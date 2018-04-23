@@ -84,7 +84,10 @@ import android.view.Window;
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -169,6 +172,11 @@ public class HomeActivity extends AppCompatActivity
     View mArrivalsListHeaderView;
 
     View mArrivalsListHeaderSubView;
+
+    private ImageButton mZoomInBtn;
+
+    private ImageButton mZoomOutBtn;
+
 
     private FloatingActionButton mFabMyLocation;
 
@@ -359,6 +367,8 @@ public class HomeActivity extends AppCompatActivity
 
         setupMyLocationButton();
 
+        setupZoomButtons();
+
         setupGooglePlayServices();
 
         UIUtils.setupActionBar(this);
@@ -406,7 +416,11 @@ public class HomeActivity extends AppCompatActivity
             mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         }
 
+        checkDisplayZoomControls();
+
         checkLeftHandMode();
+
+
         updateLayersFab();
         mFabMyLocation.requestLayout();
     }
@@ -497,15 +511,15 @@ public class HomeActivity extends AppCompatActivity
                 EmbeddedSocial.launchSignInActivity(this);
                 break;
             case NAVDRAWER_ITEM_PROFILE:
-            if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PROFILE) {
-                showMyProfileFragment();
-                mCurrentNavDrawerPosition = item;
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_social_profile));
-            }
-            break;
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PROFILE) {
+                    showMyProfileFragment();
+                    mCurrentNavDrawerPosition = item;
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_social_profile));
+                }
+                break;
             case NAVDRAWER_ITEM_POPULAR:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_POPULAR) {
                     showPopularFeedFragment();
@@ -1547,6 +1561,27 @@ public class HomeActivity extends AppCompatActivity
         updateLayersFab();
     }
 
+    private void setupZoomButtons() {
+
+        mZoomInBtn = (ImageButton) findViewById(R.id.btnZoomIn);
+
+        mZoomOutBtn = (ImageButton) findViewById(R.id.btnZoomOut);
+
+        mZoomInBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mMapFragment.zoomIn();
+            }
+        });
+
+        mZoomOutBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mMapFragment.zoomOut();
+            }
+        });
+    }
+
     private void setupMyLocationButton() {
         // Initialize the My Location button
         mFabMyLocation = (FloatingActionButton) findViewById(R.id.btnMyLocation);
@@ -1578,9 +1613,30 @@ public class HomeActivity extends AppCompatActivity
         }
     }
 
+    private void checkDisplayZoomControls() {
+        boolean displayZoom = Application.getPrefs().getBoolean(
+                getString(R.string.preference_key_show_zoom_controls), false);
+
+        LinearLayout zoomButtonsLayout = (LinearLayout) findViewById(R.id.zoom_buttons_layout);
+
+        if (displayZoom) {
+            zoomButtonsLayout.setVisibility(LinearLayout.VISIBLE);
+        } else {
+            zoomButtonsLayout.setVisibility(LinearLayout.GONE);
+        }
+
+    }
+
     private void checkLeftHandMode() {
         boolean leftHandMode = Application.getPrefs().getBoolean(
                 getString(R.string.preference_key_left_hand_mode), false);
+
+        setFABLocation(leftHandMode);
+
+    }
+
+
+    private void setFABLocation(boolean leftHandMode) {
         if (mFabMyLocation != null) {
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) mFabMyLocation
                     .getLayoutParams();
@@ -1604,7 +1660,7 @@ public class HomeActivity extends AppCompatActivity
             }
         }
     }
-
+    
     /**
      * Moves both Floating Action Buttons as response to sliding panel height changes.
      * <p>

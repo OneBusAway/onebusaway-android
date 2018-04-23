@@ -35,6 +35,13 @@
                 android:title="@string/preferences_show_negative_arrivals_title"
                 android:summary="@string/preferences_show_negative_arrivals_summary"
                 android:defaultValue="true"/>
+
+        <CheckBoxPreference
+            android:key="@string/preference_key_show_zoom_controls"
+            android:title="@string/preferences_show_zoom_controls_title"
+            android:summary="@string/preferences_show_zoom_controls_summary"
+            android:defaultValue="false"/>
+
         <CheckBoxPreference
                 android:key="@string/preference_key_show_tutorial_screens"
                 android:title="@string/preferences_show_tutorial_screens_title"

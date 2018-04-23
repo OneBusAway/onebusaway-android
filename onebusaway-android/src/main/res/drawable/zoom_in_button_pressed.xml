@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item>
+        <shape android:shape="rectangle">
+
+            <corners android:radius="@dimen/zoom_btn_radius"/>
+            <solid android:color="@color/zoom_btn_color"/>
+        </shape>
+    </item>
+
+    <item android:left="@dimen/zoom_btn_border">
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/zoom_btn_radius"/>
+            <solid android:color="@color/zoom_btn_color_pressed"/>
+        </shape>
+    </item>
+
+    <item
+            android:drawable="@drawable/ic_zoom_in"
+            android:bottom="@dimen/zoom_btn_bottom_offset"
+            android:left="@dimen/zoom_in_btn_left_offset"
+            android:right="@dimen/zoom_in_btn_right_offset"
+            android:top="@dimen/zoom_btn_top_offset"/>
+</layer-list>

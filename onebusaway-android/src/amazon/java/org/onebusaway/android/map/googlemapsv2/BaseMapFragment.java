@@ -28,6 +28,7 @@
 package org.onebusaway.android.map.googlemapsv2;
 
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.amazon.geo.mapsv2.CameraUpdate;
 import com.amazon.geo.mapsv2.CameraUpdateFactory;
 import com.amazon.geo.mapsv2.AmazonMap;
 import com.amazon.geo.mapsv2.LocationSource;
@@ -78,6 +79,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
@@ -290,6 +292,14 @@ public class BaseMapFragment extends SupportMapFragment
         return v;
     }
 
+    public void zoomIn() {
+        mMap.animateCamera(CameraUpdateFactory.zoomIn());
+    }
+
+    public void zoomOut() {
+        mMap.animateCamera(CameraUpdateFactory.zoomOut());
+    }
+
     @Override
     public void onMapReady(com.amazon.geo.mapsv2.AmazonMap map) {
         mMap = map;
@@ -303,6 +313,7 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     private void initMap(Bundle savedInstanceState) {
+
         UiSettings uiSettings = mMap.getUiSettings();
         // Show the location on the map
         mMap.setMyLocationEnabled(true);
@@ -312,8 +323,6 @@ public class BaseMapFragment extends SupportMapFragment
         mMap.setOnCameraChangeListener(this);
         // Hide MyLocation button on map, since we have our own button
         uiSettings.setMyLocationButtonEnabled(false);
-        // Hide Zoom controls
-        uiSettings.setZoomControlsEnabled(false);
         // Hide Toolbar
         uiSettings.setMapToolbarEnabled(false);
         // Instantiate class that holds generic markers to be added by outside classes
@@ -343,6 +352,7 @@ public class BaseMapFragment extends SupportMapFragment
         mMapPaddingLeft = args.getInt(MapParams.MAP_PADDING_LEFT, MapParams.DEFAULT_MAP_PADDING);
         mMapPaddingTop = args.getInt(MapParams.MAP_PADDING_TOP, MapParams.DEFAULT_MAP_PADDING);
         mMapPaddingRight = args.getInt(MapParams.MAP_PADDING_RIGHT, MapParams.DEFAULT_MAP_PADDING);
+
         mMapPaddingBottom = args
                 .getInt(MapParams.MAP_PADDING_BOTTOM, MapParams.DEFAULT_MAP_PADDING);
         setPadding(mMapPaddingLeft, mMapPaddingTop, mMapPaddingRight, mMapPaddingBottom);
@@ -596,6 +606,7 @@ public class BaseMapFragment extends SupportMapFragment
      */
     @Override
     public void setPadding(Integer left, Integer top, Integer right, Integer bottom) {
+
         if (left != null) {
             mMapPaddingLeft = left;
         }

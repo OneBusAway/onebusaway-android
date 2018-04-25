@@ -110,6 +110,13 @@ public class BaseMapFragment extends SupportMapFragment
         StopOverlay.OnFocusChangedListener, OnMapReadyCallback,
         VehicleOverlay.Controller, LayersSpeedDialAdapter.LayerActivationListener {
 
+
+    public interface OnAdjustPaddingListener {
+        void setPadding(boolean leftHandMode);
+    }
+
+    OnAdjustPaddingListener mAdjustPaddingCallback;
+
     public static final String TAG = "BaseMapFragment";
 
     private static final int REQUEST_NO_LOCATION = 41;
@@ -174,6 +181,18 @@ public class BaseMapFragment extends SupportMapFragment
     LocationHelper mLocationHelper;
 
     Bundle mLastSavedInstanceState;
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        try {
+            mAdjustPaddingCallback = (OnAdjustPaddingListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnAdjustPaddingListener");
+        }
+    }
 
     @Override
     public void onActivateLayer(LayerInfo layer) {
@@ -291,7 +310,12 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onMapReady(com.google.android.gms.maps.GoogleMap map) {
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+        boolean leftHandMode = preferences.getBoolean(getString(R.string.preference_key_left_hand_mode), false);
+
         mMap = map;
+        mAdjustPaddingCallback.setPadding(leftHandMode);
 
         MapClickListeners mapClickListeners = new MapClickListeners();
 
@@ -344,8 +368,7 @@ public class BaseMapFragment extends SupportMapFragment
 
         mMapPaddingBottom = args
                 .getInt(MapParams.MAP_PADDING_BOTTOM, MapParams.DEFAULT_MAP_PADDING);
-        setPadding(mMapPaddingLeft, mMapPaddingTop, mMapPaddingRight, mMapPaddingBottom);
-
+        
         String mode = args.getString(MapParams.MODE);
         if (mode == null) {
             mode = MapParams.MODE_STOP;

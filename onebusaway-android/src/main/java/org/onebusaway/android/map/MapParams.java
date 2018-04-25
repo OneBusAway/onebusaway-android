@@ -63,4 +63,6 @@ public class MapParams {
     public static final int DEFAULT_ZOOM = 18;
 
     public static final int DEFAULT_MAP_PADDING = 0;
+
+    public static final int MAP_PADDING_LEFT_HAND_MODE = 875;
 }

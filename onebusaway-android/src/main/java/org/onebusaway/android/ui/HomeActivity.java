@@ -125,7 +125,7 @@ public class HomeActivity extends AppCompatActivity
         implements BaseMapFragment.OnFocusChangedListener,
         BaseMapFragment.OnProgressBarChangedListener,
         ArrivalsListFragment.Listener, NavigationDrawerCallbacks,
-        ObaRegionsTask.Callback {
+        ObaRegionsTask.Callback, BaseMapFragment.OnAdjustPaddingListener {
 
     interface SlidingPanelController {
 
@@ -419,7 +419,6 @@ public class HomeActivity extends AppCompatActivity
         checkDisplayZoomControls();
 
         checkLeftHandMode();
-
 
         updateLayersFab();
         mFabMyLocation.requestLayout();
@@ -1633,8 +1632,28 @@ public class HomeActivity extends AppCompatActivity
 
         setFABLocation(leftHandMode);
 
+        setLogoPadding(leftHandMode);
     }
 
+    @Override
+    public void setPadding(boolean leftHandMode) {
+        setLogoPadding(leftHandMode);
+    }
+
+    private void setLogoPadding(boolean leftHandMode) {
+        int topPadding = MapParams.DEFAULT_MAP_PADDING;
+        int bottomPadding = MapParams.DEFAULT_MAP_PADDING;
+        int rightPadding = MapParams.DEFAULT_MAP_PADDING;
+        int leftPadding;
+
+        if(leftHandMode) {
+            leftPadding = MapParams.MAP_PADDING_LEFT_HAND_MODE;
+        } else {
+            leftPadding = MapParams.DEFAULT_MAP_PADDING;
+        }
+
+        mMapFragment.setPadding(leftPadding, topPadding, rightPadding, bottomPadding);
+    }
 
     private void setFABLocation(boolean leftHandMode) {
         if (mFabMyLocation != null) {

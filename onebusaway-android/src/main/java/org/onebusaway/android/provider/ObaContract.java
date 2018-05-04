@@ -23,7 +23,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
-import org.onebusaway.android.tad.Segment;
+import org.onebusaway.android.nav.Segment;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;

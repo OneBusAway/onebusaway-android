@@ -1,10 +1,10 @@
-package org.onebusaway.android.tad.test;
+package org.onebusaway.android.nav.test;
 
 import org.apache.commons.io.IOUtils;
 import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.mock.Resources;
-import org.onebusaway.android.tad.Segment;
-import org.onebusaway.android.tad.TADNavigationServiceProvider;
+import org.onebusaway.android.nav.Segment;
+import org.onebusaway.android.nav.TADNavigationServiceProvider;
 
 import android.location.Location;
 import android.location.LocationManager;
@@ -20,7 +20,7 @@ public class TADTest extends ObaTestCase {
 
     static final String TAG = "TADTest";
 
-    static final int SPEED_UP = 4;
+    static final long SPEED_UP = 1000000000000000L;
     private int i = 0;
     private int getReadyID;
     private int pullCordID;
@@ -113,8 +113,10 @@ public class TADTest extends ObaTestCase {
     /* Started Stop: Dale Mabry Hwy @ Linebaugh Av
        Destination Stop: Dale Mabry Hwy @ Hudson Ln @ Taco Bell
        Recorded In: Bus (Route 36) 4 stops
-       Device Used: Nexus 5 */
-    public void testTrip3() { //pull the cord triggered too soon
+       Device Used: Nexus 5
+       FIXME - Currently fails with "Pull the cord triggered too soon"
+       */
+    public void testTrip3() {
         try {
             // Read test CSV.
             Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_trip3"));
@@ -132,8 +134,10 @@ public class TADTest extends ObaTestCase {
     /* Started Stop: Dale Mabry Hwy @ Linebaugh Av
       Destination Stop: Dale Mabry Hwy @ Hudson Ln @ Taco Bell
       Recorded In: car following Bus (Route 36) 4 stops
-      Device Used: Nexus 5 */
-    public void testTrip3C() {  //pull cord triggered too soon
+      Device Used: Nexus 5
+      FIXME - Currently fails with "Pull the cord triggered too soon"
+      */
+    public void testTrip3C() {
         try {
             // Read test CSV.
             Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_trip3c"));
@@ -536,7 +540,7 @@ public class TADTest extends ObaTestCase {
        /*Started Stop: Busch Blvd @ 52nd St
     Destination Stop: Busch Blvd @ 22nd St
     Recorded In: Bus route 39 (12 stops)
-    This test is failing because the second to last stop in the map is not
+    FIXME - This test is failing because the second to last stop in the map is not
     in the coordinate where the actual stop is located. Hence, it appears that the
     pool the cord is triggered to soon
     Device Used: kyocera */
@@ -619,7 +623,8 @@ public class TADTest extends ObaTestCase {
          /*Started Stop: Library LIB
     Destination Stop: Magnolia apartments
     Recorded In: Bull Runner route D
-    Device Used: Kyocera */
+    Device Used: Kyocera
+     FIXME - this test is failing with "Get ready triggered too soon" */
 
     public void testTrip16() {
         try {

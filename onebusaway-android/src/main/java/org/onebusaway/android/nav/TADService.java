@@ -1,4 +1,4 @@
-package org.onebusaway.android.tad;
+package org.onebusaway.android.nav;
 
 import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.BuildConfig;

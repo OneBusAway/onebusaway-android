@@ -1,4 +1,4 @@
-package org.onebusaway.android.tad;
+package org.onebusaway.android.nav;
 
 import org.onebusaway.android.app.Application;
 

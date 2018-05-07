@@ -1,10 +1,17 @@
 /*
- * TADNavigationServiceProvider.java
+ * Copyright (C) 2005-2018 University of South Florida
  *
- * Created on December 1, 2006, 3:42 PM
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.onebusaway.android.nav;
 
@@ -32,7 +39,7 @@ import java.util.Locale;
  *
  * @author Barbeau / Belov
  */
-public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener {
+public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     public static final String TAG = "TADNavServiceProvider";
     public static final int NOTIFICATION_ID = 33620;
@@ -55,7 +62,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
      * TAD Specific variables
      **/
     private int segmentIndex = 0;  //Index that defines the current segment within the ordered context of a service (i.e. First segment in a service will have index = 0, second segment index = 1, etc.)
-    private Segment[] segments;  //Array of segments that are currently being navigated
+    private NavigationSegment[] segments;  //Array of segments that are currently being navigated
     private float[] distances; //Array of floats calculated from segments traveled, segment limit = 20.
 
     //private GPSDistanceCalc cp = new GPSDistanceCalc();
@@ -79,7 +86,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
     /**
      * Creates a new instance of TADNavigationServiceProvider
      */
-    public TADNavigationServiceProvider(String tripId, String stopId) {
+    public NavigationServiceProvider(String tripId, String stopId) {
         Log.d(TAG, "Creating TAD Navigation Service Provider");
         if (mTTS == null) {
             mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
@@ -91,7 +98,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
         mStopId = stopId;
     }
 
-    public TADNavigationServiceProvider(String tripId, String stopId, int flag) {
+    public NavigationServiceProvider(String tripId, String stopId, int flag) {
         Log.d(TAG, "Creating TAD Navigation Service Provider");
         resuming = flag == 1;
         if (mTTS == null) {
@@ -160,7 +167,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
     public int getSegmentID() {
         try {
             if (segments != null) {
-                return segments[segmentIndex].getIdSegment();
+                return segments[segmentIndex].getSegmentId();
             } else {
                 return -1;  //If a segment isn't currently being navigated, then return -1 as a default value
 
@@ -197,7 +204,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
      *
      * @param segments
      */
-    public void navigate(Segment[] segments) {
+    public void navigate(NavigationSegment[] segments) {
 
         Log.d(TAG, "Starting navigation for service");
         //Create a new instance and rewrite the old one with a blank slate of ProximityListener
@@ -286,7 +293,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
             Log.d(TAG, "getting coords");
             segmentIndex++;
             //Create new coordinate object using the "Ring" coordinates as specified by the TAD web site and server
-            Segment segment = segments[segmentIndex];
+            NavigationSegment segment = segments[segmentIndex];
             alertdistance = segment.getAlertDistance();
             //Have proximity listener listen for the "Ring" location
             mProxListener.listenForDistance(alertdistance);
@@ -346,7 +353,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
      * @author Sean J. Barbeau, modified by Belov
      */
     public class TADProximityCalculator {
-        TADNavigationServiceProvider navProvider;  //Holds reference to main navigation provider for TAD
+        NavigationServiceProvider navProvider;  //Holds reference to main navigation provider for TAD
 
         //**  Proximity Listener variables **/
         private float radius = 100;  //Defines radius (in meters) for which the Proximity listener should be triggered (Default = 50)
@@ -366,7 +373,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
          *
          * @param navProvider
          */
-        public TADProximityCalculator(TADNavigationServiceProvider navProvider) {
+        public TADProximityCalculator(NavigationServiceProvider navProvider) {
             this.navProvider = navProvider;
             Log.d(TAG, "Initializing TADProximityCalculator");
         }
@@ -651,7 +658,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
         PendingIntent pIntent = PendingIntent.getActivity(app.getApplicationContext(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         // Create deletion intent to stop repeated voice comands.
-        Intent receiverIntent = new Intent(app.getApplicationContext(), TripReceiver.class);
+        Intent receiverIntent = new Intent(app.getApplicationContext(), NavigationReceiver.class);
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(Application.get().getApplicationContext())
@@ -688,8 +695,8 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
                 mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
             }
 
-            receiverIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.CANCEL_TRIP);
-            receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID);
+            receiverIntent.putExtra(NavigationReceiver.ACTION_NUM, NavigationReceiver.CANCEL_TRIP);
+            receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID);
             PendingIntent pCancelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
                     0, receiverIntent, 0);
 
@@ -702,8 +709,8 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
 
         } else if (status == 2) {   // Get ready to pack
             getready = true;
-            receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
-            receiverIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.DISMISS_NOTIFICATION);
+            receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
+            receiverIntent.putExtra(NavigationReceiver.ACTION_NUM, NavigationReceiver.DISMISS_NOTIFICATION);
             PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
                     0, receiverIntent, 0);
 
@@ -727,8 +734,8 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
 
         } else if (status == 3) {   // Pull the cord
             finished = true;
-            receiverIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.DISMISS_NOTIFICATION);
-            receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 2);
+            receiverIntent.putExtra(NavigationReceiver.ACTION_NUM, NavigationReceiver.DISMISS_NOTIFICATION);
+            receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 2);
             PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
                     0, receiverIntent, 0);
 

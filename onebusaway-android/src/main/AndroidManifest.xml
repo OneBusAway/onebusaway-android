@@ -224,7 +224,7 @@
         </service>
 
         <service
-            android:name=".nav.TADService" >
+            android:name=".nav.NavigationService" >
         </service>
 
         <receiver android:name=".tripservice.AlarmReceiver">
@@ -249,7 +249,7 @@
             </intent-filter>
         </receiver>
         <receiver
-            android:name=".nav.TripReceiver"
+            android:name=".nav.NavigationReceiver"
             android:enabled="true"
             android:exported="true" >
             <intent-filter>

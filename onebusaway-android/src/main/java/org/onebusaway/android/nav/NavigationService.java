@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2005-2018 University of South Florida
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.onebusaway.android.nav;
 
 import org.apache.commons.io.FileUtils;
@@ -27,8 +42,7 @@ import java.util.Calendar;
 /**
  * Created by azizmb9494 on 2/18/16.
  */
-public class TADService extends Service
-        implements LocationHelper.Listener {
+public class NavigationService extends Service implements LocationHelper.Listener {
     public static final String TAG = "TADService";
 
     public static final String DESTINATION_ID = ".DestinationId";
@@ -47,7 +61,7 @@ public class TADService extends Service
     private boolean getReadyFlag = false;
     private boolean pullTheCordFlag = false;
 
-    private TADNavigationServiceProvider mNavProvider;
+    private NavigationServiceProvider mNavProvider;
     private File mLogFile = null;
 
     private long finishedTime;
@@ -65,14 +79,14 @@ public class TADService extends Service
                     1, 1, mTripId, mDestinationStopId, mBeforeStopId);
 
 
-            mNavProvider = new TADNavigationServiceProvider(mTripId, mDestinationStopId);
+            mNavProvider = new NavigationServiceProvider(mTripId, mDestinationStopId);
         } else {
             String[] args = ObaContract.NavStops.getDetails(Application.get().getApplicationContext(), "1");
             if (args != null && args.length == 3) {
                 mTripId = args[0];
                 mDestinationStopId = args[1];
                 mBeforeStopId = args[2];
-                mNavProvider = new TADNavigationServiceProvider(mTripId, mDestinationStopId, 1);
+                mNavProvider = new NavigationServiceProvider(mTripId, mDestinationStopId, 1);
 
             }
         }
@@ -91,10 +105,10 @@ public class TADService extends Service
 
         Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
         Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
-        Segment segment = new Segment(last, dest, null);
+        NavigationSegment segment = new NavigationSegment(last, dest, null);
 
         if (mNavProvider != null) {
-            mNavProvider.navigate(new Segment[]{segment});
+            mNavProvider.navigate(new NavigationSegment[]{segment});
         }
         return START_STICKY;
     }

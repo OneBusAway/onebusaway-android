@@ -23,7 +23,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
-import org.onebusaway.android.nav.Segment;
+import org.onebusaway.android.nav.NavigationSegment;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -1775,7 +1775,7 @@ public final class ObaContract {
             return null;
         }
 
-        public static Segment[] get(Context context, String navId)
+        public static NavigationSegment[] get(Context context, String navId)
         {
             final String[] PROJECTION = {
                     TRIP_ID,
@@ -1786,7 +1786,7 @@ public final class ObaContract {
             Cursor c = cr.query(CONTENT_URI, PROJECTION, NAV_ID + "=?", new String[]{navId}, SEQUENCE + " ASC");
             if (c != null) {
                 try {
-                    Segment[] results = new Segment[c.getCount()];
+                    NavigationSegment[] results = new NavigationSegment[c.getCount()];
                     if (c.getCount() == 0) {
                         return results;
                     }
@@ -1794,7 +1794,7 @@ public final class ObaContract {
                     int i = 0;
                     c.moveToFirst();
                     do {
-                        results[i] = new Segment(
+                        results[i] = new NavigationSegment(
                                 Stops.getLocation(context, c.getString(2)),
                                 Stops.getLocation(context, c.getString(1)),
                                 null

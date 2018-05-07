@@ -37,7 +37,7 @@ import org.onebusaway.android.io.elements.ObaTripSchedule;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
-import org.onebusaway.android.nav.TADService;
+import org.onebusaway.android.nav.NavigationService;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.DBUtil;
 import org.onebusaway.android.util.LocationUtils;
@@ -551,12 +551,12 @@ public class TripDetailsListFragment extends ListFragment {
             DBUtil.addToDB(lastStop);
             DBUtil.addToDB(destStop);
 
-            Intent serviceIntent = new Intent(getContext(), TADService.class);
+            Intent serviceIntent = new Intent(getContext(), NavigationService.class);
 
             mDestinationId = destStop.getId();
-            serviceIntent.putExtra(TADService.DESTINATION_ID, mDestinationId);
-            serviceIntent.putExtra(TADService.BEFORE_STOP_ID, lastStop.getId());
-            serviceIntent.putExtra(TADService.TRIP_ID, mTripId);
+            serviceIntent.putExtra(NavigationService.DESTINATION_ID, mDestinationId);
+            serviceIntent.putExtra(NavigationService.BEFORE_STOP_ID, lastStop.getId());
+            serviceIntent.putExtra(NavigationService.TRIP_ID, mTripId);
 
             // update UI
             if (mDestinationId != null) {
@@ -1075,7 +1075,7 @@ public class TripDetailsListFragment extends ListFragment {
      * When user cancels trip from "Notification menu" then destination flag in trip details screen
      * should be removed.
      *
-     * From {@link TADService 's} onDestroy(), we send broadcast action
+     * From {@link NavigationService 's} onDestroy(), we send broadcast action
      */
     class TripEndReceiver extends BroadcastReceiver {
         private static final String TAG = "TripEndReceiver";

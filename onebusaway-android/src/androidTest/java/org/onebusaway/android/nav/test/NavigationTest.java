@@ -1,10 +1,25 @@
+/*
+ * Copyright (C) 2005-2018 University of South Florida
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.onebusaway.android.nav.test;
 
 import org.apache.commons.io.IOUtils;
 import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.mock.Resources;
-import org.onebusaway.android.nav.Segment;
-import org.onebusaway.android.nav.TADNavigationServiceProvider;
+import org.onebusaway.android.nav.NavigationSegment;
+import org.onebusaway.android.nav.NavigationServiceProvider;
 
 import android.location.Location;
 import android.location.LocationManager;
@@ -14,9 +29,12 @@ import android.util.Log;
 import java.io.Reader;
 
 /**
- * Created by azizmb9494 on 3/18/16.
+ * Loads previously recorded trips (GPS data) and replays them through the NavigationServiceProvider
+ * via the NavigationSimulation class.
+ *
+ * For creating new test methods - see the file DESTINATION_REMINDERS.md
  */
-public class TADTest extends ObaTestCase {
+public class NavigationTest extends ObaTestCase {
 
     static final String TAG = "TADTest";
 
@@ -39,7 +57,7 @@ public class TADTest extends ObaTestCase {
             getReadyID = 848;
             pullCordID = 978;
 
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -59,7 +77,7 @@ public class TADTest extends ObaTestCase {
             getReadyID = 665;
             pullCordID = 929;
 
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -80,7 +98,7 @@ public class TADTest extends ObaTestCase {
             getReadyID = 0;
             pullCordID = 14;
 
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -101,7 +119,7 @@ public class TADTest extends ObaTestCase {
             getReadyID = 0;
             pullCordID = 64;
 
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -124,7 +142,7 @@ public class TADTest extends ObaTestCase {
             getReadyID = 95;
             pullCordID = 115;
 
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -145,7 +163,7 @@ public class TADTest extends ObaTestCase {
             getReadyID = 87;
             pullCordID = 109;
 
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -167,7 +185,7 @@ public class TADTest extends ObaTestCase {
             getReadyID = 294;
             pullCordID = 329;
 
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -188,7 +206,7 @@ public class TADTest extends ObaTestCase {
             getReadyID = 253;
             pullCordID = 329;
 
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -207,7 +225,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 372;
             pullCordID = 660;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -226,7 +244,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 284;
             pullCordID = 492;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -245,7 +263,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 801;
             pullCordID = 837;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -265,7 +283,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 676;
             pullCordID = 704;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -283,7 +301,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 183;
             pullCordID = 208;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -301,7 +319,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 172;
             pullCordID = 285;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -320,7 +338,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 0;
             pullCordID = 18;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -338,7 +356,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 0;
             pullCordID = 20;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -355,7 +373,7 @@ public class TADTest extends ObaTestCase {
              String csv = IOUtils.toString(reader);
              getReadyID = 1041;
              pullCordID = 1071;
-             TADTrip trip = new TADTrip(csv);
+             NavigationSimulation trip = new NavigationSimulation(csv);
              trip.runSimulation(true, true);
          } catch (Exception e) {
              Log.e(TAG, e.toString());
@@ -373,7 +391,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 570;
             pullCordID = 634;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -392,7 +410,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 589;
             pullCordID = 605;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -411,7 +429,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 484;
             pullCordID = 509;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -433,7 +451,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 331;
             pullCordID = 371;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -452,7 +470,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 119;
             pullCordID = 158;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -471,7 +489,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 69;
             pullCordID = 199;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -492,7 +510,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 880;
             pullCordID = 901;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -511,7 +529,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 2549;
             pullCordID = 2732;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -530,7 +548,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 230;
             pullCordID = 519;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -552,7 +570,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 548;
             pullCordID = 571;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -572,7 +590,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 387;
             pullCordID = 429;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -592,7 +610,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 225;
             pullCordID = 417;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -612,7 +630,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 217;
             pullCordID = 287;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -633,7 +651,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 142;
             pullCordID = 192;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -652,7 +670,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 121;
             pullCordID = 168;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -671,7 +689,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 100;
             pullCordID = 181;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -690,7 +708,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 86;
             pullCordID = 125;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -709,7 +727,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 31;
             pullCordID = 50;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -728,7 +746,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 31;
             pullCordID = 58;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -748,7 +766,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 133;
             pullCordID = 195;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -767,7 +785,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 53;
             pullCordID = 117;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -786,7 +804,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 547;
             pullCordID = 686;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -805,7 +823,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 323;
             pullCordID = 402;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -825,7 +843,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 1085;
             pullCordID = 1198;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -844,7 +862,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 1032;
             pullCordID = 1099;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -865,7 +883,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 0;
             pullCordID = 24;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -885,7 +903,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 0;
             pullCordID = 18;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -905,7 +923,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 115;
             pullCordID = 178;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -924,7 +942,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 203;
             pullCordID = 262;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -943,7 +961,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 209;
             pullCordID = 235;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -963,7 +981,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
             getReadyID = 217;
             pullCordID = 247;
-            TADTrip trip = new TADTrip(csv);
+            NavigationSimulation trip = new NavigationSimulation(csv);
             trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
@@ -973,7 +991,7 @@ public class TADTest extends ObaTestCase {
 
 
     // Class for holding relevant details for testing.
-    class TADTrip {
+    class NavigationSimulation {
         String mTripId;
         String mDestinationId;
         String mBeforeId;
@@ -1000,7 +1018,7 @@ public class TADTest extends ObaTestCase {
          *            and all following rows holding data to construct location points of a trip in the format
          *            time,lat,lng,altitude,speed,bearing,provider.
          */
-        TADTrip(String csv) {
+        NavigationSimulation(String csv) {
             String[] lines = csv.split("\n");
 
             // Setup meta data.
@@ -1117,8 +1135,6 @@ public class TADTest extends ObaTestCase {
             return mTimes;
         }
 
-
-
         public int getGetReadyIndex() {
             return getReadyIndex;
         }
@@ -1128,14 +1144,14 @@ public class TADTest extends ObaTestCase {
         }
 
         public void runSimulation(Boolean expected1, Boolean expected2) {
-            TADNavigationServiceProvider provider = new TADNavigationServiceProvider(mTripId, mDestinationId);
+            NavigationServiceProvider provider = new NavigationServiceProvider(mTripId, mDestinationId);
 
             // Construct Destination & Second-To-Last Location
-            Segment segment = new Segment(mBeforeLocation, mDestinationLocation, null);
+            NavigationSegment segment = new NavigationSegment(mBeforeLocation, mDestinationLocation, null);
 
 
             // Begin navigation & simulation
-            provider.navigate(new Segment[]{segment});
+            provider.navigate(new NavigationSegment[]{segment});
 
             for (int i = 0; i <=  getReadyID; i++) {
                 Location l = mPoints[i];

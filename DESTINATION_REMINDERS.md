@@ -1,4 +1,4 @@
-# Travel Assistance Device (TAD) feature - Destination Alerts
+# Real-time Navigation - Destination Alerts
 
 **Usage**
 
@@ -14,17 +14,16 @@ destination stop.
 
 **How It Works**
 
-A Service is created when the user begins a trip, this service listens
+The NavigationService is started when the user begins a trip, this service listens
 for location updates and passes the locations to its instance of 
-TADServiceNavigationProvider each time. TADServiceProvider is responsible
+NavigationServiceProvider each time. NavigationServiceProvider is responsible
 for computing the statuses of the trips and issuing notifications/TTS
-messages. Once the TADServiceNavProvider is completed, the TAD Service
-will stop itself.
+messages. Once the NavigationServiceProvider is completed, the NavigationService will stop itself.
 
 ***GPS Logging***
 
-When the BuildConfig "TAD_GPS_LOGGING" flag is set to true, the TAD 
-Service will log all coordinates it receives during the trip and 30
+When the BuildConfig "TAD_GPS_LOGGING" flag is set to true, the NavigationService
+ will log all coordinates it receives during the trip and 30
 seconds after the trip has ended. The log file is a CSV file written to
 the "TADLog" folder on your external storage root directory. The filename
 format is <TestID>-<Date/time of test>.csv. For example, "1-Thu, Aug 25 2016, 04:20 PM.csv".
@@ -43,20 +42,20 @@ the ninth column contains the satellites, the tenth column contains the provider
 ***Testing***
 
 Once a a test trip has been generated, drop the generated CSV file into
-the resources folder for the androidTest build. Then, in the TADTest
-file, a new test method can be created. In this method, a TADTrip object
+the resources folder for the androidTest build. Then, in the NavigationTest
+class, a new test method can be created. In this method, a NavigationSimulation object
 can be instantiated with the CSV string passed into the constructor and
-the runSimulation method called.
+the runSimulation() method called.
 
 ***(Potential) Idea Wish list***
 
-- Favorite Trips: Allow person to bookmark a favorite TAD Trip. This 
+- Favorite Trips: Allow person to bookmark a favorite trip. This 
 would involve storing a combo of the starting stop, destination stop &
 the trip Id. However, since Trip IDs are not persistent and are subject
 to expiration, a way to uniquely identify trips is needed.
 
 - Multi-Legged Trips: Maybe something for OTP, but have multi-bus
-trips. TAD already supports it by passing in an array of segments.
+trips. NavigationServiceProvider already supports it by passing in an array of segments.
 
 - Configurable Alert Triggering Threshold: As of right now, the distance 
 the person needs to be within from the second-to-last stop for the first 
@@ -66,6 +65,6 @@ based on certain factors such as distance between stops would be neat
 addition.
 
 - Advanced Location Logging: Currently, the location logger is built into
-TAD Service & transparently logs to a file when TAD is running. A toggle 
+NavigationService & transparently logs to a file when it's is running. A toggle 
 could be added in the Advanced Settings menu for the user to switch on and
 off.

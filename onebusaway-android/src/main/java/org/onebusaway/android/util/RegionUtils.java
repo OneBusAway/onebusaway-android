@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2012-2013 Paul Watts (paulcwatts@gmail.com) 
- * and individual contributors
+ * Copyright (C) 2012-2017 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com),
+ * Microsoft Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -410,7 +411,8 @@ public class RegionUtils {
                     ObaContract.Regions.STOP_INFO_URL,
                     ObaContract.Regions.OTP_BASE_URL,
                     ObaContract.Regions.OTP_CONTACT_EMAIL,
-                    ObaContract.Regions.SUPPORTS_OTP_BIKESHARE
+                    ObaContract.Regions.SUPPORTS_OTP_BIKESHARE,
+                    ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL
             };
 
             ContentResolver cr = context.getContentResolver();
@@ -456,7 +458,8 @@ public class RegionUtils {
                         c.getString(11),             // StopInfoUrl
                         c.getString(12),             // OTP Base URL
                         c.getString(13),              // OTP Contact Email
-                        c.getInt(14) > 0            // Supports Otp Bikeshare
+                        c.getInt(14) > 0,           // Supports Otp Bikeshare
+                        c.getInt(15) > 0            // Supports Embedded Social
                 ));
 
             } while (c.moveToNext());
@@ -639,7 +642,8 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_STOP_INFO_URL,
                 BuildConfig.FIXED_REGION_OTP_BASE_URL,
                 BuildConfig.FIXED_REGION_OTP_CONTACT_EMAIL,
-                BuildConfig.FIXED_REGION_SUPPORTS_OTP_BIKESHARE);
+                BuildConfig.FIXED_REGION_SUPPORTS_OTP_BIKESHARE,
+                BuildConfig.FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL);
         return region;
     }
 
@@ -709,6 +713,8 @@ public class RegionUtils {
         values.put(ObaContract.Regions.OTP_CONTACT_EMAIL, region.getOtpContactEmail());
         values.put(ObaContract.Regions.SUPPORTS_OTP_BIKESHARE,
                 region.getSupportsOtpBikeshare() ? 1 : 0);
+        values.put(ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL,
+                region.getSupportsEmbeddedSocial() ? 1 : 0);
         return values;
     }
 

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com), Benjamin Du (bendu@me.com)
-    and individual contributors.
+<!-- Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com)
+    Benjamin Du (bendu@me.com),
+    Microsoft Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,11 +24,22 @@
     <string name="navdrawer_item_nearby">Nearby</string>
     <string name="navdrawer_item_starred_stops">Starred stops</string>
     <string name="navdrawer_item_my_reminders">My reminders</string>
+    <string name="navdrawer_item_profile">My profile</string>
+    <string name="navdrawer_item_sign_in">Sign in</string>
+    <string name="navdrawer_item_your_feed">My feed</string>
+    <string name="navdrawer_item_search">Search</string>
+    <string name="navdrawer_item_popular">Popular</string>
+    <string name="navdrawer_item_pin">My pins</string>
+    <string name="navdrawer_item_activity_feed">Activity feed</string>
+    <string name="navdrawer_item_options">Options</string>
     <string name="navdrawer_item_settings">Settings</string>
     <string name="navdrawer_item_help">Help</string>
     <string name="navdrawer_item_send_feedback">Send feedback</string>
+    <string name="navdrawer_item_open_source">Visit us on GitHub</string>
     <string name="navdrawer_item_plan_trip">Plan a trip (beta)</string>
     <string name="navdrawer_item_bike">Bike</string>
+    <string name="navdrawer_item_social_overflow_closed">More ...</string>
+    <string name="navdrawer_item_social_overflow_open">Less ...</string>
 
     <!-- Permissions -->
     <string name="trip_service_perm_label">start the trip service</string>
@@ -105,10 +118,12 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Bike share (Tampa only)</b>
-        - See bikes and stations on the map and in trip plans!\n&#8226;\u0020
-        <b>Custom reminder notifications</b>
-        - Change the name, sound, and if it vibrates (see Settings)!\n&#8226;\u0020
+        <b>Social discussions</b>
+        - Chat with other OneBusAway users about stops and routes\n&#8226;\u0020
+        <b>Improved shortcuts</b>
+        - New home screen icons for stop/route/recents, Android 8.0 compatibility\n&#8226;\u0020
+        <b>Sort reminders</b>
+        - Order your reminders by departure time or name\n&#8226;\u0020
         <b>Bug fixes</b>
         - See http://bit.ly/oba-android-releases
     </string>
@@ -395,8 +410,8 @@
     <string name="search_stop_hint">Enter a stop number</string>
     <string name="search_route_hint">Enter a route name/number</string>
 
-    <string name="route_shortcut">OneBusAway Route</string>
-    <string name="stop_shortcut">OneBusAway Stop</string>
+    <string name="route_shortcut">Route</string>
+    <string name="stop_shortcut">Stop</string>
     <string name="recent_stops_shortcut">Recent Stops</string>
     <string name="recent_routes_shortcut">Recent Routes</string>
     <string name="starred_stops_shortcut">Starred Stops</string>
@@ -442,6 +457,10 @@
     <string name="trip_stat_lessthanone_departing">Route %s is departing now!</string>
     <string name="trip_stat_arriving">Route %1$s is arriving in %2$d min!</string>
     <string name="trip_stat_departing">Route %1$s is departing in %2$d min!</string>
+
+    <!-- Embedded Social -->
+    <string name="social">Social</string>
+    <string name="join_discussion">Join discussion</string>
 
     <!-- Report problem -->
     <string name="report_problem_comment_hint">Problem description (optional)</string>
@@ -549,6 +568,7 @@
     <string name="preferences_category_display">Display</string>
     <string name="preferences_category_backup">Backup</string>
     <string name="preferences_category_notifications">Notifications</string>
+    <string name="preferences_category_social">Social</string>
     <string name="preferences_category_advanced">Advanced</string>
     <string name="preferences_screen_advanced_summary">Dig deeper into the nuts and bolts</string>
     <string name="preferences_category_about">About</string>
@@ -567,6 +587,10 @@
     <string name="preferences_show_negative_arrivals_title">Show departed buses</string>
     <string name="preferences_show_negative_arrivals_summary">Include buses that just left as
         negative arrival times
+    </string>
+
+    <string name="preferences_show_zoom_controls_title">Show zoom controls</string>
+    <string name="preferences_show_zoom_controls_summary">Display zoom controls on map
     </string>
 
     <string name="preferences_show_header_arrivals_title">Show arrivals above stop name</string>
@@ -605,6 +629,9 @@
     <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
     <string name="preferences_restore_title">Restore from storage</string>
     <string name="preferences_restore_summary">Restores from previous save</string>
+    <string name="preferences_screen_social_title">Embedded Social</string>
+    <string name="preferences_screen_social_summary_signed_in">Sign out, privacy policy, terms and conditions, linked accounts, delete account</string>
+    <string name="preferences_screen_social_summary_signed_out">Sign in, privacy policy, terms and conditions</string>
     <string name="preferences_db_saved">Saved successfully!</string>
     <string name="preferences_db_save_error">Unable to save: %1$s</string>
     <string name="preferences_db_restore_warning">This will wipe out any existing data! Go ahead?
@@ -817,7 +844,8 @@
         "* Charles Bond\n"
         "* Hillsborough Area Regional Transit (via Simon Jacobs at Cambridge Systematics)\n"
         "* Bridgette Eichelberger\n"
-        "* Rodrigo Carvalho (Google Summer of Code 2017)\n\n"
+        "* Rodrigo Carvalho (Google Summer of Code 2017)\n"
+        "* Steve Moritani\n\n"
 
         "Want to contribute to this app? Check it out on Github at
         https://github.com/OneBusAway/onebusaway-android.\n\n"
@@ -1101,4 +1129,12 @@
     <string name="bike_station_title">Tap to reserve a bike</string>
     <string name="floating_bike_title">Tap to reserve this bike</string>
 
+    <!-- Social -->
+    <string name="embedded_social_restriction">Enable social features</string>
+    <string name="es_missing_stop_conversation">Social discussion not yet available for this stop</string>
+    <string name="es_missing_route_conversation">Social discussion not yet available for this route</string>
+    <string name="es_msg_general_create_user_success">Created Embedded Social account</string>
+    <string name="es_msg_general_signin_success">Signed into Embedded Social</string>
+    <string name="es_msg_general_signout_success">Signed out of Embedded Social</string>
+    <string name="es_msg_general_account_deleted">Embedded Social account deleted</string>
 </resources>

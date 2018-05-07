@@ -65,3 +65,7 @@ A good way to determine which type of problem users are reporting is to review t
 If the rider says the bus came 10 minutes late, and the `schedule_deviation` says "10.0 min late", then the user is not reporting an error in the AVL system prediction.  Instead, they are complaining about the bus running late - the AVL system gave them correct information.  It is recommended to categorize these reports internally as rider complaints about service, and treat them as you would normally treat a patron complaining about a bus running early or late.
 
 If the rider says that the time in the app didn't match when the vehicle actually arrived, then this issue should be categorized as an AVL system error, and the issue (complete with metadata) should be forwarded to agency IT and/or AVL system vendor so they can review the information.  IT and AVL vendors can use the `stop_arrival_time` and/or `stop_departure_time` field to see when the AVL system said the bus would arrive, along with the `schedule_deviation` field to see how early/late the AVL system said the bus was at that stop.
+
+## Implementation details
+
+See [this issue](https://github.com/OneBusAway/onebusaway-iphone/issues/923#issuecomment-270437702).

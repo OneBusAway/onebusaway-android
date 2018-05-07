@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com),
-     University of South Florida (sjbarbeau@gmail.com)
+<!-- Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
+     University of South Florida (sjbarbeau@gmail.com),
+     Microsoft Corporation
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -103,9 +104,25 @@
                             android:contentDescription="@string/route_info_context_showonmap"
                             android:maxHeight="25dp"
                             android:maxWidth="25dp"
-                            android:layout_toLeftOf="@+id/route_more_info"
-                            android:layout_toStartOf="@+id/route_more_info"
+                            android:layout_toLeftOf="@+id/route_discussion"
                             android:layout_marginLeft="10dp"/>
+
+                    <ImageButton
+                            android:id="@+id/route_discussion"
+                            android:src="@drawable/es_ic_comment"
+                            android:contentDescription="@string/join_discussion"
+                            android:background="?attr/selectableItemBackground"
+                            android:maxHeight="25dp"
+                            android:maxWidth="25dp"
+                            android:layout_width="35dp"
+                            android:layout_height="35dp"
+                            android:layout_centerVertical="true"
+                            android:layout_toLeftOf="@+id/route_more_info"
+                            android:scaleType="fitCenter"
+                            android:adjustViewBounds="true"
+                            android:padding="5dp"
+                            android:layout_marginLeft="10dp"/>
+
                     <ImageButton
                             android:id="@+id/route_more_info"
                             android:layout_width="30dp"

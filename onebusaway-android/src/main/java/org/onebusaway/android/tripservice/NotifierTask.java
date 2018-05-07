@@ -31,6 +31,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
+import android.text.TextUtils;
 
 /**
  * A task (thread) that is responsible for generating a Notification to remind the user of an
@@ -75,7 +76,7 @@ public final class NotifierTask implements Runnable {
         mTaskContext = taskContext;
         mCR = mContext.getContentResolver();
         mUri = uri;
-        mNotifyTitle = notifyTitle;
+        mNotifyTitle = TextUtils.isEmpty(notifyTitle) ? mContext.getString(R.string.app_name) : notifyTitle;
         mNotifyText = notifyText;
     }
 

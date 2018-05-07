@@ -22,6 +22,6 @@
         <!--   Theme UI controls like checkboxes and text fields -->
         <item name="colorAccent">@color/theme_accent</item>
         <!-- Change the default cursor color so its visible in the action bar -->
-        <item name="android:autoCompleteTextViewStyle">@style/cursorColor</item>
+        <item name="autoCompleteTextViewStyle">@style/cursorColor</item>
     </style>
 </resources>

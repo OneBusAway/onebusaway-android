@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com),
- * University of South Florida (sjbarbeau@gmail.com)
+ * Copyright (C) 2012-2017 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com),
+ * Microsoft Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,48 +17,15 @@
  */
 package org.onebusaway.android.ui;
 
-import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.res.Resources;
-import android.graphics.drawable.GradientDrawable;
-import android.location.Location;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.accessibility.AccessibilityManager;
-import android.view.animation.Animation;
-import android.view.animation.Transformation;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import android.widget.Toast;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
+import com.microsoft.embeddedsocial.ui.fragment.MyProfileFragment;
+import com.microsoft.embeddedsocial.ui.fragment.PinsFragment;
+import com.microsoft.embeddedsocial.ui.fragment.PopularFeedFragment;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.onebusaway.android.BuildConfig;
@@ -83,20 +51,75 @@ import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Resources;
+import android.graphics.drawable.GradientDrawable;
+import android.location.Location;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.accessibility.AccessibilityManager;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import uk.co.markormesher.android_fab.SpeedDialMenuCloseListener;
+import uk.co.markormesher.android_fab.SpeedDialMenuOpenListener;
+
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_ACTIVITY_FEED;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_NEARBY;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_OPEN_SOURCE;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PINS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PLAN_TRIP;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_POPULAR;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PROFILE;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEND_FEEDBACK;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SETTINGS;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SIGN_IN;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
+import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_BOTTOM;
+import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_END;
+import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_START;
 
 public class HomeActivity extends AppCompatActivity
         implements BaseMapFragment.OnFocusChangedListener,
@@ -150,6 +173,11 @@ public class HomeActivity extends AppCompatActivity
 
     View mArrivalsListHeaderSubView;
 
+    private ImageButton mZoomInBtn;
+
+    private ImageButton mZoomOutBtn;
+
+
     private FloatingActionButton mFabMyLocation;
 
     uk.co.markormesher.android_fab.FloatingActionButton mLayersFab;
@@ -190,6 +218,14 @@ public class HomeActivity extends AppCompatActivity
     BaseMapFragment mMapFragment;
 
     MyRemindersFragment mMyRemindersFragment;
+
+    PopularFeedFragment mMyPopularFeedFragment;
+
+    PinsFragment mMyPinsFragment;
+
+    ActivityFeedFragment mActivityFeedFragment;
+
+    MyProfileFragment mMyProfileFragment;
 
     /**
      * Control which menu options are shown per fragment menu groups
@@ -318,6 +354,7 @@ public class HomeActivity extends AppCompatActivity
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
         mContext = this;
 
         setupNavigationDrawer();
@@ -329,6 +366,8 @@ public class HomeActivity extends AppCompatActivity
         setupLayersSpeedDial();
 
         setupMyLocationButton();
+
+        setupZoomButtons();
 
         setupGooglePlayServices();
 
@@ -377,7 +416,11 @@ public class HomeActivity extends AppCompatActivity
             mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         }
 
+        checkDisplayZoomControls();
+
         checkLeftHandMode();
+
+
         updateLayersFab();
         mFabMyLocation.requestLayout();
     }
@@ -460,6 +503,53 @@ public class HomeActivity extends AppCompatActivity
                                 getString(R.string.analytics_action_button_press),
                                 getString(R.string.analytics_label_button_press_trip_plan));
                 break;
+            case NAVDRAWER_ITEM_SIGN_IN:
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_social_sign_in));
+                EmbeddedSocial.launchSignInActivity(this);
+                break;
+            case NAVDRAWER_ITEM_PROFILE:
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PROFILE) {
+                    showMyProfileFragment();
+                    mCurrentNavDrawerPosition = item;
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_social_profile));
+                }
+                break;
+            case NAVDRAWER_ITEM_POPULAR:
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_POPULAR) {
+                    showPopularFeedFragment();
+                    mCurrentNavDrawerPosition = item;
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_social_popular));
+                }
+                break;
+            case NAVDRAWER_ITEM_PINS:
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PINS) {
+                    showPinsFragment();
+                    mCurrentNavDrawerPosition = item;
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_social_pins));
+                }
+                break;
+            case NAVDRAWER_ITEM_ACTIVITY_FEED:
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_ACTIVITY_FEED) {
+                    showActivityFeedFragment();
+                    mCurrentNavDrawerPosition = item;
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_social_activity_feed));
+                }
+                break;
             case NAVDRAWER_ITEM_SETTINGS:
                 Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
                 startActivity(preferences);
@@ -469,6 +559,9 @@ public class HomeActivity extends AppCompatActivity
                                 getString(R.string.analytics_label_button_press_settings));
                 break;
             case NAVDRAWER_ITEM_HELP:
+                if (noActiveFragments()) {
+                    showMapFragment();
+                }
                 showDialog(HELP_DIALOG);
                 ObaAnalytics
                         .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
@@ -481,10 +574,22 @@ public class HomeActivity extends AppCompatActivity
                         getString(R.string.analytics_label_button_press_feedback));
                 goToSendFeedBack();
                 break;
+            case NAVDRAWER_ITEM_OPEN_SOURCE:
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_open_source));
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(getString(R.string.open_source_github)));
+                startActivity(i);
+                break;
         }
         invalidateOptionsMenu();
     }
 
+    // Return true if this HomeActivity has no active content fragments
+    private boolean noActiveFragments() {
+        return mMapFragment == null && mMyStarredStopsFragment == null && mMyRemindersFragment == null;
+    }
 
     private void handleNearbySelection() {
     }
@@ -496,6 +601,10 @@ public class HomeActivity extends AppCompatActivity
          */
         hideStarredStopsFragment();
         hideReminderFragment();
+        hidePopularFeedFragment();
+        hidePinsFragment();
+        hideActivityFeedFragment();
+        hideMyProfileFragment();
         mShowStarredStopsMenu = false;
         /**
          * Show fragment (we use show instead of replace to keep the map state)
@@ -542,6 +651,10 @@ public class HomeActivity extends AppCompatActivity
         hideMapFragment();
         hideReminderFragment();
         hideSlidingPanel();
+        hidePopularFeedFragment();
+        hidePinsFragment();
+        hideActivityFeedFragment();
+        hideMyProfileFragment();
         mShowArrivalsMenu = false;
         /**
          * Show fragment (we use show instead of replace to keep the map state)
@@ -574,6 +687,10 @@ public class HomeActivity extends AppCompatActivity
         hideStarredStopsFragment();
         hideMapFragment();
         hideSlidingPanel();
+        hidePopularFeedFragment();
+        hidePinsFragment();
+        hideActivityFeedFragment();
+        hideMyProfileFragment();
         mShowArrivalsMenu = false;
         mShowStarredStopsMenu = false;
         /**
@@ -594,6 +711,150 @@ public class HomeActivity extends AppCompatActivity
         }
         fm.beginTransaction().show(mMyRemindersFragment).commit();
         setTitle(getResources().getString(R.string.navdrawer_item_my_reminders));
+    }
+
+    private void showPopularFeedFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        /**
+         * Hide everything that shouldn't be shown
+         */
+        hideFloatingActionButtons();
+        hideMapProgressBar();
+        hideMapFragment();
+        hideStarredStopsFragment();
+        hideReminderFragment();
+        hidePinsFragment();
+        hideActivityFeedFragment();
+        hideMyProfileFragment();
+        hideSlidingPanel();
+        mShowArrivalsMenu = false;
+        /**
+         * Show fragment (we use show instead of replace to keep the map state)
+         */
+        mShowStarredStopsMenu = false;
+        if (mMyPopularFeedFragment == null) {
+            // First check to see if an instance of PinsFragment already exists (see #356)
+            mMyPopularFeedFragment = (PopularFeedFragment) fm
+                    .findFragmentByTag(PopularFeedFragment.TAG);
+
+            if (mMyPopularFeedFragment == null) {
+                // No existing fragment was found, so create a new one
+                Log.d(TAG, "Creating new PopularFeedFragment");
+                mMyPopularFeedFragment = new PopularFeedFragment();
+                fm.beginTransaction().add(R.id.main_fragment_container, mMyPopularFeedFragment,
+                        PopularFeedFragment.TAG).commit();
+            }
+        }
+        fm.beginTransaction().show(mMyPopularFeedFragment).commit();
+        setTitle(getResources().getString(R.string.navdrawer_item_popular));
+    }
+
+    private void showPinsFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        /**
+         * Hide everything that shouldn't be shown
+         */
+        hideFloatingActionButtons();
+        hideMapProgressBar();
+        hideMapFragment();
+        hideStarredStopsFragment();
+        hideReminderFragment();
+        hidePopularFeedFragment();
+        hideActivityFeedFragment();
+        hideMyProfileFragment();
+        hideSlidingPanel();
+        mShowArrivalsMenu = false;
+        /**
+         * Show fragment (we use show instead of replace to keep the map state)
+         */
+        mShowStarredStopsMenu = false;
+        if (mMyPinsFragment == null) {
+            // First check to see if an instance of PinsFragment already exists (see #356)
+            mMyPinsFragment = (PinsFragment) fm
+                    .findFragmentByTag(PinsFragment.TAG);
+
+            if (mMyPinsFragment == null) {
+                // No existing fragment was found, so create a new one
+                Log.d(TAG, "Creating new PinsFragment");
+                mMyPinsFragment = new PinsFragment();
+                fm.beginTransaction().add(R.id.main_fragment_container, mMyPinsFragment,
+                        PinsFragment.TAG).commit();
+            }
+        }
+        fm.beginTransaction().show(mMyPinsFragment).commit();
+        setTitle(getResources().getString(R.string.navdrawer_item_pin));
+    }
+
+    private void showActivityFeedFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        /**
+         * Hide everything that shouldn't be shown
+         */
+        hideFloatingActionButtons();
+        hideMapProgressBar();
+        hideMapFragment();
+        hideStarredStopsFragment();
+        hideReminderFragment();
+        hidePopularFeedFragment();
+        hidePinsFragment();
+        hideMyProfileFragment();
+        hideSlidingPanel();
+        mShowArrivalsMenu = false;
+        /**
+         * Show fragment (we use show instead of replace to keep the map state)
+         */
+        mShowStarredStopsMenu = false;
+        if (mActivityFeedFragment == null) {
+            // First check to see if an instance of PinsFragment already exists (see #356)
+            mActivityFeedFragment = (ActivityFeedFragment) fm
+                    .findFragmentByTag(ActivityFeedFragment.TAG);
+
+            if (mActivityFeedFragment == null) {
+                // No existing fragment was found, so create a new one
+                Log.d(TAG, "Creating new ActivityFeedFragment");
+                mActivityFeedFragment = new ActivityFeedFragment();
+                fm.beginTransaction().add(R.id.main_fragment_container, mActivityFeedFragment,
+                        ActivityFeedFragment.TAG).commit();
+            }
+        }
+        fm.beginTransaction().show(mActivityFeedFragment).commit();
+        setTitle(getResources().getString(R.string.navdrawer_item_activity_feed));
+    }
+
+    private void showMyProfileFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        /**
+         * Hide everything that shouldn't be shown
+         */
+        hideFloatingActionButtons();
+        hideMapProgressBar();
+        hideMapFragment();
+        hideStarredStopsFragment();
+        hideReminderFragment();
+        hidePopularFeedFragment();
+        hidePinsFragment();
+        hideActivityFeedFragment();
+        hideSlidingPanel();
+        mShowArrivalsMenu = false;
+        /**
+         * Show fragment (we use show instead of replace to keep the map state)
+         */
+        mShowStarredStopsMenu = false;
+        if (mMyProfileFragment == null) {
+            // First check to see if an instance of PinsFragment already exists (see #356)
+            mMyProfileFragment = (MyProfileFragment) fm
+                    .findFragmentByTag(MyProfileFragment.TAG);
+
+            if (mMyProfileFragment == null) {
+                // No existing fragment was found, so create a new one
+                Log.d(TAG, "Creating new MyProfileFragment");
+                mMyProfileFragment = new MyProfileFragment();
+                fm.beginTransaction().add(R.id.main_fragment_container, mMyProfileFragment,
+                        MyProfileFragment.TAG).commit();
+            }
+        }
+        fm.beginTransaction().show(mMyProfileFragment).commit();
+        setTitle(getResources().getString(R.string.navdrawer_item_profile));
     }
 
     private void hideMapFragment() {
@@ -619,6 +880,42 @@ public class HomeActivity extends AppCompatActivity
                 .findFragmentByTag(MyRemindersFragment.TAG);
         if (mMyRemindersFragment != null && !mMyRemindersFragment.isHidden()) {
             fm.beginTransaction().hide(mMyRemindersFragment).commit();
+        }
+    }
+
+    private void hidePopularFeedFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        mMyPopularFeedFragment = (PopularFeedFragment) fm.findFragmentByTag(
+                PopularFeedFragment.TAG);
+        if (mMyPopularFeedFragment != null && !mMyPopularFeedFragment.isHidden()) {
+            fm.beginTransaction().hide(mMyPopularFeedFragment).commit();
+        }
+    }
+
+    private void hidePinsFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        mMyPinsFragment = (PinsFragment) fm.findFragmentByTag(
+                PinsFragment.TAG);
+        if (mMyPinsFragment != null && !mMyPinsFragment.isHidden()) {
+            fm.beginTransaction().hide(mMyPinsFragment).commit();
+        }
+    }
+
+    private void hideActivityFeedFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        mActivityFeedFragment = (ActivityFeedFragment) fm.findFragmentByTag(
+                ActivityFeedFragment.TAG);
+        if (mActivityFeedFragment != null && !mActivityFeedFragment.isHidden()) {
+            fm.beginTransaction().hide(mActivityFeedFragment).commit();
+        }
+    }
+
+    private void hideMyProfileFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        mMyProfileFragment = (MyProfileFragment) fm.findFragmentByTag(
+                MyProfileFragment.TAG);
+        if (mMyProfileFragment != null && !mMyProfileFragment.isHidden()) {
+            fm.beginTransaction().hide(mMyProfileFragment).commit();
         }
     }
 
@@ -710,7 +1007,9 @@ public class HomeActivity extends AppCompatActivity
                         switch (which) {
                             case 0:
                                 ShowcaseViewUtils.resetAllTutorials(HomeActivity.this);
+                                mNavigationDrawerFragment.setSavedPosition(NAVDRAWER_ITEM_NEARBY);
                                 NavHelp.goHome(HomeActivity.this, true);
+
                                 break;
                             case 1:
                                 showDialog(LEGEND_DIALOG);
@@ -1262,6 +1561,27 @@ public class HomeActivity extends AppCompatActivity
         updateLayersFab();
     }
 
+    private void setupZoomButtons() {
+
+        mZoomInBtn = (ImageButton) findViewById(R.id.btnZoomIn);
+
+        mZoomOutBtn = (ImageButton) findViewById(R.id.btnZoomOut);
+
+        mZoomInBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mMapFragment.zoomIn();
+            }
+        });
+
+        mZoomOutBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mMapFragment.zoomOut();
+            }
+        });
+    }
+
     private void setupMyLocationButton() {
         // Initialize the My Location button
         mFabMyLocation = (FloatingActionButton) findViewById(R.id.btnMyLocation);
@@ -1293,28 +1613,54 @@ public class HomeActivity extends AppCompatActivity
         }
     }
 
-    private void checkLeftHandMode() {
-        if (mFabMyLocation == null) {
-            return;
-        }
-        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) mFabMyLocation
-                .getLayoutParams();
+    private void checkDisplayZoomControls() {
+        boolean displayZoom = Application.getPrefs().getBoolean(
+                getString(R.string.preference_key_show_zoom_controls), false);
 
+        LinearLayout zoomButtonsLayout = (LinearLayout) findViewById(R.id.zoom_buttons_layout);
+
+        if (displayZoom) {
+            zoomButtonsLayout.setVisibility(LinearLayout.VISIBLE);
+        } else {
+            zoomButtonsLayout.setVisibility(LinearLayout.GONE);
+        }
+
+    }
+
+    private void checkLeftHandMode() {
         boolean leftHandMode = Application.getPrefs().getBoolean(
                 getString(R.string.preference_key_left_hand_mode), false);
-        if (leftHandMode) {
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+
+        setFABLocation(leftHandMode);
+
+    }
+
+
+    private void setFABLocation(boolean leftHandMode) {
+        if (mFabMyLocation != null) {
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) mFabMyLocation
+                    .getLayoutParams();
+            if (leftHandMode) {
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                }
+            } else {
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                }
             }
-        } else {
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_LEFT);
+        }
+        if (mLayersFab != null) {
+            if (leftHandMode) {
+                mLayersFab.setButtonPosition(POSITION_BOTTOM | POSITION_START);
+            } else {
+                mLayersFab.setButtonPosition(POSITION_BOTTOM | POSITION_END);
             }
         }
     }
-
+    
     /**
      * Moves both Floating Action Buttons as response to sliding panel height changes.
      * <p>
@@ -1468,14 +1814,14 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void setupLayersSpeedDial() {
-        mLayersFab = (uk.co.markormesher.android_fab.FloatingActionButton) findViewById(R.id.layersSpeedDial);
+        mLayersFab = findViewById(R.id.layersSpeedDial);
 
         ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mLayersFab
                 .getLayoutParams();
         LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
 
-        mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
-        mLayersFab.setBackgroundColour(ContextCompat.getColor(this, R.color.theme_accent));
+        mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp);
+        mLayersFab.setButtonBackgroundColour(ContextCompat.getColor(this, R.color.theme_accent));
 
         LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
         // Add the BaseMapFragment listener to activate the layer on the map
@@ -1507,19 +1853,19 @@ public class HomeActivity extends AppCompatActivity
                 }, 100);
             }
         });
-        mLayersFab.setMenuAdapter(adapter);
-        mLayersFab.setOnSpeedDialOpenListener(
-                new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialOpenListener() {
+        mLayersFab.setSpeedDialMenuAdapter(adapter);
+        mLayersFab.setOnSpeedDialMenuOpenListener(
+                new SpeedDialMenuOpenListener() {
                     @Override
                     public void onOpen(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                        mLayersFab.setIcon(R.drawable.ic_add_white_24dp);
+                        mLayersFab.setButtonIconResource(R.drawable.ic_add_white_24dp);
                     }
                 });
-        mLayersFab.setOnSpeedDialCloseListener(
-                new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialCloseListener() {
+        mLayersFab.setOnSpeedDialMenuCloseListener(
+                new SpeedDialMenuCloseListener() {
                     @Override
                     public void onClose(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                        mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
+                        mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp);
                     }
                 });
         mLayersFab.setContentCoverEnabled(false);

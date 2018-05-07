@@ -1,6 +1,8 @@
 /*
- * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), Sean J. Barbeau (sjbarbeau@gmail.com),
- * York Region Transit / VIVA
+ * Copyright (C) 2012-2017 Paul Watts (paulcwatts@gmail.com),
+ * Sean J. Barbeau (sjbarbeau@gmail.com),
+ * York Region Transit / VIVA,
+ * Microsoft Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +20,13 @@ package org.onebusaway.android.ui;
 
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.util.comparators.AlphanumComparator;
 
@@ -147,6 +153,9 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
         ImageButton mapImageBtn = (ImageButton) view.findViewById(R.id.mapImageBtn);
         mapImageBtn.setColorFilter(r.getColor(R.color.theme_primary));
 
+        ImageButton discussBtn = (ImageButton) view.findViewById(R.id.route_discussion);
+        discussBtn.setColorFilter(r.getColor(R.color.theme_primary));
+
         ImageButton routeMoreInfo = (ImageButton) view.findViewById(R.id.route_more_info);
         routeMoreInfo.setColorFilter(r.getColor(R.color.switch_thumb_normal_material_dark));
 
@@ -185,6 +194,23 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 mFragment.showRouteOnMap(stopInfo);
             }
         });
+
+        // Setup discussion
+        discussBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        context.getString(R.string.analytics_action_button_press),
+                        context.getString(R.string.analytics_label_button_press_social_route_style_b));
+                mFragment.openRouteDiscussion(arrivalInfo.getRouteId());
+            }
+        });
+
+        ObaRegion currentRegion = Application.get().getCurrentRegion();
+        if (currentRegion != null && !EmbeddedSocialUtils.isSocialEnabled()) {
+            discussBtn.setVisibility(View.GONE);
+        }
 
         // Setup more
         routeMoreInfo.setOnClickListener(new View.OnClickListener() {

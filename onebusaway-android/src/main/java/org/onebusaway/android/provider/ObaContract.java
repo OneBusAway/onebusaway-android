@@ -1,7 +1,8 @@
 /*
- * Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com),
+ * Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
  * University of South Florida (sjbarbeau@gmail.com),
- * Benjamin Du (bendu@me.com)
+ * Benjamin Du (bendu@me.com),
+ * Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -424,6 +425,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String SUPPORTS_OTP_BIKESHARE = "supports_otp_bikeshare";
+
+        /**
+         * Whether or not the server supports Embedded Social
+         * <P>
+         * Type: BOOLEAN
+         * </P>
+         */
+        public static final String SUPPORTS_EMBEDDED_SOCIAL = "supports_embedded_social";
     }
 
     protected interface RegionBoundsColumns {
@@ -1295,7 +1304,8 @@ public final class ObaContract {
                     STOP_INFO_URL,
                     OTP_BASE_URL,
                     OTP_CONTACT_EMAIL,
-                    SUPPORTS_OTP_BIKESHARE
+                    SUPPORTS_OTP_BIKESHARE,
+                    SUPPORTS_EMBEDDED_SOCIAL
             };
 
             Cursor c = cr.query(buildUri((int) id), PROJECTION, null, null, null);
@@ -1322,7 +1332,8 @@ public final class ObaContract {
                             c.getString(11),              // StopInfoUrl
                             c.getString(12),              // OtpBaseUrl
                             c.getString(13),               // OtpContactEmail
-                            c.getInt(14) > 0            // Supports OTP Bikeshare
+                            c.getInt(14) > 0,           // Supports OTP Bikeshare
+                            c.getInt(15) > 0            // Supports Embedded Social
                     );
                 } finally {
                     c.close();

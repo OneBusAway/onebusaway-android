@@ -32,6 +32,10 @@ OneBusAway Android uses the Maps API v2 in Google Play Services for map renderin
 
 See the [Testing with custom OneBusAway and OpenTripPlanner servers](CUSTOM_SERVERS.md) page.
 
+### My arrival reminders suddenly stopped alerting me and I no longer see the reminder icon on the arrival info.  What happened?
+
+Unfortunately you’ll likely need to delete and re-create your alerts. Transit agencies change their schedules around 3-4 times a year and re-generate this data for apps like OneBusAway and Google Maps. Sometimes the trip_ids associated with particular bus arrivals will change.  When the IDs change, this breaks alarms because we rely on the trip_id to know when to fire the alarm based on the real-time data.  We have no way to match the old and new IDs, so the alarm just stops working.  This isn’t an easy problems to solve, but we do have an issue open here to potentially tackle in the future - https://github.com/OneBusAway/onebusaway-android/issues/333.
+
 ### I'd like to contribute to the app - how can I help?
 
 There are a number of open issues that are tagged as [“Your first PR”](https://github.com/OneBusAway/onebusaway-android/issues?q=is%3Aissue+is%3Aopen+label%3A%22your+first+PR%22) that should be a great place for you to start.

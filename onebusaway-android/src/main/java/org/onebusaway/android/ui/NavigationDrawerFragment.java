@@ -1,5 +1,7 @@
 /*
- * Copyright 2014 Google Inc., University of South Florida (sjbarbeau@gmail.com) All rights reserved.
+ * Copyright 2014-2017 Google Inc.,
+ * University of South Florida (sjbarbeau@gmail.com),
+ * Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +20,12 @@
  */
 package org.onebusaway.android.ui;
 
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.android.view.ScrimInsetsScrollView;
 
@@ -27,7 +33,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -77,6 +82,18 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_PLAN_TRIP = 6;
 
+    protected static final int NAVDRAWER_ITEM_POPULAR = 7;
+
+    protected static final int NAVDRAWER_ITEM_PINS = 8;
+
+    protected static final int NAVDRAWER_ITEM_ACTIVITY_FEED = 9;
+
+    protected static final int NAVDRAWER_ITEM_PROFILE = 10;
+
+    protected static final int NAVDRAWER_ITEM_SIGN_IN = 11;
+
+    protected static final int NAVDRAWER_ITEM_OPEN_SOURCE = 12;
+
     protected static final int NAVDRAWER_ITEM_INVALID = -1;
 
     protected static final int NAVDRAWER_ITEM_SEPARATOR = -2;
@@ -84,7 +101,7 @@ public class NavigationDrawerFragment extends Fragment {
     protected static final int NAVDRAWER_ITEM_SEPARATOR_SPECIAL = -3;
 
     // Currently selected navigation drawer item (must be value of one of the constants above)
-    private int mCurrentSelectedPosition = 0;
+    private int mCurrentSelectedPosition = NAVDRAWER_ITEM_NEARBY;
 
     // titles for navdrawer items (indices must correspond to the above)
     private static final int[] NAVDRAWER_TITLE_RES_ID = new int[]{
@@ -94,7 +111,13 @@ public class NavigationDrawerFragment extends Fragment {
             R.string.navdrawer_item_settings,
             R.string.navdrawer_item_help,
             R.string.navdrawer_item_send_feedback,
-            R.string.navdrawer_item_plan_trip
+            R.string.navdrawer_item_plan_trip,
+            R.string.navdrawer_item_popular,
+            R.string.navdrawer_item_pin,
+            R.string.navdrawer_item_activity_feed,
+            R.string.navdrawer_item_profile,
+            R.string.navdrawer_item_sign_in,
+            R.string.navdrawer_item_open_source
     };
 
     // icons for navdrawer items (indices must correspond to above array)
@@ -105,7 +128,30 @@ public class NavigationDrawerFragment extends Fragment {
             0, // Settings
             0, // Help
             0, // Send feedback
-            R.drawable.ic_maps_directions // Plan a trip
+            R.drawable.ic_maps_directions, // Plan a trip
+            R.drawable.ic_drawer_popular, // Popular discussions
+            R.drawable.ic_drawer_pin, // Pinned discussions
+            R.drawable.ic_drawer_activity_feed, // Social activity feed
+            R.drawable.ic_username, // My profile
+            R.drawable.ic_username, // Sign in
+            R.drawable.ic_drawer_github // Open-source
+    };
+
+    // Secondary navdrawer item icons that appear align to right of list item layout
+    private static final int[] NAVDRAWER_ICON_SECONDARY_RES_ID = new int[]{
+            0,  // Nearby
+            0, // Starred Stops
+            0, // My reminders
+            0, // Settings
+            0, // Help
+            0, // Send feedback
+            0, // Plan a trip
+            0, // Popular discussions
+            0, // Pinned discussions
+            0, // Social activity feed
+            0, // My profile
+            0, // Sign in
+            R.drawable.ic_drawer_link // Open-source
     };
 
     // list of navdrawer items that were actually added to the navdrawer, in order
@@ -131,16 +177,17 @@ public class NavigationDrawerFragment extends Fragment {
 
     private View mFragmentContainerView;
 
+    private boolean isSignedIn;
+
     public NavigationDrawerFragment() {
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // Read in the flag indicating whether or not the user has demonstrated awareness of the
         // drawer. See PREF_USER_LEARNED_DRAWER for details.
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences sp = Application.getPrefs();
 
         if (savedInstanceState != null) {
             mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
@@ -256,12 +303,20 @@ public class NavigationDrawerFragment extends Fragment {
      */
     public void selectItem(int position) {
         setSelectedNavDrawerItem(position);
-        if (mDrawerLayout != null) {
+        if (mDrawerLayout != null && mFragmentContainerView != null) {
             mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
         if (mCallbacks != null) {
             mCallbacks.onNavigationDrawerItemSelected(position);
         }
+    }
+
+    /**
+     * Set the selected position as a preference
+     */
+    public void setSavedPosition(int position) {
+        SharedPreferences sp = Application.getPrefs();
+        sp.edit().putInt(STATE_SELECTED_POSITION, position).apply();
     }
 
     /**
@@ -272,12 +327,9 @@ public class NavigationDrawerFragment extends Fragment {
         if (!isNewActivityItem(itemId)) {
             // We only change the selected item if it doesn't launch a new activity
             mCurrentSelectedPosition = itemId;
-
-            // Save the selected position as a preference
-            SharedPreferences sp = PreferenceManager
-                    .getDefaultSharedPreferences(getActivity());
-            sp.edit().putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition).apply();
+            setSavedPosition(mCurrentSelectedPosition);
         }
+
         if (mNavDrawerItemViews != null) {
             for (int i = 0; i < mNavDrawerItemViews.length; i++) {
                 if (i < mNavDrawerItems.size()) {
@@ -289,7 +341,7 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(final Context context) {
         super.onAttach(context);
         try {
             mCallbacks = (NavigationDrawerCallbacks) context;
@@ -312,15 +364,32 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
+            isSignedIn = EmbeddedSocial.isSignedIn();
+
+            // Do not allow unauthenticated users access fragments which require
+            // authentication via the back button
+            if(!isSignedIn && requiresSocialSignIn(mCurrentSelectedPosition)) {
+                selectItem(NAVDRAWER_ITEM_NEARBY);
+            }
+        }
+        populateNavDrawer();
+    }
+
+    @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         // Forward the new configuration the drawer toggle component.
-        mDrawerToggle.onConfigurationChanged(newConfig);
+        if (mDrawerToggle != null) {
+            mDrawerToggle.onConfigurationChanged(newConfig);
+        }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (mDrawerToggle.onOptionsItemSelected(item)) {
+        if (mDrawerToggle != null && mDrawerToggle.onOptionsItemSelected(item)) {
             return true;
         }
 
@@ -344,17 +413,39 @@ public class NavigationDrawerFragment extends Fragment {
 
     /** Populates the navigation drawer with the appropriate items. */
     public void populateNavDrawer() {
+        ObaRegion currentRegion = Application.get().getCurrentRegion();
         mNavDrawerItems.clear();
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_NEARBY);
         mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_STOPS);
         mNavDrawerItems.add(NAVDRAWER_ITEM_MY_REMINDERS);
 
-        if ((Application.get().getCurrentRegion() != null &&
-                !TextUtils.isEmpty(Application.get().getCurrentRegion().getOtpBaseUrl())) ||
-                !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl())) {
-            mNavDrawerItems.add(NAVDRAWER_ITEM_PLAN_TRIP);
+        if (currentRegion != null) {
+            if (!TextUtils.isEmpty(currentRegion.getOtpBaseUrl())||
+                    !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl())) {
+                mNavDrawerItems.add(NAVDRAWER_ITEM_PLAN_TRIP);
+            }
+
+            if (EmbeddedSocialUtils.isSocialEnabled()) {
+                // Social items
+                mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR_SPECIAL);
+                if (isSignedIn) {
+                    // user is signed in to Embedded Social
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_POPULAR);
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_PINS);
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_ACTIVITY_FEED);
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_PROFILE);
+                } else {
+                    // user is not signed in
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_POPULAR);
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_SIGN_IN);
+                }
+            }
         }
+
+        mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR);
+
+        mNavDrawerItems.add(NAVDRAWER_ITEM_OPEN_SOURCE);
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR);
 
@@ -375,13 +466,22 @@ public class NavigationDrawerFragment extends Fragment {
 
         LinearLayout containerLayout = (LinearLayout) mDrawerItemsListContainer.
                 findViewById(R.id.navdrawer_items_list);
-
         containerLayout.removeAllViews();
 
-        for (int itemId : mNavDrawerItems) {
-            mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, containerLayout);
-            containerLayout.addView(mNavDrawerItemViews[i]);
-            ++i;
+        if (EmbeddedSocialUtils.isSocialEnabled() && isSignedIn) {
+            // user is signed in to Embedded Social
+            for (int itemId : mNavDrawerItems) {
+                mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, containerLayout);
+                containerLayout.addView(mNavDrawerItemViews[i]);
+                ++i;
+            }
+        } else {
+            // user is not signed in
+            for (int itemId : mNavDrawerItems) {
+                mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, containerLayout);
+                containerLayout.addView(mNavDrawerItemViews[i]);
+                ++i;
+            }
         }
     }
 
@@ -391,7 +491,7 @@ public class NavigationDrawerFragment extends Fragment {
         if (itemId == NAVDRAWER_ITEM_SEPARATOR) {
             layoutToInflate = R.layout.navdrawer_separator;
         } else if (itemId == NAVDRAWER_ITEM_SEPARATOR_SPECIAL) {
-            layoutToInflate = R.layout.navdrawer_separator;
+            layoutToInflate = R.layout.navdrawer_separator_special;
         } else {
             layoutToInflate = R.layout.navdrawer_item;
         }
@@ -405,10 +505,13 @@ public class NavigationDrawerFragment extends Fragment {
 
         ImageView iconView = (ImageView) view.findViewById(R.id.icon);
         TextView titleView = (TextView) view.findViewById(R.id.title);
+        ImageView secondaryIconView = view.findViewById(R.id.secondary_icon);
         int iconId = itemId >= 0 && itemId < NAVDRAWER_ICON_RES_ID.length ?
                 NAVDRAWER_ICON_RES_ID[itemId] : 0;
         int titleId = itemId >= 0 && itemId < NAVDRAWER_TITLE_RES_ID.length ?
                 NAVDRAWER_TITLE_RES_ID[itemId] : 0;
+        int secondaryIconId = itemId >= 0 && itemId < NAVDRAWER_ICON_SECONDARY_RES_ID.length ?
+                NAVDRAWER_ICON_SECONDARY_RES_ID[itemId] : 0;
 
         // set icon and text
         iconView.setVisibility(iconId > 0 ? View.VISIBLE : View.GONE);
@@ -416,6 +519,12 @@ public class NavigationDrawerFragment extends Fragment {
             iconView.setImageResource(iconId);
         }
         titleView.setText(getString(titleId));
+
+        // Secondary icon
+        secondaryIconView.setVisibility(secondaryIconId > 0 ? View.VISIBLE : View.GONE);
+        if (secondaryIconId > 0) {
+            secondaryIconView.setImageResource(secondaryIconId);
+        }
 
         formatNavDrawerItem(view, itemId, selected);
 
@@ -437,6 +546,7 @@ public class NavigationDrawerFragment extends Fragment {
 
         ImageView iconView = (ImageView) view.findViewById(R.id.icon);
         TextView titleView = (TextView) view.findViewById(R.id.title);
+        ImageView secondaryIconView = (ImageView) view.findViewById(R.id.secondary_icon);
 
         /**
          * Configure its appearance according to whether or not it's selected.  Certain items
@@ -453,6 +563,8 @@ public class NavigationDrawerFragment extends Fragment {
                         getResources().getColor(R.color.navdrawer_text_color_selected));
                 iconView.setColorFilter(
                         getResources().getColor(R.color.navdrawer_icon_tint_selected));
+                secondaryIconView.setColorFilter(
+                        getResources().getColor(R.color.navdrawer_icon_tint_selected));
             }
         } else {
             // Show the category as not highlighted, if its not currently selected
@@ -460,6 +572,7 @@ public class NavigationDrawerFragment extends Fragment {
                 view.setSelected(false);
                 titleView.setTextColor(getResources().getColor(R.color.navdrawer_text_color));
                 iconView.setColorFilter(getResources().getColor(R.color.navdrawer_icon_tint));
+                secondaryIconView.setColorFilter(getResources().getColor(R.color.navdrawer_icon_tint));
             }
         }
     }
@@ -481,6 +594,20 @@ public class NavigationDrawerFragment extends Fragment {
         return itemId == NAVDRAWER_ITEM_SETTINGS ||
                 itemId == NAVDRAWER_ITEM_HELP ||
                 itemId == NAVDRAWER_ITEM_SEND_FEEDBACK ||
-                itemId == NAVDRAWER_ITEM_PLAN_TRIP;
+                itemId == NAVDRAWER_ITEM_PLAN_TRIP ||
+                itemId == NAVDRAWER_ITEM_SIGN_IN ||
+                itemId == NAVDRAWER_ITEM_OPEN_SOURCE;
+    }
+
+    /**
+     * Returns true is this is an item that requires the user to be signed in to Embedded Social
+     *
+     * @return true if this is an item that requires the user to be signed in to Embedded Social,
+     * false otherwise
+     */
+    private boolean requiresSocialSignIn(int itemId) {
+        return itemId == NAVDRAWER_ITEM_PINS ||
+                itemId == NAVDRAWER_ITEM_ACTIVITY_FEED ||
+                itemId == NAVDRAWER_ITEM_PROFILE;
     }
 }

@@ -1,0 +1,74 @@
+{
+  "project_info": {
+    "project_number": "278087004334",
+    "firebase_url": "https://push-160200.firebaseio.com",
+    "project_id": "push-160200",
+    "storage_bucket": "push-160200.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:278087004334:android:e2ba0de76d8a138b",
+        "android_client_info": {
+          "package_name": "com.joulespersecond.seattlebusbot"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "278087004334-dor39puv7367datkq8tujqokdejf8l09.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "278087004334-lcd6fdo4ad67uv0tv6mfqdng8oj22c4d.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "278087004334-otmla1pl86qbd9veud0qqg2vlgjvponr.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "278087004334-7rvj1m5asgkaks6nvp8u597ca7j4via7.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "278087004334-5n7g3n8l411bgdg56hdhijb2b87t021m.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "278087004334-fasutsvvr40vjfu4qfjj4fed1kbrdem4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.joulespersecond.seattlebusbot",
+            "certificate_hash": "b07dc74d8bf065f74a297018a61b557949b354cb"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlmayxwEqAc0Ti-jl4dKBHRxIfi4h8xBs"
+        },
+        {
+          "current_key": "AIzaSyB-fnHYtCzF7h8ktvHSgEdxUKaS9Tl-C5Q"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "278087004334-dor39puv7367datkq8tujqokdejf8l09.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

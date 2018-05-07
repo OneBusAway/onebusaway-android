@@ -196,7 +196,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
     private void setupLog() {
         try {
             // Get the counter that's incremented for each test
-            final String NAV_TEST_ID = getString(R.string.preference_key_tad_test_id);
+            final String NAV_TEST_ID = getString(R.string.preference_key_nav_test_id);
             int counter = Application.getPrefs().getInt(NAV_TEST_ID, 0);
             counter++;
             PreferenceUtils.saveInt(NAV_TEST_ID, counter);

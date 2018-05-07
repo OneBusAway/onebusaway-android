@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2014 Brian Ferris (bdferris@onebusaway.org),
-    Paul Watts (paulcwatts@gmail.com),  and individual contributors.
+<!-- Copyright (C) 2010-2017 Brian Ferris (bdferris@onebusaway.org),
+    Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com),
+    Microsoft Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -33,6 +35,13 @@
                 android:title="@string/preferences_show_negative_arrivals_title"
                 android:summary="@string/preferences_show_negative_arrivals_summary"
                 android:defaultValue="true"/>
+
+        <CheckBoxPreference
+            android:key="@string/preference_key_show_zoom_controls"
+            android:title="@string/preferences_show_zoom_controls_title"
+            android:summary="@string/preferences_show_zoom_controls_summary"
+            android:defaultValue="false"/>
+
         <CheckBoxPreference
                 android:key="@string/preference_key_show_tutorial_screens"
                 android:title="@string/preferences_show_tutorial_screens_title"
@@ -84,6 +93,13 @@
         <org.onebusaway.android.io.backup.RestorePreference
                 android:title="@string/preferences_restore_title"
                 android:summary="@string/preferences_restore_summary"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/preferences_category_social"
+            android:key="@string/preference_key_social_category">
+        <PreferenceScreen
+                android:key="@string/preference_key_social"
+                android:title="@string/preferences_screen_social_title"
+                android:summary="@string/preferences_screen_social_summary_signed_out"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_advanced">
         <PreferenceScreen

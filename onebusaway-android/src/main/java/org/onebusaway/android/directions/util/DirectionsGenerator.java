@@ -592,11 +592,11 @@ public class DirectionsGenerator {
     public static int getStopIcon(TraverseModeSet mode) {
         if (mode.contains(TraverseMode.BUSISH) &&
                 mode.contains(TraverseMode.TRAINISH)) {
-            return R.drawable.ri_flag_triangle;
+            return R.drawable.ic_stop_flag_triangle;
         } else if (mode.contains(TraverseMode.BUSISH)) {
-            return R.drawable.ri_flag_triangle;
+            return R.drawable.ic_stop_flag_triangle;
         } else if (mode.contains(TraverseMode.TRAINISH)) {
-            return R.drawable.ri_flag_triangle;
+            return R.drawable.ic_stop_flag_triangle;
         }
         // Just use the mode icon
         return getModeIcon(mode);

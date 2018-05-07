@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
+ * Copyright (C) 2012-2017 Paul Watts (paulcwatts@gmail.com), 
+ * University of South Florida, Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +22,19 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.report.ui.util.SocialReportHandler;
+import org.onebusaway.android.ui.social.SocialAppProfile;
+import org.onebusaway.android.ui.social.SocialNavigationDrawerHandler;
 import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
@@ -40,6 +47,7 @@ import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.location.LocationManager;
 import android.preference.PreferenceManager;
+import android.support.multidex.MultiDexApplication;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -55,7 +63,7 @@ import edu.usf.cutr.open311client.models.Open311Option;
 
 import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 
-public class Application extends android.app.Application {
+public class Application extends MultiDexApplication {
 
     public static final String APP_UID = "app_uid";
 
@@ -99,6 +107,8 @@ public class Application extends android.app.Application {
         initOba();
         initObaRegion();
         initOpen311(getCurrentRegion());
+
+        setUpSocial();
 
         ObaAnalytics.initAnalytics(this);
         reportAnalytics();
@@ -560,6 +570,18 @@ public class Application extends android.app.Application {
                         + (autoRegion ? "YES" : "NO"));
     }
 
+    /**
+     * Initializes Embedded Social if the device and current build support social functionality
+     */
+    private void setUpSocial() {
+        if (EmbeddedSocialUtils.isBuildVersionSupportedBySocial() &&
+                EmbeddedSocialUtils.isSocialApiKeyDefined()) {
+            EmbeddedSocial.init(this, R.raw.embedded_social_config, BuildConfig.EMBEDDED_SOCIAL_API_KEY);
+            EmbeddedSocial.setReportHandler(new SocialReportHandler());
+            EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
+            EmbeddedSocial.setAppProfile(new SocialAppProfile());
+        }
+    }
 
     /**
      * Method to check whether bikeshare layer is enabled or not.

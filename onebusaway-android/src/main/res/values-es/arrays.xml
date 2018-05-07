@@ -151,7 +151,7 @@
 
     <array name="report_types_icons">
         <item>@drawable/ic_customer_service</item>
-        <item>@drawable/ri_flag_triangle</item>
+        <item>@drawable/ic_stop_flag_triangle</item>
         <item>@drawable/ic_arrival_time</item>
         <item>@drawable/ic_app_feedback</item>
         <item>@drawable/ic_light_bulb</item>
@@ -175,7 +175,7 @@
 
     <array name="report_types_icons_without_open311">
         <item>@drawable/ic_customer_service</item>
-        <item>@drawable/ri_flag_triangle</item>
+        <item>@drawable/ic_stop_flag_triangle</item>
         <item>@drawable/ic_arrival_time</item>
         <item>@drawable/ic_app_feedback</item>
         <item>@drawable/ic_light_bulb</item>
@@ -192,6 +192,8 @@
         <item>\u0020bus\u0020</item> <!-- Include spaces to not match as part of another word -->
         <item>parada</item>
         <item>falta la ruta/viaje</item>
+        <item>pasajero</item>
+        <item>onebusaway</item>
     </string-array>
 
     <string-array name="report_trip_transit_category_keywords">

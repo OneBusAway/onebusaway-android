@@ -21,9 +21,9 @@ import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.support.v4.content.pm.ShortcutInfoCompat;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -54,11 +54,10 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
         ArrivalsListActivity.Builder b = stopData.getArrivalsList();
 
         if (isShortcutMode()) {
-            final Intent shortcut =
-                    UIUtils.makeShortcut(getActivity(), stopData.getUiName(), b.getIntent());
-
+            final ShortcutInfoCompat shortcut =
+                    UIUtils.createStopShortcut(getContext(), stopData.getUiName(), b);
             Activity activity = getActivity();
-            activity.setResult(Activity.RESULT_OK, shortcut);
+            activity.setResult(Activity.RESULT_OK, shortcut.getIntent());
             activity.finish();
         } else {
             b.setUpMode(NavHelp.UP_MODE_BACK);
@@ -106,12 +105,9 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
                         .doNotShowTutorial(ShowcaseViewUtils.TUTORIAL_STARRED_STOPS_SHORTCUT);
 
                 StopData stopData = getStopData(getListView(), info.position);
-                final Intent shortcutIntent =
-                        UIUtils.makeShortcut(getActivity(), stopData.uiName,
-                                stopData.getArrivalsList().getIntent());
-                shortcutIntent.setAction(INSTALL_SHORTCUT);
-                shortcutIntent.setFlags(0);
-                getActivity().sendBroadcast(shortcutIntent);
+                UIUtils.createStopShortcut(getContext(),
+                        stopData.uiName,
+                        stopData.getArrivalsList());
                 return true;
             default:
                 return super.onContextItemSelected(item);

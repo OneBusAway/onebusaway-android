@@ -33,6 +33,7 @@ public class MyStopsActivity extends MyTabActivityBase {
         final Resources res = getResources();
         final ActionBar bar = getSupportActionBar();
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        bar.setTitle(R.string.my_recent_stops);
         bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
 
         bar.addTab(bar.newTab()

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com)
     and individual contributors.
+    Copyright (c) 2017 Microsoft Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -35,7 +36,9 @@
     <string name="preference_key_preferred_units">preference_preferred_units</string>
     <string name="preference_key_arrival_info_style">preference_arrival_info_style</string>
     <string name="preference_key_show_negative_arrivals">preference_show_negative_arrivals</string>
+    <string name="preference_key_show_zoom_controls">preference_show_zoom_controls</string>
     <string name="preference_key_default_stop_sort">preference_default_stop_sort</string>
+    <string name="preference_key_default_reminder_sort">preference_default_reminder_sort</string>
     <string name="preference_key_tutorial">preference_key_tutorial</string>
     <string name="preference_key_show_header_arrivals">preference_key_show_header_arrivals</string>
     <string name="preference_key_tutorial_counter">preference_key_tutorial_counter</string>
@@ -51,8 +54,10 @@
     <string name="preference_key_trip_plan_avoid_stairs">preference_trip_plan_avoid_stairs</string>
     <string name="preference_key_notification_sound">preference_notification_sound</string>
     <string name="preference_key_preference_vibrate_allowed">preference_vibrate_allowed</string>
-    <string name="preference_key_tad_test_id">preference_key_tad_test_id</string>
+    <string name="preference_key_nav_test_id">preference_key_nav_test_id</string>
     <string name="preference_key_never_show_change_location_mode_dialog">preference_never_show_change_location_mode_dialog</string>
+    <string name="preference_key_social_category">preference_category_social</string>
+    <string name="preference_key_social">preference_social</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
@@ -65,6 +70,9 @@
 
     <!-- Powered by OBA URL -->
     <string name="powered_by_oba_url">http://onebusaway.org</string>
+
+    <!-- Open-source link for Github project -->
+    <string name="open_source_github">https://github.com/OneBusAway/onebusaway-android</string>
 
     <!-- StopInfo project (see #103) -->
     <string name="stop_info_url_path">busstops</string>
@@ -100,6 +108,12 @@
     <string name="analytics_label_sort_by_mfu_stops">Clicked sort by most frequently used from
         MyStarredStopsFragment
     </string>
+    <string name="analytics_label_sort_by_name_reminder">Clicked sort by name from
+        MyRemindersFragment
+    </string>
+    <string name="analytics_label_sort_by_departure_time_reminder">Clicked sort by departure time from
+        MyRemindersFragment
+    </string>
     <string name="analytics_label_show_arrivals_in_header">Clicked show arrivals in header
     </string>
     <string name="analytics_label_hide_arrivals_in_header">Clicked hide arrivals in header
@@ -116,6 +130,7 @@
     <string name="analytics_label_button_press_about">Clicked About</string>
     <string name="analytics_label_button_press_help">Clicked Help Link</string>
     <string name="analytics_label_button_press_feedback">Clicked Send Feedback</string>
+    <string name="analytics_label_button_press_open_source">Visit us on GitHub</string>
     <string name="analytics_label_button_press_stopinfo">Loaded StopInfo from\u0020</string>
     <string name="analytics_label_button_press_stop_details">Clicked Stop Details</string>
     <string name="analytics_label_button_press_map_icon">Clicked MapStopIcon</string>
@@ -164,6 +179,18 @@
     <string name="analytics_label_floating_bike_marker_clicked">Pressed floating bike marker</string>
     <string name="analytics_label_bike_station_balloon_clicked">Pressed bike station balloon</string>
     <string name="analytics_label_floating_bike_balloon_clicked">Pressed floating bike balloon</string>
+
+    <!-- Analytics for social -->
+    <string name="analytics_label_button_press_social_sign_in">Clicked Social Sign In</string>
+    <string name="analytics_label_button_press_social_profile">Clicked Social Profile</string>
+    <string name="analytics_label_button_press_social_popular">Clicked Social Popular Feed</string>
+    <string name="analytics_label_button_press_social_pins">Clicked Social Pins</string>
+    <string name="analytics_label_button_press_social_activity_feed">Clicked Social Activity Feed</string>
+    <string name="analytics_label_button_press_social_settings">Clicked Social Settings</string>
+    <string name="analytics_label_button_press_social_stop">Clicked Social Stop Arrivals Header</string>
+    <string name="analytics_label_button_press_social_route_options">Clicked Social Route Options</string>
+    <string name="analytics_label_button_press_social_route_style_b">Clicked Social Route Style B Card</string>
+
     <!-- General strings -->
     <string name="http_prefix">http://</string>
 

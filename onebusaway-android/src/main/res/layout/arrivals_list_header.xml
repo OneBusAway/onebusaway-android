@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2011-2014 Paul Watts (paulcwatts@gmail.com),
-    University of South Florida (sjbarbeau@gmail.com)
+<!-- Copyright (C) 2011-2017 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com),
+    Microsoft Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -133,14 +134,16 @@
         </TableLayout>
 
         <!-- Stop name, star, and stopinfo button  -->
-        <RelativeLayout
+        <LinearLayout
                 android:id="@+id/stop_details_container"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:orientation="horizontal"
                 android:layout_alignParentBottom="true"
                 android:layout_centerInParent="true"
                 android:layout_marginLeft="@dimen/keyline_1"
                 android:layout_marginRight="@dimen/keyline_1"
+                android:paddingRight="@dimen/keyline_1"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="@dimen/arrival_header_bottom_margin">
 
@@ -168,7 +171,11 @@
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
                     android:layout_toRightOf="@+id/stop_favorite"
-                    android:weightSum="1">
+                    android:weightSum="1"
+                    android:layout_weight="1">
+                    <!-- The layout_weight on this container indicates that this layout can fill
+                    any space not consumed by the stop_favorite and stop_discussion images -->
+
                 <TextView
                         android:id="@+id/stop_name"
                         android:textSize="17sp"
@@ -215,7 +222,25 @@
                         android:padding="5dp"/>
             </LinearLayout>
 
-        </RelativeLayout>
+            <ImageButton
+                    android:id="@+id/stop_discussion"
+                    android:src="@drawable/es_ic_comment"
+                    android:contentDescription="@string/join_discussion"
+                    android:background="?attr/selectableItemBackground"
+                    android:maxHeight="14dp"
+                    android:maxWidth="14dp"
+                    android:minHeight="14dp"
+                    android:minWidth="14dp"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:layout_marginLeft="2dp"
+                    android:layout_gravity="center_vertical"
+                    android:scaleType="fitCenter"
+                    android:adjustViewBounds="true"
+                    android:gravity="center"
+                    android:padding="5dp"/>
+
+        </LinearLayout>
 
         <ProgressBar
                 android:id="@+id/header_loading_spinner"

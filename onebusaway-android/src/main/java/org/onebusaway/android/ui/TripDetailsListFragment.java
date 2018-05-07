@@ -104,7 +104,7 @@ public class TripDetailsListFragment extends ListFragment {
 
     public static final String DEST_ID = ".DestinationId";
 
-    public static final String ACTION_SERVICE_DESTROYED = "TADServiceDestroyed";
+    public static final String ACTION_SERVICE_DESTROYED = "NavigationServiceDestroyed";
 
     private static final long REFRESH_PERIOD = 60 * 1000;
 
@@ -496,7 +496,7 @@ public class TripDetailsListFragment extends ListFragment {
                         //Location should be turned on at this point
 
                         if(!LocationUtils.isLocationEnabled(getContext())) {
-                            setUpForStartingTADService(pId);
+                            setUpNavigationService(pId);
                             askUserToTurnLocationOn();
                             return;
                             // If we don't do it then "Trip gets started" even when user doesn't turn on location, so return from here
@@ -513,7 +513,7 @@ public class TripDetailsListFragment extends ListFragment {
                         }
 
                         // Utility to start service
-                        startTADService(setUpForStartingTADService(pId));
+                        startNavigationService(setUpNavigationService(pId));
                     }
                 });
 
@@ -536,9 +536,9 @@ public class TripDetailsListFragment extends ListFragment {
 
         /**
          * @param pId Position of a stop for which we started Destination alert
-         * @return Intent object to be used for starting TAD service
+         * @return Intent object to be used for starting navigation service
          */
-        private Intent setUpForStartingTADService(int pId) {
+        private Intent setUpNavigationService(int pId) {
             // TODO: Handle trips with only two stops.
             ObaTripSchedule.StopTime timeLast = mTripInfo.getSchedule().getStopTimes()[pId-1];
             ObaTripSchedule.StopTime timeDest = mTripInfo.getSchedule().getStopTimes()[pId];
@@ -563,7 +563,7 @@ public class TripDetailsListFragment extends ListFragment {
                 mDestinationIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mDestinationId);
             }
             mAdapter.notifyDataSetChanged();
-            // Save Intent so that we can call up startTADService() from onActivityResult() later
+            // Save Intent so that we can call up startNavigationService() from onActivityResult() later
             getActivity().setIntent(serviceIntent);
             return serviceIntent;
         }
@@ -1039,7 +1039,7 @@ public class TripDetailsListFragment extends ListFragment {
                 case Activity.RESULT_OK:
                     // All required changes were successfully made
                     Log.d(TAG, "Location enabled");
-                    startTADService(getActivity().getIntent());
+                    startNavigationService(getActivity().getIntent());
                     break;
                 case Activity.RESULT_CANCELED:
                     // The user was asked to change settings but chose not to
@@ -1054,7 +1054,7 @@ public class TripDetailsListFragment extends ListFragment {
     /**
      * @param serviceIntent
      */
-    private void startTADService(Intent serviceIntent) {
+    private void startNavigationService(Intent serviceIntent) {
         Application.get().getApplicationContext().startService(serviceIntent);
 
         // Register receiver

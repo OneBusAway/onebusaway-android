@@ -530,7 +530,7 @@ public final class ObaContract {
     protected interface NavigationColumns {
 
         /**
-         * The TAD Navigation ID
+         * The Navigation ID for destination reminder
          * <P>
          * Type: INTEGER
          * </P>
@@ -1715,7 +1715,7 @@ public final class ObaContract {
         /**
          * Inserts multi-leg trip into database.
          * @param context Context.
-         * @param navId   Navigation ID of TAD Trip.
+         * @param navId   Navigation ID for destination alert
          * @param tripId  Trip ID of route.
          * @param legs    Array of 2-string arrays, first element being stopId of second-to-last
          *                stop and second element being stopid of destination stop of leg.

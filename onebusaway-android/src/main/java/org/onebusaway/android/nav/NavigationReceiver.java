@@ -27,7 +27,7 @@ import android.content.Intent;
  * to the NavigationServiceProvider
  */
 public class NavigationReceiver extends BroadcastReceiver {
-    public static final String TAG = "BroadcastReceiver";
+    public static final String TAG = "NavigationReceiver";
 
     public static final String NAV_ID = ".NAV_ID";
     public static final String ACTION_NUM = ".ACTION_NUM";

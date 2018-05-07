@@ -22,10 +22,10 @@ messages. Once the NavigationServiceProvider is completed, the NavigationService
 
 ***GPS Logging***
 
-When the BuildConfig "TAD_GPS_LOGGING" flag is set to true, the NavigationService
+When the BuildConfig "NAV_GPS_LOGGING" flag is set to true, the NavigationService
  will log all coordinates it receives during the trip and 30
 seconds after the trip has ended. The log file is a CSV file written to
-the "TADLog" folder on your external storage root directory. The filename
+the "ObaNavLog" folder on your external storage root directory. The filename
 format is <TestID>-<Date/time of test>.csv. For example, "1-Thu, Aug 25 2016, 04:20 PM.csv".
 The first line of the file includes the following information in the same order is going to be 
 presented: The trip ID, the destination Stop ID, the latitude of the destination, the longitude

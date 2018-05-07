@@ -40,10 +40,14 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 /**
- * Created by azizmb9494 on 2/18/16.
+ * The NavigationService is started when the user begins a trip, this service listens for location
+ * updates and passes the locations to its instance of NavigationServiceProvider each time.
+ * NavigationServiceProvider is responsible for computing the statuses of the trips and issuing
+ * notifications/TTS messages. Once the NavigationServiceProvider is completed, the
+ * NavigationService will stop itself.
  */
 public class NavigationService extends Service implements LocationHelper.Listener {
-    public static final String TAG = "TADService";
+    public static final String TAG = "NavigationService";
 
     public static final String DESTINATION_ID = ".DestinationId";
     public static final String BEFORE_STOP_ID = ".BeforeId";
@@ -92,7 +96,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
         }
 
         // Setup file for logging.
-        if (mLogFile == null && BuildConfig.TAD_GPS_LOGGING) {
+        if (mLogFile == null && BuildConfig.NAV_GPS_LOGGING) {
             setupLog();
         }
 
@@ -155,7 +159,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
             if (mLastLocation != null) {
                 mNavProvider.locationUpdated(location);
             }
-            if (BuildConfig.TAD_GPS_LOGGING) {
+            if (BuildConfig.NAV_GPS_LOGGING) {
                 mNavProvider.locationUpdated(location);
                 writeToLog(location);
             }
@@ -164,7 +168,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
             if (mLastLocation != null) {
                 mNavProvider.locationUpdated(location);
             }
-            if (BuildConfig.TAD_GPS_LOGGING) {
+            if (BuildConfig.NAV_GPS_LOGGING) {
                 writeToLog(location);
             }
         }
@@ -174,7 +178,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
 
         // Trip is done? End service.
         if (mNavProvider.getFinished()) {
-            if (BuildConfig.TAD_GPS_LOGGING) {
+            if (BuildConfig.NAV_GPS_LOGGING) {
                 if (finishedTime == 0) {
                     finishedTime = System.currentTimeMillis();
                 } else if (System.currentTimeMillis() - finishedTime >= 30000) {
@@ -187,20 +191,20 @@ public class NavigationService extends Service implements LocationHelper.Listene
     }
 
     /**
-     * Creates the log file that GPS data and TAD performance is written to - see TAD.md
+     * Creates the log file that GPS data and navigation performance is written to - see DESTINATION_ALERTS.md
      */
     private void setupLog() {
         try {
             // Get the counter that's incremented for each test
-            final String TAD_TEST_ID = getString(R.string.preference_key_tad_test_id);
-            int counter = Application.getPrefs().getInt(TAD_TEST_ID, 0);
+            final String NAV_TEST_ID = getString(R.string.preference_key_tad_test_id);
+            int counter = Application.getPrefs().getInt(NAV_TEST_ID, 0);
             counter++;
-            PreferenceUtils.saveInt(TAD_TEST_ID, counter);
+            PreferenceUtils.saveInt(NAV_TEST_ID, counter);
 
             SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM d yyyy, hh:mm aaa");
             String readableDate = sdf.format(Calendar.getInstance().getTime());
 
-            mLogFile = new File(Environment.getExternalStoragePublicDirectory("TADLog"),
+            mLogFile = new File(Environment.getExternalStoragePublicDirectory("ObaNavLog"),
                     counter + "-" + readableDate + ".csv");
             Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);

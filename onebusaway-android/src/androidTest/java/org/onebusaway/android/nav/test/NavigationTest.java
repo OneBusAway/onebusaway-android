@@ -36,9 +36,9 @@ import java.io.Reader;
  */
 public class NavigationTest extends ObaTestCase {
 
-    static final String TAG = "TADTest";
+    static final String TAG = "NavigationTest";
 
-    static final long SPEED_UP = 1000000000000000L;
+    static final long SPEED_UP = 1000000L;
     private int i = 0;
     private int getReadyID;
     private int pullCordID;
@@ -1157,7 +1157,7 @@ public class NavigationTest extends ObaTestCase {
                 Location l = mPoints[i];
 
                 try {
-                    Thread.sleep((mTimes[i] / SPEED_UP));
+                    Thread.sleep(mTimes[i] / SPEED_UP);
                 } catch (Exception e) {
                     Log.e(TAG, e.getMessage());
                 }

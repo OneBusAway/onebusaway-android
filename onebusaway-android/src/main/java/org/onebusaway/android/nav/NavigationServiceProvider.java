@@ -35,13 +35,13 @@ import java.text.DecimalFormat;
 import java.util.Locale;
 
 /**
- * This class provides the navigation functionality for the Travel Assistant Device
+ * This class provides the navigation functionality for the destination reminders
  *
  * @author Barbeau / Belov
  */
 public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
-    public static final String TAG = "TADNavServiceProvider";
+    public static final String TAG = "NavServiceProvider";
     public static final int NOTIFICATION_ID = 33620;
     private static final long[] VIBRATION_PATTERN = new long[]{
             2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000
@@ -54,12 +54,12 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     private static final int GET_READY_REPEAT = 2;
 
 
-    public TADProximityCalculator mProxListener;
+    private ProximityCalculator mProxCalculator;
 
     private int timeout = 60;  //Timeout value for service provider action (default = 60 seconds);
     private boolean dialogAllowed = false;  //Whether a dialog is allowed with this navigation service provider
     /**
-     * TAD Specific variables
+     * Navigation-specific variables
      **/
     private int segmentIndex = 0;  //Index that defines the current segment within the ordered context of a service (i.e. First segment in a service will have index = 0, second segment index = 1, etc.)
     private NavigationSegment[] segments;  //Array of segments that are currently being navigated
@@ -83,11 +83,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     private String mTripId;             // Trip ID
     private String mStopId;             // Stop ID
 
-    /**
-     * Creates a new instance of TADNavigationServiceProvider
-     */
     public NavigationServiceProvider(String tripId, String stopId) {
-        Log.d(TAG, "Creating TAD Navigation Service Provider");
+        Log.d(TAG, "Creating NavigationServiceProvider...");
         if (mTTS == null) {
             mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
         } else {
@@ -99,7 +96,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     }
 
     public NavigationServiceProvider(String tripId, String stopId, int flag) {
-        Log.d(TAG, "Creating TAD Navigation Service Provider");
+        Log.d(TAG, "Creating NavigationServiceProvider...");
         resuming = flag == 1;
         if (mTTS == null) {
             mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
@@ -110,15 +107,13 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
 
     /**
-     * Initialize tad proximityListener
+     * Initialize ProximityCalculator
      * Proximity listener will be created only upon selection of service to navigate
      */
     private void lazyProxInitialization() {
-        //Re-initializes the proximityListener
-        Log.d(TAG, "Proximity Listener initializing...");
-        mProxListener = null;
-        mProxListener = new TADProximityCalculator(this);  //Create the proximitylistener
-
+        Log.d(TAG, "ProximityCalculator initializing...");
+        mProxCalculator = null;
+        mProxCalculator = new ProximityCalculator(this);
     }
 
     /**
@@ -196,7 +191,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      * @param destination
      */
     public void navigate(Location start, Location destination) {
-        mProxListener.listenForCoords(destination, null, null);  //Set proximity listener to listen for coords
+        mProxCalculator.listenForCoords(destination, null, null);  //Set proximity listener to listen for coords
     }
 
     /**
@@ -214,17 +209,17 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         diss = 0;
         distances = new float[segments.length];
         Log.d(TAG, "Segments Length: " + segments.length);
-        //Create new coordinate object using the "Ring" coordinates as specified by the TAD web site and server
+        //Create new coordinate object using the "Ring" coordinates
         Location coords = this.segments[segmentIndex].getBeforeLocation();
         Location lastcoords = this.segments[segmentIndex].getToLocation();
         Location firstcoords = this.segments[segmentIndex].getFromLocation();
 
         alertdistance = this.segments[segmentIndex].getAlertDistance();
         //Have proximity listener listen for the "Ring" location
-        mProxListener.listenForDistance(alertdistance);
-        mProxListener.listenForCoords(coords, lastcoords, firstcoords);
-        mProxListener.ready = false;
-        mProxListener.trigger = false;
+        mProxCalculator.listenForDistance(alertdistance);
+        mProxCalculator.listenForCoords(coords, lastcoords, firstcoords);
+        mProxCalculator.ready = false;
+        mProxCalculator.trigger = false;
     }
 
 
@@ -241,7 +236,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      * Resets any current routes which might be currently navigated
      */
     public void reset() {
-        mProxListener.listenForCoords(null, null, null);
+        mProxCalculator.listenForCoords(null, null, null);
     }
 
     public void setTimeout(int timeout) {
@@ -258,7 +253,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      * @param radius
      */
     public void setRadius(float radius) {
-        mProxListener.setRadius(radius);
+        mProxCalculator.setRadius(radius);
     }
 
     /**
@@ -292,12 +287,13 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             segments[segmentIndex] = null; // - Set unused object to null to enable it for garbage collection.
             Log.d(TAG, "getting coords");
             segmentIndex++;
-            //Create new coordinate object using the "Ring" coordinates as specified by the TAD web site and server
+            //Create new coordinate object using the "Ring" coordinates
             NavigationSegment segment = segments[segmentIndex];
             alertdistance = segment.getAlertDistance();
             //Have proximity listener listen for the "Ring" location
-            mProxListener.listenForDistance(alertdistance);
-            mProxListener.listenForCoords(segment.getBeforeLocation(), segment.getToLocation(), segment.getFromLocation());
+            mProxCalculator.listenForDistance(alertdistance);
+            mProxCalculator
+                    .listenForCoords(segment.getBeforeLocation(), segment.getToLocation(), segment.getFromLocation());
             Log.d(TAG, "Proximlistener parameters were set!");
         }
     }
@@ -307,7 +303,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      */
     public void locationUpdated(Location l) {
         currentLocation = l;
-        mProxListener.checkProximityAll(currentLocation);
+        mProxCalculator.checkProximityAll(currentLocation);
     }
 
     /**
@@ -329,53 +325,46 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     public void skipSegment() {
         try {
-
             if (hasMoreSegments()) {
                 Log.d(TAG, "About to switch segment - from skipSegment");
                 navigateNextSegment(); //Uncomment this line to allow navigation on multiple segments within one service (chained segments)
-                mProxListener.setReady(false); //Reset the "get ready" notification alert
+                mProxCalculator.setReady(false); //Reset the "get ready" notification alert
             } else {
                 Log.d(TAG, "No more segments!");
             }
-            mProxListener.setTrigger(false); //Reset the proximity notification alert
+            mProxCalculator.setTrigger(false); //Reset the proximity notification alert
         } catch (Exception e) {
-            Log.e(TAG, "Error in TADProximityListener.proximityEvent(): " + e);
-            e.printStackTrace(); // See what happens!!!!!!!!
+            Log.e(TAG, "Error in ProximityCalculator.proximityEvent(): " + e);
+            e.printStackTrace();
         }
     }
 
     /**
      * This class is used to detect Proximity to a latitude and longitude location.  The JSR179 ProximityListener is not used for this implementation on iDEN phones
      * because it is not currently reliable.
-     * This class was moved to an inner class of TADNavigationServiceProvider 2-5-2007 because it must call methods in the NavigationServiceProvider
+     * This class was moved to an inner class of NavigationServiceProvider 2-5-2007 because it must call methods in the NavigationServiceProvider
      * that should remain private, and also because its the only proper way to get the NavigationServiceProvider and Listener to work together properly.
      *
      * @author Sean J. Barbeau, modified by Belov
      */
-    public class TADProximityCalculator {
-        NavigationServiceProvider navProvider;  //Holds reference to main navigation provider for TAD
+    public class ProximityCalculator {
+        NavigationServiceProvider mNavProvider;
 
-        //**  Proximity Listener variables **/
         private float radius = 100;  //Defines radius (in meters) for which the Proximity listener should be triggered (Default = 50)
-        private float readyradius = 300; //Defines radius(in meters) for which the Proximity listener should trigger "Get Ready Alert"
+        private float readyRadius = 300; //Defines radius(in meters) for which the Proximity listener should trigger "Get Ready Alert"
         private boolean trigger = false;  //Defines whether the Proximity Listener has been triggered (true) or not (false)
-        private Location secondtolastcoords = null;  //Tests distance from registered location w/ ProximityListener manually
-        private Location lastcoords = null; //Coordinates of the final bus stop of the segment
-        private Location firstcoords = null; //Coordinates of the first bus stop of the segment
+        private Location secondToLastCoords = null;  //Tests distance from registered location w/ ProximityListener manually
+        private Location lastCoords = null; //Coordinates of the final bus stop of the segment
+        private Location firstCoords = null; //Coordinates of the first bus stop of the segment
         private float distance = -1;  //Actual known traveled distance loaded from segment object
-        private float directdistance = -1; //Direct distance to second to last stop coords, used for radius detection
-        private float endistance = -1; //Direct distance to last bus stop coords, used for segment navigation
+        private float directDistance = -1; //Direct distance to second to last stop coords, used for radius detection
+        private float endDistance = -1; //Direct distance to last bus stop coords, used for segment navigation
         private boolean ready = false; //Has get ready alert been played?
-        private boolean m100_a, m50_a, m20_a, m20_d, m50_d, m100_d = false;  //Varibales for handling arrival/departure from 2nd to last stop
+        private boolean m100_a, m50_a, m20_a, m20_d, m50_d, m100_d = false;  // Variables for handling arrival/departure from 2nd to last stop
 
-        /**
-         * Creates a new instance of TADProximityCalculator
-         *
-         * @param navProvider
-         */
-        public TADProximityCalculator(NavigationServiceProvider navProvider) {
-            this.navProvider = navProvider;
-            Log.d(TAG, "Initializing TADProximityCalculator");
+        public ProximityCalculator(NavigationServiceProvider navProvider) {
+            this.mNavProvider = navProvider;
+            Log.d(TAG, "Initializing ProximityCalculator");
         }
 
         /**
@@ -422,31 +411,31 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             //*******************************************************************************************************************
             // Log.d(TAG,"Fired proximityEvent() from ProximityListener object.");
 
-            //NEW - if statement that encompases rest of method to check if navProvider has triggered navListener before for this coordinate
+            //NEW - if statement that encompases rest of method to check if mNavProvider has triggered navListener before for this coordinate
             if (selection == 0) {
                 if (trigger == false) {
                     trigger = true;
                     Log.d(TAG, "Proximity Event fired");
-                    if (navProvider.hasMoreSegments()) {
+                    if (mNavProvider.hasMoreSegments()) {
                         if (t == 0) {
                             Log.d(TAG, "Alert 1 Screen showed to rider");
                             waitingForConfirm = true;
                             // GET READY.
                             Log.d(TAG, "Calling way point reached!");
-                            //this.navProvider.navlistener.waypointReached(this.lastcoords);
+                            //this.mNavProvider.navlistener.waypointReached(this.lastCoords);
                             return true;
                         }
                         if (t == 1) {
                             try {
                                 Log.d(TAG, "About to switch segment - from Proximity Event");
-                                navProvider.navigateNextSegment(); //Uncomment this line to allow navigation on multiple segments within one service (chained segments)
+                                mNavProvider.navigateNextSegment(); //Uncomment this line to allow navigation on multiple segments within one service (chained segments)
 
                                 ready = false; //Reset the "get ready" notification alert
 
                                 trigger = false; //Reset the proximity notification alert
 
                             } catch (Exception e) {
-                                Log.e(TAG, "Error in TADProximityListener.proximityEvent(): " + e);
+                                Log.e(TAG, "Error in ProximityCalculator.proximityEvent(): " + e);
                             }
                         }
                     } else {
@@ -460,8 +449,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                         if (t == 1) {
                             long time = System.currentTimeMillis();
                             Log.d(TAG, "Ending trip, going back to services");
-                            navProvider.segments = null;
-                            navProvider.segmentIndex = 0;
+                            mNavProvider.segments = null;
+                            mNavProvider.segmentIndex = 0;
                         }
                     }
                 }
@@ -483,15 +472,15 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
          * @param first
          */
         public void listenForCoords(Location coords, Location last, Location first) {
-            secondtolastcoords = coords;
-            lastcoords = last;
-            firstcoords = first;
+            secondToLastCoords = coords;
+            lastCoords = last;
+            firstCoords = first;
             //Reset distance if the manual listener is reset
             if (coords == null) {
-                directdistance = -1;
+                directDistance = -1;
             }
             if (last == null) {
-                endistance = -1;
+                endDistance = -1;
             }
 
         }
@@ -582,26 +571,27 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         private int checkProximityAll(Location currentLocation) {
             if (!waitingForConfirm) {
                 //re-calculate the distance to the final bus stop from the current location
-                endistance = lastcoords.distanceTo(currentLocation);
+                endDistance = lastCoords.distanceTo(currentLocation);
                 //re-calculate the distance to second to last bus stop from the current location
-                directdistance = secondtolastcoords.distanceTo(currentLocation);
-                Log.d(TAG, "Second to last stop coordinates: " + secondtolastcoords.getLatitude() + ", " + secondtolastcoords.getLongitude());
+                directDistance = secondToLastCoords.distanceTo(currentLocation);
+                Log.d(TAG, "Second to last stop coordinates: " + secondToLastCoords.getLatitude() + ", " + secondToLastCoords
+                        .getLongitude());
 
-                navProvider.updateInterface(1);                 // Update distance notification
+                mNavProvider.updateInterface(1);                 // Update distance notification
 
                 // Check if distance from 2nd-to-last stop is less than threshold.
-                if (directdistance < DISTANCE_THRESHOLD) {
+                if (directDistance < DISTANCE_THRESHOLD) {
                     if (proximityEvent(1, -1)) {
-                        navProvider.updateInterface(2);
+                        mNavProvider.updateInterface(2);
                         Log.d(TAG, "-----Get ready!");
                         return 2; //Get ready alert played
                     }
                 }
 
                 // Check if pull the cord notification should be fired.
-                if (StopDetector(directdistance, 1, currentLocation.getSpeed())) {
+                if (StopDetector(directDistance, 1, currentLocation.getSpeed())) {
                     if (proximityEvent(0, 0)) {
-                        navProvider.updateInterface(3);
+                        mNavProvider.updateInterface(3);
                         Log.d(TAG, "-----Get off the bus!");
                         return 1; // Get off bus alert played
                     }
@@ -673,7 +663,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             String METRIC = app.getString(R.string.preferences_preferred_units_option_metric);
             String AUTOMATIC = app.getString(R.string.preferences_preferred_units_option_automatic);
             String preferredUnits = mSettings.getString(app.getString(R.string.preference_key_preferred_units), AUTOMATIC);
-            double distance = mProxListener.endistance;
+            double distance = mProxCalculator.endDistance;
             double miles = distance * RegionUtils.METERS_TO_MILES;  // Get miles.
             distance /= 1000;                                       // Get kilometers.
             DecimalFormat fmt = new DecimalFormat("0.0");

@@ -424,7 +424,7 @@ dependencies {
         transitive = true;
     }
     // Required to support multidex for minSdkVersion <= 20
-    implementation 'com.android.support:multidex:1.0.2'
+    implementation 'com.android.support:multidex:1.0.3'
 }
 
 // Dependencies not directly used in this project, but used by dependencies that we are using

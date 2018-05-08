@@ -52,7 +52,7 @@ android {
         preDexLibraries true
     }
     compileSdkVersion this.ext.compileSdkVersion
-    buildToolsVersion "26.0.2"
+    buildToolsVersion "27.0.3"
 
     defaultConfig {
         minSdkVersion 14

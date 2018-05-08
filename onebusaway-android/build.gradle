@@ -43,7 +43,7 @@ repositories {
 ext {
     compileSdkVersion = 27
     // supportLibVersion must have the same major version number as compileSdkVersion
-    supportLibVersion = "27.0.2"
+    supportLibVersion = "27.0.0"
     playServicesVersion = "11.8.0"
 }
 
@@ -52,7 +52,7 @@ android {
         preDexLibraries true
     }
     compileSdkVersion this.ext.compileSdkVersion
-    buildToolsVersion "26.0.2"
+    buildToolsVersion "27.0.3"
 
     defaultConfig {
         minSdkVersion 14

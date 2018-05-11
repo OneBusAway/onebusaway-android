@@ -60,7 +60,7 @@ If you can, please submit a pull request with the fix or improvements including 
 1. Fork the project on GitHub
 2. Create a feature branch
 3. Write tests and code
-4. Run the unit tests with `gradlew connectedObaGoogleDebugAndroidTest connectedObaAmazonDebugAndroidTest` to make sure you didn't break anything
+4. Run the unit tests with `gradlew connectedObaGoogleDebugCheck connectedObaAmazonDebugCheck` to make sure you didn't break anything
 5. Apply the `AndroidStyle.xml` style template to your code in Android Studio.
 6. If you have multiple commits please combine them into one commit by squashing them.  See [this article](http://eli.thegreenplace.net/2014/02/19/squashing-github-pull-requests-into-a-single-commit) and [this Git documentation](http://git-scm.com/book/en/Git-Tools-Rewriting-History#Squashing-Commits) for instructions.
 7. Push the commit to your fork

@@ -53,6 +53,7 @@ android {
     }
     compileSdkVersion this.ext.compileSdkVersion
     buildToolsVersion "27.0.3"
+    testOptions.unitTests.includeAndroidResources true
 
     defaultConfig {
         minSdkVersion 14
@@ -286,6 +287,11 @@ android {
             }
         }
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 /**
@@ -425,6 +431,10 @@ dependencies {
     }
     // Required to support multidex for minSdkVersion <= 20
     implementation 'com.android.support:multidex:1.0.3'
+    // Unit tests
+    testImplementation 'org.robolectric:robolectric:3.8'
+    testImplementation 'org.robolectric:shadows-multidex:3.8'
+    testImplementation 'junit:junit:4.12'
 }
 
 // Dependencies not directly used in this project, but used by dependencies that we are using

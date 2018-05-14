@@ -16,20 +16,30 @@
 
 package org.onebusaway.android.util.test;
 
+import android.location.Location;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.RegionUtils;
 
-import android.location.Location;
-import android.test.AndroidTestCase;
-
 import java.util.ArrayList;
+
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
 
 /**
  * Tests to evaluate region utilities
  */
-public class RegionUtilTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class RegionUtilTest {
 
     public static final float APPROXIMATE_DISTANCE_EQUALS_THRESHOLD = 2;  // meters
 
@@ -51,12 +61,11 @@ public class RegionUtilTest extends AndroidTestCase {
 
     Location mOriginLoc;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mPsRegion = MockRegion.getPugetSound(getContext());
-        mTampaRegion = MockRegion.getTampa(getContext());
-        mAtlantaRegion = MockRegion.getAtlanta(getContext());
+    @Before
+    public void before() {
+        mPsRegion = MockRegion.getPugetSound(getTargetContext());
+        mTampaRegion = MockRegion.getTampa(getTargetContext());
+        mAtlantaRegion = MockRegion.getAtlanta(getTargetContext());
 
         // Region locations
         mSeattleLoc = LocationUtils.makeLocation(47.6097, -122.3331);
@@ -68,6 +77,7 @@ public class RegionUtilTest extends AndroidTestCase {
         mOriginLoc = LocationUtils.makeLocation(0, 0);
     }
 
+    @Test
     public void testGetDistanceAway() {
         float distance = RegionUtils.getDistanceAway(mPsRegion, mSeattleLoc);
         assertApproximateEquals(1210, distance);
@@ -79,6 +89,7 @@ public class RegionUtilTest extends AndroidTestCase {
         assertApproximateEquals(3927, distance);
     }
 
+    @Test
     public void testGetClosestRegion() {
         ArrayList<ObaRegion> list = new ArrayList<>();
         list.add(mPsRegion);
@@ -132,6 +143,7 @@ public class RegionUtilTest extends AndroidTestCase {
         assertNull(closestRegion);
     }
 
+    @Test
     public void testGetRegionSpan() {
         double[] results = new double[4];
         RegionUtils.getRegionSpan(mTampaRegion, results);
@@ -156,13 +168,14 @@ public class RegionUtilTest extends AndroidTestCase {
         assertFalse(RegionUtils.isLocationWithinRegion(mTampaLoc, mAtlantaRegion));
     }
 
+    @Test
     public void testIsRegionUsable() {
         assertTrue(RegionUtils.isRegionUsable(mPsRegion));
         assertTrue(RegionUtils.isRegionUsable(mTampaRegion));
         assertTrue(RegionUtils.isRegionUsable(mAtlantaRegion));
 
-        assertFalse(RegionUtils.isRegionUsable(MockRegion.getRegionWithoutObaApis(getContext())));
-        assertFalse(RegionUtils.isRegionUsable(MockRegion.getInactiveRegion(getContext())));
+        assertFalse(RegionUtils.isRegionUsable(MockRegion.getRegionWithoutObaApis(getTargetContext())));
+        assertFalse(RegionUtils.isRegionUsable(MockRegion.getInactiveRegion(getTargetContext())));
     }
 
     /**

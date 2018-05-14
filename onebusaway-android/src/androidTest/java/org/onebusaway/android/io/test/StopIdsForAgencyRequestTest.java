@@ -15,14 +15,25 @@
  */
 package org.onebusaway.android.io.test;
 
+import org.junit.Test;
 import org.onebusaway.android.io.request.ObaStopIdsForAgencyRequest;
 import org.onebusaway.android.io.request.ObaStopIdsForAgencyResponse;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to get stop_ids for a specific agency
+ */
 public class StopIdsForAgencyRequestTest extends ObaTestCase {
 
-    public void testST() {
+    @Test
+    public void testSoundTransit() {
         ObaStopIdsForAgencyRequest.Builder builder =
-                new ObaStopIdsForAgencyRequest.Builder(getContext(), "40");
+                new ObaStopIdsForAgencyRequest.Builder(getTargetContext(), "40");
         ObaStopIdsForAgencyRequest request = builder.build();
         ObaStopIdsForAgencyResponse response = request.call();
         assertOK(response);
@@ -32,10 +43,11 @@ public class StopIdsForAgencyRequestTest extends ObaTestCase {
         assertFalse(response.getLimitExceeded());
     }
 
+    @Test
     public void testNewRequest() {
         // This is just to make sure we copy and call newRequest() at least once
         ObaStopIdsForAgencyRequest request =
-                ObaStopIdsForAgencyRequest.newRequest(getContext(), "40");
+                ObaStopIdsForAgencyRequest.newRequest(getTargetContext(), "40");
         assertNotNull(request);
     }
 }

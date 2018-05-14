@@ -16,13 +16,19 @@
 
 package org.onebusaway.android.util.test;
 
-import org.onebusaway.android.io.test.ObaTestCase;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.onebusaway.android.util.MathUtils;
+
+import static junit.framework.Assert.assertEquals;
 
 /**
  * Tests to evaluate utility methods related to math conversions
  */
-public class MathUtilTest extends ObaTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MathUtilTest {
 
     /**
      * Tests conversion from OBA orientation to normal 0-360 degrees direction.
@@ -30,6 +36,7 @@ public class MathUtilTest extends ObaTestCase {
      * From OBA REST API docs for trip status (http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/elements/trip-status.html)
      * :  "orientation - ...0º is east, 90º is north, 180º is west, and 270º is south."
      */
+    @Test
     public void testOrientationToDirection() {
         // East
         double direction = MathUtils.toDirection(0);

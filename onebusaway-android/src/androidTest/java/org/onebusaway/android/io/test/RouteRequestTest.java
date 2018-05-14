@@ -15,6 +15,9 @@
  */
 package org.onebusaway.android.io.test;
 
+import android.graphics.Color;
+
+import org.junit.Test;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaAgency;
@@ -24,17 +27,23 @@ import org.onebusaway.android.io.request.ObaRouteRequest;
 import org.onebusaway.android.io.request.ObaRouteResponse;
 import org.onebusaway.android.mock.MockRegion;
 
-import android.graphics.Color;
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 
-
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to get information about a specific route
+ */
 public class RouteRequestTest extends ObaTestCase {
 
+    @Test
     public void testKCMRoute() {
-        int defaultRouteLineColor = getContext().getResources().getColor(
+        int defaultRouteLineColor = getTargetContext().getResources().getColor(
                 R.color.route_line_color_default);
-        int defaultRouteTextColor = getContext().getResources().getColor(
+        int defaultRouteTextColor = getTargetContext().getResources().getColor(
                 R.color.route_text_color_default);
-        ObaRouteRequest.Builder builder = new ObaRouteRequest.Builder(getContext(), "1_10");
+        ObaRouteRequest.Builder builder = new ObaRouteRequest.Builder(getTargetContext(), "1_10");
         ObaRouteRequest request = builder.build();
         ObaRouteResponse response = request.call();
         assertOK(response);
@@ -60,24 +69,26 @@ public class RouteRequestTest extends ObaTestCase {
         assertEquals("Metro Transit", agency.getName());
     }
 
+    @Test
     public void testNewRequest() {
         // This is just to make sure we copy and call newRequest() at least once
-        ObaRouteRequest request = ObaRouteRequest.newRequest(getContext(), "1_10");
+        ObaRouteRequest request = ObaRouteRequest.newRequest(getTargetContext(), "1_10");
         assertNotNull(request);
     }
 
+    @Test
     public void testHARTRoute() {
         // Test by setting region
-        ObaRegion tampa = MockRegion.getTampa(getContext());
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
 
-        int defaultRouteLineColor = getContext().getResources().getColor(
+        int defaultRouteLineColor = getTargetContext().getResources().getColor(
                 R.color.route_line_color_default);
-        int defaultRouteTextColor = getContext().getResources().getColor(
+        int defaultRouteTextColor = getTargetContext().getResources().getColor(
                 R.color.route_text_color_default);
 
-        ObaRouteRequest.Builder builder = new ObaRouteRequest.Builder(getContext(),
+        ObaRouteRequest.Builder builder = new ObaRouteRequest.Builder(getTargetContext(),
                 "Hillsborough Area Regional Transit_5");
         ObaRouteRequest request = builder.build();
         ObaRouteResponse response = request.call();

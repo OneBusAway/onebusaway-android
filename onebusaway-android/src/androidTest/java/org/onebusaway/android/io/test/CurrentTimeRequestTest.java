@@ -15,14 +15,23 @@
  */
 package org.onebusaway.android.io.test;
 
+import org.junit.Test;
 import org.onebusaway.android.io.request.ObaCurrentTimeRequest;
 import org.onebusaway.android.io.request.ObaCurrentTimeResponse;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
 
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to get the current time
+ */
 public class CurrentTimeRequestTest extends ObaTestCase {
 
+    @Test
     public void testCurrentTime() {
-        ObaCurrentTimeRequest.Builder builder = new ObaCurrentTimeRequest.Builder(getContext());
+        ObaCurrentTimeRequest.Builder builder = new ObaCurrentTimeRequest.Builder(getTargetContext());
         ObaCurrentTimeRequest request = builder.build();
         ObaCurrentTimeResponse response = request.call();
         assertOK(response);
@@ -33,9 +42,10 @@ public class CurrentTimeRequestTest extends ObaTestCase {
         assertNotNull(readableTime);
     }
 
+    @Test
     public void testNewRequest() {
         // This is just to make sure we copy and call newRequest() at least once
-        ObaCurrentTimeRequest request = ObaCurrentTimeRequest.newRequest(getContext());
+        ObaCurrentTimeRequest request = ObaCurrentTimeRequest.newRequest(getTargetContext());
         assertNotNull(request);
     }
 }

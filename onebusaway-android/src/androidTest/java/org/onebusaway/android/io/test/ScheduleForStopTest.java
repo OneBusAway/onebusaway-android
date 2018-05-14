@@ -15,6 +15,9 @@
  */
 package org.onebusaway.android.io.test;
 
+import android.text.format.Time;
+
+import org.junit.Test;
 import org.onebusaway.android.UriAssert;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
@@ -24,22 +27,30 @@ import org.onebusaway.android.io.request.ObaScheduleForStopRequest;
 import org.onebusaway.android.io.request.ObaScheduleForStopResponse;
 import org.onebusaway.android.mock.MockRegion;
 
-import android.text.format.Time;
-
 import java.util.HashMap;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to get a schedule for a specific stop
+ */
 @SuppressWarnings("serial")
 public class ScheduleForStopTest extends ObaTestCase {
 
     // TODO - fix this test in context of regions and loading multiple URLs
     // Currently mixes Tampa URL with KCM data
+    @Test
     public void testKCMStopRequest() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
         callKCMStopRequest();
 
         // Test by setting region
-        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        ObaRegion ps = MockRegion.getPugetSound(getTargetContext());
         assertNotNull(ps);
         Application.get().setCurrentRegion(ps);
         callKCMStopRequest();
@@ -47,7 +58,7 @@ public class ScheduleForStopTest extends ObaTestCase {
 
     private void callKCMStopRequest() {
         ObaScheduleForStopRequest request =
-                new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
+                new ObaScheduleForStopRequest.Builder(getTargetContext(), "1_75403")
                         .build();
         UriAssert.assertUriMatch(
                 "http://api.pugetsound.onebusaway.org/api/where/schedule-for-stop/1_75403.json",
@@ -59,9 +70,10 @@ public class ScheduleForStopTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testKCMStop() {
         ObaScheduleForStopResponse response =
-                new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
+                new ObaScheduleForStopRequest.Builder(getTargetContext(), "1_75403")
                         .build()
                         .call();
         // This is just to ensure we can call it, but since we don't
@@ -80,13 +92,14 @@ public class ScheduleForStopTest extends ObaTestCase {
 
     // TODO - fix this test in context of regions and loading multiple URLs
     // Currently mixes Tampa URL with KCM data
+    @Test
     public void testKCMStopRequestWithDate() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
         callKCMStopRequestWithDate();
 
         // Test by setting region
-        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        ObaRegion ps = MockRegion.getPugetSound(getTargetContext());
         assertNotNull(ps);
         Application.get().setCurrentRegion(ps);
         callKCMStopRequestWithDate();
@@ -98,7 +111,7 @@ public class ScheduleForStopTest extends ObaTestCase {
         time.month = 6;
         time.monthDay = 30;
         ObaScheduleForStopRequest request =
-                new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
+                new ObaScheduleForStopRequest.Builder(getTargetContext(), "1_75403")
                         .setDate(time)
                         .build();
         UriAssert.assertUriMatch(
@@ -112,13 +125,14 @@ public class ScheduleForStopTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testKCMStopResponseWithDate() throws Exception {
         Time time = new Time();
         time.year = 2012;
         time.month = 6;
         time.monthDay = 30;
         ObaScheduleForStopRequest request =
-                new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
+                new ObaScheduleForStopRequest.Builder(getTargetContext(), "1_75403")
                         .setDate(time)
                         .build();
         ObaScheduleForStopResponse response = request.call();

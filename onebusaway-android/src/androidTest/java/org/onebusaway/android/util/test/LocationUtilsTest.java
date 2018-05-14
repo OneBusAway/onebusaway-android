@@ -16,24 +16,35 @@
 
 package org.onebusaway.android.util.test;
 
+import android.location.Location;
+import android.os.Build;
+import android.os.SystemClock;
+import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.TestUtils;
 
-import android.location.Location;
-import android.os.Build;
-import android.os.SystemClock;
-import android.test.AndroidTestCase;
-import android.util.Log;
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
 
 /**
  * Tests to evaluate location utilities
  */
-public class LocationUtilsTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class LocationUtilsTest extends ObaTestCase {
 
     public static final String TAG = "LocationUtilTest";
 
@@ -45,22 +56,22 @@ public class LocationUtilsTest extends AndroidTestCase {
      */
     GoogleApiClient mGoogleApiClient;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void before() {
+        super.before();
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         GoogleApiAvailability api = GoogleApiAvailability.getInstance();
-        if (api.isGooglePlayServicesAvailable(getContext())
+        if (api.isGooglePlayServicesAvailable(getTargetContext())
                 == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getContext());
+            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getTargetContext());
             mGoogleApiClient.connect();
         }
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void after() {
+        super.after();
 
         // Tear down GoogleApiClient
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
@@ -68,6 +79,7 @@ public class LocationUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testLocationComparisonByTime() {
         boolean result;
         Location a;
@@ -100,6 +112,7 @@ public class LocationUtilsTest extends AndroidTestCase {
         assertFalse(result);
     }
 
+    @Test
     public void testLocationComparison() {
         boolean result;
         Location a;
@@ -178,6 +191,7 @@ public class LocationUtilsTest extends AndroidTestCase {
         assertFalse(result);
     }
 
+    @Test
     public void testLocationApiV1() {
         Location loc;
 
@@ -189,7 +203,7 @@ public class LocationUtilsTest extends AndroidTestCase {
              * have custom Android framework providers such as "hybrid" that might should up here.
              * So, we can't test for "gps" or "network" specifically.
              */
-            loc = Application.getLastKnownLocation(getContext(), null);
+            loc = Application.getLastKnownLocation(getTargetContext(), null);
             /**
              * On devices that behave correctly the following non-null test should pass.  However, it's
              * possible that it can fail on some devices (e.g., on a fresh reboot on a device without
@@ -201,18 +215,19 @@ public class LocationUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testLocationServices() {
         Location loc;
 
         // Test with Google Play Services, if its supported, and if we're not running on an emulator
         GoogleApiAvailability api = GoogleApiAvailability.getInstance();
-        if (api.isGooglePlayServicesAvailable(getContext())
+        if (api.isGooglePlayServicesAvailable(getTargetContext())
                 == ConnectionResult.SUCCESS &&
                 !TestUtils.isRunningOnEmulator()) {
             /**
              * Could return either a fused or Location API v1 location
              */
-            loc = Application.getLastKnownLocation(getContext(), mGoogleApiClient);
+            loc = Application.getLastKnownLocation(getTargetContext(), mGoogleApiClient);
             assertNotNull(loc);
             Log.d(TAG,
                     "Location Provider for Location Services test is '" + loc.getProvider() + "'");

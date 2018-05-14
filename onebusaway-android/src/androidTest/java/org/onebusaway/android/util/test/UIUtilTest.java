@@ -17,6 +17,16 @@
 
 package org.onebusaway.android.util.test;
 
+import android.graphics.Color;
+import android.location.Location;
+import android.os.Bundle;
+import android.support.test.runner.AndroidJUnit4;
+import android.support.v4.util.Pair;
+import android.text.TextUtils;
+import android.widget.TextView;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaAgency;
@@ -36,24 +46,25 @@ import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
 
-import android.graphics.Color;
-import android.location.Location;
-import android.os.Bundle;
-import android.support.v4.util.Pair;
-import android.text.TextUtils;
-import android.widget.TextView;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
+
 /**
  * Tests to evaluate utility methods related to the presentation of information to the user in the
  * UI
  */
+@RunWith(AndroidJUnit4.class)
 public class UIUtilTest extends ObaTestCase {
 
+    @Test
     public void testSerializeRouteDisplayNames() {
         ObaStop stop = MockObaStop.getMockStop();
         HashMap<String, ObaRoute> routes = MockObaStop.getMockRoutes();
@@ -62,6 +73,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("1,5", serializedRoutes);
     }
 
+    @Test
     public void testDeserializeRouteDisplayNames() {
         String serializedRoutes = "1,5";
         List<String> routeList = UIUtils.deserializeRouteDisplayNames(serializedRoutes);
@@ -69,6 +81,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("5", routeList.get(1));
     }
 
+    @Test
     public void testFormatRouteDisplayNames() {
         String formattedString;
         ArrayList<String> routes = new ArrayList<String>();
@@ -123,6 +136,7 @@ public class UIUtilTest extends ObaTestCase {
     /**
      * Tests formatting of stop names, trip headsigns, and route names
      */
+    @Test
     public void testFormatDisplayText() {
         // Stop names
         assertEquals("SDSU Transit Center", UIUtils.formatDisplayText("SDSU Transit Center"));
@@ -147,14 +161,15 @@ public class UIUtilTest extends ObaTestCase {
     /**
      * Tests building the trip options menu, based on various route/trip parameters
      */
+    @Test
     public void testBuildTripOptions() {
         // Initial setup to get an ObaArrivalInfo object from a test response
-        ObaRegion tampa = MockRegion.getTampa(getContext());
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
 
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_3105").build().call();
         assertOK(response);
         ObaStop stop = response.getStop();
@@ -167,7 +182,7 @@ public class UIUtilTest extends ObaTestCase {
 
         ObaArrivalInfo[] arrivals = response.getArrivalInfo();
         assertNotNull(arrivals);
-        ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getContext(),
+        ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getTargetContext(),
                 arrivals, null, response.getCurrentTime(), true);
 
         ObaRoute route = response.getRoute(arrivalInfo.get(0).getInfo().getRouteId());
@@ -179,7 +194,7 @@ public class UIUtilTest extends ObaTestCase {
         // HART has route schedule URLs in test data, so below options should allow the user to set
         // a reminder and view the route schedule
         List<String> options = UIUtils
-                .buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
         assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip status");
@@ -192,7 +207,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // Now we should see route schedules and *edit* the reminder
         options = UIUtils
-                .buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
         assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip status");
@@ -203,7 +218,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // Get a PSTA response - PSTA test data doesn't include route schedule URLs
         ObaArrivalInfoResponse response2 =
-                new ObaArrivalInfoRequest.Builder(getContext(), "PSTA_4077").build().call();
+                new ObaArrivalInfoRequest.Builder(getTargetContext(), "PSTA_4077").build().call();
         assertOK(response2);
 
         stop = response2.getStop();
@@ -216,7 +231,7 @@ public class UIUtilTest extends ObaTestCase {
 
         arrivals = response2.getArrivalInfo();
         assertNotNull(arrivals);
-        arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getContext(),
+        arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getTargetContext(),
                 arrivals, null, response2.getCurrentTime(), true);
 
         route = response2.getRoute(arrivalInfo.get(0).getInfo().getRouteId());
@@ -227,7 +242,7 @@ public class UIUtilTest extends ObaTestCase {
         // PSTA does not have route schedule URLs in test data, so below options should allow the
         // user to set a reminder but NOT view the route schedule
         options = UIUtils
-                .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
         assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip status");
@@ -239,7 +254,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // Now we should see *edit* the reminder, and still no route schedule
         options = UIUtils
-                .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
         assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip status");
@@ -256,7 +271,7 @@ public class UIUtilTest extends ObaTestCase {
         // HART has route schedule URLs in test data, so below options should allow the user to set
         // a reminder and view the route schedule
         options = UIUtils
-                .buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
         assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip status");
@@ -269,7 +284,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // Now we should see route schedules and *edit* the reminder
         options = UIUtils
-                .buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
         assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip status");
@@ -284,7 +299,7 @@ public class UIUtilTest extends ObaTestCase {
         // PSTA does not have route schedule URLs in test data, so below options should allow the
         // user to set a reminder but NOT view the route schedule
         options = UIUtils
-                .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
         assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip status");
@@ -296,7 +311,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // Now we should see *edit* the reminder, and still no route schedule
         options = UIUtils
-                .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
         assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip status");
@@ -305,6 +320,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(5), "Report arrival time problem");
     }
 
+    @Test
     public void testCreateStopDetailsDialogText() {
         final String newLine = "\n";
         Pair stopDetails;
@@ -319,7 +335,7 @@ public class UIUtilTest extends ObaTestCase {
         routeDisplayNames.add("5");
 
         // Test without stop nickname or direction
-        stopDetails = UIUtils.createStopDetailsDialogText(getContext(),
+        stopDetails = UIUtils.createStopDetailsDialogText(getTargetContext(),
                 stopName,
                 stopUserName,
                 stopCode,
@@ -334,7 +350,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // Test with stop nickname and without direction
         stopUserName = "My stop nickname";
-        stopDetails = UIUtils.createStopDetailsDialogText(getContext(),
+        stopDetails = UIUtils.createStopDetailsDialogText(getTargetContext(),
                 stopName,
                 stopUserName,
                 stopCode,
@@ -352,7 +368,7 @@ public class UIUtilTest extends ObaTestCase {
         // Test without stop nickname and with direction
         stopUserName = null;
         stopDirection = "S";
-        stopDetails = UIUtils.createStopDetailsDialogText(getContext(),
+        stopDetails = UIUtils.createStopDetailsDialogText(getTargetContext(),
                 stopName,
                 stopUserName,
                 stopCode,
@@ -364,13 +380,13 @@ public class UIUtilTest extends ObaTestCase {
         expectedMessage.append(newLine);
         expectedMessage.append("Routes: " + routeDisplayNames.get(0));
         expectedMessage.append(newLine);
-        expectedMessage.append(getContext().getString(UIUtils.getStopDirectionText(stopDirection)));
+        expectedMessage.append(getTargetContext().getString(UIUtils.getStopDirectionText(stopDirection)));
         assertEquals(expectedMessage.toString(), (String) stopDetails.second);
 
         // Test with stop nickname and direction
         stopUserName = "My stop nickname";
         stopDirection = "S";
-        stopDetails = UIUtils.createStopDetailsDialogText(getContext(),
+        stopDetails = UIUtils.createStopDetailsDialogText(getTargetContext(),
                 stopName,
                 stopUserName,
                 stopCode,
@@ -384,18 +400,19 @@ public class UIUtilTest extends ObaTestCase {
         expectedMessage.append(newLine);
         expectedMessage.append("Routes: " + routeDisplayNames.get(0));
         expectedMessage.append(newLine);
-        expectedMessage.append(getContext().getString(UIUtils.getStopDirectionText(stopDirection)));
+        expectedMessage.append(getTargetContext().getString(UIUtils.getStopDirectionText(stopDirection)));
         assertEquals(expectedMessage.toString(), (String) stopDetails.second);
     }
 
+    @Test
     public void testArrivalTimeIndexSearch() {
         // Initial setup to get an ObaArrivalInfo object from a test response
-        ObaRegion tampa = MockRegion.getTampa(getContext());
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
 
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_6497").build().call();
         assertOK(response);
         ObaStop stop = response.getStop();
@@ -407,66 +424,66 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("Hillsborough Area Regional Transit", agency.getId());
 
         // First de-select any existing route favorites, to make sure the test returns correct results
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_2",
                 "UATC to Downtown via Nebraska Ave",
                 stop.getId(),
                 false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_1",
                 "UATC to Downtown via Florida Ave",
                 stop.getId(),
                 false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_18",
                 "North to UATC/Livingston",
                 stop.getId(),
                 false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_5",
                 "South to Downtown/MTC",
                 stop.getId(),
                 false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_2",
                 "UATC to Downtown via Nebraska Ave",
                 stop.getId(),
                 false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_18",
                 "South to UATC/Downtown/MTC",
                 stop.getId(),
                 false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_12",
                 "North to University Area TC",
                 stop.getId(),
                 false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_9",
                 "UATC to Downtown via 15th St",
                 stop.getId(),
                 false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_12",
                 "South to Downtown/MTC",
                 stop.getId(),
                 false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_5",
                 "North to University Area TC",
                 stop.getId(),
                 false);
 
         // Now mark 2 favorites - first non-negative index for this route/headsign will be index 11
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_6",
                 "North to University Area TC",
                 stop.getId(),
                 true);
 
         // First non-negative index for this route/headsign will be index 13
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_6",
                 "South to Downtown/MTC",
                 stop.getId(),
@@ -475,7 +492,7 @@ public class UIUtilTest extends ObaTestCase {
         // Get the response
         ObaArrivalInfo[] arrivals = response.getArrivalInfo();
         assertNotNull(arrivals);
-        ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getContext(),
+        ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getTargetContext(),
                 arrivals, null, response.getCurrentTime(), true);
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
@@ -493,19 +510,19 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(13, preferredArrivalIndexes.get(1).intValue());
 
         // Now clear the favorites
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_6",
                 "North to University Area TC",
                 stop.getId(),
                 false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getContext(),
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
                 "Hillsborough Area Regional Transit_6",
                 "South to Downtown/MTC",
                 stop.getId(),
                 false);
 
         // Process the response again (resetting the included favorite info)
-        arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getContext(),
+        arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getTargetContext(),
                 arrivals, null, response.getCurrentTime(), true);
         preferredArrivalIndexes = ArrivalInfoUtils.findPreferredArrivalIndexes(arrivalInfo);
 
@@ -517,14 +534,15 @@ public class UIUtilTest extends ObaTestCase {
     /**
      * Tests the status and time labels for arrival info
      */
+    @Test
     public void testArrivalInfoLabels() {
         // Initial setup to get an ObaArrivalInfo object from a test response
-        ObaRegion tampa = MockRegion.getTampa(getContext());
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
 
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_6497").build().call();
         assertOK(response);
         ObaStop stop = response.getStop();
@@ -544,7 +562,7 @@ public class UIUtilTest extends ObaTestCase {
          */
         boolean includeArriveDepartLabels = true;
         ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(
-                getContext(),
+                getTargetContext(),
                 arrivals, null, response.getCurrentTime(), includeArriveDepartLabels);
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
@@ -647,7 +665,7 @@ public class UIUtilTest extends ObaTestCase {
          * Status labels *without* arrive/depart included
          */
         includeArriveDepartLabels = false;
-        arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getContext(), arrivals, null,
+        arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getTargetContext(), arrivals, null,
                 response.getCurrentTime(), includeArriveDepartLabels);
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
@@ -757,22 +775,23 @@ public class UIUtilTest extends ObaTestCase {
                 + " is departing in 35 min!", arrivalInfo.get(31).getNotifyText());
     }
 
+    @Test
     public void testMaybeShrinkRouteName() {
-        TextView tv = new TextView(getContext());
+        TextView tv = new TextView(getTargetContext());
 
         String routeShortName = "TST";
         float textSize = tv.getTextSize();
-        UIUtils.maybeShrinkRouteName(getContext(), tv, routeShortName);
+        UIUtils.maybeShrinkRouteName(getTargetContext(), tv, routeShortName);
         assertEquals(textSize, tv.getTextSize());
 
         routeShortName = "Test";
-        UIUtils.maybeShrinkRouteName(getContext(), tv, routeShortName);
-        assertEquals(getContext().getResources().getDimension(R.dimen.route_name_text_size_medium),
+        UIUtils.maybeShrinkRouteName(getTargetContext(), tv, routeShortName);
+        assertEquals(getTargetContext().getResources().getDimension(R.dimen.route_name_text_size_medium),
                 tv.getTextSize());
 
         routeShortName = "Test2";
-        UIUtils.maybeShrinkRouteName(getContext(), tv, routeShortName);
-        assertEquals(getContext().getResources().getDimension(R.dimen.route_name_text_size_small),
+        UIUtils.maybeShrinkRouteName(getTargetContext(), tv, routeShortName);
+        assertEquals(getTargetContext().getResources().getDimension(R.dimen.route_name_text_size_small),
                 tv.getTextSize());
     }
 
@@ -817,6 +836,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(35, arrivalInfo.get(31).getEta());
     }
 
+    @Test
     public void testGetTransparentColor() {
         String colorString = "#777777";
         int alpha = 127;
@@ -839,12 +859,13 @@ public class UIUtilTest extends ObaTestCase {
     }
 
     private String formatTime(long time) {
-        return UIUtils.formatTime(getContext(), time);
+        return UIUtils.formatTime(getTargetContext(), time);
     }
 
     /**
      * Tests getting map view center information from a bundle
      */
+    @Test
     public void testGetMapCenter() {
         // Check null and empty bundles
         Bundle b = null;
@@ -885,6 +906,7 @@ public class UIUtilTest extends ObaTestCase {
      * Tests including all situations (service alerts) from a response in the final list, including
      * ones specific to routes
      */
+    @Test
     public void testGetAllSituations() {
         Application.get().setCustomApiUrl("sdmts.onebusway.org/api");
 
@@ -892,7 +914,7 @@ public class UIUtilTest extends ObaTestCase {
          * Test route-specific alerts only
          */
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(), "MTS_11670").build().call();
+                new ObaArrivalInfoRequest.Builder(getTargetContext(), "MTS_11670").build().call();
         assertOK(response);
         List<ObaSituation> situations = response.getSituations();
         assertNotNull(situations);
@@ -935,7 +957,7 @@ public class UIUtilTest extends ObaTestCase {
          * Test route and stop alerts
          */
 
-        response = new ObaArrivalInfoRequest.Builder(getContext(), "MTS_13353").build().call();
+        response = new ObaArrivalInfoRequest.Builder(getTargetContext(), "MTS_13353").build().call();
         assertOK(response);
         situations = response.getSituations();
         assertNotNull(situations);

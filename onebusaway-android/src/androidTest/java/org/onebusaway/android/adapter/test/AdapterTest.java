@@ -17,6 +17,11 @@
 
 package org.onebusaway.android.adapter.test;
 
+import android.support.test.runner.AndroidJUnit4;
+import android.view.View;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaAgency;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
@@ -30,27 +35,32 @@ import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.ui.ArrivalsListAdapterStyleA;
 import org.onebusaway.android.ui.ArrivalsListAdapterStyleB;
 
-import android.view.View;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
 
 /**
  * Tests aspects of the adapters used in OBA
  */
+@RunWith(AndroidJUnit4.class)
 public class AdapterTest extends ObaTestCase {
 
     private ArrivalsListAdapterStyleA adapterA;
 
     private ArrivalsListAdapterStyleB adapterB;
 
-    public void testAdapterA() throws Exception {
+    @Test
+    public void testAdapterA() {
         // Test by setting region
-        ObaRegion tampa = MockRegion.getTampa(getContext());
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_3105").build().call();
         assertOK(response);
         ObaStop stop = response.getStop();
@@ -63,19 +73,20 @@ public class AdapterTest extends ObaTestCase {
 
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
 
-        adapterA = new ArrivalsListAdapterStyleA(getContext());
+        adapterA = new ArrivalsListAdapterStyleA(getTargetContext());
         adapterA.setData(arrivals, new ArrayList<String>(), response.getCurrentTime());
         View v = adapterA.getView(0, null, null);
         assertNotNull(v);
     }
 
-    public void testAdapterB() throws Exception {
+    @Test
+    public void testAdapterB() {
         // Test by setting region
-        ObaRegion tampa = MockRegion.getTampa(getContext());
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_3105").build().call();
         assertOK(response);
         ObaStop stop = response.getStop();
@@ -88,7 +99,7 @@ public class AdapterTest extends ObaTestCase {
 
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
 
-        adapterB = new ArrivalsListAdapterStyleB(getContext());
+        adapterB = new ArrivalsListAdapterStyleB(getTargetContext());
         adapterB.setData(arrivals, new ArrayList<String>(), response.getCurrentTime());
         View v = adapterB.getView(0, null, null);
         assertNotNull(v);
@@ -101,13 +112,14 @@ public class AdapterTest extends ObaTestCase {
      * out negative arrival times, but didn't appropriately handle the case where this would cause
      * an empty list.
      */
-    public void testAdapterASinglePastArrivalTime() throws Exception {
+    @Test
+    public void testAdapterASinglePastArrivalTime() {
         // Test by setting region
-        ObaRegion tampa = MockRegion.getTampa(getContext());
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_1622").build().call();
         assertOK(response);
         ObaStop stop = response.getStop();
@@ -120,7 +132,7 @@ public class AdapterTest extends ObaTestCase {
 
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
 
-        adapterA = new ArrivalsListAdapterStyleA(getContext());
+        adapterA = new ArrivalsListAdapterStyleA(getTargetContext());
         adapterA.setData(arrivals, new ArrayList<String>(), response.getCurrentTime());
         View v = adapterA.getView(0, null, null);
         assertNotNull(v);
@@ -133,13 +145,14 @@ public class AdapterTest extends ObaTestCase {
      * out negative arrival times, but didn't appropriately handle the case where this would cause
      * an empty list.
      */
+    @Test
     public void testAdapterBSinglePastArrivalTime() throws Exception {
         // Test by setting region
-        ObaRegion tampa = MockRegion.getTampa(getContext());
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_1622").build().call();
         assertOK(response);
         ObaStop stop = response.getStop();
@@ -152,7 +165,7 @@ public class AdapterTest extends ObaTestCase {
 
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
 
-        adapterB = new ArrivalsListAdapterStyleB(getContext());
+        adapterB = new ArrivalsListAdapterStyleB(getTargetContext());
         adapterB.setData(arrivals, new ArrayList<String>(), response.getCurrentTime());
         if (!adapterB.isEmpty()) {
             View v = adapterB.getView(0, null, null);

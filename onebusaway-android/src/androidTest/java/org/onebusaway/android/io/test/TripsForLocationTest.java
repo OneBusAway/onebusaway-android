@@ -15,21 +15,30 @@
  */
 package org.onebusaway.android.io.test;
 
+import android.location.Location;
+
+import org.junit.Test;
 import org.onebusaway.android.io.elements.ObaTripDetails;
 import org.onebusaway.android.io.request.ObaTripsForLocationRequest;
 import org.onebusaway.android.io.request.ObaTripsForLocationResponse;
 import org.onebusaway.android.util.LocationUtils;
 
-import android.location.Location;
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
 
-
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to get trips near a specific location
+ */
 public class TripsForLocationTest extends ObaTestCase {
 
+    @Test
     public void test1() {
         final Location pt = LocationUtils.makeLocation(47.653, -122.307);
 
         ObaTripsForLocationRequest.Builder builder =
-                new ObaTripsForLocationRequest.Builder(getContext(), pt);
+                new ObaTripsForLocationRequest.Builder(getTargetContext(), pt);
         ObaTripsForLocationRequest request = builder.build();
         ObaTripsForLocationResponse response = request.call();
         assertOK(response);
@@ -39,12 +48,13 @@ public class TripsForLocationTest extends ObaTestCase {
         assertNotNull(list);
     }
 
+    @Test
     public void testOutOfRange() {
         // This is just to make sure we copy and call newRequest() at least once
         final Location pt = LocationUtils.makeLocation(48.85808, 2.29498);
 
         ObaTripsForLocationRequest request =
-                new ObaTripsForLocationRequest.Builder(getContext(), pt).build();
+                new ObaTripsForLocationRequest.Builder(getTargetContext(), pt).build();
         ObaTripsForLocationResponse response = request.call();
         assertOK(response);
         assertTrue(response.getOutOfRange());

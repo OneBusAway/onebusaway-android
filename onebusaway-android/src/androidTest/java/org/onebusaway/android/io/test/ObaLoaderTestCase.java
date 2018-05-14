@@ -15,29 +15,36 @@
  */
 package org.onebusaway.android.io.test;
 
+import org.junit.After;
+import org.junit.Before;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.ObaConnectionFactory;
 import org.onebusaway.android.mock.MockConnectionFactory;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+
+/**
+ * Tests loading data from Loaders for OBA
+ */
 public class ObaLoaderTestCase extends LoaderTestCase {
 
     private MockConnectionFactory mMockFactory = null;
 
     private ObaConnectionFactory mOldFactory = null;
 
-    @Override
-    protected void setUp() {
+    @Before
+    public void before() {
         enableMock();
     }
 
-    @Override
-    protected void tearDown() {
+    @After
+    public void after() {
         disableMock();
     }
 
     protected void enableMock() {
         if (mMockFactory == null) {
-            mMockFactory = new MockConnectionFactory(getContext());
+            mMockFactory = new MockConnectionFactory(getTargetContext());
         }
         mOldFactory = ObaApi.getDefaultContext().setConnectionFactory(mMockFactory);
     }

@@ -15,37 +15,48 @@
  */
 package org.onebusaway.android.io.test;
 
+import android.content.Context;
+import android.net.Uri;
+
+import org.junit.Test;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.request.ObaResponse;
 import org.onebusaway.android.io.request.ObaStopRequest;
 import org.onebusaway.android.io.request.ObaStopResponse;
 import org.onebusaway.android.io.request.RequestBase;
 
-import android.content.Context;
-import android.net.Uri;
-
 import java.util.concurrent.Callable;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+
+/**
+ * Tests requests and failure conditions parsing JSON responses from /res/raw for the OBA server API
+ */
 public class FailTest extends ObaTestCase {
 
+    @Test
     public void test404_1() {
-        ObaStopResponse response = ObaStopRequest.newRequest(getContext(), "404test").call();
+        ObaStopResponse response = ObaStopRequest.newRequest(getTargetContext(), "404test").call();
         assertNotNull(response);
         // Right now this is what is in the test response...
         assertEquals(ObaApi.OBA_INTERNAL_ERROR, response.getCode());
     }
 
     // This is a real 404
+    @Test
     public void test404_2() {
         BadResponse response =
-                new BadRequest.Builder(getContext(), "/foo/1_29261.json").build().call();
+                new BadRequest.Builder(getTargetContext(), "/foo/1_29261.json").build().call();
         assertNotNull(response);
         assertEquals(ObaApi.OBA_NOT_FOUND, response.getCode());
     }
 
+    @Test
     public void testBadJson() {
         BadResponse response =
-                new BadRequest.Builder(getContext(), "/stop/1_29261.xml").build().call();
+                new BadRequest.Builder(getTargetContext(), "/stop/1_29261.xml").build().call();
         assertNotNull(response);
         assertEquals(ObaApi.OBA_INTERNAL_ERROR, response.getCode());
     }
@@ -80,5 +91,4 @@ public class FailTest extends ObaTestCase {
             }
         }
     }
-
 }

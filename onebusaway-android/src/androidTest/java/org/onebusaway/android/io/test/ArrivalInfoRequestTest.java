@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.io.test;
 
+import org.junit.Test;
 import org.onebusaway.android.UriAssert;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaAgency;
@@ -32,18 +33,30 @@ import org.onebusaway.android.util.UIUtils;
 import java.util.HashMap;
 import java.util.List;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
+
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to get arrival times for a specific stop
+ */
 @SuppressWarnings("serial")
 public class ArrivalInfoRequestTest extends ObaTestCase {
 
+    @Test
     public void testKCMStopRequestUsingCustomUrl() {
         // Test by setting URL directly
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
         _assertKCMStopRequest();
     }
 
+    @Test
     public void testKCMStopRequestUsingRegion() {
         // Test by setting region
-        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        ObaRegion ps = MockRegion.getPugetSound(getTargetContext());
         assertNotNull(ps);
         Application.get().setCurrentRegion(ps);
         _assertKCMStopRequest();
@@ -51,7 +64,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
 
     private void _assertKCMStopRequest() {
         ObaArrivalInfoRequest.Builder builder =
-                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261");
+                new ObaArrivalInfoRequest.Builder(getTargetContext(), "1_29261");
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
                 "http://api.pugetsound.onebusaway.org/api/where/arrivals-and-departures-for-stop/1_29261.json",
@@ -63,15 +76,17 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testHARTStopRequestUsingCustomUrl() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
         _assertHARTStopRequest();
     }
 
+    @Test
     public void testHARTStopRequestUsingRegion() {
         // Test by setting region
-        ObaRegion tampa = MockRegion.getTampa(getContext());
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
         _assertHARTStopRequest();
@@ -79,7 +94,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
 
     private void _assertHARTStopRequest() {
         ObaArrivalInfoRequest.Builder builder =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_3105");
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
@@ -92,15 +107,17 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         );
     }
 
-    public void testKCMStopResponseUsingCustomUrl() throws Exception {
+    @Test
+    public void testKCMStopResponseUsingCustomUrl() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
         _assertKCMStopResponse();
     }
 
-    public void testKCMStopResponseUsingRegion() throws Exception {
+    @Test
+    public void testKCMStopResponseUsingRegion() {
         // Test by setting region
-        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        ObaRegion ps = MockRegion.getPugetSound(getTargetContext());
         assertNotNull(ps);
         Application.get().setCurrentRegion(ps);
         _assertKCMStopResponse();
@@ -108,7 +125,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
 
     private void _assertKCMStopResponse() {
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261").build().call();
+                new ObaArrivalInfoRequest.Builder(getTargetContext(), "1_29261").build().call();
         assertOK(response);
         ObaStop stop = response.getStop();
         assertNotNull(stop);
@@ -126,15 +143,17 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertTrue(nearbyStops.size() > 0);
     }
 
-    public void testHARTStopResponseUsingCustomUrl() throws Exception {
+    @Test
+    public void testHARTStopResponseUsingCustomUrl() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
         _assertHARTStopResponse();
     }
 
-    public void testHARTStopResponseUsingRegion() throws Exception {
+    @Test
+    public void testHARTStopResponseUsingRegion() {
         // Test by setting region
-        ObaRegion tampa = MockRegion.getTampa(getContext());
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
         _assertHARTStopResponse();
@@ -142,7 +161,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
 
     private void _assertHARTStopResponse() {
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_3105").build().call();
         assertOK(response);
         ObaStop stop = response.getStop();
@@ -164,7 +183,8 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertTrue(nearbyStops.size() > 0);
     }
 
-    public void testTotalStopsInTrip() throws Exception {
+    @Test
+    public void testTotalStopsInTrip() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
 
@@ -174,7 +194,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
          * the OBA Tampa server after it started supporting the field.
          */
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_10000").build().call();
         assertOK(response);
 
@@ -193,7 +213,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
          * Now test with a response from a server that doesn't support the "totalStopsInTrip" field.
          * In this case, it's a response from the OBA Tampa server prior to supporting the field.
          */
-        response = new ObaArrivalInfoRequest.Builder(getContext(),
+        response = new ObaArrivalInfoRequest.Builder(getTargetContext(),
                 "Hillsborough Area Regional Transit_6497").build().call();
         assertOK(response);
 
@@ -203,15 +223,17 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertEquals(0, arrivals[2].getTotalStopsInTrip());
     }
 
-    public void testNewRequestUsingCustomUrl() throws Exception {
+    @Test
+    public void testNewRequestUsingCustomUrl() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
         _assertNewRequest();
     }
 
-    public void testNewRequestUsingRegion() throws Exception {
+    @Test
+    public void testNewRequestUsingRegion() {
         // Test by setting region
-        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        ObaRegion ps = MockRegion.getPugetSound(getTargetContext());
         assertNotNull(ps);
         Application.get().setCurrentRegion(ps);
         _assertNewRequest();
@@ -219,7 +241,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
 
     private void _assertNewRequest() {
         // This is just to make sure we copy and call newRequest() at least once
-        ObaArrivalInfoRequest request = ObaArrivalInfoRequest.newRequest(getContext(), "1_10");
+        ObaArrivalInfoRequest request = ObaArrivalInfoRequest.newRequest(getTargetContext(), "1_10");
         assertNotNull(request);
         UriAssert.assertUriMatch(
                 "http://api.pugetsound.onebusaway.org/api/where/arrivals-and-departures-for-stop/1_10.json",
@@ -231,11 +253,12 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         );
     }
 
-    public void testStopSituationPsta() throws Exception {
+    @Test
+    public void testStopSituationPsta() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(), "PSTA_4077").build().call();
+                new ObaArrivalInfoRequest.Builder(getTargetContext(), "PSTA_4077").build().call();
         assertOK(response);
         List<ObaSituation> situations = response.getSituations();
         assertNotNull(situations);
@@ -289,11 +312,12 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
     /**
      * Test stop-specific service alerts
      */
-    public void testStopSituationDart() throws Exception {
+    @Test
+    public void testStopSituationDart() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("dart.onebusaway.org/api");
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(), "DART_4041").build().call();
+                new ObaArrivalInfoRequest.Builder(getTargetContext(), "DART_4041").build().call();
         assertOK(response);
         List<ObaSituation> situations = response.getSituations();
         assertNotNull(situations);
@@ -353,11 +377,12 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
      *
      * @throws Exception
      */
-    public void testRouteSituationSdmts() throws Exception {
+    @Test
+    public void testRouteSituationSdmts() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("sdmts.onebusway.org/api");
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(), "MTS_11670").build().call();
+                new ObaArrivalInfoRequest.Builder(getTargetContext(), "MTS_11670").build().call();
         assertOK(response);
         List<ObaSituation> situations = response.getSituations();
         assertNotNull(situations);

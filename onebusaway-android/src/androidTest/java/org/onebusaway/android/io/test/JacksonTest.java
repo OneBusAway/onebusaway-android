@@ -15,18 +15,26 @@
  */
 package org.onebusaway.android.io.test;
 
+import android.util.Log;
+
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import org.junit.Test;
 import org.onebusaway.android.io.JacksonSerializer;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.request.ObaResponse;
 import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
 import org.onebusaway.android.mock.Resources;
 
-import android.util.Log;
-
 import java.io.Reader;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+
+/**
+ * Tests use of the Jackson library for parsing JSON related to OBA
+ */
 public class JacksonTest extends ObaTestCase {
 
     private static final int mCode = 47421;
@@ -35,6 +43,7 @@ public class JacksonTest extends ObaTestCase {
 
     protected JacksonSerializer mSerializer;
 
+    @Test
     public void testPrimitive() {
         mSerializer = (JacksonSerializer) JacksonSerializer.getInstance();
         String test = mSerializer.toJson("abc");
@@ -44,6 +53,7 @@ public class JacksonTest extends ObaTestCase {
         assertEquals("\"a\\\\b\\\\c\"", test);
     }
 
+    @Test
     public void testError() {
         mSerializer = (JacksonSerializer) JacksonSerializer.getInstance();
         ObaResponse response = mSerializer.createFromError(ObaResponse.class, mCode, mErrText);
@@ -51,6 +61,7 @@ public class JacksonTest extends ObaTestCase {
         assertEquals(mErrText, response.getText());
     }
 
+    @Test
     public void testSerialization() {
         mSerializer = (JacksonSerializer) JacksonSerializer.getInstance();
         String errJson = mSerializer.serialize(new MockResponse());
@@ -61,9 +72,10 @@ public class JacksonTest extends ObaTestCase {
         assertEquals(expected, errJson);
     }
 
+    @Test
     public void testStopsForLocation() throws Exception {
         Reader reader = Resources
-                .read(getContext(), Resources.getTestUri("stops_for_location_downtown_seattle"));
+                .read(getTargetContext(), Resources.getTestUri("stops_for_location_downtown_seattle"));
         ObaApi.SerializationHandler serializer = ObaApi
                 .getSerializer(ObaStopsForLocationResponse.class);
         ObaStopsForLocationResponse response = serializer

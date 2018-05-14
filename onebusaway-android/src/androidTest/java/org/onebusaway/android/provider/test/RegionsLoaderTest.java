@@ -15,16 +15,45 @@
  */
 package org.onebusaway.android.provider.test;
 
+import org.junit.Test;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.test.ObaLoaderTestCase;
 import org.onebusaway.android.util.RegionUtils;
 
 import java.util.ArrayList;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+
+/**
+ * Tests loading regions
+ */
 public class RegionsLoaderTest extends ObaLoaderTestCase {
 
+    @Test
+    public void testLoader() throws InterruptedException {
+        // Load regions from resources
+        ArrayList<ObaRegion> regionsFromResources = RegionUtils
+                .getRegionsFromResources(getTargetContext());
+
+        // Save to provider
+        RegionUtils.saveToProvider(getTargetContext(), regionsFromResources);
+
+        // Retrieve from provider
+        ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromProvider(getTargetContext());
+        assertNotNull(regions);
+        assertEquals(7, regions.size());  // Number of production regions
+
+        // Production regions
+        _assertTampa(regions.get(0));
+        _assertPugetSound(regions.get(1));
+        _assertAtlanta(regions.get(2));
+    }
+
     private void assertBounds(ObaRegion.Bounds bound,
-            double lat, double lon, double latSpan, double lonSpan) {
+                              double lat, double lon, double latSpan, double lonSpan) {
         assertEquals(lat, bound.getLat());
         assertEquals(lon, bound.getLon());
         assertEquals(latSpan, bound.getLatSpan());
@@ -100,24 +129,4 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
                 0.006806584025866869,
                 0.035245473959491846);
     }
-
-    public void testLoader() throws InterruptedException {
-        // Load regions from resources
-        ArrayList<ObaRegion> regionsFromResources = RegionUtils
-                .getRegionsFromResources(getContext());
-
-        // Save to provider
-        RegionUtils.saveToProvider(getContext(), regionsFromResources);
-
-        // Retrieve from provider
-        ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromProvider(getContext());
-        assertNotNull(regions);
-        assertEquals(7, regions.size());  // Number of production regions
-
-        // Production regions
-        _assertTampa(regions.get(0));
-        _assertPugetSound(regions.get(1));
-        _assertAtlanta(regions.get(2));
-    }
-
 }

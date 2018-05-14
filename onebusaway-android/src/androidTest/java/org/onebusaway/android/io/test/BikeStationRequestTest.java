@@ -15,20 +15,27 @@
  */
 package org.onebusaway.android.io.test;
 
+import org.junit.Test;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.request.bike.OtpBikeStationRequest;
 import org.onebusaway.android.io.request.bike.OtpBikeStationResponse;
 import org.onebusaway.android.mock.MockRegion;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+
 /**
- * Created by carvalhorr on 7/14/17.
+ * Tests requests and parsing JSON responses from /res/raw for the OTP server API
+ * to get bikeshare information
  */
 public class BikeStationRequestTest extends ObaTestCase {
 
+    @Test
     public void testGetBikeStationsTampa() {
-        Application.get().setCurrentRegion(MockRegion.getTampa(getContext()), false);
-        OtpBikeStationRequest request = OtpBikeStationRequest.newRequest(getContext(), null, null);
+        Application.get().setCurrentRegion(MockRegion.getTampa(getTargetContext()), false);
+        OtpBikeStationRequest request = OtpBikeStationRequest.newRequest(getTargetContext(), null, null);
         OtpBikeStationResponse response = request.call();
         assertNotNull(response);
         assertNotNull(response.stations);
@@ -36,9 +43,7 @@ public class BikeStationRequestTest extends ObaTestCase {
         for (BikeRentalStation station: response.stations) {
             assertNotNull(station.name);
         }
-
         assertFirstStationIsCorrect(response.stations.get(0));
-
     }
 
     private void assertFirstStationIsCorrect(BikeRentalStation station) {
@@ -53,5 +58,4 @@ public class BikeStationRequestTest extends ObaTestCase {
         assertEquals(true, station.isFloatingBike);
         assertEquals(true, station.realTimeData);
     }
-
 }

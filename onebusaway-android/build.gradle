@@ -43,7 +43,7 @@ repositories {
 ext {
     compileSdkVersion = 27
     // supportLibVersion must have the same major version number as compileSdkVersion
-    supportLibVersion = "27.0.2"
+    supportLibVersion = "27.1.1"
     playServicesVersion = "11.8.0"
 }
 
@@ -61,6 +61,13 @@ android {
         versionName "2.3.5"
 
         multiDexEnabled true
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        // The following argument makes the Android Test Orchestrator run its
+        // "pm clear" command after each test invocation. This command ensures
+        // that the app's state is completely cleared between tests.
+        testInstrumentationRunnerArguments clearPackageData: 'true'
     }
 
     /**
@@ -286,6 +293,16 @@ android {
             }
         }
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    testOptions {
+        execution 'ANDROID_TEST_ORCHESTRATOR'
+        unitTests.includeAndroidResources true
+    }
 }
 
 /**
@@ -425,6 +442,9 @@ dependencies {
     }
     // Required to support multidex for minSdkVersion <= 20
     implementation 'com.android.support:multidex:1.0.3'
+    // Unit tests
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestUtil 'com.android.support.test:orchestrator:1.0.2'
 }
 
 // Dependencies not directly used in this project, but used by dependencies that we are using

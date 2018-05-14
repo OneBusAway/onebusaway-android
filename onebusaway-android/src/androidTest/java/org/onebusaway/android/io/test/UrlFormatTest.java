@@ -16,6 +16,7 @@
 
 package org.onebusaway.android.io.test;
 
+import org.junit.Test;
 import org.onebusaway.android.UriAssert;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
@@ -28,29 +29,34 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.fail;
+
 /**
  * Tests various URL formats to ensure URI building/encoding is correct
  */
 public class UrlFormatTest extends ObaTestCase {
 
+    @Test
     public void testBasicUrlUsingCustomUrl() {
         /*
         Puget Sound fits this profile (i.e., http://api.pugetsound.onebusaway.org),
         so use Puget Sound base URL
         */
-        ObaRegion region = MockRegion.getPugetSound(getContext());
+        ObaRegion region = MockRegion.getPugetSound(getTargetContext());
 
         // Test by setting API directly
         Application.get().setCustomApiUrl(region.getObaBaseUrl());
         _assertBasicUrl();
     }
 
+    @Test
     public void testBasicUrlUsingRegion() {
         /*
         Puget Sound fits this profile (i.e., http://api.pugetsound.onebusaway.org),
         so use Puget Sound base URL
         */
-        ObaRegion region = MockRegion.getPugetSound(getContext());
+        ObaRegion region = MockRegion.getPugetSound(getTargetContext());
 
         // Test by setting region
         Application.get().setCurrentRegion(region);
@@ -59,7 +65,7 @@ public class UrlFormatTest extends ObaTestCase {
 
     private void _assertBasicUrl() {
         ObaArrivalInfoRequest.Builder builder =
-                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261");
+                new ObaArrivalInfoRequest.Builder(getTargetContext(), "1_29261");
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
                 "http://api.pugetsound.onebusaway.org/api/where/arrivals-and-departures-for-stop/1_29261.json",
@@ -71,18 +77,20 @@ public class UrlFormatTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testUrlWithSpacesUsingCustomUrl() {
         // Tampa fits this profile, so use Tampa URL
-        ObaRegion region = MockRegion.getTampa(getContext());
+        ObaRegion region = MockRegion.getTampa(getTargetContext());
 
         // Test by setting API directly
         Application.get().setCustomApiUrl(region.getObaBaseUrl());
         _assertUrlWithSpaces();
     }
 
+    @Test
     public void testUrlWithSpacesUsingRegion() {
         // Tampa fits this profile, so use Tampa URL
-        ObaRegion region = MockRegion.getTampa(getContext());
+        ObaRegion region = MockRegion.getTampa(getTargetContext());
 
         // Test by setting region
         Application.get().setCurrentRegion(region);
@@ -92,7 +100,7 @@ public class UrlFormatTest extends ObaTestCase {
     private void _assertUrlWithSpaces() {
         // Spaces are included in agency name
         ObaArrivalInfoRequest.Builder builder =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_3105");
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
@@ -105,18 +113,20 @@ public class UrlFormatTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testUrlWithPathAndSeparatorUsingCustomUrl() {
         // Tampa fits this profile, so use Tampa URL
-        ObaRegion region = MockRegion.getTampa(getContext());
+        ObaRegion region = MockRegion.getTampa(getTargetContext());
 
         // Test by setting API directly
         Application.get().setCustomApiUrl(region.getObaBaseUrl());
         _assertUrlWithPathAndSeparator();
     }
 
+    @Test
     public void testUrlWithPathAndSeparatorUsingRegion() {
         // Tampa fits this profile, so use Tampa URL
-        ObaRegion region = MockRegion.getTampa(getContext());
+        ObaRegion region = MockRegion.getTampa(getTargetContext());
 
         // Test by setting region
         Application.get().setCurrentRegion(region);
@@ -125,7 +135,7 @@ public class UrlFormatTest extends ObaTestCase {
 
     private void _assertUrlWithPathAndSeparator() {
         ObaArrivalInfoRequest.Builder builder =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_3105");
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
@@ -138,16 +148,18 @@ public class UrlFormatTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testUrlWithPathNoSeparatorUsingCustomUrl() {
-        ObaRegion region = MockRegion.getRegionWithPathNoSeparator(getContext());
+        ObaRegion region = MockRegion.getRegionWithPathNoSeparator(getTargetContext());
 
         // Test by setting API directly
         Application.get().setCustomApiUrl(region.getObaBaseUrl());
         _assertUrlWithPathNoSeparator();
     }
 
+    @Test
     public void testUrlWithPathNoSeparatorUsingRegion() {
-        ObaRegion region = MockRegion.getRegionWithPathNoSeparator(getContext());
+        ObaRegion region = MockRegion.getRegionWithPathNoSeparator(getTargetContext());
 
         // Test by setting region
         Application.get().setCurrentRegion(region);
@@ -156,7 +168,7 @@ public class UrlFormatTest extends ObaTestCase {
 
     private void _assertUrlWithPathNoSeparator() {
         ObaArrivalInfoRequest.Builder builder =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_3105");
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
@@ -169,16 +181,18 @@ public class UrlFormatTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testUrlNoSeparatorUsingCustomUrl() {
-        ObaRegion region = MockRegion.getRegionNoSeparator(getContext());
+        ObaRegion region = MockRegion.getRegionNoSeparator(getTargetContext());
 
         // Test by setting API directly
         Application.get().setCustomApiUrl(region.getObaBaseUrl());
         _assertUrlNoSeparator();
     }
 
+    @Test
     public void testUrlNoSeparatorUsingRegion() {
-        ObaRegion region = MockRegion.getRegionNoSeparator(getContext());
+        ObaRegion region = MockRegion.getRegionNoSeparator(getTargetContext());
 
         // Test by setting region
         Application.get().setCurrentRegion(region);
@@ -187,7 +201,7 @@ public class UrlFormatTest extends ObaTestCase {
 
     private void _assertUrlNoSeparator() {
         ObaArrivalInfoRequest.Builder builder =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "1_29261");
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
@@ -200,16 +214,18 @@ public class UrlFormatTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testUrlWithPortUsingCustomUrl() {
-        ObaRegion region = MockRegion.getRegionWithPort(getContext());
+        ObaRegion region = MockRegion.getRegionWithPort(getTargetContext());
 
         // Test by setting API directly
         Application.get().setCustomApiUrl(region.getObaBaseUrl());
         _assertUrlWithPort();
     }
 
+    @Test
     public void testUrlWithPortUsingRegion() {
-        ObaRegion region = MockRegion.getRegionWithPort(getContext());
+        ObaRegion region = MockRegion.getRegionWithPort(getTargetContext());
 
         // Test by setting region
         Application.get().setCurrentRegion(region);
@@ -218,7 +234,7 @@ public class UrlFormatTest extends ObaTestCase {
 
     private void _assertUrlWithPort() {
         ObaArrivalInfoRequest.Builder builder =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_3105");
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
@@ -231,8 +247,9 @@ public class UrlFormatTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testUrlNoSchemeUsingCustomUrl() {
-        ObaRegion region = MockRegion.getRegionNoScheme(getContext());
+        ObaRegion region = MockRegion.getRegionNoScheme(getTargetContext());
 
         // Test by setting API directly
         Application.get().setCustomApiUrl(region.getObaBaseUrl());
@@ -246,7 +263,7 @@ public class UrlFormatTest extends ObaTestCase {
 
     private void _assertUrlNoScheme() {
         ObaArrivalInfoRequest.Builder builder =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_3105");
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
@@ -259,6 +276,7 @@ public class UrlFormatTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testHttps() {
         ObaRegion region = MockRegion.getRegionWithHttps();
 
@@ -269,7 +287,7 @@ public class UrlFormatTest extends ObaTestCase {
 
     private void _assertUrlHttps() {
         ObaArrivalInfoRequest.Builder builder =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_3105");
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
@@ -282,6 +300,7 @@ public class UrlFormatTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testHttpsAndPort() {
         ObaRegion region = MockRegion.getRegionWithHttpsAndPort();
 
@@ -292,7 +311,7 @@ public class UrlFormatTest extends ObaTestCase {
 
     private void _assertUrlHttpsWithPort() {
         ObaArrivalInfoRequest.Builder builder =
-                new ObaArrivalInfoRequest.Builder(getContext(),
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
                         "Hillsborough Area Regional Transit_3105");
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
@@ -305,9 +324,10 @@ public class UrlFormatTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testRegionBaseUrls() {
         // Checks all bundled region base URLs to make sure they are real URLs
-        ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromResources(getContext());
+        ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromResources(getTargetContext());
         for (ObaRegion r : regions) {
             try {
                 URL url = new URL(r.getObaBaseUrl());
@@ -317,9 +337,10 @@ public class UrlFormatTest extends ObaTestCase {
         }
     }
 
+    @Test
     public void testRegionTwitterUrls() {
         // Checks all bundled region Twitter URLs to make sure they are real URLs
-        ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromResources(getContext());
+        ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromResources(getTargetContext());
         for (ObaRegion r : regions) {
             try {
                 if (r.getTwitterUrl() != null && !r.getTwitterUrl().isEmpty()) {

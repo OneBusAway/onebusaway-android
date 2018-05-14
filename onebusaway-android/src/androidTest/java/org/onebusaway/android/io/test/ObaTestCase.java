@@ -15,16 +15,26 @@
  */
 package org.onebusaway.android.io.test;
 
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.request.ObaResponse;
-import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.mock.ObaMock;
 
-import android.test.AndroidTestCase;
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 
-public class ObaTestCase extends AndroidTestCase {
+/**
+ * Base test class extended for most OBA unit tests
+ */
+@RunWith(AndroidJUnit4.class)
+public class ObaTestCase {
 
     private ObaMock mMock;
 
@@ -33,12 +43,12 @@ public class ObaTestCase extends AndroidTestCase {
         assertEquals(ObaApi.OBA_OK, response.getCode());
     }
 
-    @Override
-    protected void setUp() {
+    @Before
+    public void before() {
         // The theme needs to be set when using "attr/?" elements - see #279
-        mContext.setTheme(R.style.Theme_OneBusAway);
+        getTargetContext().setTheme(R.style.Theme_OneBusAway);
 
-        mMock = new ObaMock(getContext());
+        mMock = new ObaMock(getTargetContext());
 
         /*
          * Assume Puget Sound API, mainly for backwards compatibility with older tests
@@ -48,8 +58,8 @@ public class ObaTestCase extends AndroidTestCase {
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
     }
 
-    @Override
-    protected void tearDown() {
+    @After
+    public void after() {
         mMock.finish();
     }
 }

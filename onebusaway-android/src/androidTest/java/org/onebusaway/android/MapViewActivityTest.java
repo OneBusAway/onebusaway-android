@@ -62,7 +62,7 @@ public class MapViewActivityTest extends
         // Send a key? Wait for our location?
         // setActivityInitialTouchMode(false);
         Instrumentation instr = getInstrumentation();
-        setActivityIntent(MapViewActivity.makeIntent(instr.getContext(),
+        setActivityIntent(MapViewActivity.makeIntent(instr.getTargetContext(),
                 null,
                 47.610980,
                 -122.33845));
@@ -79,7 +79,7 @@ public class MapViewActivityTest extends
 
     public void testRouteMode() throws InterruptedException {
         Instrumentation instr = getInstrumentation();
-        setActivityIntent(MapViewActivity.makeIntent(instr.getContext(), "1_49"));
+        setActivityIntent(MapViewActivity.makeIntent(instr.getTargetContext(), "1_49"));
         mActivity = getActivity();
         assertNotNull(mActivity);
         waitForStops(new WaitForStopsListener() {

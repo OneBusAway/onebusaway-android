@@ -40,8 +40,8 @@ public class ArrivalsListActivityTest extends
     @Override
     protected void setUp() throws InterruptedException {
         Instrumentation instr = getInstrumentation();
-        mMock = new ObaMock(instr.getContext());
-        setActivityIntent(ArrivalsListActivity.makeIntent(instr.getContext(), "1_29261"));
+        mMock = new ObaMock(instr.getTargetContext());
+        setActivityIntent(ArrivalsListActivity.makeIntent(instr.getTargetContext(), "1_29261"));
         mActivity = getActivity();
     }
 
@@ -53,7 +53,7 @@ public class ArrivalsListActivityTest extends
 
     public void testStops() throws InterruptedException {
         Instrumentation instr = getInstrumentation();
-        TestHelp.waitForLoadFinished(instr.getContext());
+        TestHelp.waitForLoadFinished(instr.getTargetContext());
         Log.d(TAG, "Activity OK");
         Thread.sleep(5000);
         // TODO: Get the name of the stop

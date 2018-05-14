@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.io.test;
 
+import org.junit.Test;
 import org.onebusaway.android.UriAssert;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
@@ -25,11 +26,21 @@ import org.onebusaway.android.mock.MockRegion;
 
 import java.util.HashMap;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to get trips that belong to a particular route
+ */
 @SuppressWarnings("serial")
 public class TripsForRouteRequestTest extends ObaTestCase {
 
     protected final String TEST_ROUTE_ID = "Hillsborough Area Regional Transit_5";
 
+    @Test
     public void testHARTTripsForRouteRequest() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
@@ -37,7 +48,7 @@ public class TripsForRouteRequestTest extends ObaTestCase {
         Application.get().setCustomApiUrl(null);
 
         // Test by setting region
-        ObaRegion tampa = MockRegion.getTampa(getContext());
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
         callHARTTripsForRouteRequest();
@@ -45,7 +56,7 @@ public class TripsForRouteRequestTest extends ObaTestCase {
     }
 
     private void callHARTTripsForRouteRequest() {
-        ObaTripsForRouteRequest.Builder builder = new ObaTripsForRouteRequest.Builder(getContext(),
+        ObaTripsForRouteRequest.Builder builder = new ObaTripsForRouteRequest.Builder(getTargetContext(),
                 TEST_ROUTE_ID);
         ObaTripsForRouteRequest request = builder.build();
         UriAssert.assertUriMatch(
@@ -59,15 +70,16 @@ public class TripsForRouteRequestTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testHARTTripsForRouteResponse() throws Exception {
         // Test by setting region
-        ObaRegion tampa = MockRegion.getTampa(getContext());
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
 
         // No trip status included
         ObaTripsForRouteResponse response =
-                new ObaTripsForRouteRequest.Builder(getContext(), TEST_ROUTE_ID)
+                new ObaTripsForRouteRequest.Builder(getTargetContext(), TEST_ROUTE_ID)
                         .build()
                         .call();
         assertOK(response);
@@ -78,7 +90,7 @@ public class TripsForRouteRequestTest extends ObaTestCase {
 
         // Include vehicles status
         response =
-                new ObaTripsForRouteRequest.Builder(getContext(), TEST_ROUTE_ID)
+                new ObaTripsForRouteRequest.Builder(getTargetContext(), TEST_ROUTE_ID)
                         .setIncludeStatus(true)
                         .build()
                         .call();
@@ -100,6 +112,7 @@ public class TripsForRouteRequestTest extends ObaTestCase {
         assertEquals(0, trips[0].getStatus().getLastLocationUpdateTime());
     }
 
+    @Test
     public void testNewRequest() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
@@ -107,7 +120,7 @@ public class TripsForRouteRequestTest extends ObaTestCase {
         Application.get().setCustomApiUrl(null);
 
         // Test by setting region
-        ObaRegion tampa = MockRegion.getTampa(getContext());
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
         callNewRequest();
@@ -117,7 +130,7 @@ public class TripsForRouteRequestTest extends ObaTestCase {
     private void callNewRequest() {
         // This is just to make sure we copy and call newRequest() at least once
         ObaTripsForRouteRequest request = ObaTripsForRouteRequest
-                .newRequest(getContext(), TEST_ROUTE_ID);
+                .newRequest(getTargetContext(), TEST_ROUTE_ID);
         UriAssert.assertUriMatch(
                 "http://api.tampa.onebusaway.org/api/api/where/trips-for-route/" + TEST_ROUTE_ID
                         + ".json",

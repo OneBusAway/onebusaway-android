@@ -15,15 +15,19 @@
  */
 package org.onebusaway.android.provider.test;
 
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.provider.ObaProvider;
-
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.test.ProviderTestCase2;
 
+import org.junit.Test;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.provider.ObaProvider;
+
+/**
+ * Tests the provider that stores and reads persistent OBA data on the device
+ */
 public class ProviderTest extends ProviderTestCase2<ObaProvider> {
 
     public ProviderTest() {
@@ -95,6 +99,7 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
         assertEquals(result, 0);
     }
 
+    @Test
     public void testLimit() {
         ContentResolver cr = getMockContentResolver();
         //
@@ -138,5 +143,4 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
         assertEquals(c.getCount(), 1);
         c.close();
     }
-
 }

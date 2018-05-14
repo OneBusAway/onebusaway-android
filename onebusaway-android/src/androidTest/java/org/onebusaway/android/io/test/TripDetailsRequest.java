@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.io.test;
 
+import org.junit.Test;
 import org.onebusaway.android.UriAssert;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
@@ -27,20 +28,31 @@ import org.onebusaway.android.mock.MockRegion;
 
 import java.util.HashMap;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to get information about specific trip details
+ */
 @SuppressWarnings("serial")
 public class TripDetailsRequest extends ObaTestCase {
 
     protected final String TEST_TRIP_ID = "1_18196913";
 
+    @Test
     public void testKCMTripRequestUsingCustomUrl() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
         _assertKCMTripRequest();
     }
 
+    @Test
     public void testKCMTripRequestUsingRegion() {
         // Test by setting region
-        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        ObaRegion ps = MockRegion.getPugetSound(getTargetContext());
         assertNotNull(ps);
         Application.get().setCurrentRegion(ps);
         _assertKCMTripRequest();
@@ -48,7 +60,7 @@ public class TripDetailsRequest extends ObaTestCase {
 
     private void _assertKCMTripRequest() {
         ObaTripDetailsRequest.Builder builder =
-                new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID);
+                new ObaTripDetailsRequest.Builder(getTargetContext(), TEST_TRIP_ID);
         ObaTripDetailsRequest request = builder.build();
         UriAssert.assertUriMatch(
                 "http://api.pugetsound.onebusaway.org/api/where/trip-details/" + TEST_TRIP_ID
@@ -61,15 +73,17 @@ public class TripDetailsRequest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testKCMTripResponseUsingCustomUrl() throws Exception {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
         _assertKCMTripResponse();
     }
 
+    @Test
     public void testKCMTripResponseUsingRegion() throws Exception {
         // Test by setting region
-        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        ObaRegion ps = MockRegion.getPugetSound(getTargetContext());
         assertNotNull(ps);
         Application.get().setCurrentRegion(ps);
         _assertKCMTripResponse();
@@ -77,7 +91,7 @@ public class TripDetailsRequest extends ObaTestCase {
 
     private void _assertKCMTripResponse() {
         ObaTripDetailsResponse response =
-                new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
+                new ObaTripDetailsRequest.Builder(getTargetContext(), TEST_TRIP_ID)
                         .build()
                         .call();
         assertOK(response);
@@ -94,22 +108,24 @@ public class TripDetailsRequest extends ObaTestCase {
         assertNotNull(trip);
     }
 
+    @Test
     public void testNoTripsRequestUsingCustomUrl() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
         _assertNoTripsRequest();
     }
 
+    @Test
     public void testNoTripsRequestUsingRegion() {
         // Test by setting region
-        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        ObaRegion ps = MockRegion.getPugetSound(getTargetContext());
         assertNotNull(ps);
         Application.get().setCurrentRegion(ps);
         _assertNoTripsRequest();
     }
 
     private void _assertNoTripsRequest() {
-        ObaTripDetailsRequest request = new ObaTripDetailsRequest.Builder(getContext(),
+        ObaTripDetailsRequest request = new ObaTripDetailsRequest.Builder(getTargetContext(),
                 TEST_TRIP_ID)
                 .setIncludeTrip(false)
                 .build();
@@ -126,9 +142,10 @@ public class TripDetailsRequest extends ObaTestCase {
     }
 
     // TODO: API response includes the trip anyway
+    @Test
     public void testNoTripsResponse() throws Exception {
         ObaTripDetailsResponse response =
-                new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
+                new ObaTripDetailsRequest.Builder(getTargetContext(), TEST_TRIP_ID)
                         .setIncludeTrip(false)
                         .build()
                         .call();
@@ -139,22 +156,24 @@ public class TripDetailsRequest extends ObaTestCase {
         assertNull("Expected failure / TODO: report as API bug?", trip);
     }
 
+    @Test
     public void testNoScheduleRequestUsingCustomUrl() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
         _assertNoScheduleRequest();
     }
 
+    @Test
     public void testNoScheduleRequestUsingRegion() {
         // Test by setting region
-        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        ObaRegion ps = MockRegion.getPugetSound(getTargetContext());
         assertNotNull(ps);
         Application.get().setCurrentRegion(ps);
         _assertNoScheduleRequest();
     }
 
     private void _assertNoScheduleRequest() {
-        ObaTripDetailsRequest request = new ObaTripDetailsRequest.Builder(getContext(),
+        ObaTripDetailsRequest request = new ObaTripDetailsRequest.Builder(getTargetContext(),
                 TEST_TRIP_ID)
                 .setIncludeSchedule(false)
                 .build();
@@ -170,9 +189,10 @@ public class TripDetailsRequest extends ObaTestCase {
         );
     }
 
-    public void testNoScheduleResponse() throws Exception {
+    @Test
+    public void testNoScheduleResponse() {
         ObaTripDetailsResponse response =
-                new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
+                new ObaTripDetailsRequest.Builder(getTargetContext(), TEST_TRIP_ID)
                         .setIncludeSchedule(false)
                         .build()
                         .call();
@@ -183,15 +203,17 @@ public class TripDetailsRequest extends ObaTestCase {
         assertNull(schedule);
     }
 
+    @Test
     public void testNoStatusRequestUsingCustomUrl() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
         _assertNoStatusRequest();
     }
 
+    @Test
     public void testNoStatusRequestUsingRegion() {
         // Test by setting region
-        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        ObaRegion ps = MockRegion.getPugetSound(getTargetContext());
         assertNotNull(ps);
         Application.get().setCurrentRegion(ps);
         _assertNoStatusRequest();
@@ -199,7 +221,7 @@ public class TripDetailsRequest extends ObaTestCase {
 
     private void _assertNoStatusRequest() {
         ObaTripDetailsRequest request =
-                new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
+                new ObaTripDetailsRequest.Builder(getTargetContext(), TEST_TRIP_ID)
                         .setIncludeStatus(false)
                         .build();
         UriAssert.assertUriMatch(
@@ -214,9 +236,10 @@ public class TripDetailsRequest extends ObaTestCase {
         );
     }
 
-    public void testNoStatus() throws Exception {
+    @Test
+    public void testNoStatus() {
         ObaTripDetailsResponse response =
-                new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
+                new ObaTripDetailsRequest.Builder(getTargetContext(), TEST_TRIP_ID)
                         .setIncludeStatus(false)
                         .build()
                         .call();
@@ -227,15 +250,17 @@ public class TripDetailsRequest extends ObaTestCase {
         assertNull(status);
     }
 
+    @Test
     public void testNewRequestUsingCustomUrl() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
         _assertNewRequest();
     }
 
+    @Test
     public void testNewRequestUsingRegion() {
         // Test by setting region
-        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        ObaRegion ps = MockRegion.getPugetSound(getTargetContext());
         assertNotNull(ps);
         Application.get().setCurrentRegion(ps);
         _assertNewRequest();
@@ -244,7 +269,7 @@ public class TripDetailsRequest extends ObaTestCase {
     private void _assertNewRequest() {
         // This is just to make sure we copy and call newRequest() at least once
         ObaTripDetailsRequest request =
-                ObaTripDetailsRequest.newRequest(getContext(), TEST_TRIP_ID);
+                ObaTripDetailsRequest.newRequest(getTargetContext(), TEST_TRIP_ID);
         UriAssert.assertUriMatch(
                 "http://api.pugetsound.onebusaway.org/api/where/trip-details/" + TEST_TRIP_ID
                         + ".json",

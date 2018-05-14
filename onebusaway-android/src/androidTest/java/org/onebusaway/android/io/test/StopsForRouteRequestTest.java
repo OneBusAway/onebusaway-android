@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.io.test;
 
+import org.junit.Test;
 import org.onebusaway.android.io.elements.ObaShape;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.elements.ObaStopGrouping;
@@ -23,11 +24,21 @@ import org.onebusaway.android.io.request.ObaStopsForRouteResponse;
 
 import java.util.List;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to get stops served by a specific route
+ */
 public class StopsForRouteRequestTest extends ObaTestCase {
 
+    @Test
     public void testKCMRoute() {
         ObaStopsForRouteRequest.Builder builder =
-                new ObaStopsForRouteRequest.Builder(getContext(), "1_44");
+                new ObaStopsForRouteRequest.Builder(getTargetContext(), "1_44");
         ObaStopsForRouteRequest request = builder.build();
         ObaStopsForRouteResponse response = request.call();
         assertOK(response);
@@ -45,9 +56,10 @@ public class StopsForRouteRequestTest extends ObaTestCase {
         assertTrue(shapes.length > 0);
     }
 
+    @Test
     public void testNoShapes() {
         ObaStopsForRouteResponse response =
-                new ObaStopsForRouteRequest.Builder(getContext(), "1_44")
+                new ObaStopsForRouteRequest.Builder(getTargetContext(), "1_44")
                         .setIncludeShapes(false)
                         .build()
                         .call();

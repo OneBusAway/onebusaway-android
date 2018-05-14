@@ -15,12 +15,20 @@
  */
 package org.onebusaway.android.util.test;
 
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.onebusaway.android.util.MyTextUtils;
 
-import android.test.AndroidTestCase;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
 
-public class MyTextUtilsTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MyTextUtilsTest {
 
+    @Test
     public void testTitleCase() {
         assertEquals(null, MyTextUtils.toTitleCase(null));
         assertEquals("E John St & 13th Ave E", MyTextUtils.toTitleCase("E JOHN ST & 13th AVE E"));
@@ -28,6 +36,7 @@ public class MyTextUtilsTest extends AndroidTestCase {
         assertEquals("Seattle", MyTextUtils.toTitleCase("Seattle"));
     }
 
+    @Test
     public void testSentenceCase() {
         assertEquals("Testing sentence case", MyTextUtils.toSentenceCase("Testing sentence case"));
         assertEquals("Testing sentence case again",
@@ -36,6 +45,7 @@ public class MyTextUtilsTest extends AndroidTestCase {
         assertEquals("Another test", MyTextUtils.toSentenceCase("Another TEST"));
     }
 
+    @Test
     public void testIsAllCaps() {
         assertTrue(MyTextUtils.isAllCaps("THIS IS ALL CAPS"));
         assertFalse(MyTextUtils.isAllCaps("THIS IS not ALL CAPS"));

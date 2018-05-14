@@ -15,17 +15,26 @@
  */
 package org.onebusaway.android.io.test;
 
+import org.junit.Test;
 import org.onebusaway.android.io.elements.ObaAgency;
 import org.onebusaway.android.io.elements.ObaAgencyWithCoverage;
 import org.onebusaway.android.io.request.ObaAgenciesWithCoverageRequest;
 import org.onebusaway.android.io.request.ObaAgenciesWithCoverageResponse;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
 
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to get transit agencies that are included in the OBA server
+ */
 public class AgenciesWithCoverageTest extends ObaTestCase {
 
+    @Test
     public void testRequest() {
         ObaAgenciesWithCoverageRequest request =
-                ObaAgenciesWithCoverageRequest.newRequest(getContext());
+                ObaAgenciesWithCoverageRequest.newRequest(getTargetContext());
         ObaAgenciesWithCoverageResponse response = request.call();
         assertOK(response);
         final ObaAgencyWithCoverage[] list = response.getAgencies();
@@ -36,9 +45,10 @@ public class AgenciesWithCoverageTest extends ObaTestCase {
         }
     }
 
+    @Test
     public void testBuilder() {
         ObaAgenciesWithCoverageRequest.Builder builder =
-                new ObaAgenciesWithCoverageRequest.Builder(getContext());
+                new ObaAgenciesWithCoverageRequest.Builder(getTargetContext());
         ObaAgenciesWithCoverageRequest request = builder.build();
         assertNotNull(request);
     }

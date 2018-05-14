@@ -15,20 +15,30 @@
  */
 package org.onebusaway.android.io.test;
 
+import android.test.MoreAsserts;
+
+import org.junit.Test;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaStopRequest;
 import org.onebusaway.android.io.request.ObaStopResponse;
 
-import android.test.MoreAsserts;
-
 import java.util.Arrays;
 import java.util.List;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to get information about a specific stop given it's ID
+ */
 public class StopRequestTest extends ObaTestCase {
 
+    @Test
     public void testKCMStop() {
-        ObaStopRequest.Builder builder = new ObaStopRequest.Builder(getContext(), "1_29261");
+        ObaStopRequest.Builder builder = new ObaStopRequest.Builder(getTargetContext(), "1_29261");
         ObaStopRequest request = builder.build();
         ObaStopResponse response = request.call();
         assertOK(response);
@@ -44,9 +54,10 @@ public class StopRequestTest extends ObaTestCase {
         assertEquals(routes.size(), routeIds.length);
     }
 
+    @Test
     public void testNewRequest() {
         // This is just to make sure we copy and call newRequest() at least once
-        ObaStopRequest request = ObaStopRequest.newRequest(getContext(), "1_29261");
+        ObaStopRequest request = ObaStopRequest.newRequest(getTargetContext(), "1_29261");
         assertNotNull(request);
     }
 }

@@ -84,7 +84,6 @@ import android.view.Window;
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -1203,8 +1202,8 @@ public class HomeActivity extends AppCompatActivity
             mFocusedStopId = null;
             moveFabsLocation();
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-            if (mArrivalsListFragment != null) {
-                FragmentManager fm = getSupportFragmentManager();
+            FragmentManager fm = getSupportFragmentManager();
+            if (mArrivalsListFragment != null && !fm.isStateSaved()) {
                 fm.beginTransaction().remove(mArrivalsListFragment).commit();
             }
             mShowArrivalsMenu = false;

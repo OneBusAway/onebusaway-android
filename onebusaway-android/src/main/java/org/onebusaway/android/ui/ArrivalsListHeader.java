@@ -666,6 +666,9 @@ class ArrivalsListHeader {
     }
 
     private void refreshName() {
+        if (mController == null) {
+            return;
+        }
         String name = mController.getStopName();
         String userName = mController.getUserStopName();
         String stopDirection = mController.getStopDirection();
@@ -690,6 +693,9 @@ class ArrivalsListHeader {
      * arrival info, and sets the number of arrival rows that should be displayed in the header
      */
     private void refreshArrivalInfoData() {
+        if (mController == null) {
+            return;
+        }
         mArrivalInfo = mController.getArrivalInfo();
         mHeaderArrivalInfo.clear();
 
@@ -910,6 +916,9 @@ class ArrivalsListHeader {
      * Refreshes the routes filter, and displays/hides it if necessary
      */
     private void refreshFilter() {
+        if (mController == null) {
+            return;
+        }
         TextView v = (TextView) mView.findViewById(R.id.filter_text);
         ArrayList<String> routesFilter = mController.getRoutesFilter();
         final int num = (routesFilter != null) ? routesFilter.size() : 0;
@@ -1237,6 +1246,9 @@ class ArrivalsListHeader {
     private ResponseError mResponseError = null;
 
     private void refreshError() {
+        if (mController == null) {
+            return;
+        }
         final long now = System.currentTimeMillis();
         final long responseTime = mController.getLastGoodResponseTime();
         AlertList alerts = mController.getAlertList();
@@ -1353,6 +1365,9 @@ class ArrivalsListHeader {
     }
 
     private void refreshHiddenAlerts() {
+        if (mController == null) {
+            return;
+        }
         AlertList alerts = mController.getAlertList();
         mIsAlertHidden = alerts.isAlertHidden();
 

@@ -416,7 +416,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         showProgressDialog(false);
 
         if (response.isSuccess()) {
-            mCallback.onSendReport();
+            mCallback.onReportSent();
         } else {
             String message = response.getErrorMessage();
             if (TextUtils.isEmpty(message)) {

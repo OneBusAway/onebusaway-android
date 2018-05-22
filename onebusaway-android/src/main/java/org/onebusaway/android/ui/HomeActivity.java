@@ -1182,6 +1182,11 @@ public class HomeActivity extends AppCompatActivity
                 mFocusedStopId.equalsIgnoreCase(stop.getId())) {
             return;
         }
+        FragmentManager fm = getSupportFragmentManager();
+        // If the fragment's state has already been saved, then don't change the state (return)
+        if (fm.isStateSaved()) {
+            return;
+        }
 
         mFocusedStop = stop;
 
@@ -1202,8 +1207,7 @@ public class HomeActivity extends AppCompatActivity
             mFocusedStopId = null;
             moveFabsLocation();
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-            FragmentManager fm = getSupportFragmentManager();
-            if (mArrivalsListFragment != null && !fm.isStateSaved()) {
+            if (mArrivalsListFragment != null) {
                 fm.beginTransaction().remove(mArrivalsListFragment).commit();
             }
             mShowArrivalsMenu = false;

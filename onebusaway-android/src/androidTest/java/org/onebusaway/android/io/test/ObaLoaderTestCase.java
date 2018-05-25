@@ -26,7 +26,7 @@ import static android.support.test.InstrumentationRegistry.getTargetContext;
 /**
  * Tests loading data from Loaders for OBA
  */
-public class ObaLoaderTestCase extends LoaderTestCase {
+public abstract class ObaLoaderTestCase extends LoaderTestCase {
 
     private MockConnectionFactory mMockFactory = null;
 

@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.io.test;
 
-import android.support.test.runner.AndroidJUnit4;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -26,6 +24,8 @@ import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.request.ObaResponse;
 import org.onebusaway.android.mock.ObaMock;
 
+import android.support.test.runner.AndroidJUnit4;
+
 import static android.support.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
@@ -34,7 +34,7 @@ import static junit.framework.Assert.assertNotNull;
  * Base test class extended for most OBA unit tests
  */
 @RunWith(AndroidJUnit4.class)
-public class ObaTestCase {
+public abstract class ObaTestCase {
 
     private ObaMock mMock;
 

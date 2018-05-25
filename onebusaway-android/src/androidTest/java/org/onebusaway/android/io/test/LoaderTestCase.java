@@ -16,6 +16,8 @@
 
 package org.onebusaway.android.io.test;
 
+import org.junit.runner.RunWith;
+
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
@@ -23,8 +25,6 @@ import android.os.Message;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.content.Loader;
 import android.support.v4.content.Loader.OnLoadCompleteListener;
-
-import org.junit.runner.RunWith;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -34,7 +34,7 @@ import java.util.concurrent.ArrayBlockingQueue;
  * it easy to assert that the Loader returns the expected result.
  */
 @RunWith(AndroidJUnit4.class)
-public class LoaderTestCase {
+public abstract class LoaderTestCase {
 
     static {
         // Force class loading of AsyncTask on the main thread so that it's handlers are tied to

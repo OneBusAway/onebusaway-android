@@ -229,20 +229,22 @@ public final class UIUtils {
 
     /**
      * Returns a formatted displayText for displaying in the UI for stops, routes, and headsigns, or
-     * null if the displayText is null.  If the displayText IS ALL CAPS and more than one word, it
-     * will be converted to title case (Is All Caps), otherwise the returned string will match the
-     * input.
+     * null if the displayText is null.  If the displayText IS ALL CAPS and more than one word and
+     * does not contain SPLC (see #883), it will be converted to title case (Is All Caps), otherwise
+     * the returned string will match the input.
      *
      * @param displayText displayText to be formatted
      * @return formatted text for stop, route, and heasigns for displaying in the UI, or null if the
-     * displayText is null.  If the displayText IS ALL CAPS and more than one word, it will be
-     * converted to title case (Is All Caps), otherwise the returned string will match the input.
+     * displayText is null.  If the displayText IS ALL CAPS and more than one word and does not
+     * contain SPLC (see #883), it will be converted to title case (Is All Caps), otherwise the
+     * returned string will match the input.
      */
     public static String formatDisplayText(String displayText) {
         if (displayText == null) {
             return null;
         }
-        if (MyTextUtils.isAllCaps(displayText) && displayText.contains(" ")) {
+        // See #883 for "SPLC" logic
+        if (MyTextUtils.isAllCaps(displayText) && displayText.contains(" ") && !displayText.contains("SPLC")) {
             return MyTextUtils.toTitleCase(displayText);
         } else {
             return displayText;

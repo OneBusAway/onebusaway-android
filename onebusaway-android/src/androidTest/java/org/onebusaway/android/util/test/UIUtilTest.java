@@ -17,14 +17,6 @@
 
 package org.onebusaway.android.util.test;
 
-import android.graphics.Color;
-import android.location.Location;
-import android.os.Bundle;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.v4.util.Pair;
-import android.text.TextUtils;
-import android.widget.TextView;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
@@ -45,6 +37,14 @@ import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
+
+import android.graphics.Color;
+import android.location.Location;
+import android.os.Bundle;
+import android.support.test.runner.AndroidJUnit4;
+import android.support.v4.util.Pair;
+import android.text.TextUtils;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -143,6 +143,8 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("VA Hospital", UIUtils.formatDisplayText("VA Hospital"));
         assertEquals("SDSU", UIUtils.formatDisplayText("SDSU"));
         assertEquals("UTC Transit Center", UIUtils.formatDisplayText("UTC Transit Center"));
+        // See #883
+        assertEquals("SPLC / SR 513", UIUtils.formatDisplayText("SPLC / SR 513"));
 
         // Trip headsigns
         assertEquals("North to University Area TC",
@@ -150,6 +152,9 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("North To University Area Tc",
                 UIUtils.formatDisplayText("NORTH TO UNIVERSITY AREA TC"));
         assertEquals("SDSU", UIUtils.formatDisplayText("SDSU"));
+        // See #883
+        assertEquals("Hospital via SPLC Parking", UIUtils.formatDisplayText("Hospital via SPLC Parking"));
+        assertEquals("SPLC Parking via 70th", UIUtils.formatDisplayText("SPLC Parking via 70th"));
 
         // Route names
         assertEquals("Downtown San Diego - UTC via Old Town",

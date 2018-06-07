@@ -82,8 +82,6 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_PLAN_TRIP = 6;
 
-    protected static final int NAVDRAWER_ITEM_POPULAR = 7;
-
     protected static final int NAVDRAWER_ITEM_PINS = 8;
 
     protected static final int NAVDRAWER_ITEM_ACTIVITY_FEED = 9;
@@ -431,13 +429,11 @@ public class NavigationDrawerFragment extends Fragment {
                 mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR_SPECIAL);
                 if (isSignedIn) {
                     // user is signed in to Embedded Social
-                    mNavDrawerItems.add(NAVDRAWER_ITEM_POPULAR);
                     mNavDrawerItems.add(NAVDRAWER_ITEM_PINS);
                     mNavDrawerItems.add(NAVDRAWER_ITEM_ACTIVITY_FEED);
                     mNavDrawerItems.add(NAVDRAWER_ITEM_PROFILE);
                 } else {
                     // user is not signed in
-                    mNavDrawerItems.add(NAVDRAWER_ITEM_POPULAR);
                     mNavDrawerItems.add(NAVDRAWER_ITEM_SIGN_IN);
                 }
             }

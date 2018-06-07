@@ -415,12 +415,15 @@ public class HomeActivity extends AppCompatActivity
             mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         }
 
-        checkDisplayZoomControls();
-
+        // Check if the map zoom controls should be displayed
+        if (mCurrentNavDrawerPosition == NAVDRAWER_ITEM_NEARBY) {
+            checkDisplayZoomControls();
+        } else {
+            showZoomControls(false);
+        }
         checkLeftHandMode();
-
-
         updateLayersFab();
+
         mFabMyLocation.requestLayout();
     }
 
@@ -638,6 +641,8 @@ public class HomeActivity extends AppCompatActivity
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         }
         setTitle(getResources().getString(R.string.navdrawer_item_nearby));
+
+        checkDisplayZoomControls();
     }
 
     private void showStarredStopsFragment() {
@@ -655,6 +660,8 @@ public class HomeActivity extends AppCompatActivity
         hideActivityFeedFragment();
         hideMyProfileFragment();
         mShowArrivalsMenu = false;
+        showZoomControls(false);
+
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
@@ -692,6 +699,7 @@ public class HomeActivity extends AppCompatActivity
         hideMyProfileFragment();
         mShowArrivalsMenu = false;
         mShowStarredStopsMenu = false;
+        showZoomControls(false);
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
@@ -727,6 +735,7 @@ public class HomeActivity extends AppCompatActivity
         hideMyProfileFragment();
         hideSlidingPanel();
         mShowArrivalsMenu = false;
+        showZoomControls(false);
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
@@ -763,6 +772,7 @@ public class HomeActivity extends AppCompatActivity
         hideMyProfileFragment();
         hideSlidingPanel();
         mShowArrivalsMenu = false;
+        showZoomControls(false);
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
@@ -799,6 +809,7 @@ public class HomeActivity extends AppCompatActivity
         hideMyProfileFragment();
         hideSlidingPanel();
         mShowArrivalsMenu = false;
+        showZoomControls(false);
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
@@ -835,6 +846,7 @@ public class HomeActivity extends AppCompatActivity
         hideActivityFeedFragment();
         hideSlidingPanel();
         mShowArrivalsMenu = false;
+        showZoomControls(false);
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
@@ -1619,23 +1631,28 @@ public class HomeActivity extends AppCompatActivity
     private void checkDisplayZoomControls() {
         boolean displayZoom = Application.getPrefs().getBoolean(
                 getString(R.string.preference_key_show_zoom_controls), false);
+        showZoomControls(displayZoom);
+    }
 
-        LinearLayout zoomButtonsLayout = (LinearLayout) findViewById(R.id.zoom_buttons_layout);
-
-        if (displayZoom) {
-            zoomButtonsLayout.setVisibility(LinearLayout.VISIBLE);
-        } else {
-            zoomButtonsLayout.setVisibility(LinearLayout.GONE);
+    /**
+     * Shows zoom controls if state is true, hides the zoom controls if state is false
+     * @param showZoom true if the zoom controls should be visible, false if they should be hidden
+     */
+    private void showZoomControls(boolean showZoom) {
+        LinearLayout zoomLayout = findViewById(R.id.zoom_buttons_layout);
+        if (zoomLayout != null) {
+            if (showZoom) {
+                zoomLayout.setVisibility(LinearLayout.VISIBLE);
+            } else {
+                zoomLayout.setVisibility(LinearLayout.GONE);
+            }
         }
-
     }
 
     private void checkLeftHandMode() {
         boolean leftHandMode = Application.getPrefs().getBoolean(
                 getString(R.string.preference_key_left_hand_mode), false);
-
         setFABLocation(leftHandMode);
-
     }
 
 

@@ -25,7 +25,6 @@ import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
 import com.microsoft.embeddedsocial.ui.fragment.MyProfileFragment;
 import com.microsoft.embeddedsocial.ui.fragment.PinsFragment;
-import com.microsoft.embeddedsocial.ui.fragment.PopularFeedFragment;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.onebusaway.android.BuildConfig;
@@ -109,7 +108,6 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_OPEN_SOURCE;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PINS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PLAN_TRIP;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_POPULAR;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PROFILE;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEND_FEEDBACK;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SETTINGS;
@@ -217,8 +215,6 @@ public class HomeActivity extends AppCompatActivity
     BaseMapFragment mMapFragment;
 
     MyRemindersFragment mMyRemindersFragment;
-
-    PopularFeedFragment mMyPopularFeedFragment;
 
     PinsFragment mMyPinsFragment;
 
@@ -522,16 +518,6 @@ public class HomeActivity extends AppCompatActivity
                             getString(R.string.analytics_label_button_press_social_profile));
                 }
                 break;
-            case NAVDRAWER_ITEM_POPULAR:
-                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_POPULAR) {
-                    showPopularFeedFragment();
-                    mCurrentNavDrawerPosition = item;
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_button_press),
-                            getString(R.string.analytics_label_button_press_social_popular));
-                }
-                break;
             case NAVDRAWER_ITEM_PINS:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PINS) {
                     showPinsFragment();
@@ -603,7 +589,6 @@ public class HomeActivity extends AppCompatActivity
          */
         hideStarredStopsFragment();
         hideReminderFragment();
-        hidePopularFeedFragment();
         hidePinsFragment();
         hideActivityFeedFragment();
         hideMyProfileFragment();
@@ -655,7 +640,6 @@ public class HomeActivity extends AppCompatActivity
         hideMapFragment();
         hideReminderFragment();
         hideSlidingPanel();
-        hidePopularFeedFragment();
         hidePinsFragment();
         hideActivityFeedFragment();
         hideMyProfileFragment();
@@ -693,7 +677,6 @@ public class HomeActivity extends AppCompatActivity
         hideStarredStopsFragment();
         hideMapFragment();
         hideSlidingPanel();
-        hidePopularFeedFragment();
         hidePinsFragment();
         hideActivityFeedFragment();
         hideMyProfileFragment();
@@ -720,43 +703,6 @@ public class HomeActivity extends AppCompatActivity
         setTitle(getResources().getString(R.string.navdrawer_item_my_reminders));
     }
 
-    private void showPopularFeedFragment() {
-        FragmentManager fm = getSupportFragmentManager();
-        /**
-         * Hide everything that shouldn't be shown
-         */
-        hideFloatingActionButtons();
-        hideMapProgressBar();
-        hideMapFragment();
-        hideStarredStopsFragment();
-        hideReminderFragment();
-        hidePinsFragment();
-        hideActivityFeedFragment();
-        hideMyProfileFragment();
-        hideSlidingPanel();
-        mShowArrivalsMenu = false;
-        showZoomControls(false);
-        /**
-         * Show fragment (we use show instead of replace to keep the map state)
-         */
-        mShowStarredStopsMenu = false;
-        if (mMyPopularFeedFragment == null) {
-            // First check to see if an instance of PinsFragment already exists (see #356)
-            mMyPopularFeedFragment = (PopularFeedFragment) fm
-                    .findFragmentByTag(PopularFeedFragment.TAG);
-
-            if (mMyPopularFeedFragment == null) {
-                // No existing fragment was found, so create a new one
-                Log.d(TAG, "Creating new PopularFeedFragment");
-                mMyPopularFeedFragment = new PopularFeedFragment();
-                fm.beginTransaction().add(R.id.main_fragment_container, mMyPopularFeedFragment,
-                        PopularFeedFragment.TAG).commit();
-            }
-        }
-        fm.beginTransaction().show(mMyPopularFeedFragment).commit();
-        setTitle(getResources().getString(R.string.navdrawer_item_popular));
-    }
-
     private void showPinsFragment() {
         FragmentManager fm = getSupportFragmentManager();
         /**
@@ -767,7 +713,6 @@ public class HomeActivity extends AppCompatActivity
         hideMapFragment();
         hideStarredStopsFragment();
         hideReminderFragment();
-        hidePopularFeedFragment();
         hideActivityFeedFragment();
         hideMyProfileFragment();
         hideSlidingPanel();
@@ -804,7 +749,6 @@ public class HomeActivity extends AppCompatActivity
         hideMapFragment();
         hideStarredStopsFragment();
         hideReminderFragment();
-        hidePopularFeedFragment();
         hidePinsFragment();
         hideMyProfileFragment();
         hideSlidingPanel();
@@ -841,7 +785,6 @@ public class HomeActivity extends AppCompatActivity
         hideMapFragment();
         hideStarredStopsFragment();
         hideReminderFragment();
-        hidePopularFeedFragment();
         hidePinsFragment();
         hideActivityFeedFragment();
         hideSlidingPanel();
@@ -891,15 +834,6 @@ public class HomeActivity extends AppCompatActivity
                 .findFragmentByTag(MyRemindersFragment.TAG);
         if (mMyRemindersFragment != null && !mMyRemindersFragment.isHidden()) {
             fm.beginTransaction().hide(mMyRemindersFragment).commit();
-        }
-    }
-
-    private void hidePopularFeedFragment() {
-        FragmentManager fm = getSupportFragmentManager();
-        mMyPopularFeedFragment = (PopularFeedFragment) fm.findFragmentByTag(
-                PopularFeedFragment.TAG);
-        if (mMyPopularFeedFragment != null && !mMyPopularFeedFragment.isHidden()) {
-            fm.beginTransaction().hide(mMyPopularFeedFragment).commit();
         }
     }
 

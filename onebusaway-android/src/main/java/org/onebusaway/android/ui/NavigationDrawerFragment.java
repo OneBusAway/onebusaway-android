@@ -81,6 +81,9 @@ public class NavigationDrawerFragment extends Fragment {
     protected static final int NAVDRAWER_ITEM_SEND_FEEDBACK = 5;
 
     protected static final int NAVDRAWER_ITEM_PLAN_TRIP = 6;
+    
+    // 7 is reserved for re-adding the Embedded Social "Popular" item - See #889
+    //protected static final int NAVDRAWER_ITEM_POPULAR = 7;
 
     protected static final int NAVDRAWER_ITEM_PINS = 8;
 

@@ -15,14 +15,23 @@
  */
 package org.onebusaway.android.io.test;
 
+import org.junit.Test;
 import org.onebusaway.android.io.request.ObaAgencyRequest;
 import org.onebusaway.android.io.request.ObaAgencyResponse;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to get information about a specific transit agency
+ */
 public class AgencyRequestTest extends ObaTestCase {
 
+    @Test
     public void testKCMAgency() {
-        ObaAgencyRequest.Builder builder = new ObaAgencyRequest.Builder(getContext(), "1");
+        ObaAgencyRequest.Builder builder = new ObaAgencyRequest.Builder(getTargetContext(), "1");
         ObaAgencyRequest request = builder.build();
         ObaAgencyResponse response = request.call();
         assertOK(response);
@@ -31,9 +40,10 @@ public class AgencyRequestTest extends ObaTestCase {
         assertEquals("Metro Transit", response.getName());
     }
 
+    @Test
     public void testNewRequest() {
         // This is just to make sure we copy and call newRequest() at least once
-        ObaAgencyRequest request = ObaAgencyRequest.newRequest(getContext(), "1");
+        ObaAgencyRequest request = ObaAgencyRequest.newRequest(getTargetContext(), "1");
         assertNotNull(request);
     }
 }

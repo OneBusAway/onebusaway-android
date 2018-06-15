@@ -15,19 +15,24 @@
  */
 package org.onebusaway.android.util.test;
 
-import org.onebusaway.android.report.ui.util.ServiceUtils;
-
+import android.support.test.runner.AndroidJUnit4;
 import android.test.AndroidTestCase;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.onebusaway.android.report.ui.util.ServiceUtils;
 
 /**
  * Tests to evaluate issue reporting utilities
  */
+@RunWith(AndroidJUnit4.class)
 public class ReportUtilTest extends AndroidTestCase {
 
     /**
      * Test our heuristic text matching that's used to identify pure transit Open311 deployments
      * that do not support the Open311 group or keyword elements for explicit matching.
      */
+    @Test
     public void testServiceKeywordMatching() {
         String[] stopServiceNamesMatch = {
                 "Incorrect/Missing Stop ID",

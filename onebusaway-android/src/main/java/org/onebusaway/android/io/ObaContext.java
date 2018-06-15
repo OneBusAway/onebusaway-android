@@ -15,14 +15,14 @@
  */
 package org.onebusaway.android.io;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaRegion;
+
 import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaRegion;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -93,7 +93,6 @@ public class ObaContext {
         String serverName = Application.get().getCustomApiUrl();
 
         if (!TextUtils.isEmpty(serverName) || mRegion != null) {
-            Log.d(TAG, "Using custom OBA API URL set by user '" + serverName + "'.");
             setUrl(context, builder, serverName);
         } else {
             String fallBack = "api.pugetsound.onebusaway.org";
@@ -112,7 +111,7 @@ public class ObaContext {
             otpBaseUrl = Application.get().getCurrentRegion().getOtpBaseUrl();
             Log.d(TAG, "Using default region OTP API URL '" + otpBaseUrl + "'.");
         } else {
-            Log.d(TAG, "Using custom region OTP API URL set by user '" + otpBaseUrl + "'.");
+            Log.d(TAG, "Using custom OTP API URL set by user '" + otpBaseUrl + "'.");
         }
         setUrl(context, builder, otpBaseUrl);
     }
@@ -128,7 +127,10 @@ public class ObaContext {
     private void setUrl(Context context, Uri.Builder builder, String serverName) {
         Uri baseUrl = null;
         if (!TextUtils.isEmpty(serverName)) {
-
+            // TODO - Right now the below log statement is needed for OBA custom APIs, but not OTP
+            // custom APIs (those are already logged in setBaseOtpUrl.  This should be cleaned up,
+            // and all OTP requests should extend RequestBase
+            Log.d(TAG, "Using API URL '" + serverName + "'.");
             try {
                 // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
                 URL url = new URL(serverName);

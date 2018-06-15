@@ -15,15 +15,21 @@
 */
 package org.onebusaway.android.util.test;
 
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
 
-import android.test.AndroidTestCase;
+import static junit.framework.Assert.assertEquals;
 
 /**
  * Tests embedded social utilities
  */
-public class EmbeddedSocialUtilTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class EmbeddedSocialUtilTest {
 
+    @Test
     public void testDiscussionTitles() {
         long regionId;
         String stopId;

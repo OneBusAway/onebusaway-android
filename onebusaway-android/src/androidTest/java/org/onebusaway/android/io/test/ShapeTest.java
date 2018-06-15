@@ -15,21 +15,32 @@
  */
 package org.onebusaway.android.io.test;
 
-import org.onebusaway.android.io.elements.ObaShapeElement;
-
 import android.location.Location;
-import android.test.AndroidTestCase;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.onebusaway.android.io.elements.ObaShapeElement;
 
 import java.util.List;
 
-public class ShapeTest extends AndroidTestCase {
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 
+/**
+ * Tests decoding polylines and levels returned by ShapeRequest
+ */
+@RunWith(AndroidJUnit4.class)
+public class ShapeTest {
+
+    @Test
     public void testDecodeLines() {
         List<Location> list = ObaShapeElement.decodeLine("_p~iF~ps|U", 1);
         assertNotNull(list);
         assertEquals(1, list.size());
         Location pt = list.get(0);
-        // Original test used GeoPoint, which is in degrees * 1E6 - fixed below via division
+        // Original test from Maps API v1 used GeoPoint, which is in degrees * 1E6 - fixed below
+        // for Maps API v2 via division
         assertEquals(38500000 / 1E6, pt.getLatitude());
         assertEquals(-120200000 / 1E6, pt.getLongitude());
 
@@ -51,6 +62,7 @@ public class ShapeTest extends AndroidTestCase {
         assertEquals(-126453000 / 1E6, pt.getLongitude());
     }
 
+    @Test
     public void testDecodeLevels() {
         List<Integer> list = ObaShapeElement.decodeLevels("mD", 1);
         assertNotNull(list);

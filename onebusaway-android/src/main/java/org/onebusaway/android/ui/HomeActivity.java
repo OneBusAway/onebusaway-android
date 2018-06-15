@@ -25,7 +25,6 @@ import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
 import com.microsoft.embeddedsocial.ui.fragment.MyProfileFragment;
 import com.microsoft.embeddedsocial.ui.fragment.PinsFragment;
-import com.microsoft.embeddedsocial.ui.fragment.PopularFeedFragment;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.onebusaway.android.BuildConfig;
@@ -84,7 +83,6 @@ import android.view.Window;
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -110,7 +108,6 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_OPEN_SOURCE;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PINS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PLAN_TRIP;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_POPULAR;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PROFILE;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEND_FEEDBACK;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SETTINGS;
@@ -218,8 +215,6 @@ public class HomeActivity extends AppCompatActivity
     BaseMapFragment mMapFragment;
 
     MyRemindersFragment mMyRemindersFragment;
-
-    PopularFeedFragment mMyPopularFeedFragment;
 
     PinsFragment mMyPinsFragment;
 
@@ -416,12 +411,15 @@ public class HomeActivity extends AppCompatActivity
             mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         }
 
-        checkDisplayZoomControls();
-
+        // Check if the map zoom controls should be displayed
+        if (mCurrentNavDrawerPosition == NAVDRAWER_ITEM_NEARBY) {
+            checkDisplayZoomControls();
+        } else {
+            showZoomControls(false);
+        }
         checkLeftHandMode();
-
-
         updateLayersFab();
+
         mFabMyLocation.requestLayout();
     }
 
@@ -520,16 +518,6 @@ public class HomeActivity extends AppCompatActivity
                             getString(R.string.analytics_label_button_press_social_profile));
                 }
                 break;
-            case NAVDRAWER_ITEM_POPULAR:
-                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_POPULAR) {
-                    showPopularFeedFragment();
-                    mCurrentNavDrawerPosition = item;
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_button_press),
-                            getString(R.string.analytics_label_button_press_social_popular));
-                }
-                break;
             case NAVDRAWER_ITEM_PINS:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PINS) {
                     showPinsFragment();
@@ -601,7 +589,6 @@ public class HomeActivity extends AppCompatActivity
          */
         hideStarredStopsFragment();
         hideReminderFragment();
-        hidePopularFeedFragment();
         hidePinsFragment();
         hideActivityFeedFragment();
         hideMyProfileFragment();
@@ -639,6 +626,8 @@ public class HomeActivity extends AppCompatActivity
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         }
         setTitle(getResources().getString(R.string.navdrawer_item_nearby));
+
+        checkDisplayZoomControls();
     }
 
     private void showStarredStopsFragment() {
@@ -651,11 +640,12 @@ public class HomeActivity extends AppCompatActivity
         hideMapFragment();
         hideReminderFragment();
         hideSlidingPanel();
-        hidePopularFeedFragment();
         hidePinsFragment();
         hideActivityFeedFragment();
         hideMyProfileFragment();
         mShowArrivalsMenu = false;
+        showZoomControls(false);
+
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
@@ -687,12 +677,12 @@ public class HomeActivity extends AppCompatActivity
         hideStarredStopsFragment();
         hideMapFragment();
         hideSlidingPanel();
-        hidePopularFeedFragment();
         hidePinsFragment();
         hideActivityFeedFragment();
         hideMyProfileFragment();
         mShowArrivalsMenu = false;
         mShowStarredStopsMenu = false;
+        showZoomControls(false);
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
@@ -713,42 +703,6 @@ public class HomeActivity extends AppCompatActivity
         setTitle(getResources().getString(R.string.navdrawer_item_my_reminders));
     }
 
-    private void showPopularFeedFragment() {
-        FragmentManager fm = getSupportFragmentManager();
-        /**
-         * Hide everything that shouldn't be shown
-         */
-        hideFloatingActionButtons();
-        hideMapProgressBar();
-        hideMapFragment();
-        hideStarredStopsFragment();
-        hideReminderFragment();
-        hidePinsFragment();
-        hideActivityFeedFragment();
-        hideMyProfileFragment();
-        hideSlidingPanel();
-        mShowArrivalsMenu = false;
-        /**
-         * Show fragment (we use show instead of replace to keep the map state)
-         */
-        mShowStarredStopsMenu = false;
-        if (mMyPopularFeedFragment == null) {
-            // First check to see if an instance of PinsFragment already exists (see #356)
-            mMyPopularFeedFragment = (PopularFeedFragment) fm
-                    .findFragmentByTag(PopularFeedFragment.TAG);
-
-            if (mMyPopularFeedFragment == null) {
-                // No existing fragment was found, so create a new one
-                Log.d(TAG, "Creating new PopularFeedFragment");
-                mMyPopularFeedFragment = new PopularFeedFragment();
-                fm.beginTransaction().add(R.id.main_fragment_container, mMyPopularFeedFragment,
-                        PopularFeedFragment.TAG).commit();
-            }
-        }
-        fm.beginTransaction().show(mMyPopularFeedFragment).commit();
-        setTitle(getResources().getString(R.string.navdrawer_item_popular));
-    }
-
     private void showPinsFragment() {
         FragmentManager fm = getSupportFragmentManager();
         /**
@@ -759,11 +713,11 @@ public class HomeActivity extends AppCompatActivity
         hideMapFragment();
         hideStarredStopsFragment();
         hideReminderFragment();
-        hidePopularFeedFragment();
         hideActivityFeedFragment();
         hideMyProfileFragment();
         hideSlidingPanel();
         mShowArrivalsMenu = false;
+        showZoomControls(false);
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
@@ -795,11 +749,11 @@ public class HomeActivity extends AppCompatActivity
         hideMapFragment();
         hideStarredStopsFragment();
         hideReminderFragment();
-        hidePopularFeedFragment();
         hidePinsFragment();
         hideMyProfileFragment();
         hideSlidingPanel();
         mShowArrivalsMenu = false;
+        showZoomControls(false);
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
@@ -831,11 +785,11 @@ public class HomeActivity extends AppCompatActivity
         hideMapFragment();
         hideStarredStopsFragment();
         hideReminderFragment();
-        hidePopularFeedFragment();
         hidePinsFragment();
         hideActivityFeedFragment();
         hideSlidingPanel();
         mShowArrivalsMenu = false;
+        showZoomControls(false);
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
@@ -880,15 +834,6 @@ public class HomeActivity extends AppCompatActivity
                 .findFragmentByTag(MyRemindersFragment.TAG);
         if (mMyRemindersFragment != null && !mMyRemindersFragment.isHidden()) {
             fm.beginTransaction().hide(mMyRemindersFragment).commit();
-        }
-    }
-
-    private void hidePopularFeedFragment() {
-        FragmentManager fm = getSupportFragmentManager();
-        mMyPopularFeedFragment = (PopularFeedFragment) fm.findFragmentByTag(
-                PopularFeedFragment.TAG);
-        if (mMyPopularFeedFragment != null && !mMyPopularFeedFragment.isHidden()) {
-            fm.beginTransaction().hide(mMyPopularFeedFragment).commit();
         }
     }
 
@@ -1183,6 +1128,11 @@ public class HomeActivity extends AppCompatActivity
                 mFocusedStopId.equalsIgnoreCase(stop.getId())) {
             return;
         }
+        FragmentManager fm = getSupportFragmentManager();
+        // If the fragment's state has already been saved, then don't change the state (return)
+        if (fm.isStateSaved()) {
+            return;
+        }
 
         mFocusedStop = stop;
 
@@ -1204,7 +1154,6 @@ public class HomeActivity extends AppCompatActivity
             moveFabsLocation();
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
             if (mArrivalsListFragment != null) {
-                FragmentManager fm = getSupportFragmentManager();
                 fm.beginTransaction().remove(mArrivalsListFragment).commit();
             }
             mShowArrivalsMenu = false;
@@ -1616,23 +1565,28 @@ public class HomeActivity extends AppCompatActivity
     private void checkDisplayZoomControls() {
         boolean displayZoom = Application.getPrefs().getBoolean(
                 getString(R.string.preference_key_show_zoom_controls), false);
+        showZoomControls(displayZoom);
+    }
 
-        LinearLayout zoomButtonsLayout = (LinearLayout) findViewById(R.id.zoom_buttons_layout);
-
-        if (displayZoom) {
-            zoomButtonsLayout.setVisibility(LinearLayout.VISIBLE);
-        } else {
-            zoomButtonsLayout.setVisibility(LinearLayout.GONE);
+    /**
+     * Shows zoom controls if state is true, hides the zoom controls if state is false
+     * @param showZoom true if the zoom controls should be visible, false if they should be hidden
+     */
+    private void showZoomControls(boolean showZoom) {
+        LinearLayout zoomLayout = findViewById(R.id.zoom_buttons_layout);
+        if (zoomLayout != null) {
+            if (showZoom) {
+                zoomLayout.setVisibility(LinearLayout.VISIBLE);
+            } else {
+                zoomLayout.setVisibility(LinearLayout.GONE);
+            }
         }
-
     }
 
     private void checkLeftHandMode() {
         boolean leftHandMode = Application.getPrefs().getBoolean(
                 getString(R.string.preference_key_left_hand_mode), false);
-
         setFABLocation(leftHandMode);
-
     }
 
 

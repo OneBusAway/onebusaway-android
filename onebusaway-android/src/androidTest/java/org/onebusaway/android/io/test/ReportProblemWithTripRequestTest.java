@@ -16,6 +16,7 @@
 package org.onebusaway.android.io.test;
 
 
+import org.junit.Test;
 import org.onebusaway.android.UriAssert;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
@@ -24,11 +25,19 @@ import org.onebusaway.android.mock.MockRegion;
 
 import java.util.HashMap;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertNotNull;
+
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to submit problem reports about a trip
+ */
 public class ReportProblemWithTripRequestTest extends ObaTestCase {
 
+    @Test
     public void testPugetSoundReportProblemRequestUsingRegion() {
         // Test by setting region
-        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        ObaRegion ps = MockRegion.getPugetSound(getTargetContext());
         assertNotNull(ps);
         Application.get().setCurrentRegion(ps);
         _assertPugetSoundReportProblemRequest();
@@ -36,7 +45,7 @@ public class ReportProblemWithTripRequestTest extends ObaTestCase {
 
     private void _assertPugetSoundReportProblemRequest() {
         ObaReportProblemWithTripRequest.Builder builder =
-                new ObaReportProblemWithTripRequest.Builder(getContext(), "1_29261");
+                new ObaReportProblemWithTripRequest.Builder(getTargetContext(), "1_29261");
         builder.setStopId("1_29262")
                 .setVehicleId("1_29263")
                 .setServiceDate(1456722000000l)
@@ -66,9 +75,10 @@ public class ReportProblemWithTripRequestTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testHARTReportProblemRequestUsingRegion() {
         // Test by setting region
-        ObaRegion ps = MockRegion.getTampa(getContext());
+        ObaRegion ps = MockRegion.getTampa(getTargetContext());
         assertNotNull(ps);
         Application.get().setCurrentRegion(ps);
         _assertHARTReportProblemRequest();
@@ -76,7 +86,7 @@ public class ReportProblemWithTripRequestTest extends ObaTestCase {
 
     private void _assertHARTReportProblemRequest() {
         ObaReportProblemWithTripRequest.Builder builder =
-                new ObaReportProblemWithTripRequest.Builder(getContext(), "Hillsborough Area Regional Transit_121133");
+                new ObaReportProblemWithTripRequest.Builder(getTargetContext(), "Hillsborough Area Regional Transit_121133");
         builder.setStopId("Hillsborough Area Regional Transit_4551")
                 .setVehicleId("Hillsborough Area Regional Transit_1018")
                 .setServiceDate(1456722000000l)
@@ -106,6 +116,7 @@ public class ReportProblemWithTripRequestTest extends ObaTestCase {
         );
     }
 
+    @Test
     public void testStagingReportProblemRequestUsingRegionCustomUrl() {
         // Test by setting custom region
         Application.get().setCustomApiUrl("app.staging.obahart.org");
@@ -114,7 +125,7 @@ public class ReportProblemWithTripRequestTest extends ObaTestCase {
 
     private void _assertStagingReportProblemRequestCustomUrl() {
         ObaReportProblemWithTripRequest.Builder builder =
-                new ObaReportProblemWithTripRequest.Builder(getContext(), "Hillsborough Area Regional Transit_121133");
+                new ObaReportProblemWithTripRequest.Builder(getTargetContext(), "Hillsborough Area Regional Transit_121133");
         builder.setStopId("Hillsborough Area Regional Transit_4551")
                 .setVehicleId("Hillsborough Area Regional Transit_1018")
                 .setServiceDate(1456722000000l)

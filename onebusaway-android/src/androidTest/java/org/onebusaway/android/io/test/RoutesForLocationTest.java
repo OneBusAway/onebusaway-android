@@ -15,22 +15,32 @@
  */
 package org.onebusaway.android.io.test;
 
+import android.location.Location;
+
+import org.junit.Test;
 import org.onebusaway.android.io.elements.ObaAgency;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.request.ObaRoutesForLocationRequest;
 import org.onebusaway.android.io.request.ObaRoutesForLocationResponse;
 import org.onebusaway.android.util.LocationUtils;
 
-import android.location.Location;
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
 
-
+/**
+ * Tests requests and parsing JSON responses from /res/raw for the OBA server API
+ * to get routes that serve an area near the provided location
+ */
 public class RoutesForLocationTest extends ObaTestCase {
 
-    public void testDowntownSeattle1() {
+    @Test
+    public void testDowntownSeattle() {
         final Location pt = LocationUtils.makeLocation(47.610980, -122.33845);
 
         ObaRoutesForLocationRequest.Builder builder =
-                new ObaRoutesForLocationRequest.Builder(getContext(), pt);
+                new ObaRoutesForLocationRequest.Builder(getTargetContext(), pt);
         ObaRoutesForLocationRequest request = builder.build();
         ObaRoutesForLocationResponse response = request.call();
         assertOK(response);
@@ -46,11 +56,12 @@ public class RoutesForLocationTest extends ObaTestCase {
         assertEquals("1", agency.getId());
     }
 
+    @Test
     public void testQuery() {
         final Location pt = LocationUtils.makeLocation(47.25331, -122.44040);
 
         ObaRoutesForLocationResponse response =
-                new ObaRoutesForLocationRequest.Builder(getContext(), pt)
+                new ObaRoutesForLocationRequest.Builder(getTargetContext(), pt)
                         .setQuery("11")
                         .build()
                         .call();
@@ -67,11 +78,12 @@ public class RoutesForLocationTest extends ObaTestCase {
         assertEquals("3", agency.getId());
     }
 
+    @Test
     public void testQueryFail() {
         final Location pt = LocationUtils.makeLocation(47.25331, -122.44040);
 
         ObaRoutesForLocationResponse response =
-                new ObaRoutesForLocationRequest.Builder(getContext(), pt)
+                new ObaRoutesForLocationRequest.Builder(getTargetContext(), pt)
                         .setQuery("112423")
                         .build()
                         .call();
@@ -82,12 +94,13 @@ public class RoutesForLocationTest extends ObaTestCase {
         assertFalse(response.getOutOfRange());
     }
 
+    @Test
     public void testOutOfRange() {
         // This is just to make sure we copy and call newRequest() at least once
         final Location pt = LocationUtils.makeLocation(48.85808, 2.29498);
 
         ObaRoutesForLocationRequest request =
-                new ObaRoutesForLocationRequest.Builder(getContext(), pt).build();
+                new ObaRoutesForLocationRequest.Builder(getTargetContext(), pt).build();
         ObaRoutesForLocationResponse response = request.call();
         assertOK(response);
         assertTrue(response.getOutOfRange());

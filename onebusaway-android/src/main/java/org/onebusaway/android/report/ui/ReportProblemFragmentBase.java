@@ -29,7 +29,6 @@ import org.onebusaway.android.util.UIUtils;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -155,12 +154,7 @@ public abstract class ReportProblemFragmentBase extends Fragment
 
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
                 getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_problem));
-
-        //If the activity implements the callback, then notify
-        if (mCallback != null) {
-            mCallback.onSendReport();
-        }
-    }
+   }
 
     @Override
     public Loader<ObaResponse> onCreateLoader(int id, Bundle args) {
@@ -172,8 +166,10 @@ public abstract class ReportProblemFragmentBase extends Fragment
         UIUtils.showProgress(this, false);
 
         if ((response != null) && (response.getCode() == ObaApi.OBA_OK)) {
-            // Manage the fragment back stack
-            mGoBackHandler.postDelayed(mGoBack, 100);
+            // If the activity implements the callback, then notify of successful report
+            if (mCallback != null) {
+                mCallback.onReportSent();
+            }
         } else {
             Toast.makeText(getActivity(), R.string.report_problem_error, Toast.LENGTH_LONG).show();
         }
@@ -183,14 +179,6 @@ public abstract class ReportProblemFragmentBase extends Fragment
     public void onLoaderReset(Loader<ObaResponse> loader) {
         UIUtils.showProgress(this, false);
     }
-
-    final Handler mGoBackHandler = new Handler();
-
-    final Runnable mGoBack = new Runnable() {
-        public void run() {
-            getActivity().getSupportFragmentManager().popBackStack();
-        }
-    };
 
     //
     // Report loader

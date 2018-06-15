@@ -16,7 +16,7 @@
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
+              android:layout_height="@dimen/trip_details_transit_line_height"
                 android:orientation="horizontal">
     <include
             android:id="@+id/eta_realtime_indicator"
@@ -60,7 +60,7 @@
     <LinearLayout
             android:id="@+id/transit_line"
             android:layout_width="wrap_content"
-            android:layout_height="@dimen/trip_details_transit_line_height"
+            android:layout_height="match_parent"
             android:weightSum="1"
             android:layout_alignParentLeft="true"
             android:layout_marginLeft="30dp"

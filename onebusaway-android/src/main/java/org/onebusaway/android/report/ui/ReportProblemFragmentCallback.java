@@ -18,9 +18,9 @@ package org.onebusaway.android.report.ui;
 public interface ReportProblemFragmentCallback {
 
     /**
-     * Called when the problem submitted
+     * Called when the problem report was successfully submitted.
      * Callback mechanism implemented as described in Android best-practices documentation:
      * http://developer.android.com/training/basics/fragments/communicating.html
      */
-    void onSendReport();
+    void onReportSent();
 }

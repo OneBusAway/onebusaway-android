@@ -15,16 +15,19 @@
  */
 package org.onebusaway.android.io.test;
 
+import android.location.Location;
+import android.support.test.runner.AndroidJUnit4;
+import android.text.TextUtils;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.report.connection.ServiceListTask;
 import org.onebusaway.android.report.constants.ReportConstants;
 import org.onebusaway.android.report.ui.util.ServiceUtils;
 import org.onebusaway.android.util.LocationUtils;
-
-import android.location.Location;
-import android.test.AndroidTestCase;
-import android.text.TextUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +40,11 @@ import edu.usf.cutr.open311client.models.Service;
 import edu.usf.cutr.open311client.models.ServiceListRequest;
 import edu.usf.cutr.open311client.models.ServiceListResponse;
 
+import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+
 /**
  * Tests to evaluate interactions with Open311 system for regions that use Open311.
  *
@@ -46,15 +54,15 @@ import edu.usf.cutr.open311client.models.ServiceListResponse;
  * but include some of the text we're using to identify transit services), these could break our
  * assumptions, and we want to know about that.
  */
-public class ReportProblemOpen311Test extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ReportProblemOpen311Test {
 
     // Mock region to use in tests
     ObaRegion mTampaRegion;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mTampaRegion = MockRegion.getTampa(getContext());
+    @Before
+    public void before() {
+        mTampaRegion = MockRegion.getTampa(getTargetContext());
 
         // Clear all open311 endpoints
         Open311Manager.clearOpen311();
@@ -82,6 +90,7 @@ public class ReportProblemOpen311Test extends AndroidTestCase {
      * As of Dec. 2, 2016 services are heuristically matched based on text in the service name
      * (SeeClickFix does not support the group or keyword Open311 elements for explicit matching).
      */
+    @Test
     public void testHillsboroughCounty() {
         List<Location> locations = new ArrayList<>();
 
@@ -99,7 +108,7 @@ public class ReportProblemOpen311Test extends AndroidTestCase {
 
         // Mark the services that are transit-related
         boolean mIsAllTransitHeuristicMatch = ServiceUtils
-                .markTransitServices(getContext(), serviceList);
+                .markTransitServices(getTargetContext(), serviceList);
         assertTrue(mIsAllTransitHeuristicMatch);
 
         int countGroupTransit = 0;
@@ -136,6 +145,7 @@ public class ReportProblemOpen311Test extends AndroidTestCase {
      * the service name (SeeClickFix does not support the group or keyword Open311 elements for
      * explicit matching).
      */
+    @Test
     public void testPinellasCounty() {
         List<Location> locations = new ArrayList<>();
 
@@ -155,7 +165,7 @@ public class ReportProblemOpen311Test extends AndroidTestCase {
 
         // Mark the services that are transit-related
         boolean mIsAllTransitHeuristicMatch = ServiceUtils
-                .markTransitServices(getContext(), serviceList);
+                .markTransitServices(getTargetContext(), serviceList);
         assertFalse(mIsAllTransitHeuristicMatch);
 
         // There should be less than ReportConstants.NUM_TRANSIT_SERVICES_THRESHOLD services

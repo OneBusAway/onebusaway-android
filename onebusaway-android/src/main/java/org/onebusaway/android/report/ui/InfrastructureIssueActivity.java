@@ -718,7 +718,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     }
 
     @Override
-    public void onSendReport() {
+    public void onReportSent() {
         (new ReportSuccessDialog()).show(getSupportFragmentManager(), ReportSuccessDialog.TAG);
     }
 

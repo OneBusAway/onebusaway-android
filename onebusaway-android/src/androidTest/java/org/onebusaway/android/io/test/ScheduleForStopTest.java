@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.io.test;
 
-import android.text.format.Time;
-
 import org.junit.Test;
 import org.onebusaway.android.UriAssert;
 import org.onebusaway.android.app.Application;
@@ -26,6 +24,8 @@ import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaScheduleForStopRequest;
 import org.onebusaway.android.io.request.ObaScheduleForStopResponse;
 import org.onebusaway.android.mock.MockRegion;
+
+import android.text.format.Time;
 
 import java.util.HashMap;
 

@@ -15,13 +15,13 @@
  */
 package org.onebusaway.android.io.test;
 
-import android.location.Location;
-
 import org.junit.Test;
 import org.onebusaway.android.io.elements.ObaTripDetails;
 import org.onebusaway.android.io.request.ObaTripsForLocationRequest;
 import org.onebusaway.android.io.request.ObaTripsForLocationResponse;
 import org.onebusaway.android.util.LocationUtils;
+
+import android.location.Location;
 
 import static android.support.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertNotNull;

@@ -16,9 +16,6 @@
 
 package org.onebusaway.android.util.test;
 
-import android.location.Location;
-import android.support.test.runner.AndroidJUnit4;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,6 +23,9 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.RegionUtils;
+
+import android.location.Location;
+import android.support.test.runner.AndroidJUnit4;
 
 import java.util.ArrayList;
 

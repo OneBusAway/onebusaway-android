@@ -15,10 +15,6 @@
  */
 package org.onebusaway.android.io.test;
 
-import android.location.Location;
-import android.support.test.runner.AndroidJUnit4;
-import android.text.TextUtils;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,6 +24,10 @@ import org.onebusaway.android.report.connection.ServiceListTask;
 import org.onebusaway.android.report.constants.ReportConstants;
 import org.onebusaway.android.report.ui.util.ServiceUtils;
 import org.onebusaway.android.util.LocationUtils;
+
+import android.location.Location;
+import android.support.test.runner.AndroidJUnit4;
+import android.text.TextUtils;
 
 import java.util.ArrayList;
 import java.util.List;

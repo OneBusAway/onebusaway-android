@@ -15,13 +15,13 @@
  */
 package org.onebusaway.android.io.test;
 
-import android.test.MoreAsserts;
-
 import org.junit.Test;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaStopRequest;
 import org.onebusaway.android.io.request.ObaStopResponse;
+
+import android.test.MoreAsserts;
 
 import java.util.Arrays;
 import java.util.List;

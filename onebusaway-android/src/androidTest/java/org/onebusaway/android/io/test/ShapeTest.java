@@ -15,12 +15,12 @@
  */
 package org.onebusaway.android.io.test;
 
-import android.location.Location;
-import android.support.test.runner.AndroidJUnit4;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.io.elements.ObaShapeElement;
+
+import android.location.Location;
+import android.support.test.runner.AndroidJUnit4;
 
 import java.util.List;
 

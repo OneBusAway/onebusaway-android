@@ -15,12 +15,12 @@
  */
 package org.onebusaway.android.util.test;
 
-import android.support.test.runner.AndroidJUnit4;
-import android.test.AndroidTestCase;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.report.ui.util.ServiceUtils;
+
+import android.support.test.runner.AndroidJUnit4;
+import android.test.AndroidTestCase;
 
 /**
  * Tests to evaluate issue reporting utilities

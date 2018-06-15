@@ -15,11 +15,11 @@
  */
 package org.onebusaway.android.io.test;
 
-import android.location.Location;
-
 import org.junit.Test;
 import org.onebusaway.android.io.request.ObaShapeRequest;
 import org.onebusaway.android.io.request.ObaShapeResponse;
+
+import android.location.Location;
 
 import java.util.List;
 

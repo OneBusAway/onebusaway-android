@@ -17,9 +17,6 @@
 
 package org.onebusaway.android.adapter.test;
 
-import android.support.test.runner.AndroidJUnit4;
-import android.view.View;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.app.Application;
@@ -34,6 +31,9 @@ import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.ui.ArrivalsListAdapterStyleA;
 import org.onebusaway.android.ui.ArrivalsListAdapterStyleB;
+
+import android.support.test.runner.AndroidJUnit4;
+import android.view.View;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -328,10 +328,6 @@
     <string name="stop_notify_title">Stop Reminder</string>
     <string name="stop_notify_cancel_trip">Cancel Trip</string>
     <string name="stop_notify_test_id">Test %1$s</string>
-    <string name="tad_expiration_title">TAD has expired</string>
-    <string name="tad_expiration_message">Please contact USF at barbeau@cutr.usf.edu to obtain a new
-        version of the application
-    </string>
 
     <!-- Stop Details -->
     <string name="stop_details_code">Stop # %1$s</string>

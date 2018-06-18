@@ -62,7 +62,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip1() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip1"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip1"));
         String csv = IOUtils.toString(reader);
         getReadyID = 848;
         pullCordID = 978;
@@ -80,7 +80,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip1C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip1c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip1c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 665;
         pullCordID = 929;
@@ -98,7 +98,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip2() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip2"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip2"));
         String csv = IOUtils.toString(reader);
         getReadyID = 0;
         pullCordID = 14;
@@ -116,7 +116,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip2C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip2c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip2c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 0;
         pullCordID = 64;
@@ -135,7 +135,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip3() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip3"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip3"));
         String csv = IOUtils.toString(reader);
         getReadyID = 95;
         pullCordID = 115;
@@ -154,7 +154,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip3C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip3c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip3c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 87;
         pullCordID = 109;
@@ -173,7 +173,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip4() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip4"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip4"));
         String csv = IOUtils.toString(reader);
         getReadyID = 294;
         pullCordID = 329;
@@ -192,7 +192,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip4C() throws IOException {
         // Read test CSV.
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip4c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip4c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 253;
         pullCordID = 329;
@@ -210,7 +210,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip5() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip5"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip5"));
         String csv = IOUtils.toString(reader);
         getReadyID = 372;
         pullCordID = 660;
@@ -227,7 +227,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip5C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip5c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip5c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 284;
         pullCordID = 492;
@@ -244,7 +244,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip6() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip6"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip6"));
         String csv = IOUtils.toString(reader);
         getReadyID = 801;
         pullCordID = 837;
@@ -261,7 +261,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip6C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip6c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip6c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 676;
         pullCordID = 704;
@@ -278,7 +278,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip7() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip7"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip7"));
         String csv = IOUtils.toString(reader);
         getReadyID = 183;
         pullCordID = 208;
@@ -295,7 +295,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip7C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip7c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip7c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 172;
         pullCordID = 285;
@@ -312,7 +312,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip8() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip8"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip8"));
         String csv = IOUtils.toString(reader);
         getReadyID = 0;
         pullCordID = 18;
@@ -329,7 +329,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip8C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip8c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip8c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 0;
         pullCordID = 20;
@@ -346,7 +346,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip9() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip9"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip9"));
         String csv = IOUtils.toString(reader);
         getReadyID = 1041;
         pullCordID = 1071;
@@ -363,7 +363,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip9C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip9c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip9c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 570;
         pullCordID = 634;
@@ -380,7 +380,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip10() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip10"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip10"));
         String csv = IOUtils.toString(reader);
         getReadyID = 589;
         pullCordID = 605;
@@ -397,7 +397,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip10C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip10c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip10c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 484;
         pullCordID = 509;
@@ -414,7 +414,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip11() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip11"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip11"));
         String csv = IOUtils.toString(reader);
         getReadyID = 331;
         pullCordID = 371;
@@ -431,7 +431,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip11C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip11c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip11c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 119;
         pullCordID = 158;
@@ -448,7 +448,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip12() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip12"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip12"));
         String csv = IOUtils.toString(reader);
         getReadyID = 69;
         pullCordID = 199;
@@ -465,7 +465,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip12C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip12c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip12c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 880;
         pullCordID = 901;
@@ -482,7 +482,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip13() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip13"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip13"));
         String csv = IOUtils.toString(reader);
         getReadyID = 2549;
         pullCordID = 2732;
@@ -499,7 +499,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip13C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip13c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip13c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 230;
         pullCordID = 519;
@@ -519,7 +519,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip14() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip14"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip14"));
         String csv = IOUtils.toString(reader);
         getReadyID = 548;
         pullCordID = 571;
@@ -536,7 +536,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip14C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip14c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip14c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 387;
         pullCordID = 429;
@@ -553,7 +553,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip15() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip15"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip15"));
         String csv = IOUtils.toString(reader);
         getReadyID = 225;
         pullCordID = 417;
@@ -570,7 +570,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip15C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip15c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip15c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 217;
         pullCordID = 287;
@@ -588,7 +588,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip16() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip16c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip16c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 142;
         pullCordID = 192;
@@ -605,7 +605,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip16C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip16c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip16c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 121;
         pullCordID = 168;
@@ -622,7 +622,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip17() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip17"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip17"));
         String csv = IOUtils.toString(reader);
         getReadyID = 100;
         pullCordID = 181;
@@ -639,7 +639,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip18() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip18"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip18"));
         String csv = IOUtils.toString(reader);
         getReadyID = 31;
         pullCordID = 50;
@@ -656,7 +656,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip18C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip18c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip18c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 31;
         pullCordID = 58;
@@ -673,7 +673,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip20() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip20"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip20"));
         String csv = IOUtils.toString(reader);
         getReadyID = 133;
         pullCordID = 195;
@@ -690,7 +690,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip20C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip20c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip20c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 53;
         pullCordID = 117;
@@ -707,7 +707,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip21() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip21"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip21"));
         String csv = IOUtils.toString(reader);
         getReadyID = 547;
         pullCordID = 686;
@@ -724,7 +724,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip21C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip21c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip21c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 323;
         pullCordID = 402;
@@ -741,7 +741,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip22() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip22"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip22"));
         String csv = IOUtils.toString(reader);
         getReadyID = 1085;
         pullCordID = 1198;
@@ -758,7 +758,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip22C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip22c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip22c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 1032;
         pullCordID = 1099;
@@ -775,7 +775,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip23() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip23"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip23"));
         String csv = IOUtils.toString(reader);
         getReadyID = 0;
         pullCordID = 24;
@@ -792,7 +792,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip23C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip23c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip23c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 0;
         pullCordID = 18;
@@ -809,7 +809,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip24() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip24"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip24"));
         String csv = IOUtils.toString(reader);
         getReadyID = 115;
         pullCordID = 178;
@@ -826,7 +826,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip24C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip24c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip24c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 203;
         pullCordID = 262;
@@ -843,7 +843,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip25() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip25"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip25"));
         String csv = IOUtils.toString(reader);
         getReadyID = 209;
         pullCordID = 235;
@@ -860,7 +860,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip25C() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("tad_trip25c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip25c"));
         String csv = IOUtils.toString(reader);
         getReadyID = 217;
         pullCordID = 247;

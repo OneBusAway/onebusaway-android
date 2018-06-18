@@ -5,7 +5,7 @@
 1. View the Trip Status of a desired trip.
 2. Long tap the desired destination stop.
 3. Confirm that you want to start this trip.
-4. TAD will be launched as a service in the background.
+4. Destination reminders will be launched as a service in the background.
 5. A real-time notification is shown at all times.
 6. A second "Get Ready" notification is triggered when nearing the second
 to last stop.

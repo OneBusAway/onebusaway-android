@@ -303,6 +303,9 @@
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value="org.onebusaway.android.ui.PreferencesActivity"/>
         </activity>
+
+        <!-- Opt-out of June 2018 Android Maps styling with pin POI icons - see #891 -->
+        <meta-data android:name="com.google.android.gms.maps.API_OPTIONS" android:value="B3H9HE845CFHYG"/>
     </application>
 
     <uses-feature

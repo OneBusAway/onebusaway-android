@@ -94,7 +94,6 @@ public class NavigationTest extends ObaTestCase {
      * Destination Stop: Mckinley Dr @ Fowler Ave
      * Recorded In: Bus Route 5 - 1 stops
      * Device Used: Nexus 5
-     * FIXME: Timestamps in tad_trip2.csv are in the string format "6.85023E+12" - they need to be changed to long format like "6190512000000"
      */
     @Test
     public void testTrip2() throws IOException {

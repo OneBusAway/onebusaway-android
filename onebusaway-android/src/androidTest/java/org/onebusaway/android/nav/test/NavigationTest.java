@@ -1016,7 +1016,7 @@ public class NavigationTest extends ObaTestCase {
             return finishedIndex;
         }
 
-        public void runSimulation(Boolean expected1, Boolean expected2) {
+        void runSimulation(Boolean expected1, Boolean expected2) {
             NavigationServiceProvider provider = new NavigationServiceProvider(mTripId,
                     mDestinationId);
 

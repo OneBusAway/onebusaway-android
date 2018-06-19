@@ -40,6 +40,9 @@ The first line of the file includes the following information in this order (del
 
 Starting from the second line, here are the columns that contain the position data:
 
+1. coordinateID - unique ID for each location fix in the file
+1. getReadyFlag - true if the "Get Ready" alert has been announced to the user, false if it has not
+1. pullTheCordNowFlag - true if the "Pull the Cord Now" alert has been announced to the user, false if it has not
 1. the time in nanoseconds since the application started
 1. the time in UTC
 1. latitude
@@ -48,9 +51,8 @@ Starting from the second line, here are the columns that contain the position da
 1. speed
 1. bearing
 1. horizontal accuracy
-1. number of satellites
-1. location provider.
-                                  
+1. number of satellites used in fix
+1. location provider                         
 
 ***Testing***
 

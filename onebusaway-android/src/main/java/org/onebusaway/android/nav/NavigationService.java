@@ -53,6 +53,8 @@ public class NavigationService extends Service implements LocationHelper.Listene
     public static final String BEFORE_STOP_ID = ".BeforeId";
     public static final String TRIP_ID = ".TripId";
 
+    public static final String LOG_DIRECTORY = "ObaNavLog";
+
     private LocationHelper mLocationHelper = null;
     private Location mLastLocation = null;
 
@@ -204,7 +206,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
             SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM d yyyy, hh:mm aaa");
             String readableDate = sdf.format(Calendar.getInstance().getTime());
 
-            mLogFile = new File(Environment.getExternalStoragePublicDirectory("ObaNavLog"),
+            mLogFile = new File(Environment.getExternalStoragePublicDirectory(LOG_DIRECTORY),
                     counter + "-" + readableDate + ".csv");
             Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);

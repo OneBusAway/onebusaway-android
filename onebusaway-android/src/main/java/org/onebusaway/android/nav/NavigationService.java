@@ -176,18 +176,16 @@ public class NavigationService extends Service implements LocationHelper.Listene
         }
         mLastLocation = location;
 
-
-
-        // Trip is done? End service.
+        // Is trip is finished? If so end service.
         if (mNavProvider.getFinished()) {
             if (BuildConfig.NAV_GPS_LOGGING) {
                 if (finishedTime == 0) {
                     finishedTime = System.currentTimeMillis();
                 } else if (System.currentTimeMillis() - finishedTime >= 30000) {
-                    this.stopSelf();
+                    stopSelf();
                 }
             } else {
-                this.stopSelf();
+                stopSelf();
             }
         }
     }

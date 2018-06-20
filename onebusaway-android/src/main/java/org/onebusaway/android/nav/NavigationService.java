@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 
 /**
  * The NavigationService is started when the user begins a trip, this service listens for location
@@ -209,7 +210,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
             Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
 
-            String header = String.format("%s,%s,%f,%f,%s,%f,%f\n", mTripId, mDestinationStopId,
+            String header = String.format(Locale.US, "%s,%s,%f,%f,%s,%f,%f\n", mTripId, mDestinationStopId,
                     dest.getLatitude(), dest.getLongitude(), mBeforeStopId, last.getLatitude(), last.getLongitude());
 
             if (mLogFile != null) {

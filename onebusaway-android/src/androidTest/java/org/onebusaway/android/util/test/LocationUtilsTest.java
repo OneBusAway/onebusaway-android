@@ -235,6 +235,49 @@ public class LocationUtilsTest extends ObaTestCase {
         }
     }
 
+    @Test
+    public void testIsDuplicate() {
+        Location locA = new Location("A");
+        locA.setTime(1234);
+        locA.setLatitude(33.3);
+        locA.setLongitude(66.6);
+
+        /**
+         * Test location that is the same
+         */
+
+        Location locDupA = new Location("A");
+        locDupA.setTime(1234);
+        locDupA.setLatitude(33.3);
+        locDupA.setLongitude(66.6);
+
+        assertTrue(LocationUtils.isDuplicate(locA, locDupA));
+
+        /**
+         * Test locations that aren't the same
+         */
+        Location locBTimeDiff = new Location("A");
+        locBTimeDiff.setTime(9876);
+        locBTimeDiff.setLatitude(33.3);
+        locBTimeDiff.setLongitude(66.6);
+
+        assertFalse(LocationUtils.isDuplicate(locA, locBTimeDiff));
+
+        Location locBLatDiff = new Location("A");
+        locBLatDiff.setTime(1234);
+        locBLatDiff.setLatitude(89.9);
+        locBLatDiff.setLongitude(66.6);
+
+        assertFalse(LocationUtils.isDuplicate(locA, locBLatDiff));
+
+        Location locBLonDiff = new Location("A");
+        locBLonDiff.setTime(1234);
+        locBLonDiff.setLatitude(33.3);
+        locBLonDiff.setLongitude(10.0);
+
+        assertFalse(LocationUtils.isDuplicate(locA, locBLonDiff));
+    }
+
     /**
      * Tests whether location is fresh (i.e., fairly recent)
      *

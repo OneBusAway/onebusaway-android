@@ -158,22 +158,12 @@ public class NavigationService extends Service implements LocationHelper.Listene
     public synchronized void onLocationChanged(Location location) {
         Log.d(TAG, "Location Updated");
         if (mLastLocation == null) {
-
-            if (mLastLocation != null) {
-                mNavProvider.locationUpdated(location);
-            }
-            if (BuildConfig.NAV_GPS_LOGGING) {
-                mNavProvider.locationUpdated(location);
-                writeToLog(location);
-            }
-
-        } else if (LocationUtils.isDuplicate(mLastLocation, location)) {
-            if (mLastLocation != null) {
-                mNavProvider.locationUpdated(location);
-            }
-            if (BuildConfig.NAV_GPS_LOGGING) {
-                writeToLog(location);
-            }
+            mNavProvider.locationUpdated(location);
+        } else if (!LocationUtils.isDuplicate(mLastLocation, location)) {
+            mNavProvider.locationUpdated(location);
+        }
+        if (BuildConfig.NAV_GPS_LOGGING) {
+            writeToLog(location);
         }
         mLastLocation = location;
 

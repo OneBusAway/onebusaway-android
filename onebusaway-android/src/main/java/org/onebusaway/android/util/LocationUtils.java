@@ -128,8 +128,7 @@ public class LocationUtils {
      * @param b Second location
      * @return true if same, false otherwise.
      */
-    public static boolean isDuplicate(Location a, Location b)
-    {
+    public static boolean isDuplicate(Location a, Location b) {
         if (a.getTime() != b.getTime())
             return false;
 

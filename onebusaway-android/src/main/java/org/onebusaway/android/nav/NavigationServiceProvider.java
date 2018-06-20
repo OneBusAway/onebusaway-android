@@ -65,8 +65,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     private NavigationSegment[] segments;  //Array of segments that are currently being navigated
     private float[] distances; //Array of floats calculated from segments traveled, segment limit = 20.
 
-    //private GPSDistanceCalc cp = new GPSDistanceCalc();
-    private boolean usecritical = false; //Tells the navigation provider to either use critical points or all points
     private float alertdistance = -1;
     private int diss = 0; //relation for segmentid/distances
 
@@ -305,21 +303,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         currentLocation = l;
         mProxCalculator.checkProximityAll(currentLocation);
     }
-
-    /**
-     * This method executes all thread-based navigation services when a new location is calculated
-     *
-     * @param CP
-     */
-    public synchronized void setuseCP(boolean CP) {
-
-        usecritical = CP;
-    }
-
-    public synchronized boolean getuseCP() {
-        return usecritical;
-    }
-
 
     private int sendCounter = 0;
 

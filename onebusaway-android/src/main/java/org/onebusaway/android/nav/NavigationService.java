@@ -63,15 +63,15 @@ public class NavigationService extends Service implements LocationHelper.Listene
     private String mBeforeStopId;                   // Before Destination Stop ID
     private String mTripId;                         // Trip ID
 
-    private int CoordinatesID =0;
+    private int mCoordId =0;
 
-    private boolean getReadyFlag = false;
-    private boolean pullTheCordFlag = false;
+    private boolean mGetReadyFlag = false;
+    private boolean mPullTheCordFlag = false;
 
     private NavigationServiceProvider mNavProvider;
     private File mLogFile = null;
 
-    private long finishedTime;
+    private long mFinishedTime;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -180,9 +180,9 @@ public class NavigationService extends Service implements LocationHelper.Listene
         // Is trip is finished? If so end service.
         if (mNavProvider.getFinished()) {
             if (BuildConfig.NAV_GPS_LOGGING) {
-                if (finishedTime == 0) {
-                    finishedTime = System.currentTimeMillis();
-                } else if (System.currentTimeMillis() - finishedTime >= 30000) {
+                if (mFinishedTime == 0) {
+                    mFinishedTime = System.currentTimeMillis();
+                } else if (System.currentTimeMillis() - mFinishedTime >= 30000) {
                     stopSelf();
                 }
             } else {
@@ -238,18 +238,18 @@ public class NavigationService extends Service implements LocationHelper.Listene
                 satellites = l.getExtras().getInt("satellites", 0);
             }
 
-           // getReadyFlag =mNavProvider.getGetReady();
-          //  pullTheCordFlag = mNavProvider.getFinished();
+           // mGetReadyFlag =mNavProvider.getGetReady();
+          //  mPullTheCordFlag = mNavProvider.getFinished();
 
             // TODO: Add isMockProvider
             String log = String.format(Locale.US,"%d,%s,%s,%s,%d,%f,%f,%f,%f,%f,%f,%d,%s\n",
-                    CoordinatesID, mNavProvider.getGetReady(),mNavProvider.getFinished(), nanoTime, l.getTime(),
+                    mCoordId, mNavProvider.getGetReady(),mNavProvider.getFinished(), nanoTime, l.getTime(),
                     l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(),
                     l.getBearing(), l.getAccuracy(), satellites, l.getProvider());
 
 
             //Increments the id for each coordinate
-            CoordinatesID++;
+            mCoordId++;
 
             if (mLogFile != null && mLogFile.canWrite()) {
                 FileUtils.write(mLogFile, log, true);

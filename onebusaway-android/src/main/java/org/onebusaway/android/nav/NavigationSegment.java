@@ -22,172 +22,171 @@ import android.location.LocationManager;
 
 public class NavigationSegment {
 
-    private int segmentId;
+    private int mSegmentId;
 
-    public void setSegmentId(int segmentId) {
-        this.segmentId = segmentId;
+    private int mAgencyFeedId;
+
+    private String mRouteIdGtfs;
+
+    private String mTripHeadsignGtfs;
+
+    private int mDirectionIdGtfs;
+
+    private int mIdStopFrom;
+
+    private String mIdStopFromTransitAgencyGTFS;
+
+    private Location mFromLocation;
+
+    private int mIdStopTo;
+
+    private String mIdStopToTransitAgencyGTFS;
+
+    private Location mToLocation;
+
+    private Location mBeforeLocation;
+
+    private float mAlertDistance;
+
+    private String mTripId;
+
+    /**
+     * Construct a segment from two stops. From Location remains null
+     *
+     * @param destination Destination Stop
+     * @param before      Second-to-last stop
+     */
+    public NavigationSegment(ObaStop destination, ObaStop before) {
+        mToLocation = new Location(LocationManager.GPS_PROVIDER);
+        mToLocation.setLatitude(destination.getLatitude());
+        mToLocation.setLongitude(destination.getLongitude());
+        mBeforeLocation = new Location(LocationManager.GPS_PROVIDER);
+        mBeforeLocation.setLatitude(before.getLatitude());
+        mBeforeLocation.setLongitude(before.getLongitude());
+    }
+
+    /**
+     * Construct a segment from locations
+     *
+     * @param beforeLoc Second to last location
+     * @param toLoc     Destination location
+     * @param fromLoc   User's origin location
+     */
+    public NavigationSegment(Location beforeLoc, Location toLoc, Location fromLoc) {
+        mFromLocation = fromLoc;
+        mToLocation = toLoc;
+        mBeforeLocation = beforeLoc;
     }
 
     public int getSegmentId() {
-        return segmentId;
+        return mSegmentId;
     }
 
-    private int agencyFeedId;
-
-    public void setAgencyFeedId(int agencyFeedId) {
-        this.agencyFeedId = agencyFeedId;
+    public void setSegmentId(int segmentId) {
+        this.mSegmentId = segmentId;
     }
 
     public int getAgencyFeedId() {
-        return agencyFeedId;
+        return mAgencyFeedId;
     }
 
-    private String routeIdGtfs;
-
-    public void setRouteIdGtfs(String routeIdGtfs) {
-        this.routeIdGtfs = routeIdGtfs;
+    public void setAgencyFeedId(int agencyFeedId) {
+        this.mAgencyFeedId = agencyFeedId;
     }
 
     public String getRouteIdGtfs() {
-        return routeIdGtfs;
+        return mRouteIdGtfs;
     }
 
-    private String tripHeadsignGtfs;
-
-    public void setTripHeadsignGtfs(String tripHeadsignGtfs) {
-        this.tripHeadsignGtfs = tripHeadsignGtfs;
+    public void setRouteIdGtfs(String routeIdGtfs) {
+        this.mRouteIdGtfs = routeIdGtfs;
     }
 
     public String getTripHeadsignGtfs() {
-        return tripHeadsignGtfs;
+        return mTripHeadsignGtfs;
     }
 
-    private int directionIdGtfs;
-
-    public void setDirectionIdGtfs(int directionIdGtfs) {
-        this.directionIdGtfs = directionIdGtfs;
+    public void setTripHeadsignGtfs(String tripHeadsignGtfs) {
+        this.mTripHeadsignGtfs = tripHeadsignGtfs;
     }
 
     public int getDirectionIdGtfs() {
-        return directionIdGtfs;
+        return mDirectionIdGtfs;
     }
 
-    private int idStopFrom;
-
-    public void setIdStopFrom(int idStopFrom) {
-        this.idStopFrom = idStopFrom;
+    public void setDirectionIdGtfs(int directionIdGtfs) {
+        this.mDirectionIdGtfs = directionIdGtfs;
     }
 
     public int getIdStopFrom() {
-        return idStopFrom;
+        return mIdStopFrom;
     }
 
-    private String idStopFromTransitAgencyGTFS;
-
-    public void setIdStopFromTransitAgencyGTFS(String idStopFromTransitAgencyGTFS) {
-        this.idStopFromTransitAgencyGTFS = idStopFromTransitAgencyGTFS;
+    public void setIdStopFrom(int idStopFrom) {
+        this.mIdStopFrom = idStopFrom;
     }
 
     public String getIdStopFromTransitAgencyGTFS() {
-        return idStopFromTransitAgencyGTFS;
+        return mIdStopFromTransitAgencyGTFS;
     }
 
-
-    private Location fromLocation;
+    public void setIdStopFromTransitAgencyGTFS(String idStopFromTransitAgencyGTFS) {
+        this.mIdStopFromTransitAgencyGTFS = idStopFromTransitAgencyGTFS;
+    }
 
     public Location getFromLocation() {
-        return fromLocation;
+        return mFromLocation;
     }
 
     public void setFromLocation(Location l) {
-        fromLocation = l;
-    }
-
-    private int idStopTo;
-
-    public void setIdStopTo(int idStopTo) {
-        this.idStopTo = idStopTo;
+        mFromLocation = l;
     }
 
     public int getIdStopTo() {
-        return idStopTo;
+        return mIdStopTo;
     }
 
-    private String idStopToTransitAgencyGTFS;
-
-    public void setIdStopToTransitAgencyGTFS(String idStopToTransitAgencyGTFS) {
-        this.idStopToTransitAgencyGTFS = idStopToTransitAgencyGTFS;
+    public void setIdStopTo(int idStopTo) {
+        this.mIdStopTo = idStopTo;
     }
 
     public String getIdStopToTransitAgencyGTFS() {
-        return idStopToTransitAgencyGTFS;
+        return mIdStopToTransitAgencyGTFS;
     }
 
-    private Location toLocation;
+    public void setIdStopToTransitAgencyGTFS(String idStopToTransitAgencyGTFS) {
+        this.mIdStopToTransitAgencyGTFS = idStopToTransitAgencyGTFS;
+    }
 
     public Location getToLocation() {
-        return toLocation;
+        return mToLocation;
     }
 
     public void setToLocation(Location l) {
-        toLocation = l;
+        mToLocation = l;
     }
 
-    private Location beforeLocation;
-
     public Location getBeforeLocation() {
-        return beforeLocation;
+        return mBeforeLocation;
     }
 
     public void setBeforeLocation(Location l) {
-        beforeLocation = l;
-    }
-
-    private float AlertDistance;
-
-    public void setAlertDistance(float AlertDistance) {
-        this.AlertDistance = AlertDistance;
+        mBeforeLocation = l;
     }
 
     public float getAlertDistance() {
-        return AlertDistance;
+        return mAlertDistance;
     }
 
-    private String tripId;
-
-    public void setTripId(String trip) {
-        tripId = trip;
+    public void setAlertDistance(float AlertDistance) {
+        this.mAlertDistance = AlertDistance;
     }
 
     public String getTripId() {
-        return tripId;
+        return mTripId;
     }
 
-    /**
-     * Construct a segment from two stops. From Location remains null.
-     *
-     * @param destination Destination Stop.
-     * @param before      Second-to-last stop.
-     */
-    public NavigationSegment(ObaStop destination, ObaStop before) {
-        toLocation = new Location(LocationManager.GPS_PROVIDER);
-        toLocation.setLatitude(destination.getLatitude());
-        toLocation.setLongitude(destination.getLongitude());
-        beforeLocation = new Location(LocationManager.GPS_PROVIDER);
-        beforeLocation.setLatitude(before.getLatitude());
-        beforeLocation.setLongitude(before.getLongitude());
-    }
-
-    /**
-     * Construct a segment from locations.
-     *
-     * @param beforeLoc Second to last location.
-     * @param toLoc     Destination location.
-     * @param fromLoc   User's from location.
-     */
-    public NavigationSegment(Location beforeLoc, Location toLoc, Location fromLoc) {
-        fromLocation = fromLoc;
-        toLocation = toLoc;
-        beforeLocation = beforeLoc;
+    public void setTripId(String trip) {
+        mTripId = trip;
     }
 }

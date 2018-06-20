@@ -242,7 +242,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
           //  pullTheCordFlag = mNavProvider.getFinished();
 
             // TODO: Add isMockProvider
-            String log = String.format("%d,%s,%s,%s,%d,%f,%f,%f,%f,%f,%f,%d,%s\n",
+            String log = String.format(Locale.US,"%d,%s,%s,%s,%d,%f,%f,%f,%f,%f,%f,%d,%s\n",
                     CoordinatesID, mNavProvider.getGetReady(),mNavProvider.getFinished(), nanoTime, l.getTime(),
                     l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(),
                     l.getBearing(), l.getAccuracy(), satellites, l.getProvider());

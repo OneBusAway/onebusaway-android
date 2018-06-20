@@ -103,12 +103,12 @@ public class NavigationService extends Service implements LocationHelper.Listene
             setupLog();
         }
 
-        mLocationHelper = new LocationHelper(this, 1);
-
         if (mLocationHelper != null) {
-            Log.d(TAG, "Requesting Location Updates");
-            mLocationHelper.registerListener(this);
+            mLocationHelper = new LocationHelper(this, 1);
         }
+
+        Log.d(TAG, "Requesting Location Updates");
+        mLocationHelper.registerListener(this);
 
         Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
         Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);

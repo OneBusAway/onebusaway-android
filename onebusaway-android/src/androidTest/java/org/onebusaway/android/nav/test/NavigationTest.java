@@ -512,9 +512,9 @@ public class NavigationTest extends ObaTestCase {
      * Destination Stop: Busch Blvd @ 22nd St
      * Recorded In: Bus route 39 (12 stops)
      * Device Used: Kyocera
-     * FIXME - This test is failing because the second to last stop in the map is not
-     * in the coordinate where the actual stop is located. Hence, it appears that the
-     * pool the cord is triggered to soon
+     * FIXME - This test is failing because the lat/long for the 2nd-to-last stop is wrong - it's
+     * not where the actual physical stop is located. Hence, it appears that the pull the cord alert
+     * is triggered to soon.
      */
     @Test
     public void testTrip14() throws IOException {

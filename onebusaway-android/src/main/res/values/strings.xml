@@ -327,7 +327,7 @@
     <string name="stop_notify_confirmation">Will notify!</string>
     <string name="stop_notify_title">Stop Reminder</string>
     <string name="stop_notify_cancel_trip">Cancel Trip</string>
-    <string name="stop_notify_test_id">Test %1$s</string>
+    <string name="stop_notify_test_id">Test %1$d</string>
 
     <!-- Stop Details -->
     <string name="stop_details_code">Stop # %1$s</string>

@@ -92,6 +92,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -160,7 +161,7 @@ public class HomeActivity extends AppCompatActivity
 
     private static final String TAG = "HomeActivity";
 
-    Context mContext;
+    WeakReference<AppCompatActivity> mActivityWeakRef;
 
     ArrivalsListFragment mArrivalsListFragment;
 
@@ -350,7 +351,7 @@ public class HomeActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        mContext = this;
+        mActivityWeakRef = new WeakReference<>(this);
 
         setupNavigationDrawer();
 
@@ -1100,8 +1101,8 @@ public class HomeActivity extends AppCompatActivity
         final int oldVer = settings.getInt(WHATS_NEW_VER, 0);
         final int newVer = appInfo.versionCode;
 
-        if (oldVer < newVer) {
-            showDialog(WHATSNEW_DIALOG);
+        if (oldVer < newVer && mActivityWeakRef.get() != null && !mActivityWeakRef.get().isFinishing()) {
+            mActivityWeakRef.get().showDialog(WHATSNEW_DIALOG);
 
             // Updates will remove the alarms. This should put them back.
             // (Unfortunately I can't find a way to reschedule them without
@@ -1891,7 +1892,7 @@ public class HomeActivity extends AppCompatActivity
 
                 // Accessibility
                 if (mExpandCollapse != null) {
-                    mExpandCollapse.setContentDescription(mContext.getResources()
+                    mExpandCollapse.setContentDescription(Application.get().getResources()
                             .getString(R.string.stop_header_sliding_panel_open));
                 }
             }
@@ -1910,7 +1911,7 @@ public class HomeActivity extends AppCompatActivity
 
                 // Accessibility
                 if (mExpandCollapse != null) {
-                    mExpandCollapse.setContentDescription(mContext.getResources()
+                    mExpandCollapse.setContentDescription(Application.get().getResources()
                             .getString(R.string.stop_header_sliding_panel_collapsed));
                 }
             }
@@ -1931,7 +1932,7 @@ public class HomeActivity extends AppCompatActivity
 
                 // Accessibility
                 if (mExpandCollapse != null) {
-                    mExpandCollapse.setContentDescription(mContext.getResources()
+                    mExpandCollapse.setContentDescription(Application.get().getResources()
                             .getString(R.string.stop_header_sliding_panel_open));
                 }
             }
@@ -1947,7 +1948,7 @@ public class HomeActivity extends AppCompatActivity
 
                 // Accessibility - reset it here so its ready for next showing
                 if (mExpandCollapse != null) {
-                    mExpandCollapse.setContentDescription(mContext.getResources()
+                    mExpandCollapse.setContentDescription(Application.get().getResources()
                             .getString(R.string.stop_header_sliding_panel_collapsed));
                 }
             }

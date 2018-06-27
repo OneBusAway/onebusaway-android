@@ -31,7 +31,7 @@ data class PathLink
  * @param secondToLast Second to last location (stop prior to destination stop)
  * @param toLoc     Destination location
  */
-(val fromLocation: Location?, val beforeLocation: Location?, val toLocation: Location?) {
+(val fromLocation: Location?, val beforeLocation: Location, val toLocation: Location) {
 
     val pathLinkId: Int = 0
 
@@ -51,7 +51,7 @@ data class PathLink
 
     val idStopToTransitAgencyGTFS: String? = null
 
-    var alertDistance: Float = 0.toFloat()
+    val alertDistance: Float = 0.toFloat()
 
     var tripId: String? = null
 }

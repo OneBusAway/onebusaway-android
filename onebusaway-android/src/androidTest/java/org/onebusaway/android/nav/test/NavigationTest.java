@@ -884,7 +884,7 @@ public class NavigationTest extends ObaTestCase {
 
         Location mSecondToLastLocation;
 
-        Location[] mPoints;
+        Location[] mLocations;
 
         long[] mTimes;
 
@@ -919,7 +919,7 @@ public class NavigationTest extends ObaTestCase {
             mSecondToLastLocation.setLatitude(Double.parseDouble(details[5]));
             mSecondToLastLocation.setLongitude(Double.parseDouble(details[6]));
 
-            mPoints = new Location[lines.length - 1];
+            mLocations = new Location[lines.length - 1];
 
             // Skip header and run through csv.
             // Rows are formatted like this:
@@ -940,45 +940,45 @@ public class NavigationTest extends ObaTestCase {
                 int sats = Integer.parseInt(values[11]);
                 String provider = values[12];
 
-                mPoints[i - 1] = new Location(provider);
+                mLocations[i - 1] = new Location(provider);
 
                 // Check if we can use elapsed nano seconds. Else, we'll use time.
                 if (!nanosStr.equals("")
                         && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
                     useElapsedNanos = true;
-                    mPoints[i - 1].setElapsedRealtimeNanos(Long.parseLong(nanosStr));
+                    mLocations[i - 1].setElapsedRealtimeNanos(Long.parseLong(nanosStr));
                 }
 
-                mPoints[i - 1].setTime(time);
-                mPoints[i - 1].setLatitude(lat);
-                mPoints[i - 1].setLongitude(lng);
-                mPoints[i - 1].setAltitude(altitude);
-                mPoints[i - 1].setBearing(bearing);
-                mPoints[i - 1].setAccuracy(accuracy);
-                mPoints[i - 1].setSpeed(speed);
+                mLocations[i - 1].setTime(time);
+                mLocations[i - 1].setLatitude(lat);
+                mLocations[i - 1].setLongitude(lng);
+                mLocations[i - 1].setAltitude(altitude);
+                mLocations[i - 1].setBearing(bearing);
+                mLocations[i - 1].setAccuracy(accuracy);
+                mLocations[i - 1].setSpeed(speed);
             }
 
             // Compute index of point nearest to second to last stop.
             double minDist = Double.MAX_VALUE;
-            for (int i = 0; i < mPoints.length; i++) {
-                if (mPoints[i].distanceTo(mSecondToLastLocation) < minDist) {
-                    minDist = mPoints[i].distanceTo(mSecondToLastLocation);
+            for (int i = 0; i < mLocations.length; i++) {
+                if (mLocations[i].distanceTo(mSecondToLastLocation) < minDist) {
+                    minDist = mLocations[i].distanceTo(mSecondToLastLocation);
                     getReadyIndex = i;
                 }
             }
 
             // Compute time differences between readings in ms, if realtime ns is available, use it
             // else use getTime.
-            mTimes = new long[mPoints.length];
+            mTimes = new long[mLocations.length];
             if (useElapsedNanos && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                for (int i = 1; i < mPoints.length; i++) {
-                    mTimes[i] = (mPoints[i].getElapsedRealtimeNanos() - mPoints[i - 1]
+                for (int i = 1; i < mLocations.length; i++) {
+                    mTimes[i] = (mLocations[i].getElapsedRealtimeNanos() - mLocations[i - 1]
                             .getElapsedRealtimeNanos());
                     mTimes[i] /= 1000000;
                 }
             } else {
-                for (int i = 1; i < mPoints.length; i++) {
-                    mTimes[i] = mPoints[i].getTime() - mPoints[i - 1].getTime();
+                for (int i = 1; i < mLocations.length; i++) {
+                    mTimes[i] = mLocations[i].getTime() - mLocations[i - 1].getTime();
                 }
             }
         }
@@ -1003,8 +1003,8 @@ public class NavigationTest extends ObaTestCase {
             return mSecondToLastLocation;
         }
 
-        public Location[] getPoints() {
-            return mPoints;
+        public Location[] getLocations() {
+            return mLocations;
         }
 
         public long[] getTimes() {
@@ -1030,7 +1030,7 @@ public class NavigationTest extends ObaTestCase {
             provider.navigate(new Path(new ArrayList<>(Arrays.asList(link))));
 
             for (int i = 0; i <= mGetReadyId; i++) {
-                Location l = mPoints[i];
+                Location l = mLocations[i];
 
                 try {
                     Thread.sleep(mTimes[i] / SPEED_UP);
@@ -1054,7 +1054,7 @@ public class NavigationTest extends ObaTestCase {
             assertEquals(expected1, check1);
 
             for (int i = mGetReadyId; i <= mPullCordId; i++) {
-                Location l = mPoints[i];
+                Location l = mLocations[i];
                 try {
                     Thread.sleep((mTimes[i] / SPEED_UP));
                 } catch (Exception e) {

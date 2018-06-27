@@ -49,9 +49,9 @@ public class NavigationTest extends ObaTestCase {
 
     private static final long SPEED_UP = 1000000L;
 
-    private int getReadyID;
+    private int mGetReadyId;
 
-    private int pullCordID;
+    private int mPullCordId;
 
     /**
      * Started Stop: Mckinley Dr @ DOT Bldg
@@ -64,8 +64,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip1"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 848;
-        pullCordID = 978;
+        mGetReadyId = 848;
+        mPullCordId = 978;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
@@ -82,8 +82,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip1c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 665;
-        pullCordID = 929;
+        mGetReadyId = 665;
+        mPullCordId = 929;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
@@ -100,8 +100,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip2"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 0;
-        pullCordID = 14;
+        mGetReadyId = 0;
+        mPullCordId = 14;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
@@ -118,8 +118,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip2c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 0;
-        pullCordID = 64;
+        mGetReadyId = 0;
+        mPullCordId = 64;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
@@ -137,8 +137,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip3"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 95;
-        pullCordID = 115;
+        mGetReadyId = 95;
+        mPullCordId = 115;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
@@ -156,8 +156,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip3c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 87;
-        pullCordID = 109;
+        mGetReadyId = 87;
+        mPullCordId = 109;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
@@ -175,8 +175,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip4"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 294;
-        pullCordID = 329;
+        mGetReadyId = 294;
+        mPullCordId = 329;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
@@ -194,8 +194,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV.
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip4c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 253;
-        pullCordID = 329;
+        mGetReadyId = 253;
+        mPullCordId = 329;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
@@ -212,8 +212,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip5"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 372;
-        pullCordID = 660;
+        mGetReadyId = 372;
+        mPullCordId = 660;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -229,8 +229,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip5c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 284;
-        pullCordID = 492;
+        mGetReadyId = 284;
+        mPullCordId = 492;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -246,8 +246,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip6"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 801;
-        pullCordID = 837;
+        mGetReadyId = 801;
+        mPullCordId = 837;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -263,8 +263,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip6c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 676;
-        pullCordID = 704;
+        mGetReadyId = 676;
+        mPullCordId = 704;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -280,8 +280,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip7"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 183;
-        pullCordID = 208;
+        mGetReadyId = 183;
+        mPullCordId = 208;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -297,8 +297,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip7c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 172;
-        pullCordID = 285;
+        mGetReadyId = 172;
+        mPullCordId = 285;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -314,8 +314,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip8"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 0;
-        pullCordID = 18;
+        mGetReadyId = 0;
+        mPullCordId = 18;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -331,8 +331,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip8c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 0;
-        pullCordID = 20;
+        mGetReadyId = 0;
+        mPullCordId = 20;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -348,8 +348,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip9"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 1041;
-        pullCordID = 1071;
+        mGetReadyId = 1041;
+        mPullCordId = 1071;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -365,8 +365,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip9c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 570;
-        pullCordID = 634;
+        mGetReadyId = 570;
+        mPullCordId = 634;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -382,8 +382,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip10"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 589;
-        pullCordID = 605;
+        mGetReadyId = 589;
+        mPullCordId = 605;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -399,8 +399,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip10c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 484;
-        pullCordID = 509;
+        mGetReadyId = 484;
+        mPullCordId = 509;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -416,8 +416,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip11"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 331;
-        pullCordID = 371;
+        mGetReadyId = 331;
+        mPullCordId = 371;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -433,8 +433,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip11c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 119;
-        pullCordID = 158;
+        mGetReadyId = 119;
+        mPullCordId = 158;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -450,8 +450,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip12"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 69;
-        pullCordID = 199;
+        mGetReadyId = 69;
+        mPullCordId = 199;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -467,8 +467,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip12c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 880;
-        pullCordID = 901;
+        mGetReadyId = 880;
+        mPullCordId = 901;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -484,8 +484,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip13"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 2549;
-        pullCordID = 2732;
+        mGetReadyId = 2549;
+        mPullCordId = 2732;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -501,8 +501,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip13c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 230;
-        pullCordID = 519;
+        mGetReadyId = 230;
+        mPullCordId = 519;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -521,8 +521,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip14"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 548;
-        pullCordID = 571;
+        mGetReadyId = 548;
+        mPullCordId = 571;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -538,8 +538,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip14c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 387;
-        pullCordID = 429;
+        mGetReadyId = 387;
+        mPullCordId = 429;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -555,8 +555,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip15"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 225;
-        pullCordID = 417;
+        mGetReadyId = 225;
+        mPullCordId = 417;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -572,8 +572,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip15c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 217;
-        pullCordID = 287;
+        mGetReadyId = 217;
+        mPullCordId = 287;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -590,8 +590,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip16c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 142;
-        pullCordID = 192;
+        mGetReadyId = 142;
+        mPullCordId = 192;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -607,8 +607,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip16c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 121;
-        pullCordID = 168;
+        mGetReadyId = 121;
+        mPullCordId = 168;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -624,8 +624,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip17"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 100;
-        pullCordID = 181;
+        mGetReadyId = 100;
+        mPullCordId = 181;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -641,8 +641,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip18"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 31;
-        pullCordID = 50;
+        mGetReadyId = 31;
+        mPullCordId = 50;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -658,8 +658,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip18c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 31;
-        pullCordID = 58;
+        mGetReadyId = 31;
+        mPullCordId = 58;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -675,8 +675,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip20"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 133;
-        pullCordID = 195;
+        mGetReadyId = 133;
+        mPullCordId = 195;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -692,8 +692,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip20c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 53;
-        pullCordID = 117;
+        mGetReadyId = 53;
+        mPullCordId = 117;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -709,8 +709,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip21"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 547;
-        pullCordID = 686;
+        mGetReadyId = 547;
+        mPullCordId = 686;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -726,8 +726,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip21c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 323;
-        pullCordID = 402;
+        mGetReadyId = 323;
+        mPullCordId = 402;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -743,8 +743,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip22"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 1085;
-        pullCordID = 1198;
+        mGetReadyId = 1085;
+        mPullCordId = 1198;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -760,8 +760,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip22c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 1032;
-        pullCordID = 1099;
+        mGetReadyId = 1032;
+        mPullCordId = 1099;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -777,8 +777,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip23"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 0;
-        pullCordID = 24;
+        mGetReadyId = 0;
+        mPullCordId = 24;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -794,8 +794,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip23c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 0;
-        pullCordID = 18;
+        mGetReadyId = 0;
+        mPullCordId = 18;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -811,8 +811,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip24"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 115;
-        pullCordID = 178;
+        mGetReadyId = 115;
+        mPullCordId = 178;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -828,8 +828,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip24c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 203;
-        pullCordID = 262;
+        mGetReadyId = 203;
+        mPullCordId = 262;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -845,8 +845,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip25"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 209;
-        pullCordID = 235;
+        mGetReadyId = 209;
+        mPullCordId = 235;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -862,8 +862,8 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip25c"));
         String csv = IOUtils.toString(reader);
-        getReadyID = 217;
-        pullCordID = 247;
+        mGetReadyId = 217;
+        mPullCordId = 247;
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(true, true);
     }
@@ -1027,7 +1027,7 @@ public class NavigationTest extends ObaTestCase {
             // Begin navigation & simulation
             provider.navigate(new NavigationSegment[]{segment});
 
-            for (int i = 0; i <= getReadyID; i++) {
+            for (int i = 0; i <= mGetReadyId; i++) {
                 Location l = mPoints[i];
 
                 try {
@@ -1037,7 +1037,7 @@ public class NavigationTest extends ObaTestCase {
                 }
                 provider.locationUpdated(l);
 
-                if (provider.getGetReady() && i < getReadyID) {
+                if (provider.getGetReady() && i < mGetReadyId) {
                     fail("Get ready triggered too soon");
                 }
 
@@ -1051,7 +1051,7 @@ public class NavigationTest extends ObaTestCase {
             Boolean check1 = provider.getGetReady() && !provider.getFinished();
             assertEquals(expected1, check1);
 
-            for (int i = getReadyID; i <= pullCordID; i++) {
+            for (int i = mGetReadyId; i <= mPullCordId; i++) {
                 Location l = mPoints[i];
                 try {
                     Thread.sleep((mTimes[i] / SPEED_UP));
@@ -1060,7 +1060,7 @@ public class NavigationTest extends ObaTestCase {
                 }
                 provider.locationUpdated(l);
 
-                if (provider.getFinished() && i < pullCordID) {
+                if (provider.getFinished() && i < mPullCordId) {
                     fail("Pull the Cord triggered too soon");
                 }
 

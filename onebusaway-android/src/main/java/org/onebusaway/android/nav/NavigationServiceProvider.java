@@ -43,15 +43,19 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     public static final String TAG = "NavServiceProvider";
 
+    public static final int STATUS_UPDATE_DISTANCE = 1;
+    public static final int STATUS_UPDATE_GET_READY = 2;
+    public static final int STATUS_UPDATE_PULL_CORD = 3;
+
     public static final int NOTIFICATION_ID = 33620;
     private static final long[] VIBRATION_PATTERN = new long[]{
             2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000
     };
     private static final int DISTANCE_THRESHOLD = 200;
 
-    // Number of times to repeat voice commands.
-    private static final int PULL_CORD_REPEAT = 10;
-    private static final int GET_READY_REPEAT = 2;
+    // Number of times to repeat voice commands
+    private static final int NUM_PULL_CORD_REPEAT = 10;
+    private static final int NUM_GET_READY_REPEAT = 2;
 
     private ProximityCalculator mProxCalculator;
 
@@ -150,15 +154,15 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
 
     /**
-     * Returns the ID of the currently navigated segment
+     * Returns the ID of the currently navigated segment, or -1 if a segment isn't currently being navigated
+     * @return the ID of the currently navigated segment, or -1 if a segment isn't currently being navigated
      */
     public int getSegmentID() {
         try {
             if (mSegments != null) {
                 return mSegments[mSegmentIndex].getSegmentId();
             } else {
-                return -1;  //If a segment isn't currently being navigated, then return -1 as a default value
-
+                return -1;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -174,21 +178,12 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         return mSegmentIndex;
     }
 
-
-    /**
-     * This method sets up the NavigationProvider to provide navigations instructions to a particular location
-     */
-    public void navigate(Location start, Location destination) {
-        mProxCalculator.listenForCoords(destination, null,
-                null);  //Set proximity listener to listen for coords
-    }
-
     /**
      * Navigates a transit Service which is composed of these Segments
      */
     public void navigate(NavigationSegment[] segments) {
-
         Log.d(TAG, "Starting navigation for service");
+
         //Create a new instance and rewrite the old one with a blank slate of ProximityListener
         lazyProxInitialization();
         mSegments = segments;
@@ -202,11 +197,12 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         Location firstcoords = mSegments[mSegmentIndex].getFromLocation();
 
         mAlertDistance = mSegments[mSegmentIndex].getAlertDistance();
+
         //Have proximity listener listen for the "Ring" location
         mProxCalculator.listenForDistance(mAlertDistance);
         mProxCalculator.listenForCoords(coords, lastcoords, firstcoords);
-        mProxCalculator.ready = false;
-        mProxCalculator.trigger = false;
+        mProxCalculator.mReady = false;
+        mProxCalculator.mTrigger = false;
     }
 
     /**
@@ -217,11 +213,11 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     }
 
     public void setTimeout(int timeout) {
-        this.mTimeout = timeout;
+        mTimeout = timeout;
     }
 
     public int getTimeout() {
-        return this.mTimeout;
+        return mTimeout;
     }
 
     /**
@@ -312,13 +308,13 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
         NavigationServiceProvider mNavProvider;
 
-        private float radius = 100;
+        private float mRadius = 100;
                 //Defines radius (in meters) for which the Proximity listener should be triggered (Default = 50)
 
         private float readyRadius = 300;
                 //Defines radius(in meters) for which the Proximity listener should trigger "Get Ready Alert"
 
-        private boolean trigger = false;
+        private boolean mTrigger = false;
                 //Defines whether the Proximity Listener has been triggered (true) or not (false)
 
         private Location secondToLastCoords = null;
@@ -328,7 +324,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
         private Location firstCoords = null; //Coordinates of the first bus stop of the segment
 
-        private float distance = -1;  //Actual known traveled distance loaded from segment object
+        private float mDistance = -1;  //Actual known traveled distance loaded from segment object
 
         private float directDistance = -1;
                 //Direct distance to second to last stop coords, used for radius detection
@@ -336,13 +332,13 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         private float endDistance = -1;
                 //Direct distance to last bus stop coords, used for segment navigation
 
-        private boolean ready = false; //Has get ready alert been played?
+        private boolean mReady = false; //Has get ready alert been played?
 
         private boolean m100_a, m50_a, m20_a, m20_d, m50_d, m100_d = false;
                 // Variables for handling arrival/departure from 2nd to last stop
 
         public ProximityCalculator(NavigationServiceProvider navProvider) {
-            this.mNavProvider = navProvider;
+            mNavProvider = navProvider;
             Log.d(TAG, "Initializing ProximityCalculator");
         }
 
@@ -350,14 +346,14 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
          * Getter method for radius value of ProximityListener
          **/
         public float getRadius() {
-            return radius;
+            return mRadius;
         }
 
         /**
          * Setter method for radius value of ProximityListener
          **/
         public void setRadius(float radius) {
-            this.radius = radius;
+            mRadius = radius;
         }
 
         /**
@@ -372,7 +368,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
          * Resets triggers for proximityEvent
          */
         public void setTrigger(boolean t) {
-            trigger = ready = t;
+            mTrigger = mReady = t;
         }
 
         /**
@@ -389,8 +385,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
             //NEW - if statement that encompases rest of method to check if mNavProvider has triggered navListener before for this coordinate
             if (selection == 0) {
-                if (trigger == false) {
-                    trigger = true;
+                if (mTrigger == false) {
+                    mTrigger = true;
                     Log.d(TAG, "Proximity Event fired");
                     if (mNavProvider.hasMoreSegments()) {
                         if (t == 0) {
@@ -407,9 +403,9 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                                 mNavProvider
                                         .navigateNextSegment(); //Uncomment this line to allow navigation on multiple segments within one service (chained segments)
 
-                                ready = false; //Reset the "get ready" notification alert
+                                mReady = false; //Reset the "get ready" notification alert
 
-                                trigger = false; //Reset the proximity notification alert
+                                mTrigger = false; //Reset the proximity notification alert
 
                             } catch (Exception e) {
                                 Log.e(TAG, "Error in ProximityCalculator.proximityEvent(): " + e);
@@ -432,8 +428,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     }
                 }
             } else if (selection == 1) {
-                if (ready == false) {
-                    ready = true;
+                if (mReady == false) {
+                    mReady = true;
                     return true;
                 }
             }
@@ -462,7 +458,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
          * Sets the "known" distance for the segment
          */
         public void listenForDistance(float d) {
-            this.distance = d;
+            mDistance = d;
         }
 
         /**
@@ -530,7 +526,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         }
 
         /**
-         * These method checks the proximity to the registered coordinates
+         * Checks the proximity to the provided location and returns the status update (STATUS_UPDATE_*) that was triggered by the proximity to this location.  STATUS_UPDATE_DISTANCE will always be updated.
+         * @return the status update (STATUS_UPDATE_*) that was triggered by the proximity to this location (if any).  STATUS_UPDATE_DISTANCE will always be updated.
          */
         private int checkProximityAll(Location currentLocation) {
             if (!mWaitingForConfirm) {
@@ -542,27 +539,27 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                         + ", " + secondToLastCoords
                         .getLongitude());
 
-                mNavProvider.updateInterface(1);                 // Update distance notification
+                mNavProvider.updateUi(STATUS_UPDATE_DISTANCE);                 // Update distance notification
 
                 // Check if distance from 2nd-to-last stop is less than threshold.
                 if (directDistance < DISTANCE_THRESHOLD) {
                     if (proximityEvent(1, -1)) {
-                        mNavProvider.updateInterface(2);
+                        mNavProvider.updateUi(STATUS_UPDATE_GET_READY);
                         Log.d(TAG, "-----Get ready!");
-                        return 2; //Get ready alert played
+                        return STATUS_UPDATE_GET_READY; //Get ready alert played
                     }
                 }
 
                 // Check if pull the cord notification should be fired.
                 if (StopDetector(directDistance, 1, currentLocation.getSpeed())) {
                     if (proximityEvent(0, 0)) {
-                        mNavProvider.updateInterface(3);
+                        mNavProvider.updateUi(STATUS_UPDATE_PULL_CORD);
                         Log.d(TAG, "-----Get off the bus!");
-                        return 1; // Get off bus alert played
+                        return STATUS_UPDATE_PULL_CORD; // Get off bus alert played
                     }
                 }
             }
-            return 0; //No alerts played.
+            return STATUS_UPDATE_DISTANCE; //No alerts played.
         }
 
 
@@ -577,16 +574,16 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         }
 
         public void setOnlyTrigger(boolean value) {
-            this.trigger = value;
+            mTrigger = value;
         }
 
         public void setReady(boolean ready) {
-            this.ready = ready;
+            mReady = ready;
         }
     }
 
     public void setWaitingForConfirm(boolean waitingForConfirm) {
-        this.mWaitingForConfirm = waitingForConfirm;
+        mWaitingForConfirm = waitingForConfirm;
     }
 
     @Override
@@ -601,9 +598,12 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         }
     }
 
-    // Update Interface
-    // e.g, notifications, speak, etc.
-    private void updateInterface(int status) {
+    /**
+     * Updates the user interface (e.g., distance display, speech) based on navigation events
+     * TODO - This method should be moved to a NavigationServiceListener class based on a listener interface
+     * @param status STATUS_UPDATE_* variable defining the status update to act upon
+     */
+    private void updateUi(int status) {
         Application app = Application.get();
         TripDetailsActivity.Builder bldr = new TripDetailsActivity.Builder(
                 app.getApplicationContext(), mTripId);
@@ -624,9 +624,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                                 .getString(R.string.stop_notify_title))
                         .setContentIntent(pIntent)
                         .setAutoCancel(true);
-        if (status == 1) {          // General status update.
+        if (status == STATUS_UPDATE_DISTANCE) {          // General status update.
             // Retrieve preferred unit and calculate distance.
-
             String IMPERIAL = app.getString(R.string.preferences_preferred_units_option_imperial);
             String METRIC = app.getString(R.string.preferences_preferred_units_option_metric);
             String AUTOMATIC = app.getString(R.string.preferences_preferred_units_option_automatic);
@@ -667,7 +666,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
 
-        } else if (status == 2) {   // Get ready to pack
+        } else if (status == STATUS_UPDATE_GET_READY) {   // Get ready to pack
             mGetReady = true;
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM,
@@ -676,9 +675,9 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     0, receiverIntent, 0);
 
             String message = Application.get().getString(R.string.voice_get_ready);
-            for (int i = 0; i < GET_READY_REPEAT; i++) {
+            for (int i = 0; i < NUM_GET_READY_REPEAT; i++) {
                 speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
-                if (i < GET_READY_REPEAT - 1) {
+                if (i < NUM_GET_READY_REPEAT - 1) {
                     silence(500, TextToSpeech.QUEUE_ADD);
                 }
             }
@@ -693,7 +692,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
             mNotificationManager.notify(NOTIFICATION_ID + 1, mBuilder.build());
 
-        } else if (status == 3) {   // Pull the cord
+        } else if (status == STATUS_UPDATE_PULL_CORD) {   // Pull the cord
             mFinished = true;
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM,
                     NavigationReceiver.DISMISS_NOTIFICATION);
@@ -703,9 +702,9 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
             String message = Application.get().getString(R.string.voice_pull_cord);
             // TODO: Slow down voice commands, add count as property.
-            for (int i = 0; i < PULL_CORD_REPEAT; i++) {
+            for (int i = 0; i < NUM_PULL_CORD_REPEAT; i++) {
                 speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
-                if (i < PULL_CORD_REPEAT - 1) {
+                if (i < NUM_PULL_CORD_REPEAT - 1) {
                     silence(500, TextToSpeech.QUEUE_ADD);
                 }
             }

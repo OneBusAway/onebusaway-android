@@ -19,6 +19,8 @@ import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.nav.model.Path;
+import org.onebusaway.android.nav.model.PathLink;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.TripDetailsListFragment;
 import org.onebusaway.android.util.LocationHelper;
@@ -37,6 +39,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
 
@@ -112,10 +115,14 @@ public class NavigationService extends Service implements LocationHelper.Listene
 
         Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
         Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
-        NavigationSegment segment = new NavigationSegment(last, dest, null);
+        PathLink pathLink = new PathLink(null, last, dest);
 
         if (mNavProvider != null) {
-            mNavProvider.navigate(new NavigationSegment[]{segment});
+            // TODO Support more than one path link
+            ArrayList<PathLink> links = new ArrayList<>(1);
+            links.add(pathLink);
+            Path path = new Path(links);
+            mNavProvider.navigate(path);
         }
         return START_STICKY;
     }

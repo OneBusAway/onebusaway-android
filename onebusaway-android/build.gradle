@@ -19,6 +19,8 @@ import groovy.swing.SwingBuilder
 import org.apache.tools.ant.filters.ConcatFilter
 
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 
 repositories {
     maven {

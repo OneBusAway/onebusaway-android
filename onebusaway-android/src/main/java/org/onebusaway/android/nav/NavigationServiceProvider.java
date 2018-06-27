@@ -17,6 +17,8 @@ package org.onebusaway.android.nav;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.nav.model.Path;
+import org.onebusaway.android.nav.model.PathLink;
 import org.onebusaway.android.ui.TripDetailsActivity;
 import org.onebusaway.android.util.RegionUtils;
 
@@ -61,20 +63,13 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     private int mTimeout = 60;  //Timeout value for service provider action (default = 60 seconds);
 
-    /**
-     * Navigation-specific variables
-     **/
-    private int mSegmentIndex = 0;
-            //Index that defines the current segment within the ordered context of a service (i.e. First segment in a service will have index = 0, second segment index = 1, etc.)
+    // Index that defines the current path link within the path (i.e. First link in a path will have index = 0, second link index = 1, etc.)
+    private int mPathLinkIndex = 0;
 
-    private NavigationSegment[] mSegments;  //Array of segments that are currently being navigated
-
-    private float[] mDistances;
-            //Array of floats calculated from segments traveled, segment limit = 20.
+    // Path links being navigated
+    private Path mPath;
 
     private float mAlertDistance = -1;
-
-    private int mDiss = 0; //relation for segmentid/distances
 
     private boolean mWaitingForConfirm = false;
 
@@ -124,14 +119,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     }
 
     /**
-     * Adds dsegment distance to the array storing all distances
-     */
-    public void addDistance(float d) {
-        mDistances[mDiss] = d;
-        mDiss++;
-    }
-
-    /**
      * Returns true if user has been notified to get ready.
      */
     public boolean getGetReady() {
@@ -146,61 +133,45 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     }
 
     /**
-     * Returns all stored distances for currently navigated service
+     * Returns the ID of the currently navigated path link, or null if no path link is currently being navigated
+     * @return the ID of the currently navigated path link, or null if no path link is currently being navigated
      */
-    public float[] getDistances() {
-        return mDistances;
-    }
-
-
-    /**
-     * Returns the ID of the currently navigated segment, or -1 if a segment isn't currently being navigated
-     * @return the ID of the currently navigated segment, or -1 if a segment isn't currently being navigated
-     */
-    public int getSegmentID() {
-        try {
-            if (mSegments != null) {
-                return mSegments[mSegmentIndex].getSegmentId();
-            } else {
-                return -1;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.e(TAG, "Could not get Segment ID");
-            return -1;
+    public Integer getPathLinkId() {
+        if (mPath != null) {
+            return mPath.getPathLinks().get(mPathLinkIndex).getPathLinkId();
         }
+        return null;
     }
 
     /**
-     * Returns the index of the current segment
+     * Returns the index of the current path link
      */
-    public int getSegmentIndex() {
-        return mSegmentIndex;
+    public int getPathLinkIndex() {
+        return mPathLinkIndex;
     }
 
     /**
-     * Navigates a transit Service which is composed of these Segments
+     * Navigates a navigation path which is composed of path links
      */
-    public void navigate(NavigationSegment[] segments) {
+    public void navigate(Path path) {
         Log.d(TAG, "Starting navigation for service");
 
-        //Create a new instance and rewrite the old one with a blank slate of ProximityListener
+        // Create a new instance and rewrite the old one with a blank slate of ProximityListener
         lazyProxInitialization();
-        mSegments = segments;
-        mSegmentIndex = 0;
-        mDiss = 0;
-        mDistances = new float[segments.length];
-        Log.d(TAG, "Segments Length: " + segments.length);
-        //Create new coordinate object using the "Ring" coordinates
-        Location coords = mSegments[mSegmentIndex].getBeforeLocation();
-        Location lastcoords = mSegments[mSegmentIndex].getToLocation();
-        Location firstcoords = mSegments[mSegmentIndex].getFromLocation();
+        mPath = path;
+        mPathLinkIndex = 0;
+        Log.d(TAG, "Number of path links: " + mPath.getPathLinks().size());
 
-        mAlertDistance = mSegments[mSegmentIndex].getAlertDistance();
+        // Create new coordinate object using the "Ring" coordinates
+        Location firstLocation =  mPath.getPathLinks().get(mPathLinkIndex).getFromLocation();
+        Location secondToLastLocation = mPath.getPathLinks().get(mPathLinkIndex).getBeforeLocation();
+        Location lastLocation =  mPath.getPathLinks().get(mPathLinkIndex).getToLocation();
 
-        //Have proximity listener listen for the "Ring" location
+        mAlertDistance =  mPath.getPathLinks().get(mPathLinkIndex).getAlertDistance();
+
+        // Have proximity listener listen for the "Ring" location
         mProxCalculator.listenForDistance(mAlertDistance);
-        mProxCalculator.listenForCoords(coords, lastcoords, firstcoords);
+        mProxCalculator.listenForLocation(firstLocation, secondToLastLocation, lastLocation);
         mProxCalculator.mReady = false;
         mProxCalculator.mTrigger = false;
     }
@@ -209,7 +180,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      * Resets any current routes which might be currently navigated
      */
     public void reset() {
-        mProxCalculator.listenForCoords(null, null, null);
+        mProxCalculator.listenForLocation(null, null, null);
     }
 
     public void setTimeout(int timeout) {
@@ -228,50 +199,47 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     }
 
     /**
-     * Determines whether or not there is another segment to be navigated as part of the current transit service that is being navigated
+     * Returns true if there is another path link to be navigated as part of the current path that is being navigated, false if there is not another link
+     * @return true if there is another path link to be navigated as part of the current path that is being navigated, false if there is not another link
      */
-    public boolean hasMoreSegments() {
-        Log.d(TAG, "Checking if service has more segments left");
-        //If there are still more segments to be navigated as part of this transit service, return true.  Otherwise return false
-        if ((mSegments == null) || (mSegmentIndex >= (mSegments.length - 1))) {
-            Log.d(TAG, "Segments Index: " + mSegmentIndex + " Segments Length: " + (mSegments.length
-                    - 1));
-            Log.d(TAG, "%%%%%%%%%%%%%%% No more Segments Left %%%%%%%%%%%%%%%%%%%%%");
-
-            return false; //No more segments exist
-
+    public boolean hasMorePathLinks() {
+        Log.d(TAG, "Checking if path has more path links left to be navigated");
+        if (mPath == null || (mPathLinkIndex >= (mPath.getPathLinks().size() - 1))) {
+            // No more path links exist
+            Log.d(TAG, "PathLink index: " + mPathLinkIndex + " Number of PathLinks: " + (mPath.getPathLinks().size()));
+            Log.d(TAG, "%%%%%%%%%%%%%%% No more PathLinks left in Path %%%%%%%%%%%%%%%%%%%%%");
+            return false;
         }
-        Log.d(TAG, "More segments left, returning true");
-        return true; //Additional segments still need to be navigated as part of this service
+        // Additional path links still need to be navigated as part of this service
+        Log.d(TAG, "More path links left");
+        return true;
 
     }
 
     /**
-     * Tells the NavigationProvider to navigate the next segment in the queue
+     * Tells the NavigationProvider to navigate the next PathLink in the Path
      */
-    private void navigateNextSegment() {
-        Log.d(TAG, "Attempting to navigate next segment");
-        if ((mSegments != null) && (mSegmentIndex < (mSegments.length))) {
-            //Increment segment index
-            Log.d(TAG, "Setting previous segment to null!");
-            mSegments[mSegmentIndex]
-                    = null; // - Set unused object to null to enable it for garbage collection.
-            Log.d(TAG, "getting coords");
-            mSegmentIndex++;
-            //Create new coordinate object using the "Ring" coordinates
-            NavigationSegment segment = mSegments[mSegmentIndex];
-            mAlertDistance = segment.getAlertDistance();
-            //Have proximity listener listen for the "Ring" location
+    private void navigateNextPathLink() {
+        Log.d(TAG, "Attempting to navigate next path link");
+        if (mPath != null && mPathLinkIndex < mPath.getPathLinks().size()) {
+            mPathLinkIndex++;
+
+            // Create new location using the "Ring" coordinates
+            PathLink link = mPath.getPathLinks().get(mPathLinkIndex);
+            mAlertDistance = link.getAlertDistance();
+
+            // Have proximity listener listen for the "Ring" location
             mProxCalculator.listenForDistance(mAlertDistance);
-            mProxCalculator
-                    .listenForCoords(segment.getBeforeLocation(), segment.getToLocation(),
-                            segment.getFromLocation());
-            Log.d(TAG, "Proximlistener parameters were set!");
+            mProxCalculator.listenForLocation(
+                    link.getFromLocation(),
+                    link.getBeforeLocation(),
+                    link.getToLocation());
+            Log.d(TAG, "ProxCalculator parameters were set!");
         }
     }
 
     /**
-     * Is called from LocationListener.locationUpdated() in inorder to supply the Navigation Provider with the most recent location
+     * Called from LocationListener.locationUpdated() in order to supply the Navigation Provider with the most recent location
      */
     public void locationUpdated(Location l) {
         mCurrentLocation = l;
@@ -280,29 +248,21 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     private int sendCounter = 0;
 
-    public void skipSegment() {
-        try {
-            if (hasMoreSegments()) {
-                Log.d(TAG, "About to switch segment - from skipSegment");
-                navigateNextSegment(); //Uncomment this line to allow navigation on multiple segments within one service (chained segments)
-                mProxCalculator.setReady(false); //Reset the "get ready" notification alert
-            } else {
-                Log.d(TAG, "No more segments!");
-            }
-            mProxCalculator.setTrigger(false); //Reset the proximity notification alert
-        } catch (Exception e) {
-            Log.e(TAG, "Error in ProximityCalculator.proximityEvent(): " + e);
-            e.printStackTrace();
+    public void skipPathLink() {
+        if (hasMorePathLinks()) {
+            Log.d(TAG, "About to switch link - from skipPathLink");
+            navigateNextPathLink();
+            // Reset the "get ready" notification alert
+            mProxCalculator.setReady(false);
+        } else {
+            Log.d(TAG, "No more path links!");
         }
+        // Reset the proximity notification alert
+        mProxCalculator.setTrigger(false);
     }
 
     /**
-     * This class is used to detect Proximity to a latitude and longitude location.  The JSR179 ProximityListener is not used for this implementation on iDEN phones
-     * because it is not currently reliable.
-     * This class was moved to an inner class of NavigationServiceProvider 2-5-2007 because it must call methods in the NavigationServiceProvider
-     * that should remain private, and also because its the only proper way to get the NavigationServiceProvider and Listener to work together properly.
-     *
-     * @author Sean J. Barbeau, modified by Belov
+     * Detects proximity to a latitude and longitude to help navigate a path link
      */
     public class ProximityCalculator {
 
@@ -320,24 +280,24 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         private Location secondToLastCoords = null;
                 //Tests distance from registered location w/ ProximityListener manually
 
-        private Location lastCoords = null; //Coordinates of the final bus stop of the segment
+        private Location lastCoords = null; //Coordinates of the final bus stop of the link
 
-        private Location firstCoords = null; //Coordinates of the first bus stop of the segment
+        private Location firstCoords = null; //Coordinates of the first bus stop of the link
 
-        private float mDistance = -1;  //Actual known traveled distance loaded from segment object
+        private float mDistance = -1;  //Actual known traveled distance loaded from link object
 
         private float directDistance = -1;
                 //Direct distance to second to last stop coords, used for radius detection
 
         private float endDistance = -1;
-                //Direct distance to last bus stop coords, used for segment navigation
+                //Direct distance to last bus stop coords, used for link navigation
 
         private boolean mReady = false; //Has get ready alert been played?
 
         private boolean m100_a, m50_a, m20_a, m20_d, m50_d, m100_d = false;
                 // Variables for handling arrival/departure from 2nd to last stop
 
-        public ProximityCalculator(NavigationServiceProvider navProvider) {
+        ProximityCalculator(NavigationServiceProvider navProvider) {
             mNavProvider = navProvider;
             Log.d(TAG, "Initializing ProximityCalculator");
         }
@@ -375,20 +335,19 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
          * Fires proximity events based on selection parameters
          *
          * @param selection - checks if the trigger or get ready notifications are called
-         * @param t         - variable is responsible for differentiating the switch of segment and alert being played.
+         * @param t         - variable is responsible for differentiating the switch of path link and alert being played.
          */
-        public boolean proximityEvent(int selection, int t) {
+        boolean proximityEvent(int selection, int t) {
             //*******************************************************************************************************************
             //* This function is fired by the ProximityListener when it detects that it is near a set of registered coordinates *
             //*******************************************************************************************************************
             // Log.d(TAG,"Fired proximityEvent() from ProximityListener object.");
 
-            //NEW - if statement that encompases rest of method to check if mNavProvider has triggered navListener before for this coordinate
             if (selection == 0) {
-                if (mTrigger == false) {
+                if (!mTrigger) {
                     mTrigger = true;
                     Log.d(TAG, "Proximity Event fired");
-                    if (mNavProvider.hasMoreSegments()) {
+                    if (mNavProvider.hasMorePathLinks()) {
                         if (t == 0) {
                             Log.d(TAG, "Alert 1 Screen showed to rider");
                             mWaitingForConfirm = true;
@@ -398,21 +357,16 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                             return true;
                         }
                         if (t == 1) {
-                            try {
-                                Log.d(TAG, "About to switch segment - from Proximity Event");
-                                mNavProvider
-                                        .navigateNextSegment(); //Uncomment this line to allow navigation on multiple segments within one service (chained segments)
+                            Log.d(TAG, "About to switch path links - from Proximity Event");
+                            mNavProvider
+                                    .navigateNextPathLink(); //Uncomment this line to allow navigation on multiple path links within one path
 
-                                mReady = false; //Reset the "get ready" notification alert
-
-                                mTrigger = false; //Reset the proximity notification alert
-
-                            } catch (Exception e) {
-                                Log.e(TAG, "Error in ProximityCalculator.proximityEvent(): " + e);
-                            }
+                            // Reset notification alerts
+                            mReady = false;
+                            mTrigger = false;
                         }
                     } else {
-                        Log.d(TAG, "Got to last stop ");
+                        Log.d(TAG, "Got to last stop");
                         if (t == 0) {
                             Log.d(TAG, "Alert 1 screen before last stop");
                             mWaitingForConfirm = true;
@@ -420,15 +374,14 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                             return true;
                         }
                         if (t == 1) {
-                            long time = System.currentTimeMillis();
-                            Log.d(TAG, "Ending trip, going back to services");
-                            mNavProvider.mSegments = null;
-                            mNavProvider.mSegmentIndex = 0;
+                            Log.d(TAG, "Ending navigation");
+                            mNavProvider.mPath = null;
+                            mNavProvider.mPathLinkIndex = 0;
                         }
                     }
                 }
             } else if (selection == 1) {
-                if (mReady == false) {
+                if (!mReady) {
                     mReady = true;
                     return true;
                 }
@@ -440,40 +393,38 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         /**
          * Test function used to register a location to detect proximity to
          */
-        public void listenForCoords(Location coords, Location last, Location first) {
-            secondToLastCoords = coords;
-            lastCoords = last;
+        void listenForLocation(Location first, Location secondToLast, Location last) {
             firstCoords = first;
-            //Reset distance if the manual listener is reset
-            if (coords == null) {
+            secondToLastCoords = secondToLast;
+            lastCoords = last;
+
+            // Reset distance if the manual listener is reset
+            if (secondToLast == null) {
                 directDistance = -1;
             }
             if (last == null) {
                 endDistance = -1;
             }
-
         }
 
         /**
-         * Sets the "known" distance for the segment
+         * Sets the "known" distance for the path link
          */
-        public void listenForDistance(float d) {
+        void listenForDistance(float d) {
             mDistance = d;
         }
 
         /**
-         * Fire proximity event to switch segment or go back to service menu
-         * when the final stop of the segment or service is reached
+         * Fire proximity event to switch path link or go back to service menu
+         * when the final stop of the path link or path is reached
          * stop_type = 0; -> final stop detection
          * stop_type = 1; -> second to last stop detection
          * speed = current speed of the bus;
          */
-        public boolean StopDetector(float distance_d, int stop_type, float speed) {
+        boolean StopDetector(float distance_d, int stop_type, float speed) {
             
-            /* TODO: This comment was comented to avoid segment switching when the rider is
-             * 20 meters away from the bus stop.
+            /* TODO: This comment was comented to avoid path link switching when the rider is 20 meters away from the bus stop
             if ((distance_d < 20) && (distance_d != -1) && stop_type == 0) {
-
                 Log.d(TAG,"About to fire Proximity Event from Last Stop Detected");
                 this.trigger = false;
                 this.proximityEvent(0, 1);
@@ -519,8 +470,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     Log.d(TAG, "Case 5: true");
                     return true;
                 }
-
-
             }
             return false;
         }
@@ -563,8 +512,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         }
 
 
-        public void resetVariablesAfterSegmentSwitching() {
-            Log.d(TAG, "Reseting variables after segment switching!");
+        public void resetVariablesAfterPathLinkSwitching() {
+            Log.d(TAG, "Reseting variables after path link switching!");
             m100_a = false;
             m50_a = false;
             m20_a = false;

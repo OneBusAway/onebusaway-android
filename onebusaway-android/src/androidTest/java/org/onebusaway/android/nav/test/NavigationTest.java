@@ -20,8 +20,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.mock.Resources;
-import org.onebusaway.android.nav.NavigationSegment;
 import org.onebusaway.android.nav.NavigationServiceProvider;
+import org.onebusaway.android.nav.model.Path;
+import org.onebusaway.android.nav.model.PathLink;
 
 import android.location.Location;
 import android.location.LocationManager;
@@ -31,6 +32,8 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import static android.support.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
@@ -879,7 +882,7 @@ public class NavigationTest extends ObaTestCase {
 
         Location mDestinationLocation;
 
-        Location mBeforeLocation;
+        Location mSecondToLastLocation;
 
         Location[] mPoints;
 
@@ -912,9 +915,9 @@ public class NavigationTest extends ObaTestCase {
             mDestinationLocation.setLatitude(Double.parseDouble(details[2]));
             mDestinationLocation.setLongitude(Double.parseDouble(details[3]));
 
-            mBeforeLocation = new Location(LocationManager.GPS_PROVIDER);
-            mBeforeLocation.setLatitude(Double.parseDouble(details[5]));
-            mBeforeLocation.setLongitude(Double.parseDouble(details[6]));
+            mSecondToLastLocation = new Location(LocationManager.GPS_PROVIDER);
+            mSecondToLastLocation.setLatitude(Double.parseDouble(details[5]));
+            mSecondToLastLocation.setLongitude(Double.parseDouble(details[6]));
 
             mPoints = new Location[lines.length - 1];
 
@@ -958,8 +961,8 @@ public class NavigationTest extends ObaTestCase {
             // Compute index of point nearest to second to last stop.
             double minDist = Double.MAX_VALUE;
             for (int i = 0; i < mPoints.length; i++) {
-                if (mPoints[i].distanceTo(mBeforeLocation) < minDist) {
-                    minDist = mPoints[i].distanceTo(mBeforeLocation);
+                if (mPoints[i].distanceTo(mSecondToLastLocation) < minDist) {
+                    minDist = mPoints[i].distanceTo(mSecondToLastLocation);
                     getReadyIndex = i;
                 }
             }
@@ -996,8 +999,8 @@ public class NavigationTest extends ObaTestCase {
             return mDestinationLocation;
         }
 
-        public Location getBeforeLocation() {
-            return mBeforeLocation;
+        public Location getSecondToLastLocation() {
+            return mSecondToLastLocation;
         }
 
         public Location[] getPoints() {
@@ -1021,11 +1024,10 @@ public class NavigationTest extends ObaTestCase {
                     mDestinationId);
 
             // Construct Destination & Second-To-Last Location
-            NavigationSegment segment = new NavigationSegment(mBeforeLocation, mDestinationLocation,
-                    null);
+            PathLink link = new PathLink(null, mSecondToLastLocation, mDestinationLocation);
 
-            // Begin navigation & simulation
-            provider.navigate(new NavigationSegment[]{segment});
+            // Begin navigation & simulation for a single path link
+            provider.navigate(new Path(new ArrayList<>(Arrays.asList(link))));
 
             for (int i = 0; i <= mGetReadyId; i++) {
                 Location l = mPoints[i];

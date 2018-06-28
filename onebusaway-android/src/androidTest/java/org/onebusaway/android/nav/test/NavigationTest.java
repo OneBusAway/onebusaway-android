@@ -591,7 +591,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip16() throws IOException {
         // Read test CSV
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip16c"));
+        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri("nav_trip16"));
         String csv = IOUtils.toString(reader);
         mGetReadyId = 142;
         mPullCordId = 192;

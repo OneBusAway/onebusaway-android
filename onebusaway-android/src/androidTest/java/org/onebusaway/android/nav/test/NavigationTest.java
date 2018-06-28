@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import static android.support.test.InstrumentationRegistry.getTargetContext;
-import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 /**
@@ -71,7 +71,7 @@ public class NavigationTest extends ObaTestCase {
         mPullCordId = 978;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -89,7 +89,7 @@ public class NavigationTest extends ObaTestCase {
         mPullCordId = 929;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -107,7 +107,7 @@ public class NavigationTest extends ObaTestCase {
         mPullCordId = 14;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -125,7 +125,7 @@ public class NavigationTest extends ObaTestCase {
         mPullCordId = 64;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -144,7 +144,7 @@ public class NavigationTest extends ObaTestCase {
         mPullCordId = 115;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -163,7 +163,7 @@ public class NavigationTest extends ObaTestCase {
         mPullCordId = 109;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -182,7 +182,7 @@ public class NavigationTest extends ObaTestCase {
         mPullCordId = 329;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -201,7 +201,7 @@ public class NavigationTest extends ObaTestCase {
         mPullCordId = 329;
 
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -218,7 +218,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 372;
         mPullCordId = 660;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -235,7 +235,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 284;
         mPullCordId = 492;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -252,7 +252,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 801;
         mPullCordId = 837;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -269,7 +269,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 676;
         mPullCordId = 704;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -286,7 +286,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 183;
         mPullCordId = 208;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -303,7 +303,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 172;
         mPullCordId = 285;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -320,7 +320,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 0;
         mPullCordId = 18;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -337,7 +337,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 0;
         mPullCordId = 20;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -354,7 +354,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 1041;
         mPullCordId = 1071;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -371,7 +371,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 570;
         mPullCordId = 634;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -388,7 +388,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 589;
         mPullCordId = 605;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -405,7 +405,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 484;
         mPullCordId = 509;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -422,7 +422,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 331;
         mPullCordId = 371;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -439,7 +439,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 119;
         mPullCordId = 158;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -456,7 +456,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 69;
         mPullCordId = 199;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -473,7 +473,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 880;
         mPullCordId = 901;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -490,7 +490,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 2549;
         mPullCordId = 2732;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -507,7 +507,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 230;
         mPullCordId = 519;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -527,7 +527,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 548;
         mPullCordId = 571;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -544,7 +544,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 387;
         mPullCordId = 429;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -561,7 +561,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 225;
         mPullCordId = 417;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -578,7 +578,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 217;
         mPullCordId = 287;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -596,7 +596,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 142;
         mPullCordId = 192;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -613,7 +613,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 121;
         mPullCordId = 168;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -630,7 +630,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 100;
         mPullCordId = 181;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -647,7 +647,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 31;
         mPullCordId = 50;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -664,7 +664,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 31;
         mPullCordId = 58;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -681,7 +681,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 133;
         mPullCordId = 195;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -698,7 +698,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 53;
         mPullCordId = 117;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -715,7 +715,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 547;
         mPullCordId = 686;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -732,7 +732,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 323;
         mPullCordId = 402;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -749,7 +749,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 1085;
         mPullCordId = 1198;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -766,7 +766,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 1032;
         mPullCordId = 1099;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -783,7 +783,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 0;
         mPullCordId = 24;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -800,7 +800,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 0;
         mPullCordId = 18;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -817,7 +817,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 115;
         mPullCordId = 178;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -834,7 +834,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 203;
         mPullCordId = 262;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -851,7 +851,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 209;
         mPullCordId = 235;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     /**
@@ -868,7 +868,7 @@ public class NavigationTest extends ObaTestCase {
         mGetReadyId = 217;
         mPullCordId = 247;
         NavigationSimulation trip = new NavigationSimulation(csv);
-        trip.runSimulation(true, true);
+        trip.runSimulation();
     }
 
     // Class for holding relevant details for testing.
@@ -1019,7 +1019,7 @@ public class NavigationTest extends ObaTestCase {
             return finishedIndex;
         }
 
-        void runSimulation(Boolean expected1, Boolean expected2) {
+        void runSimulation() {
             NavigationServiceProvider provider = new NavigationServiceProvider(mTripId,
                     mDestinationId);
 
@@ -1051,7 +1051,7 @@ public class NavigationTest extends ObaTestCase {
             }
 
             Boolean check1 = provider.getGetReady() && !provider.getFinished();
-            assertEquals(expected1, check1);
+            assertTrue(check1);
 
             for (int i = mGetReadyId; i <= mPullCordId; i++) {
                 Location l = mLocations[i];
@@ -1073,7 +1073,7 @@ public class NavigationTest extends ObaTestCase {
             }
 
             Boolean check2 = provider.getGetReady() && provider.getFinished();
-            assertEquals(expected2, check2);
+            assertTrue(check2);
         }
     }
 }

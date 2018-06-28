@@ -38,17 +38,19 @@ import java.util.Locale;
 
 /**
  * This class provides the navigation functionality for the destination reminders
- *
- * @author Barbeau / Belov
  */
 public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     public static final String TAG = "NavServiceProvider";
 
-    public static final int EVENT_TYPE_NO_EVENT = 0;
-    public static final int EVENT_TYPE_UPDATE_DISTANCE = 1;
-    public static final int EVENT_TYPE_GET_READY = 2;
-    public static final int EVENT_TYPE_PULL_CORD = 3;
+    private static final int EVENT_TYPE_NO_EVENT = 0;
+    private static final int EVENT_TYPE_UPDATE_DISTANCE = 1;
+    private static final int EVENT_TYPE_GET_READY = 2;
+    private static final int EVENT_TYPE_PULL_CORD = 3;
+
+    private static final int ALERT_STATE_NONE = -1;
+    private static final int ALERT_STATE_SHOWN_TO_RIDER = 0;
+    private static final int ALERT_STATE_ENDING_PATH_LINK = 1;
 
     public static final int NOTIFICATION_ID = 33620;
     private static final long[] VIBRATION_PATTERN = new long[]{
@@ -336,7 +338,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
          * Updates the state of the navigation provider based on the provided eventType
          *
          * @param eventType EVENT_TYPE_PULL_CORD for "Pull the cord now" event, or EVENT_TYPE_GET_READY for getting ready to exit the vehicle
-         * @param alertState         variable is responsible for differentiating the switch of path link and alert being played.
+         * @param alertState         ALERT_STATE_* variable is responsible for differentiating the switch of path link and alert being played.
          */
         boolean proximityEvent(int eventType, int alertState) {
             //*******************************************************************************************************************
@@ -349,7 +351,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     mTrigger = true;
                     Log.d(TAG, "Proximity Event fired");
                     if (mNavProvider.hasMorePathLinks()) {
-                        if (alertState == 0) {
+                        if (alertState == ALERT_STATE_SHOWN_TO_RIDER) {
                             Log.d(TAG, "Alert 1 Screen showed to rider");
                             mWaitingForConfirm = true;
                             // GET READY.
@@ -357,7 +359,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                             //this.mNavProvider.navlistener.waypointReached(this.lastCoords);
                             return true;
                         }
-                        if (alertState == 1) {
+                        if (alertState == ALERT_STATE_ENDING_PATH_LINK) {
                             Log.d(TAG, "About to switch path links - from Proximity Event");
                             mNavProvider.navigateNextPathLink();
 
@@ -367,13 +369,13 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                         }
                     } else {
                         Log.d(TAG, "Got to last stop");
-                        if (alertState == 0) {
+                        if (alertState == ALERT_STATE_SHOWN_TO_RIDER) {
                             Log.d(TAG, "Alert 1 screen before last stop");
                             mWaitingForConfirm = true;
                             Log.d(TAG, "Calling destination reached...");
                             return true;
                         }
-                        if (alertState == 1) {
+                        if (alertState == ALERT_STATE_ENDING_PATH_LINK) {
                             Log.d(TAG, "Ending navigation");
                             mNavProvider.mPath = null;
                             mNavProvider.mPathLinkIndex = 0;
@@ -492,7 +494,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
                 // Check if distance from 2nd-to-last stop is less than threshold.
                 if (directDistance < DISTANCE_THRESHOLD) {
-                    if (proximityEvent(EVENT_TYPE_GET_READY, -1)) {
+                    if (proximityEvent(EVENT_TYPE_GET_READY, ALERT_STATE_NONE)) {
                         mNavProvider.updateUi(EVENT_TYPE_GET_READY);
                         Log.d(TAG, "-----Get ready!");
                         return EVENT_TYPE_GET_READY; //Get ready alert played
@@ -501,7 +503,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
                 // Check if pull the cord notification should be fired.
                 if (StopDetector(directDistance, 1, currentLocation.getSpeed())) {
-                    if (proximityEvent(EVENT_TYPE_PULL_CORD, 0)) {
+                    if (proximityEvent(EVENT_TYPE_PULL_CORD, ALERT_STATE_SHOWN_TO_RIDER)) {
                         mNavProvider.updateUi(EVENT_TYPE_PULL_CORD);
                         Log.d(TAG, "-----Get off the bus!");
                         return EVENT_TYPE_PULL_CORD; // Get off bus alert played

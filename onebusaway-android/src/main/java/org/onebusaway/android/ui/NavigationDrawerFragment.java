@@ -20,15 +20,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.util.EmbeddedSocialUtils;
-import org.onebusaway.android.util.UIUtils;
-import org.onebusaway.android.view.ScrimInsetsScrollView;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -48,6 +39,15 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
+import org.onebusaway.android.util.UIUtils;
+import org.onebusaway.android.view.ScrimInsetsScrollView;
 
 import java.util.ArrayList;
 
@@ -95,6 +95,8 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_OPEN_SOURCE = 12;
 
+    protected static final int NAVDRAWER_ITEM_PAY_FARE = 13;
+
     protected static final int NAVDRAWER_ITEM_INVALID = -1;
 
     protected static final int NAVDRAWER_ITEM_SEPARATOR = -2;
@@ -118,7 +120,8 @@ public class NavigationDrawerFragment extends Fragment {
             R.string.navdrawer_item_activity_feed,
             R.string.navdrawer_item_profile,
             R.string.navdrawer_item_sign_in,
-            R.string.navdrawer_item_open_source
+            R.string.navdrawer_item_open_source,
+            R.string.navdrawer_item_pay_fare
     };
 
     // icons for navdrawer items (indices must correspond to above array)
@@ -135,7 +138,8 @@ public class NavigationDrawerFragment extends Fragment {
             R.drawable.ic_drawer_activity_feed, // Social activity feed
             R.drawable.ic_username, // My profile
             R.drawable.ic_username, // Sign in
-            R.drawable.ic_drawer_github // Open-source
+            R.drawable.ic_drawer_github, // Open-source
+            R.drawable.ic_payment // Pay my fare
     };
 
     // Secondary navdrawer item icons that appear align to right of list item layout
@@ -152,7 +156,8 @@ public class NavigationDrawerFragment extends Fragment {
             0, // Social activity feed
             0, // My profile
             0, // Sign in
-            R.drawable.ic_drawer_link // Open-source
+            R.drawable.ic_drawer_link, // Open-source
+            0 // Pay my fare
     };
 
     // list of navdrawer items that were actually added to the navdrawer, in order
@@ -426,6 +431,10 @@ public class NavigationDrawerFragment extends Fragment {
                     !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl())) {
                 mNavDrawerItems.add(NAVDRAWER_ITEM_PLAN_TRIP);
             }
+            if (true) {
+                // TODO - check Region API URL before adding fare nav drawer item
+                mNavDrawerItems.add(NAVDRAWER_ITEM_PAY_FARE);
+            }
 
             if (EmbeddedSocialUtils.isSocialEnabled()) {
                 // Social items
@@ -594,6 +603,7 @@ public class NavigationDrawerFragment extends Fragment {
                 itemId == NAVDRAWER_ITEM_HELP ||
                 itemId == NAVDRAWER_ITEM_SEND_FEEDBACK ||
                 itemId == NAVDRAWER_ITEM_PLAN_TRIP ||
+                itemId == NAVDRAWER_ITEM_PAY_FARE ||
                 itemId == NAVDRAWER_ITEM_SIGN_IN ||
                 itemId == NAVDRAWER_ITEM_OPEN_SOURCE;
     }

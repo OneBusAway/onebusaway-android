@@ -20,6 +20,15 @@
  */
 package org.onebusaway.android.ui;
 
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
+import org.onebusaway.android.util.UIUtils;
+import org.onebusaway.android.view.ScrimInsetsScrollView;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -39,15 +48,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
-import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.util.EmbeddedSocialUtils;
-import org.onebusaway.android.util.UIUtils;
-import org.onebusaway.android.view.ScrimInsetsScrollView;
 
 import java.util.ArrayList;
 
@@ -431,8 +431,7 @@ public class NavigationDrawerFragment extends Fragment {
                     !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl())) {
                 mNavDrawerItems.add(NAVDRAWER_ITEM_PLAN_TRIP);
             }
-            if (true) {
-                // TODO - check Region API URL before adding fare nav drawer item
+            if (!TextUtils.isEmpty(currentRegion.getPaymentAndroidAppId())) {
                 mNavDrawerItems.add(NAVDRAWER_ITEM_PAY_FARE);
             }
 

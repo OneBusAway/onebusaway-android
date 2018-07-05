@@ -138,4 +138,9 @@ public interface ObaRegion {
      * @return true if the region includes support for displaying bikeshare information from OTP.
      */
     public boolean getSupportsOtpBikeshare();
+
+    /**
+     * @return The Android App ID for the mobile app used for fare payment in the region
+     */
+    String getPaymentAndroidAppId();
 }

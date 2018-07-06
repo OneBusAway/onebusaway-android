@@ -157,7 +157,7 @@ public class NavigationDrawerFragment extends Fragment {
             0, // My profile
             0, // Sign in
             R.drawable.ic_drawer_link, // Open-source
-            0 // Pay my fare
+            R.drawable.ic_drawer_link // Pay my fare
     };
 
     // list of navdrawer items that were actually added to the navdrawer, in order

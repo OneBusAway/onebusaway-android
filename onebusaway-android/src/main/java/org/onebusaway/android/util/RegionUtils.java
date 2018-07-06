@@ -412,7 +412,8 @@ public class RegionUtils {
                     ObaContract.Regions.OTP_BASE_URL,
                     ObaContract.Regions.OTP_CONTACT_EMAIL,
                     ObaContract.Regions.SUPPORTS_OTP_BIKESHARE,
-                    ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL
+                    ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL,
+                    ObaContract.Regions.PAYMENT_ANDROID_APP_ID
             };
 
             ContentResolver cr = context.getContentResolver();
@@ -459,7 +460,8 @@ public class RegionUtils {
                         c.getString(12),             // OTP Base URL
                         c.getString(13),              // OTP Contact Email
                         c.getInt(14) > 0,           // Supports Otp Bikeshare
-                        c.getInt(15) > 0            // Supports Embedded Social
+                        c.getInt(15) > 0,            // Supports Embedded Social
+                        c.getString(16)              // Android App ID for mobile fare payment app of region
                 ));
 
             } while (c.moveToNext());
@@ -643,7 +645,8 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_OTP_BASE_URL,
                 BuildConfig.FIXED_REGION_OTP_CONTACT_EMAIL,
                 BuildConfig.FIXED_REGION_SUPPORTS_OTP_BIKESHARE,
-                BuildConfig.FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL);
+                BuildConfig.FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL,
+                BuildConfig.FIXED_REGION_PAYMENT_ANDROID_APP_ID);
         return region;
     }
 
@@ -715,6 +718,7 @@ public class RegionUtils {
                 region.getSupportsOtpBikeshare() ? 1 : 0);
         values.put(ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL,
                 region.getSupportsEmbeddedSocial() ? 1 : 0);
+        values.put(ObaContract.Regions.PAYMENT_ANDROID_APP_ID, region.getPaymentAndroidAppId());
         return values;
     }
 

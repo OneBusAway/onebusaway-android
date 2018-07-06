@@ -173,6 +173,8 @@ public class ObaRegionElement implements ObaRegion {
 
     private final boolean supportsEmbeddedSocial;
 
+    private final String paymentAndroidAppId;
+
     ObaRegionElement() {
         id = 0;
         regionName = "";
@@ -193,6 +195,7 @@ public class ObaRegionElement implements ObaRegion {
         otpContactEmail = "";
         supportsOtpBikeshare = false;
         supportsEmbeddedSocial = false;
+        paymentAndroidAppId = null;
     }
 
     public ObaRegionElement(long id,
@@ -213,7 +216,8 @@ public class ObaRegionElement implements ObaRegion {
                             String otpBaseUrl,
                             String otpContactEmail,
                             boolean supportsOtpBikeshare,
-                            boolean supportsEmbeddedSocial) {
+                            boolean supportsEmbeddedSocial,
+                            String paymentAndroidAppId) {
         this.id = id;
         this.regionName = name;
         this.active = active;
@@ -233,6 +237,7 @@ public class ObaRegionElement implements ObaRegion {
         this.otpContactEmail = otpContactEmail;
         this.supportsOtpBikeshare = supportsOtpBikeshare;
         this.supportsEmbeddedSocial = supportsEmbeddedSocial;
+        this.paymentAndroidAppId = paymentAndroidAppId;
     }
 
     @Override
@@ -331,6 +336,11 @@ public class ObaRegionElement implements ObaRegion {
     }
 
     @Override
+    public String getPaymentAndroidAppId() {
+        return paymentAndroidAppId;
+    }
+
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -382,6 +392,7 @@ public class ObaRegionElement implements ObaRegion {
                 ", otpContactEmail='" + otpContactEmail + '\'' +
                 ", supportsOtpBikeshare='" + supportsOtpBikeshare + '\'' +
                 ", supportsEmbeddedSocial=" + supportsEmbeddedSocial + '\'' +
+                ", paymentAndroidAppId=" + paymentAndroidAppId + '\'' +
                 '}';
     }
 }

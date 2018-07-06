@@ -430,6 +430,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String SUPPORTS_EMBEDDED_SOCIAL = "supports_embedded_social";
+
+        /**
+         * The Android App ID for the payment app used in the region
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String PAYMENT_ANDROID_APP_ID = "payment_android_app_id";
     }
 
     protected interface RegionBoundsColumns {
@@ -1198,7 +1206,8 @@ public final class ObaContract {
                     OTP_BASE_URL,
                     OTP_CONTACT_EMAIL,
                     SUPPORTS_OTP_BIKESHARE,
-                    SUPPORTS_EMBEDDED_SOCIAL
+                    SUPPORTS_EMBEDDED_SOCIAL,
+                    PAYMENT_ANDROID_APP_ID
             };
 
             Cursor c = cr.query(buildUri((int) id), PROJECTION, null, null, null);
@@ -1226,7 +1235,8 @@ public final class ObaContract {
                             c.getString(12),              // OtpBaseUrl
                             c.getString(13),               // OtpContactEmail
                             c.getInt(14) > 0,           // Supports OTP Bikeshare
-                            c.getInt(15) > 0            // Supports Embedded Social
+                            c.getInt(15) > 0,            // Supports Embedded Social
+                            c.getString(16)               // Payment Android App ID
                     );
                 } finally {
                     c.close();

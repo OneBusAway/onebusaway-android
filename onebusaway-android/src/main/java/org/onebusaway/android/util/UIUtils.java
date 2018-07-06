@@ -21,6 +21,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
@@ -72,6 +73,7 @@ import android.os.Environment;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.annotation.DrawableRes;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.pm.ShortcutInfoCompat;
@@ -1700,5 +1702,39 @@ public final class UIUtils {
                 .createBitmap(img, 0, 0, img.getWidth(), img.getHeight(), matrix, true);
         img.recycle();
         return rotatedImg;
+    }
+
+    /**
+     * Launches the fare payment app for the currently selected region if the payment app is
+     * installed, otherwise directs the user to the Google Play store listing to download it.
+     * If the current region is null (i.e., if a custom API URL is entered), then no-op.
+     * @param activity activity to launch the fare payment app or Google Play store from
+     */
+    public static void launchPayMyFareIntent(@NonNull Activity activity) {
+        PackageManager manager = activity.getPackageManager();
+        ObaRegion region = Application.get().getCurrentRegion();
+        if (region == null) {
+            // If a custom API URL is set (i.e., no region), then no op
+            return;
+        }
+        Intent intent = manager.getLaunchIntentForPackage(region.getPaymentAndroidAppId());
+        if (intent != null) {
+            // Launch installed app
+            intent.addCategory(Intent.CATEGORY_LAUNCHER);
+            activity.startActivity(intent);
+            ObaAnalytics
+                    .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            Application.get().getString(R.string.analytics_action_button_press),
+                            Application.get().getString(R.string.analytics_label_button_press_pay_fare_open_app));
+        } else {
+            // Go to Play Store listing to download app
+            intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, region.getPaymentAndroidAppId())));
+            activity.startActivity(intent);
+            ObaAnalytics
+                    .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            Application.get().getString(R.string.analytics_action_button_press),
+                            Application.get().getString(R.string.analytics_label_button_press_pay_fare_download_app));
+        }
     }
 }

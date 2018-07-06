@@ -58,7 +58,7 @@
     <string name="preference_key_social">preference_social</string>
 
     <!-- Regions API URL -->
-    <string name="regions_api_url">https://raw.githubusercontent.com/OneBusAway/onebusaway-multiregion-support/master/staging/regions-v3.json</string>
+    <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
 
     <!-- Donate URL -->
     <string name="donate_url">http://onebusaway.org/donate/</string>
@@ -191,6 +191,10 @@
     <string name="analytics_label_button_press_social_stop">Clicked Social Stop Arrivals Header</string>
     <string name="analytics_label_button_press_social_route_options">Clicked Social Route Options</string>
     <string name="analytics_label_button_press_social_route_style_b">Clicked Social Route Style B Card</string>
+
+    <!-- Analytics for payment -->
+    <string name="analytics_label_button_press_pay_fare_download_app">Clicked Pay Fare Download App</string>
+    <string name="analytics_label_button_press_pay_fare_open_app">Clicked Pay Fare Open App</string>
 
     <!-- General strings -->
     <string name="http_prefix">http://</string>

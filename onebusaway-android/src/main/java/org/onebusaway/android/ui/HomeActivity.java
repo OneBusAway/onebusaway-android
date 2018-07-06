@@ -515,13 +515,19 @@ public class HomeActivity extends AppCompatActivity
                     // Launch installed app
                     intent.addCategory(Intent.CATEGORY_LAUNCHER);
                     startActivity(intent);
-                    // TODO - Add analytics
+                    ObaAnalytics
+                            .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                                    getString(R.string.analytics_action_button_press),
+                                    getString(R.string.analytics_label_button_press_pay_fare_open_app));
                 } else {
-                    // Go to Play Store listing
+                    // Go to Play Store listing to download app
                     intent = new Intent(Intent.ACTION_VIEW);
                     intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, region.getPaymentAndroidAppId())));
                     startActivity(intent);
-                    // TODO - Add analytics
+                    ObaAnalytics
+                            .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                                    getString(R.string.analytics_action_button_press),
+                                    getString(R.string.analytics_label_button_press_pay_fare_download_app));
                 }
                 break;
             case NAVDRAWER_ITEM_SIGN_IN:

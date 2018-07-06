@@ -16,9 +16,6 @@
 
 package org.onebusaway.android.util.test;
 
-import android.location.Location;
-import android.support.test.runner.AndroidJUnit4;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,6 +23,9 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.RegionUtils;
+
+import android.location.Location;
+import android.support.test.runner.AndroidJUnit4;
 
 import java.util.ArrayList;
 
@@ -59,7 +59,7 @@ public class RegionUtilTest {
 
     Location mLondonLoc;
 
-    Location mOriginLoc;
+    Location mZeroZeroLoc;
 
     @Before
     public void before() {
@@ -74,7 +74,7 @@ public class RegionUtilTest {
 
         // Far locations
         mLondonLoc = LocationUtils.makeLocation(51.5072, -0.1275);
-        mOriginLoc = LocationUtils.makeLocation(0, 0);
+        mZeroZeroLoc = LocationUtils.makeLocation(0, 0);
     }
 
     @Test
@@ -109,14 +109,8 @@ public class RegionUtilTest {
         closestRegion = RegionUtils.getClosestRegion(list, mTampaLoc, useLimiter);
         assertEquals(closestRegion.getId(), RegionUtils.TAMPA_REGION_ID);
 
-        closestRegion = RegionUtils.getClosestRegion(list, mAtlantaLoc, useLimiter);
-        assertEquals(closestRegion.getId(), RegionUtils.ATLANTA_REGION_ID);
-
         // Far from region
-        closestRegion = RegionUtils.getClosestRegion(list, mLondonLoc, useLimiter);
-        assertEquals(closestRegion.getId(), RegionUtils.ATLANTA_REGION_ID);
-
-        closestRegion = RegionUtils.getClosestRegion(list, mOriginLoc, useLimiter);
+        closestRegion = RegionUtils.getClosestRegion(list, mZeroZeroLoc, useLimiter);
         assertEquals(closestRegion.getId(), RegionUtils.TAMPA_REGION_ID);
 
         /**
@@ -132,14 +126,11 @@ public class RegionUtilTest {
         closestRegion = RegionUtils.getClosestRegion(list, mTampaLoc, useLimiter);
         assertEquals(closestRegion.getId(), RegionUtils.TAMPA_REGION_ID);
 
-        closestRegion = RegionUtils.getClosestRegion(list, mAtlantaLoc, useLimiter);
-        assertEquals(closestRegion.getId(), RegionUtils.ATLANTA_REGION_ID);
-
         // Far from region
         closestRegion = RegionUtils.getClosestRegion(list, mLondonLoc, useLimiter);
         assertNull(closestRegion);
 
-        closestRegion = RegionUtils.getClosestRegion(list, mOriginLoc, useLimiter);
+        closestRegion = RegionUtils.getClosestRegion(list, mZeroZeroLoc, useLimiter);
         assertNull(closestRegion);
     }
 
@@ -172,7 +163,7 @@ public class RegionUtilTest {
     public void testIsRegionUsable() {
         assertTrue(RegionUtils.isRegionUsable(mPsRegion));
         assertTrue(RegionUtils.isRegionUsable(mTampaRegion));
-        assertTrue(RegionUtils.isRegionUsable(mAtlantaRegion));
+        assertFalse(RegionUtils.isRegionUsable(mAtlantaRegion));
 
         assertFalse(RegionUtils.isRegionUsable(MockRegion.getRegionWithoutObaApis(getTargetContext())));
         assertFalse(RegionUtils.isRegionUsable(MockRegion.getInactiveRegion(getTargetContext())));

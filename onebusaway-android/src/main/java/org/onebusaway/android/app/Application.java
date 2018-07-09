@@ -304,7 +304,6 @@ public class Application extends MultiDexApplication {
             setCustomApiUrl(null);
             if (regionChanged && region.getOtpBaseUrl() != null) {
                 setCustomOtpApiUrl(null);
-                setUseOldOtpApiUrlVersion(false);
             }
         } else {
             //User must have just entered a custom API URL via Preferences, so clear the region info
@@ -387,24 +386,6 @@ public class Application extends MultiDexApplication {
      */
     public void setCustomOtpApiUrl(String url) {
         PreferenceUtils.saveString(getString(R.string.preference_key_otp_api_url), url);
-    }
-
-    /**
-     * @return true if the OTP url version is old, or false  if it has not been set
-     */
-    public boolean getUseOldOtpApiUrlVersion() {
-        SharedPreferences preferences = getPrefs();
-        return preferences.getBoolean(getString(R.string.preference_key_otp_api_url_version), false);
-    }
-
-    /**
-     * Sets the OTP Api url version
-     *
-     * @param useOldOtpApiUrlVersion indicates that if otp url structure belongs to older version
-     */
-    public void setUseOldOtpApiUrlVersion(boolean useOldOtpApiUrlVersion) {
-        PreferenceUtils.saveBoolean(getString(R.string.preference_key_otp_api_url_version),
-                useOldOtpApiUrlVersion);
     }
 
     private static final String HEXES = "0123456789abcdef";

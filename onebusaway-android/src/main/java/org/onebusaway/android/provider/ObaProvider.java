@@ -277,6 +277,10 @@ public class ObaProvider extends ContentProvider {
             if (oldVersion == 27) {
                 db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
                                 " ADD COLUMN " + ObaContract.Regions.PAYMENT_ANDROID_APP_ID + " VARCHAR");
+                db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
+                        " ADD COLUMN " + ObaContract.Regions.PAYMENT_WARNING_TITLE + " VARCHAR");
+                db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
+                        " ADD COLUMN " + ObaContract.Regions.PAYMENT_WARNING_BODY + " VARCHAR");
             }
         }
 
@@ -533,6 +537,10 @@ public class ObaProvider extends ContentProvider {
                 .put(ObaContract.Regions.SUPPORTS_OTP_BIKESHARE, ObaContract.Regions.SUPPORTS_OTP_BIKESHARE);
         sRegionsProjectionMap
                 .put(ObaContract.Regions.PAYMENT_ANDROID_APP_ID, ObaContract.Regions.PAYMENT_ANDROID_APP_ID);
+        sRegionsProjectionMap
+                .put(ObaContract.Regions.PAYMENT_WARNING_TITLE, ObaContract.Regions.PAYMENT_WARNING_TITLE);
+        sRegionsProjectionMap
+                .put(ObaContract.Regions.PAYMENT_WARNING_BODY, ObaContract.Regions.PAYMENT_WARNING_BODY);
 
         sRegionBoundsProjectionMap = new HashMap<String, String>();
         sRegionBoundsProjectionMap.put(ObaContract.RegionBounds._ID, ObaContract.RegionBounds._ID);

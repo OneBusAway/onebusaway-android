@@ -175,6 +175,10 @@ public class ObaRegionElement implements ObaRegion {
 
     private final String paymentAndroidAppId;
 
+    private final String paymentWarningTitle;
+
+    private final String paymentWarningBody;
+
     ObaRegionElement() {
         id = 0;
         regionName = "";
@@ -196,6 +200,8 @@ public class ObaRegionElement implements ObaRegion {
         supportsOtpBikeshare = false;
         supportsEmbeddedSocial = false;
         paymentAndroidAppId = null;
+        paymentWarningTitle = null;
+        paymentWarningBody = null;
     }
 
     public ObaRegionElement(long id,
@@ -217,7 +223,9 @@ public class ObaRegionElement implements ObaRegion {
                             String otpContactEmail,
                             boolean supportsOtpBikeshare,
                             boolean supportsEmbeddedSocial,
-                            String paymentAndroidAppId) {
+                            String paymentAndroidAppId,
+                            String paymentWarningTitle,
+                            String paymentWarningBody) {
         this.id = id;
         this.regionName = name;
         this.active = active;
@@ -238,6 +246,8 @@ public class ObaRegionElement implements ObaRegion {
         this.supportsOtpBikeshare = supportsOtpBikeshare;
         this.supportsEmbeddedSocial = supportsEmbeddedSocial;
         this.paymentAndroidAppId = paymentAndroidAppId;
+        this.paymentWarningTitle = paymentWarningTitle;
+        this.paymentWarningBody = paymentWarningBody;
     }
 
     @Override
@@ -341,6 +351,16 @@ public class ObaRegionElement implements ObaRegion {
     }
 
     @Override
+    public String getPaymentWarningTitle() {
+        return paymentWarningTitle;
+    }
+
+    @Override
+    public String getPaymentWarningBody() {
+        return paymentWarningBody;
+    }
+
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -393,6 +413,8 @@ public class ObaRegionElement implements ObaRegion {
                 ", supportsOtpBikeshare='" + supportsOtpBikeshare + '\'' +
                 ", supportsEmbeddedSocial=" + supportsEmbeddedSocial + '\'' +
                 ", paymentAndroidAppId=" + paymentAndroidAppId + '\'' +
+                ", paymentWarningTitle=" + paymentWarningTitle + '\'' +
+                ", paymentWarningBody=" + paymentWarningBody + '\'' +
                 '}';
     }
 }

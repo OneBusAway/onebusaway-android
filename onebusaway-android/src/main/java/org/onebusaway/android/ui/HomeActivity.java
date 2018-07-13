@@ -504,7 +504,7 @@ public class HomeActivity extends AppCompatActivity
                                 getString(R.string.analytics_label_button_press_trip_plan));
                 break;
             case NAVDRAWER_ITEM_PAY_FARE:
-                UIUtils.launchPayMyFareIntent(this);
+                UIUtils.launchPayMyFareApp(this);
                 break;
             case NAVDRAWER_ITEM_SIGN_IN:
                 ObaAnalytics.reportEventWithCategory(

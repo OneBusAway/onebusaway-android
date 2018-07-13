@@ -128,6 +128,8 @@ android {
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "false"
             buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "null"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
         }
 
         /**
@@ -170,6 +172,8 @@ android {
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "false"
             buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "null"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
         }
 
         agencyY {
@@ -208,6 +212,8 @@ android {
                     "\"otp-tampa@onebusaway.org\""
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "true"
             buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "co.bytemark.hart"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
         }
 
         /**

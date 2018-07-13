@@ -79,6 +79,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.pm.ShortcutInfoCompat;
 import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.support.v4.content.res.ResourcesCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.graphics.drawable.IconCompat;
 import android.support.v4.util.Pair;
 import android.support.v4.view.MenuItemCompat;
@@ -98,6 +99,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -1706,17 +1708,42 @@ public final class UIUtils {
 
     /**
      * Launches the fare payment app for the currently selected region if the payment app is
-     * installed, otherwise directs the user to the Google Play store listing to download it.
+     * installed, otherwise directs the user to the Google Play store listing to download it.  If
+     * a region has a fare payment app warning, it will show the warning before checking if the app
+     * is installed, unless the user has opted out of the warning.
      * If the current region is null (i.e., if a custom API URL is entered), then no-op.
      * @param activity activity to launch the fare payment app or Google Play store from
      */
-    public static void launchPayMyFareIntent(@NonNull Activity activity) {
-        PackageManager manager = activity.getPackageManager();
+    public static void launchPayMyFareApp(@NonNull Activity activity) {
         ObaRegion region = Application.get().getCurrentRegion();
         if (region == null) {
             // If a custom API URL is set (i.e., no region), then no op
             return;
         }
+
+        if (!TextUtils.isEmpty(region.getPaymentWarningTitle()) || !TextUtils.isEmpty(region.getPaymentWarningBody())) {
+            // Region has a warning for using the payment app
+            if (!Application.getPrefs().getBoolean(activity.getString(R.string.preference_key_never_show_payment_warning_dialog), false)) {
+                // User hasn't opted out of warning dialog yet - show the dialog
+                showPaymentWarningDialog(activity, region);
+            } else {
+                // User opted out of warning - start the Intent
+                startPaymentIntent(activity, region);
+            }
+        } else {
+            // No payment warning for this region - start the Intent
+            startPaymentIntent(activity, region);
+        }
+    }
+
+    /**
+     * Launches the payment app for the provided region if it's already installed, and if not
+     * directs the user to the listing in Google Play where it can be downloaded
+     * @param activity Activity to use to launch the Intent
+     * @param region region to launch a payment Intent for
+     */
+    private static void startPaymentIntent(@NonNull Activity activity, @NonNull ObaRegion region) {
+        PackageManager manager = activity.getPackageManager();
         Intent intent = manager.getLaunchIntentForPackage(region.getPaymentAndroidAppId());
         if (intent != null) {
             // Launch installed app
@@ -1736,5 +1763,39 @@ public final class UIUtils {
                             Application.get().getString(R.string.analytics_action_button_press),
                             Application.get().getString(R.string.analytics_label_button_press_pay_fare_download_app));
         }
+    }
+
+    /**
+     * Shows the payment warning to the user for the provided region if the user hasn't already
+     * opted out of the warning, and then calls the method to create the correct payment Intent.
+     * If the user has opted out of the warning, just call the method to create the payment Intent
+     * @param activity Activity to use to launch the Intent
+     * @param region region to launch a payment Intent for
+     */
+    private static void showPaymentWarningDialog(@NonNull Activity activity, @NonNull ObaRegion region) {
+        View view = activity.getLayoutInflater().inflate(R.layout.payment_warning_dialog, null);
+        CheckBox neverShowDialog = view.findViewById(R.id.payment_warning_never_ask_again);
+        TextView warningBody = view.findViewById(R.id.payment_warning_body);
+
+        neverShowDialog.setOnCheckedChangeListener((compoundButton, isChecked) -> {
+            // Save the preference
+            PreferenceUtils.saveBoolean(activity.getString(R.string.preference_key_never_show_payment_warning_dialog), isChecked);
+        });
+
+        warningBody.setText(region.getPaymentWarningBody());
+
+        Drawable icon = activity.getResources().getDrawable(android.R.drawable.ic_dialog_alert);
+        DrawableCompat.setTint(icon, activity.getResources().getColor(R.color.alert_icon_error));
+
+        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(activity)
+                .setTitle(region.getPaymentWarningTitle())
+                .setIcon(icon)
+                .setCancelable(false)
+                .setView(view)
+                .setPositiveButton(R.string.ok,
+                        (dialog, which) -> startPaymentIntent(activity, region)
+                );
+
+        builder.create().show();
     }
 }

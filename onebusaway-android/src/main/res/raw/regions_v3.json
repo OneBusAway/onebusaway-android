@@ -17,6 +17,7 @@
         "supportsOtpBikeshare": true, 
         "otpContactEmail": "otp-tampa@onebusaway.org", 
         "otpBaseUrl": "https://otp.prod.obahart.org/otp/", 
+        "paymentWarningBody": null, 
         "supportsSiriRealtimeApis": true, 
         "twitterUrl": "http://mobile.twitter.com/OBA_tampa", 
         "paymentAndroidAppId": "co.bytemark.hart", 
@@ -29,6 +30,7 @@
             "baseUrl": "https://seeclickfix.com/open311/v2/"
           }
         ], 
+        "paymentWarningTitle": null, 
         "language": "en_US", 
         "bounds": [
           {
@@ -60,12 +62,14 @@
         "supportsOtpBikeshare": false, 
         "otpContactEmail": "otp-pugetsound@onebusaway.org", 
         "otpBaseUrl": "http://tpng.api.soundtransit.org/tripplanner/st/", 
+        "paymentWarningBody": "The mobile fare payment app for Puget Sound does not support all transit service shown in OneBusAway. Please check that a ticket is eligible for your agency and route before you purchase!", 
         "supportsSiriRealtimeApis": true, 
         "twitterUrl": "http://mobile.twitter.com/oba_pugetsound", 
-        "paymentAndroidAppId": null, 
+        "paymentAndroidAppId": "co.bytemark.tgt", 
         "stopInfoUrl": null, 
         "active": true, 
         "open311Servers": [], 
+        "paymentWarningTitle": "Check before you buy!", 
         "language": "en_US", 
         "bounds": [
           {
@@ -139,12 +143,14 @@
         "supportsOtpBikeshare": false, 
         "otpContactEmail": null, 
         "otpBaseUrl": null, 
+        "paymentWarningBody": null, 
         "supportsSiriRealtimeApis": true, 
         "twitterUrl": "http://mobile.twitter.com/nyctbusstop", 
         "paymentAndroidAppId": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "open311Servers": [], 
+        "paymentWarningTitle": null, 
         "language": "en_US", 
         "bounds": [
           {
@@ -176,12 +182,14 @@
         "supportsOtpBikeshare": false, 
         "otpContactEmail": "onebusaway@atlantaregional.com", 
         "otpBaseUrl": "http://opentrip.atlantaregion.com/otp", 
+        "paymentWarningBody": null, 
         "supportsSiriRealtimeApis": false, 
         "twitterUrl": "http://mobile.twitter.com/OBA_atlanta", 
         "paymentAndroidAppId": null, 
         "stopInfoUrl": null, 
         "active": false, 
         "open311Servers": [], 
+        "paymentWarningTitle": null, 
         "language": "en_US", 
         "bounds": [
           {
@@ -243,12 +251,14 @@
         "supportsOtpBikeshare": false, 
         "otpContactEmail": null, 
         "otpBaseUrl": null, 
+        "paymentWarningBody": null, 
         "supportsSiriRealtimeApis": true, 
         "twitterUrl": "https://mobile.twitter.com/Metrobusinfo", 
         "paymentAndroidAppId": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "open311Servers": [], 
+        "paymentWarningTitle": null, 
         "language": "en_US", 
         "bounds": [
           {
@@ -274,12 +284,14 @@
         "supportsOtpBikeshare": false, 
         "otpContactEmail": null, 
         "otpBaseUrl": null, 
+        "paymentWarningBody": null, 
         "supportsSiriRealtimeApis": false, 
         "twitterUrl": "https://mobile.twitter.com/YRTViva", 
         "paymentAndroidAppId": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "open311Servers": [], 
+        "paymentWarningTitle": null, 
         "language": "en_CA", 
         "bounds": [
           {
@@ -305,12 +317,14 @@
         "supportsOtpBikeshare": false, 
         "otpContactEmail": null, 
         "otpBaseUrl": null, 
+        "paymentWarningBody": null, 
         "supportsSiriRealtimeApis": false, 
         "twitterUrl": "https://mobile.twitter.com/CalParking", 
         "paymentAndroidAppId": null, 
         "stopInfoUrl": null, 
         "active": false, 
         "open311Servers": [], 
+        "paymentWarningTitle": null, 
         "language": "en_US", 
         "bounds": [
           {
@@ -336,12 +350,14 @@
         "supportsOtpBikeshare": false, 
         "otpContactEmail": null, 
         "otpBaseUrl": null, 
+        "paymentWarningBody": null, 
         "supportsSiriRealtimeApis": false, 
         "twitterUrl": "", 
         "paymentAndroidAppId": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "open311Servers": [], 
+        "paymentWarningTitle": null, 
         "language": "en_US", 
         "bounds": [
           {
@@ -373,12 +389,14 @@
         "supportsOtpBikeshare": false, 
         "otpContactEmail": null, 
         "otpBaseUrl": null, 
+        "paymentWarningBody": null, 
         "supportsSiriRealtimeApis": false, 
         "twitterUrl": "", 
         "paymentAndroidAppId": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "open311Servers": [], 
+        "paymentWarningTitle": null, 
         "language": "fi_FI", 
         "bounds": [
           {
@@ -404,12 +422,14 @@
         "supportsOtpBikeshare": false, 
         "otpContactEmail": null, 
         "otpBaseUrl": null, 
+        "paymentWarningBody": null, 
         "supportsSiriRealtimeApis": false, 
         "twitterUrl": "", 
         "paymentAndroidAppId": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "open311Servers": [], 
+        "paymentWarningTitle": null, 
         "language": "en_US", 
         "bounds": [
           {
@@ -435,12 +455,14 @@
         "supportsOtpBikeshare": false, 
         "otpContactEmail": null, 
         "otpBaseUrl": null, 
+        "paymentWarningBody": null, 
         "supportsSiriRealtimeApis": false, 
         "twitterUrl": "", 
         "paymentAndroidAppId": null, 
         "stopInfoUrl": null, 
         "active": false, 
         "open311Servers": [], 
+        "paymentWarningTitle": null, 
         "language": "en_US", 
         "bounds": [
           {
@@ -466,12 +488,14 @@
         "supportsOtpBikeshare": false, 
         "otpContactEmail": null, 
         "otpBaseUrl": null, 
+        "paymentWarningBody": null, 
         "supportsSiriRealtimeApis": false, 
         "twitterUrl": "", 
-        "paymentAndroidAppId": null, 
+        "paymentAndroidAppId": "org.sdmts.riderapp", 
         "stopInfoUrl": null, 
         "active": true, 
         "open311Servers": [], 
+        "paymentWarningTitle": null, 
         "language": "en_US", 
         "bounds": [
           {

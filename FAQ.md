@@ -8,7 +8,7 @@
 
 ### The blue dot on the map for my location isn't accurate - it's a few blocks away from my real position
 
-Location information comes directly from your mobile device.  The best way to try and fix this is to go to your Android system settings and then "Location,", and make sure that "Mode" is set to "High accuracy (GPS and networks)".  After checking/changing this, you might also want to turn your device off and back on again.
+Location information comes directly from your mobile device.  The best way to try and fix this is to go to your Android system settings and then "Location,", and make sure that "Mode" is set to "High accuracy (GPS and networks)".  After checking/changing this, you might also want to turn your device off and back on again.if you have a pixel phone, you can also try to wave it around in a figure '8' pattern for a few seconds.
 
 ### All the arrival times in the app are an hour off - why are they all wrong?
 

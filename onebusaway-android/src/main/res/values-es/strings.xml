@@ -37,6 +37,7 @@
     <string name="navdrawer_item_send_feedback">Enviar comentarios</string>
     <string name="navdrawer_item_open_source">Visitanos en GitHub</string>
     <string name="navdrawer_item_plan_trip">Planea un Viaje (beta)</string>
+    <string name="navdrawer_item_pay_fare">Pagar mi pasaje</string>
     <string name="navdrawer_item_bike">Bicicleta</string>
     <string name="navdrawer_item_social_overflow_closed">Más ...</string>
     <string name="navdrawer_item_social_overflow_open">Menos ...</string>
@@ -116,14 +117,10 @@
     <string name="main_option_help">Ayuda</string>
     <string name="main_option_preferences">Configuración</string>
     <string name="main_help_title">Ayuda</string>
-    <string name="main_help_whatsnew_title">Novedades en esta versión</string>
+    <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Discusiones Sociales</b>
-        - Chatea con otros usuarios de OneBusAway sobre paradas y rutas\n&#8226;\u0020
-        <b>Mejoras en los Atajos</b>
-        - Nuevos iconos de la pantalla de inicio para paradas/rutas/recientes, compatibilidad Android 8.0\n&#8226;\u0020
-        <b>Ordenar Recordatorias</b>
-        - Ordena tus recordatorios por tiempo de salida o nombre\n&#8226;\u0020
+        <b>Enlace a la aplicación de pago de pasajes</b>
+        - Si tu región tiene una aplicación para el pago de pasajer, ¡esta ahora será accesible por medio del panel lateral de navegación!\n&#8226;\u0020
         <b>Arreglo de errores</b>
         - Mirá http://bit.ly/oba-android-releases
     </string>

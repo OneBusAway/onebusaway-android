@@ -8,7 +8,7 @@
 
 ### The blue dot on the map for my location isn't accurate - it's a few blocks away from my real position
 
-Location information comes directly from your mobile device.  The best way to try and fix this is to go to your Android system settings and then "Location,", and make sure that "Mode" is set to "High accuracy (GPS and networks)".  After checking/changing this, you might also want to turn your device off and back on again.if you have a pixel phone, you can also try to wave it around in a figure '8' pattern for a few seconds.
+Location information comes directly from your mobile device.  The best way to try and fix this is to go to your Android system settings and then "Location,", and make sure that "Mode" is set to "High accuracy (GPS and networks)".  After checking/changing this, you might also want to turn your device off and back on again.  If the blue dot on the map is facing the wrong direction, you can try calibrating your compass by making a figure 8 with your devices in the air several times.  See the "Calibrate your phone or tablet" section of [this Google document](https://support.google.com/maps/answer/2839911?hl=en&co=GENIE.Platform%3DAndroid) for more info.
 
 ### All the arrival times in the app are an hour off - why are they all wrong?
 

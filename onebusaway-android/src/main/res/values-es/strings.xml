@@ -117,7 +117,7 @@
     <string name="main_option_help">Ayuda</string>
     <string name="main_option_preferences">Configuración</string>
     <string name="main_help_title">Ayuda</string>
-    <string name="main_help_whatsnew_title">What\'s New?</string>
+    <string name="main_help_whatsnew_title">Novedades en esta versión</string>
     <string name="main_help_whatsnew">&#8226;\u0020
         <b>Enlace a la aplicación de pago de pasajes</b>
         - Si tu región tiene una aplicación para el pago de pasajer, ¡esta ahora será accesible por medio del panel lateral de navegación!\n&#8226;\u0020

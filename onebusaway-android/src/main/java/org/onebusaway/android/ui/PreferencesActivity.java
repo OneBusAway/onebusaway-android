@@ -278,7 +278,6 @@ public class PreferencesActivity extends PreferenceActivity
                 mCustomOtpApiUrlPref.setSummary(
                         getString(R.string.preferences_otp_api_servername_summary));
             }
-            Application.get().setUseOldOtpApiUrlVersion(false);
         }
     }
 

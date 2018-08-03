@@ -16,7 +16,6 @@
 
 package org.onebusaway.android.directions.tasks;
 
-import org.onebusaway.android.app.Application;
 import org.onebusaway.android.directions.util.JacksonConfig;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.ws.Message;
@@ -25,7 +24,6 @@ import org.opentripplanner.api.ws.Response;
 import org.opentripplanner.routing.core.TraverseMode;
 
 import android.os.AsyncTask;
-import android.os.Build;
 import android.util.Log;
 
 import java.io.FileNotFoundException;
@@ -89,9 +87,8 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
             return null;
         } else {
             String prefix = FOLDER_STRUCTURE_PREFIX_NEW;
-            boolean useOldUrlVersion = Application.get().getUseOldOtpApiUrlVersion();
             for (Request req : reqs) {
-                mResponse = requestPlan(req, prefix, mBaseUrl, useOldUrlVersion);
+                mResponse = requestPlan(req, prefix, mBaseUrl);
             }
         }
         return totalSize;
@@ -119,8 +116,7 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
         }
     }
 
-    protected Response requestPlan(Request requestParams, String prefix, String baseURL,
-                                   boolean useOldUrlStructure) {
+    protected Response requestPlan(Request requestParams, String prefix, String baseURL) {
         HashMap<String, String> tmp = requestParams.getParameters();
 
         Collection c = tmp.entrySet();
@@ -151,11 +147,7 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
         String u;
 
-        if (!useOldUrlStructure) {
-            u = baseURL + prefix + PLAN_LOCATION + params;
-        } else {
-            u = baseURL + PLAN_LOCATION + params;
-        }
+        u = baseURL + prefix + PLAN_LOCATION + params;
 
         // Save url for error reporting purposes
         mRequestUrl = u;
@@ -169,34 +161,19 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
         try {
             url = new URL(u);
 
-            disableConnectionReuseIfNecessary(); // For bugs in HttpURLConnection pre-Froyo
-
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setConnectTimeout(HTTP_CONNECTION_TIMEOUT);
             urlConnection.setReadTimeout(HTTP_SOCKET_TIMEOUT);
             plan = JacksonConfig.getObjectReaderInstance()
                     .readValue(urlConnection.getInputStream());
-
-            if (useOldUrlStructure) {
-                // If the old url structure is successful then cache it
-                Application.get().setUseOldOtpApiUrlVersion(true);
-            }
         } catch (java.net.SocketTimeoutException e) {
             Log.e(TAG, "Timeout fetching JSON or XML: " + e);
             e.printStackTrace();
             cancel(true);
         } catch (FileNotFoundException e) {
-            if (!useOldUrlStructure) {
-                Log.v(TAG, "The OTP url might be old, trying  old url structure");
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                return requestPlan(requestParams, prefix, baseURL, true);
-            } else {
-                Log.e(TAG, "Error fetching JSON or XML: " + e);
-                e.printStackTrace();
-                cancel(true);
-            }
+            Log.e(TAG, "FileNotFoundException fetching JSON or XML: " + e);
+            e.printStackTrace();
+            cancel(true);
         } catch (IOException e) {
             Log.e(TAG, "Error fetching JSON or XML: " + e);
             e.printStackTrace();
@@ -210,14 +187,5 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
             }
         }
         return plan;
-    }
-
-    /**
-     * Disable HTTP connection reuse which was buggy pre-froyo
-     */
-    private void disableConnectionReuseIfNecessary() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
-            System.setProperty("http.keepAlive", "false");
-        }
     }
 }

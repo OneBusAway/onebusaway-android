@@ -27,15 +27,13 @@ data class PathLink
 /**
  * Construct a path link between locations (stops)
  *
- * @param fromLoc   User's origin location (may be null if origin isn't known)
+ * @param originLocation   User's origin location (may be null if origin isn't known)
  * @param secondToLast Second to last location (stop prior to destination stop)
- * @param toLoc     Destination location
+ * @param destinationLocation     Destination location where the user wishes to exit the transit vehicle
  */
-(val fromLocation: Location?, val beforeLocation: Location, val toLocation: Location) {
+(val originLocation: Location?, val beforeLocation: Location, val destinationLocation: Location) {
 
     val pathLinkId: Int = 0
-
-    val agencyFeedId: Int = 0
 
     val routeIdGtfs: String? = null
 
@@ -43,13 +41,9 @@ data class PathLink
 
     val directionIdGtfs: Int = 0
 
-    val idStopFrom: Int = 0
+    val originStopIdGtfs: String? = null
 
-    val idStopFromTransitAgencyGTFS: String? = null
-
-    val idStopTo: Int = 0
-
-    val idStopToTransitAgencyGTFS: String? = null
+    val destinationStopIdGtfs: String? = null
 
     val alertDistance: Float = 0.toFloat()
 

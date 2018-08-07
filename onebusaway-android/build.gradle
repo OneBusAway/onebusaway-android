@@ -59,17 +59,12 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 21
-        versionCode 93
-        versionName "2.3.8"
+        versionCode 94
+        versionName "2.3.9"
 
         multiDexEnabled true
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-
-        // The following argument makes the Android Test Orchestrator run its
-        // "pm clear" command after each test invocation. This command ensures
-        // that the app's state is completely cleared between tests.
-        testInstrumentationRunnerArguments clearPackageData: 'true'
     }
 
     /**
@@ -134,6 +129,9 @@ android {
             buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "false"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "null"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
             buildConfigField "boolean", "NAV_GPS_LOGGING", "true"
         }
 
@@ -176,6 +174,9 @@ android {
             buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "false"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "null"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
             buildConfigField "boolean", "NAV_GPS_LOGGING", "false"
         }
 
@@ -214,6 +215,9 @@ android {
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL",
                     "\"otp-tampa@onebusaway.org\""
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "true"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "\"co.bytemark.hart\""
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
             buildConfigField "boolean", "NAV_GPS_LOGGING", "false"
         }
 
@@ -305,7 +309,6 @@ android {
     }
 
     testOptions {
-        execution 'ANDROID_TEST_ORCHESTRATOR'
         unitTests.includeAndroidResources true
     }
 }
@@ -456,7 +459,6 @@ dependencies {
     implementation 'com.android.support:multidex:1.0.3'
     // Unit tests
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestUtil 'com.android.support.test:orchestrator:1.0.2'
 }
 
 // Dependencies not directly used in this project, but used by dependencies that we are using

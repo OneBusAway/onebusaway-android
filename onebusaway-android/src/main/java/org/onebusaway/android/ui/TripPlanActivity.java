@@ -166,8 +166,12 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
         // show error dialog if necessary
         if (bundle.getBoolean(SHOW_ERROR_DIALOG)) {
-            int planErrorCode = intent.getIntExtra(PLAN_ERROR_CODE, 0);
-            String planErrorUrl = intent.getStringExtra(PLAN_ERROR_URL);
+            int planErrorCode = 0;
+            String planErrorUrl = null;
+            if (intent != null) {
+                planErrorCode = intent.getIntExtra(PLAN_ERROR_CODE, 0);
+                planErrorUrl = intent.getStringExtra(PLAN_ERROR_URL);
+            }
             showFeedbackDialog(planErrorCode, planErrorUrl);
         }
 
@@ -222,7 +226,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             bundle.putBoolean(SHOW_ERROR_DIALOG, showError);
             bundle.putBoolean(REQUEST_LOADING, mRequestLoading);
         }
-
+        super.onSaveInstanceState(bundle);
     }
 
     @Override

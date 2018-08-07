@@ -37,6 +37,7 @@
     <string name="navdrawer_item_send_feedback">Send feedback</string>
     <string name="navdrawer_item_open_source">Visit us on GitHub</string>
     <string name="navdrawer_item_plan_trip">Plan a trip (beta)</string>
+    <string name="navdrawer_item_pay_fare">Pay my fare</string>
     <string name="navdrawer_item_bike">Bike</string>
     <string name="navdrawer_item_social_overflow_closed">More ...</string>
     <string name="navdrawer_item_social_overflow_open">Less ...</string>
@@ -118,14 +119,8 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Social discussions</b>
-        - Chat with other OneBusAway users about stops and routes\n&#8226;\u0020
-        <b>Improved shortcuts</b>
-        - New home screen icons for stop/route/recents, Android 8.0 compatibility\n&#8226;\u0020
-        <b>Sort reminders</b>
-        - Order your reminders by departure time or name\n&#8226;\u0020
-        <b>Optional map zoom control</b>
-        - Turn on in Settings\n&#8226;\u0020
+        <b>Link to fare payment app</b>
+        - If your region has an app for paying fares, it\'s now easily accessible via the navigation drawer!\n&#8226;\u0020
         <b>Bug fixes</b>
         - See http://bit.ly/oba-android-releases
     </string>

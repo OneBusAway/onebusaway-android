@@ -33,7 +33,7 @@ import static junit.framework.Assert.assertNull;
 public class RegionsLoaderTest extends ObaLoaderTestCase {
 
     @Test
-    public void testLoader() throws InterruptedException {
+    public void testLoader() {
         // Load regions from resources
         ArrayList<ObaRegion> regionsFromResources = RegionUtils
                 .getRegionsFromResources(getTargetContext());
@@ -44,12 +44,11 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
         // Retrieve from provider
         ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromProvider(getTargetContext());
         assertNotNull(regions);
-        assertEquals(7, regions.size());  // Number of production regions
+        assertEquals(6, regions.size());  // Number of production regions
 
         // Production regions
         _assertTampa(regions.get(0));
         _assertPugetSound(regions.get(1));
-        _assertAtlanta(regions.get(2));
     }
 
     private void assertBounds(ObaRegion.Bounds bound,
@@ -78,8 +77,11 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
                 -82.652145,
                 0.47208000000000183,
                 0.3967700000000036);
-        assertEquals("http://otp-hart.camsys-apps.com:8080/otp/", tampa.getOtpBaseUrl());
+        assertEquals("https://otp.prod.obahart.org/otp/", tampa.getOtpBaseUrl());
         assertEquals("otp-tampa@onebusaway.org", tampa.getOtpContactEmail());
+        assertEquals("co.bytemark.hart", tampa.getPaymentAndroidAppId());
+        assertNull(tampa.getPaymentWarningTitle());
+        assertNull(tampa.getPaymentWarningBody());
     }
 
     private void _assertPugetSound(ObaRegion ps) {
@@ -106,27 +108,9 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
                 -122.4013255,
                 0.090694,
                 0.126793);
-        assertNull(ps.getOtpBaseUrl());
-        assertNull(ps.getOtpContactEmail());
-    }
-
-    private void _assertAtlanta(ObaRegion at) {
-        assertEquals(3, at.getId());
-        assertEquals("Atlanta", at.getName());
-        ObaRegion.Bounds[] bounds = at.getBounds();
-        assertNotNull(bounds);
-        assertEquals(7, bounds.length);
-        // 33.7901797681045:-84.39483216212469:0.002537628406997783:0.016058977126604645
-        assertBounds(bounds[0],
-                33.7901797681045,
-                -84.39483216212469,
-                0.002537628406997783,
-                0.016058977126604645);
-        // 33.84859251766493:-84.36189486914657:0.006806584025866869:0.035245473959491846
-        assertBounds(bounds[1],
-                33.84859251766493,
-                -84.36189486914657,
-                0.006806584025866869,
-                0.035245473959491846);
+        assertEquals("http://tpng.api.soundtransit.org/tripplanner/st/", ps.getOtpBaseUrl());
+        assertEquals("co.bytemark.tgt", ps.getPaymentAndroidAppId());
+        assertEquals("Check before you buy!", ps.getPaymentWarningTitle());
+        assertEquals("The mobile fare payment app for Puget Sound does not support all transit service shown in OneBusAway. Please check that a ticket is eligible for your agency and route before you purchase!", ps.getPaymentWarningBody());
     }
 }

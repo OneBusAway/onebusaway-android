@@ -138,4 +138,19 @@ public interface ObaRegion {
      * @return true if the region includes support for displaying bikeshare information from OTP.
      */
     public boolean getSupportsOtpBikeshare();
+
+    /**
+     * @return The Android App ID for the mobile app used for fare payment in the region
+     */
+    String getPaymentAndroidAppId();
+
+    /**
+     * @return The title of a warning dialog that should be shown to the user the first time they select the fare payment option, or empty if no warning should be shown to the user.
+     */
+    String getPaymentWarningTitle();
+
+    /**
+     * @return The body text of a warning dialog that should be shown to the user the first time they select the fare payment option, or empty if no warning should be shown to the user.
+     */
+    String getPaymentWarningBody();
 }

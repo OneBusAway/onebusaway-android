@@ -58,6 +58,7 @@
     <string name="preference_key_never_show_change_location_mode_dialog">preference_never_show_change_location_mode_dialog</string>
     <string name="preference_key_social_category">preference_category_social</string>
     <string name="preference_key_social">preference_social</string>
+    <string name="preference_key_never_show_payment_warning_dialog">never_show_payment_warning_dialog</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
@@ -76,6 +77,9 @@
 
     <!-- StopInfo project (see #103) -->
     <string name="stop_info_url_path">busstops</string>
+
+    <!-- Google Play Store Listing prefix -->
+    <string name="google_play_listing_prefix">https://play.google.com/store/apps/details?id=%1s</string>
 
     <!-- Oba Analytics Messages -->
     <string name="analytics_action_configured_region">configured_region</string>
@@ -190,6 +194,10 @@
     <string name="analytics_label_button_press_social_stop">Clicked Social Stop Arrivals Header</string>
     <string name="analytics_label_button_press_social_route_options">Clicked Social Route Options</string>
     <string name="analytics_label_button_press_social_route_style_b">Clicked Social Route Style B Card</string>
+
+    <!-- Analytics for payment -->
+    <string name="analytics_label_button_press_pay_fare_download_app">Clicked Pay Fare Download App</string>
+    <string name="analytics_label_button_press_pay_fare_open_app">Clicked Pay Fare Open App</string>
 
     <!-- General strings -->
     <string name="http_prefix">http://</string>

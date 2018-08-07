@@ -433,6 +433,30 @@ public final class ObaContract {
          * </P>
          */
         public static final String SUPPORTS_EMBEDDED_SOCIAL = "supports_embedded_social";
+
+        /**
+         * The Android App ID for the payment app used in the region
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String PAYMENT_ANDROID_APP_ID = "payment_android_app_id";
+
+        /**
+         * The title of a warning dialog that should be shown to the user the first time they select the fare payment option, or empty if no warning should be shown to the user.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String PAYMENT_WARNING_TITLE = "payment_warning_title";
+
+        /**
+         * The body text of a warning dialog that should be shown to the user the first time they select the fare payment option, or empty if no warning should be shown to the user.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String PAYMENT_WARNING_BODY = "payment_warning_body";
     }
 
     protected interface RegionBoundsColumns {
@@ -1305,7 +1329,10 @@ public final class ObaContract {
                     OTP_BASE_URL,
                     OTP_CONTACT_EMAIL,
                     SUPPORTS_OTP_BIKESHARE,
-                    SUPPORTS_EMBEDDED_SOCIAL
+                    SUPPORTS_EMBEDDED_SOCIAL,
+                    PAYMENT_ANDROID_APP_ID,
+                    PAYMENT_WARNING_TITLE,
+                    PAYMENT_WARNING_BODY
             };
 
             Cursor c = cr.query(buildUri((int) id), PROJECTION, null, null, null);
@@ -1333,7 +1360,10 @@ public final class ObaContract {
                             c.getString(12),              // OtpBaseUrl
                             c.getString(13),               // OtpContactEmail
                             c.getInt(14) > 0,           // Supports OTP Bikeshare
-                            c.getInt(15) > 0            // Supports Embedded Social
+                            c.getInt(15) > 0,            // Supports Embedded Social
+                            c.getString(16),               // Payment Android App ID
+                            c.getString(17),               // Payment Warning Title
+                            c.getString(18)               // Payment Warning Body
                     );
                 } finally {
                     c.close();

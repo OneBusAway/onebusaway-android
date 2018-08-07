@@ -49,7 +49,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 28;
+        private static final int DATABASE_VERSION = 29;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -275,7 +275,16 @@ public class ObaProvider extends ContentProvider {
                 ++oldVersion;
             }
             if (oldVersion == 27) {
-                db.execSQL(
+                db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
+                                " ADD COLUMN " + ObaContract.Regions.PAYMENT_ANDROID_APP_ID + " VARCHAR");
+                db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
+                        " ADD COLUMN " + ObaContract.Regions.PAYMENT_WARNING_TITLE + " VARCHAR");
+                db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
+                        " ADD COLUMN " + ObaContract.Regions.PAYMENT_WARNING_BODY + " VARCHAR");
+                ++oldVersion;
+            }
+            if (oldVersion == 28) {
+                            db.execSQL(
                     "CREATE TABLE " +
                             ObaContract.NavStops.PATH + " (" +
                             ObaContract.NavStops._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -547,6 +556,12 @@ public class ObaProvider extends ContentProvider {
                 .put(ObaContract.Regions.OTP_CONTACT_EMAIL, ObaContract.Regions.OTP_CONTACT_EMAIL);
         sRegionsProjectionMap
                 .put(ObaContract.Regions.SUPPORTS_OTP_BIKESHARE, ObaContract.Regions.SUPPORTS_OTP_BIKESHARE);
+        sRegionsProjectionMap
+                .put(ObaContract.Regions.PAYMENT_ANDROID_APP_ID, ObaContract.Regions.PAYMENT_ANDROID_APP_ID);
+        sRegionsProjectionMap
+                .put(ObaContract.Regions.PAYMENT_WARNING_TITLE, ObaContract.Regions.PAYMENT_WARNING_TITLE);
+        sRegionsProjectionMap
+                .put(ObaContract.Regions.PAYMENT_WARNING_BODY, ObaContract.Regions.PAYMENT_WARNING_BODY);
 
         sRegionBoundsProjectionMap = new HashMap<String, String>();
         sRegionBoundsProjectionMap.put(ObaContract.RegionBounds._ID, ObaContract.RegionBounds._ID);

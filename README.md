@@ -5,6 +5,7 @@ This is the official Android / Fire Phone app for [OneBusAway](https://onebusawa
 [<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png"
       alt="Get it on Google Play"
       height="80">](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot)
+
 [<img src="https://images-na.ssl-images-amazon.com/images/G/01/mobile-apps/devportal2/res/images/amazon-underground-app-us-black.png"
       alt="Amazon App Store"
       height="60">](http://www.amazon.com/gp/mas/dl/android?p=com.joulespersecond.seattlebusbot)

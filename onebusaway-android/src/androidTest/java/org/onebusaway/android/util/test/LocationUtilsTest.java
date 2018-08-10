@@ -16,12 +16,6 @@
 
 package org.onebusaway.android.util.test;
 
-import android.location.Location;
-import android.os.Build;
-import android.os.SystemClock;
-import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -34,6 +28,12 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.TestUtils;
+
+import android.location.Location;
+import android.os.Build;
+import android.os.SystemClock;
+import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 
 import static android.support.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertFalse;
@@ -48,8 +48,8 @@ public class LocationUtilsTest extends ObaTestCase {
 
     public static final String TAG = "LocationUtilTest";
 
-    public static final long FRESH_LOCATION_THRESHOLD_MS = 1000 * 60 * 30;
-            // Within last 30 minutes - see #737
+    public static final long FRESH_LOCATION_THRESHOLD_MS = 1000 * 60 * 60 * 24;
+            // Within last 24 hours - see #737
 
     /**
      * GoogleApiClient being used for Location Services

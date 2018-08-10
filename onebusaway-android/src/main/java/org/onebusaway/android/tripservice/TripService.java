@@ -167,6 +167,10 @@ public class TripService extends Service {
     }
 
     private int handleCommand(Intent intent, int startId) {
+        if (intent == null) {
+            Log.e(TAG, "Null intent");
+            return START_NOT_STICKY;
+        }
         final String action = intent.getAction();
         final TaskContextImpl taskContext = new TaskContextImpl(startId);
         final Uri uri = intent.getData();

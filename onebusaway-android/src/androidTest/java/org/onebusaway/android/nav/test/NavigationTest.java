@@ -745,7 +745,7 @@ public class NavigationTest extends ObaTestCase {
                     mDestinationId);
 
             // Construct Destination & Second-To-Last Location
-            PathLink link = new PathLink(null, mSecondToLastLocation, mDestinationLocation);
+            PathLink link = new PathLink(null, mSecondToLastLocation, mDestinationLocation, mTripId);
 
             // Begin navigation & simulation for a single path link
             provider.navigate(new Path(new ArrayList<>(Collections.singletonList(link))));

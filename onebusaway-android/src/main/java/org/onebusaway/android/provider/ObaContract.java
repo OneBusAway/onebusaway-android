@@ -1837,9 +1837,9 @@ public final class ObaContract {
                     do {
                         results[i] = new PathLink(
                                 null, Stops.getLocation(context, c.getString(2)),
-                                Stops.getLocation(context, c.getString(1))
+                                Stops.getLocation(context, c.getString(1)),
+                                c.getString(0)
                         );
-                        results[i].setTripId(c.getString(0));
                         i++;
                     } while (c.moveToNext());
 

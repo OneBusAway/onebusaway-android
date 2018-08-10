@@ -80,7 +80,6 @@ public class NavigationService extends Service implements LocationHelper.Listene
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Starting Service");
         if (intent != null) {
-
             mDestinationStopId = intent.getStringExtra(DESTINATION_ID);
             mBeforeStopId = intent.getStringExtra(BEFORE_STOP_ID);
             mTripId = intent.getStringExtra(TRIP_ID);
@@ -115,7 +114,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
 
         Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
         Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
-        PathLink pathLink = new PathLink(null, last, dest);
+        PathLink pathLink = new PathLink(null, last, dest, mTripId);
 
         if (mNavProvider != null) {
             // TODO Support more than one path link

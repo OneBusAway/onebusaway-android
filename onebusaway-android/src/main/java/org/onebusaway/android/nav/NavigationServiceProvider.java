@@ -167,7 +167,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
         // Create new coordinate object using the "Ring" coordinates
         Location firstLocation =  mPath.getPathLinks().get(mPathLinkIndex).getOriginLocation();
-        Location secondToLastLocation = mPath.getPathLinks().get(mPathLinkIndex).getBeforeLocation();
+        Location secondToLastLocation = mPath.getPathLinks().get(mPathLinkIndex).getSecondToLast();
         Location lastLocation =  mPath.getPathLinks().get(mPathLinkIndex).getDestinationLocation();
 
         mAlertDistance =  mPath.getPathLinks().get(mPathLinkIndex).getAlertDistance();
@@ -235,7 +235,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             mProxCalculator.listenForDistance(mAlertDistance);
             mProxCalculator.listenForLocation(
                     link.getOriginLocation(),
-                    link.getBeforeLocation(),
+                    link.getSecondToLast(),
                     link.getDestinationLocation());
             Log.d(TAG, "ProxCalculator parameters were set!");
         }

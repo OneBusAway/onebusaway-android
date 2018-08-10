@@ -25,27 +25,25 @@ import android.location.Location
 data class PathLink
 
 /**
- * Construct a path link between locations (stops)
- *
- * @param originLocation   User's origin location (may be null if origin isn't known)
- * @param secondToLast Second to last location (stop prior to destination stop)
- * @param destinationLocation     Destination location where the user wishes to exit the transit vehicle
+ * Construct a path link between the [originLocation] stop and [destinationLocation] stop, including
+ * a [secondToLast] stop prior to the [destinationLocation].  The [destinationLocation] is where
+ * the user wishes to exit the transit vehicle.
  */
-(val originLocation: Location?, val beforeLocation: Location, val destinationLocation: Location) {
+(val originLocation: Location?, val secondToLast: Location, val destinationLocation: Location, val tripId: String) {
 
     val pathLinkId: Int = 0
 
-    val routeIdGtfs: String? = null
+    val routeId: String? = null
 
-    val tripHeadsignGtfs: String? = null
+    val tripHeadsign: String? = null
 
-    val directionIdGtfs: Int = 0
+    val directionId: Int = 0
 
-    val originStopIdGtfs: String? = null
+    val originStopId: String? = null
 
-    val destinationStopIdGtfs: String? = null
+    val destinationStopId: String? = null
 
     val alertDistance: Float = 0.toFloat()
 
-    var tripId: String? = null
+    var positions: ArrayList<Position> = ArrayList()
 }

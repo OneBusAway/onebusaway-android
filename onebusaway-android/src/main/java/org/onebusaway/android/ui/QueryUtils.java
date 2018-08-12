@@ -17,6 +17,7 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.UIUtils;
 
@@ -246,5 +247,17 @@ public final class QueryUtils {
         // Mark the combination of route and headsign as a favorite or not favorite
         ObaContract.RouteHeadsignFavorites
                 .markAsFavorite(context, routeId, headsign, stopId, favorite);
+    }
+
+    public static void addRouteToRecents(Context context, String routeId, String shortName, String routeLongName, boolean markAsUsed) {
+        ContentValues values = new ContentValues();
+        values.put(ObaContract.Routes.SHORTNAME, shortName);
+        values.put(ObaContract.Routes.LONGNAME, routeLongName);
+
+        ObaRegion currentRegion = Application.get().getCurrentRegion();
+        if (currentRegion != null) {
+            values.put(ObaContract.Routes.REGION_ID, currentRegion.getId());
+        }
+        ObaContract.Routes.insertOrUpdate(context, routeId, values, markAsUsed);
     }
 }

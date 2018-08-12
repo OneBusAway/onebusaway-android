@@ -60,9 +60,9 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
                 new String[]{ObaContract.Stops._ID, ObaContract.Stops.DIRECTION},
                 null, null, null);
         assertNotNull(c);
-        assertTrue(c.getCount() == 1);
+        assertEquals(1, c.getCount());
         c.moveToNext();
-        assertEquals(c.getString(0), stopId);
+        assertEquals(stopId, c.getString(0));
         c.close();
 
         // Test counting
@@ -70,16 +70,16 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
                 new String[]{ObaContract.Stops._COUNT},
                 null, null, null);
         assertNotNull(c);
-        assertEquals(c.getCount(), 1);
+        assertEquals(1, c.getCount());
         c.moveToNext();
-        assertTrue(c.getInt(0) == 1);
+        assertEquals(1, c.getInt(0));
         c.close();
         // Get the one that we care about
         c = cr.query(uri, new String[]{ObaContract.Stops.CODE}, null, null, null);
         assertNotNull(c);
-        assertEquals(c.getCount(), 1);
+        assertEquals(1, c.getCount());
         c.moveToNext();
-        assertEquals(c.getString(0), "11060");
+        assertEquals("11060", c.getString(0));
         c.close();
 
         //
@@ -88,15 +88,15 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
         values = new ContentValues();
         values.put(ObaContract.Stops.USE_COUNT, 1);
         int result = cr.update(uri, values, null, null);
-        assertEquals(result, 1);
+        assertEquals(1, result);
 
         //
         // Delete
         //
         result = cr.delete(uri, null, null);
-        assertEquals(result, 1);
+        assertEquals(1, result);
         result = cr.delete(uri, null, null);
-        assertEquals(result, 0);
+        assertEquals(0, result);
     }
 
     @Test
@@ -118,7 +118,7 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
         Uri uri = cr.insert(ObaContract.Stops.CONTENT_URI, values);
         assertNotNull(uri);
 
-        final String stopId2 = "1_1010101";
+        final String stopId2 = "1_1010101-TEST";
         values.put(ObaContract.Stops._ID, stopId2);
         uri = cr.insert(ObaContract.Stops.CONTENT_URI, values);
         assertNotNull(uri);
@@ -127,7 +127,7 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
                 new String[]{ObaContract.Stops._COUNT},
                 null, null, null);
         assertNotNull(c);
-        assertEquals(c.getCount(), 1);
+        assertEquals(1, c.getCount());
         c.moveToNext();
         assertTrue(c.getInt(0) == 2);
         c.close();
@@ -140,7 +140,7 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
                 null, null, null
         );
         assertNotNull(c);
-        assertEquals(c.getCount(), 1);
+        assertEquals(1, c.getCount());
         c.close();
     }
 }

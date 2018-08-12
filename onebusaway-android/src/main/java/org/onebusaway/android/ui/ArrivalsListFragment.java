@@ -874,12 +874,19 @@ public class ArrivalsListFragment extends ListFragment
 
     public void showRouteOnMap(ArrivalInfo arrivalInfo) {
         boolean handled = false;
+
+        ObaArrivalInfo info = arrivalInfo.getInfo();
+        String routeId = info.getRouteId();
+        String displayName = UIUtils.getRouteDisplayName(info);
+
+        QueryUtils.addRouteToRecents(getContext(), routeId, info.getShortName(), displayName, true);
+
         if (mListener != null) {
             handled = mListener.onShowRouteOnMapSelected(arrivalInfo);
         }
         // If the event hasn't been handled by the listener, start a new activity
         if (!handled) {
-            HomeActivity.start(getActivity(), arrivalInfo.getInfo().getRouteId());
+            HomeActivity.start(getActivity(), routeId);
         }
     }
 
@@ -1486,6 +1493,11 @@ public class ArrivalsListFragment extends ListFragment
     }
 
     private void goToTripDetails(ArrivalInfo stop) {
+        ObaArrivalInfo info = stop.getInfo();
+        String routeId = info.getRouteId();
+        String displayName = UIUtils.getRouteDisplayName(info);
+
+        QueryUtils.addRouteToRecents(getContext(), routeId, info.getShortName(), displayName, true);
         TripDetailsActivity.start(getActivity(),
                 stop.getInfo().getTripId(), stop.getInfo().getStopId(),
                 TripDetailsListFragment.SCROLL_MODE_STOP);

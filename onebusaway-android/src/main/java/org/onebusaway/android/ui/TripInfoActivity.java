@@ -258,10 +258,7 @@ public class TripInfoActivity extends AppCompatActivity {
             mRouteName = bundle.getString(ROUTE_NAME);
             // If we get this, update it in the DB.
             if (mRouteName != null) {
-                ContentValues values = new ContentValues();
-                values.put(ObaContract.Routes.SHORTNAME, mRouteName);
-                ObaContract.Routes
-                        .insertOrUpdate(getActivity(), mRouteId, values, false);
+                QueryUtils.addRouteToRecents(getActivity(), mRouteId, mRouteName, "", false);
             }
             String name = bundle.getString(TRIP_NAME);
             if (name != null) {

@@ -16,7 +16,6 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -26,11 +25,9 @@ import org.onebusaway.android.io.request.ObaRouteRequest;
 import org.onebusaway.android.io.request.ObaRouteResponse;
 import org.onebusaway.android.io.request.ObaStopsForRouteRequest;
 import org.onebusaway.android.io.request.ObaStopsForRouteResponse;
-import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.UIUtils;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
@@ -467,15 +464,7 @@ public class RouteInfoListFragment extends ListFragment {
             agencyText.setText(mRouteInfo.getAgency().getName());
 
             if (addToDb) {
-                ContentValues values = new ContentValues();
-                values.put(ObaContract.Routes.SHORTNAME, shortName);
-                values.put(ObaContract.Routes.LONGNAME, longName);
-                values.put(ObaContract.Routes.URL, url);
-                if (Application.get().getCurrentRegion() != null) {
-                    values.put(ObaContract.Routes.REGION_ID,
-                            Application.get().getCurrentRegion().getId());
-                }
-                ObaContract.Routes.insertOrUpdate(getActivity(), mRouteInfo.getId(), values, true);
+                QueryUtils.addRouteToRecents(getActivity(), mRouteInfo.getId(), shortName, longName, true);
             }
         } else {
             setEmptyText(UIUtils.getRouteErrorString(getActivity(), routeInfo.getCode()));

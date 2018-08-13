@@ -105,7 +105,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
             setupLog();
         }
 
-        if (mLocationHelper != null) {
+        if (mLocationHelper == null) {
             mLocationHelper = new LocationHelper(this, 1);
         }
 

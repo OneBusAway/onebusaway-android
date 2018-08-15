@@ -27,9 +27,10 @@ data class PathLink
 /**
  * Construct a path link between the [originLocation] stop and [destinationLocation] stop, including
  * a [secondToLastLocation] stop prior to the [destinationLocation].  The [destinationLocation] is where
- * the user wishes to exit the transit vehicle.
+ * the user wishes to exit the transit vehicle.  The [startTime] is the system time in milliseconds
+ * at which the navigation of this PathLink instance started.
  */
-(val originLocation: Location?, val secondToLastLocation: Location, val destinationLocation: Location, val tripId: String) {
+(val startTime: Long, val originLocation: Location?, val secondToLastLocation: Location, val destinationLocation: Location, val tripId: String) {
 
     val pathLinkId: Int = 0
 

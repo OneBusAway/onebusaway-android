@@ -289,6 +289,7 @@ public class ObaProvider extends ContentProvider {
                             ObaContract.NavStops.PATH + " (" +
                             ObaContract.NavStops._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                             + ObaContract.NavStops.NAV_ID + " VARCHAR NOT NULL, "
+                            + ObaContract.NavStops.START_TIME + " INTEGER NOT NULL, "
                             + ObaContract.NavStops.TRIP_ID + " VARCHAR NOT NULL, "
                             + ObaContract.NavStops.DESTINATION_ID + " VARCHAR NOT NULL, "
                             + ObaContract.NavStops.BEFORE_ID + " VARCHAR NOT NULL, "

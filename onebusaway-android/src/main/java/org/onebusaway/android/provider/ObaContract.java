@@ -571,6 +571,14 @@ public final class ObaContract {
         public static final String NAV_ID = "nav_id";
 
         /**
+         * The start time for the navigation of this path link
+         * <P>
+         * Type: INTEGER
+         * </P>
+         */
+        public static final String START_TIME = "start_time";
+
+        /**
          * The Trip Id
          * <P>
          * Type: TEXT
@@ -1739,12 +1747,13 @@ public final class ObaContract {
         public static final String CONTENT_DIR_TYPE
                 = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".navstops";
 
-        public static Uri insert(Context context, Integer navId, Integer seqNum, String tripId, String destId, String beforeId) {
+        public static Uri insert(Context context, Long startTime, Integer navId, Integer seqNum, String tripId, String destId, String beforeId) {
             // TODO: Delete there since there's only one active trip.
             ContentResolver cr = context.getContentResolver();
             cr.delete(CONTENT_URI, null, null);
             ContentValues values = new ContentValues();
             values.put(NAV_ID, navId);
+            values.put(START_TIME, startTime);
             values.put(TRIP_ID, tripId);
             values.put(DESTINATION_ID, destId);
             values.put(BEFORE_ID, beforeId);
@@ -1756,13 +1765,14 @@ public final class ObaContract {
         /**
          * Inserts multi-leg trip into database.
          * @param context Context.
+         * @param startTime the startTime in milliseconds for this PathLink instance
          * @param navId   Navigation ID for destination alert
          * @param tripId  Trip ID of route.
          * @param legs    Array of 2-string arrays, first element being stopId of second-to-last
          *                stop and second element being stopid of destination stop of leg.
          * @return
          */
-        public static boolean insert(Context context, Integer navId, String tripId, String[][] legs)
+        public static boolean insert(Context context, Long startTime, Integer navId, String tripId, String[][] legs)
         {
             ContentResolver cr = context.getContentResolver();
             // TODO: Delete there since there's only one active trip atm.
@@ -1776,6 +1786,7 @@ public final class ObaContract {
             for (int i = 0; i < legs.length;i++) {
                 ContentValues values = new ContentValues();
                 values.put(NAV_ID, navId);
+                values.put(START_TIME, startTime);
                 values.put(TRIP_ID, tripId);
                 values.put(BEFORE_ID, legs[i][0]);
                 values.put(DESTINATION_ID, legs[i][1]);
@@ -1821,7 +1832,8 @@ public final class ObaContract {
             final String[] PROJECTION = {
                     TRIP_ID,
                     DESTINATION_ID,
-                    BEFORE_ID
+                    BEFORE_ID,
+                    START_TIME
             };
             ContentResolver cr = context.getContentResolver();
             Cursor c = cr.query(CONTENT_URI, PROJECTION, NAV_ID + "=?", new String[]{navId}, SEQUENCE + " ASC");
@@ -1835,7 +1847,7 @@ public final class ObaContract {
                     int i = 0;
                     c.moveToFirst();
                     do {
-                        results[i] = new PathLink(
+                        results[i] = new PathLink(c.getLong(3),
                                 null, Stops.getLocation(context, c.getString(2)),
                                 Stops.getLocation(context, c.getString(1)),
                                 c.getString(0)

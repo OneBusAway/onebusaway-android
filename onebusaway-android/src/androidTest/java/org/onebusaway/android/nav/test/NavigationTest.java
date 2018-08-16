@@ -15,6 +15,12 @@
  */
 package org.onebusaway.android.nav.test;
 
+import android.location.Location;
+import android.location.LocationManager;
+import android.os.Build;
+import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
+
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,12 +29,6 @@ import org.onebusaway.android.mock.Resources;
 import org.onebusaway.android.nav.NavigationServiceProvider;
 import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
-
-import android.location.Location;
-import android.location.LocationManager;
-import android.os.Build;
-import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -744,8 +744,9 @@ public class NavigationTest extends ObaTestCase {
             NavigationServiceProvider provider = new NavigationServiceProvider(mTripId,
                     mDestinationId);
 
-            // Construct Destination & Second-To-Last Location
-            PathLink link = new PathLink(null, mSecondToLastLocation, mDestinationLocation, mTripId);
+            // Use the first location time as the starting time for this PathLink
+            // TODO - capture PathLink nav starting time in logs
+            PathLink link = new PathLink(mLocations[0].getTime(), null, mSecondToLastLocation, mDestinationLocation, mTripId);
 
             // Begin navigation & simulation for a single path link
             provider.navigate(new Path(new ArrayList<>(Collections.singletonList(link))));

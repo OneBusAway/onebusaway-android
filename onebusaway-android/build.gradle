@@ -238,6 +238,14 @@ android {
             }
     }
 
+    variantFilter { variant ->
+        def names = variant.flavors*.name
+        // Make sure that OBA release builds always have an Embedded Social API key (#907)
+        if (names.contains("oba") && variant.buildType.name == "release" && getEmbeddedSocialApiKey(variant.flavors.get(0).name) == "") {
+            throw new InvalidUserDataException("gradle.properties must contain an EmbeddedSocialApiKey_oba API key for oba release builds")
+        }
+    }
+
     // http://stackoverflow.com/questions/20673625/gradle-0-7-0-duplicate-files-during-packaging-of-apk
     packagingOptions {
         exclude 'META-INF/LICENSE'

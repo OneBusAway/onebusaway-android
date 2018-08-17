@@ -109,22 +109,8 @@ public class NavigationService extends Service implements LocationHelper.Listene
             }
         }
 
-        // Init Firebase anonymous auth
-        mAuth = FirebaseAuth.getInstance();
-        int numCores = Runtime.getRuntime().availableProcessors();
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(numCores * 2, numCores *2,
-                60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
-        mAuth.signInAnonymously()
-                .addOnCompleteListener(executor, task -> {
-                    if (task.isSuccessful()) {
-                        // Sign in success
-                        FirebaseUser user = mAuth.getCurrentUser();
-                        Log.d(TAG, "signInAnonymously:success");
-                    } else {
-                        // Sign in failed
-                        Log.w(TAG, "signInAnonymously:failure", task.getException());
-                    }
-                });
+        // Log in anonymously via Firebase
+        initAnonFirebaseLogin();
 
         // Setup file for logging.
         if (mLogFile == null && BuildConfig.NAV_GPS_LOGGING) {
@@ -211,6 +197,24 @@ public class NavigationService extends Service implements LocationHelper.Listene
                 stopSelf();
             }
         }
+    }
+
+    private void initAnonFirebaseLogin() {
+        mAuth = FirebaseAuth.getInstance();
+        int numCores = Runtime.getRuntime().availableProcessors();
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(numCores * 2, numCores *2,
+                60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+        mAuth.signInAnonymously()
+                .addOnCompleteListener(executor, task -> {
+                    if (task.isSuccessful()) {
+                        // Sign in success
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        Log.d(TAG, "signInAnonymously:success");
+                    } else {
+                        // Sign in failed
+                        Log.w(TAG, "signInAnonymously:failure", task.getException());
+                    }
+                });
     }
 
     /**

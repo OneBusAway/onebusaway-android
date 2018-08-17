@@ -15,6 +15,9 @@
  */
 package org.onebusaway.android.nav;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
@@ -42,6 +45,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The NavigationService is started when the user begins a trip, this service listens for location
@@ -76,6 +82,8 @@ public class NavigationService extends Service implements LocationHelper.Listene
 
     private long mFinishedTime;
 
+    private FirebaseAuth mAuth;
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Starting Service");
@@ -100,6 +108,23 @@ public class NavigationService extends Service implements LocationHelper.Listene
 
             }
         }
+
+        // Init Firebase anonymous auth
+        mAuth = FirebaseAuth.getInstance();
+        int numCores = Runtime.getRuntime().availableProcessors();
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(numCores * 2, numCores *2,
+                60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+        mAuth.signInAnonymously()
+                .addOnCompleteListener(executor, task -> {
+                    if (task.isSuccessful()) {
+                        // Sign in success
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        Log.d(TAG, "signInAnonymously:success");
+                    } else {
+                        // Sign in failed
+                        Log.w(TAG, "signInAnonymously:failure", task.getException());
+                    }
+                });
 
         // Setup file for logging.
         if (mLogFile == null && BuildConfig.NAV_GPS_LOGGING) {

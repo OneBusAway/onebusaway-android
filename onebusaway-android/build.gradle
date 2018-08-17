@@ -417,6 +417,9 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore:${this.ext.playServicesVersion}") {
         force = true
     }
+    implementation("com.google.firebase:firebase-auth:${this.ext.playServicesVersion}") {
+        force = true
+    }
     // Support libraries
     implementation ("com.android.support:cardview-v7:${this.ext.supportLibVersion}") {
         force = true

@@ -579,6 +579,55 @@ public class NavigationTest extends ObaTestCase {
     }
 
     /**
+     * Started Stop: Fletcher Avenue @46th Street
+     * Destination Stop: University Area Transit Center
+     * Recorded In: Route 6
+     * Device Used: ZTE Z831
+     */
+    @Test
+    public void testTrip26() throws IOException {
+        // Read test CSV
+        runSimulation("nav_trip26", 367, 463);
+    }
+
+    /**
+     * Started Stop: University Area Transit Center
+     * Destination Stop: Fletcher Avenue @Palm Drive MetroRapid
+     * Recorded In: Route 6
+     * Device Used: ZTE Z831
+     */
+    @Test
+    public void testTrip27() throws IOException {
+        // Read test CSV
+        runSimulation("nav_trip27", 909, 941);
+    }
+
+    /**
+     * Started Stop: Fletcher Avenue @Palm Drive MetroRapid
+     * Destination Stop: 56th Street @131st Avenue (S)
+     * Recorded In: Route 6
+     * Device Used: ZTE Z831
+     */
+    @Test
+    public void testTrip28() throws IOException {
+        // Read test CSV
+        runSimulation("nav_trip28", 400, 473);
+    }
+
+    /**
+     * Started Stop: 56th Street @131st Avenue (N)
+     * Destination Stop: Fletcher Avenue @42nd Street MetroRapid
+     * Recorded In: Route 6
+     * Device Used: ZTE Z831
+     */
+    @Test
+    public void testTrip29() throws IOException {
+        // Read test CSV
+        runSimulation("nav_trip29", 472, 594);
+    }
+
+
+    /**
      * Runs the simulation with the provided CSV data and expected "Get ready" and "Pull the Cord Now" notification indexes
      *
      * @param csvFileName file name of the CSV file to load from the raw resources directory that contains the test location data from a user's trip

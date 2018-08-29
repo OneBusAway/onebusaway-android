@@ -238,14 +238,6 @@ android {
             }
     }
 
-    variantFilter { variant ->
-        def names = variant.flavors*.name
-        // Make sure that OBA release builds always have an Embedded Social API key (#907)
-        if (names.contains("oba") && variant.buildType.name == "release" && getEmbeddedSocialApiKey(variant.flavors.get(0).name) == "") {
-            throw new InvalidUserDataException("gradle.properties must contain an EmbeddedSocialApiKey_oba API key for oba release builds")
-        }
-    }
-
     // http://stackoverflow.com/questions/20673625/gradle-0-7-0-duplicate-files-during-packaging-of-apk
     packagingOptions {
         exclude 'META-INF/LICENSE'
@@ -391,9 +383,16 @@ task askForPasswords << {
 }
 
 tasks.whenTaskAdded { theTask ->
-    if (theTask.name.matches("\\bpackage\\w+Release\\b")) {
+   if (theTask.name.matches("\\bpackage\\w+Release\\b")) {
         theTask.dependsOn "askForPasswords"
-    }
+   }
+    // Make sure that OBA release builds always have an Embedded Social API key (#907)
+   def runningTask = project.gradle.startParameter.taskNames
+
+   if (runningTask.toString().matches("(.*)Oba(.*)Release(.*)") && !project.hasProperty('EmbeddedSocialApiKey_oba')) {
+        throw new InvalidUserDataException("gradle.properties must contain an EmbeddedSocialApiKey_oba API key for oba release builds")
+   }
+
 }
 
 // Exclude all classes from dependencies that conflict with Android platform classes (#849)

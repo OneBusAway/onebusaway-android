@@ -386,10 +386,10 @@ tasks.whenTaskAdded { theTask ->
    if (theTask.name.matches("\\bpackage\\w+Release\\b")) {
         theTask.dependsOn "askForPasswords"
    }
-    // Make sure that OBA release builds always have an Embedded Social API key (#907)
+   // Make sure that OBA release builds always have an Embedded Social API key (#907)
    def runningTask = project.gradle.startParameter.taskNames
 
-   if (runningTask.toString().matches("(.*)Oba(.*)Release(.*)") && !project.hasProperty('EmbeddedSocialApiKey_oba')) {
+   if ((runningTask.toString().toLowerCase().matches("(.*)oba(.*)release(.*)") || runningTask.toString().toLowerCase().contains("assemblerelease") )  && !project.hasProperty('EmbeddedSocialApiKey_oba')) {
         throw new InvalidUserDataException("gradle.properties must contain an EmbeddedSocialApiKey_oba API key for oba release builds")
    }
 

@@ -26,21 +26,15 @@
     <string name="navdrawer_item_my_reminders">My reminders</string>
     <string name="navdrawer_item_profile">My profile</string>
     <string name="navdrawer_item_sign_in">Sign in</string>
-    <string name="navdrawer_item_your_feed">My feed</string>
-    <string name="navdrawer_item_search">Search</string>
     <string name="navdrawer_item_popular">Popular</string>
     <string name="navdrawer_item_pin">My pins</string>
     <string name="navdrawer_item_activity_feed">Activity feed</string>
-    <string name="navdrawer_item_options">Options</string>
     <string name="navdrawer_item_settings">Settings</string>
     <string name="navdrawer_item_help">Help</string>
     <string name="navdrawer_item_send_feedback">Send feedback</string>
     <string name="navdrawer_item_open_source">Visit us on GitHub</string>
     <string name="navdrawer_item_plan_trip">Plan a trip (beta)</string>
     <string name="navdrawer_item_pay_fare">Pay my fare</string>
-    <string name="navdrawer_item_bike">Bike</string>
-    <string name="navdrawer_item_social_overflow_closed">More ...</string>
-    <string name="navdrawer_item_social_overflow_open">Less ...</string>
 
     <!-- Permissions -->
     <string name="trip_service_perm_label">start the trip service</string>
@@ -111,11 +105,6 @@
     <!--  Option strings -->
     <string name="map_option_mylocation">My Location</string>
     <string name="map_option_search">Search</string>
-    <string name="main_option_findroute">My Routes</string>
-    <string name="main_option_findstop">My Stops</string>
-    <string name="main_option_viewtrips">My Reminders</string>
-    <string name="main_option_help">Help</string>
-    <string name="main_option_preferences">Settings</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
@@ -238,8 +227,6 @@
     <string name="stop_info_eta_unknown">---\u0020\u0020</string>
     <string name="stop_info_option_showonmap">Show on map</string>
     <string name="menu_option_sort_by">Sort by</string>
-    <string name="stop_info_option_sort_eta">Sorting by estimated arrival…</string>
-    <string name="stop_info_option_sort_route">Sorting by route…</string>
     <string name="stop_info_option_refresh">Refresh</string>
     <string name="stop_info_option_filter">Filter routes</string>
     <string name="stop_info_option_hide_header_arrivals">Hide arrivals in header</string>
@@ -296,8 +283,6 @@
     <string name="stop_info_favorite">Favorite stop</string>
     <string name="stop_info_official_stop_name_label">Official name: %1$s</string>
     <string name="stop_info_route_ids_label">Routes:</string>
-    <string name="stop_info_header_arrival_info">%1$d min</string>
-    <string name="stop_info_header_just_left">just left</string>
     <string name="stop_info_button_content_description">About this stop</string>
     <string name="stop_info_frequency_approximate">~</string>
     <string name="stop_header_sliding_panel_open">Sliding panel expanded. Tap or press Back button
@@ -353,7 +338,6 @@
     <string name="my_context_show_schedule">Show schedule</string>
 
     <!-- Service Alerts  -->
-    <string name="situation_activity_label">Service Alert</string>
     <string name="alert_content_description_warning">Service alert warning - tap to slide up panel
         and reveal more info.
     </string>
@@ -403,7 +387,6 @@
     <string name="trip_info_reminder_header">Reminder Time</string>
     <string name="trip_info_reminder_repeat">Repeats</string>
     <string name="trip_info_save">Save</string>
-    <string name="trip_info_cancel">Cancel</string>
     <string name="trip_info_delete">Delete</string>
     <string name="trip_info_saved">Trip saved.</string>
     <string name="trip_info_dismiss">Cancel</string>
@@ -442,14 +425,11 @@
     <string name="report_problem_comment_hint">Problem description (optional)</string>
     <string name="report_problem_send">Send</string>
     <string name="report_problem_hint">Your reports help OneBusAway find and fix problems!</string>
-    <string name="report_problem_sent">Report sent! Thank you!</string>
     <string name="report_problem_error">Unable to send the report. Try again?</string>
     <string name="report_problem_invalid_argument">Please choose a problem category.</string>
     <!-- TODO: Modes -->
     <string name="report_problem_onvehicle_bus">Are you on this bus?</string>
     <string name="report_problem_uservehicle_hint">Bus number (optional)</string>
-    <string name="report_problem_stop_activity_label">Report Stop Problem</string>
-    <string name="report_problem_trip_activity_label">Report Arrival Time Problem</string>
     <string name="report_problem_report">Report</string>
 
     <!-- Region list -->
@@ -843,24 +823,19 @@
     <!-- Trip Planner strings -->
 
     <string name="title_activity_trip_plan">Trip Planner (beta)</string>
-    <string name="error_while_retrieving_data">Error while retrieving data</string>
     <string name="trip_plan_from">From: </string>
     <string name="trip_plan_to">To: </string>
-    <string name="trip_plan_when">When</string>
     <string name="trip_plan_leaving">Leaving</string>
     <string name="trip_plan_arriving">Arriving</string>
-    <string name="trip_plan_plan_my_trip">Plan My Trip</string>
     <string name="trip_plan_stop_connector">at</string>
 
     <string name="trip_plan_location_hint">Enter address or location name</string>
 
-    <string name="trip_plan_switch_view">Switch View:</string>
     <string name="trip_plan_list_view">List View</string>
     <string name="trip_plan_map_view">Map View</string>
 
     <string name="task_progress_tripplanner_progress">Planning trip. Please wait&#8230;</string>
     <string name="tripplanner_no_server_selected_error">No region selected</string>
-    <string name="tripplanner_results_title">Planning Results</string>
     <string name="tripplanner_error_dialog_title">Planning not possible</string>
     <!-- Errors -->
     <string name="tripplanner_error_not_defined">Sorry, something went wrong.  Please try again.</string>
@@ -884,7 +859,6 @@
     <string name="tripplanner_error_triangle">Something went wrong.  Change your bike options and try again</string>
     <!-- When routing from my location -->
     <string name="tripplanner_current_location">Current Location</string>
-    <string name="tripplanner_error_no_location">Please enter a location for the start and end of your trip.</string>
 
     <string name="tripplanner_no_contact">There is no trip planning contact for this region.
     </string>
@@ -895,19 +869,6 @@
     <!-- Instructions generation -->
 
     <!-- Step-by-step screen -->
-
-    <!-- Title -->
-    <string name="step_by_step_title">Directions</string>
-
-    <!-- Top headers -->
-    <string name="step_by_step_header_from">From</string>
-    <string name="step_by_step_header_to">To</string>
-    <string name="step_by_step_header_departure">Dep.</string>
-    <string name="step_by_step_header_arrival">Arr.</string>
-
-    <!-- Drop down menu components -->
-    <string name="step_by_step_walking_duration">walking</string>
-    <string name="step_by_step_total_duration">takes</string>
 
     <!-- Instructions generation -->
 
@@ -930,7 +891,6 @@
     <string name="step_by_step_transit_connector_headsign">to</string>
 
     <!-- Real time -->
-    <string name="step_by_step_transit_warning_live_udpates">Live updates</string>
 
     <!-- Modes -->
 
@@ -1026,23 +986,6 @@
     <string name="street_type_sidewalk">sidewalk</string>
     <string name="street_type_steps">steps</string>
 
-    <!-- Notifications specific -->
-
-    <!-- Button -->
-    <string name="notification_disable_updates_button">Cancel updates for this trip</string>
-
-    <!-- Toast -->
-    <string name="notification_disable_updates_info">Updates cancelled</string>
-
-    <!-- Text -->
-    <string name="notification_stop_name_conector">at</string>
-    <string name="notification_two_delays_connector">and</string>
-    <string name="notification_origin">origin</string>
-    <string name="notification_destination">destination</string>
-
-    <!-- Obtaining real time updates -->
-    <string name="toast_realtime_updates_fail">Realtime updates not available for this trip, times might be outdated</string>
-
     <!-- Units -->
     <string name="hours_abbreviation">h</string>
     <string name="hours_full">hours</string>
@@ -1064,10 +1007,6 @@
 
 
     <!-- Real time -->
-    <string name="map_markers_warning_live_updates">Live updates</string>
-    <string name="map_markers_warning_live_updates_on_time">On time</string>
-    <string name="map_markers_warning_live_updates_early_arrival">early</string>
-    <string name="map_markers_warning_live_updates_late_arrival">delay</string>
 
     <string name="trip_plan_notification_new_plan_title">We found a better trip plan</string>
     <string name="trip_plan_notification_new_plan_text">Tap to see new results for your last origin/destination.</string>

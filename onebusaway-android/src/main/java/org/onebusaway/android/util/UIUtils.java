@@ -1432,11 +1432,12 @@ public final class UIUtils {
      * for a stop.  See #700.
      *
      * @param response response from arrivals-and-departures-for-stop API
+     * @param filter   list of routes to not retrieve service alerts for
      * @return a list of all situations (service alerts) that are specific to the stop, routes, and
-     * agency
+     * agency (excluding those specified with filter)
      * for the provided arrivals-and-departures-for-stop response.  See #700.
      */
-    public static List<ObaSituation> getAllSituations(final ObaArrivalInfoResponse response) {
+    public static List<ObaSituation> getAllSituations(final ObaArrivalInfoResponse response, List<String> filter) {
         List<ObaSituation> allSituations = new ArrayList<>();
         // Add agency-wide and stop-specific alerts
         allSituations.addAll(response.getSituations());
@@ -1447,13 +1448,24 @@ public final class UIUtils {
             allIds.add(s.getId());
         }
 
+        // Do the same for filtered routes
+        HashSet<String> filterIds = new HashSet<>();
+        if (filter != null) {
+            for (String routeId : filter) {
+                filterIds.add(routeId);
+            }
+        }
+
         // Scan through the routes, and if a route-specific situation hasn't been added yet, add it
+        // If a filter list exists and a route isn't on it, skip it's situations
         ObaArrivalInfo[] info = response.getArrivalInfo();
         for (ObaArrivalInfo i : info) {
-            for (String situationId : i.getSituationIds()) {
-                if (!allIds.contains(situationId)) {
-                    allIds.add(situationId);
-                    allSituations.add(response.getSituation(situationId));
+            if (filterIds.isEmpty() || filterIds.contains(i.getRouteId())) {
+                for (String situationId : i.getSituationIds()) {
+                    if (!allIds.contains(situationId)) {
+                        allIds.add(situationId);
+                        allSituations.add(response.getSituation(situationId));
+                    }
                 }
             }
         }

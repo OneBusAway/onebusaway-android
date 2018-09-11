@@ -93,11 +93,6 @@
     <!--  Option strings -->
     <string name="map_option_mylocation">Oma sijainti</string>
     <string name="map_option_search">Haku</string>
-    <string name="main_option_findroute">Omat reitit</string>
-    <string name="main_option_findstop">Omat pysäkit</string>
-    <string name="main_option_viewtrips">Omat muistutukset</string>
-    <string name="main_option_help">Ohje</string>
-    <string name="main_option_preferences">Asetukset</string>
     <string name="main_help_title">Ohje</string>
     <string name="main_help_whatsnew_title">Mitä uutta?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
@@ -212,8 +207,6 @@
     <string name="stop_info_eta_unknown">---\u0020\u0020</string>
     <string name="stop_info_option_showonmap">Näytä kartalla</string>
     <string name="menu_option_sort_by">Järjestä</string>
-    <string name="stop_info_option_sort_eta">Järjestetty saapumisajan mukaan…</string>
-    <string name="stop_info_option_sort_route">Järjestetty reitin mukaan…</string>
     <string name="stop_info_option_refresh">Päivitä</string>
     <string name="stop_info_option_filter">Rajaa reittejä</string>
     <string name="stop_info_option_hide_header_arrivals">Piilota saapumiset otsikosta</string>
@@ -222,7 +215,6 @@
     <string name="stop_info_option_addstar">Lisää suosikiksi</string>
     <string name="stop_info_option_show_details">Pysäkin tiedot</string>
     <string name="stop_info_option_removestar">Poista suosikeista</string>
-    <string name="stop_info_option_reportproblem">Ilmoita ongelmasta</string>
     <string name="stop_info_option_night_light">Yövalo</string>
     <string name="stop_info_nodata_minutes">Ei saapuvia kulkuneuvoja seuraavaan %1$d min.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
@@ -269,8 +261,6 @@
     <string name="stop_info_old_data">Tiedot päivitetty %s</string>
     <string name="stop_info_favorite">Suosikkipysäkki</string>
     <string name="stop_info_route_ids_label">Reitit:</string>
-    <string name="stop_info_header_arrival_info">%1$d min</string>
-    <string name="stop_info_header_just_left">juuri lähtenyt</string>
     <string name="stop_info_button_content_description">Tietoja pysäkistä</string>
     <string name="stop_info_frequency_approximate">~</string>
     <string name="stop_header_sliding_panel_open">Paneeli laajennettu. Napsauta tai paina Takaisin painiketta
@@ -326,7 +316,6 @@
     <string name="my_context_show_schedule">Näytä aikataulu</string>
 
     <!-- Service Alerts  -->
-    <string name="situation_activity_label">Ilmoitus</string>
     <string name="alert_content_description_warning">Ilmoitus - napsauta nähdäksesi
         enemmän.
     </string>
@@ -362,7 +351,6 @@
     <string name="trip_info_reminder_header">Muistutusaika</string>
     <string name="trip_info_reminder_repeat">Toistetaan</string>
     <string name="trip_info_save">Tallenna</string>
-    <string name="trip_info_cancel">Peruuta</string>
     <string name="trip_info_delete">Poista</string>
     <string name="trip_info_saved">Matka tallennettu.</string>
     <string name="trip_info_dismiss">Poistu</string>
@@ -385,30 +373,15 @@
     <string name="trip_list_context_showstop">Näytä pysäkki</string>
     <string name="trip_list_context_showroute">Näytä reitti</string>
 
-    <!--  Trip notifications -->
-    <string name="trip_stat_gone">Kulkuneuvo %s on lähtenyt.</string>
-    <string name="trip_stat_lessthanone">Kulkuneuvo %s on alle 1 minuutin päässä!</string>
-    <string name="trip_stat_one">Kulkuneuvo %s on 1 minuutin päässä!</string>
-    <string name="trip_stat">Kulkuneuvo %1$s on %2$d minuutin päässä!</string>
-
     <!-- Report problem -->
-    <string name="report_problem_code">Ongelman kuvaus</string>
-    <string name="report_problem_comment">Muuta lisättävää?</string>
     <string name="report_problem_comment_hint">valinnainen</string>
-    <string name="report_problem_email">Sähköpostisi</string>
-    <string name="report_problem_email_hint">valinnainen</string>
-    <string name="report_problem_cancel">Peruuta</string>
     <string name="report_problem_send">Lähetä</string>
     <string name="report_problem_hint">Raportit auttavat OneBusAway:tä löytämään ja korjaamaan ongelmia!</string>
-    <string name="report_problem_sent">Raportti lähetetty! Paljon kiitoksia!</string>
     <string name="report_problem_error">Raporttia ei pystytä lähettämään. Yritetäänkö uudestaan?</string>
     <string name="report_problem_invalid_argument">Valitse ongelman kategoria.</string>
     <!-- TODO: Modes -->
     <string name="report_problem_onvehicle_bus">Oletko tässä kulkuneuvossa?</string>
-    <string name="report_problem_vehiclenumber_bus">Kulkuneuvon numero</string>
     <string name="report_problem_uservehicle_hint">vaihtoehtoinen</string>
-    <string name="report_problem_stop_activity_label">Ilmoita pysäkin ongelmasta</string>
-    <string name="report_problem_trip_activity_label">Ilmoita matkan ongelmasta</string>
 
     <!-- Region list -->
     <plurals name="distance_miles">
@@ -596,18 +569,10 @@
         bussi etuajassa (punainen) vai myöhässä (sininen). Ajallaan = vihreä taustaväri. Jos bussin 
         sijaintia ei tiedetä, näytetään aikataulun mukainen saapumisaika (harmaa taustaväri).
     </string>
-    <string name="tutorial_arrival_header_star_stop_title">Merkkaa suosikkipysäkkisi</string>
-    <string name="tutorial_arrival_header_star_stop_text">Napsauta tähteä tallentaaksesi pysäkki
-        suosikkehisi. Suosikkipysäkit löytyvät navigointipaneelista.
-    </string>
     <string name="tutorial_arrival_header_sliding_panel_title">Liu\'uta nähdäksesi lisää saapuvia
     </string>
     <string name="tutorial_arrival_header_sliding_panel_text">Napsauta nuolta tai liikuta paneelia ylöspäin
         nähdäksesi lisää tälle pysäkille saapuvia vuoroja.
-    </string>
-    <string name="tutorial_arrival_info_more_title">Käytä joukkoliikennesupervoimiasi viisaasti!</string>
-    <string name="tutorial_arrival_info_more_text">Napsauta kolmea pistettä asettaaksei muistutuksia, suosikki
-        reittejä, nähdäksesi reitin kartalla, sekä paljon muuta…
     </string>
     <string name="tutorial_arrival_sort_title">Järjestä saapumisajan tai reitin mukaan</string>
     <string name="tutorial_arrival_sort_text">Ruudun yläreunasta löytyvän \"Järjestä\" napin avulla
@@ -621,19 +586,6 @@
     <string name="tutorial_recent_stops_routes_text">Ruudun oikeasta laidasta löytyvän \"Lisää\" napin 
         avulla löydät pysäkit ja reitit joita olet viimeksi katsellut.
     </string>
-    <string name="tutorial_arrival_style_b_show_route_title">Katsele bussien sijainteja kartalla
-    </string>
-    <string name="tutorial_arrival_style_b_show_route_text">Napsauta karttaikonia nähdäksesi bussin
-        liikkeet reaaliajassa.
-    </string>
-    <string name="tutorial_vehicle_icons_title">Saat tietoja napsauttamalla ajoneuvon ikonia</string>
-    <string name="tutorial_vehicle_icons_text">Vihje - Voit kiertää karttaa kahden sormen avulla jos
-        vahingossa osut viereiseen pysäkkiin bussin sijaan.
-    </string>
-    <string name="tutorial_vehicle_info_window_title">Reaaliaikaiset tiedot ajoneuvoista</string>
-    <string name="tutorial_vehicle_info_window_text">Napsauta ilmaantuvaa palloa nähdäksesi linjan ja 
-        ajoneuvon reaaliaikaisia tietoja.
-    </string>
     <string name="tutorial_starred_stops_sort_title">Järjestä suosikkipysäkkisi</string>
     <string name="tutorial_starred_stops_sort_text">Ruudun yläreunasta löytyvän \"Järjestä\" napin avulla
         voit järjestellä suosikkipysäkkisi nimen tai sen perusteella kuinka usein käytät pysäkkiä.
@@ -641,20 +593,6 @@
     <string name="tutorial_starred_stops_shortcut_title">Pikakuvakkeilla säästät aikaa</string>
     <string name="tutorial_starred_stops_shortcut_text">Painamalla pitkään pysäkkiä voit luoda laitteesi 
         työpöydälle pikakuvakkeen. Pikakuvaketta napsauttamalla näet suoraan pysäkille saapuvat vuorot.
-    </string>
-    <string name="tutorial_show_arrivals_in_header_title">Näytä suosikkireitit päällimmäisenä</string>
-    <string name="tutorial_show_arrivals_in_header_text">Haluatko nähdä suosikkireittisi pysäkin
-        yläpuolella? Kokeile ruudun oikean ylänurkan \"Lisää\" napin takaa löytyvää
-        \"Näytä saapumiset otsikossa\" asetusta.
-    </string>
-    <string name="tutorial_arrival_route_filter_title">Piilota turhat reitit</string>
-    <string name="tutorial_arrival_route_filter_text">Etkö tarvitse reittiä 6? Piilota se ruudun oikean
-        ylänurkan \"Lisää\" napin takaa löytyvän \"Rajaa reittejä\" asetuksen avulla.
-    </string>
-    <string name="tutorial_night_light_title">Tuo valoa pimeyteen</string>
-    <string name="tutorial_night_light_text">Harmittaako kun bussi ajaa pimeässä ohitsesi
-        huomaamatta sinua? Kokeile ruudun oikean ylänurkan \"Lisää\" napin takaa löytyvää
-        \"Yövalo\" asetusta.
     </string>
 
     <!-- About -->

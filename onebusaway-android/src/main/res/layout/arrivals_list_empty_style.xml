@@ -38,7 +38,7 @@
                   android:layout_width="fill_parent"
                   android:layout_height="wrap_content"/>
     </android.support.v7.widget.CardView>
-    <include layout="@layout/arrivals_list_footer_style_b"
+    <include layout="@layout/arrivals_list_footer_style"
              android:layout_width="match_parent"
              android:layout_height="wrap_content"/>
 </LinearLayout>

@@ -279,7 +279,7 @@ public class ArrivalsListFragment extends ListFragment
             return null;
         }
 
-        initArrivalInfoViews(BuildFlavorUtils.getArrivalInfoStyleFromPreferences(), inflater);
+        initArrivalInfoViews(inflater);
 
         return inflater.inflate(R.layout.fragment_arrivals_list, null);
     }
@@ -1112,7 +1112,7 @@ public class ArrivalsListFragment extends ListFragment
             ((ViewGroup) getListView().getParent()).removeView(mEmptyList);
         }
 
-        initArrivalInfoViews(arrivalInfoStyle, inflater);
+        initArrivalInfoViews(inflater);
         setupFooter();
         setupEmptyList(emptyText);
         setListViewProperties(arrivalInfoStyle);
@@ -1122,14 +1122,12 @@ public class ArrivalsListFragment extends ListFragment
     /**
      * Initializes the adapter views
      *
-     * @param arrivalInfoStyle the adapter style to use - should be one of the
-     *                         BuildFlavorUtil.ARRIVAL_INFO_STYLE_* contants
      * @param inflater         inflater to use
      */
-    private void initArrivalInfoViews(int arrivalInfoStyle, LayoutInflater inflater) {
+    private void initArrivalInfoViews(LayoutInflater inflater) {
         // Use a card-styled footer
-        mFooter = inflater.inflate(R.layout.arrivals_list_footer_style_b, null);
-        mEmptyList = inflater.inflate(R.layout.arrivals_list_empty_style_b, null);
+        mFooter = inflater.inflate(R.layout.arrivals_list_footer_style, null);
+        mEmptyList = inflater.inflate(R.layout.arrivals_list_empty_style, null);
     }
 
     /**

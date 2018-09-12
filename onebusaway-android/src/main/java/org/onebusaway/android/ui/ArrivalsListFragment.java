@@ -150,6 +150,7 @@ public class ArrivalsListFragment extends ListFragment
 
     private ObaReferences mObaReferences;
 
+    // The list of route_ids that should have their arrival info and alerts displayed. (All if empty or null)
     private ArrayList<String> mRoutesFilter;
 
     private int mLastResponseLength = -1; // Keep copy locally, since loader overwrites
@@ -384,7 +385,7 @@ public class ArrivalsListFragment extends ListFragment
         if (loader != null) {
             ObaArrivalInfoResponse lastGood = loader.getLastGoodResponse();
             if (lastGood != null) {
-                setResponseData(lastGood.getArrivalInfo(), UIUtils.getAllSituations(lastGood),
+                setResponseData(lastGood.getArrivalInfo(), UIUtils.getAllSituations(lastGood, mRoutesFilter),
                         lastGood.getRefs());
             }
         }
@@ -456,7 +457,7 @@ public class ArrivalsListFragment extends ListFragment
                 addToDB(mStop);
             }
             info = result.getArrivalInfo();
-            situations = UIUtils.getAllSituations(result);
+            situations = UIUtils.getAllSituations(result, mRoutesFilter);
             refs = result.getRefs();
 
         } else {
@@ -471,7 +472,7 @@ public class ArrivalsListFragment extends ListFragment
                         R.string.generic_comm_error_toast,
                         Toast.LENGTH_LONG).show();
                 info = lastGood.getArrivalInfo();
-                situations = lastGood.getSituations();
+                situations = UIUtils.getAllSituations(lastGood, mRoutesFilter);
             } else {
                 setEmptyText(UIUtils.getStopErrorString(getActivity(), result.getCode()));
             }
@@ -1000,6 +1001,7 @@ public class ArrivalsListFragment extends ListFragment
     public void setRoutesFilter(ArrayList<String> routes) {
         mRoutesFilter = routes;
         ObaContract.StopRouteFilters.set(getActivity(), mStopId, mRoutesFilter);
+        refreshSituations(UIUtils.getAllSituations(getArrivalsLoader().getLastGoodResponse(), mRoutesFilter));
         refreshLocal();
     }
 
@@ -1319,6 +1321,7 @@ public class ArrivalsListFragment extends ListFragment
                 checks[i] = true;
             }
         }
+
         // Arguments
         Bundle args = new Bundle();
         args.putStringArray(RoutesFilterDialog.ITEMS, items);

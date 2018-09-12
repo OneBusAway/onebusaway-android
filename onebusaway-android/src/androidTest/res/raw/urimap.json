@@ -17,6 +17,7 @@
     "/api/api/where/arrivals-and-departures-for-stop/DART_4041.json": "arrivals_and_departures_for_stop_dart_4041_alerts",
     "/api/api/where/arrivals-and-departures-for-stop/MTS_11670.json": "arrivals_and_departures_for_stop_mts_11670_route_alerts",
     "/api/api/where/arrivals-and-departures-for-stop/MTS_13353.json": "arrivals_and_departures_for_stop_mts_13353_route_and_stop_alerts",
+    "/api/api/where/arrivals-and-departures-for-stop/MTS_11671.json": "arrivals_and_departures_for_stop_mts_11671_filter_route_alerts",
 
     "/api/where/current-time.json": "current_time",
 

@@ -1424,19 +1424,22 @@ public final class UIUtils {
 
     /**
      * Returns a list of all situations (service alerts) that are specific to the stop, routes, and
-     * agency
-     * for the provided arrivals-and-departures-for-stop response.  For route-specific alerts, this
+     * agency for the provided arrivals-and-departures-for-stop response.  For route-specific alerts, this
      * involves looping through the routes and checking the references element to see if there are
      * any route-specific alerts, and adding them to the list to be shown above the list of
-     * arrivals
-     * for a stop.  See #700.
+     * arrivals for a stop.  See #700.
      *
      * @param response response from arrivals-and-departures-for-stop API
+     * @param filter   list of route_ids to retrieve service alerts for, or null to retrieve service
+     *                 alerts for all routes. Note that this filter only affects alerts scoped to
+     *                 routes - it does not affect alerts scoped to stops or agencies
      * @return a list of all situations (service alerts) that are specific to the stop, routes, and
-     * agency
-     * for the provided arrivals-and-departures-for-stop response.  See #700.
+     * agency. If a route filter list is provided, situations for all stops and agencies are included
+     * in the returned list, but only situations scoped for route_ids in the provided filter list are
+     * included in the returned list (i.e., situations specified for route_ids that aren't in the
+     * filter list are excluded).
      */
-    public static List<ObaSituation> getAllSituations(final ObaArrivalInfoResponse response) {
+    public static List<ObaSituation> getAllSituations(final ObaArrivalInfoResponse response, List<String> filter) {
         List<ObaSituation> allSituations = new ArrayList<>();
         // Add agency-wide and stop-specific alerts
         allSituations.addAll(response.getSituations());
@@ -1447,13 +1450,25 @@ public final class UIUtils {
             allIds.add(s.getId());
         }
 
+        // Do the same for filtered routes
+        HashSet<String> filterIds = new HashSet<>();
+        if (filter != null && !filter.isEmpty()) {
+            for (String routeId : filter) {
+                filterIds.add(routeId);
+            }
+        }
+
         // Scan through the routes, and if a route-specific situation hasn't been added yet, add it
+        // If a filter list exists and a route_id is not included in the filter list, don't included
+        // it's situations in the returned list.
         ObaArrivalInfo[] info = response.getArrivalInfo();
         for (ObaArrivalInfo i : info) {
-            for (String situationId : i.getSituationIds()) {
-                if (!allIds.contains(situationId)) {
-                    allIds.add(situationId);
-                    allSituations.add(response.getSituation(situationId));
+            if (filterIds.isEmpty() || filterIds.contains(i.getRouteId())) {
+                for (String situationId : i.getSituationIds()) {
+                    if (!allIds.contains(situationId)) {
+                        allIds.add(situationId);
+                        allSituations.add(response.getSituation(situationId));
+                    }
                 }
             }
         }

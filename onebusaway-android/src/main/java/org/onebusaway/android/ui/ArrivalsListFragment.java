@@ -150,6 +150,7 @@ public class ArrivalsListFragment extends ListFragment
 
     private ObaReferences mObaReferences;
 
+    // The list of route_ids that should have their arrival info and alerts displayed. (All if empty or null)
     private ArrayList<String> mRoutesFilter;
 
     private int mLastResponseLength = -1; // Keep copy locally, since loader overwrites

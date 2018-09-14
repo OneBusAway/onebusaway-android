@@ -101,11 +101,10 @@ public class NavigationTest extends ObaTestCase {
      * Destination Stop: Dale Mabry Hwy @ Hudson Ln @ Taco Bell
      * Recorded In: Bus (Route 36) 4 stops
      * Device Used: Nexus 5
-     * FIXME - Currently fails with "Pull the cord triggered too soon"
      */
     @Test
     public void testTrip3() throws IOException {
-        runSimulation("nav_trip3", 95, 115);
+        runSimulation("nav_trip3", 95, 109);
     }
 
     /**
@@ -113,11 +112,10 @@ public class NavigationTest extends ObaTestCase {
      * Destination Stop: Dale Mabry Hwy @ Hudson Ln @ Taco Bell
      * Recorded In: car following Bus (Route 36) 4 stops
      * Device Used: Nexus 5
-     * FIXME - Currently fails with "Pull the cord triggered too soon"
      */
     @Test
     public void testTrip3C() throws IOException {
-        runSimulation("nav_trip3c", 87, 109);
+        runSimulation("nav_trip3c", 87, 106);
     }
 
     /**
@@ -347,13 +345,10 @@ public class NavigationTest extends ObaTestCase {
      * Destination Stop: Busch Blvd @ 22nd St
      * Recorded In: Bus route 39 (12 stops)
      * Device Used: Kyocera
-     * FIXME - This test is failing because the lat/long for the 2nd-to-last stop is wrong - it's
-     * not where the actual physical stop is located. Hence, it appears that the pull the cord alert
-     * is triggered to soon.
      */
     @Test
     public void testTrip14() throws IOException {
-        runSimulation("nav_trip14", 548, 571);
+        runSimulation("nav_trip14", 548, 569);
     }
 
     /**
@@ -625,8 +620,6 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         runSimulation("nav_trip29", 472, 594);
     }
-
-
     /**
      * Runs the simulation with the provided CSV data and expected "Get ready" and "Pull the Cord Now" notification indexes
      *

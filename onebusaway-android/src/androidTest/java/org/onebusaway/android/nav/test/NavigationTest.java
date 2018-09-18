@@ -579,7 +579,7 @@ public class NavigationTest extends ObaTestCase {
     }
 
     /**
-     * Started Stop: Fletcher Avenue @46th Street
+     * Started Stop: Fletcher Avenue @ 46th Street
      * Destination Stop: University Area Transit Center
      * Recorded In: Route 6
      * Device Used: ZTE Z831
@@ -592,7 +592,7 @@ public class NavigationTest extends ObaTestCase {
 
     /**
      * Started Stop: University Area Transit Center
-     * Destination Stop: Fletcher Avenue @Palm Drive MetroRapid
+     * Destination Stop: Fletcher Avenue @ Palm Drive MetroRapid
      * Recorded In: Route 6
      * Device Used: ZTE Z831
      */
@@ -603,8 +603,8 @@ public class NavigationTest extends ObaTestCase {
     }
 
     /**
-     * Started Stop: Fletcher Avenue @Palm Drive MetroRapid
-     * Destination Stop: 56th Street @131st Avenue (S)
+     * Started Stop: Fletcher Avenue @ Palm Drive MetroRapid
+     * Destination Stop: 56th Street @ 131st Avenue (S)
      * Recorded In: Route 6
      * Device Used: ZTE Z831
      */
@@ -615,8 +615,8 @@ public class NavigationTest extends ObaTestCase {
     }
 
     /**
-     * Started Stop: 56th Street @131st Avenue (N)
-     * Destination Stop: Fletcher Avenue @42nd Street MetroRapid
+     * Started Stop: 56th Street @ 131st Avenue (N)
+     * Destination Stop: Fletcher Avenue @ 42nd Street MetroRapid
      * Recorded In: Route 6
      * Device Used: ZTE Z831
      */
@@ -626,6 +626,55 @@ public class NavigationTest extends ObaTestCase {
         runSimulation("nav_trip29", 472, 594);
     }
 
+
+    /**
+     * Started Stop: Fletcher Avenue @ 42nd Street MetroRapid
+     * Destination Stop: University Area Transit Center
+     * Recorded In: Route 6
+     * Device Used: One Plus 6
+     */
+    @Test
+    public void testTrip30() throws IOException {
+        // Read test CSV
+        runSimulation("nav_trip30", 1001, 1048);
+    }
+
+    /**
+     * Started Stop: University Area Transit Center
+     * Destination Stop: 15th St @ 127 avenue
+     * Recorded In: Route 42
+     * Device Used: One Plus 6
+     */
+    @Test
+    public void testTrip31() throws IOException {
+        // Read test CSV
+        runSimulation("nav_trip31", 2508, 2654);
+    }
+
+    /**
+     * Started Stop: 15th St @127 avenue
+     * Destination Stop: Bruce B Downs Bl @ Lakeside Commons
+     * Recorded In: Route 42
+     * Device Used: ZTE Z831
+     */
+
+    @Test
+    public void testTrip32() throws IOException {
+        // Read test CSV
+        runSimulation("nav_trip32", 1847, 1888);
+    }
+
+    /**
+     * Started Stop: Bruce B Downs Bl @ Lakeside Commons
+     * Destination Stop: University Area Transit Center
+     * Recorded In: Route 42
+     * Device Used: ZTE Z831
+     */
+    @Test
+    public void testTrip33() throws IOException {
+        // Read test CSV
+        runSimulation("nav_trip33", 335, 401);
+    }
 
     /**
      * Runs the simulation with the provided CSV data and expected "Get ready" and "Pull the Cord Now" notification indexes

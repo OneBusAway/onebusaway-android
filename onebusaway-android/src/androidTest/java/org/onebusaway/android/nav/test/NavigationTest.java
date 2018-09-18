@@ -579,7 +579,7 @@ public class NavigationTest extends ObaTestCase {
     }
 
     /**
-     * Started Stop: Fletcher Avenue @46th Street
+     * Started Stop: Fletcher Avenue @ 46th Street
      * Destination Stop: University Area Transit Center
      * Recorded In: Route 6
      * Device Used: ZTE Z831
@@ -592,7 +592,7 @@ public class NavigationTest extends ObaTestCase {
 
     /**
      * Started Stop: University Area Transit Center
-     * Destination Stop: Fletcher Avenue @Palm Drive MetroRapid
+     * Destination Stop: Fletcher Avenue @ Palm Drive MetroRapid
      * Recorded In: Route 6
      * Device Used: ZTE Z831
      */
@@ -603,8 +603,8 @@ public class NavigationTest extends ObaTestCase {
     }
 
     /**
-     * Started Stop: Fletcher Avenue @Palm Drive MetroRapid
-     * Destination Stop: 56th Street @131st Avenue (S)
+     * Started Stop: Fletcher Avenue @ Palm Drive MetroRapid
+     * Destination Stop: 56th Street @ 131st Avenue (S)
      * Recorded In: Route 6
      * Device Used: ZTE Z831
      */
@@ -615,8 +615,8 @@ public class NavigationTest extends ObaTestCase {
     }
 
     /**
-     * Started Stop: 56th Street @131st Avenue (N)
-     * Destination Stop: Fletcher Avenue @42nd Street MetroRapid
+     * Started Stop: 56th Street @ 131st Avenue (N)
+     * Destination Stop: Fletcher Avenue @ 42nd Street MetroRapid
      * Recorded In: Route 6
      * Device Used: ZTE Z831
      */
@@ -628,7 +628,7 @@ public class NavigationTest extends ObaTestCase {
 
 
     /**
-     * Started Stop: Fletcher Avenue @42nd Street MetroRapid
+     * Started Stop: Fletcher Avenue @ 42nd Street MetroRapid
      * Destination Stop: University Area Transit Center
      * Recorded In: Route 6
      * Device Used: One Plus 6
@@ -641,7 +641,7 @@ public class NavigationTest extends ObaTestCase {
 
     /**
      * Started Stop: University Area Transit Center
-     * Destination Stop: 15th St @127 avenue
+     * Destination Stop: 15th St @ 127 avenue
      * Recorded In: Route 42
      * Device Used: One Plus 6
      */
@@ -653,7 +653,7 @@ public class NavigationTest extends ObaTestCase {
 
     /**
      * Started Stop: 15th St @127 avenue
-     * Destination Stop: Bruce B Downs Bl @Lakeside Commons
+     * Destination Stop: Bruce B Downs Bl @ Lakeside Commons
      * Recorded In: Route 42
      * Device Used: ZTE Z831
      */
@@ -665,7 +665,7 @@ public class NavigationTest extends ObaTestCase {
     }
 
     /**
-     * Started Stop: Bruce B Downs Bl @Lakeside Commons
+     * Started Stop: Bruce B Downs Bl @ Lakeside Commons
      * Destination Stop: University Area Transit Center
      * Recorded In: Route 42
      * Device Used: ZTE Z831

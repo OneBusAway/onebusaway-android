@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "1083736323923",
-    "firebase_url": "https://api-project-1083736323923.firebaseio.com",
-    "project_id": "api-project-1083736323923",
-    "storage_bucket": "api-project-1083736323923.appspot.com"
+    "project_number": "694948222130",
+    "firebase_url": "https://onebusaway-7019b.firebaseio.com",
+    "project_id": "onebusaway-7019b",
+    "storage_bucket": "onebusaway-7019b.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1083736323923:android:e2ba0de76d8a138b",
+        "mobilesdk_app_id": "1:694948222130:android:e2ba0de76d8a138b",
         "android_client_info": {
           "package_name": "com.joulespersecond.seattlebusbot"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1083736323923-rc9l9v9he2njpl9urkg81anr35jv99uj.apps.googleusercontent.com",
+          "client_id": "694948222130-n78ci8i0ntm2gchldafprj0s54bqn9f6.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.joulespersecond.seattlebusbot",
@@ -23,13 +23,13 @@
           }
         },
         {
-          "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
+          "client_id": "694948222130-v0af9jf5fe37o3oti2v2ddmnn96nejgl.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAKhirldbMm7knvxq2lFoYiNxSCOesvnwk"
+          "current_key": "AIzaSyCrEG11uP2Vhr3APjCyKbU8jACzBvJekTw"
         }
       ],
       "services": {
@@ -40,8 +40,16 @@
           "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
+              "client_id": "694948222130-v0af9jf5fe37o3oti2v2ddmnn96nejgl.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "694948222130-o4b4p2vbm78qmdkdht583bi78fve5ucm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "org.onebusaway.iphone",
+                "app_store_id": "329380089"
+              }
             }
           ]
         },

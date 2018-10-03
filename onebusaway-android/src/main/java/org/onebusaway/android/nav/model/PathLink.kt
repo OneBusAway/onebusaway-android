@@ -30,9 +30,9 @@ data class PathLink
  * the user wishes to exit the transit vehicle.  The [startTime] is the system time in milliseconds
  * at which the navigation of this PathLink instance started.
  */
-(val startTime: Long, val originLocation: Location?, val secondToLastLocation: Location, val destinationLocation: Location, val tripId: String) {
+(val startTime: Long?, val originLocation: Location?, val secondToLastLocation: Location?, val destinationLocation: Location?, val tripId: String?) {
 
-    val pathLinkId: Int = 0
+    val pathId: Int = 0
 
     val routeId: String? = null
 
@@ -47,6 +47,4 @@ data class PathLink
     val destinationStopId: String? = null
 
     val alertDistance: Float = 0.toFloat()
-
-    var positions: ArrayList<Position> = ArrayList()
 }

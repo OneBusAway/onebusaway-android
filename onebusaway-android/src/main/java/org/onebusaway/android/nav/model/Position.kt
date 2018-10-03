@@ -24,6 +24,7 @@ package org.onebusaway.android.nav.model
 data class Position
 
 /**
+ * [pathLinkId] - the [PathLink] that this ooordinate belongs to
  * [coordinateId] - the unique ID for this Position.
  * [getReadyFlag] - true if the "Get Ready" alert has been announced to the user, false if it has not
  * [pullTheCordNowFlag] - true if the "Pull the Cord Now" alert has been announced to the user, false if it has not
@@ -38,7 +39,8 @@ data class Position
  * [numSatsUsed] - number of satellites used in fix
  * [locationProvider] - the name of the provider that generated this fix
  */
-(val coordinateId: Int,
+(val pathLinkId: Long,
+ val coordinateId: Int,
  val getReadyFlag: Boolean,
  val pullTheCordNowFlag: Boolean,
  val timeSinceAppStartedNanos: Long,

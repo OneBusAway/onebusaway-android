@@ -15,7 +15,7 @@
       },
       "oauth_client": [
         {
-          "client_id": "1083736323923-rc9l9v9he2njpl9urkg81anr35jv99uj.apps.googleusercontent.com",
+          "client_id": "1083736323923-0u4ns2rkmbar7taqetottco4oe0q36d5.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.joulespersecond.seattlebusbot",
@@ -42,6 +42,14 @@
             {
               "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "1083736323923-a3abfviki4fcbm734vbfceejcivrvbv2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "org.onebusaway.iphone",
+                "app_store_id": "329380089"
+              }
             }
           ]
         },

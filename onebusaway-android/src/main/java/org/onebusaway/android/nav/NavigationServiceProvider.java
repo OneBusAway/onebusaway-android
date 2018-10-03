@@ -15,13 +15,6 @@
  */
 package org.onebusaway.android.nav;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.nav.model.Path;
-import org.onebusaway.android.nav.model.PathLink;
-import org.onebusaway.android.ui.TripDetailsActivity;
-import org.onebusaway.android.util.RegionUtils;
-
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -32,6 +25,13 @@ import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.nav.model.Path;
+import org.onebusaway.android.nav.model.PathLink;
+import org.onebusaway.android.ui.TripDetailsActivity;
+import org.onebusaway.android.util.RegionUtils;
 
 import java.text.DecimalFormat;
 import java.util.Locale;
@@ -133,17 +133,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      */
     public boolean getFinished() {
         return mFinished;
-    }
-
-    /**
-     * Returns the ID of the currently navigated path link, or null if no path link is currently being navigated
-     * @return the ID of the currently navigated path link, or null if no path link is currently being navigated
-     */
-    public Integer getPathLinkId() {
-        if (mPath != null) {
-            return mPath.getPathLinks().get(mPathLinkIndex).getPathLinkId();
-        }
-        return null;
     }
 
     /**

@@ -844,7 +844,7 @@ public class NavigationTest extends ObaTestCase {
         void runSimulation(int expectedGetReadyIndex, int expectedPullCordIndex) {
             NavigationServiceProvider provider = new NavigationServiceProvider(mTripId,
                     mDestinationId);
-            Location mPrevLocation = null; // variable to store the location to check for duplicates
+            Location prevLocation = null;
             // Use the first location time as the starting time for this PathLink
             // TODO - capture PathLink nav starting time in logs
             PathLink link = new PathLink(mLocations[0].getTime(), null, mSecondToLastLocation, mDestinationLocation, mTripId);
@@ -862,12 +862,12 @@ public class NavigationTest extends ObaTestCase {
                 }
 
                 // Code added to check for duplicate locations in the .csv log files
-                if (mPrevLocation == null) {
+                if (prevLocation == null) {
                     provider.locationUpdated(l);
-                } else if (!LocationUtils.isDuplicate(mPrevLocation, l)) {
+                } else if (!LocationUtils.isDuplicate(prevLocation, l)) {
                     provider.locationUpdated(l);
                 }
-                mPrevLocation = l;
+                prevLocation = l;
 
                 if (provider.getGetReady() && i < expectedGetReadyIndex) {
                     fail("Get ready triggered too soon");
@@ -883,6 +883,8 @@ public class NavigationTest extends ObaTestCase {
             Boolean check1 = provider.getGetReady() && !provider.getFinished();
             assertTrue(check1);
 
+            prevLocation = mLocations[expectedGetReadyIndex - 1];
+
             for (int i = expectedGetReadyIndex; i <= expectedPullCordIndex; i++) {
                 Location l = mLocations[i];
                 try {
@@ -892,12 +894,12 @@ public class NavigationTest extends ObaTestCase {
                 }
 
                 // Code added to check for duplicate locations in the .csv log files
-                if (mPrevLocation == null) {
+                if (prevLocation == null) {
                     provider.locationUpdated(l);
-                } else if (!LocationUtils.isDuplicate(mPrevLocation, l)) {
+                } else if (!LocationUtils.isDuplicate(prevLocation, l)) {
                     provider.locationUpdated(l);
                 }
-                mPrevLocation = l;
+                prevLocation = l;
 
                 if (provider.getFinished() && i < expectedPullCordIndex) {
                     fail("Pull the Cord triggered too soon");

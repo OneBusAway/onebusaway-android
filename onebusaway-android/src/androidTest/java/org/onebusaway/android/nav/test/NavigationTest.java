@@ -834,7 +834,9 @@ public class NavigationTest extends ObaTestCase {
             Boolean check1 = provider.getGetReady() && !provider.getFinished();
             assertTrue(check1);
 
-            prevLocation = mLocations[expectedGetReadyIndex - 1];
+            if(expectedGetReadyIndex!= 0){
+                prevLocation = mLocations[expectedGetReadyIndex - 1];
+            }
 
             for (int i = expectedGetReadyIndex; i <= expectedPullCordIndex; i++) {
                 Location l = mLocations[i];

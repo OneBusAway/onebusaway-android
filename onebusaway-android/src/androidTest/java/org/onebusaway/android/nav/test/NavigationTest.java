@@ -80,11 +80,10 @@ public class NavigationTest extends ObaTestCase {
      * Destination Stop: Mckinley Dr @ Fowler Ave
      * Recorded In: Bus Route 5 - 1 stops
      * Device Used: Nexus 5
-     * FIXME - Currently fails as "Pull the cord" is not triggered
      */
     @Test
     public void testTrip2() throws IOException {
-         runSimulation("nav_trip2", 0, 14);
+         runSimulation("nav_trip2", 0, 15);
     }
 
     /**
@@ -529,11 +528,10 @@ public class NavigationTest extends ObaTestCase {
      * Destination Stop: Holly Mail Room
      * Recorded In: Car following Bull Runner route E
      * Device Used: Nexus 5
-     * FIXME - Currently fails as "Pull the cord" is not triggered
      */
     @Test
     public void testTrip23C() throws IOException {
-        runSimulation("nav_trip23c", 0, 18);
+        runSimulation("nav_trip23c", 0, 19);
     }
 
     /**

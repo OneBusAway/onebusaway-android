@@ -108,8 +108,8 @@
     <string name="main_help_title">Ayuda</string>
     <string name="main_help_whatsnew_title">Novedades en esta versión</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Enlace a la aplicación de pago de pasajes</b>
-        - Si tu región tiene una aplicación para el pago de pasajer, ¡esta ahora será accesible por medio del panel lateral de navegación!\n&#8226;\u0020
+        <b>El Filtro de Ruta ahora afecta a las alertas</b>
+        - Cuando se ven las alertas en una parada, estás se ocultaran si las rutas están ocultas.\n&#8226;\u0020
         <b>Arreglo de errores</b>
         - Mirá http://bit.ly/oba-android-releases
     </string>
@@ -985,8 +985,6 @@
     <string name="street_type_track">pista</string>
     <string name="street_type_sidewalk">acera</string>
     <string name="street_type_steps">pasos</string>
-
-    <!-- Notifications specific -->
 
     <!-- Units -->
     <string name="hours_abbreviation">h</string>

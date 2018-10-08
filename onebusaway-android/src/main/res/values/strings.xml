@@ -108,8 +108,8 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Link to fare payment app</b>
-        - If your region has an app for paying fares, it\'s now easily accessible via the navigation drawer!\n&#8226;\u0020
+        <b>Route filter now affects alerts</b>
+        - When viewing alerts at a stop, alerts for hidden routes are now hidden.\n&#8226;\u0020
         <b>Bug fixes</b>
         - See http://bit.ly/oba-android-releases
     </string>

@@ -37,6 +37,7 @@ import org.onebusaway.android.ui.RouteInfoActivity;
 import org.onebusaway.android.view.RealtimeIndicatorView;
 import org.onebusaway.util.comparators.AlphanumComparator;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
@@ -122,6 +123,12 @@ import androidx.fragment.app.Fragment;
 public final class UIUtils {
 
     private static final String TAG = "UIHelp";
+
+    public static final String[] REQUIRED_PERMISSIONS = {
+            Manifest.permission.ACCESS_FINE_LOCATION
+    };
+
+    public static final int LOCATION_PERMISSION_REQUEST = 1;
 
     public static void setupActionBar(AppCompatActivity activity) {
         ActionBar bar = activity.getSupportActionBar();
@@ -1812,6 +1819,36 @@ public final class UIUtils {
                         (dialog, which) -> startPaymentIntent(activity, region)
                 );
 
+        builder.create().show();
+    }
+
+    /**
+     * Shows the dialog to explain why location permissions are needed.  If this provided activity
+     * can't manage dialogs then this method is a no-op.
+     *
+     * NOTE - this dialog can't be managed under the old dialog framework as the method
+     * ActivityCompat.shouldShowRequestPermissionRationale() always returns false.
+     */
+    public static void showLocationPermissionDialog(@NonNull Activity activity) {
+        if (!canManageDialog(activity)) {
+            return;
+        }
+        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(activity)
+                .setTitle(R.string.location_permissions_title)
+                .setMessage(R.string.location_permissions_message)
+                .setCancelable(false)
+                .setPositiveButton(R.string.ok,
+                        (dialog, which) -> {
+                            // Request permissions from the user
+                            ActivityCompat
+                                    .requestPermissions(activity, REQUIRED_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
+                        }
+                )
+                .setNegativeButton(R.string.no_thanks,
+                        (dialog, which) -> {
+                            // No-op
+                        }
+                );
         builder.create().show();
     }
 }

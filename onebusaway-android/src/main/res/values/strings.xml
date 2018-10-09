@@ -762,13 +762,13 @@
         types to your local government near this stop. Tap on the drop-down box to see a full list.
     </string>
 
-    <!-- Location Security Exception -->
-    <string name="location_security_exception_title">Location permissions denied</string>
-    <string name="location_security_exception_message">It looks like you may have denied location
-        permissions for the app via the system settings. Location services will not be available.
-        If you\'d like to re-enable location permissions, go to your Android system settings, choose
-        \"OneBusAway\" and then \"Permissions\", and re-enable \"Location\".
+    <!-- Permissions -->
+    <string name="location_permissions_title">Real-time location needs permission</string>
+    <string name="location_permissions_message">To show your real-time position on the map
+        you\'ll need to grant location permissions. If you select \"Never ask again\" you will need
+        to reinstall the app or enable permissions via system settings to see your real-time location.
     </string>
+    <string name="no_thanks">No thanks</string>
 
     <!-- About -->
     <string name="title_activity_about">About</string>

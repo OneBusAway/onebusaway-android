@@ -21,12 +21,10 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
-import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 
+import android.app.Fragment;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -39,6 +37,8 @@ import java.util.List;
 import androidx.appcompat.app.AlertDialog;
 
 import static com.google.android.gms.location.LocationServices.FusedLocationApi;
+import static org.onebusaway.android.util.UIUtils.LOCATION_PERMISSION_REQUEST;
+import static org.onebusaway.android.util.UIUtils.REQUIRED_PERMISSIONS;
 
 /**
  * A helper class that keeps listeners updated with the best location available from
@@ -83,9 +83,6 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
     private static final long FASTEST_INTERVAL =
             MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
 
-    private static final String PREFERENCE_SHOWED_DIALOG
-            = "showed_location_security_exception_dialog";
-
     public LocationHelper(Context context) {
         mContext = context;
         mLocationManager = (LocationManager) Application.get().getBaseContext()
@@ -93,7 +90,7 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
         setupGooglePlayServices();
     }
 
-    public synchronized void registerListener(Listener listener) {
+    public synchronized void registerListener(Fragment fragment, Listener listener) {
         if (!mListeners.contains(listener)) {
             mListeners.add(listener);
         }
@@ -101,11 +98,11 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
         // If this is the first listener, make sure we're monitoring the sensors to provide updates
         if (mListeners.size() == 1) {
             // Listen for location
-            try {
+            if (PermissionUtils.hasGrantedPermissions(mContext, REQUIRED_PERMISSIONS)) {
                 registerAllProviders();
-            } catch (SecurityException e) {
-                Log.e(TAG, "User may have denied location permission - " + e);
-                maybeShowSecurityDialog();
+            } else {
+                // Request permissions from the user
+                fragment.requestPermissions(REQUIRED_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
             }
         }
     }
@@ -218,27 +215,6 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
                     .addOnConnectionFailedListener(this)
                     .build();
             mGoogleApiClient.connect();
-        }
-    }
-
-    /**
-     * Shows the security dialog once if the user has disabled location permissions manually
-     */
-    private void maybeShowSecurityDialog() {
-        if (mContext != null && UIUtils.canManageDialog(mContext)) {
-            final SharedPreferences sp = Application.getPrefs();
-            if (!sp.getBoolean(PREFERENCE_SHOWED_DIALOG, false)) {
-                final AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-                builder.setTitle(R.string.location_security_exception_title);
-                builder.setCancelable(false);
-                builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        sp.edit().putBoolean(PREFERENCE_SHOWED_DIALOG, true).commit();
-                    }
-                });
-                builder.setMessage(R.string.location_security_exception_message);
-                builder.create().show();
-            }
         }
     }
 

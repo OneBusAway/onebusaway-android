@@ -64,16 +64,19 @@ import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.ui.LayersSpeedDialAdapter;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PermissionUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
@@ -97,6 +100,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import androidx.fragment.app.DialogFragment;
+
+import static org.onebusaway.android.util.UIUtils.LOCATION_PERMISSION_REQUEST;
+import static org.onebusaway.android.util.UIUtils.REQUIRED_PERMISSIONS;
 
 /**
  * The MapFragment class is split into two basic modes:
@@ -186,6 +192,8 @@ public class BaseMapFragment extends SupportMapFragment
 
     Bundle mLastSavedInstanceState;
 
+    private boolean mUserDeniedPermission = false;
+
     @Override
     public void onActivateLayer(LayerInfo layer) {
         switch (layer.getLayerlabel()) {
@@ -268,7 +276,7 @@ public class BaseMapFragment extends SupportMapFragment
         View v = super.onCreateView(inflater, container, savedInstanceState);
 
         mLocationHelper = new LocationHelper(getActivity());
-        mLocationHelper.registerListener(this);
+        mLocationHelper.registerListener(getActivity(), this);
 
         if (MapHelpV2.isMapsInstalled(getActivity())) {
             // Save the savedInstanceState
@@ -313,10 +321,15 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     private void initMap(Bundle savedInstanceState) {
-
         UiSettings uiSettings = mMap.getUiSettings();
-        // Show the location on the map
-        mMap.setMyLocationEnabled(true);
+
+        if (!mUserDeniedPermission) {
+            requestPermissionAndInit(getActivity());
+        } else {
+            // Explain permission to user
+            UIUtils.showLocationPermissionDialog(getActivity());
+        }
+
         // Set location source
         mMap.setLocationSource(this);
         // Listener for camera changes
@@ -364,8 +377,35 @@ public class BaseMapFragment extends SupportMapFragment
         setMapMode(mode, args);
     }
 
+    @SuppressLint("MissingPermission")
+    private void requestPermissionAndInit(final Activity activity) {
+        if (PermissionUtils.hasGrantedPermissions(activity, REQUIRED_PERMISSIONS)) {
+            // Show the location on the map
+            mMap.setMyLocationEnabled(true);
+        } else {
+            // Request permissions from the user
+            requestPermissions(REQUIRED_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                mUserDeniedPermission = false;
+                // Show the location on the map
+                mMap.setMyLocationEnabled(true);
+            } else {
+                mUserDeniedPermission = true;
+            }
+        }
+    }
+
     @Override
     public void onDestroy() {
+        mLocationHelper.unregisterListener(this);
         if (mControllers != null) {
             for (MapModeController controller : mControllers) {
                 controller.destroy();

@@ -54,7 +54,7 @@ android {
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 21
+        targetSdkVersion 26
         versionCode 96
         versionName "2.3.11"
 

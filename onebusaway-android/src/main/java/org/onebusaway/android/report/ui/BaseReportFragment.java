@@ -15,9 +15,10 @@
 */
 package org.onebusaway.android.report.ui;
 
-import android.support.v4.app.Fragment;
 import android.view.View;
 import android.widget.Toast;
+
+import androidx.fragment.app.Fragment;
 
 /**
  * @author Cagri Cetin

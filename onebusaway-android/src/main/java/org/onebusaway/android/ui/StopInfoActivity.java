@@ -19,8 +19,9 @@ package org.onebusaway.android.ui;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 /**
  * This activity is deprecated, but we need to keep it around

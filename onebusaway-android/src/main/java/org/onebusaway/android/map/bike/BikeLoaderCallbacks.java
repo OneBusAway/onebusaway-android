@@ -19,11 +19,12 @@ import org.onebusaway.android.map.MapModeController.Callback;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
 
 /**
  * Callbacks to respond to BikeStationLoader callbacks.

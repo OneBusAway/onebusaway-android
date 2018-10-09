@@ -17,7 +17,6 @@
 package org.onebusaway.android.map.googlemapsv2;
 
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
@@ -68,10 +67,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -86,6 +82,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.fragment.app.DialogFragment;
 
 /**
  * The MapFragment class is split into two basic modes:
@@ -1163,7 +1163,7 @@ public class BaseMapFragment extends SupportMapFragment
     // Dialogs
     //
 
-    public static class MapDialogFragment extends android.support.v4.app.DialogFragment {
+    public static class MapDialogFragment extends DialogFragment {
 
         private static final String TAG = "MapDialogFragment";
 

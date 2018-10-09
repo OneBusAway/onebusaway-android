@@ -16,7 +16,8 @@
 package org.onebusaway.android.report.ui.dialog;
 
 import android.content.DialogInterface;
-import android.support.v4.app.DialogFragment;
+
+import androidx.fragment.app.DialogFragment;
 
 public class BaseReportDialogFragment extends DialogFragment {
 

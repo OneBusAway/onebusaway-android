@@ -24,9 +24,6 @@ import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ListAdapter;
@@ -34,6 +31,10 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.AsyncTaskLoader;
+import androidx.loader.content.Loader;
 
 public class AgenciesFragment extends ListFragment
         implements LoaderManager.LoaderCallbacks<ObaAgenciesWithCoverageResponse> {

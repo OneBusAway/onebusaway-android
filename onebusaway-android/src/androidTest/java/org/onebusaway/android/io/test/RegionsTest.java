@@ -17,16 +17,16 @@
 
 package org.onebusaway.android.io.test;
 
-import android.content.ContentResolver;
-import android.net.Uri;
-
 import org.junit.Test;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.request.ObaRegionsRequest;
 import org.onebusaway.android.io.request.ObaRegionsResponse;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import android.content.ContentResolver;
+import android.net.Uri;
+
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 

@@ -25,13 +25,14 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.support.v4.graphics.drawable.DrawableCompat;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+
+import androidx.core.graphics.drawable.DrawableCompat;
 
 /**
  * Original style of arrivals for OBA Android

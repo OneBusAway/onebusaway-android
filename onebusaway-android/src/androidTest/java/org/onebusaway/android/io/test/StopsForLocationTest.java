@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.io.test;
 
-import android.location.Location;
-
 import org.junit.Test;
 import org.onebusaway.android.io.elements.ObaAgency;
 import org.onebusaway.android.io.elements.ObaRoute;
@@ -25,7 +23,9 @@ import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
 import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
 import org.onebusaway.android.util.LocationUtils;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import android.location.Location;
+
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;

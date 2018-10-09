@@ -19,7 +19,7 @@ import org.junit.Test;
 import org.onebusaway.android.io.request.ObaRouteIdsForAgencyRequest;
 import org.onebusaway.android.io.request.ObaRouteIdsForAgencyResponse;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;

@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaSituation;
@@ -27,13 +29,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.DialogFragment;
-import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
 
 /**
  * Displays service alerts (i.e., situations) is a dialog
@@ -136,7 +138,7 @@ public class SituationDialogFragment extends DialogFragment {
                     }
                 });
 
-        final android.support.v7.app.AlertDialog dialog = builder.create();
+        final androidx.appcompat.app.AlertDialog dialog = builder.create();
         dialog.show();
 
         // Set the title, description, and URL (if provided)

@@ -32,10 +32,11 @@ import org.onebusaway.android.util.TestUtils;
 import android.location.Location;
 import android.os.Build;
 import android.os.SystemClock;
-import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import androidx.test.runner.AndroidJUnit4;
+
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;

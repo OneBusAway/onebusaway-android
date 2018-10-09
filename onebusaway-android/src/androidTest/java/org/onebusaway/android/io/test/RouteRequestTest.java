@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.io.test;
 
-import android.graphics.Color;
-
 import org.junit.Test;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -27,7 +25,9 @@ import org.onebusaway.android.io.request.ObaRouteRequest;
 import org.onebusaway.android.io.request.ObaRouteResponse;
 import org.onebusaway.android.mock.MockRegion;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import android.graphics.Color;
+
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 

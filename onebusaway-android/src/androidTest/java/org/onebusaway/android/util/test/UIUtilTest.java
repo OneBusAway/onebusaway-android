@@ -41,8 +41,6 @@ import org.onebusaway.android.util.UIUtils;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.v4.util.Pair;
 import android.text.TextUtils;
 import android.widget.TextView;
 
@@ -51,7 +49,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import androidx.core.util.Pair;
+import androidx.test.runner.AndroidJUnit4;
+
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;

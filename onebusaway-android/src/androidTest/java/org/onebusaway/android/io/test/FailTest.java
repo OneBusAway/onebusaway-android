@@ -15,9 +15,6 @@
  */
 package org.onebusaway.android.io.test;
 
-import android.content.Context;
-import android.net.Uri;
-
 import org.junit.Test;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.request.ObaResponse;
@@ -25,9 +22,12 @@ import org.onebusaway.android.io.request.ObaStopRequest;
 import org.onebusaway.android.io.request.ObaStopResponse;
 import org.onebusaway.android.io.request.RequestBase;
 
+import android.content.Context;
+import android.net.Uri;
+
 import java.util.concurrent.Callable;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 

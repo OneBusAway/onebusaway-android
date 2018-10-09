@@ -21,7 +21,8 @@ import org.onebusaway.android.util.UIUtils;
 
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.support.v7.app.ActionBar;
+
+import androidx.appcompat.app.ActionBar;
 
 public class MyStopsActivity extends MyTabActivityBase {
     //private static final String TAG = "MyStopsActivity";

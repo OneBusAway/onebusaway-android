@@ -130,12 +130,12 @@
     </LinearLayout>
 
 
-    <android.support.design.widget.TabLayout
+    <com.google.android.material.tabs.TabLayout
             android:layout_width="match_parent"
             android:layout_height="@dimen/trip_results_tab_size"
             android:id="@+id/tab_layout_switch_view">
 
-        <android.support.design.widget.TabItem
+        <com.google.android.material.tabs.TabItem
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:text="@string/trip_plan_list_view"
@@ -143,7 +143,7 @@
                 android:layout="@layout/tab_trip_results_view"
         />
 
-        <android.support.design.widget.TabItem
+        <com.google.android.material.tabs.TabItem
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:text="@string/trip_plan_map_view"
@@ -151,7 +151,7 @@
                 android:layout="@layout/tab_trip_results_view"
         />
 
-    </android.support.design.widget.TabLayout>
+    </com.google.android.material.tabs.TabLayout>
 
 
     <FrameLayout

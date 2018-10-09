@@ -20,8 +20,8 @@ import com.microsoft.embeddedsocial.sdk.INavigationDrawerHandler;
 import org.onebusaway.android.R;
 import org.onebusaway.android.ui.NavigationDrawerFragment;
 
-import android.support.v4.app.Fragment;
-import android.support.v4.widget.DrawerLayout;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 
 public class SocialNavigationDrawerHandler implements INavigationDrawerHandler {
     private NavigationDrawerFragment fragment;

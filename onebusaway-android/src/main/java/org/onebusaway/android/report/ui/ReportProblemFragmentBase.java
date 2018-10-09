@@ -29,10 +29,6 @@ import org.onebusaway.android.util.UIUtils;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -43,6 +39,11 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import java.util.concurrent.Callable;
+
+import androidx.fragment.app.Fragment;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.AsyncTaskLoader;
+import androidx.loader.content.Loader;
 
 public abstract class ReportProblemFragmentBase extends Fragment
         implements LoaderManager.LoaderCallbacks<ObaResponse> {

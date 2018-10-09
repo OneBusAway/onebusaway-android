@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.io.test;
 
-import android.util.Log;
-
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import org.junit.Test;
@@ -26,9 +24,11 @@ import org.onebusaway.android.io.request.ObaResponse;
 import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
 import org.onebusaway.android.mock.Resources;
 
+import android.util.Log;
+
 import java.io.Reader;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 

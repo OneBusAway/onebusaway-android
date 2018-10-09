@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.io.test;
 
-import android.test.MoreAsserts;
-
 import org.junit.Test;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -26,9 +24,10 @@ import org.onebusaway.android.io.request.ObaStopResponse;
 import java.util.Arrays;
 import java.util.List;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests requests and parsing JSON responses from /res/raw for the OBA server API
@@ -47,7 +46,10 @@ public class StopRequestTest extends ObaTestCase {
         assertEquals(ObaStop.LOCATION_STOP, response.getLocationType());
         final String[] routeIds = response.getRouteIds();
         assertNotNull(routeIds);
-        MoreAsserts.assertContentsInAnyOrder(Arrays.asList(routeIds), "1_8", "1_10", "1_43");
+        List<String> routeIdsList = Arrays.asList(routeIds);
+        assertTrue(routeIdsList.contains("1_8"));
+        assertTrue(routeIdsList.contains("1_10"));
+        assertTrue(routeIdsList.contains("1_43"));
 
         final List<ObaRoute> routes = response.getRoutes();
         assertNotNull(routes);

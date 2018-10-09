@@ -23,8 +23,6 @@ import org.onebusaway.android.util.UIUtils;
 import android.app.Activity;
 import android.database.Cursor;
 import android.net.Uri;
-import android.support.v4.content.pm.ShortcutInfoCompat;
-import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuItem;
@@ -32,6 +30,9 @@ import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.cursoradapter.widget.SimpleCursorAdapter;
 
 abstract class MyStopListFragmentBase extends MyListFragmentBase
         implements QueryUtils.StopList.Columns {

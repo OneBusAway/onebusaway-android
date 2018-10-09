@@ -15,14 +15,15 @@
  */
 package org.onebusaway.android.io.test;
 
-import android.location.Location;
-import android.support.test.runner.AndroidJUnit4;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.io.elements.ObaShapeElement;
 
+import android.location.Location;
+
 import java.util.List;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;

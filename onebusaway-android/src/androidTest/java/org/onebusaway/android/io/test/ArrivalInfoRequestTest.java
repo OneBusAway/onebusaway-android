@@ -33,7 +33,7 @@ import org.onebusaway.android.util.UIUtils;
 import java.util.HashMap;
 import java.util.List;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;

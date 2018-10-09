@@ -27,11 +27,6 @@ import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,6 +37,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.Arrays;
+
+import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.AsyncTaskLoader;
+import androidx.loader.content.Loader;
 
 public class CustomerServiceDialog extends DialogFragment implements
         LoaderManager.LoaderCallbacks<ObaAgenciesWithCoverageResponse> {

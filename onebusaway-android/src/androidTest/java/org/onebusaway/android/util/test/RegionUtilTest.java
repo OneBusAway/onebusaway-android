@@ -25,11 +25,12 @@ import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.RegionUtils;
 
 import android.location.Location;
-import android.support.test.runner.AndroidJUnit4;
 
 import java.util.ArrayList;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import androidx.test.runner.AndroidJUnit4;
+
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNull;

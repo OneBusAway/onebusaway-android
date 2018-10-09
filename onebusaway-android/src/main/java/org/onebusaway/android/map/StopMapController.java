@@ -16,37 +16,27 @@
  */
 package org.onebusaway.android.map;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
 import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
-import org.onebusaway.android.map.bike.BikeLoaderCallbacks;
-import org.onebusaway.android.map.bike.BikeStationLoader;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
-import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.RegionUtils;
-import org.onebusaway.android.util.UIUtils;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
 import android.text.TextUtils;
 import android.util.Log;
 
 import java.util.Arrays;
 import java.util.List;
+
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.AsyncTaskLoader;
+import androidx.loader.content.Loader;
 
 final class StopsRequest {
 

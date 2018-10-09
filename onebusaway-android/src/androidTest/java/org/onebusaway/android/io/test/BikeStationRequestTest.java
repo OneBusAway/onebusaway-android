@@ -22,7 +22,7 @@ import org.onebusaway.android.io.request.bike.OtpBikeStationResponse;
 import org.onebusaway.android.mock.MockRegion;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 

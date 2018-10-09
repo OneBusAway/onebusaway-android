@@ -35,8 +35,6 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.location.Location;
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -53,6 +51,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Locale;
+
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
 
 public class RegionsFragment extends ListFragment
         implements LoaderManager.LoaderCallbacks<ArrayList<ObaRegion>> {

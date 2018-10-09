@@ -28,10 +28,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
-import android.support.v4.content.pm.ShortcutInfoCompat;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -43,6 +39,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.Arrays;
+
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.AsyncTaskLoader;
+import androidx.loader.content.Loader;
 
 public class MySearchStopsFragment extends MySearchFragmentBase
         implements LoaderManager.LoaderCallbacks<ObaStopsForLocationResponse> {

@@ -15,11 +15,11 @@
 */
 package org.onebusaway.android.util.test;
 
-import android.support.test.runner.AndroidJUnit4;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import static junit.framework.Assert.assertEquals;
 

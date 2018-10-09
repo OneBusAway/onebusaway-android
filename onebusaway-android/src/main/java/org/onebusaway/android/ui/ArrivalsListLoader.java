@@ -21,7 +21,8 @@ import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 
 import android.content.Context;
-import android.support.v4.content.AsyncTaskLoader;
+
+import androidx.loader.content.AsyncTaskLoader;
 
 
 public class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> {

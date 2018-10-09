@@ -15,15 +15,15 @@
  */
 package org.onebusaway.android.provider.test;
 
+import org.junit.Test;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.provider.ObaProvider;
+
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.test.ProviderTestCase2;
-
-import org.junit.Test;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.provider.ObaProvider;
 
 /**
  * Tests the provider that stores and reads persistent OBA data on the device

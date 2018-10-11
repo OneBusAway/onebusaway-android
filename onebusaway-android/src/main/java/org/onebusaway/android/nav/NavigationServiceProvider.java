@@ -439,7 +439,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                 }
                 if ((distance_d < 20) && (distance_d != -1) && !m20_a) {
                     m20_a = true;
-                    if ((speed > 15) && (lastToSecDistance < 100)) {
+                    if (speed > 15 && lastToSecDistance < 100) {
                         Log.d(TAG, "Case 3: true");
                         return true;
                     }

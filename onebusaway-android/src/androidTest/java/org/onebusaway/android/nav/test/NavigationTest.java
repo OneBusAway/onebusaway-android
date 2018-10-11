@@ -29,7 +29,7 @@ import org.onebusaway.android.mock.Resources;
 import org.onebusaway.android.nav.NavigationServiceProvider;
 import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
-import org.onebusaway.android.util.LocationUtils; // package added to utilize LocationUtils.isDuplicate() method
+import org.onebusaway.android.util.LocationUtils;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -811,9 +811,7 @@ public class NavigationTest extends ObaTestCase {
                 }
 
                 // Code added to check for duplicate locations in the .csv log files
-                if (prevLocation == null) {
-                    provider.locationUpdated(l);
-                } else if (!LocationUtils.isDuplicate(prevLocation, l)) {
+                if (prevLocation == null || !LocationUtils.isDuplicate(prevLocation, l)) {
                     provider.locationUpdated(l);
                 }
                 prevLocation = l;
@@ -832,7 +830,7 @@ public class NavigationTest extends ObaTestCase {
             Boolean check1 = provider.getGetReady() && !provider.getFinished();
             assertTrue(check1);
 
-            if(expectedGetReadyIndex!= 0){
+            if(expectedGetReadyIndex != 0){
                 prevLocation = mLocations[expectedGetReadyIndex - 1];
             }
 
@@ -845,9 +843,7 @@ public class NavigationTest extends ObaTestCase {
                 }
 
                 // Code added to check for duplicate locations in the .csv log files
-                if (prevLocation == null) {
-                    provider.locationUpdated(l);
-                } else if (!LocationUtils.isDuplicate(prevLocation, l)) {
+                if (prevLocation == null || !LocationUtils.isDuplicate(prevLocation, l)) {
                     provider.locationUpdated(l);
                 }
                 prevLocation = l;

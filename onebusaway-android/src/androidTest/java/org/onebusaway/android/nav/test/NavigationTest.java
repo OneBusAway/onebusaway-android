@@ -101,11 +101,10 @@ public class NavigationTest extends ObaTestCase {
      * Destination Stop: Dale Mabry Hwy @ Hudson Ln @ Taco Bell
      * Recorded In: Bus (Route 36) 4 stops
      * Device Used: Nexus 5
-     * FIXME - Currently fails with "Pull the cord triggered too soon"
      */
     @Test
     public void testTrip3() throws IOException {
-        runSimulation("nav_trip3", 95, 115);
+        runSimulation("nav_trip3", 95, 111);
     }
 
     /**
@@ -113,7 +112,6 @@ public class NavigationTest extends ObaTestCase {
      * Destination Stop: Dale Mabry Hwy @ Hudson Ln @ Taco Bell
      * Recorded In: car following Bus (Route 36) 4 stops
      * Device Used: Nexus 5
-     * FIXME - Currently fails with "Pull the cord triggered too soon"
      */
     @Test
     public void testTrip3C() throws IOException {
@@ -431,7 +429,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip18() throws IOException {
-        runSimulation("nav_trip18", 31, 50);
+        runSimulation("nav_trip18", 31, 51);
     }
 
     /**
@@ -599,7 +597,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip27() throws IOException {
         // Read test CSV
-        runSimulation("nav_trip27", 909, 941);
+        runSimulation("nav_trip27", 909, 944);
     }
 
     /**
@@ -624,56 +622,6 @@ public class NavigationTest extends ObaTestCase {
     public void testTrip29() throws IOException {
         // Read test CSV
         runSimulation("nav_trip29", 472, 594);
-    }
-
-
-    /**
-     * Started Stop: Fletcher Avenue @ 42nd Street MetroRapid
-     * Destination Stop: University Area Transit Center
-     * Recorded In: Route 6
-     * Device Used: One Plus 6
-     */
-    @Test
-    public void testTrip30() throws IOException {
-        // Read test CSV
-        runSimulation("nav_trip30", 1001, 1048);
-    }
-
-    /**
-     * Started Stop: University Area Transit Center
-     * Destination Stop: 15th St @ 127 avenue
-     * Recorded In: Route 42
-     * Device Used: One Plus 6
-     */
-    @Test
-    public void testTrip31() throws IOException {
-        // Read test CSV
-        runSimulation("nav_trip31", 2508, 2654);
-    }
-
-    /**
-     * Started Stop: 15th St @127 avenue
-     * Destination Stop: Bruce B Downs Bl @ Lakeside Commons
-     * Recorded In: Route 42
-     * Device Used: ZTE Z831
-     */
-
-    @Test
-    public void testTrip32() throws IOException {
-        // Read test CSV
-        runSimulation("nav_trip32", 1847, 1888);
-    }
-
-    /**
-     * Started Stop: Bruce B Downs Bl @ Lakeside Commons
-     * Destination Stop: University Area Transit Center
-     * Recorded In: Route 42
-     * Device Used: ZTE Z831
-     */
-    @Test
-    public void testTrip33() throws IOException {
-        // Read test CSV
-        runSimulation("nav_trip33", 335, 401);
     }
 
     /**

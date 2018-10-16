@@ -59,9 +59,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -83,6 +80,10 @@ import android.widget.TextView;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
+
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.AsyncTaskLoader;
+import androidx.loader.content.Loader;
 
 public class TripDetailsListFragment extends ListFragment {
 
@@ -109,7 +110,7 @@ public class TripDetailsListFragment extends ListFragment {
     private static final long REFRESH_PERIOD = 60 * 1000;
 
     private static final int TRIP_DETAILS_LOADER = 0;
-    
+
     public static final int REQUEST_ENABLE_LOCATION = 1;
 
     private String mTripId;
@@ -133,7 +134,7 @@ public class TripDetailsListFragment extends ListFragment {
     private TripDetailsAdapter mAdapter;
 
     private final TripDetailsLoaderCallback mTripDetailsCallback = new TripDetailsLoaderCallback();
-    
+
     private LocationRequest mLocationRequest;
     private Task<LocationSettingsResponse> mResult;
 
@@ -1030,7 +1031,7 @@ public class TripDetailsListFragment extends ListFragment {
         }
         mAdapter.notifyDataSetChanged();
     }
-    
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data)
     {

@@ -24,12 +24,13 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Build;
-import android.support.v4.view.animation.FastOutLinearInInterpolator;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+
+import androidx.interpolator.view.animation.FastOutLinearInInterpolator;
 
 /**
  * View that animates a circle expanding and contracting to indicate real-time information

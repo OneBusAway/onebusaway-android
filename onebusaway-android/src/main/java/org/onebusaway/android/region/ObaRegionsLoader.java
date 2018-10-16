@@ -20,9 +20,10 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.util.RegionUtils;
 
 import android.content.Context;
-import android.support.v4.content.AsyncTaskLoader;
 
 import java.util.ArrayList;
+
+import androidx.loader.content.AsyncTaskLoader;
 
 public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
     //private static final String TAG = "ObaRegionsLoader";

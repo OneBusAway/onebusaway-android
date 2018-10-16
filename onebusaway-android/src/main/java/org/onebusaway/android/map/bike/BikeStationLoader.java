@@ -15,24 +15,16 @@
 */
 package org.onebusaway.android.map.bike;
 
-import android.content.Context;
-import android.location.Location;
-import android.support.v4.content.AsyncTaskLoader;
-
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.request.bike.OtpBikeStationRequest;
 import org.onebusaway.android.io.request.bike.OtpBikeStationResponse;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
-import org.opentripplanner.routing.bike_rental.BikeRentalStationList;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import android.content.Context;
+import android.location.Location;
+
 import java.util.List;
+
+import androidx.loader.content.AsyncTaskLoader;
 
 /**
  * Class responsible for loading the list of bike stations and floating bikes from OpenTripPlanner.

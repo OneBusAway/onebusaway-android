@@ -26,21 +26,15 @@
     <string name="navdrawer_item_my_reminders">Mis recordatorios</string>
     <string name="navdrawer_item_profile">Mi Perfil</string>
     <string name="navdrawer_item_sign_in">Iniciar Sesión</string>
-    <string name="navdrawer_item_your_feed">Mis Publicaciones</string>
-    <string name="navdrawer_item_search">Buscar</string>
     <string name="navdrawer_item_popular">Popular</string>
     <string name="navdrawer_item_pin">Mis Guardados</string>
     <string name="navdrawer_item_activity_feed">Actividad Reciente</string>
-    <string name="navdrawer_item_options">Opciones</string>
     <string name="navdrawer_item_settings">Configuración</string>
     <string name="navdrawer_item_help">Ayuda</string>
     <string name="navdrawer_item_send_feedback">Enviar comentarios</string>
     <string name="navdrawer_item_open_source">Visitanos en GitHub</string>
     <string name="navdrawer_item_plan_trip">Planea un Viaje (beta)</string>
     <string name="navdrawer_item_pay_fare">Pagar mi pasaje</string>
-    <string name="navdrawer_item_bike">Bicicleta</string>
-    <string name="navdrawer_item_social_overflow_closed">Más ...</string>
-    <string name="navdrawer_item_social_overflow_open">Menos ...</string>
 
     <!-- Permissions -->
     <string name="trip_service_perm_label">Iniciar el servicio del viaje</string>
@@ -111,16 +105,11 @@
     <!--  Option strings -->
     <string name="map_option_mylocation">Mi ubicación</string>
     <string name="map_option_search">Buscar</string>
-    <string name="main_option_findroute">Mis Rutas</string>
-    <string name="main_option_findstop">Mis Paradas</string>
-    <string name="main_option_viewtrips">Mis Recordatorios</string>
-    <string name="main_option_help">Ayuda</string>
-    <string name="main_option_preferences">Configuración</string>
     <string name="main_help_title">Ayuda</string>
     <string name="main_help_whatsnew_title">Novedades en esta versión</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Enlace a la aplicación de pago de pasajes</b>
-        - Si tu región tiene una aplicación para el pago de pasajer, ¡esta ahora será accesible por medio del panel lateral de navegación!\n&#8226;\u0020
+        <b>El Filtro de Ruta ahora afecta a las alertas</b>
+        - Cuando se ven las alertas en una parada, estás se ocultaran si las rutas están ocultas.\n&#8226;\u0020
         <b>Arreglo de errores</b>
         - Mirá http://bit.ly/oba-android-releases
     </string>
@@ -238,8 +227,6 @@
     <string name="stop_info_eta_unknown">---\u0020\u0020</string>
     <string name="stop_info_option_showonmap">Mostrar sobre el Mapa</string>
     <string name="menu_option_sort_by">Ordenar por</string>
-    <string name="stop_info_option_sort_eta">Ordenar por llegada estimada …</string>
-    <string name="stop_info_option_sort_route">Ordenar por Ruta …</string>
     <string name="stop_info_option_refresh">Refrescar</string>
     <string name="stop_info_option_filter">Filtrar rutas</string>
     <string name="stop_info_option_hide_header_arrivals">Ocultar las llegadas en el encabezado</string>
@@ -296,8 +283,6 @@
     <string name="stop_info_favorite">Parada Favorita</string>
     <string name="stop_info_official_stop_name_label">Nombre oficial: %1$s</string>
     <string name="stop_info_route_ids_label">Rutas:</string>
-    <string name="stop_info_header_arrival_info">%1$d min</string>
-    <string name="stop_info_header_just_left">acaba de irse</string>
     <string name="stop_info_button_content_description">Acerca de esta parada</string>
     <string name="stop_info_frequency_approximate">~</string>
     <string name="stop_header_sliding_panel_open">El panel deslizante se expandió. Toque o presione el botón Atrás
@@ -353,7 +338,6 @@
     <string name="my_context_show_schedule">Mostrar horarios</string>
 
     <!-- Service Alerts  -->
-    <string name="situation_activity_label">Servicio de Alertas</string>
     <string name="alert_content_description_warning">Advertencia sobre el Servicio - toque para deslizar hacia arriba
         el panel y ver más información.
     </string>
@@ -403,7 +387,6 @@
     <string name="trip_info_reminder_header">Tiempo del recordatorio</string>
     <string name="trip_info_reminder_repeat">Repetir</string>
     <string name="trip_info_save">Guardar</string>
-    <string name="trip_info_cancel">Cancelar</string>
     <string name="trip_info_delete">Borrar</string>
     <string name="trip_info_saved">Viaje guardado.</string>
     <string name="trip_info_dismiss">Cancelar</string>
@@ -442,14 +425,11 @@
     <string name="report_problem_comment_hint">Descripción del problema (opcional)</string>
     <string name="report_problem_send">Enviar</string>
     <string name="report_problem_hint">¡Tus reportes ayudan a OneBusAway a encontrar y arreglar los problemas!</string>
-    <string name="report_problem_sent">Reporte enviado, ¡Gracias!</string>
     <string name="report_problem_error">No se pudo enviar el reporte. ¿Intentar de nuevo?</string>
     <string name="report_problem_invalid_argument">Por favor, elija una categoría para el problema.</string>
     <!-- TODO: Modes -->
     <string name="report_problem_onvehicle_bus">¿Estas en este bus?</string>
     <string name="report_problem_uservehicle_hint">Número del bus (opcional)</string>
-    <string name="report_problem_stop_activity_label">Reportar problema de Parada</string>
-    <string name="report_problem_trip_activity_label">Reportar problema de Viaje</string>
     <string name="report_problem_report">Reportar</string>
 
     <!-- Region list -->
@@ -843,24 +823,19 @@
     <!-- Trip Planner strings -->
 
     <string name="title_activity_trip_plan">Planeador de Viajes (beta)</string>
-    <string name="error_while_retrieving_data">Error mientras se recuperaban los datos</string>
     <string name="trip_plan_from">Origen: </string>
     <string name="trip_plan_to">Destino: </string>
-    <string name="trip_plan_when">Cuando</string>
     <string name="trip_plan_leaving">Saliendo</string>
     <string name="trip_plan_arriving">Llegando</string>
-    <string name="trip_plan_plan_my_trip">Planear mi Viaje</string>
     <string name="trip_plan_stop_connector">a las</string>
 
     <string name="trip_plan_location_hint">Indique una dirección o lugar</string>
 
-    <string name="trip_plan_switch_view">Cambiar de vista:</string>
     <string name="trip_plan_list_view">Vista de Lista</string>
     <string name="trip_plan_map_view">Vista de Mapa</string>
 
     <string name="task_progress_tripplanner_progress">Planeando viaje. Por favor espere&#8230;</string>
     <string name="tripplanner_no_server_selected_error">No hay ninguna región seleccionada</string>
-    <string name="tripplanner_results_title">Resultados de Planeación</string>
     <string name="tripplanner_error_dialog_title">No fue posible realizar la Planeación</string>
     <!-- Errors -->
     <string name="tripplanner_error_not_defined">Lo sentimos, algo salió mal. Por favor, inténtalo de nuevo.</string>
@@ -884,7 +859,6 @@
     <string name="tripplanner_error_triangle">Algo salió mal. Cambia las opciones de bicicleta y vuelve a intentarlo</string>
     <!-- When routing from my location -->
     <string name="tripplanner_current_location">Ubicación actual</string>
-    <string name="tripplanner_error_no_location">Por favor ingresa una ubicación para el origen y el destino de tu viaje.</string>
 
     <string name="tripplanner_no_contact">No existe un contacto del planeador de viajes para esta región.
     </string>
@@ -895,19 +869,6 @@
     <!-- Instructions generation -->
 
     <!-- Step-by-step screen -->
-
-    <!-- Title -->
-    <string name="step_by_step_title">Direcciones</string>
-
-    <!-- Top headers -->
-    <string name="step_by_step_header_from">Desde</string>
-    <string name="step_by_step_header_to">Hasta</string>
-    <string name="step_by_step_header_departure">Sal.</string>
-    <string name="step_by_step_header_arrival">Lle.</string>
-
-    <!-- Drop down menu components -->
-    <string name="step_by_step_walking_duration">caminar</string>
-    <string name="step_by_step_total_duration">toma</string>
 
     <!-- Instructions generation -->
 
@@ -930,7 +891,6 @@
     <string name="step_by_step_transit_connector_headsign">hasta</string>
 
     <!-- Real time -->
-    <string name="step_by_step_transit_warning_live_udpates">Actualizaciones en vivo</string>
 
     <!-- Modes -->
 
@@ -1026,23 +986,6 @@
     <string name="street_type_sidewalk">acera</string>
     <string name="street_type_steps">pasos</string>
 
-    <!-- Notifications specific -->
-
-    <!-- Button -->
-    <string name="notification_disable_updates_button">Cancelar actualizaciones de este viaje</string>
-
-    <!-- Toast -->
-    <string name="notification_disable_updates_info">Actualizaciones canceladas</string>
-
-    <!-- Text -->
-    <string name="notification_stop_name_conector">a</string>
-    <string name="notification_two_delays_connector">y</string>
-    <string name="notification_origin">origen</string>
-    <string name="notification_destination">destino</string>
-
-    <!-- Obtaining real time updates -->
-    <string name="toast_realtime_updates_fail">Las actualizaciones en tiempo real no están disponibles en este viaje, los tiempos pueden estar desactualizados</string>
-
     <!-- Units -->
     <string name="hours_abbreviation">h</string>
     <string name="hours_full">horas</string>
@@ -1064,10 +1007,6 @@
 
 
     <!-- Real time -->
-    <string name="map_markers_warning_live_updates">Actualizaciones en vivo</string>
-    <string name="map_markers_warning_live_updates_on_time">A tiempo</string>
-    <string name="map_markers_warning_live_updates_early_arrival">adelantado</string>
-    <string name="map_markers_warning_live_updates_late_arrival">atrasado</string>
 
     <string name="trip_plan_notification_new_plan_title">Encontramos un mejor plan de viaje</string>
     <string name="trip_plan_notification_new_plan_text">Toca para ver los nuevos resultados de tu último origen/destino.</string>

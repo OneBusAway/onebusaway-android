@@ -26,7 +26,7 @@ import org.onebusaway.android.io.request.ObaRegionsResponse;
 import android.content.ContentResolver;
 import android.net.Uri;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 

@@ -43,9 +43,7 @@ repositories {
 
 // Custom properties for OBA
 ext {
-    compileSdkVersion = 27
-    // supportLibVersion must have the same major version number as compileSdkVersion
-    supportLibVersion = "27.1.1"
+    compileSdkVersion = 28
     playServicesVersion = "11.8.0"
 }
 
@@ -57,14 +55,14 @@ android {
     buildToolsVersion "28.0.2"
 
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion 15
         targetSdkVersion 21
-        versionCode 95
-        versionName "2.3.10"
+        versionCode 96
+        versionName "2.3.11"
 
         multiDexEnabled true
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     /**
@@ -311,6 +309,10 @@ android {
     testOptions {
         unitTests.includeAndroidResources true
     }
+
+    useLibrary 'android.test.runner'
+    useLibrary 'android.test.base'
+    useLibrary 'android.test.mock'
 }
 
 /**
@@ -388,9 +390,16 @@ task askForPasswords << {
 }
 
 tasks.whenTaskAdded { theTask ->
-    if (theTask.name.matches("\\bpackage\\w+Release\\b")) {
+   if (theTask.name.matches("\\bpackage\\w+Release\\b")) {
         theTask.dependsOn "askForPasswords"
-    }
+   }
+   // Make sure that OBA release builds always have an Embedded Social API key (#907)
+   def runningTask = project.gradle.startParameter.taskNames
+
+   if ((runningTask.toString().toLowerCase().matches("(.*)oba(.*)release(.*)") || runningTask.toString().toLowerCase().contains("assemblerelease") )  && !project.hasProperty('EmbeddedSocialApiKey_oba')) {
+        throw new InvalidUserDataException("gradle.properties must contain an EmbeddedSocialApiKey_oba API key for oba release builds")
+   }
+
 }
 
 // Exclude all classes from dependencies that conflict with Android platform classes (#849)
@@ -421,10 +430,10 @@ dependencies {
         force = true
     }
     // Support libraries
-    implementation ("com.android.support:cardview-v7:${this.ext.supportLibVersion}") {
+    implementation ('androidx.cardview:cardview:1.0.0') {
         force = true
     }
-    implementation ("com.android.support:design:${this.ext.supportLibVersion}") {
+    implementation ('com.google.android.material:material:1.0.0') {
         force = true
     }
     implementation 'commons-io:commons-io:2.4'
@@ -459,15 +468,13 @@ dependencies {
         transitive = true;
     }
     // Required to support multidex for minSdkVersion <= 20
-    implementation 'com.android.support:multidex:1.0.3'
-    // Unit tests
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    implementation 'androidx.multidex:multidex:2.0.0'
+    // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
+    androidTestImplementation 'androidx.test:runner:1.1.0-beta01'
 }
 
 // Dependencies not directly used in this project, but used by dependencies that we are using
 configurations.all {
-    // Needed to eliminate conflict with OpenID dependency within the EmbeddedSocial SDK (#843)
-    resolutionStrategy.force "com.android.support:customtabs:${this.ext.supportLibVersion}"
     // Needed to eliminate conflict with EmbeddedSocial SDK Google Play Services & Firebase libraries
     resolutionStrategy.force "com.google.android.gms:play-services-auth:${this.ext.playServicesVersion}"
     resolutionStrategy.force "com.google.android.gms:play-services-gcm:${this.ext.playServicesVersion}"

@@ -16,6 +16,8 @@
 
 package org.onebusaway.android.ui;
 
+import com.google.android.material.appbar.CollapsingToolbarLayout;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 
@@ -24,10 +26,10 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * An Activity that displays version, license, and contributor information

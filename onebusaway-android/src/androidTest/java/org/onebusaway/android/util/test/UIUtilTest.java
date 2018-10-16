@@ -41,8 +41,6 @@ import org.onebusaway.android.util.UIUtils;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.v4.util.Pair;
 import android.text.TextUtils;
 import android.widget.TextView;
 
@@ -51,8 +49,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import androidx.core.util.Pair;
+import androidx.test.runner.AndroidJUnit4;
+
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
@@ -928,7 +930,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // They do appear, however, in the references list and are referenced by each arrival info
         // Make sure we build a list of all situations
-        List<ObaSituation> allSituations = UIUtils.getAllSituations(response);
+        List<ObaSituation> allSituations = UIUtils.getAllSituations(response, null);
 
         // Build a set of all IDs returned
         HashSet<String> situationIds = new HashSet<>();
@@ -971,7 +973,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // They do appear, however, in the references list and are referenced by each arrival info
         // Make sure we build a list of all situations
-        allSituations = UIUtils.getAllSituations(response);
+        allSituations = UIUtils.getAllSituations(response, null);
 
         // Build a set of all IDs returned
         situationIds = new HashSet<>();
@@ -1000,5 +1002,49 @@ public class UIUtilTest extends ObaTestCase {
 
         // Make sure the stop situation object exist in list
         assertTrue(allSituations.contains(response.getSituations().get(0)));
+
+        /*
+        Test filtering routes alerts
+         */
+        response = new ObaArrivalInfoRequest.Builder(getTargetContext(), "MTS_11671").build().call();
+        assertOK(response);
+
+        List<String> routeFilters = new ArrayList<>();
+        routeFilters.add("MTS_1");
+
+        List<ObaSituation> filteredSituations = UIUtils.getAllSituations(response, routeFilters);
+
+        List<String> allIds = new ArrayList<>();
+        allSituations = UIUtils.getAllSituations(response, null);
+        for (ObaSituation situation : allSituations) {
+            allIds.add(situation.getId());
+        }
+
+        List<String> filteredIds = new ArrayList<>();
+        for (ObaSituation situation : filteredSituations) {
+            filteredIds.add(situation.getId());
+        }
+
+        // Should have two service alerts one for route 1 and one for route 11
+        assertEquals(2, allIds.size());
+        assertEquals(2, allSituations.size());
+
+        // Should contain only the alert for route 1
+        assertEquals(1, filteredIds.size());
+        assertEquals(1, filteredSituations.size());
+
+        // Should contain route 1 situation ID
+        assertTrue(filteredIds.contains("MTS_RTA:11569670"));
+
+        // route 11 situation ID should be in all IDs but not filteredIds
+        assertTrue(allIds.contains("MTS_RTA:11569666"));
+        assertFalse(filteredIds.contains("MTS_RTA:11569666"));
+
+        // Make sure filtered situation object exists
+        assertTrue(filteredSituations.contains(response.getSituation("MTS_RTA:11569670")));
+
+        // Make sure filtered out situation object is in all situations but not in filtered situations
+        assertTrue(allSituations.contains(response.getSituation("MTS_RTA:11569666")));
+        assertFalse(filteredSituations.contains(response.getSituation("MTS_RTA:11569666")));
     }
 }

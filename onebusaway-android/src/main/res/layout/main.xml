@@ -12,7 +12,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<android.support.v4.widget.DrawerLayout
+<androidx.drawerlayout.widget.DrawerLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/nav_drawer_left_pane"
@@ -51,7 +51,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"/>
                 <!-- Floating Action Button for My Location, overlaid on map -->
-                <android.support.design.widget.FloatingActionButton
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/btnMyLocation"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -151,5 +151,5 @@
               android:layout_gravity="start"
               android:name="org.onebusaway.android.ui.NavigationDrawerFragment"
               tools:layout="@layout/navigation_drawer"/>
-</android.support.v4.widget.DrawerLayout>
+</androidx.drawerlayout.widget.DrawerLayout>
 

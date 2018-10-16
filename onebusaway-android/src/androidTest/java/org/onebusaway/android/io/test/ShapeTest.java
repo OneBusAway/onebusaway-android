@@ -20,9 +20,10 @@ import org.junit.runner.RunWith;
 import org.onebusaway.android.io.elements.ObaShapeElement;
 
 import android.location.Location;
-import android.support.test.runner.AndroidJUnit4;
 
 import java.util.List;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;

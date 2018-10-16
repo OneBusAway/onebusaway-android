@@ -30,12 +30,13 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import androidx.appcompat.app.AlertDialog;
 
 import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 

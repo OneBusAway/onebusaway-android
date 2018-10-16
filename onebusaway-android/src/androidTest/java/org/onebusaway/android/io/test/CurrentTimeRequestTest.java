@@ -19,7 +19,7 @@ import org.junit.Test;
 import org.onebusaway.android.io.request.ObaCurrentTimeRequest;
 import org.onebusaway.android.io.request.ObaCurrentTimeResponse;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 

@@ -25,7 +25,6 @@ import org.onebusaway.android.util.UIUtils;
 
 import android.content.res.TypedArray;
 import android.os.Bundle;
-import android.support.v4.app.ListFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,6 +33,7 @@ import android.widget.AdapterView;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.fragment.app.ListFragment;
 import edu.usf.cutr.open311client.Open311Manager;
 
 /**

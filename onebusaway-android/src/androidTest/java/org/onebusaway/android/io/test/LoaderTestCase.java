@@ -22,11 +22,12 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.v4.content.Loader;
-import android.support.v4.content.Loader.OnLoadCompleteListener;
 
 import java.util.concurrent.ArrayBlockingQueue;
+
+import androidx.loader.content.Loader;
+import androidx.loader.content.Loader.OnLoadCompleteListener;
+import androidx.test.runner.AndroidJUnit4;
 
 /**
  * A convenience class for testing {@link Loader}s. This test case

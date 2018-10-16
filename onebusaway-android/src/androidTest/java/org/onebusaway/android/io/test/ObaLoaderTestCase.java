@@ -21,7 +21,7 @@ import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.ObaConnectionFactory;
 import org.onebusaway.android.mock.MockConnectionFactory;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 
 /**
  * Tests loading data from Loaders for OBA

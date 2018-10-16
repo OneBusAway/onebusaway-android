@@ -26,10 +26,11 @@ import org.opentripplanner.api.model.VertexType;
 import org.opentripplanner.routing.core.TraverseMode;
 
 import android.os.Bundle;
-import android.support.v4.content.Loader;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.loader.content.Loader;
 
 public class BikeshareMapController extends BaseMapController {
 

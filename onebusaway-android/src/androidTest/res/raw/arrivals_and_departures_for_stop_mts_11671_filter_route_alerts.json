@@ -1,0 +1,579 @@
+{
+  "code": 200,
+  "currentTime": 1536288397225,
+  "data": {
+    "entry": {
+      "arrivalsAndDepartures": [
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 11,
+          "departureEnabled": true,
+          "distanceFromStop": -473.27719098026864,
+          "frequency": null,
+          "lastUpdateTime": 1536288297000,
+          "numberOfStopsAway": -2,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1536288300000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1536288300000,
+          "routeId": "MTS_1",
+          "routeLongName": "Fashion Valley - La Mesa",
+          "routeShortName": "1",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1536288300000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1536288300000,
+          "serviceDate": 1536217200000,
+          "situationIds": [
+            "MTS_RTA:11569670"
+          ],
+          "status": "default",
+          "stopId": "MTS_11671",
+          "stopSequence": 40,
+          "tripHeadsign": "Fashion Valley",
+          "tripId": "MTS_13327700",
+          "tripStatus": {
+            "activeTripId": "MTS_13327700",
+            "blockTripSequence": 11,
+            "closestStop": "MTS_11675",
+            "closestStopTimeOffset": 23,
+            "distanceAlongTrip": 12887.684319223423,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.755283,
+              "lon": -117.145927
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 1536288297000,
+            "lastUpdateTime": 1536288297000,
+            "nextStop": "MTS_11675",
+            "nextStopTimeOffset": 23,
+            "orientation": 270.3022609802159,
+            "phase": "",
+            "position": {
+              "lat": 32.74957960829666,
+              "lon": -117.14632725760532
+            },
+            "predicted": true,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 12887.684319223423,
+            "serviceDate": 1536217200000,
+            "situationIds": [
+              "MTS_RTA:11569670"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 18492.8861934505,
+            "vehicleId": "MTS_2806"
+          },
+          "vehicleId": "MTS_2806"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 13,
+          "departureEnabled": true,
+          "distanceFromStop": 1650.8848098315357,
+          "frequency": null,
+          "lastUpdateTime": 1536288331000,
+          "numberOfStopsAway": 6,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1536288660000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1536288660000,
+          "routeId": "MTS_11",
+          "routeLongName": "SDSU - Downtown San Diego",
+          "routeShortName": "11",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1536288300000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1536288300000,
+          "serviceDate": 1536217200000,
+          "situationIds": [
+            "MTS_RTA:11569666"
+          ],
+          "status": "default",
+          "stopId": "MTS_11671",
+          "stopSequence": 23,
+          "tripHeadsign": "Downtown",
+          "tripId": "MTS_13405842",
+          "tripStatus": {
+            "activeTripId": "MTS_13405842",
+            "blockTripSequence": 13,
+            "closestStop": "MTS_11271",
+            "closestStopTimeOffset": 23,
+            "distanceAlongTrip": 8456.73840396566,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.762901,
+              "lon": -117.133377
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 1536288331000,
+            "lastUpdateTime": 1536288331000,
+            "nextStop": "MTS_11271",
+            "nextStopTimeOffset": 23,
+            "orientation": 180.30102584404722,
+            "phase": "",
+            "position": {
+              "lat": 32.76285682823025,
+              "lon": -117.13898669350826
+            },
+            "predicted": true,
+            "scheduleDeviation": 360,
+            "scheduledDistanceAlongTrip": 8456.73840396566,
+            "serviceDate": 1536217200000,
+            "situationIds": [
+              "MTS_RTA:11569666"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 16939.94079231228,
+            "vehicleId": "MTS_614"
+          },
+          "vehicleId": "MTS_614"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 3,
+          "departureEnabled": true,
+          "distanceFromStop": 10107.665971320457,
+          "frequency": null,
+          "lastUpdateTime": 1536288353000,
+          "numberOfStopsAway": 23,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1536290082000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1536290082000,
+          "routeId": "MTS_11",
+          "routeLongName": "SDSU - Downtown San Diego",
+          "routeShortName": "11",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1536290082000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1536290082000,
+          "serviceDate": 1536217200000,
+          "situationIds": [
+            "MTS_RTA:11569666"
+          ],
+          "status": "default",
+          "stopId": "MTS_11671",
+          "stopSequence": 23,
+          "tripHeadsign": "Downtown",
+          "tripId": "MTS_13405886",
+          "tripStatus": {
+            "activeTripId": "MTS_13405885",
+            "blockTripSequence": 2,
+            "closestStop": "MTS_99096",
+            "closestStopTimeOffset": 323,
+            "distanceAlongTrip": 15777.470891609242,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.772938,
+              "lon": -117.071632
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 1536288353000,
+            "lastUpdateTime": 1536288353000,
+            "nextStop": "MTS_99096",
+            "nextStopTimeOffset": 323,
+            "orientation": 48.36646069150642,
+            "phase": "",
+            "position": {
+              "lat": 32.77308969199388,
+              "lon": -117.07162227378322
+            },
+            "predicted": true,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 15777.470891609242,
+            "serviceDate": 1536217200000,
+            "situationIds": [
+              "MTS_RTA:11569666"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 15777.513649132487,
+            "vehicleId": "MTS_820"
+          },
+          "vehicleId": "MTS_820"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 12,
+          "departureEnabled": true,
+          "distanceFromStop": 8575.633243603981,
+          "frequency": null,
+          "lastUpdateTime": 1536288227000,
+          "numberOfStopsAway": 30,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1536290160000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1536290160000,
+          "routeId": "MTS_1",
+          "routeLongName": "Fashion Valley - La Mesa",
+          "routeShortName": "1",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1536290100000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1536290100000,
+          "serviceDate": 1536217200000,
+          "situationIds": [
+            "MTS_RTA:11569670"
+          ],
+          "status": "default",
+          "stopId": "MTS_11671",
+          "stopSequence": 40,
+          "tripHeadsign": "Fashion Valley",
+          "tripId": "MTS_13327707",
+          "tripStatus": {
+            "activeTripId": "MTS_13327707",
+            "blockTripSequence": 12,
+            "closestStop": "MTS_11044",
+            "closestStopTimeOffset": 23,
+            "distanceAlongTrip": 3838.773884639173,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.76873,
+              "lon": -117.049728
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 1536288227000,
+            "lastUpdateTime": 1536288227000,
+            "nextStop": "MTS_11044",
+            "nextStopTimeOffset": 23,
+            "orientation": 222.64045419996364,
+            "phase": "",
+            "position": {
+              "lat": 32.76612801864077,
+              "lon": -117.0594869335463
+            },
+            "predicted": true,
+            "scheduleDeviation": 60,
+            "scheduledDistanceAlongTrip": 3838.773884639173,
+            "serviceDate": 1536217200000,
+            "situationIds": [
+              "MTS_RTA:11569670"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 18492.8861934505,
+            "vehicleId": "MTS_2417"
+          },
+          "vehicleId": "MTS_2417"
+        }
+      ],
+      "nearbyStopIds": [
+        "MTS_13553",
+        "MTS_12454",
+        "MTS_13552"
+      ],
+      "situationIds": [],
+      "stopId": "MTS_11671"
+    },
+    "references": {
+      "agencies": [
+        {
+          "disclaimer": "",
+          "email": "customerfeedback@sdmts.com",
+          "fareUrl": "",
+          "id": "MTS",
+          "lang": "EN",
+          "name": "MTS",
+          "phone": "619-233-3004",
+          "privateService": false,
+          "timezone": "America/Los_Angeles",
+          "url": "http://www.sdmts.com"
+        }
+      ],
+      "routes": [
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_1",
+          "longName": "Fashion Valley - La Mesa",
+          "shortName": "1",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=1"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_11",
+          "longName": "SDSU - Downtown San Diego",
+          "shortName": "11",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=11"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_215",
+          "longName": "Mid-City Rapid",
+          "shortName": "215",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=215"
+        }
+      ],
+      "situations": [
+        {
+          "activeWindows": [
+            {
+              "from": 1536073200,
+              "to": 1538157600
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_1",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "no_service",
+              "conditionDetails": null
+            }
+          ],
+          "creationTime": 1536288380198,
+          "description": {
+            "lang": "en",
+            "value": "Due to road work, the eastbound bus stop on University at 8th (ID# 13391) will be closed 9/4 - 9/28, Monday - Friday from 8am -4pm. Route 1 connections can be made on University at 10th."
+          },
+          "id": "MTS_RTA:11569670",
+          "publicationWindows": [],
+          "reason": "CONSTRUCTION",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "Route 1 & 11 Stop Closed @ University & 8th"
+          },
+          "url": null
+        },
+        {
+          "activeWindows": [
+            {
+              "from": 1536073200,
+              "to": 1538157600
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_11",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "no_service",
+              "conditionDetails": null
+            }
+          ],
+          "creationTime": 1536288380198,
+          "description": {
+            "lang": "en",
+            "value": "Due to road work, the eastbound bus stop on University at 8th (ID# 13391) will be closed 9/4 - 9/28, Monday - Friday from 8am -4pm. Route 11 connections can be made on University at 10th."
+          },
+          "id": "MTS_RTA:11569666",
+          "publicationWindows": [],
+          "reason": "CONSTRUCTION",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "Route 1 & 11 Stop Closed @ University & 8th"
+          },
+          "url": null
+        }
+      ],
+      "stops": [
+        {
+          "code": "11671",
+          "direction": "S",
+          "id": "MTS_11671",
+          "lat": 32.753833777169,
+          "locationType": 0,
+          "lon": -117.146632534228,
+          "name": "Park Bl & Howard Av",
+          "routeIds": [
+            "MTS_1",
+            "MTS_11"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "11675",
+          "direction": "S",
+          "id": "MTS_11675",
+          "lat": 32.748581359718,
+          "locationType": 0,
+          "lon": -117.146482485901,
+          "name": "Park Bl & University Av",
+          "routeIds": [
+            "MTS_1",
+            "MTS_11"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "11271",
+          "direction": "W",
+          "id": "MTS_11271",
+          "lat": 32.762948821329,
+          "locationType": 0,
+          "lon": -117.140272393213,
+          "name": "Adams Av & Panorama Dr (E)",
+          "routeIds": [
+            "MTS_11"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "99096",
+          "direction": "NE",
+          "id": "MTS_99096",
+          "lat": 32.773045203141,
+          "locationType": 0,
+          "lon": -117.071553449154,
+          "name": "SDSU Transit Center",
+          "routeIds": [
+            "MTS_11"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "11044",
+          "direction": "SW",
+          "id": "MTS_11044",
+          "lat": 32.765176427222,
+          "locationType": 0,
+          "lon": -117.060722289388,
+          "name": "El Cajon Bl & Art St",
+          "routeIds": [
+            "MTS_1"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "13553",
+          "direction": "S",
+          "id": "MTS_13553",
+          "lat": 32.753688688176,
+          "locationType": 0,
+          "lon": -117.146401096855,
+          "name": "Park Bl & Howard Av",
+          "routeIds": [
+            "MTS_215"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "12454",
+          "direction": "N",
+          "id": "MTS_12454",
+          "lat": 32.753894071237,
+          "locationType": 0,
+          "lon": -117.14612671249,
+          "name": "Park Bl & Howard Av",
+          "routeIds": [
+            "MTS_1",
+            "MTS_11"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "13552",
+          "direction": "N",
+          "id": "MTS_13552",
+          "lat": 32.754340628328,
+          "locationType": 0,
+          "lon": -117.1463264137,
+          "name": "Park Bl & Howard Av",
+          "routeIds": [
+            "MTS_215"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        }
+      ],
+      "trips": [
+        {
+          "blockId": "MTS_102",
+          "directionId": "1",
+          "id": "MTS_13327700",
+          "routeId": "MTS_1",
+          "routeShortName": "",
+          "serviceId": "MTS_67610-1111100-0",
+          "shapeId": "MTS_1_3_147",
+          "timeZone": "",
+          "tripHeadsign": "Fashion Valley",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_101103",
+          "directionId": "1",
+          "id": "MTS_13405842",
+          "routeId": "MTS_11",
+          "routeShortName": "",
+          "serviceId": "MTS_67669-1111100-0",
+          "shapeId": "MTS_11_1_289",
+          "timeZone": "",
+          "tripHeadsign": "Downtown",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_101111",
+          "directionId": "1",
+          "id": "MTS_13405886",
+          "routeId": "MTS_11",
+          "routeShortName": "",
+          "serviceId": "MTS_67669-1111100-0",
+          "shapeId": "MTS_11_1_289",
+          "timeZone": "",
+          "tripHeadsign": "Downtown",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_101111",
+          "directionId": "0",
+          "id": "MTS_13405885",
+          "routeId": "MTS_11",
+          "routeShortName": "",
+          "serviceId": "MTS_67669-1111100-0",
+          "shapeId": "MTS_11_0_288",
+          "timeZone": "",
+          "tripHeadsign": "SDSU",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_101",
+          "directionId": "1",
+          "id": "MTS_13327707",
+          "routeId": "MTS_1",
+          "routeShortName": "",
+          "serviceId": "MTS_67610-1111100-0",
+          "shapeId": "MTS_1_3_147",
+          "timeZone": "",
+          "tripHeadsign": "Fashion Valley",
+          "tripShortName": ""
+        }
+      ]
+    }
+  },
+  "text": "OK",
+  "version": 2
+}

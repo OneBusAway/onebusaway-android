@@ -15,15 +15,16 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.util.UIUtils;
+
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.content.pm.ShortcutInfoCompat;
-import android.support.v4.content.pm.ShortcutManagerCompat;
-import android.support.v7.app.AppCompatActivity;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.util.UIUtils;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.core.content.pm.ShortcutManagerCompat;
 
 public class MyStarredStopsActivity extends AppCompatActivity {
 

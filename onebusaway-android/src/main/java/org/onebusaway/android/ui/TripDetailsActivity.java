@@ -20,17 +20,17 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.UIUtils;
 
-import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
+
 public class TripDetailsActivity extends AppCompatActivity {
-    
+
     private static final String TAG = "TripDetailsActivity";
 
     public static class Builder {
@@ -121,7 +121,7 @@ public class TripDetailsActivity extends AppCompatActivity {
         }
         return false;
     }
-    
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(requestCode == TripDetailsListFragment.REQUEST_ENABLE_LOCATION) {
@@ -139,7 +139,7 @@ public class TripDetailsActivity extends AppCompatActivity {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
-    
+
     /**
      * @return Fragment {@link TripDetailsListFragment object}
      */

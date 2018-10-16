@@ -24,14 +24,15 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.Collection;
+
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 class AlertList {
 

@@ -26,13 +26,13 @@ import org.onebusaway.android.report.ui.util.ServiceUtils;
 import org.onebusaway.android.util.LocationUtils;
 
 import android.location.Location;
-import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import androidx.test.runner.AndroidJUnit4;
 import edu.usf.cutr.open311client.Open311;
 import edu.usf.cutr.open311client.Open311Manager;
 import edu.usf.cutr.open311client.models.Open311Option;
@@ -40,7 +40,7 @@ import edu.usf.cutr.open311client.models.Service;
 import edu.usf.cutr.open311client.models.ServiceListRequest;
 import edu.usf.cutr.open311client.models.ServiceListResponse;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;

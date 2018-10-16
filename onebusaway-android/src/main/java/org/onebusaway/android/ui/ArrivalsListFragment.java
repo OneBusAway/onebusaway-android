@@ -60,15 +60,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
-import android.support.v4.util.Pair;
-import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -89,6 +80,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.util.Pair;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
 
 //
 // We don't use the ListFragment because the support library's version of
@@ -151,6 +152,7 @@ public class ArrivalsListFragment extends ListFragment
 
     private ObaReferences mObaReferences;
 
+    // The list of route_ids that should have their arrival info and alerts displayed. (All if empty or null)
     private ArrayList<String> mRoutesFilter;
 
     private int mLastResponseLength = -1; // Keep copy locally, since loader overwrites
@@ -280,7 +282,7 @@ public class ArrivalsListFragment extends ListFragment
             return null;
         }
 
-        initArrivalInfoViews(BuildFlavorUtils.getArrivalInfoStyleFromPreferences(), inflater);
+        initArrivalInfoViews(inflater);
 
         return inflater.inflate(R.layout.fragment_arrivals_list, null);
     }
@@ -385,7 +387,7 @@ public class ArrivalsListFragment extends ListFragment
         if (loader != null) {
             ObaArrivalInfoResponse lastGood = loader.getLastGoodResponse();
             if (lastGood != null) {
-                setResponseData(lastGood.getArrivalInfo(), UIUtils.getAllSituations(lastGood),
+                setResponseData(lastGood.getArrivalInfo(), UIUtils.getAllSituations(lastGood, mRoutesFilter),
                         lastGood.getRefs());
             }
         }
@@ -457,7 +459,7 @@ public class ArrivalsListFragment extends ListFragment
                 DBUtil.addToDB(mStop);
             }
             info = result.getArrivalInfo();
-            situations = UIUtils.getAllSituations(result);
+            situations = UIUtils.getAllSituations(result, mRoutesFilter);
             refs = result.getRefs();
 
         } else {
@@ -472,7 +474,7 @@ public class ArrivalsListFragment extends ListFragment
                         R.string.generic_comm_error_toast,
                         Toast.LENGTH_LONG).show();
                 info = lastGood.getArrivalInfo();
-                situations = lastGood.getSituations();
+                situations = UIUtils.getAllSituations(lastGood, mRoutesFilter);
             } else {
                 setEmptyText(UIUtils.getStopErrorString(getActivity(), result.getCode()));
             }
@@ -1001,6 +1003,7 @@ public class ArrivalsListFragment extends ListFragment
     public void setRoutesFilter(ArrayList<String> routes) {
         mRoutesFilter = routes;
         ObaContract.StopRouteFilters.set(getActivity(), mStopId, mRoutesFilter);
+        refreshSituations(UIUtils.getAllSituations(getArrivalsLoader().getLastGoodResponse(), mRoutesFilter));
         refreshLocal();
     }
 
@@ -1113,7 +1116,7 @@ public class ArrivalsListFragment extends ListFragment
             ((ViewGroup) getListView().getParent()).removeView(mEmptyList);
         }
 
-        initArrivalInfoViews(arrivalInfoStyle, inflater);
+        initArrivalInfoViews(inflater);
         setupFooter();
         setupEmptyList(emptyText);
         setListViewProperties(arrivalInfoStyle);
@@ -1123,14 +1126,12 @@ public class ArrivalsListFragment extends ListFragment
     /**
      * Initializes the adapter views
      *
-     * @param arrivalInfoStyle the adapter style to use - should be one of the
-     *                         BuildFlavorUtil.ARRIVAL_INFO_STYLE_* contants
      * @param inflater         inflater to use
      */
-    private void initArrivalInfoViews(int arrivalInfoStyle, LayoutInflater inflater) {
+    private void initArrivalInfoViews(LayoutInflater inflater) {
         // Use a card-styled footer
-        mFooter = inflater.inflate(R.layout.arrivals_list_footer_style_b, null);
-        mEmptyList = inflater.inflate(R.layout.arrivals_list_empty_style_b, null);
+        mFooter = inflater.inflate(R.layout.arrivals_list_footer_style, null);
+        mEmptyList = inflater.inflate(R.layout.arrivals_list_empty_style, null);
     }
 
     /**
@@ -1322,6 +1323,7 @@ public class ArrivalsListFragment extends ListFragment
                 checks[i] = true;
             }
         }
+
         // Arguments
         Bundle args = new Bundle();
         args.putStringArray(RoutesFilterDialog.ITEMS, items);

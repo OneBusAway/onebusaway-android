@@ -24,12 +24,13 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
+
+import androidx.cursoradapter.widget.SimpleCursorAdapter;
+import androidx.loader.content.CursorLoader;
 
 /**
  * Utilities mainly to support queries for the Stops and Routes lists

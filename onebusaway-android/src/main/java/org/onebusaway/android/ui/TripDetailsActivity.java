@@ -23,10 +23,10 @@ import org.onebusaway.android.util.UIUtils;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MenuItem;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 public class TripDetailsActivity extends AppCompatActivity {
@@ -125,7 +125,7 @@ public class TripDetailsActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(requestCode == TripDetailsListFragment.REQUEST_ENABLE_LOCATION) {
-            TripDetailsListFragment tripDetListFrag = (TripDetailsListFragment)findFragmentByTag();
+            TripDetailsListFragment tripDetListFrag = (TripDetailsListFragment) findFragmentByTag();
             if(tripDetListFrag == null) {
                 tripDetListFrag = new TripDetailsListFragment();
 

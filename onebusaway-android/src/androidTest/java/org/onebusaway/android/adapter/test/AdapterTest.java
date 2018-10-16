@@ -17,9 +17,6 @@
 
 package org.onebusaway.android.adapter.test;
 
-import android.support.test.runner.AndroidJUnit4;
-import android.view.View;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.app.Application;

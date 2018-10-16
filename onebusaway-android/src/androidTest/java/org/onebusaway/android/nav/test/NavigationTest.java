@@ -15,12 +15,6 @@
  */
 package org.onebusaway.android.nav.test;
 
-import android.location.Location;
-import android.location.LocationManager;
-import android.os.Build;
-import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
-
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,12 +25,19 @@ import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
 import org.onebusaway.android.util.LocationUtils;
 
+import android.location.Location;
+import android.location.LocationManager;
+import android.os.Build;
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import androidx.test.runner.AndroidJUnit4;
+
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 

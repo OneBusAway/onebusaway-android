@@ -422,6 +422,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                 return true;
 
             } else */
+            float lastToSecDistance = lastCoords.distanceTo(secondToLastCoords);
             Log.d(TAG, "Detecting stop. distance_d=" +
                     distance_d + ". stop_type=" + stop_type + " speed=" + speed);
             if (stop_type == 1) {
@@ -438,7 +439,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                 }
                 if ((distance_d < 20) && (distance_d != -1) && !m20_a) {
                     m20_a = true;
-                    if (speed > 15) {
+                    if (speed > 15 && lastToSecDistance < 100) {
                         Log.d(TAG, "Case 3: true");
                         return true;
                     }

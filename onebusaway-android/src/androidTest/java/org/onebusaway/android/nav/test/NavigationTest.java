@@ -102,11 +102,10 @@ public class NavigationTest extends ObaTestCase {
      * Destination Stop: Dale Mabry Hwy @ Hudson Ln @ Taco Bell
      * Recorded In: Bus (Route 36) 4 stops
      * Device Used: Nexus 5
-     * FIXME - Currently fails with "Pull the cord triggered too soon"
      */
     @Test
     public void testTrip3() throws IOException {
-        runSimulation("nav_trip3", 95, 115);
+        runSimulation("nav_trip3", 95, 111);
     }
 
     /**
@@ -114,7 +113,6 @@ public class NavigationTest extends ObaTestCase {
      * Destination Stop: Dale Mabry Hwy @ Hudson Ln @ Taco Bell
      * Recorded In: car following Bus (Route 36) 4 stops
      * Device Used: Nexus 5
-     * FIXME - Currently fails with "Pull the cord triggered too soon"
      */
     @Test
     public void testTrip3C() throws IOException {
@@ -432,7 +430,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip18() throws IOException {
-        runSimulation("nav_trip18", 31, 50);
+        runSimulation("nav_trip18", 31, 51);
     }
 
     /**
@@ -600,7 +598,7 @@ public class NavigationTest extends ObaTestCase {
     @Test
     public void testTrip27() throws IOException {
         // Read test CSV
-        runSimulation("nav_trip27", 909, 941);
+        runSimulation("nav_trip27", 909, 944);
     }
 
     /**
@@ -626,7 +624,6 @@ public class NavigationTest extends ObaTestCase {
         // Read test CSV
         runSimulation("nav_trip29", 472, 594);
     }
-
 
     /**
      * Started Stop: Fletcher Avenue @ 42nd Street MetroRapid

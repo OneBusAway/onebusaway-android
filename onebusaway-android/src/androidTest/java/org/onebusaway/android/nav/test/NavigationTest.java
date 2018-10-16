@@ -29,6 +29,7 @@ import org.onebusaway.android.mock.Resources;
 import org.onebusaway.android.nav.NavigationServiceProvider;
 import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
+import org.onebusaway.android.util.LocationUtils;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -82,7 +83,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip2() throws IOException {
-         runSimulation("nav_trip2", 0, 14);
+         runSimulation("nav_trip2", 0, 15);
     }
 
     /**
@@ -530,7 +531,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip23C() throws IOException {
-        runSimulation("nav_trip23c", 0, 18);
+        runSimulation("nav_trip23c", 0, 19);
     }
 
     /**
@@ -841,7 +842,7 @@ public class NavigationTest extends ObaTestCase {
         void runSimulation(int expectedGetReadyIndex, int expectedPullCordIndex) {
             NavigationServiceProvider provider = new NavigationServiceProvider(mTripId,
                     mDestinationId);
-
+            Location prevLocation = null;
             // Use the first location time as the starting time for this PathLink
             // TODO - capture PathLink nav starting time in logs
             PathLink link = new PathLink(mLocations[0].getTime(), null, mSecondToLastLocation, mDestinationLocation, mTripId);
@@ -857,7 +858,12 @@ public class NavigationTest extends ObaTestCase {
                 } catch (Exception e) {
                     Log.e(TAG, e.getMessage());
                 }
-                provider.locationUpdated(l);
+
+                // Code added to check for duplicate locations in the .csv log files
+                if (prevLocation == null || !LocationUtils.isDuplicate(prevLocation, l)) {
+                    provider.locationUpdated(l);
+                }
+                prevLocation = l;
 
                 if (provider.getGetReady() && i < expectedGetReadyIndex) {
                     fail("Get ready triggered too soon");
@@ -873,6 +879,10 @@ public class NavigationTest extends ObaTestCase {
             Boolean check1 = provider.getGetReady() && !provider.getFinished();
             assertTrue(check1);
 
+            if(expectedGetReadyIndex != 0){
+                prevLocation = mLocations[expectedGetReadyIndex - 1];
+            }
+
             for (int i = expectedGetReadyIndex; i <= expectedPullCordIndex; i++) {
                 Location l = mLocations[i];
                 try {
@@ -880,7 +890,12 @@ public class NavigationTest extends ObaTestCase {
                 } catch (Exception e) {
                     Log.e(TAG, e.getMessage());
                 }
-                provider.locationUpdated(l);
+
+                // Code added to check for duplicate locations in the .csv log files
+                if (prevLocation == null || !LocationUtils.isDuplicate(prevLocation, l)) {
+                    provider.locationUpdated(l);
+                }
+                prevLocation = l;
 
                 if (provider.getFinished() && i < expectedPullCordIndex) {
                     fail("Pull the Cord triggered too soon");

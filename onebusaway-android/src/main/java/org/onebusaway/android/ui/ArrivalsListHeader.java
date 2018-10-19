@@ -24,6 +24,7 @@ import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.ArrivalInfoUtils.ArrivalFilter;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.UIUtils;
 
@@ -837,16 +838,21 @@ class ArrivalsListHeader {
                 }
             } else {
                 // Show abbreviated "no upcoming arrivals" message (e.g., "35+ min")
+
+                ArrivalFilter filter = ArrivalFilter
+                        .fromInt(ObaContract.StopArrivalFilter.get(mContext, mController.getStopId()));
+                boolean onlyDepartures = filter == ArrivalFilter.ONLY_DEPARTURES;
+
                 int minAfter = mController.getMinutesAfter();
                 if (minAfter != -1) {
                     mNoArrivals
                             .setText(
-                                    UIUtils.getNoArrivalsMessage(mContext, minAfter, false, false));
+                                    UIUtils.getNoArrivalsMessage(mContext, minAfter, false, false, onlyDepartures));
                 } else {
                     minAfter = 35;  // Assume 35 minutes, because that's the API default
                     mNoArrivals
                             .setText(
-                                    UIUtils.getNoArrivalsMessage(mContext, minAfter, false, false));
+                                    UIUtils.getNoArrivalsMessage(mContext, minAfter, false, false, onlyDepartures));
                 }
                 mNumHeaderArrivals = 0;
             }

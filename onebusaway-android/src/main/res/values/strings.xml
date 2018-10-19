@@ -237,14 +237,16 @@
     <string name="stop_info_option_removestar">Remove star from stop</string>
     <string name="stop_info_option_report_problem">Report stop problem</string>
     <string name="stop_info_option_night_light">Night light</string>
-    <string name="stop_info_nodata_minutes">No arrivals in the next %1$d min.</string>
+    <string name="stop_info_type_arrival">arrivals</string>
+    <string name="stop_info_type_departure">departures</string>
+    <string name="stop_info_nodata_minutes">No %1$s in the next %2$d min.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_nodata_hours_minutes">
-        <item quantity="one">No arrivals in the next 1 hour and %1$d min.</item>
+        <item quantity="one">No %1$s in the next 1 hour and %2$d min.</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">No arrivals in the next
-            <xliff:g id="count">%2$d</xliff:g>
-            hours and %1$d min.
+        <item quantity="other">No %1$s in the next
+            <xliff:g id="count">%3$d</xliff:g>
+            hours and %2$d min.
         </item>
     </plurals>
     <plurals name="stop_info_nodata_hours_minutes_short_format">
@@ -253,16 +255,16 @@
         <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
         </item>
     </plurals>
-    <string name="stop_info_no_additional_data_minutes">No additional arrivals in the next %1$d
+    <string name="stop_info_no_additional_data_minutes">No additional %1$s in the next %2$d
         min.
     </string>
     <string name="stop_info_no_additional_data_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_no_additional_data_hours_minutes">
-        <item quantity="one">No additional arrivals in the next 1 hr and %1$d min.</item>
+        <item quantity="one">No additional %1$s in the next 1 hr and %2$d min.</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">No additional arrivals in the next
-            <xliff:g id="count">%2$d</xliff:g>
-            hrs and %1$d min.
+        <item quantity="other">No additional %1$s in the next
+            <xliff:g id="count">%3$d</xliff:g>
+            hrs and %2$d min.
         </item>
     </plurals>
     <plurals name="stop_info_no_additional_data_hours_minutes_short_format">
@@ -272,10 +274,15 @@
         </item>
     </plurals>
     <string name="stop_info_load_more_arrivals">Load more arrivals</string>
+    <string name="stop_info_load_more_departures">Load more departures</string>
     <string name="stop_info_item_options_title">Bus options</string>
     <string name="stop_info_filter_title">Show only these routes</string>
     <string name="stop_info_filter_header">Showing %1$d of %2$d routes</string>
     <string name="stop_info_filter_showall">(show all)</string>
+    <string name="stop_info_arrival_filter_title">Show</string>
+    <string name="stop_info_arrival_filter_both">Both</string>
+    <string name="stop_info_arrival_filter_arrivals">Arrivals only</string>
+    <string name="stop_info_arrival_filter_departures">Departures only</string>
     <string name="stop_info_save">Save</string>
     <string name="stop_info_cancel">Cancel</string>
     <string name="stop_info_clear">Clear</string>

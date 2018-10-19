@@ -33,6 +33,8 @@
         <item android:id="@+id/filter"
               android:title="@string/stop_info_option_filter"
               android:icon="@drawable/ic_menu_trip"/>
+        <item android:id="@+id/arrival_filter"
+              android:title="Filter arrivals/departures" />
         <item android:id="@+id/edit_name"
               android:title="@string/stop_info_option_editname"
               android:icon="@drawable/android:ic_menu_edit"/>

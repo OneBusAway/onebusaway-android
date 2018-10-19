@@ -36,6 +36,7 @@ import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.ArrivalInfoUtils.ArrivalFilter;
 import org.onebusaway.android.util.UIUtils;
 
 import android.graphics.Color;
@@ -190,7 +191,7 @@ public class UIUtilTest extends ObaTestCase {
         ObaArrivalInfo[] arrivals = response.getArrivalInfo();
         assertNotNull(arrivals);
         ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getTargetContext(),
-                arrivals, null, response.getCurrentTime(), true);
+                arrivals, ArrivalFilter.BOTH, null, response.getCurrentTime(), true);
 
         ObaRoute route = response.getRoute(arrivalInfo.get(0).getInfo().getRouteId());
         String url = route != null ? route.getUrl() : null;
@@ -239,7 +240,7 @@ public class UIUtilTest extends ObaTestCase {
         arrivals = response2.getArrivalInfo();
         assertNotNull(arrivals);
         arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getTargetContext(),
-                arrivals, null, response2.getCurrentTime(), true);
+                arrivals, ArrivalFilter.BOTH, null, response2.getCurrentTime(), true);
 
         route = response2.getRoute(arrivalInfo.get(0).getInfo().getRouteId());
         url = route != null ? route.getUrl() : null;
@@ -500,7 +501,7 @@ public class UIUtilTest extends ObaTestCase {
         ObaArrivalInfo[] arrivals = response.getArrivalInfo();
         assertNotNull(arrivals);
         ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getTargetContext(),
-                arrivals, null, response.getCurrentTime(), true);
+                arrivals, ArrivalFilter.BOTH, null, response.getCurrentTime(), true);
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
         validateUatcArrivalInfo(arrivalInfo);
@@ -530,7 +531,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // Process the response again (resetting the included favorite info)
         arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getTargetContext(),
-                arrivals, null, response.getCurrentTime(), true);
+                arrivals, ArrivalFilter.BOTH, null, response.getCurrentTime(), true);
         preferredArrivalIndexes = ArrivalInfoUtils.findPreferredArrivalIndexes(arrivalInfo);
 
         // Now the first two non-negative arrival times should be returned - indexes 5 and 6
@@ -570,7 +571,7 @@ public class UIUtilTest extends ObaTestCase {
         boolean includeArriveDepartLabels = true;
         ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(
                 getTargetContext(),
-                arrivals, null, response.getCurrentTime(), includeArriveDepartLabels);
+                arrivals, ArrivalFilter.BOTH, null, response.getCurrentTime(), includeArriveDepartLabels);
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
         validateUatcArrivalInfo(arrivalInfo);
@@ -672,7 +673,8 @@ public class UIUtilTest extends ObaTestCase {
          * Status labels *without* arrive/depart included
          */
         includeArriveDepartLabels = false;
-        arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getTargetContext(), arrivals, null,
+        arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getTargetContext(), arrivals,
+                ArrivalFilter.BOTH, null,
                 response.getCurrentTime(), includeArriveDepartLabels);
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
@@ -780,6 +782,153 @@ public class UIUtilTest extends ObaTestCase {
                 + " is arriving in 35 min!", arrivalInfo.get(30).getNotifyText());
         assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(31).getInfo())
                 + " is departing in 35 min!", arrivalInfo.get(31).getNotifyText());
+    }
+
+    /***
+     * Tests filtering arrivals to show only arrivals or only departures
+     */
+    @Test
+    public void testArrivalTypeFiltering() {
+        // Initial setup to get an ObaArrivalInfo object from a test response
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
+        assertNotNull(tampa);
+        Application.get().setCurrentRegion(tampa);
+
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
+                        "Hillsborough Area Regional Transit_6497").build().call();
+        assertOK(response);
+        ObaStop stop = response.getStop();
+        assertNotNull(stop);
+        assertEquals("Hillsborough Area Regional Transit_6497", stop.getId());
+        List<ObaRoute> routes = response.getRoutes(stop.getRouteIds());
+        assertTrue(routes.size() > 0);
+        ObaAgency agency = response.getAgency(routes.get(0).getAgencyId());
+        assertEquals("Hillsborough Area Regional Transit", agency.getId());
+
+        // Get the response
+        ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+        assertNotNull(arrivals);
+
+        ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(
+                getTargetContext(),
+                arrivals, ArrivalFilter.ONLY_ARRIVALS, null, response.getCurrentTime(), true);
+
+        // Check that there are the correct number of arrivals
+        assertEquals(18, arrivalInfo.size());
+
+        // Check that the first few are arrivals
+        assertEquals("Arrived on time", arrivalInfo.get(0).getStatusText());
+        assertEquals("Arrived at " + formatTime(1438804260000L),
+                arrivalInfo.get(0).getTimeText());
+        assertEquals("Arrived on time", arrivalInfo.get(1).getStatusText());
+        assertEquals("Arrived at " + formatTime(1438804440000L), arrivalInfo.get(1).getTimeText());
+        assertEquals("On time", arrivalInfo.get(2).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438804500000L), arrivalInfo.get(2).getTimeText());
+        assertEquals("5 min delay", arrivalInfo.get(3).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438804680000L), arrivalInfo.get(3).getTimeText());
+        assertEquals("10 min delay", arrivalInfo.get(4).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438804860000L), arrivalInfo.get(4).getTimeText());
+        assertEquals("1 min early", arrivalInfo.get(5).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438804920000L), arrivalInfo.get(5).getTimeText());
+        assertEquals("On time", arrivalInfo.get(6).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438805100000L), arrivalInfo.get(6).getTimeText());
+
+        // Check last arrival
+        assertEquals("9 min delay", arrivalInfo.get(17).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438806600000L), arrivalInfo.get(17).getTimeText());
+
+        ArrayList<ArrivalInfo> departureInfo = ArrivalInfoUtils.convertObaArrivalInfo(
+                getTargetContext(),
+                arrivals, ArrivalFilter.ONLY_DEPARTURES, null, response.getCurrentTime(), true);
+
+        // Check that there are the correct number of departures
+        assertEquals(14, departureInfo.size());
+
+        // Check that the first few are departures
+        assertEquals("Departed 2 min late", departureInfo.get(0).getStatusText());
+        assertEquals("Departed at " + formatTime(1438804320000L), departureInfo.get(0).getTimeText());
+        assertEquals("Departed 1 min early", departureInfo.get(1).getStatusText());
+        assertEquals("Departed at " + formatTime(1438804440000L), departureInfo.get(1).getTimeText());
+        assertEquals("Departed 6 min early", departureInfo.get(2).getStatusText());
+        assertEquals("Departed at " + formatTime(1438804440000L), departureInfo.get(2).getTimeText());
+        assertEquals("On time", departureInfo.get(3).getStatusText());
+        assertEquals("Departing at " + formatTime(1438804500000L), departureInfo.get(3).getTimeText());
+        assertEquals("On time", departureInfo.get(4).getStatusText());
+        assertEquals("Departing at " + formatTime(1438804800000L), departureInfo.get(4).getTimeText());
+        assertEquals("On time", departureInfo.get(5).getStatusText());
+        assertEquals("Departing at " + formatTime(1438804800000L), departureInfo.get(5).getTimeText());
+        assertEquals("1 min early", departureInfo.get(6).getStatusText());
+        assertEquals("Departing at " + formatTime(1438805340000L), departureInfo.get(6).getTimeText());
+
+        // Check last departure
+        assertEquals("On time", departureInfo.get(13).getStatusText());
+        assertEquals("Departing at " + formatTime(1438806600000L), departureInfo.get(13).getTimeText());
+    }
+
+    /***
+     * Test getNoArrivalsMessage for arrivals vs. departures for all possible strings
+     */
+    @Test
+    public void testGetNoArrivalsMessage() {
+        String result;
+
+        // Arrivals only or both arrivals and departures
+        boolean onlyDepartures = false;
+
+        // Less than an hour
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, false, onlyDepartures);
+        assertEquals("No arrivals in the next 35 min.", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, false, onlyDepartures);
+        assertEquals("No additional arrivals in the next 35 min.", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, true, onlyDepartures);
+        assertEquals("35+ min", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, true, onlyDepartures);
+        assertEquals("35+ min", result);
+
+        // More than an hour
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, false, onlyDepartures);
+        assertEquals("No arrivals in the next 1 hour and 15 min.", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, false, onlyDepartures);
+        assertEquals("No additional arrivals in the next 1 hr and 15 min.", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, true, onlyDepartures);
+        assertEquals("1h 15+ min", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, true, onlyDepartures);
+        assertEquals("1h 15+ min", result);
+
+        onlyDepartures = true;
+
+        // Less than an hour
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, false, onlyDepartures);
+        assertEquals("No departures in the next 35 min.", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, false, onlyDepartures);
+        assertEquals("No additional departures in the next 35 min.", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, true, onlyDepartures);
+        assertEquals("35+ min", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, true, onlyDepartures);
+        assertEquals("35+ min", result);
+
+        // More than an hour
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, false, onlyDepartures);
+        assertEquals("No departures in the next 1 hour and 15 min.", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, false, onlyDepartures);
+        assertEquals("No additional departures in the next 1 hr and 15 min.", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, true, onlyDepartures);
+        assertEquals("1h 15+ min", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, true, onlyDepartures);
+        assertEquals("1h 15+ min", result);
     }
 
     @Test

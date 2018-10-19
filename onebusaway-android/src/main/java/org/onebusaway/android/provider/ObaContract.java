@@ -168,6 +168,25 @@ public final class ObaContract {
         // No additional columns
     }
 
+    protected interface StopArrivalFilterColumns {
+        /**
+         * The referenced Stop ID. This may or may not represent a key in the
+         * Stops table.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String STOP_ID = "stop_id";
+
+        /**
+         * Whether the selected stop should show arrivals, departures or both.
+         * <P>
+         * Type: INTEGER
+         * </P>
+         */
+        public static final String ARRIVAL_FILTER = "arrival_filter";
+    }
+
     protected interface TripsColumns extends StopRouteKeyColumns {
 
         /**
@@ -727,6 +746,51 @@ public final class ObaContract {
             }
             // If we get this far, assume its not
             return false;
+        }
+    }
+
+    public static class StopArrivalFilter implements StopArrivalFilterColumns {
+        private StopArrivalFilter() {
+            // Cannot be instantiated
+        }
+
+        public static final String PATH = "stop_arrival_filter";
+
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, PATH);
+        public static final String CONTENT_DIR_TYPE = "vnd.android.dit" +
+                BuildConfig.DATABASE_AUTHORITY + ".stoparrivalfilter";
+
+        private static final String FILTER_WHERE = STOP_ID + "=?";
+
+        public static int get(Context context, String stopId) {
+            final String[] selection = {ARRIVAL_FILTER};
+            final String[] selectionArgs = {stopId};
+            ContentResolver cr = context.getContentResolver();
+            Cursor c = cr.query(CONTENT_URI, selection, FILTER_WHERE, selectionArgs, null);
+
+            int result = 0;
+            if (c != null && c.moveToNext()) {
+                result = c.getInt(0);
+            }
+            c.close();
+
+            return result;
+        }
+
+        public static void set(Context context, String stopId, int filterOption) {
+            if (context == null) {
+                return;
+            }
+
+            final String[] selectionArgs = {stopId};
+            ContentResolver cr = context.getContentResolver();
+
+            cr.delete(CONTENT_URI, FILTER_WHERE, selectionArgs);
+
+            ContentValues values = new ContentValues();
+            values.put(ARRIVAL_FILTER, filterOption);
+            values.put(STOP_ID, stopId);
+            cr.insert(CONTENT_URI, values);
         }
     }
 

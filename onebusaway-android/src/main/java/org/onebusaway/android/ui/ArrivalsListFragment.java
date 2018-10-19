@@ -35,6 +35,7 @@ import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
 import org.onebusaway.android.util.ArrayAdapterWithIcon;
 import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.ArrivalInfoUtils.ArrivalFilter;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.FragmentUtils;
@@ -153,6 +154,8 @@ public class ArrivalsListFragment extends ListFragment
 
     // The list of route_ids that should have their arrival info and alerts displayed. (All if empty or null)
     private ArrayList<String> mRoutesFilter;
+
+    private ArrivalFilter mArrivalFilter;
 
     private int mLastResponseLength = -1; // Keep copy locally, since loader overwrites
 
@@ -311,15 +314,18 @@ public class ArrivalsListFragment extends ListFragment
         mAlertList = new AlertList(getActivity());
         mAlertList.initView(getView().findViewById(R.id.arrivals_alert_list));
 
+        // This sets the stopId and uri
+        setStopId();
+        setUserInfo();
+
+        int arrivalFilter = ObaContract.StopArrivalFilter.get(getActivity(), mStopId);
+        mArrivalFilter = ArrivalFilter.fromInt(arrivalFilter);
+
         setupHeader(savedInstanceState);
 
         setupFooter();
 
         setupEmptyList(null);
-
-        // This sets the stopId and uri
-        setStopId();
-        setUserInfo();
 
         // Create an empty adapter we will use to display the loaded data
         instantiateAdapter(BuildFlavorUtils.getArrivalInfoStyleFromPreferences());
@@ -340,7 +346,8 @@ public class ArrivalsListFragment extends ListFragment
         // Set initial minutesAfter value in the empty list view
         setEmptyText(
                 UIUtils.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(),
-                        false, false)
+                        false, false,
+                        mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES)
         );
 
         if (mHeader != null) {
@@ -511,7 +518,8 @@ public class ArrivalsListFragment extends ListFragment
                 // No additional arrivals were included in the response, show a toast
                 Toast.makeText(getActivity(),
                         UIUtils.getNoArrivalsMessage(getActivity(),
-                                getArrivalsLoader().getMinutesAfter(), true, false),
+                                getArrivalsLoader().getMinutesAfter(), true, false,
+                                mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES),
                         Toast.LENGTH_LONG
                 ).show();
                 mLoadedMoreArrivals = false;  // Only show the toast once
@@ -574,8 +582,9 @@ public class ArrivalsListFragment extends ListFragment
             }
             // Reset the empty text just in case there is no data.
             setEmptyText(UIUtils.getNoArrivalsMessage(Application.get().getApplicationContext(),
-                    minutesAfter, false, false));
-            mAdapter.setData(info, mRoutesFilter, System.currentTimeMillis());
+                    minutesAfter, false, false,
+                    mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES));
+            mAdapter.setData(info, mRoutesFilter, mArrivalFilter, System.currentTimeMillis());
         }
 
         if (mHeader != null) {
@@ -586,7 +595,7 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public void onLoaderReset(Loader<ObaArrivalInfoResponse> loader) {
         showProgress(false);
-        mAdapter.setData(null, mRoutesFilter, System.currentTimeMillis());
+        mAdapter.setData(null, mRoutesFilter, mArrivalFilter, System.currentTimeMillis());
 
         mArrivalInfo = null;
 
@@ -654,6 +663,8 @@ public class ArrivalsListFragment extends ListFragment
             if (mStop != null) {
                 showRoutesFilterDialog();
             }
+        } else if (id == R.id.arrival_filter) {
+            showArrivalFilterDialog();
         } else if (id == R.id.show_header_arrivals) {
             doShowHideHeaderArrivals();
         } else if (id == R.id.edit_name) {
@@ -944,7 +955,7 @@ public class ArrivalsListFragment extends ListFragment
         ArrayList<ArrivalInfo> list = null;
 
         if (mArrivalInfo != null) {
-            list = ArrivalInfoUtils.convertObaArrivalInfo(getActivity(), mArrivalInfo, mRoutesFilter,
+            list = ArrivalInfoUtils.convertObaArrivalInfo(getActivity(), mArrivalInfo, mArrivalFilter, mRoutesFilter,
                     System.currentTimeMillis(), true);
         }
         return list;
@@ -1139,6 +1150,11 @@ public class ArrivalsListFragment extends ListFragment
     private void setupFooter() {
         // Setup list footer button to load more arrivals (when arrivals are shown)
         Button loadMoreArrivals = (Button) mFooter.findViewById(R.id.load_more_arrivals);
+
+        if (mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES) {
+            loadMoreArrivals.setText(R.string.stop_info_load_more_departures);
+        }
+        
         loadMoreArrivals.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -1158,6 +1174,11 @@ public class ArrivalsListFragment extends ListFragment
     private void setupEmptyList(CharSequence currentText) {
         Button loadMoreArrivalsEmptyList = (Button) mEmptyList
                 .findViewById(R.id.load_more_arrivals);
+
+        if (mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES) {
+            loadMoreArrivalsEmptyList.setText(R.string.stop_info_load_more_departures);
+        }
+
         loadMoreArrivalsEmptyList.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -1332,6 +1353,14 @@ public class ArrivalsListFragment extends ListFragment
         frag.show(getActivity().getSupportFragmentManager(), ".RoutesFilterDialog");
     }
 
+    private void showArrivalFilterDialog() {
+        Bundle args = new Bundle();
+        args.putInt(ArrivalFilterDialog.SELECTION, mArrivalFilter.toInt());
+        ArrivalFilterDialog frag = new ArrivalFilterDialog();
+        frag.setArguments(args);
+        frag.show(getActivity().getSupportFragmentManager(), ".ArrivalFilterDialog");
+    }
+
     private void showStopDetailsDialog() {
         // Create dialog contents
         String stopCode = null;
@@ -1472,6 +1501,88 @@ public class ArrivalsListFragment extends ListFragment
         setRoutesFilter(newFilter);
     }
 
+    private void setArrivalFilter(int selection) {
+        ArrivalFilter newFilter = ArrivalFilter.fromInt(selection);
+
+        boolean switchedFromOnlyDepartures =
+                mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES &&
+                        newFilter != ArrivalFilter.ONLY_DEPARTURES;
+
+        mArrivalFilter = newFilter;
+
+        ObaContract.StopArrivalFilter.set(getActivity(), mStopId, selection);
+        refreshSituations(UIUtils.getAllSituations(getArrivalsLoader().getLastGoodResponse(), mRoutesFilter));
+        refreshLocal();
+
+        // Update empty text to reflect arrival filter choice (e.g. no more departures vs arrivals)
+        if (mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES || switchedFromOnlyDepartures) {
+            setEmptyText(UIUtils.getNoArrivalsMessage(Application.get().getApplicationContext(),
+                    getArrivalsLoader().getMinutesAfter(), false, false,
+                    mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES));
+        }
+
+        // Update "load more" button to say arrivals/departures based on filter settings
+        Button footerButton = (Button) mFooter.findViewById(R.id.load_more_arrivals);
+        Button emptyButton = (Button) mEmptyList.findViewById(R.id.load_more_arrivals);
+        if (mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES) {
+            footerButton.setText(R.string.stop_info_load_more_departures);
+            emptyButton.setText(R.string.stop_info_load_more_departures);
+        }
+        if (switchedFromOnlyDepartures) {
+            footerButton.setText(R.string.stop_info_load_more_arrivals);
+            emptyButton.setText(R.string.stop_info_load_more_arrivals);
+        }
+    }
+
+    public static class ArrivalFilterDialog extends DialogFragment
+            implements DialogInterface.OnClickListener {
+
+        static final String SELECTION = ".selection";
+
+        private int mSelection;
+
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            Bundle args = getArguments();
+
+            CharSequence[] options = {
+                    getString(R.string.stop_info_arrival_filter_both),
+                    getString(R.string.stop_info_arrival_filter_arrivals),
+                    getString(R.string.stop_info_arrival_filter_departures)
+            };
+
+            mSelection = args.getInt(SELECTION);
+            if (savedInstanceState != null) {
+                mSelection = savedInstanceState.getInt(SELECTION);
+            }
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            return builder.setTitle(R.string.stop_info_arrival_filter_title)
+                    .setSingleChoiceItems(options, mSelection, this)
+                    .create();
+        }
+
+        @Override
+        public void onClick(DialogInterface dialog, int i) {
+            Activity act = getActivity();
+            ArrivalsListFragment frag = null;
+
+            if (act instanceof ArrivalsListActivity) {
+                frag = ((ArrivalsListActivity) act).getArrivalsListFragment();
+            } else if (act instanceof HomeActivity) {
+                frag = ((HomeActivity) act).getArrivalsListFragment();
+            }
+
+            frag.setArrivalFilter(i);
+            dialog.dismiss();
+        }
+
+        @Override
+        public void onSaveInstanceState(Bundle outState) {
+            outState.putInt(SELECTION, mSelection);
+        }
+
+    }
+
     //
     // Navigation
     //
@@ -1557,7 +1668,7 @@ public class ArrivalsListFragment extends ListFragment
                 // Nothing to refresh yet
                 return;
             }
-            mAdapter.setData(response.getArrivalInfo(), mRoutesFilter, System.currentTimeMillis());
+            mAdapter.setData(response.getArrivalInfo(), mRoutesFilter, mArrivalFilter, System.currentTimeMillis());
         }
         if (mHeader != null) {
             mHeader.refresh();

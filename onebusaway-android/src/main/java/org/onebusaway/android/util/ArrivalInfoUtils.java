@@ -42,7 +42,8 @@ public class ArrivalInfoUtils {
      *
      * @param context
      * @param arrivalInfo
-     * @param filter                               routeIds to filter for
+     * @param arrivalFilter                        whether to include arrivals, departures or both
+     * @param routeFilter                          routeIds to filter for
      * @param ms                                   current time in milliseconds
      * @param includeArrivalDepartureInStatusLabel true if the arrival/departure label should be
      *                                             included in the status label, false if it should
@@ -51,19 +52,23 @@ public class ArrivalInfoUtils {
      */
     public static final ArrayList<ArrivalInfo> convertObaArrivalInfo(Context context,
                                                                      ObaArrivalInfo[] arrivalInfo,
-                                                                     ArrayList<String> filter, long ms,
+                                                                     ArrivalFilter arrivalFilter,
+                                                                     ArrayList<String> routeFilter, long ms,
                                                                      boolean includeArrivalDepartureInStatusLabel) {
         final int len = arrivalInfo.length;
         ArrayList<ArrivalInfo> result = new ArrayList<ArrivalInfo>(len);
-        if (filter != null && filter.size() > 0) {
+
+        if (routeFilter != null && routeFilter.size() > 0) {
             // Only add routes that haven't been filtered out
             for (int i = 0; i < len; ++i) {
                 ObaArrivalInfo arrival = arrivalInfo[i];
-                if (filter.contains(arrival.getRouteId())) {
+                if (routeFilter.contains(arrival.getRouteId())) {
                     ArrivalInfo info = new ArrivalInfo(context, arrival, ms,
                             includeArrivalDepartureInStatusLabel);
-                    if (shouldAddEta(info)) {
-                        result.add(info);
+                    if (shouldIncludeArrivalType(arrivalFilter, info)) {
+                        if (shouldAddEta(info)) {
+                            result.add(info);
+                        }
                     }
                 }
             }
@@ -72,8 +77,10 @@ public class ArrivalInfoUtils {
             for (int i = 0; i < len; ++i) {
                 ArrivalInfo info = new ArrivalInfo(context, arrivalInfo[i], ms,
                         includeArrivalDepartureInStatusLabel);
-                if (shouldAddEta(info)) {
-                    result.add(info);
+                if (shouldIncludeArrivalType(arrivalFilter, info)) {
+                    if (shouldAddEta(info)) {
+                        result.add(info);
+                    }
                 }
             }
         }
@@ -81,6 +88,49 @@ public class ArrivalInfoUtils {
         // Sort by ETA
         Collections.sort(result, new InfoComparator());
         return result;
+    }
+
+    /***
+     * Returns true if the provided ArrivalInfo should be included based off of it's arrival type
+     * and the current arrivalFilter
+     *
+     * @param arrivalFilter whether to include arrivals, departures or both
+     * @param info info that includes the arrival type to be evaluated
+     * @return true if the given arrival info should be included based on arrivalFilter, false if not
+     */
+    private static boolean shouldIncludeArrivalType(ArrivalFilter arrivalFilter, ArrivalInfo info) {
+        return (arrivalFilter == ArrivalFilter.BOTH)
+                || (arrivalFilter == ArrivalFilter.ONLY_ARRIVALS && info.isArrival())
+                || (arrivalFilter == ArrivalFilter.ONLY_DEPARTURES && !info.isArrival());
+    }
+
+    /***
+     * Type for arrival filtering options (only arrivals, only departures, or both)
+     */
+    public enum ArrivalFilter {
+        BOTH(0), ONLY_ARRIVALS(1), ONLY_DEPARTURES(2);
+
+        private int value;
+
+        ArrivalFilter(int value) {
+            this.value = value;
+        }
+
+        public static ArrivalFilter fromInt(int value) {
+            switch (value) {
+                case 0:
+                    return ArrivalFilter.BOTH;
+                case 1:
+                    return ArrivalFilter.ONLY_ARRIVALS;
+                case 2:
+                    return ArrivalFilter.ONLY_DEPARTURES;
+            }
+            return ArrivalFilter.BOTH;
+        }
+
+        public int toInt() {
+            return this.value;
+        }
     }
 
     /**

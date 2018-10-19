@@ -181,7 +181,7 @@ public class SimpleArrivalListFragment extends Fragment
         contentLayout.removeAllViews();
 
         ArrayList<ArrivalInfo> arrivalInfos = ArrivalInfoUtils.convertObaArrivalInfo(getActivity(),
-                info, new ArrayList<String>(), currentTime, false);
+                info, ArrivalInfoUtils.ArrivalFilter.BOTH, new ArrayList<String>(), currentTime, false);
 
         for (ArrivalInfo stopInfo : arrivalInfos) {
 

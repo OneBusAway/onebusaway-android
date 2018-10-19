@@ -909,11 +909,20 @@ public final class UIUtils {
      *                           it should not
      * @param shortFormat        true if the format should be abbreviated, false if it should be
      *                           long
+     * @param onlyDepartures     true if the user has filtered out all arrivals
      * @return a user-readable string saying the number of minutes in which no arrivals are coming,
      * or the number of hours and minutes if minutes > 60
      */
     public static String getNoArrivalsMessage(Context context, int minutes,
-            boolean additionalArrivals, boolean shortFormat) {
+            boolean additionalArrivals, boolean shortFormat, boolean onlyDepartures) {
+
+        String type;
+        if (onlyDepartures) {
+            type = context.getString(R.string.stop_info_type_departure);
+        } else {
+            type = context.getString(R.string.stop_info_type_arrival);
+        }
+
         if (minutes <= MINUTES_IN_HOUR) {
             // Return just minutes
             if (additionalArrivals) {
@@ -925,7 +934,7 @@ public final class UIUtils {
                 } else {
                     // Long version
                     return context
-                            .getString(R.string.stop_info_no_additional_data_minutes, minutes);
+                            .getString(R.string.stop_info_no_additional_data_minutes, type, minutes);
                 }
             } else {
                 if (shortFormat) {
@@ -934,7 +943,7 @@ public final class UIUtils {
                             .getString(R.string.stop_info_nodata_minutes_short_format, minutes);
                 } else {
                     // Long version
-                    return context.getString(R.string.stop_info_nodata_minutes, minutes);
+                    return context.getString(R.string.stop_info_nodata_minutes, type, minutes);
                 }
             }
         } else {
@@ -950,7 +959,7 @@ public final class UIUtils {
                     // Long version
                     return context.getResources()
                             .getQuantityString(R.plurals.stop_info_no_additional_data_hours_minutes,
-                                    minutes / 60, minutes % 60, minutes / 60);
+                                    minutes / 60, type, minutes % 60, minutes / 60);
                 }
             } else {
                 if (shortFormat) {
@@ -965,7 +974,7 @@ public final class UIUtils {
                     return context.getResources()
                             .getQuantityString(R.plurals.stop_info_nodata_hours_minutes,
                                     minutes / 60,
-                                    minutes % 60, minutes / 60);
+                                    type, minutes % 60, minutes / 60);
                 }
             }
         }

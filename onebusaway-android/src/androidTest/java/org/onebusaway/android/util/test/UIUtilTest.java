@@ -873,61 +873,91 @@ public class UIUtilTest extends ObaTestCase {
     public void testGetNoArrivalsMessage() {
         String result;
 
-        // Arrivals only or both arrivals and departures
-        boolean onlyDepartures = false;
+        // Test for both arrivals and departures
+        ArrivalFilter arrivalFilter = ArrivalFilter.BOTH;
 
         // Less than an hour
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, false, onlyDepartures);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, false, arrivalFilter);
         assertEquals("No arrivals in the next 35 min.", result);
 
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, false, onlyDepartures);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, false, arrivalFilter);
         assertEquals("No additional arrivals in the next 35 min.", result);
 
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, true, onlyDepartures);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, true, arrivalFilter);
         assertEquals("35+ min", result);
 
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, true, onlyDepartures);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, true, arrivalFilter);
         assertEquals("35+ min", result);
 
         // More than an hour
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, false, onlyDepartures);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, false, arrivalFilter);
         assertEquals("No arrivals in the next 1 hour and 15 min.", result);
 
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, false, onlyDepartures);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, false, arrivalFilter);
         assertEquals("No additional arrivals in the next 1 hr and 15 min.", result);
 
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, true, onlyDepartures);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, true, arrivalFilter);
         assertEquals("1h 15+ min", result);
 
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, true, onlyDepartures);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, true, arrivalFilter);
         assertEquals("1h 15+ min", result);
 
-        onlyDepartures = true;
+        // Test for only arrivals
+        arrivalFilter = ArrivalFilter.ONLY_ARRIVALS;
 
         // Less than an hour
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, false, onlyDepartures);
-        assertEquals("No departures in the next 35 min.", result);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, false, arrivalFilter);
+        assertEquals("No arrivals in the next 35 min.", result);
 
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, false, onlyDepartures);
-        assertEquals("No additional departures in the next 35 min.", result);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, false, arrivalFilter);
+        assertEquals("No additional arrivals in the next 35 min.", result);
 
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, true, onlyDepartures);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, true, arrivalFilter);
         assertEquals("35+ min", result);
 
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, true, onlyDepartures);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, true, arrivalFilter);
         assertEquals("35+ min", result);
 
         // More than an hour
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, false, onlyDepartures);
-        assertEquals("No departures in the next 1 hour and 15 min.", result);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, false, arrivalFilter);
+        assertEquals("No arrivals in the next 1 hour and 15 min.", result);
 
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, false, onlyDepartures);
-        assertEquals("No additional departures in the next 1 hr and 15 min.", result);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, false, arrivalFilter);
+        assertEquals("No additional arrivals in the next 1 hr and 15 min.", result);
 
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, true, onlyDepartures);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, true, arrivalFilter);
         assertEquals("1h 15+ min", result);
 
-        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, true, onlyDepartures);
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, true, arrivalFilter);
+        assertEquals("1h 15+ min", result);
+
+        // Test for only departures
+        arrivalFilter = ArrivalFilter.ONLY_DEPARTURES;
+
+        // Less than an hour
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, false, arrivalFilter);
+        assertEquals("No departures in the next 35 min.", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, false, arrivalFilter);
+        assertEquals("No additional departures in the next 35 min.", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, false, true, arrivalFilter);
+        assertEquals("35+ min", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 35, true, true, arrivalFilter);
+        assertEquals("35+ min", result);
+
+        // More than an hour
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, false, arrivalFilter);
+        assertEquals("No departures in the next 1 hour and 15 min.", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, false, arrivalFilter);
+        assertEquals("No additional departures in the next 1 hr and 15 min.", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, false, true, arrivalFilter);
+        assertEquals("1h 15+ min", result);
+
+        result = UIUtils.getNoArrivalsMessage(getTargetContext(), 75, true, true, arrivalFilter);
         assertEquals("1h 15+ min", result);
     }
 

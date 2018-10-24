@@ -286,11 +286,8 @@ public class ObaProvider extends ContentProvider {
             }
             if (oldVersion == 28) {
                 db.execSQL(
-                        "CREATE TABLE " +
-                                ObaContract.StopArrivalFilter.PATH + " (" +
-                                ObaContract.StopArrivalFilter.STOP_ID + " VARCHAR NOT NULL, " +
-                                ObaContract.StopArrivalFilter.ARRIVAL_FILTER + " INTEGER NOT NULL" +
-                                ");");
+                        "ALTER TABLE " + ObaContract.Stops.PATH +
+                                " ADD COLUMN " + ObaContract.Stops.ARRIVAL_FILTER + " INTEGER");
             }
         }
 
@@ -343,7 +340,6 @@ public class ObaProvider extends ContentProvider {
 
         private void dropTables(SQLiteDatabase db) {
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.StopRouteFilters.PATH);
-            db.execSQL("DROP TABLE IF EXISTS " + ObaContract.StopArrivalFilter.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.Routes.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.Stops.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.Trips.PATH);
@@ -392,8 +388,6 @@ public class ObaProvider extends ContentProvider {
 
     private static final int REGION_OPEN311_SERVERS_ID = 18;
 
-    private static final int STOP_ARRIVAL_FILTER = 19;
-
     private static final UriMatcher sUriMatcher;
 
     private static final HashMap<String, String> sStopsProjectionMap;
@@ -423,8 +417,6 @@ public class ObaProvider extends ContentProvider {
 
     private DatabaseUtils.InsertHelper mFilterInserter;
 
-    private DatabaseUtils.InsertHelper mArrivalFilterInserter;
-
     private DatabaseUtils.InsertHelper mServiceAlertsInserter;
 
     private DatabaseUtils.InsertHelper mRegionsInserter;
@@ -448,7 +440,6 @@ public class ObaProvider extends ContentProvider {
                 .addURI(ObaContract.AUTHORITY, ObaContract.TripAlerts.PATH + "/#", TRIP_ALERTS_ID);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.StopRouteFilters.PATH,
                 STOP_ROUTE_FILTERS);
-        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.StopArrivalFilter.PATH, STOP_ARRIVAL_FILTER);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.ServiceAlerts.PATH, SERVICE_ALERTS);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.ServiceAlerts.PATH + "/*",
                 SERVICE_ALERTS_ID);
@@ -471,6 +462,7 @@ public class ObaProvider extends ContentProvider {
         sStopsProjectionMap.put(ObaContract.Stops.USE_COUNT, ObaContract.Stops.USE_COUNT);
         sStopsProjectionMap.put(ObaContract.Stops.LATITUDE, ObaContract.Stops.LATITUDE);
         sStopsProjectionMap.put(ObaContract.Stops.LONGITUDE, ObaContract.Stops.LONGITUDE);
+        sStopsProjectionMap.put(ObaContract.Stops.ARRIVAL_FILTER, ObaContract.Stops.ARRIVAL_FILTER);
         sStopsProjectionMap.put(ObaContract.Stops.USER_NAME, ObaContract.Stops.USER_NAME);
         sStopsProjectionMap.put(ObaContract.Stops.ACCESS_TIME, ObaContract.Stops.ACCESS_TIME);
         sStopsProjectionMap.put(ObaContract.Stops.FAVORITE, ObaContract.Stops.FAVORITE);
@@ -620,8 +612,6 @@ public class ObaProvider extends ContentProvider {
                 return ObaContract.TripAlerts.CONTENT_TYPE;
             case STOP_ROUTE_FILTERS:
                 return ObaContract.StopRouteFilters.CONTENT_DIR_TYPE;
-            case STOP_ARRIVAL_FILTER:
-                return ObaContract.StopArrivalFilter.CONTENT_DIR_TYPE;
             case SERVICE_ALERTS:
                 return ObaContract.ServiceAlerts.CONTENT_DIR_TYPE;
             case SERVICE_ALERTS_ID:
@@ -757,15 +747,6 @@ public class ObaProvider extends ContentProvider {
                 mFilterInserter.insert(values);
                 return result;
 
-            case STOP_ARRIVAL_FILTER:
-                id = values.getAsString(ObaContract.StopArrivalFilter.STOP_ID);
-                if (id == null) {
-                    throw new IllegalArgumentException("Need a stop ID to insert! " + uri);
-                }
-                result = Uri.withAppendedPath(ObaContract.StopArrivalFilter.CONTENT_URI, id);
-                mArrivalFilterInserter.insert(values);
-                return result;
-
             case SERVICE_ALERTS:
                 // Pull out the Situation ID from the values to construct the new URI
                 // (And we'd better have a situation ID)
@@ -887,11 +868,6 @@ public class ObaProvider extends ContentProvider {
                 return qb.query(mDb, projection, selection, selectionArgs,
                         null, null, sortOrder, limit);
 
-            case STOP_ARRIVAL_FILTER:
-                qb.setTables(ObaContract.StopArrivalFilter.PATH);
-                return qb.query(mDb, projection, selection, selectionArgs,
-                        null, null, sortOrder, limit);
-
             case SERVICE_ALERTS:
                 qb.setTables(ObaContract.ServiceAlerts.PATH);
                 qb.setProjectionMap(sServiceAlertsProjectionMap);
@@ -997,9 +973,6 @@ public class ObaProvider extends ContentProvider {
             case STOP_ROUTE_FILTERS:
                 return 0;
 
-            case STOP_ARRIVAL_FILTER:
-                return db.update(ObaContract.StopArrivalFilter.PATH, values, selection, selectionArgs);
-
             case SERVICE_ALERTS:
                 return db.update(ObaContract.ServiceAlerts.PATH, values, selection, selectionArgs);
 
@@ -1069,9 +1042,6 @@ public class ObaProvider extends ContentProvider {
 
             case STOP_ROUTE_FILTERS:
                 return db.delete(ObaContract.StopRouteFilters.PATH, selection, selectionArgs);
-
-            case STOP_ARRIVAL_FILTER:
-                return db.delete(ObaContract.StopArrivalFilter.PATH, selection, selectionArgs);
 
             case SERVICE_ALERTS:
                 return db.delete(ObaContract.ServiceAlerts.PATH, selection, selectionArgs);
@@ -1150,8 +1120,6 @@ public class ObaProvider extends ContentProvider {
             mTripAlertsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.TripAlerts.PATH);
             mFilterInserter = new DatabaseUtils.InsertHelper(mDb,
                     ObaContract.StopRouteFilters.PATH);
-            mArrivalFilterInserter = new DatabaseUtils.InsertHelper(mDb,
-                    ObaContract.StopArrivalFilter.PATH);
             mServiceAlertsInserter = new DatabaseUtils.InsertHelper(mDb,
                     ObaContract.ServiceAlerts.PATH);
             mRegionsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.Regions.PATH);

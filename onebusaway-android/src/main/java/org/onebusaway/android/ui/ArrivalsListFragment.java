@@ -318,7 +318,7 @@ public class ArrivalsListFragment extends ListFragment
         setStopId();
         setUserInfo();
 
-        int arrivalFilter = ObaContract.StopArrivalFilter.get(getActivity(), mStopId);
+        int arrivalFilter = ObaContract.Stops.getArrivalFilter(getActivity(), mStopUri);
         mArrivalFilter = ArrivalFilter.fromInt(arrivalFilter);
 
         setupHeader(savedInstanceState);
@@ -346,8 +346,7 @@ public class ArrivalsListFragment extends ListFragment
         // Set initial minutesAfter value in the empty list view
         setEmptyText(
                 UIUtils.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(),
-                        false, false,
-                        mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES)
+                        false, false, mArrivalFilter)
         );
 
         if (mHeader != null) {
@@ -518,8 +517,7 @@ public class ArrivalsListFragment extends ListFragment
                 // No additional arrivals were included in the response, show a toast
                 Toast.makeText(getActivity(),
                         UIUtils.getNoArrivalsMessage(getActivity(),
-                                getArrivalsLoader().getMinutesAfter(), true, false,
-                                mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES),
+                                getArrivalsLoader().getMinutesAfter(), true, false, mArrivalFilter),
                         Toast.LENGTH_LONG
                 ).show();
                 mLoadedMoreArrivals = false;  // Only show the toast once
@@ -582,8 +580,7 @@ public class ArrivalsListFragment extends ListFragment
             }
             // Reset the empty text just in case there is no data.
             setEmptyText(UIUtils.getNoArrivalsMessage(Application.get().getApplicationContext(),
-                    minutesAfter, false, false,
-                    mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES));
+                    minutesAfter, false, false, mArrivalFilter));
             mAdapter.setData(info, mRoutesFilter, mArrivalFilter, System.currentTimeMillis());
         }
 
@@ -1007,6 +1004,11 @@ public class ArrivalsListFragment extends ListFragment
         } else {
             return null;
         }
+    }
+
+    @Override
+    public ArrivalFilter getArrivalFilter() {
+        return mArrivalFilter;
     }
 
     @Override
@@ -1510,15 +1512,14 @@ public class ArrivalsListFragment extends ListFragment
 
         mArrivalFilter = newFilter;
 
-        ObaContract.StopArrivalFilter.set(getActivity(), mStopId, selection);
+        ObaContract.Stops.setArrivalFilter(getActivity(), mStopUri, selection);
         refreshSituations(UIUtils.getAllSituations(getArrivalsLoader().getLastGoodResponse(), mRoutesFilter));
         refreshLocal();
 
         // Update empty text to reflect arrival filter choice (e.g. no more departures vs arrivals)
         if (mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES || switchedFromOnlyDepartures) {
             setEmptyText(UIUtils.getNoArrivalsMessage(Application.get().getApplicationContext(),
-                    getArrivalsLoader().getMinutesAfter(), false, false,
-                    mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES));
+                    getArrivalsLoader().getMinutesAfter(), false, false, mArrivalFilter));
         }
 
         // Update "load more" button to say arrivals/departures based on filter settings

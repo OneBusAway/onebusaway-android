@@ -909,15 +909,15 @@ public final class UIUtils {
      *                           it should not
      * @param shortFormat        true if the format should be abbreviated, false if it should be
      *                           long
-     * @param onlyDepartures     true if the user has filtered out all arrivals
+     * @param arrivalFilter      the user's current setting for showing arrivals, departures or both
      * @return a user-readable string saying the number of minutes in which no arrivals are coming,
      * or the number of hours and minutes if minutes > 60
      */
     public static String getNoArrivalsMessage(Context context, int minutes,
-            boolean additionalArrivals, boolean shortFormat, boolean onlyDepartures) {
+            boolean additionalArrivals, boolean shortFormat, ArrivalInfoUtils.ArrivalFilter arrivalFilter) {
 
         String type;
-        if (onlyDepartures) {
+        if (arrivalFilter == ArrivalInfoUtils.ArrivalFilter.ONLY_DEPARTURES) {
             type = context.getString(R.string.stop_info_type_departure);
         } else {
             type = context.getString(R.string.stop_info_type_arrival);

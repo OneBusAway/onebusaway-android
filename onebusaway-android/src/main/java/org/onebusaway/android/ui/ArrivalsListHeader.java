@@ -91,6 +91,8 @@ class ArrivalsListHeader {
 
         ArrayList<String> getRoutesFilter();
 
+        ArrivalFilter getArrivalFilter();
+
         void setRoutesFilter(ArrayList<String> filter);
 
         int getNumRoutes();
@@ -838,21 +840,18 @@ class ArrivalsListHeader {
                 }
             } else {
                 // Show abbreviated "no upcoming arrivals" message (e.g., "35+ min")
-
-                ArrivalFilter filter = ArrivalFilter
-                        .fromInt(ObaContract.StopArrivalFilter.get(mContext, mController.getStopId()));
-                boolean onlyDepartures = filter == ArrivalFilter.ONLY_DEPARTURES;
+                ArrivalFilter arrivalFilter = mController.getArrivalFilter();
 
                 int minAfter = mController.getMinutesAfter();
                 if (minAfter != -1) {
                     mNoArrivals
                             .setText(
-                                    UIUtils.getNoArrivalsMessage(mContext, minAfter, false, false, onlyDepartures));
+                                    UIUtils.getNoArrivalsMessage(mContext, minAfter, false, false, arrivalFilter));
                 } else {
                     minAfter = 35;  // Assume 35 minutes, because that's the API default
                     mNoArrivals
                             .setText(
-                                    UIUtils.getNoArrivalsMessage(mContext, minAfter, false, false, onlyDepartures));
+                                    UIUtils.getNoArrivalsMessage(mContext, minAfter, false, false, arrivalFilter));
                 }
                 mNumHeaderArrivals = 0;
             }

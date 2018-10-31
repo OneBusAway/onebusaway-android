@@ -318,8 +318,7 @@ public class ArrivalsListFragment extends ListFragment
         setStopId();
         setUserInfo();
 
-        int arrivalFilter = ObaContract.Stops.getArrivalFilter(getActivity(), mStopUri);
-        mArrivalFilter = ArrivalFilter.fromInt(arrivalFilter);
+        mArrivalFilter = ObaContract.Stops.getArrivalFilter(getActivity(), mStopUri);
 
         setupHeader(savedInstanceState);
 
@@ -1357,7 +1356,7 @@ public class ArrivalsListFragment extends ListFragment
 
     private void showArrivalFilterDialog() {
         Bundle args = new Bundle();
-        args.putInt(ArrivalFilterDialog.SELECTION, mArrivalFilter.toInt());
+        args.putInt(ArrivalFilterDialog.SELECTION, ArrivalFilter.toInt(mArrivalFilter));
         ArrivalFilterDialog frag = new ArrivalFilterDialog();
         frag.setArguments(args);
         frag.show(getActivity().getSupportFragmentManager(), ".ArrivalFilterDialog");
@@ -1512,7 +1511,7 @@ public class ArrivalsListFragment extends ListFragment
 
         mArrivalFilter = newFilter;
 
-        ObaContract.Stops.setArrivalFilter(getActivity(), mStopUri, selection);
+        ObaContract.Stops.setArrivalFilter(getActivity(), mStopUri, ArrivalFilter.fromInt(selection));
         refreshSituations(UIUtils.getAllSituations(getArrivalsLoader().getLastGoodResponse(), mRoutesFilter));
         refreshLocal();
 

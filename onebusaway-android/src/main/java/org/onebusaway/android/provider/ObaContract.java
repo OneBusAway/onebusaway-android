@@ -24,6 +24,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
+import org.onebusaway.android.util.ArrivalInfoUtils.ArrivalFilter;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -636,7 +637,7 @@ public final class ObaContract {
             return cr.update(uri, values, null, null) > 0;
         }
 
-        public static int getArrivalFilter(Context context, Uri uri) {
+        public static ArrivalFilter getArrivalFilter(Context context, Uri uri) {
             ContentResolver cr = context.getContentResolver();
             Cursor c = cr.query(uri, new String[]{ARRIVAL_FILTER}, null, null, null);
 
@@ -649,13 +650,15 @@ public final class ObaContract {
                 c.close();
             }
 
-            return result;
+            return ArrivalFilter.fromInt(result);
         }
 
-        public static void setArrivalFilter(Context context, Uri uri, int filterOption) {
+        public static void setArrivalFilter(Context context, Uri uri, ArrivalFilter arrivalFilter) {
             if (context == null) {
                 return;
             }
+
+            int filterOption = ArrivalFilter.toInt(arrivalFilter);
 
             ContentResolver cr = context.getContentResolver();
             ContentValues values = new ContentValues();

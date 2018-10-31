@@ -108,13 +108,7 @@ public class ArrivalInfoUtils {
      * Type for arrival filtering options (only arrivals, only departures, or both)
      */
     public enum ArrivalFilter {
-        BOTH(0), ONLY_ARRIVALS(1), ONLY_DEPARTURES(2);
-
-        private int value;
-
-        ArrivalFilter(int value) {
-            this.value = value;
-        }
+        BOTH, ONLY_ARRIVALS, ONLY_DEPARTURES;
 
         public static ArrivalFilter fromInt(int value) {
             switch (value) {
@@ -125,11 +119,21 @@ public class ArrivalInfoUtils {
                 case 2:
                     return ArrivalFilter.ONLY_DEPARTURES;
             }
+
             return ArrivalFilter.BOTH;
         }
 
-        public int toInt() {
-            return this.value;
+        public static int toInt(ArrivalFilter arrivalFilter) {
+            switch(arrivalFilter) {
+                case BOTH:
+                    return 0;
+                case ONLY_ARRIVALS:
+                    return 1;
+                case ONLY_DEPARTURES:
+                    return 2;
+            }
+
+            return 0;
         }
     }
 

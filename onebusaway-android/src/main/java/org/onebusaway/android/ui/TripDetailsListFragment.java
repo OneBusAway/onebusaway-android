@@ -31,6 +31,9 @@ import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -612,7 +615,33 @@ public class TripDetailsListFragment extends ListFragment {
             ImageView transitStop = (ImageView) convertView.findViewById(R.id.transit_stop);
 
             // Set bus and realtime indicator to match status color
-            bus.setColorFilter(getResources().getColor(statusColor));
+            int id;
+            switch (route.getType()) {
+                case ObaRoute.TYPE_FERRY:
+                    id = R.drawable.ic_ferry;
+                    break;
+                case ObaRoute.TYPE_SUBWAY:
+                    id = R.drawable.ic_subway;
+                    break;
+                case ObaRoute.TYPE_CABLECAR:
+                    id = R.drawable.ic_tram;
+                    break;
+                case ObaRoute.TYPE_TRAM:
+                    id = R.drawable.ic_tram;
+                    break;
+                case ObaRoute.TYPE_RAIL:
+                    id = R.drawable.ic_train;
+                    break;
+                case ObaRoute.TYPE_BUS:
+                    id = R.drawable.ic_bus;
+                    break;
+                default:
+                    id = R.drawable.ic_bus;
+                    break;
+            }
+            bus.setImageDrawable(getResources().getDrawable(id));
+            bus.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN); // Make the icon itself white
+            bus.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(statusColor))); // Change the circle's color
             UIUtils.setRealtimeIndicatorColor(realtime, getResources().getColor(statusColor),
                     android.R.color.transparent);
 

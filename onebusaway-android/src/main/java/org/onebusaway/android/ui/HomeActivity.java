@@ -45,6 +45,7 @@ import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PermissionUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
@@ -116,6 +117,7 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SIGN_IN;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
+import static org.onebusaway.android.util.UIUtils.LOCATION_PERMISSIONS;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_BOTTOM;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_END;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_START;
@@ -175,7 +177,6 @@ public class HomeActivity extends AppCompatActivity
     private ImageButton mZoomInBtn;
 
     private ImageButton mZoomOutBtn;
-
 
     private FloatingActionButton mFabMyLocation;
 
@@ -252,6 +253,10 @@ public class HomeActivity extends AppCompatActivity
     ProgressBar mMapProgressBar = null;
 
     boolean mLastMapProgressBarState = true;
+
+    private static final String INITIAL_STARTUP = "initialStartup";
+
+    boolean mInitialStartup = true;
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -354,6 +359,8 @@ public class HomeActivity extends AppCompatActivity
 
         mActivityWeakRef = new WeakReference<>(this);
 
+        mInitialStartup = Application.getPrefs().getBoolean(INITIAL_STARTUP, true);
+
         setupNavigationDrawer();
 
         setupSlidingPanel();
@@ -370,7 +377,11 @@ public class HomeActivity extends AppCompatActivity
 
         UIUtils.setupActionBar(this);
 
-        checkRegionStatus();
+        if (!mInitialStartup || PermissionUtils.hasGrantedPermissions(this, LOCATION_PERMISSIONS)) {
+            // It's not the first startup or if the user has already granted location permissions (Android L and lower), then check the region status
+            // Otherwise, wait for a permission callback from the BaseMapFragment before checking the region status
+            checkRegionStatus();
+        }
 
         // Check to see if we should show the welcome tutorial
         Bundle b = getIntent().getExtras();
@@ -609,6 +620,15 @@ public class HomeActivity extends AppCompatActivity
                 // No existing fragment was found, so create a new one
                 Log.d(TAG, "Creating new BaseMapFragment");
                 mMapFragment = BaseMapFragment.newInstance();
+                mMapFragment.setOnLocationPermissionResultListener(result -> {
+                            if (mInitialStartup) {
+                                // Whether or not the user granted permissions, check region status
+                                // (they'll be asked to manually pick region if they denied)
+                                mInitialStartup = false;
+                                PreferenceUtils.saveBoolean(INITIAL_STARTUP, false);
+                                checkRegionStatus();
+                            }
+                        });
                 fm.beginTransaction()
                         .add(R.id.main_fragment_container, mMapFragment, BaseMapFragment.TAG)
                         .commit();

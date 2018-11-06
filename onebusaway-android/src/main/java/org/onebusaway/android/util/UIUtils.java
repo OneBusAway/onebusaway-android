@@ -124,7 +124,7 @@ public final class UIUtils {
 
     private static final String TAG = "UIHelp";
 
-    public static final String[] REQUIRED_PERMISSIONS = {
+    public static final String[] LOCATION_PERMISSIONS = {
             Manifest.permission.ACCESS_FINE_LOCATION
     };
 
@@ -1840,7 +1840,7 @@ public final class UIUtils {
                 .setPositiveButton(R.string.ok,
                         (dialog, which) -> {
                             // Request permissions from the user
-                            fragment.requestPermissions(REQUIRED_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
+                            fragment.requestPermissions(LOCATION_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
                         }
                 )
                 .setNegativeButton(R.string.no_thanks,

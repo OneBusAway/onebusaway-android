@@ -102,7 +102,7 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.fragment.app.DialogFragment;
 
 import static org.onebusaway.android.util.UIUtils.LOCATION_PERMISSION_REQUEST;
-import static org.onebusaway.android.util.UIUtils.REQUIRED_PERMISSIONS;
+import static org.onebusaway.android.util.UIUtils.LOCATION_PERMISSIONS;
 
 /**
  * The MapFragment class is split into two basic modes:
@@ -130,6 +130,8 @@ public class BaseMapFragment extends SupportMapFragment
     public static final String TAG = "BaseMapFragment";
 
     private static final int REQUEST_NO_LOCATION = 41;
+
+    private static final String USER_DENIED_PERMISSION = ".UserDeniedPermission";
 
     //
     // Location Services and Maps API v2 constants
@@ -187,6 +189,9 @@ public class BaseMapFragment extends SupportMapFragment
 
     // Listen to map loading/progress bar events
     OnProgressBarChangedListener mOnProgressBarChangedListener;
+
+    // Listen to location permission request results
+    OnLocationPermissionResultListener mOnLocationPermissionResultListener;
 
     LocationHelper mLocationHelper;
 
@@ -266,6 +271,15 @@ public class BaseMapFragment extends SupportMapFragment
         void onProgressBarChanged(boolean showProgressBar);
     }
 
+    public interface OnLocationPermissionResultListener {
+
+        /**
+         * Called when a result has been obtained after requesting user location permission.
+         * @param grantResult The grant results for the location permission which is either PackageManager.PERMISSION_GRANTED or PackageManager.PERMISSION_DENIED. Never null.
+         */
+        void onLocationPermissionResult(int grantResult);
+    }
+
     public static BaseMapFragment newInstance() {
         return new BaseMapFragment();
     }
@@ -274,6 +288,10 @@ public class BaseMapFragment extends SupportMapFragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
+
+        if (savedInstanceState != null) {
+            savedInstanceState.getBoolean(USER_DENIED_PERMISSION, false);
+        }
 
         mLocationHelper = new LocationHelper(getActivity());
 
@@ -378,14 +396,14 @@ public class BaseMapFragment extends SupportMapFragment
 
     @SuppressLint("MissingPermission")
     private void requestPermissionAndInit(final Activity activity) {
-        if (PermissionUtils.hasGrantedPermissions(activity, REQUIRED_PERMISSIONS)) {
+        if (PermissionUtils.hasGrantedPermissions(activity, LOCATION_PERMISSIONS)) {
             // Show the location on the map
             mMap.setMyLocationEnabled(true);
             // Make sure location helper is registered
             mLocationHelper.registerListener(this);
         } else {
             // Request permissions from the user
-            requestPermissions(REQUIRED_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
+            requestPermissions(LOCATION_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
         }
     }
 
@@ -393,7 +411,7 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public void onRequestPermissionsResult(
             int requestCode, String[] permissions, int[] grantResults) {
-        Log.d(TAG, "Got permission callback");
+        int result = PackageManager.PERMISSION_DENIED;
         if (requestCode == LOCATION_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 mUserDeniedPermission = false;
@@ -401,9 +419,13 @@ public class BaseMapFragment extends SupportMapFragment
                 mMap.setMyLocationEnabled(true);
                 // Make sure location helper is registered
                 mLocationHelper.registerListener(this);
+                result = PackageManager.PERMISSION_GRANTED;
             } else {
                 mUserDeniedPermission = true;
             }
+        }
+        if (mOnLocationPermissionResultListener != null) {
+            mOnLocationPermissionResultListener.onLocationPermissionResult(result);
         }
     }
 
@@ -490,6 +512,7 @@ public class BaseMapFragment extends SupportMapFragment
         outState.putInt(MapParams.MAP_PADDING_TOP, mMapPaddingTop);
         outState.putInt(MapParams.MAP_PADDING_RIGHT, mMapPaddingRight);
         outState.putInt(MapParams.MAP_PADDING_BOTTOM, mMapPaddingBottom);
+        outState.putBoolean(USER_DENIED_PERMISSION, mUserDeniedPermission);
     }
 
     @Override
@@ -725,13 +748,17 @@ public class BaseMapFragment extends SupportMapFragment
         Location l = Application
                 .getLastKnownLocation(getActivity(), mLocationHelper.getGoogleApiClient());
         // If the region changed, and we don't have a location or the map center is still (0,0),
-        // then zoom to the region
+        // then zoom to the region (or location if we have it)
         Location mapCenter = getMapCenterAsLocation();
         if (currentRegionChanged &&
                 (l == null ||
                         (mapCenter != null && mapCenter.getLatitude() == 0.0 &&
                                 mapCenter.getLongitude() == 0.0))) {
-            zoomToRegion();
+            if (l != null) {
+                setMyLocation(true, false);
+            } else {
+                zoomToRegion();
+            }
         }
     }
 
@@ -742,6 +769,10 @@ public class BaseMapFragment extends SupportMapFragment
     public void setOnProgressBarChangedListener(
             OnProgressBarChangedListener onProgressBarChangedListener) {
         mOnProgressBarChangedListener = onProgressBarChangedListener;
+    }
+
+    public void setOnLocationPermissionResultListener(OnLocationPermissionResultListener onLocationPermissionResultListener) {
+        mOnLocationPermissionResultListener = onLocationPermissionResultListener;
     }
 
     //
@@ -800,9 +831,14 @@ public class BaseMapFragment extends SupportMapFragment
 
         Location lastLocation = Application.getLastKnownLocation(getActivity(), apiClient);
         if (lastLocation == null) {
+            String text;
+            if (!PermissionUtils.hasGrantedPermissions(Application.get(), LOCATION_PERMISSIONS)) {
+                text = getResources().getString(R.string.no_location_permission);
+            } else {
+                text = getResources().getString(R.string.main_waiting_for_location);
+            }
             Toast.makeText(getActivity(),
-                    getResources()
-                            .getString(R.string.main_waiting_for_location),
+                    text,
                     Toast.LENGTH_SHORT).show();
             return false;
         }

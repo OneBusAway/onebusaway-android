@@ -109,7 +109,7 @@
         sallitaanko?
     </string>
     <string name="main_waiting_for_location">Sijaintiasi yritetään paikantaa&#8230;</string>
-    <string name="trip_plan_no_location">Sijaintiasi ei pystytty määrittämään.</string>
+    <string name="no_location_permission">Sijaintiasi ei pystytty määrittämään.</string>
     <string name="main_outofrange_title">Ulkona alueelta</string>
     <string name="main_outofrange">Olet ulkona %1$s palvelualueelta.\n\nHaluatko siirtyä sinne?</string>
     <string name="main_outofrange_yes">Siirry</string>

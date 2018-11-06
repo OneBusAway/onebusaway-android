@@ -37,7 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
-import static org.onebusaway.android.util.UIUtils.REQUIRED_PERMISSIONS;
+import static org.onebusaway.android.util.UIUtils.LOCATION_PERMISSIONS;
 
 /**
  * A helper class that keeps listeners updated with the best location available from
@@ -108,7 +108,7 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
      * permissions have not been granted and no listener was registered
      */
     public synchronized boolean registerListener(Listener listener) {
-        if (!PermissionUtils.hasGrantedPermissions(mContext, REQUIRED_PERMISSIONS)) {
+        if (!PermissionUtils.hasGrantedPermissions(mContext, LOCATION_PERMISSIONS)) {
             return false;
         }
         // User has granted permissions - continue to register listener for location updates

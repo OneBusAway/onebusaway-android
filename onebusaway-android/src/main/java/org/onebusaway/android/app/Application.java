@@ -22,6 +22,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.tasks.Task;
 
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
@@ -252,8 +253,11 @@ public class Application extends MultiDexApplication {
                         == ConnectionResult.SUCCESS
                 && client.isConnected()) {
             FusedLocationProviderClient fusedClient = getFusedLocationProviderClient(cxt);
-            playServices = fusedClient.getLastLocation().getResult();
-            Log.d(TAG, "Got location from Google Play Services, testing against API v1...");
+            Task<Location> task = fusedClient.getLastLocation();
+            if (task.isComplete()) {
+                playServices = task.getResult();
+                Log.d(TAG, "Got location from Google Play Services, testing against API v1...");
+            }
         }
         Location apiV1 = getLocationApiV1(cxt);
 

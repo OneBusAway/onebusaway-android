@@ -98,10 +98,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentManager;
-import uk.co.markormesher.android_fab.SpeedDialMenuCloseListener;
-import uk.co.markormesher.android_fab.SpeedDialMenuOpenListener;
 
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_ACTIVITY_FEED;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
@@ -401,17 +398,14 @@ public class HomeActivity extends AppCompatActivity
             mGoogleApiClient.connect();
         }
         ObaAnalytics.reportActivityStart(this);
-        if (Build.VERSION.SDK_INT >= 14) {
-            AccessibilityManager am = (AccessibilityManager) getSystemService(
-                    ACCESSIBILITY_SERVICE);
-            Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
-            if (isTalkBackEnabled) {
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.ACCESSIBILITY.toString(),
-                        getString(R.string.analytics_action_touch_exploration),
-                        getString(R.string.analytics_label_talkback) + getClass().getSimpleName()
-                                + " using TalkBack");
-            }
+        AccessibilityManager am = (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
+        Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
+        if (isTalkBackEnabled) {
+            ObaAnalytics.reportEventWithCategory(
+                    ObaAnalytics.ObaEventCategory.ACCESSIBILITY.toString(),
+                    getString(R.string.analytics_action_touch_exploration),
+                    getString(R.string.analytics_label_talkback) + getClass().getSimpleName()
+                            + " using TalkBack");
         }
     }
 
@@ -1025,11 +1019,7 @@ public class HomeActivity extends AppCompatActivity
         builder.setIcon(R.mipmap.ic_launcher);
         builder.setView(textView);
         builder.setNeutralButton(R.string.main_help_close,
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dismissDialog(WHATSNEW_DIALOG);
-                    }
-                }
+                (dialog, which) -> dismissDialog(WHATSNEW_DIALOG)
         );
         builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
@@ -1059,7 +1049,7 @@ public class HomeActivity extends AppCompatActivity
         GradientDrawable d1 = (GradientDrawable) etaAndMin.getBackground();
         d1.setColor(resources.getColor(R.color.stop_info_ontime));
         etaAndMin.findViewById(R.id.eta_realtime_indicator).setVisibility(View.VISIBLE);
-        TextView etaTextView = ((TextView) etaAndMin.findViewById(R.id.eta));
+        TextView etaTextView = etaAndMin.findViewById(R.id.eta);
         etaTextView.setTextSize(etaTextFontSize);
         etaTextView.setText("5");
 
@@ -1068,7 +1058,7 @@ public class HomeActivity extends AppCompatActivity
         d1 = (GradientDrawable) etaAndMin.getBackground();
         d1.setColor(resources.getColor(R.color.stop_info_early));
         etaAndMin.findViewById(R.id.eta_realtime_indicator).setVisibility(View.VISIBLE);
-        etaTextView = ((TextView) etaAndMin.findViewById(R.id.eta));
+        etaTextView = etaAndMin.findViewById(R.id.eta);
         etaTextView.setTextSize(etaTextFontSize);
         etaTextView.setText("5");
 
@@ -1077,7 +1067,7 @@ public class HomeActivity extends AppCompatActivity
         d1 = (GradientDrawable) etaAndMin.getBackground();
         d1.setColor(resources.getColor(R.color.stop_info_delayed));
         etaAndMin.findViewById(R.id.eta_realtime_indicator).setVisibility(View.VISIBLE);
-        etaTextView = ((TextView) etaAndMin.findViewById(R.id.eta));
+        etaTextView = etaAndMin.findViewById(R.id.eta);
         etaTextView.setTextSize(etaTextFontSize);
         etaTextView.setText("5");
 
@@ -1086,18 +1076,14 @@ public class HomeActivity extends AppCompatActivity
         d1 = (GradientDrawable) etaAndMin.getBackground();
         d1.setColor(resources.getColor(R.color.stop_info_scheduled_time));
         etaAndMin.findViewById(R.id.eta_realtime_indicator).setVisibility(View.INVISIBLE);
-        etaTextView = ((TextView) etaAndMin.findViewById(R.id.eta));
+        etaTextView = etaAndMin.findViewById(R.id.eta);
         etaTextView.setTextSize(etaTextFontSize);
         etaTextView.setText("5");
 
         builder.setView(legendDialogView);
 
         builder.setNeutralButton(R.string.main_help_close,
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dismissDialog(LEGEND_DIALOG);
-                    }
-                }
+                (dialog, which) -> dismissDialog(LEGEND_DIALOG)
         );
         return builder.create();
     }
@@ -1402,7 +1388,7 @@ public class HomeActivity extends AppCompatActivity
         mArrivalsListHeader.setSlidingPanelController(mSlidingPanelController);
         mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         mShowArrivalsMenu = true;
-        mExpandCollapse = (ImageView) mArrivalsListHeaderView.findViewById(R.id.expand_collapse);
+        mExpandCollapse = mArrivalsListHeaderView.findViewById(R.id.expand_collapse);
 
         if (stop != null && routes != null) {
             // Use ObaStop and ObaRoute objects, since we can pre-populate some of the fields
@@ -1537,41 +1523,28 @@ public class HomeActivity extends AppCompatActivity
 
     private void setupZoomButtons() {
 
-        mZoomInBtn = (ImageButton) findViewById(R.id.btnZoomIn);
+        mZoomInBtn = findViewById(R.id.btnZoomIn);
 
-        mZoomOutBtn = (ImageButton) findViewById(R.id.btnZoomOut);
+        mZoomOutBtn = findViewById(R.id.btnZoomOut);
 
-        mZoomInBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mMapFragment.zoomIn();
-            }
-        });
+        mZoomInBtn.setOnClickListener(view -> mMapFragment.zoomIn());
 
-        mZoomOutBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mMapFragment.zoomOut();
-            }
-        });
+        mZoomOutBtn.setOnClickListener(view -> mMapFragment.zoomOut());
     }
 
     private void setupMyLocationButton() {
         // Initialize the My Location button
-        mFabMyLocation = (FloatingActionButton) findViewById(R.id.btnMyLocation);
-        mFabMyLocation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                if (mMapFragment != null) {
-                    // Reset the preference to ask user to enable location
-                    PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_location_dialog), false);
+        mFabMyLocation = findViewById(R.id.btnMyLocation);
+        mFabMyLocation.setOnClickListener(view -> {
+            if (mMapFragment != null) {
+                // Reset the preference to ask user to enable location
+                PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_location_dialog), false);
 
-                    mMapFragment.setMyLocation(true, true);
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_button_press),
-                            getString(R.string.analytics_label_button_press_location));
-                }
+                mMapFragment.setMyLocation(true, true);
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_location));
             }
         });
         ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mFabMyLocation
@@ -1693,7 +1666,6 @@ public class HomeActivity extends AppCompatActivity
                 final int goalMargin = tempMargin;
                 final int currentMargin = p.bottomMargin;
 
-                // TODO - this doesn't seem to be animating?? Why not?  Or is it just my device...
                 mMyLocationAnimation = new Animation() {
                     @Override
                     protected void applyTransformation(float interpolatedTime, Transformation t) {
@@ -1769,7 +1741,7 @@ public class HomeActivity extends AppCompatActivity
         // Set up the drawer.
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
-                (DrawerLayout) findViewById(R.id.nav_drawer_left_pane));
+                findViewById(R.id.nav_drawer_left_pane));
 
         // Was this activity started to show a route or stop on the map? If so, switch to MapFragment
         Bundle bundle = getIntent().getExtras();
@@ -1813,40 +1785,20 @@ public class HomeActivity extends AppCompatActivity
             @Override
             public void onActivateLayer(LayerInfo layer) {
                 Handler h = new Handler(getMainLooper());
-                h.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        mLayersFab.rebuildSpeedDialMenu();
-                    }
-                }, 100);
+                h.postDelayed(() -> mLayersFab.rebuildSpeedDialMenu(), 100);
             }
 
             @Override
             public void onDeactivateLayer(LayerInfo layer) {
                 Handler h = new Handler(getMainLooper());
-                h.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        mLayersFab.rebuildSpeedDialMenu();
-                    }
-                }, 100);
+                h.postDelayed(() -> mLayersFab.rebuildSpeedDialMenu(), 100);
             }
         });
         mLayersFab.setSpeedDialMenuAdapter(adapter);
         mLayersFab.setOnSpeedDialMenuOpenListener(
-                new SpeedDialMenuOpenListener() {
-                    @Override
-                    public void onOpen(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                        mLayersFab.setButtonIconResource(R.drawable.ic_add_white_24dp);
-                    }
-                });
+                v -> mLayersFab.setButtonIconResource(R.drawable.ic_add_white_24dp));
         mLayersFab.setOnSpeedDialMenuCloseListener(
-                new SpeedDialMenuCloseListener() {
-                    @Override
-                    public void onClose(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                        mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp);
-                    }
-                });
+                v -> mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp));
         mLayersFab.setContentCoverEnabled(false);
     }
 
@@ -1866,7 +1818,7 @@ public class HomeActivity extends AppCompatActivity
 
 
     private void setupSlidingPanel() {
-        mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.bottom_sliding_layout);
+        mSlidingPanel = findViewById(R.id.bottom_sliding_layout);
         mArrivalsListHeaderView = findViewById(R.id.arrivals_list_header);
         mArrivalsListHeaderSubView = mArrivalsListHeaderView.findViewById(R.id.main_header_content);
 
@@ -1878,7 +1830,6 @@ public class HomeActivity extends AppCompatActivity
 
             @Override
             public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
-
                 if (previousState == SlidingUpPanelLayout.PanelState.HIDDEN) {
                     return;
                 }
@@ -2043,7 +1994,7 @@ public class HomeActivity extends AppCompatActivity
                 }
             }
         }
-        mMapProgressBar = (ProgressBar) findViewById(R.id.progress_horizontal);
+        mMapProgressBar = findViewById(R.id.progress_horizontal);
     }
 
     /**

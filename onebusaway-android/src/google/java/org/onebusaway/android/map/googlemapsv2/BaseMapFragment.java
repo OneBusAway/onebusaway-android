@@ -62,7 +62,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -77,7 +76,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -1305,22 +1303,16 @@ public class BaseMapFragment extends SupportMapFragment
                                     Application.get().getCurrentRegion().getName() : ""
                     ))
                     .setPositiveButton(R.string.main_outofrange_yes,
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    if (mMapFragment != null && mMapFragment.isAdded()) {
-                                        mMapFragment.zoomToRegion();
-                                    }
+                            (dialog, which) -> {
+                                if (mMapFragment != null && mMapFragment.isAdded()) {
+                                    mMapFragment.zoomToRegion();
                                 }
                             }
                     )
                     .setNegativeButton(R.string.main_outofrange_no,
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    if (mMapFragment != null && mMapFragment.isAdded()) {
-                                        mMapFragment.mWarnOutOfRange = false;
-                                    }
+                            (dialog, which) -> {
+                                if (mMapFragment != null && mMapFragment.isAdded()) {
+                                    mMapFragment.mWarnOutOfRange = false;
                                 }
                             }
                     );
@@ -1330,14 +1322,11 @@ public class BaseMapFragment extends SupportMapFragment
         @SuppressWarnings("deprecation")
         private Dialog createNoLocationDialog() {
             View view = getActivity().getLayoutInflater().inflate(R.layout.no_location_dialog, null);
-            CheckBox neverShowDialog = (CheckBox) view.findViewById(R.id.location_never_ask_again);
+            CheckBox neverShowDialog = view.findViewById(R.id.location_never_ask_again);
 
-            neverShowDialog.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                    // Save the preference
-                    PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_location_dialog), isChecked);
-                }
+            neverShowDialog.setOnCheckedChangeListener((compoundButton, isChecked) -> {
+                // Save the preference
+                PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_location_dialog), isChecked);
             });
 
             Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_map);
@@ -1349,24 +1338,16 @@ public class BaseMapFragment extends SupportMapFragment
                     .setCancelable(false)
                     .setView(view)
                     .setPositiveButton(R.string.rt_yes,
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    startActivityForResult(
-                                            new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS),
-                                            REQUEST_NO_LOCATION);
-                                }
-                            }
+                            (dialog, which) -> startActivityForResult(
+                                    new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS),
+                                    REQUEST_NO_LOCATION)
                     )
                     .setNegativeButton(R.string.rt_no,
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // Ok, I suppose we can just try looking from where we
-                                    // are.
-                                    for (MapModeController controller : mMapFragment.mControllers) {
-                                        controller.onLocation();
-                                    }
+                            (dialog, which) -> {
+                                // Ok, I suppose we can just try looking from where we
+                                // are.
+                                for (MapModeController controller : mMapFragment.mControllers) {
+                                    controller.onLocation();
                                 }
                             }
                     );
@@ -1409,9 +1390,7 @@ public class BaseMapFragment extends SupportMapFragment
                 }
             }
             if (mVehicleOverlay != null) {
-                if (mVehicleOverlay.markerClicked(marker)) {
-                    return true;
-                }
+                return mVehicleOverlay.markerClicked(marker);
             }
             return false;
         }

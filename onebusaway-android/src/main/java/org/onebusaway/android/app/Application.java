@@ -278,7 +278,12 @@ public class Application extends MultiDexApplication {
         List<String> providers = mgr.getProviders(true);
         Location last = null;
         for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
-            Location loc = mgr.getLastKnownLocation(i.next());
+            Location loc = null;
+            try {
+                loc = mgr.getLastKnownLocation(i.next());
+            }  catch (SecurityException e) {
+                Log.w(TAG, "User may have denied location permission - " + e);
+            }
             // If this provider has a last location, and either:
             // 1. We don't have a last location,
             // 2. Our last location is older than this location.

@@ -1,9 +1,3 @@
-<<<<<<< Updated upstream
-package org.onebusaway.android.util;
-
-public class PermissionUtils {
-
-=======
 /*
  * Copyright (C) 2018 The Android Open Source Project, Sean J. Barbeau (sjbarbeau@gmail.com)
  *
@@ -24,7 +18,8 @@ package org.onebusaway.android.util;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.support.v4.content.ContextCompat;
+
+import androidx.core.content.ContextCompat;
 
 
 public class PermissionUtils {
@@ -46,5 +41,4 @@ public class PermissionUtils {
         }
         return true;
     }
->>>>>>> Stashed changes
 }

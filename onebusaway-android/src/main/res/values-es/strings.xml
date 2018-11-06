@@ -127,7 +127,7 @@
     </string>
     <string name="main_never_ask_again">No volver a preguntar</string>
     <string name="main_waiting_for_location">Tratando de establecer tú ubicación&#8230;</string>
-    <string name="main_location_unavailable">No se puede obtener tú ubicación.</string>
+    <string name="trip_plan_no_location">No se puede obtener tú ubicación.</string>
     <string name="main_outofrange_title">Fuera de alcance</string>
     <string name="main_outofrange">Usted esta fuera del área de servicio %1$s.\n\n¿Mover
         el mapa a %1$s ahora?

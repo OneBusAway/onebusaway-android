@@ -82,8 +82,6 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.appcompat.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -99,6 +97,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.fragment.app.DialogFragment;
 
 import static org.onebusaway.android.util.UIUtils.LOCATION_PERMISSION_REQUEST;
@@ -276,7 +276,6 @@ public class BaseMapFragment extends SupportMapFragment
         View v = super.onCreateView(inflater, container, savedInstanceState);
 
         mLocationHelper = new LocationHelper(getActivity());
-        mLocationHelper.registerListener(getActivity(), this);
 
         if (MapHelpV2.isMapsInstalled(getActivity())) {
             // Save the savedInstanceState
@@ -327,7 +326,7 @@ public class BaseMapFragment extends SupportMapFragment
             requestPermissionAndInit(getActivity());
         } else {
             // Explain permission to user
-            UIUtils.showLocationPermissionDialog(getActivity());
+            UIUtils.showLocationPermissionDialog(this);
         }
 
         // Set location source
@@ -382,6 +381,8 @@ public class BaseMapFragment extends SupportMapFragment
         if (PermissionUtils.hasGrantedPermissions(activity, REQUIRED_PERMISSIONS)) {
             // Show the location on the map
             mMap.setMyLocationEnabled(true);
+            // Make sure location helper is registered
+            mLocationHelper.registerListener(this);
         } else {
             // Request permissions from the user
             requestPermissions(REQUIRED_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
@@ -392,11 +393,14 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public void onRequestPermissionsResult(
             int requestCode, String[] permissions, int[] grantResults) {
+        Log.d(TAG, "Got permission callback");
         if (requestCode == LOCATION_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 mUserDeniedPermission = false;
                 // Show the location on the map
                 mMap.setMyLocationEnabled(true);
+                // Make sure location helper is registered
+                mLocationHelper.registerListener(this);
             } else {
                 mUserDeniedPermission = true;
             }

@@ -21,6 +21,7 @@ import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
 
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
@@ -61,7 +62,7 @@ import androidx.multidex.MultiDexApplication;
 import edu.usf.cutr.open311client.Open311Manager;
 import edu.usf.cutr.open311client.models.Open311Option;
 
-import static com.google.android.gms.location.LocationServices.FusedLocationApi;
+import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 
 public class Application extends MultiDexApplication {
 
@@ -178,7 +179,7 @@ public class Application extends MultiDexApplication {
                     (float) l.getLongitude(),
                     (float) l.getAltitude(),
                     System.currentTimeMillis());
-            // Log.d(TAG, "Newest best location: " + mLastKnownLocation.toString());
+            Log.d(TAG, "Newest best location: " + mLastKnownLocation.toString());
         }
     }
 
@@ -250,7 +251,8 @@ public class Application extends MultiDexApplication {
                 api.isGooglePlayServicesAvailable(cxt)
                         == ConnectionResult.SUCCESS
                 && client.isConnected()) {
-            playServices = FusedLocationApi.getLastLocation(client);
+            FusedLocationProviderClient fusedClient = getFusedLocationProviderClient(cxt);
+            playServices = fusedClient.getLastLocation().getResult();
             Log.d(TAG, "Got location from Google Play Services, testing against API v1...");
         }
         Location apiV1 = getLocationApiV1(cxt);
@@ -419,6 +421,7 @@ public class Application extends MultiDexApplication {
     }
 
     private String getAppUid() {
+        // FIXME - See https://developer.android.com/training/articles/user-data-ids
         try {
             final TelephonyManager telephony =
                     (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);

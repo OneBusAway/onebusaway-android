@@ -42,7 +42,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.SearchManager;
 import android.content.ActivityNotFoundException;
 import android.content.ContentQueryMap;
@@ -105,6 +104,7 @@ import java.util.concurrent.TimeUnit;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
@@ -1829,19 +1829,18 @@ public final class UIUtils {
      * NOTE - this dialog can't be managed under the old dialog framework as the method
      * ActivityCompat.shouldShowRequestPermissionRationale() always returns false.
      */
-    public static void showLocationPermissionDialog(@NonNull Activity activity) {
-        if (!canManageDialog(activity)) {
+    public static void showLocationPermissionDialog(@NonNull Fragment fragment) {
+        if (!canManageDialog(fragment.getActivity())) {
             return;
         }
-        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(activity)
+        AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getActivity())
                 .setTitle(R.string.location_permissions_title)
                 .setMessage(R.string.location_permissions_message)
                 .setCancelable(false)
                 .setPositiveButton(R.string.ok,
                         (dialog, which) -> {
                             // Request permissions from the user
-                            ActivityCompat
-                                    .requestPermissions(activity, REQUIRED_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
+                            fragment.requestPermissions(REQUIRED_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
                         }
                 )
                 .setNegativeButton(R.string.no_thanks,

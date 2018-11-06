@@ -42,7 +42,7 @@ repositories {
 // Custom properties for OBA
 ext {
     compileSdkVersion = 28
-    playServicesVersion = "11.8.0"
+    playServicesVersion = "16.0.0"
 }
 
 android {
@@ -50,7 +50,7 @@ android {
         preDexLibraries true
     }
     compileSdkVersion this.ext.compileSdkVersion
-    buildToolsVersion "28.0.2"
+    buildToolsVersion '28.0.3'
 
     defaultConfig {
         minSdkVersion 15

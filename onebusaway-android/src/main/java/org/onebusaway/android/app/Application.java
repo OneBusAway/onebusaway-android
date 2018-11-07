@@ -431,6 +431,7 @@ public class Application extends MultiDexApplication {
 
     private String getAppUid() {
         // FIXME - See https://developer.android.com/training/articles/user-data-ids
+        // https://developer.android.com/training/permissions/usage-notes#c_determine_the_device_your_instance_is_running_on
         try {
             final TelephonyManager telephony =
                     (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);

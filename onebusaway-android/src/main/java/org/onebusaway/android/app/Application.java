@@ -16,6 +16,18 @@
  */
 package org.onebusaway.android.app;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.hardware.GeomagneticField;
+import android.location.Location;
+import android.location.LocationManager;
+import android.preference.PreferenceManager;
+import android.text.TextUtils;
+import android.util.Log;
+
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.common.ConnectionResult;
@@ -23,7 +35,6 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
-
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
 import org.onebusaway.android.BuildConfig;
@@ -39,19 +50,6 @@ import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.hardware.GeomagneticField;
-import android.location.Location;
-import android.location.LocationManager;
-import android.preference.PreferenceManager;
-import android.telephony.TelephonyManager;
-import android.text.TextUtils;
-import android.util.Log;
 
 import java.security.MessageDigest;
 import java.util.HashMap;
@@ -430,18 +428,9 @@ public class Application extends MultiDexApplication {
     }
 
     private String getAppUid() {
-        // FIXME - See https://developer.android.com/training/articles/user-data-ids
-        // https://developer.android.com/training/permissions/usage-notes#c_determine_the_device_your_instance_is_running_on
-        try {
-            final TelephonyManager telephony =
-                    (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-            final String id = telephony.getDeviceId();
-            MessageDigest digest = MessageDigest.getInstance("MD5");
-            digest.update(id.getBytes());
-            return getHex(digest.digest());
-        } catch (Exception e) {
-            return UUID.randomUUID().toString();
-        }
+        // FIXME - After migrating to Firebase, use FirebaseInstanceId - https://firebase.google.com/docs/reference/android/com/google/firebase/iid/FirebaseInstanceId
+        // If FirebaseInstanceId isn't available (catch all exceptions), then return randomUUID()
+        return UUID.randomUUID().toString();
     }
 
     private void initOba() {

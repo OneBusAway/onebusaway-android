@@ -145,23 +145,21 @@ public final class UIUtils {
      * Sets up the search view in the action bar
      */
     public static void setupSearch(Activity activity, Menu menu) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            SearchManager searchManager =
-                    (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
-            final MenuItem searchMenu = menu.findItem(R.id.action_search);
-            SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchMenu);
-            searchView.setSearchableInfo(
-                    searchManager.getSearchableInfo(activity.getComponentName()));
-            // Close the keyboard and SearchView at same time when the back button is pressed
-            searchView.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
-                @Override
-                public void onFocusChange(View view, boolean queryTextFocused) {
-                    if (!queryTextFocused) {
-                        MenuItemCompat.collapseActionView(searchMenu);
-                    }
+        SearchManager searchManager =
+                (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
+        final MenuItem searchMenu = menu.findItem(R.id.action_search);
+        SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchMenu);
+        searchView.setSearchableInfo(
+                searchManager.getSearchableInfo(activity.getComponentName()));
+        // Close the keyboard and SearchView at same time when the back button is pressed
+        searchView.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean queryTextFocused) {
+                if (!queryTextFocused) {
+                    MenuItemCompat.collapseActionView(searchMenu);
                 }
-            });
-        }
+            }
+        });
     }
 
     public static void showProgress(Fragment fragment, boolean visible) {

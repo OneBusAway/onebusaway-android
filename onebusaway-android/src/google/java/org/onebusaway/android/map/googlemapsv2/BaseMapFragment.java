@@ -88,8 +88,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.fragment.app.DialogFragment;
 
-import static org.onebusaway.android.util.UIUtils.LOCATION_PERMISSIONS;
-import static org.onebusaway.android.util.UIUtils.LOCATION_PERMISSION_REQUEST;
+import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
+import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSION_REQUEST;
 
 /**
  * The MapFragment class is split into two basic modes:

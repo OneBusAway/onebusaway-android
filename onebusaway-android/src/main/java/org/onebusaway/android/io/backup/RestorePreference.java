@@ -19,6 +19,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.util.PermissionUtils;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -31,6 +32,8 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.onebusaway.android.util.PermissionUtils.STORAGE_PERMISSIONS;
 
 public class RestorePreference extends Preference {
 
@@ -66,6 +69,10 @@ public class RestorePreference extends Preference {
 
     @Override
     protected void onClick() {
+        if (!PermissionUtils.hasGrantedPermissions(getContext(), STORAGE_PERMISSIONS)) {
+            // Let the PreferenceActivity request permissions from the user first
+            return;
+        }
         //
         // Because this is a destructive operation, we should warn the user.
         //

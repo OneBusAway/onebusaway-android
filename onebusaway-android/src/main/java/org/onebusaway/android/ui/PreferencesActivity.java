@@ -89,6 +89,10 @@ public class PreferencesActivity extends PreferenceActivity
 
     Preference mAboutPref;
 
+    Preference mSaveBackup;
+
+    Preference mRestoreBackup;
+
     boolean mAutoSelectInitialValue;
 
     boolean mOtpCustomAPIUrlChanged = false;
@@ -109,6 +113,12 @@ public class PreferencesActivity extends PreferenceActivity
 
         mLeftHandMode = findPreference(getString(R.string.preference_key_left_hand_mode));
         mLeftHandMode.setOnPreferenceChangeListener(this);
+
+        mSaveBackup = findPreference(getString(R.string.preference_key_save_backup));
+        mSaveBackup.setOnPreferenceClickListener(this);
+
+        mRestoreBackup = findPreference(getString(R.string.preference_key_restore_backup));
+        mRestoreBackup.setOnPreferenceClickListener(this);
 
         mCustomApiUrlPref = findPreference(getString(R.string.preference_key_oba_api_url));
         mCustomApiUrlPref.setOnPreferenceChangeListener(this);
@@ -312,6 +322,11 @@ public class PreferencesActivity extends PreferenceActivity
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_about));
             AboutActivity.start(this);
+        } else if (pref.equals(mSaveBackup) || pref.equals(mSaveBackup)) {
+            // SavePreference and RestorePreference will get the click event but will ignore it if
+            // permissions haven't been granted yet so we can handle permissions here.
+            // TODO - implement permission check
+            return true;
         }
         return true;
     }

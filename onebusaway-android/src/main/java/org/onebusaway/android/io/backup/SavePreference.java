@@ -18,6 +18,7 @@ package org.onebusaway.android.io.backup;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.util.PermissionUtils;
 
 import android.content.Context;
 import android.os.Environment;
@@ -26,6 +27,8 @@ import android.util.AttributeSet;
 import android.widget.Toast;
 
 import java.io.IOException;
+
+import static org.onebusaway.android.util.PermissionUtils.STORAGE_PERMISSIONS;
 
 public class SavePreference extends Preference {
 
@@ -58,6 +61,11 @@ public class SavePreference extends Preference {
 
     @Override
     protected void onClick() {
+        if (!PermissionUtils.hasGrantedPermissions(getContext(), STORAGE_PERMISSIONS)) {
+            // Let the PreferenceActivity request permissions from the user first
+            return;
+        }
+
         Context context = Application.get().getApplicationContext();
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                 context.getString(R.string.analytics_action_button_press),

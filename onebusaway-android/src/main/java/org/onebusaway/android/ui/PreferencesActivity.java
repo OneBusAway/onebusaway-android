@@ -322,7 +322,7 @@ public class PreferencesActivity extends PreferenceActivity
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_about));
             AboutActivity.start(this);
-        } else if (pref.equals(mSaveBackup) || pref.equals(mSaveBackup)) {
+        } else if (pref.equals(mSaveBackup) || pref.equals(mRestoreBackup)) {
             // SavePreference and RestorePreference will get the click event but will ignore it if
             // permissions haven't been granted yet so we can handle permissions here.
             // TODO - implement permission check

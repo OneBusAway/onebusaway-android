@@ -276,9 +276,11 @@
     <string name="stop_info_load_more_arrivals">Load more arrivals</string>
     <string name="stop_info_load_more_departures">Load more departures</string>
     <string name="stop_info_item_options_title">Bus options</string>
-    <string name="stop_info_filter_title">Show only these routes</string>
-    <string name="stop_info_filter_header">Showing %1$d of %2$d routes</string>
+    <string name="stop_info_route_filter_title">Show only these routes</string>
+    <string name="stop_info_route_filter_header">Showing %1$d of %2$d routes</string>
     <string name="stop_info_filter_showall">(show all)</string>
+    <string name="stop_info_arrivals_hidden">Arrivals are hidden</string>
+    <string name="stop_info_departures_hidden">Departures are hidden</string>
     <string name="stop_info_arrival_filter_title">Show</string>
     <string name="stop_info_arrival_filter_both">Both</string>
     <string name="stop_info_arrival_filter_arrivals">Arrivals only</string>

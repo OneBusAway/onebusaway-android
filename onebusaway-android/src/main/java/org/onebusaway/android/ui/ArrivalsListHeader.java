@@ -95,6 +95,8 @@ class ArrivalsListHeader {
 
         void setRoutesFilter(ArrayList<String> filter);
 
+        void setArrivalFilter(ArrivalFilter filter);
+
         int getNumRoutes();
 
         boolean isFavoriteStop();
@@ -170,11 +172,17 @@ class ArrivalsListHeader {
 
     private ImageButton mStopDiscussion;
 
-    private View mFilterGroup;
+    private View mRouteFilterGroup;
 
-    private TextView mShowAllView;
+    private View mArrivalFilterGroup;
 
-    private ClickableSpan mShowAllClick;
+    private TextView mRouteShowAllView;
+
+    private ClickableSpan mRouteShowAllClick;
+
+    private TextView mArrivalShowAllView;
+
+    private ClickableSpan mArrivalShowAllClick;
 
     private boolean mInNameEdit = false;
 
@@ -292,7 +300,7 @@ class ArrivalsListHeader {
 
     private static float HEADER_HEIGHT_EDIT_NAME_DP;
 
-    private static float HEADER_OFFSET_FILTER_ROUTES_DP;
+    private static float HEADER_OFFSET_FILTER_DP;
 
     // Controller to change parent sliding panel
     HomeActivity.SlidingPanelController mSlidingPanelController;
@@ -324,8 +332,8 @@ class ArrivalsListHeader {
         HEADER_HEIGHT_TWO_ARRIVALS_DP =
                 view.getResources().getDimension(R.dimen.arrival_header_height_two_arrivals)
                         / view.getResources().getDisplayMetrics().density;
-        HEADER_OFFSET_FILTER_ROUTES_DP = view.getResources()
-                .getDimension(R.dimen.arrival_header_height_offset_filter_routes)
+        HEADER_OFFSET_FILTER_DP = view.getResources()
+                .getDimension(R.dimen.arrival_header_height_offset_filter)
                 / view.getResources().getDisplayMetrics().density;
         HEADER_HEIGHT_EDIT_NAME_DP =
                 view.getResources().getDimension(R.dimen.arrival_header_height_edit_name)
@@ -347,17 +355,28 @@ class ArrivalsListHeader {
             mStopDiscussion.setVisibility(View.GONE);
         }
 
-        mFilterGroup = mView.findViewById(R.id.filter_group);
+        mRouteFilterGroup = mView.findViewById(R.id.route_filter_group);
+        mArrivalFilterGroup = mView.findViewById(R.id.arrival_filter_group);
 
-        mShowAllView = (TextView) mView.findViewById(R.id.show_all);
+        mRouteShowAllView = (TextView) mView.findViewById(R.id.show_all);
         // Remove any previous clickable spans - we're recycling views between fragments for efficiency
-        UIUtils.removeAllClickableSpans(mShowAllView);
-        mShowAllClick = new ClickableSpan() {
+        UIUtils.removeAllClickableSpans(mRouteShowAllView);
+        mRouteShowAllClick = new ClickableSpan() {
             public void onClick(View v) {
                 mController.setRoutesFilter(new ArrayList<String>());
             }
         };
-        UIUtils.setClickableSpan(mShowAllView, mShowAllClick);
+        UIUtils.setClickableSpan(mRouteShowAllView, mRouteShowAllClick);
+
+        mArrivalShowAllView = (TextView) mView.findViewById(R.id.arrival_show_all);
+        UIUtils.removeAllClickableSpans(mArrivalShowAllView);
+        mArrivalShowAllClick = new ClickableSpan() {
+            public void onClick(View v) {
+                mController.setArrivalFilter(ArrivalFilter.BOTH);
+            }
+        };
+        UIUtils.setClickableSpan(mArrivalShowAllView, mArrivalShowAllClick);
+
 
         mNoArrivals = (TextView) mView.findViewById(R.id.no_arrivals);
 
@@ -662,7 +681,8 @@ class ArrivalsListHeader {
         refreshName();
         refreshArrivalInfoData();
         refreshStopFavorite();
-        refreshFilter();
+        refreshRouteFilter();
+        refreshArrivalFilter();
         refreshError();
         refreshHiddenAlerts();
         refreshArrivalInfoVisibilityAndListeners();
@@ -921,24 +941,48 @@ class ArrivalsListHeader {
     /**
      * Refreshes the routes filter, and displays/hides it if necessary
      */
-    private void refreshFilter() {
+    private void refreshRouteFilter() {
         if (mController == null) {
             return;
         }
-        TextView v = (TextView) mView.findViewById(R.id.filter_text);
+        TextView v = (TextView) mView.findViewById(R.id.route_filter_text);
         ArrayList<String> routesFilter = mController.getRoutesFilter();
         final int num = (routesFilter != null) ? routesFilter.size() : 0;
         if (num > 0) {
             final int total = mController.getNumRoutes();
-            v.setText(mContext.getString(R.string.stop_info_filter_header, num, total));
+            v.setText(mContext.getString(R.string.stop_info_route_filter_header, num, total));
             // Show the filter text (except when in name edit mode)
             if (mInNameEdit) {
-                mFilterGroup.setVisibility(View.GONE);
+                mRouteFilterGroup.setVisibility(View.GONE);
             } else {
-                mFilterGroup.setVisibility(View.VISIBLE);
+                mRouteFilterGroup.setVisibility(View.VISIBLE);
             }
         } else {
-            mFilterGroup.setVisibility(View.GONE);
+            mRouteFilterGroup.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Refreshes the arrival/departure filter and displays/hides it as necessary
+     */
+    private void refreshArrivalFilter() {
+        if (mController == null) {
+                return;
+        }
+
+        TextView v = (TextView) mView.findViewById(R.id.arrival_filter_text);
+        ArrivalFilter arrivalFilter = mController.getArrivalFilter();
+
+        if (arrivalFilter == ArrivalFilter.BOTH || mInNameEdit) {
+            mArrivalFilterGroup.setVisibility(View.GONE);
+        } else {
+            if (arrivalFilter == ArrivalFilter.ONLY_ARRIVALS) {
+                v.setText(mContext.getString(R.string.stop_info_departures_hidden));
+            } else {
+                v.setText(mContext.getString(R.string.stop_info_arrivals_hidden));
+            }
+
+            mArrivalFilterGroup.setVisibility(View.VISIBLE);
         }
     }
 
@@ -951,6 +995,14 @@ class ArrivalsListHeader {
         ArrayList<String> routesFilter = mController.getRoutesFilter();
         final int num = (routesFilter != null) ? routesFilter.size() : 0;
         return num > 0;
+    }
+
+    /**
+     *
+     * @return true if we're filtering arrivals/departures from the user's view, false otherwise
+     */
+    private boolean isFilteringArrivals() {
+        return mController.getArrivalFilter() != ArrivalFilter.BOTH;
     }
 
     /**
@@ -1168,7 +1220,11 @@ class ArrivalsListHeader {
 
         // If we're showing the route filter, than add the offset so this filter view has room
         if (isFilteringRoutes()) {
-            newSize += HEADER_OFFSET_FILTER_ROUTES_DP;
+            newSize += HEADER_OFFSET_FILTER_DP;
+        }
+
+        if (isFilteringArrivals()) {
+            newSize += HEADER_OFFSET_FILTER_DP;
         }
 
         if (newSize != 0) {
@@ -1395,7 +1451,8 @@ class ArrivalsListHeader {
         // editable, so we should go into edit mode.
         mEditNameView.setText((initial != null) ? initial : mNameView.getText());
         mNameContainerView.setVisibility(View.GONE);
-        mFilterGroup.setVisibility(View.GONE);
+        mRouteFilterGroup.setVisibility(View.GONE);
+        mArrivalFilterGroup.setVisibility(View.GONE);
         mStopFavorite.setVisibility(View.GONE);
         mStopDiscussion.setVisibility(View.GONE);
         mEtaContainer1.setVisibility(View.GONE);

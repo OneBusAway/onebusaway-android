@@ -1011,6 +1011,13 @@ public class ArrivalsListFragment extends ListFragment
     }
 
     @Override
+    public void setArrivalFilter(ArrivalFilter filter) {
+        mArrivalFilter = filter;
+        ObaContract.Stops.setArrivalFilter(getActivity(), mStopUri, filter);
+        refreshLocal();
+    }
+
+    @Override
     public void setRoutesFilter(ArrayList<String> routes) {
         mRoutesFilter = routes;
         ObaContract.StopRouteFilters.set(getActivity(), mStopId, mRoutesFilter);
@@ -1441,7 +1448,7 @@ public class ArrivalsListFragment extends ListFragment
             }
 
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            return builder.setTitle(R.string.stop_info_filter_title)
+            return builder.setTitle(R.string.stop_info_route_filter_title)
                     .setMultiChoiceItems(items, mChecks, this)
                     .setPositiveButton(R.string.stop_info_save, this)
                     .setNegativeButton(R.string.stop_info_cancel, null)

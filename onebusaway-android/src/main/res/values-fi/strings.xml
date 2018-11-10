@@ -252,8 +252,8 @@
     </plurals>
     <string name="stop_info_load_more_arrivals">Näytä lisää saapuvia</string>
     <string name="stop_info_item_options_title">Toiminnot</string>
-    <string name="stop_info_filter_title">Näytä ainoastaan nämä reitit</string>
-    <string name="stop_info_filter_header">Näyttää %1$d / %2$d reiteistä</string>
+    <string name="stop_info_route_filter_title">Näytä ainoastaan nämä reitit</string>
+    <string name="stop_info_route_filter_header">Näyttää %1$d / %2$d reiteistä</string>
     <string name="stop_info_filter_showall">(näytä kaikki)</string>
     <string name="stop_info_save">Tallenna</string>
     <string name="stop_info_cancel">Peruuta</string>

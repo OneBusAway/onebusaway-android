@@ -243,7 +243,7 @@ public class RealtimeService extends IntentService {
                         PendingIntent.FLAG_CANCEL_CURRENT);
 
         NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(getApplicationContext())
+                new NotificationCompat.Builder(getApplicationContext(),Application.CHANNEL_REALTIME_ID)
                         .setSmallIcon(R.drawable.ic_stat_notification)
                         .setContentTitle(titleText)
                         .setStyle(new NotificationCompat.BigTextStyle().bigText(messageText))

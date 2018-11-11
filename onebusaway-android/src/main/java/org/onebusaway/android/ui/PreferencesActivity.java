@@ -178,6 +178,12 @@ public class PreferencesActivity extends PreferenceActivity
             advancedCategory.removePreference(experimentalRegion);
         }
 
+        //If the Android version is Oreo (8.0) and above hide "Notification" preference
+        /*PreferenceCategory notificationCategory = (PreferenceCategory)
+                findPreference(getString(R.string.preference_key_notifications));*/
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            getPreferenceScreen().removePreference(findPreference(getString(R.string.preference_key_notifications)));
+        }
         // If its the OBA brand flavor, then show the "Donate" preference and hide "Powered by OBA"
         PreferenceCategory aboutCategory = (PreferenceCategory)
                 findPreference(getString(R.string.preferences_category_about));

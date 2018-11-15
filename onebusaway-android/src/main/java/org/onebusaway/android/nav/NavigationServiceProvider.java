@@ -83,6 +83,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     public boolean mFinished = false;   // Trip has finished.  //Change to public
     public boolean mGetReady = false;   // Get Ready triggered. //Change to public
 
+    public float sectoCurDistance = -1;
+
     public static TextToSpeech mTTS;          // TextToSpeech for speaking commands.
 
     SharedPreferences mSettings = Application.getPrefs();  // Shared Prefs
@@ -477,6 +479,9 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                 endDistance = lastCoords.distanceTo(currentLocation);
                 //re-calculate the distance to second to last bus stop from the current location
                 directDistance = secondToLastCoords.distanceTo(currentLocation);
+
+                sectoCurDistance = directDistance;
+
                 Log.d(TAG, "Second to last stop coordinates: " + secondToLastCoords.getLatitude()
                         + ", " + secondToLastCoords
                         .getLongitude());

@@ -180,7 +180,8 @@ public class NavigationService extends Service implements LocationHelper.Listene
         } else if (!LocationUtils.isDuplicate(mLastLocation, location)) {
             mNavProvider.locationUpdated(location);
         }
-        if (BuildConfig.NAV_GPS_LOGGING) {
+
+        if ((BuildConfig.NAV_GPS_LOGGING) &&(mNavProvider.sectoCurDistance <= 300)) {
             writeToLog(location);
         }
         mLastLocation = location;

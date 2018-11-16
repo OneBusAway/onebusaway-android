@@ -37,11 +37,11 @@ import org.onebusaway.android.ui.RouteInfoActivity;
 import org.onebusaway.android.view.RealtimeIndicatorView;
 import org.onebusaway.util.comparators.AlphanumComparator;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.SearchManager;
 import android.content.ActivityNotFoundException;
 import android.content.ContentQueryMap;
@@ -104,6 +104,7 @@ import java.util.concurrent.TimeUnit;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
@@ -123,6 +124,12 @@ public final class UIUtils {
 
     private static final String TAG = "UIHelp";
 
+    public static final String[] LOCATION_PERMISSIONS = {
+            Manifest.permission.ACCESS_FINE_LOCATION
+    };
+
+    public static final int LOCATION_PERMISSION_REQUEST = 1;
+
     public static void setupActionBar(AppCompatActivity activity) {
         ActionBar bar = activity.getSupportActionBar();
         bar.setIcon(android.R.color.transparent);
@@ -138,23 +145,21 @@ public final class UIUtils {
      * Sets up the search view in the action bar
      */
     public static void setupSearch(Activity activity, Menu menu) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            SearchManager searchManager =
-                    (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
-            final MenuItem searchMenu = menu.findItem(R.id.action_search);
-            SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchMenu);
-            searchView.setSearchableInfo(
-                    searchManager.getSearchableInfo(activity.getComponentName()));
-            // Close the keyboard and SearchView at same time when the back button is pressed
-            searchView.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
-                @Override
-                public void onFocusChange(View view, boolean queryTextFocused) {
-                    if (!queryTextFocused) {
-                        MenuItemCompat.collapseActionView(searchMenu);
-                    }
+        SearchManager searchManager =
+                (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
+        final MenuItem searchMenu = menu.findItem(R.id.action_search);
+        SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchMenu);
+        searchView.setSearchableInfo(
+                searchManager.getSearchableInfo(activity.getComponentName()));
+        // Close the keyboard and SearchView at same time when the back button is pressed
+        searchView.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean queryTextFocused) {
+                if (!queryTextFocused) {
+                    MenuItemCompat.collapseActionView(searchMenu);
                 }
-            });
-        }
+            }
+        });
     }
 
     public static void showProgress(Fragment fragment, boolean visible) {
@@ -1812,6 +1817,35 @@ public final class UIUtils {
                         (dialog, which) -> startPaymentIntent(activity, region)
                 );
 
+        builder.create().show();
+    }
+
+    /**
+     * Shows the dialog to explain why location permissions are needed.  If this provided activity
+     * can't manage dialogs then this method is a no-op.
+     *
+     * NOTE - this dialog can't be managed under the old dialog framework as the method
+     * ActivityCompat.shouldShowRequestPermissionRationale() always returns false.
+     */
+    public static void showLocationPermissionDialog(@NonNull Fragment fragment) {
+        if (!canManageDialog(fragment.getActivity())) {
+            return;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getActivity())
+                .setTitle(R.string.location_permissions_title)
+                .setMessage(R.string.location_permissions_message)
+                .setCancelable(false)
+                .setPositiveButton(R.string.ok,
+                        (dialog, which) -> {
+                            // Request permissions from the user
+                            fragment.requestPermissions(LOCATION_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
+                        }
+                )
+                .setNegativeButton(R.string.no_thanks,
+                        (dialog, which) -> {
+                            // No-op
+                        }
+                );
         builder.create().show();
     }
 }

@@ -27,6 +27,9 @@ import android.location.LocationManager;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.os.Build;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;

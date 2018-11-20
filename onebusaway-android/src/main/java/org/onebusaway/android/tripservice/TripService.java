@@ -240,7 +240,7 @@ public class TripService extends Service {
                 (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             // Try to cut through Doze so alarm still triggers - See #558
-            alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
+            alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
         } else {
             alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
         }

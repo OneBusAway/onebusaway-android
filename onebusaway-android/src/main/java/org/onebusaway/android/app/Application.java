@@ -16,18 +16,6 @@
  */
 package org.onebusaway.android.app;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.hardware.GeomagneticField;
-import android.location.Location;
-import android.location.LocationManager;
-import android.preference.PreferenceManager;
-import android.text.TextUtils;
-import android.util.Log;
-
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.common.ConnectionResult;
@@ -35,6 +23,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
+
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
 import org.onebusaway.android.BuildConfig;
@@ -50,6 +39,18 @@ import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.hardware.GeomagneticField;
+import android.location.Location;
+import android.location.LocationManager;
+import android.preference.PreferenceManager;
+import android.text.TextUtils;
+import android.util.Log;
 
 import java.security.MessageDigest;
 import java.util.HashMap;
@@ -178,7 +179,7 @@ public class Application extends MultiDexApplication {
                     (float) l.getLongitude(),
                     (float) l.getAltitude(),
                     System.currentTimeMillis());
-            Log.d(TAG, "Newest best location: " + mLastKnownLocation.toString());
+            // Log.d(TAG, "Newest best location: " + mLastKnownLocation.toString());
         }
     }
 

@@ -127,7 +127,7 @@
     </string>
     <string name="main_never_ask_again">No volver a preguntar</string>
     <string name="main_waiting_for_location">Tratando de establecer tú ubicación&#8230;</string>
-    <string name="main_location_unavailable">No se puede obtener tú ubicación.</string>
+    <string name="no_location_permission">No se puede obtener tú ubicación.</string>
     <string name="main_outofrange_title">Fuera de alcance</string>
     <string name="main_outofrange">Usted esta fuera del área de servicio %1$s.\n\n¿Mover
         el mapa a %1$s ahora?
@@ -760,14 +760,6 @@
     <string name="tutorial_send_feedback_transit_service_title">Más que sólo tránsito</string>
     <string name="tutorial_send_feedback_transit_service_text">Puedes reportar una variedad de tipos de
         problemas a tu gobierno local cerca a esta parada. Toca en el cuadro desplegable para ver una lista completa.
-    </string>
-
-    <!-- Location Security Exception -->
-    <string name="location_security_exception_title">Permisos de ubicación denegados</string>
-    <string name="location_security_exception_message">Parece que has podido negar los permisos
-        de ubicación para la aplicación en la configuración del sistema. Los servicios de ubicación no estarán disponibles.
-        Si quieres habilitar los permisos de ubicación, ve a la configuración de tu sistema Android, elige
-        \"OneBusAway\" y luego en \"Permisos\", y habilita \"Ubicación\".
     </string>
 
     <!-- About -->

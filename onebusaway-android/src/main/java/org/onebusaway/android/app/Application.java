@@ -21,6 +21,8 @@ import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.tasks.Task;
 
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
@@ -47,7 +49,6 @@ import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.location.LocationManager;
 import android.preference.PreferenceManager;
-import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -61,7 +62,7 @@ import androidx.multidex.MultiDexApplication;
 import edu.usf.cutr.open311client.Open311Manager;
 import edu.usf.cutr.open311client.models.Open311Option;
 
-import static com.google.android.gms.location.LocationServices.FusedLocationApi;
+import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 
 public class Application extends MultiDexApplication {
 
@@ -250,8 +251,12 @@ public class Application extends MultiDexApplication {
                 api.isGooglePlayServicesAvailable(cxt)
                         == ConnectionResult.SUCCESS
                 && client.isConnected()) {
-            playServices = FusedLocationApi.getLastLocation(client);
-            Log.d(TAG, "Got location from Google Play Services, testing against API v1...");
+            FusedLocationProviderClient fusedClient = getFusedLocationProviderClient(cxt);
+            Task<Location> task = fusedClient.getLastLocation();
+            if (task.isComplete()) {
+                playServices = task.getResult();
+                Log.d(TAG, "Got location from Google Play Services, testing against API v1...");
+            }
         }
         Location apiV1 = getLocationApiV1(cxt);
 
@@ -272,7 +277,12 @@ public class Application extends MultiDexApplication {
         List<String> providers = mgr.getProviders(true);
         Location last = null;
         for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
-            Location loc = mgr.getLastKnownLocation(i.next());
+            Location loc = null;
+            try {
+                loc = mgr.getLastKnownLocation(i.next());
+            }  catch (SecurityException e) {
+                Log.w(TAG, "User may have denied location permission - " + e);
+            }
             // If this provider has a last location, and either:
             // 1. We don't have a last location,
             // 2. Our last location is older than this location.
@@ -419,16 +429,9 @@ public class Application extends MultiDexApplication {
     }
 
     private String getAppUid() {
-        try {
-            final TelephonyManager telephony =
-                    (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-            final String id = telephony.getDeviceId();
-            MessageDigest digest = MessageDigest.getInstance("MD5");
-            digest.update(id.getBytes());
-            return getHex(digest.digest());
-        } catch (Exception e) {
-            return UUID.randomUUID().toString();
-        }
+        // FIXME - After migrating to Firebase, use FirebaseInstanceId - https://firebase.google.com/docs/reference/android/com/google/firebase/iid/FirebaseInstanceId
+        // If FirebaseInstanceId isn't available (catch all exceptions), then return randomUUID()
+        return UUID.randomUUID().toString();
     }
 
     private void initOba() {

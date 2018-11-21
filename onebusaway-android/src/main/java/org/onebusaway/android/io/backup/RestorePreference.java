@@ -15,22 +15,12 @@
  */
 package org.onebusaway.android.io.backup;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.util.BackupUtils;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Environment;
 import android.preference.Preference;
 import android.util.AttributeSet;
-import android.widget.Toast;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class RestorePreference extends Preference {
 
@@ -66,56 +56,6 @@ public class RestorePreference extends Preference {
 
     @Override
     protected void onClick() {
-        //
-        // Because this is a destructive operation, we should warn the user.
-        //
-        AlertDialog dialog = new AlertDialog.Builder(getContext())
-                .setMessage(R.string.preferences_db_restore_warning)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                        doRestore();
-                    }
-                })
-                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                })
-                .create();
-        dialog.show();
-
-    }
-
-    void doRestore() {
-        final Context context = Application.get().getApplicationContext();
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                context.getString(R.string.analytics_action_button_press),
-                context.getString(R.string.analytics_label_button_press_restore_preference));
-        try {
-            Backup.restore(context);
-
-            Context activityContext = getContext();
-            if (activityContext != null) {
-                List<ObaRegionsTask.Callback> callbacks = new ArrayList<>();
-                callbacks.add(new ObaRegionsTask.Callback() {
-                    @Override
-                    public void onRegionTaskFinished(boolean currentRegionChanged) {
-                        Toast.makeText(context,
-                                R.string.preferences_db_restored,
-                                Toast.LENGTH_LONG).show();
-                    }
-                });
-                ObaRegionsTask task = new ObaRegionsTask(activityContext, callbacks, true, true);
-                task.setProgressDialogMessage(context.getString(R.string.preferences_restore_loading));
-                task.execute();
-            }
-        } catch (IOException e) {
-            Toast.makeText(context,
-                    context.getString(R.string.preferences_db_restore_error, e.getMessage()),
-                    Toast.LENGTH_LONG).show();
-        }
+        BackupUtils.restore(getContext());
     }
 }

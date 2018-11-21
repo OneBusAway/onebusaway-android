@@ -65,7 +65,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
 
     public static final String LOG_DIRECTORY = "ObaNavLog";
 
-    private static final int RECORDING_THRESHOLD = (NavigationServiceProvider.DISTANCE_THRESHOLD + 100);
+    private static final int RECORDING_THRESHOLD = NavigationServiceProvider.DISTANCE_THRESHOLD + 100;
 
     private LocationHelper mLocationHelper = null;
     private Location mLastLocation = null;

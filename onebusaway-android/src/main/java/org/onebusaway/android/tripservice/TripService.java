@@ -125,6 +125,7 @@ public class TripService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "Trip service started");
         return handleCommand(intent, startId);
     }
 

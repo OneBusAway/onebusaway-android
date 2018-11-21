@@ -57,7 +57,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     private static final long[] VIBRATION_PATTERN = new long[]{
             2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000
     };
-    private static final int DISTANCE_THRESHOLD = 200;
+    public static final int DISTANCE_THRESHOLD = 200;
 
     // Number of times to repeat voice commands
     private static final int NUM_PULL_CORD_REPEAT = 10;
@@ -82,6 +82,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     private boolean mResuming = false;   // Is Trip being resumed?
     public boolean mFinished = false;   // Trip has finished.  //Change to public
     public boolean mGetReady = false;   // Get Ready triggered. //Change to public
+
+    public float mSectoCurDistance = -1;
 
     public static TextToSpeech mTTS;          // TextToSpeech for speaking commands.
 
@@ -477,6 +479,9 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                 endDistance = lastCoords.distanceTo(currentLocation);
                 //re-calculate the distance to second to last bus stop from the current location
                 directDistance = secondToLastCoords.distanceTo(currentLocation);
+
+                mSectoCurDistance = directDistance;
+
                 Log.d(TAG, "Second to last stop coordinates: " + secondToLastCoords.getLatitude()
                         + ", " + secondToLastCoords
                         .getLongitude());

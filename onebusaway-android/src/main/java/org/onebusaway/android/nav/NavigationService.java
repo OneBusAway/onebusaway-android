@@ -183,7 +183,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
             mNavProvider.locationUpdated(location);
         }
 
-        if ((BuildConfig.NAV_GPS_LOGGING) &&(mNavProvider.mSectoCurDistance <= RECORDING_THRESHOLD)) {
+        if (BuildConfig.NAV_GPS_LOGGING && mNavProvider.mSectoCurDistance <= RECORDING_THRESHOLD) {
             writeToLog(location);
         }
         mLastLocation = location;

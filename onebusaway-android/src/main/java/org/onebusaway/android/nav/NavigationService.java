@@ -65,6 +65,8 @@ public class NavigationService extends Service implements LocationHelper.Listene
 
     public static final String LOG_DIRECTORY = "ObaNavLog";
 
+    private static final int RECORDING_THRESHOLD = (NavigationServiceProvider.DISTANCE_THRESHOLD + 100);
+
     private LocationHelper mLocationHelper = null;
     private Location mLastLocation = null;
 
@@ -181,7 +183,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
             mNavProvider.locationUpdated(location);
         }
 
-        if ((BuildConfig.NAV_GPS_LOGGING) &&(mNavProvider.mSectoCurDistance <= 300)) {
+        if ((BuildConfig.NAV_GPS_LOGGING) &&(mNavProvider.mSectoCurDistance <= RECORDING_THRESHOLD)) {
             writeToLog(location);
         }
         mLastLocation = location;

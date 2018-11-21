@@ -57,7 +57,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     private static final long[] VIBRATION_PATTERN = new long[]{
             2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000
     };
-    private static final int DISTANCE_THRESHOLD = 200;
+    public static final int DISTANCE_THRESHOLD = 200;
 
     // Number of times to repeat voice commands
     private static final int NUM_PULL_CORD_REPEAT = 10;

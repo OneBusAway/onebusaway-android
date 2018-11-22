@@ -19,7 +19,6 @@ package org.onebusaway.android.tripservice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 public class BootstrapService extends BroadcastReceiver {
 
@@ -29,7 +28,6 @@ public class BootstrapService extends BroadcastReceiver {
      */
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d("BootstrapService", "Bootstrap onReceive");
         TripService.scheduleAll(context);
     }
 }

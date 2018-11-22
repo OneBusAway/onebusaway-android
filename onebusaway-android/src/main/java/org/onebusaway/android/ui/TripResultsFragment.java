@@ -340,12 +340,11 @@ public class TripResultsFragment extends Fragment {
             Context context = Application.get().getApplicationContext();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-                NotificationChannel channel = manager.getNotificationChannel(Application.CHANNEL_REALTIME_ID);
+                NotificationChannel channel = manager.getNotificationChannel(Application.CHANNEL_TRIP_PLAN_UPDATES_ID);
                 if(channel.getImportance() != NotificationManager.IMPORTANCE_NONE){
                     RealtimeService.start(getActivity(), getArguments());
                 }
-            }
-            else{
+            } else {
                 if (Application.getPrefs()
                         .getBoolean(getString(R.string.preference_key_trip_plan_notifications), true)) {
 

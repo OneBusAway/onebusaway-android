@@ -140,7 +140,7 @@ public final class NotifierTask implements Runnable {
                                             String notifyText,
                                             PendingIntent contentIntent,
                                             PendingIntent deleteIntent) {
-        NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(mContext, Application.CHANNEL_BUS_ARRIVAL_ID);
+        NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(mContext, Application.CHANNEL_ARRIVAL_REMINDERS_ID);
 
         notifyBuilder.setSmallIcon(R.drawable.ic_stat_notification)
                 .setOnlyAlertOnce(true)

@@ -73,8 +73,8 @@ public class Application extends MultiDexApplication {
     // Region preference (long id)
     private static final String TAG = "Application";
 
-    public static final String CHANNEL_REALTIME_ID = "ch101";
-    public static final String CHANNEL_BUS_ARRIVAL_ID = "ch102";
+    public static final String CHANNEL_TRIP_PLAN_UPDATES_ID = "ch101";
+    public static final String CHANNEL_ARRIVAL_REMINDERS_ID = "ch102";
 
     private SharedPreferences mPrefs;
 
@@ -610,13 +610,13 @@ public class Application extends MultiDexApplication {
     private void createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel1 = new NotificationChannel(
-                    CHANNEL_REALTIME_ID,
+                    CHANNEL_TRIP_PLAN_UPDATES_ID,
                     "Trip plan notifications (beta)",
                     NotificationManager.IMPORTANCE_DEFAULT);
             channel1.setDescription("After planning a trip, send notifications if the trip is delayed or no longer recommended.");
 
             NotificationChannel channel2 = new NotificationChannel(
-                    CHANNEL_BUS_ARRIVAL_ID,
+                    CHANNEL_ARRIVAL_REMINDERS_ID,
                     "Bus arrival notifications",
                     NotificationManager.IMPORTANCE_DEFAULT);
             channel2.setDescription("Notifications to remind the user of an arriving bus.");

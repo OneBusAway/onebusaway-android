@@ -126,6 +126,8 @@ public class TripService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Trip service started");
+        //create notification regarding foreground
+        //startForeground(1001,);
         return handleCommand(intent, startId);
     }
 
@@ -228,7 +230,12 @@ public class TripService extends Service {
         final Intent intent = new Intent(context, TripService.class);
         intent.setAction(TripService.ACTION_SCHEDULE);
         intent.setData(ObaContract.Trips.CONTENT_URI);
-        context.startService(intent);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        }
+        else{
+            context.startService(intent);
+        }
     }
 
     public static void pollTrip(Context context, Uri alertUri, long triggerTime) {

@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.util;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -23,6 +25,21 @@ import androidx.core.content.ContextCompat;
 
 
 public class PermissionUtils {
+
+    public static final int LOCATION_PERMISSION_REQUEST = 1;
+    public static final int SAVE_BACKUP_PERMISSION_REQUEST = 2;
+    public static final int RESTORE_BACKUP_PERMISSION_REQUEST = 3;
+
+    public static final String[] LOCATION_PERMISSIONS = {
+            Manifest.permission.ACCESS_FINE_LOCATION
+    };
+
+    @SuppressLint("InlinedApi")
+    public static final String[] STORAGE_PERMISSIONS = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+
     /**
      * Returns true if all of the provided permissions in requiredPermissions have been granted, or false if they have not
      * @param context

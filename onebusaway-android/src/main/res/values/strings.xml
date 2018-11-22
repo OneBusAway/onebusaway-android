@@ -770,6 +770,9 @@
     </string>
     <string name="no_thanks">No thanks</string>
 
+    <string name="storage_permissions_title">Access to device storage is required</string>
+    <string name="storage_permissions_message">To backup or restore your data, OneBusAway needs permission to access your local device storage.</string>
+
     <!-- About -->
     <string name="title_activity_about">About</string>
     <string name="about_text">

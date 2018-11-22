@@ -37,7 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
-import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
+import static org.onebusaway.android.util.UIUtils.LOCATION_PERMISSIONS;
 
 /**
  * A helper class that keeps listeners updated with the best location available from

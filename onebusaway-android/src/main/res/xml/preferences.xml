@@ -88,11 +88,9 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_backup">
         <org.onebusaway.android.io.backup.SavePreference
-                android:key="@string/preference_key_save_backup"
                 android:title="@string/preferences_save_title"
                 android:summary="@string/preferences_save_summary"/>
         <org.onebusaway.android.io.backup.RestorePreference
-                android:key="@string/preference_key_restore_backup"
                 android:title="@string/preferences_restore_title"
                 android:summary="@string/preferences_restore_summary"/>
     </PreferenceCategory>

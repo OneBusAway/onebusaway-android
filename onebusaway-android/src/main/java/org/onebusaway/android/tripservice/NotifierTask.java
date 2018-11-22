@@ -31,6 +31,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
@@ -139,7 +140,7 @@ public final class NotifierTask implements Runnable {
                                             String notifyText,
                                             PendingIntent contentIntent,
                                             PendingIntent deleteIntent) {
-        NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(mContext);
+        NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(mContext, Application.CHANNEL_ARRIVAL_REMINDERS_ID);
 
         notifyBuilder.setSmallIcon(R.drawable.ic_stat_notification)
                 .setOnlyAlertOnce(true)
@@ -147,6 +148,8 @@ public final class NotifierTask implements Runnable {
                 .setDeleteIntent(deleteIntent)
                 .setContentTitle(notifyTitle)
                 .setContentText(notifyText);
+
+        Log.d("NotifierTask", "Bus arrival notication");
 
         SharedPreferences appPrefs = Application.getPrefs();
 

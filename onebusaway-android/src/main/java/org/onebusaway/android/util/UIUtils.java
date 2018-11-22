@@ -37,6 +37,7 @@ import org.onebusaway.android.ui.RouteInfoActivity;
 import org.onebusaway.android.view.RealtimeIndicatorView;
 import org.onebusaway.util.comparators.AlphanumComparator;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
@@ -116,15 +117,18 @@ import androidx.core.util.Pair;
 import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
 
-import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
-import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSION_REQUEST;
-
 /**
  * A class containing utility methods related to the user interface
  */
 public final class UIUtils {
 
     private static final String TAG = "UIHelp";
+
+    public static final String[] LOCATION_PERMISSIONS = {
+            Manifest.permission.ACCESS_FINE_LOCATION
+    };
+
+    public static final int LOCATION_PERMISSION_REQUEST = 1;
 
     public static void setupActionBar(AppCompatActivity activity) {
         ActionBar bar = activity.getSupportActionBar();

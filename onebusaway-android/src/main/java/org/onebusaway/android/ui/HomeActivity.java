@@ -114,7 +114,7 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SIGN_IN;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
-import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
+import static org.onebusaway.android.util.UIUtils.LOCATION_PERMISSIONS;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_BOTTOM;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_END;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_START;

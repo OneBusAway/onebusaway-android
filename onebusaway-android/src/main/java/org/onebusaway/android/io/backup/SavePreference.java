@@ -15,12 +15,17 @@
  */
 package org.onebusaway.android.io.backup;
 
-import org.onebusaway.android.util.BackupUtils;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 
 import android.content.Context;
 import android.os.Environment;
 import android.preference.Preference;
 import android.util.AttributeSet;
+import android.widget.Toast;
+
+import java.io.IOException;
 
 public class SavePreference extends Preference {
 
@@ -53,6 +58,19 @@ public class SavePreference extends Preference {
 
     @Override
     protected void onClick() {
-        BackupUtils.save(getContext());
+        Context context = Application.get().getApplicationContext();
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                context.getString(R.string.analytics_action_button_press),
+                context.getString(R.string.analytics_label_button_press_save_preference));
+        try {
+            Backup.backup(context);
+            Toast.makeText(context,
+                    context.getString(R.string.preferences_db_saved),
+                    Toast.LENGTH_LONG).show();
+        } catch (IOException e) {
+            Toast.makeText(context,
+                    context.getString(R.string.preferences_db_save_error, e.getMessage()),
+                    Toast.LENGTH_LONG).show();
+        }
     }
 }

@@ -46,8 +46,6 @@
     <string name="preference_key_notifications">preference_key_notifications</string>
     <string name="preference_key_trip_plan_notifications">preference_key_trip_plan_notifications</string>
     <string name="preference_key_left_hand_mode">preference_key_left_hand_mode</string>
-    <string name="preference_key_save_backup">preference_key_save_backup</string>
-    <string name="preference_key_restore_backup">preference_key_restore_backup</string>
     <string name="preference_key_never_show_location_dialog">never_show_location_dialog</string>
     <string name="preference_key_layer_bikeshare_visible">layer_bike_selected</string>
     <string name="preference_key_trip_plan_travel_by">preference_trip_plan_travel_by</string>

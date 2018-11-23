@@ -230,12 +230,7 @@ public class TripService extends Service {
         final Intent intent = new Intent(context, TripService.class);
         intent.setAction(TripService.ACTION_SCHEDULE);
         intent.setData(ObaContract.Trips.CONTENT_URI);
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(intent);
-        }
-        else{
-            context.startService(intent);
-        }
+        context.startService(intent);
     }
 
     public static void pollTrip(Context context, Uri alertUri, long triggerTime) {

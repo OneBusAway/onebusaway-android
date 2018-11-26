@@ -125,9 +125,6 @@ public class TripService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "Trip service started");
-        //create notification regarding foreground
-        //startForeground(1001,);
         return handleCommand(intent, startId);
     }
 

@@ -538,7 +538,7 @@ public class TripPlanFragment extends Fragment {
         Location loc = Application.getLastKnownLocation(getContext(), mGoogleApiClient);
         if (loc == null) {
             if (getContext() != null) {
-                Toast.makeText(getContext(), getString(R.string.no_location_permission), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.main_location_unavailable), Toast.LENGTH_SHORT).show();
             }
         } else {
             address.setLatitude(loc.getLatitude());

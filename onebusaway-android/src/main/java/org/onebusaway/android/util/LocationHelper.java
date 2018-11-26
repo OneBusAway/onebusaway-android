@@ -18,15 +18,15 @@ package org.onebusaway.android.util;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -36,8 +36,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
-import static org.onebusaway.android.util.UIUtils.LOCATION_PERMISSIONS;
+import androidx.appcompat.app.AlertDialog;
+
+import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 
 /**
  * A helper class that keeps listeners updated with the best location available from
@@ -70,8 +71,6 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
 
     LocationRequest mLocationRequest;
 
-    LocationCallback mLocationCallback;
-
     private static final int MILLISECONDS_PER_SECOND = 1000;
 
     public static final int UPDATE_INTERVAL_IN_SECONDS = 5;
@@ -84,34 +83,17 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
     private static final long FASTEST_INTERVAL =
             MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
 
+    private static final String PREFERENCE_SHOWED_DIALOG
+            = "showed_location_security_exception_dialog";
+
     public LocationHelper(Context context) {
         mContext = context;
         mLocationManager = (LocationManager) Application.get().getBaseContext()
                 .getSystemService(Context.LOCATION_SERVICE);
-        // Create the LocationRequest object
-        mLocationRequest = LocationRequest.create();
-        // Use high accuracy
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        // Set the update interval to 5 seconds
-        mLocationRequest.setInterval(UPDATE_INTERVAL);
-        // Set the fastest update interval to 1 second
-        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
+        setupGooglePlayServices();
     }
 
-    /**
-     * Registers the provided listener for location updates, but first checks to see if Location
-     * permissions are granted.  If permissions haven't been granted, returns false and does not
-     * register any listeners.  After the caller has received permission from the user it can
-     * call this method again.
-     * @param listener listener for updates
-     * @return true if permissions have been granted and the listener was registered, false if
-     * permissions have not been granted and no listener was registered
-     */
-    public synchronized boolean registerListener(Listener listener) {
-        if (!PermissionUtils.hasGrantedPermissions(mContext, LOCATION_PERMISSIONS)) {
-            return false;
-        }
-        // User has granted permissions - continue to register listener for location updates
+    public synchronized void registerListener(Listener listener) {
         if (!mListeners.contains(listener)) {
             mListeners.add(listener);
         }
@@ -119,22 +101,22 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
         // If this is the first listener, make sure we're monitoring the sensors to provide updates
         if (mListeners.size() == 1) {
             // Listen for location
-            registerAllProviders();
+            try {
+                registerAllProviders();
+            } catch (SecurityException e) {
+                Log.e(TAG, "User may have denied location permission - " + e);
+                maybeShowSecurityDialog();
+            }
         }
-        return true;
     }
 
     public synchronized void unregisterListener(Listener listener) {
-        mListeners.remove(listener);
+        if (mListeners.contains(listener)) {
+            mListeners.remove(listener);
+        }
 
         if (mListeners.size() == 0) {
-            try {
-                mLocationManager.removeUpdates(this);
-            } catch (SecurityException e) {
-                // We're just unregistering listeners here, so just log exception if user revoked
-                // permissions after the listener was registered
-                Log.w(TAG, "User may have denied location permission - " + e);
-            }
+            mLocationManager.removeUpdates(this);
         }
     }
 
@@ -151,8 +133,8 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
         try {
             registerAllProviders();
         } catch (SecurityException e) {
-            // If we resume after the user has denied location permissions, log the warning and continue
-            Log.w(TAG, "User may have denied location permission - " + e);
+            Log.e(TAG, "User may have denied location permission - " + e);
+            maybeShowSecurityDialog();
         }
     }
 
@@ -161,15 +143,13 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
             mLocationManager.removeUpdates(this);
 
             // Tear down GoogleApiClient
-            if (mGoogleApiClient != null && mGoogleApiClient.isConnected()&& mLocationCallback != null) {
-                FusedLocationProviderClient client = getFusedLocationProviderClient(mContext);
-                client.removeLocationUpdates(mLocationCallback);
+            if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+                FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
                 mGoogleApiClient.disconnect();
             }
         } catch (SecurityException e) {
-            // We're just unregistering listeners here, so just log exception if user revoked
-            // permissions after the listener was registered
-            Log.w(TAG, "User may have denied location permission - " + e);
+            Log.e(TAG, "User may have denied location permission - " + e);
+            maybeShowSecurityDialog();
         }
     }
 
@@ -207,20 +187,28 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
     }
 
     private void registerAllProviders() throws SecurityException {
-        // Register the network and GPS provider (and anything else available)
         List<String> providers = mLocationManager.getProviders(true);
         for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
             mLocationManager.requestLocationUpdates(i.next(), 0, 0, this);
         }
 
-        setupGooglePlayServices();
+        // Make sure GoogleApiClient is connected, if available
+        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.connect();
+        }
     }
 
-    /**
-     * Request connection to Google Play Services for the fused location provider.
-     * onConnected() will be called after connection.
-     */
     private void setupGooglePlayServices() {
+        // Create the LocationRequest object
+        mLocationRequest = LocationRequest.create();
+        // Use high accuracy
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        // Set the update interval to 5 seconds
+        mLocationRequest.setInterval(UPDATE_INTERVAL);
+        // Set the fastest update interval to 1 second
+        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
+
+        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         GoogleApiAvailability api = GoogleApiAvailability.getInstance();
         if (api.isGooglePlayServicesAvailable(mContext)
                 == ConnectionResult.SUCCESS) {
@@ -233,34 +221,46 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
         }
     }
 
+    /**
+     * Shows the security dialog once if the user has disabled location permissions manually
+     */
+    private void maybeShowSecurityDialog() {
+        if (mContext != null && UIUtils.canManageDialog(mContext)) {
+            final SharedPreferences sp = Application.getPrefs();
+            if (!sp.getBoolean(PREFERENCE_SHOWED_DIALOG, false)) {
+                final AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+                builder.setTitle(R.string.location_security_exception_title);
+                builder.setCancelable(false);
+                builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        sp.edit().putBoolean(PREFERENCE_SHOWED_DIALOG, true).commit();
+                    }
+                });
+                builder.setMessage(R.string.location_security_exception_message);
+                builder.create().show();
+            }
+        }
+    }
+
     @Override
     public void onConnected(Bundle bundle) {
         Log.d(TAG, "Location Services connected");
-        // Request location updates from the fused location provider
-        FusedLocationProviderClient client = getFusedLocationProviderClient(mContext);
-
-        if (mLocationCallback == null) {
-            mLocationCallback = new LocationCallback() {
-                @Override
-                public void onLocationResult(LocationResult locationResult) {
-                    onLocationChanged(locationResult.getLastLocation());
-                }
-            };
-        }
+        // Request location updates
         try {
-            client.requestLocationUpdates(mLocationRequest, mLocationCallback, null);
+            FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         } catch (SecurityException e) {
-            // We only register the fused provider if permission was granted, so if it was revoked
-            // in between log the warning and continue
-            Log.w(TAG, "User may have denied location permission - " + e);
+            Log.e(TAG, "User may have denied location permission - " + e);
+            maybeShowSecurityDialog();
         }
     }
 
     @Override
     public void onConnectionSuspended(int i) {
+
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
+
     }
 }

@@ -1,7 +1,6 @@
 # Test format changes to this .travis.yml file before submitting a PR with:
 # http://lint.travis-ci.org/OneBusAway/onebusaway-android
-
-language: android
+ language: android
 jdk: oraclejdk8
 # Turn off caching to avoid any caching problems
 cache: false
@@ -12,8 +11,7 @@ env:
     - ANDROID_API_LEVEL=28
     - ANDROID_BUILD_TOOLS_VERSION=28.0.2
     - ADB_INSTALL_TIMEOUT=20 # minutes (2 minutes by default - see #247)
-
-android:
+ android:
   components:
     - platform-tools
     - tools
@@ -26,15 +24,12 @@ android:
     # Latest artifacts in local repository
     - extra-google-m2repository
     - extra-android-m2repository
-
-before_install:
+ before_install:
   - yes | sdkmanager "platforms;android-28"
-
-# Only run tests on the main two OneBusAway brand flavors
+ # Only run tests on the main two OneBusAway brand flavors
 script:
   - ./gradlew assembleObaGoogleDebug assembleObaAmazonDebug -PdisablePreDex
-
-notifications:
+ notifications:
   webhooks:
   # Integration with Gitter (https://gitter.im/OneBusAway/onebusaway-android)
     urls:

@@ -87,7 +87,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.fragment.app.DialogFragment;
 
-
 /**
  * The MapFragment class is split into two basic modes:
  * stop mode and route mode. It needs to be able to switch
@@ -114,8 +113,6 @@ public class BaseMapFragment extends SupportMapFragment
     public static final String TAG = "BaseMapFragment";
 
     private static final int REQUEST_NO_LOCATION = 41;
-
-    private static final String USER_DENIED_PERMISSION = ".UserDeniedPermission";
 
     //
     // Location Services and Maps API v2 constants
@@ -259,7 +256,7 @@ public class BaseMapFragment extends SupportMapFragment
                              Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
 
-        mLocationHelper.registerListener(this);
+        mLocationHelper = new LocationHelper(getActivity());
 
         if (MapHelpV2.isMapsInstalled(getActivity())) {
             // Save the savedInstanceState
@@ -304,10 +301,10 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     private void initMap(Bundle savedInstanceState) {
+		
         UiSettings uiSettings = mMap.getUiSettings();
         // Show the location on the map
         mMap.setMyLocationEnabled(true);
-
         // Set location source
         mMap.setLocationSource(this);
         // Listener for camera changes
@@ -747,7 +744,6 @@ public class BaseMapFragment extends SupportMapFragment
 
         Location lastLocation = Application.getLastKnownLocation(getActivity(), apiClient);
         if (lastLocation == null) {
-            String text;
             Toast.makeText(getActivity(),
                     getResources()
                             .getString(R.string.main_waiting_for_location),
@@ -1240,10 +1236,9 @@ public class BaseMapFragment extends SupportMapFragment
                     .setNegativeButton(R.string.main_outofrange_no,
                             new DialogInterface.OnClickListener() {
                                     @Override
-                                    public void onClick(DialogInterface dialog, int which){
-                                        if (mMapFragment != null && mMapFragment.isAdded()) {
-                                            mMapFragment.mWarnOutOfRange = false;
-                                        }
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (mMapFragment != null && mMapFragment.isAdded()) {
+                                        mMapFragment.mWarnOutOfRange = false;
                                     }
                             }
                     );

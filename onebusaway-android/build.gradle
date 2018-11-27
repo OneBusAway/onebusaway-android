@@ -455,7 +455,7 @@ dependencies {
     // Required to support multidex for minSdkVersion <= 20
     implementation 'androidx.multidex:multidex:2.0.0'
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
-    androidTestImplementation 'androidx.test:runner:1.1.0-beta01'
+    androidTestImplementation 'androidx.test:runner:1.1.0'
 }
 
 // Dependencies not directly used in this project, but used by dependencies that we are using

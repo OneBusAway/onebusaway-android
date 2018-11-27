@@ -40,6 +40,8 @@ import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -48,6 +50,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -70,6 +73,9 @@ public class Application extends MultiDexApplication {
 
     // Region preference (long id)
     private static final String TAG = "Application";
+
+    public static final String CHANNEL_TRIP_PLAN_UPDATES_ID = "trip_plan_updates";
+    public static final String CHANNEL_ARRIVAL_REMINDERS_ID = "arrival_reminders";
 
     private SharedPreferences mPrefs;
 
@@ -113,6 +119,8 @@ public class Application extends MultiDexApplication {
 
         ObaAnalytics.initAnalytics(this);
         reportAnalytics();
+
+        createNotificationChannels();
     }
 
     /**
@@ -598,6 +606,26 @@ public class Application extends MultiDexApplication {
         return ((Application.get().getCurrentRegion() != null
                 && Application.get().getCurrentRegion().getSupportsOtpBikeshare())
                 || !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl()));
+    }
+
+    private void createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel1 = new NotificationChannel(
+                    CHANNEL_TRIP_PLAN_UPDATES_ID,
+                    "Trip plan notifications (beta)",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel1.setDescription("After planning a trip, send notifications if the trip is delayed or no longer recommended.");
+
+            NotificationChannel channel2 = new NotificationChannel(
+                    CHANNEL_ARRIVAL_REMINDERS_ID,
+                    "Bus arrival notifications",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel2.setDescription("Notifications to remind the user of an arriving bus.");
+
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel1);
+            manager.createNotificationChannel(channel2);
+        }
     }
 
 }

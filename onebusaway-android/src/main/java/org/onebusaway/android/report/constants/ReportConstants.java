@@ -31,7 +31,7 @@ public class ReportConstants {
     public static final String DYNAMIC_SERVICE = "dynamic";
 
     // Number of transit-related services at which we assume all services are transit-related
-    public static final int NUM_TRANSIT_SERVICES_THRESHOLD = 4;
+    public static final int NUM_TRANSIT_SERVICES_THRESHOLD = 3;
 
     // Static Transit service indicates that the service is default OBA stop or trip problem
     public static final String STATIC_TRANSIT_SERVICE_STOP = "stop";

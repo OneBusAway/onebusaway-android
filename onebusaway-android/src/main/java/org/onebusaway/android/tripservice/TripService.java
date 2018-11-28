@@ -17,6 +17,8 @@
 package org.onebusaway.android.tripservice;
 
 import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.UIUtils;
 
@@ -38,6 +40,8 @@ import android.util.Log;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import androidx.core.app.NotificationCompat;
 
 /**
  * A container Service for a thread pool that manages the scheduling, polling, and notifying the
@@ -125,6 +129,20 @@ public class TripService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "Trip service started");
+        //create notification regarding foreground
+        Intent notificationIntent = new Intent(this, TripService.class);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                notificationIntent, 0);
+
+        Notification notification = new NotificationCompat.Builder(getApplicationContext(), Application.CHANNEL_TRIP_PLAN_UPDATES_ID)
+                .setSmallIcon(R.drawable.ic_stat_notification)
+                .setContentTitle("Service running in foreground")
+                .setContentText("OneBusAway will be running a service in foreground")
+                .setContentIntent(pendingIntent).build();
+
+        startForeground(1001,notification);
         return handleCommand(intent, startId);
     }
 
@@ -174,9 +192,9 @@ public class TripService extends Service {
         final String action = intent.getAction();
         final TaskContextImpl taskContext = new TaskContextImpl(startId);
         final Uri uri = intent.getData();
-        //Log.d(TAG, "Handle command: startId=" + startId +
-        //        " action=" + action +
-        //        " uri=" + uri);
+        Log.d(TAG, "Handle command: startId=" + startId +
+               " action=" + action +
+                " uri=" + uri);
 
         if (ACTION_SCHEDULE.equals(action)) {
             mThreadPool.submit(new SchedulerTask(this, taskContext, uri));
@@ -224,10 +242,16 @@ public class TripService extends Service {
     // Trip helpers
     //
     public static void scheduleAll(Context context) {
+        Log.d(TAG, "Triggered scehduleAll()");
         final Intent intent = new Intent(context, TripService.class);
         intent.setAction(TripService.ACTION_SCHEDULE);
         intent.setData(ObaContract.Trips.CONTENT_URI);
-        context.startService(intent);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        }
+        else{
+            context.startService(intent);
+        }
     }
 
     public static void pollTrip(Context context, Uri alertUri, long triggerTime) {

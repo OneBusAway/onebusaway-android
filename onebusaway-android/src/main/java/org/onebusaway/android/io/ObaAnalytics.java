@@ -18,6 +18,7 @@ package org.onebusaway.android.io;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
@@ -28,8 +29,11 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+
+import static android.text.TextUtils.isEmpty;
 
 /**
  * Analytics class for tracking the app
@@ -125,6 +129,24 @@ public class ObaAnalytics {
                     .setCustomDimension(1, obaRegionName)
                     .build());
         }
+    }
+
+    /**
+     * Reports UI events using Firebase
+     * @param analytics Firebase singleton
+     * @param id ID of the UI element to report
+     * @param state the state of the UI item, or null if the item doesn't have a state
+     */
+    public static void reportFirebaseUiEvent(FirebaseAnalytics analytics, String id, String state) {
+        if (!isAnalyticsActive()) {
+            return;
+        }
+        Bundle bundle = new Bundle();
+        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, id);
+        if (!isEmpty(state)) {
+            bundle.putString(FirebaseAnalytics.Param.ITEM_VARIANT, state);
+        }
+        analytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
     }
 
     /**

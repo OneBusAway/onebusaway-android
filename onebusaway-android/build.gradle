@@ -41,15 +41,14 @@ repositories {
 
 // Custom properties for OBA
 ext {
-    compileSdkVersion = 28
-    playServicesVersion = "16.0.0"
+    playServicesVersion = "11.8.0"
 }
 
 android {
     dexOptions {
         preDexLibraries true
     }
-    compileSdkVersion this.ext.compileSdkVersion
+    compileSdkVersion 28
     buildToolsVersion '28.0.3'
 
     defaultConfig {
@@ -410,17 +409,20 @@ dependencies {
         exclude module: 'play-services-ads' // See #342
         force = true
     }
+    // Firebase Analytics
+    implementation("com.google.firebase:firebase-core:${this.ext.playServicesVersion}") {
+            force = true
+}
+    implementation("com.google.firebase:firebase-analytics:${this.ext.playServicesVersion}") {
+            force = true
+    }
     // Google Play Services Location (we need this on Amazon flavor too)
     implementation("com.google.android.gms:play-services-location:${this.ext.playServicesVersion}") {
         force = true
     }
     // Support libraries
-    implementation ('androidx.cardview:cardview:1.0.0') {
-        force = true
-    }
-    implementation ('com.google.android.material:material:1.0.0') {
-        force = true
-    }
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'com.google.android.material:material:1.0.0'
     implementation 'commons-io:commons-io:2.4'
     // Open311 client library
     implementation 'edu.usf.cutr:open311client:1.0.9'
@@ -460,9 +462,9 @@ dependencies {
 
 // Dependencies not directly used in this project, but used by dependencies that we are using
 configurations.all {
-    // Needed to eliminate conflict with EmbeddedSocial SDK Google Play Services & Firebase libraries
+    // Needed to eliminate conflict with EmbeddedSocial SDK Google Play Services libraries
     resolutionStrategy.force "com.google.android.gms:play-services-auth:${this.ext.playServicesVersion}"
     resolutionStrategy.force "com.google.android.gms:play-services-gcm:${this.ext.playServicesVersion}"
-    resolutionStrategy.force "com.google.firebase:firebase-core:${this.ext.playServicesVersion}"
-    resolutionStrategy.force "com.google.firebase:firebase-analytics:${this.ext.playServicesVersion}"
 }
+
+apply plugin:'com.google.gms.google-services'

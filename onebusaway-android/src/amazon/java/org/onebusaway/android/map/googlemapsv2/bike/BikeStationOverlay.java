@@ -32,6 +32,7 @@ import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
 import com.amazon.geo.mapsv2.model.LatLng;
 import com.amazon.geo.mapsv2.model.Marker;
 import com.amazon.geo.mapsv2.model.MarkerOptions;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -80,6 +81,8 @@ public class BikeStationOverlay
 
     private Context mContext;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     private BikeInfoWindowAdapter mBikeInfoWindowAdapter = null;
 
     /**
@@ -90,6 +93,7 @@ public class BikeStationOverlay
 
     public BikeStationOverlay(Activity activity, AmazonMap map, boolean isInDirectionsMode) {
         mContext = activity;
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(mContext);
         mMap = map;
         mIsInDirectionsMode = isInDirectionsMode;
         mBikeStationData = new BikeStationData();
@@ -182,6 +186,12 @@ public class BikeStationOverlay
                     mContext.getString(bikeRentalStation.isFloatingBike ?
                             R.string.analytics_label_bike_station_marker_clicked :
                             R.string.analytics_label_floating_bike_marker_clicked));
+
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                    mContext.getString(bikeRentalStation.isFloatingBike ?
+                            R.string.analytics_label_bike_station_marker_clicked :
+                            R.string.analytics_label_floating_bike_marker_clicked),
+                    null);
             return true;
         } else {
             mBikeStationData.removeMarkerSelection();
@@ -243,6 +253,12 @@ public class BikeStationOverlay
                         mContext.getString(bikeStation.isFloatingBike ?
                                 R.string.analytics_label_bike_station_balloon_clicked :
                                 R.string.analytics_label_floating_bike_balloon_clicked));
+
+                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                        mContext.getString(bikeStation.isFloatingBike ?
+                                R.string.analytics_label_bike_station_balloon_clicked :
+                                R.string.analytics_label_floating_bike_balloon_clicked),
+                        null);
 
                 Intent i = new Intent(Intent.ACTION_VIEW);
                 i.setData(Uri.parse(url));

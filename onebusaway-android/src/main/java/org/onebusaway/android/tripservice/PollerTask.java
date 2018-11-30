@@ -16,6 +16,12 @@
  */
 package org.onebusaway.android.tripservice;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
@@ -23,12 +29,6 @@ import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.UIUtils;
-
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
 
 /**
  * A task (thread) that is responsible for polling the server to determine if a Notification to
@@ -86,7 +86,7 @@ public final class PollerTask implements Runnable {
             if (c != null) {
                 c.close();
             }
-            mTaskContext.taskComplete();
+            mTaskContext.taskComplete(TripService.ACTION_POLL);
         }
     }
 

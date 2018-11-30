@@ -16,12 +16,6 @@
  */
 package org.onebusaway.android.tripservice;
 
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -37,11 +31,15 @@ import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.Log;
 
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.UIUtils;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import androidx.core.app.NotificationCompat;
 
@@ -182,10 +180,10 @@ public class TripService extends Service {
         }
 
         @Override
-        public void taskComplete() {
+        public void taskComplete(String action) {
             //Log.d(TAG, "Task complete: " + mStartId);
             // If we have notifications, then we can't stop ourselves.
-            if (mNotifications.isEmpty()) {
+            if (mNotifications.isEmpty() || ACTION_NOTIFY.equals(action)) {
                 stopSelfResult(mStartId);
             }
         }
@@ -237,13 +235,7 @@ public class TripService extends Service {
             String notifyText = intent.getStringExtra(NOTIFY_TEXT);
 
             mThreadPool.submit(new NotifierTask(this, taskContext, uri, notifyTitle, notifyText));
-            Pattern pat = Pattern.compile("Route\\s\\d+\\shas\\sarrived");
-            Matcher match = pat.matcher(notifyText);
-            if(match.find()){
-                stopSelf();
-            }
             return START_REDELIVER_INTENT;
-
         } else if (ACTION_CANCEL.equals(action)) {
             mThreadPool.submit(new CancelNotifyTask(this, taskContext, uri));
             return START_NOT_STICKY;

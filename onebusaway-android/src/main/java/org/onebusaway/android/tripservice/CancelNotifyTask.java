@@ -55,7 +55,7 @@ public final class CancelNotifyTask implements Runnable {
 
             TripService.scheduleAll(mContext);
         } finally {
-            mTaskContext.taskComplete(TripService.ACTION_CANCEL);
+            mTaskContext.taskComplete();
         }
     }
 }

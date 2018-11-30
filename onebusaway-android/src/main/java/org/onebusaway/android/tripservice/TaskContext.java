@@ -29,5 +29,5 @@ public interface TaskContext {
 
     public void cancelNotification(int id);
 
-    public void taskComplete(String action);
+    public void taskComplete();
 }

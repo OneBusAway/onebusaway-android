@@ -95,7 +95,7 @@ public final class NotifierTask implements Runnable {
             if (c != null) {
                 c.close();
             }
-            mTaskContext.taskComplete(TripService.ACTION_NOTIFY);
+            mTaskContext.taskComplete();
         }
     }
 

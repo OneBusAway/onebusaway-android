@@ -90,7 +90,7 @@ public final class SchedulerTask implements Runnable {
             if (c != null) {
                 c.close();
             }
-            mTaskContext.taskComplete(TripService.ACTION_SCHEDULE);
+            mTaskContext.taskComplete();
         }
     }
 

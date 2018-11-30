@@ -86,7 +86,7 @@ public final class PollerTask implements Runnable {
             if (c != null) {
                 c.close();
             }
-            mTaskContext.taskComplete(TripService.ACTION_POLL);
+            mTaskContext.taskComplete();
         }
     }
 

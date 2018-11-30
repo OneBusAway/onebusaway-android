@@ -451,8 +451,8 @@ dependencies {
     // Amazon Maps (only for Amazon flavor)
     amazonImplementation 'com.amazon.android:amazon-maps-api:2.0'
     // Embedded Social SDK
-    implementation('com.acrowntest.test:sdk:0.7.1:release@aar') {
-        transitive = true;
+    implementation('com.acrowntest.test:sdk:0.7.2:release@aar') {
+        transitive = true
     }
     // Required to support multidex for minSdkVersion <= 20
     implementation 'androidx.multidex:multidex:2.0.0'

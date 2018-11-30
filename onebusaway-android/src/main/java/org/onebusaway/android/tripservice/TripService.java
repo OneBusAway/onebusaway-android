@@ -40,6 +40,8 @@ import android.util.Log;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import androidx.core.app.NotificationCompat;
 
@@ -91,6 +93,8 @@ public class TripService extends Service {
 
     private static final String NOTIFY_TITLE = ".notifyTitle";
 
+    public static final int FOREGROUND_NOTIFICATION_ID = 1800001;
+
     private ExecutorService mThreadPool;
 
     private NotificationManager mNM;
@@ -129,20 +133,43 @@ public class TripService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "Trip service started");
-        //create notification regarding foreground
-        Intent notificationIntent = new Intent(this, TripService.class);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            //create notification regarding foreground
+            Intent notificationIntent = new Intent(this, TripService.class);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                    notificationIntent, 0);
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                notificationIntent, 0);
+            String action = intent.getAction();
+            String foregroundNotifyTitle = Application.get().getResources()
+                    .getString(R.string.foreground_all_intent_title);
+            String foregroundNotifyText = "";
 
-        Notification notification = new NotificationCompat.Builder(getApplicationContext(), Application.CHANNEL_TRIP_PLAN_UPDATES_ID)
-                .setSmallIcon(R.drawable.ic_stat_notification)
-                .setContentTitle("Service running in foreground")
-                .setContentText("OneBusAway will be running a service in foreground")
-                .setContentIntent(pendingIntent).build();
+            if (ACTION_SCHEDULE.equals(action)) {
+                foregroundNotifyText = Application.get().getResources()
+                        .getString(R.string.foreground_action_schedule_text);
 
-        startForeground(1001,notification);
+            } else if (ACTION_POLL.equals(action)) {
+                foregroundNotifyText = Application.get().getResources()
+                        .getString(R.string.foreground_action_poll_text);
+
+            } else if (ACTION_NOTIFY.equals(action)) {
+                foregroundNotifyText = Application.get().getResources()
+                        .getString(R.string.foreground_action_notify_text);
+            }
+            else {
+                foregroundNotifyText = Application.get().getResources()
+                        .getString(R.string.foreground_action_cancel_text);
+            }
+
+            Notification notification = new NotificationCompat.Builder(getApplicationContext(),
+                    Application.CHANNEL_TRIP_PLAN_UPDATES_ID)
+                    .setSmallIcon(R.drawable.ic_stat_notification)
+                    .setContentTitle(foregroundNotifyTitle)
+                    .setContentText(foregroundNotifyText)
+                    .setContentIntent(pendingIntent).build();
+
+            startForeground(FOREGROUND_NOTIFICATION_ID, notification);
+        }
         return handleCommand(intent, startId);
     }
 
@@ -210,6 +237,11 @@ public class TripService extends Service {
             String notifyText = intent.getStringExtra(NOTIFY_TEXT);
 
             mThreadPool.submit(new NotifierTask(this, taskContext, uri, notifyTitle, notifyText));
+            Pattern pat = Pattern.compile("Route\\s\\d+\\shas\\sarrived");
+            Matcher match = pat.matcher(notifyText);
+            if(match.find()){
+                stopSelf();
+            }
             return START_REDELIVER_INTENT;
 
         } else if (ACTION_CANCEL.equals(action)) {

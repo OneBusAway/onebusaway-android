@@ -40,8 +40,6 @@ import org.onebusaway.android.util.UIUtils;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import androidx.core.app.NotificationCompat;
 
@@ -237,11 +235,6 @@ public class TripService extends Service {
             String notifyText = intent.getStringExtra(NOTIFY_TEXT);
 
             mThreadPool.submit(new NotifierTask(this, taskContext, uri, notifyTitle, notifyText));
-            Pattern pat = Pattern.compile("Route\\s\\d+\\shas\\sarrived");
-            Matcher match = pat.matcher(notifyText);
-            if (match.find()) {
-                stopSelf();
-            }
             return START_REDELIVER_INTENT;
 
         } else if (ACTION_CANCEL.equals(action)) {

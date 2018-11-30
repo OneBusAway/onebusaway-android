@@ -131,7 +131,7 @@ public class TripService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             //create notification regarding foreground
             Intent notificationIntent = new Intent(this, TripService.class);
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
@@ -145,11 +145,9 @@ public class TripService extends Service {
             if (ACTION_SCHEDULE.equals(action)) {
                 foregroundNotifyText = Application.get().getResources()
                         .getString(R.string.foreground_action_schedule_text);
-
             } else if (ACTION_POLL.equals(action)) {
                 foregroundNotifyText = Application.get().getResources()
                         .getString(R.string.foreground_action_poll_text);
-
             } else if (ACTION_NOTIFY.equals(action)) {
                 foregroundNotifyText = Application.get().getResources()
                         .getString(R.string.foreground_action_notify_text);

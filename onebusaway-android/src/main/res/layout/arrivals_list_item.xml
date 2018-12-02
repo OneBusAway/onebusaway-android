@@ -14,10 +14,11 @@
      limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="@color/stop_info_arrival_list_background"
-              android:orientation="vertical">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/tools"
+    android:background="@color/stop_info_arrival_list_background"
+    android:orientation="vertical">
     <androidx.cardview.widget.CardView
             xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:card_view="http://schemas.android.com/apk/res-auto"
@@ -57,12 +58,13 @@
                         android:gravity="center"
                         style="@style/StopInfoRoute">
                 </TextView>
-                <LinearLayout
-                        android:orientation="vertical"
-                        android:layout_column="1"
-                        android:gravity="left">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
                     <TextView
                             android:id="@+id/reminder"
+                        android:drawableStart="@drawable/ic_drawer_alarm"
                             android:drawableLeft="@drawable/ic_drawer_alarm"
                             android:contentDescription="@string/trip_info_reminder_content_description"
                             android:drawablePadding="5dp"
@@ -70,8 +72,7 @@
                             style="@style/StopInfoDestination"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical">
-                    </TextView>
+                        app:layout_constraintTop_toTopOf="parent" />
                     <TextView
                             android:id="@+id/destination"
                             style="@style/StopInfoDestination"
@@ -79,23 +80,25 @@
                             android:layout_height="wrap_content"
                             android:text="North to Univerity Area TC"
                             android:ellipsize="end"
-                            android:singleLine="true">
-                    </TextView>
+                        android:singleLine="true"
+                        app:layout_constraintTop_toBottomOf="@id/reminder" />
                     <include
                             android:id="@+id/status"
                             layout="@layout/arrivals_list_tv_template_style_a_status_small"
                             android:layout_marginTop="2dp"
                             android:layout_marginBottom="2dp"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        app:layout_constraintTop_toBottomOf="@id/destination" />
                     <TextView
                             android:id="@+id/time"
                             style="@style/StopInfoTime"
                             android:text="11:46 AM"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content">
+                        android:layout_height="wrap_content"
+                        app:layout_constraintTop_toBottomOf="@id/status">
                     </TextView>
-                </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
                 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                                 android:id="@+id/eta_and_min"
                                 android:layout_width="wrap_content"

@@ -399,6 +399,7 @@
     <string name="trip_info_option_showroute">Show Route</string>
     <string name="trip_info_option_showstop">Show Stop</string>
     <string name="trip_info_separator">-</string>
+    <string name="occupancy_description">Occupancy</string>
 
     <!--  Trip list -->
     <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by

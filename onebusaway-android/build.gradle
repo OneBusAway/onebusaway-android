@@ -60,6 +60,8 @@ android {
 
         multiDexEnabled true
 
+        vectorDrawables.useSupportLibrary = true
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -421,6 +423,7 @@ dependencies {
     implementation ('com.google.android.material:material:1.0.0') {
         force = true
     }
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha2'
     implementation 'commons-io:commons-io:2.4'
     // Open311 client library
     implementation 'edu.usf.cutr:open311client:1.0.9'

@@ -58,7 +58,7 @@
     <color name="stop_info_early">#af504c</color>
 
     <color name="stop_info_occupancy_background">@color/navdrawer_background_color_selected</color>
-    <color name="stop_info_occupancy">@color/navdrawer_icon_tint</color>
+    <color name="stop_info_occupancy">@color/stop_info_scheduled_time</color>
 
     <color name="stop_info_arrival_list_background">#eaeaea</color>
 

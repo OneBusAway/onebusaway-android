@@ -57,7 +57,7 @@
 
     <!-- Arrivals Style A -->
     <dimen name="occupancy">15dp</dimen>
-    <dimen name="occupancy_margin">10dp</dimen>
+    <dimen name="occupancy_margin">2dp</dimen>
 
     <!-- Arrivals Style B -->
     <dimen name="arrival_style_b_status_min_width">77dp</dimen>

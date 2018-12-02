@@ -52,7 +52,7 @@
     <color name="header_stop_info_ontime">@color/theme_primary</color>
 
     <!-- Arrival time colors -->
-    <color name="stop_info_scheduled_time">#777</color>
+    <color name="stop_info_scheduled_time">#777777</color>
     <color name="stop_info_ontime">@color/theme_primary</color>
     <color name="stop_info_delayed">#504caf</color>
     <color name="stop_info_early">#af504c</color>

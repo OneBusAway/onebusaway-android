@@ -106,7 +106,7 @@
                         android:layout_marginLeft="5dp"
                         app:layout_constraintTop_toTopOf="@id/status"
                         app:layout_constraintBottom_toBottomOf="@id/status"
-                        card_view:layout_constraintStart_toEndOf="@+id/status" />
+                        app:layout_constraintStart_toEndOf="@+id/status" />
 
                     <TextView
                         android:id="@+id/time"

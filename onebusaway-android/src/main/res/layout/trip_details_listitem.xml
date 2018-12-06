@@ -15,9 +15,10 @@
     limitations under the License.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="fill_parent"
-              android:layout_height="@dimen/trip_details_transit_line_height"
-                android:orientation="horizontal">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="@dimen/trip_details_transit_line_height"
+    android:orientation="horizontal">
     <include
             android:id="@+id/eta_realtime_indicator"
             layout="@layout/realtime_indicator"
@@ -89,7 +90,7 @@
         <TextView
                 android:id="@+id/stop_name"
                 style="@style/Line1Text"
-                android:text="Stop name"
+            tools:text="Stop name"
                 android:ellipsize="end"
                 android:singleLine="true"
                 android:layout_width="wrap_content"
@@ -97,7 +98,7 @@
         <TextView
                 android:id="@+id/time"
                 style="@style/Line2Text"
-                android:text="3:20 PM"
+            tools:text="3:20 PM"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
     </LinearLayout>

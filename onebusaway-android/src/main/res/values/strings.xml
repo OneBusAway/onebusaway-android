@@ -417,6 +417,13 @@
     <string name="trip_stat_arriving">Route %1$s is arriving in %2$d min!</string>
     <string name="trip_stat_departing">Route %1$s is departing in %2$d min!</string>
 
+    <!--  Foreground Service notifications -->
+    <string name="foreground_all_intent_title">Updating your reminders</string>
+    <string name="foreground_action_schedule_text">Setting up your reminders&#8230;</string>
+    <string name="foreground_action_poll_text">Checking predictions for your reminders&#8230;</string>
+    <string name="foreground_action_notify_text">Triggering a notification for your reminder&#8230;</string>
+    <string name="foreground_action_cancel_text">Dismissing your reminder&#8230;</string>
+
     <!-- Embedded Social -->
     <string name="social">Social</string>
     <string name="join_discussion">Join discussion</string>

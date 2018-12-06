@@ -16,13 +16,13 @@
  */
 package org.onebusaway.android.tripservice;
 
-import org.onebusaway.android.provider.ObaContract;
-
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
+
+import org.onebusaway.android.provider.ObaContract;
 
 /**
  * A task (thread) that is responsible for canceling a reminder.

@@ -60,9 +60,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.OnLifecycleEvent;
+import androidx.annotation.NonNull;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.multidex.MultiDexApplication;
 import edu.usf.cutr.open311client.Open311Manager;
@@ -112,15 +112,15 @@ public class Application extends MultiDexApplication {
         super.onCreate();
 
         ProcessLifecycleOwner.get().getLifecycle().addObserver(
-                new LifecycleObserver() {
-                    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-                    void onStarted() {
-                        Log.d(TAG, "Started lifecycle");
+                new DefaultLifecycleObserver() {
+                    @Override
+                    public void onStart(@NonNull LifecycleOwner owner) {
+                        Log.d(TAG, "Lifecycle in the foreground");
                     }
 
-                    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-                    void onStopped() {
-                        Log.d(TAG, "Stopped lifecycle");
+                    @Override
+                    public void onStop(@NonNull LifecycleOwner owner) {
+                        Log.d(TAG, "Lifecycle in the background");
                     }
                 });
 

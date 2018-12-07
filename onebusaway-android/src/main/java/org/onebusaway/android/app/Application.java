@@ -61,6 +61,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.multidex.MultiDexApplication;
 import edu.usf.cutr.open311client.Open311Manager;
 import edu.usf.cutr.open311client.models.Open311Option;
@@ -108,14 +112,22 @@ public class Application extends MultiDexApplication {
     public void onCreate() {
         super.onCreate();
 
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(
+                new DefaultLifecycleObserver() {
+                    @Override
+                    public void onStart(@NonNull LifecycleOwner owner) {
+                        // Make sure ES SDK only runs when the app is in the foreground
+                        // (Workaround for #933 until ES SDK doesn't run Services in the background)
+                        setUpSocial();
+                    }
+                });
+
         mApp = this;
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         initOba();
         initObaRegion();
         initOpen311(getCurrentRegion());
-
-        setUpSocial();
 
         ObaAnalytics.initAnalytics(this);
         reportAnalytics();

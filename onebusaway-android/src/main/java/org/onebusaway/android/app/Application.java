@@ -116,7 +116,8 @@ public class Application extends MultiDexApplication {
                 new DefaultLifecycleObserver() {
                     @Override
                     public void onStart(@NonNull LifecycleOwner owner) {
-                        // Workaround for #933 until ES SDK doesn't run Services in the background
+                        // Make sure ES SDK only runs when the app is in the foreground
+                        // (Workaround for #933 until ES SDK doesn't run Services in the background)
                         setUpSocial();
                     }
                 });

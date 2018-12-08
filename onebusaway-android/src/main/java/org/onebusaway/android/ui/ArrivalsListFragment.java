@@ -318,6 +318,7 @@ public class ArrivalsListFragment extends ListFragment
         setStopId();
         setUserInfo();
 
+        // This is here so that the 'load more' button has the right text between arrivals/departures
         mArrivalFilter = ObaContract.Stops.getArrivalFilter(getActivity(), mStopUri);
 
         setupHeader(savedInstanceState);
@@ -1012,7 +1013,30 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void setArrivalFilter(ArrivalFilter filter) {
+        boolean switchedFromOnlyDepartures =
+                mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES &&
+                        filter != ArrivalFilter.ONLY_DEPARTURES;
+
         mArrivalFilter = filter;
+
+        // Update empty text to reflect arrival filter choice (e.g. no more departures vs arrivals)
+        if (mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES || switchedFromOnlyDepartures) {
+            setEmptyText(UIUtils.getNoArrivalsMessage(Application.get().getApplicationContext(),
+                    getArrivalsLoader().getMinutesAfter(), false, false, mArrivalFilter));
+        }
+
+        // Update "load more" button to say arrivals/departures based on filter settings
+        Button footerButton = (Button) mFooter.findViewById(R.id.load_more_arrivals);
+        Button emptyButton = (Button) mEmptyList.findViewById(R.id.load_more_arrivals);
+        if (mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES) {
+            footerButton.setText(R.string.stop_info_load_more_departures);
+            emptyButton.setText(R.string.stop_info_load_more_departures);
+        }
+        if (switchedFromOnlyDepartures) {
+            footerButton.setText(R.string.stop_info_load_more_arrivals);
+            emptyButton.setText(R.string.stop_info_load_more_arrivals);
+        }
+
         ObaContract.Stops.setArrivalFilter(getActivity(), mStopUri, filter);
         refreshLocal();
     }
@@ -1512,33 +1536,7 @@ public class ArrivalsListFragment extends ListFragment
     private void setArrivalFilter(int selection) {
         ArrivalFilter newFilter = ArrivalFilter.fromInt(selection);
 
-        boolean switchedFromOnlyDepartures =
-                mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES &&
-                        newFilter != ArrivalFilter.ONLY_DEPARTURES;
-
-        mArrivalFilter = newFilter;
-
-        ObaContract.Stops.setArrivalFilter(getActivity(), mStopUri, ArrivalFilter.fromInt(selection));
-        refreshSituations(UIUtils.getAllSituations(getArrivalsLoader().getLastGoodResponse(), mRoutesFilter));
-        refreshLocal();
-
-        // Update empty text to reflect arrival filter choice (e.g. no more departures vs arrivals)
-        if (mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES || switchedFromOnlyDepartures) {
-            setEmptyText(UIUtils.getNoArrivalsMessage(Application.get().getApplicationContext(),
-                    getArrivalsLoader().getMinutesAfter(), false, false, mArrivalFilter));
-        }
-
-        // Update "load more" button to say arrivals/departures based on filter settings
-        Button footerButton = (Button) mFooter.findViewById(R.id.load_more_arrivals);
-        Button emptyButton = (Button) mEmptyList.findViewById(R.id.load_more_arrivals);
-        if (mArrivalFilter == ArrivalFilter.ONLY_DEPARTURES) {
-            footerButton.setText(R.string.stop_info_load_more_departures);
-            emptyButton.setText(R.string.stop_info_load_more_departures);
-        }
-        if (switchedFromOnlyDepartures) {
-            footerButton.setText(R.string.stop_info_load_more_arrivals);
-            emptyButton.setText(R.string.stop_info_load_more_arrivals);
-        }
+        setArrivalFilter(newFilter);
     }
 
     public static class ArrivalFilterDialog extends DialogFragment

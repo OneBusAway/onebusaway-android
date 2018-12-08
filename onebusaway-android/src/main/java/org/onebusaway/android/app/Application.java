@@ -16,6 +16,21 @@
  */
 package org.onebusaway.android.app;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.hardware.GeomagneticField;
+import android.location.Location;
+import android.location.LocationManager;
+import android.os.Build;
+import android.preference.PreferenceManager;
+import android.text.TextUtils;
+import android.util.Log;
+
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.common.ConnectionResult;
@@ -23,7 +38,6 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
-
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
 import org.onebusaway.android.BuildConfig;
@@ -40,27 +54,16 @@ import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.hardware.GeomagneticField;
-import android.location.Location;
-import android.location.LocationManager;
-import android.os.Build;
-import android.preference.PreferenceManager;
-import android.text.TextUtils;
-import android.util.Log;
-
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.multidex.MultiDexApplication;
 import edu.usf.cutr.open311client.Open311Manager;
 import edu.usf.cutr.open311client.models.Open311Option;
@@ -94,6 +97,9 @@ public class Application extends MultiDexApplication {
     // Magnetic declination is based on location, so track this centrally too.
     static GeomagneticField mGeomagneticField = null;
 
+    // Workaround for #933 until ES SDK doesn't run Services in the background
+    static boolean mEmbeddedSocialInitiated = false;
+
     /**
      * Google analytics tracker configs
      */
@@ -111,11 +117,19 @@ public class Application extends MultiDexApplication {
         mApp = this;
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
+        // Make sure ES SDK only runs when the app is in the foreground
+        // (Workaround for #933 until ES SDK doesn't run Services in the background)
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(
+                new DefaultLifecycleObserver() {
+                    @Override
+                    public void onStart(@NonNull LifecycleOwner owner) {
+                        setUpSocial();
+                    }
+                });
+
         initOba();
         initObaRegion();
         initOpen311(getCurrentRegion());
-
-        setUpSocial();
 
         ObaAnalytics.initAnalytics(this);
         reportAnalytics();
@@ -584,13 +598,16 @@ public class Application extends MultiDexApplication {
     /**
      * Initializes Embedded Social if the device and current build support social functionality
      */
-    private void setUpSocial() {
-        if (EmbeddedSocialUtils.isBuildVersionSupportedBySocial() &&
-                EmbeddedSocialUtils.isSocialApiKeyDefined()) {
-            EmbeddedSocial.init(this, R.raw.embedded_social_config, BuildConfig.EMBEDDED_SOCIAL_API_KEY, null);
-            EmbeddedSocial.setReportHandler(new SocialReportHandler());
-            EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
-            EmbeddedSocial.setAppProfile(new SocialAppProfile());
+    private synchronized void setUpSocial() {
+        if (!mEmbeddedSocialInitiated) {
+            if (EmbeddedSocialUtils.isBuildVersionSupportedBySocial() &&
+                    EmbeddedSocialUtils.isSocialApiKeyDefined()) {
+                EmbeddedSocial.init(mApp, R.raw.embedded_social_config, BuildConfig.EMBEDDED_SOCIAL_API_KEY, null);
+                EmbeddedSocial.setReportHandler(new SocialReportHandler());
+                EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
+                EmbeddedSocial.setAppProfile(new SocialAppProfile());
+            }
+            mEmbeddedSocialInitiated = true;
         }
     }
 

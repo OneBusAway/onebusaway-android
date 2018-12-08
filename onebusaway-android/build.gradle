@@ -423,6 +423,8 @@ dependencies {
     implementation ('com.google.android.material:material:1.0.0') {
         force = true
     }
+    implementation 'android.arch.lifecycle:extensions:1.1.1'
+    implementation 'android.arch.lifecycle:common-java8:1.1.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha2'
     implementation 'commons-io:commons-io:2.4'
     // Open311 client library
@@ -452,7 +454,7 @@ dependencies {
     // Amazon Maps (only for Amazon flavor)
     amazonImplementation 'com.amazon.android:amazon-maps-api:2.0'
     // Embedded Social SDK
-    implementation('com.acrowntest.test:sdk:0.7.2:release@aar') {
+    implementation('com.acrowntest.test:sdk:0.7.3:release@aar') {
         transitive = true
     }
     // Required to support multidex for minSdkVersion <= 20

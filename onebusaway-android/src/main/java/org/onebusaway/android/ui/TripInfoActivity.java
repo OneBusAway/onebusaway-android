@@ -15,13 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.tripservice.TripService;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
@@ -46,6 +39,13 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import java.util.List;
 
@@ -452,7 +452,7 @@ public class TripInfoActivity extends AppCompatActivity {
             if (c != null) {
                 c.close();
             }
-            TripService.scheduleAll(getActivity());
+            TripService.scheduleAll(getActivity(), true);
 
             Toast.makeText(getActivity(), R.string.trip_info_saved, Toast.LENGTH_SHORT)
                     .show();
@@ -536,7 +536,7 @@ public class TripInfoActivity extends AppCompatActivity {
                                     public void onClick(DialogInterface dialog, int which) {
                                         ContentResolver cr = getActivity().getContentResolver();
                                         cr.delete(tripUri, null, null);
-                                        TripService.scheduleAll(getActivity());
+                                        TripService.scheduleAll(getActivity(), true);
                                         getActivity().finish();
                                     }
                                 }

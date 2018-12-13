@@ -53,7 +53,7 @@ public final class CancelNotifyTask implements Runnable {
             values.put(ObaContract.TripAlerts.STATE, ObaContract.TripAlerts.STATE_CANCELLED);
             cr.update(mUri, values, null, null);
 
-            TripService.scheduleAll(mContext);
+            TripService.scheduleAll(mContext, true);
         } finally {
             mTaskContext.taskComplete();
         }

@@ -97,3 +97,11 @@
 
 # for android LifecyleOwner
 -keep class android.arch.** { *; }
+
+# for AndroidSlidingUpPanel and compiling with API 28 (see https://github.com/OneBusAway/onebusaway-android/issues/944#issuecomment-446340531)
+-dontwarn com.sothree.**
+-keep class com.sothree.**
+-keep interface com.sothree.**
+
+# for TabLayout in EmbeddedSocial SDK and compiling with API 28 (see https://github.com/OneBusAway/onebusaway-android/issues/944#issuecomment-446345133)
+-dontwarn com.microsoft.embeddedsocial.sdk.ui.TabbedDrawerHandler

@@ -16,10 +16,6 @@
  */
 package org.onebusaway.android.tripservice;
 
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -35,9 +31,17 @@ import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.Log;
 
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.UIUtils;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import androidx.core.app.NotificationCompat;
 
 /**
  * A container Service for a thread pool that manages the scheduling, polling, and notifying the
@@ -87,6 +91,8 @@ public class TripService extends Service {
 
     private static final String NOTIFY_TITLE = ".notifyTitle";
 
+    public static final int FOREGROUND_NOTIFICATION_ID = 1800001;
+
     private ExecutorService mThreadPool;
 
     private NotificationManager mNM;
@@ -125,6 +131,41 @@ public class TripService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            //create notification regarding foreground
+            Intent notificationIntent = new Intent(this, TripService.class);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                    notificationIntent, 0);
+
+            String action = intent.getAction();
+            String foregroundNotifyTitle = Application.get().getResources()
+                    .getString(R.string.foreground_all_intent_title);
+            String foregroundNotifyText = "";
+
+            if (ACTION_SCHEDULE.equals(action)) {
+                foregroundNotifyText = Application.get().getResources()
+                        .getString(R.string.foreground_action_schedule_text);
+            } else if (ACTION_POLL.equals(action)) {
+                foregroundNotifyText = Application.get().getResources()
+                        .getString(R.string.foreground_action_poll_text);
+            } else if (ACTION_NOTIFY.equals(action)) {
+                foregroundNotifyText = Application.get().getResources()
+                        .getString(R.string.foreground_action_notify_text);
+            }
+            else {
+                foregroundNotifyText = Application.get().getResources()
+                        .getString(R.string.foreground_action_cancel_text);
+            }
+
+            Notification notification = new NotificationCompat.Builder(getApplicationContext(),
+                    Application.CHANNEL_TRIP_PLAN_UPDATES_ID)
+                    .setSmallIcon(R.drawable.ic_stat_notification)
+                    .setContentTitle(foregroundNotifyTitle)
+                    .setContentText(foregroundNotifyText)
+                    .setContentIntent(pendingIntent).build();
+
+            startForeground(FOREGROUND_NOTIFICATION_ID, notification);
+        }
         return handleCommand(intent, startId);
     }
 
@@ -175,7 +216,7 @@ public class TripService extends Service {
         final TaskContextImpl taskContext = new TaskContextImpl(startId);
         final Uri uri = intent.getData();
         //Log.d(TAG, "Handle command: startId=" + startId +
-        //        " action=" + action +
+        //       " action=" + action +
         //        " uri=" + uri);
 
         if (ACTION_SCHEDULE.equals(action)) {
@@ -227,7 +268,11 @@ public class TripService extends Service {
         final Intent intent = new Intent(context, TripService.class);
         intent.setAction(TripService.ACTION_SCHEDULE);
         intent.setData(ObaContract.Trips.CONTENT_URI);
-        context.startService(intent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
     }
 
     public static void pollTrip(Context context, Uri alertUri, long triggerTime) {

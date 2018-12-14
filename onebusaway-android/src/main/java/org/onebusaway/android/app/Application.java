@@ -553,11 +553,13 @@ public class Application extends MultiDexApplication {
     }
 
     public synchronized Tracker getTracker(TrackerName trackerId) {
+        final double SAMPLE_RATE = 1.0d; // 1% of devices will send hits
         if (!mTrackers.containsKey(trackerId)) {
             GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
             Tracker t = (trackerId == TrackerName.APP_TRACKER) ? analytics.newTracker(R.xml.app_tracker)
                     : (trackerId == TrackerName.GLOBAL_TRACKER) ? analytics.newTracker(R.xml.global_tracker)
                     : analytics.newTracker(R.xml.global_tracker);
+            t.setSampleRate(SAMPLE_RATE);
             mTrackers.put(trackerId, t);
         }
         return mTrackers.get(trackerId);

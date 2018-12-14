@@ -108,8 +108,12 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Route filter now affects alerts</b>
-        - When viewing alerts at a stop, alerts for hidden routes are now hidden.\n&#8226;\u0020
+        <b>Improved reminder reliability</b>
+        - Various changes to make reminders alert you at the right time.\n&#8226;\u0020
+        <b>Improved notification management (Android 8.0 Oreo and up)</b>
+        - Manage notification sounds using the Android system menu under \"Apps\".\n&#8226;\u0020
+        <b>Improved trip status icon</b>
+        - Thanks Pokechu22!\n&#8226;\u0020
         <b>Bug fixes</b>
         - See http://bit.ly/oba-android-releases
     </string>

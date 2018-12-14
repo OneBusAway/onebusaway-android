@@ -27,13 +27,18 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.util.BackupUtils;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
+import org.onebusaway.android.util.PermissionUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -62,6 +67,11 @@ import java.util.List;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+
+import static org.onebusaway.android.util.PermissionUtils.RESTORE_BACKUP_PERMISSION_REQUEST;
+import static org.onebusaway.android.util.PermissionUtils.SAVE_BACKUP_PERMISSION_REQUEST;
+import static org.onebusaway.android.util.PermissionUtils.STORAGE_PERMISSIONS;
 
 public class PreferencesActivity extends PreferenceActivity
         implements Preference.OnPreferenceClickListener, OnPreferenceChangeListener,
@@ -89,6 +99,10 @@ public class PreferencesActivity extends PreferenceActivity
 
     Preference mAboutPref;
 
+    Preference mSaveBackup;
+
+    Preference mRestoreBackup;
+
     boolean mAutoSelectInitialValue;
 
     boolean mOtpCustomAPIUrlChanged = false;
@@ -109,6 +123,12 @@ public class PreferencesActivity extends PreferenceActivity
 
         mLeftHandMode = findPreference(getString(R.string.preference_key_left_hand_mode));
         mLeftHandMode.setOnPreferenceChangeListener(this);
+
+        mSaveBackup = findPreference(getString(R.string.preference_key_save_backup));
+        mSaveBackup.setOnPreferenceClickListener(this);
+
+        mRestoreBackup = findPreference(getString(R.string.preference_key_restore_backup));
+        mRestoreBackup.setOnPreferenceClickListener(this);
 
         mCustomApiUrlPref = findPreference(getString(R.string.preference_key_oba_api_url));
         mCustomApiUrlPref.setOnPreferenceChangeListener(this);
@@ -178,6 +198,10 @@ public class PreferencesActivity extends PreferenceActivity
             advancedCategory.removePreference(experimentalRegion);
         }
 
+        // If the Android version is Oreo (8.0) and above hide "Notification" preference
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            getPreferenceScreen().removePreference(findPreference(getString(R.string.preference_key_notifications)));
+        }
         // If its the OBA brand flavor, then show the "Donate" preference and hide "Powered by OBA"
         PreferenceCategory aboutCategory = (PreferenceCategory)
                 findPreference(getString(R.string.preferences_category_about));
@@ -312,8 +336,69 @@ public class PreferencesActivity extends PreferenceActivity
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_about));
             AboutActivity.start(this);
+        } else if (pref.equals(mSaveBackup)) {
+            // SavePreference will get the click event but will ignore it if permissions haven't
+            // been granted yet so we can handle permissions here
+            maybeRequestPermissions(SAVE_BACKUP_PERMISSION_REQUEST);
+        } else if (pref.equals(mRestoreBackup)){
+            // RestorePreference will get the click event but will ignore it if permissions haven't
+            // been granted yet so we can handle permissions here.
+            maybeRequestPermissions(RESTORE_BACKUP_PERMISSION_REQUEST);
         }
         return true;
+    }
+
+    private void maybeRequestPermissions(int permissionRequest) {
+        if (!PermissionUtils.hasGrantedPermissions(this, STORAGE_PERMISSIONS)) {
+            // Request permissions from the user
+            ActivityCompat.requestPermissions(this, STORAGE_PERMISSIONS, permissionRequest);
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode, String[] permissions, int[] grantResults) {
+        int result = PackageManager.PERMISSION_DENIED;
+        if (requestCode == SAVE_BACKUP_PERMISSION_REQUEST || requestCode == RESTORE_BACKUP_PERMISSION_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                result = PackageManager.PERMISSION_GRANTED;
+                // The first time the user grants permission, we have to explictly call the save
+                // or restore utility method so that the save or restore is triggered after the permission is granted
+                if (requestCode == SAVE_BACKUP_PERMISSION_REQUEST) {
+                    BackupUtils.save(this);
+                } else {
+                    BackupUtils.restore(this);
+                }
+            } else {
+                showStoragePermissionDialog(this, requestCode);
+            }
+        }
+    }
+
+    /**
+     * Shows the dialog to explain why storage permissions are needed
+     * @param activity Activity used to show the dialog
+     * @param requestCode The requesting permission code (SAVE_BACKUP_PERMISSION_REQUEST or RESTORE_BACKUP_PERMISSION_REQUEST)
+     */
+    private void showStoragePermissionDialog(Activity activity, int requestCode) {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.storage_permissions_title)
+                .setMessage(R.string.storage_permissions_message)
+                .setCancelable(false)
+                .setPositiveButton(R.string.ok,
+                        (dialog, which) -> {
+                            // Request permissions from the user
+                            ActivityCompat
+                                    .requestPermissions(activity, STORAGE_PERMISSIONS, requestCode);
+                        }
+                )
+                .setNegativeButton(R.string.no_thanks,
+                        (dialog, which) -> {
+                            // No-op
+                        }
+                );
+        builder.create().show();
     }
 
     @Override

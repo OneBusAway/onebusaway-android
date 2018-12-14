@@ -27,9 +27,11 @@
             android:layout_marginLeft="11dp"
             android:layout_marginBottom="-24dp"
             android:layout_above="@+id/bus_icon"/>
+
     <ImageView
             android:id="@+id/bus_icon"
-            android:src="@drawable/ic_maps_directions_bus"
+            android:background="@drawable/circle"
+            android:src="@drawable/ic_bus"
             android:contentDescription="@string/trip_details_current_bus_position"
             android:layout_width="@dimen/trip_details_transit_bus_icon"
             android:layout_height="@dimen/trip_details_transit_bus_icon"

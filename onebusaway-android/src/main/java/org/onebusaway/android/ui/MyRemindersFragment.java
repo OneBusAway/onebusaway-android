@@ -16,13 +16,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.tripservice.TripService;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
@@ -39,6 +32,13 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import androidx.cursoradapter.widget.SimpleCursorAdapter;
 import androidx.loader.app.LoaderManager;
@@ -299,7 +299,7 @@ public final class MyRemindersFragment extends ListFragment
         // TODO: Confirmation dialog?
         ContentResolver cr = getActivity().getContentResolver();
         cr.delete(ObaContract.Trips.buildUri(ids[0], ids[1]), null, null);
-        TripService.scheduleAll(getActivity());
+        TripService.scheduleAll(getActivity(), true);
 
         getLoaderManager().getLoader(0).onContentChanged();
     }

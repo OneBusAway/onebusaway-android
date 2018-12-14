@@ -17,40 +17,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
-import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
-import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
-import com.microsoft.embeddedsocial.ui.fragment.MyProfileFragment;
-import com.microsoft.embeddedsocial.ui.fragment.PinsFragment;
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.map.MapModeController;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.map.googlemapsv2.LayerInfo;
-import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.report.ui.ReportActivity;
-import org.onebusaway.android.tripservice.TripService;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.RegionUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
-import org.onebusaway.android.util.UIUtils;
-import org.opentripplanner.routing.bike_rental.BikeRentalStation;
-
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -86,6 +52,40 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
+import com.microsoft.embeddedsocial.ui.fragment.MyProfileFragment;
+import com.microsoft.embeddedsocial.ui.fragment.PinsFragment;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapModeController;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.googlemapsv2.LayerInfo;
+import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.report.ui.ReportActivity;
+import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PermissionUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.RegionUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
+import org.onebusaway.android.util.UIUtils;
+import org.opentripplanner.routing.bike_rental.BikeRentalStation;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -97,10 +97,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentManager;
-import uk.co.markormesher.android_fab.SpeedDialMenuCloseListener;
-import uk.co.markormesher.android_fab.SpeedDialMenuOpenListener;
 
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_ACTIVITY_FEED;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
@@ -116,6 +113,7 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SIGN_IN;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
+import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_BOTTOM;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_END;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_START;
@@ -175,7 +173,6 @@ public class HomeActivity extends AppCompatActivity
     private ImageButton mZoomInBtn;
 
     private ImageButton mZoomOutBtn;
-
 
     private FloatingActionButton mFabMyLocation;
 
@@ -252,6 +249,10 @@ public class HomeActivity extends AppCompatActivity
     ProgressBar mMapProgressBar = null;
 
     boolean mLastMapProgressBarState = true;
+
+    private static final String INITIAL_STARTUP = "initialStartup";
+
+    boolean mInitialStartup = true;
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -354,6 +355,8 @@ public class HomeActivity extends AppCompatActivity
 
         mActivityWeakRef = new WeakReference<>(this);
 
+        mInitialStartup = Application.getPrefs().getBoolean(INITIAL_STARTUP, true);
+
         setupNavigationDrawer();
 
         setupSlidingPanel();
@@ -370,7 +373,11 @@ public class HomeActivity extends AppCompatActivity
 
         UIUtils.setupActionBar(this);
 
-        checkRegionStatus();
+        if (!mInitialStartup || PermissionUtils.hasGrantedPermissions(this, LOCATION_PERMISSIONS)) {
+            // It's not the first startup or if the user has already granted location permissions (Android L and lower), then check the region status
+            // Otherwise, wait for a permission callback from the BaseMapFragment before checking the region status
+            checkRegionStatus();
+        }
 
         // Check to see if we should show the welcome tutorial
         Bundle b = getIntent().getExtras();
@@ -390,17 +397,14 @@ public class HomeActivity extends AppCompatActivity
             mGoogleApiClient.connect();
         }
         ObaAnalytics.reportActivityStart(this);
-        if (Build.VERSION.SDK_INT >= 14) {
-            AccessibilityManager am = (AccessibilityManager) getSystemService(
-                    ACCESSIBILITY_SERVICE);
-            Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
-            if (isTalkBackEnabled) {
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.ACCESSIBILITY.toString(),
-                        getString(R.string.analytics_action_touch_exploration),
-                        getString(R.string.analytics_label_talkback) + getClass().getSimpleName()
-                                + " using TalkBack");
-            }
+        AccessibilityManager am = (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
+        Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
+        if (isTalkBackEnabled) {
+            ObaAnalytics.reportEventWithCategory(
+                    ObaAnalytics.ObaEventCategory.ACCESSIBILITY.toString(),
+                    getString(R.string.analytics_action_touch_exploration),
+                    getString(R.string.analytics_label_talkback) + getClass().getSimpleName()
+                            + " using TalkBack");
         }
     }
 
@@ -609,6 +613,15 @@ public class HomeActivity extends AppCompatActivity
                 // No existing fragment was found, so create a new one
                 Log.d(TAG, "Creating new BaseMapFragment");
                 mMapFragment = BaseMapFragment.newInstance();
+                mMapFragment.setOnLocationPermissionResultListener(result -> {
+                            if (mInitialStartup) {
+                                // Whether or not the user granted permissions, check region status
+                                // (they'll be asked to manually pick region if they denied)
+                                mInitialStartup = false;
+                                PreferenceUtils.saveBoolean(INITIAL_STARTUP, false);
+                                checkRegionStatus();
+                            }
+                        });
                 fm.beginTransaction()
                         .add(R.id.main_fragment_container, mMapFragment, BaseMapFragment.TAG)
                         .commit();
@@ -1005,11 +1018,7 @@ public class HomeActivity extends AppCompatActivity
         builder.setIcon(R.mipmap.ic_launcher);
         builder.setView(textView);
         builder.setNeutralButton(R.string.main_help_close,
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dismissDialog(WHATSNEW_DIALOG);
-                    }
-                }
+                (dialog, which) -> dismissDialog(WHATSNEW_DIALOG)
         );
         builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
@@ -1039,7 +1048,7 @@ public class HomeActivity extends AppCompatActivity
         GradientDrawable d1 = (GradientDrawable) etaAndMin.getBackground();
         d1.setColor(resources.getColor(R.color.stop_info_ontime));
         etaAndMin.findViewById(R.id.eta_realtime_indicator).setVisibility(View.VISIBLE);
-        TextView etaTextView = ((TextView) etaAndMin.findViewById(R.id.eta));
+        TextView etaTextView = etaAndMin.findViewById(R.id.eta);
         etaTextView.setTextSize(etaTextFontSize);
         etaTextView.setText("5");
 
@@ -1048,7 +1057,7 @@ public class HomeActivity extends AppCompatActivity
         d1 = (GradientDrawable) etaAndMin.getBackground();
         d1.setColor(resources.getColor(R.color.stop_info_early));
         etaAndMin.findViewById(R.id.eta_realtime_indicator).setVisibility(View.VISIBLE);
-        etaTextView = ((TextView) etaAndMin.findViewById(R.id.eta));
+        etaTextView = etaAndMin.findViewById(R.id.eta);
         etaTextView.setTextSize(etaTextFontSize);
         etaTextView.setText("5");
 
@@ -1057,7 +1066,7 @@ public class HomeActivity extends AppCompatActivity
         d1 = (GradientDrawable) etaAndMin.getBackground();
         d1.setColor(resources.getColor(R.color.stop_info_delayed));
         etaAndMin.findViewById(R.id.eta_realtime_indicator).setVisibility(View.VISIBLE);
-        etaTextView = ((TextView) etaAndMin.findViewById(R.id.eta));
+        etaTextView = etaAndMin.findViewById(R.id.eta);
         etaTextView.setTextSize(etaTextFontSize);
         etaTextView.setText("5");
 
@@ -1066,18 +1075,14 @@ public class HomeActivity extends AppCompatActivity
         d1 = (GradientDrawable) etaAndMin.getBackground();
         d1.setColor(resources.getColor(R.color.stop_info_scheduled_time));
         etaAndMin.findViewById(R.id.eta_realtime_indicator).setVisibility(View.INVISIBLE);
-        etaTextView = ((TextView) etaAndMin.findViewById(R.id.eta));
+        etaTextView = etaAndMin.findViewById(R.id.eta);
         etaTextView.setTextSize(etaTextFontSize);
         etaTextView.setText("5");
 
         builder.setView(legendDialogView);
 
         builder.setNeutralButton(R.string.main_help_close,
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dismissDialog(LEGEND_DIALOG);
-                    }
-                }
+                (dialog, which) -> dismissDialog(LEGEND_DIALOG)
         );
         return builder.create();
     }
@@ -1111,7 +1116,7 @@ public class HomeActivity extends AppCompatActivity
             // Updates will remove the alarms. This should put them back.
             // (Unfortunately I can't find a way to reschedule them without
             // having the app run again).
-            TripService.scheduleAll(this);
+            TripService.scheduleAll(this, true);
             PreferenceUtils.saveInt(WHATS_NEW_VER, appInfo.versionCode);
             return true;
         }
@@ -1382,7 +1387,7 @@ public class HomeActivity extends AppCompatActivity
         mArrivalsListHeader.setSlidingPanelController(mSlidingPanelController);
         mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         mShowArrivalsMenu = true;
-        mExpandCollapse = (ImageView) mArrivalsListHeaderView.findViewById(R.id.expand_collapse);
+        mExpandCollapse = mArrivalsListHeaderView.findViewById(R.id.expand_collapse);
 
         if (stop != null && routes != null) {
             // Use ObaStop and ObaRoute objects, since we can pre-populate some of the fields
@@ -1517,41 +1522,28 @@ public class HomeActivity extends AppCompatActivity
 
     private void setupZoomButtons() {
 
-        mZoomInBtn = (ImageButton) findViewById(R.id.btnZoomIn);
+        mZoomInBtn = findViewById(R.id.btnZoomIn);
 
-        mZoomOutBtn = (ImageButton) findViewById(R.id.btnZoomOut);
+        mZoomOutBtn = findViewById(R.id.btnZoomOut);
 
-        mZoomInBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mMapFragment.zoomIn();
-            }
-        });
+        mZoomInBtn.setOnClickListener(view -> mMapFragment.zoomIn());
 
-        mZoomOutBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mMapFragment.zoomOut();
-            }
-        });
+        mZoomOutBtn.setOnClickListener(view -> mMapFragment.zoomOut());
     }
 
     private void setupMyLocationButton() {
         // Initialize the My Location button
-        mFabMyLocation = (FloatingActionButton) findViewById(R.id.btnMyLocation);
-        mFabMyLocation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                if (mMapFragment != null) {
-                    // Reset the preference to ask user to enable location
-                    PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_location_dialog), false);
+        mFabMyLocation = findViewById(R.id.btnMyLocation);
+        mFabMyLocation.setOnClickListener(view -> {
+            if (mMapFragment != null) {
+                // Reset the preference to ask user to enable location
+                PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_location_dialog), false);
 
-                    mMapFragment.setMyLocation(true, true);
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_button_press),
-                            getString(R.string.analytics_label_button_press_location));
-                }
+                mMapFragment.setMyLocation(true, true);
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_location));
             }
         });
         ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mFabMyLocation
@@ -1673,7 +1665,6 @@ public class HomeActivity extends AppCompatActivity
                 final int goalMargin = tempMargin;
                 final int currentMargin = p.bottomMargin;
 
-                // TODO - this doesn't seem to be animating?? Why not?  Or is it just my device...
                 mMyLocationAnimation = new Animation() {
                     @Override
                     protected void applyTransformation(float interpolatedTime, Transformation t) {
@@ -1749,7 +1740,7 @@ public class HomeActivity extends AppCompatActivity
         // Set up the drawer.
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
-                (DrawerLayout) findViewById(R.id.nav_drawer_left_pane));
+                findViewById(R.id.nav_drawer_left_pane));
 
         // Was this activity started to show a route or stop on the map? If so, switch to MapFragment
         Bundle bundle = getIntent().getExtras();
@@ -1793,40 +1784,20 @@ public class HomeActivity extends AppCompatActivity
             @Override
             public void onActivateLayer(LayerInfo layer) {
                 Handler h = new Handler(getMainLooper());
-                h.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        mLayersFab.rebuildSpeedDialMenu();
-                    }
-                }, 100);
+                h.postDelayed(() -> mLayersFab.rebuildSpeedDialMenu(), 100);
             }
 
             @Override
             public void onDeactivateLayer(LayerInfo layer) {
                 Handler h = new Handler(getMainLooper());
-                h.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        mLayersFab.rebuildSpeedDialMenu();
-                    }
-                }, 100);
+                h.postDelayed(() -> mLayersFab.rebuildSpeedDialMenu(), 100);
             }
         });
         mLayersFab.setSpeedDialMenuAdapter(adapter);
         mLayersFab.setOnSpeedDialMenuOpenListener(
-                new SpeedDialMenuOpenListener() {
-                    @Override
-                    public void onOpen(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                        mLayersFab.setButtonIconResource(R.drawable.ic_add_white_24dp);
-                    }
-                });
+                v -> mLayersFab.setButtonIconResource(R.drawable.ic_add_white_24dp));
         mLayersFab.setOnSpeedDialMenuCloseListener(
-                new SpeedDialMenuCloseListener() {
-                    @Override
-                    public void onClose(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                        mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp);
-                    }
-                });
+                v -> mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp));
         mLayersFab.setContentCoverEnabled(false);
     }
 
@@ -1846,7 +1817,7 @@ public class HomeActivity extends AppCompatActivity
 
 
     private void setupSlidingPanel() {
-        mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.bottom_sliding_layout);
+        mSlidingPanel = findViewById(R.id.bottom_sliding_layout);
         mArrivalsListHeaderView = findViewById(R.id.arrivals_list_header);
         mArrivalsListHeaderSubView = mArrivalsListHeaderView.findViewById(R.id.main_header_content);
 
@@ -1858,7 +1829,6 @@ public class HomeActivity extends AppCompatActivity
 
             @Override
             public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
-
                 if (previousState == SlidingUpPanelLayout.PanelState.HIDDEN) {
                     return;
                 }
@@ -2023,7 +1993,7 @@ public class HomeActivity extends AppCompatActivity
                 }
             }
         }
-        mMapProgressBar = (ProgressBar) findViewById(R.id.progress_horizontal);
+        mMapProgressBar = findViewById(R.id.progress_horizontal);
     }
 
     /**

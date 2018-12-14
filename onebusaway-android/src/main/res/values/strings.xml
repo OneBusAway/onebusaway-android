@@ -108,8 +108,12 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Route filter now affects alerts</b>
-        - When viewing alerts at a stop, alerts for hidden routes are now hidden.\n&#8226;\u0020
+        <b>Improved reminder reliability</b>
+        - Various changes to make reminders alert you at the right time.\n&#8226;\u0020
+        <b>Improved notification management (Android 8.0 Oreo and up)</b>
+        - Manage notification sounds using the Android system menu under \"Apps\".\n&#8226;\u0020
+        <b>Improved trip status icon</b>
+        - Thanks Pokechu22!\n&#8226;\u0020
         <b>Bug fixes</b>
         - See http://bit.ly/oba-android-releases
     </string>
@@ -134,7 +138,7 @@
     </string>
     
     <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
-    <string name="main_location_unavailable">Unable to get your location.</string>
+    <string name="no_location_permission">Unable to get your location.  Please give app location permissions via system settings.</string>
     <string name="main_outofrange_title">Out of range</string>
     <string name="main_outofrange">You\'re looking at a place outside the %1$s service area.\n\nMove
         map to %1$s now?
@@ -433,6 +437,13 @@
     <string name="trip_stat_lessthanone_departing">Route %s is departing now!</string>
     <string name="trip_stat_arriving">Route %1$s is arriving in %2$d min!</string>
     <string name="trip_stat_departing">Route %1$s is departing in %2$d min!</string>
+
+    <!--  Foreground Service notifications -->
+    <string name="foreground_all_intent_title">Updating your reminders</string>
+    <string name="foreground_action_schedule_text">Setting up your reminders&#8230;</string>
+    <string name="foreground_action_poll_text">Checking predictions for your reminders&#8230;</string>
+    <string name="foreground_action_notify_text">Triggering a notification for your reminder&#8230;</string>
+    <string name="foreground_action_cancel_text">Dismissing your reminder&#8230;</string>
 
     <!-- Embedded Social -->
     <string name="social">Social</string>
@@ -780,13 +791,16 @@
         types to your local government near this stop. Tap on the drop-down box to see a full list.
     </string>
 
-    <!-- Location Security Exception -->
-    <string name="location_security_exception_title">Location permissions denied</string>
-    <string name="location_security_exception_message">It looks like you may have denied location
-        permissions for the app via the system settings. Location services will not be available.
-        If you\'d like to re-enable location permissions, go to your Android system settings, choose
-        \"OneBusAway\" and then \"Permissions\", and re-enable \"Location\".
+    <!-- Permissions -->
+    <string name="location_permissions_title">Real-time location needs permission</string>
+    <string name="location_permissions_message">To show your real-time position on the map
+        you\'ll need to grant location permissions. If you select \"Never ask again\" you will need
+        to reinstall the app or enable permissions via system settings to see your real-time location.
     </string>
+    <string name="no_thanks">No thanks</string>
+
+    <string name="storage_permissions_title">Access to device storage is required</string>
+    <string name="storage_permissions_message">To backup or restore your data, OneBusAway needs permission to access your local device storage.</string>
 
     <!-- Voice Commands -->
     <string name="voice_get_ready">Get ready!</string>

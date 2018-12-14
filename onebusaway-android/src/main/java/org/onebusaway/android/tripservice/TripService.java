@@ -16,10 +16,6 @@
  */
 package org.onebusaway.android.tripservice;
 
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -30,14 +26,23 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.Log;
 
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.UIUtils;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import androidx.core.app.NotificationCompat;
 
 /**
  * A container Service for a thread pool that manages the scheduling, polling, and notifying the
@@ -87,6 +92,10 @@ public class TripService extends Service {
 
     private static final String NOTIFY_TITLE = ".notifyTitle";
 
+    private static final String START_FOREGROUND = ".startForeground";
+
+    public static final int FOREGROUND_NOTIFICATION_ID = 1800001;
+
     private ExecutorService mThreadPool;
 
     private NotificationManager mNM;
@@ -113,18 +122,49 @@ public class TripService extends Service {
         }
     }
 
-    //
-    // This is the old onStart method that will be called on the pre-2.0
-    // platform. On 2.0 or later we override onStartCommand so this
-    // method will not be called.
-    //
-    @Override
-    public void onStart(Intent intent, int startId) {
-        handleCommand(intent, startId);
-    }
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // Check if we should start the service in the foreground
+        boolean startInForeground = false;
+        Bundle bundle = intent.getExtras();
+        if (bundle != null) {
+            startInForeground = bundle.getBoolean(START_FOREGROUND);
+        }
+        String action = intent.getAction();
+
+        // ACTION_NOTIFY should never run in the foreground to avoid multiple notifications (#946)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && startInForeground
+                && !ACTION_NOTIFY.equals(action)) {
+            // Create notification for running service in the foreground
+            Intent notificationIntent = new Intent(this, TripService.class);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                    notificationIntent, 0);
+
+            String foregroundNotifyTitle = Application.get().getResources()
+                    .getString(R.string.foreground_all_intent_title);
+            String foregroundNotifyText = "";
+
+            if (ACTION_SCHEDULE.equals(action)) {
+                foregroundNotifyText = Application.get().getResources()
+                        .getString(R.string.foreground_action_schedule_text);
+            } else if (ACTION_POLL.equals(action)) {
+                foregroundNotifyText = Application.get().getResources()
+                        .getString(R.string.foreground_action_poll_text);
+            } else if (ACTION_CANCEL.equals(action)) {
+                foregroundNotifyText = Application.get().getResources()
+                        .getString(R.string.foreground_action_cancel_text);
+            }
+
+            Notification notification = new NotificationCompat.Builder(getApplicationContext(),
+                    Application.CHANNEL_TRIP_PLAN_UPDATES_ID)
+                    .setSmallIcon(R.drawable.ic_stat_notification)
+                    .setContentTitle(foregroundNotifyTitle)
+                    .setContentText(foregroundNotifyText)
+                    .setContentIntent(pendingIntent).build();
+
+            startForeground(FOREGROUND_NOTIFICATION_ID, notification);
+        }
         return handleCommand(intent, startId);
     }
 
@@ -175,17 +215,15 @@ public class TripService extends Service {
         final TaskContextImpl taskContext = new TaskContextImpl(startId);
         final Uri uri = intent.getData();
         //Log.d(TAG, "Handle command: startId=" + startId +
-        //        " action=" + action +
+        //       " action=" + action +
         //        " uri=" + uri);
 
         if (ACTION_SCHEDULE.equals(action)) {
             mThreadPool.submit(new SchedulerTask(this, taskContext, uri));
             return START_REDELIVER_INTENT;
-
         } else if (ACTION_POLL.equals(action)) {
             mThreadPool.submit(new PollerTask(this, taskContext, uri));
             return START_NOT_STICKY;
-
         } else if (ACTION_NOTIFY.equals(action)) {
             // Create the notification
             String notifyTitle = intent.getStringExtra(NOTIFY_TITLE);
@@ -193,11 +231,9 @@ public class TripService extends Service {
 
             mThreadPool.submit(new NotifierTask(this, taskContext, uri, notifyTitle, notifyText));
             return START_REDELIVER_INTENT;
-
         } else if (ACTION_CANCEL.equals(action)) {
             mThreadPool.submit(new CancelNotifyTask(this, taskContext, uri));
             return START_NOT_STICKY;
-
         } else {
             Log.e(TAG, "Unknown action: " + action);
             //stopSelfResult(startId);
@@ -223,11 +259,24 @@ public class TripService extends Service {
     //
     // Trip helpers
     //
-    public static void scheduleAll(Context context) {
+
+    /**
+     * Starts the service to schedule all pending reminders
+     *
+     * @param context
+     * @param startForeground true if the service should be started in the foreground, false if it should not.  This parameter doesn't have any effect on Android versions less than 8.0.
+     */
+    public static void scheduleAll(Context context, boolean startForeground) {
         final Intent intent = new Intent(context, TripService.class);
         intent.setAction(TripService.ACTION_SCHEDULE);
         intent.setData(ObaContract.Trips.CONTENT_URI);
-        context.startService(intent);
+        intent.putExtra(TripService.START_FOREGROUND, startForeground);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && startForeground) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
     }
 
     public static void pollTrip(Context context, Uri alertUri, long triggerTime) {
@@ -240,7 +289,7 @@ public class TripService extends Service {
                 (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             // Try to cut through Doze so alarm still triggers - See #558
-            alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
+            alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
         } else {
             alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
         }

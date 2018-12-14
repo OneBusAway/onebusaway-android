@@ -16,11 +16,6 @@
  */
 package org.onebusaway.android.tripservice;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.ui.ArrivalsListActivity;
-
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.ContentResolver;
@@ -31,6 +26,11 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Settings;
 import android.text.TextUtils;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.ui.ArrivalsListActivity;
 
 import androidx.core.app.NotificationCompat;
 
@@ -139,7 +139,7 @@ public final class NotifierTask implements Runnable {
                                             String notifyText,
                                             PendingIntent contentIntent,
                                             PendingIntent deleteIntent) {
-        NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(mContext);
+        NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(mContext, Application.CHANNEL_ARRIVAL_REMINDERS_ID);
 
         notifyBuilder.setSmallIcon(R.drawable.ic_stat_notification)
                 .setOnlyAlertOnce(true)

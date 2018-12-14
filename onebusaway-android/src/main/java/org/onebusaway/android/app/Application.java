@@ -16,12 +16,28 @@
  */
 package org.onebusaway.android.app;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.hardware.GeomagneticField;
+import android.location.Location;
+import android.location.LocationManager;
+import android.os.Build;
+import android.preference.PreferenceManager;
+import android.text.TextUtils;
+import android.util.Log;
+
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
-
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.tasks.Task;
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
 import org.onebusaway.android.BuildConfig;
@@ -38,30 +54,21 @@ import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.hardware.GeomagneticField;
-import android.location.Location;
-import android.location.LocationManager;
-import android.preference.PreferenceManager;
-import android.telephony.TelephonyManager;
-import android.text.TextUtils;
-import android.util.Log;
-
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.multidex.MultiDexApplication;
 import edu.usf.cutr.open311client.Open311Manager;
 import edu.usf.cutr.open311client.models.Open311Option;
 
-import static com.google.android.gms.location.LocationServices.FusedLocationApi;
+import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 
 public class Application extends MultiDexApplication {
 
@@ -69,6 +76,9 @@ public class Application extends MultiDexApplication {
 
     // Region preference (long id)
     private static final String TAG = "Application";
+
+    public static final String CHANNEL_TRIP_PLAN_UPDATES_ID = "trip_plan_updates";
+    public static final String CHANNEL_ARRIVAL_REMINDERS_ID = "arrival_reminders";
 
     private SharedPreferences mPrefs;
 
@@ -87,6 +97,9 @@ public class Application extends MultiDexApplication {
     // Magnetic declination is based on location, so track this centrally too.
     static GeomagneticField mGeomagneticField = null;
 
+    // Workaround for #933 until ES SDK doesn't run Services in the background
+    static boolean mEmbeddedSocialInitiated = false;
+
     /**
      * Google analytics tracker configs
      */
@@ -104,14 +117,24 @@ public class Application extends MultiDexApplication {
         mApp = this;
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
+        // Make sure ES SDK only runs when the app is in the foreground
+        // (Workaround for #933 until ES SDK doesn't run Services in the background)
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(
+                new DefaultLifecycleObserver() {
+                    @Override
+                    public void onStart(@NonNull LifecycleOwner owner) {
+                        setUpSocial();
+                    }
+                });
+
         initOba();
         initObaRegion();
         initOpen311(getCurrentRegion());
 
-        setUpSocial();
-
         ObaAnalytics.initAnalytics(this);
         reportAnalytics();
+
+        createNotificationChannels();
     }
 
     /**
@@ -250,8 +273,12 @@ public class Application extends MultiDexApplication {
                 api.isGooglePlayServicesAvailable(cxt)
                         == ConnectionResult.SUCCESS
                 && client.isConnected()) {
-            playServices = FusedLocationApi.getLastLocation(client);
-            Log.d(TAG, "Got location from Google Play Services, testing against API v1...");
+            FusedLocationProviderClient fusedClient = getFusedLocationProviderClient(cxt);
+            Task<Location> task = fusedClient.getLastLocation();
+            if (task.isComplete()) {
+                playServices = task.getResult();
+                Log.d(TAG, "Got location from Google Play Services, testing against API v1...");
+            }
         }
         Location apiV1 = getLocationApiV1(cxt);
 
@@ -272,7 +299,12 @@ public class Application extends MultiDexApplication {
         List<String> providers = mgr.getProviders(true);
         Location last = null;
         for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
-            Location loc = mgr.getLastKnownLocation(i.next());
+            Location loc = null;
+            try {
+                loc = mgr.getLastKnownLocation(i.next());
+            }  catch (SecurityException e) {
+                Log.w(TAG, "User may have denied location permission - " + e);
+            }
             // If this provider has a last location, and either:
             // 1. We don't have a last location,
             // 2. Our last location is older than this location.
@@ -419,16 +451,9 @@ public class Application extends MultiDexApplication {
     }
 
     private String getAppUid() {
-        try {
-            final TelephonyManager telephony =
-                    (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-            final String id = telephony.getDeviceId();
-            MessageDigest digest = MessageDigest.getInstance("MD5");
-            digest.update(id.getBytes());
-            return getHex(digest.digest());
-        } catch (Exception e) {
-            return UUID.randomUUID().toString();
-        }
+        // FIXME - After migrating to Firebase, use FirebaseInstanceId - https://firebase.google.com/docs/reference/android/com/google/firebase/iid/FirebaseInstanceId
+        // If FirebaseInstanceId isn't available (catch all exceptions), then return randomUUID()
+        return UUID.randomUUID().toString();
     }
 
     private void initOba() {
@@ -528,11 +553,13 @@ public class Application extends MultiDexApplication {
     }
 
     public synchronized Tracker getTracker(TrackerName trackerId) {
+        final double SAMPLE_RATE = 1.0d; // 1% of devices will send hits
         if (!mTrackers.containsKey(trackerId)) {
             GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
             Tracker t = (trackerId == TrackerName.APP_TRACKER) ? analytics.newTracker(R.xml.app_tracker)
                     : (trackerId == TrackerName.GLOBAL_TRACKER) ? analytics.newTracker(R.xml.global_tracker)
                     : analytics.newTracker(R.xml.global_tracker);
+            t.setSampleRate(SAMPLE_RATE);
             mTrackers.put(trackerId, t);
         }
         return mTrackers.get(trackerId);
@@ -573,13 +600,16 @@ public class Application extends MultiDexApplication {
     /**
      * Initializes Embedded Social if the device and current build support social functionality
      */
-    private void setUpSocial() {
-        if (EmbeddedSocialUtils.isBuildVersionSupportedBySocial() &&
-                EmbeddedSocialUtils.isSocialApiKeyDefined()) {
-            EmbeddedSocial.init(this, R.raw.embedded_social_config, BuildConfig.EMBEDDED_SOCIAL_API_KEY);
-            EmbeddedSocial.setReportHandler(new SocialReportHandler());
-            EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
-            EmbeddedSocial.setAppProfile(new SocialAppProfile());
+    private synchronized void setUpSocial() {
+        if (!mEmbeddedSocialInitiated) {
+            if (EmbeddedSocialUtils.isBuildVersionSupportedBySocial() &&
+                    EmbeddedSocialUtils.isSocialApiKeyDefined()) {
+                EmbeddedSocial.init(mApp, R.raw.embedded_social_config, BuildConfig.EMBEDDED_SOCIAL_API_KEY, null);
+                EmbeddedSocial.setReportHandler(new SocialReportHandler());
+                EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
+                EmbeddedSocial.setAppProfile(new SocialAppProfile());
+            }
+            mEmbeddedSocialInitiated = true;
         }
     }
 
@@ -595,6 +625,26 @@ public class Application extends MultiDexApplication {
         return ((Application.get().getCurrentRegion() != null
                 && Application.get().getCurrentRegion().getSupportsOtpBikeshare())
                 || !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl()));
+    }
+
+    private void createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel1 = new NotificationChannel(
+                    CHANNEL_TRIP_PLAN_UPDATES_ID,
+                    "Trip plan notifications (beta)",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel1.setDescription("After planning a trip, send notifications if the trip is delayed or no longer recommended.");
+
+            NotificationChannel channel2 = new NotificationChannel(
+                    CHANNEL_ARRIVAL_REMINDERS_ID,
+                    "Bus arrival notifications",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel2.setDescription("Notifications to remind the user of an arriving bus.");
+
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel1);
+            manager.createNotificationChannel(channel2);
+        }
     }
 
 }

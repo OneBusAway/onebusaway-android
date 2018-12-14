@@ -44,7 +44,7 @@ repositories {
 // Custom properties for OBA
 ext {
     compileSdkVersion = 28
-    playServicesVersion = "11.8.0"
+    playServicesVersion = "16.0.0"
 }
 
 android {
@@ -52,13 +52,13 @@ android {
         preDexLibraries true
     }
     compileSdkVersion this.ext.compileSdkVersion
-    buildToolsVersion "28.0.2"
+    buildToolsVersion '28.0.3'
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 21
-        versionCode 96
-        versionName "2.3.11"
+        targetSdkVersion 26
+        versionCode 98
+        versionName "2.4.1"
 
         multiDexEnabled true
 
@@ -436,6 +436,8 @@ dependencies {
     implementation ('com.google.android.material:material:1.0.0') {
         force = true
     }
+    implementation 'android.arch.lifecycle:extensions:1.1.1'
+    implementation 'android.arch.lifecycle:common-java8:1.1.1'
     implementation 'commons-io:commons-io:2.4'
     // Open311 client library
     implementation 'edu.usf.cutr:open311client:1.0.9'
@@ -464,13 +466,13 @@ dependencies {
     // Amazon Maps (only for Amazon flavor)
     amazonImplementation 'com.amazon.android:amazon-maps-api:2.0'
     // Embedded Social SDK
-    implementation('com.acrowntest.test:sdk:0.7.1:release@aar') {
-        transitive = true;
+    implementation('com.acrowntest.test:sdk:0.7.3:release@aar') {
+        transitive = true
     }
     // Required to support multidex for minSdkVersion <= 20
     implementation 'androidx.multidex:multidex:2.0.0'
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
-    androidTestImplementation 'androidx.test:runner:1.1.0-beta01'
+    androidTestImplementation 'androidx.test:runner:1.1.0'
 }
 
 // Dependencies not directly used in this project, but used by dependencies that we are using

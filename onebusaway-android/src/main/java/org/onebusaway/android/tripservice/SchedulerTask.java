@@ -16,14 +16,14 @@
  */
 package org.onebusaway.android.tripservice;
 
-import org.onebusaway.android.provider.ObaContract;
-
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.text.format.Time;
+
+import org.onebusaway.android.provider.ObaContract;
 
 /**
  * This is the runnable that implements scheduling of trips (for the reminder feature).

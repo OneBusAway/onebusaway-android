@@ -24,9 +24,6 @@
             android:label="@string/trip_service_perm_label"
             android:description="@string/trip_service_perm_description"
             android:protectionLevel="normal"/>
-    <permission
-            android:name="${applicationId}.permission.C2D_MESSAGE"
-            android:protectionLevel="signature"/>
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -35,13 +32,10 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
     <uses-permission android:name="${applicationId}.permission.TRIP_SERVICE"/>
-    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE"/>
-    <uses-permission android:name="${applicationId}.permission.C2D_MESSAGE"/>
 
     <uses-sdk tools:overrideLibrary="net.openid.appauth,
         android.support.customtabs,
@@ -252,6 +246,8 @@
         <receiver android:name=".tripservice.BootstrapService">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
             </intent-filter>
         </receiver>

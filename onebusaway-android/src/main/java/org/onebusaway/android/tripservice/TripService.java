@@ -16,6 +16,12 @@
  */
 package org.onebusaway.android.tripservice;
 
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.UIUtils;
+
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -30,12 +36,6 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.Log;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIUtils;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;

@@ -32,6 +32,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
@@ -91,6 +92,8 @@ public class TripService extends Service {
 
     private static final String NOTIFY_TITLE = ".notifyTitle";
 
+    private static final String START_FOREGROUND = ".startForeground";
+
     public static final int FOREGROUND_NOTIFICATION_ID = 1800001;
 
     private ExecutorService mThreadPool;
@@ -119,25 +122,25 @@ public class TripService extends Service {
         }
     }
 
-    //
-    // This is the old onStart method that will be called on the pre-2.0
-    // platform. On 2.0 or later we override onStartCommand so this
-    // method will not be called.
-    //
-    @Override
-    public void onStart(Intent intent, int startId) {
-        handleCommand(intent, startId);
-    }
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            //create notification regarding foreground
+        // Check if we should start the service in the foreground
+        boolean startInForeground = false;
+        Bundle bundle = intent.getExtras();
+        if (bundle != null) {
+            startInForeground = bundle.getBoolean(START_FOREGROUND);
+        }
+        String action = intent.getAction();
+
+        // ACTION_NOTIFY should never run in the foreground to avoid multiple notifications (#946)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && startInForeground
+                && !ACTION_NOTIFY.equals(action)) {
+            // Create notification for running service in the foreground
             Intent notificationIntent = new Intent(this, TripService.class);
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
                     notificationIntent, 0);
 
-            String action = intent.getAction();
             String foregroundNotifyTitle = Application.get().getResources()
                     .getString(R.string.foreground_all_intent_title);
             String foregroundNotifyText = "";
@@ -148,11 +151,7 @@ public class TripService extends Service {
             } else if (ACTION_POLL.equals(action)) {
                 foregroundNotifyText = Application.get().getResources()
                         .getString(R.string.foreground_action_poll_text);
-            } else if (ACTION_NOTIFY.equals(action)) {
-                foregroundNotifyText = Application.get().getResources()
-                        .getString(R.string.foreground_action_notify_text);
-            }
-            else {
+            } else if (ACTION_CANCEL.equals(action)) {
                 foregroundNotifyText = Application.get().getResources()
                         .getString(R.string.foreground_action_cancel_text);
             }
@@ -222,11 +221,9 @@ public class TripService extends Service {
         if (ACTION_SCHEDULE.equals(action)) {
             mThreadPool.submit(new SchedulerTask(this, taskContext, uri));
             return START_REDELIVER_INTENT;
-
         } else if (ACTION_POLL.equals(action)) {
             mThreadPool.submit(new PollerTask(this, taskContext, uri));
             return START_NOT_STICKY;
-
         } else if (ACTION_NOTIFY.equals(action)) {
             // Create the notification
             String notifyTitle = intent.getStringExtra(NOTIFY_TITLE);
@@ -234,11 +231,9 @@ public class TripService extends Service {
 
             mThreadPool.submit(new NotifierTask(this, taskContext, uri, notifyTitle, notifyText));
             return START_REDELIVER_INTENT;
-
         } else if (ACTION_CANCEL.equals(action)) {
             mThreadPool.submit(new CancelNotifyTask(this, taskContext, uri));
             return START_NOT_STICKY;
-
         } else {
             Log.e(TAG, "Unknown action: " + action);
             //stopSelfResult(startId);
@@ -264,11 +259,20 @@ public class TripService extends Service {
     //
     // Trip helpers
     //
-    public static void scheduleAll(Context context) {
+
+    /**
+     * Starts the service to schedule all pending reminders
+     *
+     * @param context
+     * @param startForeground true if the service should be started in the foreground, false if it should not.  This parameter doesn't have any effect on Android versions less than 8.0.
+     */
+    public static void scheduleAll(Context context, boolean startForeground) {
         final Intent intent = new Intent(context, TripService.class);
         intent.setAction(TripService.ACTION_SCHEDULE);
         intent.setData(ObaContract.Trips.CONTENT_URI);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        intent.putExtra(TripService.START_FOREGROUND, startForeground);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && startForeground) {
             context.startForegroundService(intent);
         } else {
             context.startService(intent);

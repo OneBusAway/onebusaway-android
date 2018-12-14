@@ -105,7 +105,7 @@ public final class PollerTask implements Runnable {
             values.put(ObaContract.TripAlerts.STATE, ObaContract.TripAlerts.STATE_CANCELLED);
             mCR.update(alertUri, values, null, null);
 
-            TripService.scheduleAll(mContext);
+            TripService.scheduleAll(mContext, true);
             return;
         }
 

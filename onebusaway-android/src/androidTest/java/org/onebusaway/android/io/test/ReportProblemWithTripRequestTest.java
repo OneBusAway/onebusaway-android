@@ -137,7 +137,7 @@ public class ReportProblemWithTripRequestTest extends ObaTestCase {
         ObaReportProblemWithTripRequest request = builder.build();
 
         UriAssert.assertUriMatch(
-                "http://app.staging.obahart.org/api/where/report-problem-with-trip.json?" +
+                "https://app.staging.obahart.org/api/where/report-problem-with-trip.json?" +
                         "tripId=Hillsborough%20Area%20Regional%20Transit_121133&" +
                         "stopId=Hillsborough Area Regional Transit_4551&" +
                         "vehicleId=Hillsborough%20Area%20Regional%20Transit_1018&" +

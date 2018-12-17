@@ -135,8 +135,8 @@ public class ObaContext {
                 // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
                 URL url = new URL(serverName);
             } catch (MalformedURLException e) {
-                // Assume HTTP scheme, since without a scheme the Uri won't parse the authority
-                serverName = context.getString(R.string.http_prefix) + serverName;
+                // Assume HTTPS scheme, since without a scheme the Uri won't parse the authority
+                serverName = context.getString(R.string.https_prefix) + serverName;
             }
 
             baseUrl = Uri.parse(serverName);

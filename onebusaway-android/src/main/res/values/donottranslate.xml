@@ -61,16 +61,16 @@
     <string name="preference_key_never_show_payment_warning_dialog">never_show_payment_warning_dialog</string>
 
     <!-- Regions API URL -->
-    <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
+    <string name="regions_api_url">https://regions.onebusaway.org/regions-v3.json</string>
 
     <!-- Donate URL -->
-    <string name="donate_url">http://onebusaway.org/donate/</string>
+    <string name="donate_url">https://onebusaway.org/donate/</string>
 
     <!-- IdeaScale URL -->
-    <string name="ideascale_url">http://onebusaway.ideascale.com/a/ideas/top/campaign-filter/byids/campaigns/46167</string>
+    <string name="ideascale_url">https://onebusaway.ideascale.com/a/ideas/top/campaign-filter/byids/campaigns/46167</string>
 
     <!-- Powered by OBA URL -->
-    <string name="powered_by_oba_url">http://onebusaway.org</string>
+    <string name="powered_by_oba_url">https://onebusaway.org</string>
 
     <!-- Open-source link for Github project -->
     <string name="open_source_github">https://github.com/OneBusAway/onebusaway-android</string>
@@ -200,7 +200,7 @@
     <string name="analytics_label_button_press_pay_fare_open_app">Clicked Pay Fare Open App</string>
 
     <!-- General strings -->
-    <string name="http_prefix">http://</string>
+    <string name="https_prefix">https://</string>
 
     <!-- Problem reporting additions -->
     <string name="ri_append_start">\n\n---------------------\n</string>
@@ -230,7 +230,7 @@
     <string name="ri_app_feedback_email">android-app@onebusaway.org</string>
 
     <string name="arrival_list_stop_directions">\u0020(%1$s)</string>
-    <string name="sobi_deep_link_floating_bike_url">http://app.socialbicycles.com/map?bike_id=</string>
+    <string name="sobi_deep_link_floating_bike_url">https://app.socialbicycles.com/map?bike_id=</string>
     <string name="sobi_deep_link_bike_station_url">https://app.socialbicycles.com/map?hub_id=</string>
 
     <string name="traverse_mode_bicycle_rent">BICYCLE_RENT</string>

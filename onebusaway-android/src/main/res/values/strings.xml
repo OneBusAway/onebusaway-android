@@ -115,7 +115,7 @@
         <b>Improved trip status icon</b>
         - Thanks Pokechu22!\n&#8226;\u0020
         <b>Bug fixes</b>
-        - See http://bit.ly/oba-android-releases
+        - See https://bit.ly/oba-android-releases
     </string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>
@@ -787,7 +787,7 @@
     <!-- About -->
     <string name="title_activity_about">About</string>
     <string name="about_text">
-        "Find out more about the OneBusAway open-source project at http://onebusaway.org.\n\n"
+        "Find out more about the OneBusAway open-source project at https://onebusaway.org.\n\n"
 
         "*** Code ***\n\n"
 
@@ -822,7 +822,7 @@
         "*** Images ***\n\n"
 
         "Thanks to the designers who created images used in the vehicle icons, which were uploaded "
-        "to the Noun Project under CC BY 3.0 (http://creativecommons.org/licenses/by/3.0/us/):\n\n"
+        "to the Noun Project under CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/us/):\n\n"
 
         "* Arrow by Zlatko Najdenovski, MK\n"
         "* Map Marker by Housin Aziz, SE\n"

@@ -19,6 +19,20 @@
 package org.onebusaway.android.ui;
 
 
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -30,23 +44,11 @@ import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.util.comparators.AlphanumComparator;
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.ImageButton;
-import android.widget.RelativeLayout;
-import android.widget.TableLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.drawable.DrawableCompat;
 
 /**
@@ -236,6 +238,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
             // Layout and views to inflate from XML templates
             RelativeLayout layout;
+            ConstraintLayout occupancyView;
             TextView scheduleView, estimatedView, statusView;
             View divider;
 
@@ -260,6 +263,8 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 statusView = (TextView) inflater
                         .inflate(R.layout.arrivals_list_tv_template_style_b_status_small, null);
             }
+
+            occupancyView = (ConstraintLayout) inflater.inflate(R.layout.occupancy, null);
 
             // Set arrival times and status in views
             scheduleView.setText(UIUtils.formatTime(context, scheduledTime));
@@ -297,9 +302,15 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             int pTopBottom = UIUtils.dpToPixels(context, 2);
             statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
 
+            // Set alpha for occupancy person icons
+            for (int index = 0; index < occupancyView.getChildCount(); ++index) {
+                ((ImageView) occupancyView.getChildAt(index)).setAlpha(alpha);
+            }
+
             // Add TextViews to layout
             layout.addView(scheduleView);
             layout.addView(statusView);
+            layout.addView(occupancyView);
             layout.addView(estimatedView);
 
             // Make sure the TextViews align left/center/right of parent relative layout
@@ -311,7 +322,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
             RelativeLayout.LayoutParams params2 = (RelativeLayout.LayoutParams) statusView
                     .getLayoutParams();
-            params2.addRule(RelativeLayout.CENTER_IN_PARENT);
+            params2.addRule(RelativeLayout.CENTER_HORIZONTAL);
             // Give status view a little extra margin
             int p = UIUtils.dpToPixels(context, 3);
             params2.setMargins(p, p, p, p);
@@ -322,6 +333,13 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             params3.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
             params3.addRule(RelativeLayout.CENTER_VERTICAL);
             estimatedView.setLayoutParams(params3);
+
+            RelativeLayout.LayoutParams params4 = (RelativeLayout.LayoutParams) occupancyView
+                    .getLayoutParams();
+            params4.addRule(RelativeLayout.CENTER_HORIZONTAL);
+            params4.addRule(RelativeLayout.BELOW, statusView.getId());
+            params4.setMargins(p, p, p, p);
+            occupancyView.setLayoutParams(params4);
 
             // Add layout to TableRow
             tr.addView(layout);

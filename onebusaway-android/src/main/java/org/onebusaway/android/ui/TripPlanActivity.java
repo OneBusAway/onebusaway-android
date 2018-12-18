@@ -17,6 +17,8 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import com.sothree.slidinguppanel.ScrollableViewHelper;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
@@ -83,6 +85,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     boolean mRequestLoading = false;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,6 +94,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         setContentView(R.layout.activity_trip_plan);
 
         UIUtils.setupActionBar(this);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         Bundle bundle = (savedInstanceState == null) ? new Bundle() : savedInstanceState;
         mBuilder = new TripRequestBuilder(bundle);
@@ -366,6 +372,9 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                                         ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                                         getString(R.string.analytics_action_problem),
                                         getString(R.string.analytics_label_app_feedback_otp));
+                                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                                        getString(R.string.analytics_label_app_feedback_otp),
+                                        null);
                             } else {
                                 Toast.makeText(TripPlanActivity.this,
                                         getString(R.string.tripplanner_no_contact),

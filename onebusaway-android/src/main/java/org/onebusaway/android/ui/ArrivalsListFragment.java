@@ -18,6 +18,8 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -175,6 +177,8 @@ public class ArrivalsListFragment extends ListFragment
 
     ObaArrivalInfo[] mArrivalInfo;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     public interface Listener {
 
         /**
@@ -280,6 +284,8 @@ public class ArrivalsListFragment extends ListFragment
             // reason to create our view.
             return null;
         }
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
 
         initArrivalInfoViews(inflater);
 
@@ -797,6 +803,9 @@ public class ArrivalsListFragment extends ListFragment
                             getActivity().getString(R.string.analytics_action_button_press),
                             getActivity().getString(
                                     R.string.analytics_label_button_press_social_route_options));
+                    ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                            getActivity().getString(R.string.analytics_label_button_press_social_route_options),
+                            null);
                     openRouteDiscussion(arrivalInfo.getInfo().getRouteId());
                 }
             }
@@ -1065,7 +1074,11 @@ public class ArrivalsListFragment extends ListFragment
         //Analytics
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                 getString(R.string.analytics_action_edit_field),
-                getString(R.string.analytics_label_edit_field));
+                getString(R.string.analytics_label_edit_field_bookmark));
+
+        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                getString(R.string.analytics_label_edit_field_bookmark),
+                null);
 
         return mFavorite;
     }
@@ -1241,6 +1254,9 @@ public class ArrivalsListFragment extends ListFragment
                                     getActivity().getString(R.string.analytics_action_button_press),
                                     getActivity().getString(
                                             R.string.analytics_label_sort_by_eta_arrival));
+                            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                                    getString(R.string.analytics_label_sort_by_eta_arrival),
+                                    null);
                         } else if (index == 1) {
                             // Sort by route
                             Log.d(TAG, "Sort by route");
@@ -1249,6 +1265,9 @@ public class ArrivalsListFragment extends ListFragment
                                     getActivity().getString(R.string.analytics_action_button_press),
                                     getActivity().getString(
                                             R.string.analytics_label_sort_by_route_arrival));
+                            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                                    getString(R.string.analytics_label_sort_by_route_arrival),
+                                    null);
                         }
                         String[] styles = getResources()
                                 .getStringArray(R.array.arrival_info_style_options);
@@ -1285,6 +1304,9 @@ public class ArrivalsListFragment extends ListFragment
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_hide_arrivals_in_header));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_label_hide_arrivals_in_header),
+                    null);
         } else {
             // Currently we're hiding arrivals - we need to show them
             mHeader.showArrivals(true);
@@ -1293,6 +1315,9 @@ public class ArrivalsListFragment extends ListFragment
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_show_arrivals_in_header));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_label_show_arrivals_in_header),
+                    null);
         }
 
         PreferenceUtils.saveBoolean(getResources()
@@ -1352,6 +1377,9 @@ public class ArrivalsListFragment extends ListFragment
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                 getString(R.string.analytics_action_button_press),
                 getString(R.string.analytics_label_button_press_stop_details));
+        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                getActivity().getString(R.string.analytics_label_button_press_stop_details),
+                null);
     }
 
     /**
@@ -1526,6 +1554,9 @@ public class ArrivalsListFragment extends ListFragment
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                 getActivity().getString(R.string.analytics_action_button_press),
                 getActivity().getString(R.string.analytics_label_button_press));
+        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                getActivity().getString(R.string.analytics_label_button_press),
+                null);
     }
 
     /**
@@ -1752,6 +1783,9 @@ public class ArrivalsListFragment extends ListFragment
 
         for (String agencyId : agencyIds) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_service_alerts),
+                    getString(R.string.analytics_label_service_alerts) + agencyId);
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
                     getString(R.string.analytics_action_service_alerts),
                     getString(R.string.analytics_label_service_alerts) + agencyId);
         }

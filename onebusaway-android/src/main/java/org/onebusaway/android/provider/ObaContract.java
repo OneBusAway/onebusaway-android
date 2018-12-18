@@ -18,6 +18,8 @@
  */
 package org.onebusaway.android.provider;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -1511,22 +1513,26 @@ public final class ObaContract {
                 }
             }
 
-            StringBuilder analyicsLabel = new StringBuilder();
+            StringBuilder analyticsEvent = new StringBuilder();
             if (favorite) {
-                analyicsLabel.append(context.getString(R.string.analytics_label_star_route));
+                analyticsEvent.append(context.getString(R.string.analytics_label_star_route));
             } else {
-                analyicsLabel.append(context.getString(R.string.analytics_label_unstar_route));
+                analyticsEvent.append(context.getString(R.string.analytics_label_unstar_route));
             }
-            analyicsLabel.append(" ").append(routeId).append("_").append(headsign).append(" for ");
+            StringBuilder analyticsParam = new StringBuilder();
+            analyticsParam.append(routeId).append("_").append(headsign).append(" for ");
             if (stopId != null) {
-                analyicsLabel.append(stopId);
+                analyticsParam.append(stopId);
             } else {
-                analyicsLabel.append("all stops");
+                analyticsParam.append("all stops");
             }
             ObaAnalytics.reportEventWithCategory(
                     ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     context.getString(R.string.analytics_action_edit_field),
-                    analyicsLabel.toString());
+                    analyticsEvent.toString() + " " + analyticsParam.toString());
+            ObaAnalytics.reportFirebaseUiEvent(FirebaseAnalytics.getInstance(context),
+                    analyticsEvent.toString(),
+                    analyticsParam.toString());
         }
 
         /**

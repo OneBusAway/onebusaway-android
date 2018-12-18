@@ -17,6 +17,8 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -294,11 +296,14 @@ class ArrivalsListHeader {
     // Controller to change parent sliding panel
     HomeActivity.SlidingPanelController mSlidingPanelController;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     ArrivalsListHeader(Context context, Controller controller, FragmentManager fm) {
         mController = controller;
         mContext = context;
         mResources = context.getResources();
         mFragmentManager = fm;
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
 
         // Retrieve and cache the system's default "short" animation time.
         mShortAnimationDuration = mResources.getInteger(
@@ -434,6 +439,9 @@ class ArrivalsListHeader {
                         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                                 mContext.getString(R.string.analytics_action_button_press),
                                 mContext.getString(R.string.analytics_label_button_press_stopinfo) + obaRegion.getName());
+                    ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                            mContext.getString(R.string.analytics_label_button_press_stopinfo),
+                            null);
                 }
             });
         }
@@ -452,6 +460,9 @@ class ArrivalsListHeader {
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         mContext.getString(R.string.analytics_action_button_press),
                         mContext.getString(R.string.analytics_label_button_press_social_stop));
+                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                        mContext.getString(R.string.analytics_label_button_press_social_stop),
+                        null);
                 mController.openStopDiscussion();
             }
         });

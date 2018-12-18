@@ -19,6 +19,8 @@
 package org.onebusaway.android.ui;
 
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -139,73 +141,62 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
         LayoutInflater inflater = LayoutInflater.from(context);
 
-        TextView routeName = (TextView) view.findViewById(R.id.routeName);
-        TextView destination = (TextView) view.findViewById(R.id.routeDestination);
+        TextView routeName = view.findViewById(R.id.routeName);
+        TextView destination = view.findViewById(R.id.routeDestination);
 
         // TableLayout that we will fill with TableRows of arrival times
-        TableLayout arrivalTimesLayout = (TableLayout) view.findViewById(R.id.arrivalTimeLayout);
+        TableLayout arrivalTimesLayout = view.findViewById(R.id.arrivalTimeLayout);
         arrivalTimesLayout.removeAllViews();
 
         Resources r = view.getResources();
 
-        ImageButton starBtn = (ImageButton) view.findViewById(R.id.route_star);
+        ImageButton starBtn = view.findViewById(R.id.route_star);
         starBtn.setColorFilter(r.getColor(R.color.theme_primary));
 
-        ImageButton mapImageBtn = (ImageButton) view.findViewById(R.id.mapImageBtn);
+        ImageButton mapImageBtn = view.findViewById(R.id.mapImageBtn);
         mapImageBtn.setColorFilter(r.getColor(R.color.theme_primary));
 
-        ImageButton discussBtn = (ImageButton) view.findViewById(R.id.route_discussion);
+        ImageButton discussBtn = view.findViewById(R.id.route_discussion);
         discussBtn.setColorFilter(r.getColor(R.color.theme_primary));
 
-        ImageButton routeMoreInfo = (ImageButton) view.findViewById(R.id.route_more_info);
+        ImageButton routeMoreInfo = view.findViewById(R.id.route_more_info);
         routeMoreInfo.setColorFilter(r.getColor(R.color.switch_thumb_normal_material_dark));
 
         starBtn.setImageResource(stopInfo.isRouteAndHeadsignFavorite() ?
                 R.drawable.focus_star_on :
                 R.drawable.focus_star_off);
 
-        starBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Show dialog for setting route favorite
-                RouteFavoriteDialogFragment dialog = new RouteFavoriteDialogFragment.Builder(
-                        stopInfo.getInfo().getRouteId(), stopInfo.getInfo().getHeadsign())
-                        .setRouteShortName(stopInfo.getInfo().getShortName())
-                        .setRouteLongName(stopInfo.getInfo().getRouteLongName())
-                        .setStopId(stopInfo.getInfo().getStopId())
-                        .setFavorite(!stopInfo.isRouteAndHeadsignFavorite())
-                        .build();
+        starBtn.setOnClickListener(v -> {
+            // Show dialog for setting route favorite
+            RouteFavoriteDialogFragment dialog = new RouteFavoriteDialogFragment.Builder(
+                    stopInfo.getInfo().getRouteId(), stopInfo.getInfo().getHeadsign())
+                    .setRouteShortName(stopInfo.getInfo().getShortName())
+                    .setRouteLongName(stopInfo.getInfo().getRouteLongName())
+                    .setStopId(stopInfo.getInfo().getStopId())
+                    .setFavorite(!stopInfo.isRouteAndHeadsignFavorite())
+                    .build();
 
-                dialog.setCallback(new RouteFavoriteDialogFragment.Callback() {
-                    @Override
-                    public void onSelectionComplete(boolean savedFavorite) {
-                        if (savedFavorite) {
-                            mFragment.refreshLocal();
-                        }
-                    }
-                });
-                dialog.show(mFragment.getFragmentManager(), RouteFavoriteDialogFragment.TAG);
-            }
+            dialog.setCallback(savedFavorite -> {
+                if (savedFavorite) {
+                    mFragment.refreshLocal();
+                }
+            });
+            dialog.show(mFragment.getFragmentManager(), RouteFavoriteDialogFragment.TAG);
         });
 
         // Setup map
-        mapImageBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mFragment.showRouteOnMap(stopInfo);
-            }
-        });
+        mapImageBtn.setOnClickListener(v -> mFragment.showRouteOnMap(stopInfo));
 
         // Setup discussion
-        discussBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        context.getString(R.string.analytics_action_button_press),
-                        context.getString(R.string.analytics_label_button_press_social_route_style_b));
-                mFragment.openRouteDiscussion(arrivalInfo.getRouteId());
-            }
+        discussBtn.setOnClickListener(v -> {
+            ObaAnalytics.reportEventWithCategory(
+                    ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    context.getString(R.string.analytics_action_button_press),
+                    context.getString(R.string.analytics_label_button_press_social_route_style_b));
+            ObaAnalytics.reportFirebaseUiEvent(FirebaseAnalytics.getInstance(getContext()),
+                    context.getString(R.string.analytics_label_button_press_social_route_style_b),
+                    null);
+            mFragment.openRouteDiscussion(arrivalInfo.getRouteId());
         });
 
         ObaRegion currentRegion = Application.get().getCurrentRegion();

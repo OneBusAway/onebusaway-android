@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -29,10 +31,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 import androidx.appcompat.app.AlertDialog;
@@ -46,6 +50,15 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     public static final String TAB_NAME = "starred";
 
     private static String sortBy;
+
+    private FirebaseAnalytics mFirebaseAnalytics;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
+        return super.onCreateView(inflater, container, savedInstanceState);
+    }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -181,6 +194,9 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         getActivity().getString(R.string.analytics_action_button_press),
                         getActivity().getString(R.string.analytics_label_sort_by_name_stops));
+                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_sort_by_name_stops),
+                        null);
                 break;
             case 1:
                 // Sort by frequently used
@@ -189,6 +205,9 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         getActivity().getString(R.string.analytics_action_button_press),
                         getActivity().getString(R.string.analytics_label_sort_by_mfu_stops));
+                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_sort_by_mfu_stops),
+                        null);
                 break;
         }
         // Set the sort option to preferences
@@ -212,6 +231,9 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_edit_field),
                     getString(R.string.analytics_label_edit_field_bookmark_delete));
+            ObaAnalytics.reportFirebaseUiEvent(FirebaseAnalytics.getInstance(getContext()),
+                    getString(R.string.analytics_label_edit_field_bookmark_delete),
+                    null);
         }
     }
 }

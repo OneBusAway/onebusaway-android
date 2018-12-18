@@ -15,6 +15,8 @@
 */
 package org.onebusaway.android.report.ui.dialog;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaAgency;
@@ -53,9 +55,13 @@ public class CustomerServiceDialog extends DialogFragment implements
 
     private Adapter mAdapter;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
 
         getLoaderManager().initLoader(0, null, this);
     }
@@ -65,7 +71,7 @@ public class CustomerServiceDialog extends DialogFragment implements
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.report_issue_customer_service, null, false);
 
-        mListView = (ListView) view.findViewById(R.id.list);
+        mListView = view.findViewById(R.id.list);
         getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         return view;
     }
@@ -101,18 +107,18 @@ public class CustomerServiceDialog extends DialogFragment implements
         protected void initView(View view, ObaAgencyWithCoverage coverage) {
             final ObaAgency agency = mResponse.getAgency(coverage.getId());
 
-            TextView text1 = (TextView) view.findViewById(R.id.ricsi_text);
+            TextView text1 = view.findViewById(R.id.ricsi_text);
             text1.setText(agency.getName());
 
-            ImageButton phoneButton = (ImageButton) view.findViewById(R.id.ricsi_phone);
+            ImageButton phoneButton = view.findViewById(R.id.ricsi_phone);
             phoneButton.setColorFilter(getActivity().getResources().
                     getColor(R.color.navdrawer_icon_tint_selected));
 
-            ImageButton webButton = (ImageButton) view.findViewById(R.id.ricsi_web);
+            ImageButton webButton = view.findViewById(R.id.ricsi_web);
             webButton.setColorFilter(getActivity().getResources().
                     getColor(R.color.navdrawer_icon_tint_selected));
 
-            ImageButton emailButton = (ImageButton) view.findViewById(R.id.ricsi_email);
+            ImageButton emailButton = view.findViewById(R.id.ricsi_email);
             emailButton.setColorFilter(getActivity().getResources().
                     getColor(R.color.navdrawer_icon_tint_selected));
 
@@ -120,22 +126,25 @@ public class CustomerServiceDialog extends DialogFragment implements
                 emailButton.setVisibility(View.INVISIBLE);
             } else {
                 emailButton.setVisibility(View.VISIBLE);
-                emailButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        String locationString = getActivity().getIntent().
-                                getStringExtra(BaseReportActivity.LOCATION_STRING);
+                emailButton.setOnClickListener(view13 -> {
+                    String locationString = getActivity().getIntent().
+                            getStringExtra(BaseReportActivity.LOCATION_STRING);
 
-                        UIUtils.sendEmail(getActivity(), agency.getEmail(), locationString);
+                    UIUtils.sendEmail(getActivity(), agency.getEmail(), locationString);
 
+                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
+                            getString(R.string.analytics_label_customer_service_email));
+                    ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                            agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
+                            getString(R.string.analytics_label_customer_service_email));
+                    if (locationString == null) {
                         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                                 agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
-                                getString(R.string.analytics_label_customer_service_email));
-                        if (locationString == null) {
-                            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                    agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
-                                    getString(R.string.analytics_label_customer_service_email_without_location));
-                        }
+                                getString(R.string.analytics_label_customer_service_email_without_location));
+                        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                                agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
+                                getString(R.string.analytics_label_customer_service_email_without_location));
                     }
                 });
             }
@@ -144,14 +153,15 @@ public class CustomerServiceDialog extends DialogFragment implements
                 webButton.setVisibility(View.INVISIBLE);
             } else {
                 webButton.setVisibility(View.VISIBLE);
-                webButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        UIUtils.goToUrl(getActivity(), agency.getUrl());
-                        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
-                                getString(R.string.analytics_label_customer_service_web));
-                    }
+                webButton.setOnClickListener(view1 -> {
+                    UIUtils.goToUrl(getActivity(), agency.getUrl());
+                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
+                            getString(R.string.analytics_label_customer_service_web));
+                    ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                            agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
+                            getString(R.string.analytics_label_customer_service_web));
+
                 });
             }
 
@@ -159,14 +169,14 @@ public class CustomerServiceDialog extends DialogFragment implements
                 phoneButton.setVisibility(View.INVISIBLE);
             } else {
                 phoneButton.setVisibility(View.VISIBLE);
-                phoneButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        UIUtils.goToPhoneDialer(getActivity(), "tel:" + agency.getPhone());
-                        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
-                                getString(R.string.analytics_label_customer_service_phone));
-                    }
+                phoneButton.setOnClickListener(view12 -> {
+                    UIUtils.goToPhoneDialer(getActivity(), "tel:" + agency.getPhone());
+                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
+                            getString(R.string.analytics_label_customer_service_phone));
+                    ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                            agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
+                            getString(R.string.analytics_label_customer_service_phone));
                 });
             }
         }

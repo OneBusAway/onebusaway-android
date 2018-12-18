@@ -18,6 +18,7 @@
 package org.onebusaway.android.ui;
 
 import com.google.android.gms.analytics.GoogleAnalytics;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
@@ -110,6 +111,8 @@ public class PreferencesActivity extends PreferenceActivity
 
     ListPreference preferredUnits;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     @SuppressWarnings("deprecation")
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
@@ -117,6 +120,8 @@ public class PreferencesActivity extends PreferenceActivity
         setProgressBarIndeterminate(true);
 
         addPreferencesFromResource(R.xml.preferences);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         mPreference = findPreference(getString(R.string.preference_key_region));
         mPreference.setOnPreferenceClickListener(this);
@@ -158,17 +163,17 @@ public class PreferencesActivity extends PreferenceActivity
                 socialPref.setSummary(R.string.preferences_screen_social_summary_signed_in);
             }
 
-            socialPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_button_press),
-                            getString(R.string.analytics_label_button_press_social_settings));
+            socialPref.setOnPreferenceClickListener(preference -> {
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_social_settings));
+                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_button_press_social_settings),
+                        null);
 
-                    EmbeddedSocial.launchOptionsActivity(PreferencesActivity.this);
-                    return true;
-                }
+                EmbeddedSocial.launchOptionsActivity(PreferencesActivity.this);
+                return true;
             });
         } else {
             // Social is not enabled so don't show related preferences
@@ -316,18 +321,27 @@ public class PreferencesActivity extends PreferenceActivity
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_tutorial));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_label_button_press_tutorial),
+                    null);
             ShowcaseViewUtils.resetAllTutorials(this);
             NavHelp.goHome(this, true);
         } else if (pref.equals(mDonatePref)) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_donate));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_label_button_press_donate),
+                    null);
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.donate_url)));
             startActivity(intent);
         } else if (pref.equals(mPoweredByObaPref)) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_powered_by_oba));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_label_button_press_powered_by_oba),
+                    null);
             Intent intent = new Intent(Intent.ACTION_VIEW,
                     Uri.parse(getString(R.string.powered_by_oba_url)));
             startActivity(intent);
@@ -335,6 +349,9 @@ public class PreferencesActivity extends PreferenceActivity
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_about));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_label_button_press_about),
+                    null);
             AboutActivity.start(this);
         } else if (pref.equals(mSaveBackup)) {
             // SavePreference will get the click event but will ignore it if permissions haven't
@@ -504,10 +521,16 @@ public class PreferencesActivity extends PreferenceActivity
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         getString(R.string.analytics_action_button_press),
                         getString(R.string.analytics_label_button_press_experimental_on));
+                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_button_press_experimental_on),
+                        null);
             } else {
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         getString(R.string.analytics_action_button_press),
                         getString(R.string.analytics_label_button_press_experimental_off));
+                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_button_press_experimental_off),
+                        null);
             }
         } else if (key.equals(getString(R.string.preference_key_oba_api_url))) {
             // Change the region preference description to show we're not using a region
@@ -526,10 +549,16 @@ public class PreferencesActivity extends PreferenceActivity
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         getString(R.string.analytics_action_button_press),
                         getString(R.string.analytics_label_button_press_auto));
+                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_button_press_auto),
+                        null);
             } else {
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         getString(R.string.analytics_action_button_press),
                         getString(R.string.analytics_label_button_press_manual));
+                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_button_press_manual),
+                        null);
             }
         } else if (key.equalsIgnoreCase(getString(R.string.preferences_key_analytics))) {
             Boolean isAnalyticsActive = settings.getBoolean(Application.get().

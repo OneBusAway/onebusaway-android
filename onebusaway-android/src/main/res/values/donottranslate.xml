@@ -150,10 +150,10 @@
     <string name="analytics_label_button_press_manual">Set region manually</string>
     <string name="analytics_label_button_press_save_preference">Clicked Save to Storage</string>
     <string name="analytics_label_button_press_restore_preference">Clicked Restore from Storage</string>
-    <string name="analytics_label_edit_field">Edited Bookmark</string>
+    <string name="analytics_label_edit_field_bookmark">Edited Bookmark</string>
     <string name="analytics_label_edit_field_bookmark_delete">Edited Bookmark Group Deleted</string>
     <string name="analytics_label_set_region">Set Region:\u0020</string>
-    <string name="analytics_label_app_switch">Loaded Twitter via Web</string>
+    <string name="analytics_label_twitter">Loaded Twitter via Web</string>
     <string name="analytics_label_report_problem">Reported Problem</string>
     <string name="analytics_label_report_stop_problem">Reported Stop Problem</string>
     <string name="analytics_label_report_trip_problem">Reported Trip Problem</string>
@@ -194,6 +194,7 @@
     <string name="analytics_label_button_press_social_stop">Clicked Social Stop Arrivals Header</string>
     <string name="analytics_label_button_press_social_route_options">Clicked Social Route Options</string>
     <string name="analytics_label_button_press_social_route_style_b">Clicked Social Route Style B Card</string>
+    <string name="analytics_login_embedded_social">embedded_social</string>
 
     <!-- Analytics for payment -->
     <string name="analytics_label_button_press_pay_fare_download_app">Clicked Pay Fare Download App</string>

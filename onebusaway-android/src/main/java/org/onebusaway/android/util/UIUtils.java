@@ -18,6 +18,7 @@
 package org.onebusaway.android.util;
 
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -1770,6 +1771,9 @@ public final class UIUtils {
                     .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                             Application.get().getString(R.string.analytics_action_button_press),
                             Application.get().getString(R.string.analytics_label_button_press_pay_fare_open_app));
+            ObaAnalytics.reportFirebaseUiEvent(FirebaseAnalytics.getInstance(activity),
+                    Application.get().getString(R.string.analytics_label_button_press_pay_fare_open_app),
+                    null);
         } else {
             // Go to Play Store listing to download app
             intent = new Intent(Intent.ACTION_VIEW);
@@ -1779,6 +1783,9 @@ public final class UIUtils {
                     .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                             Application.get().getString(R.string.analytics_action_button_press),
                             Application.get().getString(R.string.analytics_label_button_press_pay_fare_download_app));
+            ObaAnalytics.reportFirebaseUiEvent(FirebaseAnalytics.getInstance(activity),
+                    Application.get().getString(R.string.analytics_label_button_press_pay_fare_download_app),
+                    null);
         }
     }
 

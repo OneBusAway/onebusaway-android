@@ -16,6 +16,15 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
+
 import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
@@ -25,20 +34,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.tripservice.TripService;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.UIUtils;
 
 import androidx.cursoradapter.widget.SimpleCursorAdapter;
 import androidx.loader.app.LoaderManager;
@@ -94,6 +98,15 @@ public final class MyRemindersFragment extends ListFragment
     private SimpleCursorAdapter mAdapter;
 
     private Observer mObserver;
+
+    private FirebaseAnalytics mFirebaseAnalytics;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
+        return super.onCreateView(inflater, container, savedInstanceState);
+    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -377,6 +390,9 @@ public final class MyRemindersFragment extends ListFragment
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         getActivity().getString(R.string.analytics_action_button_press),
                         getActivity().getString(R.string.analytics_label_sort_by_name_reminder));
+                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_sort_by_name_reminder),
+                        null);
                 break;
             case 1:
                 Log.d(TAG, "setSortByClause: sort by time");
@@ -384,6 +400,9 @@ public final class MyRemindersFragment extends ListFragment
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         getActivity().getString(R.string.analytics_action_button_press),
                         getActivity().getString(R.string.analytics_label_sort_by_departure_time_reminder));
+                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_sort_by_departure_time_reminder),
+                        null);
                 break;
         }
         final String[] sortOptions = getResources().getStringArray(R.array.sort_reminders);

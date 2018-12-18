@@ -135,7 +135,7 @@ public class ObaAnalytics {
      * Reports UI events using Firebase
      * @param analytics Firebase singleton
      * @param id ID of the UI element to report
-     * @param state the state of the UI item, or null if the item doesn't have a state
+     * @param state the state or variant of the UI item, or null if the item doesn't have a state or variant
      */
     public static void reportFirebaseUiEvent(FirebaseAnalytics analytics, String id, String state) {
         if (!isAnalyticsActive()) {
@@ -147,6 +147,40 @@ public class ObaAnalytics {
             bundle.putString(FirebaseAnalytics.Param.ITEM_VARIANT, state);
         }
         analytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+    }
+
+    /**
+     * Reports Login events using Firebase
+     * @param analytics Firebase singleton
+     * @param signUpMethod Sign up method of the login, or null if unknown
+     */
+    public static void reportFirebaseLoginEvent(FirebaseAnalytics analytics, String signUpMethod) {
+        if (!isAnalyticsActive()) {
+            return;
+        }
+        Bundle bundle = null;
+        if (!isEmpty(signUpMethod)) {
+            bundle = new Bundle();
+            bundle.putString(FirebaseAnalytics.Param.METHOD, signUpMethod);
+        }
+        analytics.logEvent(FirebaseAnalytics.Event.LOGIN, bundle);
+    }
+
+    /**
+     * Reports Search events using Firebase
+     * @param analytics Firebase singleton
+     * @param searchTerm search term used, or null if unknown
+     */
+    public static void reportFirebaseSearchEvent(FirebaseAnalytics analytics, String searchTerm) {
+        if (!isAnalyticsActive()) {
+            return;
+        }
+        Bundle bundle = null;
+        if (!isEmpty(searchTerm)) {
+            bundle = new Bundle();
+            bundle.putString(FirebaseAnalytics.Param.SEARCH_TERM, searchTerm);
+        }
+        analytics.logEvent(FirebaseAnalytics.Event.SEARCH, bundle);
     }
 
     /**

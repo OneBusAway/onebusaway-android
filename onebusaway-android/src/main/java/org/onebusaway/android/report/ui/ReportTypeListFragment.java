@@ -15,6 +15,8 @@
 */
 package org.onebusaway.android.report.ui;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -41,6 +43,8 @@ import edu.usf.cutr.open311client.Open311Manager;
  */
 public class ReportTypeListFragment extends ListFragment implements AdapterView.OnItemClickListener {
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.report_type_fragment, null, false);
@@ -48,8 +52,9 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-
         super.onActivityCreated(savedInstanceState);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
 
         String reportTypes[];
         String reportDesc[];
@@ -101,11 +106,17 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_problem),
                     getString(R.string.analytics_label_customer_service));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_action_problem),
+                    getString(R.string.analytics_label_customer_service));
         } else if (getString(R.string.rt_infrastructure_problem).equals(rti.getTitle())) {
             ((ReportActivity) getActivity()).createInfrastructureIssueActivity(
                     getString(R.string.ri_selected_service_stop));
 
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_problem),
+                    getString(R.string.analytics_label_stop_problem));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
                     getString(R.string.analytics_action_problem),
                     getString(R.string.analytics_label_stop_problem));
         } else if (getString(R.string.rt_stop_problem).equals(rti.getTitle())) {
@@ -115,12 +126,18 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_problem),
                     getString(R.string.analytics_label_stop_problem));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_action_problem),
+                    getString(R.string.analytics_label_stop_problem));
         } else if (getString(R.string.rt_arrival_problem).equals(rti.getTitle())) {
             // Report bus stop issue
             ((ReportActivity) getActivity()).createInfrastructureIssueActivity(
                     getString(R.string.ri_selected_service_trip));
 
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_problem),
+                    getString(R.string.analytics_label_trip_problem));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
                     getString(R.string.analytics_action_problem),
                     getString(R.string.analytics_label_trip_problem));
         } else if (getString(R.string.rt_app_feedback).equals(rti.getTitle())) {
@@ -134,8 +151,14 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_problem),
                     getString(R.string.analytics_label_app_feedback));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_action_problem),
+                    getString(R.string.analytics_label_app_feedback));
             if (locationString == null) {
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_problem),
+                        getString(R.string.analytics_label_app_feedback_without_location));
+                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
                         getString(R.string.analytics_action_problem),
                         getString(R.string.analytics_label_app_feedback_without_location));
             }
@@ -144,6 +167,9 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
             goToIdeaScale();
 
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_problem),
+                    getString(R.string.analytics_label_idea_scale));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
                     getString(R.string.analytics_action_problem),
                     getString(R.string.analytics_label_idea_scale));
         }

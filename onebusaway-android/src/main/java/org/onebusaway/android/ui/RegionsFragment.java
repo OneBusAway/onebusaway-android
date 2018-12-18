@@ -18,6 +18,7 @@ package org.onebusaway.android.ui;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -36,10 +37,12 @@ import android.content.res.Resources;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -83,6 +86,15 @@ public class RegionsFragment extends ListFragment
      * GoogleApiClient being used for Location Services
      */
     GoogleApiClient mGoogleApiClient;
+
+    private FirebaseAnalytics mFirebaseAnalytics;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
+        return super.onCreateView(inflater, container, savedInstanceState);
+    }
 
     @Override
     public void onAttach(Activity activity) {
@@ -138,6 +150,9 @@ public class RegionsFragment extends ListFragment
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                 getString(R.string.analytics_action_set_region),
                 getString(R.string.analytics_label_set_region)+ region.getName());
+        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                getString(R.string.region_selected_manually),
+                region.getName());
 
         NavHelp.goHome(getActivity(), false);
     }

@@ -452,8 +452,6 @@ public class Application extends MultiDexApplication {
     }
 
     private String getAppUid() {
-        // FIXME - After migrating to Firebase, use FirebaseInstanceId - https://firebase.google.com/docs/reference/android/com/google/firebase/iid/FirebaseInstanceId
-        // If FirebaseInstanceId isn't available (catch all exceptions), then return randomUUID()
         return UUID.randomUUID().toString();
     }
 

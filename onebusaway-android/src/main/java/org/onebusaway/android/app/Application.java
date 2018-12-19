@@ -600,8 +600,11 @@ public class Application extends MultiDexApplication {
 
     /**
      * Initializes Embedded Social if the device and current build support social functionality
+     * This method is only public as a workaround to avoid running ES SDK in the background - see
+     * #953.  When ES SDK no longer runs servers in the background this can be made private again
+     * and all ES SDK initialization can happen in Application.onCreate().
      */
-    private synchronized void setUpSocial() {
+    public synchronized void setUpSocial() {
         if (!mEmbeddedSocialInitiated) {
             if (EmbeddedSocialUtils.isBuildVersionSupportedBySocial() &&
                     EmbeddedSocialUtils.isSocialApiKeyDefined()) {

@@ -27,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PermissionUtils;
 import org.onebusaway.android.util.TestUtils;
 
 import android.location.Location;
@@ -40,6 +41,7 @@ import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
+import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
 
 /**
  * Tests to evaluate location utilities
@@ -197,7 +199,7 @@ public class LocationUtilsTest extends ObaTestCase {
         Location loc;
 
         // Make sure we're not running on an emulator, since we'll get a null location there
-        if (!TestUtils.isRunningOnEmulator()) {
+        if (!TestUtils.isRunningOnEmulator() && PermissionUtils.hasGrantedPermissions(getTargetContext(), LOCATION_PERMISSIONS)) {
             /**
              * Test without Google Play Services - should be a Location API v1 location.
              * Typically this is "gps" or "network", but some devices (e.g., HTC EVO LTE)
@@ -224,7 +226,8 @@ public class LocationUtilsTest extends ObaTestCase {
         GoogleApiAvailability api = GoogleApiAvailability.getInstance();
         if (api.isGooglePlayServicesAvailable(getTargetContext())
                 == ConnectionResult.SUCCESS &&
-                !TestUtils.isRunningOnEmulator()) {
+                !TestUtils.isRunningOnEmulator() &&
+                PermissionUtils.hasGrantedPermissions(getTargetContext(), LOCATION_PERMISSIONS)) {
             /**
              * Could return either a fused or Location API v1 location
              */

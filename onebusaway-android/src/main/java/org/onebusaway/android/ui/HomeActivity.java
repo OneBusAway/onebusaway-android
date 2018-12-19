@@ -352,6 +352,9 @@ public class HomeActivity extends AppCompatActivity
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
+        // Workaround to make sure ES SDK is initialized in case we startup to ES Fragments (#953)
+        Application.get().setUpSocial();
+
         setContentView(R.layout.main);
 
         mActivityWeakRef = new WeakReference<>(this);

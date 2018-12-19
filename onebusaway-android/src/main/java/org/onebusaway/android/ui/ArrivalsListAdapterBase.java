@@ -17,6 +17,7 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.util.ArrayAdapter;
+import org.onebusaway.android.util.ArrivalInfoUtils;
 
 import android.content.ContentQueryMap;
 import android.content.Context;
@@ -41,5 +42,6 @@ public abstract class ArrivalsListAdapterBase<T> extends ArrayAdapter<T> {
         notifyDataSetChanged();
     }
 
-    abstract public void setData(ObaArrivalInfo[] arrivals, ArrayList<String> routesFilter, long currentTime);
+    abstract public void setData(ObaArrivalInfo[] arrivals, ArrayList<String> routesFilter,
+                                 ArrivalInfoUtils.ArrivalFilter arrivalFilter, long currentTime);
 }

@@ -24,6 +24,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
+import org.onebusaway.android.util.ArrivalInfoUtils.ArrivalFilter;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -106,6 +107,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String REGION_ID = "region_id";
+
+        /**
+         * Whether the selected stop should show arrivals, departures or both.
+         * <P>
+         * Type: INTEGER
+         * </P>
+         */
+        public static final String ARRIVAL_FILTER = "arrival_filter";
     }
 
     protected interface RoutesColumns {
@@ -626,6 +635,35 @@ public final class ObaContract {
             values.put(ObaContract.Stops.USE_COUNT, 0);
             values.putNull(ObaContract.Stops.ACCESS_TIME);
             return cr.update(uri, values, null, null) > 0;
+        }
+
+        public static ArrivalFilter getArrivalFilter(Context context, Uri uri) {
+            ContentResolver cr = context.getContentResolver();
+            Cursor c = cr.query(uri, new String[]{ARRIVAL_FILTER}, null, null, null);
+
+            int result = 0;
+            if (c != null && c.moveToNext()) {
+                result = c.getInt(0);
+            }
+
+            if (c != null) {
+                c.close();
+            }
+
+            return ArrivalFilter.fromInt(result);
+        }
+
+        public static void setArrivalFilter(Context context, Uri uri, ArrivalFilter arrivalFilter) {
+            if (context == null) {
+                return;
+            }
+
+            int filterOption = ArrivalFilter.toInt(arrivalFilter);
+
+            ContentResolver cr = context.getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(ARRIVAL_FILTER, filterOption);
+            cr.update(uri, values, null, null);
         }
     }
 

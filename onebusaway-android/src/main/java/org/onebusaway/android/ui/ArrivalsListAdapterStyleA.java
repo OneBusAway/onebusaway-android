@@ -46,15 +46,16 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
     /**
      * Sets the data to be used with the adapter
      *
-     * @param routesFilter routeIds to filter for
-     * @param currentTime  current time in milliseconds
+     * @param routesFilter  routeIds to filter for
+     * @param arrivalFilter whether to include arrivals, departures, or both
+     * @param currentTime   current time in milliseconds
      */
     public void setData(ObaArrivalInfo[] arrivals, ArrayList<String> routesFilter,
-            long currentTime) {
+                        ArrivalInfoUtils.ArrivalFilter arrivalFilter, long currentTime) {
         if (arrivals != null) {
             ArrayList<ArrivalInfo> list =
                     ArrivalInfoUtils.convertObaArrivalInfo(getContext(),
-                            arrivals, routesFilter, currentTime, false);
+                            arrivals, arrivalFilter, routesFilter, currentTime, false);
             setData(list);
         } else {
             setData(null);

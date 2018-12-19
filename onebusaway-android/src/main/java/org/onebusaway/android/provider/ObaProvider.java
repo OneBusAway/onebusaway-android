@@ -49,7 +49,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 28;
+        private static final int DATABASE_VERSION = 29;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -281,6 +281,13 @@ public class ObaProvider extends ContentProvider {
                         " ADD COLUMN " + ObaContract.Regions.PAYMENT_WARNING_TITLE + " VARCHAR");
                 db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
                         " ADD COLUMN " + ObaContract.Regions.PAYMENT_WARNING_BODY + " VARCHAR");
+
+                oldVersion++;
+            }
+            if (oldVersion == 28) {
+                db.execSQL(
+                        "ALTER TABLE " + ObaContract.Stops.PATH +
+                                " ADD COLUMN " + ObaContract.Stops.ARRIVAL_FILTER + " INTEGER");
             }
         }
 
@@ -455,6 +462,7 @@ public class ObaProvider extends ContentProvider {
         sStopsProjectionMap.put(ObaContract.Stops.USE_COUNT, ObaContract.Stops.USE_COUNT);
         sStopsProjectionMap.put(ObaContract.Stops.LATITUDE, ObaContract.Stops.LATITUDE);
         sStopsProjectionMap.put(ObaContract.Stops.LONGITUDE, ObaContract.Stops.LONGITUDE);
+        sStopsProjectionMap.put(ObaContract.Stops.ARRIVAL_FILTER, ObaContract.Stops.ARRIVAL_FILTER);
         sStopsProjectionMap.put(ObaContract.Stops.USER_NAME, ObaContract.Stops.USER_NAME);
         sStopsProjectionMap.put(ObaContract.Stops.ACCESS_TIME, ObaContract.Stops.ACCESS_TIME);
         sStopsProjectionMap.put(ObaContract.Stops.FAVORITE, ObaContract.Stops.FAVORITE);

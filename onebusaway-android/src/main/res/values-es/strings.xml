@@ -273,8 +273,8 @@
     </plurals>
     <string name="stop_info_load_more_arrivals">Cargar más llegadas</string>
     <string name="stop_info_item_options_title">Opciones de bus</string>
-    <string name="stop_info_filter_title">Mostrar sólo estas rutas</string>
-    <string name="stop_info_filter_header">Mostrando %1$d de %2$d rutas</string>
+    <string name="stop_info_route_filter_title">Mostrar sólo estas rutas</string>
+    <string name="stop_info_route_filter_header">Mostrando %1$d de %2$d rutas</string>
     <string name="stop_info_filter_showall">(mostrar todas)</string>
     <string name="stop_info_save">Guardar</string>
     <string name="stop_info_cancel">Cancelar</string>

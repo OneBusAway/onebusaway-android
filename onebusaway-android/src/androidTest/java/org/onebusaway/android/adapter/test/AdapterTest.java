@@ -31,6 +31,7 @@ import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.ui.ArrivalsListAdapterStyleA;
 import org.onebusaway.android.ui.ArrivalsListAdapterStyleB;
+import org.onebusaway.android.util.ArrivalInfoUtils.ArrivalFilter;
 
 import android.view.View;
 
@@ -75,7 +76,8 @@ public class AdapterTest extends ObaTestCase {
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
 
         adapterA = new ArrivalsListAdapterStyleA(getTargetContext());
-        adapterA.setData(arrivals, new ArrayList<String>(), response.getCurrentTime());
+        adapterA.setData(arrivals, new ArrayList<String>(), ArrivalFilter.BOTH,
+                response.getCurrentTime());
         View v = adapterA.getView(0, null, null);
         assertNotNull(v);
     }
@@ -101,7 +103,8 @@ public class AdapterTest extends ObaTestCase {
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
 
         adapterB = new ArrivalsListAdapterStyleB(getTargetContext());
-        adapterB.setData(arrivals, new ArrayList<String>(), response.getCurrentTime());
+        adapterB.setData(arrivals, new ArrayList<String>(), ArrivalFilter.BOTH,
+                response.getCurrentTime());
         View v = adapterB.getView(0, null, null);
         assertNotNull(v);
     }
@@ -134,7 +137,8 @@ public class AdapterTest extends ObaTestCase {
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
 
         adapterA = new ArrivalsListAdapterStyleA(getTargetContext());
-        adapterA.setData(arrivals, new ArrayList<String>(), response.getCurrentTime());
+        adapterA.setData(arrivals, new ArrayList<String>(), ArrivalFilter.BOTH,
+                response.getCurrentTime());
         View v = adapterA.getView(0, null, null);
         assertNotNull(v);
     }
@@ -167,7 +171,8 @@ public class AdapterTest extends ObaTestCase {
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
 
         adapterB = new ArrivalsListAdapterStyleB(getTargetContext());
-        adapterB.setData(arrivals, new ArrayList<String>(), response.getCurrentTime());
+        adapterB.setData(arrivals, new ArrayList<String>(), ArrivalFilter.BOTH,
+                response.getCurrentTime());
         if (!adapterB.isEmpty()) {
             View v = adapterB.getView(0, null, null);
             assertNotNull(v);

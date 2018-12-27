@@ -22,6 +22,7 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.elements.ObaTripSchedule;
 import org.onebusaway.android.io.elements.ObaTripStatus;
+import org.onebusaway.android.io.elements.Occupancy;
 import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
 import org.onebusaway.android.mock.MockRegion;
@@ -279,5 +280,51 @@ public class TripDetailsRequest extends ObaTestCase {
                 }},
                 request
         );
+    }
+
+    @Test
+    public void testTripResponseOccupancy() {
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
+        assertNotNull(tampa);
+        Application.get().setCurrentRegion(tampa);
+
+        ObaTripDetailsResponse response =
+                new ObaTripDetailsRequest.Builder(getTargetContext(), "Hillsborough Area Regional Transit_1389962")
+                        .build()
+                        .call();
+        assertOK(response);
+        assertEquals("Hillsborough Area Regional Transit_1389962", response.getId());
+
+        ObaTripSchedule schedule = response.getSchedule();
+        assertNotNull(schedule);
+
+        ObaTripSchedule.StopTime[] stopTimes = schedule.getStopTimes();
+
+        // Occupancy - EMPTY
+        assertEquals(Occupancy.EMPTY, stopTimes[0].getHistoricalOccupancy());
+
+        // Occupancy - MANY_SEATS_AVAILABLE
+        assertEquals(Occupancy.MANY_SEATS_AVAILABLE, stopTimes[1].getHistoricalOccupancy());
+
+        // Occupancy - FEW_SEATS_AVAILABLE
+        assertEquals(Occupancy.FEW_SEATS_AVAILABLE, stopTimes[2].getHistoricalOccupancy());
+
+        // Occupancy - STANDING_ROOM_ONLY
+        assertEquals(Occupancy.STANDING_ROOM_ONLY, stopTimes[3].getHistoricalOccupancy());
+
+        // Occupancy - CRUSHED_STANDING_ROOM_ONLY
+        assertEquals(Occupancy.CRUSHED_STANDING_ROOM_ONLY, stopTimes[4].getHistoricalOccupancy());
+
+        // Occupancy - FULL
+        assertEquals(Occupancy.FULL, stopTimes[5].getHistoricalOccupancy());
+
+        // Occupancy - NOT_ACCEPTING_PASSENGERS
+        assertEquals(Occupancy.NOT_ACCEPTING_PASSENGERS, stopTimes[6].getHistoricalOccupancy());
+
+        // Occupancy - Empty string
+        assertNull(stopTimes[7].getHistoricalOccupancy());
+
+        // Occupancy - Missing field
+        assertNull(stopTimes[8].getHistoricalOccupancy());
     }
 }

@@ -81,6 +81,7 @@ import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.elements.Occupancy;
+import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
@@ -1889,5 +1890,74 @@ public final class UIUtils {
             case EMPTY:
                 // 0 icons
         }
+    }
+
+    /**
+     * Sets the content description of the occupancy view group based on the provided occupancy
+     *
+     * @param v              occupancy.xml layout viewgroup containing the silhouettes
+     * @param occupancy      the occupancy value to use to set the content description
+     * @param occupancyState the state of the occupancy
+     */
+    public static void setOccupancyContentDescription(ViewGroup v, Occupancy occupancy, OccupancyState occupancyState) {
+        // Hide the entire view group if occupancy is null
+        if (occupancy == null) {
+            v.setContentDescription("");
+            return;
+        }
+
+        int stringId = R.string.historically_full;
+
+        // Below switch continues into following cases to minimize lines of code
+        switch (occupancy) {
+            case NOT_ACCEPTING_PASSENGERS:
+                // "Full"
+            case FULL:
+                // "Full"
+            case CRUSHED_STANDING_ROOM_ONLY:
+                // "Full"
+                if (occupancyState == OccupancyState.HISTORICAL) {
+                    stringId = R.string.historically_full;
+                } else if (occupancyState == OccupancyState.REALTIME) {
+                    stringId = R.string.realtime_full;
+                } else if (occupancyState == OccupancyState.PREDICTED) {
+                    stringId = R.string.predicted_full;
+                }
+                break;
+            case STANDING_ROOM_ONLY:
+                // "Standing room"
+                if (occupancyState == OccupancyState.HISTORICAL) {
+                    stringId = R.string.historically_standing_room;
+                } else if (occupancyState == OccupancyState.REALTIME) {
+                    stringId = R.string.realtime_standing_room;
+                } else if (occupancyState == OccupancyState.PREDICTED) {
+                    stringId = R.string.predicted_standing_room;
+                }
+                break;
+            case FEW_SEATS_AVAILABLE:
+                // "Standing room"
+            case MANY_SEATS_AVAILABLE:
+                // "Standing room"
+                if (occupancyState == OccupancyState.HISTORICAL) {
+                    stringId = R.string.historically_seats_available;
+                } else if (occupancyState == OccupancyState.REALTIME) {
+                    stringId = R.string.realtime_seats_available;
+                } else if (occupancyState == OccupancyState.PREDICTED) {
+                    stringId = R.string.predicted_seats_available;
+                }
+                break;
+            case EMPTY:
+                // "Empty"
+                if (occupancyState == OccupancyState.HISTORICAL) {
+                    stringId = R.string.historically_empty;
+                } else if (occupancyState == OccupancyState.REALTIME) {
+                    stringId = R.string.realtime_empty;
+                } else if (occupancyState == OccupancyState.PREDICTED) {
+                    stringId = R.string.predicted_empty;
+                }
+                break;
+        }
+
+        v.setContentDescription(Application.get().getString(stringId));
     }
 }

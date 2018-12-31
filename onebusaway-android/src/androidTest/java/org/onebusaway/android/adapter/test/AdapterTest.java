@@ -31,6 +31,7 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.elements.Occupancy;
+import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.io.test.ObaTestCase;
@@ -269,5 +270,113 @@ public class AdapterTest extends ObaTestCase {
         assertEquals(View.GONE, silhouette1.getVisibility());
         assertEquals(View.GONE, silhouette2.getVisibility());
         assertEquals(View.GONE, silhouette3.getVisibility());
+    }
+
+    /**
+     * Test occupancy visibility - we need to do this somewhere with an inflated view, so this
+     * adapter works
+     */
+    @Test
+    public void testSetOccupancyContentDescription() {
+        // Test by setting region
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
+        assertNotNull(tampa);
+        Application.get().setCurrentRegion(tampa);
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
+                        "Hillsborough Area Regional Transit_3105").build().call();
+        assertOK(response);
+        ObaStop stop = response.getStop();
+        assertNotNull(stop);
+        assertEquals("Hillsborough Area Regional Transit_3105", stop.getId());
+        final List<ObaRoute> routes = response.getRoutes(stop.getRouteIds());
+        assertTrue(routes.size() > 0);
+        ObaAgency agency = response.getAgency(routes.get(0).getAgencyId());
+        assertEquals("Hillsborough Area Regional Transit", agency.getId());
+
+        final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+
+        adapterA = new ArrivalsListAdapterStyleA(getTargetContext());
+        adapterA.setData(arrivals, new ArrayList<String>(), response.getCurrentTime());
+        View v = adapterA.getView(0, null, null);
+        assertNotNull(v);
+
+        // Test occupancy content description
+        ViewGroup occupancy = v.findViewById(R.id.occupancy);
+
+        // Historical
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.NOT_ACCEPTING_PASSENGERS, OccupancyState.HISTORICAL);
+        assertEquals("Historically full", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.FULL, OccupancyState.HISTORICAL);
+        assertEquals("Historically full", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.CRUSHED_STANDING_ROOM_ONLY, OccupancyState.HISTORICAL);
+        assertEquals("Historically full", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.STANDING_ROOM_ONLY, OccupancyState.HISTORICAL);
+        assertEquals("Historically standing room", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.FEW_SEATS_AVAILABLE, OccupancyState.HISTORICAL);
+        assertEquals("Historically seats available", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.MANY_SEATS_AVAILABLE, OccupancyState.HISTORICAL);
+        assertEquals("Historically seats available", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.EMPTY, OccupancyState.HISTORICAL);
+        assertEquals("Historically empty", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, null, OccupancyState.HISTORICAL);
+        assertEquals("", occupancy.getContentDescription());
+
+        // Real-time
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.NOT_ACCEPTING_PASSENGERS, OccupancyState.REALTIME);
+        assertEquals("Full", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.FULL, OccupancyState.REALTIME);
+        assertEquals("Full", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.CRUSHED_STANDING_ROOM_ONLY, OccupancyState.REALTIME);
+        assertEquals("Full", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.STANDING_ROOM_ONLY, OccupancyState.REALTIME);
+        assertEquals("Standing room", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.FEW_SEATS_AVAILABLE, OccupancyState.REALTIME);
+        assertEquals("Seats available", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.MANY_SEATS_AVAILABLE, OccupancyState.REALTIME);
+        assertEquals("Seats available", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.EMPTY, OccupancyState.REALTIME);
+        assertEquals("Empty", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, null, OccupancyState.REALTIME);
+        assertEquals("", occupancy.getContentDescription());
+
+        // Predicted
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.NOT_ACCEPTING_PASSENGERS, OccupancyState.PREDICTED);
+        assertEquals("Predicted full", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.FULL, OccupancyState.PREDICTED);
+        assertEquals("Predicted full", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.CRUSHED_STANDING_ROOM_ONLY, OccupancyState.PREDICTED);
+        assertEquals("Predicted full", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.STANDING_ROOM_ONLY, OccupancyState.PREDICTED);
+        assertEquals("Predicted standing room", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.FEW_SEATS_AVAILABLE, OccupancyState.PREDICTED);
+        assertEquals("Predicted seats available", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.MANY_SEATS_AVAILABLE, OccupancyState.PREDICTED);
+        assertEquals("Predicted seats available", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, Occupancy.EMPTY, OccupancyState.PREDICTED);
+        assertEquals("Predicted empty", occupancy.getContentDescription());
+
+        UIUtils.setOccupancyContentDescription(occupancy, null, OccupancyState.PREDICTED);
+        assertEquals("", occupancy.getContentDescription());
     }
 }

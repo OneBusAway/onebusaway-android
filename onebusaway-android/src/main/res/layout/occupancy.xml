@@ -6,8 +6,7 @@
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
     android:minWidth="@dimen/arrival_style_b_status_min_width"
-    android:background="@drawable/occupancy_background"
-    android:contentDescription="@string/occupancy_description">
+    android:background="@drawable/occupancy_background">
 
     <ImageView
         android:id="@+id/silhouette1"

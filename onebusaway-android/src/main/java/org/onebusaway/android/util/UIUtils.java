@@ -1851,7 +1851,7 @@ public final class UIUtils {
     /**
      * Sets the visibility of the silhouettes in the provided occupancy.xml viewgroup
      *
-     * @param v         occpuancy.xml layout viewgroup containing the silhouettes
+     * @param v         occupancy.xml layout viewgroup containing the silhouettes
      * @param occupancy the occupancy value to use to set the silhouette visibility
      */
     public static void setOccupancyVisibility(ViewGroup v, Occupancy occupancy) {

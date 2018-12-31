@@ -273,7 +273,7 @@ public class AdapterTest extends ObaTestCase {
     }
 
     /**
-     * Test occupancy visibility - we need to do this somewhere with an inflated view, so this
+     * Test occupancy content description - we need to do this somewhere with an inflated view, so this
      * adapter works
      */
     @Test

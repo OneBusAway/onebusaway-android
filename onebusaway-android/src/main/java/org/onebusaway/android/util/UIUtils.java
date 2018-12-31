@@ -17,26 +17,6 @@
 
 package org.onebusaway.android.util;
 
-import com.google.android.gms.common.GoogleApiAvailability;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaSituation;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.ui.ArrivalsListActivity;
-import org.onebusaway.android.ui.HomeActivity;
-import org.onebusaway.android.ui.RouteInfoActivity;
-import org.onebusaway.android.view.RealtimeIndicatorView;
-import org.onebusaway.util.comparators.AlphanumComparator;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
@@ -85,8 +65,30 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.common.GoogleApiAvailability;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaSituation;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.Occupancy;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.ui.ArrivalsListActivity;
+import org.onebusaway.android.ui.HomeActivity;
+import org.onebusaway.android.ui.RouteInfoActivity;
+import org.onebusaway.android.view.RealtimeIndicatorView;
+import org.onebusaway.util.comparators.AlphanumComparator;
 
 import java.io.File;
 import java.io.IOException;
@@ -1843,5 +1845,49 @@ public final class UIUtils {
                         }
                 );
         builder.create().show();
+    }
+
+    /**
+     * Sets the visibility of the silhouettes in the provided occupancy.xml viewgroup
+     *
+     * @param v         occpuancy.xml layout viewgroup containing the silhouettes
+     * @param occupancy the occupancy value to use to set the silhouette visibility
+     */
+    public static void setOccupancyVisibility(ViewGroup v, Occupancy occupancy) {
+        ImageView silhouette1 = v.findViewById(R.id.silhouette1);
+        silhouette1.setVisibility(View.GONE);
+        ImageView silhouette2 = v.findViewById(R.id.silhouette2);
+        silhouette2.setVisibility(View.GONE);
+        ImageView silhouette3 = v.findViewById(R.id.silhouette3);
+        silhouette3.setVisibility(View.GONE);
+
+        // Hide the entire view group if occupancy is null
+        if (occupancy == null) {
+            v.setVisibility(View.GONE);
+            return;
+        } else {
+            v.setVisibility(View.VISIBLE);
+        }
+
+        // Below switch continues into following cases to minimize number of setVisibility() calls
+        switch (occupancy) {
+            case NOT_ACCEPTING_PASSENGERS:
+                // 3 icons
+            case FULL:
+                // 3 icons
+            case CRUSHED_STANDING_ROOM_ONLY:
+                // 3 icons
+                silhouette3.setVisibility(View.VISIBLE);
+            case STANDING_ROOM_ONLY:
+                // 2 icons
+                silhouette2.setVisibility(View.VISIBLE);
+            case FEW_SEATS_AVAILABLE:
+                // 1 icon
+            case MANY_SEATS_AVAILABLE:
+                // 1 icon
+                silhouette1.setVisibility(View.VISIBLE);
+            case EMPTY:
+                // 0 icons
+        }
     }
 }

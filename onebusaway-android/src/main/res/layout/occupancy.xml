@@ -10,7 +10,7 @@
     android:contentDescription="@string/occupancy_description">
 
     <ImageView
-        android:id="@+id/occupancy1"
+        android:id="@+id/silhouette1"
         android:layout_width="@dimen/occupancy"
         android:layout_height="@dimen/occupancy"
         android:layout_marginStart="@dimen/occupancy_margin"
@@ -18,26 +18,26 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/occupancy2"
+        app:layout_constraintEnd_toStartOf="@id/silhouette2"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:srcCompat="@drawable/ic_occupancy"
         android:tint="@color/stop_info_occupancy" />
 
     <ImageView
-        android:id="@+id/occupancy2"
+        android:id="@+id/silhouette2"
         android:layout_width="@dimen/occupancy"
         android:layout_height="@dimen/occupancy"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/occupancy1"
-        app:layout_constraintEnd_toStartOf="@id/occupancy3"
+        app:layout_constraintStart_toEndOf="@id/silhouette1"
+        app:layout_constraintEnd_toStartOf="@id/silhouette3"
         android:layout_marginStart="@dimen/occupancy_margin"
         android:layout_marginLeft="@dimen/occupancy_margin"
         app:srcCompat="@drawable/ic_occupancy"
         android:tint="@color/stop_info_occupancy" />
 
     <ImageView
-        android:id="@+id/occupancy3"
+        android:id="@+id/silhouette3"
         android:layout_width="@dimen/occupancy"
         android:layout_height="@dimen/occupancy"
         android:layout_marginStart="@dimen/occupancy_margin"
@@ -46,7 +46,7 @@
         android:layout_marginRight="@dimen/occupancy_margin"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/occupancy2"
+        app:layout_constraintStart_toEndOf="@id/silhouette2"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_occupancy"
         android:tint="@color/stop_info_occupancy" />

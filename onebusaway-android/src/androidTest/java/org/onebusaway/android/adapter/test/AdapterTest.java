@@ -17,22 +17,27 @@
 
 package org.onebusaway.android.adapter.test;
 
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaAgency;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.Occupancy;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.ui.ArrivalsListAdapterStyleA;
 import org.onebusaway.android.ui.ArrivalsListAdapterStyleB;
-
-import android.view.View;
+import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -172,5 +177,97 @@ public class AdapterTest extends ObaTestCase {
             View v = adapterB.getView(0, null, null);
             assertNotNull(v);
         }
+    }
+
+    /**
+     * Test occupancy visibility - we need to do this somewhere with an inflated view, so this
+     * adapter works
+     */
+    @Test
+    public void testSetOccupancyVisibility() {
+        // Test by setting region
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
+        assertNotNull(tampa);
+        Application.get().setCurrentRegion(tampa);
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
+                        "Hillsborough Area Regional Transit_3105").build().call();
+        assertOK(response);
+        ObaStop stop = response.getStop();
+        assertNotNull(stop);
+        assertEquals("Hillsborough Area Regional Transit_3105", stop.getId());
+        final List<ObaRoute> routes = response.getRoutes(stop.getRouteIds());
+        assertTrue(routes.size() > 0);
+        ObaAgency agency = response.getAgency(routes.get(0).getAgencyId());
+        assertEquals("Hillsborough Area Regional Transit", agency.getId());
+
+        final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+
+        adapterA = new ArrivalsListAdapterStyleA(getTargetContext());
+        adapterA.setData(arrivals, new ArrayList<String>(), response.getCurrentTime());
+        View v = adapterA.getView(0, null, null);
+        assertNotNull(v);
+
+        // Test occupancy visibility
+        ViewGroup occupancy = v.findViewById(R.id.occupancy);
+        ImageView silhouette1 = v.findViewById(R.id.silhouette1);
+        ImageView silhouette2 = v.findViewById(R.id.silhouette2);
+        ImageView silhouette3 = v.findViewById(R.id.silhouette3);
+
+        // 3 icons
+        UIUtils.setOccupancyVisibility(occupancy, Occupancy.NOT_ACCEPTING_PASSENGERS);
+        assertEquals(View.VISIBLE, occupancy.getVisibility());
+        assertEquals(View.VISIBLE, silhouette1.getVisibility());
+        assertEquals(View.VISIBLE, silhouette2.getVisibility());
+        assertEquals(View.VISIBLE, silhouette3.getVisibility());
+
+        // 3 icons
+        UIUtils.setOccupancyVisibility(occupancy, Occupancy.FULL);
+        assertEquals(View.VISIBLE, occupancy.getVisibility());
+        assertEquals(View.VISIBLE, silhouette1.getVisibility());
+        assertEquals(View.VISIBLE, silhouette2.getVisibility());
+        assertEquals(View.VISIBLE, silhouette3.getVisibility());
+
+        // 3 icons
+        UIUtils.setOccupancyVisibility(occupancy, Occupancy.CRUSHED_STANDING_ROOM_ONLY);
+        assertEquals(View.VISIBLE, occupancy.getVisibility());
+        assertEquals(View.VISIBLE, silhouette1.getVisibility());
+        assertEquals(View.VISIBLE, silhouette2.getVisibility());
+        assertEquals(View.VISIBLE, silhouette3.getVisibility());
+
+        // 2 icons
+        UIUtils.setOccupancyVisibility(occupancy, Occupancy.STANDING_ROOM_ONLY);
+        assertEquals(View.VISIBLE, occupancy.getVisibility());
+        assertEquals(View.VISIBLE, silhouette1.getVisibility());
+        assertEquals(View.VISIBLE, silhouette2.getVisibility());
+        assertEquals(View.GONE, silhouette3.getVisibility());
+
+        // 1 icon
+        UIUtils.setOccupancyVisibility(occupancy, Occupancy.FEW_SEATS_AVAILABLE);
+        assertEquals(View.VISIBLE, occupancy.getVisibility());
+        assertEquals(View.VISIBLE, silhouette1.getVisibility());
+        assertEquals(View.GONE, silhouette2.getVisibility());
+        assertEquals(View.GONE, silhouette3.getVisibility());
+
+        // 1 icon
+        UIUtils.setOccupancyVisibility(occupancy, Occupancy.MANY_SEATS_AVAILABLE);
+        assertEquals(View.VISIBLE, occupancy.getVisibility());
+        assertEquals(View.VISIBLE, silhouette1.getVisibility());
+        assertEquals(View.GONE, silhouette2.getVisibility());
+        assertEquals(View.GONE, silhouette3.getVisibility());
+
+        // 0 icons
+        UIUtils.setOccupancyVisibility(occupancy, Occupancy.EMPTY);
+        assertEquals(View.VISIBLE, occupancy.getVisibility());
+        assertEquals(View.GONE, silhouette1.getVisibility());
+        assertEquals(View.GONE, silhouette2.getVisibility());
+        assertEquals(View.GONE, silhouette3.getVisibility());
+
+        // Hide entire occupancy
+        UIUtils.setOccupancyVisibility(occupancy, null);
+        assertEquals(View.GONE, occupancy.getVisibility());
+        assertEquals(View.GONE, silhouette1.getVisibility());
+        assertEquals(View.GONE, silhouette2.getVisibility());
+        assertEquals(View.GONE, silhouette3.getVisibility());
     }
 }

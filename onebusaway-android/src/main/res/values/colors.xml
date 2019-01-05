@@ -57,7 +57,8 @@
     <color name="stop_info_delayed">#504caf</color>
     <color name="stop_info_early">#af504c</color>
 
-    <color name="stop_info_occupancy_background">@color/navdrawer_background_color_selected</color>
+    <!-- stop_info_occupancy_background is same as navdrawer_background_color_selected, but without transparency so it works on non-white backgrounds -->
+    <color name="stop_info_occupancy_background">#ededed</color>
     <color name="stop_info_occupancy">@color/stop_info_scheduled_time</color>
 
     <color name="stop_info_arrival_list_background">#eaeaea</color>

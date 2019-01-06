@@ -125,6 +125,7 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
 
         time.setText(stopInfo.getTimeText());
 
+        // Occupancy
         if (stopInfo.getPredictedOccupancy() != null) {
             // Predicted occupancy data
             UIUtils.setOccupancyVisibilityAndColor(occupancyView, stopInfo.getPredictedOccupancy(), OccupancyState.PREDICTED);

@@ -26,6 +26,21 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.GradientDrawable;
+import android.location.Location;
+import android.os.Handler;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
 import com.amazon.geo.mapsv2.AmazonMap;
 import com.amazon.geo.mapsv2.model.BitmapDescriptor;
 import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
@@ -46,21 +61,6 @@ import org.onebusaway.android.ui.TripDetailsListFragment;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.MathUtils;
 import org.onebusaway.android.util.UIUtils;
-
-import android.app.Activity;
-import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.GradientDrawable;
-import android.location.Location;
-import android.os.Handler;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -976,8 +976,8 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener, Mark
                 UIUtils.setOccupancyContentDescription(occupancyView, status.getRealtimeOccupancy(), OccupancyState.REALTIME);
             } else {
                 // Hide occupancy by setting null value
-                UIUtils.setOccupancyVisibilityAndColor(occupancyView, null, OccupancyState.HISTORICAL);
-                UIUtils.setOccupancyContentDescription(occupancyView, null, OccupancyState.HISTORICAL);
+                UIUtils.setOccupancyVisibilityAndColor(occupancyView, null, OccupancyState.REALTIME);
+                UIUtils.setOccupancyContentDescription(occupancyView, null, OccupancyState.REALTIME);
             }
 
             return view;

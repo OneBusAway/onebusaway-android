@@ -720,9 +720,20 @@ public class TripDetailsListFragment extends ListFragment {
                 }
 
                 if (position < mNextStopIndex) {
-                    // Bus passed stop - fade out these stops
+                    // Bus passed stop - fade out views for these stops
                     stopName.setTextColor(getResources().getColor(R.color.trip_details_passed));
                     time.setTextColor(getResources().getColor(R.color.trip_details_passed));
+
+                    // Set alpha for occupancy background
+                    int alpha = (int) (.35f * 255);  // X percent transparency
+                    occupancyView.setBackgroundResource(R.drawable.occupancy_background);
+                    GradientDrawable d = (GradientDrawable) occupancyView.getBackground();
+                    d.setAlpha(alpha);
+
+                    // Set alpha for occupancy person icons
+                    for (int index = 0; index < occupancyView.getChildCount(); ++index) {
+                        ((ImageView) occupancyView.getChildAt(index)).setAlpha(alpha);
+                    }
                 } else {
                     // Bus hasn't yet passed this stop - leave full color
                     stopName.setTextColor(getResources().getColor(R.color.trip_details_not_passed));

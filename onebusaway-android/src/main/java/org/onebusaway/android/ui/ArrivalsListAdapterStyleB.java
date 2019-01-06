@@ -38,6 +38,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
@@ -265,6 +266,17 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             }
 
             occupancyView = (ConstraintLayout) inflater.inflate(R.layout.occupancy, null);
+
+            // Occupancy
+            if (stopInfo.getPredictedOccupancy() != null) {
+                // Predicted occupancy data
+                UIUtils.setOccupancyVisibilityAndColor(occupancyView, stopInfo.getPredictedOccupancy(), OccupancyState.PREDICTED);
+                UIUtils.setOccupancyContentDescription(occupancyView, stopInfo.getPredictedOccupancy(), OccupancyState.PREDICTED);
+            } else {
+                // Historical occupancy data
+                UIUtils.setOccupancyVisibilityAndColor(occupancyView, stopInfo.getHistoricalOccupancy(), OccupancyState.HISTORICAL);
+                UIUtils.setOccupancyContentDescription(occupancyView, stopInfo.getHistoricalOccupancy(), OccupancyState.HISTORICAL);
+            }
 
             // Set arrival times and status in views
             scheduleView.setText(UIUtils.formatTime(context, scheduledTime));

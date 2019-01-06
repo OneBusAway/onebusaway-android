@@ -1918,7 +1918,6 @@ public final class UIUtils {
         v.setBackgroundResource(R.drawable.occupancy_background);
         GradientDrawable d = (GradientDrawable) v.getBackground();
         d.setColor(backgroundColor);
-
     }
 
     /**

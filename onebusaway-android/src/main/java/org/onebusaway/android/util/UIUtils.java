@@ -30,6 +30,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -40,6 +41,7 @@ import android.graphics.Matrix;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.location.Location;
 import android.media.ExifInterface;
@@ -117,6 +119,7 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.core.graphics.drawable.IconCompat;
 import androidx.core.util.Pair;
 import androidx.core.view.MenuItemCompat;
+import androidx.core.widget.ImageViewCompat;
 import androidx.fragment.app.Fragment;
 
 import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
@@ -1849,12 +1852,12 @@ public final class UIUtils {
     }
 
     /**
-     * Sets the visibility of the silhouettes in the provided occupancy.xml viewgroup
-     *
-     * @param v         occupancy.xml layout viewgroup containing the silhouettes
+     * Sets the visibility and colors of the silhouettes in the provided occupancy.xml viewgroup
+     *  @param v         occupancy.xml layout viewgroup containing the silhouettes
      * @param occupancy the occupancy value to use to set the silhouette visibility
+     * @param occupancyState the state of the occupancy to use to set the silhouette color
      */
-    public static void setOccupancyVisibility(ViewGroup v, Occupancy occupancy) {
+    public static void setOccupancyVisibilityAndColor(ViewGroup v, Occupancy occupancy, OccupancyState occupancyState) {
         ImageView silhouette1 = v.findViewById(R.id.silhouette1);
         silhouette1.setVisibility(View.GONE);
         ImageView silhouette2 = v.findViewById(R.id.silhouette2);
@@ -1870,6 +1873,16 @@ public final class UIUtils {
             v.setVisibility(View.VISIBLE);
         }
 
+        int silhouetteColor;
+        int backgroundColor;
+        if (occupancyState == OccupancyState.HISTORICAL) {
+            silhouetteColor = Application.get().getResources().getColor(R.color.stop_info_occupancy_historical);
+            backgroundColor = Application.get().getResources().getColor(R.color.stop_info_occupancy_background_historical);
+        } else {
+            silhouetteColor = Application.get().getResources().getColor(R.color.stop_info_occupancy_predicted);
+            backgroundColor = Application.get().getResources().getColor(R.color.stop_info_occupancy_background_predicted);
+        }
+
         // Below switch continues into following cases to minimize number of setVisibility() calls
         switch (occupancy) {
             case NOT_ACCEPTING_PASSENGERS:
@@ -1879,6 +1892,11 @@ public final class UIUtils {
             case CRUSHED_STANDING_ROOM_ONLY:
                 // 3 icons
                 silhouette3.setVisibility(View.VISIBLE);
+                if (occupancyState == OccupancyState.PREDICTED || occupancyState == OccupancyState.REALTIME) {
+                    // Highlight packed vehicles based on real-time data with a different color
+                    silhouetteColor = Application.get().getResources().getColor(R.color.stop_info_occupancy_predicted_full);
+                    backgroundColor = Application.get().getResources().getColor(R.color.stop_info_occupancy_background_predicted_full);
+                }
             case STANDING_ROOM_ONLY:
                 // 2 icons
                 silhouette2.setVisibility(View.VISIBLE);
@@ -1890,6 +1908,17 @@ public final class UIUtils {
             case EMPTY:
                 // 0 icons
         }
+
+        // Set silhouette colors
+        ImageViewCompat.setImageTintList(silhouette1, ColorStateList.valueOf(silhouetteColor));
+        ImageViewCompat.setImageTintList(silhouette2, ColorStateList.valueOf(silhouetteColor));
+        ImageViewCompat.setImageTintList(silhouette3, ColorStateList.valueOf(silhouetteColor));
+
+        // Set background color
+        v.setBackgroundResource(R.drawable.occupancy_background);
+        GradientDrawable d = (GradientDrawable) v.getBackground();
+        d.setColor(backgroundColor);
+
     }
 
     /**

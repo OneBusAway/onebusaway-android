@@ -16,25 +16,13 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.ObaTrip;
-import org.onebusaway.android.io.elements.ObaTripSchedule;
-import org.onebusaway.android.io.elements.ObaTripStatus;
-import org.onebusaway.android.io.request.ObaTripDetailsRequest;
-import org.onebusaway.android.io.request.ObaTripDetailsResponse;
-import org.onebusaway.android.util.ArrivalInfoUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
@@ -51,6 +39,20 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaTrip;
+import org.onebusaway.android.io.elements.ObaTripSchedule;
+import org.onebusaway.android.io.elements.ObaTripStatus;
+import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.io.request.ObaTripDetailsRequest;
+import org.onebusaway.android.io.request.ObaTripDetailsResponse;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -279,6 +281,7 @@ public class TripDetailsListFragment extends ListFragment {
         realtime.setVisibility(View.GONE);
         ViewGroup statusLayout = (ViewGroup) getView().findViewById(
                 R.id.status_layout);
+        ViewGroup occupancyView = getView().findViewById(R.id.occupancy);
 
         if (status == null) {
             // Show schedule info only
@@ -358,6 +361,16 @@ public class TripDetailsListFragment extends ListFragment {
                         context.getString(R.string.trip_details_real_time_min_sec_early, minutes,
                                 seconds, lastUpdate));
             }
+        }
+
+        if (status.getRealtimeOccupancy() != null) {
+            // Real-time occupancy data
+            UIUtils.setOccupancyVisibilityAndColor(occupancyView, status.getRealtimeOccupancy(), OccupancyState.REALTIME);
+            UIUtils.setOccupancyContentDescription(occupancyView, status.getRealtimeOccupancy(), OccupancyState.REALTIME);
+        } else {
+            // Hide occupancy by setting null value
+            UIUtils.setOccupancyVisibilityAndColor(occupancyView, null, OccupancyState.REALTIME);
+            UIUtils.setOccupancyContentDescription(occupancyView, null, OccupancyState.REALTIME);
         }
     }
 
@@ -575,6 +588,7 @@ public class TripDetailsListFragment extends ListFragment {
             ViewGroup realtime = (ViewGroup) convertView.findViewById(
                     R.id.eta_realtime_indicator);
             realtime.setVisibility(View.GONE);
+            ViewGroup occupancyView = convertView.findViewById(R.id.occupancy);
 
             long date;
             long deviation = 0;
@@ -607,6 +621,16 @@ public class TripDetailsListFragment extends ListFragment {
                             DateUtils.FORMAT_NO_NOON |
                             DateUtils.FORMAT_NO_MIDNIGHT
             ));
+
+            if (stopTime.getPredictedOccupancy() != null) {
+                // Predicted occupancy data
+                UIUtils.setOccupancyVisibilityAndColor(occupancyView, stopTime.getPredictedOccupancy(), OccupancyState.PREDICTED);
+                UIUtils.setOccupancyContentDescription(occupancyView, stopTime.getPredictedOccupancy(), OccupancyState.PREDICTED);
+            } else {
+                // Historical occupancy data
+                UIUtils.setOccupancyVisibilityAndColor(occupancyView, stopTime.getHistoricalOccupancy(), OccupancyState.HISTORICAL);
+                UIUtils.setOccupancyContentDescription(occupancyView, stopTime.getHistoricalOccupancy(), OccupancyState.HISTORICAL);
+            }
 
             ImageView bus = (ImageView) convertView.findViewById(R.id.bus_icon);
             ImageView stopIcon = (ImageView) convertView.findViewById(R.id.stop_icon);
@@ -641,7 +665,9 @@ public class TripDetailsListFragment extends ListFragment {
             }
             bus.setImageDrawable(getResources().getDrawable(id));
             bus.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN); // Make the icon itself white
-            bus.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(statusColor))); // Change the circle's color
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                bus.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(statusColor))); // Change the circle's color
+            }
             UIUtils.setRealtimeIndicatorColor(realtime, getResources().getColor(statusColor),
                     android.R.color.transparent);
 

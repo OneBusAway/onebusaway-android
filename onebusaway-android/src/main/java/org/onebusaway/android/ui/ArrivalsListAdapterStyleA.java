@@ -15,12 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.ArrivalInfoUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
@@ -29,6 +23,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
 
@@ -73,6 +74,7 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         TextView etaView = (TextView) view.findViewById(R.id.eta);
         TextView minView = (TextView) view.findViewById(R.id.eta_min);
         ViewGroup realtimeView = (ViewGroup) view.findViewById(R.id.eta_realtime_indicator);
+        ViewGroup occupancyView = view.findViewById(R.id.occupancy);
         ImageView moreView = (ImageView) view.findViewById(R.id.more_horizontal);
         moreView.setColorFilter(
                 context.getResources().getColor(R.color.switch_thumb_normal_material_dark));
@@ -122,6 +124,16 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         status.setPadding(pSides, pTopBottom, pSides, pTopBottom);
 
         time.setText(stopInfo.getTimeText());
+
+        if (stopInfo.getPredictedOccupancy() != null) {
+            // Predicted occupancy data
+            UIUtils.setOccupancyVisibilityAndColor(occupancyView, stopInfo.getPredictedOccupancy(), OccupancyState.PREDICTED);
+            UIUtils.setOccupancyContentDescription(occupancyView, stopInfo.getPredictedOccupancy(), OccupancyState.PREDICTED);
+        } else {
+            // Historical occupancy data
+            UIUtils.setOccupancyVisibilityAndColor(occupancyView, stopInfo.getHistoricalOccupancy(), OccupancyState.HISTORICAL);
+            UIUtils.setOccupancyContentDescription(occupancyView, stopInfo.getHistoricalOccupancy(), OccupancyState.HISTORICAL);
+        }
 
         ContentValues values = null;
         if (mTripsForStop != null) {

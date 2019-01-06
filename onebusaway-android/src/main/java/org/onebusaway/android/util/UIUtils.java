@@ -1859,11 +1859,11 @@ public final class UIUtils {
      */
     public static void setOccupancyVisibilityAndColor(ViewGroup v, Occupancy occupancy, OccupancyState occupancyState) {
         ImageView silhouette1 = v.findViewById(R.id.silhouette1);
-        silhouette1.setVisibility(View.GONE);
+        silhouette1.setVisibility(View.INVISIBLE);
         ImageView silhouette2 = v.findViewById(R.id.silhouette2);
-        silhouette2.setVisibility(View.GONE);
+        silhouette2.setVisibility(View.INVISIBLE);
         ImageView silhouette3 = v.findViewById(R.id.silhouette3);
-        silhouette3.setVisibility(View.GONE);
+        silhouette3.setVisibility(View.INVISIBLE);
 
         // Hide the entire view group if occupancy is null
         if (occupancy == null) {

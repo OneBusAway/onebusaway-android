@@ -22,6 +22,7 @@ import android.content.res.Resources;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaArrivalInfo.Frequency;
+import org.onebusaway.android.io.elements.Occupancy;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
@@ -52,6 +53,10 @@ public final class ArrivalInfo {
     private final boolean mIsArrival;
 
     private final boolean mIsRouteAndHeadsignFavorite;
+
+    private final Occupancy mHistoricalOccupancy;
+
+    private final Occupancy mPredictedOccupancy;
 
     /**
      * @param includeArrivalDepartureInStatusLabel true if the arrival/departure label
@@ -101,6 +106,9 @@ public final class ArrivalInfo {
                 .isFavorite(info.getRouteId(), info.getHeadsign(), info.getStopId());
 
         mNotifyText = computeNotifyText(context);
+
+        mHistoricalOccupancy = info.getHistoricalOccupancy();
+        mPredictedOccupancy = info.getPredictedOccupancy();
     }
 
     /**
@@ -342,5 +350,23 @@ public final class ArrivalInfo {
      */
     public final boolean isRouteAndHeadsignFavorite() {
         return mIsRouteAndHeadsignFavorite;
+    }
+
+    /**
+     * Returns the average historical occupancy of the vehicle when it arrives at this stop, or null if the occupancy is unknown
+     *
+     * @return the average historical occupancy of the vehicle when it arrives at this stop, or null if the occupancy is unknown
+     */
+    public Occupancy getHistoricalOccupancy() {
+        return mHistoricalOccupancy;
+    }
+
+    /**
+     * Returns the predicted occupancy of the vehicle when it arrives at this stop, or null if the occupancy is unknown
+     *
+     * @return the predicted occupancy of the vehicle when it arrives at this stop, or null if the occupancy is unknown
+     */
+    public Occupancy getPredictedOccupancy() {
+        return mPredictedOccupancy;
     }
 }

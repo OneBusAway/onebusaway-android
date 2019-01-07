@@ -18,31 +18,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaSituation;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.ObaTrip;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
-import org.onebusaway.android.util.ArrayAdapterWithIcon;
-import org.onebusaway.android.util.ArrivalInfoUtils;
-import org.onebusaway.android.util.BuildFlavorUtils;
-import org.onebusaway.android.util.EmbeddedSocialUtils;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -73,6 +48,33 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaSituation;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaTrip;
+import org.onebusaway.android.io.elements.Occupancy;
+import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
+import org.onebusaway.android.util.ArrayAdapterWithIcon;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -733,9 +735,22 @@ public class ArrivalsListFragment extends ListFragment
         final boolean isRouteFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(routeId,
                 arrivalInfo.getInfo().getHeadsign(), arrivalInfo.getInfo().getStopId());
 
+        final Occupancy occupancy;
+        final OccupancyState occupancyState;
+        if (arrivalInfo.getPredictedOccupancy() != null) {
+            occupancy = arrivalInfo.getPredictedOccupancy();
+            occupancyState = OccupancyState.PREDICTED;
+        } else if (arrivalInfo.getHistoricalOccupancy() != null) {
+            occupancy = arrivalInfo.getHistoricalOccupancy();
+            occupancyState = OccupancyState.HISTORICAL;
+        } else {
+            occupancy = null;
+            occupancyState = null;
+        }
+
         List<String> items = UIUtils
-                .buildTripOptions(getActivity(), isRouteFavorite, hasUrl, isReminderVisible);
-        List<Integer> icons = UIUtils.buildTripOptionsIcons(isRouteFavorite, hasUrl);
+                .buildTripOptions(getActivity(), isRouteFavorite, hasUrl, isReminderVisible, occupancy, occupancyState);
+        List<Integer> icons = UIUtils.buildTripOptionsIcons(isRouteFavorite, hasUrl, occupancy);
 
         ListAdapter adapter = new ArrayAdapterWithIcon(getActivity(), items, icons);
         final boolean isSocialEnabled = EmbeddedSocialUtils.isSocialEnabled();
@@ -791,13 +806,22 @@ public class ArrivalsListFragment extends ListFragment
                     InfrastructureIssueActivity.startWithService(getActivity(), intent,
                             getString(R.string.ri_selected_service_trip), arrivalInfo.getInfo(),
                             agencyName, blockId);
-                } else if (isSocialEnabled && (!hasUrl && which == 6) || (hasUrl && which == 7)) {
+                } else if (isSocialEnabled && ((!hasUrl && which == 6) || (hasUrl && which == 7))) {
                     ObaAnalytics.reportEventWithCategory(
                             ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                             getActivity().getString(R.string.analytics_action_button_press),
                             getActivity().getString(
                                     R.string.analytics_label_button_press_social_route_options));
                     openRouteDiscussion(arrivalInfo.getInfo().getRouteId());
+                } else if (occupancy != null &&
+                        (((!hasUrl && !isSocialEnabled && which == 6) || (hasUrl && !isSocialEnabled && which == 7)) ||
+                                ((!hasUrl && isSocialEnabled && which == 7) || (hasUrl && isSocialEnabled && which == 8)))) {
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getActivity().getString(R.string.analytics_action_button_press),
+                            getActivity().getString(
+                                    R.string.analytics_label_button_press_about_occupancy));
+                    createOccupancyDialog(occupancyState).show();
                 }
             }
         });
@@ -1799,5 +1823,40 @@ public class ArrivalsListFragment extends ListFragment
         }
         mAlertList.setHiddenAlertCount(hiddenCount);
         mAlertList.addAll(mSituationAlerts);
+    }
+
+    /**
+     * Creates the dialog that will be shown to the user to explain the occupancy feature
+     *
+     * @param occupancyState occupancy state for this trip
+     * @return the dialog that will be shown to the user to explain the occupancy feature
+     */
+    private Dialog createOccupancyDialog(OccupancyState occupancyState) {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(getContext());
+        if (occupancyState == OccupancyState.HISTORICAL) {
+            builder.setTitle(R.string.menu_title_about_historical_occupancy);
+        } else {
+            builder.setTitle(R.string.menu_title_about_occupancy);
+        }
+
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        View occupancyDialogView = inflater.inflate(R.layout.occupancy_dialog, null);
+        builder.setView(occupancyDialogView);
+
+        TextView occupancyDescription = occupancyDialogView.findViewById(R.id.occupancy_description);
+
+        if (occupancyState == OccupancyState.HISTORICAL) {
+            occupancyDescription.setText(R.string.menu_text_about_historical_occupancy);
+        } else {
+            occupancyDescription.setText(R.string.menu_text_about_occupancy);
+        }
+
+        // TODO - Implement About screen that includes real-time/predicted occupancy icons. Design is somewhat
+        // TBD at the moment, although I've added some placeholder coloring.  But let's wait to
+        // implement the full About until we've finalized the design.  We can use the main Legend as
+        // an example - see HomeActivity.createLegendDialog() and the legend_dialog.xml layout
+
+        builder.setNeutralButton(R.string.main_help_close, (dialogInterface, i) -> dialogInterface.dismiss());
+        return builder.create();
     }
 }

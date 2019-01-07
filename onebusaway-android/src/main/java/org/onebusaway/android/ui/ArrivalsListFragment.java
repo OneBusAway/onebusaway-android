@@ -816,7 +816,6 @@ public class ArrivalsListFragment extends ListFragment
                 } else if (occupancy != null &&
                         (((!hasUrl && !isSocialEnabled && which == 6) || (hasUrl && !isSocialEnabled && which == 7)) ||
                                 ((!hasUrl && isSocialEnabled && which == 7) || (hasUrl && isSocialEnabled && which == 8)))) {
-
                     ObaAnalytics.reportEventWithCategory(
                             ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                             getActivity().getString(R.string.analytics_action_button_press),
@@ -1844,7 +1843,15 @@ public class ArrivalsListFragment extends ListFragment
         View occupancyDialogView = inflater.inflate(R.layout.occupancy_dialog, null);
         builder.setView(occupancyDialogView);
 
-        // TODO - Implement About screen that includes real-time/predicted occupancy. Design is somewhat
+        TextView occupancyDescription = occupancyDialogView.findViewById(R.id.occupancy_description);
+
+        if (occupancyState == OccupancyState.HISTORICAL) {
+            occupancyDescription.setText(R.string.menu_text_about_historical_occupancy);
+        } else {
+            occupancyDescription.setText(R.string.menu_text_about_occupancy);
+        }
+
+        // TODO - Implement About screen that includes real-time/predicted occupancy icons. Design is somewhat
         // TBD at the moment, although I've added some placeholder coloring.  But let's wait to
         // implement the full About until we've finalized the design.  We can use the main Legend as
         // an example - see HomeActivity.createLegendDialog() and the legend_dialog.xml layout

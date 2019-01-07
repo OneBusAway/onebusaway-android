@@ -411,7 +411,8 @@
     <string name="historically_empty">Historically empty</string>
     <string name="menu_title_about_historical_occupancy">About historical occupancy</string>
     <string name="menu_title_about_occupancy">About occupancy</string>
-    <string name="menu_text_about_historical_occupancy">Historical occupancy is an average of trip ridership at this stop over the last 6 months.</string>
+    <string name="menu_text_about_historical_occupancy">Historical occupancy (gray icon) is an average of trip ridership at this stop over the last 6 months.</string>
+    <string name="menu_text_about_occupancy">Real-time occupancy is shown using green coloring when there are many seats available or standing room available, and is shown in red coloring when the vehicle is full.  Historical occupancy (gray icon) is an average of trip ridership at this stop over the last 6 months.</string>
 
     <string name="realtime_full">Full</string>
     <string name="realtime_standing_room">Standing room</string>

@@ -194,6 +194,7 @@
     <string name="analytics_label_button_press_social_stop">Clicked Social Stop Arrivals Header</string>
     <string name="analytics_label_button_press_social_route_options">Clicked Social Route Options</string>
     <string name="analytics_label_button_press_social_route_style_b">Clicked Social Route Style B Card</string>
+    <string name="analytics_label_button_press_about_occupancy">Clicked About Occupancy</string>
 
     <!-- Analytics for payment -->
     <string name="analytics_label_button_press_pay_fare_download_app">Clicked Pay Fare Download App</string>

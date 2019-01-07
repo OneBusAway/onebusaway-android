@@ -1243,11 +1243,13 @@ public final class UIUtils {
      * @param isReminderVisible true if the reminder is currently visible for a trip, false if it
      *                          is
      *                          not
+     * @param occupancy occupancy of this trip
+     * @param occupancyState occupanceState of this trip
      * @return the list of Strings that should be shown for a given trip, provided the arguments for
      * that trip
      */
     public static List<String> buildTripOptions(Context c, boolean isRouteFavorite, boolean hasUrl,
-            boolean isReminderVisible) {
+                                                boolean isReminderVisible, Occupancy occupancy, OccupancyState occupancyState) {
         ArrayList<String> list = new ArrayList<>();
         if (!isRouteFavorite) {
             list.add(c.getString(R.string.bus_options_menu_add_star));
@@ -1277,6 +1279,14 @@ public final class UIUtils {
             list.add(c.getString(R.string.join_discussion));
         }
 
+        if (occupancy != null) {
+            if (occupancyState == OccupancyState.HISTORICAL) {
+                list.add(c.getString(R.string.menu_title_about_historical_occupancy));
+            } else {
+                list.add(c.getString(R.string.menu_title_about_occupancy));
+            }
+        }
+
         return list;
     }
 
@@ -1287,9 +1297,10 @@ public final class UIUtils {
      * @param isRouteFavorite   true if this route is a user favorite, false if it is not
      * @param hasUrl true if the route provides a URL for schedule data, false if it does
      *               not
+     * @param occupancy occupancy of this trip
      * @return the array of icons that should be shown for a given trip
      */
-    public static List<Integer> buildTripOptionsIcons(boolean isRouteFavorite, boolean hasUrl) {
+    public static List<Integer> buildTripOptionsIcons(boolean isRouteFavorite, boolean hasUrl, Occupancy occupancy) {
         ArrayList<Integer> list = new ArrayList<>();
         if (!isRouteFavorite) {
             list.add(R.drawable.focus_star_on);
@@ -1307,6 +1318,9 @@ public final class UIUtils {
         ObaRegion currentRegion = Application.get().getCurrentRegion();
         if (currentRegion != null && EmbeddedSocialUtils.isSocialEnabled()) {
             list.add(R.drawable.es_ic_comment);
+        }
+        if (occupancy != null) {
+            list.add(R.drawable.ic_occupancy);
         }
         return list;
     }

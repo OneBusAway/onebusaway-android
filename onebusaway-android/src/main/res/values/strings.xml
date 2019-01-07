@@ -409,6 +409,9 @@
     <string name="historically_standing_room">Historically standing room</string>
     <string name="historically_seats_available">Historically seats available</string>
     <string name="historically_empty">Historically empty</string>
+    <string name="menu_title_about_historical_occupancy">About historical occupancy</string>
+    <string name="menu_title_about_occupancy">About occupancy</string>
+    <string name="menu_text_about_historical_occupancy">Historical occupancy is an average of trip ridership at this stop over the last 6 months.</string>
 
     <string name="realtime_full">Full</string>
     <string name="realtime_standing_room">Standing room</string>

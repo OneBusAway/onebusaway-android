@@ -927,7 +927,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
                 d.setColor(r.getColor(statusColor));
                 lastUpdatedView.setText(r.getString(R.string.vehicle_last_updated_scheduled));
                 statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
-                
+
                 // Hide occupancy by setting null value
                 UIUtils.setOccupancyVisibilityAndColor(occupancyView, null, OccupancyState.HISTORICAL);
                 UIUtils.setOccupancyContentDescription(occupancyView, null, OccupancyState.HISTORICAL);

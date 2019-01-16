@@ -15,13 +15,6 @@
  */
 package org.onebusaway.android.nav;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.nav.model.Path;
-import org.onebusaway.android.nav.model.PathLink;
-import org.onebusaway.android.ui.TripDetailsActivity;
-import org.onebusaway.android.util.RegionUtils;
-
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -32,10 +25,20 @@ import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.nav.model.Path;
+import org.onebusaway.android.nav.model.PathLink;
+import org.onebusaway.android.ui.FeedbackActivity;
+import org.onebusaway.android.ui.TripDetailsActivity;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.RegionUtils;
+
 import java.text.DecimalFormat;
 import java.util.Locale;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.RemoteInput;
 
 /**
  * This class provides the navigation functionality for the destination reminders
@@ -43,6 +46,12 @@ import androidx.core.app.NotificationCompat;
 public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     public static final String TAG = "NavServiceProvider";
+    public static String REPLY_ACTION = "org.onebusaway.android.nav.REPLY_ACTION";
+    public static final String KEY_TEXT_REPLY = "trip_feedback";
+
+    private static final String FIRST_FEEDBACK = "firstFeedback";
+
+    boolean mFirstFeedback = true;
 
     private static final int EVENT_TYPE_NO_EVENT = 0;
     private static final int EVENT_TYPE_UPDATE_DISTANCE = 1;
@@ -565,7 +574,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         Intent receiverIntent = new Intent(app.getApplicationContext(), NavigationReceiver.class);
 
         NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(Application.get().getApplicationContext())
+                new NotificationCompat.Builder(Application.get().getApplicationContext()
+                        , Application.CHANNEL_DESTINATION_ALERT_ID)
                         .setSmallIcon(R.drawable.ic_content_flag)
                         .setContentTitle(Application.get().getResources()
                                 .getString(R.string.stop_notify_title))
@@ -666,7 +676,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             mNotificationManager.cancel(NOTIFICATION_ID + 1);
             mNotificationManager.notify(NOTIFICATION_ID + 2, mBuilder.build());
 
-            mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext())
+            mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext()
+                    , Application.CHANNEL_DESTINATION_ALERT_ID)
                     .setSmallIcon(R.drawable.ic_content_flag)
                     .setContentTitle(
                             Application.get().getResources().getString(R.string.stop_notify_title))
@@ -676,6 +687,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             mBuilder.setContentText(message);
             mBuilder.setOngoing(false);
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+
+            getUserFeedback();
         }
     }
 
@@ -705,5 +718,100 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         } else {
             mTTS.playSilence(duration, queueFlag, null);
         }
+    }
+
+    private void getUserFeedback() {
+
+        Application app = Application.get();
+        NotificationCompat.Builder mBuilder;
+        mFirstFeedback = Application.getPrefs().getBoolean(FIRST_FEEDBACK, true);
+        String message = Application.get().getString(R.string.feedback_notify_dialog_msg);
+
+        if((mFirstFeedback) || (Build.VERSION.SDK_INT < Build.VERSION_CODES.N)) {
+            mFirstFeedback = false;
+            PreferenceUtils.saveBoolean(FIRST_FEEDBACK, false);
+
+            Intent fdIntent = new Intent(app.getApplicationContext(), FeedbackActivity.class);
+            fdIntent.setAction(REPLY_ACTION);
+            fdIntent.putExtra("CallingAction", "Dislike");
+            fdIntent.putExtra("NotificationId", NOTIFICATION_ID + 1);
+            fdIntent.putExtra("TripId", mTripId);
+            PendingIntent fdPendingIntentNo = PendingIntent.getActivity(app.getApplicationContext()
+                    , 1, fdIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
+            fdIntent = new Intent(app.getApplicationContext(), FeedbackActivity.class);
+            fdIntent.setAction(REPLY_ACTION);
+            fdIntent.putExtra("CallingAction", "Like");
+            PendingIntent fdPendingIntentYes = PendingIntent.getActivity(app.getApplicationContext()
+                    , 2, fdIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext()
+                    ,Application.CHANNEL_DESTINATION_ALERT_ID)
+                    .setSmallIcon(R.drawable.ic_stat_notification)
+                    .setContentTitle(Application.get().getResources()
+                            .getString(R.string.feedback_notify_title))
+                    .setContentText(message)
+                    .addAction(0, "No", fdPendingIntentNo )
+                    .addAction(0, "Yes", fdPendingIntentYes)
+                    .setAutoCancel(true);
+        }
+        else {
+
+            Intent intent = new Intent(Application.get().getApplicationContext(), FeedbackReceiver.class);
+            intent.setAction(REPLY_ACTION);
+            intent.putExtra(FeedbackReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
+            intent.putExtra(FeedbackReceiver.TRIP_ID, mTripId);
+            intent.putExtra(FeedbackReceiver.CALLING_ACTION, FeedbackReceiver.FEEDBACK_NO);
+            PendingIntent fdPendingIntentNo = PendingIntent.getBroadcast(Application.get()
+                    .getApplicationContext(),100, intent, 0);
+
+            String replyLabel = Application.get().getResources()
+                    .getString(R.string.feedback_action_reply_no);
+
+            RemoteInput remoteInput = new RemoteInput.Builder(KEY_TEXT_REPLY)
+                    .setLabel(replyLabel)
+                    .build();
+
+            NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(
+                    0, replyLabel, fdPendingIntentNo)
+                    .addRemoteInput(remoteInput)
+                    .build();
+
+            Intent intent1 = new Intent(Application.get().getApplicationContext(), FeedbackReceiver.class);
+            intent1.setAction(REPLY_ACTION);
+            intent1.putExtra(FeedbackReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
+            intent1.putExtra(FeedbackReceiver.TRIP_ID, mTripId);
+            intent1.putExtra(FeedbackReceiver.CALLING_ACTION, FeedbackReceiver.FEEDBACK_YES);
+            PendingIntent fdPendingIntentYes = PendingIntent.getBroadcast(Application.get()
+                    .getApplicationContext(),101, intent1, 0);
+
+            String replyLabel1 = Application.get().getResources()
+                    .getString(R.string.feedback_action_reply_yes);
+
+            RemoteInput remoteInput1 = new RemoteInput.Builder(KEY_TEXT_REPLY)
+                    .setLabel(replyLabel1)
+                    .build();
+
+            NotificationCompat.Action replyAction1 = new NotificationCompat.Action.Builder(
+                    0, replyLabel1, fdPendingIntentYes)
+                    .addRemoteInput(remoteInput1)
+                    .build();
+
+            mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext()
+                    , Application.CHANNEL_DESTINATION_ALERT_ID)
+                    .setSmallIcon(R.drawable.ic_stat_notification)
+                    .setContentTitle(Application.get().getResources().getString(R.string.feedback_notify_title))
+                    .setContentText(message)
+                    .addAction(replyAction)
+                    .addAction(replyAction1);
+
+        }
+
+        mBuilder.setOngoing(false);
+
+        NotificationManager mNotificationManager = (NotificationManager)
+                Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(NOTIFICATION_ID + 1, mBuilder.build());
+
     }
 }

@@ -1083,4 +1083,12 @@
     <string name="es_msg_general_signin_success">Signed into Embedded Social</string>
     <string name="es_msg_general_signout_success">Signed out of Embedded Social</string>
     <string name="es_msg_general_account_deleted">Embedded Social account deleted</string>
+
+    <!-- User Feedback notifications -->
+    <string name="feedback_notify_title">Help Improve OneBusAway</string>
+    <string name="feedback_notify_dialog_msg">Rate your trip</string>
+    <string name="feedback_notify_confirmation">Thank you for the feedback!</string>
+    <string name="feedback_label">Feedback</string>
+    <string name="feedback_action_reply_no">No</string>
+    <string name="feedback_action_reply_yes">Yes</string>
 </resources>

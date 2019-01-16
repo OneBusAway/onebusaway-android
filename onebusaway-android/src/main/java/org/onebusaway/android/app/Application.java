@@ -16,6 +16,21 @@
  */
 package org.onebusaway.android.app;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.hardware.GeomagneticField;
+import android.location.Location;
+import android.location.LocationManager;
+import android.os.Build;
+import android.preference.PreferenceManager;
+import android.text.TextUtils;
+import android.util.Log;
+
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.common.ConnectionResult;
@@ -23,7 +38,6 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
-
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
 import org.onebusaway.android.BuildConfig;
@@ -39,21 +53,6 @@ import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
-
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.hardware.GeomagneticField;
-import android.location.Location;
-import android.location.LocationManager;
-import android.os.Build;
-import android.preference.PreferenceManager;
-import android.text.TextUtils;
-import android.util.Log;
 
 import java.security.MessageDigest;
 import java.util.HashMap;
@@ -80,6 +79,7 @@ public class Application extends MultiDexApplication {
 
     public static final String CHANNEL_TRIP_PLAN_UPDATES_ID = "trip_plan_updates";
     public static final String CHANNEL_ARRIVAL_REMINDERS_ID = "arrival_reminders";
+    public static final String CHANNEL_DESTINATION_ALERT_ID = "destination_alerts";
 
     private SharedPreferences mPrefs;
 
@@ -645,9 +645,16 @@ public class Application extends MultiDexApplication {
                     NotificationManager.IMPORTANCE_DEFAULT);
             channel2.setDescription("Notifications to remind the user of an arriving bus.");
 
+            NotificationChannel channel3 = new NotificationChannel(
+                    CHANNEL_DESTINATION_ALERT_ID,
+                    "Destination alerts",
+                    NotificationManager.IMPORTANCE_LOW);
+            channel2.setDescription("All notifications relating to Destination alerts");
+
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(channel1);
             manager.createNotificationChannel(channel2);
+            manager.createNotificationChannel(channel3);
         }
     }
 

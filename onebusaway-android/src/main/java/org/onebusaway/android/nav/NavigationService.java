@@ -15,6 +15,14 @@
  */
 package org.onebusaway.android.nav;
 
+import android.app.Service;
+import android.content.Intent;
+import android.location.Location;
+import android.os.Build;
+import android.os.IBinder;
+import android.util.Log;
+import android.widget.Toast;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -29,15 +37,6 @@ import org.onebusaway.android.ui.TripDetailsListFragment;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
-
-import android.app.Service;
-import android.content.Intent;
-import android.location.Location;
-import android.os.Build;
-import android.os.Environment;
-import android.os.IBinder;
-import android.util.Log;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
@@ -234,8 +233,15 @@ public class NavigationService extends Service implements LocationHelper.Listene
             SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM d yyyy, hh:mm aaa");
             String readableDate = sdf.format(Calendar.getInstance().getTime());
 
-            mLogFile = new File(Environment.getExternalStoragePublicDirectory(LOG_DIRECTORY),
-                    counter + "-" + readableDate + ".csv");
+            File subFolder = new File(Application.get().getApplicationContext()
+                    .getFilesDir().getAbsolutePath() + File.separator + LOG_DIRECTORY);
+
+            if (!subFolder.exists()) {
+                subFolder.mkdirs();
+            }
+
+            mLogFile = new File(subFolder, counter + "-" + readableDate + ".csv");
+
             Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
 

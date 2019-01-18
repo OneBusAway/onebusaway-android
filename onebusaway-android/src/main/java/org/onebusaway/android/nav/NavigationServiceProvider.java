@@ -21,9 +21,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
+import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -34,9 +42,11 @@ import org.onebusaway.android.ui.TripDetailsActivity;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
 
+import java.io.File;
 import java.text.DecimalFormat;
 import java.util.Locale;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.RemoteInput;
 
@@ -100,6 +110,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     private String mTripId;             // Trip ID
     private String mStopId;             // Stop ID
+
+    private StorageReference mStorageRef;
 
     public NavigationServiceProvider(String tripId, String stopId) {
         Log.d(TAG, "Creating NavigationServiceProvider...");
@@ -688,6 +700,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             mBuilder.setOngoing(false);
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
 
+            uploadTripLog();
             getUserFeedback();
         }
     }
@@ -813,5 +826,34 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                 Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(NOTIFICATION_ID + 1, mBuilder.build());
 
+    }
+
+    private void uploadTripLog() {
+        mStorageRef = FirebaseStorage.getInstance().getReference();
+
+        Uri file = Uri.fromFile(new File("/data/data/com.joulespersecond.seattlebusbot/files/ObaNavLog/1-Thu, Jan 17 2019, 06:05 PM.csv"));
+        StorageReference logRef = mStorageRef.child("1-Thu, Jan 17 2019, 06:05 PM.csv");
+
+        logRef.putFile(file)
+                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        Log.d(TAG, "Upload successful");
+                        Toast toast = Toast.makeText(Application.get().getApplicationContext(),
+                                "Upload successful",
+                                Toast.LENGTH_SHORT);
+                        toast.show();
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception exception) {
+                        Log.d(TAG, "Upload failed");
+                        Toast toast = Toast.makeText(Application.get().getApplicationContext(),
+                                "Upload failed",
+                                Toast.LENGTH_SHORT);
+                        toast.show();
+                    }
+                });
     }
 }

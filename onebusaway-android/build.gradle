@@ -55,8 +55,8 @@ android {
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 100
-        versionName "2.4.3"
+        versionCode 101
+        versionName "2.4.4"
 
         multiDexEnabled true
 

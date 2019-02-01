@@ -53,8 +53,8 @@ The `secure.properties` file (in the location specified in gradle.properties) ha
 ```
 key.store=<full_path_to_keystore_file>
 key.alias=<key_alias_name>
-key.storepassword=yourKeystorePassword
-key.keypassword=yourKeyPassword
+key.storepassword=<your_keystore_password>
+key.keypassword=<your_key_password>
 ```
 
 Note that the paths in these files always use the Unix path separator `/`, even on Windows. If you use the Windows path separator `\` you will get the error `No value has been specified for property 'signingConfig.keyAlias'.`

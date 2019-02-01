@@ -21,17 +21,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
-import android.widget.Toast;
-
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -42,11 +34,9 @@ import org.onebusaway.android.ui.TripDetailsActivity;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
 
-import java.io.File;
 import java.text.DecimalFormat;
 import java.util.Locale;
 
-import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.RemoteInput;
 
@@ -61,7 +51,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     private static final String FIRST_FEEDBACK = "firstFeedback";
 
-    boolean mFirstFeedback = true;
+    public static boolean mFirstFeedback = true;
 
     private static final int EVENT_TYPE_NO_EVENT = 0;
     private static final int EVENT_TYPE_UPDATE_DISTANCE = 1;
@@ -111,8 +101,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     private String mTripId;             // Trip ID
     private String mStopId;             // Stop ID
 
-    private StorageReference mStorageRef;
-
     public NavigationServiceProvider(String tripId, String stopId) {
         Log.d(TAG, "Creating NavigationServiceProvider...");
         if (mTTS == null) {
@@ -123,6 +111,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         }
         mTripId = tripId;
         mStopId = stopId;
+        mFirstFeedback = Application.getPrefs().getBoolean(FIRST_FEEDBACK, true);
     }
 
     public NavigationServiceProvider(String tripId, String stopId, int flag) {
@@ -133,6 +122,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         }
         mTripId = tripId;
         mStopId = stopId;
+        mFirstFeedback = Application.getPrefs().getBoolean(FIRST_FEEDBACK, true);
     }
 
     /**
@@ -700,8 +690,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             mBuilder.setOngoing(false);
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
 
-            uploadTripLog();
-            getUserFeedback();
+            //getUserFeedback();
         }
     }
 
@@ -733,15 +722,16 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         }
     }
 
-    private void getUserFeedback() {
+    public void getUserFeedback() {
+        //TODO - Log "Yes" or "No" including plaintext feedback using Firebase Analytics
 
         Application app = Application.get();
         NotificationCompat.Builder mBuilder;
-        mFirstFeedback = Application.getPrefs().getBoolean(FIRST_FEEDBACK, true);
+        //mFirstFeedback = Application.getPrefs().getBoolean(FIRST_FEEDBACK, true);
         String message = Application.get().getString(R.string.feedback_notify_dialog_msg);
 
         if((mFirstFeedback) || (Build.VERSION.SDK_INT < Build.VERSION_CODES.N)) {
-            mFirstFeedback = false;
+            //mFirstFeedback = false;
             PreferenceUtils.saveBoolean(FIRST_FEEDBACK, false);
 
             Intent fdIntent = new Intent(app.getApplicationContext(), FeedbackActivity.class);
@@ -770,13 +760,13 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         }
         else {
 
-            Intent intent = new Intent(Application.get().getApplicationContext(), FeedbackReceiver.class);
-            intent.setAction(REPLY_ACTION);
-            intent.putExtra(FeedbackReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
-            intent.putExtra(FeedbackReceiver.TRIP_ID, mTripId);
-            intent.putExtra(FeedbackReceiver.CALLING_ACTION, FeedbackReceiver.FEEDBACK_NO);
+            Intent intentNo = new Intent(Application.get().getApplicationContext(), FeedbackReceiver.class);
+            intentNo.setAction(REPLY_ACTION);
+            intentNo.putExtra(FeedbackReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
+            intentNo.putExtra(FeedbackReceiver.TRIP_ID, mTripId);
+            intentNo.putExtra(FeedbackReceiver.CALLING_ACTION, FeedbackReceiver.FEEDBACK_NO);
             PendingIntent fdPendingIntentNo = PendingIntent.getBroadcast(Application.get()
-                    .getApplicationContext(),100, intent, 0);
+                    .getApplicationContext(),100, intentNo, 0);
 
             String replyLabel = Application.get().getResources()
                     .getString(R.string.feedback_action_reply_no);
@@ -790,13 +780,13 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     .addRemoteInput(remoteInput)
                     .build();
 
-            Intent intent1 = new Intent(Application.get().getApplicationContext(), FeedbackReceiver.class);
-            intent1.setAction(REPLY_ACTION);
-            intent1.putExtra(FeedbackReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
-            intent1.putExtra(FeedbackReceiver.TRIP_ID, mTripId);
-            intent1.putExtra(FeedbackReceiver.CALLING_ACTION, FeedbackReceiver.FEEDBACK_YES);
+            Intent intentYes = new Intent(Application.get().getApplicationContext(), FeedbackReceiver.class);
+            intentYes.setAction(REPLY_ACTION);
+            intentYes.putExtra(FeedbackReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
+            intentYes.putExtra(FeedbackReceiver.TRIP_ID, mTripId);
+            intentYes.putExtra(FeedbackReceiver.CALLING_ACTION, FeedbackReceiver.FEEDBACK_YES);
             PendingIntent fdPendingIntentYes = PendingIntent.getBroadcast(Application.get()
-                    .getApplicationContext(),101, intent1, 0);
+                    .getApplicationContext(),101, intentYes, 0);
 
             String replyLabel1 = Application.get().getResources()
                     .getString(R.string.feedback_action_reply_yes);
@@ -816,8 +806,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     .setContentTitle(Application.get().getResources().getString(R.string.feedback_notify_title))
                     .setContentText(message)
                     .addAction(replyAction)
-                    .addAction(replyAction1);
-
+                    .addAction(replyAction1)
+                    .setAutoCancel(true);
         }
 
         mBuilder.setOngoing(false);
@@ -826,34 +816,5 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                 Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(NOTIFICATION_ID + 1, mBuilder.build());
 
-    }
-
-    private void uploadTripLog() {
-        mStorageRef = FirebaseStorage.getInstance().getReference();
-
-        Uri file = Uri.fromFile(new File("/data/data/com.joulespersecond.seattlebusbot/files/ObaNavLog/1-Thu, Jan 17 2019, 06:05 PM.csv"));
-        StorageReference logRef = mStorageRef.child("1-Thu, Jan 17 2019, 06:05 PM.csv");
-
-        logRef.putFile(file)
-                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        Log.d(TAG, "Upload successful");
-                        Toast toast = Toast.makeText(Application.get().getApplicationContext(),
-                                "Upload successful",
-                                Toast.LENGTH_SHORT);
-                        toast.show();
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception exception) {
-                        Log.d(TAG, "Upload failed");
-                        Toast toast = Toast.makeText(Application.get().getApplicationContext(),
-                                "Upload failed",
-                                Toast.LENGTH_SHORT);
-                        toast.show();
-                    }
-                });
     }
 }

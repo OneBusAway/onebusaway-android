@@ -80,7 +80,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
     private boolean mGetReadyFlag = false;
     private boolean mPullTheCordFlag = false;
 
-    private NavigationServiceProvider mNavProvider;
+    public NavigationServiceProvider mNavProvider;
     private File mLogFile = null;
 
     private long mFinishedTime;
@@ -195,6 +195,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
                 if (mFinishedTime == 0) {
                     mFinishedTime = System.currentTimeMillis();
                 } else if (System.currentTimeMillis() - mFinishedTime >= 30000) {
+                    mNavProvider.getUserFeedback();
                     stopSelf();
                 }
             } else {
@@ -243,12 +244,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
             }
 
             mLogFile = new File(subFolder, counter + "-" + readableDate + ".csv");
-
             LOG_FILE = mLogFile.getAbsolutePath();
-
-            //mLogFile = new File(Environment.getExternalStoragePublicDirectory(LOG_DIRECTORY),
-            //        counter + "-" + readableDate + ".csv");
-
             Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
 

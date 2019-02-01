@@ -384,15 +384,15 @@ task askForPasswords << {
 }
 
 tasks.whenTaskAdded { theTask ->
-    if (theTask.name.matches("\\bpackage\\w+Release\\b")) {
+   if (theTask.name.matches("\\bpackage\\w+Release\\b")) {
         theTask.dependsOn "askForPasswords"
-    }
-    // Make sure that OBA release builds always have an Embedded Social API key (#907)
-    def runningTask = project.gradle.startParameter.taskNames
+   }
+   // Make sure that OBA release builds always have an Embedded Social API key (#907)
+   def runningTask = project.gradle.startParameter.taskNames
 
-    if ((runningTask.toString().toLowerCase().matches("(.*)oba(.*)release(.*)") || runningTask.toString().toLowerCase().contains("assemblerelease")) && !project.hasProperty('EmbeddedSocialApiKey_oba')) {
+   if ((runningTask.toString().toLowerCase().matches("(.*)oba(.*)release(.*)") || runningTask.toString().toLowerCase().contains("assemblerelease") )  && !project.hasProperty('EmbeddedSocialApiKey_oba')) {
         throw new InvalidUserDataException("gradle.properties must contain an EmbeddedSocialApiKey_oba API key for oba release builds")
-    }
+   }
 
 }
 
@@ -430,7 +430,7 @@ dependencies {
     // Bottom sliding panel
     implementation 'com.sothree.slidinguppanel:library:3.3.0'
     // For floating action button speed dial
-    implementation('uk.co.markormesher:android-fab:2.2.0')
+    implementation ('uk.co.markormesher:android-fab:2.2.0')
     // For sorting alphanumeric route names
     implementation 'org.onebusaway.util:comparators:1.0.0'
     // For tutorial (ShowcaseView) library
@@ -453,6 +453,6 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.1.0'
 }
 
-apply plugin: 'com.google.gms.google-services'
+apply plugin:'com.google.gms.google-services'
 
 com.google.gms.googleservices.GoogleServicesPlugin.config.disableVersionCheck = true

@@ -1,17 +1,41 @@
 package org.onebusaway.android.ui;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ImageButton;
 
-import org.onebusaway.android.R;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import org.apache.commons.io.FileUtils;
+import org.onebusaway.android.R;
+import org.onebusaway.android.nav.NavigationService;
+import org.onebusaway.android.nav.NavigationServiceProvider;
+
+import java.io.File;
+import java.io.IOException;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class FeedbackActivity extends AppCompatActivity {
 
+    public static final String TAG = "FeedbackActivity";
+
+    private String mAction = null;
+    private boolean mSendLogs = false;
+    private ImageButton dislikeButton;
+    private ImageButton likeButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -20,17 +44,17 @@ public class FeedbackActivity extends AppCompatActivity {
 
         Intent intent = this.getIntent();
         if(intent != null){
-            String action = intent.getExtras().getString("CallingAction");
-            if(action.equals("Dislike")){
-                Log.d("FeedbackActivity", "Thumbs down tapped");
-                ImageButton feedbackButton = findViewById(R.id.ImageBtn_Dislike);
-                feedbackButton.setSelected(true);
+            mAction = intent.getExtras().getString("CallingAction");
+            if(mAction.equals("Dislike")){
+                Log.d(TAG, "Thumbs down tapped");
+                dislikeButton = findViewById(R.id.ImageBtn_Dislike);
+                dislikeButton.setSelected(true);
 
             }
-            else if(action.equals("Like")){
-                Log.d("FeedbackActivity", "Thumbs up tapped");
-                ImageButton feedbackButton = findViewById(R.id.ImageBtn_like);
-                feedbackButton.setSelected(true);
+            else if(mAction.equals("Like")){
+                Log.d(TAG, "Thumbs up tapped");
+                likeButton = findViewById(R.id.ImageBtn_like);
+                likeButton.setSelected(true);
             }
         }
     }
@@ -42,18 +66,89 @@ public class FeedbackActivity extends AppCompatActivity {
         return true;
     }
 
-/*    @Override
+   @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+       if (item.getItemId() == R.id.report_problem_send) {
+           submitFeedback();
+       }
+       return super.onOptionsItemSelected(item);
+    }
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_name) {
-            return true;
+    private void submitFeedback() {
+        NavigationServiceProvider.mFirstFeedback = false;
+        String feedback = ((EditText) this.findViewById(R.id.editFeedbackText)).getText().toString();
+        if (mSendLogs) {
+            uploadLog(feedback);
+        }
+        else {
+            deleteLog();
+        }
+        Log.d(TAG,"Feedback send :" + feedback);
+    }
+
+    public void likeBtnOnClick(View view) {
+        mAction = "Like";
+        likeButton = findViewById(R.id.ImageBtn_like);
+        dislikeButton = findViewById(R.id.ImageBtn_Dislike);
+        likeButton.setSelected(true);
+        dislikeButton.setSelected(false);
+        Log.d(TAG,"Like");
+    }
+
+    public void dislikeBtnOnClick(View view) {
+        mAction = "Dislike";
+        likeButton = findViewById(R.id.ImageBtn_like);
+        dislikeButton = findViewById(R.id.ImageBtn_Dislike);
+        dislikeButton.setSelected(true);
+        likeButton.setSelected(false);
+        Log.d(TAG,"Feedback changed to dislike");
+    }
+
+    private void uploadLog(String feedback) {
+        try {
+            File lFile = new File(NavigationService.LOG_FILE); //"/data/data/com.joulespersecond.seattlebusbot/files/ObaNavLog/1-Thu, Jan 24 2019, 12:29 PM.csv");
+            FileUtils.write(lFile, feedback, true);
+            Log.d(TAG, "Feedback appended");
+
+            FirebaseStorage storage = FirebaseStorage.getInstance();
+            StorageReference storageRef = storage.getReference();
+
+            Uri file = Uri.fromFile(lFile);
+            String logFileName = lFile.getName();
+            StorageReference logRef = storageRef.child(mAction + "/" + logFileName);
+            Log.d(TAG, "Location : " + mAction + "/" + logFileName);
+
+            UploadTask uploadTask = logRef.putFile(file);
+            uploadTask.addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    Log.e(TAG, "Log upload failed");
+                }
+            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    Log.d(TAG, "Log upload successful");
+                }
+            });
+        } catch (IOException e) {
+            Log.e(TAG, "File write failed: " + e.toString());
         }
 
-        return super.onOptionsItemSelected(item);
-    }*/
+    }
+
+    private void deleteLog() {
+        File lFile = new File(NavigationService.LOG_FILE);
+        boolean deleted = lFile.delete();
+        Log.v(TAG,"Log deleted " + deleted);
+    }
+
+    public void setSendLogs(View view) {
+        CheckBox checkBox = (CheckBox)view;
+        if(checkBox.isChecked()){
+            mSendLogs = true;
+        }
+        else {
+            mSendLogs = false;
+        }
+    }
 }

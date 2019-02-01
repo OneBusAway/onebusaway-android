@@ -24,7 +24,8 @@
                 android:layout_weight="1"
                 android:scaleType="fitEnd"
                 android:background="@color/alert_icon_info"
-                android:src="@drawable/ic_thumbs_up_custom"/>
+                android:src="@drawable/ic_thumbs_up_custom"
+                android:onClick="likeBtnOnClick"/>
                 <!--android:src="@drawable/ic_thumb_up" />-->
 
             <ImageButton
@@ -34,7 +35,8 @@
                 android:layout_weight="1"
                 android:background="@color/alert_icon_info"
                 android:src="@drawable/ic_thumbs_down_custom"
-                android:scaleType="fitStart"/>
+                android:scaleType="fitStart"
+                android:onClick="dislikeBtnOnClick"/>
                 <!--android:background="@color/alert_icon_info"-->
                 <!--android:src="@drawable/ic_thumb_down" />-->
         </LinearLayout>
@@ -49,7 +51,7 @@
         android:orientation="horizontal">
 
         <EditText
-            android:id="@+id/editText"
+            android:id="@+id/editFeedbackText"
             android:layout_width="345dp"
             android:layout_height="47dp"
             android:layout_marginStart="8dp"
@@ -80,7 +82,8 @@
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
             android:layout_marginBottom="8dp"
-            android:text="Include system log (your choice will be saved for future trips)" />
+            android:text="Include system log (your choice will be saved for future trips)"
+            android:onClick="setSendLogs"/>
     </FrameLayout>
 
     <FrameLayout

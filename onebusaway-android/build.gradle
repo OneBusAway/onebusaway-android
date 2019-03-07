@@ -368,7 +368,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'android.arch.lifecycle:extensions:1.1.1'
     implementation 'android.arch.lifecycle:common-java8:1.1.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha3'
     implementation 'commons-io:commons-io:2.4'
     // Open311 client library
     implementation 'edu.usf.cutr:open311client:1.0.9'

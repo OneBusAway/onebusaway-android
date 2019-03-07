@@ -184,6 +184,52 @@ public class ObaAnalytics {
     }
 
     /**
+     * Sets the current region as a user property in Firebase Analytics
+     * @param analytics Firebase singleton
+     * @param regionName name of the region that was selected
+     */
+    public static void setFirebaseRegion(FirebaseAnalytics analytics, String regionName) {
+        if (!isAnalyticsActive()) {
+            return;
+        }
+        analytics.setUserProperty(Application.get().getString(R.string.analytics_label_region_name), regionName);
+    }
+
+    /**
+     * Sets if the user has set the preference to send anonymous usage data
+     * @param analytics Firebase singleton
+     * @param isAnalyticsActive true if the user has enabled the preference, or false if they have disabled it
+     */
+    public static void setFirebaseSendAnonymousData(FirebaseAnalytics analytics, boolean isAnalyticsActive) {
+        analytics.setUserProperty(Application.get().getString(R.string.analytics_label_firebase_analytics_property), isAnalyticsActive ? "YES" : "NO");
+        analytics.setAnalyticsCollectionEnabled(isAnalyticsActive);
+    }
+
+    /**
+     * Sets if the user has set the preference for left handed mode
+     * @param analytics Firebase singleton
+     * @param isLeftHanded true if the user has enabled the left handed preference, or false if they have disabled it (default)
+     */
+    public static void setFirebaseLeftHanded(FirebaseAnalytics analytics, boolean isLeftHanded) {
+        if (!isAnalyticsActive()) {
+            return;
+        }
+        analytics.setUserProperty(Application.get().getString(R.string.analytics_label_firebase_left_hand_property), isLeftHanded ? "YES" : "NO");
+    }
+
+    /**
+     * Sets if the user has chosen to hide departed vehicles (i.e, negative prediction times)
+     * @param analytics Firebase singleton
+     * @param showDepartedVehicles true if the user has the preference enabled to see departed vehicles (default), or false if they have it disabled
+     */
+    public static void setShowDepartedVehicles(FirebaseAnalytics analytics, boolean showDepartedVehicles) {
+        if (!isAnalyticsActive()) {
+            return;
+        }
+        analytics.setUserProperty(Application.get().getString(R.string.analytics_label_show_departed_vehicles_property), showDepartedVehicles ? "YES" : "NO");
+    }
+
+    /**
      * Tracks stop tap distance between bus stop location and users current location
      *
      * @param stopId       for action

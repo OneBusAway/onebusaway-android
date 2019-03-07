@@ -461,6 +461,7 @@ public class PreferencesActivity extends PreferenceActivity
                                 + (isAnalyticsActive ? "YES" : "NO"));
                 GoogleAnalytics.getInstance(getBaseContext()).dispatchLocalHits();
             }
+            ObaAnalytics.setFirebaseSendAnonymousData(mFirebaseAnalytics, isAnalyticsActive);
         } else if (preference.equals(mLeftHandMode) && newValue instanceof Boolean) {
             Boolean isLeftHandEnabled = (Boolean) newValue;
             //Report if left handed mode is turned on, just before shared preference changed
@@ -470,6 +471,7 @@ public class PreferencesActivity extends PreferenceActivity
                         getString(R.string.analytics_label_left_hand_preference)
                                 + (isLeftHandEnabled ? "YES" : "NO"));
             }
+            ObaAnalytics.setFirebaseLeftHanded(mFirebaseAnalytics, isLeftHandEnabled);
         }
         return true;
     }
@@ -564,11 +566,14 @@ public class PreferencesActivity extends PreferenceActivity
             Boolean isAnalyticsActive = settings.getBoolean(Application.get().
                     getString(R.string.preferences_key_analytics), Boolean.FALSE);
             //Report if the analytics turns on, just after shared preference changed
-            if (isAnalyticsActive)
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+            if (isAnalyticsActive) {
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
                         getString(R.string.analytics_action_edit_general),
                         getString(R.string.analytics_label_analytic_preference)
                                 + (isAnalyticsActive ? "YES" : "NO"));
+            }
+            ObaAnalytics.setFirebaseSendAnonymousData(mFirebaseAnalytics, isAnalyticsActive);
         } else if (key.equalsIgnoreCase(getString(R.string.preference_key_arrival_info_style))) {
             // Change the arrival info description
             changePreferenceSummary(key);
@@ -579,6 +584,7 @@ public class PreferencesActivity extends PreferenceActivity
                     getString(R.string.analytics_action_edit_general),
                     getString(R.string.analytics_label_show_departed_bus_preference)
                             + (showDepartedBuses ? "YES" : "NO"));
+            ObaAnalytics.setShowDepartedVehicles(mFirebaseAnalytics, showDepartedBuses);
         }
     }
 

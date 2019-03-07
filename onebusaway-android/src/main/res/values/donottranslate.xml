@@ -98,6 +98,8 @@
     <string name="analytics_action_bike_marker_clicked">bike_marker_clicked</string>
 
     <string name="analytics_label_region">API Region:\u0020</string>
+    <!-- The below region name value needs to match existing iOS Firebase User Property -->
+    <string name="analytics_label_region_name">RegionName</string>
     <string name="analytics_label_region_auto">Set Region Automatically:\u0020</string>
     <string name="analytics_label_button_press">Clicked load more arrivals button</string>
     <string name="analytics_label_sort_by_eta_arrival">Clicked sort by ETA from
@@ -173,8 +175,11 @@
     <string name="analytics_label_star_route">Starred route</string>
     <string name="analytics_label_unstar_route">Unstarred route</string>
     <string name="analytics_label_left_hand_preference">Set Left hand mode:\u0020</string>
+    <string name="analytics_label_firebase_left_hand_property">left_handed</string>
     <string name="analytics_label_analytic_preference">Set Send anonymous usage data:\u0020</string>
+    <string name="analytics_label_firebase_analytics_property">send_anonymous_data</string>
     <string name="analytics_label_show_departed_bus_preference">Show Departed Buses:\u0020</string>
+    <string name="analytics_label_show_departed_vehicles_property">show_departed_vehicles</string>
     <string name="analytics_label_arrival_info_style">Set Arrival info style:\u0020</string>
     <string name="analytics_label_service_alerts">Clicked Service Alerts from:\u0020</string>
     <string name="analytics_label_bikeshare_activated">Bikeshare layer activated</string>

@@ -23,6 +23,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
@@ -110,6 +111,8 @@ public class Application extends MultiDexApplication {
     }
 
     HashMap<TrackerName, Tracker> mTrackers = new HashMap<TrackerName, Tracker>();
+
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
     public void onCreate() {
@@ -565,10 +568,12 @@ public class Application extends MultiDexApplication {
     }
 
     private void reportAnalytics() {
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         if (getCustomApiUrl() == null && getCurrentRegion() != null) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
                     getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
                             + getCurrentRegion().getName());
+            ObaAnalytics.setFirebaseRegion(mFirebaseAnalytics, getCurrentRegion().getName());
         } else if (Application.get().getCustomApiUrl() != null) {
             String customUrl = null;
             MessageDigest digest = null;
@@ -583,6 +588,7 @@ public class Application extends MultiDexApplication {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
                     getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
                             + customUrl);
+            ObaAnalytics.setFirebaseRegion(mFirebaseAnalytics, customUrl);
         }
         Boolean experimentalRegions = getPrefs().getBoolean(getString(R.string.preference_key_experimental_regions),
                 Boolean.FALSE);

@@ -143,6 +143,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         if (isReportArgumentsValid()) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
                     getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_stop_problem));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics, getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_stop_problem));
             super.sendReport();
         } else {
             // Show error message if report arguments is not valid

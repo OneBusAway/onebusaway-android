@@ -16,6 +16,8 @@
 
 package org.onebusaway.android.report.ui;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
@@ -175,6 +177,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     private static final String BLOCK_ID = ".blockId";
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     public static void show(AppCompatActivity activity, Integer containerViewId,
                             Open311 open311, Service service, ObaArrivalInfo obaArrivalInfo,
             String agencyName, String blockId) {
@@ -211,6 +215,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         setRetainInstance(true);
 
         setHasOptionsMenu(Boolean.TRUE);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
 
         return rootView;
     }
@@ -533,6 +539,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
                     getString(R.string.analytics_action_problem), mService.getService_name());
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics, getString(R.string.analytics_action_problem), mService.getService_name());
         } else {
             createToastMessage(Open311Validator.getErrorMessageForServiceRequestByErrorCode(errorCode));
         }

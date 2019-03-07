@@ -197,6 +197,9 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
         if (isReportArgumentsValid()) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
                     getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_trip_problem));
+            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_action_problem),
+                    getString(R.string.analytics_label_report_trip_problem));
             super.sendReport();
         } else {
             // Show error message if report arguments is not valid

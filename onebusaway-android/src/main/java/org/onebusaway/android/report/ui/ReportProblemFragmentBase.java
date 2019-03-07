@@ -18,6 +18,7 @@ package org.onebusaway.android.report.ui;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -68,6 +69,8 @@ public abstract class ReportProblemFragmentBase extends Fragment
      */
     String[] SPINNER_TO_CODE;
 
+    protected FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -102,6 +105,8 @@ public abstract class ReportProblemFragmentBase extends Fragment
             // reason to create our view.
             return null;
         }
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
 
         return inflater.inflate(getLayoutId(), null);
     }

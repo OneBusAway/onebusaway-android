@@ -288,6 +288,9 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
                         getString(R.string.analytics_action_trip_plan),
                         getString(R.string.analytics_label_trip_plan));
+        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                getString(R.string.analytics_action_trip_plan),
+                getString(R.string.analytics_label_trip_plan));
 
         showProgressDialog();
     }

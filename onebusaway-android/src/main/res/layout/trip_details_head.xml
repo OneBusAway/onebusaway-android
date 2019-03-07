@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com), Benjamin Du (bendu@me.com)
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com), Benjamin Du (bendu@me.com)
     and individual contributors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,72 +14,93 @@
     limitations under the License.
 -->
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             style="@style/HeaderItem"
-             android:layout_width="fill_parent"
-             android:layout_height="wrap_content"
-             android:orientation="vertical">
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/HeaderItem"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
     <TableRow>
+
         <TextView
-                android:id="@+id/short_name"
-                style="@style/RouteInfoShortName"
-                android:layout_marginLeft="6dp"
-                android:layout_gravity="center_vertical"
+            android:id="@+id/short_name"
+            style="@style/RouteInfoShortName"
+            android:layout_marginLeft="6dp"
+            android:layout_marginStart="6dp"
+            android:layout_gravity="center_vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_column="0"
+            android:maxLength="6"
+            android:maxLines="1"
+            tools:text="48" />
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="6dp"
+            android:layout_marginStart="6dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:layout_column="1"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/long_name"
+                style="@style/RouteInfoLongName"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_column="0"
-                android:maxLength="6"
-                android:maxLines="1">
-        </TextView>
-        <LinearLayout
-                android:orientation="vertical"
-                android:layout_gravity="center_vertical"
-                android:layout_marginLeft="6dp"
-                android:paddingTop="5dp"
-                android:paddingBottom="5dp"
-                android:layout_column="1"
-                android:layout_weight="1">
+                tools:text="South to Netpark" />
+
             <TextView
-                    android:id="@+id/long_name"
-                    style="@style/RouteInfoLongName"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </TextView>
+                android:id="@+id/agency"
+                style="@style/TripDetailsAgency"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Hillsborough Area Regional Transit" />
+
             <TextView
-                    android:id="@+id/agency"
-                    style="@style/TripDetailsAgency"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-            </TextView>
-            <TextView
-                    android:id="@+id/vehicle"
-                    style="@style/TripDetailsVehicle"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </TextView>
+                android:id="@+id/vehicle"
+                style="@style/TripDetailsVehicle"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                tools:text="Vehicle: Hillsborough Area Regional Transit_1720" />
+
             <LinearLayout
-                    android:id="@+id/status_layout"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
-                    android:orientation="horizontal">
+                android:id="@+id/status_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:orientation="horizontal">
+
                 <TextView
-                        android:id="@+id/status"
-                        style="@style/TripDetailsStatus"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content">
-                </TextView>
+                    android:id="@+id/status"
+                    style="@style/TripDetailsStatus"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    tools:text="13 min 0 sec late (Last update: 6:37 PM)" />
+
                 <include
-                        android:id="@+id/eta_realtime_indicator"
-                        layout="@layout/realtime_indicator"
-                        android:layout_width="6dp"
-                        android:layout_height="6dp"
-                        android:layout_marginLeft="2dp"
-                        android:layout_marginTop="3dp"/>
+                    android:id="@+id/eta_realtime_indicator"
+                    layout="@layout/realtime_indicator"
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:layout_marginLeft="2dp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginTop="3dp" />
             </LinearLayout>
+
+            <include
+                android:id="@+id/occupancy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                layout="@layout/occupancy"
+                android:layout_marginTop="2dp"
+                android:visibility="gone" />
         </LinearLayout>
     </TableRow>
 </TableLayout>

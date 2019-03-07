@@ -19,6 +19,7 @@ package org.onebusaway.android.report.ui;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -48,7 +49,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.provider.MediaStore;
-import android.telephony.TelephonyManager;
 import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -490,8 +490,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         // Prepare issue description
         String description = ((EditText) getActivity().findViewById(R.id.ri_editTextDesc)).getText().toString();
 
-        final TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-
         Open311User open311User;
 
         if (!mAnonymousReportingCheckBox.isChecked()) {
@@ -499,6 +497,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         } else {
             open311User = getOpen311UserFromStrings();
         }
+
+        String appUid = PreferenceUtils.getString(Application.APP_UID);
 
         IssueLocationHelper issueLocationHelper = getIssueLocationHelper();
 
@@ -510,7 +510,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 setDescription(description).setEmail(open311User.getEmail()).
                 setFirst_name(open311User.getName()).setLast_name(open311User.getLastName()).
                 setPhone(open311User.getPhone()).setAddress_string(getCurrentAddress()).
-                setDevice_id(tm.getDeviceId());
+                setDevice_id(appUid);
 
         if (mImagePath != null) {
             attachImage(builder);

@@ -15,9 +15,9 @@
  */
 package org.onebusaway.android.io.elements;
 
-import org.onebusaway.android.util.LocationUtils;
-
 import android.location.Location;
+
+import org.onebusaway.android.util.LocationUtils;
 
 import java.io.Serializable;
 
@@ -172,4 +172,9 @@ public interface ObaTripStatus {
      * location is relative to an arrival-and-departure.
      */
     public int getBlockTripSequence();
+
+    /**
+     * @return the real-time occupancy of the vehicle
+     */
+    Occupancy getRealtimeOccupancy();
 }

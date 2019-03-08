@@ -60,7 +60,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
@@ -434,17 +433,14 @@ public class ArrivalsListFragment extends ListFragment
         super.onStart();
         ObaAnalytics.reportFragmentStart(this);
 
-        if (Build.VERSION.SDK_INT >= 14) {
-            AccessibilityManager am = (AccessibilityManager) getActivity().getSystemService(
-                    Context.ACCESSIBILITY_SERVICE);
-
-            Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
-            if (isTalkBackEnabled)
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.ACCESSIBILITY.toString(),
-                        getString(R.string.analytics_action_touch_exploration),
-                        getString(R.string.analytics_label_talkback) + getClass().getSimpleName()
-                                + " using TalkBack");
-        }
+        AccessibilityManager am = (AccessibilityManager) getActivity().getSystemService(
+                Context.ACCESSIBILITY_SERVICE);
+        Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
+        if (isTalkBackEnabled)
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.ACCESSIBILITY.toString(),
+                    getString(R.string.analytics_action_touch_exploration),
+                    getString(R.string.analytics_label_talkback) + getClass().getSimpleName()
+                            + " using TalkBack");
     }
 
     //

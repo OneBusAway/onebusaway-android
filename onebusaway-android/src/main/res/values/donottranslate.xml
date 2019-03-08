@@ -92,6 +92,7 @@
     <string name="analytics_action_switch">app_switch</string>
     <string name="analytics_action_problem">report_problem</string>
     <string name="analytics_action_touch_exploration">touch_exploration_on</string>
+    <string name="analytics_firebase_accessibility">accessibility</string>
     <string name="analytics_action_customer_service">customer_service</string>
     <string name="analytics_action_service_alerts">service_alerts</string>
     <string name="analytics_action_layer_bikeshare">layer_bikeshare</string>

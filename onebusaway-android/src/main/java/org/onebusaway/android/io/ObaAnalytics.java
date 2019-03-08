@@ -230,6 +230,18 @@ public class ObaAnalytics {
     }
 
     /**
+     * Sets if the user has enabled touch exploration (accessibility) on their device
+     * @param analytics Firebase singleton
+     * @param isAccessibilityActive true if the user has enabled touch exploration (accessibility) on their device, and false if they have not
+     */
+    public static void setAccessibility(FirebaseAnalytics analytics, boolean isAccessibilityActive) {
+        if (!isAnalyticsActive()) {
+            return;
+        }
+        analytics.setUserProperty(Application.get().getString(R.string.analytics_firebase_accessibility), isAccessibilityActive ? "YES" : "NO");
+    }
+
+    /**
      * Tracks stop tap distance between bus stop location and users current location
      *
      * @param stopId       for action

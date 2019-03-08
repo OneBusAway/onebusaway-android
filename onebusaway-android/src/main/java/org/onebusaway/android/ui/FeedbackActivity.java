@@ -1,7 +1,6 @@
 package org.onebusaway.android.ui;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -10,32 +9,30 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
-
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
+import android.widget.Toast;
 
 import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.nav.NavigationService;
 import org.onebusaway.android.nav.NavigationServiceProvider;
+import org.onebusaway.android.util.PreferenceUtils;
 
 import java.io.File;
 import java.io.IOException;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import static org.onebusaway.android.nav.NavigationService.LOG_DIRECTORY;
 
 public class FeedbackActivity extends AppCompatActivity {
 
     public static final String TAG = "FeedbackActivity";
 
     private String mAction = null;
-    private boolean mSendLogs = false;
     private ImageButton dislikeButton;
     private ImageButton likeButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,20 +40,29 @@ public class FeedbackActivity extends AppCompatActivity {
         setTitle(getResources().getString(R.string.feedback_label));
 
         Intent intent = this.getIntent();
+        CheckBox sendLogs = (CheckBox) findViewById(R.id.feedback_send_logs);
         if(intent != null){
             mAction = intent.getExtras().getString("CallingAction");
-            if(mAction.equals("Dislike")){
+            if(mAction.equals("no")){
                 Log.d(TAG, "Thumbs down tapped");
                 dislikeButton = findViewById(R.id.ImageBtn_Dislike);
                 dislikeButton.setSelected(true);
-
             }
-            else if(mAction.equals("Like")){
+            else if(mAction.equals("yes")){
                 Log.d(TAG, "Thumbs up tapped");
                 likeButton = findViewById(R.id.ImageBtn_like);
                 likeButton.setSelected(true);
             }
         }
+
+        if(Application.getPrefs()
+                .getBoolean(getString(R.string.preferences_key_user_share_logs), true)) {
+            sendLogs.setChecked(true);
+        }
+        else {
+            sendLogs.setChecked(false);
+        }
+
     }
 
     @Override
@@ -70,67 +76,69 @@ public class FeedbackActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
        if (item.getItemId() == R.id.report_problem_send) {
            submitFeedback();
+           finish();
        }
-       return super.onOptionsItemSelected(item);
+        return super.onOptionsItemSelected(item);
     }
 
     private void submitFeedback() {
-        NavigationServiceProvider.mFirstFeedback = false;
+        PreferenceUtils.saveBoolean(NavigationServiceProvider.FIRST_FEEDBACK, false);
+        Log.d(TAG, "First Feedback : " + String.valueOf(Application.getPrefs()
+                .getBoolean(NavigationServiceProvider.FIRST_FEEDBACK, true)));
         String feedback = ((EditText) this.findViewById(R.id.editFeedbackText)).getText().toString();
-        if (mSendLogs) {
-            uploadLog(feedback);
+        if (Application.getPrefs()
+                .getBoolean(getString(R.string.preferences_key_user_share_logs), true)) {
+            moveLog(feedback);
         }
         else {
             deleteLog();
         }
-        Log.d(TAG,"Feedback send :" + feedback);
+        Log.d(TAG,"Feedback send : " + feedback);
+        Toast.makeText(FeedbackActivity.this,
+                getString(R.string.feedback_notify_confirmation),
+                Toast.LENGTH_SHORT).show();
     }
 
     public void likeBtnOnClick(View view) {
-        mAction = "Like";
+        mAction = "yes";
         likeButton = findViewById(R.id.ImageBtn_like);
         dislikeButton = findViewById(R.id.ImageBtn_Dislike);
         likeButton.setSelected(true);
         dislikeButton.setSelected(false);
-        Log.d(TAG,"Like");
+        Log.d(TAG,"Feedback changed to yes");
     }
 
     public void dislikeBtnOnClick(View view) {
-        mAction = "Dislike";
+        mAction = "no";
         likeButton = findViewById(R.id.ImageBtn_like);
         dislikeButton = findViewById(R.id.ImageBtn_Dislike);
         dislikeButton.setSelected(true);
         likeButton.setSelected(false);
-        Log.d(TAG,"Feedback changed to dislike");
+        Log.d(TAG,"Feedback changed to no");
     }
 
-    private void uploadLog(String feedback) {
+    private void moveLog(String feedback) {
         try {
-            File lFile = new File(NavigationService.LOG_FILE); //"/data/data/com.joulespersecond.seattlebusbot/files/ObaNavLog/1-Thu, Jan 24 2019, 12:29 PM.csv");
-            FileUtils.write(lFile, feedback, true);
+            File lFile = new File(NavigationService.LOG_FILE);
+            FileUtils.write(lFile, System.getProperty("line.separator") + "User Feedback - " + feedback, true);
             Log.d(TAG, "Feedback appended");
 
-            FirebaseStorage storage = FirebaseStorage.getInstance();
-            StorageReference storageRef = storage.getReference();
+            File destFolder = new File(Application.get().getApplicationContext().getFilesDir()
+                    .getAbsolutePath() + File.separator + LOG_DIRECTORY + File.separator + mAction);
 
-            Uri file = Uri.fromFile(lFile);
-            String logFileName = lFile.getName();
-            StorageReference logRef = storageRef.child(mAction + "/" + logFileName);
-            Log.d(TAG, "Location : " + mAction + "/" + logFileName);
+            Log.d(TAG, "sourceLocation: " + lFile);
+            Log.d(TAG, "targetLocation: " + destFolder);
 
-            UploadTask uploadTask = logRef.putFile(file);
-            uploadTask.addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-                    Log.e(TAG, "Log upload failed");
-                }
-            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    Log.d(TAG, "Log upload successful");
-                }
-            });
-        } catch (IOException e) {
+            try {
+                FileUtils.moveFileToDirectory(
+                        FileUtils.getFile(lFile),
+                        FileUtils.getFile(destFolder), true);
+                Log.d(TAG, "Move file successful.");
+            }
+            catch (Exception e) {
+                Log.d(TAG, "File move failed");
+            }
+            } catch (IOException e) {
             Log.e(TAG, "File write failed: " + e.toString());
         }
 
@@ -139,16 +147,22 @@ public class FeedbackActivity extends AppCompatActivity {
     private void deleteLog() {
         File lFile = new File(NavigationService.LOG_FILE);
         boolean deleted = lFile.delete();
-        Log.v(TAG,"Log deleted " + deleted);
+        Log.d(TAG,"Log deleted " + deleted);
     }
 
     public void setSendLogs(View view) {
         CheckBox checkBox = (CheckBox)view;
         if(checkBox.isChecked()){
-            mSendLogs = true;
+            if (!Application.getPrefs().getBoolean(getString(R.string.preferences_key_user_share_logs), true)) {
+                PreferenceUtils.saveBoolean(getString(R.string.preferences_key_user_share_logs), true);
+                Log.d(TAG,"User wants to share logs");
+            }
         }
         else {
-            mSendLogs = false;
+            if (Application.getPrefs().getBoolean(getString(R.string.preferences_key_user_share_logs), true)) {
+                PreferenceUtils.saveBoolean(getString(R.string.preferences_key_user_share_logs), false);
+                Log.d(TAG,"User doesn't want to share logs");
+            }
         }
     }
 }

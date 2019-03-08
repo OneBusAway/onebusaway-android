@@ -282,6 +282,8 @@
             android:exported="true" >
             <intent-filter>
                 <action android:name=".nav.FeedbackReceiver" />
+                <action android:name="${applicationId}.action.SCHEDULE"/>
+                <action android:name="${applicationId}.action.POLL"/>
             </intent-filter>
         </receiver>
         <!-- Receiver for restricted profiles -->

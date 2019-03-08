@@ -25,7 +25,7 @@ messages. Once the NavigationServiceProvider is completed, the NavigationService
 When the BuildConfig "NAV_GPS_LOGGING" flag is set to true, the NavigationService
  will log all coordinates it receives during the trip and 30
 seconds after the trip has ended. The log file is a CSV file written to
-the "ObaNavLog" folder on your external storage root directory. The filename
+the "ObaNavLog" folder on your internal storage root directory. The filename
 format is <TestID>-<Date/time of test>.csv. For example, "1-Thu, Aug 25 2016, 04:20 PM.csv".
 
 The first line of the file includes the following information in this order (delimited by commas): 
@@ -61,6 +61,20 @@ the resources folder for the androidTest build. Then, in the NavigationTest
 class, a new test method can be created. In this method, a NavigationSimulation object
 can be instantiated with the CSV string passed into the constructor and
 the runSimulation() method called.
+
+***User Feedback Collection***
+
+After completion of a trip, user will be requested for their feedback and asked if they wish to
+share their trip data with OneBusAway.
+Case 1: If the user agrees to share the data, the log file will be uploaded to Firebase storage and
+deleted from the user's internal storage along with his feedback.
+Case 2: If the user does not want to share the data, only his feedback with be recorded by Firebase
+Analytics and the file will be deleted from his internal storage.
+Case 3: If the user does not provide any feedback within 24 hours, the log file will be deleted from
+the device's internal memory.
+
+A detailed flowchart of this functionality can be found at
+https://docs.google.com/drawings/d/13Ea1KVC0sK6_fCJ6Bk0kyoapi-8UY61hvQmld3gJjwU/edit
 
 ***(Potential) Idea Wish list***
 

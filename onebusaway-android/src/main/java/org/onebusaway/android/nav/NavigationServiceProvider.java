@@ -31,7 +31,6 @@ import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
 import org.onebusaway.android.ui.FeedbackActivity;
 import org.onebusaway.android.ui.TripDetailsActivity;
-import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
 
 import java.text.DecimalFormat;
@@ -49,7 +48,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     public static String REPLY_ACTION = "org.onebusaway.android.nav.REPLY_ACTION";
     public static final String KEY_TEXT_REPLY = "trip_feedback";
 
-    private static final String FIRST_FEEDBACK = "firstFeedback";
+    public static final String FIRST_FEEDBACK = "firstFeedback";
 
     public static boolean mFirstFeedback = true;
 
@@ -111,7 +110,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         }
         mTripId = tripId;
         mStopId = stopId;
-        mFirstFeedback = Application.getPrefs().getBoolean(FIRST_FEEDBACK, true);
     }
 
     public NavigationServiceProvider(String tripId, String stopId, int flag) {
@@ -122,7 +120,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         }
         mTripId = tripId;
         mStopId = stopId;
-        mFirstFeedback = Application.getPrefs().getBoolean(FIRST_FEEDBACK, true);
     }
 
     /**
@@ -689,8 +686,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             mBuilder.setContentText(message);
             mBuilder.setOngoing(false);
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
-
-            //getUserFeedback();
         }
     }
 
@@ -727,16 +722,19 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
         Application app = Application.get();
         NotificationCompat.Builder mBuilder;
-        //mFirstFeedback = Application.getPrefs().getBoolean(FIRST_FEEDBACK, true);
-        String message = Application.get().getString(R.string.feedback_notify_dialog_msg);
 
-        if((mFirstFeedback) || (Build.VERSION.SDK_INT < Build.VERSION_CODES.N)) {
-            //mFirstFeedback = false;
-            PreferenceUtils.saveBoolean(FIRST_FEEDBACK, false);
+        String message = Application.get().getString(R.string.feedback_notify_dialog_msg);
+        mFirstFeedback = Application.getPrefs().getBoolean(FIRST_FEEDBACK, true);
+
+        // Create delete intent to set flag for snackbar creation next time the app is opened.
+        Intent rIntent = new Intent(app.getApplicationContext(), FeedbackReceiver.class);
+        rIntent.putExtra(FeedbackReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
+
+        if((mFirstFeedback) || (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)) {
 
             Intent fdIntent = new Intent(app.getApplicationContext(), FeedbackActivity.class);
             fdIntent.setAction(REPLY_ACTION);
-            fdIntent.putExtra("CallingAction", "Dislike");
+            fdIntent.putExtra("CallingAction", "no");
             fdIntent.putExtra("NotificationId", NOTIFICATION_ID + 1);
             fdIntent.putExtra("TripId", mTripId);
             PendingIntent fdPendingIntentNo = PendingIntent.getActivity(app.getApplicationContext()
@@ -744,9 +742,14 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
             fdIntent = new Intent(app.getApplicationContext(), FeedbackActivity.class);
             fdIntent.setAction(REPLY_ACTION);
-            fdIntent.putExtra("CallingAction", "Like");
+            fdIntent.putExtra("CallingAction", "yes");
             PendingIntent fdPendingIntentYes = PendingIntent.getActivity(app.getApplicationContext()
                     , 2, fdIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            rIntent.putExtra(FeedbackReceiver.ACTION_NUM,
+                    FeedbackReceiver.DISMISS_FEEDBACK_NOTIFICATION);
+            PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
+                    0, rIntent, 0);
 
             mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext()
                     ,Application.CHANNEL_DESTINATION_ALERT_ID)
@@ -756,6 +759,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     .setContentText(message)
                     .addAction(0, "No", fdPendingIntentNo )
                     .addAction(0, "Yes", fdPendingIntentYes)
+                    .setDeleteIntent(pDelIntent)
                     .setAutoCancel(true);
         }
         else {
@@ -800,6 +804,11 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     .addRemoteInput(remoteInput1)
                     .build();
 
+            rIntent.putExtra(FeedbackReceiver.ACTION_NUM,
+                    FeedbackReceiver.DISMISS_FEEDBACK_NOTIFICATION);
+            PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
+                    0, rIntent, 0);
+
             mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext()
                     , Application.CHANNEL_DESTINATION_ALERT_ID)
                     .setSmallIcon(R.drawable.ic_stat_notification)
@@ -807,6 +816,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     .setContentText(message)
                     .addAction(replyAction)
                     .addAction(replyAction1)
+                    .setDeleteIntent(pDelIntent)
                     .setAutoCancel(true);
         }
 

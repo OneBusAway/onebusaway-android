@@ -236,15 +236,8 @@ public class NavigationService extends Service implements LocationHelper.Listene
             SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM d yyyy, hh:mm aaa");
             String readableDate = sdf.format(Calendar.getInstance().getTime());
 
-            File subFolder = new File(Application.get().getApplicationContext()
-                    .getFilesDir().getAbsolutePath() + File.separator + LOG_DIRECTORY);
-
-            if (!subFolder.exists()) {
-                subFolder.mkdirs();
-            }
-
-            mLogFile = new File(subFolder, counter + "-" + readableDate + ".csv");
-            LOG_FILE = mLogFile.getAbsolutePath();
+            mLogFile = new File(Environment.getExternalStoragePublicDirectory(LOG_DIRECTORY),
+                    counter + "-" + readableDate + ".csv");
             Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
 

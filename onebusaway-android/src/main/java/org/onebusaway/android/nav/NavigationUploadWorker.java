@@ -45,7 +45,6 @@ public class NavigationUploadWorker extends Worker {
         if (dir.exists()) {
             Log.d(TAG, "Directory exists");
             for (File lFile : dir.listFiles()) {
-
                 Uri file = Uri.fromFile(lFile);
                 String logFileName = lFile.getName();
                 StorageReference logRef = storageRef.child("android/destination_reminders/" + action

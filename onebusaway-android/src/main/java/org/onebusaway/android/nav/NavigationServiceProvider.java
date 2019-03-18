@@ -730,7 +730,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         Intent rIntent = new Intent(app.getApplicationContext(), FeedbackReceiver.class);
         rIntent.putExtra(FeedbackReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
 
-        if((mFirstFeedback) || (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)) {
+        if ((mFirstFeedback) || (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)) {
 
             Intent fdIntent = new Intent(app.getApplicationContext(), FeedbackActivity.class);
             fdIntent.setAction(REPLY_ACTION);
@@ -761,9 +761,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     .addAction(0, "Yes", fdPendingIntentYes)
                     .setDeleteIntent(pDelIntent)
                     .setAutoCancel(true);
-        }
-        else {
-
+        } else {
             Intent intentNo = new Intent(Application.get().getApplicationContext(), FeedbackReceiver.class);
             intentNo.setAction(REPLY_ACTION);
             intentNo.putExtra(FeedbackReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);

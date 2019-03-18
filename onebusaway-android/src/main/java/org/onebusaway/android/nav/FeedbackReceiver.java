@@ -41,11 +41,10 @@ public class FeedbackReceiver extends BroadcastReceiver {
                 NavigationServiceProvider.NOTIFICATION_ID + 1);
         int actionNum = intent.getIntExtra(ACTION_NUM, 0);
 
-        if(actionNum == DISMISS_FEEDBACK_NOTIFICATION) {
+        if (actionNum == DISMISS_FEEDBACK_NOTIFICATION) {
             Log.d(TAG, "Dismiss intent");
             //TODO : Create Snack bar if user dismissed feedback notification without providing feedback
-        }
-        else {
+        } else {
             Log.d(TAG, "Capturing user feedback from notification");
             captureFeedback(context, intent, notifyId);
         }
@@ -81,8 +80,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
 
             if(action == FEEDBACK_YES) {
                 callingAction = "yes";
-            }
-            else {
+            } else {
                 callingAction = "no";
             }
 
@@ -95,12 +93,10 @@ public class FeedbackReceiver extends BroadcastReceiver {
             if (pref) {
                 Log.d(TAG, "True");
                 moveLog(feedback, callingAction);
-            }
-            else {
+            } else {
                 Log.d(TAG, "False");
                 deleteLog();
             }
-
         }
     }
 

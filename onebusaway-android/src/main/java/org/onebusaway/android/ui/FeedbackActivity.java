@@ -41,25 +41,23 @@ public class FeedbackActivity extends AppCompatActivity {
 
         Intent intent = this.getIntent();
         CheckBox sendLogs = (CheckBox) findViewById(R.id.feedback_send_logs);
-        if(intent != null){
+        if (intent != null) {
             mAction = intent.getExtras().getString("CallingAction");
-            if(mAction.equals("no")){
+            if (mAction.equals("no")) {
                 Log.d(TAG, "Thumbs down tapped");
                 dislikeButton = findViewById(R.id.ImageBtn_Dislike);
                 dislikeButton.setSelected(true);
-            }
-            else if(mAction.equals("yes")){
+            } else if (mAction.equals("yes")) {
                 Log.d(TAG, "Thumbs up tapped");
                 likeButton = findViewById(R.id.ImageBtn_like);
                 likeButton.setSelected(true);
             }
         }
 
-        if(Application.getPrefs()
+        if (Application.getPrefs()
                 .getBoolean(getString(R.string.preferences_key_user_share_logs), true)) {
             sendLogs.setChecked(true);
-        }
-        else {
+        } else {
             sendLogs.setChecked(false);
         }
 
@@ -78,7 +76,7 @@ public class FeedbackActivity extends AppCompatActivity {
            submitFeedback();
            finish();
        }
-        return super.onOptionsItemSelected(item);
+       return super.onOptionsItemSelected(item);
     }
 
     private void submitFeedback() {
@@ -89,8 +87,7 @@ public class FeedbackActivity extends AppCompatActivity {
         if (Application.getPrefs()
                 .getBoolean(getString(R.string.preferences_key_user_share_logs), true)) {
             moveLog(feedback);
-        }
-        else {
+        } else {
             deleteLog();
         }
         Log.d(TAG,"Feedback send : " + feedback);
@@ -153,13 +150,12 @@ public class FeedbackActivity extends AppCompatActivity {
 
     public void setSendLogs(View view) {
         CheckBox checkBox = (CheckBox)view;
-        if(checkBox.isChecked()){
+        if (checkBox.isChecked()) {
             if (!Application.getPrefs().getBoolean(getString(R.string.preferences_key_user_share_logs), true)) {
                 PreferenceUtils.saveBoolean(getString(R.string.preferences_key_user_share_logs), true);
                 Log.d(TAG,"User wants to share logs");
             }
-        }
-        else {
+        } else {
             if (Application.getPrefs().getBoolean(getString(R.string.preferences_key_user_share_logs), true)) {
                 PreferenceUtils.saveBoolean(getString(R.string.preferences_key_user_share_logs), false);
                 Log.d(TAG,"User doesn't want to share logs");

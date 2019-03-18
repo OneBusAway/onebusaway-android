@@ -39,13 +39,13 @@ public class NavigationCleanupWorker extends Worker {
         time.add(Calendar.HOUR_OF_DAY,-24);
         Log.d(TAG, "Time threshold - " + time.getTime().toString());
 
-        if (dir.exists()){
+        if (dir.exists()) {
             Log.d(TAG, "Directory exists");
             for (File file : dir.listFiles()) {
                 Date lastModified = new Date(file.lastModified());
                 Log.d(TAG, "File Last modified at - " + lastModified.toString());
 
-                if((!file.isDirectory()) && (lastModified.before(time.getTime()))) {
+                if ((!file.isDirectory()) && (lastModified.before(time.getTime()))) {
                     //file is older than a day
                     file.delete();
                     Log.d(TAG, "File deleted");

@@ -138,7 +138,8 @@ public class FeedbackActivity extends AppCompatActivity {
             catch (Exception e) {
                 Log.d(TAG, "File move failed");
             }
-            } catch (IOException e) {
+
+        } catch (IOException e) {
             Log.e(TAG, "File write failed: " + e.toString());
         }
 

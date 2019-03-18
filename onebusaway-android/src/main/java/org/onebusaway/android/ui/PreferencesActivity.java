@@ -204,7 +204,7 @@ public class PreferencesActivity extends PreferenceActivity
 
         // If the Android version is lower than Nougat (7.0) and above hide "Share trip logs" preference
         if ((Build.VERSION.SDK_INT < Build.VERSION_CODES.N) || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)) {
-            getPreferenceScreen().removePreference(findPreference(getString(R.string.preferences_key_user_logs)));
+            getPreferenceScreen().removePreference(findPreference(getString(R.string.preferences_key_user_share_logs_category)));
         }
 
         // If its the OBA brand flavor, then show the "Donate" preference and hide "Powered by OBA"

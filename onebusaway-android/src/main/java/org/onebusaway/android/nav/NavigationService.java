@@ -80,7 +80,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
     private boolean mGetReadyFlag = false;
     private boolean mPullTheCordFlag = false;
 
-    public NavigationServiceProvider mNavProvider;
+    private NavigationServiceProvider mNavProvider;
     private File mLogFile = null;
 
     private long mFinishedTime;

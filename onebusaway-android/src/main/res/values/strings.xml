@@ -1093,6 +1093,7 @@
     <string name="feedback_action_reply_yes">Yes</string>
 
     <!-- User trip log Preferences -->
+    <string name="preferences_category_user_logs">Share trip logs</string>
     <string name="preferences_user_share_logs_title">Include system logs</string>
     <string name="preferences_user_share_logs_summary">Anonymous real-time location information from your device will be shared with OneBusAway to improve the destination reminder feature.</string>
 </resources>

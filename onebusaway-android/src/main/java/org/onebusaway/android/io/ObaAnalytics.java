@@ -15,6 +15,12 @@
  */
 package org.onebusaway.android.io;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.location.Location;
+import android.os.Bundle;
+
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
@@ -24,12 +30,6 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.RegionUtils;
-
-import android.app.Activity;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.location.Location;
-import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
@@ -242,43 +242,59 @@ public class ObaAnalytics {
     }
 
     /**
-     * Tracks stop tap distance between bus stop location and users current location
+     * Tracks distance between bus stop location and device current location
      *
-     * @param stopId       for action
-     * @param myLocation   the users location
-     * @param stopLocation tapped stop location
+     * @param analytics Firebase singleton
+     * @param stopId       bus stop ID
+     * @param myLocation   the device location
+     * @param stopLocation bus stop location
      */
-    public static void trackBusStopDistance(String stopId, Location myLocation, Location stopLocation) {
-        if (isAnalyticsActive()) {
-            if (myLocation == null) {
-                return;
-            }
-            if (myLocation.getAccuracy() < LOCATION_ACCURACY_THRESHOLD) {
-                float distanceInMeters = myLocation.distanceTo(stopLocation);
-                ObaStopDistance stopDistance;
-
-                if (distanceInMeters < ObaStopDistance.DISTANCE_1.getDistanceInMeters()) {
-                    stopDistance = ObaStopDistance.DISTANCE_1;
-                } else if (distanceInMeters < ObaStopDistance.DISTANCE_2.getDistanceInMeters()) {
-                    stopDistance = ObaStopDistance.DISTANCE_2;
-                } else if (distanceInMeters < ObaStopDistance.DISTANCE_3.getDistanceInMeters()) {
-                    stopDistance = ObaStopDistance.DISTANCE_3;
-                } else if (distanceInMeters < ObaStopDistance.DISTANCE_4.getDistanceInMeters()) {
-                    stopDistance = ObaStopDistance.DISTANCE_4;
-                } else if (distanceInMeters < ObaStopDistance.DISTANCE_5.getDistanceInMeters()) {
-                    stopDistance = ObaStopDistance.DISTANCE_5;
-                } else if (distanceInMeters < ObaStopDistance.DISTANCE_6.getDistanceInMeters()) {
-                    stopDistance = ObaStopDistance.DISTANCE_6;
-                } else if (distanceInMeters < ObaStopDistance.DISTANCE_7.getDistanceInMeters()) {
-                    stopDistance = ObaStopDistance.DISTANCE_7;
-                } else {
-                    stopDistance = ObaStopDistance.DISTANCE_8;
-                }
-
-                reportEventWithCategory(ObaEventCategory.STOP_ACTION.toString(), "Stop Id: " + stopId,
-                        stopDistance.toString());
-            }
+    public static void trackBusStopDistance(FirebaseAnalytics analytics, String stopId, Location myLocation, Location stopLocation) {
+        if (!isAnalyticsActive() || myLocation == null) {
+            return;
         }
+        if (myLocation.getAccuracy() < LOCATION_ACCURACY_THRESHOLD) {
+            float distanceInMeters = myLocation.distanceTo(stopLocation);
+            ObaStopDistance stopDistance;
+
+            if (distanceInMeters < ObaStopDistance.DISTANCE_1.getDistanceInMeters()) {
+                stopDistance = ObaStopDistance.DISTANCE_1;
+            } else if (distanceInMeters < ObaStopDistance.DISTANCE_2.getDistanceInMeters()) {
+                stopDistance = ObaStopDistance.DISTANCE_2;
+            } else if (distanceInMeters < ObaStopDistance.DISTANCE_3.getDistanceInMeters()) {
+                stopDistance = ObaStopDistance.DISTANCE_3;
+            } else if (distanceInMeters < ObaStopDistance.DISTANCE_4.getDistanceInMeters()) {
+                stopDistance = ObaStopDistance.DISTANCE_4;
+            } else if (distanceInMeters < ObaStopDistance.DISTANCE_5.getDistanceInMeters()) {
+                stopDistance = ObaStopDistance.DISTANCE_5;
+            } else if (distanceInMeters < ObaStopDistance.DISTANCE_6.getDistanceInMeters()) {
+                stopDistance = ObaStopDistance.DISTANCE_6;
+            } else if (distanceInMeters < ObaStopDistance.DISTANCE_7.getDistanceInMeters()) {
+                stopDistance = ObaStopDistance.DISTANCE_7;
+            } else {
+                stopDistance = ObaStopDistance.DISTANCE_8;
+            }
+
+            reportFirebaseViewStop(analytics, stopId, stopDistance.toString());
+        }
+    }
+
+    /**
+     * Reports the user viewing a particular bus stop, as well as a categorized distance from that stop
+     *
+     * @param analytics       Firebase singleton
+     * @param stopId          ID of the stop
+     * @param proximityToStop a label indicating the proximity of the user to the stop
+     */
+    private static void reportFirebaseViewStop(FirebaseAnalytics analytics, String stopId, String proximityToStop) {
+        if (!isAnalyticsActive()) {
+            return;
+        }
+        Bundle bundle = new Bundle();
+        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, stopId);
+        bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, Application.get().getString(R.string.analytics_label_stop_category));
+        bundle.putString(FirebaseAnalytics.Param.ITEM_LOCATION_ID, proximityToStop);
+        analytics.logEvent(FirebaseAnalytics.Event.VIEW_ITEM, bundle);
     }
 
     /**

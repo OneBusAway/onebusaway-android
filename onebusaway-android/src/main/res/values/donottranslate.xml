@@ -189,6 +189,7 @@
     <string name="analytics_label_floating_bike_marker_clicked">Pressed floating bike marker</string>
     <string name="analytics_label_bike_station_balloon_clicked">Pressed bike station balloon</string>
     <string name="analytics_label_floating_bike_balloon_clicked">Pressed floating bike balloon</string>
+    <string name="analytics_label_stop_category">stops</string>
 
     <!-- Analytics for social -->
     <string name="analytics_label_button_press_social_sign_in">Clicked Social Sign In</string>

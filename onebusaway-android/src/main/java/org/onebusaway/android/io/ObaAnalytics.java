@@ -15,12 +15,6 @@
  */
 package org.onebusaway.android.io;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.location.Location;
-import android.os.Bundle;
-
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
@@ -30,6 +24,12 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.RegionUtils;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.location.Location;
+import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
@@ -246,10 +246,11 @@ public class ObaAnalytics {
      *
      * @param analytics Firebase singleton
      * @param stopId       bus stop ID
+     * @param stopName bus stop name
      * @param myLocation   the device location
      * @param stopLocation bus stop location
      */
-    public static void trackBusStopDistance(FirebaseAnalytics analytics, String stopId, Location myLocation, Location stopLocation) {
+    public static void trackBusStopDistance(FirebaseAnalytics analytics, String stopId, String stopName, Location myLocation, Location stopLocation) {
         if (!isAnalyticsActive() || myLocation == null) {
             return;
         }
@@ -275,7 +276,7 @@ public class ObaAnalytics {
                 stopDistance = ObaStopDistance.DISTANCE_8;
             }
 
-            reportFirebaseViewStop(analytics, stopId, stopDistance.toString());
+            reportFirebaseViewStop(analytics, stopId, stopName, stopDistance.toString());
         }
     }
 
@@ -284,14 +285,16 @@ public class ObaAnalytics {
      *
      * @param analytics       Firebase singleton
      * @param stopId          ID of the stop
+     * @param stopName        Name of the stop
      * @param proximityToStop a label indicating the proximity of the user to the stop
      */
-    private static void reportFirebaseViewStop(FirebaseAnalytics analytics, String stopId, String proximityToStop) {
+    private static void reportFirebaseViewStop(FirebaseAnalytics analytics, String stopId, String stopName, String proximityToStop) {
         if (!isAnalyticsActive()) {
             return;
         }
         Bundle bundle = new Bundle();
         bundle.putString(FirebaseAnalytics.Param.ITEM_ID, stopId);
+        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, stopName);
         bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, Application.get().getString(R.string.analytics_label_stop_category));
         bundle.putString(FirebaseAnalytics.Param.ITEM_LOCATION_ID, proximityToStop);
         analytics.logEvent(FirebaseAnalytics.Event.VIEW_ITEM, bundle);

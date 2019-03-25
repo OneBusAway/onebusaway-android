@@ -114,14 +114,14 @@
     <string name="analytics_label_hide_arrivals_in_header">Clicked hide arrivals in header
     </string>
     <string name="analytics_label_trip_plan">Planned a Trip</string>
-    <string name="analytics_label_button_press_star">nav_drawer_starred_stops</string>
-    <string name="analytics_label_button_press_nearby">nav_drawer_nearby</string>
-    <string name="analytics_label_button_press_reminders">nav_drawer_my_reminders</string>
-    <string name="analytics_label_button_press_trip_plan">nav_drawer_trip_plan</string>
-    <string name="analytics_label_button_press_settings">nav_drawer_settings</string>
-    <string name="analytics_label_button_press_help">nav_drawer_help</string>
-    <string name="analytics_label_button_press_feedback">nav_drawer_feedback</string>
-    <string name="analytics_label_button_press_open_source">nav_drawer_github</string>
+    <string name="analytics_label_button_press_star">starred_stops</string>
+    <string name="analytics_label_button_press_nearby">nearby</string>
+    <string name="analytics_label_button_press_reminders">my_reminders</string>
+    <string name="analytics_label_button_press_trip_plan">trip_plan</string>
+    <string name="analytics_label_button_press_settings">settings</string>
+    <string name="analytics_label_button_press_help">help</string>
+    <string name="analytics_label_button_press_feedback">send_feedback</string>
+    <string name="analytics_label_button_press_open_source">github</string>
     <string name="analytics_label_button_press_tutorial">preference_tutorial</string>
     <string name="analytics_label_button_press_donate">preference_donate</string>
     <string name="analytics_label_button_press_powered_by_oba">preference_power_by_oba</string>

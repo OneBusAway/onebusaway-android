@@ -23,6 +23,7 @@ import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.elements.ObaTrip;
+import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
@@ -198,6 +199,7 @@ public class SimpleArrivalListFragment extends Fragment
             TextView etaView = (TextView) view.findViewById(R.id.eta);
             TextView minView = (TextView) view.findViewById(R.id.eta_min);
             ViewGroup realtimeView = (ViewGroup) view.findViewById(R.id.eta_realtime_indicator);
+            ViewGroup occupancyView = view.findViewById(R.id.occupancy);
 
             view.findViewById(R.id.more_horizontal).setVisibility(View.INVISIBLE);
             view.findViewById(R.id.route_favorite).setVisibility(View.INVISIBLE);
@@ -247,18 +249,27 @@ public class SimpleArrivalListFragment extends Fragment
                             DateUtils.FORMAT_NO_NOON |
                             DateUtils.FORMAT_NO_MIDNIGHT
             ));
+
+            // Occupancy
+            if (stopInfo.getPredictedOccupancy() != null) {
+                // Predicted occupancy data
+                UIUtils.setOccupancyVisibilityAndColor(occupancyView, stopInfo.getPredictedOccupancy(), OccupancyState.PREDICTED);
+                UIUtils.setOccupancyContentDescription(occupancyView, stopInfo.getPredictedOccupancy(), OccupancyState.PREDICTED);
+            } else {
+                // Historical occupancy data
+                UIUtils.setOccupancyVisibilityAndColor(occupancyView, stopInfo.getHistoricalOccupancy(), OccupancyState.HISTORICAL);
+                UIUtils.setOccupancyContentDescription(occupancyView, stopInfo.getHistoricalOccupancy(), OccupancyState.HISTORICAL);
+            }
+
             View reminder = view.findViewById(R.id.reminder);
             reminder.setVisibility(View.GONE);
 
             contentLayout.addView(view);
 
-            view.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    String agencyName = findAgencyNameByRouteId(refs, arrivalInfo.getRouteId());
-                    String blockId = findBlockIdByTripId(refs, arrivalInfo.getTripId());
-                    mCallback.onArrivalItemClicked(arrivalInfo, agencyName, blockId);
-                }
+            view.setOnClickListener(view1 -> {
+                String agencyName = findAgencyNameByRouteId(refs, arrivalInfo.getRouteId());
+                String blockId = findBlockIdByTripId(refs, arrivalInfo.getTripId());
+                mCallback.onArrivalItemClicked(arrivalInfo, agencyName, blockId);
             });
         }
     }

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="@layout/arrivals_list_item"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:minWidth="@dimen/arrival_style_b_status_min_width"
+    android:background="@drawable/occupancy_background">
+
+    <ImageView
+        android:id="@+id/silhouette1"
+        android:layout_width="@dimen/occupancy"
+        android:layout_height="@dimen/occupancy"
+        android:layout_marginStart="@dimen/occupancy_margin"
+        android:layout_marginLeft="@dimen/occupancy_margin"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/silhouette2"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:srcCompat="@drawable/ic_occupancy"
+        android:tint="@color/stop_info_occupancy_historical" />
+
+    <ImageView
+        android:id="@+id/silhouette2"
+        android:layout_width="@dimen/occupancy"
+        android:layout_height="@dimen/occupancy"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/silhouette1"
+        app:layout_constraintEnd_toStartOf="@id/silhouette3"
+        android:layout_marginStart="@dimen/occupancy_margin"
+        android:layout_marginLeft="@dimen/occupancy_margin"
+        app:srcCompat="@drawable/ic_occupancy"
+        android:tint="@color/stop_info_occupancy_historical" />
+
+    <ImageView
+        android:id="@+id/silhouette3"
+        android:layout_width="@dimen/occupancy"
+        android:layout_height="@dimen/occupancy"
+        android:layout_marginStart="@dimen/occupancy_margin"
+        android:layout_marginLeft="@dimen/occupancy_margin"
+        android:layout_marginEnd="@dimen/occupancy_margin"
+        android:layout_marginRight="@dimen/occupancy_margin"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/silhouette2"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_occupancy"
+        android:tint="@color/stop_info_occupancy_historical" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -195,8 +195,9 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
                 Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mUserComment.getWindowToken(), 0);
         if (isReportArgumentsValid()) {
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
-                    getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_trip_problem));
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_problem),
+                    getString(R.string.analytics_label_report_trip_problem));
             super.sendReport();
         } else {
             // Show error message if report arguments is not valid

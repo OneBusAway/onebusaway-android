@@ -421,6 +421,27 @@
     <string name="trip_info_option_showstop">Show Stop</string>
     <string name="trip_info_separator">-</string>
 
+    <!-- Occupancy -->
+    <string name="historically_full">Historically full</string>
+    <string name="historically_standing_room">Historically standing room</string>
+    <string name="historically_seats_available">Historically seats available</string>
+    <string name="historically_empty">Historically empty</string>
+    <string name="menu_title_about_historical_occupancy">About historical occupancy</string>
+    <string name="menu_title_about_occupancy">About occupancy</string>
+    <string name="menu_text_about_historical_occupancy">Historical occupancy (gray icon) is an average of trip ridership at this stop over the last 6 months.</string>
+    <string name="menu_text_about_occupancy">Real-time occupancy is shown using green coloring when there are many seats available or standing room available, and is shown in red coloring when the vehicle is full.  Historical occupancy (gray icon) is an average of trip ridership at this stop over the last 6 months.</string>
+
+    <string name="realtime_full">Full</string>
+    <string name="realtime_standing_room">Standing room</string>
+    <string name="realtime_seats_available">Seats available</string>
+    <string name="realtime_empty">Empty</string>
+
+    <string name="predicted_full">Predicted full</string>
+    <string name="predicted_standing_room">Predicted standing room</string>
+    <string name="predicted_seats_available">Predicted seats available</string>
+    <string name="predicted_empty">Predicted empty</string>
+
+
     <!--  Trip list -->
     <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by
         tapping on an arriving bus at your stop.

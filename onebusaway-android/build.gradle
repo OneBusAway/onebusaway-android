@@ -49,10 +49,10 @@ android {
     buildToolsVersion '28.0.3'
 
     defaultConfig {
-        minSdkVersion 15
+        minSdkVersion 16
         targetSdkVersion 26
-        versionCode 98
-        versionName "2.4.1"
+        versionCode 101
+        versionName "2.4.4"
 
         multiDexEnabled true
 
@@ -261,8 +261,8 @@ android {
             release {
                 storeFile file(props['key.store'])
                 keyAlias props['key.alias']
-                storePassword "askmelater"
-                keyPassword "askmelater"
+                storePassword props['key.storepassword']
+                keyPassword props['key.keypassword']
             }
         }
     } else {
@@ -288,7 +288,6 @@ android {
         android.applicationVariants.all { variant ->
             if (variant.buildType.name == "release") {
                 variant.outputs.all { output ->
-                    def file = output.outputFile
                     outputFileName = "${variant.name}-v${variant.versionName}.apk"
                 }
             }
@@ -310,7 +309,7 @@ android {
 }
 
 /**
- * Returns the Embedded Social API key. Returns the empty string if the key is not found
+ * Returns the Embedded Social API key from gradle.properties for the given product flavor (e.g., "oba"), or returns the empty string if the key is not found
  */
 def getEmbeddedSocialApiKey(productFlavor) {
     def keyName = "EmbeddedSocialApiKey" + "_" + productFlavor
@@ -345,55 +344,13 @@ task copyMapsApiV2Classes {
 
 preBuild.dependsOn copyMapsApiV2Classes
 
-/**
- * Ask for keystore/key passwords on the command line or popup UI when running release builds
- */
-task askForPasswords << {
-    def console = System.console()
-    def storePw
-    def keyPw
-
-    if (console) {
-        // Must create String because System.readPassword() returns char[]
-        // (and assigning that below fails silently)
-        storePw = new String(console.readPassword("\nKeystore password: "))
-        keyPw = new String(console.readPassword("Key password: "))
-    } else {
-        // Gradle is running as a daemon - prompt user to enter passwords via popup UI (#770)
-        new SwingBuilder().edt {
-            dialog(modal: true, title: 'Enter credentials', alwaysOnTop: true, resizable: true,
-                    locationRelativeTo: null, pack: true, show: true
-            ) {
-                vbox {
-                    label(text: "Keystore passphrase:")
-                    textField id: "storeText", input = passwordField()
-                    label(text: "Key passphrase:")
-                    textField id: "keyText", input = passwordField()
-                    button(defaultButton: true, text: 'OK', actionPerformed: {
-                        storePw = storeText.text;
-                        keyPw = keyText.text;
-                        dispose();
-                    })
-                }
-            }
-        }
-    }
-
-    android.signingConfigs.release.storePassword = storePw
-    android.signingConfigs.release.keyPassword = keyPw
-}
-
 tasks.whenTaskAdded { theTask ->
-   if (theTask.name.matches("\\bpackage\\w+Release\\b")) {
-        theTask.dependsOn "askForPasswords"
-   }
    // Make sure that OBA release builds always have an Embedded Social API key (#907)
    def runningTask = project.gradle.startParameter.taskNames
 
    if ((runningTask.toString().toLowerCase().matches("(.*)oba(.*)release(.*)") || runningTask.toString().toLowerCase().contains("assemblerelease") )  && !project.hasProperty('EmbeddedSocialApiKey_oba')) {
         throw new InvalidUserDataException("gradle.properties must contain an EmbeddedSocialApiKey_oba API key for oba release builds")
    }
-
 }
 
 // Exclude all classes from dependencies that conflict with Android platform classes (#849)
@@ -404,13 +361,9 @@ configurations {
 }
 
 dependencies {
-    // Google Play Services Analytics (we need this on Amazon flavor too)
-    implementation 'com.google.android.gms:play-services-analytics:16.0.6'
     // Firebase Analytics
-    implementation 'com.google.firebase:firebase-core:16.0.6'
-    implementation 'com.google.firebase:firebase-analytics:16.0.6'
-    // Cloud Firestore (for storing destination alert test data)
-    implementation 'com.google.firebase:firebase-firestore:17.1.4'
+    implementation 'com.google.firebase:firebase-core:16.0.8'
+    implementation 'com.google.firebase:firebase-analytics:16.4.0'
     implementation 'com.google.firebase:firebase-auth:16.1.0'
     // Google Play Services Location (we need this on Amazon flavor too)
     implementation 'com.google.android.gms:play-services-location:16.0.0'
@@ -419,6 +372,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'android.arch.lifecycle:extensions:1.1.1'
     implementation 'android.arch.lifecycle:common-java8:1.1.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha3'
     implementation 'commons-io:commons-io:2.4'
     // Open311 client library
     implementation 'edu.usf.cutr:open311client:1.0.9'
@@ -453,5 +407,3 @@ dependencies {
 }
 
 apply plugin:'com.google.gms.google-services'
-
-com.google.gms.googleservices.GoogleServicesPlugin.config.disableVersionCheck = true

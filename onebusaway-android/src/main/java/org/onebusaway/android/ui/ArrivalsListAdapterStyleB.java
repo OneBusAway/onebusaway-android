@@ -18,12 +18,14 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
@@ -38,6 +40,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -47,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.drawable.DrawableCompat;
 
 /**
@@ -139,73 +143,58 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
         LayoutInflater inflater = LayoutInflater.from(context);
 
-        TextView routeName = (TextView) view.findViewById(R.id.routeName);
-        TextView destination = (TextView) view.findViewById(R.id.routeDestination);
+        TextView routeName = view.findViewById(R.id.routeName);
+        TextView destination = view.findViewById(R.id.routeDestination);
 
         // TableLayout that we will fill with TableRows of arrival times
-        TableLayout arrivalTimesLayout = (TableLayout) view.findViewById(R.id.arrivalTimeLayout);
+        TableLayout arrivalTimesLayout = view.findViewById(R.id.arrivalTimeLayout);
         arrivalTimesLayout.removeAllViews();
 
         Resources r = view.getResources();
 
-        ImageButton starBtn = (ImageButton) view.findViewById(R.id.route_star);
+        ImageButton starBtn = view.findViewById(R.id.route_star);
         starBtn.setColorFilter(r.getColor(R.color.theme_primary));
 
-        ImageButton mapImageBtn = (ImageButton) view.findViewById(R.id.mapImageBtn);
+        ImageButton mapImageBtn = view.findViewById(R.id.mapImageBtn);
         mapImageBtn.setColorFilter(r.getColor(R.color.theme_primary));
 
-        ImageButton discussBtn = (ImageButton) view.findViewById(R.id.route_discussion);
+        ImageButton discussBtn = view.findViewById(R.id.route_discussion);
         discussBtn.setColorFilter(r.getColor(R.color.theme_primary));
 
-        ImageButton routeMoreInfo = (ImageButton) view.findViewById(R.id.route_more_info);
+        ImageButton routeMoreInfo = view.findViewById(R.id.route_more_info);
         routeMoreInfo.setColorFilter(r.getColor(R.color.switch_thumb_normal_material_dark));
 
         starBtn.setImageResource(stopInfo.isRouteAndHeadsignFavorite() ?
                 R.drawable.focus_star_on :
                 R.drawable.focus_star_off);
 
-        starBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Show dialog for setting route favorite
-                RouteFavoriteDialogFragment dialog = new RouteFavoriteDialogFragment.Builder(
-                        stopInfo.getInfo().getRouteId(), stopInfo.getInfo().getHeadsign())
-                        .setRouteShortName(stopInfo.getInfo().getShortName())
-                        .setRouteLongName(stopInfo.getInfo().getRouteLongName())
-                        .setStopId(stopInfo.getInfo().getStopId())
-                        .setFavorite(!stopInfo.isRouteAndHeadsignFavorite())
-                        .build();
+        starBtn.setOnClickListener(v -> {
+            // Show dialog for setting route favorite
+            RouteFavoriteDialogFragment dialog = new RouteFavoriteDialogFragment.Builder(
+                    stopInfo.getInfo().getRouteId(), stopInfo.getInfo().getHeadsign())
+                    .setRouteShortName(stopInfo.getInfo().getShortName())
+                    .setRouteLongName(stopInfo.getInfo().getRouteLongName())
+                    .setStopId(stopInfo.getInfo().getStopId())
+                    .setFavorite(!stopInfo.isRouteAndHeadsignFavorite())
+                    .build();
 
-                dialog.setCallback(new RouteFavoriteDialogFragment.Callback() {
-                    @Override
-                    public void onSelectionComplete(boolean savedFavorite) {
-                        if (savedFavorite) {
-                            mFragment.refreshLocal();
-                        }
-                    }
-                });
-                dialog.show(mFragment.getFragmentManager(), RouteFavoriteDialogFragment.TAG);
-            }
+            dialog.setCallback(savedFavorite -> {
+                if (savedFavorite) {
+                    mFragment.refreshLocal();
+                }
+            });
+            dialog.show(mFragment.getFragmentManager(), RouteFavoriteDialogFragment.TAG);
         });
 
         // Setup map
-        mapImageBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mFragment.showRouteOnMap(stopInfo);
-            }
-        });
+        mapImageBtn.setOnClickListener(v -> mFragment.showRouteOnMap(stopInfo));
 
         // Setup discussion
-        discussBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        context.getString(R.string.analytics_action_button_press),
-                        context.getString(R.string.analytics_label_button_press_social_route_style_b));
-                mFragment.openRouteDiscussion(arrivalInfo.getRouteId());
-            }
+        discussBtn.setOnClickListener(v -> {
+            ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(getContext()),
+                    context.getString(R.string.analytics_label_button_press_social_route_style_b),
+                    null);
+            mFragment.openRouteDiscussion(arrivalInfo.getRouteId());
         });
 
         ObaRegion currentRegion = Application.get().getCurrentRegion();
@@ -236,6 +225,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
             // Layout and views to inflate from XML templates
             RelativeLayout layout;
+            ConstraintLayout occupancyView;
             TextView scheduleView, estimatedView, statusView;
             View divider;
 
@@ -259,6 +249,19 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                         .inflate(R.layout.arrivals_list_tv_template_style_b_estimated_small, null);
                 statusView = (TextView) inflater
                         .inflate(R.layout.arrivals_list_tv_template_style_b_status_small, null);
+            }
+
+            occupancyView = (ConstraintLayout) inflater.inflate(R.layout.occupancy, null);
+
+            // Occupancy
+            if (stopInfo.getPredictedOccupancy() != null) {
+                // Predicted occupancy data
+                UIUtils.setOccupancyVisibilityAndColor(occupancyView, stopInfo.getPredictedOccupancy(), OccupancyState.PREDICTED);
+                UIUtils.setOccupancyContentDescription(occupancyView, stopInfo.getPredictedOccupancy(), OccupancyState.PREDICTED);
+            } else {
+                // Historical occupancy data
+                UIUtils.setOccupancyVisibilityAndColor(occupancyView, stopInfo.getHistoricalOccupancy(), OccupancyState.HISTORICAL);
+                UIUtils.setOccupancyContentDescription(occupancyView, stopInfo.getHistoricalOccupancy(), OccupancyState.HISTORICAL);
             }
 
             // Set arrival times and status in views
@@ -297,9 +300,15 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             int pTopBottom = UIUtils.dpToPixels(context, 2);
             statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
 
+            // Set alpha for occupancy person icons
+            for (int index = 0; index < occupancyView.getChildCount(); ++index) {
+                ((ImageView) occupancyView.getChildAt(index)).setAlpha(alpha);
+            }
+
             // Add TextViews to layout
             layout.addView(scheduleView);
             layout.addView(statusView);
+            layout.addView(occupancyView);
             layout.addView(estimatedView);
 
             // Make sure the TextViews align left/center/right of parent relative layout
@@ -311,7 +320,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
             RelativeLayout.LayoutParams params2 = (RelativeLayout.LayoutParams) statusView
                     .getLayoutParams();
-            params2.addRule(RelativeLayout.CENTER_IN_PARENT);
+            params2.addRule(RelativeLayout.CENTER_HORIZONTAL);
             // Give status view a little extra margin
             int p = UIUtils.dpToPixels(context, 3);
             params2.setMargins(p, p, p, p);
@@ -322,6 +331,13 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             params3.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
             params3.addRule(RelativeLayout.CENTER_VERTICAL);
             estimatedView.setLayoutParams(params3);
+
+            RelativeLayout.LayoutParams params4 = (RelativeLayout.LayoutParams) occupancyView
+                    .getLayoutParams();
+            params4.addRule(RelativeLayout.CENTER_HORIZONTAL);
+            params4.addRule(RelativeLayout.BELOW, statusView.getId());
+            params4.setMargins(p, p, p, p);
+            occupancyView.setLayoutParams(params4);
 
             // Add layout to TableRow
             tr.addView(layout);

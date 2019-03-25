@@ -84,24 +84,15 @@
     <string name="google_play_listing_prefix">https://play.google.com/store/apps/details?id=%1s</string>
 
     <!-- Oba Analytics Messages -->
-    <string name="analytics_action_configured_region">configured_region</string>
-    <string name="analytics_action_configured_region_auto">configured_region_auto</string>
-    <string name="analytics_action_button_press">button_press</string>
-    <string name="analytics_action_set_region">set_region</string>
-    <string name="analytics_action_trip_plan">trip_plan</string>
-    <string name="analytics_action_edit_field">edit_field</string>
-    <string name="analytics_action_edit_general">general</string>
-    <string name="analytics_action_switch">app_switch</string>
-    <string name="analytics_action_problem">report_problem</string>
-    <string name="analytics_action_touch_exploration">touch_exploration_on</string>
-    <string name="analytics_action_customer_service">customer_service</string>
-    <string name="analytics_action_service_alerts">service_alerts</string>
-    <string name="analytics_action_layer_bikeshare">layer_bikeshare</string>
-    <string name="analytics_action_bike_marker_clicked">bike_marker_clicked</string>
+    <string name="analytics_problem">report_problem</string>
+    <string name="analytics_accessibility">accessibility</string>
+    <string name="analytics_customer_service">customer_service</string>
+    <string name="analytics_service_alerts">service_alerts</string>
+    <string name="analytics_layer_bikeshare">layer_bikeshare</string>
 
-    <string name="analytics_label_region">API Region:\u0020</string>
-    <string name="analytics_label_region_auto">Set Region Automatically:\u0020</string>
-    <string name="analytics_label_button_press">Clicked load more arrivals button</string>
+    <!-- The below region name value needs to match existing iOS Firebase User Property -->
+    <string name="analytics_label_region_name">RegionName</string>
+    <string name="analytics_label_load_more_arrivals">Clicked load more arrivals button</string>
     <string name="analytics_label_sort_by_eta_arrival">Clicked sort by ETA from
         ArrivalsListFragment
     </string>
@@ -125,59 +116,53 @@
     <string name="analytics_label_hide_arrivals_in_header">Clicked hide arrivals in header
     </string>
     <string name="analytics_label_trip_plan">Planned a Trip</string>
-    <string name="analytics_label_button_press_star">Clicked Starred Stops Link</string>
-    <string name="analytics_label_button_press_nearby">Clicked Nearby Item Link</string>
-    <string name="analytics_label_button_press_reminders">Clicked My Reminders Link</string>
-    <string name="analytics_label_button_press_trip_plan">Clicked Trip Plan Link</string>
-    <string name="analytics_label_button_press_settings">Clicked Settings Link</string>
-    <string name="analytics_label_button_press_tutorial">Clicked Tutorial Link</string>
-    <string name="analytics_label_button_press_donate">Clicked Donate Link</string>
-    <string name="analytics_label_button_press_powered_by_oba">Clicked Powered By Oba Link</string>
-    <string name="analytics_label_button_press_about">Clicked About</string>
-    <string name="analytics_label_button_press_help">Clicked Help Link</string>
-    <string name="analytics_label_button_press_feedback">Clicked Send Feedback</string>
-    <string name="analytics_label_button_press_open_source">Visit us on GitHub</string>
+    <string name="analytics_label_button_press_star">starred_stops</string>
+    <string name="analytics_label_button_press_nearby">nearby</string>
+    <string name="analytics_label_button_press_reminders">my_reminders</string>
+    <string name="analytics_label_button_press_trip_plan">trip_plan</string>
+    <string name="analytics_label_button_press_settings">settings</string>
+    <string name="analytics_label_button_press_help">help</string>
+    <string name="analytics_label_button_press_feedback">send_feedback</string>
+    <string name="analytics_label_button_press_open_source">github</string>
+    <string name="analytics_label_button_press_tutorial">preference_tutorial</string>
+    <string name="analytics_label_button_press_donate">preference_donate</string>
+    <string name="analytics_label_button_press_powered_by_oba">preference_power_by_oba</string>
+    <string name="analytics_label_button_press_about">preference_about</string>
     <string name="analytics_label_button_press_stopinfo">Loaded StopInfo from\u0020</string>
     <string name="analytics_label_button_press_stop_details">Clicked Stop Details</string>
     <string name="analytics_label_button_press_map_icon">Clicked MapStopIcon</string>
     <string name="analytics_label_button_press_search_box">Search box selected</string>
-    <string name="analytics_label_button_press_search_button">Search button clicked</string>
     <string name="analytics_label_button_press_location">Clicked My Location Button</string>
     <string name="analytics_label_button_press_experimental_on">Turned on Experimental Regions
     </string>
     <string name="analytics_label_button_press_experimental_off">Turned off Experimental Regions
     </string>
-    <string name="analytics_label_experimental">Show Experimental Regions:\u0020</string>
     <string name="analytics_label_button_press_auto">Set region automatically</string>
     <string name="analytics_label_button_press_manual">Set region manually</string>
     <string name="analytics_label_button_press_save_preference">Clicked Save to Storage</string>
     <string name="analytics_label_button_press_restore_preference">Clicked Restore from Storage</string>
-    <string name="analytics_label_edit_field">Edited Bookmark</string>
+    <string name="analytics_label_edit_field_bookmark">Edited Bookmark</string>
     <string name="analytics_label_edit_field_bookmark_delete">Edited Bookmark Group Deleted</string>
-    <string name="analytics_label_set_region">Set Region:\u0020</string>
-    <string name="analytics_label_app_switch">Loaded Twitter via Web</string>
-    <string name="analytics_label_report_problem">Reported Problem</string>
+    <string name="analytics_label_twitter">Loaded Twitter via Web</string>
     <string name="analytics_label_report_stop_problem">Reported Stop Problem</string>
     <string name="analytics_label_report_trip_problem">Reported Trip Problem</string>
-    <string name="analytics_label_stop_problem">Stop Problem</string>
-    <string name="analytics_label_trip_problem">Trip Problem</string>
-    <string name="analytics_label_app_feedback">Send Email Link</string>
+    <string name="analytics_label_stop_problem">feedback_stop_problem</string>
+    <string name="analytics_label_trip_problem">feedback_trip_problem</string>
+    <string name="analytics_label_app_feedback">feedback_app_feedback_email</string>
     <string name="analytics_label_app_feedback_otp">Reported OTP problem</string>
-    <string name="analytics_label_app_feedback_without_location">Send Email Link without location</string>
-    <string name="analytics_label_customer_service">Customer Service</string>
+    <string name="analytics_label_app_feedback_without_location">feedback_app_feedback_email_no_location</string>
+    <string name="analytics_label_customer_service">feedback_customer_service</string>
     <string name="analytics_label_customer_service_web">Open web page</string>
     <string name="analytics_label_customer_service_email">Send email</string>
     <string name="analytics_label_customer_service_email_without_location">Send email without location</string>
     <string name="analytics_label_customer_service_phone">Make phone call</string>
     <string name="analytics_label_idea_scale">IdeaScale</string>
-    <string name="analytics_label_talkback">Loaded view:\u0020</string>
     <string name="analytics_label_custom_url">Custom URL</string>
     <string name="analytics_label_star_route">Starred route</string>
     <string name="analytics_label_unstar_route">Unstarred route</string>
-    <string name="analytics_label_left_hand_preference">Set Left hand mode:\u0020</string>
-    <string name="analytics_label_analytic_preference">Set Send anonymous usage data:\u0020</string>
-    <string name="analytics_label_show_departed_bus_preference">Show Departed Buses:\u0020</string>
-    <string name="analytics_label_arrival_info_style">Set Arrival info style:\u0020</string>
+    <string name="analytics_label_left_hand_property">left_handed</string>
+    <string name="analytics_label_analytics_property">send_anonymous_data</string>
+    <string name="analytics_label_show_departed_vehicles_property">show_departed_vehicles</string>
     <string name="analytics_label_service_alerts">Clicked Service Alerts from:\u0020</string>
     <string name="analytics_label_bikeshare_activated">Bikeshare layer activated</string>
     <string name="analytics_label_bikeshare_deactivated">Bikeshare layer deactivated</string>
@@ -185,6 +170,7 @@
     <string name="analytics_label_floating_bike_marker_clicked">Pressed floating bike marker</string>
     <string name="analytics_label_bike_station_balloon_clicked">Pressed bike station balloon</string>
     <string name="analytics_label_floating_bike_balloon_clicked">Pressed floating bike balloon</string>
+    <string name="analytics_label_stop_category">stops</string>
 
     <!-- Analytics for social -->
     <string name="analytics_label_button_press_social_sign_in">Clicked Social Sign In</string>
@@ -196,10 +182,13 @@
     <string name="analytics_label_button_press_social_stop">Clicked Social Stop Arrivals Header</string>
     <string name="analytics_label_button_press_social_route_options">Clicked Social Route Options</string>
     <string name="analytics_label_button_press_social_route_style_b">Clicked Social Route Style B Card</string>
+    <string name="analytics_login_embedded_social">embedded_social</string>
+    <string name="analytics_label_button_press_about_occupancy">Clicked About Occupancy</string>
 
     <!-- Analytics for payment -->
-    <string name="analytics_label_button_press_pay_fare_download_app">Clicked Pay Fare Download App</string>
-    <string name="analytics_label_button_press_pay_fare_open_app">Clicked Pay Fare Open App</string>
+    <string name="analytics_label_button_fare_payment">fare_payment</string>
+    <string name="analytics_label_download_app">download_app</string>
+    <string name="analytics_label_open_app">open_app</string>
 
     <!-- General strings -->
     <string name="http_prefix">http://</string>

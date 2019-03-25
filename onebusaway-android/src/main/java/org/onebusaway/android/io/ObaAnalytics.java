@@ -130,7 +130,7 @@ public class ObaAnalytics {
      * @param myLocation   the device location
      * @param stopLocation bus stop location
      */
-    public static void reportBusStopDistance(FirebaseAnalytics analytics, String stopId, String stopName, Location myLocation, Location stopLocation) {
+    public static void reportViewStopEvent(FirebaseAnalytics analytics, String stopId, String stopName, Location myLocation, Location stopLocation) {
         if (!isAnalyticsActive() || myLocation == null) {
             return;
         }
@@ -166,9 +166,9 @@ public class ObaAnalytics {
      * @param analytics       Firebase singleton
      * @param stopId          ID of the stop
      * @param stopName        Name of the stop
-     * @param proximityToStop a label indicating the proximity of the user to the stop
+     * @param proximityToStopCategory a label indicating the proximity of the user to the stop
      */
-    private static void reportViewStopEvent(FirebaseAnalytics analytics, String stopId, String stopName, String proximityToStop) {
+    private static void reportViewStopEvent(FirebaseAnalytics analytics, String stopId, String stopName, String proximityToStopCategory) {
         if (!isAnalyticsActive()) {
             return;
         }
@@ -176,7 +176,7 @@ public class ObaAnalytics {
         bundle.putString(FirebaseAnalytics.Param.ITEM_ID, stopId);
         bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, stopName);
         bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, Application.get().getString(R.string.analytics_label_stop_category));
-        bundle.putString(FirebaseAnalytics.Param.ITEM_LOCATION_ID, proximityToStop);
+        bundle.putString(FirebaseAnalytics.Param.ITEM_LOCATION_ID, proximityToStopCategory);
         analytics.logEvent(FirebaseAnalytics.Event.VIEW_ITEM, bundle);
     }
 

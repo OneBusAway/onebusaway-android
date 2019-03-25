@@ -451,7 +451,7 @@ public class ArrivalsListFragment extends ListFragment
             // Report Stop distance metric
             Location stopLocation = mStop.getLocation();
             Location myLocation = Application.getLastKnownLocation(getActivity(), null);
-            ObaAnalytics.reportBusStopDistance(mFirebaseAnalytics, mStop.getId(), mStop.getName(), myLocation, stopLocation);
+            ObaAnalytics.reportViewStopEvent(mFirebaseAnalytics, mStop.getId(), mStop.getName(), myLocation, stopLocation);
         } else {
             // If there was a last good response, then this is a refresh
             // and we should use a toast. Otherwise, it's a initial

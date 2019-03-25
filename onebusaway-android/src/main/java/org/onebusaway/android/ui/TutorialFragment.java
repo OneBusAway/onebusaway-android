@@ -16,7 +16,6 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -97,12 +96,6 @@ public class TutorialFragment extends Fragment implements
         imageArrayResourceId = getArguments().getInt(IMAGE_RESOURCE_ID, -1);
 
         return inflater.inflate(R.layout.tutorial, null, false);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        ObaAnalytics.reportFragmentStart(this);
     }
 
     @Override

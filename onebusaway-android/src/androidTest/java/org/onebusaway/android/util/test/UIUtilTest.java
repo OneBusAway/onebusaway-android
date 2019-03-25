@@ -17,12 +17,6 @@
 
 package org.onebusaway.android.util.test;
 
-import android.graphics.Color;
-import android.location.Location;
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.widget.TextView;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
@@ -45,6 +39,12 @@ import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
+
+import android.graphics.Color;
+import android.location.Location;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;

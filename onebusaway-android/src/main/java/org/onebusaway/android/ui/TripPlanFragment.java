@@ -19,6 +19,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -76,16 +77,6 @@ import androidx.fragment.app.Fragment;
 
 public class TripPlanFragment extends Fragment {
 
-    public TripPlanFragment setPlanErrorUrl(String planErrorUrl) {
-        mPlanErrorUrl = planErrorUrl;
-        return this;
-    }
-
-    public TripPlanFragment setPlanRequestUrl(String planRequestUrl) {
-        mPlanRequestUrl = planRequestUrl;
-        return this;
-    }
-
     /**
      * Allows calling activity to register to know when to send request.
      */
@@ -126,23 +117,14 @@ public class TripPlanFragment extends Fragment {
 
     private String mPlanRequestUrl;
 
-    private void resetDateTimeLabels() {
-        String dateText = new SimpleDateFormat(OTPConstants.TRIP_PLAN_DATE_STRING_FORMAT, Locale.getDefault())
-                .format(mMyCalendar.getTime());
-        String timeText = new SimpleDateFormat(OTPConstants.TRIP_PLAN_TIME_STRING_FORMAT, Locale.getDefault())
-                .format(mMyCalendar.getTime());
-
-        mDateAdapter.insert(dateText, 0);
-        mDateAdapter.notifyDataSetChanged();
-
-        mTimeAdapter.insert(timeText, 0);
-        mTimeAdapter.notifyDataSetChanged();
-    }
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     // Create view, initialize state
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
@@ -266,6 +248,29 @@ public class TripPlanFragment extends Fragment {
 
         // Start: default from address is Current Location, to address is unset
         return view;
+    }
+
+    public TripPlanFragment setPlanErrorUrl(String planErrorUrl) {
+        mPlanErrorUrl = planErrorUrl;
+        return this;
+    }
+
+    public TripPlanFragment setPlanRequestUrl(String planRequestUrl) {
+        mPlanRequestUrl = planRequestUrl;
+        return this;
+    }
+
+    private void resetDateTimeLabels() {
+        String dateText = new SimpleDateFormat(OTPConstants.TRIP_PLAN_DATE_STRING_FORMAT, Locale.getDefault())
+                .format(mMyCalendar.getTime());
+        String timeText = new SimpleDateFormat(OTPConstants.TRIP_PLAN_TIME_STRING_FORMAT, Locale.getDefault())
+                .format(mMyCalendar.getTime());
+
+        mDateAdapter.insert(dateText, 0);
+        mDateAdapter.notifyDataSetChanged();
+
+        mTimeAdapter.insert(timeText, 0);
+        mTimeAdapter.notifyDataSetChanged();
     }
 
     private void loadAndSetAdditionalTripPreferences() {
@@ -518,9 +523,9 @@ public class TripPlanFragment extends Fragment {
             } else {
                 UIUtils.sendEmail(getActivity(), email, locString, null, true);
             }
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_problem),
-                    getString(R.string.analytics_label_app_feedback_otp));
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_label_app_feedback_otp),
+                    null);
         }
     }
 

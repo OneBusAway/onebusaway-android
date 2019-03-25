@@ -17,7 +17,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.provider.ObaContract;
@@ -193,12 +192,6 @@ public class ArrivalsListActivity extends AppCompatActivity {
     protected void onPause() {
         ShowcaseViewUtils.hideShowcaseView();
         super.onPause();
-    }
-
-    @Override
-    protected void onStart() {
-        ObaAnalytics.reportActivityStart(this);
-        super.onStart();
     }
 
     @Override

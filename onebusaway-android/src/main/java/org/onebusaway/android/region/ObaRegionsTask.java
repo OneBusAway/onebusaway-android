@@ -157,12 +157,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                     //No region has been set, so set region application-wide to closest region
                     Application.get().setCurrentRegion(closestRegion);
                     Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'");
-                    //Analytics
-                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                            mContext.getString(R.string.analytics_action_configured_region_auto),
-                            mContext.getString(R.string.analytics_label_region_auto)
-                                    + closestRegion.getName() + "; Old Region: null");
-                    ObaAnalytics.setFirebaseRegion(mFirebaseAnalytics,  closestRegion.getName());
+                    ObaAnalytics.setRegion(mFirebaseAnalytics,  closestRegion.getName());
                     doCallback(true);
                 } else {
                     //No region has been set, and we couldn't find a usable region based on RegionUtil.isRegionUsable()
@@ -175,14 +170,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 String oldRegionName = Application.get().getCurrentRegion().getName();
                 Application.get().setCurrentRegion(closestRegion);
                 Log.d(TAG, "Detected closer region '" + closestRegion.getName()
-                        + "', changed to this region.");
-                //Analytics
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                        mContext.getString(R.string.analytics_action_configured_region_auto)
-                        , mContext.getString(R.string.analytics_label_region_auto)
-                                + closestRegion.getName() + "; Old Region: "
-                                + oldRegionName);
-                ObaAnalytics.setFirebaseRegion(mFirebaseAnalytics, closestRegion.getName());
+                        + "', changed from " + oldRegionName + " to this region.");
+                ObaAnalytics.setRegion(mFirebaseAnalytics, closestRegion.getName());
                 doCallback(true);
             } else if (Application.get().getCurrentRegion() != null && closestRegion != null
                     && Application.get().getCurrentRegion().equals(closestRegion)) {

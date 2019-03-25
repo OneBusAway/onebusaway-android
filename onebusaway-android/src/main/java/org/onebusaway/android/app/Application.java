@@ -16,8 +16,6 @@
  */
 package org.onebusaway.android.app;
 
-import com.google.android.gms.analytics.GoogleAnalytics;
-import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -57,7 +55,6 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import java.security.MessageDigest;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -102,16 +99,6 @@ public class Application extends MultiDexApplication {
     // Workaround for #933 until ES SDK doesn't run Services in the background
     static boolean mEmbeddedSocialInitiated = false;
 
-    /**
-     * Google analytics tracker configs
-     */
-    public enum TrackerName {
-        APP_TRACKER, // Tracker used only in this app.
-        GLOBAL_TRACKER, // Tracker used by all the apps from a company. eg: roll-up tracking.
-    }
-
-    HashMap<TrackerName, Tracker> mTrackers = new HashMap<TrackerName, Tracker>();
-
     private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
@@ -135,7 +122,6 @@ public class Application extends MultiDexApplication {
         initObaRegion();
         initOpen311(getCurrentRegion());
 
-        ObaAnalytics.initAnalytics(this);
         reportAnalytics();
 
         createNotificationChannels();
@@ -554,26 +540,10 @@ public class Application extends MultiDexApplication {
         }
     }
 
-    public synchronized Tracker getTracker(TrackerName trackerId) {
-        final double SAMPLE_RATE = 1.0d; // 1% of devices will send hits
-        if (!mTrackers.containsKey(trackerId)) {
-            GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
-            Tracker t = (trackerId == TrackerName.APP_TRACKER) ? analytics.newTracker(R.xml.app_tracker)
-                    : (trackerId == TrackerName.GLOBAL_TRACKER) ? analytics.newTracker(R.xml.global_tracker)
-                    : analytics.newTracker(R.xml.global_tracker);
-            t.setSampleRate(SAMPLE_RATE);
-            mTrackers.put(trackerId, t);
-        }
-        return mTrackers.get(trackerId);
-    }
-
     private void reportAnalytics() {
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         if (getCustomApiUrl() == null && getCurrentRegion() != null) {
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                    getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
-                            + getCurrentRegion().getName());
-            ObaAnalytics.setFirebaseRegion(mFirebaseAnalytics, getCurrentRegion().getName());
+            ObaAnalytics.setRegion(mFirebaseAnalytics, getCurrentRegion().getName());
         } else if (Application.get().getCustomApiUrl() != null) {
             String customUrl = null;
             MessageDigest digest = null;
@@ -585,21 +555,12 @@ public class Application extends MultiDexApplication {
             } catch (Exception e) {
                 customUrl = Application.get().getString(R.string.analytics_label_custom_url);
             }
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                    getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
-                            + customUrl);
-            ObaAnalytics.setFirebaseRegion(mFirebaseAnalytics, customUrl);
+            ObaAnalytics.setRegion(mFirebaseAnalytics, customUrl);
         }
         Boolean experimentalRegions = getPrefs().getBoolean(getString(R.string.preference_key_experimental_regions),
                 Boolean.FALSE);
         Boolean autoRegion = getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region),
                 true);
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                getString(R.string.analytics_action_edit_general), getString(R.string.analytics_label_experimental)
-                        + (experimentalRegions ? "YES" : "NO"));
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                getString(R.string.analytics_action_edit_general), getString(R.string.analytics_label_region_auto)
-                        + (autoRegion ? "YES" : "NO"));
     }
 
     /**

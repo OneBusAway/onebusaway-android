@@ -191,11 +191,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
         // Setup discussion
         discussBtn.setOnClickListener(v -> {
-            ObaAnalytics.reportEventWithCategory(
-                    ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    context.getString(R.string.analytics_action_button_press),
-                    context.getString(R.string.analytics_label_button_press_social_route_style_b));
-            ObaAnalytics.reportFirebaseUiEvent(FirebaseAnalytics.getInstance(getContext()),
+            ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(getContext()),
                     context.getString(R.string.analytics_label_button_press_social_route_style_b),
                     null);
             mFragment.openRouteDiscussion(arrivalInfo.getRouteId());

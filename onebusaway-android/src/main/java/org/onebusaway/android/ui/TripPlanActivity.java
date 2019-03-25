@@ -285,12 +285,9 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         bundle.remove(OTPConstants.ITINERARIES);
         bundle.remove(OTPConstants.SELECTED_ITINERARY);
 
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
-                        getString(R.string.analytics_action_trip_plan),
-                        getString(R.string.analytics_label_trip_plan));
-        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                getString(R.string.analytics_action_trip_plan),
-                getString(R.string.analytics_label_trip_plan));
+        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                getString(R.string.analytics_label_trip_plan),
+                null);
 
         showProgressDialog();
     }
@@ -371,11 +368,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                                 }
                                 UIUtils.sendEmail(TripPlanActivity.this, email, locString, url,
                                         true);
-                                ObaAnalytics.reportEventWithCategory(
-                                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                        getString(R.string.analytics_action_problem),
-                                        getString(R.string.analytics_label_app_feedback_otp));
-                                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                                         getString(R.string.analytics_label_app_feedback_otp),
                                         null);
                             } else {

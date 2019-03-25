@@ -146,11 +146,7 @@ public class RegionsFragment extends ListFragment
 
         Log.d(TAG, "User manually set region to '" + region.getName() + "'.");
 
-        //Analytics
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                getString(R.string.analytics_action_set_region),
-                getString(R.string.analytics_label_set_region)+ region.getName());
-        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                 getString(R.string.region_selected_manually),
                 region.getName());
 

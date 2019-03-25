@@ -62,10 +62,7 @@ public class BackupUtils {
 
     static private void doRestore(Context activityContext) {
         final Context context = Application.get().getApplicationContext();
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                context.getString(R.string.analytics_action_button_press),
-                context.getString(R.string.analytics_label_button_press_restore_preference));
-        ObaAnalytics.reportFirebaseUiEvent(FirebaseAnalytics.getInstance(activityContext),
+        ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
                 context.getString(R.string.analytics_label_button_press_restore_preference),
                 null);
         try {
@@ -99,10 +96,7 @@ public class BackupUtils {
         }
 
         Context context = Application.get().getApplicationContext();
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                context.getString(R.string.analytics_action_button_press),
-                context.getString(R.string.analytics_label_button_press_save_preference));
-        ObaAnalytics.reportFirebaseUiEvent(FirebaseAnalytics.getInstance(activityContext),
+        ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
                 context.getString(R.string.analytics_label_button_press_save_preference),
                 null);
         try {

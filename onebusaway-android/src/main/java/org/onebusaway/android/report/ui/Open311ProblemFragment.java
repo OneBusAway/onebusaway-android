@@ -288,12 +288,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        ObaAnalytics.reportFragmentStart(this);
-    }
-
-    @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         if (mServiceDescriptionTaskResult != null) {
@@ -537,9 +531,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             mRequestTask = new ServiceRequestTask(mOpen311, serviceRequest, this);
             mRequestTask.execute();
 
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
-                    getString(R.string.analytics_action_problem), mService.getService_name());
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics, getString(R.string.analytics_action_problem), mService.getService_name());
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics, getString(R.string.analytics_problem), mService.getService_name());
         } else {
             createToastMessage(Open311Validator.getErrorMessageForServiceRequestByErrorCode(errorCode));
         }

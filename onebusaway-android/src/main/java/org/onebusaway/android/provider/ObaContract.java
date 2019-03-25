@@ -1526,11 +1526,7 @@ public final class ObaContract {
             } else {
                 analyticsParam.append("all stops");
             }
-            ObaAnalytics.reportEventWithCategory(
-                    ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    context.getString(R.string.analytics_action_edit_field),
-                    analyticsEvent.toString() + " " + analyticsParam.toString());
-            ObaAnalytics.reportFirebaseUiEvent(FirebaseAnalytics.getInstance(context),
+            ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(context),
                     analyticsEvent.toString(),
                     analyticsParam.toString());
         }

@@ -207,13 +207,8 @@ public class BaseMapFragment extends SupportMapFragment
                 for (MapModeController controller : mControllers) {
                     if (controller instanceof BikeshareMapController) {
                         ((BikeshareMapController) controller).showBikes(true);
-
-                        ObaAnalytics.reportEventWithCategory(
-                                ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                getString(R.string.analytics_action_layer_bikeshare),
-                                getString(R.string.analytics_label_bikeshare_activated));
-                        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                                getString(R.string.analytics_action_layer_bikeshare),
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                getString(R.string.analytics_layer_bikeshare),
                                 getString(R.string.analytics_label_bikeshare_activated));
                     }
                 }
@@ -229,13 +224,8 @@ public class BaseMapFragment extends SupportMapFragment
                 for (MapModeController controller : mControllers) {
                     if (controller instanceof BikeshareMapController) {
                         ((BikeshareMapController) controller).showBikes(false);
-
-                        ObaAnalytics.reportEventWithCategory(
-                                ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                getString(R.string.analytics_action_layer_bikeshare),
-                                getString(R.string.analytics_label_bikeshare_deactivated));
-                        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                                getString(R.string.analytics_action_layer_bikeshare),
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                getString(R.string.analytics_layer_bikeshare),
                                 getString(R.string.analytics_label_bikeshare_deactivated));
                     }
                 }

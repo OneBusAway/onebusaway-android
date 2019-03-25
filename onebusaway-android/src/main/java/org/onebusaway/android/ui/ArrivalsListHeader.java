@@ -435,13 +435,11 @@ class ArrivalsListHeader {
                     i.setData(stopInfoBuilder.build());
                     mContext.startActivity(i);
                     //Analytics
-                    if (obaRegion != null && obaRegion.getName() != null)
-                        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                mContext.getString(R.string.analytics_action_button_press),
-                                mContext.getString(R.string.analytics_label_button_press_stopinfo) + obaRegion.getName());
-                    ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                            mContext.getString(R.string.analytics_label_button_press_stopinfo),
-                            null);
+                    if (obaRegion.getName() != null) {
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                mContext.getString(R.string.analytics_label_button_press_stopinfo),
+                                null);
+                    }
                 }
             });
         }
@@ -457,10 +455,7 @@ class ArrivalsListHeader {
         mStopDiscussion.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        mContext.getString(R.string.analytics_action_button_press),
-                        mContext.getString(R.string.analytics_label_button_press_social_stop));
-                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         mContext.getString(R.string.analytics_label_button_press_social_stop),
                         null);
                 mController.openStopDiscussion();

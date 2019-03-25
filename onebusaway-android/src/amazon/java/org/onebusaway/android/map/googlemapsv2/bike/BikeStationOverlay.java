@@ -180,14 +180,7 @@ public class BikeStationOverlay
 
             mBikeStationData.selectMaker(marker);
 
-            ObaAnalytics.reportEventWithCategory(
-                    ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    mContext.getString(R.string.analytics_action_button_press),
-                    mContext.getString(bikeRentalStation.isFloatingBike ?
-                            R.string.analytics_label_bike_station_marker_clicked :
-                            R.string.analytics_label_floating_bike_marker_clicked));
-
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                     mContext.getString(bikeRentalStation.isFloatingBike ?
                             R.string.analytics_label_bike_station_marker_clicked :
                             R.string.analytics_label_floating_bike_marker_clicked),
@@ -247,14 +240,7 @@ public class BikeStationOverlay
                             + bikeStationId;
                 }
 
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        mContext.getString(R.string.analytics_action_button_press),
-                        mContext.getString(bikeStation.isFloatingBike ?
-                                R.string.analytics_label_bike_station_balloon_clicked :
-                                R.string.analytics_label_floating_bike_balloon_clicked));
-
-                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         mContext.getString(bikeStation.isFloatingBike ?
                                 R.string.analytics_label_bike_station_balloon_clicked :
                                 R.string.analytics_label_floating_bike_balloon_clicked),

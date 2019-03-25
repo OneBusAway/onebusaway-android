@@ -523,10 +523,7 @@ public class TripPlanFragment extends Fragment {
             } else {
                 UIUtils.sendEmail(getActivity(), email, locString, null, true);
             }
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_problem),
-                    getString(R.string.analytics_label_app_feedback_otp));
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                     getString(R.string.analytics_label_app_feedback_otp),
                     null);
         }

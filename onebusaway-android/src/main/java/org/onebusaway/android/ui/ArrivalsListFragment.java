@@ -70,7 +70,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.accessibility.AccessibilityManager;
 import android.widget.Button;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -427,22 +426,6 @@ public class ArrivalsListFragment extends ListFragment
         return new ArrivalsListLoader(getActivity(), mStopId);
     }
 
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        ObaAnalytics.reportFragmentStart(this);
-
-        AccessibilityManager am = (AccessibilityManager) getActivity().getSystemService(
-                Context.ACCESSIBILITY_SERVICE);
-        Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
-        if (isTalkBackEnabled)
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.ACCESSIBILITY.toString(),
-                    getString(R.string.analytics_action_touch_exploration),
-                    getString(R.string.analytics_label_talkback) + getClass().getSimpleName()
-                            + " using TalkBack");
-    }
-
     //
     // This is where the bulk of the initialization takes place to create
     // this screen.
@@ -468,7 +451,7 @@ public class ArrivalsListFragment extends ListFragment
             // Report Stop distance metric
             Location stopLocation = mStop.getLocation();
             Location myLocation = Application.getLastKnownLocation(getActivity(), null);
-            ObaAnalytics.trackBusStopDistance(mFirebaseAnalytics, mStop.getId(), mStop.getName(), myLocation, stopLocation);
+            ObaAnalytics.reportBusStopDistance(mFirebaseAnalytics, mStop.getId(), mStop.getName(), myLocation, stopLocation);
         } else {
             // If there was a last good response, then this is a refresh
             // and we should use a toast. Otherwise, it's a initial
@@ -813,23 +796,16 @@ public class ArrivalsListFragment extends ListFragment
                             getString(R.string.ri_selected_service_trip), arrivalInfo.getInfo(),
                             agencyName, blockId);
                 } else if (isSocialEnabled && ((!hasUrl && which == 6) || (hasUrl && which == 7))) {
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getActivity().getString(R.string.analytics_action_button_press),
-                            getActivity().getString(
-                                    R.string.analytics_label_button_press_social_route_options));
-                    ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                             getActivity().getString(R.string.analytics_label_button_press_social_route_options),
                             null);
                     openRouteDiscussion(arrivalInfo.getInfo().getRouteId());
                 } else if (occupancy != null &&
                         (((!hasUrl && !isSocialEnabled && which == 6) || (hasUrl && !isSocialEnabled && which == 7)) ||
                                 ((!hasUrl && isSocialEnabled && which == 7) || (hasUrl && isSocialEnabled && which == 8)))) {
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getActivity().getString(R.string.analytics_action_button_press),
-                            getActivity().getString(
-                                    R.string.analytics_label_button_press_about_occupancy));
+                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            getActivity().getString(R.string.analytics_label_button_press_about_occupancy),
+                            null);
                     createOccupancyDialog(occupancyState).show();
                 }
             }
@@ -1095,12 +1071,7 @@ public class ArrivalsListFragment extends ListFragment
         // menus like we did before...
         getActivity().supportInvalidateOptionsMenu();
 
-        //Analytics
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                getString(R.string.analytics_action_edit_field),
-                getString(R.string.analytics_label_edit_field_bookmark));
-
-        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                 getString(R.string.analytics_label_edit_field_bookmark),
                 null);
 
@@ -1273,23 +1244,13 @@ public class ArrivalsListFragment extends ListFragment
                         if (index == 0) {
                             // Sort by eta
                             Log.d(TAG, "Sort by ETA");
-                            ObaAnalytics.reportEventWithCategory(
-                                    ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                    getActivity().getString(R.string.analytics_action_button_press),
-                                    getActivity().getString(
-                                            R.string.analytics_label_sort_by_eta_arrival));
-                            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                                     getString(R.string.analytics_label_sort_by_eta_arrival),
                                     null);
                         } else if (index == 1) {
                             // Sort by route
                             Log.d(TAG, "Sort by route");
-                            ObaAnalytics.reportEventWithCategory(
-                                    ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                    getActivity().getString(R.string.analytics_action_button_press),
-                                    getActivity().getString(
-                                            R.string.analytics_label_sort_by_route_arrival));
-                            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                                     getString(R.string.analytics_label_sort_by_route_arrival),
                                     null);
                         }
@@ -1323,23 +1284,13 @@ public class ArrivalsListFragment extends ListFragment
         if (showArrivals) {
             // Currently we're showing arrivals in header - we need to remove them
             mHeader.showArrivals(false);
-
-            //Analytics
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_button_press),
-                    getString(R.string.analytics_label_hide_arrivals_in_header));
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                     getString(R.string.analytics_label_hide_arrivals_in_header),
                     null);
         } else {
             // Currently we're hiding arrivals - we need to show them
             mHeader.showArrivals(true);
-
-            //Analytics
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_button_press),
-                    getString(R.string.analytics_label_show_arrivals_in_header));
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                     getString(R.string.analytics_label_show_arrivals_in_header),
                     null);
         }
@@ -1398,10 +1349,7 @@ public class ArrivalsListFragment extends ListFragment
                 (String) stopDetails.first,
                 (String) stopDetails.second).show();
 
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                getString(R.string.analytics_action_button_press),
-                getString(R.string.analytics_label_button_press_stop_details));
-        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                 getActivity().getString(R.string.analytics_label_button_press_stop_details),
                 null);
     }
@@ -1574,12 +1522,8 @@ public class ArrivalsListFragment extends ListFragment
         mLoadedMoreArrivals = true;
         refresh();
 
-        //Analytics
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                getActivity().getString(R.string.analytics_action_button_press),
-                getActivity().getString(R.string.analytics_label_button_press));
-        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                getActivity().getString(R.string.analytics_label_button_press),
+        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                getActivity().getString(R.string.analytics_label_load_more_arrivals),
                 null);
     }
 
@@ -1806,11 +1750,8 @@ public class ArrivalsListFragment extends ListFragment
         }
 
         for (String agencyId : agencyIds) {
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_service_alerts),
-                    getString(R.string.analytics_label_service_alerts) + agencyId);
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                    getString(R.string.analytics_action_service_alerts),
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_service_alerts),
                     getString(R.string.analytics_label_service_alerts) + agencyId);
         }
     }

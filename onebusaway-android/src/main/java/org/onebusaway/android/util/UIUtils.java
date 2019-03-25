@@ -1787,25 +1787,17 @@ public final class UIUtils {
             // Launch installed app
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
             activity.startActivity(intent);
-            ObaAnalytics
-                    .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            Application.get().getString(R.string.analytics_action_button_press),
-                            Application.get().getString(R.string.analytics_label_button_press_pay_fare_open_app));
-            ObaAnalytics.reportFirebaseUiEvent(FirebaseAnalytics.getInstance(activity),
-                    Application.get().getString(R.string.analytics_label_button_press_pay_fare_open_app),
-                    null);
+            ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activity),
+                    Application.get().getString(R.string.analytics_label_button_fare_payment),
+                    Application.get().getString(R.string.analytics_label_open_app));
         } else {
             // Go to Play Store listing to download app
             intent = new Intent(Intent.ACTION_VIEW);
             intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, region.getPaymentAndroidAppId())));
             activity.startActivity(intent);
-            ObaAnalytics
-                    .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            Application.get().getString(R.string.analytics_action_button_press),
-                            Application.get().getString(R.string.analytics_label_button_press_pay_fare_download_app));
-            ObaAnalytics.reportFirebaseUiEvent(FirebaseAnalytics.getInstance(activity),
-                    Application.get().getString(R.string.analytics_label_button_press_pay_fare_download_app),
-                    null);
+            ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activity),
+                    Application.get().getString(R.string.analytics_label_button_fare_payment),
+                    Application.get().getString(R.string.analytics_label_download_app));
         }
     }
 

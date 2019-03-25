@@ -130,12 +130,6 @@ public final class MyRemindersFragment extends ListFragment
     }
 
     @Override
-    public void onStart() {
-        ObaAnalytics.reportFragmentStart(this);
-        super.onStart();
-    }
-
-    @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ListView listView = getListView();
@@ -387,20 +381,14 @@ public final class MyRemindersFragment extends ListFragment
             case 0:
                 Log.d(TAG, "setSortByClause: sort by name");
                 sortBy = ObaContract.Trips.NAME + " asc";
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getActivity().getString(R.string.analytics_action_button_press),
-                        getActivity().getString(R.string.analytics_label_sort_by_name_reminder));
-                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         getString(R.string.analytics_label_sort_by_name_reminder),
                         null);
                 break;
             case 1:
                 Log.d(TAG, "setSortByClause: sort by time");
                 sortBy = ObaContract.Trips.DEPARTURE + " asc";
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getActivity().getString(R.string.analytics_action_button_press),
-                        getActivity().getString(R.string.analytics_label_sort_by_departure_time_reminder));
-                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         getString(R.string.analytics_label_sort_by_departure_time_reminder),
                         null);
                 break;

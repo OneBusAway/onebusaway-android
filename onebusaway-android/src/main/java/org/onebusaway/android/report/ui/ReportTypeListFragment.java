@@ -85,12 +85,6 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
         getListView().setOnItemClickListener(this);
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        ObaAnalytics.reportFragmentStart(this);
-    }
-
     private Boolean isEmailDefined() {
         ObaRegion region = Application.get().getCurrentRegion();
         return !(region == null || region.getContactEmail() == null);
@@ -102,43 +96,27 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
 
         if (getString(R.string.rt_customer_service).equals(rti.getTitle())) {
             goToCustomerServices();
-
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_problem),
-                    getString(R.string.analytics_label_customer_service));
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                    getString(R.string.analytics_action_problem),
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_problem),
                     getString(R.string.analytics_label_customer_service));
         } else if (getString(R.string.rt_infrastructure_problem).equals(rti.getTitle())) {
             ((ReportActivity) getActivity()).createInfrastructureIssueActivity(
                     getString(R.string.ri_selected_service_stop));
-
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_problem),
-                    getString(R.string.analytics_label_stop_problem));
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                    getString(R.string.analytics_action_problem),
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_problem),
                     getString(R.string.analytics_label_stop_problem));
         } else if (getString(R.string.rt_stop_problem).equals(rti.getTitle())) {
             ((ReportActivity) getActivity()).createInfrastructureIssueActivity(
                     getString(R.string.ri_selected_service_stop));
-
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_problem),
-                    getString(R.string.analytics_label_stop_problem));
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                    getString(R.string.analytics_action_problem),
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_problem),
                     getString(R.string.analytics_label_stop_problem));
         } else if (getString(R.string.rt_arrival_problem).equals(rti.getTitle())) {
             // Report bus stop issue
             ((ReportActivity) getActivity()).createInfrastructureIssueActivity(
                     getString(R.string.ri_selected_service_trip));
-
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_problem),
-                    getString(R.string.analytics_label_trip_problem));
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                    getString(R.string.analytics_action_problem),
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_problem),
                     getString(R.string.analytics_label_trip_problem));
         } else if (getString(R.string.rt_app_feedback).equals(rti.getTitle())) {
             // Send App feedback
@@ -148,29 +126,19 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
 
             UIUtils.sendEmail(getActivity(), email, locationString);
 
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_problem),
-                    getString(R.string.analytics_label_app_feedback));
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                    getString(R.string.analytics_action_problem),
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_problem),
                     getString(R.string.analytics_label_app_feedback));
             if (locationString == null) {
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_problem),
-                        getString(R.string.analytics_label_app_feedback_without_location));
-                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                        getString(R.string.analytics_action_problem),
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_problem),
                         getString(R.string.analytics_label_app_feedback_without_location));
             }
         } else if (getString(R.string.rt_ideas).equals(rti.getTitle())) {
             // Direct to ideascale website
             goToIdeaScale();
-
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_problem),
-                    getString(R.string.analytics_label_idea_scale));
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                    getString(R.string.analytics_action_problem),
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_problem),
                     getString(R.string.analytics_label_idea_scale));
         }
     }

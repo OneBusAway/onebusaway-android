@@ -132,18 +132,12 @@ public class CustomerServiceDialog extends DialogFragment implements
 
                     UIUtils.sendEmail(getActivity(), agency.getEmail(), locationString);
 
-                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
-                            getString(R.string.analytics_label_customer_service_email));
-                    ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                            agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
+                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            agency.getName() + "_" + getString(R.string.analytics_customer_service),
                             getString(R.string.analytics_label_customer_service_email));
                     if (locationString == null) {
-                        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
-                                getString(R.string.analytics_label_customer_service_email_without_location));
-                        ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                                agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                agency.getName() + "_" + getString(R.string.analytics_customer_service),
                                 getString(R.string.analytics_label_customer_service_email_without_location));
                     }
                 });
@@ -155,11 +149,8 @@ public class CustomerServiceDialog extends DialogFragment implements
                 webButton.setVisibility(View.VISIBLE);
                 webButton.setOnClickListener(view1 -> {
                     UIUtils.goToUrl(getActivity(), agency.getUrl());
-                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
-                            getString(R.string.analytics_label_customer_service_web));
-                    ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                            agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
+                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            agency.getName() + "_" + getString(R.string.analytics_customer_service),
                             getString(R.string.analytics_label_customer_service_web));
 
                 });
@@ -171,11 +162,8 @@ public class CustomerServiceDialog extends DialogFragment implements
                 phoneButton.setVisibility(View.VISIBLE);
                 phoneButton.setOnClickListener(view12 -> {
                     UIUtils.goToPhoneDialer(getActivity(), "tel:" + agency.getPhone());
-                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
-                            getString(R.string.analytics_label_customer_service_phone));
-                    ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
-                            agency.getName() + "_" + getString(R.string.analytics_action_customer_service),
+                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            agency.getName() + "_" + getString(R.string.analytics_customer_service),
                             getString(R.string.analytics_label_customer_service_phone));
                 });
             }

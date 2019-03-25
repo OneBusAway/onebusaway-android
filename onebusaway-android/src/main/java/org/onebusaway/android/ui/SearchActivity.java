@@ -17,7 +17,6 @@ package org.onebusaway.android.ui;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 
-import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.util.UIUtils;
 
@@ -47,12 +46,6 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        ObaAnalytics.reportActivityStart(this);
-    }
-
-    @Override
     public void onNewIntent(Intent intent) {
         handleIntent(intent);
     }
@@ -78,11 +71,7 @@ public class SearchActivity extends AppCompatActivity {
         } else if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             // handles a search query
             String query = intent.getStringExtra(SearchManager.QUERY);
-            //Analytics
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_button_press),
-                    getString(R.string.analytics_label_button_press_search_button));
-            ObaAnalytics.reportFirebaseSearchEvent(mFirebaseAnalytics, query);
+            ObaAnalytics.reportSearchEvent(mFirebaseAnalytics, query);
             doSearch(query);
         }
     }

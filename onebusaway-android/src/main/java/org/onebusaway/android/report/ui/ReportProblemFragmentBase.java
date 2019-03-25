@@ -21,7 +21,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.request.ObaResponse;
 import org.onebusaway.android.util.LocationUtils;
@@ -157,9 +156,6 @@ public abstract class ReportProblemFragmentBase extends Fragment
     protected void sendReport() {
         UIUtils.showProgress(this, true);
         getLoaderManager().restartLoader(REPORT_LOADER, getArguments(), this);
-
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
-                getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_problem));
    }
 
     @Override

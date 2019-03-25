@@ -17,7 +17,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
@@ -164,11 +163,7 @@ public class PreferencesActivity extends PreferenceActivity
             }
 
             socialPref.setOnPreferenceClickListener(preference -> {
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_social_settings));
-                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         getString(R.string.analytics_label_button_press_social_settings),
                         null);
 
@@ -246,12 +241,6 @@ public class PreferencesActivity extends PreferenceActivity
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        ObaAnalytics.reportActivityStart(this);
-    }
-
-    @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         setupActionBar();
@@ -318,38 +307,26 @@ public class PreferencesActivity extends PreferenceActivity
         if (pref.equals(mPreference)) {
             RegionsActivity.start(this);
         } else if (pref.equals(mTutorialPref)) {
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_button_press),
-                    getString(R.string.analytics_label_button_press_tutorial));
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                     getString(R.string.analytics_label_button_press_tutorial),
                     null);
             ShowcaseViewUtils.resetAllTutorials(this);
             NavHelp.goHome(this, true);
         } else if (pref.equals(mDonatePref)) {
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_button_press),
-                    getString(R.string.analytics_label_button_press_donate));
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                     getString(R.string.analytics_label_button_press_donate),
                     null);
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.donate_url)));
             startActivity(intent);
         } else if (pref.equals(mPoweredByObaPref)) {
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_button_press),
-                    getString(R.string.analytics_label_button_press_powered_by_oba));
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                     getString(R.string.analytics_label_button_press_powered_by_oba),
                     null);
             Intent intent = new Intent(Intent.ACTION_VIEW,
                     Uri.parse(getString(R.string.powered_by_oba_url)));
             startActivity(intent);
         } else if (pref.equals(mAboutPref)) {
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_button_press),
-                    getString(R.string.analytics_label_button_press_about));
-            ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                     getString(R.string.analytics_label_button_press_about),
                     null);
             AboutActivity.start(this);
@@ -454,24 +431,11 @@ public class PreferencesActivity extends PreferenceActivity
         } else if (preference.equals(mAnalyticsPref) && newValue instanceof Boolean) {
             Boolean isAnalyticsActive = (Boolean) newValue;
             //Report if the analytics turns off, just before shared preference changed
-            if (!isAnalyticsActive) {
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                        getString(R.string.analytics_action_edit_general),
-                        getString(R.string.analytics_label_analytic_preference)
-                                + (isAnalyticsActive ? "YES" : "NO"));
-                GoogleAnalytics.getInstance(getBaseContext()).dispatchLocalHits();
-            }
-            ObaAnalytics.setFirebaseSendAnonymousData(mFirebaseAnalytics, isAnalyticsActive);
+            ObaAnalytics.setSendAnonymousData(mFirebaseAnalytics, isAnalyticsActive);
         } else if (preference.equals(mLeftHandMode) && newValue instanceof Boolean) {
             Boolean isLeftHandEnabled = (Boolean) newValue;
             //Report if left handed mode is turned on, just before shared preference changed
-            if (isLeftHandEnabled) {
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                        getString(R.string.analytics_action_edit_general),
-                        getString(R.string.analytics_label_left_hand_preference)
-                                + (isLeftHandEnabled ? "YES" : "NO"));
-            }
-            ObaAnalytics.setFirebaseLeftHanded(mFirebaseAnalytics, isLeftHandEnabled);
+            ObaAnalytics.setLeftHanded(mFirebaseAnalytics, isLeftHandEnabled);
         }
         return true;
     }
@@ -520,17 +484,11 @@ public class PreferencesActivity extends PreferenceActivity
             // Wait to change the region preference description until the task callback
             //Analytics
             if (experimentalServers) {
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_experimental_on));
-                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         getString(R.string.analytics_label_button_press_experimental_on),
                         null);
             } else {
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_experimental_off));
-                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         getString(R.string.analytics_label_button_press_experimental_off),
                         null);
             }
@@ -548,17 +506,11 @@ public class PreferencesActivity extends PreferenceActivity
             boolean autoSelect = settings
                     .getBoolean(getString(R.string.preference_key_auto_select_region), true);
             if (autoSelect) {
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_auto));
-                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         getString(R.string.analytics_label_button_press_auto),
                         null);
             } else {
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_manual));
-                ObaAnalytics.reportFirebaseUiEvent(mFirebaseAnalytics,
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         getString(R.string.analytics_label_button_press_manual),
                         null);
             }
@@ -566,24 +518,13 @@ public class PreferencesActivity extends PreferenceActivity
             Boolean isAnalyticsActive = settings.getBoolean(Application.get().
                     getString(R.string.preferences_key_analytics), Boolean.FALSE);
             //Report if the analytics turns on, just after shared preference changed
-            if (isAnalyticsActive) {
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                        getString(R.string.analytics_action_edit_general),
-                        getString(R.string.analytics_label_analytic_preference)
-                                + (isAnalyticsActive ? "YES" : "NO"));
-            }
-            ObaAnalytics.setFirebaseSendAnonymousData(mFirebaseAnalytics, isAnalyticsActive);
+            ObaAnalytics.setSendAnonymousData(mFirebaseAnalytics, isAnalyticsActive);
         } else if (key.equalsIgnoreCase(getString(R.string.preference_key_arrival_info_style))) {
             // Change the arrival info description
             changePreferenceSummary(key);
         } else if (key.equalsIgnoreCase(getString(R.string.preference_key_show_negative_arrivals))) {
             boolean showDepartedBuses = settings.getBoolean(Application.get().
                     getString(R.string.preference_key_show_negative_arrivals), Boolean.FALSE);
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                    getString(R.string.analytics_action_edit_general),
-                    getString(R.string.analytics_label_show_departed_bus_preference)
-                            + (showDepartedBuses ? "YES" : "NO"));
             ObaAnalytics.setShowDepartedVehicles(mFirebaseAnalytics, showDepartedBuses);
         }
     }

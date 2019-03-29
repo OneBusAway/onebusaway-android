@@ -74,8 +74,6 @@ import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.map.googlemapsv2.LayerInfo;
-import org.onebusaway.android.nav.NavigationCleanupWorker;
-import org.onebusaway.android.nav.NavigationUploadWorker;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
@@ -94,15 +92,12 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
 
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_ACTIVITY_FEED;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
@@ -396,8 +391,6 @@ public class HomeActivity extends AppCompatActivity
             }
         }
 
-        setupLogUploadTask();
-        setupLogCleanupTask();
     }
 
     @Override
@@ -2026,27 +2019,4 @@ public class HomeActivity extends AppCompatActivity
         return mArrivalsListFragment;
     }
 
-    private void setupLogUploadTask() {
-        PeriodicWorkRequest.Builder uploadLogsBuilder =
-                new PeriodicWorkRequest.Builder(NavigationUploadWorker.class, 24,
-                        TimeUnit.HOURS);
-
-        // Create the actual work object:
-        PeriodicWorkRequest uploadCheckWork = uploadLogsBuilder.build();
-
-        // Then enqueue the recurring task:
-        WorkManager.getInstance().enqueue(uploadCheckWork);
     }
-
-    private void setupLogCleanupTask() {
-        PeriodicWorkRequest.Builder cleanupLogsBuilder =
-                new PeriodicWorkRequest.Builder(NavigationCleanupWorker.class, 24,
-                        TimeUnit.HOURS);
-
-        // Create the actual work object:
-        PeriodicWorkRequest cleanUpCheckWork = cleanupLogsBuilder.build();
-
-        // Then enqueue the recurring task:
-        WorkManager.getInstance().enqueue(cleanUpCheckWork);
-    }
-}

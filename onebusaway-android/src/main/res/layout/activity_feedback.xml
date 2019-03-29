@@ -5,7 +5,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="org.onebusaway.android.ui.FeedbackActivity"
     android:orientation="vertical">
+    <FrameLayout
+        style="@style/MaterialLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal">
 
+        <TextView
+            android:id="@+id/textViewContent"
+            style="@style/MaterialLayoutTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/feedback_msg"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="@android:color/black"
+            android:textSize="14sp" />
+    </FrameLayout>
     <FrameLayout
         style="@style/MaterialLayout"
         android:layout_width="match_parent"
@@ -14,31 +30,31 @@
 
         <LinearLayout
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="65dp"
             android:orientation="horizontal">
 
             <ImageButton
                 android:id="@+id/ImageBtn_like"
                 android:layout_width="148dp"
-                android:layout_height="86dp"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:scaleType="fitEnd"
                 android:background="@color/alert_icon_info"
-                android:src="@drawable/ic_thumbs_up_custom"
-                android:onClick="likeBtnOnClick"/>
-                <!--android:src="@drawable/ic_thumb_up" />-->
+                android:onClick="likeBtnOnClick"
+                android:scaleType="fitEnd"
+                android:src="@drawable/ic_thumbs_up_custom" />
+            <!--android:src="@drawable/ic_thumb_up" />-->
 
             <ImageButton
                 android:id="@+id/ImageBtn_Dislike"
-                android:layout_width="149dp"
-                android:layout_height="86dp"
+                android:layout_width="148dp"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:background="@color/alert_icon_info"
-                android:src="@drawable/ic_thumbs_down_custom"
+                android:onClick="dislikeBtnOnClick"
                 android:scaleType="fitStart"
-                android:onClick="dislikeBtnOnClick"/>
-                <!--android:background="@color/alert_icon_info"-->
-                <!--android:src="@drawable/ic_thumb_down" />-->
+                android:src="@drawable/ic_thumbs_down_custom" />
+            <!--android:background="@color/alert_icon_info"-->
+            <!--android:src="@drawable/ic_thumb_down" />-->
         </LinearLayout>
 
     </FrameLayout>
@@ -52,8 +68,8 @@
 
         <EditText
             android:id="@+id/editFeedbackText"
-            android:layout_width="345dp"
-            android:layout_height="47dp"
+            android:layout_width="366dp"
+            android:layout_height="match_parent"
             android:layout_marginStart="8dp"
             android:layout_marginLeft="8dp"
             android:layout_marginTop="8dp"
@@ -61,7 +77,7 @@
             android:layout_marginRight="8dp"
             android:layout_marginBottom="8dp"
             android:ems="10"
-            android:hint="Write your feedback"
+            android:hint="@string/feedback_freeText"
             android:inputType="textMultiLine" />
     </FrameLayout>
 
@@ -74,7 +90,7 @@
 
         <CheckBox
             android:id="@+id/feedback_send_logs"
-            android:layout_width="fill_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginLeft="8dp"
@@ -82,23 +98,23 @@
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
             android:layout_marginBottom="8dp"
-            android:text="Include system log (your choice will be saved for future trips)"
-            android:onClick="setSendLogs"/>
+            android:onClick="setSendLogs"
+            android:text="@string/feedback_checkbox_text" />
     </FrameLayout>
 
     <FrameLayout
         style="@style/MaterialLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:orientation="horizontal">
 
         <TextView
             android:id="@+id/textView"
             style="@style/MaterialLayoutTextView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="Your feedback will be sent to OneBusAway. If you check  &quot;Include system logs &quot;, real-time location information from your device recorded as you approached your destination stop will be shared with OneBusAway so developers can improve the destination reminder feature.\n\nChange your preference for sharing system logs in Settings."
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/feedback_log_guide"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textColor="@android:color/black"
             android:textSize="14sp" />

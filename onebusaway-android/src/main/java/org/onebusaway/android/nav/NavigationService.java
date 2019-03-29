@@ -15,7 +15,10 @@
  */
 package org.onebusaway.android.nav;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Build;
@@ -33,6 +36,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.ui.FeedbackActivity;
 import org.onebusaway.android.ui.TripDetailsListFragment;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
@@ -48,6 +52,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.RemoteInput;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+
 /**
  * The NavigationService is started when the user begins a trip, this service listens for location
  * updates and passes the locations to its instance of NavigationServiceProvider each time.
@@ -61,10 +70,14 @@ public class NavigationService extends Service implements LocationHelper.Listene
     public static final String DESTINATION_ID = ".DestinationId";
     public static final String BEFORE_STOP_ID = ".BeforeId";
     public static final String TRIP_ID = ".TripId";
+    public static final String FIRST_FEEDBACK = "firstFeedback";
+    public static final String KEY_TEXT_REPLY = "trip_feedback";
+
+    //public static String REPLY_ACTION = "org.onebusaway.android.nav.REPLY_ACTION";
 
     public static final String LOG_DIRECTORY = "ObaNavLog";
 
-    public static String LOG_FILE = null;
+    public static boolean mFirstFeedback = true;
 
     private static final int RECORDING_THRESHOLD = NavigationServiceProvider.DISTANCE_THRESHOLD + 100;
 
@@ -195,8 +208,9 @@ public class NavigationService extends Service implements LocationHelper.Listene
                 if (mFinishedTime == 0) {
                     mFinishedTime = System.currentTimeMillis();
                 } else if (System.currentTimeMillis() - mFinishedTime >= 30000) {
-                    mNavProvider.getUserFeedback();
+                    getUserFeedback();
                     stopSelf();
+                    setupLogCleanupTask();
                 }
             } else {
                 stopSelf();
@@ -244,6 +258,8 @@ public class NavigationService extends Service implements LocationHelper.Listene
             }
 
             mLogFile = new File(subFolder, counter + "-" + readableDate + ".csv");
+
+            Log.d(TAG, ":"+ mLogFile.getAbsolutePath());
 
             Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
@@ -298,5 +314,143 @@ public class NavigationService extends Service implements LocationHelper.Listene
         } catch (IOException e) {
             Log.e(TAG, "File write failed: " + e.toString());
         }
+    }
+
+    public void getUserFeedback() {
+        //TODO - Log "Yes" or "No" including plaintext feedback using Firebase Analytics
+
+        Application app = Application.get();
+        NotificationCompat.Builder mBuilder;
+
+        String message = Application.get().getString(R.string.feedback_notify_dialog_msg);
+        mFirstFeedback = Application.getPrefs().getBoolean(FIRST_FEEDBACK, true);
+
+        // Create delete intent to set flag for snackbar creation next time the app is opened.
+        Intent delIntent = new Intent(app.getApplicationContext(), FeedbackReceiver.class);
+        delIntent.putExtra(FeedbackReceiver.NOTIFICATION_ID, mNavProvider.NOTIFICATION_ID + 1);
+
+        if ((mFirstFeedback) || (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)) {
+
+            Intent fdIntent = new Intent(app.getApplicationContext(), FeedbackActivity.class);
+            fdIntent.setAction(FeedbackReceiver.ACTION_REPLY);
+            fdIntent.putExtra(FeedbackActivity.RESPONSE, FeedbackActivity.FEEDBACK_NO);
+            fdIntent.putExtra(FeedbackActivity.NOTIFICATION_ID, mNavProvider.NOTIFICATION_ID + 1);
+            fdIntent.putExtra(FeedbackActivity.TRIP_ID, mTripId);
+            fdIntent.putExtra(FeedbackActivity.LOG_FILE, mLogFile.getAbsolutePath());
+
+            //Pending intent used to handle feedback when user taps on 'No'
+            PendingIntent fdPendingIntentNo = PendingIntent.getActivity(app.getApplicationContext()
+                    , 1, fdIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
+            fdIntent = new Intent(app.getApplicationContext(), FeedbackActivity.class);
+            fdIntent.setAction(FeedbackReceiver.ACTION_REPLY);
+            fdIntent.putExtra(FeedbackActivity.RESPONSE, FeedbackActivity.FEEDBACK_YES);
+            fdIntent.putExtra(FeedbackActivity.NOTIFICATION_ID, mNavProvider.NOTIFICATION_ID + 1);
+            fdIntent.putExtra(FeedbackActivity.TRIP_ID, mTripId);
+            fdIntent.putExtra(FeedbackActivity.LOG_FILE, mLogFile.getAbsolutePath());
+
+            //Pending intent used to handle feedback when user taps on 'Yes'
+            PendingIntent fdPendingIntentYes = PendingIntent.getActivity(app.getApplicationContext()
+                    , 2, fdIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            delIntent.setAction(FeedbackReceiver.ACTION_DISMISS_FEEDBACK);
+            PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
+                    0, delIntent, 0);
+
+            mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext()
+                    ,Application.CHANNEL_DESTINATION_ALERT_ID)
+                    .setSmallIcon(R.drawable.ic_stat_notification)
+                    .setContentTitle(Application.get().getResources()
+                            .getString(R.string.feedback_notify_title))
+                    .setContentText(message)
+                    .addAction(0, Application.get().getResources()
+                            .getString(R.string.feedback_action_reply_no), fdPendingIntentNo )
+                    .addAction(0, Application.get().getResources()
+                            .getString(R.string.feedback_action_reply_yes), fdPendingIntentYes)
+                    .setDeleteIntent(pDelIntent)
+                    .setAutoCancel(true);
+        } else {
+
+            //Intent to handle user feedback when a user taps on 'No'
+            Intent intentNo = new Intent(Application.get().getApplicationContext(), FeedbackReceiver.class);
+            intentNo.setAction(FeedbackReceiver.ACTION_REPLY);
+            intentNo.putExtra(FeedbackReceiver.NOTIFICATION_ID, mNavProvider.NOTIFICATION_ID + 1);
+            intentNo.putExtra(FeedbackReceiver.TRIP_ID, mTripId);
+            intentNo.putExtra(FeedbackReceiver.RESPONSE, FeedbackReceiver.FEEDBACK_NO);
+            intentNo.putExtra(FeedbackReceiver.LOG_FILE, mLogFile.getAbsolutePath());
+
+            //PendingIntent to handle user feedback when a user taps on 'No'
+            PendingIntent fdPendingIntentNo = PendingIntent.getBroadcast(Application.get()
+                    .getApplicationContext(),100, intentNo, 0);
+
+            String replyLabelNo = Application.get().getResources()
+                    .getString(R.string.feedback_action_reply_no);
+
+            RemoteInput remoteInput = new RemoteInput.Builder(KEY_TEXT_REPLY)
+                    .setLabel(replyLabelNo)
+                    .build();
+
+            NotificationCompat.Action replyActionNo = new NotificationCompat.Action.Builder(
+                    0, replyLabelNo, fdPendingIntentNo)
+                    .addRemoteInput(remoteInput)
+                    .build();
+
+            //Intent to handle user feedback when a user taps on 'Yes'
+            Intent intentYes = new Intent(Application.get().getApplicationContext(), FeedbackReceiver.class);
+            intentYes.setAction(FeedbackReceiver.ACTION_REPLY);
+            intentYes.putExtra(FeedbackReceiver.NOTIFICATION_ID, mNavProvider.NOTIFICATION_ID + 1);
+            intentYes.putExtra(FeedbackReceiver.TRIP_ID, mTripId);
+            intentYes.putExtra(FeedbackReceiver.RESPONSE, FeedbackReceiver.FEEDBACK_YES);
+            intentYes.putExtra(FeedbackReceiver.LOG_FILE, mLogFile.getAbsolutePath());
+
+            //PendingIntent to handle user feedback when a user taps on 'No'
+            PendingIntent fdPendingIntentYes = PendingIntent.getBroadcast(Application.get()
+                    .getApplicationContext(),101, intentYes, 0);
+
+            String replyLabelYes = Application.get().getResources()
+                    .getString(R.string.feedback_action_reply_yes);
+
+            RemoteInput remoteInput1 = new RemoteInput.Builder(KEY_TEXT_REPLY)
+                    .setLabel(replyLabelYes)
+                    .build();
+
+            NotificationCompat.Action replyActionYes = new NotificationCompat.Action.Builder(
+                    0, replyLabelYes, fdPendingIntentYes)
+                    .addRemoteInput(remoteInput1)
+                    .build();
+
+            delIntent.setAction(FeedbackReceiver.ACTION_DISMISS_FEEDBACK);
+            PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
+                    0, delIntent, 0);
+
+            mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext()
+                    , Application.CHANNEL_DESTINATION_ALERT_ID)
+                    .setSmallIcon(R.drawable.ic_stat_notification)
+                    .setContentTitle(Application.get().getResources().getString(R.string.feedback_notify_title))
+                    .setContentText(message)
+                    .addAction(replyActionNo)
+                    .addAction(replyActionYes)
+                    .setDeleteIntent(pDelIntent)
+                    .setAutoCancel(true);
+        }
+
+        mBuilder.setOngoing(false);
+
+        NotificationManager mNotificationManager = (NotificationManager)
+                Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(mNavProvider.NOTIFICATION_ID + 1, mBuilder.build());
+
+    }
+
+    private void setupLogCleanupTask() {
+        PeriodicWorkRequest.Builder cleanupLogsBuilder =
+                new PeriodicWorkRequest.Builder(NavigationCleanupWorker.class, 24,
+                        TimeUnit.HOURS);
+
+        // Create the actual work object:
+        PeriodicWorkRequest cleanUpCheckWork = cleanupLogsBuilder.build();
+
+        // Then enqueue the recurring task:
+        WorkManager.getInstance().enqueue(cleanUpCheckWork);
     }
 }

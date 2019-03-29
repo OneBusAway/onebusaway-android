@@ -15,13 +15,16 @@ import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.nav.NavigationService;
-import org.onebusaway.android.nav.NavigationServiceProvider;
+import org.onebusaway.android.nav.NavigationUploadWorker;
 import org.onebusaway.android.util.PreferenceUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import static org.onebusaway.android.nav.NavigationService.LOG_DIRECTORY;
 
@@ -29,7 +32,16 @@ public class FeedbackActivity extends AppCompatActivity {
 
     public static final String TAG = "FeedbackActivity";
 
-    private String mAction = null;
+    public static final String TRIP_ID = ".TRIP_ID";
+    public static final String NOTIFICATION_ID = ".NOTIFICATION_ID";
+    public static final String RESPONSE = ".RESPONSE";
+    public static final String LOG_FILE = ".LOG_FILE";
+
+    public static final int FEEDBACK_NO = 1;
+    public static final int FEEDBACK_YES = 2;
+
+    private String mUserResponse = null;
+    private String mLogFile = null;
     private ImageButton dislikeButton;
     private ImageButton likeButton;
 
@@ -42,12 +54,20 @@ public class FeedbackActivity extends AppCompatActivity {
         Intent intent = this.getIntent();
         CheckBox sendLogs = (CheckBox) findViewById(R.id.feedback_send_logs);
         if (intent != null) {
-            mAction = intent.getExtras().getString("CallingAction");
-            if (mAction.equals("no")) {
+            int response = intent.getIntExtra(RESPONSE, 0);
+            mLogFile = intent.getExtras().getString(LOG_FILE);
+            Log.d(TAG, "Intent LOG_FILE :" + mLogFile);
+            if(response == FEEDBACK_YES) {
+                mUserResponse = "yes";
+            } else {
+                mUserResponse = "no";
+            }
+            //mAction = intent.getExtras().getString("CallingAction");
+            if (mUserResponse.equals("no")) {
                 Log.d(TAG, "Thumbs down tapped");
                 dislikeButton = findViewById(R.id.ImageBtn_Dislike);
                 dislikeButton.setSelected(true);
-            } else if (mAction.equals("yes")) {
+            } else if (mUserResponse.equals("yes")) {
                 Log.d(TAG, "Thumbs up tapped");
                 likeButton = findViewById(R.id.ImageBtn_like);
                 likeButton.setSelected(true);
@@ -80,9 +100,9 @@ public class FeedbackActivity extends AppCompatActivity {
     }
 
     private void submitFeedback() {
-        PreferenceUtils.saveBoolean(NavigationServiceProvider.FIRST_FEEDBACK, false);
+        PreferenceUtils.saveBoolean(NavigationService.FIRST_FEEDBACK, false);
         Log.d(TAG, "First Feedback : " + String.valueOf(Application.getPrefs()
-                .getBoolean(NavigationServiceProvider.FIRST_FEEDBACK, true)));
+                .getBoolean(NavigationService.FIRST_FEEDBACK, true)));
         String feedback = ((EditText) this.findViewById(R.id.editFeedbackText)).getText().toString();
         if (Application.getPrefs()
                 .getBoolean(getString(R.string.preferences_key_user_share_logs), true)) {
@@ -97,7 +117,7 @@ public class FeedbackActivity extends AppCompatActivity {
     }
 
     public void likeBtnOnClick(View view) {
-        mAction = "yes";
+        mUserResponse = "yes";
         likeButton = findViewById(R.id.ImageBtn_like);
         dislikeButton = findViewById(R.id.ImageBtn_Dislike);
         likeButton.setSelected(true);
@@ -106,7 +126,7 @@ public class FeedbackActivity extends AppCompatActivity {
     }
 
     public void dislikeBtnOnClick(View view) {
-        mAction = "no";
+        mUserResponse = "no";
         likeButton = findViewById(R.id.ImageBtn_like);
         dislikeButton = findViewById(R.id.ImageBtn_Dislike);
         dislikeButton.setSelected(true);
@@ -116,12 +136,13 @@ public class FeedbackActivity extends AppCompatActivity {
 
     private void moveLog(String feedback) {
         try {
-            File lFile = new File(NavigationService.LOG_FILE);
+            Log.d(TAG, "Log file: "+ mLogFile);
+            File lFile = new File(mLogFile);
             FileUtils.write(lFile, System.getProperty("line.separator") + "User Feedback - " + feedback, true);
             Log.d(TAG, "Feedback appended");
 
             File destFolder = new File(Application.get().getApplicationContext().getFilesDir()
-                    .getAbsolutePath() + File.separator + LOG_DIRECTORY + File.separator + mAction);
+                    .getAbsolutePath() + File.separator + LOG_DIRECTORY + File.separator + mUserResponse);
 
             Log.d(TAG, "sourceLocation: " + lFile);
             Log.d(TAG, "targetLocation: " + destFolder);
@@ -136,6 +157,8 @@ public class FeedbackActivity extends AppCompatActivity {
                 Log.d(TAG, "File move failed");
             }
 
+            setupLogUploadTask();
+
         } catch (IOException e) {
             Log.e(TAG, "File write failed: " + e.toString());
         }
@@ -143,7 +166,7 @@ public class FeedbackActivity extends AppCompatActivity {
     }
 
     private void deleteLog() {
-        File lFile = new File(NavigationService.LOG_FILE);
+        File lFile = new File(mLogFile);
         boolean deleted = lFile.delete();
         Log.d(TAG,"Log deleted " + deleted);
     }
@@ -162,4 +185,17 @@ public class FeedbackActivity extends AppCompatActivity {
             }
         }
     }
+
+    private void setupLogUploadTask() {
+        PeriodicWorkRequest.Builder uploadLogsBuilder =
+                new PeriodicWorkRequest.Builder(NavigationUploadWorker.class, 24,
+                        TimeUnit.HOURS);
+
+        // Create the actual work object:
+        PeriodicWorkRequest uploadCheckWork = uploadLogsBuilder.build();
+
+        // Then enqueue the recurring task:
+        WorkManager.getInstance().enqueue(uploadCheckWork);
+    }
+
 }

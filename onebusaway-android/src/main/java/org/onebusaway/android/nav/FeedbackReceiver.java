@@ -8,30 +8,33 @@ import android.os.Bundle;
 import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.RemoteInput;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import static org.onebusaway.android.nav.NavigationService.LOG_DIRECTORY;
 
 
 public class FeedbackReceiver extends BroadcastReceiver {
     public static final String TAG = "FeedbackReceiver";
-
+    public static final String ACTION_REPLY = BuildConfig.APPLICATION_ID + ".action.REPLY";
+    public static final String ACTION_DISMISS_FEEDBACK = BuildConfig.APPLICATION_ID + ".action.DISMISS_FEEDBACK";
     public static final String TRIP_ID = ".TRIP_ID";
     public static final String NOTIFICATION_ID = ".NOTIFICATION_ID";
-    public static final String CALLING_ACTION = ".CALLING_ACTION";
-    public static final String ACTION_NUM = ".ACTION_NUM";
+    public static final String RESPONSE = ".RESPONSE";
+    public static final String LOG_FILE = ".LOG_FILE";
 
     public static final int FEEDBACK_NO = 1;
     public static final int FEEDBACK_YES = 2;
-
-    public static final int DISMISS_FEEDBACK_NOTIFICATION = 1;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -39,26 +42,28 @@ public class FeedbackReceiver extends BroadcastReceiver {
 
         int notifyId = intent.getIntExtra(NOTIFICATION_ID,
                 NavigationServiceProvider.NOTIFICATION_ID + 1);
-        int actionNum = intent.getIntExtra(ACTION_NUM, 0);
+        //int actionNum = intent.getIntExtra(ACTION_NUM, 0);
+        String action = intent.getAction();
 
-        if (actionNum == DISMISS_FEEDBACK_NOTIFICATION) {
+        if (action == ACTION_DISMISS_FEEDBACK) {
             Log.d(TAG, "Dismiss intent");
             //TODO : Create Snack bar if user dismissed feedback notification without providing feedback
-        } else {
+        } else if (action == ACTION_REPLY) {
             Log.d(TAG, "Capturing user feedback from notification");
             captureFeedback(context, intent, notifyId);
         }
     }
 
     private void captureFeedback(Context context, Intent intent, int notifyId) {
-        int action = intent.getIntExtra(CALLING_ACTION, 0);
+        int response = intent.getIntExtra(RESPONSE, 0);
+        String logFile = intent.getExtras().getString(LOG_FILE);
         Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
-        String callingAction = null;
+        String userResponse = null;
 
         if (remoteInput != null) {
             Log.d(TAG, "checked remoteInput ");
             String feedback = remoteInput.getCharSequence(
-                    NavigationServiceProvider.KEY_TEXT_REPLY).toString();
+                    NavigationService.KEY_TEXT_REPLY).toString();
 
             Log.d(TAG, "Feedback captured");
 
@@ -78,10 +83,10 @@ public class FeedbackReceiver extends BroadcastReceiver {
                     Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
             mNotificationManager.notify(notifyId, repliedNotification.build());
 
-            if(action == FEEDBACK_YES) {
-                callingAction = "yes";
+            if(response == FEEDBACK_YES) {
+                userResponse = "yes";
             } else {
-                callingAction = "no";
+                userResponse = "no";
             }
 
             Log.d(TAG, "cancelling notification");
@@ -92,22 +97,22 @@ public class FeedbackReceiver extends BroadcastReceiver {
 
             if (pref) {
                 Log.d(TAG, "True");
-                moveLog(feedback, callingAction);
+                moveLog(feedback, userResponse, logFile);
             } else {
                 Log.d(TAG, "False");
-                deleteLog();
+                deleteLog(logFile);
             }
         }
     }
 
-    private void moveLog(String feedback, String action) {
+    private void moveLog(String feedback, String userResponse, String logFile) {
         try {
-            File lFile = new File(NavigationService.LOG_FILE);
+            File lFile = new File(logFile);
             FileUtils.write(lFile, System.getProperty("line.separator") + "User Feedback - " + feedback, true);
             Log.d(TAG, "Feedback appended");
 
             File destFolder = new File(Application.get().getApplicationContext().getFilesDir()
-                    .getAbsolutePath() + File.separator + LOG_DIRECTORY + File.separator + action);
+                    .getAbsolutePath() + File.separator + LOG_DIRECTORY + File.separator + userResponse);
 
             Log.d(TAG, "sourceLocation: " + lFile);
             Log.d(TAG, "targetLocation: " + destFolder);
@@ -121,15 +126,31 @@ public class FeedbackReceiver extends BroadcastReceiver {
             catch (Exception e) {
                 Log.d(TAG, "File move failed");
             }
+
+            setupLogUploadTask();
+
         } catch (IOException e) {
             Log.e(TAG, "File write failed: " + e.toString());
         }
 
     }
 
-    private void deleteLog() {
-        File lFile = new File(NavigationService.LOG_FILE);
+    private void deleteLog(String logFile) {
+        File lFile = new File(logFile);
         boolean deleted = lFile.delete();
         Log.v(TAG,"Log deleted " + deleted);
     }
+
+    private void setupLogUploadTask() {
+        PeriodicWorkRequest.Builder uploadLogsBuilder =
+                new PeriodicWorkRequest.Builder(NavigationUploadWorker.class, 24,
+                        TimeUnit.HOURS);
+
+        // Create the actual work object:
+        PeriodicWorkRequest uploadCheckWork = uploadLogsBuilder.build();
+
+        // Then enqueue the recurring task:
+        WorkManager.getInstance().enqueue(uploadCheckWork);
+    }
+
 }

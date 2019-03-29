@@ -216,6 +216,7 @@
         <activity
             android:name="org.onebusaway.android.ui.FeedbackActivity"
             android:label="@string/feedback_notify_title"
+            android:noHistory="true"
             android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -278,13 +279,7 @@
         </receiver>
         <receiver
             android:name=".nav.FeedbackReceiver"
-            android:enabled="true"
-            android:exported="true" >
-            <intent-filter>
-                <action android:name=".nav.FeedbackReceiver" />
-                <action android:name="${applicationId}.action.SCHEDULE"/>
-                <action android:name="${applicationId}.action.POLL"/>
-            </intent-filter>
+            android:enabled="true">
         </receiver>
         <!-- Receiver for restricted profiles -->
         <receiver android:name=".util.GetRestrictionsReceiver">

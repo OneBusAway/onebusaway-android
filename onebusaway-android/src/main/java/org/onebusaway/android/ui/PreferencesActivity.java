@@ -17,22 +17,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
-
-import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.util.BackupUtils;
-import org.onebusaway.android.util.BuildFlavorUtils;
-import org.onebusaway.android.util.EmbeddedSocialUtils;
-import org.onebusaway.android.util.PermissionUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.DialogInterface;
@@ -60,7 +44,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.google.android.gms.analytics.GoogleAnalytics;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
 import org.onebusaway.android.BuildConfig;

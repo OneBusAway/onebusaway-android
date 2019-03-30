@@ -358,6 +358,9 @@ configurations {
     all {
         exclude group: 'org.json', module: 'json'
     }
+    all {
+        exclude group: 'com.google.guava', module: 'listenablefuture'
+    }
 }
 
 dependencies {
@@ -406,7 +409,7 @@ dependencies {
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
     androidTestImplementation 'androidx.test:runner:1.1.0'
     // WorkManager (Java only)
-    implementation "android.arch.work:work-runtime:1.0.0-rc01"
+    implementation 'android.arch.work:work-runtime:1.0.0-rc01'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 }
 

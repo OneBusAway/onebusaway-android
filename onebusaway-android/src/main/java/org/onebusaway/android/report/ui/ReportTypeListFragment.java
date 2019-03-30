@@ -15,6 +15,13 @@
 */
 package org.onebusaway.android.report.ui;
 
+import android.content.res.TypedArray;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -24,13 +31,6 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.ui.MaterialListAdapter;
 import org.onebusaway.android.ui.MaterialListItem;
 import org.onebusaway.android.util.UIUtils;
-
-import android.content.res.TypedArray;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
 
 import java.util.ArrayList;
 import java.util.List;

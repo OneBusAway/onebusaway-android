@@ -15,20 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.ObaStopGroup;
-import org.onebusaway.android.io.elements.ObaStopGrouping;
-import org.onebusaway.android.io.request.ObaRouteRequest;
-import org.onebusaway.android.io.request.ObaRouteResponse;
-import org.onebusaway.android.io.request.ObaStopsForRouteRequest;
-import org.onebusaway.android.io.request.ObaStopsForRouteResponse;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
@@ -46,6 +32,20 @@ import android.view.ViewGroup;
 import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaStopGroup;
+import org.onebusaway.android.io.elements.ObaStopGrouping;
+import org.onebusaway.android.io.request.ObaRouteRequest;
+import org.onebusaway.android.io.request.ObaRouteResponse;
+import org.onebusaway.android.io.request.ObaStopsForRouteRequest;
+import org.onebusaway.android.io.request.ObaStopsForRouteResponse;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;

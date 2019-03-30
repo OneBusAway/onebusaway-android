@@ -138,7 +138,8 @@ public class FeedbackActivity extends AppCompatActivity {
         try {
             Log.d(TAG, "Log file: "+ mLogFile);
             File lFile = new File(mLogFile);
-            FileUtils.write(lFile, System.getProperty("line.separator") + "User Feedback - " + feedback, true);
+            FileUtils.write(lFile, System.getProperty("line.separator") + feedback, true);
+            //FileUtils.write(lFile, System.getProperty("line.separator") + "User Feedback - " + feedback, true);
             Log.d(TAG, "Feedback appended");
 
             File destFolder = new File(Application.get().getApplicationContext().getFilesDir()

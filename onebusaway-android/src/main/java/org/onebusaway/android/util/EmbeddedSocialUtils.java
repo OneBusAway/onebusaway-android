@@ -15,6 +15,13 @@
  */
 package org.onebusaway.android.util;
 
+import android.content.Context;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.UserManager;
+import android.text.TextUtils;
+import android.util.Base64;
+
 import com.microsoft.embeddedsocial.autorest.models.PublisherType;
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 import com.microsoft.embeddedsocial.server.exception.NotFoundException;
@@ -23,13 +30,6 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
-
-import android.content.Context;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.UserManager;
-import android.text.TextUtils;
-import android.util.Base64;
 
 import java.util.HashMap;
 import java.util.regex.Matcher;

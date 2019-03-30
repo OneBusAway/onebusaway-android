@@ -15,16 +15,16 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
-
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.Window;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.util.UIUtils;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;

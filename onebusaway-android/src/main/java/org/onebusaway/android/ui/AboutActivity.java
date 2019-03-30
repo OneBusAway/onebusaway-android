@@ -16,16 +16,16 @@
 
 package org.onebusaway.android.ui;
 
-import com.google.android.material.appbar.CollapsingToolbarLayout;
-
-import org.onebusaway.android.R;
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.widget.TextView;
+
+import com.google.android.material.appbar.CollapsingToolbarLayout;
+
+import org.onebusaway.android.R;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;

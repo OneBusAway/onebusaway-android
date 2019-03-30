@@ -18,16 +18,6 @@
  */
 package org.onebusaway.android.provider;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRegionElement;
-import org.onebusaway.android.nav.model.PathLink;
-
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -38,6 +28,16 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.text.format.Time;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRegionElement;
+import org.onebusaway.android.nav.model.PathLink;
 
 import java.util.ArrayList;
 

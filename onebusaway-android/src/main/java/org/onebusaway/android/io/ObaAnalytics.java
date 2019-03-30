@@ -15,14 +15,14 @@
  */
 package org.onebusaway.android.io;
 
+import android.content.SharedPreferences;
+import android.location.Location;
+import android.os.Bundle;
+
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-
-import android.content.SharedPreferences;
-import android.location.Location;
-import android.os.Bundle;
 
 import static android.text.TextUtils.isEmpty;
 

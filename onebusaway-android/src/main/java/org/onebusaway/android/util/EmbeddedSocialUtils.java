@@ -136,7 +136,8 @@ public class EmbeddedSocialUtils {
      * Returns true if the Embedded Social api key is non-empty
      */
     public static boolean isSocialApiKeyDefined() {
-        return !BuildConfig.EMBEDDED_SOCIAL_API_KEY.isEmpty();
+        String embeddedSocialApiKey = BuildConfig.EMBEDDED_SOCIAL_API_KEY;
+        return embeddedSocialApiKey != null && !embeddedSocialApiKey.isEmpty();
     }
 
     /**

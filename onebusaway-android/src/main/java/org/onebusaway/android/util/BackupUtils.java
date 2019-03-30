@@ -16,6 +16,8 @@
 
 package org.onebusaway.android.util;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -60,9 +62,9 @@ public class BackupUtils {
 
     static private void doRestore(Context activityContext) {
         final Context context = Application.get().getApplicationContext();
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                context.getString(R.string.analytics_action_button_press),
-                context.getString(R.string.analytics_label_button_press_restore_preference));
+        ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
+                context.getString(R.string.analytics_label_button_press_restore_preference),
+                null);
         try {
             Backup.restore(context);
 
@@ -94,9 +96,9 @@ public class BackupUtils {
         }
 
         Context context = Application.get().getApplicationContext();
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                context.getString(R.string.analytics_action_button_press),
-                context.getString(R.string.analytics_label_button_press_save_preference));
+        ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
+                context.getString(R.string.analytics_label_button_press_save_preference),
+                null);
         try {
             Backup.backup(context);
             Toast.makeText(context,

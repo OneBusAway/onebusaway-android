@@ -28,6 +28,7 @@ import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.elements.ObaTripDetails;
 import org.onebusaway.android.io.elements.ObaTripStatus;
+import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.ui.TripDetailsActivity;
 import org.onebusaway.android.ui.TripDetailsListFragment;
@@ -46,6 +47,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -890,6 +892,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
             TextView lastUpdatedView = (TextView) view.findViewById(R.id.last_updated);
             ImageView moreView = (ImageView) view.findViewById(R.id.trip_more_info);
             moreView.setColorFilter(r.getColor(R.color.switch_thumb_normal_material_dark));
+            ViewGroup occupancyView = view.findViewById(R.id.occupancy);
 
             // Get route/trip details
             ObaTrip trip = mLastResponse.getTrip(status.getActiveTripId());
@@ -924,6 +927,11 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
                 d.setColor(r.getColor(statusColor));
                 lastUpdatedView.setText(r.getString(R.string.vehicle_last_updated_scheduled));
                 statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
+
+                // Hide occupancy by setting null value
+                UIUtils.setOccupancyVisibilityAndColor(occupancyView, null, OccupancyState.HISTORICAL);
+                UIUtils.setOccupancyContentDescription(occupancyView, null, OccupancyState.HISTORICAL);
+
                 return view;
             }
 
@@ -954,6 +962,16 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
             if (mMarkerRefreshHandler != null) {
                 mMarkerRefreshHandler.removeCallbacks(mMarkerRefresh);
                 mMarkerRefreshHandler.postDelayed(mMarkerRefresh, MARKER_REFRESH_PERIOD);
+            }
+
+            if (status.getRealtimeOccupancy() != null) {
+                // Real-time occupancy data
+                UIUtils.setOccupancyVisibilityAndColor(occupancyView, status.getRealtimeOccupancy(), OccupancyState.REALTIME);
+                UIUtils.setOccupancyContentDescription(occupancyView, status.getRealtimeOccupancy(), OccupancyState.REALTIME);
+            } else {
+                // Hide occupancy by setting null value
+                UIUtils.setOccupancyVisibilityAndColor(occupancyView, null, OccupancyState.REALTIME);
+                UIUtils.setOccupancyContentDescription(occupancyView, null, OccupancyState.REALTIME);
             }
 
             return view;

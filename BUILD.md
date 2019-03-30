@@ -44,7 +44,7 @@ also mention how you would build/run the **amazon** flavor for the **oba** brand
 
 To build a release build, you need to create a `gradle.properties` file that points to a `secure.properties` file, and a `secure.properties` file that points to your keystore and alias.
 
-The `gradle.properties` file is located in the onebusaway-android directory and has the contents:
+The `gradle.properties` file is located in the `onebusaway-android` directory and has the contents:
 ```
 secure.properties=<full_path_to_secure_properties_file>
 ```
@@ -53,6 +53,8 @@ The `secure.properties` file (in the location specified in gradle.properties) ha
 ```
 key.store=<full_path_to_keystore_file>
 key.alias=<key_alias_name>
+key.storepassword=<your_keystore_password>
+key.keypassword=<your_key_password>
 ```
 
 Note that the paths in these files always use the Unix path separator `/`, even on Windows. If you use the Windows path separator `\` you will get the error `No value has been specified for property 'signingConfig.keyAlias'.`
@@ -62,10 +64,6 @@ Then, to build all flavors run:
 `gradlew assembleRelease`
 
 (If you want to assemble just the Google variant, use `gradlew assembleObaGoogleRelease`, and for Amazon Fire Phone-only use `gradlew assembleObaAmazonRelease`)
-
-If Gradle is running as a daemon, you'll be prompted for the keystore/key password via a popup dialog box. If you're not running Gradle as a daemon, command will prompt for your passwords (See https://github.com/OneBusAway/onebusaway-android/issues/770).
-
-If you want to force Gradle to not run as a daemon, use `gradlew assembleRelease -D org.gradle.daemon=false`.
 
 ### Updating the Amazon Maps API library
 

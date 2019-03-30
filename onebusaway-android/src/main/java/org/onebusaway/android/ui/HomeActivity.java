@@ -17,6 +17,42 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
+import com.microsoft.embeddedsocial.ui.fragment.MyProfileFragment;
+import com.microsoft.embeddedsocial.ui.fragment.PinsFragment;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapModeController;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.googlemapsv2.LayerInfo;
+import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.report.ui.ReportActivity;
+import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PermissionUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.RegionUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
+import org.onebusaway.android.util.UIUtils;
+import org.opentripplanner.routing.bike_rental.BikeRentalStation;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -254,6 +290,8 @@ public class HomeActivity extends AppCompatActivity
 
     boolean mInitialStartup = true;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     /**
      * Starts the MapActivity with a particular stop focused with the center of
      * the map at a particular point.
@@ -351,6 +389,9 @@ public class HomeActivity extends AppCompatActivity
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
         // Workaround to make sure ES SDK is initialized in case we startup to ES Fragments (#953)
         Application.get().setUpSocial();
 
@@ -400,16 +441,9 @@ public class HomeActivity extends AppCompatActivity
         if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
             mGoogleApiClient.connect();
         }
-        ObaAnalytics.reportActivityStart(this);
         AccessibilityManager am = (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
         Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
-        if (isTalkBackEnabled) {
-            ObaAnalytics.reportEventWithCategory(
-                    ObaAnalytics.ObaEventCategory.ACCESSIBILITY.toString(),
-                    getString(R.string.analytics_action_touch_exploration),
-                    getString(R.string.analytics_label_talkback) + getClass().getSimpleName()
-                            + " using TalkBack");
-        }
+        ObaAnalytics.setAccessibility(mFirebaseAnalytics, isTalkBackEnabled);
     }
 
     @Override
@@ -477,108 +511,97 @@ public class HomeActivity extends AppCompatActivity
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_STARRED_STOPS) {
                     showStarredStopsFragment();
                     mCurrentNavDrawerPosition = item;
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_button_press),
-                            getString(R.string.analytics_label_button_press_star));
+                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            getString(R.string.analytics_label_button_press_star),
+                            null);
                 }
                 break;
             case NAVDRAWER_ITEM_NEARBY:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
                     showMapFragment();
                     mCurrentNavDrawerPosition = NAVDRAWER_ITEM_NEARBY;
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_button_press),
-                            getString(R.string.analytics_label_button_press_nearby));
+                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            getString(R.string.analytics_label_button_press_nearby),
+                            null);
                 }
                 break;
             case NAVDRAWER_ITEM_MY_REMINDERS:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_MY_REMINDERS) {
                     showMyRemindersFragment();
                     mCurrentNavDrawerPosition = item;
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_button_press),
-                            getString(R.string.analytics_label_button_press_reminders));
+                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            getString(R.string.analytics_label_button_press_reminders),
+                            null);
                 }
                 break;
             case NAVDRAWER_ITEM_PLAN_TRIP:
                 Intent planTrip = new Intent(HomeActivity.this, TripPlanActivity.class);
                 startActivity(planTrip);
-                ObaAnalytics
-                        .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                getString(R.string.analytics_action_button_press),
-                                getString(R.string.analytics_label_button_press_trip_plan));
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_button_press_trip_plan),
+                        null);
                 break;
             case NAVDRAWER_ITEM_PAY_FARE:
                 UIUtils.launchPayMyFareApp(this);
                 break;
             case NAVDRAWER_ITEM_SIGN_IN:
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_social_sign_in));
+                ObaAnalytics.reportLoginEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_login_embedded_social));
                 EmbeddedSocial.launchSignInActivity(this);
                 break;
             case NAVDRAWER_ITEM_PROFILE:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PROFILE) {
                     showMyProfileFragment();
                     mCurrentNavDrawerPosition = item;
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_button_press),
-                            getString(R.string.analytics_label_button_press_social_profile));
+                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            getString(R.string.analytics_label_button_press_social_profile),
+                            null);
                 }
                 break;
             case NAVDRAWER_ITEM_PINS:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PINS) {
                     showPinsFragment();
                     mCurrentNavDrawerPosition = item;
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_button_press),
-                            getString(R.string.analytics_label_button_press_social_pins));
+                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            getString(R.string.analytics_label_button_press_social_pins),
+                            null);
                 }
                 break;
             case NAVDRAWER_ITEM_ACTIVITY_FEED:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_ACTIVITY_FEED) {
                     showActivityFeedFragment();
                     mCurrentNavDrawerPosition = item;
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_button_press),
-                            getString(R.string.analytics_label_button_press_social_activity_feed));
+                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            getString(R.string.analytics_label_button_press_social_activity_feed),
+                            null);
                 }
                 break;
             case NAVDRAWER_ITEM_SETTINGS:
                 Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
                 startActivity(preferences);
-                ObaAnalytics
-                        .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                getString(R.string.analytics_action_button_press),
-                                getString(R.string.analytics_label_button_press_settings));
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_button_press_settings),
+                        null);
                 break;
             case NAVDRAWER_ITEM_HELP:
                 if (noActiveFragments()) {
                     showMapFragment();
                 }
                 showDialog(HELP_DIALOG);
-                ObaAnalytics
-                        .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                getString(R.string.analytics_action_button_press),
-                                getString(R.string.analytics_label_button_press_help));
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_button_press_help),
+                        null);
                 break;
             case NAVDRAWER_ITEM_SEND_FEEDBACK:
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_feedback));
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_button_press_feedback),
+                        null);
                 goToSendFeedBack();
                 break;
             case NAVDRAWER_ITEM_OPEN_SOURCE:
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_open_source));
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_button_press_open_source),
+                        null);
                 Intent i = new Intent(Intent.ACTION_VIEW);
                 i.setData(Uri.parse(getString(R.string.open_source_github)));
                 startActivity(i);
@@ -927,10 +950,9 @@ public class HomeActivity extends AppCompatActivity
         final int id = item.getItemId();
         if (id == R.id.search) {
             onSearchRequested();
-            //Analytics
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_button_press),
-                    getString(R.string.analytics_label_button_press_search_box));
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_label_button_press_search_box),
+                    null);
             return true;
         } else if (id == R.id.recent_stops_routes) {
             ShowcaseViewUtils.doNotShowTutorial(ShowcaseViewUtils.TUTORIAL_RECENT_STOPS_ROUTES);
@@ -996,10 +1018,9 @@ public class HomeActivity extends AppCompatActivity
                                             .getTwitterUrl();
                                 }
                                 UIUtils.goToUrl(HomeActivity.this, twitterUrl);
-                                ObaAnalytics.reportEventWithCategory(
-                                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                        getString(R.string.analytics_action_switch),
-                                        getString(R.string.analytics_label_app_switch));
+                                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                        getString(R.string.analytics_label_twitter),
+                                        null);
                                 break;
                             case 5:
                                 // Contact us
@@ -1157,10 +1178,9 @@ public class HomeActivity extends AppCompatActivity
             updateArrivalListFragment(stop.getId(), stop.getName(), stop.getStopCode(), stop,
                     routes);
 
-            //Analytics
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_button_press),
-                    getString(R.string.analytics_label_button_press_map_icon));
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_label_button_press_map_icon),
+                    null);
         } else {
             // No stop is in focus (e.g., user tapped on the map), so hide the panel
             // and clear the currently focused stopId
@@ -1544,10 +1564,9 @@ public class HomeActivity extends AppCompatActivity
                 PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_location_dialog), false);
 
                 mMapFragment.setMyLocation(true, true);
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_location));
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_button_press_location),
+                        null);
             }
         });
         ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mFabMyLocation

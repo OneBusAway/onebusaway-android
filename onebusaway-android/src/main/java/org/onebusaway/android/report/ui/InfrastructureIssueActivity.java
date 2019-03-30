@@ -17,7 +17,6 @@ package org.onebusaway.android.report.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -317,12 +316,6 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             mBlockId = getIntent().getStringExtra(BLOCK_ID);
             mDefaultIssueType = getIntent().getStringExtra(SELECTED_SERVICE);
         }
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        ObaAnalytics.reportActivityStart(this);
     }
 
     @Override

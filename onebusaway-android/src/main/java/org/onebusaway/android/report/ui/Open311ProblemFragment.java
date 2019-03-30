@@ -16,7 +16,10 @@
 
 package org.onebusaway.android.report.ui;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -46,7 +49,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.provider.MediaStore;
-import android.telephony.TelephonyManager;
 import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -175,6 +177,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     private static final String BLOCK_ID = ".blockId";
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     public static void show(AppCompatActivity activity, Integer containerViewId,
                             Open311 open311, Service service, ObaArrivalInfo obaArrivalInfo,
             String agencyName, String blockId) {
@@ -211,6 +215,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         setRetainInstance(true);
 
         setHasOptionsMenu(Boolean.TRUE);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
 
         return rootView;
     }
@@ -279,12 +285,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 showProgressDialog(true);
             }
         }
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        ObaAnalytics.reportFragmentStart(this);
     }
 
     @Override
@@ -484,8 +484,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         // Prepare issue description
         String description = ((EditText) getActivity().findViewById(R.id.ri_editTextDesc)).getText().toString();
 
-        final TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-
         Open311User open311User;
 
         if (!mAnonymousReportingCheckBox.isChecked()) {
@@ -493,6 +491,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         } else {
             open311User = getOpen311UserFromStrings();
         }
+
+        String appUid = PreferenceUtils.getString(Application.APP_UID);
 
         IssueLocationHelper issueLocationHelper = getIssueLocationHelper();
 
@@ -504,7 +504,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 setDescription(description).setEmail(open311User.getEmail()).
                 setFirst_name(open311User.getName()).setLast_name(open311User.getLastName()).
                 setPhone(open311User.getPhone()).setAddress_string(getCurrentAddress()).
-                setDevice_id(tm.getDeviceId());
+                setDevice_id(appUid);
 
         if (mImagePath != null) {
             attachImage(builder);
@@ -531,8 +531,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             mRequestTask = new ServiceRequestTask(mOpen311, serviceRequest, this);
             mRequestTask.execute();
 
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
-                    getString(R.string.analytics_action_problem), mService.getService_name());
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics, getString(R.string.analytics_problem), mService.getService_name());
         } else {
             createToastMessage(Open311Validator.getErrorMessageForServiceRequestByErrorCode(errorCode));
         }

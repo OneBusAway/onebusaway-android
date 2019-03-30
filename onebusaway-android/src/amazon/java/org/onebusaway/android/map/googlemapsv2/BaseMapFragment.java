@@ -41,6 +41,7 @@ import com.amazon.geo.mapsv2.model.Marker;
 import com.amazon.geo.mapsv2.model.Polyline;
 import com.amazon.geo.mapsv2.model.PolylineOptions;
 import com.amazon.geo.mapsv2.model.VisibleRegion;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -197,6 +198,8 @@ public class BaseMapFragment extends SupportMapFragment
 
     private boolean mUserDeniedPermission = false;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     public void onActivateLayer(LayerInfo layer) {
         switch (layer.getLayerlabel()) {
@@ -204,10 +207,8 @@ public class BaseMapFragment extends SupportMapFragment
                 for (MapModeController controller : mControllers) {
                     if (controller instanceof BikeshareMapController) {
                         ((BikeshareMapController) controller).showBikes(true);
-
-                        ObaAnalytics.reportEventWithCategory(
-                                ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                getString(R.string.analytics_action_layer_bikeshare),
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                getString(R.string.analytics_layer_bikeshare),
                                 getString(R.string.analytics_label_bikeshare_activated));
                     }
                 }
@@ -223,10 +224,8 @@ public class BaseMapFragment extends SupportMapFragment
                 for (MapModeController controller : mControllers) {
                     if (controller instanceof BikeshareMapController) {
                         ((BikeshareMapController) controller).showBikes(false);
-
-                        ObaAnalytics.reportEventWithCategory(
-                                ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                getString(R.string.analytics_action_layer_bikeshare),
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                getString(R.string.analytics_layer_bikeshare),
                                 getString(R.string.analytics_label_bikeshare_deactivated));
                     }
                 }
@@ -286,6 +285,8 @@ public class BaseMapFragment extends SupportMapFragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
 
         if (savedInstanceState != null) {
             savedInstanceState.getBoolean(USER_DENIED_PERMISSION, false);

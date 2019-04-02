@@ -1107,7 +1107,7 @@
 
     <!-- User Feedback notifications -->
     <string name="feedback_notify_title">Help Improve Destination Reminder</string>
-    <string name="feedback_notify_dialog_msg">Were you notified at the right time to pull the cord?</string>
+    <string name="feedback_notify_dialog_msg">Were you notified at the right time?</string>
     <string name="feedback_notify_confirmation">Thank you for the feedback!</string>
     <string name="feedback_label">Feedback</string>
     <string name="feedback_action_reply_no">No</string>

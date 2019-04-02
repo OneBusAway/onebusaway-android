@@ -29,7 +29,6 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
-import org.onebusaway.android.ui.FeedbackActivity;
 import org.onebusaway.android.ui.TripDetailsActivity;
 import org.onebusaway.android.util.RegionUtils;
 
@@ -37,11 +36,6 @@ import java.text.DecimalFormat;
 import java.util.Locale;
 
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.RemoteInput;
-
-import static org.onebusaway.android.nav.NavigationService.FIRST_FEEDBACK;
-import static org.onebusaway.android.nav.NavigationService.KEY_TEXT_REPLY;
-import static org.onebusaway.android.nav.NavigationService.mFirstFeedback;
 
 /**
  * This class provides the navigation functionality for the destination reminders
@@ -684,7 +678,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             mBuilder.setContentText(message);
             mBuilder.setOngoing(false);
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
-            getNavUserFeedback();
         }
     }
 
@@ -714,131 +707,5 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         } else {
             mTTS.playSilence(duration, queueFlag, null);
         }
-    }
-
-    public void getNavUserFeedback() {
-        //TODO - Log "Yes" or "No" including plaintext feedback using Firebase Analytics
-
-        Application app = Application.get();
-        NotificationCompat.Builder mBuilder;
-
-        String message = Application.get().getString(R.string.feedback_notify_dialog_msg);
-        mFirstFeedback = Application.getPrefs().getBoolean(FIRST_FEEDBACK, true);
-
-        // Create delete intent to set flag for snackbar creation next time the app is opened.
-        Intent delIntent = new Intent(app.getApplicationContext(), FeedbackReceiver.class);
-        delIntent.putExtra(FeedbackReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
-
-        if ((mFirstFeedback) || (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)) {
-
-            Intent fdIntent = new Intent(app.getApplicationContext(), FeedbackActivity.class);
-            fdIntent.setAction(FeedbackReceiver.ACTION_REPLY);
-            fdIntent.putExtra(FeedbackActivity.RESPONSE, FeedbackActivity.FEEDBACK_NO);
-            fdIntent.putExtra(FeedbackActivity.NOTIFICATION_ID, NOTIFICATION_ID + 1);
-            fdIntent.putExtra(FeedbackActivity.TRIP_ID, mTripId);
-            fdIntent.putExtra(FeedbackActivity.LOG_FILE, "/data/data/com.joulespersecond.seattlebusbot/files/ObaNavLog/9-Wed, Aug 15 2018, 1200 PM.csv");//mLogFile.getAbsolutePath());
-
-            //Pending intent used to handle feedback when user taps on 'No'
-            PendingIntent fdPendingIntentNo = PendingIntent.getActivity(app.getApplicationContext()
-                    , 1, fdIntent,PendingIntent.FLAG_UPDATE_CURRENT);
-
-            fdIntent = new Intent(app.getApplicationContext(), FeedbackActivity.class);
-            fdIntent.setAction(FeedbackReceiver.ACTION_REPLY);
-            fdIntent.putExtra(FeedbackActivity.RESPONSE, FeedbackActivity.FEEDBACK_YES);
-            fdIntent.putExtra(FeedbackActivity.NOTIFICATION_ID, NOTIFICATION_ID + 1);
-            fdIntent.putExtra(FeedbackActivity.TRIP_ID, mTripId);
-            fdIntent.putExtra(FeedbackActivity.LOG_FILE, "/data/data/com.joulespersecond.seattlebusbot/files/ObaNavLog/1-Sat, Mar 30 2019, 05:57 PM.csv");//mLogFile.getAbsolutePath());
-
-            //Pending intent used to handle feedback when user taps on 'Yes'
-            PendingIntent fdPendingIntentYes = PendingIntent.getActivity(app.getApplicationContext()
-                    , 2, fdIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-            delIntent.setAction(FeedbackReceiver.ACTION_DISMISS_FEEDBACK);
-            PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
-                    0, delIntent, 0);
-
-            mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext()
-                    ,Application.CHANNEL_DESTINATION_ALERT_ID)
-                    .setSmallIcon(R.drawable.ic_stat_notification)
-                    .setContentTitle(Application.get().getResources()
-                            .getString(R.string.feedback_notify_title))
-                    .setContentText(message)
-                    .addAction(0, Application.get().getResources()
-                            .getString(R.string.feedback_action_reply_no), fdPendingIntentNo )
-                    .addAction(0, Application.get().getResources()
-                            .getString(R.string.feedback_action_reply_yes), fdPendingIntentYes)
-                    .setDeleteIntent(pDelIntent)
-                    .setAutoCancel(true);
-        } else {
-
-            //Intent to handle user feedback when a user taps on 'No'
-            Intent intentNo = new Intent(Application.get().getApplicationContext(), FeedbackReceiver.class);
-            intentNo.setAction(FeedbackReceiver.ACTION_REPLY);
-            intentNo.putExtra(FeedbackReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
-            intentNo.putExtra(FeedbackReceiver.TRIP_ID, mTripId);
-            intentNo.putExtra(FeedbackReceiver.RESPONSE, FeedbackReceiver.FEEDBACK_NO);
-            intentNo.putExtra(FeedbackReceiver.LOG_FILE, "");//mLogFile.getAbsolutePath());
-
-            //PendingIntent to handle user feedback when a user taps on 'No'
-            PendingIntent fdPendingIntentNo = PendingIntent.getBroadcast(Application.get()
-                    .getApplicationContext(),100, intentNo, 0);
-
-            String replyLabelNo = Application.get().getResources()
-                    .getString(R.string.feedback_action_reply_no);
-
-            RemoteInput remoteInput = new RemoteInput.Builder(KEY_TEXT_REPLY)
-                    .setLabel(replyLabelNo)
-                    .build();
-
-            NotificationCompat.Action replyActionNo = new NotificationCompat.Action.Builder(
-                    0, replyLabelNo, fdPendingIntentNo)
-                    .addRemoteInput(remoteInput)
-                    .build();
-
-            //Intent to handle user feedback when a user taps on 'Yes'
-            Intent intentYes = new Intent(Application.get().getApplicationContext(), FeedbackReceiver.class);
-            intentYes.setAction(FeedbackReceiver.ACTION_REPLY);
-            intentYes.putExtra(FeedbackReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
-            intentYes.putExtra(FeedbackReceiver.TRIP_ID, mTripId);
-            intentYes.putExtra(FeedbackReceiver.RESPONSE, FeedbackReceiver.FEEDBACK_YES);
-            intentYes.putExtra(FeedbackReceiver.LOG_FILE, "");//mLogFile.getAbsolutePath());
-
-            //PendingIntent to handle user feedback when a user taps on 'No'
-            PendingIntent fdPendingIntentYes = PendingIntent.getBroadcast(Application.get()
-                    .getApplicationContext(),101, intentYes, 0);
-
-            String replyLabelYes = Application.get().getResources()
-                    .getString(R.string.feedback_action_reply_yes);
-
-            RemoteInput remoteInput1 = new RemoteInput.Builder(KEY_TEXT_REPLY)
-                    .setLabel(replyLabelYes)
-                    .build();
-
-            NotificationCompat.Action replyActionYes = new NotificationCompat.Action.Builder(
-                    0, replyLabelYes, fdPendingIntentYes)
-                    .addRemoteInput(remoteInput1)
-                    .build();
-
-            delIntent.setAction(FeedbackReceiver.ACTION_DISMISS_FEEDBACK);
-            PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
-                    0, delIntent, 0);
-
-            mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext()
-                    , Application.CHANNEL_DESTINATION_ALERT_ID)
-                    .setSmallIcon(R.drawable.ic_stat_notification)
-                    .setContentTitle(Application.get().getResources().getString(R.string.feedback_notify_title))
-                    .setContentText(message)
-                    .addAction(replyActionNo)
-                    .addAction(replyActionYes)
-                    .setDeleteIntent(pDelIntent)
-                    .setAutoCancel(true);
-        }
-
-        mBuilder.setOngoing(false);
-
-        NotificationManager mNotificationManager = (NotificationManager)
-                Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(NOTIFICATION_ID + 1, mBuilder.build());
-
     }
 }

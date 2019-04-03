@@ -16,6 +16,16 @@
  */
 package org.onebusaway.android.region;
 
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.location.Location;
+import android.os.AsyncTask;
+import android.os.Handler;
+import android.util.Log;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -28,16 +38,6 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.RegionUtils;
 import org.onebusaway.android.util.UIUtils;
-
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.SharedPreferences;
-import android.location.Location;
-import android.os.AsyncTask;
-import android.os.Handler;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;

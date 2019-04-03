@@ -26,6 +26,21 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import com.amazon.geo.mapsv2.AmazonMap;
+import com.amazon.geo.mapsv2.Projection;
+import com.amazon.geo.mapsv2.model.BitmapDescriptor;
+import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
+import com.amazon.geo.mapsv2.model.LatLng;
+import com.amazon.geo.mapsv2.model.Marker;
+import com.amazon.geo.mapsv2.model.MarkerOptions;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
@@ -47,21 +62,6 @@ import android.util.Log;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.Toast;
-
-import com.amazon.geo.mapsv2.AmazonMap;
-import com.amazon.geo.mapsv2.Projection;
-import com.amazon.geo.mapsv2.model.BitmapDescriptor;
-import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
-import com.amazon.geo.mapsv2.model.LatLng;
-import com.amazon.geo.mapsv2.model.Marker;
-import com.amazon.geo.mapsv2.model.MarkerOptions;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
 
 import java.util.ArrayList;
 import java.util.HashMap;

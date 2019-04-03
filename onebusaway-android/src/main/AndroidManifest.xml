@@ -213,6 +213,15 @@
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value="org.onebusaway.android.ui.HomeActivity"/>
         </activity>
+        <activity
+            android:name="org.onebusaway.android.ui.FeedbackActivity"
+            android:label="@string/feedback_notify_title"
+            android:noHistory="true"
+            android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.onebusaway.android.ui.HomeActivity"/>
+        </activity>
 
 
         <!-- Provider is defined in build.gradle flavors -->
@@ -267,6 +276,10 @@
             <intent-filter>
                 <action android:name=".nav.NavigationReceiver" />
             </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".nav.FeedbackReceiver"
+            android:enabled="true">
         </receiver>
         <!-- Receiver for restricted profiles -->
         <receiver android:name=".util.GetRestrictionsReceiver">

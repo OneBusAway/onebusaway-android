@@ -61,6 +61,8 @@
     <string name="preference_key_social_category">preference_category_social</string>
     <string name="preference_key_social">preference_social</string>
     <string name="preference_key_never_show_payment_warning_dialog">never_show_payment_warning_dialog</string>
+    <string name="preferences_key_user_share_logs_category">preferences_key_user_share_logs_category</string>
+    <string name="preferences_key_user_share_logs">preferences_user_share_logs</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>

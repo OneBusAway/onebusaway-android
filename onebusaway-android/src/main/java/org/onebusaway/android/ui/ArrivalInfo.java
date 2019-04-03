@@ -16,6 +16,9 @@
  */
 package org.onebusaway.android.ui;
 
+import android.content.Context;
+import android.content.res.Resources;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaArrivalInfo.Frequency;
@@ -23,9 +26,6 @@ import org.onebusaway.android.io.elements.Occupancy;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
-
-import android.content.Context;
-import android.content.res.Resources;
 
 import java.text.DateFormat;
 import java.util.Date;

@@ -17,22 +17,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
-
-import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.util.BackupUtils;
-import org.onebusaway.android.util.BuildFlavorUtils;
-import org.onebusaway.android.util.EmbeddedSocialUtils;
-import org.onebusaway.android.util.PermissionUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.DialogInterface;
@@ -59,6 +43,21 @@ import android.view.Window;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.util.BackupUtils;
+import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
+import org.onebusaway.android.util.PermissionUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -202,6 +201,12 @@ public class PreferencesActivity extends PreferenceActivity
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getPreferenceScreen().removePreference(findPreference(getString(R.string.preference_key_notifications)));
         }
+
+        // If the Android version is lower than Nougat (7.0) and above Pie (9.0) hide "Share trip logs" preference
+        if ((Build.VERSION.SDK_INT < Build.VERSION_CODES.N) || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)) {
+            getPreferenceScreen().removePreference(findPreference(getString(R.string.preferences_key_user_share_logs_category)));
+        }
+
         // If its the OBA brand flavor, then show the "Donate" preference and hide "Powered by OBA"
         PreferenceCategory aboutCategory = (PreferenceCategory)
                 findPreference(getString(R.string.preferences_category_about));

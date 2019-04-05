@@ -245,4 +245,31 @@ public class ObaAnalytics {
         SharedPreferences settings = Application.getPrefs();
         return settings.getBoolean(Application.get().getString(R.string.preferences_key_analytics), Boolean.TRUE);
     }
+
+    /**
+     * Reports destination reminder feedback using Firebase
+     * @param analytics Firebase singleton
+     * @param wasGoodReminder true if the user responded that they got the reminder at the right time, or false if they responded that they did not get the reminder at the right time
+     * @param feedbackText plain text feedback submitted by the user, or null if the user didn't enter any feedback text
+     * @param fileName the name of the file that was uploaded that contains the data for this particular trip, or null if the user didn't upload data
+     */
+    public static void reportDestinationReminderFeedback(FirebaseAnalytics analytics, boolean wasGoodReminder, String feedbackText, String fileName) {
+        if (!isAnalyticsActive()) {
+            return;
+        }
+        Bundle bundle = new Bundle();
+        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, Application.get().getString(R.string.analytics_label_button_press_destination_reminder_feedback));
+        if (wasGoodReminder) {
+            bundle.putString(FirebaseAnalytics.Param.ITEM_VARIANT, Application.get().getString(R.string.analytics_label_destination_reminder_yes));
+        } else {
+            bundle.putString(FirebaseAnalytics.Param.ITEM_VARIANT, Application.get().getString(R.string.analytics_label_destination_reminder_no));
+        }
+        if (!isEmpty(feedbackText)) {
+            bundle.putString(FirebaseAnalytics.Param.CONTENT, feedbackText);
+        }
+        if (!isEmpty(fileName)) {
+            bundle.putString(FirebaseAnalytics.Param.ITEM_LOCATION_ID, fileName);
+        }
+        analytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+    }
 }

@@ -11,9 +11,12 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.nav.NavigationService;
 import org.onebusaway.android.nav.NavigationUploadWorker;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -26,6 +29,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import static android.text.TextUtils.isEmpty;
 import static org.onebusaway.android.nav.NavigationService.LOG_DIRECTORY;
 
 public class FeedbackActivity extends AppCompatActivity {
@@ -45,6 +49,8 @@ public class FeedbackActivity extends AppCompatActivity {
     private ImageButton dislikeButton;
     private ImageButton likeButton;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,6 +59,9 @@ public class FeedbackActivity extends AppCompatActivity {
 
         Intent intent = this.getIntent();
         CheckBox sendLogs = (CheckBox) findViewById(R.id.feedback_send_logs);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
         if (intent != null) {
             int response = intent.getIntExtra(RESPONSE, 0);
             mLogFile = intent.getExtras().getString(LOG_FILE);
@@ -62,7 +71,6 @@ public class FeedbackActivity extends AppCompatActivity {
             } else {
                 mUserResponse = "no";
             }
-            //mAction = intent.getExtras().getString("CallingAction");
             if (mUserResponse.equals("no")) {
                 Log.d(TAG, "Thumbs down tapped");
                 dislikeButton = findViewById(R.id.ImageBtn_Dislike);
@@ -109,6 +117,7 @@ public class FeedbackActivity extends AppCompatActivity {
             moveLog(feedback);
         } else {
             deleteLog();
+            logFeedback(feedback);
         }
         Log.d(TAG,"Feedback send : " + feedback);
         Toast.makeText(FeedbackActivity.this,
@@ -139,7 +148,6 @@ public class FeedbackActivity extends AppCompatActivity {
             Log.d(TAG, "Log file: "+ mLogFile);
             File lFile = new File(mLogFile);
             FileUtils.write(lFile, System.getProperty("line.separator") + feedback, true);
-            //FileUtils.write(lFile, System.getProperty("line.separator") + "User Feedback - " + feedback, true);
             Log.d(TAG, "Feedback appended");
 
             File destFolder = new File(Application.get().getApplicationContext().getFilesDir()
@@ -199,4 +207,16 @@ public class FeedbackActivity extends AppCompatActivity {
         WorkManager.getInstance().enqueue(uploadCheckWork);
     }
 
+    private void logFeedback(String feedbackText) {
+        Boolean wasGoodReminder;
+        if (mUserResponse.equals("yes")) {
+            wasGoodReminder = true;
+        } else {
+            wasGoodReminder = false;
+        }
+        ObaAnalytics.reportDestinationReminderFeedback(mFirebaseAnalytics, wasGoodReminder
+                , ((!isEmpty(feedbackText))? feedbackText : null), null);
+        Log.d (TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
+                + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText))? feedbackText : null));
+    }
 }

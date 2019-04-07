@@ -240,11 +240,10 @@ android {
                     "\"https://twitter.com/YRTViva\""
             buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
             buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
-            buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "\"937033cad3054ec58a1a8156dcdd6ad8a416af2f\""
-            buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL",
-                    "\"https://seeclickfix.com/open311/v2/\""
+            buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_BASE_URL",
-                    "\"https://devoba.yrt.ca/otp/\""
+                    "\"https://otp.yrt.ca/otp/\""
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL",
                     "\"transitinfo@york.ca\""
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "false"
@@ -261,7 +260,7 @@ android {
      * Set brand BuildConfig.DATABASE_AUTHORITY, used in org.onebusaway.android.provider.ObaContract
      */
     applicationVariants.all {
-        variant ->
+        variant -0
             def authority
             if (variant.productFlavors.get(0).name == "oba") {
                 authority = '"' + "com.joulespersecond.oba" + '"'

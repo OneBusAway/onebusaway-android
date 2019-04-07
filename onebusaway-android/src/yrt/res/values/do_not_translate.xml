@@ -17,7 +17,8 @@
     <!-- DO NOT TRANSLATE ANY STRINGS IN THIS FILE. -->
 
     <!-- Android Maps API v2 key for York Region-->
-    <string name="apiv2_key">xxxxxxxxxxxxxxxxxxxxxxxxx</string>
-
+    <string name="apiv2_key">AIzaSyAMJdNWQ7bwz7EK9tJFrwe5RCY0o9doz</string>
+    <string name="ri_app_feedback_email">tmsyrt@gmail.com</string>
+    <string name="ri_static_user_email">tmsyrt@gmail.com</string>
     <!-- See src/main/res/do_not_translate.xml for more strings you can override here -->
 </resources>

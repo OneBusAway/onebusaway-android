@@ -358,9 +358,6 @@ public class HomeActivity extends AppCompatActivity
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
-        // Workaround to make sure ES SDK is initialized in case we startup to ES Fragments (#953)
-        Application.get().setUpSocial();
-
         setContentView(R.layout.main);
 
         mActivityWeakRef = new WeakReference<>(this);

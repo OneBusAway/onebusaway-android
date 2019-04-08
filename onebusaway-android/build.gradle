@@ -260,8 +260,8 @@ android {
      * Set brand BuildConfig.DATABASE_AUTHORITY, used in org.onebusaway.android.provider.ObaContract
      */
     applicationVariants.all {
-        variant -0
-            def authority
+        variant ->
+            def authority;
             if (variant.productFlavors.get(0).name == "oba") {
                 authority = '"' + "com.joulespersecond.oba" + '"'
                 // Must keep the original OBA authority

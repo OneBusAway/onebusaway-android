@@ -92,9 +92,9 @@ public class FeedbackReceiver extends BroadcastReceiver {
             mNotificationManager.notify(notifyId, repliedNotification.build());
 
             if(response == FEEDBACK_YES) {
-                userResponse = "yes";
+                userResponse = Application.get().getString(R.string.analytics_label_destination_reminder_yes);
             } else {
-                userResponse = "no";
+                userResponse = Application.get().getString(R.string.analytics_label_destination_reminder_no);
             }
 
             Log.d(TAG, "cancelling notification");
@@ -164,7 +164,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
 
     private void logFeedback(String feedbackText, String userResponse) {
         Boolean wasGoodReminder;
-        if (userResponse.equals("yes")) {
+        if (userResponse.equals(Application.get().getString(R.string.analytics_label_destination_reminder_yes))) {
             wasGoodReminder = true;
         } else {
             wasGoodReminder = false;

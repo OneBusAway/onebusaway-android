@@ -67,15 +67,15 @@ public class FeedbackActivity extends AppCompatActivity {
             mLogFile = intent.getExtras().getString(LOG_FILE);
             Log.d(TAG, "Intent LOG_FILE :" + mLogFile);
             if(response == FEEDBACK_YES) {
-                mUserResponse = "yes";
+                mUserResponse = Application.get().getString(R.string.analytics_label_destination_reminder_yes);
             } else {
-                mUserResponse = "no";
+                mUserResponse = Application.get().getString(R.string.analytics_label_destination_reminder_no);
             }
-            if (mUserResponse.equals("no")) {
+            if (mUserResponse.equals(Application.get().getString(R.string.analytics_label_destination_reminder_no))) {
                 Log.d(TAG, "Thumbs down tapped");
                 dislikeButton = findViewById(R.id.ImageBtn_Dislike);
                 dislikeButton.setSelected(true);
-            } else if (mUserResponse.equals("yes")) {
+            } else if (mUserResponse.equals(Application.get().getString(R.string.analytics_label_destination_reminder_yes))) {
                 Log.d(TAG, "Thumbs up tapped");
                 likeButton = findViewById(R.id.ImageBtn_like);
                 likeButton.setSelected(true);
@@ -126,7 +126,7 @@ public class FeedbackActivity extends AppCompatActivity {
     }
 
     public void likeBtnOnClick(View view) {
-        mUserResponse = "yes";
+        mUserResponse = Application.get().getString(R.string.analytics_label_destination_reminder_yes);
         likeButton = findViewById(R.id.ImageBtn_like);
         dislikeButton = findViewById(R.id.ImageBtn_Dislike);
         likeButton.setSelected(true);
@@ -135,7 +135,7 @@ public class FeedbackActivity extends AppCompatActivity {
     }
 
     public void dislikeBtnOnClick(View view) {
-        mUserResponse = "no";
+        mUserResponse = Application.get().getString(R.string.analytics_label_destination_reminder_no);
         likeButton = findViewById(R.id.ImageBtn_like);
         dislikeButton = findViewById(R.id.ImageBtn_Dislike);
         dislikeButton.setSelected(true);
@@ -209,7 +209,7 @@ public class FeedbackActivity extends AppCompatActivity {
 
     private void logFeedback(String feedbackText) {
         Boolean wasGoodReminder;
-        if (mUserResponse.equals("yes")) {
+        if (mUserResponse.equals(Application.get().getString(R.string.analytics_label_destination_reminder_yes))) {
             wasGoodReminder = true;
         } else {
             wasGoodReminder = false;

@@ -17,7 +17,6 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 
 import android.database.Cursor;
@@ -50,12 +49,6 @@ public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setHasOptionsMenu(true);
-    }
-
-    @Override
-    public void onStart() {
-        ObaAnalytics.reportFragmentStart(this);
-        super.onStart();
     }
 
     private static final int CONTEXT_MENU_DELETE = 10;

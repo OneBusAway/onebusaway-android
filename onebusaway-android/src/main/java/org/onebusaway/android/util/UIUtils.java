@@ -17,6 +17,29 @@
 
 package org.onebusaway.android.util;
 
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaSituation;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.Occupancy;
+import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.ui.ArrivalsListActivity;
+import org.onebusaway.android.ui.HomeActivity;
+import org.onebusaway.android.ui.RouteInfoActivity;
+import org.onebusaway.android.view.RealtimeIndicatorView;
+import org.onebusaway.util.comparators.AlphanumComparator;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
@@ -70,28 +93,6 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.android.gms.common.GoogleApiAvailability;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaSituation;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.Occupancy;
-import org.onebusaway.android.io.elements.OccupancyState;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.ui.ArrivalsListActivity;
-import org.onebusaway.android.ui.HomeActivity;
-import org.onebusaway.android.ui.RouteInfoActivity;
-import org.onebusaway.android.view.RealtimeIndicatorView;
-import org.onebusaway.util.comparators.AlphanumComparator;
 
 import java.io.File;
 import java.io.IOException;
@@ -1786,19 +1787,17 @@ public final class UIUtils {
             // Launch installed app
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
             activity.startActivity(intent);
-            ObaAnalytics
-                    .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            Application.get().getString(R.string.analytics_action_button_press),
-                            Application.get().getString(R.string.analytics_label_button_press_pay_fare_open_app));
+            ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activity),
+                    Application.get().getString(R.string.analytics_label_button_fare_payment),
+                    Application.get().getString(R.string.analytics_label_open_app));
         } else {
             // Go to Play Store listing to download app
             intent = new Intent(Intent.ACTION_VIEW);
             intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, region.getPaymentAndroidAppId())));
             activity.startActivity(intent);
-            ObaAnalytics
-                    .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            Application.get().getString(R.string.analytics_action_button_press),
-                            Application.get().getString(R.string.analytics_label_button_press_pay_fare_download_app));
+            ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activity),
+                    Application.get().getString(R.string.analytics_label_button_fare_payment),
+                    Application.get().getString(R.string.analytics_label_download_app));
         }
     }
 

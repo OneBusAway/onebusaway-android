@@ -16,7 +16,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.UIUtils;
 
@@ -92,12 +91,6 @@ public class TripDetailsActivity extends AppCompatActivity {
 
             fm.beginTransaction().add(android.R.id.content, list).commit();
         }
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        ObaAnalytics.reportActivityStart(this);
     }
 
     @Override

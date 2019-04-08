@@ -17,11 +17,6 @@
 
 package org.onebusaway.android.adapter.test;
 
-import android.graphics.drawable.GradientDrawable;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
@@ -40,6 +35,11 @@ import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.ui.ArrivalsListAdapterStyleA;
 import org.onebusaway.android.ui.ArrivalsListAdapterStyleB;
 import org.onebusaway.android.util.UIUtils;
+
+import android.graphics.drawable.GradientDrawable;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import java.util.ArrayList;
 import java.util.List;

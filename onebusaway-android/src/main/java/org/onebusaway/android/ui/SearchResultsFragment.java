@@ -22,7 +22,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaElement;
 import org.onebusaway.android.io.elements.ObaRoute;
@@ -120,7 +119,6 @@ public class SearchResultsFragment extends ListFragment
     @Override
     public void onStart() {
         super.onStart();
-        ObaAnalytics.reportFragmentStart(this);
         // Make sure GoogleApiClient is connected, if available
         if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
             mGoogleApiClient.connect();

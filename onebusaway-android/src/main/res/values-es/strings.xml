@@ -108,8 +108,12 @@
     <string name="main_help_title">Ayuda</string>
     <string name="main_help_whatsnew_title">Novedades en esta versión</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>El Filtro de Ruta ahora afecta a las alertas</b>
-        - Cuando se ven las alertas en una parada, estás se ocultaran si las rutas están ocultas.\n&#8226;\u0020
+        <b>Mejora en la exactitud del recordatorio</b>
+        - Varios cambios para hacer que los recordatorios te alerten en el momento adecuado .\n&#8226;\u0020
+        <b>Administración de notificaciones mejorada (Android 8.0 Oreo y superior)</b>
+        - Administra los sonidos de notificación usanto el menu del sistema Android en \"Aplicaciones\".\n&#8226;\u0020
+        <b>Mejora en el icono de estado de viaje</b>
+        - Gracias Pokechu22!\n&#8226;\u0020
         <b>Arreglo de errores</b>
         - Mirá http://bit.ly/oba-android-releases
     </string>
@@ -400,6 +404,27 @@
     <string name="trip_info_option_showstop">Mostrar las paradas</string>
     <string name="trip_info_separator">-</string>
 
+    <!-- Occupancy -->
+    <string name="historically_full">Históricamente lleno</string>
+    <string name="historically_standing_room">Históricamente estar de pie</string>
+    <string name="historically_seats_available">Históricamente asientos disponibles</string>
+    <string name="historically_empty">Históricamente vacío</string>
+    <string name="menu_title_about_historical_occupancy">Sobre la ocupación histórica</string>
+    <string name="menu_title_about_occupancy">Sobre la ocupación</string>
+    <string name="menu_text_about_historical_occupancy">La ocupación histórica (ícono gris) es un promedio del viaje en esta parada en los últimos 6 meses.</string>
+    <string name="menu_text_about_occupancy">La ocupación en tiempo real se muestra usando coloración verde cuando hay muchos asientos disponibles o espacio para estar disponible, y se muestra en color rojo cuando el vehículo está lleno. La ocupación histórica (ícono gris) es un promedio del viaje en esta parada en los últimos 6 meses.</string>
+
+    <string name="realtime_full">Lleno</string>
+    <string name="realtime_standing_room">Estar de pie</string>
+    <string name="realtime_seats_available">Asientos disponibles</string>
+    <string name="realtime_empty">Vacío</string>
+
+    <string name="predicted_full">Lleno pronosticado</string>
+    <string name="predicted_standing_room">Estar de pie pronosticado</string>
+    <string name="predicted_seats_available">Asientos disponibles pronosticado</string>
+    <string name="predicted_empty">Vacío pronosticado</string>
+
+
     <!--  Trip list -->
     <string name="trip_list_notrips">No tienes ningún recordatorio.\n\nPuedes crear recordatorios al
         tocar sobre un bus que llega a tu parada.
@@ -416,6 +441,13 @@
     <string name="trip_stat_lessthanone_departing">¡La ruta %s está saliendo ahora!</string>
     <string name="trip_stat_arriving">¡La ruta %1$s está llegando en %2$d min!</string>
     <string name="trip_stat_departing">¡La ruta %1$s está saliendo en %2$d min!</string>
+
+    <!--  Foreground Service notifications -->
+    <string name="foreground_all_intent_title">Actualizando tus recordatorios</string>
+    <string name="foreground_action_schedule_text">Configurando tus recordatorios&#8230;</string>
+    <string name="foreground_action_poll_text">Comprobando las predicciones de tus recordatorios&#8230;</string>
+    <string name="foreground_action_notify_text">Activando una notificación para su recordatorio&#8230;</string>
+    <string name="foreground_action_cancel_text">Descartando tu recordatorio&#8230;</string>
 
     <!-- Embedded Social -->
     <string name="social">Social</string>
@@ -761,6 +793,17 @@
     <string name="tutorial_send_feedback_transit_service_text">Puedes reportar una variedad de tipos de
         problemas a tu gobierno local cerca a esta parada. Toca en el cuadro desplegable para ver una lista completa.
     </string>
+
+    <!-- Permissions -->
+    <string name="location_permissions_title">La ubicación en tiempo real necesita permisos</string>
+    <string name="location_permissions_message">Para mostrar tu posición en tiempo real sobre el mapa
+        tendrás que otorgar permisos de ubicación. Si tu seleccionas \"No volver a preguntar de nuevo\" tu tendrás
+        que reinstalar la aplicación o habilitar los permisos por medio de la configuración del sistema para ver tu ubicación en tiempo real.
+    </string>
+    <string name="no_thanks">No gracias</string>
+
+    <string name="storage_permissions_title">Se requiere acceso al almacenamiento del dispositivo</string>
+    <string name="storage_permissions_message">Para hacer una copia de seguridad o restaurar sus datos, OneBusAway necesita permiso para acceder al almacenamiento de su dispositivo local.</string>
 
     <!-- About -->
     <string name="title_activity_about">Acerca de</string>

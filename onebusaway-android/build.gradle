@@ -208,7 +208,7 @@ android {
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
         }
         yrt {
-            // "YRT - York Region Transit - Canada" rebranding
+            // "YRT - York Region Transit - Canada" rebranding - https://play.google.com/store/apps/details?id=can.yrt.onebusaway
             dimension "brand"
             applicationId "can.yrt.onebusaway" // Unique listing of this brand on app store
             manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']

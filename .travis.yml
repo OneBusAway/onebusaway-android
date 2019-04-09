@@ -30,9 +30,9 @@ android:
 before_install:
   - yes | sdkmanager "platforms;android-28"
 
-# Only run tests on the main two OneBusAway brand flavors
+# Only run tests on the main two OneBusAway brand flavors and the YRT Google flavor
 script:
-  - ./gradlew assembleObaGoogleDebug assembleObaAmazonDebug -PdisablePreDex
+  - ./gradlew assembleObaGoogleDebug assembleObaAmazonDebug assembleYrtGoogleDebug -PdisablePreDex
 
 notifications:
   webhooks:

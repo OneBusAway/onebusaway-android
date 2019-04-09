@@ -294,6 +294,9 @@
         <uses-library
                 android:name="org.apache.http.legacy"
                 android:required="false" />
+        <!-- Below is required to enable Firebase Analytics and override the opposite setting in Embedded Social library -->
+        <meta-data android:name="firebase_analytics_collection_deactivated" android:value="false"
+                   tools:replace="android:value"/>
     </application>
 
     <uses-feature

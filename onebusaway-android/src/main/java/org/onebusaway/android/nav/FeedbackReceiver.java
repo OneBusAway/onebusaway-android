@@ -7,10 +7,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +24,7 @@ import androidx.core.app.RemoteInput;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import static android.text.TextUtils.isEmpty;
 import static org.onebusaway.android.nav.NavigationService.LOG_DIRECTORY;
 
 
@@ -36,9 +40,13 @@ public class FeedbackReceiver extends BroadcastReceiver {
     public static final int FEEDBACK_NO = 1;
     public static final int FEEDBACK_YES = 2;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "onReceive");
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
 
         int notifyId = intent.getIntExtra(NOTIFICATION_ID,
                 NavigationServiceProvider.NOTIFICATION_ID + 1);
@@ -84,9 +92,9 @@ public class FeedbackReceiver extends BroadcastReceiver {
             mNotificationManager.notify(notifyId, repliedNotification.build());
 
             if(response == FEEDBACK_YES) {
-                userResponse = "yes";
+                userResponse = Application.get().getString(R.string.analytics_label_destination_reminder_yes);
             } else {
-                userResponse = "no";
+                userResponse = Application.get().getString(R.string.analytics_label_destination_reminder_no);
             }
 
             Log.d(TAG, "cancelling notification");
@@ -101,6 +109,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
             } else {
                 Log.d(TAG, "False");
                 deleteLog(logFile);
+                logFeedback(feedback, userResponse);
             }
         }
     }
@@ -151,6 +160,19 @@ public class FeedbackReceiver extends BroadcastReceiver {
 
         // Then enqueue the recurring task:
         WorkManager.getInstance().enqueue(uploadCheckWork);
+    }
+
+    private void logFeedback(String feedbackText, String userResponse) {
+        Boolean wasGoodReminder;
+        if (userResponse.equals(Application.get().getString(R.string.analytics_label_destination_reminder_yes))) {
+            wasGoodReminder = true;
+        } else {
+            wasGoodReminder = false;
+        }
+        ObaAnalytics.reportDestinationReminderFeedback(mFirebaseAnalytics, wasGoodReminder
+                , ((!isEmpty(feedbackText))? feedbackText : null), null);
+        Log.d (TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
+                + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText))? feedbackText : null));
     }
 
 }

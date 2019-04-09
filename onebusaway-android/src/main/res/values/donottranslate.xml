@@ -228,4 +228,10 @@
 
     <string name="traverse_mode_bicycle_rent">BICYCLE_RENT</string>
 
+    <!-- User Feedback Firebase Analytics -->
+    <string name="analytics_label_button_press_destination_reminder_feedback">destination_reminder_feedback</string>
+    <string name="analytics_label_destination_reminder_yes">yes</string>
+    <string name="analytics_label_destination_reminder_no">no</string>
+    <string name="analytics_label_custom_metadata_response">Response</string>
+    <string name="analytics_label_custom_metadata_feedback">FeedbackText</string>
 </resources>

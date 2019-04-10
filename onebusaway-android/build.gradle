@@ -212,7 +212,44 @@ android {
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
             buildConfigField "boolean", "NAV_GPS_LOGGING", "false"
         }
-
+        yrt {
+            // "YRT - York Region Transit - Canada" rebranding - https://play.google.com/store/apps/details?id=can.yrt.onebusaway
+            dimension "brand"
+            applicationId "can.yrt.onebusaway" // Unique listing of this brand on app store
+            manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
+            buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants
+            buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
+            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialApiKey(name) + "\""
+            // Fixed region info that the app will use
+            buildConfigField "String", "FIXED_REGION_NAME", "\"YORK\""
+            buildConfigField "String", "FIXED_REGION_OBA_BASE_URL",
+                    "\"http://oba.yrt.ca/\""
+            buildConfigField "String", "FIXED_REGION_SIRI_BASE_URL", "null"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT", "44.011994"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LON", "-79.47573600000001"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT_SPAN", "0.6502339999999975"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LON_SPAN", "0.5733579999999989"
+            buildConfigField "String", "FIXED_REGION_LANG", "\"en_US\""
+            buildConfigField "String", "FIXED_REGION_CONTACT_EMAIL", "\"transitinfo@york.ca\""
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL", "false"
+            buildConfigField "String", "FIXED_REGION_TWITTER_URL",
+                    "\"https://twitter.com/YRTViva\""
+            buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
+            buildConfigField "String", "FIXED_REGION_OTP_BASE_URL",
+                    "\"https://otp.yrt.ca/otp/\""
+            buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL",
+                    "\"transitinfo@york.ca\""
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "false"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "\"co.bytemark.york\""
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
+        }
         /**
          * Add more rebranding flavors here...
          */

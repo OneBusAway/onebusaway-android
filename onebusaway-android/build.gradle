@@ -124,7 +124,6 @@ android {
             buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
-            buildConfigField "boolean", "NAV_GPS_LOGGING", "true"
         }
 
         /**
@@ -169,7 +168,6 @@ android {
             buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
-            buildConfigField "boolean", "NAV_GPS_LOGGING", "false"
         }
 
         agencyY {
@@ -210,7 +208,6 @@ android {
             buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "\"co.bytemark.hart\""
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
-            buildConfigField "boolean", "NAV_GPS_LOGGING", "false"
         }
         yrt {
             // "YRT - York Region Transit - Canada" rebranding - https://play.google.com/store/apps/details?id=can.yrt.onebusaway

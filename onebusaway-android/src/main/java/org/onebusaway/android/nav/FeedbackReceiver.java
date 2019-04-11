@@ -101,7 +101,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
             mNotificationManager.cancel(notifyId);
 
             Boolean pref = Application.getPrefs().getBoolean(Application.get().getResources()
-                    .getString(R.string.preferences_key_user_share_logs), true);
+                    .getString(R.string.preferences_key_user_share_destination_logs), true);
 
             if (pref) {
                 Log.d(TAG, "True");

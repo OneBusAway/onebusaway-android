@@ -197,14 +197,14 @@ public class PreferencesActivity extends PreferenceActivity
             advancedCategory.removePreference(experimentalRegion);
         }
 
-        // If the Android version is Oreo (8.0) and above hide "Notification" preference
+        // If the Android version is Oreo (8.0) hide "Notification" preference
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getPreferenceScreen().removePreference(findPreference(getString(R.string.preference_key_notifications)));
         }
 
-        // If the Android version is lower than Nougat (7.0) and above Pie (9.0) hide "Share trip logs" preference
+        // If the Android version is lower than Nougat (7.0) and equal to or above Pie (9.0) hide "Share trip logs" preference
         if ((Build.VERSION.SDK_INT < Build.VERSION_CODES.N) || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)) {
-            getPreferenceScreen().removePreference(findPreference(getString(R.string.preferences_key_user_share_logs_category)));
+            getPreferenceScreen().removePreference(findPreference(getString(R.string.preferences_key_user_debugging_logs_category)));
         }
 
         // If its the OBA brand flavor, then show the "Donate" preference and hide "Powered by OBA"
@@ -521,7 +521,7 @@ public class PreferencesActivity extends PreferenceActivity
             }
         } else if (key.equalsIgnoreCase(getString(R.string.preferences_key_analytics))) {
             Boolean isAnalyticsActive = settings.getBoolean(Application.get().
-                    getString(R.string.preferences_key_analytics), Boolean.FALSE);
+                    getString(R.string.preferences_key_analytics), Boolean.TRUE);
             //Report if the analytics turns on, just after shared preference changed
             ObaAnalytics.setSendAnonymousData(mFirebaseAnalytics, isAnalyticsActive);
         } else if (key.equalsIgnoreCase(getString(R.string.preference_key_arrival_info_style))) {

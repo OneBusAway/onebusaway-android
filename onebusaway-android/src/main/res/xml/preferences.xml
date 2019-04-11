@@ -153,11 +153,11 @@
                 android:summary="@string/preferences_about_summary"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_user_logs"
-        android:key="@string/preferences_key_user_share_logs_category">
+        android:key="@string/preferences_key_user_debugging_logs_category">
         <CheckBoxPreference
-            android:key="@string/preferences_key_user_share_logs"
-            android:title="@string/preferences_user_share_logs_title"
-            android:summary="@string/preferences_user_share_logs_summary"
+            android:key="@string/preferences_key_user_share_destination_logs"
+            android:title="@string/preferences_user_share_destination_logs_title"
+            android:summary="@string/preferences_user_share_destination_logs_summary"
             android:defaultValue="true"/>
     </PreferenceCategory>
 </PreferenceScreen>

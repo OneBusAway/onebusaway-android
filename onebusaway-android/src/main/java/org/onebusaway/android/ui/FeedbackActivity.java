@@ -58,7 +58,7 @@ public class FeedbackActivity extends AppCompatActivity {
         setTitle(getResources().getString(R.string.feedback_label));
 
         Intent intent = this.getIntent();
-        CheckBox sendLogs = (CheckBox) findViewById(R.id.feedback_send_logs);
+        CheckBox sendLogs = findViewById(R.id.feedback_send_logs);
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
@@ -66,7 +66,7 @@ public class FeedbackActivity extends AppCompatActivity {
             int response = intent.getIntExtra(RESPONSE, 0);
             mLogFile = intent.getExtras().getString(LOG_FILE);
             Log.d(TAG, "Intent LOG_FILE :" + mLogFile);
-            if(response == FEEDBACK_YES) {
+            if (response == FEEDBACK_YES) {
                 mUserResponse = Application.get().getString(R.string.analytics_label_destination_reminder_yes);
             } else {
                 mUserResponse = Application.get().getString(R.string.analytics_label_destination_reminder_no);
@@ -82,8 +82,7 @@ public class FeedbackActivity extends AppCompatActivity {
             }
         }
 
-        if (Application.getPrefs()
-                .getBoolean(getString(R.string.preferences_key_user_share_logs), true)) {
+        if (Application.getPrefs().getBoolean(getString(R.string.preferences_key_user_share_destination_logs), true)) {
             sendLogs.setChecked(true);
         } else {
             sendLogs.setChecked(false);
@@ -98,13 +97,13 @@ public class FeedbackActivity extends AppCompatActivity {
         return true;
     }
 
-   @Override
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-       if (item.getItemId() == R.id.report_problem_send) {
-           submitFeedback();
-           finish();
-       }
-       return super.onOptionsItemSelected(item);
+        if (item.getItemId() == R.id.report_problem_send) {
+            submitFeedback();
+            finish();
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void submitFeedback() {
@@ -113,13 +112,13 @@ public class FeedbackActivity extends AppCompatActivity {
                 .getBoolean(NavigationService.FIRST_FEEDBACK, true)));
         String feedback = ((EditText) this.findViewById(R.id.editFeedbackText)).getText().toString();
         if (Application.getPrefs()
-                .getBoolean(getString(R.string.preferences_key_user_share_logs), true)) {
+                .getBoolean(getString(R.string.preferences_key_user_share_destination_logs), true)) {
             moveLog(feedback);
         } else {
             deleteLog();
             logFeedback(feedback);
         }
-        Log.d(TAG,"Feedback send : " + feedback);
+        Log.d(TAG, "Feedback send : " + feedback);
         Toast.makeText(FeedbackActivity.this,
                 getString(R.string.feedback_notify_confirmation),
                 Toast.LENGTH_SHORT).show();
@@ -131,7 +130,7 @@ public class FeedbackActivity extends AppCompatActivity {
         dislikeButton = findViewById(R.id.ImageBtn_Dislike);
         likeButton.setSelected(true);
         dislikeButton.setSelected(false);
-        Log.d(TAG,"Feedback changed to yes");
+        Log.d(TAG, "Feedback changed to yes");
     }
 
     public void dislikeBtnOnClick(View view) {
@@ -140,12 +139,12 @@ public class FeedbackActivity extends AppCompatActivity {
         dislikeButton = findViewById(R.id.ImageBtn_Dislike);
         dislikeButton.setSelected(true);
         likeButton.setSelected(false);
-        Log.d(TAG,"Feedback changed to no");
+        Log.d(TAG, "Feedback changed to no");
     }
 
     private void moveLog(String feedback) {
         try {
-            Log.d(TAG, "Log file: "+ mLogFile);
+            Log.d(TAG, "Log file: " + mLogFile);
             File lFile = new File(mLogFile);
             FileUtils.write(lFile, System.getProperty("line.separator") + feedback, true);
             Log.d(TAG, "Feedback appended");
@@ -161,9 +160,8 @@ public class FeedbackActivity extends AppCompatActivity {
                         FileUtils.getFile(lFile),
                         FileUtils.getFile(destFolder), true);
                 Log.d(TAG, "Move file successful.");
-            }
-            catch (Exception e) {
-                Log.d(TAG, "File move failed");
+            } catch (Exception e) {
+                Log.e(TAG, "File move failed");
             }
 
             setupLogUploadTask();
@@ -171,26 +169,25 @@ public class FeedbackActivity extends AppCompatActivity {
         } catch (IOException e) {
             Log.e(TAG, "File write failed: " + e.toString());
         }
-
     }
 
     private void deleteLog() {
         File lFile = new File(mLogFile);
         boolean deleted = lFile.delete();
-        Log.d(TAG,"Log deleted " + deleted);
+        Log.d(TAG, "Log deleted " + deleted);
     }
 
     public void setSendLogs(View view) {
-        CheckBox checkBox = (CheckBox)view;
+        CheckBox checkBox = (CheckBox) view;
         if (checkBox.isChecked()) {
-            if (!Application.getPrefs().getBoolean(getString(R.string.preferences_key_user_share_logs), true)) {
-                PreferenceUtils.saveBoolean(getString(R.string.preferences_key_user_share_logs), true);
-                Log.d(TAG,"User wants to share logs");
+            if (!Application.getPrefs().getBoolean(getString(R.string.preferences_key_user_share_destination_logs), true)) {
+                PreferenceUtils.saveBoolean(getString(R.string.preferences_key_user_share_destination_logs), true);
+                Log.d(TAG, "User wants to share logs");
             }
         } else {
-            if (Application.getPrefs().getBoolean(getString(R.string.preferences_key_user_share_logs), true)) {
-                PreferenceUtils.saveBoolean(getString(R.string.preferences_key_user_share_logs), false);
-                Log.d(TAG,"User doesn't want to share logs");
+            if (Application.getPrefs().getBoolean(getString(R.string.preferences_key_user_share_destination_logs), true)) {
+                PreferenceUtils.saveBoolean(getString(R.string.preferences_key_user_share_destination_logs), false);
+                Log.d(TAG, "User doesn't want to share logs");
             }
         }
     }
@@ -200,10 +197,10 @@ public class FeedbackActivity extends AppCompatActivity {
                 new PeriodicWorkRequest.Builder(NavigationUploadWorker.class, 24,
                         TimeUnit.HOURS);
 
-        // Create the actual work object:
+        // Create the actual work object
         PeriodicWorkRequest uploadCheckWork = uploadLogsBuilder.build();
 
-        // Then enqueue the recurring task:
+        // Then enqueue the recurring task
         WorkManager.getInstance().enqueue(uploadCheckWork);
     }
 
@@ -215,8 +212,8 @@ public class FeedbackActivity extends AppCompatActivity {
             wasGoodReminder = false;
         }
         ObaAnalytics.reportDestinationReminderFeedback(mFirebaseAnalytics, wasGoodReminder
-                , ((!isEmpty(feedbackText))? feedbackText : null), null);
-        Log.d (TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
-                + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText))? feedbackText : null));
+                , ((!isEmpty(feedbackText)) ? feedbackText : null), null);
+        Log.d(TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
+                + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText)) ? feedbackText : null));
     }
 }

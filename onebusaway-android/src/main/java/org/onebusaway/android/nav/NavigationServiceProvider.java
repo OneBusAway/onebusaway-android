@@ -15,13 +15,6 @@
  */
 package org.onebusaway.android.nav;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.nav.model.Path;
-import org.onebusaway.android.nav.model.PathLink;
-import org.onebusaway.android.ui.TripDetailsActivity;
-import org.onebusaway.android.util.RegionUtils;
-
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -31,6 +24,14 @@ import android.location.Location;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
+import android.widget.Toast;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.nav.model.Path;
+import org.onebusaway.android.nav.model.PathLink;
+import org.onebusaway.android.ui.TripDetailsActivity;
+import org.onebusaway.android.util.RegionUtils;
 
 import java.text.DecimalFormat;
 import java.util.Locale;
@@ -97,8 +98,10 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         if (mTTS == null) {
             mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
         } else {
-            String message = Application.get().getString(R.string.voice_starting_trip);
-            speak(message, TextToSpeech.QUEUE_FLUSH);
+            Toast.makeText(Application.get(),
+                    Application.get().getString(R.string.destination_reminder_title),
+                    Toast.LENGTH_LONG
+            ).show();
         }
         mTripId = tripId;
         mStopId = stopId;
@@ -539,8 +542,10 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             mTTS.setLanguage(Locale.getDefault());
             mTTS.setSpeechRate(0.75f);
             if (!mResuming) {
-                speak(Application.get().getString(R.string.voice_starting_trip),
-                        TextToSpeech.QUEUE_FLUSH);
+                Toast.makeText(Application.get(),
+                        Application.get().getString(R.string.destination_reminder_title),
+                        Toast.LENGTH_LONG
+                ).show();
             }
         }
     }
@@ -591,14 +596,22 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                 // If the country is set to USA, assume imperial, otherwise metric
                 // TODO - Method of guessing metric/imperial can definitely be improved
                 if (mLocale.getISO3Country().equalsIgnoreCase(Locale.US.getISO3Country())) {
-                    mBuilder.setContentText(fmt.format(miles) + " miles away.");
+                    mBuilder.setContentText(Application.get().getResources().getQuantityString(R.plurals.distance_miles,
+                            (int) miles,
+                            fmt.format(miles)));
                 } else {
-                    mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
+                    mBuilder.setContentText(Application.get().getResources().getQuantityString(R.plurals.distance_kilometers,
+                            (int) distance,
+                            fmt.format(distance)));
                 }
             } else if (preferredUnits.equalsIgnoreCase(IMPERIAL)) {
-                mBuilder.setContentText(fmt.format(miles) + " miles away.");
+                mBuilder.setContentText(Application.get().getResources().getQuantityString(R.plurals.distance_miles,
+                        (int) miles,
+                        fmt.format(miles)));
             } else {
-                mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
+                mBuilder.setContentText(Application.get().getResources().getQuantityString(R.plurals.distance_kilometers,
+                        (int) distance,
+                        fmt.format(distance)));
             }
 
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM, NavigationReceiver.CANCEL_TRIP);
@@ -622,7 +635,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
                     0, receiverIntent, 0);
 
-            String message = Application.get().getString(R.string.voice_get_ready);
+            String message = Application.get().getString(R.string.destination_voice_get_ready);
             for (int i = 0; i < NUM_GET_READY_REPEAT; i++) {
                 speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
                 if (i < NUM_GET_READY_REPEAT - 1) {
@@ -648,7 +661,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
                     0, receiverIntent, 0);
 
-            String message = Application.get().getString(R.string.voice_pull_cord);
+            String message = Application.get().getString(R.string.destination_voice_request_stop);
             // TODO: Slow down voice commands, add count as property.
             for (int i = 0; i < NUM_PULL_CORD_REPEAT; i++) {
                 speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
@@ -674,7 +687,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                             Application.get().getResources().getString(R.string.destination_reminder_title))
                     .setContentIntent(pIntent)
                     .setAutoCancel(true);
-            message = Application.get().getString(R.string.voice_arriving_destination);
+            message = Application.get().getString(R.string.destination_voice_arriving_destination);
             mBuilder.setContentText(message);
             mBuilder.setOngoing(false);
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());

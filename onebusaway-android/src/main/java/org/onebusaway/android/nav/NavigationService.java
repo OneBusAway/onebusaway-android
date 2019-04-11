@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2018 University of South Florida
+ * Copyright (C) 2005-2019 University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 package org.onebusaway.android.nav;
+
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.location.Location;
+import android.os.Build;
+import android.os.IBinder;
+import android.util.Log;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -30,16 +40,6 @@ import org.onebusaway.android.ui.TripDetailsListFragment;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
-
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Service;
-import android.content.Context;
-import android.content.Intent;
-import android.location.Location;
-import android.os.Build;
-import android.os.IBinder;
-import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,7 +87,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
     private String mBeforeStopId;                   // Before Destination Stop ID
     private String mTripId;                         // Trip ID
 
-    private int mCoordId =0;
+    private int mCoordId = 0;
 
     private boolean mGetReadyFlag = false;
     private boolean mPullTheCordFlag = false;
@@ -220,7 +220,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
     private void initAnonFirebaseLogin() {
         mAuth = FirebaseAuth.getInstance();
         int numCores = Runtime.getRuntime().availableProcessors();
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(numCores * 2, numCores *2,
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(numCores * 2, numCores * 2,
                 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
         mAuth.signInAnonymously()
                 .addOnCompleteListener(executor, task -> {
@@ -258,7 +258,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
 
             mLogFile = new File(subFolder, counter + "-" + readableDate + ".csv");
 
-            Log.d(TAG, ":"+ mLogFile.getAbsolutePath());
+            Log.d(TAG, ":" + mLogFile.getAbsolutePath());
 
             Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
@@ -288,12 +288,12 @@ public class NavigationService extends Service implements LocationHelper.Listene
                 satellites = l.getExtras().getInt("satellites", 0);
             }
 
-           // mGetReadyFlag =mNavProvider.getGetReady();
-          //  mPullTheCordFlag = mNavProvider.getFinished();
+            // mGetReadyFlag =mNavProvider.getGetReady();
+            //  mPullTheCordFlag = mNavProvider.getFinished();
 
             // TODO: Add isMockProvider
-            String log = String.format(Locale.US,"%d,%s,%s,%s,%d,%f,%f,%f,%f,%f,%f,%d,%s\n",
-                    mCoordId, mNavProvider.getGetReady(),mNavProvider.getFinished(), nanoTime, l.getTime(),
+            String log = String.format(Locale.US, "%d,%s,%s,%s,%d,%f,%f,%f,%f,%f,%f,%d,%s\n",
+                    mCoordId, mNavProvider.getGetReady(), mNavProvider.getFinished(), nanoTime, l.getTime(),
                     l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(),
                     l.getBearing(), l.getAccuracy(), satellites, l.getProvider());
 
@@ -336,7 +336,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
 
             //Pending intent used to handle feedback when user taps on 'No'
             PendingIntent fdPendingIntentNo = PendingIntent.getActivity(app.getApplicationContext()
-                    , 1, fdIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+                    , 1, fdIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
             fdIntent = new Intent(app.getApplicationContext(), FeedbackActivity.class);
             fdIntent.setAction(FeedbackReceiver.ACTION_REPLY);
@@ -354,13 +354,13 @@ public class NavigationService extends Service implements LocationHelper.Listene
                     0, delIntent, 0);
 
             mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext()
-                    ,Application.CHANNEL_DESTINATION_ALERT_ID)
+                    , Application.CHANNEL_DESTINATION_ALERT_ID)
                     .setSmallIcon(R.drawable.ic_stat_notification)
                     .setContentTitle(Application.get().getResources()
                             .getString(R.string.feedback_notify_title))
                     .setContentText(message)
                     .addAction(0, Application.get().getResources()
-                            .getString(R.string.feedback_action_reply_no), fdPendingIntentNo )
+                            .getString(R.string.feedback_action_reply_no), fdPendingIntentNo)
                     .addAction(0, Application.get().getResources()
                             .getString(R.string.feedback_action_reply_yes), fdPendingIntentYes)
                     .setDeleteIntent(pDelIntent)
@@ -377,7 +377,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
 
             //PendingIntent to handle user feedback when a user taps on 'No'
             PendingIntent fdPendingIntentNo = PendingIntent.getBroadcast(Application.get()
-                    .getApplicationContext(),100, intentNo, 0);
+                    .getApplicationContext(), 100, intentNo, 0);
 
             String replyLabelNo = Application.get().getResources()
                     .getString(R.string.feedback_action_reply_no);
@@ -401,7 +401,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
 
             //PendingIntent to handle user feedback when a user taps on 'No'
             PendingIntent fdPendingIntentYes = PendingIntent.getBroadcast(Application.get()
-                    .getApplicationContext(),101, intentYes, 0);
+                    .getApplicationContext(), 101, intentYes, 0);
 
             String replyLabelYes = Application.get().getResources()
                     .getString(R.string.feedback_action_reply_yes);

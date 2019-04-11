@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2018 University of South Florida
+ * Copyright (C) 2005-2019 University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,11 +161,11 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         Log.d(TAG, "Number of path links: " + mPath.getPathLinks().size());
 
         // Create new coordinate object using the "Ring" coordinates
-        Location firstLocation =  mPath.getPathLinks().get(mPathLinkIndex).getOriginLocation();
+        Location firstLocation = mPath.getPathLinks().get(mPathLinkIndex).getOriginLocation();
         Location secondToLastLocation = mPath.getPathLinks().get(mPathLinkIndex).getSecondToLastLocation();
-        Location lastLocation =  mPath.getPathLinks().get(mPathLinkIndex).getDestinationLocation();
+        Location lastLocation = mPath.getPathLinks().get(mPathLinkIndex).getDestinationLocation();
 
-        mAlertDistance =  mPath.getPathLinks().get(mPathLinkIndex).getAlertDistance();
+        mAlertDistance = mPath.getPathLinks().get(mPathLinkIndex).getAlertDistance();
 
         // Have proximity listener listen for the "Ring" location
         mProxCalculator.listenForDistance(mAlertDistance);
@@ -198,6 +198,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     /**
      * Returns true if there is another path link to be navigated as part of the current path that is being navigated, false if there is not another link
+     *
      * @return true if there is another path link to be navigated as part of the current path that is being navigated, false if there is not another link
      */
     public boolean hasMorePathLinks() {
@@ -267,16 +268,16 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         NavigationServiceProvider mNavProvider;
 
         private float mRadius = 100;
-                //Defines radius (in meters) for which the Proximity listener should be triggered (Default = 50)
+        //Defines radius (in meters) for which the Proximity listener should be triggered (Default = 50)
 
         private float readyRadius = 300;
-                //Defines radius(in meters) for which the Proximity listener should trigger "Get Ready Alert"
+        //Defines radius(in meters) for which the Proximity listener should trigger "Get Ready Alert"
 
         private boolean mTrigger = false;
-                //Defines whether the Proximity Listener has been triggered (true) or not (false)
+        //Defines whether the Proximity Listener has been triggered (true) or not (false)
 
         private Location secondToLastCoords = null;
-                //Tests distance from registered location w/ ProximityListener manually
+        //Tests distance from registered location w/ ProximityListener manually
 
         private Location lastCoords = null; //Coordinates of the final bus stop of the link
 
@@ -285,15 +286,15 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         private float mDistance = -1;  //Actual known traveled distance loaded from link object
 
         private float directDistance = -1;
-                //Direct distance to second to last stop coords, used for radius detection
+        //Direct distance to second to last stop coords, used for radius detection
 
         private float endDistance = -1;
-                //Direct distance to last bus stop coords, used for link navigation
+        //Direct distance to last bus stop coords, used for link navigation
 
         private boolean mReady = false; //Has get ready alert been played?
 
         private boolean m100_a, m50_a, m20_a, m20_d, m50_d, m100_d = false;
-                // Variables for handling arrival/departure from 2nd to last stop
+        // Variables for handling arrival/departure from 2nd to last stop
 
         ProximityCalculator(NavigationServiceProvider navProvider) {
             mNavProvider = navProvider;
@@ -332,8 +333,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         /**
          * Updates the state of the navigation provider based on the provided eventType
          *
-         * @param eventType EVENT_TYPE_PULL_CORD for "Pull the cord now" event, or EVENT_TYPE_GET_READY for getting ready to exit the vehicle
-         * @param alertState         ALERT_STATE_* variable is responsible for differentiating the switch of path link and alert being played.
+         * @param eventType  EVENT_TYPE_PULL_CORD for "Pull the cord now" event, or EVENT_TYPE_GET_READY for getting ready to exit the vehicle
+         * @param alertState ALERT_STATE_* variable is responsible for differentiating the switch of path link and alert being played.
          */
         boolean proximityEvent(int eventType, int alertState) {
             //*******************************************************************************************************************
@@ -474,6 +475,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
         /**
          * Checks the proximity to the provided location and returns the event type (EVENT_TYPE_*) that was triggered by the proximity to this location.
+         *
          * @return the status update (EVENT_TYPE_*) that was triggered by the proximity to this location (if any).
          */
         private int checkProximityAll(Location currentLocation) {
@@ -553,6 +555,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     /**
      * Updates the user interface (e.g., distance display, speech) based on navigation events
      * TODO - This method should be moved to a NavigationServiceListener class based on a listener interface
+     *
      * @param eventType EVENT_TYPE_* variable defining the eventType update to act upon
      */
     private void updateUi(int eventType) {

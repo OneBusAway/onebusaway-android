@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2019 University of South Florida
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.onebusaway.android.nav;
 
 import android.content.Context;
@@ -47,7 +62,7 @@ public class NavigationUploadWorker extends Worker {
         return Result.success();
     }
 
-    private void uploadLog (String response) {
+    private void uploadLog(String response) {
 
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
@@ -62,7 +77,8 @@ public class NavigationUploadWorker extends Worker {
                         + "/" + logFileName);
                 Log.d(TAG, "Location : " + response + logFileName);
 
-                String sCurrentLine, feedbackText = "";;
+                String sCurrentLine, feedbackText = "";
+                ;
                 try {
                     BufferedReader br = new BufferedReader(new FileReader(lFile.getAbsolutePath()));
                     while ((sCurrentLine = br.readLine()) != null) {
@@ -92,7 +108,7 @@ public class NavigationUploadWorker extends Worker {
                                 .get().getString(R.string.analytics_label_custom_metadata_response));
                         String feedbackText = taskSnapshot.getMetadata().getCustomMetadata(Application
                                 .get().getString(R.string.analytics_label_custom_metadata_feedback));
-                        String fileURL =  taskSnapshot.getStorage().getDownloadUrl().toString();
+                        String fileURL = taskSnapshot.getStorage().getDownloadUrl().toString();
                         Log.d(TAG, "Response - " + userResponse);
                         Log.d(TAG, "FeedbackText - " + feedbackText);
                         Log.d(TAG, "Download URL - " + fileURL);
@@ -113,8 +129,8 @@ public class NavigationUploadWorker extends Worker {
             wasGoodReminder = false;
         }
         ObaAnalytics.reportDestinationReminderFeedback(mFirebaseAnalytics, wasGoodReminder
-                , ((!isEmpty(feedbackText))? feedbackText : null), fileName);
-        Log.d (TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
-                + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText))? feedbackText : null) + ", filename - " + fileName);
+                , ((!isEmpty(feedbackText)) ? feedbackText : null), fileName);
+        Log.d(TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
+                + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText)) ? feedbackText : null) + ", filename - " + fileName);
     }
 }

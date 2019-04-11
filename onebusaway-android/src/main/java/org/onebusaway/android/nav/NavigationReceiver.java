@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2018 University of South Florida
+ * Copyright (C) 2005-2019 University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package org.onebusaway.android.nav;
 
-import org.onebusaway.android.app.Application;
-
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+
+import org.onebusaway.android.app.Application;
 
 /**
  * Receives broadcasts when the user interacts with the navigation notification and passes them

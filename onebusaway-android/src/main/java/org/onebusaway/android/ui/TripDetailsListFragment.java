@@ -16,35 +16,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.common.api.ResolvableApiException;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResponse;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.ObaTrip;
-import org.onebusaway.android.io.elements.ObaTripSchedule;
-import org.onebusaway.android.io.elements.ObaTripStatus;
-import org.onebusaway.android.io.elements.OccupancyState;
-import org.onebusaway.android.io.request.ObaTripDetailsRequest;
-import org.onebusaway.android.io.request.ObaTripDetailsResponse;
-import org.onebusaway.android.nav.NavigationService;
-import org.onebusaway.android.util.ArrivalInfoUtils;
-import org.onebusaway.android.util.DBUtil;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -76,10 +47,38 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaTrip;
+import org.onebusaway.android.io.elements.ObaTripSchedule;
+import org.onebusaway.android.io.elements.ObaTripStatus;
+import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.io.request.ObaTripDetailsRequest;
+import org.onebusaway.android.io.request.ObaTripDetailsResponse;
+import org.onebusaway.android.nav.NavigationService;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.DBUtil;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -510,22 +509,17 @@ public class TripDetailsListFragment extends ListFragment {
                 bldr.setPositiveButton(R.string.destination_reminder_confirm, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        //Location should be turned on at this point
-
                         if(!LocationUtils.isLocationEnabled(getContext())) {
-                            setUpNavigationService(pId);
                             askUserToTurnLocationOn();
                             return;
-                            // If we don't do it then "Trip gets started" even when user doesn't turn on location, so return from here
                         }
                         int locMode = LocationUtils.getLocationMode(getContext());
 
-                       /*  If location is already on but not on "High Accuracy" mode, ask user to do so!
-                            If the user hasn't opted out of "Change Location Mode" dialog, show it to them
-                        */
+                        // If location is already on but not on "High Accuracy" mode, ask user to do so!
+                        // If the user hasn't opted out of "Change Location Mode" dialog, show it to them
                         SharedPreferences prefs = Application.getPrefs();
-                        if ( !(prefs.getBoolean(getString(R.string.preference_key_never_show_change_location_mode_dialog), false))  &&
-                                        locMode != Settings.Secure.LOCATION_MODE_HIGH_ACCURACY) {
+                        if (!(prefs.getBoolean(getString(R.string.preference_key_never_show_change_location_mode_dialog), false))
+                                && locMode != Settings.Secure.LOCATION_MODE_HIGH_ACCURACY) {
                             getDialogForLocationModeChanges().show();
                         }
 
@@ -556,7 +550,6 @@ public class TripDetailsListFragment extends ListFragment {
          * @return Intent object to be used for starting navigation service
          */
         private Intent setUpNavigationService(int pId) {
-            // TODO: Handle trips with only two stops.
             ObaTripSchedule.StopTime timeLast = mTripInfo.getSchedule().getStopTimes()[pId-1];
             ObaTripSchedule.StopTime timeDest = mTripInfo.getSchedule().getStopTimes()[pId];
             ObaReferences refs = mTripInfo.getRefs();
@@ -598,8 +591,8 @@ public class TripDetailsListFragment extends ListFragment {
 
             mResult = LocationServices.getSettingsClient(getActivity()).checkLocationSettings(builder.build());
 
-            //When the Task(mResult is of type Task) completes, the client can check the location settings
-            //by looking at the status code from the LocationSettingsResponse object.
+            // When the Task(mResult is of type Task) completes, the client can check the location settings
+            // by looking at the status code from the LocationSettingsResponse object.
             mResult.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
                 @Override
                 public void onComplete(Task<LocationSettingsResponse> task) {
@@ -634,18 +627,18 @@ public class TripDetailsListFragment extends ListFragment {
             });
         }
 
-        //A method for "High Accuracy GPS needed alert"
-        private Dialog getDialogForLocationModeChanges()
-        {
-            View view = getActivity().getLayoutInflater().inflate(R.layout.change_locationmode_dialog , null);
-            CheckBox neverShowDialog = (CheckBox) view.findViewById(R.id.change_locationmode_never_ask_again);
+        /**
+         * Create "High Accuracy GPS needed alert" dialog
+         *
+         * @return dialog for "High Accuracy GPS needed alert"
+         */
+        private Dialog getDialogForLocationModeChanges() {
+            View view = getActivity().getLayoutInflater().inflate(R.layout.change_locationmode_dialog, null);
+            CheckBox neverShowDialog = view.findViewById(R.id.change_locationmode_never_ask_again);
 
-            neverShowDialog.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                    // Save the preference
-                    PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_change_location_mode_dialog), isChecked);
-                }
+            neverShowDialog.setOnCheckedChangeListener((compoundButton, isChecked) -> {
+                // Save the preference
+                PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_change_location_mode_dialog), isChecked);
             });
 
             Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_map);
@@ -657,19 +650,11 @@ public class TripDetailsListFragment extends ListFragment {
                     .setCancelable(false)
                     .setView(view)
                     .setPositiveButton(R.string.rt_yes,
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-                                }
-                            }
+                            (dialog, which) -> startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                     )
                     .setNegativeButton(R.string.rt_no,
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // No code required..
-                                }
+                            (dialog, which) -> {
+                                // No code required..
                             }
                     );
             return builder.create();
@@ -1159,7 +1144,7 @@ public class TripDetailsListFragment extends ListFragment {
                 // It will call up getView() so that flag icon gets unset
                 mAdapter.notifyDataSetChanged();
 
-                // Unregister this receiver now.
+                // Unregister this receiver now
                 getActivity().unregisterReceiver(this);
             }
         }

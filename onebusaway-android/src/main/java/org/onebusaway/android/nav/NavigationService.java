@@ -29,7 +29,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import org.apache.commons.io.FileUtils;
-import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.nav.model.Path;
@@ -128,7 +127,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
         initAnonFirebaseLogin();
 
         // Setup file for logging.
-        if (mLogFile == null && BuildConfig.NAV_GPS_LOGGING) {
+        if (mLogFile == null) {
             setupLog();
         }
 
@@ -196,23 +195,19 @@ public class NavigationService extends Service implements LocationHelper.Listene
             mNavProvider.locationUpdated(location);
         }
 
-        if (BuildConfig.NAV_GPS_LOGGING && mNavProvider.mSectoCurDistance <= RECORDING_THRESHOLD) {
+        if (mNavProvider.mSectoCurDistance <= RECORDING_THRESHOLD) {
             writeToLog(location);
         }
         mLastLocation = location;
 
         // Is trip is finished? If so end service.
         if (mNavProvider.getFinished()) {
-            if (BuildConfig.NAV_GPS_LOGGING) {
-                if (mFinishedTime == 0) {
-                    mFinishedTime = System.currentTimeMillis();
-                } else if (System.currentTimeMillis() - mFinishedTime >= 30000) {
-                    getUserFeedback();
-                    stopSelf();
-                    setupLogCleanupTask();
-                }
-            } else {
+            if (mFinishedTime == 0) {
+                mFinishedTime = System.currentTimeMillis();
+            } else if (System.currentTimeMillis() - mFinishedTime >= 30000) {
+                getUserFeedback();
                 stopSelf();
+                setupLogCleanupTask();
             }
         }
     }

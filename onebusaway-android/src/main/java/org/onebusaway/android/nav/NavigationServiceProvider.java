@@ -206,7 +206,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         if (mPath == null || (mPathLinkIndex >= (mPath.getPathLinks().size() - 1))) {
             // No more path links exist
             Log.d(TAG, "PathLink index: " + mPathLinkIndex + " Number of PathLinks: " + (mPath.getPathLinks().size()));
-            Log.d(TAG, "%%%%%%%%%%%%%%% No more PathLinks left in Path %%%%%%%%%%%%%%%%%%%%%");
+            Log.d(TAG, "%%%%%%N%%%%%%%%% No more PathLinks left in Path %%%%%%%%%%%%%%%%%%%%%");
             return false;
         }
         // Additional path links still need to be navigated as part of this service

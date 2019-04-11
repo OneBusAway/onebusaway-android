@@ -8,6 +8,51 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:1083736323923:android:75ea84a920f3dd26",
+        "android_client_info": {
+          "package_name": "can.yrt.onebusaway"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1083736323923-u9a12phc7p9s7kmlh6aerpdvu6cbjagg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "can.yrt.onebusaway",
+            "certificate_hash": "d8d368095abbdf638318a74cce3f5f3c35ab34b2"
+          }
+        },
+        {
+          "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKhirldbMm7knvxq2lFoYiNxSCOesvnwk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1083736323923-a3abfviki4fcbm734vbfceejcivrvbv2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "org.onebusaway.iphone",
+                "app_store_id": "329380089"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:1083736323923:android:e2ba0de76d8a138b",
         "android_client_info": {
           "package_name": "com.joulespersecond.seattlebusbot"
@@ -33,11 +78,7 @@
         }
       ],
       "services": {
-        "analytics_service": {
-          "status": 1
-        },
         "appinvite_service": {
-          "status": 2,
           "other_platform_oauth_client": [
             {
               "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
@@ -52,9 +93,6 @@
               }
             }
           ]
-        },
-        "ads_service": {
-          "status": 2
         }
       }
     },
@@ -85,11 +123,7 @@
         }
       ],
       "services": {
-        "analytics_service": {
-          "status": 1
-        },
         "appinvite_service": {
-          "status": 2,
           "other_platform_oauth_client": [
             {
               "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
@@ -104,9 +138,6 @@
               }
             }
           ]
-        },
-        "ads_service": {
-          "status": 2
         }
       }
     },
@@ -137,11 +168,7 @@
         }
       ],
       "services": {
-        "analytics_service": {
-          "status": 1
-        },
         "appinvite_service": {
-          "status": 2,
           "other_platform_oauth_client": [
             {
               "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
@@ -156,9 +183,6 @@
               }
             }
           ]
-        },
-        "ads_service": {
-          "status": 2
         }
       }
     }

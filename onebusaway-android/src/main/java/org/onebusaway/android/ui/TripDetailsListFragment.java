@@ -50,6 +50,7 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -528,6 +529,10 @@ public class TripDetailsListFragment extends ListFragment {
                         }
 
                         startNavigationService(setUpNavigationService(position));
+                        Toast.makeText(Application.get(),
+                                Application.get().getString(R.string.destination_reminder_title),
+                                Toast.LENGTH_LONG
+                        ).show();
                     }
                 });
 

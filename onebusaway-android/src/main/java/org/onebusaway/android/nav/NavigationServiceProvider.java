@@ -24,7 +24,6 @@ import android.location.Location;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -97,11 +96,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         Log.d(TAG, "Creating NavigationServiceProvider...");
         if (mTTS == null) {
             mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
-        } else {
-            Toast.makeText(Application.get(),
-                    Application.get().getString(R.string.destination_reminder_title),
-                    Toast.LENGTH_LONG
-            ).show();
         }
         mTripId = tripId;
         mStopId = stopId;
@@ -543,12 +537,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         if (status == TextToSpeech.SUCCESS) {
             mTTS.setLanguage(Locale.getDefault());
             mTTS.setSpeechRate(0.75f);
-            if (!mResuming) {
-                Toast.makeText(Application.get(),
-                        Application.get().getString(R.string.destination_reminder_title),
-                        Toast.LENGTH_LONG
-                ).show();
-            }
         }
     }
 

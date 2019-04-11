@@ -499,8 +499,7 @@ public class TripDetailsListFragment extends ListFragment {
     private final AdapterView.OnItemLongClickListener mLongClickListener = new AdapterView.OnItemLongClickListener() {
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-            final int pId = position;
-            if (pId > 1) {
+            if (position > 1) {
                 // Build AlertDialog
                 AlertDialog.Builder bldr = new AlertDialog.Builder(getActivity());
                 bldr.setMessage(R.string.destination_reminder_dialog_msg).setTitle(R.string.destination_reminder_dialog_title);
@@ -523,17 +522,17 @@ public class TripDetailsListFragment extends ListFragment {
                             getDialogForLocationModeChanges().show();
                         }
 
-                        // Utility to start service
-                        startNavigationService(setUpNavigationService(pId));
+                        // Warn users that destination remindres are in beta
+                        if (!(prefs.getBoolean(getString(R.string.preference_key_never_show_destination_reminder_beta_dialog), false))) {
+                            createDestinationReminderBetaDialog().show();
+                        }
+
+                        startNavigationService(setUpNavigationService(position));
                     }
                 });
 
                 // Cancellation Button
-                bldr.setNegativeButton(R.string.destination_reminder_cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // TODO Have to see what to do here?
-                    }
+                bldr.setNegativeButton(R.string.destination_reminder_cancel, (dialog, which) -> {
                 });
 
                 // Display
@@ -660,6 +659,34 @@ public class TripDetailsListFragment extends ListFragment {
             return builder.create();
         }
     };
+
+    /**
+     * Create dialog reminding user that destination reminders are in beta
+     *
+     * @return dialog reminding user that destination reminders are in beta
+     */
+    private Dialog createDestinationReminderBetaDialog() {
+        View view = getActivity().getLayoutInflater().inflate(R.layout.destination_reminder_beta_dialog, null);
+        CheckBox neverShowDialog = view.findViewById(R.id.destination_reminder_beta_never_show_again);
+
+        neverShowDialog.setOnCheckedChangeListener((compoundButton, isChecked) -> {
+            // Save the preference
+            PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_destination_reminder_beta_dialog), isChecked);
+        });
+
+        Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_alert);
+        DrawableCompat.setTint(icon, getResources().getColor(R.color.theme_primary));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
+                .setTitle(R.string.destination_reminder_beta_title)
+                .setIcon(icon)
+                .setCancelable(false)
+                .setView(view)
+                .setPositiveButton(R.string.ok, (dialogInterface, i) -> {
+                        }
+                );
+        return builder.create();
+    }
 
     private final Handler mRefreshHandler = new Handler();
 

@@ -130,6 +130,7 @@
         now?
     </string>
     <string name="main_never_ask_again">Never ask again</string>
+    <string name="main_never_show_again">Never show again</string>
 
     <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="no_location_permission">Unable to get your location.  Please give app location permissions via system settings.</string>
@@ -298,12 +299,14 @@
     </string>
 
     <!-- Destination reminders -->
-    <string name="destination_reminder_dialog_title">Destination reminder</string>
+    <string name="destination_reminder_dialog_title">Destination reminder (beta)</string>
     <string name="destination_reminder_dialog_msg">Would you like to be notified when you are approaching this stop?</string>
     <string name="destination_reminder_confirm">Yes</string>
     <string name="destination_reminder_cancel">Cancel</string>
     <string name="destination_reminder_title">Destination reminder is set</string>
     <string name="destination_reminder_cancel_trip">Cancel reminder</string>
+    <string name="destination_reminder_beta_title">Destination reminders are in beta</string>
+    <string name="destination_reminder_beta_summary">Destination reminders rely on GPS, which is not always reliable and will not work indoors, underground, or in areas without a clear view of the sky. Always be aware of your surroundings.</string>
 
     <!-- Destination reminder voice commands -->
     <string name="destination_voice_get_ready">Get ready!</string>

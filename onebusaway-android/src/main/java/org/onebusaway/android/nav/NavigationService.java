@@ -15,17 +15,6 @@
  */
 package org.onebusaway.android.nav;
 
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Service;
-import android.content.Context;
-import android.content.Intent;
-import android.location.Location;
-import android.os.Build;
-import android.os.IBinder;
-import android.util.Log;
-import android.widget.Toast;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -41,6 +30,16 @@ import org.onebusaway.android.ui.TripDetailsListFragment;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
+
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.location.Location;
+import android.os.Build;
+import android.os.IBinder;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -272,9 +271,6 @@ public class NavigationService extends Service implements LocationHelper.Listene
             } else {
                 Log.e(TAG, "Failed to write to file - null file");
             }
-            Toast toast = Toast.makeText(getApplicationContext(),
-                    getString(R.string.stop_notify_test_id, counter), Toast.LENGTH_SHORT);
-            toast.show();
         } catch (IOException e) {
             Log.e(TAG, "File write failed: " + e.toString());
         }

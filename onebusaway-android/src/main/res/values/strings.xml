@@ -303,15 +303,43 @@
         show detailed arrivals list, or press Back button to hide.
     </string>
 
-    <!-- Stop Notification -->
-    <string name="stop_notify_dialog_title">Destination Alert</string>
-    <string name="stop_notify_dialog_msg">Would you like to be notified when you are approaching this stop?</string>
-    <string name="stop_notify_confirm">Yes</string>
-    <string name="stop_notify_cancel">Cancel</string>
-    <string name="stop_notify_confirmation">Will notify!</string>
-    <string name="stop_notify_title">Stop Reminder</string>
-    <string name="stop_notify_cancel_trip">Cancel Trip</string>
-    <string name="stop_notify_test_id">Test %1$d</string>
+    <!-- Destination reminders -->
+    <string name="destination_reminder_dialog_title">Destination reminder</string>
+    <string name="destination_reminder_dialog_msg">Would you like to be notified when you are approaching this stop?</string>
+    <string name="destination_reminder_confirm">Yes</string>
+    <string name="destination_reminder_cancel">Cancel</string>
+    <string name="destination_reminder_title">Destination reminder</string>
+    <string name="destination_reminder_cancel_trip">Cancel reminder</string>
+
+    <!-- Destination reminder voice commands -->
+    <string name="voice_get_ready">Get ready!</string>
+    <string name="voice_starting_trip">Starting trip now!</string>
+    <string name="voice_exit_bus">Get off the bus now!</string>
+    <string name="voice_pull_cord">Pull the cord!</string>
+    <string name="voice_arriving_destination">Arriving at destination!</string>
+
+    <!-- Destination reminder feedback notifications -->
+    <string name="feedback_notify_title">Help improve destination reminders</string>
+    <string name="feedback_notify_dialog_msg">Were you notified at the right time?</string>
+    <string name="feedback_notify_confirmation">Thank you for the feedback!</string>
+    <string name="feedback_label">Feedback</string>
+    <string name="feedback_action_reply_no">No</string>
+    <string name="feedback_action_reply_yes">Yes</string>
+
+    <!-- Destination reminder feedback Activity -->
+    <string name="feedback_msg">Were you notified at the right time to pull the cord?</string>
+    <string name="feedback_freeText">Write your feedback</string>
+    <string name="feedback_checkbox_text">Include system log (your choice will be saved for future trips)</string>
+    <string name="feedback_log_guide">Your feedback will be sent to OneBusAway. If you check \"Include system logs\"
+        , real-time location information from your device recorded as you
+        approached your destination stop will be shared with OneBusAway so developers can improve
+        the destination reminder feature.\n\nChange your preference for sharing system logs in Settings.</string>
+
+    <!-- Destination reminder feedback Preferences -->
+    <string name="preferences_category_user_logs">Share trip logs</string>
+    <string name="preferences_user_share_logs_title">Include system logs</string>
+    <string name="preferences_user_share_logs_summary">Anonymous real-time location information from
+        your device will be shared with OneBusAway to improve the destination reminder feature.</string>
 
     <!-- Stop Details -->
     <string name="stop_details_code">Stop # %1$s</string>
@@ -823,13 +851,6 @@
     <string name="storage_permissions_title">Access to device storage is required</string>
     <string name="storage_permissions_message">To backup or restore your data, OneBusAway needs permission to access your local device storage.</string>
 
-    <!-- Voice Commands -->
-    <string name="voice_get_ready">Get ready!</string>
-    <string name="voice_starting_trip">Starting trip now!</string>
-    <string name="voice_exit_bus">Get off the bus now!</string>
-    <string name="voice_pull_cord">Pull the cord!</string>
-    <string name="voice_arriving_destination">Arriving at destination!</string>
-
     <!-- About -->
     <string name="title_activity_about">About</string>
     <string name="about_text">
@@ -1104,27 +1125,4 @@
     <string name="es_msg_general_signin_success">Signed into Embedded Social</string>
     <string name="es_msg_general_signout_success">Signed out of Embedded Social</string>
     <string name="es_msg_general_account_deleted">Embedded Social account deleted</string>
-
-    <!-- User Feedback notifications -->
-    <string name="feedback_notify_title">Help improve destination reminders</string>
-    <string name="feedback_notify_dialog_msg">Were you notified at the right time?</string>
-    <string name="feedback_notify_confirmation">Thank you for the feedback!</string>
-    <string name="feedback_label">Feedback</string>
-    <string name="feedback_action_reply_no">No</string>
-    <string name="feedback_action_reply_yes">Yes</string>
-
-    <!-- User Feedback Activity -->
-    <string name="feedback_msg">Were you notified at the right time to pull the cord?</string>
-    <string name="feedback_freeText">Write your feedback</string>
-    <string name="feedback_checkbox_text">Include system log (your choice will be saved for future trips)</string>
-    <string name="feedback_log_guide">Your feedback will be sent to OneBusAway. If you check \"Include system logs\"
-        , real-time location information from your device recorded as you
-        approached your destination stop will be shared with OneBusAway so developers can improve
-        the destination reminder feature.\n\nChange your preference for sharing system logs in Settings.</string>
-
-    <!-- User trip log Preferences -->
-    <string name="preferences_category_user_logs">Share trip logs</string>
-    <string name="preferences_user_share_logs_title">Include system logs</string>
-    <string name="preferences_user_share_logs_summary">Anonymous real-time location information from
-        your device will be shared with OneBusAway to improve the destination reminder feature.</string>
 </resources>

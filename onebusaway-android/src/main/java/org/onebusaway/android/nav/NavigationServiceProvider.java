@@ -15,6 +15,13 @@
  */
 package org.onebusaway.android.nav;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.nav.model.Path;
+import org.onebusaway.android.nav.model.PathLink;
+import org.onebusaway.android.ui.TripDetailsActivity;
+import org.onebusaway.android.util.RegionUtils;
+
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -24,13 +31,6 @@ import android.location.Location;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.nav.model.Path;
-import org.onebusaway.android.nav.model.PathLink;
-import org.onebusaway.android.ui.TripDetailsActivity;
-import org.onebusaway.android.util.RegionUtils;
 
 import java.text.DecimalFormat;
 import java.util.Locale;
@@ -569,7 +569,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                         , Application.CHANNEL_DESTINATION_ALERT_ID)
                         .setSmallIcon(R.drawable.ic_content_flag)
                         .setContentTitle(Application.get().getResources()
-                                .getString(R.string.stop_notify_title))
+                                .getString(R.string.destination_reminder_title))
                         .setContentIntent(pIntent)
                         .setAutoCancel(true);
         if (eventType == EVENT_TYPE_UPDATE_DISTANCE) {          // General eventType update.
@@ -607,7 +607,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     0, receiverIntent, 0);
 
             mBuilder.addAction(R.drawable.ic_navigation_close,
-                    app.getString(R.string.stop_notify_cancel_trip), pCancelIntent);
+                    app.getString(R.string.destination_reminder_cancel_trip), pCancelIntent);
 
             mBuilder.setOngoing(true);
             NotificationManager mNotificationManager = (NotificationManager)
@@ -671,7 +671,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     , Application.CHANNEL_DESTINATION_ALERT_ID)
                     .setSmallIcon(R.drawable.ic_content_flag)
                     .setContentTitle(
-                            Application.get().getResources().getString(R.string.stop_notify_title))
+                            Application.get().getResources().getString(R.string.destination_reminder_title))
                     .setContentIntent(pIntent)
                     .setAutoCancel(true);
             message = Application.get().getString(R.string.voice_arriving_destination);

@@ -16,6 +16,35 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaTrip;
+import org.onebusaway.android.io.elements.ObaTripSchedule;
+import org.onebusaway.android.io.elements.ObaTripStatus;
+import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.io.request.ObaTripDetailsRequest;
+import org.onebusaway.android.io.request.ObaTripDetailsResponse;
+import org.onebusaway.android.nav.NavigationService;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.DBUtil;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -51,35 +80,6 @@ import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.common.api.ResolvableApiException;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResponse;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.ObaTrip;
-import org.onebusaway.android.io.elements.ObaTripSchedule;
-import org.onebusaway.android.io.elements.ObaTripStatus;
-import org.onebusaway.android.io.elements.OccupancyState;
-import org.onebusaway.android.io.request.ObaTripDetailsRequest;
-import org.onebusaway.android.io.request.ObaTripDetailsResponse;
-import org.onebusaway.android.nav.NavigationService;
-import org.onebusaway.android.util.ArrivalInfoUtils;
-import org.onebusaway.android.util.DBUtil;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.UIUtils;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -504,10 +504,10 @@ public class TripDetailsListFragment extends ListFragment {
             if (pId > 1) {
                 // Build AlertDialog
                 AlertDialog.Builder bldr = new AlertDialog.Builder(getActivity());
-                bldr.setMessage(R.string.stop_notify_dialog_msg).setTitle(R.string.stop_notify_dialog_title);
+                bldr.setMessage(R.string.destination_reminder_dialog_msg).setTitle(R.string.destination_reminder_dialog_title);
 
                 // Confirmation button
-                bldr.setPositiveButton(R.string.stop_notify_confirm, new DialogInterface.OnClickListener() {
+                bldr.setPositiveButton(R.string.destination_reminder_confirm, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         //Location should be turned on at this point
@@ -535,7 +535,7 @@ public class TripDetailsListFragment extends ListFragment {
                 });
 
                 // Cancellation Button
-                bldr.setNegativeButton(R.string.stop_notify_cancel, new DialogInterface.OnClickListener() {
+                bldr.setNegativeButton(R.string.destination_reminder_cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // TODO Have to see what to do here?

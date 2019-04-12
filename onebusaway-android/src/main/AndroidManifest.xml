@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2011-2017 Paul Watts (paulcwatts@gmail.com),
+<!-- Copyright (C) 2011-2018 Paul Watts (paulcwatts@gmail.com),
      University of South Florida (sjbarbeau@gmail.com), 
      Microsoft Corporation.
 
@@ -36,6 +36,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
     <uses-permission android:name="${applicationId}.permission.TRIP_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <uses-sdk tools:overrideLibrary="net.openid.appauth,
         android.support.customtabs,
@@ -212,6 +213,15 @@
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value="org.onebusaway.android.ui.HomeActivity"/>
         </activity>
+        <activity
+            android:name="org.onebusaway.android.ui.FeedbackActivity"
+            android:label="@string/feedback_notify_title"
+            android:noHistory="true"
+            android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.onebusaway.android.ui.HomeActivity"/>
+        </activity>
 
 
         <!-- Provider is defined in build.gradle flavors -->
@@ -230,6 +240,10 @@
 
         <service
                 android:name=".directions.realtime.RealtimeService">
+        </service>
+
+        <service
+            android:name=".nav.NavigationService" >
         </service>
 
         <receiver android:name=".tripservice.AlarmReceiver">
@@ -254,6 +268,18 @@
                 <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE"/>
                 <action android:name="com.joulespersecond.seattlebusbot.action.POLL"/>
             </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".nav.NavigationReceiver"
+            android:enabled="true"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name=".nav.NavigationReceiver" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".nav.FeedbackReceiver"
+            android:enabled="true">
         </receiver>
         <!-- Receiver for restricted profiles -->
         <receiver android:name=".util.GetRestrictionsReceiver">

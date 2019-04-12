@@ -16,29 +16,25 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.ObaTrip;
-import org.onebusaway.android.io.elements.ObaTripSchedule;
-import org.onebusaway.android.io.elements.ObaTripStatus;
-import org.onebusaway.android.io.elements.OccupancyState;
-import org.onebusaway.android.io.request.ObaTripDetailsRequest;
-import org.onebusaway.android.io.request.ObaTripDetailsResponse;
-import org.onebusaway.android.util.ArrivalInfoUtils;
-import org.onebusaway.android.util.UIUtils;
-
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -50,21 +46,53 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaTrip;
+import org.onebusaway.android.io.elements.ObaTripSchedule;
+import org.onebusaway.android.io.elements.ObaTripStatus;
+import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.io.request.ObaTripDetailsRequest;
+import org.onebusaway.android.io.request.ObaTripDetailsResponse;
+import org.onebusaway.android.nav.NavigationService;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.DBUtil;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.AsyncTaskLoader;
 import androidx.loader.content.Loader;
 
 public class TripDetailsListFragment extends ListFragment {
 
-    private static final String TAG = "TripDetailsListFragment";
+    public static final String TAG = "TripDetailsListFragment";
 
     public static final String TRIP_ID = ".TripId";
 
@@ -78,9 +106,17 @@ public class TripDetailsListFragment extends ListFragment {
 
     public static final String SCROLL_MODE_STOP = "stop";
 
+    public static final String TRIP_ACTIVE = ".TripActive";
+
+    public static final String DEST_ID = ".DestinationId";
+
+    public static final String ACTION_SERVICE_DESTROYED = "NavigationServiceDestroyed";
+
     private static final long REFRESH_PERIOD = 60 * 1000;
 
     private static final int TRIP_DETAILS_LOADER = 0;
+
+    public static final int REQUEST_ENABLE_LOCATION = 1;
 
     private String mTripId;
 
@@ -90,13 +126,22 @@ public class TripDetailsListFragment extends ListFragment {
 
     private String mScrollMode;
 
+    private String mDestinationId;
+
     private Integer mStopIndex;
+
+    private Integer mDestinationIndex;
+
+    private boolean mActiveTrip;
 
     private ObaTripDetailsResponse mTripInfo;
 
     private TripDetailsAdapter mAdapter;
 
     private final TripDetailsLoaderCallback mTripDetailsCallback = new TripDetailsLoaderCallback();
+
+    private LocationRequest mLocationRequest;
+    private Task<LocationSettingsResponse> mResult;
 
     /**
      * Builds an intent used to set the trip and stop for the TripDetailsListFragment directly
@@ -132,6 +177,7 @@ public class TripDetailsListFragment extends ListFragment {
         setHasOptionsMenu(true);
 
         getListView().setOnItemClickListener(mClickListener);
+        getListView().setOnItemLongClickListener(mLongClickListener);
 
         // Get saved routeId if it exists - avoids potential NPE in onOptionsItemSelected() (#515)
         if (savedInstanceState != null) {
@@ -146,7 +192,12 @@ public class TripDetailsListFragment extends ListFragment {
         }
 
         mStopId = args.getString(STOP_ID);
+
         mScrollMode = args.getString(SCROLL_MODE);
+
+        mActiveTrip = args.getBoolean(TRIP_ACTIVE);
+
+        mDestinationId = args.getString(DEST_ID);
 
         getLoaderManager().initLoader(TRIP_DETAILS_LOADER, null, mTripDetailsCallback);
     }
@@ -244,6 +295,44 @@ public class TripDetailsListFragment extends ListFragment {
             getListView().setDivider(null);
             setListAdapter(mAdapter);
             setScroller(listView);
+
+            // Scroll to stop if we have the stopId available
+            if (mStopId != null) {
+                mStopIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mStopId);
+                if (mStopIndex != null) {
+                    listView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listView.setSelection(mStopIndex);
+                        }
+                    });
+                }
+            } else {
+                // If we don't have a stop, then scroll to the current position of the bus
+                final Integer nextStop = mAdapter.getNextStopIndex();
+                if (nextStop != null) {
+                    listView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listView.setSelection(nextStop - 1);
+                        }
+                    });
+                }
+            }
+
+            if (mDestinationId != null) {
+                mDestinationIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mDestinationId);
+                if (mDestinationIndex != null) {
+                    listView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listView.setSelection(mDestinationIndex);
+                        }
+                    });
+                }
+            }
+
+            mAdapter.notifyDataSetChanged();
         } else {  // refresh, keep scroll position
             int index = listView.getFirstVisiblePosition();
             View v = listView.getChildAt(0);
@@ -407,6 +496,202 @@ public class TripDetailsListFragment extends ListFragment {
             showArrivals(stopId, stop.getName(), stop.getDirection());
         }
     };
+
+    private final AdapterView.OnItemLongClickListener mLongClickListener = new AdapterView.OnItemLongClickListener() {
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            if (position > 1) {
+                // Build AlertDialog
+                AlertDialog.Builder bldr = new AlertDialog.Builder(getActivity());
+                bldr.setMessage(R.string.destination_reminder_dialog_msg).setTitle(R.string.destination_reminder_dialog_title);
+
+                // Confirmation button
+                bldr.setPositiveButton(R.string.destination_reminder_confirm, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(!LocationUtils.isLocationEnabled(getContext())) {
+                            askUserToTurnLocationOn();
+                            return;
+                        }
+                        int locMode = LocationUtils.getLocationMode(getContext());
+
+                        // If location is already on but not on "High Accuracy" mode, ask user to do so!
+                        // If the user hasn't opted out of "Change Location Mode" dialog, show it to them
+                        SharedPreferences prefs = Application.getPrefs();
+                        if (!(prefs.getBoolean(getString(R.string.preference_key_never_show_change_location_mode_dialog), false))
+                                && locMode != Settings.Secure.LOCATION_MODE_HIGH_ACCURACY) {
+                            getDialogForLocationModeChanges().show();
+                        }
+
+                        // Warn users that destination remindres are in beta
+                        if (!(prefs.getBoolean(getString(R.string.preference_key_never_show_destination_reminder_beta_dialog), false))) {
+                            createDestinationReminderBetaDialog().show();
+                        }
+
+                        startNavigationService(setUpNavigationService(position));
+                        Toast.makeText(Application.get(),
+                                Application.get().getString(R.string.destination_reminder_title),
+                                Toast.LENGTH_LONG
+                        ).show();
+                    }
+                });
+
+                // Cancellation Button
+                bldr.setNegativeButton(R.string.destination_reminder_cancel, (dialog, which) -> {
+                });
+
+                // Display
+                AlertDialog dialog = bldr.create();
+                dialog.setOwnerActivity(getActivity());
+                dialog.show();
+            }
+
+            return true;
+        }
+
+        /**
+         * @param pId Position of a stop for which we started Destination alert
+         * @return Intent object to be used for starting navigation service
+         */
+        private Intent setUpNavigationService(int pId) {
+            ObaTripSchedule.StopTime timeLast = mTripInfo.getSchedule().getStopTimes()[pId-1];
+            ObaTripSchedule.StopTime timeDest = mTripInfo.getSchedule().getStopTimes()[pId];
+            ObaReferences refs = mTripInfo.getRefs();
+            String destStopId = timeDest.getStopId();
+            String lastStopId = timeLast.getStopId();
+            ObaStop destStop = refs.getStop(destStopId);
+            ObaStop lastStop = refs.getStop(lastStopId);
+
+            DBUtil.addToDB(lastStop);
+            DBUtil.addToDB(destStop);
+
+            Intent serviceIntent = new Intent(getContext(), NavigationService.class);
+
+            mDestinationId = destStop.getId();
+            serviceIntent.putExtra(NavigationService.DESTINATION_ID, mDestinationId);
+            serviceIntent.putExtra(NavigationService.BEFORE_STOP_ID, lastStop.getId());
+            serviceIntent.putExtra(NavigationService.TRIP_ID, mTripId);
+
+            // update UI
+            if (mDestinationId != null) {
+                mDestinationIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mDestinationId);
+            }
+            mAdapter.notifyDataSetChanged();
+            // Save Intent so that we can call up startNavigationService() from onActivityResult() later
+            getActivity().setIntent(serviceIntent);
+            return serviceIntent;
+        }
+
+        /**
+         * This will allow user to turn on location within application context
+         */
+        private void askUserToTurnLocationOn() {
+            mLocationRequest = LocationRequest.create();
+            mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+            // Specifies the types of location services the client is interested in using.
+            LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+            builder.addLocationRequest(mLocationRequest);
+
+            mResult = LocationServices.getSettingsClient(getActivity()).checkLocationSettings(builder.build());
+
+            // When the Task(mResult is of type Task) completes, the client can check the location settings
+            // by looking at the status code from the LocationSettingsResponse object.
+            mResult.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+                @Override
+                public void onComplete(Task<LocationSettingsResponse> task) {
+                    try {
+                        LocationSettingsResponse response = task.getResult(ApiException.class);
+                        // All loc settings are satisfied if we are at this line. Code flow never comes here!
+                    } catch (ApiException APIexc) {
+                        switch (APIexc.getStatusCode()) {
+                            case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                                // Location settings are not satisfied. But could be fixed by showing the
+                                // user a dialog.
+                                try {
+                                    ResolvableApiException resolvable = (ResolvableApiException) APIexc;
+                                    // Show the dialog by calling startResolutionForResult(),
+                                    // and check the result in onActivityResult()
+                                    Log.d(TAG, "Showing dialog to user for desired location settings...");
+                                    resolvable.startResolutionForResult(getActivity(), REQUEST_ENABLE_LOCATION);
+                                } catch (IntentSender.SendIntentException sendIntExc) {
+                                    // Ignore the error.
+                                } catch (ClassCastException classCastExc) {
+                                    // Ignore, should be an impossible error.
+                                }
+                                break;
+                            case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                                // Location settings are not satisfied. However, we have no way to fix the
+                                // settings so we won't show the dialog.
+                                Log.d(TAG, "Location settings are inadequate, and cannot be fixed here. Dialog not created.");
+                                break;
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * Create "High Accuracy GPS needed alert" dialog
+         *
+         * @return dialog for "High Accuracy GPS needed alert"
+         */
+        private Dialog getDialogForLocationModeChanges() {
+            View view = getActivity().getLayoutInflater().inflate(R.layout.change_locationmode_dialog, null);
+            CheckBox neverShowDialog = view.findViewById(R.id.change_locationmode_never_ask_again);
+
+            neverShowDialog.setOnCheckedChangeListener((compoundButton, isChecked) -> {
+                // Save the preference
+                PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_change_location_mode_dialog), isChecked);
+            });
+
+            Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_map);
+            DrawableCompat.setTint(icon, getResources().getColor(R.color.theme_primary));
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
+                    .setTitle(R.string.main_changelocationmode_title)
+                    .setIcon(icon)
+                    .setCancelable(false)
+                    .setView(view)
+                    .setPositiveButton(R.string.rt_yes,
+                            (dialog, which) -> startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                    )
+                    .setNegativeButton(R.string.rt_no,
+                            (dialog, which) -> {
+                                // No code required..
+                            }
+                    );
+            return builder.create();
+        }
+    };
+
+    /**
+     * Create dialog reminding user that destination reminders are in beta
+     *
+     * @return dialog reminding user that destination reminders are in beta
+     */
+    private Dialog createDestinationReminderBetaDialog() {
+        View view = getActivity().getLayoutInflater().inflate(R.layout.destination_reminder_beta_dialog, null);
+        CheckBox neverShowDialog = view.findViewById(R.id.destination_reminder_beta_never_show_again);
+
+        neverShowDialog.setOnCheckedChangeListener((compoundButton, isChecked) -> {
+            // Save the preference
+            PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_destination_reminder_beta_dialog), isChecked);
+        });
+
+        Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_alert);
+        DrawableCompat.setTint(icon, getResources().getColor(R.color.theme_primary));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
+                .setTitle(R.string.destination_reminder_beta_title)
+                .setIcon(icon)
+                .setCancelable(false)
+                .setView(view)
+                .setPositiveButton(R.string.ok, (dialogInterface, i) -> {
+                        }
+                );
+        return builder.create();
+    }
 
     private final Handler mRefreshHandler = new Handler();
 
@@ -634,6 +919,7 @@ public class TripDetailsListFragment extends ListFragment {
 
             ImageView bus = (ImageView) convertView.findViewById(R.id.bus_icon);
             ImageView stopIcon = (ImageView) convertView.findViewById(R.id.stop_icon);
+            ImageView flagIcon = (ImageView) convertView.findViewById(R.id.destination_icon);
             ImageView topLine = (ImageView) convertView.findViewById(R.id.top_line);
             ImageView bottomLine = (ImageView) convertView.findViewById(R.id.bottom_line);
             ImageView transitStop = (ImageView) convertView.findViewById(R.id.transit_stop);
@@ -684,6 +970,7 @@ public class TripDetailsListFragment extends ListFragment {
             topLine.setColorFilter(routeColor);
             bottomLine.setColorFilter(routeColor);
             transitStop.setColorFilter(routeColor);
+            flagIcon.setColorFilter(routeColor);
 
             if (position == 0) {
                 // First stop in trip - hide the top half of the transit line
@@ -699,10 +986,14 @@ public class TripDetailsListFragment extends ListFragment {
                 bottomLine.setVisibility(View.VISIBLE);
             }
 
-            if (mStopIndex != null && mStopIndex == position) {
-                // Show the selected stop
+            if (mDestinationIndex != null && mDestinationIndex == position) {
+                stopIcon.setVisibility(View.GONE);
+                flagIcon.setVisibility(View.VISIBLE);
+            } else if (mStopIndex != null && mStopIndex == position) {
                 stopIcon.setVisibility(View.VISIBLE);
+                flagIcon.setVisibility(View.GONE);
             } else {
+                flagIcon.setVisibility(View.GONE);
                 stopIcon.setVisibility(View.GONE);
             }
 
@@ -822,5 +1113,72 @@ public class TripDetailsListFragment extends ListFragment {
             }
         }
         mAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        if (requestCode == REQUEST_ENABLE_LOCATION) {
+            switch (resultCode) {
+                case Activity.RESULT_OK:
+                    // All required changes were successfully made
+                    Log.d(TAG, "Location enabled");
+                    startNavigationService(getActivity().getIntent());
+                    break;
+                case Activity.RESULT_CANCELED:
+                    // The user was asked to change settings but chose not to
+                    Log.d(TAG, "Location not enabled");
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    /**
+     * @param serviceIntent
+     */
+    private void startNavigationService(Intent serviceIntent) {
+        Application.get().getApplicationContext().startService(serviceIntent);
+
+        // Register receiver
+        registerReceiver();
+    }
+
+    /**
+     * Register receiver so that when trip is cancelled by user then flag will be removed from screen
+     */
+    private void registerReceiver() {
+        // filter specifies which event Receiver should listen to
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_SERVICE_DESTROYED);
+        getActivity().registerReceiver(new TripEndReceiver(), filter);
+    }
+
+    /**
+     * When user cancels trip from "Notification menu" then destination flag in trip details screen
+     * should be removed.
+     *
+     * From {@link NavigationService 's} onDestroy(), we send broadcast action
+     */
+    class TripEndReceiver extends BroadcastReceiver {
+        private static final String TAG = "TripEndReceiver";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(ACTION_SERVICE_DESTROYED)) {
+                Log.d(TAG,"Action received in BroadcastReceiver, trip is destroyed");
+
+                // This is used to set flagIcon on trip details screen so setting it to null
+                mDestinationId = null;
+                mDestinationIndex = null;
+
+                // It will call up getView() so that flag icon gets unset
+                mAdapter.notifyDataSetChanged();
+
+                // Unregister this receiver now
+                getActivity().unregisterReceiver(this);
+            }
+        }
     }
 }

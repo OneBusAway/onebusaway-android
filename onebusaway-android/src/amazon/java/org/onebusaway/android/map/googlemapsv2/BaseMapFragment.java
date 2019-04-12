@@ -27,6 +27,26 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Handler;
+import android.provider.Settings;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.Toast;
+
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.amazon.geo.mapsv2.CameraUpdateFactory;
 import com.amazon.geo.mapsv2.AmazonMap;
@@ -69,26 +89,6 @@ import org.onebusaway.android.util.PermissionUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
-
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.Dialog;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
-import android.location.Location;
-import android.os.Bundle;
-import android.os.Handler;
-import android.provider.Settings;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;

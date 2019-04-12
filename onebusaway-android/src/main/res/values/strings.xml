@@ -130,6 +130,8 @@
         now?
     </string>
     <string name="main_never_ask_again">Never ask again</string>
+    <string name="main_never_show_again">Never show again</string>
+
     <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="no_location_permission">Unable to get your location.  Please give app location permissions via system settings.</string>
     <string name="main_outofrange_title">Out of range</string>
@@ -294,6 +296,51 @@
     </string>
     <string name="stop_header_sliding_panel_collapsed">Sliding panel collapsed. Tap to expand and
         show detailed arrivals list, or press Back button to hide.
+    </string>
+
+    <!-- Destination reminders -->
+    <string name="destination_reminder_dialog_title">Destination reminder (beta)</string>
+    <string name="destination_reminder_dialog_msg">Would you like to be notified when you are approaching this stop?</string>
+    <string name="destination_reminder_confirm">Yes</string>
+    <string name="destination_reminder_cancel">Cancel</string>
+    <string name="destination_reminder_title">Destination reminder is set</string>
+    <string name="destination_reminder_cancel_trip">Cancel reminder</string>
+    <string name="destination_reminder_beta_title">Destination reminders are in beta</string>
+    <string name="destination_reminder_beta_summary">Destination reminders rely on GPS, which is not always reliable and will not work indoors, underground, or in areas without a clear view of the sky. Always be aware of your surroundings.</string>
+
+    <!-- Destination reminder voice commands -->
+    <string name="destination_voice_get_ready">Get ready!</string>
+    <string name="destination_voice_request_stop">Exit at the next stop!</string>
+    <string name="destination_voice_arriving_destination">Arriving at destination!</string>
+
+    <!-- Destination reminder feedback notifications -->
+    <string name="feedback_notify_title">Help improve destination reminders</string>
+    <string name="feedback_notify_dialog_msg">Were you notified at the right time?</string>
+    <string name="feedback_notify_confirmation">Thank you for the feedback!</string>
+    <string name="feedback_label">Feedback</string>
+    <string name="feedback_action_reply_no">No</string>
+    <string name="feedback_action_reply_yes">Yes</string>
+
+    <!-- Destination reminder feedback Activity -->
+    <string name="feedback_msg">Were you notified at the right time to exit at your stop?</string>
+    <string name="feedback_freeText">Write your feedback</string>
+    <string name="feedback_checkbox_text">Include system log (your choice will be saved for future trips)</string>
+    <string name="feedback_log_guide">Your feedback will be sent to OneBusAway. If you check \"Include system logs\"
+        , real-time location information from your device recorded as you
+        approached your destination stop will be shared with OneBusAway so developers can improve
+        the destination reminder feature.\n\nChange your preference for sharing system logs in Settings.</string>
+
+    <!-- Destination reminder feedback Preferences -->
+    <string name="preferences_category_user_logs">Share debugging information</string>
+    <string name="preferences_user_share_destination_logs_title">Include destination reminder logs</string>
+    <string name="preferences_user_share_destination_logs_summary">Anonymous real-time location information from
+        your device will be shared with OneBusAway to improve the destination reminder feature.</string>
+
+    <!-- Destination reminder change location accuracy -->
+    <string name="main_changelocationmode_title">High accuracy location not enabled</string>
+    <string name="main_changelocationmode">Your current device "Location method" setting may fail to
+        notify you when approaching your destination due to inaccurate position information.
+        Would you like to change your device "Location method" to "High accuracy" now?
     </string>
 
     <!-- Stop Details -->
@@ -734,6 +781,7 @@
     </string>
     <string name="trip_details_current_stop">Current stop</string>
     <string name="trip_details_current_bus_position">Bus is currently at</string>
+    <string name="trip_details_dest_stop">Destination stop</string>
 
     <!-- Vehicles on Map -->
     <string name="vehicle_last_updated_sec">Data updated %1$d sec ago</string>

@@ -56,9 +56,14 @@
     <string name="preference_key_trip_plan_avoid_stairs">preference_trip_plan_avoid_stairs</string>
     <string name="preference_key_notification_sound">preference_notification_sound</string>
     <string name="preference_key_preference_vibrate_allowed">preference_vibrate_allowed</string>
+    <string name="preference_key_nav_test_id">preference_key_nav_test_id</string>
+    <string name="preference_key_never_show_change_location_mode_dialog">preference_never_show_change_location_mode_dialog</string>
     <string name="preference_key_social_category">preference_category_social</string>
     <string name="preference_key_social">preference_social</string>
     <string name="preference_key_never_show_payment_warning_dialog">never_show_payment_warning_dialog</string>
+    <string name="preferences_key_user_debugging_logs_category">preferences_key_user_debugging_logs_category</string>
+    <string name="preferences_key_user_share_destination_logs">preferences_user_share_logs</string>
+    <string name="preference_key_never_show_destination_reminder_beta_dialog">preference_never_show_destination_reminder_beta_dialog</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
@@ -224,4 +229,10 @@
 
     <string name="traverse_mode_bicycle_rent">BICYCLE_RENT</string>
 
+    <!-- User Feedback Firebase Analytics -->
+    <string name="analytics_label_button_press_destination_reminder_feedback">destination_reminder_feedback</string>
+    <string name="analytics_label_destination_reminder_yes">yes</string>
+    <string name="analytics_label_destination_reminder_no">no</string>
+    <string name="analytics_label_custom_metadata_response">Response</string>
+    <string name="analytics_label_custom_metadata_feedback">FeedbackText</string>
 </resources>

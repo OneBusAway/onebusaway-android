@@ -15,6 +15,17 @@
 */
 package org.onebusaway.android.report.ui.dialog;
 
+import android.content.Context;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.ImageButton;
+import android.widget.ListView;
+import android.widget.TextView;
+
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -26,17 +37,6 @@ import org.onebusaway.android.io.request.ObaAgenciesWithCoverageResponse;
 import org.onebusaway.android.report.ui.BaseReportActivity;
 import org.onebusaway.android.util.ArrayAdapter;
 import org.onebusaway.android.util.UIUtils;
-
-import android.content.Context;
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.ImageButton;
-import android.widget.ListView;
-import android.widget.TextView;
 
 import java.util.Arrays;
 

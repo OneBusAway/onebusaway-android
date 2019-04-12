@@ -15,12 +15,6 @@
  */
 package org.onebusaway.android.report.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaReportProblemWithStopRequest;
-
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
@@ -33,6 +27,12 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaReportProblemWithStopRequest;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;

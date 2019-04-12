@@ -69,6 +69,7 @@
     <dimen name="trip_details_transit_stop_width_focused">16dp</dimen>
     <dimen name="trip_details_transit_bus_icon">18dp</dimen>
     <dimen name="trip_details_transit_stop_icon">18dp</dimen>
+    <dimen name="trip_details_dest_stop_icon">18dp</dimen>
 
     <!-- Map -->
     <dimen name="map_stop_icon_size">19dp</dimen>

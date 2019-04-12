@@ -105,3 +105,6 @@
 
 # for TabLayout in EmbeddedSocial SDK and compiling with API 28 (see https://github.com/OneBusAway/onebusaway-android/issues/944#issuecomment-446345133)
 -dontwarn com.microsoft.embeddedsocial.sdk.ui.TabbedDrawerHandler
+
+# for EmbeddedSocial SDK
+-dontwarn com.microsoft.rest.Validator

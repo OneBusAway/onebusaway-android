@@ -28,6 +28,7 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -122,6 +123,25 @@ public class LocationUtils {
     }
 
     /**
+     * Check if two locations are the exact same by comparing their timestamp, lat & lng.
+     * @param a First location
+     * @param b Second location
+     * @return true if same, false otherwise.
+     */
+    public static boolean isDuplicate(Location a, Location b) {
+        if (a.getTime() != b.getTime())
+            return false;
+
+        if (a.getLatitude() != b.getLatitude())
+            return false;
+
+        if (a.getLongitude() != b.getLongitude())
+            return false;
+
+        return true;
+    }
+
+    /**
      * Converts a latitude/longitude to a Location.
      *
      * @param lat The latitude.
@@ -157,6 +177,16 @@ public class LocationUtils {
      * not
      */
     public static boolean isLocationEnabled(Context context) {
+        return getLocationMode(context) != Settings.Secure.LOCATION_MODE_OFF;
+    }
+    
+    /**
+     * This method is used to get Integer representation of location mode
+     *
+     * @param context
+     * @return location mode for passed context
+     */
+    public static int getLocationMode(Context context) {
         int locationMode = Settings.Secure.LOCATION_MODE_OFF;
         String locationProviders;
 
@@ -166,14 +196,20 @@ public class LocationUtils {
                         .getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
             } catch (Settings.SettingNotFoundException e) {
                 e.printStackTrace();
-                return false;
             }
-            return locationMode != Settings.Secure.LOCATION_MODE_OFF;
         } else {
             locationProviders = Settings.Secure.getString(context.getContentResolver(),
                     Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
-            return !TextUtils.isEmpty(locationProviders);
+
+            if (TextUtils.isEmpty(locationProviders)) {
+                locationMode = Settings.Secure.LOCATION_MODE_OFF;
+            } else if (locationProviders.contains(LocationManager.GPS_PROVIDER)) {
+                locationMode = Settings.Secure.LOCATION_MODE_HIGH_ACCURACY;
+            } else if (locationProviders.contains(LocationManager.NETWORK_PROVIDER)) {
+                locationMode = Settings.Secure.LOCATION_MODE_BATTERY_SAVING;
+            }
         }
+        return locationMode;
     }
 
     /**

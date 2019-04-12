@@ -16,6 +16,10 @@
 
 package org.onebusaway.android.util;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.widget.Toast;
+
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -23,10 +27,6 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.backup.Backup;
 import org.onebusaway.android.region.ObaRegionsTask;
-
-import android.app.AlertDialog;
-import android.content.Context;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;

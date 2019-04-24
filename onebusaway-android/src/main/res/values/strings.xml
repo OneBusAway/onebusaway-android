@@ -318,7 +318,6 @@
     <string name="feedback_action_reply_yes">Yes</string>
 
     <!-- Destination reminder feedback Activity -->
-    <string name="feedback_msg">Were you notified at the right time to exit at your stop?</string>
     <string name="feedback_freeText">Write your feedback</string>
     <string name="feedback_checkbox_text">Include system log (your choice will be saved for future trips)</string>
     <string name="feedback_log_guide">Your feedback will be sent to OneBusAway. If you check \"Include system logs\"

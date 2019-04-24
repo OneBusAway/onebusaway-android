@@ -17,7 +17,7 @@
             style="@style/MaterialLayoutTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/feedback_msg"
+            android:text="@string/feedback_notify_dialog_msg"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textColor="@android:color/black"
             android:textSize="14sp" />

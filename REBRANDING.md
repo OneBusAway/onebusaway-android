@@ -130,3 +130,7 @@ The Agency Y sample has chosen different options - they are using `ARRIVAL_INFO_
     }
 
 Note that all brands need to supply the `FIXED_REGION_...` fields in their flavor dimension in `build.gradle` so the project will compile, although these values are only used if `USE_FIXED_REGION` is set to true.
+
+## Acknowledgements
+
+When launching a rebranded version of OneBusAway, acknowledging that your app is based on the hard work of those contributing to the OneBusAway project is certainly appreciated.  However, please do not imply that the OneBusAway project or it's contributors endorse the rebranded app, and please do not use the OneBusAway logo or color scheme in your rebranded app.

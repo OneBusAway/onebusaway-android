@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.nav;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -24,6 +25,11 @@ import android.location.Location;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
+
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.RemoteInput;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -49,11 +55,6 @@ import java.util.Locale;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.RemoteInput;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
 
 /**
  * The NavigationService is started when the user begins a trip, this service listens for location
@@ -149,6 +150,8 @@ public class NavigationService extends Service implements LocationHelper.Listene
             Path path = new Path(links);
             mNavProvider.navigate(path);
         }
+        Notification notification = mNavProvider.getForegroundStartingNotification();
+        startForeground(NavigationServiceProvider.NOTIFICATION_ID, notification);
         return START_STICKY;
     }
 

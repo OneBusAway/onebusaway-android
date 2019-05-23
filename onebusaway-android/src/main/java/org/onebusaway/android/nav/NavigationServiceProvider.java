@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.nav;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -25,6 +26,8 @@ import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
+import androidx.core.app.NotificationCompat;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.nav.model.Path;
@@ -34,8 +37,6 @@ import org.onebusaway.android.util.RegionUtils;
 
 import java.text.DecimalFormat;
 import java.util.Locale;
-
-import androidx.core.app.NotificationCompat;
 
 /**
  * This class provides the navigation functionality for the destination reminders
@@ -48,6 +49,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     private static final int EVENT_TYPE_UPDATE_DISTANCE = 1;
     private static final int EVENT_TYPE_GET_READY = 2;
     private static final int EVENT_TYPE_PULL_CORD = 3;
+    private static final int EVENT_TYPE_INITIAL_STARTUP = 4;
 
     private static final int ALERT_STATE_NONE = -1;
     private static final int ALERT_STATE_SHOWN_TO_RIDER = 0;
@@ -541,12 +543,22 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     }
 
     /**
+     * Gets the notification to be used for starting a hosting service for the NavigationServiceProvider in the foreground
+     *
+     * @return the notification to be used for starting a hosting service for the NavigationServiceProvider in the foreground
+     */
+    public Notification getForegroundStartingNotification() {
+        return updateUi(EVENT_TYPE_INITIAL_STARTUP);
+    }
+
+    /**
      * Updates the user interface (e.g., distance display, speech) based on navigation events
      * TODO - This method should be moved to a NavigationServiceListener class based on a listener interface
      *
      * @param eventType EVENT_TYPE_* variable defining the eventType update to act upon
+     * @return the notification to use for the foreground service if eventType == EVENT_TYPE_INITIAL_STARTUP, otherwise returns null
      */
-    private void updateUi(int eventType) {
+    private Notification updateUi(int eventType) {
         Application app = Application.get();
         TripDetailsActivity.Builder bldr = new TripDetailsActivity.Builder(
                 app.getApplicationContext(), mTripId);
@@ -566,9 +578,18 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                         .setSmallIcon(R.drawable.ic_content_flag)
                         .setContentTitle(Application.get().getResources()
                                 .getString(R.string.destination_reminder_title))
-                        .setContentIntent(pIntent)
-                        .setAutoCancel(true);
-        if (eventType == EVENT_TYPE_UPDATE_DISTANCE) {          // General eventType update.
+                        .setContentIntent(pIntent);
+        if (eventType == EVENT_TYPE_INITIAL_STARTUP) {
+            // Build initial notification used to start the service in the foreground
+            receiverIntent.putExtra(NavigationReceiver.ACTION_NUM, NavigationReceiver.CANCEL_TRIP);
+            receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID);
+            PendingIntent pCancelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
+                    0, receiverIntent, 0);
+            mBuilder.addAction(R.drawable.ic_navigation_close,
+                    app.getString(R.string.destination_reminder_cancel_trip), pCancelIntent);
+            mBuilder.setOngoing(true);
+            return mBuilder.build();
+        } else if (eventType == EVENT_TYPE_UPDATE_DISTANCE) {
             // Retrieve preferred unit and calculate distance.
             String IMPERIAL = app.getString(R.string.preferences_preferred_units_option_imperial);
             String METRIC = app.getString(R.string.preferences_preferred_units_option_metric);
@@ -617,7 +638,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             NotificationManager mNotificationManager = (NotificationManager)
                     Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
-
         } else if (eventType == EVENT_TYPE_GET_READY) {   // Get ready to pack
             mGetReady = true;
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
@@ -683,6 +703,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             mBuilder.setOngoing(false);
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
         }
+        // If we reach this point then the event_type isn't initial startup
+        return null;
     }
 
     /**

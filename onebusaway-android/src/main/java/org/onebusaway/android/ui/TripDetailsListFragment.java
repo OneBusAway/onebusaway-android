@@ -52,6 +52,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.AsyncTaskLoader;
+import androidx.loader.content.Loader;
+
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.LocationRequest;
@@ -84,11 +89,6 @@ import org.onebusaway.android.util.UIUtils;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
-
-import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.AsyncTaskLoader;
-import androidx.loader.content.Loader;
 
 public class TripDetailsListFragment extends ListFragment {
 
@@ -523,7 +523,7 @@ public class TripDetailsListFragment extends ListFragment {
                             getDialogForLocationModeChanges().show();
                         }
 
-                        // Warn users that destination remindres are in beta
+                        // Warn users that destination reminders are in beta
                         if (!(prefs.getBoolean(getString(R.string.preference_key_never_show_destination_reminder_beta_dialog), false))) {
                             createDestinationReminderBetaDialog().show();
                         }
@@ -1136,10 +1136,15 @@ public class TripDetailsListFragment extends ListFragment {
     }
 
     /**
+     * Starts the navigation service for destination reminders
      * @param serviceIntent
      */
     private void startNavigationService(Intent serviceIntent) {
-        Application.get().getApplicationContext().startService(serviceIntent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Application.get().getApplicationContext().startForegroundService(serviceIntent);
+        } else {
+            Application.get().getApplicationContext().startService(serviceIntent);
+        }
 
         // Register receiver
         registerReceiver();

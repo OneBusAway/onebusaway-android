@@ -66,9 +66,11 @@ import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
@@ -143,6 +145,8 @@ public class TripDetailsListFragment extends ListFragment {
     private LocationRequest mLocationRequest;
     private Task<LocationSettingsResponse> mResult;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     /**
      * Builds an intent used to set the trip and stop for the TripDetailsListFragment directly
      * (i.e., when TripDetailsActivity is not used)
@@ -210,6 +214,7 @@ public class TripDetailsListFragment extends ListFragment {
             // reason to create our view.
             return null;
         }
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
         return inflater.inflate(R.layout.trip_details, null);
     }
 
@@ -527,6 +532,8 @@ public class TripDetailsListFragment extends ListFragment {
                         if (!(prefs.getBoolean(getString(R.string.preference_key_never_show_destination_reminder_beta_dialog), false))) {
                             createDestinationReminderBetaDialog().show();
                         }
+
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics, getString(R.string.analytics_label_destination_reminder), getString(R.string.analytics_label_destination_reminder_variant_started));
 
                         startNavigationService(setUpNavigationService(position));
                         Toast.makeText(Application.get(),

@@ -31,12 +31,14 @@ import androidx.core.app.RemoteInput;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
 import org.onebusaway.android.provider.ObaContract;
@@ -72,8 +74,6 @@ public class NavigationService extends Service implements LocationHelper.Listene
     public static final String FIRST_FEEDBACK = "firstFeedback";
     public static final String KEY_TEXT_REPLY = "trip_feedback";
 
-    //public static String REPLY_ACTION = "org.onebusaway.android.nav.REPLY_ACTION";
-
     public static final String LOG_DIRECTORY = "ObaNavLog";
 
     public static boolean mFirstFeedback = true;
@@ -89,19 +89,18 @@ public class NavigationService extends Service implements LocationHelper.Listene
 
     private int mCoordId = 0;
 
-    private boolean mGetReadyFlag = false;
-    private boolean mPullTheCordFlag = false;
-
     private NavigationServiceProvider mNavProvider;
     private File mLogFile = null;
 
     private long mFinishedTime;
 
     private FirebaseAuth mAuth;
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Starting Service");
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         long currentTime = System.currentTimeMillis();
         if (intent != null) {
             mDestinationStopId = intent.getStringExtra(DESTINATION_ID);
@@ -208,6 +207,7 @@ public class NavigationService extends Service implements LocationHelper.Listene
             if (mFinishedTime == 0) {
                 mFinishedTime = System.currentTimeMillis();
             } else if (System.currentTimeMillis() - mFinishedTime >= 30000) {
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics, getString(R.string.analytics_label_destination_reminder), getString(R.string.analytics_label_destination_reminder_variant_ended));
                 getUserFeedback();
                 stopSelf();
                 setupLogCleanupTask();
@@ -311,8 +311,6 @@ public class NavigationService extends Service implements LocationHelper.Listene
     }
 
     public void getUserFeedback() {
-        //TODO - Log "Yes" or "No" including plaintext feedback using Firebase Analytics
-
         Application app = Application.get();
         NotificationCompat.Builder mBuilder;
 

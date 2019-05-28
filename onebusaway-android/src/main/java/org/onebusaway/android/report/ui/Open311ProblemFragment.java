@@ -692,6 +692,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
             if (Boolean.valueOf(open311Attribute.getVariable())) {
                 if (Open311DataType.STRING.equals(open311Attribute.getDatatype())
+                        || Open311DataType.TEXT.equals(open311Attribute.getDatatype())
                         || Open311DataType.NUMBER.equals(open311Attribute.getDatatype())
                         || Open311DataType.DATETIME.equals(open311Attribute.getDatatype())) {
                     EditText et = (EditText) mDynamicAttributeUIMap.get(open311Attribute.getCode());
@@ -751,6 +752,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         for (Open311Attribute open311Attribute : serviceDescription.getAttributes()) {
             if (Boolean.valueOf(open311Attribute.getVariable())) {
                 if (Open311DataType.STRING.equals(open311Attribute.getDatatype())
+                        || Open311DataType.TEXT.equals(open311Attribute.getDatatype())
                         || Open311DataType.NUMBER.equals(open311Attribute.getDatatype())
                         || Open311DataType.DATETIME.equals(open311Attribute.getDatatype())) {
                     EditText et = (EditText) mDynamicAttributeUIMap.get(open311Attribute.getCode());
@@ -848,6 +850,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 addDescriptionText(open311Attribute.getDescription());
             } else {
                 if (Open311DataType.STRING.equals(open311Attribute.getDatatype())
+                        || Open311DataType.TEXT.equals(open311Attribute.getDatatype())
                         || Open311DataType.NUMBER.equals(open311Attribute.getDatatype())
                         || Open311DataType.DATETIME.equals(open311Attribute.getDatatype())) {
                     createEditText(open311Attribute);

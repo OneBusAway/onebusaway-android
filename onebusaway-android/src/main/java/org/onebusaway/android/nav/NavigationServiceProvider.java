@@ -15,6 +15,16 @@
  */
 package org.onebusaway.android.nav;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.nav.model.Path;
+import org.onebusaway.android.nav.model.PathLink;
+import org.onebusaway.android.ui.TripDetailsActivity;
+import org.onebusaway.android.util.RegionUtils;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -26,17 +36,10 @@ import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
-import androidx.core.app.NotificationCompat;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.nav.model.Path;
-import org.onebusaway.android.nav.model.PathLink;
-import org.onebusaway.android.ui.TripDetailsActivity;
-import org.onebusaway.android.util.RegionUtils;
-
 import java.text.DecimalFormat;
 import java.util.Locale;
+
+import androidx.core.app.NotificationCompat;
 
 /**
  * This class provides the navigation functionality for the destination reminders
@@ -94,17 +97,22 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     private String mTripId;             // Trip ID
     private String mStopId;             // Stop ID
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     public NavigationServiceProvider(String tripId, String stopId) {
         Log.d(TAG, "Creating NavigationServiceProvider...");
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(Application.get().getApplicationContext());
         if (mTTS == null) {
             mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
         }
         mTripId = tripId;
         mStopId = stopId;
+
     }
 
     public NavigationServiceProvider(String tripId, String stopId, int flag) {
         Log.d(TAG, "Creating NavigationServiceProvider...");
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(Application.get().getApplicationContext());
         mResuming = flag == 1;
         if (mTTS == null) {
             mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
@@ -494,6 +502,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     if (proximityEvent(EVENT_TYPE_GET_READY, ALERT_STATE_NONE)) {
                         mNavProvider.updateUi(EVENT_TYPE_GET_READY);
                         Log.d(TAG, "-----Get ready!");
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics, Application.get().getString(R.string.analytics_label_destination_reminder), Application.get().getString(R.string.analytics_label_destination_reminder_variant_get_ready));
                         return EVENT_TYPE_GET_READY; //Get ready alert played
                     }
                 }
@@ -503,6 +512,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     if (proximityEvent(EVENT_TYPE_PULL_CORD, ALERT_STATE_SHOWN_TO_RIDER)) {
                         mNavProvider.updateUi(EVENT_TYPE_PULL_CORD);
                         Log.d(TAG, "-----Get off the bus!");
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics, Application.get().getString(R.string.analytics_label_destination_reminder), Application.get().getString(R.string.analytics_label_destination_reminder_variant_exit_at_next_stop));
                         return EVENT_TYPE_PULL_CORD; // Get off bus alert played
                     }
                 }

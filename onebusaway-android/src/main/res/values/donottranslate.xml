@@ -176,6 +176,8 @@
     <string name="analytics_label_stop_category">stops</string>
     <string name="analytics_label_destination_reminder">destination_reminder</string>
     <string name="analytics_label_destination_reminder_variant_started">destination_reminder_started</string>
+    <string name="analytics_label_destination_reminder_variant_get_ready">destination_reminder_get_ready</string>
+    <string name="analytics_label_destination_reminder_variant_exit_at_next_stop">destination_reminder_exit_at_next_stop</string>
     <string name="analytics_label_destination_reminder_variant_ended">destination_reminder_ended</string>
 
     <!-- Analytics for social -->

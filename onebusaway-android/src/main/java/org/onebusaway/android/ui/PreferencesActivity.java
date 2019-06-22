@@ -26,6 +26,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
@@ -53,6 +54,8 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
+import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
 import org.onebusaway.android.util.BackupUtils;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
@@ -89,6 +92,8 @@ public class PreferencesActivity extends PreferenceActivity
     Preference mCustomOtpApiUrlPref;
 
     Preference mAnalyticsPref;
+
+    CheckBoxPreference mTravelBehaviorPref;
 
     Preference mTutorialPref;
 
@@ -141,6 +146,19 @@ public class PreferencesActivity extends PreferenceActivity
 
         mAnalyticsPref = findPreference(getString(R.string.preferences_key_analytics));
         mAnalyticsPref.setOnPreferenceChangeListener(this);
+
+        mTravelBehaviorPref = (CheckBoxPreference) findPreference(getString(R.string.preferences_key_travel_behavior));
+        mTravelBehaviorPref.setOnPreferenceChangeListener(this);
+
+        if (!TravelBehaviorUtils.isTravelBehaviorActiveInRegion() ||
+                (!TravelBehaviorUtils.allowEnrollMoreParticipantsInStudy() &&
+                        !TravelBehaviorUtils.isUserParticipatingInStudy())) {
+            PreferenceCategory aboutCategory = (PreferenceCategory)
+                    findPreference(getString(R.string.preferences_category_about));
+            aboutCategory.removePreference(mTravelBehaviorPref);
+        } else {
+            mTravelBehaviorPref.setChecked(TravelBehaviorUtils.isUserParticipatingInStudy());
+        }
 
         mTutorialPref = findPreference(getString(R.string.preference_key_tutorial));
         mTutorialPref.setOnPreferenceClickListener(this);
@@ -437,6 +455,17 @@ public class PreferencesActivity extends PreferenceActivity
             Boolean isAnalyticsActive = (Boolean) newValue;
             //Report if the analytics turns off, just before shared preference changed
             ObaAnalytics.setSendAnonymousData(mFirebaseAnalytics, isAnalyticsActive);
+        } else if (preference.equals(mTravelBehaviorPref) && newValue instanceof Boolean) {
+            Boolean isTravelBehaviorActive = (Boolean) newValue;
+            if(isTravelBehaviorActive) {
+                new TravelBehaviorManager(this, getApplicationContext()).
+                        registerTravelBehaviorParticipant(true);
+            } else {
+                new TravelBehaviorManager(this, getApplicationContext()).
+                        stopCollectingData();
+                TravelBehaviorManager.optOutUser();
+            }
+
         } else if (preference.equals(mLeftHandMode) && newValue instanceof Boolean) {
             Boolean isLeftHandEnabled = (Boolean) newValue;
             //Report if left handed mode is turned on, just before shared preference changed

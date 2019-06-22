@@ -53,6 +53,10 @@ public class RequestBase {
         mPostData = postData;
     }
 
+    public Uri getUri() {
+        return mUri;
+    }
+
     public static class BuilderBase {
 
         protected static final String BASE_PATH = "api/where";

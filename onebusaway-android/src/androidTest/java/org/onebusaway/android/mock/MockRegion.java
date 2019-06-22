@@ -93,7 +93,9 @@ public class MockRegion {
                 false,
                 "co.bytemark.hart",
                 null,
-                null);
+                null,
+                false,
+                false);
     }
 
     /**
@@ -131,7 +133,9 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false,
+                false);
     }
 
     /**
@@ -169,7 +173,9 @@ public class MockRegion {
                 false,
                 "co.bytemark.hart",
                 null,
-                null);
+                null,
+                false,
+                false);
     }
 
     /**
@@ -207,7 +213,9 @@ public class MockRegion {
                 false,
                 "co.bytemark.hart",
                 null,
-                null);
+                null,
+                false,
+                false);
     }
 
     /**
@@ -245,7 +253,9 @@ public class MockRegion {
                 false,
                 "co.bytemark.hart",
                 null,
-                null);
+                null,
+                false,
+                false);
     }
 
     /**
@@ -283,7 +293,9 @@ public class MockRegion {
                 false,
                 "co.bytemark.hart",
                 null,
-                null);
+                null,
+                false,
+                false);
     }
 
     /**
@@ -319,7 +331,9 @@ public class MockRegion {
                 false,
                 "co.bytemark.hart",
                 null,
-                null);
+                null,
+                false,
+                false);
     }
 
     /**
@@ -355,6 +369,8 @@ public class MockRegion {
                 false,
                 "co.bytemark.hart",
                 null,
-                null);
+                null,
+                false,
+                false);
     }
 }

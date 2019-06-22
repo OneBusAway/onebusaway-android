@@ -682,6 +682,8 @@
     </string>
     <string name="preferences_analytics_title">Send anonymous usage data</string>
     <string name="preferences_analytics_summary">Help us improve the app</string>
+    <string name="preferences_travel_behavior_title">Send anonymous travel behavior data</string>
+    <string name="preferences_travel_behavior_summary">Help us improve public transit</string>
     <string name="preferences_tutorial_title">Show tutorial</string>
     <string name="preferences_tutorial_summary">Show instructions for using this app</string>
     <string name="preferences_donate_title">Donate</string>
@@ -1123,4 +1125,25 @@
     <string name="es_msg_general_signin_success">Signed into Embedded Social</string>
     <string name="es_msg_general_signout_success">Signed out of Embedded Social</string>
     <string name="es_msg_general_account_deleted">Embedded Social account deleted</string>
+
+    <string name="application_ignoring_battery_opt_title">Performance Alert!</string>
+    <string name="application_ignoring_battery_opt_message">Battery optimizations are enabled for
+        this application which may decrease the performance of the application. To get the best experience
+        from this application, please go to settings and disable performance optimizations for OneBusAway.
+    </string>
+
+    <!--Travel Behaviour data collection-->
+    <string name="travel_behavior_opt_in_message">Would you like to improve public transportation?</string>
+    <string name="travel_behavior_opt_in_title">Improve public transportation</string>
+    <string name="travel_behavior_age_message">Are you over the age of 18?</string>
+    <string name="travel_behavior_email_message">Please provide your email address</string>
+    <string name="travel_behavior_email_invalid">Email address is invalid</string>
+    <string name="travel_behavior_enroll_success">You successfully enrolled in the study.</string>
+    <string name="travel_behavior_enroll_fail">Failed to enroll in the study. Please try again later.</string>
+    <string name="travel_behavior_email_hint">Email</string>
+    <string name="travel_behavior_dialog_yes">Yes</string>
+    <string name="travel_behavior_dialog_no">No</string>
+    <string name="travel_behavior_dialog_consent_agree">Agree</string>
+    <string name="travel_behavior_dialog_consent_disagree">Decline</string>
+    <string name="travel_behavior_dialog_email_save">Save</string>
 </resources>

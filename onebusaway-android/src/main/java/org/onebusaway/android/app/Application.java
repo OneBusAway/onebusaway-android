@@ -27,6 +27,7 @@ import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -46,6 +47,7 @@ import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.report.ui.util.SocialReportHandler;
+import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.ui.social.SocialAppProfile;
 import org.onebusaway.android.ui.social.SocialNavigationDrawerHandler;
 import org.onebusaway.android.util.BuildFlavorUtils;
@@ -125,6 +127,8 @@ public class Application extends MultiDexApplication {
         reportAnalytics();
 
         createNotificationChannels();
+
+        TravelBehaviorManager.startCollectingData(getApplicationContext());
     }
 
     /**
@@ -623,4 +627,17 @@ public class Application extends MultiDexApplication {
         }
     }
 
+    public static Boolean isIgnoringBatteryOptimizations(Context applicationContext) {
+        PowerManager pm = (PowerManager) applicationContext.getSystemService(Context.POWER_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                pm.isIgnoringBatteryOptimizations(applicationContext.getPackageName())) {
+            return true;
+        }
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return null;
+        }
+
+        return false;
+    }
 }

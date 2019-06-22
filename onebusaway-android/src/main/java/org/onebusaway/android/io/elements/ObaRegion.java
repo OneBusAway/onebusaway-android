@@ -153,4 +153,14 @@ public interface ObaRegion {
      * @return The body text of a warning dialog that should be shown to the user the first time they select the fare payment option, or empty if no warning should be shown to the user.
      */
     String getPaymentWarningBody();
+
+    /**
+     * @return true if the region allows travel behavior data collection feature.
+     */
+    boolean isTravelBehaviorDataCollectionEnabled();
+
+    /**
+     * @return true if the region allows enrolling more participants to the travel behavior data collection study.
+     */
+    boolean isEnrollParticipantsInStudy();
 }

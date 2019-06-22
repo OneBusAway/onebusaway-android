@@ -18,7 +18,7 @@ package org.onebusaway.android.directions.tasks;
 
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.directions.util.JacksonConfig;
-import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.TripPlan;
 import org.opentripplanner.api.ws.Message;
 import org.opentripplanner.api.ws.Request;
 import org.opentripplanner.api.ws.Response;
@@ -35,7 +35,6 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * AsyncTask that invokes a trip planning request to the OTP Server
@@ -48,7 +47,7 @@ import java.util.List;
 public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
     public interface Callback {
-        void onTripRequestComplete(List<Itinerary> itineraries, String url);
+        void onTripRequestComplete(TripPlan tripPlan, String url);
         void onTripRequestFailure(int errorCode, String url);
     }
 
@@ -108,7 +107,7 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
         if (mResponse != null && mResponse.getPlan() != null
                 && mResponse.getPlan().getItinerary().get(0) != null) {
-            mCallback.onTripRequestComplete(mResponse.getPlan().getItinerary(), mRequestUrl);
+            mCallback.onTripRequestComplete(mResponse.getPlan(), mRequestUrl);
         } else {
             Log.e(TAG, "Error retrieving routing from OTP server: " + mResponse);
             int errorCode = -1;

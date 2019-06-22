@@ -459,6 +459,10 @@ public final class ObaContract {
          * </P>
          */
         public static final String PAYMENT_WARNING_BODY = "payment_warning_body";
+
+        public static final String TRAVEL_BEHAVIOR_DATA_COLLECTION = "travel_behavior_data_collection";
+
+        public static final String ENROLL_PARTICIPANTS_IN_STUDY = "enroll_participants_in_study";
     }
 
     protected interface RegionBoundsColumns {
@@ -1342,7 +1346,9 @@ public final class ObaContract {
                     SUPPORTS_EMBEDDED_SOCIAL,
                     PAYMENT_ANDROID_APP_ID,
                     PAYMENT_WARNING_TITLE,
-                    PAYMENT_WARNING_BODY
+                    PAYMENT_WARNING_BODY,
+                    TRAVEL_BEHAVIOR_DATA_COLLECTION,
+                    ENROLL_PARTICIPANTS_IN_STUDY
             };
 
             Cursor c = cr.query(buildUri((int) id), PROJECTION, null, null, null);
@@ -1373,7 +1379,9 @@ public final class ObaContract {
                             c.getInt(15) > 0,            // Supports Embedded Social
                             c.getString(16),               // Payment Android App ID
                             c.getString(17),               // Payment Warning Title
-                            c.getString(18)               // Payment Warning Body
+                            c.getString(18),               // Payment Warning Body
+                            c.getInt(19) > 0, // Travel behavior data collection
+                            c.getInt(20) > 0 // Enroll participants in travel behavior study
                     );
                 } finally {
                     c.close();

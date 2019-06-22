@@ -1,0 +1,264 @@
+/*
+ * Copyright (C) 2019 University of South Florida
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.onebusaway.android.travelbehavior.receiver;
+
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.ActivityRecognitionClient;
+import com.google.android.gms.location.ActivityTransitionEvent;
+import com.google.android.gms.location.ActivityTransitionResult;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
+import org.onebusaway.android.travelbehavior.io.worker.ArrivalsAndDeparturesDataReaderWorker;
+import org.onebusaway.android.travelbehavior.io.worker.DestinationReminderReaderWorker;
+import org.onebusaway.android.travelbehavior.io.worker.TripPlanDataReaderWorker;
+import org.onebusaway.android.travelbehavior.model.DeviceInformation;
+import org.onebusaway.android.travelbehavior.model.TravelBehaviorInfo;
+import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils;
+import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
+import org.onebusaway.android.util.PermissionUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.location.LocationManager;
+import android.os.Build;
+import android.util.Log;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+
+public class TransitionBroadcastReceiver extends BroadcastReceiver {
+//     implements LocationHelper.Listener
+
+    private static final String TAG = "ActivityTransition";
+
+    //    private LocationHelper mLocationHelper;
+    private Context mContext;
+    private List<TravelBehaviorInfo.TravelBehaviorActivity> mActivityList;
+    private String mUid;
+    private String mRecordId;
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (intent != null) {
+            if (ActivityTransitionResult.hasResult(intent)) {
+                mContext = context;
+
+                ActivityTransitionResult result = ActivityTransitionResult.extractResult(intent);
+                if (result == null) {
+                    return;
+                }
+
+                StringBuilder sb = new StringBuilder();
+                mActivityList = new ArrayList<>();
+
+
+                for (ActivityTransitionEvent event : result.getTransitionEvents()) {
+                    sb.append(TravelBehaviorUtils.toActivityString(event.getActivityType())).append(" -- ");
+                    sb.append(TravelBehaviorUtils.toTransitionType(event.getTransitionType())).append("\n");
+                    mActivityList.add(new TravelBehaviorInfo.TravelBehaviorActivity(
+                            TravelBehaviorUtils.toActivityString(event.getActivityType()),
+                            TravelBehaviorUtils.toTransitionType(event.getTransitionType())));
+                }
+
+                Log.v(TAG, "Detected activity transition: " + sb.toString());
+                TravelBehaviorUtils.showDebugToastMessageWithVibration(
+                        "Detected activity transition: " + sb.toString(), mContext);
+
+                mUid = PreferenceUtils.getString(TravelBehaviorConstants.USER_ID);
+                saveTravelBehavior();
+            }
+        }
+    }
+
+    private void saveTravelBehavior() {
+        saveTravelBehavior(new TravelBehaviorInfo(mActivityList,
+                Application.isIgnoringBatteryOptimizations(mContext)));
+
+        startSaveTripPlansWorker();
+
+        startSaveArrivalAndDepartureWorker();
+
+        startSaveDestinationRemindersWorker();
+
+        requestActivityRecognition();
+
+        requestLocationUpdates();
+
+        saveDeviceInformation();
+    }
+
+    private void saveTravelBehavior(TravelBehaviorInfo tbi) {
+        StringBuilder pathBuilder = new StringBuilder();
+        pathBuilder.append("users/").append(mUid).append("/").append(
+                TravelBehaviorConstants.FIREBASE_ACTIVITY_TRANSITION_FOLDER);
+        long riPrefix = PreferenceUtils.getLong(TravelBehaviorConstants.RECORD_ID, 0);
+        mRecordId = riPrefix++ + "-" + UUID.randomUUID().toString();
+        PreferenceUtils.saveLong(TravelBehaviorConstants.RECORD_ID, riPrefix);
+        pathBuilder.append(mRecordId);
+
+        DocumentReference document = FirebaseFirestore.getInstance().document(pathBuilder.toString());
+
+        document.set(tbi).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Log.v(TAG, "Activity transition document added with ID " + document.getId());
+            } else {
+                Log.v(TAG, "Activity transition document failed to be added: " +
+                        task.getException().getMessage());
+                task.getException().printStackTrace();
+            }
+        });
+    }
+
+    private void startSaveArrivalAndDepartureWorker() {
+        Data myData = new Data.Builder()
+                .putString(TravelBehaviorConstants.USER_ID, mUid)
+                .putString(TravelBehaviorConstants.RECORD_ID, mRecordId)
+                .build();
+
+        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.
+                Builder(ArrivalsAndDeparturesDataReaderWorker.class)
+                .setInputData(myData)
+                .build();
+        WorkManager.getInstance().enqueue(workRequest);
+    }
+
+    private void startSaveTripPlansWorker() {
+        Data myData = new Data.Builder()
+                .putString(TravelBehaviorConstants.USER_ID, mUid)
+                .putString(TravelBehaviorConstants.RECORD_ID, mRecordId)
+                .build();
+
+        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(TripPlanDataReaderWorker.class)
+                .setInputData(myData)
+                .build();
+        WorkManager.getInstance().enqueue(workRequest);
+    }
+
+    private void startSaveDestinationRemindersWorker() {
+        Data myData = new Data.Builder()
+                .putString(TravelBehaviorConstants.USER_ID, mUid)
+                .putString(TravelBehaviorConstants.RECORD_ID, mRecordId)
+                .build();
+
+        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DestinationReminderReaderWorker.class)
+                .setInputData(myData)
+                .build();
+        WorkManager.getInstance().enqueue(workRequest);
+    }
+
+    private void requestActivityRecognition() {
+        ActivityRecognitionClient client = ActivityRecognition.getClient(mContext);
+        Intent intent = new Intent(mContext, RecognitionBroadcastReceiver.class);
+        intent.putExtra(TravelBehaviorConstants.RECORD_ID, mRecordId);
+
+        PendingIntent pi = PendingIntent.getBroadcast(mContext, 100, intent, PendingIntent.FLAG_ONE_SHOT);
+        client.requestActivityUpdates(10000l, pi);
+    }
+
+    private void requestLocationUpdates() {
+        String[] requiredPermissions = {Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION};
+        if (PermissionUtils.hasGrantedPermissions(mContext, requiredPermissions)) {
+            Log.v(TAG, "Location permissions are granted, requesting fused, GPS, and Network" +
+                    "locations");
+            requestFusedLocation();
+
+            requestGPSNetworkLocation();
+        } else {
+            Log.v(TAG, "Location permissions not granted. Skipping location requests");
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestFusedLocation() {
+        FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(mContext);
+        client.getLastLocation().addOnSuccessListener(location -> {
+            if (location != null) {
+                TravelBehaviorFirebaseIOUtils.saveLocation(location, mUid, mRecordId);
+            }
+        });
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestGPSNetworkLocation() {
+        LocationManager lm = (LocationManager) Application.get().getBaseContext()
+                .getSystemService(Context.LOCATION_SERVICE);
+
+        List<String> providers = lm.getProviders(true);
+        for (String provider : providers) {
+            if (LocationManager.PASSIVE_PROVIDER.equals(provider)) continue;
+
+            int reqCode = PreferenceUtils.getInt(TravelBehaviorConstants.REQUEST_CODE, 0);
+            Intent intent = new Intent(mContext, LocationBroadcastReceiver.class);
+            intent.putExtra(TravelBehaviorConstants.RECORD_ID, mRecordId);
+            PendingIntent pi = PendingIntent.getBroadcast(mContext, reqCode++, intent, PendingIntent.FLAG_ONE_SHOT);
+            lm.requestLocationUpdates(provider, 0, 0, pi);
+            PreferenceUtils.saveInt(TravelBehaviorConstants.REQUEST_CODE, reqCode);
+        }
+    }
+
+    private void saveDeviceInformation() {
+        PackageManager pm = mContext.getPackageManager();
+        PackageInfo appInfoOba;
+        PackageInfo appInfoGps;
+        String obaVersion = "";
+        String googlePlayServicesAppVersion = "";
+        try {
+            appInfoOba = pm.getPackageInfo(mContext.getPackageName(),
+                    PackageManager.GET_META_DATA);
+            obaVersion = appInfoOba.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            // Leave version as empty string
+        }
+        try {
+            appInfoGps = pm.getPackageInfo(GoogleApiAvailability.GOOGLE_PLAY_SERVICES_PACKAGE, 0);
+            googlePlayServicesAppVersion = appInfoGps.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            // Leave version as empty string
+        }
+
+        DeviceInformation di = new DeviceInformation(obaVersion, Build.MODEL, Build.VERSION.RELEASE,
+                Build.VERSION.SDK_INT, googlePlayServicesAppVersion,
+                GoogleApiAvailability.GOOGLE_PLAY_SERVICES_VERSION_CODE);
+
+        int hashCode = di.hashCode();
+        int mostRecentDeviceHash = PreferenceUtils.getInt(TravelBehaviorConstants.DEVICE_INFO_HASH,
+                -1);
+
+        // Update if the device info is changed
+        if(hashCode != mostRecentDeviceHash) {
+            TravelBehaviorFirebaseIOUtils.saveDeviceInfo(di, mUid, mRecordId, hashCode);
+        }
+    }
+}

@@ -49,7 +49,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 29;
+        private static final int DATABASE_VERSION = 30;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -284,19 +284,27 @@ public class ObaProvider extends ContentProvider {
                 ++oldVersion;
             }
             if (oldVersion == 28) {
-                            db.execSQL(
-                    "CREATE TABLE " +
-                            ObaContract.NavStops.PATH + " (" +
-                            ObaContract.NavStops._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                            + ObaContract.NavStops.NAV_ID + " VARCHAR NOT NULL, "
-                            + ObaContract.NavStops.START_TIME + " INTEGER NOT NULL, "
-                            + ObaContract.NavStops.TRIP_ID + " VARCHAR NOT NULL, "
-                            + ObaContract.NavStops.DESTINATION_ID + " VARCHAR NOT NULL, "
-                            + ObaContract.NavStops.BEFORE_ID + " VARCHAR NOT NULL, "
-                            + ObaContract.NavStops.SEQUENCE + " INTEGER NOT NULL, "
-                            + ObaContract.NavStops.ACTIVE + " INTEGER NOT NULL " +
-                            ");"
+                db.execSQL(
+                        "CREATE TABLE " +
+                                ObaContract.NavStops.PATH + " (" +
+                                ObaContract.NavStops._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                                + ObaContract.NavStops.NAV_ID + " VARCHAR NOT NULL, "
+                                + ObaContract.NavStops.START_TIME + " INTEGER NOT NULL, "
+                                + ObaContract.NavStops.TRIP_ID + " VARCHAR NOT NULL, "
+                                + ObaContract.NavStops.DESTINATION_ID + " VARCHAR NOT NULL, "
+                                + ObaContract.NavStops.BEFORE_ID + " VARCHAR NOT NULL, "
+                                + ObaContract.NavStops.SEQUENCE + " INTEGER NOT NULL, "
+                                + ObaContract.NavStops.ACTIVE + " INTEGER NOT NULL " +
+                                ");"
                 );
+                ++oldVersion;
+            }
+
+            if (oldVersion == 29) {
+                db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
+                        " ADD COLUMN " + ObaContract.Regions.TRAVEL_BEHAVIOR_DATA_COLLECTION + " INTEGER");
+                db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
+                        " ADD COLUMN " + ObaContract.Regions.ENROLL_PARTICIPANTS_IN_STUDY + " INTEGER");
             }
         }
 
@@ -563,6 +571,10 @@ public class ObaProvider extends ContentProvider {
                 .put(ObaContract.Regions.PAYMENT_WARNING_TITLE, ObaContract.Regions.PAYMENT_WARNING_TITLE);
         sRegionsProjectionMap
                 .put(ObaContract.Regions.PAYMENT_WARNING_BODY, ObaContract.Regions.PAYMENT_WARNING_BODY);
+        sRegionsProjectionMap
+                .put(ObaContract.Regions.TRAVEL_BEHAVIOR_DATA_COLLECTION, ObaContract.Regions.TRAVEL_BEHAVIOR_DATA_COLLECTION);
+        sRegionsProjectionMap
+                .put(ObaContract.Regions.ENROLL_PARTICIPANTS_IN_STUDY, ObaContract.Regions.ENROLL_PARTICIPANTS_IN_STUDY);
 
         sRegionBoundsProjectionMap = new HashMap<String, String>();
         sRegionBoundsProjectionMap.put(ObaContract.RegionBounds._ID, ObaContract.RegionBounds._ID);

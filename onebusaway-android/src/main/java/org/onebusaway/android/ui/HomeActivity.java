@@ -17,46 +17,12 @@
  */
 package org.onebusaway.android.ui;
 
-import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.res.Resources;
-import android.graphics.drawable.GradientDrawable;
-import android.location.Location;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.accessibility.AccessibilityManager;
-import android.view.animation.Animation;
-import android.view.animation.Transformation;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import android.widget.Toast;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.analytics.FirebaseAnalytics;
+
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
 import com.microsoft.embeddedsocial.ui.fragment.MyProfileFragment;
@@ -77,6 +43,7 @@ import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
+import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
@@ -86,6 +53,44 @@ import org.onebusaway.android.util.RegionUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
+
+import android.Manifest;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Resources;
+import android.graphics.drawable.GradientDrawable;
+import android.location.Location;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.PowerManager;
+import android.provider.Settings;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.accessibility.AccessibilityManager;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -115,6 +120,7 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
 import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
+import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSION_REQUEST;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_BOTTOM;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_END;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_START;
@@ -194,6 +200,8 @@ public class HomeActivity extends AppCompatActivity
 
     // Bottom Sliding panel
     SlidingUpPanelLayout mSlidingPanel;
+
+    public static final int BATTERY_OPTIMIZATIONS_PERMISSION_REQUEST = 1;
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -381,6 +389,11 @@ public class HomeActivity extends AppCompatActivity
         setupGooglePlayServices();
 
         UIUtils.setupActionBar(this);
+
+        checkBatteryOptimizations();
+
+        new TravelBehaviorManager(this, getApplicationContext()).
+                registerTravelBehaviorParticipant();
 
         if (!mInitialStartup || PermissionUtils.hasGrantedPermissions(this, LOCATION_PERMISSIONS)) {
             // It's not the first startup or if the user has already granted location permissions (Android L and lower), then check the region status
@@ -899,6 +912,16 @@ public class HomeActivity extends AppCompatActivity
         setupOptionsMenu(menu);
 
         return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (BATTERY_OPTIMIZATIONS_PERMISSION_REQUEST == requestCode) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openBatteryIgnoreIntent();
+            }
+        }
     }
 
     private void setupOptionsMenu(Menu menu) {
@@ -2000,5 +2023,52 @@ public class HomeActivity extends AppCompatActivity
 
     public ArrivalsListFragment getArrivalsListFragment() {
         return mArrivalsListFragment;
+    }
+
+    private void checkBatteryOptimizations() {
+        if (PreferenceUtils.getBoolean(getString(R.string.not_request_battery_optimizations_key),
+                false)) {
+            return;
+        }
+
+        if (!Application.isIgnoringBatteryOptimizations(getApplicationContext())) {
+            showIgnoreBatteryOptimizationDialog();
+        }
+    }
+
+    private void showIgnoreBatteryOptimizationDialog() {
+        new android.app.AlertDialog.Builder(this)
+                .setMessage(R.string.application_ignoring_battery_opt_message)
+                .setTitle(R.string.application_ignoring_battery_opt_title)
+                .setIcon(R.drawable.ic_alert_warning)
+                .setCancelable(false)
+                .setPositiveButton(R.string.travel_behavior_dialog_yes,
+                        (dialog, which) -> {
+                            if (PermissionUtils.hasGrantedPermissions(this, new String[]{Manifest.
+                                    permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS})) {
+                                openBatteryIgnoreIntent();
+                            } else {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    requestPermissions(new String[]{Manifest.
+                                                    permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS},
+                                            BATTERY_OPTIMIZATIONS_PERMISSION_REQUEST);
+                                }
+                            }
+                            PreferenceUtils.saveBoolean(getString(R.string.not_request_battery_optimizations_key),
+                                    true);
+                        })
+                .setNegativeButton(R.string.travel_behavior_dialog_no,
+                        (dialog, which) -> {
+                            PreferenceUtils.saveBoolean(getString(R.string.not_request_battery_optimizations_key),
+                                    true);
+                        })
+                .create().show();
+    }
+
+    private void openBatteryIgnoreIntent() {
+        Intent intent = new Intent();
+        intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+        intent.setData(Uri.parse("package:" + getPackageName()));
+        startActivity(intent);
     }
 }

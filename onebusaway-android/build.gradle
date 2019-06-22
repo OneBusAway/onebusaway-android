@@ -45,7 +45,7 @@ android {
     dexOptions {
         preDexLibraries true
     }
-    compileSdkVersion 28
+    compileSdkVersion 29
     buildToolsVersion '28.0.3'
 
     defaultConfig {
@@ -124,6 +124,8 @@ android {
             buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
+            buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
+            buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
         }
 
         /**
@@ -168,6 +170,8 @@ android {
             buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
+            buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
+            buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
         }
 
         agencyY {
@@ -208,6 +212,8 @@ android {
             buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "\"co.bytemark.hart\""
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
+            buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
+            buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
         }
         yrt {
             // "YRT - York Region Transit - Canada" rebranding - https://play.google.com/store/apps/details?id=can.yrt.onebusaway
@@ -246,6 +252,8 @@ android {
             buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "\"co.bytemark.york\""
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
+            buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
+            buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
         }
         /**
          * Add more rebranding flavors here...
@@ -411,6 +419,7 @@ dependencies {
     implementation 'android.arch.lifecycle:common-java8:1.1.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha3'
     implementation 'commons-io:commons-io:2.4'
+    implementation 'org.apache.commons:commons-lang3:3.0'
     // Open311 client library
     implementation 'edu.usf.cutr:open311client:1.0.10'
     // JSON data binding for OBA REST API responses
@@ -441,6 +450,10 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.1.0'
     // WorkManager (Java only)
     implementation 'androidx.work:work-runtime:2.0.0'
+    implementation "androidx.concurrent:concurrent-futures:1.0.0-beta01"
+    implementation "androidx.concurrent:concurrent-listenablefuture:1.0.0-beta01"
+    implementation "androidx.concurrent:concurrent-listenablefuture-callback:1.0.0-beta01"
+
 }
 
 apply plugin:'com.google.gms.google-services'

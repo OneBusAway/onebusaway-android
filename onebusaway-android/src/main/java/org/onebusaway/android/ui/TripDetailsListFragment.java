@@ -82,6 +82,7 @@ import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
 import org.onebusaway.android.nav.NavigationService;
+import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.DBUtil;
 import org.onebusaway.android.util.LocationUtils;
@@ -540,6 +541,9 @@ public class TripDetailsListFragment extends ListFragment {
                                 Application.get().getString(R.string.destination_reminder_title),
                                 Toast.LENGTH_LONG
                         ).show();
+
+                        TravelBehaviorManager.saveDestinationReminders(mStopId, mDestinationId,
+                                mTripId, mRouteId, mTripInfo.getCurrentTime());
                     }
                 });
 

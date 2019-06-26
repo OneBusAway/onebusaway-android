@@ -37,7 +37,7 @@ repositories {
     }
     maven {
         // for testlib
-        url "http://dl.bintray.com/acrowntest/test"
+        url "http://dl.bintray.com/acrowntest/ES_SDK"
     }
 }
 
@@ -434,9 +434,7 @@ dependencies {
     // Amazon Maps (only for Amazon flavor)
     amazonImplementation 'com.amazon.android:amazon-maps-api:2.0'
     // Embedded Social SDK
-    implementation('com.acrowntest.test:sdk:0.7.4@aar') {
-        transitive = true
-    }
+    implementation('com.acrowntest.ES_SDK:sdk:0.7.6')
     // Required to support multidex for minSdkVersion <= 20
     implementation 'androidx.multidex:multidex:2.0.0'
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier

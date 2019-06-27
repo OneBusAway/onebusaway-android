@@ -137,7 +137,7 @@ public class EmbeddedSocialUtils {
      */
     public static boolean isSocialApiKeyDefined() {
         String embeddedSocialApiKey = BuildConfig.EMBEDDED_SOCIAL_API_KEY;
-        return embeddedSocialApiKey != null && !embeddedSocialApiKey.isEmpty();
+        return embeddedSocialApiKey != null && embeddedSocialApiKey.length() != 0;
     }
 
     /**

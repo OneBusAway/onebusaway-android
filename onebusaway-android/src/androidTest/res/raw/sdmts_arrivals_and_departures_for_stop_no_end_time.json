@@ -1,0 +1,2055 @@
+{
+  "code": 200,
+  "currentTime": 1561496749089,
+  "data": {
+    "entry": {
+      "arrivalsAndDepartures": [
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 7,
+          "departureEnabled": true,
+          "distanceFromStop": -551.1606642903062,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": -2,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_30",
+          "routeLongName": "Downtown San Diego - UTC via Pacific Beach",
+          "routeShortName": "30",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561496520000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561496520000,
+          "serviceDate": 1561446000000,
+          "situationIds": [
+            "MTS_RTA:11930347"
+          ],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 64,
+          "totalStopsInTrip": 67,
+          "tripHeadsign": "Downtown",
+          "tripId": "MTS_13948911",
+          "tripStatus": {
+            "activeTripId": "MTS_13948911",
+            "blockTripSequence": 7,
+            "closestStop": "MTS_99432",
+            "closestStopTimeOffset": 11,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_99432",
+            "nextStopTimeOffset": 11,
+            "orientation": 90.53148549142699,
+            "phase": "",
+            "position": {
+              "lat": 32.71597848361311,
+              "lon": -117.15652541636005
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 34906.30004140074,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571",
+              "MTS_RTA:11930347"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 34937.270642468604,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 9,
+          "departureEnabled": true,
+          "distanceFromStop": -223.5268971330952,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": -1,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_7",
+          "routeLongName": "Downtown San Diego - University/College",
+          "routeShortName": "7",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561496640000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561496640000,
+          "serviceDate": 1561446000000,
+          "situationIds": [
+            "MTS_RTA:11930343"
+          ],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 1,
+          "totalStopsInTrip": 44,
+          "tripHeadsign": "University & College",
+          "tripId": "MTS_13950880",
+          "tripStatus": {
+            "activeTripId": "MTS_13950880",
+            "blockTripSequence": 9,
+            "closestStop": "MTS_10099",
+            "closestStopTimeOffset": 11,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_10099",
+            "nextStopTimeOffset": 11,
+            "orientation": 0.4194345244210518,
+            "phase": "",
+            "position": {
+              "lat": 32.71570324031384,
+              "lon": -117.1597153731288
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 834.9112454168207,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571",
+              "MTS_RTA:11930343"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 13193.398688987487,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 11,
+          "departureEnabled": true,
+          "distanceFromStop": -223.5268971330952,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": -1,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_2",
+          "routeLongName": "Downtown San Diego - 30th & Adams",
+          "routeShortName": "2",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561496640000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561496640000,
+          "serviceDate": 1561446000000,
+          "situationIds": [
+            "MTS_RTA:11930339"
+          ],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 1,
+          "totalStopsInTrip": 37,
+          "tripHeadsign": "North Park",
+          "tripId": "MTS_13949957",
+          "tripStatus": {
+            "activeTripId": "MTS_13949957",
+            "blockTripSequence": 11,
+            "closestStop": "MTS_10099",
+            "closestStopTimeOffset": 11,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_10099",
+            "nextStopTimeOffset": 11,
+            "orientation": 0.4194345244210518,
+            "phase": "",
+            "position": {
+              "lat": 32.71570324031384,
+              "lon": -117.1597153731288
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 822.9980628972698,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571",
+              "MTS_RTA:11930339"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 9355.078941372018,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 0,
+          "departureEnabled": true,
+          "distanceFromStop": 179.8964178809283,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 0,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_901",
+          "routeLongName": "Iris Transit Center - Downtown San Diego",
+          "routeShortName": "901",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561496820000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561496820000,
+          "serviceDate": 1561446000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 1,
+          "totalStopsInTrip": 55,
+          "tripHeadsign": "Iris Transit Center",
+          "tripId": "MTS_13871479",
+          "tripStatus": {
+            "activeTripId": "MTS_13871479",
+            "blockTripSequence": 0,
+            "closestStop": "MTS_10094",
+            "closestStopTimeOffset": 71,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_10094",
+            "nextStopTimeOffset": 71,
+            "orientation": 359.7427816176823,
+            "phase": "",
+            "position": {
+              "lat": 32.71571790843862,
+              "lon": -117.16402735470216
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 431.48793040280316,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 30545.02324483493,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 9,
+          "departureEnabled": true,
+          "distanceFromStop": 296.12410807480046,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 1,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_992",
+          "routeLongName": "Airport/Downtown Shuttle",
+          "routeShortName": "992",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561496880000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561496880000,
+          "serviceDate": 1561446000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 27,
+          "totalStopsInTrip": 31,
+          "tripHeadsign": "Downtown",
+          "tripId": "MTS_13870174",
+          "tripStatus": {
+            "activeTripId": "MTS_13870174",
+            "blockTripSequence": 9,
+            "closestStop": "MTS_10090",
+            "closestStopTimeOffset": 11,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_10090",
+            "nextStopTimeOffset": 11,
+            "orientation": 0.08720812104942172,
+            "phase": "",
+            "position": {
+              "lat": 32.71572051798282,
+              "lon": -117.16526968529013
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 11119.141857449868,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 12496.331186115878,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 9,
+          "departureEnabled": true,
+          "distanceFromStop": 669.973896585987,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 1,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_7",
+          "routeLongName": "Downtown San Diego - University/College",
+          "routeShortName": "7",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561497240000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561497240000,
+          "serviceDate": 1561446000000,
+          "situationIds": [
+            "MTS_RTA:11930343"
+          ],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 1,
+          "totalStopsInTrip": 44,
+          "tripHeadsign": "University & College",
+          "tripId": "MTS_13950820",
+          "tripStatus": {
+            "activeTripId": "MTS_13950822",
+            "blockTripSequence": 8,
+            "closestStop": "MTS_12012",
+            "closestStopTimeOffset": 311,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_12012",
+            "nextStopTimeOffset": 311,
+            "orientation": 270.596119547363,
+            "phase": "",
+            "position": {
+              "lat": 32.719548887453094,
+              "lon": -117.16474248206599
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 13590.084239656047,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571",
+              "MTS_RTA:11930343"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 13648.673787958303,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 0,
+          "departureEnabled": true,
+          "distanceFromStop": 599.4711657641758,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 1,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_2",
+          "routeLongName": "Downtown San Diego - 30th & Adams",
+          "routeShortName": "2",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561497360000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561497360000,
+          "serviceDate": 1561446000000,
+          "situationIds": [
+            "MTS_RTA:11930339"
+          ],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 1,
+          "totalStopsInTrip": 37,
+          "tripHeadsign": "North Park",
+          "tripId": "MTS_13950010",
+          "tripStatus": {
+            "activeTripId": "MTS_13950010",
+            "blockTripSequence": 0,
+            "closestStop": "MTS_12012",
+            "closestStopTimeOffset": 431,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_12012",
+            "nextStopTimeOffset": 431,
+            "orientation": 0.5305013152781171,
+            "phase": "",
+            "position": {
+              "lat": 32.718823,
+              "lon": -117.164843
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 0,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571",
+              "MTS_RTA:11930339"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 9355.078941372018,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 4,
+          "departureEnabled": true,
+          "distanceFromStop": 6202.280015194381,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 3,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_30",
+          "routeLongName": "Downtown San Diego - UTC via Pacific Beach",
+          "routeShortName": "30",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561497420000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561497420000,
+          "serviceDate": 1561446000000,
+          "situationIds": [
+            "MTS_RTA:11930347"
+          ],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 64,
+          "totalStopsInTrip": 67,
+          "tripHeadsign": "Downtown",
+          "tripId": "MTS_13948970",
+          "tripStatus": {
+            "activeTripId": "MTS_13948970",
+            "blockTripSequence": 4,
+            "closestStop": "MTS_94025",
+            "closestStopTimeOffset": 0,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_94025",
+            "nextStopTimeOffset": 0,
+            "orientation": 290.5108592821129,
+            "phase": "",
+            "position": {
+              "lat": 32.75427771428069,
+              "lon": -117.1997978931122
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 28152.859361916053,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571",
+              "MTS_RTA:11930347"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 34937.270642468604,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 5,
+          "departureEnabled": true,
+          "distanceFromStop": 1000.106584903464,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 1,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_901",
+          "routeLongName": "Iris Transit Center - Downtown San Diego",
+          "routeShortName": "901",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561497720000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561497720000,
+          "serviceDate": 1561446000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 1,
+          "totalStopsInTrip": 55,
+          "tripHeadsign": "Iris Transit Center",
+          "tripId": "MTS_13871472",
+          "tripStatus": {
+            "activeTripId": "MTS_13871473",
+            "blockTripSequence": 4,
+            "closestStop": "MTS_10840",
+            "closestStopTimeOffset": -349,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_12012",
+            "nextStopTimeOffset": 791,
+            "orientation": 90.43570095171798,
+            "phase": "",
+            "position": {
+              "lat": 32.71801235121435,
+              "lon": -117.1638417821385
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 31484.274980379632,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 31872.997216999378,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 8,
+          "departureEnabled": true,
+          "distanceFromStop": 5569.808789740549,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 13,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_992",
+          "routeLongName": "Airport/Downtown Shuttle",
+          "routeShortName": "992",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561497780000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561497780000,
+          "serviceDate": 1561446000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 27,
+          "totalStopsInTrip": 31,
+          "tripHeadsign": "Downtown",
+          "tripId": "MTS_13870183",
+          "tripStatus": {
+            "activeTripId": "MTS_13870183",
+            "blockTripSequence": 8,
+            "closestStop": "MTS_99471",
+            "closestStopTimeOffset": 11,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_99471",
+            "nextStopTimeOffset": 11,
+            "orientation": 193.91687743360166,
+            "phase": "",
+            "position": {
+              "lat": 32.731425102352304,
+              "lon": -117.20139912264965
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 5845.457175784119,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 12496.331186115878,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 7,
+          "departureEnabled": true,
+          "distanceFromStop": 1117.4488865033636,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 1,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_7",
+          "routeLongName": "Downtown San Diego - University/College",
+          "routeShortName": "7",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561497840000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561497840000,
+          "serviceDate": 1561446000000,
+          "situationIds": [
+            "MTS_RTA:11930343"
+          ],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 1,
+          "totalStopsInTrip": 44,
+          "tripHeadsign": "University & College",
+          "tripId": "MTS_13950904",
+          "tripStatus": {
+            "activeTripId": "MTS_13950903",
+            "blockTripSequence": 6,
+            "closestStop": "MTS_10840",
+            "closestStopTimeOffset": -169,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_12012",
+            "nextStopTimeOffset": 911,
+            "orientation": 90.3878765275317,
+            "phase": "",
+            "position": {
+              "lat": 32.71695708631193,
+              "lon": -117.16383444255723
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 13142.60924973867,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571",
+              "MTS_RTA:11930343"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 13648.673787958303,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 7,
+          "departureEnabled": true,
+          "distanceFromStop": 6453.619729517552,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 15,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_923",
+          "routeLongName": "Downtown to Point Loma",
+          "routeShortName": "923",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561497900000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561497900000,
+          "serviceDate": 1561446000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 41,
+          "totalStopsInTrip": 44,
+          "tripHeadsign": "Downtown",
+          "tripId": "MTS_13870890",
+          "tripStatus": {
+            "activeTripId": "MTS_13870890",
+            "blockTripSequence": 7,
+            "closestStop": "MTS_99993",
+            "closestStopTimeOffset": 11,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_99993",
+            "nextStopTimeOffset": 11,
+            "orientation": 26.24406977578304,
+            "phase": "",
+            "position": {
+              "lat": 32.72709174046047,
+              "lon": -117.21824597119065
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 7224.16964775075,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 14334.757907092917,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 2,
+          "departureEnabled": true,
+          "distanceFromStop": 1222.0346480075677,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 2,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_2",
+          "routeLongName": "Downtown San Diego - 30th & Adams",
+          "routeShortName": "2",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561498080000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561498080000,
+          "serviceDate": 1561446000000,
+          "situationIds": [
+            "MTS_RTA:11930339"
+          ],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 1,
+          "totalStopsInTrip": 37,
+          "tripHeadsign": "North Park",
+          "tripId": "MTS_13949888",
+          "tripStatus": {
+            "activeTripId": "MTS_13949887",
+            "blockTripSequence": 1,
+            "closestStop": "MTS_10839",
+            "closestStopTimeOffset": 11,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_10839",
+            "nextStopTimeOffset": 11,
+            "orientation": 180.07308131212022,
+            "phase": "",
+            "position": {
+              "lat": 32.71572042606391,
+              "lon": -117.16516596589301
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 8743.774539455591,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571",
+              "MTS_RTA:11930339"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 9366.338021698986,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 4,
+          "departureEnabled": true,
+          "distanceFromStop": 14100.686520142626,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 8,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_30",
+          "routeLongName": "Downtown San Diego - UTC via Pacific Beach",
+          "routeShortName": "30",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561498320000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561498320000,
+          "serviceDate": 1561446000000,
+          "situationIds": [
+            "MTS_RTA:11930347"
+          ],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 64,
+          "totalStopsInTrip": 67,
+          "tripHeadsign": "Downtown",
+          "tripId": "MTS_13948931",
+          "tripStatus": {
+            "activeTripId": "MTS_13948931",
+            "blockTripSequence": 4,
+            "closestStop": "MTS_10375",
+            "closestStopTimeOffset": 11,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_10375",
+            "nextStopTimeOffset": 11,
+            "orientation": 12.62871306472742,
+            "phase": "",
+            "position": {
+              "lat": 32.798957665219575,
+              "lon": -117.23534856773323
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 20254.452856967808,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571",
+              "MTS_RTA:11930347"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 34937.270642468604,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 9,
+          "departureEnabled": true,
+          "distanceFromStop": 2840.237713381648,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 7,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_7",
+          "routeLongName": "Downtown San Diego - University/College",
+          "routeShortName": "7",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561498440000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561498440000,
+          "serviceDate": 1561446000000,
+          "situationIds": [
+            "MTS_RTA:11930343"
+          ],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 1,
+          "totalStopsInTrip": 44,
+          "tripHeadsign": "University & College",
+          "tripId": "MTS_13950842",
+          "tripStatus": {
+            "activeTripId": "MTS_13950844",
+            "blockTripSequence": 8,
+            "closestStop": "MTS_13137",
+            "closestStopTimeOffset": 11,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_13137",
+            "nextStopTimeOffset": 11,
+            "orientation": 227.22105016525575,
+            "phase": "",
+            "position": {
+              "lat": 32.72138700672912,
+              "lon": -117.15316795744641
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 11419.820422860386,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571",
+              "MTS_RTA:11930343"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 13648.673787958303,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 0,
+          "departureEnabled": true,
+          "distanceFromStop": 611.3843482837315,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 1,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_901",
+          "routeLongName": "Iris Transit Center - Downtown San Diego",
+          "routeShortName": "901",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561498620000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561498620000,
+          "serviceDate": 1561446000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 1,
+          "totalStopsInTrip": 55,
+          "tripHeadsign": "Iris Transit Center",
+          "tripId": "MTS_13871488",
+          "tripStatus": {
+            "activeTripId": "MTS_13871488",
+            "blockTripSequence": 0,
+            "closestStop": "MTS_12012",
+            "closestStopTimeOffset": 1691,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_12012",
+            "nextStopTimeOffset": 1691,
+            "orientation": 270.5787255682451,
+            "phase": "",
+            "position": {
+              "lat": 32.719022,
+              "lon": -117.164737
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 0,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 30545.02324483493,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 9,
+          "departureEnabled": true,
+          "distanceFromStop": 9926.12254970189,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 21,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_992",
+          "routeLongName": "Airport/Downtown Shuttle",
+          "routeShortName": "992",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561498680000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561498680000,
+          "serviceDate": 1561446000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 27,
+          "totalStopsInTrip": 31,
+          "tripHeadsign": "Downtown",
+          "tripId": "MTS_13870180",
+          "tripStatus": {
+            "activeTripId": "MTS_13870180",
+            "blockTripSequence": 9,
+            "closestStop": "MTS_10833",
+            "closestStopTimeOffset": 11,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_10833",
+            "nextStopTimeOffset": 11,
+            "orientation": 180,
+            "phase": "",
+            "position": {
+              "lat": 32.715716,
+              "lon": -117.16863022063285
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 1489.1434158227785,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 12496.331186115878,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 0,
+          "departureEnabled": true,
+          "distanceFromStop": 599.4711657641758,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 1,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_2",
+          "routeLongName": "Downtown San Diego - 30th & Adams",
+          "routeShortName": "2",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1561498800000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1561498800000,
+          "serviceDate": 1561446000000,
+          "situationIds": [
+            "MTS_RTA:11930339"
+          ],
+          "status": "default",
+          "stopId": "MTS_10094",
+          "stopSequence": 1,
+          "totalStopsInTrip": 37,
+          "tripHeadsign": "North Park",
+          "tripId": "MTS_13949973",
+          "tripStatus": {
+            "activeTripId": "MTS_13949973",
+            "blockTripSequence": 0,
+            "closestStop": "MTS_12012",
+            "closestStopTimeOffset": 1871,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_12012",
+            "nextStopTimeOffset": 1871,
+            "orientation": 0.5305013152781171,
+            "phase": "",
+            "position": {
+              "lat": 32.718823,
+              "lon": -117.164843
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 0,
+            "serviceDate": 1561446000000,
+            "situationIds": [
+              "MTS_RTA:11955571",
+              "MTS_RTA:11930339"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 9355.078941372018,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        }
+      ],
+      "nearbyStopIds": [
+        "MTS_12031",
+        "MTS_13313"
+      ],
+      "situationIds": [
+        "MTS_RTA:11955571"
+      ],
+      "stopId": "MTS_10094"
+    },
+    "references": {
+      "agencies": [
+        {
+          "disclaimer": "",
+          "email": "customerfeedback@sdmts.com",
+          "fareUrl": "",
+          "id": "MTS",
+          "lang": "EN",
+          "name": "MTS",
+          "phone": "619-233-3004",
+          "privateService": false,
+          "timezone": "America/Los_Angeles",
+          "url": "http://www.sdmts.com"
+        }
+      ],
+      "routes": [
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_2",
+          "longName": "Downtown San Diego - 30th & Adams",
+          "shortName": "2",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=2"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_7",
+          "longName": "Downtown San Diego - University/College",
+          "shortName": "7",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=7"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_30",
+          "longName": "Downtown San Diego - UTC via Pacific Beach",
+          "shortName": "30",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=30"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "CC0000",
+          "description": "",
+          "id": "MTS_50",
+          "longName": "Downtown San Diego - UTC via Regents Rd",
+          "shortName": "50",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=50"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "CC0000",
+          "description": "",
+          "id": "MTS_110",
+          "longName": "Mira Mesa - Downtown via Hwy 163",
+          "shortName": "110",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=110"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_901",
+          "longName": "Iris Transit Center - Downtown San Diego",
+          "shortName": "901",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=901"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_923",
+          "longName": "Downtown to Point Loma",
+          "shortName": "923",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=923"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "006600",
+          "description": "",
+          "id": "MTS_992",
+          "longName": "Airport/Downtown Shuttle",
+          "shortName": "992",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=992"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_11",
+          "longName": "SDSU - Downtown San Diego",
+          "shortName": "11",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=11"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "CC0000",
+          "description": "",
+          "id": "MTS_150",
+          "longName": "Downtown San Diego - UTC via Old Town",
+          "shortName": "150",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=150"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_215",
+          "longName": "Mid-City Rapid",
+          "shortName": "215",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=215"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_225",
+          "longName": "Downtown - Otay Mesa TC",
+          "shortName": "225",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=225"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_235",
+          "longName": "Downtown - Escondido Transit Center",
+          "shortName": "235",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=235"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_280",
+          "longName": "Escondido Transit Center - Downtown",
+          "shortName": "280",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=280"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_290",
+          "longName": "Rancho Bernardo Station - Downtown",
+          "shortName": "290",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=290"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_3",
+          "longName": "UCSD Hospital - Euclid Transit Center",
+          "shortName": "3",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=3"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_120",
+          "longName": "Downtown San Diego - Kearny Mesa Transit Center",
+          "shortName": "120",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "https://www.sdmts.com/schedules-real-time?fragment=120"
+        }
+      ],
+      "situations": [
+        {
+          "activeWindows": [
+            {
+              "from": 1561491840,
+              "to": 0
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "MTS",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "",
+              "conditionDetails": {
+                "diversionPath": {
+                  "length": 0,
+                  "levels": "",
+                  "points": ""
+                },
+                "diversionStopIds": []
+              }
+            }
+          ],
+          "creationTime": 1561496718329,
+          "description": {
+            "lang": "en",
+            "value": "Due to a communications outage, all bus real time information is unavailable. We apologize for the inconvenience and are working to resolve the issue as soon as possible."
+          },
+          "id": "MTS_RTA:11955571",
+          "publicationWindows": [],
+          "reason": "TECHNICAL_PROBLEM",
+          "severity": "noImpact",
+          "summary": {
+            "lang": "en",
+            "value": "Bus Real Time System Outage"
+          },
+          "url": null
+        },
+        {
+          "activeWindows": [
+            {
+              "from": 1560171600,
+              "to": 1566025140
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "30",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "",
+              "conditionDetails": {
+                "diversionPath": {
+                  "length": 0,
+                  "levels": "",
+                  "points": ""
+                },
+                "diversionStopIds": []
+              }
+            }
+          ],
+          "creationTime": 1561496720501,
+          "description": {
+            "lang": "en",
+            "value": "Due to road work, the westbound bus stop on Broadway at First Ave. will be closed 6/10 - 8/16, 24 hours / day, impacting northbound route 30. Passengers are advised to make connections on First Ave. at 'C' St."
+          },
+          "id": "MTS_RTA:11930347",
+          "publicationWindows": [],
+          "reason": "CONSTRUCTION",
+          "severity": "noImpact",
+          "summary": {
+            "lang": "en",
+            "value": "Westbound Bus Stop on Broadway at First Ave. Closed"
+          },
+          "url": null
+        },
+        {
+          "activeWindows": [
+            {
+              "from": 1559998800,
+              "to": 1566025140
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "7",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "",
+              "conditionDetails": {
+                "diversionPath": {
+                  "length": 0,
+                  "levels": "",
+                  "points": ""
+                },
+                "diversionStopIds": []
+              }
+            }
+          ],
+          "creationTime": 1561496721876,
+          "description": {
+            "lang": "en",
+            "value": "Due to road work, the westbound bus stop on Broadway at First Ave. will be closed 6/8 - 8/16, 24 hours / day, impacting southbound route 7. Southbound route 7 will drop off on Broadway at 2nd."
+          },
+          "id": "MTS_RTA:11930343",
+          "publicationWindows": [],
+          "reason": "CONSTRUCTION",
+          "severity": "noImpact",
+          "summary": {
+            "lang": "en",
+            "value": "Westbound Bus Stop on Broadway at First Ave. Closed"
+          },
+          "url": null
+        },
+        {
+          "activeWindows": [
+            {
+              "from": 1559998800,
+              "to": 1566025140
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "2",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "",
+              "conditionDetails": {
+                "diversionPath": {
+                  "length": 0,
+                  "levels": "",
+                  "points": ""
+                },
+                "diversionStopIds": []
+              }
+            }
+          ],
+          "creationTime": 1561496721079,
+          "description": {
+            "lang": "en",
+            "value": "Due to road work, the westbound bus stop on Broadway at First Ave. will be closed 6/8- 8/16, 24 hours / day, impacting southbound route 2. Passengers are advised to alight on Broadway at Union."
+          },
+          "id": "MTS_RTA:11930339",
+          "publicationWindows": [],
+          "reason": "CONSTRUCTION",
+          "severity": "noImpact",
+          "summary": {
+            "lang": "en",
+            "value": "Westbound Bus Stop on Broadway at First Ave. Closed"
+          },
+          "url": null
+        }
+      ],
+      "stops": [
+        {
+          "code": "10094",
+          "direction": "E",
+          "id": "MTS_10094",
+          "lat": 32.715614,
+          "locationType": 0,
+          "lon": -117.162107,
+          "name": "Broadway & 3rd Av",
+          "routeIds": [
+            "MTS_2",
+            "MTS_7",
+            "MTS_30",
+            "MTS_50",
+            "MTS_110",
+            "MTS_901",
+            "MTS_923",
+            "MTS_992"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "99432",
+          "direction": "N",
+          "id": "MTS_99432",
+          "lat": 32.716258,
+          "locationType": 0,
+          "lon": -117.156408,
+          "name": "9th Av & C St",
+          "routeIds": [
+            "MTS_30"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "10099",
+          "direction": "E",
+          "id": "MTS_10099",
+          "lat": 32.715664,
+          "locationType": 0,
+          "lon": -117.159474,
+          "name": "Broadway & 6th Av",
+          "routeIds": [
+            "MTS_2",
+            "MTS_7",
+            "MTS_30",
+            "MTS_50",
+            "MTS_110",
+            "MTS_901",
+            "MTS_923",
+            "MTS_992"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "10090",
+          "direction": "E",
+          "id": "MTS_10090",
+          "lat": 32.715598,
+          "locationType": 0,
+          "lon": -117.164952,
+          "name": "Broadway & Front St",
+          "routeIds": [
+            "MTS_923",
+            "MTS_992"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "12012",
+          "direction": "S",
+          "id": "MTS_12012",
+          "lat": 32.717625,
+          "locationType": 0,
+          "lon": -117.16482,
+          "name": "Front St & B St",
+          "routeIds": [
+            "MTS_2",
+            "MTS_7",
+            "MTS_11",
+            "MTS_30",
+            "MTS_50",
+            "MTS_110",
+            "MTS_150",
+            "MTS_901"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "94025",
+          "direction": "S",
+          "id": "MTS_94025",
+          "lat": 32.754267,
+          "locationType": 0,
+          "lon": -117.199838,
+          "name": "Old Town Transit Center",
+          "routeIds": [
+            "MTS_30"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "10840",
+          "direction": "N",
+          "id": "MTS_10840",
+          "lat": 32.715855,
+          "locationType": 0,
+          "lon": -117.163671,
+          "name": "Broadway & 1st Av",
+          "routeIds": [
+            "MTS_2",
+            "MTS_7",
+            "MTS_30",
+            "MTS_50",
+            "MTS_110",
+            "MTS_901"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "99471",
+          "direction": "W",
+          "id": "MTS_99471",
+          "lat": 32.731402,
+          "locationType": 0,
+          "lon": -117.201644,
+          "name": "Lindbergh Field & Terminal 2 East",
+          "routeIds": [
+            "MTS_992"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "99993",
+          "direction": "NE",
+          "id": "MTS_99993",
+          "lat": 32.727237,
+          "locationType": 0,
+          "lon": -117.217643,
+          "name": "N Harbor Dr & Laning Dr",
+          "routeIds": [
+            "MTS_923"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "10839",
+          "direction": "W",
+          "id": "MTS_10839",
+          "lat": 32.715833,
+          "locationType": 0,
+          "lon": -117.165501,
+          "name": "Broadway & Union St",
+          "routeIds": [
+            "MTS_2",
+            "MTS_110",
+            "MTS_215",
+            "MTS_225",
+            "MTS_235",
+            "MTS_280",
+            "MTS_290",
+            "MTS_923",
+            "MTS_992"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "10375",
+          "direction": "E",
+          "id": "MTS_10375",
+          "lat": 32.799062,
+          "locationType": 0,
+          "lon": -117.234323,
+          "name": "Grand Av & Lamont St",
+          "routeIds": [
+            "MTS_30"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "13137",
+          "direction": "SW",
+          "id": "MTS_13137",
+          "lat": 32.720529,
+          "locationType": 0,
+          "lon": -117.153815,
+          "name": "Park Bl & Russ Bl",
+          "routeIds": [
+            "MTS_7"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "10833",
+          "direction": "W",
+          "id": "MTS_10833",
+          "lat": 32.715857,
+          "locationType": 0,
+          "lon": -117.168938,
+          "name": "Broadway & Kettner Bl",
+          "routeIds": [
+            "MTS_280",
+            "MTS_290",
+            "MTS_923",
+            "MTS_992"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "12031",
+          "direction": "S",
+          "id": "MTS_12031",
+          "lat": 32.715145,
+          "locationType": 0,
+          "lon": -117.161156,
+          "name": "4th Av & Broadway",
+          "routeIds": [
+            "MTS_3",
+            "MTS_120"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "13313",
+          "direction": "W",
+          "id": "MTS_13313",
+          "lat": 32.715776,
+          "locationType": 0,
+          "lon": -117.162794,
+          "name": "Broadway & 2nd Av",
+          "routeIds": [
+            "MTS_280",
+            "MTS_290",
+            "MTS_923",
+            "MTS_992"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        }
+      ],
+      "trips": [
+        {
+          "blockId": "MTS_103008",
+          "directionId": "1",
+          "id": "MTS_13948911",
+          "routeId": "MTS_30",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_30_1_234",
+          "timeZone": "",
+          "tripHeadsign": "Downtown",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_100701",
+          "directionId": "0",
+          "id": "MTS_13950880",
+          "routeId": "MTS_7",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_7_0_262",
+          "timeZone": "",
+          "tripHeadsign": "University & College",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_200202",
+          "directionId": "0",
+          "id": "MTS_13949957",
+          "routeId": "MTS_2",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_2_0_76",
+          "timeZone": "",
+          "tripHeadsign": "North Park",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_90112",
+          "directionId": "1",
+          "id": "MTS_13871479",
+          "routeId": "MTS_901",
+          "routeShortName": "",
+          "serviceId": "MTS_69170-1111100-0",
+          "shapeId": "MTS_901_1_97",
+          "timeZone": "",
+          "tripHeadsign": "Iris Transit Center",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_99201",
+          "directionId": "1",
+          "id": "MTS_13870174",
+          "routeId": "MTS_992",
+          "routeShortName": "",
+          "serviceId": "MTS_69170-1111100-0",
+          "shapeId": "MTS_992_9_50",
+          "timeZone": "",
+          "tripHeadsign": "Airport",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_200701",
+          "directionId": "0",
+          "id": "MTS_13950820",
+          "routeId": "MTS_7",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_7_0_262",
+          "timeZone": "",
+          "tripHeadsign": "University & College",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_200701",
+          "directionId": "1",
+          "id": "MTS_13950822",
+          "routeId": "MTS_7",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_7_1_261",
+          "timeZone": "",
+          "tripHeadsign": "Downtown",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_100205",
+          "directionId": "0",
+          "id": "MTS_13950010",
+          "routeId": "MTS_2",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_2_0_76",
+          "timeZone": "",
+          "tripHeadsign": "North Park",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_203004",
+          "directionId": "1",
+          "id": "MTS_13948970",
+          "routeId": "MTS_30",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_30_1_234",
+          "timeZone": "",
+          "tripHeadsign": "Downtown",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_90110",
+          "directionId": "1",
+          "id": "MTS_13871472",
+          "routeId": "MTS_901",
+          "routeShortName": "",
+          "serviceId": "MTS_69170-1111100-0",
+          "shapeId": "MTS_901_1_97",
+          "timeZone": "",
+          "tripHeadsign": "Iris Transit Center",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_90110",
+          "directionId": "0",
+          "id": "MTS_13871473",
+          "routeId": "MTS_901",
+          "routeShortName": "",
+          "serviceId": "MTS_69170-1111100-0",
+          "shapeId": "MTS_901_0_98",
+          "timeZone": "",
+          "tripHeadsign": "Downtown",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_99203",
+          "directionId": "1",
+          "id": "MTS_13870183",
+          "routeId": "MTS_992",
+          "routeShortName": "",
+          "serviceId": "MTS_69170-1111100-0",
+          "shapeId": "MTS_992_9_50",
+          "timeZone": "",
+          "tripHeadsign": "Airport",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_100709",
+          "directionId": "0",
+          "id": "MTS_13950904",
+          "routeId": "MTS_7",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_7_0_262",
+          "timeZone": "",
+          "tripHeadsign": "University & College",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_100709",
+          "directionId": "1",
+          "id": "MTS_13950903",
+          "routeId": "MTS_7",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_7_1_261",
+          "timeZone": "",
+          "tripHeadsign": "Downtown",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_92304",
+          "directionId": "0",
+          "id": "MTS_13870890",
+          "routeId": "MTS_923",
+          "routeShortName": "",
+          "serviceId": "MTS_69170-1111100-0",
+          "shapeId": "MTS_923_2_65",
+          "timeZone": "",
+          "tripHeadsign": "Downtown",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_200204",
+          "directionId": "0",
+          "id": "MTS_13949888",
+          "routeId": "MTS_2",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_2_0_76",
+          "timeZone": "",
+          "tripHeadsign": "North Park",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_200204",
+          "directionId": "1",
+          "id": "MTS_13949887",
+          "routeId": "MTS_2",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_2_1_78",
+          "timeZone": "",
+          "tripHeadsign": "Downtown",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_203005",
+          "directionId": "1",
+          "id": "MTS_13948931",
+          "routeId": "MTS_30",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_30_1_234",
+          "timeZone": "",
+          "tripHeadsign": "Downtown",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_100704",
+          "directionId": "0",
+          "id": "MTS_13950842",
+          "routeId": "MTS_7",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_7_0_262",
+          "timeZone": "",
+          "tripHeadsign": "University & College",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_100704",
+          "directionId": "1",
+          "id": "MTS_13950844",
+          "routeId": "MTS_7",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_7_1_261",
+          "timeZone": "",
+          "tripHeadsign": "Downtown",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_90114",
+          "directionId": "1",
+          "id": "MTS_13871488",
+          "routeId": "MTS_901",
+          "routeShortName": "",
+          "serviceId": "MTS_69170-1111100-0",
+          "shapeId": "MTS_901_1_97",
+          "timeZone": "",
+          "tripHeadsign": "Iris Transit Center",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_99202",
+          "directionId": "1",
+          "id": "MTS_13870180",
+          "routeId": "MTS_992",
+          "routeShortName": "",
+          "serviceId": "MTS_69170-1111100-0",
+          "shapeId": "MTS_992_9_50",
+          "timeZone": "",
+          "tripHeadsign": "Airport",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_100206",
+          "directionId": "0",
+          "id": "MTS_13949973",
+          "routeId": "MTS_2",
+          "routeShortName": "",
+          "serviceId": "MTS_69211-1111100-0",
+          "shapeId": "MTS_2_0_76",
+          "timeZone": "",
+          "tripHeadsign": "North Park",
+          "tripShortName": ""
+        }
+      ]
+    }
+  },
+  "text": "OK",
+  "version": 2
+}

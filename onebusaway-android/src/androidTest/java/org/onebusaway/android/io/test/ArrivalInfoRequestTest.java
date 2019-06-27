@@ -434,6 +434,49 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertEquals("http://www.sdmts.com/Planning/alerts_detours.asp", situation.getUrl());
     }
 
+    /**
+     * Test an alert with a beginning time but no end time
+     *
+     */
+    @Test
+    public void testSituationNoEndTimeSdmts() {
+        // Test by setting API directly
+        Application.get().setCustomApiUrl("sdmts.onebusway.org/api");
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getTargetContext(), "MTS_9999").build().call();
+        assertOK(response);
+        List<ObaSituation> situations = response.getSituations();
+        assertNotNull(situations);
+
+        ObaSituation situation = situations.get(0);
+        assertEquals("MTS_RTA:11955571", situation.getId());
+        assertEquals("Bus Real Time System Outage", situation.getSummary());
+        assertEquals(
+                "Due to a communications outage, all bus real time information is unavailable. We apologize for the inconvenience and are working to resolve the issue as soon as possible.",
+                situation.getDescription());
+        assertEquals(1561496718329L, situation.getCreationTime());
+        assertEquals("MTS", situation.getAllAffects()[0].getAgencyId());
+        assertEquals("", situation.getAllAffects()[0].getApplicationId());
+        assertEquals("", situation.getAllAffects()[0].getDirectionId());
+        assertEquals("", situation.getAllAffects()[0].getRouteId());
+        assertEquals("", situation.getAllAffects()[0].getStopId());
+        assertEquals("", situation.getAllAffects()[0].getTripId());
+        assertNull(situation.getUrl());
+
+        // Check active window - there is no end time for this situation in the response
+        ObaSituation.ActiveWindow[] windows = situation.getActiveWindows();
+        assertEquals(1561491840, windows[0].getFrom());
+        assertEquals(0, windows[0].getTo());
+
+        long timeBeforeWindow0 = 0;
+        boolean result = UIUtils.isActiveWindowForSituation(situation, timeBeforeWindow0);
+        assertEquals(false, result);
+
+        long timeWithinWindow0 = 1561494000000L;
+        result = UIUtils.isActiveWindowForSituation(situation, timeWithinWindow0);
+        assertEquals(true, result);
+    }
+
     // TODO: get/create situation response that includes diversion path
     /*
     public void testTripSituation() throws Exception {

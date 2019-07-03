@@ -44,6 +44,5 @@ public class LocationBroadcastReceiver extends BroadcastReceiver {
                 Log.d(TAG, "Location provider is null");
             }
         }
-
     }
 }

@@ -468,8 +468,8 @@ public class RegionUtils {
                         c.getString(16),              // Android App ID for mobile fare payment app of region
                         c.getString(17),               // Payment Warning Title
                         c.getString(18),    // Payment Warning Body
-                        c.getInt(19) > 0, // travel behavior data collection
-                        c.getInt(20) > 0
+                        c.getInt(19) > 0, // travel behavior data collection enabled for region
+                        c.getInt(20) > 0 // enrolling participants for travel behavior data collection
                 ));
 
             } while (c.moveToNext());

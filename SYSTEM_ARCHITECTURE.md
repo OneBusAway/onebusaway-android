@@ -41,7 +41,7 @@ See the [Getting Started](https://github.com/OneBusAway/onebusaway-application-m
 
 After you have the OneBusAway server set up, see the [Custom Servers](CUSTOM_SERVERS.md) documentation in this project to see how you can test OneBusAway Android with your new OBA server.
 
-After you've tested arrival information, if you want to add trip planning and/or bike share information, see the [Basic Usage](http://docs.opentripplanner.org/en/latest/Basic-Usage/) documentation for setting up an OpenTripPlanner server.
+After you've tested arrival information, if you want to add trip planning and/or bike share information, see the [Basic Tutorial](http://docs.opentripplanner.org/en/latest/Basic-Tutorial/) documentation for setting up an OpenTripPlanner server.
 
 When you have this set up, see the [Custom Servers](CUSTOM_SERVERS.md#opentripplanner-api-server) documentation again to point your OBA Android app to your new OTP server.
 

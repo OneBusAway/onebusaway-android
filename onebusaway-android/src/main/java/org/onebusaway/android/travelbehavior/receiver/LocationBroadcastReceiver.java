@@ -31,8 +31,7 @@ public class LocationBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String key = LocationManager.KEY_LOCATION_CHANGED;
-        Location location = (Location) intent.getExtras().get(key);
+        Location location = (Location) intent.getExtras().get(LocationManager.KEY_LOCATION_CHANGED);
         if (location != null) {
             String recordId = intent.getStringExtra(TravelBehaviorConstants.RECORD_ID);
             String uid = PreferenceUtils.getString(TravelBehaviorConstants.USER_ID);

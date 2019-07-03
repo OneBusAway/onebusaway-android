@@ -191,7 +191,6 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
             Log.d(TAG, "Location permissions are granted, requesting fused, GPS, and Network" +
                     "locations");
             requestFusedLocation();
-
             requestGPSNetworkLocation();
         } else {
             Log.d(TAG, "Location permissions not granted. Skipping location requests");
@@ -255,7 +254,7 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
                 -1);
 
         // Update if the device info is changed
-        if(hashCode != mostRecentDeviceHash) {
+        if (hashCode != mostRecentDeviceHash) {
             TravelBehaviorFirebaseIOUtils.saveDeviceInfo(di, mUid, mRecordId, hashCode);
         }
     }

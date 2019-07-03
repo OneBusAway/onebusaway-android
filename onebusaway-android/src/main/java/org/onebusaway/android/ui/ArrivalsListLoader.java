@@ -51,10 +51,9 @@ public class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> 
 
     @Override
     public ObaArrivalInfoResponse loadInBackground() {
-        // TBC collection project: Module of cache blaa
-        // TODO: cache get Url
         ObaArrivalInfoRequest obaArrivalInfoRequest = ObaArrivalInfoRequest.newRequest(getContext(),
                 mStopId, mMinutesAfter);
+        // Cache the URL so we have a record of the request w/ params made to the server
         mUrl = obaArrivalInfoRequest.getUri().toString();
         return obaArrivalInfoRequest.call();
     }

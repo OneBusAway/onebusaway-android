@@ -17,6 +17,8 @@ package org.onebusaway.android.travelbehavior.constants;
 
 import android.Manifest;
 
+import java.util.concurrent.TimeUnit;
+
 public class TravelBehaviorConstants {
 
     public static final String RECORD_ID = "tbRecordId";
@@ -53,13 +55,11 @@ public class TravelBehaviorConstants {
 
     public static final String LOCAL_DESTINATION_REMINDER_FOLDER = "destination-reminders";
 
-    private static final long MOST_RECENT_DATA_THRESHOLD_MINUTES = 30l;
+    private static final long MOST_RECENT_DATA_THRESHOLD_MINUTES = 30;
 
-    public static final long MOST_RECENT_DATA_THRESHOLD_MILLIS = 60000l *
-            MOST_RECENT_DATA_THRESHOLD_MINUTES;
+    public static final long MOST_RECENT_DATA_THRESHOLD_MILLIS = TimeUnit.MINUTES.toMillis(MOST_RECENT_DATA_THRESHOLD_MINUTES);
 
-    public static final long MOST_RECENT_DATA_THRESHOLD_NANO = 60000000000l *
-            MOST_RECENT_DATA_THRESHOLD_MINUTES;
+    public static final long MOST_RECENT_DATA_THRESHOLD_NANO = TimeUnit.MINUTES.toNanos(MOST_RECENT_DATA_THRESHOLD_MINUTES);
 
     public static final String USER_OPT_IN = "travelBehaviorUserOptIn";
 

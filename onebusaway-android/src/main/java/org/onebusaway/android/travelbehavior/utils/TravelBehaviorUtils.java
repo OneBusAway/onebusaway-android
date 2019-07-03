@@ -46,8 +46,10 @@ public class TravelBehaviorUtils {
                 return "IN_VEHICLE";
             case DetectedActivity.ON_FOOT:
                 return "ON_FOOT";
+            case DetectedActivity.ON_BICYCLE:
+                return "ON_BICYCLE";
             default:
-                return "UNKNOWN";
+                return "UNKNOWN = " + activity;
         }
     }
 

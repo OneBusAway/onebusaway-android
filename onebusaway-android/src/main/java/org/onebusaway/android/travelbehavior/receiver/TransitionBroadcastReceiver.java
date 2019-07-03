@@ -23,7 +23,6 @@ import com.google.android.gms.location.ActivityTransitionResult;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
@@ -117,23 +116,20 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
     }
 
     private void saveTravelBehavior(TravelBehaviorInfo tbi) {
-        StringBuilder pathBuilder = new StringBuilder();
-        pathBuilder.append("users/").append(mUid).append("/").append(
-                TravelBehaviorConstants.FIREBASE_ACTIVITY_TRANSITION_FOLDER);
         long riPrefix = PreferenceUtils.getLong(TravelBehaviorConstants.RECORD_ID, 0);
         mRecordId = riPrefix++ + "-" + UUID.randomUUID().toString();
         PreferenceUtils.saveLong(TravelBehaviorConstants.RECORD_ID, riPrefix);
-        pathBuilder.append(mRecordId);
 
-        DocumentReference document = FirebaseFirestore.getInstance().document(pathBuilder.toString());
+        DocumentReference document = TravelBehaviorFirebaseIOUtils.
+                getFirebaseDocReferenceByUserIdAndRecordId(mUid, mRecordId,
+                        TravelBehaviorConstants.FIREBASE_ACTIVITY_TRANSITION_FOLDER);
 
         document.set(tbi).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Log.d(TAG, "Activity transition document added with ID " + document.getId());
             } else {
-                Log.d(TAG, "Activity transition document failed to be added: " +
-                        task.getException().getMessage());
-                task.getException().printStackTrace();
+                TravelBehaviorFirebaseIOUtils.logErrorMessage(task.getException(),
+                        "Activity transition document failed to be added: ");
             }
         });
     }
@@ -180,7 +176,9 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
         Intent intent = new Intent(mContext, RecognitionBroadcastReceiver.class);
         intent.putExtra(TravelBehaviorConstants.RECORD_ID, mRecordId);
 
-        PendingIntent pi = PendingIntent.getBroadcast(mContext, 100, intent, PendingIntent.FLAG_ONE_SHOT);
+        int reqCode = PreferenceUtils.getInt(TravelBehaviorConstants.RECOGNITION_REQUEST_CODE, 0);
+        PendingIntent pi = PendingIntent.getBroadcast(mContext, reqCode++, intent, PendingIntent.FLAG_ONE_SHOT);
+        PreferenceUtils.saveInt(TravelBehaviorConstants.RECOGNITION_REQUEST_CODE, reqCode);
         client.requestActivityUpdates(TimeUnit.SECONDS.toMillis(10), pi);
     }
 
@@ -212,16 +210,18 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
         LocationManager lm = (LocationManager) Application.get().getBaseContext()
                 .getSystemService(Context.LOCATION_SERVICE);
 
+        if (lm == null) return;
+
         List<String> providers = lm.getProviders(true);
         for (String provider : providers) {
             if (LocationManager.PASSIVE_PROVIDER.equals(provider)) continue;
 
-            int reqCode = PreferenceUtils.getInt(TravelBehaviorConstants.REQUEST_CODE, 0);
+            int reqCode = PreferenceUtils.getInt(TravelBehaviorConstants.LOCATION_REQUEST_CODE, 0);
             Intent intent = new Intent(mContext, LocationBroadcastReceiver.class);
             intent.putExtra(TravelBehaviorConstants.RECORD_ID, mRecordId);
             PendingIntent pi = PendingIntent.getBroadcast(mContext, reqCode++, intent, PendingIntent.FLAG_ONE_SHOT);
             lm.requestLocationUpdates(provider, 0, 0, pi);
-            PreferenceUtils.saveInt(TravelBehaviorConstants.REQUEST_CODE, reqCode);
+            PreferenceUtils.saveInt(TravelBehaviorConstants.LOCATION_REQUEST_CODE, reqCode);
         }
     }
 
@@ -247,7 +247,8 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
 
         DeviceInformation di = new DeviceInformation(obaVersion, Build.MODEL, Build.VERSION.RELEASE,
                 Build.VERSION.SDK_INT, googlePlayServicesAppVersion,
-                GoogleApiAvailability.GOOGLE_PLAY_SERVICES_VERSION_CODE);
+                GoogleApiAvailability.GOOGLE_PLAY_SERVICES_VERSION_CODE,
+                Application.get().getCurrentRegion().getId());
 
         int hashCode = di.hashCode();
         int mostRecentDeviceHash = PreferenceUtils.getInt(TravelBehaviorConstants.DEVICE_INFO_HASH,

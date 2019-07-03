@@ -44,7 +44,7 @@ public class TravelBehaviorFirebaseIOUtils {
         return pathBuilder.toString();
     }
 
-    private static DocumentReference getFirebaseDocReferenceByUserIdAndRecordId(String userId,
+    public static DocumentReference getFirebaseDocReferenceByUserIdAndRecordId(String userId,
                                                                                 String recordId,
                                                                                 String folder) {
         String path = TravelBehaviorFirebaseIOUtils.buildDocumentPathByUid(userId, folder);
@@ -65,9 +65,7 @@ public class TravelBehaviorFirebaseIOUtils {
                         Log.d(TAG, "Location update saved with provider: " +
                                 location.getProvider());
                     } else {
-                        Log.d(TAG, "Location update failed: " +
-                                task.getException().getMessage());
-                        task.getException().printStackTrace();
+                        logErrorMessage(task.getException(), "Location update failed: ");
                     }
                 });
     }
@@ -84,9 +82,8 @@ public class TravelBehaviorFirebaseIOUtils {
                         Log.d(TAG, "Arrivals and departure are saved with ID: " +
                                 document.getId());
                     } else {
-                        Log.d(TAG, "Arrivals and departure are failed to be saved " +
-                                task.getException().getMessage());
-                        task.getException().printStackTrace();
+                        logErrorMessage(task.getException(),
+                                "Arrivals and departure are failed to be saved ");
                     }
                 });
     }
@@ -103,9 +100,8 @@ public class TravelBehaviorFirebaseIOUtils {
                         Log.d(TAG, "Trip plans are saved with ID: " +
                                 document.getId());
                     } else {
-                        Log.d(TAG, "Trip plans are failed to be saved " +
-                                task.getException().getMessage());
-                        task.getException().printStackTrace();
+                        logErrorMessage(task.getException(),
+                                "Trip plans are failed to be saved ");
                     }
                 });
     }
@@ -122,9 +118,8 @@ public class TravelBehaviorFirebaseIOUtils {
                         Log.d(TAG, "Destination reminders are saved with ID: " +
                                 document.getId());
                     } else {
-                        Log.d(TAG, "Destination reminders are failed to be saved " +
-                                task.getException().getMessage());
-                        task.getException().printStackTrace();
+                        logErrorMessage(task.getException(),
+                                "Destination reminders are failed to be saved ");
                     }
                 });
     }
@@ -140,10 +135,19 @@ public class TravelBehaviorFirebaseIOUtils {
                 Log.d(TAG, "Device Info document added with ID " + document.getId());
                 PreferenceUtils.saveInt(TravelBehaviorConstants.DEVICE_INFO_HASH, hashCode);
             } else {
-                Log.d(TAG, "Device Info transition document failed to be added: " +
-                        task.getException().getMessage());
-                task.getException().printStackTrace();
+                logErrorMessage(task.getException(),
+                        "Device Info transition document failed to be added: ");
             }
         });
+    }
+
+    public static void logErrorMessage(Exception e, String message) {
+        if (e != null) {
+            Log.d(TAG, message +
+                    e.getMessage());
+            e.printStackTrace();
+        } else {
+            Log.d(TAG, message);
+        }
     }
 }

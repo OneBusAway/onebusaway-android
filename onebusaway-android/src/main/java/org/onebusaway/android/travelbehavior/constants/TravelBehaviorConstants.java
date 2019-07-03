@@ -29,7 +29,9 @@ public class TravelBehaviorConstants {
 
     public static final String PARTICIPANT_SERVICE_RESULT = "STATUS OK";
 
-    public static final String REQUEST_CODE = "tbRequestCode";
+    public static final String LOCATION_REQUEST_CODE = "tbRequestCode";
+
+    public static final String RECOGNITION_REQUEST_CODE = "tbRecognitionRequestCode";
 
     public static final String TRIP_PLAN_COUNTER = "tripPlanCounter";
 
@@ -39,7 +41,7 @@ public class TravelBehaviorConstants {
 
     public static final String DESTINATION_REMINDER_COUNTER = "destinationReminderCounter";
 
-    public static final String FIREBASE_ACTIVITY_TRANSITION_FOLDER = "activity-transitions/";
+    public static final String FIREBASE_ACTIVITY_TRANSITION_FOLDER = "activity-transitions";
 
     public static final String FIREBASE_ARRIVAL_AND_DEPARTURE_FOLDER = "arrival-and-departures";
 

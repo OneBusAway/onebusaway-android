@@ -17,15 +17,11 @@ package org.onebusaway.android.travelbehavior.receiver;
 
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.model.TravelBehaviorInfo;
+import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
@@ -38,8 +34,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import androidx.annotation.NonNull;
 
 public class RecognitionBroadcastReceiver extends BroadcastReceiver {
 
@@ -70,39 +64,33 @@ public class RecognitionBroadcastReceiver extends BroadcastReceiver {
 
     private void readActivitiesByRecordId(String recordId) {
         String uid = PreferenceUtils.getString(TravelBehaviorConstants.USER_ID);
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-        StringBuilder pathBuilder = new StringBuilder();
-        pathBuilder.append("users/").append(uid).append("/").
-                append(TravelBehaviorConstants.FIREBASE_ACTIVITY_TRANSITION_FOLDER);
-
-        DocumentReference document = db.collection(pathBuilder.toString()).document(recordId);
-        document.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-            @Override
-            public void onSuccess(DocumentSnapshot documentSnapshot) {
-                if(documentSnapshot.exists()) {
-                    Log.d(TAG, "Read document successful RecognitionBroadcastReceiver");
-                    TravelBehaviorInfo tbi = documentSnapshot.toObject(TravelBehaviorInfo.class);
+        DocumentReference document = TravelBehaviorFirebaseIOUtils.
+                getFirebaseDocReferenceByUserIdAndRecordId(uid, recordId,
+                        TravelBehaviorConstants.FIREBASE_ACTIVITY_TRANSITION_FOLDER);
+        document.get().addOnSuccessListener(documentSnapshot -> {
+            if(documentSnapshot.exists()) {
+                Log.d(TAG, "Read document successful RecognitionBroadcastReceiver");
+                TravelBehaviorInfo tbi = documentSnapshot.toObject(TravelBehaviorInfo.class);
+                if (tbi != null) {
                     updateTravelBehavior(tbi, recordId);
                 } else {
-                    Log.d(TAG, "Read document FAILED RecognitionBroadcastReceiver");
+                    Log.d(TAG, "TravelBehaviorInfo is null");
                 }
+            } else {
+                Log.d(TAG, "Read document FAILED RecognitionBroadcastReceiver");
             }
         });
     }
 
     private void updateTravelBehavior(TravelBehaviorInfo tbi, String recordId) {
         String uid = PreferenceUtils.getString(TravelBehaviorConstants.USER_ID);
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference document = TravelBehaviorFirebaseIOUtils.
+                getFirebaseDocReferenceByUserIdAndRecordId(uid, recordId,
+                        TravelBehaviorConstants.FIREBASE_ACTIVITY_TRANSITION_FOLDER);
 
-        StringBuilder pathBuilder = new StringBuilder();
-        pathBuilder.append("users/").append(uid).append("/").append("activity-transitions");
-
-        DocumentReference document = db.collection(pathBuilder.toString()).document(recordId);
         List<Map<String,Object>> list=new ArrayList<>();
         for (TravelBehaviorInfo.TravelBehaviorActivity tba: tbi.activities) {
-            Integer confidence = mDetectedActivityMap.get(tba.detectedActivity);
-            tba.confidenceLevel = confidence;
+            tba.confidenceLevel = mDetectedActivityMap.get(tba.detectedActivity);;
             Map<String, Object> updateMap = new HashMap();
             updateMap.put("detectedActivity", tba.detectedActivity);
             updateMap.put("detectedActivityType", tba.detectedActivityType);
@@ -110,15 +98,12 @@ public class RecognitionBroadcastReceiver extends BroadcastReceiver {
             list.add(updateMap);
         }
 
-        document.update("activities", list).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                if (task.isSuccessful()) {
-                    Log.d(TAG, "Update travel behavior successful.");
-                } else {
-                    Log.d(TAG, "Update travel behavior failed: " + task.getException().getMessage());
-                    task.getException().printStackTrace();
-                }
+        document.update("activities", list).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Log.d(TAG, "Update travel behavior successful.");
+            } else {
+                TravelBehaviorFirebaseIOUtils.logErrorMessage(task.getException(),
+                        "Update travel behavior failed: ");
             }
         });
     }

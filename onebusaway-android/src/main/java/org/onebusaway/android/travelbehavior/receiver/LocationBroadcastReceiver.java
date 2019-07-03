@@ -31,14 +31,19 @@ public class LocationBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Location location = (Location) intent.getExtras().get(LocationManager.KEY_LOCATION_CHANGED);
-        if (location != null) {
-            String recordId = intent.getStringExtra(TravelBehaviorConstants.RECORD_ID);
-            String uid = PreferenceUtils.getString(TravelBehaviorConstants.USER_ID);
-            TravelBehaviorFirebaseIOUtils.saveLocation(location, uid, recordId);
-            Log.d(TAG, "Location provider: " + location.getProvider());
+        if (intent.getExtras() == null) {
+            Log.d(TAG, "Intent.getExtras is null");
         } else {
-            Log.d(TAG, "Location provider is null");
+            Location location = (Location) intent.getExtras().get(LocationManager.KEY_LOCATION_CHANGED);
+            if (location != null) {
+                String recordId = intent.getStringExtra(TravelBehaviorConstants.RECORD_ID);
+                String uid = PreferenceUtils.getString(TravelBehaviorConstants.USER_ID);
+                TravelBehaviorFirebaseIOUtils.saveLocation(location, uid, recordId);
+                Log.d(TAG, "Location provider: " + location.getProvider());
+            } else {
+                Log.d(TAG, "Location provider is null");
+            }
         }
+
     }
 }

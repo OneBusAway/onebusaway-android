@@ -31,21 +31,24 @@ public class DeviceInformation {
 
     public Integer googlePlayServicesLib;
 
+    public Long regionId;
+
     public DeviceInformation(String appVersion, String deviceModel, String sdkVersion,
                              Integer sdkVersionInt, String googlePlayServicesApp,
-                             Integer googlePlayServicesLib) {
+                             Integer googlePlayServicesLib, Long regionId) {
         this.appVersion = appVersion;
         this.deviceModel = deviceModel;
         this.sdkVersion = sdkVersion;
         this.sdkVersionInt = sdkVersionInt;
         this.googlePlayServicesApp = googlePlayServicesApp;
         this.googlePlayServicesLib = googlePlayServicesLib;
+        this.regionId = regionId;
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(appVersion).append(deviceModel).append(sdkVersion)
                 .append(sdkVersionInt).append(googlePlayServicesApp).append(googlePlayServicesLib)
-                .toHashCode();
+                .append(regionId).toHashCode();
     }
 }

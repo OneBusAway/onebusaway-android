@@ -26,6 +26,7 @@ import org.onebusaway.android.io.ObaDefaultConnectionFactory;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.io.TravelBehaviorFileSaverExecutorManager;
+import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils;
 
 import android.content.Context;
 import android.net.Uri;
@@ -60,7 +61,7 @@ public class RegisterTravelBehaviorParticipantWorker extends ListenableWorker {
 
     private void registerUser() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
-        Log.d(TAG, "Initializing anonymous firebase user");
+        Log.d(TAG, "Initializing anonymous Firebase user");
         TravelBehaviorFileSaverExecutorManager manager =
                 TravelBehaviorFileSaverExecutorManager.getInstance();
         auth.signInAnonymously()
@@ -69,8 +70,8 @@ public class RegisterTravelBehaviorParticipantWorker extends ListenableWorker {
                         Log.d(TAG, "Firebase user init success ID: " + auth.getUid());
                         saveEmailAddress(auth.getUid());
                     } else {
-                        Log.d(TAG, "Firebase user init failed:" + task.getException().getMessage());
-                        task.getException().printStackTrace();
+                        TravelBehaviorFirebaseIOUtils.logErrorMessage(task.getException(),
+                                "Firebase user init failed: ");
                         mFuture.set(Result.failure());
                     }
                 });
@@ -92,7 +93,7 @@ public class RegisterTravelBehaviorParticipantWorker extends ListenableWorker {
             }
         } catch (IOException e) {
             Log.e(TAG, e.toString());
-            Result.failure();
+            mFuture.set(Result.failure());
         }
     }
 

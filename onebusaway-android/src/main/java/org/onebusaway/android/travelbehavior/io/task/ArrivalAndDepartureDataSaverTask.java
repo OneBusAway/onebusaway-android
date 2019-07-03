@@ -59,7 +59,7 @@ public class ArrivalAndDepartureDataSaverTask implements Runnable {
     public ArrivalAndDepartureDataSaverTask(ObaArrivalInfo[] arrivalInfo, long serverTime,
                                             String url, String stopId, Context applicationContext) {
         mArrivalInfo = arrivalInfo;
-        this.mServerTime = serverTime;
+        mServerTime = serverTime;
         mStopId = stopId;
         mUrl = url;
         mApplicationContext = applicationContext;

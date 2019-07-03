@@ -61,7 +61,7 @@ public class RecognitionBroadcastReceiver extends BroadcastReceiver {
                     sb.append("confidence level: ").append(da.getConfidence()).append("\n");
                 }
 
-                Log.v(TAG, "Detected activity recognition: " + sb.toString());
+                Log.d(TAG, "Detected activity recognition: " + sb.toString());
                 String recordId = intent.getStringExtra(TravelBehaviorConstants.RECORD_ID);
                 readActivitiesByRecordId(recordId);
             }
@@ -81,11 +81,11 @@ public class RecognitionBroadcastReceiver extends BroadcastReceiver {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 if(documentSnapshot.exists()) {
-                    Log.v(TAG, "Read document successful RecognitionBroadcastReceiver");
+                    Log.d(TAG, "Read document successful RecognitionBroadcastReceiver");
                     TravelBehaviorInfo tbi = documentSnapshot.toObject(TravelBehaviorInfo.class);
                     updateTravelBehavior(tbi, recordId);
                 } else {
-                    Log.v(TAG, "Read document FAILED RecognitionBroadcastReceiver");
+                    Log.d(TAG, "Read document FAILED RecognitionBroadcastReceiver");
                 }
             }
         });
@@ -114,9 +114,9 @@ public class RecognitionBroadcastReceiver extends BroadcastReceiver {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 if (task.isSuccessful()) {
-                    Log.v(TAG, "Update travel behavior successful.");
+                    Log.d(TAG, "Update travel behavior successful.");
                 } else {
-                    Log.v(TAG, "Update travel behavior failed: " + task.getException().getMessage());
+                    Log.d(TAG, "Update travel behavior failed: " + task.getException().getMessage());
                     task.getException().printStackTrace();
                 }
             }

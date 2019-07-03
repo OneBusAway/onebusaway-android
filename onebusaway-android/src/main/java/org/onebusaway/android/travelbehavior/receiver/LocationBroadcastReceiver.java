@@ -36,9 +36,9 @@ public class LocationBroadcastReceiver extends BroadcastReceiver {
             String recordId = intent.getStringExtra(TravelBehaviorConstants.RECORD_ID);
             String uid = PreferenceUtils.getString(TravelBehaviorConstants.USER_ID);
             TravelBehaviorFirebaseIOUtils.saveLocation(location, uid, recordId);
-            Log.v(TAG, "Location provider: " + location.getProvider());
+            Log.d(TAG, "Location provider: " + location.getProvider());
         } else {
-            Log.v(TAG, "Location provider is null");
+            Log.d(TAG, "Location provider is null");
         }
     }
 }

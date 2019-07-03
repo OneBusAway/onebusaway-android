@@ -62,10 +62,10 @@ public class TravelBehaviorFirebaseIOUtils {
         document.update("locationInfoList", FieldValue.arrayUnion(locationMap)).
                 addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Log.v(TAG, "Location update saved with provider: " +
+                        Log.d(TAG, "Location update saved with provider: " +
                                 location.getProvider());
                     } else {
-                        Log.v(TAG, "Location update failed: " +
+                        Log.d(TAG, "Location update failed: " +
                                 task.getException().getMessage());
                         task.getException().printStackTrace();
                     }
@@ -81,10 +81,10 @@ public class TravelBehaviorFirebaseIOUtils {
         document.set(new ArrivalAndDepartureInfo(arrivalAndDepartureList)).
                 addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Log.v(TAG, "Arrivals and departure are saved with ID: " +
+                        Log.d(TAG, "Arrivals and departure are saved with ID: " +
                                 document.getId());
                     } else {
-                        Log.v(TAG, "Arrivals and departure are failed to be saved " +
+                        Log.d(TAG, "Arrivals and departure are failed to be saved " +
                                 task.getException().getMessage());
                         task.getException().printStackTrace();
                     }
@@ -100,10 +100,10 @@ public class TravelBehaviorFirebaseIOUtils {
         document.set(new TripPlanInfo(tripPlanDataList)).
                 addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Log.v(TAG, "Trip plans are saved with ID: " +
+                        Log.d(TAG, "Trip plans are saved with ID: " +
                                 document.getId());
                     } else {
-                        Log.v(TAG, "Trip plans are failed to be saved " +
+                        Log.d(TAG, "Trip plans are failed to be saved " +
                                 task.getException().getMessage());
                         task.getException().printStackTrace();
                     }
@@ -119,10 +119,10 @@ public class TravelBehaviorFirebaseIOUtils {
         document.set(new DestinationReminderInfo(reminderData)).
                 addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Log.v(TAG, "Destination reminders are saved with ID: " +
+                        Log.d(TAG, "Destination reminders are saved with ID: " +
                                 document.getId());
                     } else {
-                        Log.v(TAG, "Destination reminders are failed to be saved " +
+                        Log.d(TAG, "Destination reminders are failed to be saved " +
                                 task.getException().getMessage());
                         task.getException().printStackTrace();
                     }
@@ -137,10 +137,10 @@ public class TravelBehaviorFirebaseIOUtils {
 
         document.set(deviceInformation).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                Log.v(TAG, "Device Info document added with ID " + document.getId());
+                Log.d(TAG, "Device Info document added with ID " + document.getId());
                 PreferenceUtils.saveInt(TravelBehaviorConstants.DEVICE_INFO_HASH, hashCode);
             } else {
-                Log.v(TAG, "Device Info transition document failed to be added: " +
+                Log.d(TAG, "Device Info transition document failed to be added: " +
                         task.getException().getMessage());
                 task.getException().printStackTrace();
             }

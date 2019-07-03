@@ -60,16 +60,16 @@ public class RegisterTravelBehaviorParticipantWorker extends ListenableWorker {
 
     private void registerUser() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
-        Log.v(TAG, "Initializing anonymous firebase user");
+        Log.d(TAG, "Initializing anonymous firebase user");
         TravelBehaviorFileSaverExecutorManager manager =
                 TravelBehaviorFileSaverExecutorManager.getInstance();
         auth.signInAnonymously()
                 .addOnCompleteListener(manager.getThreadPoolExecutor(), task -> {
                     if (task.isSuccessful()) {
-                        Log.v(TAG, "Firebase user init success ID: " + auth.getUid());
+                        Log.d(TAG, "Firebase user init success ID: " + auth.getUid());
                         saveEmailAddress(auth.getUid());
                     } else {
-                        Log.v(TAG, "Firebase user init failed:" + task.getException().getMessage());
+                        Log.d(TAG, "Firebase user init failed:" + task.getException().getMessage());
                         task.getException().printStackTrace();
                         mFuture.set(Result.failure());
                     }

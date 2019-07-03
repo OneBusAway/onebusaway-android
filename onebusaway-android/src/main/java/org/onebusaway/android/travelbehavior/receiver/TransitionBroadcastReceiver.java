@@ -91,7 +91,7 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
                             TravelBehaviorUtils.toTransitionType(event.getTransitionType())));
                 }
 
-                Log.v(TAG, "Detected activity transition: " + sb.toString());
+                Log.d(TAG, "Detected activity transition: " + sb.toString());
                 TravelBehaviorUtils.showDebugToastMessageWithVibration(
                         "Detected activity transition: " + sb.toString(), mContext);
 
@@ -131,9 +131,9 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
 
         document.set(tbi).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                Log.v(TAG, "Activity transition document added with ID " + document.getId());
+                Log.d(TAG, "Activity transition document added with ID " + document.getId());
             } else {
-                Log.v(TAG, "Activity transition document failed to be added: " +
+                Log.d(TAG, "Activity transition document failed to be added: " +
                         task.getException().getMessage());
                 task.getException().printStackTrace();
             }
@@ -190,13 +190,13 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
         String[] requiredPermissions = {Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION};
         if (PermissionUtils.hasGrantedPermissions(mContext, requiredPermissions)) {
-            Log.v(TAG, "Location permissions are granted, requesting fused, GPS, and Network" +
+            Log.d(TAG, "Location permissions are granted, requesting fused, GPS, and Network" +
                     "locations");
             requestFusedLocation();
 
             requestGPSNetworkLocation();
         } else {
-            Log.v(TAG, "Location permissions not granted. Skipping location requests");
+            Log.d(TAG, "Location permissions not granted. Skipping location requests");
         }
     }
 

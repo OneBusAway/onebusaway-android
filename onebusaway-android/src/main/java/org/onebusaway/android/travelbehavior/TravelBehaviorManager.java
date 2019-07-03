@@ -48,14 +48,12 @@ import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.text.Html;
-import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
@@ -315,9 +313,9 @@ public class TravelBehaviorManager {
                 .requestActivityTransitionUpdates(atr, pi);
         task.addOnCompleteListener(task1 -> {
             if (task1.isSuccessful()) {
-                Log.v(TAG, "Travel behavior activity-transition-update set up");
+                Log.d(TAG, "Travel behavior activity-transition-update set up");
             } else {
-                Log.v(TAG, "Travel behavior activity-transition-update failed set up: " +
+                Log.d(TAG, "Travel behavior activity-transition-update failed set up: " +
                         task1.getException().getMessage());
                 task1.getException().printStackTrace();
             }

@@ -116,9 +116,9 @@ public class ArrivalAndDepartureDataSaverTask implements Runnable {
                             time.getTime(), mServerTime);
             add.setLocation(location);
 
-            // Used Gson instead of Jackson library because, Jackson had problems while deserializing
-            // nested objects.  When we deserialize the object and push it to Firebase, firebase API
-            // throwed a null pointer exception.  Serializing and deserializing this arrival and
+            // Used Gson instead of Jackson library - Jackson had problems while deserializing
+            // nested objects.  When we deserialize the object and push it to Firebase, Firebase API
+            // throws a null pointer exception.  Serializing and deserializing this arrival and
             // departure data with Gson fixed the problem.
             Gson gson = new Gson();
             String data = gson.toJson(add);

@@ -1133,8 +1133,8 @@
     </string>
 
     <!--Travel Behaviour data collection-->
-    <string name="travel_behavior_opt_in_message">Would you like to improve public transportation?</string>
-    <string name="travel_behavior_opt_in_title">Improve public transportation</string>
+    <string name="travel_behavior_opt_in_message">We\'d like your help in a research study that could improve how transit service works. Learn more?</string>
+    <string name="travel_behavior_opt_in_title">Help us improve transit!</string>
     <string name="travel_behavior_age_message">Are you over the age of 18?</string>
     <string name="travel_behavior_email_message">Please provide your email address</string>
     <string name="travel_behavior_email_invalid">Email address is invalid</string>

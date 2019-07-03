@@ -23,7 +23,6 @@ import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.io.TravelBehaviorFileSaverExecutorManager;
-import org.onebusaway.android.travelbehavior.model.ArrivalAndDepartureInfo;
 import org.onebusaway.android.travelbehavior.model.DestinationReminderInfo;
 import org.onebusaway.android.util.PreferenceUtils;
 
@@ -70,14 +69,13 @@ public class DestinationReminderDataSaverTask implements Runnable {
 
     @Override
     public void run() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                    mApplicationContext.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    mApplicationContext.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                saveDestinationReminders(null);
-            } else {
-                requestFusedLocation();
-            }
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                mApplicationContext.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                mApplicationContext.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            saveDestinationReminders(null);
+        } else {
+            requestFusedLocation();
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -118,9 +116,9 @@ public class DestinationReminderDataSaverTask implements Runnable {
                     Application.get().getCurrentRegion().getId(), localElapsedRealtimeNanos,
                     time.getTime(), mServerTime, location);
 
-            // Used Gson instead of Jackson library because, Jackson had problems while deserializing
-            // nested objects.  When we deserialize the object and push it to Firebase, firebase API
-            // throwed a null pointer exception.  Serializing and deserializing this arrival and
+            // Used Gson instead of Jackson library - Jackson had problems while deserializing
+            // nested objects.  When we deserialize the object and push it to Firebase, Firebase API
+            // throws a null pointer exception.  Serializing and deserializing this arrival and
             // departure data with Gson fixed the problem.
             Gson gson = new Gson();
             String data = gson.toJson(drd);

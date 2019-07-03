@@ -52,17 +52,16 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
 public class TransitionBroadcastReceiver extends BroadcastReceiver {
-//     implements LocationHelper.Listener
 
     private static final String TAG = "ActivityTransition";
 
-    //    private LocationHelper mLocationHelper;
     private Context mContext;
     private List<TravelBehaviorInfo.TravelBehaviorActivity> mActivityList;
     private String mUid;
@@ -81,7 +80,6 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
 
                 StringBuilder sb = new StringBuilder();
                 mActivityList = new ArrayList<>();
-
 
                 for (ActivityTransitionEvent event : result.getTransitionEvents()) {
                     sb.append(TravelBehaviorUtils.toActivityString(event.getActivityType())).append(" -- ");
@@ -183,7 +181,7 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
         intent.putExtra(TravelBehaviorConstants.RECORD_ID, mRecordId);
 
         PendingIntent pi = PendingIntent.getBroadcast(mContext, 100, intent, PendingIntent.FLAG_ONE_SHOT);
-        client.requestActivityUpdates(10000l, pi);
+        client.requestActivityUpdates(TimeUnit.SECONDS.toMillis(10), pi);
     }
 
     private void requestLocationUpdates() {

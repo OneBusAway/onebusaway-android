@@ -25,6 +25,7 @@ import org.onebusaway.android.travelbehavior.model.DestinationReminderInfo;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +38,8 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 public class DestinationReminderReaderWorker extends Worker {
+
+    private static final String TAG = "DestRemindReadWorker";
 
     public DestinationReminderReaderWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -55,7 +58,7 @@ public class DestinationReminderReaderWorker extends Worker {
                     .getFilesDir().getAbsolutePath() + File.separator +
                     TravelBehaviorConstants.LOCAL_DESTINATION_REMINDER_FOLDER);
 
-            // If the directory is not exist do not read
+            // If the directory does not exist do not read
             if (subFolder == null || !subFolder.isDirectory()) return;
 
             Collection<File> files = FileUtils.listFiles(subFolder, TrueFileFilter.INSTANCE,
@@ -70,7 +73,7 @@ public class DestinationReminderReaderWorker extends Worker {
                                 gson.fromJson(jsonStr, DestinationReminderInfo.DestinationReminderData.class);
                         l.add(destinationReminderData);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Log.e(TAG, e.toString());
                     }
                 }
 
@@ -82,7 +85,7 @@ public class DestinationReminderReaderWorker extends Worker {
                 TravelBehaviorFirebaseIOUtils.saveDestinationReminders(l, uid, recordId);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.toString());
         }
     }
 }

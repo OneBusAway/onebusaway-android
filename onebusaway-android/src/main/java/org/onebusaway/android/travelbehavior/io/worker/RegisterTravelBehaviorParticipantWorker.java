@@ -91,7 +91,7 @@ public class RegisterTravelBehaviorParticipantWorker extends ListenableWorker {
                 mFuture.set(Result.failure());
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.toString());
             Result.failure();
         }
     }

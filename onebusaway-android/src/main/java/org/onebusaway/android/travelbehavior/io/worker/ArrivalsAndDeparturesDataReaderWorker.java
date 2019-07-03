@@ -27,6 +27,7 @@ import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils
 import android.content.Context;
 import android.os.Build;
 import android.os.SystemClock;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +40,8 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 public class ArrivalsAndDeparturesDataReaderWorker extends Worker {
+
+    private static final String TAG = "ArrDprtDataReadWorker";
 
     public ArrivalsAndDeparturesDataReaderWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -57,7 +60,7 @@ public class ArrivalsAndDeparturesDataReaderWorker extends Worker {
                     .getFilesDir().getAbsolutePath() + File.separator +
                     TravelBehaviorConstants.LOCAL_ARRIVAL_AND_DEPARTURE_FOLDER);
 
-            // If the directory is not exist do not read
+            // If the directory does not exist do not read
             if (subFolder == null || !subFolder.isDirectory()) return;
 
             Collection<File> files = FileUtils.listFiles(subFolder, TrueFileFilter.INSTANCE,
@@ -83,7 +86,7 @@ public class ArrivalsAndDeparturesDataReaderWorker extends Worker {
                             }
                         }
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Log.e(TAG, e.toString());
                     }
                 }
 
@@ -95,7 +98,7 @@ public class ArrivalsAndDeparturesDataReaderWorker extends Worker {
                 TravelBehaviorFirebaseIOUtils.saveArrivalsAndDepartures(l, uid, recordId);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.toString());
         }
     }
 }

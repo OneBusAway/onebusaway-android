@@ -2002,4 +2002,11 @@ public final class UIUtils {
 
         v.setContentDescription(Application.get().getString(stringId));
     }
+
+    public static void openBatteryIgnoreIntent(Activity activity) {
+        Intent intent = new Intent();
+        intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+        intent.setData(Uri.parse("package:" + activity.getPackageName()));
+        activity.startActivity(intent);
+    }
 }

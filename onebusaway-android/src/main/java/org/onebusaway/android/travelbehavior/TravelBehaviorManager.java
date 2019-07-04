@@ -141,6 +141,8 @@ public class TravelBehaviorManager {
                         })
                 .setNegativeButton(R.string.travel_behavior_dialog_no,
                         (dialog, which) -> {
+                            Toast.makeText(mApplicationContext,
+                                    R.string.travel_behavior_age_invalid_message, Toast.LENGTH_LONG).show();
                             optOutUser();
                             dialog.dismiss();
                         })

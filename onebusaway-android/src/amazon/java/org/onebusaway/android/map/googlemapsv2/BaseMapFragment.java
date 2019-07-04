@@ -36,6 +36,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -82,6 +83,7 @@ import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.map.bike.BikeshareMapController;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.ui.HomeActivity;
 import org.onebusaway.android.ui.LayersSpeedDialAdapter;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
@@ -422,8 +424,13 @@ public class BaseMapFragment extends SupportMapFragment
             } else {
                 mUserDeniedPermission = true;
             }
+        } else if (HomeActivity.BATTERY_OPTIMIZATIONS_PERMISSION_REQUEST == requestCode) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                UIUtils.openBatteryIgnoreIntent(getActivity());
+            }
         }
-        if (mOnLocationPermissionResultListener != null) {
+
+        if (requestCode == LOCATION_PERMISSION_REQUEST && mOnLocationPermissionResultListener != null) {
             mOnLocationPermissionResultListener.onLocationPermissionResult(result);
         }
     }

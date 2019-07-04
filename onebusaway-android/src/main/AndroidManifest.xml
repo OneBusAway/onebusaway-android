@@ -39,7 +39,9 @@
     <uses-permission android:name="${applicationId}.permission.TRIP_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION"/>
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+    <!--To enable checkBatteryOptimizations feature, also comment in the
+        checkBatteryOptimizations function in the HomeActivity's onCreate method-->
+    <!--<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>-->
 
     <uses-sdk tools:overrideLibrary="net.openid.appauth,
         android.support.customtabs,

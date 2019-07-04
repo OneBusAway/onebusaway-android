@@ -200,7 +200,7 @@ public class HomeActivity extends AppCompatActivity
     // Bottom Sliding panel
     SlidingUpPanelLayout mSlidingPanel;
 
-    public static final int BATTERY_OPTIMIZATIONS_PERMISSION_REQUEST = 1;
+    public static final int BATTERY_OPTIMIZATIONS_PERMISSION_REQUEST = 111;
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -389,7 +389,9 @@ public class HomeActivity extends AppCompatActivity
 
         UIUtils.setupActionBar(this);
 
-        checkBatteryOptimizations();
+        // To enable checkBatteryOptimizations, also comment in the
+        // REQUEST_IGNORE_BATTERY_OPTIMIZATIONS request in Android Manifest
+//        checkBatteryOptimizations();
 
         new TravelBehaviorManager(this, getApplicationContext()).
                 registerTravelBehaviorParticipant();
@@ -911,16 +913,6 @@ public class HomeActivity extends AppCompatActivity
         setupOptionsMenu(menu);
 
         return true;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        if (BATTERY_OPTIMIZATIONS_PERMISSION_REQUEST == requestCode) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                openBatteryIgnoreIntent();
-            }
-        }
     }
 
     private void setupOptionsMenu(Menu menu) {
@@ -2030,7 +2022,8 @@ public class HomeActivity extends AppCompatActivity
             return;
         }
 
-        if (!Application.isIgnoringBatteryOptimizations(getApplicationContext())) {
+        Boolean ignoringBatteryOptimizations = Application.isIgnoringBatteryOptimizations(getApplicationContext());
+        if (ignoringBatteryOptimizations != null && !ignoringBatteryOptimizations) {
             showIgnoreBatteryOptimizationDialog();
         }
     }
@@ -2045,7 +2038,7 @@ public class HomeActivity extends AppCompatActivity
                         (dialog, which) -> {
                             if (PermissionUtils.hasGrantedPermissions(this, new String[]{Manifest.
                                     permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS})) {
-                                openBatteryIgnoreIntent();
+                                UIUtils.openBatteryIgnoreIntent(this);
                             } else {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                     requestPermissions(new String[]{Manifest.
@@ -2062,12 +2055,5 @@ public class HomeActivity extends AppCompatActivity
                                     true);
                         })
                 .create().show();
-    }
-
-    private void openBatteryIgnoreIntent() {
-        Intent intent = new Intent();
-        intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-        intent.setData(Uri.parse("package:" + getPackageName()));
-        startActivity(intent);
     }
 }

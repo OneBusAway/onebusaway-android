@@ -1133,7 +1133,7 @@
     </string>
 
     <!--Travel Behaviour data collection-->
-    <string name="travel_behavior_opt_in_message">We\'d like your help in a research study that could improve how transit service works. Learn more?</string>
+    <string name="travel_behavior_opt_in_message">We\'d like your help with research to improve transit service.</string>
     <string name="travel_behavior_opt_in_title">Help us improve transit!</string>
     <string name="travel_behavior_age_message">Are you over the age of 18?</string>
     <string name="travel_behavior_age_invalid_message">Thanks for your interest, but you need to be over the age of 18 to participate.</string>
@@ -1144,6 +1144,8 @@
     <string name="travel_behavior_email_hint">Email</string>
     <string name="travel_behavior_dialog_yes">Yes</string>
     <string name="travel_behavior_dialog_no">No</string>
+    <string name="travel_behavior_dialog_learn_more">Learn more</string>
+    <string name="travel_behavior_dialog_no_thanks">No thanks</string>
     <string name="travel_behavior_dialog_consent_agree">Agree</string>
     <string name="travel_behavior_dialog_consent_disagree">Decline</string>
     <string name="travel_behavior_dialog_email_save">Save</string>

@@ -42,6 +42,8 @@ public class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> 
 
     private static final int MINUTES_INCREMENT = 60; // minutes
 
+    private String mUrl;
+
     public ArrivalsListLoader(Context context, String stopId) {
         super(context);
         mStopId = stopId;
@@ -49,12 +51,19 @@ public class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> 
 
     @Override
     public ObaArrivalInfoResponse loadInBackground() {
-        return ObaArrivalInfoRequest.newRequest(getContext(), mStopId, mMinutesAfter).call();
+        ObaArrivalInfoRequest obaArrivalInfoRequest = ObaArrivalInfoRequest.newRequest(getContext(),
+                mStopId, mMinutesAfter);
+        // Cache the URL so we have a record of the request w/ params made to the server
+        mUrl = obaArrivalInfoRequest.getUri().toString();
+        return obaArrivalInfoRequest.call();
     }
 
     @Override
     public void deliverResult(ObaArrivalInfoResponse data) {
         mLastResponseTime = System.currentTimeMillis();
+        if (data != null) {
+            data.setUrl(mUrl);
+        }
         if (data.getCode() == ObaApi.OBA_OK) {
             mLastGoodResponse = data;
             mLastGoodResponseTime = mLastResponseTime;

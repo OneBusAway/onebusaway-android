@@ -64,6 +64,7 @@
     <string name="preferences_key_user_debugging_logs_category">preferences_key_user_debugging_logs_category</string>
     <string name="preferences_key_user_share_destination_logs">preferences_user_share_logs</string>
     <string name="preference_key_never_show_destination_reminder_beta_dialog">preference_never_show_destination_reminder_beta_dialog</string>
+    <string name="preferences_key_travel_behavior">preference_travel_behavior</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
@@ -76,6 +77,9 @@
 
     <!-- Powered by OBA URL -->
     <string name="powered_by_oba_url">http://onebusaway.org</string>
+
+    <!-- Travel Behavior Study Participant Info Url-->
+    <string name="travel_behavior_participants_url">https://script.google.com/macros/s/AKfycbyUnU7wYhGk_Y6UyEjQ0ePNn9avA3jA7QqDHI2PzKg2RYftrj9x/exec</string>
 
     <!-- Open-source link for Github project -->
     <string name="open_source_github">https://github.com/OneBusAway/onebusaway-android</string>
@@ -240,4 +244,6 @@
     <string name="analytics_label_destination_reminder_no">no</string>
     <string name="analytics_label_custom_metadata_response">Response</string>
     <string name="analytics_label_custom_metadata_feedback">FeedbackText</string>
+
+    <string name="not_request_battery_optimizations_key">request_battery_optimizations_key</string>
 </resources>

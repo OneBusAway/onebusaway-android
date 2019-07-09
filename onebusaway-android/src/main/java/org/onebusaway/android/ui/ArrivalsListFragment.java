@@ -18,6 +18,37 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaSituation;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaTrip;
+import org.onebusaway.android.io.elements.Occupancy;
+import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
+import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
+import org.onebusaway.android.util.ArrayAdapterWithIcon;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.DBUtil;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
+import org.onebusaway.android.util.UIUtils;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -46,36 +77,6 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.firebase.analytics.FirebaseAnalytics;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaSituation;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.ObaTrip;
-import org.onebusaway.android.io.elements.Occupancy;
-import org.onebusaway.android.io.elements.OccupancyState;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
-import org.onebusaway.android.util.ArrayAdapterWithIcon;
-import org.onebusaway.android.util.ArrivalInfoUtils;
-import org.onebusaway.android.util.BuildFlavorUtils;
-import org.onebusaway.android.util.DBUtil;
-import org.onebusaway.android.util.EmbeddedSocialUtils;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
-import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -114,7 +115,7 @@ public class ArrivalsListFragment extends ListFragment
     /**
      * Comma-delimited set of routes that serve this stop
      * See {@link UIUtils#serializeRouteDisplayNames(ObaStop,
-     * java.util.HashMap)}
+     * HashMap)}
      */
     public static final String STOP_ROUTES = ".StopRoutes";
 
@@ -263,7 +264,7 @@ public class ArrivalsListFragment extends ListFragment
          * Sets the routes that serve this stop via a comma-delimited set of route display names
          * <p/>
          * See {@link UIUtils#serializeRouteDisplayNames(ObaStop,
-         * java.util.HashMap)}
+         * HashMap)}
          *
          * @param routes comma-delimited list of route display names that serve this stop
          */
@@ -448,6 +449,9 @@ public class ArrivalsListFragment extends ListFragment
             info = result.getArrivalInfo();
             situations = UIUtils.getAllSituations(result, mRoutesFilter);
             refs = result.getRefs();
+
+            TravelBehaviorManager.saveArrivalInfo(info, result.getUrl(),
+                    result.getCurrentTime(), mStopId);
 
             // Report Stop distance metric
             Location stopLocation = mStop.getLocation();

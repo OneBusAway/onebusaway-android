@@ -17,29 +17,6 @@
 
 package org.onebusaway.android.util;
 
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.firebase.analytics.FirebaseAnalytics;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaSituation;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.Occupancy;
-import org.onebusaway.android.io.elements.OccupancyState;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.ui.ArrivalsListActivity;
-import org.onebusaway.android.ui.HomeActivity;
-import org.onebusaway.android.ui.RouteInfoActivity;
-import org.onebusaway.android.view.RealtimeIndicatorView;
-import org.onebusaway.util.comparators.AlphanumComparator;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
@@ -94,18 +71,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -122,6 +87,41 @@ import androidx.core.util.Pair;
 import androidx.core.view.MenuItemCompat;
 import androidx.core.widget.ImageViewCompat;
 import androidx.fragment.app.Fragment;
+
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaSituation;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.Occupancy;
+import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.ui.ArrivalsListActivity;
+import org.onebusaway.android.ui.HomeActivity;
+import org.onebusaway.android.ui.RouteInfoActivity;
+import org.onebusaway.android.view.RealtimeIndicatorView;
+import org.onebusaway.util.comparators.AlphanumComparator;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
 import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSION_REQUEST;
@@ -2001,5 +2001,18 @@ public final class UIUtils {
         }
 
         v.setContentDescription(Application.get().getString(stringId));
+    }
+
+    /**
+     * Asks the user to whitelist the application for energy restrictions (e.g., running in
+     * the background). See https://developer.android.com/training/monitoring-device-state/doze-standby#support_for_other_use_cases
+     *
+     * @param activity
+     */
+    public static void openBatteryIgnoreIntent(Activity activity) {
+        Intent intent = new Intent();
+        intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+        intent.setData(Uri.parse("package:" + activity.getPackageName()));
+        activity.startActivity(intent);
     }
 }

@@ -59,6 +59,7 @@ import org.onebusaway.android.travelbehavior.io.task.DestinationReminderDataSave
 import org.onebusaway.android.travelbehavior.io.task.TripPlanDataSaverTask;
 import org.onebusaway.android.travelbehavior.io.worker.RegisterTravelBehaviorParticipantWorker;
 import org.onebusaway.android.travelbehavior.receiver.TransitionBroadcastReceiver;
+import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
 import org.onebusaway.android.util.PermissionUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -118,13 +119,9 @@ public class TravelBehaviorManager {
                 .setIcon(createIcon())
                 .setCancelable(false)
                 .setPositiveButton(R.string.travel_behavior_dialog_learn_more,
-                        (dialog, which) -> {
-                            showAgeDialog();
-                        })
+                        (dialog, which) -> showAgeDialog())
                 .setNegativeButton(R.string.travel_behavior_dialog_no_thanks,
-                        (dialog, which) -> {
-                            optOutUser();
-                        })
+                        (dialog, which) -> optOutUser())
                 .create().show();
     }
 
@@ -157,13 +154,9 @@ public class TravelBehaviorManager {
                 .setIcon(createIcon())
                 .setCancelable(false)
                 .setPositiveButton(R.string.travel_behavior_dialog_consent_agree,
-                        (dialog, which) -> {
-                            showEmailDialog();
-                        })
+                        (dialog, which) -> showEmailDialog())
                 .setNegativeButton(R.string.travel_behavior_dialog_consent_disagree,
-                        (dialog, which) -> {
-                            optOutUser();
-                        })
+                        (dialog, which) -> optOutUser())
                 .create().show();
     }
 
@@ -172,7 +165,7 @@ public class TravelBehaviorManager {
                 openRawResource(R.raw.travel_behavior_informed_consent);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-        byte buf[] = new byte[1024];
+        byte[] buf = new byte[1024];
         int len;
         try {
             while ((len = inputStream.read(buf)) != -1) {
@@ -181,7 +174,7 @@ public class TravelBehaviorManager {
             outputStream.close();
             inputStream.close();
         } catch (IOException e) {
-
+            e.printStackTrace();
         }
         return outputStream.toString();
     }
@@ -317,9 +310,9 @@ public class TravelBehaviorManager {
             if (task1.isSuccessful()) {
                 Log.d(TAG, "Travel behavior activity-transition-update set up");
             } else {
-                Log.d(TAG, "Travel behavior activity-transition-update failed set up: " +
-                        task1.getException().getMessage());
-                task1.getException().printStackTrace();
+
+                TravelBehaviorFirebaseIOUtils.logErrorMessage(task1.getException(),
+                        "Travel behavior activity-transition-update failed set up: ");
             }
         });
     }

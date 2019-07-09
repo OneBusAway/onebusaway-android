@@ -47,6 +47,7 @@ import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Build;
 import android.util.Log;
+import android.view.accessibility.AccessibilityManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,8 @@ import java.util.concurrent.TimeUnit;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
+
+import static android.content.Context.ACCESSIBILITY_SERVICE;
 
 public class TransitionBroadcastReceiver extends BroadcastReceiver {
 
@@ -245,10 +248,13 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
             // Leave version as empty string
         }
 
+        AccessibilityManager am = (AccessibilityManager) mContext.getSystemService(ACCESSIBILITY_SERVICE);
+        Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
+
         DeviceInformation di = new DeviceInformation(obaVersion, Build.MODEL, Build.VERSION.RELEASE,
                 Build.VERSION.SDK_INT, googlePlayServicesAppVersion,
                 GoogleApiAvailability.GOOGLE_PLAY_SERVICES_VERSION_CODE,
-                Application.get().getCurrentRegion().getId());
+                Application.get().getCurrentRegion().getId(), isTalkBackEnabled);
 
         int hashCode = di.hashCode();
         int mostRecentDeviceHash = PreferenceUtils.getInt(TravelBehaviorConstants.DEVICE_INFO_HASH,

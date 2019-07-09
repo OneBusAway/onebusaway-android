@@ -33,9 +33,11 @@ public class DeviceInformation {
 
     public Long regionId;
 
+    public Boolean isTalkBackEnabled;
+
     public DeviceInformation(String appVersion, String deviceModel, String sdkVersion,
                              Integer sdkVersionInt, String googlePlayServicesApp,
-                             Integer googlePlayServicesLib, Long regionId) {
+                             Integer googlePlayServicesLib, Long regionId, Boolean isTalkBackEnabled) {
         this.appVersion = appVersion;
         this.deviceModel = deviceModel;
         this.sdkVersion = sdkVersion;
@@ -43,12 +45,13 @@ public class DeviceInformation {
         this.googlePlayServicesApp = googlePlayServicesApp;
         this.googlePlayServicesLib = googlePlayServicesLib;
         this.regionId = regionId;
+        this.isTalkBackEnabled = isTalkBackEnabled;
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(appVersion).append(deviceModel).append(sdkVersion)
                 .append(sdkVersionInt).append(googlePlayServicesApp).append(googlePlayServicesLib)
-                .append(regionId).toHashCode();
+                .append(regionId).append(isTalkBackEnabled).toHashCode();
     }
 }

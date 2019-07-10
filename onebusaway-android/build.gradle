@@ -39,6 +39,7 @@ repositories {
         // for testlib
         url "http://dl.bintray.com/acrowntest/ES_SDK"
     }
+    mavenCentral()
 }
 
 android {
@@ -453,6 +454,8 @@ dependencies {
     implementation "androidx.concurrent:concurrent-futures:1.0.0-beta01"
     implementation "androidx.concurrent:concurrent-listenablefuture:1.0.0-beta01"
     implementation "androidx.concurrent:concurrent-listenablefuture-callback:1.0.0-beta01"
+    compile "androidx.core:core-ktx:+"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
 }
 

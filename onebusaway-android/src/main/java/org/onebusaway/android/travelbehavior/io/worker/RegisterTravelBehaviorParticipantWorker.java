@@ -69,6 +69,7 @@ public class RegisterTravelBehaviorParticipantWorker extends ListenableWorker {
                     if (task.isSuccessful()) {
                         Log.d(TAG, "Firebase user init success ID: " + auth.getUid());
                         saveEmailAddress(auth.getUid());
+                        TravelBehaviorFirebaseIOUtils.initFirebaseUserWithId(auth.getUid());
                     } else {
                         TravelBehaviorFirebaseIOUtils.logErrorMessage(task.getException(),
                                 "Firebase user init failed: ");

@@ -30,6 +30,7 @@ import org.onebusaway.android.util.PreferenceUtils;
 import android.location.Location;
 import android.util.Log;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,8 +46,8 @@ public class TravelBehaviorFirebaseIOUtils {
     }
 
     public static DocumentReference getFirebaseDocReferenceByUserIdAndRecordId(String userId,
-                                                                                String recordId,
-                                                                                String folder) {
+                                                                               String recordId,
+                                                                               String folder) {
         String path = TravelBehaviorFirebaseIOUtils.buildDocumentPathByUid(userId, folder);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         return db.collection(path).document(recordId);
@@ -89,7 +90,7 @@ public class TravelBehaviorFirebaseIOUtils {
     }
 
     public static void saveTripPlans(List<TripPlanInfo.TripPlanData> tripPlanDataList,
-                                                 String userId, String recordId) {
+                                     String userId, String recordId) {
         DocumentReference document = TravelBehaviorFirebaseIOUtils.
                 getFirebaseDocReferenceByUserIdAndRecordId(userId, recordId,
                         TravelBehaviorConstants.FIREBASE_TRIP_PLAN_FOLDER);
@@ -107,7 +108,7 @@ public class TravelBehaviorFirebaseIOUtils {
     }
 
     public static void saveDestinationReminders(List<DestinationReminderInfo.DestinationReminderData> reminderData,
-                                     String userId, String recordId) {
+                                                String userId, String recordId) {
         DocumentReference document = TravelBehaviorFirebaseIOUtils.
                 getFirebaseDocReferenceByUserIdAndRecordId(userId, recordId,
                         TravelBehaviorConstants.FIREBASE_DESTINATION_REMINDER_FOLDER);
@@ -137,6 +138,21 @@ public class TravelBehaviorFirebaseIOUtils {
             } else {
                 logErrorMessage(task.getException(),
                         "Device Info transition document failed to be added: ");
+            }
+        });
+    }
+
+    public static void initFirebaseUserWithId(String userId) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference document = db.collection("users/").document(userId + "/");
+        Map<String, String> m = new HashMap<>();
+        m.put("userId", userId);
+        document.set(m).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Log.d(TAG, "Firebase initialized with user id: " + userId);
+            } else {
+                logErrorMessage(task.getException(),
+                        "Firebase failed to initialize with user id");
             }
         });
     }

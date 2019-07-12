@@ -73,7 +73,9 @@ install:
   - android-wait-for-emulator
   - adb shell input keyevent 82 &
 
-script: ./gradlew test check connectedObaGoogleDebugAndroidTest connectedObaAmazonDebugAndroidTest -x lint --stacktrace
+script:
+  - ./gradlew assembleObaGoogleDebug assembleObaAmazonDebug assembleYrtGoogleDebug
+  - ./gradlew test check connectedObaGoogleDebugAndroidTest -x lint --stacktrace
 
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock

@@ -14,9 +14,9 @@ env:
     - PATH=${ANDROID_HOME}:${ANDROID_HOME}/emulator:${TOOLS}:${TOOLS}/bin:${ANDROID_HOME}/platform-tools:${PATH}
   matrix:
     #- API=15 # only runs locally. Create+Start once from AndroidStudio to init sdcard. Then only from command-line w/-engine classic
-    - API=16 ABI=armeabi-v7a AUDIO=-no-audio
-    - API=17 ABI=armeabi-v7a
-    - API=18 ABI=armeabi-v7a # API18 has started being flaky
+    #- API=16 ABI=armeabi-v7a AUDIO=-no-audio # Fails with "com.android.builder.testing.ConnectedDevice > No tests found."
+    #- API=17 ABI=armeabi-v7a # Fails with "com.android.builder.testing.ConnectedDevice > No tests found."
+    #- API=18 ABI=armeabi-v7a # Fails with "com.android.builder.testing.ConnectedDevice > No tests found."
     #- API=19 ABI=armeabi-v7a # Fails: kernel/emulator mismatch, and emulator-29+ doesn't support "-engine classic" to fix
     # API 20 was Android Wear only
     - API=21
@@ -73,7 +73,7 @@ install:
   - android-wait-for-emulator
   - adb shell input keyevent 82 &
 
-script: ./gradlew test check connectedObaGoogleDebugAndroidTest connectedObaAmazonDebugAndroidTest connectedYrtGoogleDebugAndroidTest -x lint --stacktrace
+script: ./gradlew test check connectedObaGoogleDebugAndroidTest connectedObaAmazonDebugAndroidTest -x lint --stacktrace
 
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock

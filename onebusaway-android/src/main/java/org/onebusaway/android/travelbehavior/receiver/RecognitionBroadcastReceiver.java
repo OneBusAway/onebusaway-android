@@ -95,6 +95,10 @@ public class RecognitionBroadcastReceiver extends BroadcastReceiver {
             updateMap.put("detectedActivity", tba.detectedActivity);
             updateMap.put("detectedActivityType", tba.detectedActivityType);
             updateMap.put("confidenceLevel", tba.confidenceLevel);
+            updateMap.put("transitEventElapsedRealtimeNanos", tba.transitEventElapsedRealtimeNanos);
+            updateMap.put("systemClockElapsedRealtimeNanos", tba.systemClockElapsedRealtimeNanos);
+            updateMap.put("systemClockCurrentTimeMillis", tba.systemClockCurrentTimeMillis);
+            updateMap.put("numberOfNanosInThePastWhenEventHappened", tba.numberOfNanosInThePastWhenEventHappened);
             list.add(updateMap);
         }
 

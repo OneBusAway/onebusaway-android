@@ -17,8 +17,10 @@ package org.onebusaway.android.travelbehavior.model;
 
 import android.location.Location;
 import android.os.Build;
+import android.os.SystemClock;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class TravelBehaviorInfo {
 
@@ -26,13 +28,25 @@ public class TravelBehaviorInfo {
         public String detectedActivity;
         public String detectedActivityType;
         public Integer confidenceLevel;
+        public Long transitEventElapsedRealtimeNanos;
+        public Long systemClockElapsedRealtimeNanos;
+        public Long systemClockCurrentTimeMillis;
+        public Long numberOfNanosInThePastWhenEventHappened;
 
         public TravelBehaviorActivity() {
         }
 
-        public TravelBehaviorActivity(String detectedActivity, String detectedActivityType) {
+        public TravelBehaviorActivity(String detectedActivity, String detectedActivityType,
+                                      Long transitEventElapsedRealtimeNanos) {
             this.detectedActivity = detectedActivity;
             this.detectedActivityType = detectedActivityType;
+            this.transitEventElapsedRealtimeNanos = transitEventElapsedRealtimeNanos;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                systemClockElapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos();
+            }
+            systemClockCurrentTimeMillis = System.currentTimeMillis();
+            numberOfNanosInThePastWhenEventHappened = TimeUnit.MILLISECONDS.
+                    toNanos(systemClockCurrentTimeMillis) - transitEventElapsedRealtimeNanos;
         }
     }
 

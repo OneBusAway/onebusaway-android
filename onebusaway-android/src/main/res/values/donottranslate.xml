@@ -81,7 +81,7 @@
     <!-- Travel Behavior Study Participant Info Url-->
     <string name="travel_behavior_participants_url">https://script.google.com/macros/s/AKfycbyUnU7wYhGk_Y6UyEjQ0ePNn9avA3jA7QqDHI2PzKg2RYftrj9x/exec</string>
 
-    <string name="travel_behavior_participants_opt_out_url">https://script.google.com/a/mail.usf.edu/macros/s/AKfycbzPwMeJV0DFCjWjHJDuXOA95KtYIuoRbnDWXFSQQhTDk9zOhn1h/exec</string>
+    <string name="travel_behavior_participants_opt_out_url">https://script.google.com/macros/s/AKfycbyrCNQluXQHpMZt-jYqjdmV9CLT43sSCeGcIS1yNJtWB5LCtSOw/exec</string>
 
     <!-- Open-source link for Github project -->
     <string name="open_source_github">https://github.com/OneBusAway/onebusaway-android</string>

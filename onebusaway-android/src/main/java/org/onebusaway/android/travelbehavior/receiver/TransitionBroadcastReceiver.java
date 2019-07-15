@@ -88,7 +88,8 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
                     sb.append(TravelBehaviorUtils.toTransitionType(event.getTransitionType())).append("\n");
                     mActivityList.add(new TravelBehaviorInfo.TravelBehaviorActivity(
                             TravelBehaviorUtils.toActivityString(event.getActivityType()),
-                            TravelBehaviorUtils.toTransitionType(event.getTransitionType())));
+                            TravelBehaviorUtils.toTransitionType(event.getTransitionType()),
+                            event.getElapsedRealTimeNanos()));
                 }
 
                 Log.d(TAG, "Detected activity transition: " + sb.toString());

@@ -17,8 +17,10 @@ package org.onebusaway.android.travelbehavior.model;
 
 import android.location.Location;
 import android.os.Build;
+import android.os.SystemClock;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class TravelBehaviorInfo {
 
@@ -26,13 +28,31 @@ public class TravelBehaviorInfo {
         public String detectedActivity;
         public String detectedActivityType;
         public Integer confidenceLevel;
+        public Long eventElapsedRealtimeNanos;
+        public Long systemClockElapsedRealtimeNanos;
+        public Long systemClockCurrentTimeMillis;
+        public Long numberOfNanosInThePastWhenEventHappened;
+        public Long eventTimeMillis;
 
         public TravelBehaviorActivity() {
         }
 
-        public TravelBehaviorActivity(String detectedActivity, String detectedActivityType) {
+        public TravelBehaviorActivity(String detectedActivity, String detectedActivityType,
+                                      Long eventElapsedRealtimeNanos) {
             this.detectedActivity = detectedActivity;
             this.detectedActivityType = detectedActivityType;
+            // When the transition event happened, in nanos since boot
+            this.eventElapsedRealtimeNanos = eventElapsedRealtimeNanos;
+            // Current time, in milliseconds since epoch (normal clock time)
+            systemClockCurrentTimeMillis = System.currentTimeMillis();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                // Current time, in nanos since boot
+                systemClockElapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos();
+                // Number of nanos in the past from current time when the event happened
+                numberOfNanosInThePastWhenEventHappened = systemClockElapsedRealtimeNanos - eventElapsedRealtimeNanos;
+                // When the transition event happened, in milliseconds since epoch (normal clock time)
+                eventTimeMillis = systemClockCurrentTimeMillis - TimeUnit.NANOSECONDS.toMillis(numberOfNanosInThePastWhenEventHappened);
+            }
         }
     }
 

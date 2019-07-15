@@ -15,6 +15,11 @@
  */
 package org.onebusaway.android.travelbehavior.receiver;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
+
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 import com.google.firebase.firestore.DocumentReference;
@@ -24,11 +29,6 @@ import org.onebusaway.android.travelbehavior.model.TravelBehaviorInfo;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
 import org.onebusaway.android.util.PreferenceUtils;
-
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,10 +95,11 @@ public class RecognitionBroadcastReceiver extends BroadcastReceiver {
             updateMap.put("detectedActivity", tba.detectedActivity);
             updateMap.put("detectedActivityType", tba.detectedActivityType);
             updateMap.put("confidenceLevel", tba.confidenceLevel);
-            updateMap.put("transitEventElapsedRealtimeNanos", tba.transitEventElapsedRealtimeNanos);
+            updateMap.put("eventElapsedRealtimeNanos", tba.eventElapsedRealtimeNanos);
             updateMap.put("systemClockElapsedRealtimeNanos", tba.systemClockElapsedRealtimeNanos);
             updateMap.put("systemClockCurrentTimeMillis", tba.systemClockCurrentTimeMillis);
             updateMap.put("numberOfNanosInThePastWhenEventHappened", tba.numberOfNanosInThePastWhenEventHappened);
+            updateMap.put("eventTimeMillis", tba.eventTimeMillis);
             list.add(updateMap);
         }
 

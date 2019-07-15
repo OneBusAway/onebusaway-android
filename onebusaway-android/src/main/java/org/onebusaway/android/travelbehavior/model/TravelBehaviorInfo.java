@@ -28,25 +28,31 @@ public class TravelBehaviorInfo {
         public String detectedActivity;
         public String detectedActivityType;
         public Integer confidenceLevel;
-        public Long transitEventElapsedRealtimeNanos;
+        public Long eventElapsedRealtimeNanos;
         public Long systemClockElapsedRealtimeNanos;
         public Long systemClockCurrentTimeMillis;
         public Long numberOfNanosInThePastWhenEventHappened;
+        public Long eventTimeMillis;
 
         public TravelBehaviorActivity() {
         }
 
         public TravelBehaviorActivity(String detectedActivity, String detectedActivityType,
-                                      Long transitEventElapsedRealtimeNanos) {
+                                      Long eventElapsedRealtimeNanos) {
             this.detectedActivity = detectedActivity;
             this.detectedActivityType = detectedActivityType;
-            this.transitEventElapsedRealtimeNanos = transitEventElapsedRealtimeNanos;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                systemClockElapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos();
-            }
+            // When the transition event happened, in nanos since boot
+            this.eventElapsedRealtimeNanos = eventElapsedRealtimeNanos;
+            // Current time, in milliseconds since epoch (normal clock time)
             systemClockCurrentTimeMillis = System.currentTimeMillis();
-            numberOfNanosInThePastWhenEventHappened = TimeUnit.MILLISECONDS.
-                    toNanos(systemClockCurrentTimeMillis) - transitEventElapsedRealtimeNanos;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                // Current time, in nanos since boot
+                systemClockElapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos();
+                // Number of nanos in the past from current time when the event happened
+                numberOfNanosInThePastWhenEventHappened = systemClockElapsedRealtimeNanos - eventElapsedRealtimeNanos;
+                // When the transition event happened, in milliseconds since epoch (normal clock time)
+                eventTimeMillis = systemClockCurrentTimeMillis - TimeUnit.NANOSECONDS.toMillis(numberOfNanosInThePastWhenEventHappened);
+            }
         }
     }
 

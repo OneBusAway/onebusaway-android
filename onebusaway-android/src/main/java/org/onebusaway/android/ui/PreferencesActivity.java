@@ -464,6 +464,7 @@ public class PreferencesActivity extends PreferenceActivity
                 new TravelBehaviorManager(this, getApplicationContext()).
                         stopCollectingData();
                 TravelBehaviorManager.optOutUser();
+                TravelBehaviorManager.optOutUserOnServer();
             }
 
         } else if (preference.equals(mLeftHandMode) && newValue instanceof Boolean) {

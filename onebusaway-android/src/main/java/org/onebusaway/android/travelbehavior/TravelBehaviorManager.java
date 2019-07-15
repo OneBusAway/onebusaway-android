@@ -15,30 +15,6 @@
  */
 package org.onebusaway.android.travelbehavior;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
-import android.text.Html;
-import android.text.TextUtils;
-import android.util.Log;
-import android.util.Patterns;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.EditText;
-import android.widget.Toast;
-
-import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.work.Constraints;
-import androidx.work.Data;
-import androidx.work.NetworkType;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkInfo;
-import androidx.work.WorkManager;
-
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityTransition;
 import com.google.android.gms.location.ActivityTransitionRequest;
@@ -57,6 +33,7 @@ import org.onebusaway.android.travelbehavior.io.TravelBehaviorFileSaverExecutorM
 import org.onebusaway.android.travelbehavior.io.task.ArrivalAndDepartureDataSaverTask;
 import org.onebusaway.android.travelbehavior.io.task.DestinationReminderDataSaverTask;
 import org.onebusaway.android.travelbehavior.io.task.TripPlanDataSaverTask;
+import org.onebusaway.android.travelbehavior.io.worker.OptOutTravelBehaviorParticipantWorker;
 import org.onebusaway.android.travelbehavior.io.worker.RegisterTravelBehaviorParticipantWorker;
 import org.onebusaway.android.travelbehavior.receiver.TransitionBroadcastReceiver;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils;
@@ -65,11 +42,35 @@ import org.onebusaway.android.util.PermissionUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.opentripplanner.api.model.TripPlan;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.text.Html;
+import android.text.TextUtils;
+import android.util.Log;
+import android.util.Patterns;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.Toast;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.work.Constraints;
+import androidx.work.Data;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 
 public class TravelBehaviorManager {
 
@@ -336,6 +337,19 @@ public class TravelBehaviorManager {
     public static void optOutUser() {
         PreferenceUtils.saveBoolean(TravelBehaviorConstants.USER_OPT_OUT, true);
         PreferenceUtils.saveBoolean(TravelBehaviorConstants.USER_OPT_IN, false);
+    }
+
+    public static void optOutUserOnServer() {
+        String uid = PreferenceUtils.getString(TravelBehaviorConstants.USER_ID);
+        Data myData = new Data.Builder()
+                .putString(TravelBehaviorConstants.USER_ID, uid)
+                .build();
+
+        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(
+                OptOutTravelBehaviorParticipantWorker.class)
+                .setInputData(myData)
+                .build();
+        WorkManager.getInstance().enqueue(workRequest);
     }
 
     public static void optInUser(String uid) {

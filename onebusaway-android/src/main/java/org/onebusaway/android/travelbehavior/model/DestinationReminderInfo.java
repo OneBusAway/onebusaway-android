@@ -16,56 +16,13 @@
  */
 package org.onebusaway.android.travelbehavior.model;
 
-import android.location.Location;
-
 import java.util.List;
 
 public class DestinationReminderInfo {
-    public static class DestinationReminderData {
+    public List<DestinationReminderData> destinationReminderData;
 
-        public String currStopId;
-
-        public String destStopId;
-
-        public String tripId;
-
-        public String routeId;
-
-        public Long regionId;
-
-        public Long localElapsedRealtimeNanos;
-
-        public Long localSystemCurrMillis;
-
-        public Long obaServerTimestamp;
-
-        public TravelBehaviorInfo.LocationInfo locationInfo;
-
-        public DestinationReminderData(String currStopId, String destStopId, String tripId,
-                                       String routeId, Long regionId, Long localElapsedRealtimeNanos,
-                                       Long localSystemCurrMillis, Long obaServerTimestamp,
-                                       Location location) {
-            this.currStopId = currStopId;
-            this.destStopId = destStopId;
-            this.tripId = tripId;
-            this.routeId = routeId;
-            this.regionId = regionId;
-            this.localElapsedRealtimeNanos = localElapsedRealtimeNanos;
-            this.localSystemCurrMillis = localSystemCurrMillis;
-            this.obaServerTimestamp = obaServerTimestamp;
-            this.locationInfo = new TravelBehaviorInfo.LocationInfo(location);
-        }
-
-        public Long getLocalElapsedRealtimeNanos() {
-            return localElapsedRealtimeNanos;
-        }
-
-        public Long getLocalSystemCurrMillis() {
-            return localSystemCurrMillis;
-        }
+    public DestinationReminderInfo() {
     }
-
-    List<DestinationReminderData> destinationReminderData;
 
     public DestinationReminderInfo(List<DestinationReminderData> destinationReminderData) {
         this.destinationReminderData = destinationReminderData;

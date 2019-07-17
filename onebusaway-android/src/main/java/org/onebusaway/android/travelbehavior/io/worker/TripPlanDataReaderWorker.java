@@ -21,7 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
-import org.onebusaway.android.travelbehavior.model.TripPlanInfo;
+import org.onebusaway.android.travelbehavior.model.TripPlanData;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils;
 
 import android.content.Context;
@@ -67,12 +67,11 @@ public class TripPlanDataReaderWorker extends Worker {
                     TrueFileFilter.INSTANCE);
             Gson gson = new Gson();
             if (files != null && !files.isEmpty()) {
-                List<TripPlanInfo.TripPlanData> l = new ArrayList<>();
+                List<TripPlanData> l = new ArrayList<>();
                 for (File f : files) {
                     try {
                         String jsonStr = FileUtils.readFileToString(f);
-                        TripPlanInfo.TripPlanData tripPlanData = gson.fromJson(jsonStr,
-                                TripPlanInfo.TripPlanData.class);
+                        TripPlanData tripPlanData = gson.fromJson(jsonStr, TripPlanData.class);
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
                             if (SystemClock.elapsedRealtimeNanos() -  tripPlanData.getLocalElapsedRealtimeNanos() <
                                     TravelBehaviorConstants.MOST_RECENT_DATA_THRESHOLD_NANO) {

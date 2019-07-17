@@ -20,10 +20,13 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
+import org.onebusaway.android.travelbehavior.model.ArrivalAndDepartureData;
 import org.onebusaway.android.travelbehavior.model.ArrivalAndDepartureInfo;
+import org.onebusaway.android.travelbehavior.model.DestinationReminderData;
 import org.onebusaway.android.travelbehavior.model.DestinationReminderInfo;
 import org.onebusaway.android.travelbehavior.model.DeviceInformation;
 import org.onebusaway.android.travelbehavior.model.TravelBehaviorInfo;
+import org.onebusaway.android.travelbehavior.model.TripPlanData;
 import org.onebusaway.android.travelbehavior.model.TripPlanInfo;
 import org.onebusaway.android.util.PreferenceUtils;
 
@@ -71,7 +74,7 @@ public class TravelBehaviorFirebaseIOUtils {
                 });
     }
 
-    public static void saveArrivalsAndDepartures(List<ArrivalAndDepartureInfo.ArrivalAndDepartureData> arrivalAndDepartureList,
+    public static void saveArrivalsAndDepartures(List<ArrivalAndDepartureData> arrivalAndDepartureList,
                                                  String userId, String recordId) {
         DocumentReference document = TravelBehaviorFirebaseIOUtils.
                 getFirebaseDocReferenceByUserIdAndRecordId(userId, recordId,
@@ -89,7 +92,7 @@ public class TravelBehaviorFirebaseIOUtils {
                 });
     }
 
-    public static void saveTripPlans(List<TripPlanInfo.TripPlanData> tripPlanDataList,
+    public static void saveTripPlans(List<TripPlanData> tripPlanDataList,
                                      String userId, String recordId) {
         DocumentReference document = TravelBehaviorFirebaseIOUtils.
                 getFirebaseDocReferenceByUserIdAndRecordId(userId, recordId,
@@ -107,7 +110,7 @@ public class TravelBehaviorFirebaseIOUtils {
                 });
     }
 
-    public static void saveDestinationReminders(List<DestinationReminderInfo.DestinationReminderData> reminderData,
+    public static void saveDestinationReminders(List<DestinationReminderData> reminderData,
                                                 String userId, String recordId) {
         DocumentReference document = TravelBehaviorFirebaseIOUtils.
                 getFirebaseDocReferenceByUserIdAndRecordId(userId, recordId,

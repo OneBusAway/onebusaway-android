@@ -23,7 +23,7 @@ import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.io.TravelBehaviorFileSaverExecutorManager;
-import org.onebusaway.android.travelbehavior.model.TripPlanInfo;
+import org.onebusaway.android.travelbehavior.model.TripPlanData;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.opentripplanner.api.model.TripPlan;
 
@@ -108,7 +108,7 @@ public class TripPlanDataSaverTask implements Runnable {
             }
 
             File file = new File(subFolder, counter + "-" + readableDate + ".json");
-            TripPlanInfo.TripPlanData tpd = new TripPlanInfo.TripPlanData(mTripPlan, mUrl,
+            TripPlanData tpd = new TripPlanData(mTripPlan, mUrl,
                     Application.get().getCurrentRegion().getId(), localElapsedRealtimeNanos,
                     time.getTime(), serverTime);
             tpd.setLocation(location);

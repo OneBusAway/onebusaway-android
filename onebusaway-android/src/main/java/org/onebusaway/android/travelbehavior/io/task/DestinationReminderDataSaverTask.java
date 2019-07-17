@@ -23,6 +23,7 @@ import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.io.TravelBehaviorFileSaverExecutorManager;
+import org.onebusaway.android.travelbehavior.model.DestinationReminderData;
 import org.onebusaway.android.travelbehavior.model.DestinationReminderInfo;
 import org.onebusaway.android.util.PreferenceUtils;
 
@@ -111,10 +112,9 @@ public class DestinationReminderDataSaverTask implements Runnable {
             }
 
             File file = new File(subFolder, counter + "-" + readableDate + ".json");
-            DestinationReminderInfo.DestinationReminderData drd = new DestinationReminderInfo.
-                    DestinationReminderData(mCurrStopId ,mDestStopId, mTripId, mRouteId,
-                    Application.get().getCurrentRegion().getId(), localElapsedRealtimeNanos,
-                    time.getTime(), mServerTime, location);
+            DestinationReminderData drd = new DestinationReminderData(mCurrStopId ,mDestStopId,
+                    mTripId, mRouteId, Application.get().getCurrentRegion().getId(),
+                    localElapsedRealtimeNanos, time.getTime(), mServerTime, location);
 
             // Used Gson instead of Jackson library - Jackson had problems while deserializing
             // nested objects.  When we deserialize the object and push it to Firebase, Firebase API

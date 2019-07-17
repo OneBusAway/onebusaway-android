@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
+import org.onebusaway.android.travelbehavior.model.ArrivalAndDepartureData;
 import org.onebusaway.android.travelbehavior.model.ArrivalAndDepartureInfo;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils;
 
@@ -66,13 +67,13 @@ public class ArrivalsAndDeparturesDataReaderWorker extends Worker {
             Collection<File> files = FileUtils.listFiles(subFolder, TrueFileFilter.INSTANCE,
                     TrueFileFilter.INSTANCE);
             if (files != null && !files.isEmpty()) {
-                List<ArrivalAndDepartureInfo.ArrivalAndDepartureData> l = new ArrayList<>();
+                List<ArrivalAndDepartureData> l = new ArrayList<>();
                 Gson gson = new Gson();
                 for (File f : files) {
                     try {
                         String jsonStr = FileUtils.readFileToString(f);
-                        ArrivalAndDepartureInfo.ArrivalAndDepartureData data =
-                                gson.fromJson(jsonStr, ArrivalAndDepartureInfo.ArrivalAndDepartureData.class);
+                        ArrivalAndDepartureData data =
+                                gson.fromJson(jsonStr, ArrivalAndDepartureData.class);
 
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
                             if (SystemClock.elapsedRealtimeNanos() -  data.getLocalElapsedRealtimeNanos() <

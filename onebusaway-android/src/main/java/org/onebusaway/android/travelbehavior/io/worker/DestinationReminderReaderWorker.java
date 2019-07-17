@@ -21,7 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
-import org.onebusaway.android.travelbehavior.model.DestinationReminderInfo;
+import org.onebusaway.android.travelbehavior.model.DestinationReminderData;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils;
 
 import android.content.Context;
@@ -65,12 +65,12 @@ public class DestinationReminderReaderWorker extends Worker {
                     TrueFileFilter.INSTANCE);
             Gson gson = new Gson();
             if (files != null && !files.isEmpty()) {
-                List<DestinationReminderInfo.DestinationReminderData> l = new ArrayList<>();
+                List<DestinationReminderData> l = new ArrayList<>();
                 for (File f : files) {
                     try {
                         String jsonStr = FileUtils.readFileToString(f);
-                        DestinationReminderInfo.DestinationReminderData destinationReminderData =
-                                gson.fromJson(jsonStr, DestinationReminderInfo.DestinationReminderData.class);
+                        DestinationReminderData destinationReminderData =
+                                gson.fromJson(jsonStr, DestinationReminderData.class);
                         l.add(destinationReminderData);
                     } catch (IOException e) {
                         Log.e(TAG, e.toString());

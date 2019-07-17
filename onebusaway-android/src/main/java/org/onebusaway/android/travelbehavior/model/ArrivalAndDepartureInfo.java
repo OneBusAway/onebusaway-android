@@ -15,87 +15,14 @@
  */
 package org.onebusaway.android.travelbehavior.model;
 
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-
-import android.location.Location;
-
-import java.util.ArrayList;
 import java.util.List;
 
 public class ArrivalAndDepartureInfo {
 
-    public static class ArrivalAndDepartureData {
-        public TravelBehaviorInfo.LocationInfo locationInfo;
+    public List<ArrivalAndDepartureData> arrivalAndDepartureData;
 
-        public List<ObaArrivalInfoPojo> arrivalList;
-
-        public Long localElapsedRealtimeNanos;
-
-        public Long localSystemCurrMillis;
-
-        public Long obaServerTimestamp;
-
-        public String stopId;
-
-        public Long regionId;
-
-        public String url;
-
-        public ArrivalAndDepartureData() {
-        }
-
-        public ArrivalAndDepartureData(ObaArrivalInfo[] info, String stopId, Long regionId,
-                                       String url, Long localElapsedRealtimeNanos,
-                                       Long localSystemCurrMillis, Long obaServerTimestamp) {
-            this.stopId = stopId;
-            this.regionId = regionId;
-            this.url = url;
-            this.localElapsedRealtimeNanos = localElapsedRealtimeNanos;
-            this.localSystemCurrMillis = localSystemCurrMillis;
-            this.obaServerTimestamp = obaServerTimestamp;
-
-            arrivalList = new ArrayList<>();
-            if (info != null && info.length != 0) {
-                for (ObaArrivalInfo oai: info) {
-                    arrivalList.add(new ObaArrivalInfoPojo(oai));
-                }
-            }
-        }
-
-        public List<ObaArrivalInfoPojo> getArrivalList() {
-            return arrivalList;
-        }
-
-        public Long getLocalElapsedRealtimeNanos() {
-            return localElapsedRealtimeNanos;
-        }
-
-        public Long getLocalSystemCurrMillis() {
-            return localSystemCurrMillis;
-        }
-
-        public Long getObaServerTimestamp() {
-            return obaServerTimestamp;
-        }
-
-        public String getStopId() {
-            return stopId;
-        }
-
-        public Long getRegionId() {
-            return regionId;
-        }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public void setLocation(Location location) {
-            locationInfo = new TravelBehaviorInfo.LocationInfo(location);
-        }
+    public ArrivalAndDepartureInfo() {
     }
-
-    List<ArrivalAndDepartureData> arrivalAndDepartureData;
 
     public ArrivalAndDepartureInfo(List<ArrivalAndDepartureData> arrivalAndDepartureData) {
         this.arrivalAndDepartureData = arrivalAndDepartureData;

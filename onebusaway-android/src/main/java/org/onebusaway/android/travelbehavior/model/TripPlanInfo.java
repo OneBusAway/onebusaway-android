@@ -15,61 +15,13 @@
  */
 package org.onebusaway.android.travelbehavior.model;
 
-import org.opentripplanner.api.model.TripPlan;
-
-import android.location.Location;
-
 import java.util.List;
 
 public class TripPlanInfo {
+    public List<TripPlanData> tripPlanDataList;
 
-    public static class TripPlanData {
-        public TravelBehaviorInfo.LocationInfo locationInfo;
-
-        public TripPlan tripPlan;
-
-        public String url;
-
-        public Long regionId;
-
-        public Long localElapsedRealtimeNanos;
-
-        public Long localSystemCurrMillis;
-
-        public Long otpServerTimestamp;
-
-        public TripPlanData() {
-        }
-
-        public TripPlanData(TripPlan tripPlan, String url, Long regionId ,
-                            Long localElapsedRealtimeNanos, Long localSystemCurrMillis,
-                            Long otpServerTimestamp) {
-            this.tripPlan = tripPlan;
-            this.url = url;
-            this.regionId = regionId;
-            this.localElapsedRealtimeNanos = localElapsedRealtimeNanos;
-            this.localSystemCurrMillis = localSystemCurrMillis;
-            this.otpServerTimestamp = otpServerTimestamp;
-        }
-
-        public Long getLocalElapsedRealtimeNanos() {
-            return localElapsedRealtimeNanos;
-        }
-
-        public Long getLocalSystemCurrMillis() {
-            return localSystemCurrMillis;
-        }
-
-        public Long getOtpServerTimestamp() {
-            return otpServerTimestamp;
-        }
-
-        public void setLocation(Location location) {
-            locationInfo = new TravelBehaviorInfo.LocationInfo(location);
-        }
+    public TripPlanInfo() {
     }
-
-    List<TripPlanData> tripPlanDataList;
 
     public TripPlanInfo(List<TripPlanData> tripPlanDataList) {
         this.tripPlanDataList = tripPlanDataList;

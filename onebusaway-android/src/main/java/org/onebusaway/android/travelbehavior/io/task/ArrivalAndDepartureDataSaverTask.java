@@ -24,7 +24,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.io.TravelBehaviorFileSaverExecutorManager;
-import org.onebusaway.android.travelbehavior.model.ArrivalAndDepartureInfo;
+import org.onebusaway.android.travelbehavior.model.ArrivalAndDepartureData;
 import org.onebusaway.android.util.PreferenceUtils;
 
 import android.Manifest;
@@ -110,8 +110,8 @@ public class ArrivalAndDepartureDataSaverTask implements Runnable {
             }
 
             File file = new File(subFolder, counter + "-" + readableDate + ".json");
-            ArrivalAndDepartureInfo.ArrivalAndDepartureData add =
-                    new ArrivalAndDepartureInfo.ArrivalAndDepartureData(mArrivalInfo, mStopId,
+            ArrivalAndDepartureData add =
+                    new ArrivalAndDepartureData(mArrivalInfo, mStopId,
                             Application.get().getCurrentRegion().getId(), mUrl, localElapsedRealtimeNanos,
                             time.getTime(), mServerTime);
             add.setLocation(location);

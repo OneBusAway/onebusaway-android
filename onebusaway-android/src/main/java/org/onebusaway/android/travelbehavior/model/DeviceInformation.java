@@ -35,6 +35,8 @@ public class DeviceInformation {
 
     public Boolean isTalkBackEnabled;
 
+    public String timestamp;
+
     public DeviceInformation(String appVersion, String deviceModel, String sdkVersion,
                              Integer sdkVersionInt, String googlePlayServicesApp,
                              Integer googlePlayServicesLib, Long regionId, Boolean isTalkBackEnabled) {
@@ -46,6 +48,10 @@ public class DeviceInformation {
         this.googlePlayServicesLib = googlePlayServicesLib;
         this.regionId = regionId;
         this.isTalkBackEnabled = isTalkBackEnabled;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
     }
 
     @Override

@@ -35,6 +35,7 @@ import org.onebusaway.android.travelbehavior.io.task.DestinationReminderDataSave
 import org.onebusaway.android.travelbehavior.io.task.TripPlanDataSaverTask;
 import org.onebusaway.android.travelbehavior.io.worker.OptOutTravelBehaviorParticipantWorker;
 import org.onebusaway.android.travelbehavior.io.worker.RegisterTravelBehaviorParticipantWorker;
+import org.onebusaway.android.travelbehavior.io.worker.UpdateDeviceInfoWorker;
 import org.onebusaway.android.travelbehavior.receiver.TransitionBroadcastReceiver;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
@@ -316,6 +317,21 @@ public class TravelBehaviorManager {
                         "Travel behavior activity-transition-update failed set up: ");
             }
         });
+
+        saveDeviceInformation();
+    }
+
+    private void saveDeviceInformation() {
+        String uid = PreferenceUtils.getString(TravelBehaviorConstants.USER_ID);
+        Data myData = new Data.Builder()
+                .putString(TravelBehaviorConstants.USER_ID, uid)
+                .build();
+
+        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(
+                UpdateDeviceInfoWorker.class)
+                .setInputData(myData)
+                .build();
+        WorkManager.getInstance().enqueue(workRequest);
     }
 
     public void stopCollectingData() {

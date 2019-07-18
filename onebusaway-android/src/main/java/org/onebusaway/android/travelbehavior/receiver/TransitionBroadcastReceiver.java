@@ -115,8 +115,6 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
         requestActivityRecognition();
 
         requestLocationUpdates();
-
-        saveDeviceInformation();
     }
 
     private void saveTravelBehavior(TravelBehaviorInfo tbi) {
@@ -226,44 +224,6 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
             PendingIntent pi = PendingIntent.getBroadcast(mContext, reqCode++, intent, PendingIntent.FLAG_ONE_SHOT);
             lm.requestLocationUpdates(provider, 0, 0, pi);
             PreferenceUtils.saveInt(TravelBehaviorConstants.LOCATION_REQUEST_CODE, reqCode);
-        }
-    }
-
-    private void saveDeviceInformation() {
-        PackageManager pm = mContext.getPackageManager();
-        PackageInfo appInfoOba;
-        PackageInfo appInfoGps;
-        String obaVersion = "";
-        String googlePlayServicesAppVersion = "";
-        try {
-            appInfoOba = pm.getPackageInfo(mContext.getPackageName(),
-                    PackageManager.GET_META_DATA);
-            obaVersion = appInfoOba.versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            // Leave version as empty string
-        }
-        try {
-            appInfoGps = pm.getPackageInfo(GoogleApiAvailability.GOOGLE_PLAY_SERVICES_PACKAGE, 0);
-            googlePlayServicesAppVersion = appInfoGps.versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            // Leave version as empty string
-        }
-
-        AccessibilityManager am = (AccessibilityManager) mContext.getSystemService(ACCESSIBILITY_SERVICE);
-        Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
-
-        DeviceInformation di = new DeviceInformation(obaVersion, Build.MODEL, Build.VERSION.RELEASE,
-                Build.VERSION.SDK_INT, googlePlayServicesAppVersion,
-                GoogleApiAvailability.GOOGLE_PLAY_SERVICES_VERSION_CODE,
-                Application.get().getCurrentRegion().getId(), isTalkBackEnabled);
-
-        int hashCode = di.hashCode();
-        int mostRecentDeviceHash = PreferenceUtils.getInt(TravelBehaviorConstants.DEVICE_INFO_HASH,
-                -1);
-
-        // Update if the device info is changed
-        if (hashCode != mostRecentDeviceHash) {
-            TravelBehaviorFirebaseIOUtils.saveDeviceInfo(di, mUid, mRecordId, hashCode);
         }
     }
 }

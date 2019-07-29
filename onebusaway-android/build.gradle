@@ -357,7 +357,7 @@ android {
 }
 
 /**
- * Returns the Embedded Social key (e.g. "ApiKey") from gradle.properties for the given product flavor (e.g., "oba"), or returns the empty string if the key is not found
+ * Returns the Embedded Social key (e.g. "ApiKey" or "TelemetryKey") from gradle.properties for the given product flavor (e.g., "oba"), or returns the empty string if the key is not found
  */
 def getEmbeddedSocialKey(keyType, productFlavor) {
     def keyName = "EmbeddedSocial" + keyType + "_" + productFlavor

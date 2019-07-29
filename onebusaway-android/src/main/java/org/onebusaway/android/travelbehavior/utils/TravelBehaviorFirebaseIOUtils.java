@@ -130,6 +130,8 @@ public class TravelBehaviorFirebaseIOUtils {
 
     public static void saveDeviceInfo(DeviceInformation deviceInformation, String userId,
                                       String recordId, int hashCode) {
+        deviceInformation.setTimestamp(recordId);
+
         DocumentReference document = TravelBehaviorFirebaseIOUtils.
                 getFirebaseDocReferenceByUserIdAndRecordId(userId, recordId,
                         TravelBehaviorConstants.FIREBASE_DEVICE_INFO_FOLDER);

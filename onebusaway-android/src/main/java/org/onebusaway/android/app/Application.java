@@ -577,7 +577,9 @@ public class Application extends MultiDexApplication {
         if (!mEmbeddedSocialInitiated) {
             if (EmbeddedSocialUtils.isBuildVersionSupportedBySocial() &&
                     EmbeddedSocialUtils.isSocialApiKeyDefined()) {
-                EmbeddedSocial.init(mApp, R.raw.embedded_social_config, BuildConfig.EMBEDDED_SOCIAL_API_KEY, null);
+                EmbeddedSocial.init(mApp, R.raw.embedded_social_config,
+                        BuildConfig.EMBEDDED_SOCIAL_API_KEY,
+                        BuildConfig.EMBEDDED_SOCIAL_TELEMETRY_KEY);
                 EmbeddedSocial.setReportHandler(new SocialReportHandler());
                 EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
                 EmbeddedSocial.setAppProfile(new SocialAppProfile());

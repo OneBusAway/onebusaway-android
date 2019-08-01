@@ -74,7 +74,7 @@ install:
   - adb shell input keyevent 82 &
 
 script:
-  - ./gradlew assembleObaGoogleDebug assembleObaAmazonDebug assembleYrtGoogleDebug
+  - ./gradlew test check connectedObaGoogleDebugAndroidTest -x lint --stacktrace
 
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock

@@ -16,6 +16,8 @@
 package org.onebusaway.android.nav.test;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.io.test.ObaTestCase;
@@ -53,6 +55,16 @@ public class NavigationTest extends ObaTestCase {
     private static final String TAG = "NavigationTest";
 
     private static final long SPEED_UP = 1000000L;
+
+    @BeforeClass
+    public static void beforeClass() {
+        // Only run this test suite if we're not running on Travis CI (it's too slow)
+        String runningOnTravis = System.getProperty("RUNNING_ON_TRAVIS");
+        if (runningOnTravis != null && runningOnTravis.equals("true")) {
+            // Skip all @Test methods in this class
+            Assume.assumeTrue("Skipping NavigationTest tests - this is expected behavior when running on Travis CI", false);
+        }
+    }
 
     /**
      * Started Stop: Mckinley Dr @ DOT Bldg

@@ -59,7 +59,7 @@ public class NavigationTest extends ObaTestCase {
     @BeforeClass
     public static void beforeClass() {
         // Only run this test suite if we're not running on Travis CI (it's too slow)
-        String runningOnTravis = System.getProperty("RUNNING_ON_TRAVIS");
+        String runningOnTravis = System.getenv("RUNNING_ON_TRAVIS");
         if (runningOnTravis != null && runningOnTravis.equals("true")) {
             // Skip all @Test methods in this class
             Assume.assumeTrue("Skipping NavigationTest tests - this is expected behavior when running on Travis CI", false);

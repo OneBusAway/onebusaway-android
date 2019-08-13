@@ -15,16 +15,32 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.directions.util.ConversionUtils;
+import org.onebusaway.android.directions.util.CustomAddress;
+import org.onebusaway.android.directions.util.OTPConstants;
+import org.onebusaway.android.directions.util.PlacesAutoCompleteAdapter;
+import org.onebusaway.android.directions.util.TripRequestBuilder;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
+
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.res.TypedArray;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -43,26 +59,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.firebase.analytics.FirebaseAnalytics;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.directions.util.ConversionUtils;
-import org.onebusaway.android.directions.util.CustomAddress;
-import org.onebusaway.android.directions.util.OTPConstants;
-import org.onebusaway.android.directions.util.PlacesAutoCompleteAdapter;
-import org.onebusaway.android.directions.util.TripRequestBuilder;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.map.googlemapsv2.ProprietaryMapHelpV2;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.UIUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -554,58 +550,23 @@ public class TripPlanFragment extends Fragment {
         return address;
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        if (resultCode != -1) {
-            Log.e(TAG, "Error getting geocoding results");
-            return;
-        }
-
-        CustomAddress address = ProprietaryMapHelpV2.getCustomAddressFromPlacesIntent(Application.get().getApplicationContext(), intent);
-
-        // Note that onResume will run after this function. We need to put new objects in the bundle.
-        if (requestCode == USE_FROM_ADDRESS) {
-            mFromAddress = address;
-            mBuilder.setFrom(mFromAddress);
-            mFromAddressTextArea.setText(mFromAddress.toString());
-        } else if (requestCode == USE_TO_ADDRESS) {
-            mToAddress = address;
-            mBuilder.setTo(mToAddress);
-            mToAddressTextArea.setText(mToAddress.toString());
-        }
-
-        checkRequestAndSubmit();
-    }
-
     private void setUpAutocomplete(AutoCompleteTextView tv, final int use) {
         ObaRegion region = Application.get().getCurrentRegion();
 
-        // Use Google widget if available
-        if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getContext())
-                == ConnectionResult.SUCCESS) {
-            tv.setFocusable(false);
-            tv.setOnClickListener(new ProprietaryMapHelpV2.StartPlacesAutocompleteOnClick(use, this, region));
-            return;
-        }
-
-        // else, set up autocomplete with Android geocoder
-
+        // Set up autocomplete with Android geocoder
         tv.setAdapter(new PlacesAutoCompleteAdapter(getContext(), android.R.layout.simple_list_item_1, region));
-        tv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                CustomAddress addr = (CustomAddress) parent.getAdapter().getItem(position);
+        tv.setOnItemClickListener((parent, view, position, id) -> {
+            CustomAddress addr = (CustomAddress) parent.getAdapter().getItem(position);
 
-                if (use == USE_FROM_ADDRESS) {
-                    mFromAddress = addr;
-                    mBuilder.setFrom(mFromAddress);
-                } else if (use == USE_TO_ADDRESS) {
-                    mToAddress = addr;
-                    mBuilder.setTo(mToAddress);
-                }
-
-                checkRequestAndSubmit();
+            if (use == USE_FROM_ADDRESS) {
+                mFromAddress = addr;
+                mBuilder.setFrom(mFromAddress);
+            } else if (use == USE_TO_ADDRESS) {
+                mToAddress = addr;
+                mBuilder.setTo(mToAddress);
             }
+
+            checkRequestAndSubmit();
         });
     }
 

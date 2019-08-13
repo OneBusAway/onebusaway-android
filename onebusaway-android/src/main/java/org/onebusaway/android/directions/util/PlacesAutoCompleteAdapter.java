@@ -21,6 +21,7 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.util.LocationUtils;
 
 import android.content.Context;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
@@ -64,9 +65,11 @@ public class PlacesAutoCompleteAdapter extends ArrayAdapter<CustomAddress> imple
                 FilterResults filterResults = new FilterResults();
                 if (constraint != null) {
                     // Retrieve the autocomplete results.
-                        mResultList = LocationUtils.processGeocoding(mContext, mRegion,
-                                constraint.toString());
+//                    mResultList = LocationUtils.processGeocoding(mContext, mRegion,
+//                                constraint.toString());
+                    mResultList = LocationUtils.processPeliasGeocoding(mContext, mRegion, constraint.toString());
                     if (mResultList != null){
+                        Log.d("Geocode", "Num of results: " + mResultList.size());
                         // Assign the data to the FilterResults
                         filterResults.values = mResultList;
                         filterResults.count = mResultList.size();

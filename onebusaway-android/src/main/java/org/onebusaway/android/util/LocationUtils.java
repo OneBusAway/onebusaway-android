@@ -42,6 +42,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import edu.usf.cutr.pelias.AutocompleteRequest;
+import edu.usf.cutr.pelias.PeliasRequest;
+import edu.usf.cutr.pelias.PeliasResponse;
+
 /**
  * Utilities to help obtain and process location data
  *
@@ -358,6 +362,123 @@ public class LocationUtils {
             e.printStackTrace();
         }
 
+
+        addresses = filterAddressesBBox(region, addresses);
+
+        boolean resultsCloseEnough = true;
+
+        if (geocodingForMarker && latLngSet) {
+            float results[] = new float[1];
+            resultsCloseEnough = false;
+
+            for (CustomAddress addressToCheck : addresses) {
+                Location.distanceBetween(latitude, longitude,
+                        addressToCheck.getLatitude(), addressToCheck.getLongitude(), results);
+                if (results[0] < GEOCODING_MAX_ERROR) {
+                    resultsCloseEnough = true;
+                    break;
+                }
+            }
+        }
+
+        if ((addresses == null) || addresses.isEmpty() || !resultsCloseEnough) {
+            if (addresses == null) {
+                addresses = new ArrayList<CustomAddress>();
+            }
+            Log.e(TAG, "Geocoder did not find enough addresses: " + addresses);
+        }
+
+        addresses = filterAddressesBBox(region, addresses);
+
+        if (geocodingForMarker && latLngSet && addresses != null && !addresses.isEmpty()) {
+            float results[] = new float[1];
+            float minDistanceToOriginalLatLon = Float.MAX_VALUE;
+            CustomAddress closestAddress = addresses.get(0);
+
+            for (CustomAddress addressToCheck : addresses) {
+                Location.distanceBetween(latitude, longitude,
+                        addressToCheck.getLatitude(), addressToCheck.getLongitude(), results);
+                if (results[0] < minDistanceToOriginalLatLon) {
+                    closestAddress = addressToCheck;
+                    minDistanceToOriginalLatLon = results[0];
+                }
+            }
+            addressesReturn.add(closestAddress);
+        } else {
+            addressesReturn.addAll(addresses);
+        }
+
+        return addressesReturn;
+    }
+
+    public static List<CustomAddress> processPeliasGeocoding(Context context, ObaRegion region,
+            String... reqs) {
+        return processPeliasGeocoding(context, region, false, reqs);
+    }
+
+    public static List<CustomAddress> processPeliasGeocoding(Context context, ObaRegion region, boolean geocodingForMarker, String... reqs) {
+        ArrayList<CustomAddress> addressesReturn = new ArrayList<CustomAddress>();
+
+        String address = reqs[0];
+
+        if (address == null || address.equalsIgnoreCase("")) {
+            return null;
+        }
+
+        double latitude = 0, longitude = 0;
+        boolean latLngSet = false;
+
+        try {
+            if (reqs.length >= 3) {
+                latitude = Double.parseDouble(reqs[1]);
+                longitude = Double.parseDouble(reqs[2]);
+                latLngSet = true;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Geocoding without reference latitude/longitude");
+        }
+
+        if (address.equalsIgnoreCase(context.getString(R.string.tripplanner_current_location))) {
+            if (latLngSet) {
+                CustomAddress addressReturn = new CustomAddress(context.getResources().getConfiguration().locale);
+                addressReturn.setLatitude(latitude);
+                addressReturn.setLongitude(longitude);
+                addressReturn.setAddressLine(addressReturn.getMaxAddressLineIndex() + 1,
+                        context.getString(R.string.tripplanner_current_location));
+
+                addressesReturn.add(addressReturn);
+
+                return addressesReturn;
+            }
+            return null;
+        }
+
+        List<CustomAddress> addresses = new ArrayList<>();
+        try {
+            // FIXME - Replace with Pelias key
+            String apiKey = "YourKeyHere";
+            PeliasRequest.Builder requestBuilder = new AutocompleteRequest.Builder(apiKey, address)
+                    .setApiEndpoint("YourEndpointHere");  // FIXME - Replace with Pelias endpoint
+
+            if (region != null) {
+                double[] regionSpan = new double[4];
+                RegionUtils.getRegionSpan(region, regionSpan);
+                double minLat = regionSpan[2] - (regionSpan[0] / 2);
+                double minLon = regionSpan[3] - (regionSpan[1] / 2);
+                double maxLat = regionSpan[2] + (regionSpan[0] / 2);
+                double maxLon = regionSpan[3] + (regionSpan[1] / 2);
+
+                requestBuilder.setBoundaryRect(minLat, minLon, maxLat, maxLon);
+            }
+
+            // Call the Pelias API
+            PeliasResponse response = requestBuilder.build().call();
+            for (org.geojson.Feature feature : response.getFeatures()) {
+                addresses.add(new CustomAddress(feature));
+            }
+        } catch (IOException e) {
+            Log.e(TAG, e.toString());
+        }
 
         addresses = filterAddressesBBox(region, addresses);
 

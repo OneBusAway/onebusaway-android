@@ -17,6 +17,7 @@
 package org.onebusaway.android.directions.util;
 
 import org.geojson.Feature;
+import org.geojson.Point;
 
 import android.location.Address;
 import android.os.Parcel;
@@ -83,18 +84,20 @@ public class CustomAddress extends Address {
         super.setFeatureName((String) address.getProperties().get("label"));
 //        super.setAdminArea(address.getAdminArea());
 //        super.setSubAdminArea(address.getSubAdminArea());
-        super.setLocality((String) address.getProperties().get("locality"));
+//        super.setLocality((String) address.getProperties().get("locality"));
 //        super.setSubLocality(address.getSubLocality());
 //        super.setThoroughfare(address.getThoroughfare());
 //        super.setSubThoroughfare(address.getSubThoroughfare());
         super.setPostalCode((String) address.getProperties().get("postalcode"));
 //        super.setCountryCode(address.getCountryCode());
         super.setCountryName((String) address.getProperties().get("country"));
-//        super.setLatitude(address.getLatitude());
-//        super.setLongitude(address.getLongitude());
 //        super.setPhone(address.getPhone());
 //        super.setUrl(address.getUrl());
 //        super.setExtras(address.getExtras());
+
+        Point p = (Point) address.getGeometry();
+        super.setLatitude(p.getCoordinates().getLatitude());
+        super.setLongitude(p.getCoordinates().getLongitude());
     }
 
     @Override

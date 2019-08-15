@@ -284,6 +284,8 @@ public class TripPlanFragment extends Fragment {
 
     private void checkRequestAndSubmit() {
         if (mBuilder.ready() && mListener != null) {
+            mFromAddressTextArea.dismissDropDown();
+            mToAddressTextArea.dismissDropDown();
             mListener.onTripRequestReady();
         }
     }
@@ -352,6 +354,9 @@ public class TripPlanFragment extends Fragment {
                 // do nothing
             }
         });
+
+        mFromAddressTextArea.dismissDropDown();
+        mToAddressTextArea.dismissDropDown();
     }
 
     @Override
@@ -568,6 +573,7 @@ public class TripPlanFragment extends Fragment {
 
             checkRequestAndSubmit();
         });
+        tv.dismissDropDown();
     }
 
 }

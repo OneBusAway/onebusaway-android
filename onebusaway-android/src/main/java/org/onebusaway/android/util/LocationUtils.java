@@ -458,7 +458,7 @@ public class LocationUtils {
             // FIXME - Replace with Pelias key
             String apiKey = "YourKeyHere";
             PeliasRequest.Builder requestBuilder = new AutocompleteRequest.Builder(apiKey, address)
-                    .setApiEndpoint("YourEndpointHere");  // FIXME - Replace with Pelias endpoint
+                    .setApiEndpoint("https://api.geocode.earth/v1/autocomplete");  // FIXME - Replace with Pelias endpoint
 
             if (region != null) {
                 double[] regionSpan = new double[4];

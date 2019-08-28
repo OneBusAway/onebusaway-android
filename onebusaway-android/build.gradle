@@ -342,6 +342,19 @@ android {
         }
     }
 
+    // Filter out the Amazon release build variants for AgencyX and AgencyY brands because they are unused
+    variantFilter { variant ->
+        def names = variant.flavors*.name
+        def brand = names.get(0)
+        def platform = names.get(1)
+        def isRelease = variant.buildType.name.equals('release')
+        if (isRelease &&
+                ((brand.equals("agencyX") && platform.equals("amazon")) ||
+                        (brand.equals("agencyY") && platform.equals("amazon")) )) {
+            variant.setIgnore(true)
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8

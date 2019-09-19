@@ -1153,7 +1153,7 @@
     <string name="travel_behavior_dialog_yes">Yes</string>
     <string name="travel_behavior_dialog_no">No</string>
     <string name="travel_behavior_dialog_learn_more">Learn more</string>
-    <string name="travel_behavior_dialog_no_thanks">No thanks</string>
+    <string name="travel_behavior_dialog_not_now">Not now</string>
     <string name="travel_behavior_dialog_consent_agree">Agree</string>
     <string name="travel_behavior_dialog_consent_disagree">Decline</string>
     <string name="travel_behavior_dialog_email_save">Save</string>

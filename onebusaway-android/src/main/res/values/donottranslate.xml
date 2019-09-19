@@ -205,6 +205,15 @@
     <string name="analytics_label_download_app">download_app</string>
     <string name="analytics_label_open_app">open_app</string>
 
+    <!-- Analytics for travel behavior data collection -->
+    <string name="analytics_label_button_travel_behavior_enroll_not_now">travel_behavior_enroll_not_now</string>
+    <string name="analytics_label_button_travel_behavior_opt_out_at_first_dialog">travel_behavior_opt_out_first_dialog</string>
+    <string name="analytics_label_button_travel_behavior_opt_in_over_18">travel_behavior_opt_in_over_18</string>
+    <string name="analytics_label_button_travel_behavior_opt_out_under_18">travel_behavior_opt_out_under_18</string>
+    <string name="analytics_label_button_travel_behavior_opt_in_informed_consent">travel_behavior_opt_in_informed_consent</string>
+    <string name="analytics_label_button_travel_behavior_opt_out_informed_consent">travel_behavior_opt_out_informed_consent</string>
+
+
     <!-- General strings -->
     <string name="http_prefix">http://</string>
 

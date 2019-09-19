@@ -37,9 +37,14 @@ public class DeviceInformation {
 
     public String timestamp;
 
+    public Boolean isPowerSaveModeEnabled;
+
+    public Boolean isIgnoringBatteryOptimizations;
+
     public DeviceInformation(String appVersion, String deviceModel, String sdkVersion,
                              Integer sdkVersionInt, String googlePlayServicesApp,
-                             Integer googlePlayServicesLib, Long regionId, Boolean isTalkBackEnabled) {
+                             Integer googlePlayServicesLib, Long regionId, Boolean isTalkBackEnabled,
+                             Boolean isPowerSaveModeEnabled, Boolean isIgnoringBatteryOptimizations) {
         this.appVersion = appVersion;
         this.deviceModel = deviceModel;
         this.sdkVersion = sdkVersion;
@@ -48,6 +53,8 @@ public class DeviceInformation {
         this.googlePlayServicesLib = googlePlayServicesLib;
         this.regionId = regionId;
         this.isTalkBackEnabled = isTalkBackEnabled;
+        this.isPowerSaveModeEnabled = isPowerSaveModeEnabled;
+        this.isIgnoringBatteryOptimizations = isIgnoringBatteryOptimizations;
     }
 
     public void setTimestamp(String timestamp) {
@@ -56,8 +63,15 @@ public class DeviceInformation {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(appVersion).append(deviceModel).append(sdkVersion)
+        HashCodeBuilder builder = new HashCodeBuilder().append(appVersion).append(deviceModel).append(sdkVersion)
                 .append(sdkVersionInt).append(googlePlayServicesApp).append(googlePlayServicesLib)
-                .append(regionId).append(isTalkBackEnabled).toHashCode();
+                .append(regionId).append(isTalkBackEnabled);
+        if (isPowerSaveModeEnabled != null) {
+            builder.append(isPowerSaveModeEnabled);
+        }
+        if (isIgnoringBatteryOptimizations != null) {
+            builder.append(isIgnoringBatteryOptimizations);
+        }
+        return builder.toHashCode();
     }
 }

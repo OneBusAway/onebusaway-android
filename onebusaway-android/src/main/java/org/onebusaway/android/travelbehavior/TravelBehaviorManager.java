@@ -225,7 +225,8 @@ public class TravelBehaviorManager {
     private void showEmailDialog(String email) {
         LayoutInflater inflater = ((Activity) mActivityContext).getLayoutInflater();
         final View editTextView = inflater.inflate(R.layout.travel_behavior_email_dialog, null);
-        EditText emailEditText = editTextView.findViewById(R.id.tb_email_editdext);
+        EditText emailEditText = editTextView.findViewById(R.id.tb_email_edittext);
+        EditText emailEditTextConfirm = editTextView.findViewById(R.id.tb_email_edittext_confirm);
 
         if (email != null) {
             emailEditText.setText(email);
@@ -240,8 +241,10 @@ public class TravelBehaviorManager {
                 .setPositiveButton(R.string.travel_behavior_dialog_email_save,
                         (dialog, which) -> {
                             String currentEmail = emailEditText.getText().toString();
+                            String currentEmailConfirm = emailEditTextConfirm.getText().toString();
                             if (!TextUtils.isEmpty(currentEmail) &&
-                                    Patterns.EMAIL_ADDRESS.matcher(currentEmail).matches()) {
+                                    Patterns.EMAIL_ADDRESS.matcher(currentEmail).matches() &&
+                                    currentEmail.equalsIgnoreCase(currentEmailConfirm)) {
                                 registerUser(currentEmail);
                                 checkPermissions();
                             } else {

@@ -1146,10 +1146,11 @@
     <string name="travel_behavior_age_message">Are you over the age of 18?</string>
     <string name="travel_behavior_age_invalid_message">Thanks for your interest, but you need to be over the age of 18 to participate.</string>
     <string name="travel_behavior_email_message">Please provide your email address for the online surveys</string>
-    <string name="travel_behavior_email_invalid">Email address is invalid</string>
+    <string name="travel_behavior_email_invalid">Please re-enter your email</string>
     <string name="travel_behavior_enroll_success">You successfully enrolled in the study.</string>
     <string name="travel_behavior_enroll_fail">Failed to enroll in the study. Please try again later.</string>
     <string name="travel_behavior_email_hint">Email</string>
+    <string name="travel_behavior_confirm_email_hint">Confirm email</string>
     <string name="travel_behavior_dialog_yes">Yes</string>
     <string name="travel_behavior_dialog_no">No</string>
     <string name="travel_behavior_dialog_learn_more">Learn more</string>

@@ -945,12 +945,6 @@
     <string name="tripplanner_reverse">Reverse</string>
     <string name="tripplanner_report_trip_problem">Report Trip Plan Problem</string>
 
-    <string name="no_trip_planner_title">Google cost increase</string>
-    <string name="no_trip_planner_message">Google is now charging OneBusAway for all trip plans (about $1,000 per month)!
-        OBA is an open source project and can\’t pay for these costs. We\'ve created a non-profit and applied to Google for Nonprofits, but are still waiting for approval.
-        In the mean-time, we\'ve had to shut down the trip planner. If you\'d like to express your support for OneBusAway to Google for Nonprofits,
-        please reach out to them on Twitter at https://twitter.com/googlenonprofit?s=17!</string>
-
     <!-- Instructions generation -->
 
     <!-- Step-by-step screen -->

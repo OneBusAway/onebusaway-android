@@ -1866,31 +1866,6 @@ public final class UIUtils {
     }
 
     /**
-     * Shows the dialog to explain why the trip planning isn't available.  If this provided activity
-     * can't manage dialogs then this method is a no-op.
-     *
-     * NOTE - this dialog can't be managed under the old dialog framework as the method
-     * ActivityCompat.shouldShowRequestPermissionRationale() always returns false.
-     */
-    public static void showNoTripPlannerDialog(@NonNull Activity activity) {
-        if (!canManageDialog(activity)) {
-            return;
-        }
-        TextView textView = (TextView) activity.getLayoutInflater().inflate(R.layout.whats_new_dialog, null);
-        textView.setText(R.string.no_trip_planner_message);
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity)
-                .setTitle(R.string.no_trip_planner_title)
-                .setView(textView)
-                .setCancelable(false)
-                .setPositiveButton(R.string.ok,
-                        (dialog, which) -> {
-                            // No-op
-                        }
-                );
-        builder.create().show();
-    }
-
-    /**
      * Sets the visibility and colors of the silhouettes in the provided occupancy.xml viewgroup
      *  @param v         occupancy.xml layout viewgroup containing the silhouettes
      * @param occupancy the occupancy value to use to set the silhouette visibility

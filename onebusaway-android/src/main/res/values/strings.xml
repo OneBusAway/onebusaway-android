@@ -108,8 +108,8 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Trip planner is back</b>
-        - Thanks to Google for admitting us to their Google for Nonprofits program!\n&#8226;\u0020
+        <b>Trip planner turned off (again)</b>
+        - Google ultimately rejected our non-profit\'s request for credits because OneBusAway \“recreates Google Products or Services.\" More at http://bit.ly/oba-trip-plan \n&#8226;\u0020
         <b>Bug fixes</b>
         - See http://bit.ly/oba-android-releases
     </string>
@@ -946,10 +946,7 @@
     <string name="tripplanner_report_trip_problem">Report Trip Plan Problem</string>
 
     <string name="no_trip_planner_title">Google cost increase</string>
-    <string name="no_trip_planner_message">Google is now charging OneBusAway for all trip plans (about $1,000 per month)!
-        OBA is an open source project and can\’t pay for these costs. We\'ve created a non-profit and applied to Google for Nonprofits, but are still waiting for approval.
-        In the mean-time, we\'ve had to shut down the trip planner. If you\'d like to express your support for OneBusAway to Google for Nonprofits,
-        please reach out to them on Twitter at https://twitter.com/googlenonprofit?s=17!</string>
+    <string name="no_trip_planner_message">Google ultimately rejected our non-profit\'s request for credits because OneBusAway \"recreates Google Products or Services.\" We can\'t afford the new ~$1,000 per month fee for the Places API, so we\'ve had to shut down the trip planner while we investigate alternate services. More details at http://bit.ly/oba-trip-plan</string>
 
     <!-- Instructions generation -->
 

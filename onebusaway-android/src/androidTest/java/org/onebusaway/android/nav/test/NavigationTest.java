@@ -20,6 +20,7 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.mock.Resources;
 import org.onebusaway.android.nav.NavigationServiceProvider;
@@ -59,10 +60,9 @@ public class NavigationTest extends ObaTestCase {
     @BeforeClass
     public static void beforeClass() {
         // Only run this test suite if we're not running on Travis CI (it's too slow)
-        String runningOnTravis = System.getenv("RUNNING_ON_TRAVIS");
-        if (runningOnTravis != null && runningOnTravis.equals("true")) {
+        if (BuildConfig.TRAVIS != null && BuildConfig.TRAVIS.equals("true")) {
             // Skip all @Test methods in this class
-            Assume.assumeTrue("Skipping NavigationTest tests - this is expected behavior when running on Travis CI", false);
+            Assume.assumeTrue("Skipping NavigationTest tests - this is expected behavior when running on Travis CI (#1010)", false);
         }
     }
 

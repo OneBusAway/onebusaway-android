@@ -59,6 +59,9 @@ android {
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // This enables us to tell when we're running unit tests on Travis (#1010)
+        buildConfigField("String", "TRAVIS", "\"" + System.getenv('TRAVIS') + "\"")
     }
 
     /**

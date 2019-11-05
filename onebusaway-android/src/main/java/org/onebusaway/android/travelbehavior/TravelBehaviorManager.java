@@ -23,10 +23,12 @@ import com.google.android.gms.tasks.Task;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.io.TravelBehaviorFileSaverExecutorManager;
@@ -56,6 +58,7 @@ import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -81,9 +84,12 @@ public class TravelBehaviorManager {
 
     private Context mApplicationContext;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     public TravelBehaviorManager(Context activityContext, Context applicationContext) {
         mActivityContext = activityContext;
         mApplicationContext = applicationContext;
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(activityContext);
     }
 
     public void registerTravelBehaviorParticipant() {
@@ -115,15 +121,30 @@ public class TravelBehaviorManager {
     }
 
     private void showParticipationDialog() {
+        View v = LayoutInflater.from(mActivityContext).inflate(R.layout.research_participation_dialog, null);
+        CheckBox neverShowDialog = v.findViewById(R.id.research_never_ask_again);
+
         new AlertDialog.Builder(mActivityContext)
-                .setMessage(R.string.travel_behavior_opt_in_message)
+                .setView(v)
                 .setTitle(R.string.travel_behavior_opt_in_title)
                 .setIcon(createIcon())
                 .setCancelable(false)
                 .setPositiveButton(R.string.travel_behavior_dialog_learn_more,
                         (dialog, which) -> showAgeDialog())
-                .setNegativeButton(R.string.travel_behavior_dialog_no_thanks,
-                        (dialog, which) -> optOutUser())
+                .setNegativeButton(R.string.travel_behavior_dialog_not_now,
+                        (dialog, which) -> {
+                            // If the user has chosen not to see the dialog again opt them out of the study, otherwise do nothing so they are prompted again later
+                            if (neverShowDialog.isChecked()) {
+                                optOutUser();
+                                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                        mApplicationContext.getString(R.string.analytics_label_button_travel_behavior_opt_out_at_first_dialog),
+                                        null);
+                            } else {
+                                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                        mApplicationContext.getString(R.string.analytics_label_button_travel_behavior_enroll_not_now),
+                                        null);
+                            }
+                        })
                 .create().show();
     }
 
@@ -137,6 +158,9 @@ public class TravelBehaviorManager {
                         (dialog, which) -> {
                             showInformedConsent();
                             dialog.dismiss();
+                            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                    mApplicationContext.getString(R.string.analytics_label_button_travel_behavior_opt_in_over_18),
+                                    null);
                         })
                 .setNegativeButton(R.string.travel_behavior_dialog_no,
                         (dialog, which) -> {
@@ -144,6 +168,9 @@ public class TravelBehaviorManager {
                                     R.string.travel_behavior_age_invalid_message, Toast.LENGTH_LONG).show();
                             optOutUser();
                             dialog.dismiss();
+                            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                    mApplicationContext.getString(R.string.analytics_label_button_travel_behavior_opt_out_under_18),
+                                    null);
                         })
                 .create().show();
     }
@@ -156,9 +183,19 @@ public class TravelBehaviorManager {
                 .setIcon(createIcon())
                 .setCancelable(false)
                 .setPositiveButton(R.string.travel_behavior_dialog_consent_agree,
-                        (dialog, which) -> showEmailDialog())
+                        (dialog, which) -> {
+                            showEmailDialog();
+                            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                    mApplicationContext.getString(R.string.analytics_label_button_travel_behavior_opt_in_informed_consent),
+                                    null);
+                        })
                 .setNegativeButton(R.string.travel_behavior_dialog_consent_disagree,
-                        (dialog, which) -> optOutUser())
+                        (dialog, which) -> {
+                            optOutUser();
+                            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                    mApplicationContext.getString(R.string.analytics_label_button_travel_behavior_opt_out_informed_consent),
+                                    null);
+                        })
                 .create().show();
     }
 
@@ -188,7 +225,8 @@ public class TravelBehaviorManager {
     private void showEmailDialog(String email) {
         LayoutInflater inflater = ((Activity) mActivityContext).getLayoutInflater();
         final View editTextView = inflater.inflate(R.layout.travel_behavior_email_dialog, null);
-        EditText emailEditText = editTextView.findViewById(R.id.tb_email_editdext);
+        EditText emailEditText = editTextView.findViewById(R.id.tb_email_edittext);
+        EditText emailEditTextConfirm = editTextView.findViewById(R.id.tb_email_edittext_confirm);
 
         if (email != null) {
             emailEditText.setText(email);
@@ -203,8 +241,10 @@ public class TravelBehaviorManager {
                 .setPositiveButton(R.string.travel_behavior_dialog_email_save,
                         (dialog, which) -> {
                             String currentEmail = emailEditText.getText().toString();
+                            String currentEmailConfirm = emailEditTextConfirm.getText().toString();
                             if (!TextUtils.isEmpty(currentEmail) &&
-                                    Patterns.EMAIL_ADDRESS.matcher(currentEmail).matches()) {
+                                    Patterns.EMAIL_ADDRESS.matcher(currentEmail).matches() &&
+                                    currentEmail.equalsIgnoreCase(currentEmailConfirm)) {
                                 registerUser(currentEmail);
                                 checkPermissions();
                             } else {

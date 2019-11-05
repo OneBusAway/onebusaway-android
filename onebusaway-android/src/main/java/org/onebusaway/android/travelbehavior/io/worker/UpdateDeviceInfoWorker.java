@@ -27,6 +27,7 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.PowerManager;
 import android.view.accessibility.AccessibilityManager;
 
 import androidx.annotation.NonNull;
@@ -73,10 +74,21 @@ public class UpdateDeviceInfoWorker extends Worker {
         AccessibilityManager am = (AccessibilityManager) getApplicationContext().getSystemService(ACCESSIBILITY_SERVICE);
         Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
 
+        PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        Boolean isPowerSaveModeActive = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            isPowerSaveModeActive = powerManager.isPowerSaveMode();
+        }
+        Boolean isIgnoringBatteryOptimizations = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            isIgnoringBatteryOptimizations = Application.isIgnoringBatteryOptimizations(getApplicationContext());
+        }
+
         DeviceInformation di = new DeviceInformation(obaVersion, Build.MODEL, Build.VERSION.RELEASE,
                 Build.VERSION.SDK_INT, googlePlayServicesAppVersion,
                 GoogleApiAvailability.GOOGLE_PLAY_SERVICES_VERSION_CODE,
-                Application.get().getCurrentRegion().getId(), isTalkBackEnabled);
+                Application.get().getCurrentRegion().getId(), isTalkBackEnabled,
+                isPowerSaveModeActive, isIgnoringBatteryOptimizations);
 
         int hashCode = di.hashCode();
         int mostRecentDeviceHash = PreferenceUtils.getInt(TravelBehaviorConstants.DEVICE_INFO_HASH,
@@ -84,9 +96,8 @@ public class UpdateDeviceInfoWorker extends Worker {
 
         String uid = getInputData().getString(TravelBehaviorConstants.USER_ID);
 
-        // Update if the device info is changed
+        // Update if the device info changed
         if (hashCode != mostRecentDeviceHash && uid != null) {
-
             String recordId = Long.toString(System.currentTimeMillis());
             TravelBehaviorFirebaseIOUtils.saveDeviceInfo(di, uid, recordId, hashCode);
         }

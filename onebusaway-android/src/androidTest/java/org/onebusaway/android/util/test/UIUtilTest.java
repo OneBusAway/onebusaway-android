@@ -458,7 +458,6 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Report arrival time problem");
-        assertEquals(options.get(6), "Join discussion");
         if (!isRunningOnTravis()) {
             assertEquals(options.get(6), "Join discussion");
             assertEquals(options.get(7), "About occupancy");

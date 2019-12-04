@@ -102,6 +102,7 @@ android {
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
             buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
             buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
+            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Below fields need to be defined so flavor builds, but will not be used by app
             buildConfigField "String", "FIXED_REGION_NAME", "null"
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
@@ -149,6 +150,7 @@ android {
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
             buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
             buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
+            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Below fields need to be defined so flavor builds, but will not be used by app
             buildConfigField "String", "FIXED_REGION_NAME", "null"
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
@@ -187,6 +189,7 @@ android {
             buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
             buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
             buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
+            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Fixed region info that the app will use
             buildConfigField "String", "FIXED_REGION_NAME", "\"Agency Y\""
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL",
@@ -229,6 +232,7 @@ android {
             buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
             buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
             buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
+            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Fixed region info that the app will use
             buildConfigField "String", "FIXED_REGION_NAME", "\"YORK\""
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL",
@@ -361,6 +365,19 @@ android {
  */
 def getEmbeddedSocialKey(keyType, productFlavor) {
     def keyName = "EmbeddedSocial" + keyType + "_" + productFlavor
+    if (project.hasProperty(keyName)) {
+        return project.property(keyName)
+    } else {
+        return ""
+    }
+}
+/**
+ * Gets the Pelias geocoding API key for the given product flavor
+ * @param productFlavor the product flavor being built
+ * @return the Pelias geocoding API key for the given product flavor
+ */
+def getPeliasKey(productFlavor) {
+    def keyName = "Pelias" + "_" + productFlavor
     if (project.hasProperty(keyName)) {
         return project.property(keyName)
     } else {

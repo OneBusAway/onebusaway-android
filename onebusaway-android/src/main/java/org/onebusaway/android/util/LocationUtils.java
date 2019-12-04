@@ -15,15 +15,6 @@
  */
 package org.onebusaway.android.util;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.directions.util.CustomAddress;
-import org.onebusaway.android.io.elements.ObaRegion;
-
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
@@ -35,6 +26,16 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.directions.util.CustomAddress;
+import org.onebusaway.android.io.elements.ObaRegion;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -455,10 +456,9 @@ public class LocationUtils {
 
         List<CustomAddress> addresses = new ArrayList<>();
         try {
-            // FIXME - Replace with Pelias key
-            String apiKey = "YourKeyHere";
+            String apiKey = BuildConfig.PELIAS_API_KEY;
             PeliasRequest.Builder requestBuilder = new AutocompleteRequest.Builder(apiKey, address)
-                    .setApiEndpoint("https://api.geocode.earth/v1/autocomplete");  // FIXME - Replace with Pelias endpoint
+                    .setApiEndpoint(Application.get().getString(R.string.pelias_api_url));
 
             if (region != null) {
                 double[] regionSpan = new double[4];

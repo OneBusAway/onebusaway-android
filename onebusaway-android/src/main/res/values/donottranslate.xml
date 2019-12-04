@@ -92,6 +92,9 @@
     <!-- Google Play Store Listing prefix -->
     <string name="google_play_listing_prefix">https://play.google.com/store/apps/details?id=%1s</string>
 
+    <!-- Pelias API URL for geocoding -->
+    <string name="pelias_api_url">https://api.geocode.earth/v1/autocomplete</string>
+
     <!-- Oba Analytics Messages -->
     <string name="analytics_problem">report_problem</string>
     <string name="analytics_accessibility">accessibility</string>

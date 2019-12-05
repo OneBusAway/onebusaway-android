@@ -110,6 +110,8 @@
     <string name="main_help_whatsnew">&#8226;\u0020
         <b>Help us improve transit</b>
         - Optionally participate in research to improve multimodal transportation.\n&#8226;\u0020
+        <b>Trip planner turned off (again)</b>
+        - Google ultimately rejected our non-profit\'s request for credits because OneBusAway \“recreates Google Products or Services.\" More at http://bit.ly/oba-trip-plan \n&#8226;\u0020
         <b>Bug fixes</b>
         - See http://bit.ly/oba-android-releases
     </string>
@@ -947,6 +949,9 @@
     <string name="tripplanner_reverse">Reverse</string>
     <string name="tripplanner_report_trip_problem">Report Trip Plan Problem</string>
 
+    <string name="no_trip_planner_title">Google cost increase</string>
+    <string name="no_trip_planner_message">Google ultimately rejected our non-profit\'s request for credits because OneBusAway \"recreates Google Products or Services.\" We can\'t afford the new ~$1,000 per month fee for the Places API, so we\'ve had to shut down the trip planner while we investigate alternate services. More details at http://bit.ly/oba-trip-plan</string>
+
     <!-- Instructions generation -->
 
     <!-- Step-by-step screen -->
@@ -1138,14 +1143,15 @@
     <string name="travel_behavior_age_message">Are you over the age of 18?</string>
     <string name="travel_behavior_age_invalid_message">Thanks for your interest, but you need to be over the age of 18 to participate.</string>
     <string name="travel_behavior_email_message">Please provide your email address for the online surveys</string>
-    <string name="travel_behavior_email_invalid">Email address is invalid</string>
+    <string name="travel_behavior_email_invalid">Please re-enter your email</string>
     <string name="travel_behavior_enroll_success">You successfully enrolled in the study.</string>
     <string name="travel_behavior_enroll_fail">Failed to enroll in the study. Please try again later.</string>
     <string name="travel_behavior_email_hint">Email</string>
+    <string name="travel_behavior_confirm_email_hint">Confirm email</string>
     <string name="travel_behavior_dialog_yes">Yes</string>
     <string name="travel_behavior_dialog_no">No</string>
     <string name="travel_behavior_dialog_learn_more">Learn more</string>
-    <string name="travel_behavior_dialog_no_thanks">No thanks</string>
+    <string name="travel_behavior_dialog_not_now">Not now</string>
     <string name="travel_behavior_dialog_consent_agree">Agree</string>
     <string name="travel_behavior_dialog_consent_disagree">Decline</string>
     <string name="travel_behavior_dialog_email_save">Save</string>

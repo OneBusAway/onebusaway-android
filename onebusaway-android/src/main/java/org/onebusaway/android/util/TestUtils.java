@@ -82,4 +82,13 @@ public class TestUtils {
     public static boolean isRunningOnEmulator() {
         return Build.FINGERPRINT.contains("generic");
     }
+
+    /**
+     * Returns true if the test is running on Travis CI, and false if it is not
+     *
+     * @return true if the test is running on Travis CI, and false if it is not
+     */
+    public static boolean isRunningOnTravis() {
+        return BuildConfig.TRAVIS != null && BuildConfig.TRAVIS.equals("true");
+    }
 }

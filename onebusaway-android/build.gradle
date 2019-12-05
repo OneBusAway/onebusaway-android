@@ -53,12 +53,15 @@ android {
     defaultConfig {
         minSdkVersion 16
         targetSdkVersion 26
-        versionCode 110
-        versionName "2.6.4"
+        versionCode 116
+        versionName "2.6.7"
 
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // This enables us to tell when we're running unit tests on Travis (#1010)
+        buildConfigField("String", "TRAVIS", "\"" + System.getenv('TRAVIS') + "\"")
     }
 
     /**
@@ -343,6 +346,19 @@ android {
                     outputFileName = "${variant.name}-v${variant.versionName}.apk"
                 }
             }
+        }
+    }
+
+    // Filter out the Amazon release build variants for AgencyX and AgencyY brands because they are unused
+    variantFilter { variant ->
+        def names = variant.flavors*.name
+        def brand = names.get(0)
+        def platform = names.get(1)
+        def isRelease = variant.buildType.name.equals('release')
+        if (isRelease &&
+                ((brand.equals("agencyX") && platform.equals("amazon")) ||
+                        (brand.equals("agencyY") && platform.equals("amazon")) )) {
+            variant.setIgnore(true)
         }
     }
 

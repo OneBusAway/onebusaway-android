@@ -16,6 +16,7 @@
 package org.onebusaway.android.nav.test;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.io.test.ObaTestCase;
@@ -40,6 +41,7 @@ import androidx.test.runner.AndroidJUnit4;
 import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
+import static org.onebusaway.android.util.TestUtils.isRunningOnTravis;
 
 /**
  * Loads previously recorded trips (GPS data) and replays them through the NavigationServiceProvider
@@ -62,6 +64,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip1() throws IOException {
+        checkTravis();
         runSimulation("nav_trip1", 848, 978);
     }
 
@@ -73,6 +76,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip1C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip1c", 665, 929);
     }
 
@@ -84,7 +88,8 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip2() throws IOException {
-         runSimulation("nav_trip2", 0, 15);
+        checkTravis();
+        runSimulation("nav_trip2", 0, 15);
     }
 
     /**
@@ -106,6 +111,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip3() throws IOException {
+        checkTravis();
         runSimulation("nav_trip3", 95, 111);
     }
 
@@ -117,6 +123,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip3C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip3c", 87, 109);
     }
 
@@ -129,6 +136,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip4() throws IOException {
+        checkTravis();
         runSimulation("nav_trip4", 294, 329);
     }
 
@@ -141,6 +149,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip4C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip4c", 253, 329);
     }
 
@@ -152,6 +161,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip5() throws IOException {
+        checkTravis();
         runSimulation("nav_trip5", 372, 660);
     }
 
@@ -163,6 +173,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip5C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip5c", 284, 492);
     }
 
@@ -174,6 +185,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip6() throws IOException {
+        checkTravis();
         runSimulation("nav_trip6", 801, 837);
     }
 
@@ -185,6 +197,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip6C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip6c", 676, 704);
     }
 
@@ -196,6 +209,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip7() throws IOException {
+        checkTravis();
         runSimulation("nav_trip7", 183, 208);
     }
 
@@ -207,6 +221,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip7C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip7c", 172, 285);
     }
 
@@ -218,6 +233,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip8() throws IOException {
+        checkTravis();
         runSimulation("nav_trip8", 0, 18);
     }
 
@@ -229,6 +245,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip8C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip8c", 0, 20);
     }
 
@@ -240,6 +257,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip9() throws IOException {
+        checkTravis();
         runSimulation("nav_trip9", 1041, 1071);
     }
 
@@ -251,6 +269,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip9C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip9c", 570, 634);
     }
 
@@ -262,6 +281,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip10() throws IOException {
+        checkTravis();
         runSimulation("nav_trip10", 589, 605);
     }
 
@@ -273,6 +293,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip10C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip10c", 484, 509);
     }
 
@@ -284,6 +305,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip11() throws IOException {
+        checkTravis();
         runSimulation("nav_trip11", 331, 371);
     }
 
@@ -295,6 +317,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip11C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip11c", 119, 158);
     }
 
@@ -306,6 +329,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip12() throws IOException {
+        checkTravis();
         runSimulation("nav_trip12", 69, 199);
     }
 
@@ -317,6 +341,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip12C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip12c", 880, 901);
     }
 
@@ -328,6 +353,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip13() throws IOException {
+        checkTravis();
         runSimulation("nav_trip13", 2549, 2732);
     }
 
@@ -339,6 +365,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip13C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip13c", 230, 519);
     }
 
@@ -353,6 +380,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip14() throws IOException {
+        checkTravis();
         runSimulation("nav_trip14", 548, 571);
     }
 
@@ -364,6 +392,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip14C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip14c", 387, 429);
     }
 
@@ -375,6 +404,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip15() throws IOException {
+        checkTravis();
         runSimulation("nav_trip15", 225, 417);
     }
 
@@ -386,6 +416,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip15C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip15c", 217, 287);
     }
 
@@ -398,6 +429,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip16() throws IOException {
+        checkTravis();
         runSimulation("nav_trip16", 142, 192);
     }
 
@@ -409,6 +441,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip16C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip16c", 121, 168);
     }
 
@@ -420,6 +453,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip17() throws IOException {
+        checkTravis();
         runSimulation("nav_trip17", 100, 181);
     }
 
@@ -431,6 +465,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip18() throws IOException {
+        checkTravis();
         runSimulation("nav_trip18", 31, 51);
     }
 
@@ -442,6 +477,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip18C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip18c", 31, 58);
     }
 
@@ -453,6 +489,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip20() throws IOException {
+        checkTravis();
         runSimulation("nav_trip20", 133, 195);
     }
 
@@ -464,6 +501,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip20C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip20c", 53, 117);
     }
 
@@ -475,6 +513,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip21() throws IOException {
+        checkTravis();
         runSimulation("nav_trip21", 547, 686);
     }
 
@@ -486,6 +525,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip21C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip21c", 323, 402);
     }
 
@@ -497,6 +537,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip22() throws IOException {
+        checkTravis();
         runSimulation("nav_trip22", 1085, 1198);
     }
 
@@ -508,6 +549,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip22C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip22c", 1032, 1099);
     }
 
@@ -519,6 +561,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip23() throws IOException {
+        checkTravis();
         runSimulation("nav_trip23", 0, 24);
     }
 
@@ -530,6 +573,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip23C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip23c", 0, 19);
     }
 
@@ -541,6 +585,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip24() throws IOException {
+        checkTravis();
         runSimulation("nav_trip24", 115, 178);
     }
 
@@ -552,6 +597,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip24C() throws IOException {
+        checkTravis();
          runSimulation("nav_trip24c", 203, 262);
     }
 
@@ -563,7 +609,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip25() throws IOException {
-        // Read test CSV
+        checkTravis();
         runSimulation("nav_trip25", 209, 235);
     }
 
@@ -575,6 +621,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip25C() throws IOException {
+        checkTravis();
         runSimulation("nav_trip25c", 217, 247);
     }
 
@@ -586,7 +633,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip26() throws IOException {
-        // Read test CSV
+        checkTravis();
         runSimulation("nav_trip26", 367, 463);
     }
 
@@ -598,7 +645,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip27() throws IOException {
-        // Read test CSV
+        checkTravis();
         runSimulation("nav_trip27", 909, 944);
     }
 
@@ -610,7 +657,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip28() throws IOException {
-        // Read test CSV
+        checkTravis();
         runSimulation("nav_trip28", 400, 473);
     }
 
@@ -622,7 +669,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip29() throws IOException {
-        // Read test CSV
+        checkTravis();
         runSimulation("nav_trip29", 472, 594);
     }
 
@@ -634,7 +681,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip30() throws IOException {
-        // Read test CSV
+        checkTravis();
         runSimulation("nav_trip30", 1001, 1048);
     }
 
@@ -646,7 +693,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip31() throws IOException {
-        // Read test CSV
+        checkTravis();
         runSimulation("nav_trip31", 2508, 2654);
     }
 
@@ -659,7 +706,7 @@ public class NavigationTest extends ObaTestCase {
 
     @Test
     public void testTrip32() throws IOException {
-        // Read test CSV
+        checkTravis();
         runSimulation("nav_trip32", 1847, 1888);
     }
 
@@ -671,7 +718,7 @@ public class NavigationTest extends ObaTestCase {
      */
     @Test
     public void testTrip33() throws IOException {
-        // Read test CSV
+        checkTravis();
         runSimulation("nav_trip33", 335, 401);
     }
 
@@ -907,6 +954,16 @@ public class NavigationTest extends ObaTestCase {
 
             Boolean check2 = provider.getGetReady() && provider.getFinished();
             assertTrue(check2);
+        }
+    }
+
+    /**
+     * Checks to see if we're running on Travis, and if so, skips this test with Assume.assumeTrue().
+     * Note that we can't put this in a @BeforeClass method because otherwise we get "test run failed: 'Test run failed to complete. Expected 204 tests, received 149'"
+     */
+    public static void checkTravis() {
+        if (isRunningOnTravis()) {
+            Assume.assumeTrue("Skipping NavigationTest tests - this is expected behavior when running on Travis CI (#1010)", false);
         }
     }
 }

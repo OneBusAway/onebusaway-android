@@ -30,8 +30,7 @@
                     android:text="@string/trip_plan_from"
                     android:textColor="@color/trip_plan_label"
                     android:id="@+id/trip_plan_from"
-                    android:layout_gravity="center_vertical"
-            />
+                android:layout_gravity="center_vertical" />
 
             <AutoCompleteTextView
                     android:layout_width="0dip"
@@ -46,9 +45,7 @@
                     android:ellipsize="end"
                     android:requiresFadingEdge="horizontal"
                     android:layout_marginLeft="4dp"
-                    android:layout_gravity="center_vertical"
-            />
-
+                android:layout_gravity="center_vertical" />
 
             <ImageButton
                     android:layout_width="wrap_content"
@@ -58,9 +55,7 @@
                     android:background="#00000000"
                     android:src="@drawable/ic_my_location"
                     android:tint="@color/material_gray"
-                    android:layout_gravity="center_vertical"
-            />
-
+                android:layout_gravity="center_vertical" />
         </TableRow>
 
         <TableRow android:layout_width="wrap_content">
@@ -96,11 +91,8 @@
                     android:background="#00000000"
                     android:src="@drawable/ic_my_location"
                     android:tint="@color/material_gray"
-                    android:layout_gravity="center_vertical"
-            />
-
+                android:layout_gravity="center_vertical" />
         </TableRow>
-
     </TableLayout>
 
     <LinearLayout

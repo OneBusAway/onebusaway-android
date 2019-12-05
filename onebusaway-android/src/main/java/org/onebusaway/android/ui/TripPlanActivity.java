@@ -17,8 +17,24 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.location.Location;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.widget.ListView;
+import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.sothree.slidinguppanel.ScrollableViewHelper;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
@@ -35,24 +51,7 @@ import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.TripPlan;
 import org.opentripplanner.api.ws.Message;
 
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.location.Location;
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.widget.ListView;
-import android.widget.Toast;
-
 import java.util.ArrayList;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
 
 
 public class TripPlanActivity extends AppCompatActivity implements TripRequest.Callback,
@@ -158,7 +157,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             fragment.setArguments(bundle);
             fragment.setListener(this);
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.trip_plan_fragment_container, fragment).commit();
+                    .add(R.id.trip_plan_fragment_container, fragment, TripPlanFragment.TAG).commit();
         }
 
         mPanel = (SlidingUpPanelLayout) findViewById(R.id.trip_plan_sliding_layout);

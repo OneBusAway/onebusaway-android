@@ -15,24 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.firebase.analytics.FirebaseAnalytics;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.directions.util.ConversionUtils;
-import org.onebusaway.android.directions.util.CustomAddress;
-import org.onebusaway.android.directions.util.OTPConstants;
-import org.onebusaway.android.directions.util.PlacesAutoCompleteAdapter;
-import org.onebusaway.android.directions.util.TripRequestBuilder;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
@@ -60,15 +42,33 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.directions.util.ConversionUtils;
+import org.onebusaway.android.directions.util.CustomAddress;
+import org.onebusaway.android.directions.util.OTPConstants;
+import org.onebusaway.android.directions.util.PlacesAutoCompleteAdapter;
+import org.onebusaway.android.directions.util.TripRequestBuilder;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
-
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.Fragment;
 
 
 public class TripPlanFragment extends Fragment {
@@ -83,6 +83,8 @@ public class TripPlanFragment extends Fragment {
          */
         void onTripRequestReady();
     }
+
+    public static final String TAG = "TripPlanFragment";
 
     private static final int USE_FROM_ADDRESS = 1;
     private static final int USE_TO_ADDRESS = 2;
@@ -101,7 +103,6 @@ public class TripPlanFragment extends Fragment {
     Calendar mMyCalendar;
 
     protected GoogleApiClient mGoogleApiClient;
-    private static final String TAG = "TripPlanFragment";
 
     private CustomAddress mFromAddress, mToAddress;
 

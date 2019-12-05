@@ -287,6 +287,7 @@ public class TripPlanFragment extends Fragment {
         if (mBuilder.ready() && mListener != null) {
             mFromAddressTextArea.dismissDropDown();
             mToAddressTextArea.dismissDropDown();
+            UIUtils.closeKeyboard(getContext(), mFromAddressTextArea);
             mListener.onTripRequestReady();
         }
     }

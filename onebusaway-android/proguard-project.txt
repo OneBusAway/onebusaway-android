@@ -38,6 +38,13 @@
 # Keep all OpenTripPlanner POJO classes
 -keep class org.opentripplanner.** { *; }
 
+# Keep all Pelias POJO classes for geocoding
+-keep class edu.usf.cutr.pelias.** { *; }
+
+# Keep all class members for GeoJSON Feature class and deserializers for geocoding
+-keepclassmembers class org.geojson.Feature** { *; }
+-keepclassmembers class org.geojson.jackson.LngLatAltDeserializer** { *; }
+
 # SearchView
 -keep class android.support.v7.widget.SearchView { *; }
 

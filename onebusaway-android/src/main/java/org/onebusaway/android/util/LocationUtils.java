@@ -292,8 +292,8 @@ public class LocationUtils {
         }
     }
 
-    public static List<CustomAddress> processGeocoding(Context context, ObaRegion region,
-                                                            String... reqs) {
+    public static List<CustomAddress> processGooglePlacesGeocoding(Context context, ObaRegion region,
+                                                                   String... reqs) {
         return processGeocoding(context, region, false, reqs);
     }
 

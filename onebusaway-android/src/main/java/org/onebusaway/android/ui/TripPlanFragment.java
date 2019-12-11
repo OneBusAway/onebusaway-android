@@ -562,6 +562,13 @@ public class TripPlanFragment extends Fragment {
         return address;
     }
 
+    /**
+     * Receives a geocoding result from the Google Places SDK
+     *
+     * @param requestCode
+     * @param resultCode
+     * @param intent
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (resultCode != -1) {

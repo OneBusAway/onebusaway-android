@@ -17,13 +17,15 @@
 
 package org.onebusaway.android.directions.util;
 
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.util.LocationUtils;
-
 import android.content.Context;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.util.LocationUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,10 +65,15 @@ public class PlacesAutoCompleteAdapter extends ArrayAdapter<CustomAddress> imple
             protected Filter.FilterResults performFiltering(CharSequence constraint) {
                 FilterResults filterResults = new FilterResults();
                 if (constraint != null) {
-                    // Retrieve the autocomplete results.
-                        mResultList = LocationUtils.processGeocoding(mContext, mRegion,
-                                constraint.toString());
+                    // Retrieve the autocomplete results
+                    if (BuildConfig.USE_PELIAS_GEOCODING) {
+                        mResultList = LocationUtils.processPeliasGeocoding(mContext, mRegion, constraint.toString());
+                    } else {
+                        // Use Google Places SDK
+                        mResultList = LocationUtils.processGooglePlacesGeocoding(mContext, mRegion, constraint.toString());
+                    }
                     if (mResultList != null){
+                        Log.d("Geocode", "Num of results: " + mResultList.size());
                         // Assign the data to the FilterResults
                         filterResults.values = mResultList;
                         filterResults.count = mResultList.size();

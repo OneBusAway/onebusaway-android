@@ -87,6 +87,16 @@ No matter which default is defined, users can change the sorting style by using 
 
 `USE_FIXED_REGION` - Valid values are `true` and `false` - If true, then the app will be fixed to the region information provided for this brand dimension in the `build.gradle`.  If false, then the app will function with the normal multi-region process, and work across various regions defined in the Regions API.  This value is false for the original OneBusAway brand so it supports multi-region.
 
+**Configuration Pelias API key for geocoding**
+
+If trip planning is active, you'll need to provide an API key for [geocode.earth](https://geocode.earth/).
+
+Add the following to `onebusaway-android/gradle.properties`:
+
+`Pelias_oba=XXXXXX`
+
+...where `XXXXXX` is your API key. Note that the suffix of `_oba` can be changed to configure API keys for other build flavors.
+
 ## Examples
 
 Here's an example of how configuration options are set up for the sample agency "Agency X" in `build.gradle`:

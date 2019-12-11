@@ -40,6 +40,16 @@ also mention how you would build/run the **amazon** flavor for the **oba** brand
 1. To build and push the app to the device, run `gradlew installObaGoogleDebug` from the command line at the root of the project (or `gradlew installObaAmazonDebug` for Amazon build flavor)
 1. To start the app, run `adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.ui.HomeActivity` (alternately, you can manually start the app)
 
+### Configuration Pelias API key for geocoding
+
+If trip planning is active, you'll need to provide an API key for [geocode.earth](https://geocode.earth/).
+
+Add the following to `onebusaway-android/gradle.properties`:
+
+`Pelias_oba=XXXXXX`
+
+...where `XXXXXX` is your API key. Note that the suffix of `_oba` can be changed to configure API keys for other build flavors.
+
 ### Release builds
 
 To build a release build, you need to create a `gradle.properties` file that points to a `secure.properties` file, and a `secure.properties` file that points to your keystore and alias.

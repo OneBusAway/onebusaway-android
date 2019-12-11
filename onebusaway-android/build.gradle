@@ -105,6 +105,8 @@ android {
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
             buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
             buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
+            buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
+            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Below fields need to be defined so flavor builds, but will not be used by app
             buildConfigField "String", "FIXED_REGION_NAME", "null"
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
@@ -152,6 +154,8 @@ android {
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
             buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
             buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
+            buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
+            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Below fields need to be defined so flavor builds, but will not be used by app
             buildConfigField "String", "FIXED_REGION_NAME", "null"
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
@@ -190,6 +194,8 @@ android {
             buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
             buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
             buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
+            buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
+            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Fixed region info that the app will use
             buildConfigField "String", "FIXED_REGION_NAME", "\"Agency Y\""
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL",
@@ -232,6 +238,8 @@ android {
             buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
             buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
             buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
+            buildConfigField "boolean", "USE_PELIAS_GEOCODING", "false"
+            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Fixed region info that the app will use
             buildConfigField "String", "FIXED_REGION_NAME", "\"YORK\""
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL",
@@ -383,6 +391,19 @@ def getEmbeddedSocialKey(keyType, productFlavor) {
         return ""
     }
 }
+/**
+ * Gets the Pelias geocoding API key for the given product flavor
+ * @param productFlavor the product flavor being built
+ * @return the Pelias geocoding API key for the given product flavor
+ */
+def getPeliasKey(productFlavor) {
+    def keyName = "Pelias" + "_" + productFlavor
+    if (project.hasProperty(keyName)) {
+        return project.property(keyName)
+    } else {
+        return ""
+    }
+}
 
 /**
  * Copies our Maps API v2-based classes from the Google build flavor to the Amazon build flavor,
@@ -458,6 +479,8 @@ dependencies {
     implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
     // POJOs used for full data-binding via Jackson
     implementation 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
+    // Pelias for point-of-interest search and geocoding for trip planning origin and destination
+    implementation 'edu.usf.cutr:pelias-client-library:1.0.3'
     // Google Play Services Maps (only for Google flavor)
     googleImplementation 'com.google.android.gms:play-services-maps:16.1.0'
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)

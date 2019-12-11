@@ -169,7 +169,8 @@
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
                 android:background="@android:color/white"
-                android:id="@+id/directionsListView"/>
+            android:id="@+id/directionsListView"
+            android:isScrollContainer="false" />
 
     </FrameLayout>
 

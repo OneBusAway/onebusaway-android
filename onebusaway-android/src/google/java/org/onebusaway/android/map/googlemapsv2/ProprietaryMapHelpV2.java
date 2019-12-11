@@ -15,18 +15,6 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
-import com.google.android.gms.common.GooglePlayServicesRepairableException;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.libraries.places.compat.Place;
-import com.google.android.libraries.places.compat.ui.PlaceAutocomplete;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.directions.util.CustomAddress;
-import org.onebusaway.android.io.elements.ObaRegion;
-
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -38,6 +26,18 @@ import android.net.Uri;
 import android.view.View;
 
 import androidx.fragment.app.Fragment;
+
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.libraries.places.compat.Place;
+import com.google.android.libraries.places.compat.ui.PlaceAutocomplete;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.directions.util.CustomAddress;
+import org.onebusaway.android.io.elements.ObaRegion;
 
 /**
  * Helper methods specific to Google Maps API v2

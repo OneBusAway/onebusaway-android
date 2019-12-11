@@ -92,6 +92,9 @@
     <!-- Google Play Store Listing prefix -->
     <string name="google_play_listing_prefix">https://play.google.com/store/apps/details?id=%1s</string>
 
+    <!-- Pelias API URL for geocoding -->
+    <string name="pelias_api_url">https://api.geocode.earth/v1/autocomplete</string>
+
     <!-- Oba Analytics Messages -->
     <string name="analytics_problem">report_problem</string>
     <string name="analytics_accessibility">accessibility</string>
@@ -129,7 +132,6 @@
     <string name="analytics_label_button_press_nearby">nearby</string>
     <string name="analytics_label_button_press_reminders">my_reminders</string>
     <string name="analytics_label_button_press_trip_plan">trip_plan</string>
-    <string name="analytics_label_button_press_google_cost_increase">google_cost_increase</string>
     <string name="analytics_label_button_press_settings">settings</string>
     <string name="analytics_label_button_press_help">help</string>
     <string name="analytics_label_button_press_feedback">send_feedback</string>

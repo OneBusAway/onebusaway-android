@@ -44,12 +44,16 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.directions.util.ConversionUtils;
@@ -71,9 +75,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.Fragment;
-
 
 public class TripPlanFragment extends Fragment {
 
@@ -87,6 +88,8 @@ public class TripPlanFragment extends Fragment {
          */
         void onTripRequestReady();
     }
+
+    public static final String TAG = "TripPlanFragment";
 
     private static final int USE_FROM_ADDRESS = 1;
     private static final int USE_TO_ADDRESS = 2;
@@ -105,7 +108,6 @@ public class TripPlanFragment extends Fragment {
     Calendar mMyCalendar;
 
     protected GoogleApiClient mGoogleApiClient;
-    private static final String TAG = "TripPlanFragment";
 
     private CustomAddress mFromAddress, mToAddress;
 
@@ -288,6 +290,9 @@ public class TripPlanFragment extends Fragment {
 
     private void checkRequestAndSubmit() {
         if (mBuilder.ready() && mListener != null) {
+            mFromAddressTextArea.dismissDropDown();
+            mToAddressTextArea.dismissDropDown();
+            UIUtils.closeKeyboard(getContext(), mFromAddressTextArea);
             mListener.onTripRequestReady();
         }
     }
@@ -356,6 +361,9 @@ public class TripPlanFragment extends Fragment {
                 // do nothing
             }
         });
+
+        mFromAddressTextArea.dismissDropDown();
+        mToAddressTextArea.dismissDropDown();
     }
 
     @Override
@@ -554,6 +562,13 @@ public class TripPlanFragment extends Fragment {
         return address;
     }
 
+    /**
+     * Receives a geocoding result from the Google Places SDK
+     *
+     * @param requestCode
+     * @param resultCode
+     * @param intent
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (resultCode != -1) {
@@ -580,34 +595,30 @@ public class TripPlanFragment extends Fragment {
     private void setUpAutocomplete(AutoCompleteTextView tv, final int use) {
         ObaRegion region = Application.get().getCurrentRegion();
 
-        // Use Google widget if available
-        if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getContext())
+        // Use Google Places widget if build config uses it and it's available
+        if (!BuildConfig.USE_PELIAS_GEOCODING && GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getContext())
                 == ConnectionResult.SUCCESS) {
             tv.setFocusable(false);
             tv.setOnClickListener(new ProprietaryMapHelpV2.StartPlacesAutocompleteOnClick(use, this, region));
             return;
         }
 
-        // else, set up autocomplete with Android geocoder
-
+        // Set up autocomplete with Pelias geocoder
         tv.setAdapter(new PlacesAutoCompleteAdapter(getContext(), android.R.layout.simple_list_item_1, region));
-        tv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                CustomAddress addr = (CustomAddress) parent.getAdapter().getItem(position);
+        tv.setOnItemClickListener((parent, view, position, id) -> {
+            CustomAddress addr = (CustomAddress) parent.getAdapter().getItem(position);
 
-                if (use == USE_FROM_ADDRESS) {
-                    mFromAddress = addr;
-                    mBuilder.setFrom(mFromAddress);
-                } else if (use == USE_TO_ADDRESS) {
-                    mToAddress = addr;
-                    mBuilder.setTo(mToAddress);
-                }
-
-                checkRequestAndSubmit();
+            if (use == USE_FROM_ADDRESS) {
+                mFromAddress = addr;
+                mBuilder.setFrom(mFromAddress);
+            } else if (use == USE_TO_ADDRESS) {
+                mToAddress = addr;
+                mBuilder.setTo(mToAddress);
             }
-        });
-    }
 
+            checkRequestAndSubmit();
+        });
+        tv.dismissDropDown();
+    }
 }
 

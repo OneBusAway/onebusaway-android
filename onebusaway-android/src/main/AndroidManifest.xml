@@ -54,7 +54,8 @@
             android:name="org.onebusaway.android.app.Application"
             android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name"
-            android:theme="@style/Theme.OneBusAway">
+        android:theme="@style/Theme.OneBusAway"
+        android:networkSecurityConfig="@xml/network_security_config">
         <meta-data
                 android:name="android.app.default_searchable"
                 android:value="org.onebusaway.android.ui.SearchActivity"/>

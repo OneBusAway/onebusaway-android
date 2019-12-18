@@ -179,6 +179,10 @@ public class ObaRegionElement implements ObaRegion {
 
     private final String paymentWarningBody;
 
+    private final boolean travelBehaviorDataCollectionEnabled;
+
+    private final boolean enrollParticipantsInStudy;
+
     ObaRegionElement() {
         id = 0;
         regionName = "";
@@ -202,6 +206,8 @@ public class ObaRegionElement implements ObaRegion {
         paymentAndroidAppId = null;
         paymentWarningTitle = null;
         paymentWarningBody = null;
+        travelBehaviorDataCollectionEnabled = false;
+        enrollParticipantsInStudy = false;
     }
 
     public ObaRegionElement(long id,
@@ -225,7 +231,9 @@ public class ObaRegionElement implements ObaRegion {
                             boolean supportsEmbeddedSocial,
                             String paymentAndroidAppId,
                             String paymentWarningTitle,
-                            String paymentWarningBody) {
+                            String paymentWarningBody,
+                            boolean travelBehaviorDataCollectionEnabled,
+                            boolean enrollParticipantsInStudy) {
         this.id = id;
         this.regionName = name;
         this.active = active;
@@ -248,6 +256,8 @@ public class ObaRegionElement implements ObaRegion {
         this.paymentAndroidAppId = paymentAndroidAppId;
         this.paymentWarningTitle = paymentWarningTitle;
         this.paymentWarningBody = paymentWarningBody;
+        this.travelBehaviorDataCollectionEnabled = travelBehaviorDataCollectionEnabled;
+        this.enrollParticipantsInStudy = enrollParticipantsInStudy;
     }
 
     @Override
@@ -358,6 +368,16 @@ public class ObaRegionElement implements ObaRegion {
     @Override
     public String getPaymentWarningBody() {
         return paymentWarningBody;
+    }
+
+    @Override
+    public boolean isTravelBehaviorDataCollectionEnabled() {
+        return travelBehaviorDataCollectionEnabled;
+    }
+
+    @Override
+    public boolean isEnrollParticipantsInStudy() {
+        return enrollParticipantsInStudy;
     }
 
     @Override

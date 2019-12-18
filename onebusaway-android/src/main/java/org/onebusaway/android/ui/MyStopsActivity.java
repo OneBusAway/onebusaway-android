@@ -15,12 +15,11 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.util.UIUtils;
-
 import android.content.res.Resources;
 import android.os.Bundle;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.util.UIUtils;
 
 import androidx.appcompat.app.ActionBar;
 
@@ -65,12 +64,6 @@ public class MyStopsActivity extends MyTabActivityBase {
         restoreDefaultTab();
 
         UIUtils.setupActionBar(this);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        ObaAnalytics.reportActivityStart(this);
     }
 
     @Override

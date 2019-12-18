@@ -44,7 +44,6 @@
     <dimen name="route_name_text_size_small">24sp</dimen>
     <dimen name="route_name_text_size_medium">30sp</dimen>
 
-
     <!-- Arrival List Header -->
     <dimen name="arrival_header_height_no_arrivals">50dp</dimen>
     <dimen name="arrival_header_height_one_arrival">106dp</dimen>
@@ -56,16 +55,20 @@
     <dimen name="arrival_header_bottom_margin_expand_collapse">10dp</dimen>
     <dimen name="arrival_header_text_pad_left">10dp</dimen>
 
+    <!-- Arrivals Style A -->
+    <dimen name="occupancy">15dp</dimen>
+    <dimen name="occupancy_margin">2dp</dimen>
+
     <!-- Arrivals Style B -->
     <dimen name="arrival_style_b_status_min_width">77dp</dimen>
 
     <!-- Trip details - transit stop and line -->
     <dimen name="trip_details_transit_line_width">3dp</dimen>
-    <dimen name="trip_details_transit_line_height">65dp</dimen>
     <dimen name="trip_details_transit_stop_width">13dp</dimen>
     <dimen name="trip_details_transit_stop_width_focused">16dp</dimen>
     <dimen name="trip_details_transit_bus_icon">18dp</dimen>
     <dimen name="trip_details_transit_stop_icon">18dp</dimen>
+    <dimen name="trip_details_dest_stop_icon">18dp</dimen>
 
     <!-- Map -->
     <dimen name="map_stop_icon_size">19dp</dimen>

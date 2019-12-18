@@ -16,6 +16,8 @@
  */
 package org.onebusaway.android.io;
 
+import android.util.Log;
+
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -24,14 +26,13 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.TreeTraversingParser;
-
-import android.util.Log;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -65,9 +66,20 @@ public class JacksonSerializer implements ObaApi.SerializationHandler {
         return SingletonHolder.INSTANCE;
     }
 
+    /**
+     * Returns the JsonParser if the reader has valid content, null if it does not
+     * @param reader
+     * @return the JsonParser if the reader has valid content, null if it does not
+     * @throws IOException
+     */
     private static JsonParser getJsonParser(Reader reader)
             throws IOException {
-        TreeTraversingParser parser = new TreeTraversingParser(mMapper.readTree(reader));
+        JsonNode node = mMapper.readTree(reader);
+        if (node == null) {
+            // According to Jackson docs, the "input has no content to bind", so return null (error)
+            return null;
+        }
+        TreeTraversingParser parser = new TreeTraversingParser(node);
         parser.setCodec(mMapper);
         return parser;
     }
@@ -103,9 +115,12 @@ public class JacksonSerializer implements ObaApi.SerializationHandler {
 
     public <T> T deserialize(Reader reader, Class<T> cls) {
         try {
-            T t = getJsonParser(reader).readValueAs(cls);
+            T t = null;
+            JsonParser parser = getJsonParser(reader);
+            if (parser != null) {
+                t = parser.readValueAs(cls);
+            }
             if (t == null) {
-                // TODO: test switching from Gson for errors
                 t = createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, "Json error");
             }
             return t;

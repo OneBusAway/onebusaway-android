@@ -66,7 +66,6 @@ Typical resource values that you would override in a new brand include:
  * `apiv2_key` in `src/newBrandName/res/values/do_not_translate.xml` - your Android Maps API v2 key (see [this page](https://developers.google.com/maps/documentation/android/start#get-key) to get your key)
  * app theme colors (`theme_primary`, `theme_primary_dark`, `theme_muted`, `theme_accent`) in `src/newBrandName/res/values/colors.xml` - the default colors for the Action Bar, etc.  For example, the Agency X brand specifies red theme colors, while Agency Y brand specifies blue theme colors.
  * `stop_info_ontime` in `src/newBrandName/res/values/colors.xml` - the OneBusAway brand uses its green theme color for the "on-time" arrival color.  If your theme color isn't green, you need to specify green for this "on-time" arrival color - we suggest `#4CAF50`
- * `ga_trackingId` in `src/newBrandName/res/values/app_tracker.xml` and `src/newBrandName/res/values/global_tracker.xml` - your Google Analytics tracker IDs.  We allow for two trackers to offer both unrolled (free) and rolled-up reporting (for paid accounts) - see [this discussion](https://github.com/OneBusAway/onebusaway-android/issues/105#issuecomment-71862899) for details.
 
 If you want to implement custom code, we recommend that you create a base abstract class, and split the implementation differences into subclasses that can be selected at runtime by different brands based on configuration options in `build.gradle`.  See `org.onebusaway.android.ui.ArrivalsListAdapterBase` for a sample base class, and `ArrivalsListAdapterStyleA` and `ArrivalsListAdapterStyleB` for examples of how different presentations of arrival times can be used in different brands, and see the following section for how these options are specified in `build.gradle`.
 
@@ -87,6 +86,16 @@ No matter which default is defined, users can change the sorting style by using 
 **Fixed vs. Multi-region**
 
 `USE_FIXED_REGION` - Valid values are `true` and `false` - If true, then the app will be fixed to the region information provided for this brand dimension in the `build.gradle`.  If false, then the app will function with the normal multi-region process, and work across various regions defined in the Regions API.  This value is false for the original OneBusAway brand so it supports multi-region.
+
+**Configuration Pelias API key for geocoding**
+
+If trip planning is active, you'll need to provide an API key for [geocode.earth](https://geocode.earth/).
+
+Add the following to `onebusaway-android/gradle.properties`:
+
+`Pelias_oba=XXXXXX`
+
+...where `XXXXXX` is your API key. Note that the suffix of `_oba` can be changed to configure API keys for other build flavors.
 
 ## Examples
 
@@ -131,3 +140,7 @@ The Agency Y sample has chosen different options - they are using `ARRIVAL_INFO_
     }
 
 Note that all brands need to supply the `FIXED_REGION_...` fields in their flavor dimension in `build.gradle` so the project will compile, although these values are only used if `USE_FIXED_REGION` is set to true.
+
+## Acknowledgements
+
+When launching a rebranded version of OneBusAway, acknowledging that your app is based on the hard work of those contributing to the OneBusAway project is certainly appreciated.  However, please do not imply that the OneBusAway project or it's contributors endorse the rebranded app, and please do not use the OneBusAway logo or color scheme in your rebranded app.

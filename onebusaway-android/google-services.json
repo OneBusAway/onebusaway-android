@@ -1,71 +1,188 @@
 {
   "project_info": {
-    "project_number": "278087004334",
-    "firebase_url": "https://push-160200.firebaseio.com",
-    "project_id": "push-160200",
-    "storage_bucket": "push-160200.appspot.com"
+    "project_number": "1083736323923",
+    "firebase_url": "https://api-project-1083736323923.firebaseio.com",
+    "project_id": "api-project-1083736323923",
+    "storage_bucket": "api-project-1083736323923.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:278087004334:android:e2ba0de76d8a138b",
+        "mobilesdk_app_id": "1:1083736323923:android:75ea84a920f3dd26",
+        "android_client_info": {
+          "package_name": "can.yrt.onebusaway"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1083736323923-u9a12phc7p9s7kmlh6aerpdvu6cbjagg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "can.yrt.onebusaway",
+            "certificate_hash": "d8d368095abbdf638318a74cce3f5f3c35ab34b2"
+          }
+        },
+        {
+          "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKhirldbMm7knvxq2lFoYiNxSCOesvnwk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1083736323923-a3abfviki4fcbm734vbfceejcivrvbv2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "org.onebusaway.iphone",
+                "app_store_id": "329380089"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1083736323923:android:e2ba0de76d8a138b",
         "android_client_info": {
           "package_name": "com.joulespersecond.seattlebusbot"
         }
       },
       "oauth_client": [
         {
-          "client_id": "278087004334-dor39puv7367datkq8tujqokdejf8l09.apps.googleusercontent.com",
-          "client_type": 3
-        },
-        {
-          "client_id": "278087004334-lcd6fdo4ad67uv0tv6mfqdng8oj22c4d.apps.googleusercontent.com",
-          "client_type": 3
-        },
-        {
-          "client_id": "278087004334-otmla1pl86qbd9veud0qqg2vlgjvponr.apps.googleusercontent.com",
-          "client_type": 3
-        },
-        {
-          "client_id": "278087004334-7rvj1m5asgkaks6nvp8u597ca7j4via7.apps.googleusercontent.com",
-          "client_type": 3
-        },
-        {
-          "client_id": "278087004334-5n7g3n8l411bgdg56hdhijb2b87t021m.apps.googleusercontent.com",
-          "client_type": 3
-        },
-        {
-          "client_id": "278087004334-fasutsvvr40vjfu4qfjj4fed1kbrdem4.apps.googleusercontent.com",
+          "client_id": "1083736323923-0u4ns2rkmbar7taqetottco4oe0q36d5.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.joulespersecond.seattlebusbot",
-            "certificate_hash": "b07dc74d8bf065f74a297018a61b557949b354cb"
+            "certificate_hash": "650f90e1ea8abee695865f3abaac9af968a99007"
           }
+        },
+        {
+          "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
+          "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDlmayxwEqAc0Ti-jl4dKBHRxIfi4h8xBs"
-        },
-        {
-          "current_key": "AIzaSyB-fnHYtCzF7h8ktvHSgEdxUKaS9Tl-C5Q"
+          "current_key": "AIzaSyAKhirldbMm7knvxq2lFoYiNxSCOesvnwk"
         }
       ],
       "services": {
-        "analytics_service": {
-          "status": 1
-        },
         "appinvite_service": {
-          "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "278087004334-dor39puv7367datkq8tujqokdejf8l09.apps.googleusercontent.com",
+              "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "1083736323923-a3abfviki4fcbm734vbfceejcivrvbv2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "org.onebusaway.iphone",
+                "app_store_id": "329380089"
+              }
             }
           ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1083736323923:android:0afb35895aeb0afe",
+        "android_client_info": {
+          "package_name": "org.agencyx.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1083736323923-1db56fvaq7nt417bofvnf81hq1uc42e3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "org.agencyx.android",
+            "certificate_hash": "650f90e1ea8abee695865f3abaac9af968a99007"
+          }
         },
-        "ads_service": {
-          "status": 2
+        {
+          "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKhirldbMm7knvxq2lFoYiNxSCOesvnwk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1083736323923-a3abfviki4fcbm734vbfceejcivrvbv2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "org.onebusaway.iphone",
+                "app_store_id": "329380089"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1083736323923:android:5315b0708d7ce060",
+        "android_client_info": {
+          "package_name": "org.agencyy.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1083736323923-8e01enil38smqtoc0fisqu57u57e26ie.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "org.agencyy.android",
+            "certificate_hash": "650f90e1ea8abee695865f3abaac9af968a99007"
+          }
+        },
+        {
+          "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKhirldbMm7knvxq2lFoYiNxSCOesvnwk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1083736323923-r9sj5jprq479c089eol4shq6q026tlv7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1083736323923-a3abfviki4fcbm734vbfceejcivrvbv2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "org.onebusaway.iphone",
+                "app_store_id": "329380089"
+              }
+            }
+          ]
         }
       }
     }

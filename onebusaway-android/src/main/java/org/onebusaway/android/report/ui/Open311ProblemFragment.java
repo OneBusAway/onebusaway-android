@@ -16,21 +16,6 @@
 
 package org.onebusaway.android.report.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.ObaTripStatus;
-import org.onebusaway.android.report.connection.ServiceDescriptionTask;
-import org.onebusaway.android.report.connection.ServiceRequestTask;
-import org.onebusaway.android.report.constants.ReportConstants;
-import org.onebusaway.android.report.ui.model.AttributeValue;
-import org.onebusaway.android.report.ui.util.IssueLocationHelper;
-import org.onebusaway.android.report.ui.util.ServiceUtils;
-import org.onebusaway.android.util.MyTextUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -46,7 +31,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.provider.MediaStore;
-import android.telephony.TelephonyManager;
 import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -69,6 +53,24 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaTripStatus;
+import org.onebusaway.android.report.connection.ServiceDescriptionTask;
+import org.onebusaway.android.report.connection.ServiceRequestTask;
+import org.onebusaway.android.report.constants.ReportConstants;
+import org.onebusaway.android.report.ui.model.AttributeValue;
+import org.onebusaway.android.report.ui.util.IssueLocationHelper;
+import org.onebusaway.android.report.ui.util.ServiceUtils;
+import org.onebusaway.android.util.MyTextUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -175,6 +177,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     private static final String BLOCK_ID = ".blockId";
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     public static void show(AppCompatActivity activity, Integer containerViewId,
                             Open311 open311, Service service, ObaArrivalInfo obaArrivalInfo,
             String agencyName, String blockId) {
@@ -211,6 +215,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         setRetainInstance(true);
 
         setHasOptionsMenu(Boolean.TRUE);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
 
         return rootView;
     }
@@ -279,12 +285,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 showProgressDialog(true);
             }
         }
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        ObaAnalytics.reportFragmentStart(this);
     }
 
     @Override
@@ -484,8 +484,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         // Prepare issue description
         String description = ((EditText) getActivity().findViewById(R.id.ri_editTextDesc)).getText().toString();
 
-        final TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-
         Open311User open311User;
 
         if (!mAnonymousReportingCheckBox.isChecked()) {
@@ -493,6 +491,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         } else {
             open311User = getOpen311UserFromStrings();
         }
+
+        String appUid = PreferenceUtils.getString(Application.APP_UID);
 
         IssueLocationHelper issueLocationHelper = getIssueLocationHelper();
 
@@ -504,7 +504,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 setDescription(description).setEmail(open311User.getEmail()).
                 setFirst_name(open311User.getName()).setLast_name(open311User.getLastName()).
                 setPhone(open311User.getPhone()).setAddress_string(getCurrentAddress()).
-                setDevice_id(tm.getDeviceId());
+                setDevice_id(appUid);
 
         if (mImagePath != null) {
             attachImage(builder);
@@ -531,8 +531,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             mRequestTask = new ServiceRequestTask(mOpen311, serviceRequest, this);
             mRequestTask.execute();
 
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
-                    getString(R.string.analytics_action_problem), mService.getService_name());
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics, getString(R.string.analytics_problem), mService.getService_name());
         } else {
             createToastMessage(Open311Validator.getErrorMessageForServiceRequestByErrorCode(errorCode));
         }
@@ -693,6 +692,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
             if (Boolean.valueOf(open311Attribute.getVariable())) {
                 if (Open311DataType.STRING.equals(open311Attribute.getDatatype())
+                        || Open311DataType.TEXT.equals(open311Attribute.getDatatype())
                         || Open311DataType.NUMBER.equals(open311Attribute.getDatatype())
                         || Open311DataType.DATETIME.equals(open311Attribute.getDatatype())) {
                     EditText et = (EditText) mDynamicAttributeUIMap.get(open311Attribute.getCode());
@@ -752,6 +752,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         for (Open311Attribute open311Attribute : serviceDescription.getAttributes()) {
             if (Boolean.valueOf(open311Attribute.getVariable())) {
                 if (Open311DataType.STRING.equals(open311Attribute.getDatatype())
+                        || Open311DataType.TEXT.equals(open311Attribute.getDatatype())
                         || Open311DataType.NUMBER.equals(open311Attribute.getDatatype())
                         || Open311DataType.DATETIME.equals(open311Attribute.getDatatype())) {
                     EditText et = (EditText) mDynamicAttributeUIMap.get(open311Attribute.getCode());
@@ -849,6 +850,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 addDescriptionText(open311Attribute.getDescription());
             } else {
                 if (Open311DataType.STRING.equals(open311Attribute.getDatatype())
+                        || Open311DataType.TEXT.equals(open311Attribute.getDatatype())
                         || Open311DataType.NUMBER.equals(open311Attribute.getDatatype())
                         || Open311DataType.DATETIME.equals(open311Attribute.getDatatype())) {
                     createEditText(open311Attribute);

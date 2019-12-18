@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2015 Sean Barbeau (sjbarbeau@gmail.com)
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2015-2018 Sean Barbeau (sjbarbeau@gmail.com)
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,49 +12,63 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
     <TextView
-            android:id="@+id/route_and_destination"
-            style="@style/StopInfoDestination"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:text="5 - North to Univerity Area TC"
-            android:ellipsize="end"
-            android:singleLine="true">
-    </TextView>
+        android:id="@+id/route_and_destination"
+        style="@style/StopInfoDestination"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="5 - North to Univerity Area TC"
+        android:ellipsize="end"
+        android:singleLine="true" />
+
     <include
-            android:id="@+id/status"
-            layout="@layout/arrivals_list_tv_template_style_a_status_small"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_below="@+id/route_and_destination"
-            android:layout_marginTop="2dp"
-            android:layout_marginBottom="2dp"/>
+        android:id="@+id/status"
+        layout="@layout/arrivals_list_tv_template_style_a_status_small"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/route_and_destination"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp" />
+
+    <include
+        android:id="@+id/occupancy"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        layout="@layout/occupancy"
+        android:layout_marginStart="5dp"
+        android:layout_marginLeft="5dp"
+        app:layout_constraintTop_toTopOf="@id/status"
+        app:layout_constraintBottom_toBottomOf="@id/status"
+        app:layout_constraintStart_toEndOf="@+id/status" />
+
     <TextView
-            android:id="@+id/last_updated"
-            style="@style/StopInfoTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_below="@+id/status"
-            android:text="Updated 3 min ago">
-    </TextView>
+        android:id="@+id/last_updated"
+        style="@style/StopInfoTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/status"
+        tools:text="Updated 3 min ago" />
+
     <ImageView
-            android:id="@+id/trip_more_info"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_centerVertical="true"
-            android:layout_alignRight="@+id/route_and_destination"
-            android:layout_alignBottom="@+id/last_updated"
-            android:layout_marginBottom="-4dp"
-            android:layout_marginRight="-9dp"
-            android:src="@drawable/ic_navigation_chevron_right"
-            android:maxHeight="24dp"
-            android:maxWidth="24dp"
-            android:scaleType="fitCenter"
-            android:adjustViewBounds="true"/>
-</RelativeLayout>
+        android:id="@+id/trip_more_info"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        app:layout_constraintEnd_toEndOf="@+id/route_and_destination"
+        app:layout_constraintBottom_toBottomOf="@id/last_updated"
+        android:translationY="4dp"
+        android:translationX="9dp"
+        android:src="@drawable/ic_navigation_chevron_right"
+        android:maxHeight="24dp"
+        android:maxWidth="24dp"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true" />
+</androidx.constraintlayout.widget.ConstraintLayout>

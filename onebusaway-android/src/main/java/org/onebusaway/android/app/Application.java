@@ -27,17 +27,17 @@ import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.google.android.gms.analytics.GoogleAnalytics;
-import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
 import org.onebusaway.android.BuildConfig;
@@ -47,6 +47,7 @@ import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.report.ui.util.SocialReportHandler;
+import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.ui.social.SocialAppProfile;
 import org.onebusaway.android.ui.social.SocialNavigationDrawerHandler;
 import org.onebusaway.android.util.BuildFlavorUtils;
@@ -55,7 +56,6 @@ import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
 import java.security.MessageDigest;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -79,6 +79,7 @@ public class Application extends MultiDexApplication {
 
     public static final String CHANNEL_TRIP_PLAN_UPDATES_ID = "trip_plan_updates";
     public static final String CHANNEL_ARRIVAL_REMINDERS_ID = "arrival_reminders";
+    public static final String CHANNEL_DESTINATION_ALERT_ID = "destination_alerts";
 
     private SharedPreferences mPrefs;
 
@@ -100,15 +101,7 @@ public class Application extends MultiDexApplication {
     // Workaround for #933 until ES SDK doesn't run Services in the background
     static boolean mEmbeddedSocialInitiated = false;
 
-    /**
-     * Google analytics tracker configs
-     */
-    public enum TrackerName {
-        APP_TRACKER, // Tracker used only in this app.
-        GLOBAL_TRACKER, // Tracker used by all the apps from a company. eg: roll-up tracking.
-    }
-
-    HashMap<TrackerName, Tracker> mTrackers = new HashMap<TrackerName, Tracker>();
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
     public void onCreate() {
@@ -131,10 +124,11 @@ public class Application extends MultiDexApplication {
         initObaRegion();
         initOpen311(getCurrentRegion());
 
-        ObaAnalytics.initAnalytics(this);
         reportAnalytics();
 
         createNotificationChannels();
+
+        TravelBehaviorManager.startCollectingData(getApplicationContext());
     }
 
     /**
@@ -451,8 +445,6 @@ public class Application extends MultiDexApplication {
     }
 
     private String getAppUid() {
-        // FIXME - After migrating to Firebase, use FirebaseInstanceId - https://firebase.google.com/docs/reference/android/com/google/firebase/iid/FirebaseInstanceId
-        // If FirebaseInstanceId isn't available (catch all exceptions), then return randomUUID()
         return UUID.randomUUID().toString();
     }
 
@@ -552,24 +544,10 @@ public class Application extends MultiDexApplication {
         }
     }
 
-    public synchronized Tracker getTracker(TrackerName trackerId) {
-        final double SAMPLE_RATE = 1.0d; // 1% of devices will send hits
-        if (!mTrackers.containsKey(trackerId)) {
-            GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
-            Tracker t = (trackerId == TrackerName.APP_TRACKER) ? analytics.newTracker(R.xml.app_tracker)
-                    : (trackerId == TrackerName.GLOBAL_TRACKER) ? analytics.newTracker(R.xml.global_tracker)
-                    : analytics.newTracker(R.xml.global_tracker);
-            t.setSampleRate(SAMPLE_RATE);
-            mTrackers.put(trackerId, t);
-        }
-        return mTrackers.get(trackerId);
-    }
-
     private void reportAnalytics() {
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         if (getCustomApiUrl() == null && getCurrentRegion() != null) {
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                    getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
-                            + getCurrentRegion().getName());
+            ObaAnalytics.setRegion(mFirebaseAnalytics, getCurrentRegion().getName());
         } else if (Application.get().getCustomApiUrl() != null) {
             String customUrl = null;
             MessageDigest digest = null;
@@ -581,30 +559,27 @@ public class Application extends MultiDexApplication {
             } catch (Exception e) {
                 customUrl = Application.get().getString(R.string.analytics_label_custom_url);
             }
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                    getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
-                            + customUrl);
+            ObaAnalytics.setRegion(mFirebaseAnalytics, customUrl);
         }
         Boolean experimentalRegions = getPrefs().getBoolean(getString(R.string.preference_key_experimental_regions),
                 Boolean.FALSE);
         Boolean autoRegion = getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region),
                 true);
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                getString(R.string.analytics_action_edit_general), getString(R.string.analytics_label_experimental)
-                        + (experimentalRegions ? "YES" : "NO"));
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                getString(R.string.analytics_action_edit_general), getString(R.string.analytics_label_region_auto)
-                        + (autoRegion ? "YES" : "NO"));
     }
 
     /**
      * Initializes Embedded Social if the device and current build support social functionality
+     * This method is only public as a workaround to avoid running ES SDK in the background - see
+     * #953.  When ES SDK no longer runs servers in the background this can be made private again
+     * and all ES SDK initialization can happen in Application.onCreate().
      */
-    private synchronized void setUpSocial() {
+    public synchronized void setUpSocial() {
         if (!mEmbeddedSocialInitiated) {
             if (EmbeddedSocialUtils.isBuildVersionSupportedBySocial() &&
                     EmbeddedSocialUtils.isSocialApiKeyDefined()) {
-                EmbeddedSocial.init(mApp, R.raw.embedded_social_config, BuildConfig.EMBEDDED_SOCIAL_API_KEY, null);
+                EmbeddedSocial.init(mApp, R.raw.embedded_social_config,
+                        BuildConfig.EMBEDDED_SOCIAL_API_KEY,
+                        BuildConfig.EMBEDDED_SOCIAL_TELEMETRY_KEY);
                 EmbeddedSocial.setReportHandler(new SocialReportHandler());
                 EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
                 EmbeddedSocial.setAppProfile(new SocialAppProfile());
@@ -641,10 +616,30 @@ public class Application extends MultiDexApplication {
                     NotificationManager.IMPORTANCE_DEFAULT);
             channel2.setDescription("Notifications to remind the user of an arriving bus.");
 
+            NotificationChannel channel3 = new NotificationChannel(
+                    CHANNEL_DESTINATION_ALERT_ID,
+                    "Destination alerts",
+                    NotificationManager.IMPORTANCE_LOW);
+            channel2.setDescription("All notifications relating to Destination alerts");
+
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(channel1);
             manager.createNotificationChannel(channel2);
+            manager.createNotificationChannel(channel3);
         }
     }
 
+    public static Boolean isIgnoringBatteryOptimizations(Context applicationContext) {
+        PowerManager pm = (PowerManager) applicationContext.getSystemService(Context.POWER_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                pm.isIgnoringBatteryOptimizations(applicationContext.getPackageName())) {
+            return true;
+        }
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return null;
+        }
+
+        return false;
+    }
 }

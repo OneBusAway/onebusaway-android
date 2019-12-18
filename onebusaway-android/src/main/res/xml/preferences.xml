@@ -135,6 +135,11 @@
             android:title="@string/preferences_analytics_title"
             android:summary="@string/preferences_analytics_summary"
             android:defaultValue="true"/>
+        <CheckBoxPreference
+            android:key="@string/preferences_key_travel_behavior"
+            android:title="@string/preferences_travel_behavior_title"
+            android:summary="@string/preferences_travel_behavior_summary"
+            android:defaultValue="false"/>
         <Preference
                 android:key="@string/preference_key_tutorial"
                 android:title="@string/preferences_tutorial_title"
@@ -151,5 +156,13 @@
                 android:key="@string/preferences_key_about"
                 android:title="@string/preferences_about_title"
                 android:summary="@string/preferences_about_summary"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/preferences_category_user_logs"
+        android:key="@string/preferences_key_user_debugging_logs_category">
+        <CheckBoxPreference
+            android:key="@string/preferences_key_user_share_destination_logs"
+            android:title="@string/preferences_user_share_destination_logs_title"
+            android:summary="@string/preferences_user_share_destination_logs_summary"
+            android:defaultValue="true"/>
     </PreferenceCategory>
 </PreferenceScreen>

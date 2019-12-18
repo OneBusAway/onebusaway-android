@@ -15,25 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.directions.util.ConversionUtils;
-import org.onebusaway.android.directions.util.CustomAddress;
-import org.onebusaway.android.directions.util.OTPConstants;
-import org.onebusaway.android.directions.util.PlacesAutoCompleteAdapter;
-import org.onebusaway.android.directions.util.TripRequestBuilder;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.map.googlemapsv2.ProprietaryMapHelpV2;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
@@ -63,6 +44,30 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.directions.util.ConversionUtils;
+import org.onebusaway.android.directions.util.CustomAddress;
+import org.onebusaway.android.directions.util.OTPConstants;
+import org.onebusaway.android.directions.util.PlacesAutoCompleteAdapter;
+import org.onebusaway.android.directions.util.TripRequestBuilder;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.map.googlemapsv2.ProprietaryMapHelpV2;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,21 +75,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.Fragment;
-
 
 public class TripPlanFragment extends Fragment {
-
-    public TripPlanFragment setPlanErrorUrl(String planErrorUrl) {
-        mPlanErrorUrl = planErrorUrl;
-        return this;
-    }
-
-    public TripPlanFragment setPlanRequestUrl(String planRequestUrl) {
-        mPlanRequestUrl = planRequestUrl;
-        return this;
-    }
 
     /**
      * Allows calling activity to register to know when to send request.
@@ -96,6 +88,8 @@ public class TripPlanFragment extends Fragment {
          */
         void onTripRequestReady();
     }
+
+    public static final String TAG = "TripPlanFragment";
 
     private static final int USE_FROM_ADDRESS = 1;
     private static final int USE_TO_ADDRESS = 2;
@@ -114,7 +108,6 @@ public class TripPlanFragment extends Fragment {
     Calendar mMyCalendar;
 
     protected GoogleApiClient mGoogleApiClient;
-    private static final String TAG = "TripPlanFragment";
 
     private CustomAddress mFromAddress, mToAddress;
 
@@ -126,23 +119,14 @@ public class TripPlanFragment extends Fragment {
 
     private String mPlanRequestUrl;
 
-    private void resetDateTimeLabels() {
-        String dateText = new SimpleDateFormat(OTPConstants.TRIP_PLAN_DATE_STRING_FORMAT, Locale.getDefault())
-                .format(mMyCalendar.getTime());
-        String timeText = new SimpleDateFormat(OTPConstants.TRIP_PLAN_TIME_STRING_FORMAT, Locale.getDefault())
-                .format(mMyCalendar.getTime());
-
-        mDateAdapter.insert(dateText, 0);
-        mDateAdapter.notifyDataSetChanged();
-
-        mTimeAdapter.insert(timeText, 0);
-        mTimeAdapter.notifyDataSetChanged();
-    }
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     // Create view, initialize state
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
@@ -268,6 +252,29 @@ public class TripPlanFragment extends Fragment {
         return view;
     }
 
+    public TripPlanFragment setPlanErrorUrl(String planErrorUrl) {
+        mPlanErrorUrl = planErrorUrl;
+        return this;
+    }
+
+    public TripPlanFragment setPlanRequestUrl(String planRequestUrl) {
+        mPlanRequestUrl = planRequestUrl;
+        return this;
+    }
+
+    private void resetDateTimeLabels() {
+        String dateText = new SimpleDateFormat(OTPConstants.TRIP_PLAN_DATE_STRING_FORMAT, Locale.getDefault())
+                .format(mMyCalendar.getTime());
+        String timeText = new SimpleDateFormat(OTPConstants.TRIP_PLAN_TIME_STRING_FORMAT, Locale.getDefault())
+                .format(mMyCalendar.getTime());
+
+        mDateAdapter.insert(dateText, 0);
+        mDateAdapter.notifyDataSetChanged();
+
+        mTimeAdapter.insert(timeText, 0);
+        mTimeAdapter.notifyDataSetChanged();
+    }
+
     private void loadAndSetAdditionalTripPreferences() {
         int modeId = PreferenceUtils.getInt(getString(R.string.preference_key_trip_plan_travel_by), 0);
         double maxWalkDistance = PreferenceUtils.getDouble(getString(R.string.preference_key_trip_plan_maximum_walking_distance), 0);
@@ -283,6 +290,9 @@ public class TripPlanFragment extends Fragment {
 
     private void checkRequestAndSubmit() {
         if (mBuilder.ready() && mListener != null) {
+            mFromAddressTextArea.dismissDropDown();
+            mToAddressTextArea.dismissDropDown();
+            UIUtils.closeKeyboard(getContext(), mFromAddressTextArea);
             mListener.onTripRequestReady();
         }
     }
@@ -351,6 +361,9 @@ public class TripPlanFragment extends Fragment {
                 // do nothing
             }
         });
+
+        mFromAddressTextArea.dismissDropDown();
+        mToAddressTextArea.dismissDropDown();
     }
 
     @Override
@@ -518,9 +531,9 @@ public class TripPlanFragment extends Fragment {
             } else {
                 UIUtils.sendEmail(getActivity(), email, locString, null, true);
             }
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_problem),
-                    getString(R.string.analytics_label_app_feedback_otp));
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_label_app_feedback_otp),
+                    null);
         }
     }
 
@@ -549,6 +562,13 @@ public class TripPlanFragment extends Fragment {
         return address;
     }
 
+    /**
+     * Receives a geocoding result from the Google Places SDK
+     *
+     * @param requestCode
+     * @param resultCode
+     * @param intent
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (resultCode != -1) {
@@ -575,34 +595,30 @@ public class TripPlanFragment extends Fragment {
     private void setUpAutocomplete(AutoCompleteTextView tv, final int use) {
         ObaRegion region = Application.get().getCurrentRegion();
 
-        // Use Google widget if available
-        if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getContext())
+        // Use Google Places widget if build config uses it and it's available
+        if (!BuildConfig.USE_PELIAS_GEOCODING && GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getContext())
                 == ConnectionResult.SUCCESS) {
             tv.setFocusable(false);
             tv.setOnClickListener(new ProprietaryMapHelpV2.StartPlacesAutocompleteOnClick(use, this, region));
             return;
         }
 
-        // else, set up autocomplete with Android geocoder
-
+        // Set up autocomplete with Pelias geocoder
         tv.setAdapter(new PlacesAutoCompleteAdapter(getContext(), android.R.layout.simple_list_item_1, region));
-        tv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                CustomAddress addr = (CustomAddress) parent.getAdapter().getItem(position);
+        tv.setOnItemClickListener((parent, view, position, id) -> {
+            CustomAddress addr = (CustomAddress) parent.getAdapter().getItem(position);
 
-                if (use == USE_FROM_ADDRESS) {
-                    mFromAddress = addr;
-                    mBuilder.setFrom(mFromAddress);
-                } else if (use == USE_TO_ADDRESS) {
-                    mToAddress = addr;
-                    mBuilder.setTo(mToAddress);
-                }
-
-                checkRequestAndSubmit();
+            if (use == USE_FROM_ADDRESS) {
+                mFromAddress = addr;
+                mBuilder.setFrom(mFromAddress);
+            } else if (use == USE_TO_ADDRESS) {
+                mToAddress = addr;
+                mBuilder.setTo(mToAddress);
             }
-        });
-    }
 
+            checkRequestAndSubmit();
+        });
+        tv.dismissDropDown();
+    }
 }
 

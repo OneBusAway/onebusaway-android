@@ -15,12 +15,21 @@
 */
 package org.onebusaway.android.map.googlemapsv2.bike;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -31,14 +40,6 @@ import org.onebusaway.android.map.googlemapsv2.MarkerListeners;
 import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.RegionUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
-
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,6 +70,8 @@ public class BikeStationOverlay
 
     private Context mContext;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     private BikeInfoWindowAdapter mBikeInfoWindowAdapter = null;
 
     /**
@@ -79,6 +82,7 @@ public class BikeStationOverlay
 
     public BikeStationOverlay(Activity activity, GoogleMap map, boolean isInDirectionsMode) {
         mContext = activity;
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(mContext);
         mMap = map;
         mIsInDirectionsMode = isInDirectionsMode;
         mBikeStationData = new BikeStationData();
@@ -165,12 +169,11 @@ public class BikeStationOverlay
 
             mBikeStationData.selectMaker(marker);
 
-            ObaAnalytics.reportEventWithCategory(
-                    ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    mContext.getString(R.string.analytics_action_button_press),
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                     mContext.getString(bikeRentalStation.isFloatingBike ?
                             R.string.analytics_label_bike_station_marker_clicked :
-                            R.string.analytics_label_floating_bike_marker_clicked));
+                            R.string.analytics_label_floating_bike_marker_clicked),
+                    null);
             return true;
         } else {
             mBikeStationData.removeMarkerSelection();
@@ -226,12 +229,11 @@ public class BikeStationOverlay
                             + bikeStationId;
                 }
 
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        mContext.getString(R.string.analytics_action_button_press),
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         mContext.getString(bikeStation.isFloatingBike ?
                                 R.string.analytics_label_bike_station_balloon_clicked :
-                                R.string.analytics_label_floating_bike_balloon_clicked));
+                                R.string.analytics_label_floating_bike_balloon_clicked),
+                        null);
 
                 Intent i = new Intent(Intent.ACTION_VIEW);
                 i.setData(Uri.parse(url));

@@ -16,6 +16,27 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.provider.Settings;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.Toast;
+
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -30,6 +51,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.VisibleRegion;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -50,6 +72,7 @@ import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.map.bike.BikeshareMapController;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.ui.HomeActivity;
 import org.onebusaway.android.ui.LayersSpeedDialAdapter;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
@@ -57,26 +80,6 @@ import org.onebusaway.android.util.PermissionUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
-
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.Dialog;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
-import android.location.Location;
-import android.os.Bundle;
-import android.os.Handler;
-import android.provider.Settings;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -186,6 +189,8 @@ public class BaseMapFragment extends SupportMapFragment
 
     private boolean mUserDeniedPermission = false;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     public void onActivateLayer(LayerInfo layer) {
         switch (layer.getLayerlabel()) {
@@ -193,10 +198,8 @@ public class BaseMapFragment extends SupportMapFragment
                 for (MapModeController controller : mControllers) {
                     if (controller instanceof BikeshareMapController) {
                         ((BikeshareMapController) controller).showBikes(true);
-
-                        ObaAnalytics.reportEventWithCategory(
-                                ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                getString(R.string.analytics_action_layer_bikeshare),
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                getString(R.string.analytics_layer_bikeshare),
                                 getString(R.string.analytics_label_bikeshare_activated));
                     }
                 }
@@ -212,10 +215,8 @@ public class BaseMapFragment extends SupportMapFragment
                 for (MapModeController controller : mControllers) {
                     if (controller instanceof BikeshareMapController) {
                         ((BikeshareMapController) controller).showBikes(false);
-
-                        ObaAnalytics.reportEventWithCategory(
-                                ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                getString(R.string.analytics_action_layer_bikeshare),
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                getString(R.string.analytics_layer_bikeshare),
                                 getString(R.string.analytics_label_bikeshare_deactivated));
                     }
                 }
@@ -275,6 +276,8 @@ public class BaseMapFragment extends SupportMapFragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
 
         if (savedInstanceState != null) {
             savedInstanceState.getBoolean(USER_DENIED_PERMISSION, false);
@@ -410,8 +413,13 @@ public class BaseMapFragment extends SupportMapFragment
             } else {
                 mUserDeniedPermission = true;
             }
+        } else if (HomeActivity.BATTERY_OPTIMIZATIONS_PERMISSION_REQUEST == requestCode) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                UIUtils.openBatteryIgnoreIntent(getActivity());
+            }
         }
-        if (mOnLocationPermissionResultListener != null) {
+
+        if (requestCode == LOCATION_PERMISSION_REQUEST && mOnLocationPermissionResultListener != null) {
             mOnLocationPermissionResultListener.onLocationPermissionResult(result);
         }
     }

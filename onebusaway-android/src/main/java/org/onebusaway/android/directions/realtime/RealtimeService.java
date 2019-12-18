@@ -23,6 +23,7 @@ import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.Leg;
+import org.opentripplanner.api.model.TripPlan;
 
 import android.app.Activity;
 import android.app.AlarmManager;
@@ -165,16 +166,16 @@ public class RealtimeService extends IntentService {
 
         TripRequest.Callback callback = new TripRequest.Callback() {
             @Override
-            public void onTripRequestComplete(List<Itinerary> itineraries, String url) {
-                if (itineraries == null || itineraries.isEmpty()) {
+            public void onTripRequestComplete(TripPlan tripPlan, String url) {
+                if (tripPlan == null || tripPlan.itineraries == null || tripPlan.itineraries.isEmpty()) {
                     onTripRequestFailure(-1, null);
                     return;
                 }
 
                 // Check each itinerary. Notify user if our *current* itinerary doesn't exist
                 // or has a lower rank.
-                for (int i = 0; i < itineraries.size(); i++) {
-                    ItineraryDescription other = new ItineraryDescription(itineraries.get(i));
+                for (int i = 0; i < tripPlan.itineraries.size(); i++) {
+                    ItineraryDescription other = new ItineraryDescription(tripPlan.itineraries.get(i));
 
                     if (itineraryDescription.itineraryMatches(other)) {
 
@@ -187,7 +188,7 @@ public class RealtimeService extends IntentService {
                                     (delay > 0) ? R.string.trip_plan_delay
                                             : R.string.trip_plan_early,
                                     R.string.trip_plan_notification_new_plan_text,
-                                    source, builder.getBundle(), itineraries);
+                                    source, builder.getBundle(), tripPlan.itineraries);
                             disableListenForTripUpdates();
                             return;
                         }
@@ -203,7 +204,7 @@ public class RealtimeService extends IntentService {
                 showNotification(itineraryDescription,
                         R.string.trip_plan_notification_new_plan_title,
                         R.string.trip_plan_notification_new_plan_text, source,
-                        builder.getBundle(), itineraries);
+                        builder.getBundle(), tripPlan.itineraries);
                 disableListenForTripUpdates();
             }
 

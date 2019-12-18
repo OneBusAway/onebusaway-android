@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="org.onebusaway.android.ui.FeedbackActivity"
+    android:orientation="vertical">
+    <FrameLayout
+        style="@style/MaterialLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/textViewContent"
+            style="@style/MaterialLayoutTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/feedback_msg"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="@android:color/black"
+            android:textSize="14sp" />
+    </FrameLayout>
+    <FrameLayout
+        style="@style/MaterialLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="65dp"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/ImageBtn_like"
+                android:layout_width="148dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@color/alert_icon_info"
+                android:onClick="likeBtnOnClick"
+                android:scaleType="fitEnd"
+                android:src="@drawable/ic_thumbs_up_custom" />
+            <!--android:src="@drawable/ic_thumb_up" />-->
+
+            <ImageButton
+                android:id="@+id/ImageBtn_Dislike"
+                android:layout_width="148dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@color/alert_icon_info"
+                android:onClick="dislikeBtnOnClick"
+                android:scaleType="fitStart"
+                android:src="@drawable/ic_thumbs_down_custom" />
+            <!--android:background="@color/alert_icon_info"-->
+            <!--android:src="@drawable/ic_thumb_down" />-->
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <FrameLayout
+        style="@style/MaterialLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/editFeedbackText"
+            android:layout_width="366dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginBottom="8dp"
+            android:ems="10"
+            android:hint="@string/feedback_freeText"
+            android:inputType="textMultiLine" />
+    </FrameLayout>
+
+    <FrameLayout
+        style="@style/MaterialLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/feedback_send_logs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginBottom="8dp"
+            android:onClick="setSendLogs"
+            android:text="@string/feedback_checkbox_text" />
+    </FrameLayout>
+
+    <FrameLayout
+        style="@style/MaterialLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/textView"
+            style="@style/MaterialLayoutTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/feedback_log_guide"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="@android:color/black"
+            android:textSize="14sp" />
+    </FrameLayout>
+</LinearLayout>

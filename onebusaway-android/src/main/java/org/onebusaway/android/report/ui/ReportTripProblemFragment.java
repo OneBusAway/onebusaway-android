@@ -15,13 +15,6 @@
  */
 package org.onebusaway.android.report.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.request.ObaReportProblemWithTripRequest;
-import org.onebusaway.android.util.UIUtils;
-
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
@@ -36,6 +29,13 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.request.ObaReportProblemWithTripRequest;
+import org.onebusaway.android.util.UIUtils;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
@@ -195,8 +195,9 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
                 Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mUserComment.getWindowToken(), 0);
         if (isReportArgumentsValid()) {
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
-                    getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_trip_problem));
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    getString(R.string.analytics_problem),
+                    getString(R.string.analytics_label_report_trip_problem));
             super.sendReport();
         } else {
             // Show error message if report arguments is not valid

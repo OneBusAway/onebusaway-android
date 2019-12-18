@@ -41,7 +41,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
@@ -229,12 +228,6 @@ public class TripInfoActivity extends AppCompatActivity {
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
-        }
-
-        @Override
-        public void onStart() {
-            ObaAnalytics.reportActivityStart(getActivity());
-            super.onStart();
         }
 
         private boolean initFromBundle(Bundle bundle) {

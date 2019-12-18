@@ -16,18 +16,6 @@
  */
 package org.onebusaway.android.region;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.RegionUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -37,6 +25,19 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.RegionUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -84,16 +85,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
      */
     GoogleApiClient mGoogleApiClient;
 
-    /**
-     * @param callbacks a callback will be made to all interfaces in this list after the task is
-     *                 complete (null if no callbacks are requested)
-     */
-    public ObaRegionsTask(Context context, List<ObaRegionsTask.Callback> callbacks) {
-        mContext = context;
-        mCallbacks = callbacks;
-        mForceReload = false;
-        mShowProgressDialog = true;
-    }
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     /**
      * @param callbacks          a callback will be made to all interfaces in this list after the
@@ -110,11 +102,11 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         mForceReload = force;
         mShowProgressDialog = showProgressDialog;
         GoogleApiAvailability api = GoogleApiAvailability.getInstance();
-        if (api.isGooglePlayServicesAvailable(context)
-                == ConnectionResult.SUCCESS) {
+        if (api.isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS) {
             mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(context);
             mGoogleApiClient.connect();
         }
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
     }
 
     @Override
@@ -165,11 +157,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                     //No region has been set, so set region application-wide to closest region
                     Application.get().setCurrentRegion(closestRegion);
                     Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'");
-                    //Analytics
-                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                            mContext.getString(R.string.analytics_action_configured_region_auto),
-                            mContext.getString(R.string.analytics_label_region_auto)
-                                    + closestRegion.getName() + "; Old Region: null");
+                    ObaAnalytics.setRegion(mFirebaseAnalytics,  closestRegion.getName());
                     doCallback(true);
                 } else {
                     //No region has been set, and we couldn't find a usable region based on RegionUtil.isRegionUsable()
@@ -182,13 +170,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 String oldRegionName = Application.get().getCurrentRegion().getName();
                 Application.get().setCurrentRegion(closestRegion);
                 Log.d(TAG, "Detected closer region '" + closestRegion.getName()
-                        + "', changed to this region.");
-                //Analytics
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                        mContext.getString(R.string.analytics_action_configured_region_auto)
-                        , mContext.getString(R.string.analytics_label_region_auto)
-                                + closestRegion.getName() + "; Old Region: "
-                                + oldRegionName);
+                        + "', changed from " + oldRegionName + " to this region.");
+                ObaAnalytics.setRegion(mFirebaseAnalytics, closestRegion.getName());
                 doCallback(true);
             } else if (Application.get().getCurrentRegion() != null && closestRegion != null
                     && Application.get().getCurrentRegion().equals(closestRegion)) {

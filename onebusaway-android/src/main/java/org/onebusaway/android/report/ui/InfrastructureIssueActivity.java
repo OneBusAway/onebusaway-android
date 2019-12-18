@@ -15,30 +15,6 @@
 */
 package org.onebusaway.android.report.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.ObaStopElement;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.report.connection.GeocoderTask;
-import org.onebusaway.android.report.connection.ServiceListTask;
-import org.onebusaway.android.report.constants.ReportConstants;
-import org.onebusaway.android.report.ui.adapter.EntrySpinnerAdapter;
-import org.onebusaway.android.report.ui.adapter.SectionItem;
-import org.onebusaway.android.report.ui.adapter.ServiceSpinnerItem;
-import org.onebusaway.android.report.ui.adapter.SpinnerItem;
-import org.onebusaway.android.report.ui.dialog.ReportSuccessDialog;
-import org.onebusaway.android.report.ui.util.IssueLocationHelper;
-import org.onebusaway.android.report.ui.util.ServiceUtils;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
-import org.opentripplanner.routing.bike_rental.BikeRentalStation;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -60,6 +36,29 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaStopElement;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.report.connection.GeocoderTask;
+import org.onebusaway.android.report.connection.ServiceListTask;
+import org.onebusaway.android.report.constants.ReportConstants;
+import org.onebusaway.android.report.ui.adapter.EntrySpinnerAdapter;
+import org.onebusaway.android.report.ui.adapter.SectionItem;
+import org.onebusaway.android.report.ui.adapter.ServiceSpinnerItem;
+import org.onebusaway.android.report.ui.adapter.SpinnerItem;
+import org.onebusaway.android.report.ui.dialog.ReportSuccessDialog;
+import org.onebusaway.android.report.ui.util.IssueLocationHelper;
+import org.onebusaway.android.report.ui.util.ServiceUtils;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
+import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -317,12 +316,6 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             mBlockId = getIntent().getStringExtra(BLOCK_ID);
             mDefaultIssueType = getIntent().getStringExtra(SELECTED_SERVICE);
         }
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        ObaAnalytics.reportActivityStart(this);
     }
 
     @Override

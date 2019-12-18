@@ -16,6 +16,11 @@
  */
 package org.onebusaway.android.tripservice;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.ui.ArrivalsListActivity;
+
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.ContentResolver;
@@ -26,11 +31,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Settings;
 import android.text.TextUtils;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.ui.ArrivalsListActivity;
 
 import androidx.core.app.NotificationCompat;
 

@@ -15,14 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.material.snackbar.Snackbar;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaSituation;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
@@ -33,6 +25,13 @@ import android.text.TextUtils;
 import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.TextView;
+
+import com.google.android.material.snackbar.Snackbar;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.elements.ObaSituation;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.UIUtils;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
@@ -181,11 +180,5 @@ public class SituationDialogFragment extends DialogFragment {
 
     public void setListener(Listener listener) {
         mListener = listener;
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        ObaAnalytics.reportFragmentStart(this);
     }
 }

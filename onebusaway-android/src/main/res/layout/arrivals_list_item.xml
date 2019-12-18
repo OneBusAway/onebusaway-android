@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010-2018 Paul Watts (paulcwatts@gmail.com),
+        University of South Florida, Sean J. Barbeau (sjbarbeau@gmail.com)
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -14,146 +14,170 @@
      limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="@color/stop_info_arrival_list_background"
-              android:orientation="vertical">
-    <androidx.cardview.widget.CardView
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:card_view="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/arrivals_card_view_eta"
-            android:layout_gravity="center"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@color/stop_info_arrival_list_background"
+    android:orientation="vertical">
+
+    <androidx.cardview.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/arrivals_card_view_eta"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:foreground="?attr/selectableItemBackground"
+        card_view:cardCornerRadius="4dp"
+        card_view:cardUseCompatPadding="true">
+
+        <ImageView
+            android:id="@+id/route_favorite"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="left|top"
+            android:adjustViewBounds="true"
+            android:maxWidth="10dp"
+            android:maxHeight="10dp"
+            android:paddingLeft="10dp"
+            android:paddingTop="11dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_toggle_star" />
+
+        <TableLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            card_view:cardUseCompatPadding="true"
-            card_view:cardCornerRadius="4dp"
-            android:foreground="?attr/selectableItemBackground">
-        <ImageView
-                android:id="@+id/route_favorite"
-                android:src="@drawable/ic_toggle_star"
-                android:maxHeight="10dp"
-                android:maxWidth="10dp"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:scaleType="fitCenter"
-                android:adjustViewBounds="true"
-                android:layout_gravity="left|top"
-                android:paddingLeft="10dp"
-                android:paddingTop="11dp"/>
-        <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                     android:layout_width="fill_parent"
-                     android:layout_height="wrap_content"
-                     android:layout_margin="2dp"
-                     android:stretchColumns="2"
-                     android:shrinkColumns="1"
-                     android:paddingTop="5dp" android:paddingBottom="5dp">
-            <TableRow
-                    android:gravity="center_vertical">
+            android:layout_margin="2dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:shrinkColumns="1"
+            android:stretchColumns="2">
+
+            <TableRow android:gravity="center_vertical">
+
                 <TextView
-                        android:layout_column="0"
-                        android:id="@+id/route"
-                        android:text="5"
-                        android:layout_width="80sp"
-                        android:gravity="center"
-                        style="@style/StopInfoRoute">
-                </TextView>
-                <LinearLayout
-                        android:orientation="vertical"
-                        android:layout_column="1"
-                        android:gravity="left">
+                    android:id="@+id/route"
+                    style="@style/StopInfoRoute"
+                    android:layout_width="80sp"
+                    android:layout_column="0"
+                    android:gravity="center"
+                    tools:text="5" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
                     <TextView
-                            android:id="@+id/reminder"
-                            android:drawableLeft="@drawable/ic_drawer_alarm"
-                            android:contentDescription="@string/trip_info_reminder_content_description"
-                            android:drawablePadding="5dp"
-                            android:visibility="gone"
-                            style="@style/StopInfoDestination"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical">
-                    </TextView>
+                        android:id="@+id/reminder"
+                        style="@style/StopInfoDestination"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/trip_info_reminder_content_description"
+                        android:drawableStart="@drawable/ic_drawer_alarm"
+                        android:drawableLeft="@drawable/ic_drawer_alarm"
+                        android:drawablePadding="5dp"
+                        android:visibility="gone"
+                        app:layout_constraintTop_toTopOf="parent" />
+
                     <TextView
-                            android:id="@+id/destination"
-                            style="@style/StopInfoDestination"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="North to Univerity Area TC"
-                            android:ellipsize="end"
-                            android:singleLine="true">
-                    </TextView>
+                        android:id="@+id/destination"
+                        style="@style/StopInfoDestination"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        tools:text="North to Univerity Area TC"
+                        app:layout_constraintTop_toBottomOf="@id/reminder" />
+
                     <include
-                            android:id="@+id/status"
-                            layout="@layout/arrivals_list_tv_template_style_a_status_small"
-                            android:layout_marginTop="2dp"
-                            android:layout_marginBottom="2dp"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
-                    <TextView
-                            android:id="@+id/time"
-                            style="@style/StopInfoTime"
-                            android:text="11:46 AM"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content">
-                    </TextView>
-                </LinearLayout>
-                <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                                android:id="@+id/eta_and_min"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_column="2"
-                                android:layout_marginLeft="@dimen/arrival_header_text_pad_left"
-                                android:layout_marginRight="5dp"
-                                android:layout_marginTop="3dp"
-                                android:layout_marginBottom="3dp"
-                                android:paddingLeft="4dp"
-                                android:paddingRight="4dp"
-                                android:gravity="right"
-                                android:orientation="horizontal">
-                    <TextView
-                            android:id="@+id/eta"
-                            style="@style/StopInfoEta"
-                            android:text="12"
-                            android:maxLines="1"
-                            android:gravity="right"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content">
-                    </TextView>
-                    <TextView
-                            android:id="@+id/eta_min"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textSize="14sp"
-                            android:text="@string/minutes_abbreviation"
-                            android:contentDescription="@string/minutes_full"
-                            android:ellipsize="end"
-                            android:singleLine="true"
-                            android:textIsSelectable="false"
-                            android:layout_marginLeft="5dp"
-                            android:layout_toRightOf="@id/eta"
-                            android:layout_alignBaseline="@id/eta"
-                            android:gravity="bottom"/>
+                        android:id="@+id/status"
+                        layout="@layout/arrivals_list_tv_template_style_a_status_small"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="2dp"
+                        app:layout_constraintTop_toBottomOf="@id/destination" />
+
                     <include
-                            android:id="@+id/eta_realtime_indicator"
-                            layout="@layout/realtime_indicator"
-                            android:layout_width="6dp"
-                            android:layout_height="6dp"
-                            android:layout_toRightOf="@id/eta_min"
-                            android:layout_marginTop="22dp"
-                            android:layout_marginLeft="1dp"/>
+                        android:id="@+id/occupancy"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        layout="@layout/occupancy"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginLeft="5dp"
+                        app:layout_constraintTop_toTopOf="@id/status"
+                        app:layout_constraintBottom_toBottomOf="@id/status"
+                        app:layout_constraintStart_toEndOf="@+id/status" />
+
+                    <TextView
+                        android:id="@+id/time"
+                        style="@style/StopInfoTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="11:46 AM"
+                        app:layout_constraintTop_toBottomOf="@id/status" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <RelativeLayout
+                    android:id="@+id/eta_and_min"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_column="2"
+                    android:layout_marginLeft="@dimen/arrival_header_text_pad_left"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginRight="5dp"
+                    android:layout_marginBottom="3dp"
+                    android:gravity="right"
+                    android:orientation="horizontal"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp">
+
+                    <TextView
+                        android:id="@+id/eta"
+                        style="@style/StopInfoEta"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="right"
+                        android:maxLines="1"
+                        tools:text="12" />
+
+                    <TextView
+                        android:id="@+id/eta_min"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignBaseline="@id/eta"
+                        android:layout_marginLeft="5dp"
+                        android:layout_toRightOf="@id/eta"
+                        android:contentDescription="@string/minutes_full"
+                        android:ellipsize="end"
+                        android:gravity="bottom"
+                        android:singleLine="true"
+                        android:text="@string/minutes_abbreviation"
+                        android:textIsSelectable="false"
+                        android:textSize="14sp" />
+
+                    <include
+                        android:id="@+id/eta_realtime_indicator"
+                        layout="@layout/realtime_indicator"
+                        android:layout_width="6dp"
+                        android:layout_height="6dp"
+                        android:layout_marginLeft="1dp"
+                        android:layout_marginTop="22dp"
+                        android:layout_toRightOf="@id/eta_min" />
                 </RelativeLayout>
             </TableRow>
         </TableLayout>
+
         <ImageView
-                android:id="@+id/more_horizontal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_navigation_more_horiz"
-                android:maxHeight="25dp"
-                android:maxWidth="25dp"
-                android:scaleType="fitCenter"
-                android:adjustViewBounds="true"
-                android:layout_gravity="right|top"
-                android:paddingTop="4dp"
-                android:paddingRight="9dp"/>
+            android:id="@+id/more_horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right|top"
+            android:adjustViewBounds="true"
+            android:maxWidth="25dp"
+            android:maxHeight="25dp"
+            android:paddingTop="4dp"
+            android:paddingRight="9dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_navigation_more_horiz" />
     </androidx.cardview.widget.CardView>
 </LinearLayout>

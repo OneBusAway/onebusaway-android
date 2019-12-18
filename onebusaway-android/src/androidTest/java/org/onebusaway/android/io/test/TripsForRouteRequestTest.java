@@ -20,6 +20,8 @@ import org.onebusaway.android.UriAssert;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaTripDetails;
+import org.onebusaway.android.io.elements.ObaTripStatus;
+import org.onebusaway.android.io.elements.Occupancy;
 import org.onebusaway.android.io.request.ObaTripsForRouteRequest;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.mock.MockRegion;
@@ -140,5 +142,72 @@ public class TripsForRouteRequestTest extends ObaTestCase {
                 }},
                 request
         );
+    }
+
+    @Test
+    public void testTripsForRouteOccupancyResponse() {
+        // Test by setting region
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
+        assertNotNull(tampa);
+        Application.get().setCurrentRegion(tampa);
+
+        // Include vehicles status
+        ObaTripsForRouteResponse response =
+                new ObaTripsForRouteRequest.Builder(getTargetContext(), "Hillsborough Area Regional Transit_5_occupancy")
+                        .setIncludeStatus(true)
+                        .build()
+                        .call();
+        assertOK(response);
+        ObaTripDetails[] trips = response.getTrips();
+
+        assertEquals("Hillsborough Area Regional Transit_101446", trips[0].getId());
+        assertEquals(1444073087126L, trips[0].getStatus().getLastUpdateTime());
+        assertEquals("Hillsborough Area Regional Transit_2415",
+                trips[0].getStatus().getVehicleId());
+        assertEquals("Hillsborough Area Regional Transit_4707", trips[0].getStatus().getNextStop());
+        assertEquals(420, trips[0].getStatus().getScheduleDeviation());
+        // Potentially interpolated position
+        assertEquals(28.063130557136404, trips[0].getStatus().getPosition().getLatitude());
+        assertEquals(-82.43457, trips[0].getStatus().getPosition().getLongitude());
+        // Last known location
+        assertEquals(28.065561294555664, trips[0].getStatus().getLastKnownLocation().getLatitude());
+        assertEquals(-82.4344711303711, trips[0].getStatus().getLastKnownLocation().getLongitude());
+        assertEquals(0, trips[0].getStatus().getLastLocationUpdateTime());
+
+        // Occupancy - EMPTY
+        ObaTripStatus status = trips[0].getStatus();
+        assertEquals(Occupancy.EMPTY, status.getRealtimeOccupancy());
+
+        // Occupancy - MANY_SEATS_AVAILABLE
+        status = trips[1].getStatus();
+        assertEquals(Occupancy.MANY_SEATS_AVAILABLE, status.getRealtimeOccupancy());
+
+        // Occupancy - FEW_SEATS_AVAILABLE
+        status = trips[2].getStatus();
+        assertEquals(Occupancy.FEW_SEATS_AVAILABLE, status.getRealtimeOccupancy());
+
+        // Occupancy - STANDING_ROOM_ONLY
+        status = trips[3].getStatus();
+        assertEquals(Occupancy.STANDING_ROOM_ONLY, status.getRealtimeOccupancy());
+
+        // Occupancy - CRUSHED_STANDING_ROOM_ONLY
+        status = trips[4].getStatus();
+        assertEquals(Occupancy.CRUSHED_STANDING_ROOM_ONLY, status.getRealtimeOccupancy());
+
+        // Occupancy - FULL
+        status = trips[5].getStatus();
+        assertEquals(Occupancy.FULL, status.getRealtimeOccupancy());
+
+        // Occupancy - NOT_ACCEPTING_PASSENGERS
+        status = trips[6].getStatus();
+        assertEquals(Occupancy.NOT_ACCEPTING_PASSENGERS, status.getRealtimeOccupancy());
+
+        // Occupancy - Empty string
+        status = trips[7].getStatus();
+        assertNull(status.getRealtimeOccupancy());
+
+        // Occupancy - Missing field
+        status = trips[8].getStatus();
+        assertNull(status.getRealtimeOccupancy());
     }
 }

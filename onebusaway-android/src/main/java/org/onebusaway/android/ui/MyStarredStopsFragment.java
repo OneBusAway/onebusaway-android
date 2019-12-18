@@ -15,13 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
-
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
@@ -29,11 +22,22 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -46,6 +50,15 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     public static final String TAB_NAME = "starred";
 
     private static String sortBy;
+
+    private FirebaseAnalytics mFirebaseAnalytics;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
+        return super.onCreateView(inflater, container, savedInstanceState);
+    }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -94,12 +107,6 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
             ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_STARRED_STOPS_SORT,
                     (AppCompatActivity) getActivity(), null);
         }
-    }
-
-    @Override
-    public void onStart() {
-        ObaAnalytics.reportFragmentStart(this);
-        super.onStart();
     }
 
     @Override
@@ -178,17 +185,17 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
                 // Sort by name
                 Log.d(TAG, "Sort by name");
                 sortBy = ObaContract.Stops.UI_NAME + " asc";
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getActivity().getString(R.string.analytics_action_button_press),
-                        getActivity().getString(R.string.analytics_label_sort_by_name_stops));
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_sort_by_name_stops),
+                        null);
                 break;
             case 1:
                 // Sort by frequently used
                 Log.d(TAG, "Sort by frequently used");
                 sortBy = ObaContract.Stops.USE_COUNT + " desc";
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getActivity().getString(R.string.analytics_action_button_press),
-                        getActivity().getString(R.string.analytics_label_sort_by_mfu_stops));
+                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        getString(R.string.analytics_label_sort_by_mfu_stops),
+                        null);
                 break;
         }
         // Set the sort option to preferences
@@ -208,10 +215,9 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
         @Override
         protected void doClear() {
             ObaContract.Stops.markAsFavorite(getActivity(), ObaContract.Stops.CONTENT_URI, false);
-            //Analytics
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getString(R.string.analytics_action_edit_field),
-                    getString(R.string.analytics_label_edit_field_bookmark_delete));
+            ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(getContext()),
+                    getString(R.string.analytics_label_edit_field_bookmark_delete),
+                    null);
         }
     }
 }

@@ -32,11 +32,17 @@ public final class ObaTripSchedule {
 
         private final long departureTime;
 
+        private final String historicalOccupancy;
+
+        private final String predictedOccupancy;
+
         StopTime() {
             stopId = "";
             stopHeadsign = "";
             arrivalTime = 0;
             departureTime = 0;
+            historicalOccupancy = "";
+            predictedOccupancy = "";
         }
 
         /**
@@ -67,6 +73,20 @@ public final class ObaTripSchedule {
          */
         public long getDepartureTime() {
             return departureTime;
+        }
+
+        /**
+         * @return the average historical occupancy of the vehicle when it arrives at this stop, or null if the occupancy is unknown
+         */
+        public Occupancy getHistoricalOccupancy() {
+            return Occupancy.fromString(historicalOccupancy);
+        }
+
+        /**
+         * @return the predicted occupancy of the vehicle when it arrives at this stop, or null if the occupancy is unknown
+         */
+        public Occupancy getPredictedOccupancy() {
+            return Occupancy.fromString(predictedOccupancy);
         }
     }
 

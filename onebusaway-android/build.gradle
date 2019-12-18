@@ -19,6 +19,8 @@ import groovy.swing.SwingBuilder
 import org.apache.tools.ant.filters.ConcatFilter
 
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 
 repositories {
     maven {
@@ -35,32 +37,31 @@ repositories {
     }
     maven {
         // for testlib
-        url "http://dl.bintray.com/acrowntest/test"
+        url "http://dl.bintray.com/acrowntest/ES_SDK"
     }
-}
-
-// Custom properties for OBA
-ext {
-    compileSdkVersion = 28
-    playServicesVersion = "16.0.0"
+    mavenCentral()
 }
 
 android {
     dexOptions {
         preDexLibraries true
+        javaMaxHeapSize "3g"
     }
-    compileSdkVersion this.ext.compileSdkVersion
+    compileSdkVersion 29
     buildToolsVersion '28.0.3'
 
     defaultConfig {
-        minSdkVersion 15
+        minSdkVersion 16
         targetSdkVersion 26
-        versionCode 98
-        versionName "2.4.1"
+        versionCode 116
+        versionName "2.6.7"
 
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // This enables us to tell when we're running unit tests on Travis (#1010)
+        buildConfigField("String", "TRAVIS", "\"" + System.getenv('TRAVIS') + "\"")
     }
 
     /**
@@ -102,7 +103,10 @@ android {
             manifestPlaceholders = [databaseAuthority: "com.joulespersecond.oba"]
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "0" // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
-            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialApiKey(name) + "\""
+            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
+            buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
+            buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
+            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Below fields need to be defined so flavor builds, but will not be used by app
             buildConfigField "String", "FIXED_REGION_NAME", "null"
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
@@ -128,6 +132,8 @@ android {
             buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
+            buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
+            buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
         }
 
         /**
@@ -146,7 +152,10 @@ android {
             manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "0"  // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
-            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialApiKey(name) + "\""
+            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
+            buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
+            buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
+            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Below fields need to be defined so flavor builds, but will not be used by app
             buildConfigField "String", "FIXED_REGION_NAME", "null"
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
@@ -172,6 +181,8 @@ android {
             buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
+            buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
+            buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
         }
 
         agencyY {
@@ -181,7 +192,10 @@ android {
             manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
-            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialApiKey(name) + "\""
+            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
+            buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
+            buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
+            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Fixed region info that the app will use
             buildConfigField "String", "FIXED_REGION_NAME", "\"Agency Y\""
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL",
@@ -212,8 +226,52 @@ android {
             buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "\"co.bytemark.hart\""
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
             buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
+            buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
+            buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
         }
-
+        yrt {
+            // "YRT - York Region Transit - Canada" rebranding - https://play.google.com/store/apps/details?id=can.yrt.onebusaway
+            dimension "brand"
+            applicationId "can.yrt.onebusaway" // Unique listing of this brand on app store
+            manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
+            buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants
+            buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
+            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
+            buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
+            buildConfigField "boolean", "USE_PELIAS_GEOCODING", "false"
+            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
+            // Fixed region info that the app will use
+            buildConfigField "String", "FIXED_REGION_NAME", "\"YORK\""
+            buildConfigField "String", "FIXED_REGION_OBA_BASE_URL",
+                    "\"http://oba.yrt.ca/\""
+            buildConfigField "String", "FIXED_REGION_SIRI_BASE_URL", "null"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT", "44.011994"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LON", "-79.47573600000001"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT_SPAN", "0.6502339999999975"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LON_SPAN", "0.5733579999999989"
+            buildConfigField "String", "FIXED_REGION_LANG", "\"en_US\""
+            buildConfigField "String", "FIXED_REGION_CONTACT_EMAIL", "\"transitinfo@york.ca\""
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL", "false"
+            buildConfigField "String", "FIXED_REGION_TWITTER_URL",
+                    "\"https://twitter.com/YRTViva\""
+            buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
+            buildConfigField "String", "FIXED_REGION_OTP_BASE_URL",
+                    "\"https://otp.yrt.ca/otp/\""
+            buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL",
+                    "\"transitinfo@york.ca\""
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "false"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "\"co.bytemark.york\""
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
+            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
+            buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
+            buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
+        }
         /**
          * Add more rebranding flavors here...
          */
@@ -262,8 +320,8 @@ android {
             release {
                 storeFile file(props['key.store'])
                 keyAlias props['key.alias']
-                storePassword "askmelater"
-                keyPassword "askmelater"
+                storePassword props['key.storepassword']
+                keyPassword props['key.keypassword']
             }
         }
     } else {
@@ -289,10 +347,22 @@ android {
         android.applicationVariants.all { variant ->
             if (variant.buildType.name == "release") {
                 variant.outputs.all { output ->
-                    def file = output.outputFile
                     outputFileName = "${variant.name}-v${variant.versionName}.apk"
                 }
             }
+        }
+    }
+
+    // Filter out the Amazon release build variants for AgencyX and AgencyY brands because they are unused
+    variantFilter { variant ->
+        def names = variant.flavors*.name
+        def brand = names.get(0)
+        def platform = names.get(1)
+        def isRelease = variant.buildType.name.equals('release')
+        if (isRelease &&
+                ((brand.equals("agencyX") && platform.equals("amazon")) ||
+                        (brand.equals("agencyY") && platform.equals("amazon")) )) {
+            variant.setIgnore(true)
         }
     }
 
@@ -311,10 +381,23 @@ android {
 }
 
 /**
- * Returns the Embedded Social API key. Returns the empty string if the key is not found
+ * Returns the Embedded Social key (e.g. "ApiKey" or "TelemetryKey") from gradle.properties for the given product flavor (e.g., "oba"), or returns the empty string if the key is not found
  */
-def getEmbeddedSocialApiKey(productFlavor) {
-    def keyName = "EmbeddedSocialApiKey" + "_" + productFlavor
+def getEmbeddedSocialKey(keyType, productFlavor) {
+    def keyName = "EmbeddedSocial" + keyType + "_" + productFlavor
+    if (project.hasProperty(keyName)) {
+        return project.property(keyName)
+    } else {
+        return ""
+    }
+}
+/**
+ * Gets the Pelias geocoding API key for the given product flavor
+ * @param productFlavor the product flavor being built
+ * @return the Pelias geocoding API key for the given product flavor
+ */
+def getPeliasKey(productFlavor) {
+    def keyName = "Pelias" + "_" + productFlavor
     if (project.hasProperty(keyName)) {
         return project.property(keyName)
     } else {
@@ -346,55 +429,13 @@ task copyMapsApiV2Classes {
 
 preBuild.dependsOn copyMapsApiV2Classes
 
-/**
- * Ask for keystore/key passwords on the command line or popup UI when running release builds
- */
-task askForPasswords << {
-    def console = System.console()
-    def storePw
-    def keyPw
-
-    if (console) {
-        // Must create String because System.readPassword() returns char[]
-        // (and assigning that below fails silently)
-        storePw = new String(console.readPassword("\nKeystore password: "))
-        keyPw = new String(console.readPassword("Key password: "))
-    } else {
-        // Gradle is running as a daemon - prompt user to enter passwords via popup UI (#770)
-        new SwingBuilder().edt {
-            dialog(modal: true, title: 'Enter credentials', alwaysOnTop: true, resizable: true,
-                    locationRelativeTo: null, pack: true, show: true
-            ) {
-                vbox {
-                    label(text: "Keystore passphrase:")
-                    textField id: "storeText", input = passwordField()
-                    label(text: "Key passphrase:")
-                    textField id: "keyText", input = passwordField()
-                    button(defaultButton: true, text: 'OK', actionPerformed: {
-                        storePw = storeText.text;
-                        keyPw = keyText.text;
-                        dispose();
-                    })
-                }
-            }
-        }
-    }
-
-    android.signingConfigs.release.storePassword = storePw
-    android.signingConfigs.release.keyPassword = keyPw
-}
-
 tasks.whenTaskAdded { theTask ->
-   if (theTask.name.matches("\\bpackage\\w+Release\\b")) {
-        theTask.dependsOn "askForPasswords"
-   }
    // Make sure that OBA release builds always have an Embedded Social API key (#907)
    def runningTask = project.gradle.startParameter.taskNames
 
    if ((runningTask.toString().toLowerCase().matches("(.*)oba(.*)release(.*)") || runningTask.toString().toLowerCase().contains("assemblerelease") )  && !project.hasProperty('EmbeddedSocialApiKey_oba')) {
         throw new InvalidUserDataException("gradle.properties must contain an EmbeddedSocialApiKey_oba API key for oba release builds")
    }
-
 }
 
 // Exclude all classes from dependencies that conflict with Android platform classes (#849)
@@ -405,27 +446,25 @@ configurations {
 }
 
 dependencies {
-    // Google Play Services Analytics (we need this on Amazon flavor too)
-    implementation("com.google.android.gms:play-services-analytics:${this.ext.playServicesVersion}") {
-        exclude module: 'play-services-ads' // See #342
-        force = true
-    }
+    // Firebase Analytics
+    implementation 'com.google.firebase:firebase-core:16.0.8'
+    implementation 'com.google.firebase:firebase-analytics:16.4.0'
+    // Cloud Firestore (for storing destination alert test data)
+    implementation 'com.google.firebase:firebase-firestore:17.1.4'
+    implementation 'com.google.firebase:firebase-auth:16.1.0'
+    implementation 'com.google.firebase:firebase-storage:16.0.5'
     // Google Play Services Location (we need this on Amazon flavor too)
-    implementation("com.google.android.gms:play-services-location:${this.ext.playServicesVersion}") {
-        force = true
-    }
+    implementation 'com.google.android.gms:play-services-location:16.0.0'
     // Support libraries
-    implementation ('androidx.cardview:cardview:1.0.0') {
-        force = true
-    }
-    implementation ('com.google.android.material:material:1.0.0') {
-        force = true
-    }
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'com.google.android.material:material:1.0.0'
     implementation 'android.arch.lifecycle:extensions:1.1.1'
     implementation 'android.arch.lifecycle:common-java8:1.1.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha3'
     implementation 'commons-io:commons-io:2.4'
+    implementation 'org.apache.commons:commons-lang3:3.0'
     // Open311 client library
-    implementation 'edu.usf.cutr:open311client:1.0.9'
+    implementation 'edu.usf.cutr:open311client:1.0.10'
     // JSON data binding for OBA REST API responses
     implementation 'com.fasterxml.jackson.core:jackson-core:2.9.4'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.9.4'
@@ -440,31 +479,28 @@ dependencies {
     implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
     // POJOs used for full data-binding via Jackson
     implementation 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
+    // Pelias for point-of-interest search and geocoding for trip planning origin and destination
+    implementation 'edu.usf.cutr:pelias-client-library:1.0.3'
     // Google Play Services Maps (only for Google flavor)
-    googleImplementation ("com.google.android.gms:play-services-maps:${this.ext.playServicesVersion}") {
-        force = true
-    }
+    googleImplementation 'com.google.android.gms:play-services-maps:16.1.0'
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)
-    googleImplementation ("com.google.android.gms:play-services-places:${this.ext.playServicesVersion}") {
-        force = true
-    }
+    googleImplementation 'com.google.android.libraries.places:places-compat:1.1.0'
     // Amazon Maps (only for Amazon flavor)
     amazonImplementation 'com.amazon.android:amazon-maps-api:2.0'
     // Embedded Social SDK
-    implementation('com.acrowntest.test:sdk:0.7.3:release@aar') {
-        transitive = true
-    }
+    implementation('com.acrowntest.ES_SDK:sdk:0.7.6')
     // Required to support multidex for minSdkVersion <= 20
     implementation 'androidx.multidex:multidex:2.0.0'
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
     androidTestImplementation 'androidx.test:runner:1.1.0'
+    // WorkManager (Java only)
+    implementation 'androidx.work:work-runtime:2.0.0'
+    implementation "androidx.concurrent:concurrent-futures:1.0.0-beta01"
+    implementation "androidx.concurrent:concurrent-listenablefuture:1.0.0-beta01"
+    implementation "androidx.concurrent:concurrent-listenablefuture-callback:1.0.0-beta01"
+    compile "androidx.core:core-ktx:+"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
 }
 
-// Dependencies not directly used in this project, but used by dependencies that we are using
-configurations.all {
-    // Needed to eliminate conflict with EmbeddedSocial SDK Google Play Services & Firebase libraries
-    resolutionStrategy.force "com.google.android.gms:play-services-auth:${this.ext.playServicesVersion}"
-    resolutionStrategy.force "com.google.android.gms:play-services-gcm:${this.ext.playServicesVersion}"
-    resolutionStrategy.force "com.google.firebase:firebase-core:${this.ext.playServicesVersion}"
-    resolutionStrategy.force "com.google.firebase:firebase-analytics:${this.ext.playServicesVersion}"
-}
+apply plugin:'com.google.gms.google-services'

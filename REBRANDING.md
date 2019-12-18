@@ -87,15 +87,23 @@ No matter which default is defined, users can change the sorting style by using 
 
 `USE_FIXED_REGION` - Valid values are `true` and `false` - If true, then the app will be fixed to the region information provided for this brand dimension in the `build.gradle`.  If false, then the app will function with the normal multi-region process, and work across various regions defined in the Regions API.  This value is false for the original OneBusAway brand so it supports multi-region.
 
-**Configuration Pelias API key for geocoding**
+**Google Places SDK vs. Pelias geocoder for trip planning**
 
-If trip planning is active, you'll need to provide an API key for [geocode.earth](https://geocode.earth/).
+`USE_PELIAS_GEOCODING` defines which software is used for searching for origins and destinations while trip planning (e.g., returning a latitude and longitude for a search for `airport`). Note that this doesn't affect the trip planner itself - OpenTripPlanner is always used to plan an itinerary from one latitude and longitude to another.
+
+Valid values are `true` and `false`:
+    * `USE_PELIAS_GEOCODING = true` - The [Pelias geocoder](https://github.com/pelias/pelias) (configured for [geocode.earth](https://geocode.earth/) by default) will be used to search for origins and destinations when planning a trip. You must also set the Pelias API key in `gradle.properties` (see below).
+    * `USE_PELIAS_GEOCODING = false` - The [Google Places SDK for Android](https://developers.google.com/places/android-sdk/intro) will be used to search for origins and destinations when planning a trip. Note that you'll need to set up your own billing account with the [Google Maps Platform](https://developers.google.com/maps/gmp-get-started) and configure that account for your app release signature.
+
+If `USE_PELIAS_GEOCODING = true`, you'll need to provide an API key (by default for [geocode.earth](https://geocode.earth/)).
 
 Add the following to `onebusaway-android/gradle.properties`:
 
 `Pelias_oba=XXXXXX`
 
-...where `XXXXXX` is your API key. Note that the suffix of `_oba` can be changed to configure API keys for other build flavors.
+...where `XXXXXX` is your API key. Note that you'll need to change the suffix of `_oba` to match the name of your build flavor.
+
+Note that if you want to use a different Pelias server other than [geocode.earth](https://geocode.earth/) you can change the base Pelias URL being used by overriding the resource string `pelias_api_url` in `donottranslate.xml` (see above for examples of how to override string resources in your build flavor).
 
 ## Examples
 

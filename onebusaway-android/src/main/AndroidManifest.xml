@@ -331,10 +331,6 @@
 
         <!-- Opt-out of June 2018 Android Maps styling with pin POI icons - see #891 -->
         <meta-data android:name="com.google.android.gms.maps.API_OPTIONS" android:value="B3H9HE845CFHYG"/>
-        <!-- Required for targeting API level 28 and higher - see #949 -->
-        <uses-library
-                android:name="org.apache.http.legacy"
-                android:required="false" />
         <!-- Below is required to enable Firebase Analytics and override the opposite setting in Embedded Social library -->
         <meta-data android:name="firebase_analytics_collection_deactivated" android:value="false"
                    tools:replace="android:value"/>

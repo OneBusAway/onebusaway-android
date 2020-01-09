@@ -57,7 +57,7 @@ public class ReportProblemWithTripRequestTest extends ObaTestCase {
         ObaReportProblemWithTripRequest request = builder.build();
 
         UriAssert.assertUriMatch(
-                "http://api.pugetsound.onebusaway.org/api/where/report-problem-with-trip.json?" +
+                "https://api.pugetsound.onebusaway.org/api/where/report-problem-with-trip.json?" +
                         "tripId=1_29261&" +
                         "stopId=1_29262&" +
                         "vehicleId=1_29263&" +
@@ -98,7 +98,7 @@ public class ReportProblemWithTripRequestTest extends ObaTestCase {
         ObaReportProblemWithTripRequest request = builder.build();
 
         UriAssert.assertUriMatch(
-                "http://api.tampa.onebusaway.org/api/api/where/report-problem-with-trip.json?" +
+                "https://api.tampa.onebusaway.org/api/api/where/report-problem-with-trip.json?" +
                         "tripId=Hillsborough%20Area%20Regional%20Transit_121133&" +
                         "stopId=Hillsborough Area Regional Transit_4551&" +
                         "vehicleId=Hillsborough%20Area%20Regional%20Transit_1018&" +

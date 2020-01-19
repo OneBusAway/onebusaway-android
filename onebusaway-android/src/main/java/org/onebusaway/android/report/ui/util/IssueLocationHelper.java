@@ -49,7 +49,7 @@ public class IssueLocationHelper {
 
     public void handleMarkerUpdate(int markerId) {
         clearMarkers();
-        this.setMarkerId(markerId);
+        this.markerId = markerId;
     }
 
     public void updateMarkerPosition(Location markerPosition, ObaStop obaStop) {

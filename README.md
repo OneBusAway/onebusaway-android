@@ -1,6 +1,6 @@
 # OneBusAway for Android [![Build Status](https://travis-ci.org/OneBusAway/onebusaway-android.svg?branch=master)](https://travis-ci.org/OneBusAway/onebusaway-android) [![Join the OneBusAway chat](https://onebusaway.herokuapp.com/badge.svg)](https://onebusaway.herokuapp.com/)
 
-This is the official Android / Fire Phone app for [OneBusAway](https://onebusaway.org/)!
+This is the official Android / Fire Phone app for [OneBusAway](https://onebusaway.org/), a project of the non-profit [Open Transit Software Foundation](https://opentransitsoftwarefoundation.org/)!
 
 [<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png"
       alt="Get it on Google Play"
@@ -62,4 +62,4 @@ Things not going well building the project?  See our [Troubleshooting](TROUBLESH
 
 ## OneBusAway Project
 
-Want to learn more about the [OneBusAway project](https://onebusaway.org/)? [Read up on the entire Application Suite](https://github.com/OneBusAway/onebusaway-application-modules) and/or [learn more about the mobile apps](https://github.com/OneBusAway/onebusaway-application-modules/wiki/Mobile-App-Design-Considerations).
+Want to learn more about the [OneBusAway project](https://onebusaway.org/), a project of the non-profit [Open Transit Software Foundation](https://opentransitsoftwarefoundation.org/)? [Read up on the entire Application Suite](https://github.com/OneBusAway/onebusaway-application-modules) and/or [learn more about the mobile apps](https://github.com/OneBusAway/onebusaway-application-modules/wiki/Mobile-App-Design-Considerations).

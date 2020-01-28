@@ -64,7 +64,7 @@ public class TripDetailsRequest extends ObaTestCase {
                 new ObaTripDetailsRequest.Builder(getTargetContext(), TEST_TRIP_ID);
         ObaTripDetailsRequest request = builder.build();
         UriAssert.assertUriMatch(
-                "http://api.pugetsound.onebusaway.org/api/where/trip-details/" + TEST_TRIP_ID
+                "https://api.pugetsound.onebusaway.org/api/where/trip-details/" + TEST_TRIP_ID
                         + ".json",
                 new HashMap<String, String>() {{
                     put("key", "*");
@@ -131,7 +131,7 @@ public class TripDetailsRequest extends ObaTestCase {
                 .setIncludeTrip(false)
                 .build();
         UriAssert.assertUriMatch(
-                "http://api.pugetsound.onebusaway.org/api/where/trip-details/" + TEST_TRIP_ID
+                "https://api.pugetsound.onebusaway.org/api/where/trip-details/" + TEST_TRIP_ID
                         + ".json",
                 new HashMap<String, String>() {{
                     put("includeTrip", "false");
@@ -179,7 +179,7 @@ public class TripDetailsRequest extends ObaTestCase {
                 .setIncludeSchedule(false)
                 .build();
         UriAssert.assertUriMatch(
-                "http://api.pugetsound.onebusaway.org/api/where/trip-details/" + TEST_TRIP_ID
+                "https://api.pugetsound.onebusaway.org/api/where/trip-details/" + TEST_TRIP_ID
                         + ".json",
                 new HashMap<String, String>() {{
                     put("includeSchedule", "false");
@@ -226,7 +226,7 @@ public class TripDetailsRequest extends ObaTestCase {
                         .setIncludeStatus(false)
                         .build();
         UriAssert.assertUriMatch(
-                "http://api.pugetsound.onebusaway.org/api/where/trip-details/" + TEST_TRIP_ID
+                "https://api.pugetsound.onebusaway.org/api/where/trip-details/" + TEST_TRIP_ID
                         + ".json",
                 new HashMap<String, String>() {{
                     put("includeStatus", "false");
@@ -272,7 +272,7 @@ public class TripDetailsRequest extends ObaTestCase {
         ObaTripDetailsRequest request =
                 ObaTripDetailsRequest.newRequest(getTargetContext(), TEST_TRIP_ID);
         UriAssert.assertUriMatch(
-                "http://api.pugetsound.onebusaway.org/api/where/trip-details/" + TEST_TRIP_ID
+                "https://api.pugetsound.onebusaway.org/api/where/trip-details/" + TEST_TRIP_ID
                         + ".json",
                 new HashMap<String, String>() {{
                     put("key", "*");

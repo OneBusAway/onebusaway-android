@@ -67,16 +67,16 @@
     <string name="preferences_key_travel_behavior">preference_travel_behavior</string>
 
     <!-- Regions API URL -->
-    <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
+    <string name="regions_api_url">https://regions.onebusaway.org/regions-v3.json</string>
 
     <!-- Donate URL -->
-    <string name="donate_url">http://onebusaway.org/donate/</string>
+    <string name="donate_url">https://onebusaway.org/donate/</string>
 
     <!-- IdeaScale URL -->
-    <string name="ideascale_url">http://onebusaway.ideascale.com/a/ideas/top/campaign-filter/byids/campaigns/46167</string>
+    <string name="ideascale_url">https://onebusaway.ideascale.com/a/ideas/top/campaign-filter/byids/campaigns/46167</string>
 
     <!-- Powered by OBA URL -->
-    <string name="powered_by_oba_url">http://onebusaway.org</string>
+    <string name="powered_by_oba_url">https://onebusaway.org</string>
 
     <!-- Travel Behavior Study Participant Info Url-->
     <string name="travel_behavior_participants_url">https://script.google.com/macros/s/AKfycbyUnU7wYhGk_Y6UyEjQ0ePNn9avA3jA7QqDHI2PzKg2RYftrj9x/exec</string>
@@ -217,7 +217,7 @@
 
 
     <!-- General strings -->
-    <string name="http_prefix">http://</string>
+    <string name="https_prefix">https://</string>
 
     <!-- Problem reporting additions -->
     <string name="ri_append_start">\n\n---------------------\n</string>
@@ -247,7 +247,7 @@
     <string name="ri_app_feedback_email">android-app@onebusaway.org</string>
 
     <string name="arrival_list_stop_directions">\u0020(%1$s)</string>
-    <string name="sobi_deep_link_floating_bike_url">http://app.socialbicycles.com/map?bike_id=</string>
+    <string name="sobi_deep_link_floating_bike_url">https://app.socialbicycles.com/map?bike_id=</string>
     <string name="sobi_deep_link_bike_station_url">https://app.socialbicycles.com/map?hub_id=</string>
 
     <string name="traverse_mode_bicycle_rent">BICYCLE_RENT</string>

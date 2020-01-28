@@ -15,11 +15,11 @@
  */
 package org.onebusaway.android.mock;
 
+import android.content.Context;
+
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
 import org.onebusaway.android.util.RegionUtils;
-
-import android.content.Context;
 
 import java.util.ArrayList;
 
@@ -75,7 +75,7 @@ public class MockRegion {
                 0,
                 "Test-RegionWithPathNoSeparator",
                 true,
-                "http://api.tampa.onebusaway.org/api",
+                "https://api.tampa.onebusaway.org/api",
                 null,
                 bounds,
                 new ObaRegionElement.Open311Server[0],
@@ -115,7 +115,7 @@ public class MockRegion {
                 0,
                 "Test-RegionWithPathNoSeparator",
                 true,
-                "http://api.pugetsound.onebusaway.org",
+                "https://api.pugetsound.onebusaway.org",
                 null,
                 bounds,
                 new ObaRegionElement.Open311Server[0],
@@ -126,7 +126,7 @@ public class MockRegion {
                 false,
                 null,
                 false,
-                "http://stopinfo.pugetsound.onebusaway.org",
+                "https://stopinfo.pugetsound.onebusaway.org",
                 null,
                 null,
                 false,
@@ -155,7 +155,7 @@ public class MockRegion {
                 0,
                 "Test-RegionWithPort",
                 true,
-                "http://api.tampa.onebusaway.org:8088/api/",
+                "https://api.tampa.onebusaway.org:8088/api/",
                 null,
                 bounds,
                 new ObaRegionElement.Open311Server[0],
@@ -313,7 +313,7 @@ public class MockRegion {
                 0,
                 "Test-RegionWithoutOBAApis",
                 true,
-                "http://api.tampa.onebusaway.org/api/",
+                "https://api.tampa.onebusaway.org/api/",
                 null,
                 bounds,
                 null,
@@ -351,7 +351,7 @@ public class MockRegion {
                 0,
                 "Test-RegionWithoutOBAApis",
                 true,
-                "http://api.tampa.onebusaway.org/api/",
+                "https://api.tampa.onebusaway.org/api/",
                 null,
                 bounds,
                 null,

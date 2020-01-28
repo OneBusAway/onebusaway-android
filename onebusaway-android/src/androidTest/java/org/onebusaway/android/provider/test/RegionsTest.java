@@ -17,17 +17,17 @@
  */
 package org.onebusaway.android.provider.test;
 
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.provider.ObaContract.RegionBounds;
-import org.onebusaway.android.provider.ObaContract.Regions;
-import org.onebusaway.android.provider.ObaProvider;
-
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.test.ProviderTestCase2;
+
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.provider.ObaContract.RegionBounds;
+import org.onebusaway.android.provider.ObaContract.Regions;
+import org.onebusaway.android.provider.ObaProvider;
 
 public class RegionsTest extends ProviderTestCase2<ObaProvider> {
 
@@ -39,7 +39,7 @@ public class RegionsTest extends ProviderTestCase2<ObaProvider> {
         ContentResolver cr = getMockContentResolver();
         ContentValues values = new ContentValues();
         values.put(Regions.NAME, "Test region");
-        values.put(Regions.OBA_BASE_URL, "http://test.onebusaway.org/");
+        values.put(Regions.OBA_BASE_URL, "https://test.onebusaway.org/");
         values.put(Regions.SIRI_BASE_URL, "");
         values.put(Regions.LANGUAGE, "en_US");
         values.put(Regions.CONTACT_EMAIL, "contact@onebusaway.org");
@@ -90,7 +90,7 @@ public class RegionsTest extends ProviderTestCase2<ObaProvider> {
         ContentResolver cr = getMockContentResolver();
         ContentValues values = new ContentValues();
         values.put(Regions.NAME, "Test region");
-        values.put(Regions.OBA_BASE_URL, "http://test.onebusaway.org/");
+        values.put(Regions.OBA_BASE_URL, "https://test.onebusaway.org/");
         values.put(Regions.SIRI_BASE_URL, "");
         values.put(Regions.LANGUAGE, "en_US");
         values.put(Regions.CONTACT_EMAIL, "contact@onebusaway.org");

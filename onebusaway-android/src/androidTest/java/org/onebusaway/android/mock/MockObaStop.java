@@ -16,11 +16,11 @@
  */
 package org.onebusaway.android.mock;
 
+import android.location.Location;
+
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.util.LocationUtils;
-
-import android.location.Location;
 
 import java.util.HashMap;
 
@@ -121,7 +121,7 @@ public class MockObaStop {
 
         @Override
         public String getUrl() {
-            return "http://www.gohart.org/routes/hart/01.html";
+            return "https://www.gohart.org/routes/hart/01.html";
         }
 
         @Override
@@ -169,7 +169,7 @@ public class MockObaStop {
 
         @Override
         public String getUrl() {
-            return "http://www.gohart.org/routes/hart/05.html";
+            return "https://www.gohart.org/routes/hart/05.html";
         }
 
         @Override

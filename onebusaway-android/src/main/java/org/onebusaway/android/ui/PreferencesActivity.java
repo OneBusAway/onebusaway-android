@@ -575,8 +575,8 @@ public class PreferencesActivity extends PreferenceActivity
             // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
             URL url = new URL(apiUrl);
         } catch (MalformedURLException e) {
-            // Assume HTTP scheme if none is provided
-            apiUrl = getString(R.string.http_prefix) + apiUrl;
+            // Assume HTTPS scheme if none is provided
+            apiUrl = getString(R.string.https_prefix) + apiUrl;
         }
         return Patterns.WEB_URL.matcher(apiUrl).matches();
     }

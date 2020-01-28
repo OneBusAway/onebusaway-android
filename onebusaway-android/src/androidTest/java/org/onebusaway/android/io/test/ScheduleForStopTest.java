@@ -61,7 +61,7 @@ public class ScheduleForStopTest extends ObaTestCase {
                 new ObaScheduleForStopRequest.Builder(getTargetContext(), "1_75403")
                         .build();
         UriAssert.assertUriMatch(
-                "http://api.pugetsound.onebusaway.org/api/where/schedule-for-stop/1_75403.json",
+                "https://api.pugetsound.onebusaway.org/api/where/schedule-for-stop/1_75403.json",
                 new HashMap<String, String>() {{
                     put("key", "*");
                     put("version", "2");
@@ -115,7 +115,7 @@ public class ScheduleForStopTest extends ObaTestCase {
                         .setDate(time)
                         .build();
         UriAssert.assertUriMatch(
-                "http://api.pugetsound.onebusaway.org/api/where/schedule-for-stop/1_75403.json",
+                "https://api.pugetsound.onebusaway.org/api/where/schedule-for-stop/1_75403.json",
                 new HashMap<String, String>() {{
                     put("date", "2012-07-30");
                     put("key", "*");

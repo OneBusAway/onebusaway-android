@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- See https://github.com/OneBusAway/onebusaway-multiregion-support/issues/14 for TODO list
+    of regions still working to transition to HTTPS. Exceptions for these regions are below. -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- San Diego OTP server -->
+        <domain includeSubdomains="true">realtime.sdmts.com</domain>
+    </domain-config>
+</network-security-config>

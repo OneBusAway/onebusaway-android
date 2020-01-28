@@ -62,7 +62,7 @@ public class TripsForRouteRequestTest extends ObaTestCase {
                 TEST_ROUTE_ID);
         ObaTripsForRouteRequest request = builder.build();
         UriAssert.assertUriMatch(
-                "http://api.tampa.onebusaway.org/api/api/where/trips-for-route/" + TEST_ROUTE_ID
+                "https://api.tampa.onebusaway.org/api/api/where/trips-for-route/" + TEST_ROUTE_ID
                         + ".json",
                 new HashMap<String, String>() {{
                     put("key", "*");
@@ -134,7 +134,7 @@ public class TripsForRouteRequestTest extends ObaTestCase {
         ObaTripsForRouteRequest request = ObaTripsForRouteRequest
                 .newRequest(getTargetContext(), TEST_ROUTE_ID);
         UriAssert.assertUriMatch(
-                "http://api.tampa.onebusaway.org/api/api/where/trips-for-route/" + TEST_ROUTE_ID
+                "https://api.tampa.onebusaway.org/api/api/where/trips-for-route/" + TEST_ROUTE_ID
                         + ".json",
                 new HashMap<String, String>() {{
                     put("key", "*");

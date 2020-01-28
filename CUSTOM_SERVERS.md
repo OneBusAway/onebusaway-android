@@ -4,6 +4,8 @@ We support testing custom [OneBusAway](https://github.com/OneBusAway/onebusaway-
 this feature to try out a new test server that you've set up, but aren't ready to publicize in the [Regions API](https://github.com/OneBusAway/onebusaway/wiki/Multi-Region) yet.
 
 Before doing anything, check out the [system architecture diagrams](SYSTEM_ARCHITECTURE.md) to understand how OBA Android communicates with other servers. and what features they provide.
+
+Also, note that while you can test your OBA server with a HTTP URL, you'll need to enable SSL for HTTPS before launching in the Regions API.
  
 ## Configuration
 

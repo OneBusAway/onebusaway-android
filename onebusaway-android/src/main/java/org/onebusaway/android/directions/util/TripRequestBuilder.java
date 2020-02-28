@@ -142,15 +142,15 @@ public class TripRequestBuilder {
 
     public Double getMaxWalkDistance() {
         Double d = mBundle.getDouble(MAX_WALK_DISTANCE);
-        return d != 0 ? d : null;
+        return (d != 0 && d != Double.MAX_VALUE) ? d : null;
     }
 
     // Built in TraverseModeSet does not work properly so we cannot use request.setMode
     // This is built from examining dropdown on the OTP webapp
     // there are also airplane, bike, bike + ride, park + ride, kiss + ride, etc options
     // transit -> TRANSIT,WALK
-    // bus only -> BUSISH,WALK
-    // rail only -> TRAINISH,WALK
+    // bus only -> BUS,WALK
+    // rail only -> RAIL,WALK
     public TripRequestBuilder setModeSetById(int id) {
         List<String> modes;
 
@@ -171,10 +171,10 @@ public class TripRequestBuilder {
                 }
                 break;
             case TripModes.BUS_ONLY:
-                modes = Arrays.asList(TraverseMode.BUSISH.toString(), TraverseMode.WALK.toString());
+                modes = Arrays.asList(TraverseMode.BUS.toString(), TraverseMode.WALK.toString());
                 break;
             case TripModes.RAIL_ONLY:
-                modes = Arrays.asList(TraverseMode.TRAINISH.toString(), TraverseMode.WALK.toString());
+                modes = Arrays.asList(TraverseMode.RAIL.toString(), TraverseMode.WALK.toString());
                 break;
             case TripModes.BIKESHARE:
                 modes = Arrays.asList(Application.get().getString(R.string.traverse_mode_bicycle_rent));

@@ -134,7 +134,7 @@ public class DirectionsGenerator {
     private Direction generateNonTransitDirections(Leg leg) {
         Direction direction = new Direction();
 
-        //http://opentripplanner.usf.edu/opentripplanner-api-webapp/ws/plan?optimize=QUICK&time=09:24pm&arriveBy=false&wheelchair=false&maxWalkDistance=7600.0&fromPlace=28.033389%2C+-82.521034&toPlace=28.064709%2C+-82.471618&date=03/07/12&mode=WALK,TRAM,SUBWAY,RAIL,BUS,FERRY,CABLE_CAR,GONDOLA,FUNICULAR,TRANSIT,TRAINISH,BUSISH
+        //http://opentripplanner.usf.edu/opentripplanner-api-webapp/ws/plan?optimize=QUICK&time=09:24pm&arriveBy=false&wheelchair=false&maxWalkDistance=7600.0&fromPlace=28.033389%2C+-82.521034&toPlace=28.064709%2C+-82.471618&date=03/07/12&mode=WALK,TRAM,SUBWAY,RAIL,BUS,FERRY,CABLE_CAR,GONDOLA,FUNICULAR,TRANSIT,RAIL
 
         // Get appropriate action and icon
         String action = applicationContext.getResources().getString(R.string.step_by_step_non_transit_mode_walk_action);
@@ -559,12 +559,12 @@ public class DirectionsGenerator {
      * @return the mode icon for the given mode
      */
     public static int getModeIcon(TraverseModeSet mode) {
-        if (mode.contains(TraverseMode.BUSISH) &&
-                        mode.contains(TraverseMode.TRAINISH)) {
+        if (mode.contains(TraverseMode.BUS) &&
+                        mode.contains(TraverseMode.RAIL)) {
             return R.drawable.ic_maps_directions_bus;
-        } else if (mode.contains(TraverseMode.BUSISH)) {
+        } else if (mode.contains(TraverseMode.BUS)) {
             return R.drawable.ic_maps_directions_bus;
-        } else if (mode.contains(TraverseMode.TRAINISH)) {
+        } else if (mode.contains(TraverseMode.RAIL)) {
             return R.drawable.ic_directions_railway;
         } else if (mode.contains(TraverseMode.FERRY)) {
             return R.drawable.ic_directions_boat;
@@ -590,12 +590,12 @@ public class DirectionsGenerator {
      * @return the transit stop icon for the given mode
      */
     public static int getStopIcon(TraverseModeSet mode) {
-        if (mode.contains(TraverseMode.BUSISH) &&
-                mode.contains(TraverseMode.TRAINISH)) {
+        if (mode.contains(TraverseMode.BUS) &&
+                mode.contains(TraverseMode.RAIL)) {
             return R.drawable.ic_stop_flag_triangle;
-        } else if (mode.contains(TraverseMode.BUSISH)) {
+        } else if (mode.contains(TraverseMode.BUS)) {
             return R.drawable.ic_stop_flag_triangle;
-        } else if (mode.contains(TraverseMode.TRAINISH)) {
+        } else if (mode.contains(TraverseMode.RAIL)) {
             return R.drawable.ic_stop_flag_triangle;
         }
         // Just use the mode icon

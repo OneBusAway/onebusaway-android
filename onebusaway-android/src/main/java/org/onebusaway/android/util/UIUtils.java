@@ -1250,7 +1250,7 @@ public final class UIUtils {
      * that trip
      */
     public static List<String> buildTripOptions(Context c, boolean isRouteFavorite, boolean hasUrl,
-                                                boolean isReminderVisible, Occupancy occupancy, OccupancyState occupancyState) {
+                                                boolean isReminderVisible, boolean hasRouteFilter, Occupancy occupancy, OccupancyState occupancyState) {
         ArrayList<String> list = new ArrayList<>();
         if (!isRouteFavorite) {
             list.add(c.getString(R.string.bus_options_menu_add_star));
@@ -1267,7 +1267,11 @@ public final class UIUtils {
             list.add(c.getString(R.string.bus_options_menu_edit_reminder));
         }
 
-        list.add(c.getString(R.string.bus_options_menu_show_only_this_route));
+        if (!hasRouteFilter) {
+            list.add(c.getString(R.string.bus_options_menu_show_only_this_route));
+        } else {
+            list.add(c.getString(R.string.bus_options_menu_show_all_routes));
+        }
 
         if (hasUrl) {
             list.add(c.getString(R.string.bus_options_menu_show_route_schedule));

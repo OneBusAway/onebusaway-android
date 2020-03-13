@@ -489,6 +489,8 @@ dependencies {
     amazonImplementation 'com.amazon.android:amazon-maps-api:2.0'
     // Embedded Social SDK
     implementation('com.acrowntest.ES_SDK:sdk:0.7.6')
+    // Autocomplete text views with clear button for trip planning
+    implementation 'com.google.android.material:material:1.1.0'
     // Required to support multidex for minSdkVersion <= 20
     implementation 'androidx.multidex:multidex:2.0.0'
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier

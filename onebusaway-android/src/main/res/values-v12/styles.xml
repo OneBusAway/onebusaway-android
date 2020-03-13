@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Change the SearchView cursor color so its easier to see -->
+    <!-- Change the Action Bar SearchView cursor color so its easier to see -->
     <style name="cursorColor" parent="Widget.AppCompat.AutoCompleteTextView">
         <item name="android:textCursorDrawable">@drawable/cursor</item>
+    </style>
+    <!-- Change the Action Bar SearchView cursor color so its easier to see -->
+    <style name="cursorColorTripPlan" parent="Widget.AppCompat.AutoCompleteTextView">
+        <item name="android:textCursorDrawable">@drawable/cursor_trip_plan</item>
     </style>
 </resources>

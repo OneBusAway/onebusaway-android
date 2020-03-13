@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,161 +12,183 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical"
-              android:layout_margin="16dp">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:layout_margin="16dp">
 
-    <TableLayout android:layout_width="match_parent"
-                 android:layout_height="wrap_content">
+    <RelativeLayout
+        android:id="@+id/to_and_from_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-        <TableRow android:layout_width="wrap_content">
+        <RelativeLayout
+            android:id="@+id/trip_plan_from_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/trip_plan_from"
-                    android:textColor="@color/trip_plan_label"
-                    android:id="@+id/trip_plan_from"
-                android:layout_gravity="center_vertical" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@id/fromCurrentLocationImageButton"
+                android:layout_toStartOf="@id/fromCurrentLocationImageButton"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                app:endIconMode="clear_text">
 
-            <AutoCompleteTextView
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/tripplanner_current_location"
+                <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+                    style="@style/cursorColorTripPlan"
                     android:id="@+id/fromAddressTextArea"
-                    android:hint="@string/trip_plan_location_hint"
-                    android:textColor="@color/body_text_1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tripplanner_current_location"
+                    android:hint="@string/trip_plan_start_location_hint"
                     android:linksClickable="true"
                     android:singleLine="true"
                     android:ellipsize="end"
-                    android:requiresFadingEdge="horizontal"
-                    android:layout_marginLeft="4dp"
-                android:layout_gravity="center_vertical" />
+                    android:requiresFadingEdge="horizontal" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <ImageButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="5dp"
-                    android:id="@+id/fromCurrentLocationImageButton"
-                    android:background="#00000000"
-                    android:src="@drawable/ic_my_location"
-                    android:tint="@color/material_gray"
-                android:layout_gravity="center_vertical" />
-        </TableRow>
-
-        <TableRow android:layout_width="wrap_content">
-
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/trip_plan_to"
-                    android:textColor="@color/trip_plan_label"
-                    android:id="@+id/trip_plan_to"
-                    android:layout_gravity="center_vertical"
-            />
-
-            <AutoCompleteTextView
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:id="@+id/toAddressTextArea"
-                    android:hint="@string/trip_plan_location_hint"
-                    android:textColor="@color/body_text_1"
-                    android:linksClickable="true"
-                    android:singleLine="true"
-                    android:requiresFadingEdge="horizontal"
-                    android:layout_marginLeft="4dp"
-                    android:layout_gravity="center_vertical"
-            />
-
-            <ImageButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="5dp"
-                    android:id="@+id/toCurrentLocationImageButton"
-                    android:background="#00000000"
-                    android:src="@drawable/ic_my_location"
-                    android:tint="@color/material_gray"
-                android:layout_gravity="center_vertical" />
-        </TableRow>
-    </TableLayout>
-
-    <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingTop="8dp">
-
-        <Spinner
+                android:id="@+id/fromCurrentLocationImageButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/leavingChoiceSpinner"
-                android:layout_gravity="center_vertical"
-                android:textAppearance="?android:attr/textAppearanceSmall"/>
-
-        <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1"/>
-
-        <Spinner
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/date"
-                android:text="June 14"
-                android:inputType="none"
-                android:focusable="false"
-                android:layout_gravity="center_vertical"
-                android:textAppearance="?android:attr/textAppearanceSmall"/>
-
-        <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1"/>
-
-        <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:color="@color/trip_plan_label"
-                android:text="@string/trip_plan_stop_connector"
-                android:layout_gravity="center_vertical"/>
-
-        <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1"/>
-
-        <Spinner
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/time"
-                android:text="04:01 pm"
-                android:inputType="none"
-                android:focusable="false"
-                android:layout_gravity="center_vertical"
-                android:textAppearance="?android:attr/textAppearanceSmall"/>
-
-        <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1"/>
-
-        <ImageButton
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:background="#00000000"
+                android:src="@drawable/ic_my_location"
+                android:tint="@color/material_gray"
+                android:layout_marginLeft="5dp"
+                android:layout_marginStart="5dp"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentEnd="true"
-                android:scaleType="fitXY"
-                android:id="@+id/resetTimeImageButton"
-                android:src="@drawable/ic_arrival_time"
+                android:layout_centerVertical="true"
+                android:contentDescription="@string/set_origin_to_my_location" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/trip_plan_to_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/trip_plan_from_layout">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_toLeftOf="@id/toCurrentLocationImageButton"
+                android:layout_toStartOf="@id/toCurrentLocationImageButton"
+                android:layout_centerVertical="true"
+                app:endIconMode="clear_text">
+
+                <AutoCompleteTextView
+                    android:id="@+id/toAddressTextArea"
+                    style="@style/cursorColorTripPlan"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/trip_plan_end_location_hint"
+                    android:linksClickable="true"
+                    android:singleLine="true"
+                    android:requiresFadingEdge="horizontal" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginStart="5dp"
+                android:id="@+id/toCurrentLocationImageButton"
                 android:background="#00000000"
+                android:src="@drawable/ic_my_location"
                 android:tint="@color/material_gray"
                 android:layout_gravity="center_vertical"
-        />
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:contentDescription="@string/set_destination_to_my_location" />
+        </RelativeLayout>
+    </RelativeLayout>
 
+    <LinearLayout
+        android:id="@+id/time_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/to_and_from_layout"
+        android:orientation="horizontal"
+        android:paddingTop="8dp">
+
+        <Spinner
+            android:id="@+id/leavingChoiceSpinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            tools:text="Leaving" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <Spinner
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/date"
+            tools:text="June 14"
+            android:inputType="none"
+            android:focusable="false"
+            android:layout_gravity="center_vertical"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:color="@color/trip_plan_label"
+            android:text="@string/trip_plan_stop_connector"
+            android:layout_gravity="center_vertical"
+            android:paddingRight="8dp"
+            android:paddingEnd="8dp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <Spinner
+            android:id="@+id/time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="04:01 pm"
+            android:inputType="none"
+            android:focusable="false"
+            android:layout_gravity="center_vertical"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:scaleType="fitXY"
+            android:id="@+id/resetTimeImageButton"
+            android:src="@drawable/ic_arrival_time"
+            android:background="#00000000"
+            android:tint="@color/material_gray"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@string/reset_time" />
     </LinearLayout>
 
-</LinearLayout>
+</RelativeLayout>

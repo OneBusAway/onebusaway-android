@@ -728,6 +728,8 @@ public class ArrivalsListFragment extends ListFragment
         // Check route favorite, for whether we show "Add star" or "Remove star"
         final boolean isRouteFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(routeId,
                 arrivalInfo.getInfo().getHeadsign(), arrivalInfo.getInfo().getStopId());
+        // Check to see if there is a route filter, for whether we show "Show all routes" or "Show only this route"
+        boolean hasRouteFilter = !mRoutesFilter.isEmpty();
 
         final Occupancy occupancy;
         final OccupancyState occupancyState;
@@ -743,7 +745,7 @@ public class ArrivalsListFragment extends ListFragment
         }
 
         List<String> items = UIUtils
-                .buildTripOptions(getActivity(), isRouteFavorite, hasUrl, isReminderVisible, occupancy, occupancyState);
+                .buildTripOptions(getActivity(), isRouteFavorite, hasUrl, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
         List<Integer> icons = UIUtils.buildTripOptionsIcons(isRouteFavorite, hasUrl, occupancy);
 
         ListAdapter adapter = new ArrayAdapterWithIcon(getActivity(), items, icons);
@@ -775,6 +777,10 @@ public class ArrivalsListFragment extends ListFragment
                 } else if (which == 4) {
                     ArrayList<String> routes = new ArrayList<String>(1);
                     routes.add(arrivalInfo.getInfo().getRouteId());
+                    // toggle route filter - if user selection equals existing route filter, clear it
+                    if (routes.equals(mRoutesFilter) || mRoutesFilter.size() > routes.size()) {
+                        routes.clear();
+                    }
                     setRoutesFilter(routes);
                     if (mHeader != null) {
                         mHeader.refresh();

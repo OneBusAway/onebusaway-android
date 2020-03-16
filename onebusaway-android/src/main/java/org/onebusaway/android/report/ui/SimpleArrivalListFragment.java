@@ -30,6 +30,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
@@ -47,13 +54,6 @@ import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.Loader;
 
 public class SimpleArrivalListFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse> {
@@ -205,8 +205,8 @@ public class SimpleArrivalListFragment extends Fragment
             view.findViewById(R.id.route_favorite).setVisibility(View.INVISIBLE);
 
             String routeShortName = arrivalInfo.getShortName();
-            route.setText(routeShortName);
-            UIUtils.maybeShrinkRouteName(getActivity(), route, routeShortName);
+            route.setText(routeShortName.trim());
+            UIUtils.maybeShrinkRouteName(getActivity(), route, routeShortName.trim());
 
             destination.setText(UIUtils.formatDisplayText(arrivalInfo.getHeadsign()));
             status.setText(stopInfo.getStatusText());

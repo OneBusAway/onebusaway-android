@@ -144,6 +144,7 @@
     <string name="bus_options_menu_set_reminder">Set a reminder</string>
     <string name="bus_options_menu_edit_reminder">Edit this reminder</string>
     <string name="bus_options_menu_show_only_this_route">Show only this route</string>
+    <string name="bus_options_menu_show_all_routes">"Show all routes"</string>
     <string name="bus_options_menu_show_route_schedule">Show route schedule</string>
     <string name="bus_options_menu_report_trip_problem">Report arrival time problem</string>
 
@@ -910,7 +911,8 @@
     <string name="trip_plan_arriving">Arriving</string>
     <string name="trip_plan_stop_connector">at</string>
 
-    <string name="trip_plan_location_hint">Enter address or location name</string>
+    <string name="trip_plan_start_location_hint">Starting address or location name</string>
+    <string name="trip_plan_end_location_hint">Ending address or location name</string>
 
     <string name="trip_plan_list_view">List View</string>
     <string name="trip_plan_map_view">Map View</string>
@@ -1156,4 +1158,7 @@
     <string name="travel_behavior_dialog_consent_agree">Agree</string>
     <string name="travel_behavior_dialog_consent_disagree">Decline</string>
     <string name="travel_behavior_dialog_email_save">Save</string>
+    <string name="reset_time">Reset time</string>
+    <string name="set_destination_to_my_location">Set destination to my location</string>
+    <string name="set_origin_to_my_location">Set origin to my location</string>
 </resources>

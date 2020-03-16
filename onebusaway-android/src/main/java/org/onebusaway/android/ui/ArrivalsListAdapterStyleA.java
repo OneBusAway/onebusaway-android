@@ -24,6 +24,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.core.graphics.drawable.DrawableCompat;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.OccupancyState;
@@ -32,8 +34,6 @@ import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
-
-import androidx.core.graphics.drawable.DrawableCompat;
 
 /**
  * Original style of arrivals for OBA Android
@@ -85,8 +85,8 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
                 R.drawable.focus_star_off);
 
         String shortName = arrivalInfo.getShortName();
-        route.setText(shortName);
-        UIUtils.maybeShrinkRouteName(getContext(), route, shortName);
+        route.setText(shortName.trim());
+        UIUtils.maybeShrinkRouteName(getContext(), route, shortName.trim());
 
         destination.setText(UIUtils.formatDisplayText(arrivalInfo.getHeadsign()));
         status.setText(stopInfo.getStatusText());

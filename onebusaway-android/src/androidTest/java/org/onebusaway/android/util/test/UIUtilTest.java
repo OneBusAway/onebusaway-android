@@ -38,6 +38,7 @@ import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.graphics.Color;
@@ -60,7 +61,6 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
-import static org.onebusaway.android.util.TestUtils.isRunningOnTravis;
 
 /**
  * Tests to evaluate utility methods related to the presentation of information to the user in the
@@ -200,6 +200,7 @@ public class UIUtilTest extends ObaTestCase {
         boolean hasUrl = !TextUtils.isEmpty(url);
         boolean isReminderVisible = false;  // We don't have views here, so just fake it
         boolean isRouteFavorite = false;  // We'll fake this too, for our purposes
+        boolean hasRouteFilter = false;
 
         Occupancy occupancy = null;
         OccupancyState occupancyState = null;
@@ -214,10 +215,10 @@ public class UIUtilTest extends ObaTestCase {
         // HART has route schedule URLs in test data, so below options should allow the user to set
         // a reminder and view the route schedule
         List<String> options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, occupancy, occupancyState);
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
 
-        if (isRunningOnTravis()) {
-            // We don't have the Embedded Social config set up on Travis, so it doesn't include that menu item.
+        if (!EmbeddedSocialUtils.isSocialEnabled()) {
+            // Developer hasn't configured ES SDK key (or we're on Travis), so it doesn't include that menu item.
             assertEquals(7, options.size());
         } else {
             assertEquals(8, options.size());
@@ -230,17 +231,40 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(5), "Show route schedule");
         assertEquals(options.get(6), "Report arrival time problem");
 
-        if (!isRunningOnTravis()) {
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
             assertEquals(options.get(7), "Join discussion");
         }
+
+        // "Show only this route" should toggle to "Show all routes" when hasRouteFilter is true
+        hasRouteFilter = true;
+        options = UIUtils
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
+        if (!EmbeddedSocialUtils.isSocialEnabled()) {
+            // Developer hasn't configured ES SDK key (or we're on Travis), so it doesn't include that menu item.
+            assertEquals(7, options.size());
+        } else {
+            assertEquals(8, options.size());
+        }
+        assertEquals(options.get(0), "Add star to route");
+        assertEquals(options.get(1), "Show route on map");
+        assertEquals(options.get(2), "Show trip status");
+        assertEquals(options.get(3), "Set a reminder");
+        assertEquals(options.get(4), "Show all routes");
+        assertEquals(options.get(5), "Show route schedule");
+        assertEquals(options.get(6), "Report arrival time problem");
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
+            assertEquals(options.get(7), "Join discussion");
+        }
+        // "Reset hasRouteFilter to false to remaining tests
+        hasRouteFilter = false;
 
         isReminderVisible = true;
 
         // Now we should see route schedules and *edit* the reminder
         options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, occupancy, occupancyState);
-        if (isRunningOnTravis()) {
-            // We don't have the Embedded Social config set up on Travis, so it doesn't include that menu item.
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
+        if (!EmbeddedSocialUtils.isSocialEnabled()) {
+            // Developer hasn't configured ES SDK key (or we're on Travis), so it doesn't include that menu item.
             assertEquals(7, options.size());
         } else {
             assertEquals(8, options.size());
@@ -252,7 +276,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Show route schedule");
         assertEquals(options.get(6), "Report arrival time problem");
-        if (!isRunningOnTravis()) {
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
             assertEquals(options.get(7), "Join discussion");
         }
 
@@ -282,9 +306,9 @@ public class UIUtilTest extends ObaTestCase {
         // PSTA does not have route schedule URLs in test data, so below options should allow the
         // user to set a reminder but NOT view the route schedule
         options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, occupancy, occupancyState);
-        if (isRunningOnTravis()) {
-            // We don't have the Embedded Social config set up on Travis, so it doesn't include that menu item.
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
+        if (!EmbeddedSocialUtils.isSocialEnabled()) {
+            // Developer hasn't configured ES SDK key (or we're on Travis), so it doesn't include that menu item.
             assertEquals(6, options.size());
         } else {
             assertEquals(7, options.size());
@@ -295,7 +319,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(3), "Set a reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Report arrival time problem");
-        if (!isRunningOnTravis()) {
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
             assertEquals(options.get(6), "Join discussion");
         }
 
@@ -303,9 +327,9 @@ public class UIUtilTest extends ObaTestCase {
 
         // Now we should see *edit* the reminder, and still no route schedule
         options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, occupancy, occupancyState);
-        if (isRunningOnTravis()) {
-            // We don't have the Embedded Social config set up on Travis, so it doesn't include that menu item.
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
+        if (!EmbeddedSocialUtils.isSocialEnabled()) {
+            // Developer hasn't configured ES SDK key (or we're on Travis), so it doesn't include that menu item.
             assertEquals(6, options.size());
         } else {
             assertEquals(7, options.size());
@@ -316,7 +340,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Report arrival time problem");
-        if (!isRunningOnTravis()) {
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
             assertEquals(options.get(6), "Join discussion");
         }
 
@@ -329,9 +353,9 @@ public class UIUtilTest extends ObaTestCase {
         // HART has route schedule URLs in test data, so below options should allow the user to set
         // a reminder and view the route schedule
         options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, occupancy, occupancyState);
-        if (isRunningOnTravis()) {
-            // We don't have the Embedded Social config set up on Travis, so it doesn't include that menu item.
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
+        if (!EmbeddedSocialUtils.isSocialEnabled()) {
+            // Developer hasn't configured ES SDK key (or we're on Travis), so it doesn't include that menu item.
             assertEquals(7, options.size());
         } else {
             assertEquals(8, options.size());
@@ -343,7 +367,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Show route schedule");
         assertEquals(options.get(6), "Report arrival time problem");
-        if (!isRunningOnTravis()) {
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
             assertEquals(options.get(7), "Join discussion");
         }
 
@@ -351,9 +375,9 @@ public class UIUtilTest extends ObaTestCase {
 
         // Now we should see route schedules and *edit* the reminder
         options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, occupancy, occupancyState);
-        if (isRunningOnTravis()) {
-            // We don't have the Embedded Social config set up on Travis, so it doesn't include that menu item.
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
+        if (!EmbeddedSocialUtils.isSocialEnabled()) {
+            // Developer hasn't configured ES SDK key (or we're on Travis), so it doesn't include that menu item.
             assertEquals(7, options.size());
         } else {
             assertEquals(8, options.size());
@@ -365,7 +389,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Show route schedule");
         assertEquals(options.get(6), "Report arrival time problem");
-        if (!isRunningOnTravis()) {
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
             assertEquals(options.get(7), "Join discussion");
         }
 
@@ -375,9 +399,9 @@ public class UIUtilTest extends ObaTestCase {
         // PSTA does not have route schedule URLs in test data, so below options should allow the
         // user to set a reminder but NOT view the route schedule
         options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, occupancy, occupancyState);
-        if (isRunningOnTravis()) {
-            // We don't have the Embedded Social config set up on Travis, so it doesn't include that menu item.
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
+        if (!EmbeddedSocialUtils.isSocialEnabled()) {
+            // Developer hasn't configured ES SDK key (or we're on Travis), so it doesn't include that menu item.
             assertEquals(6, options.size());
         } else {
             assertEquals(7, options.size());
@@ -388,7 +412,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(3), "Set a reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Report arrival time problem");
-        if (!isRunningOnTravis()) {
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
             assertEquals(options.get(6), "Join discussion");
         }
 
@@ -396,9 +420,9 @@ public class UIUtilTest extends ObaTestCase {
 
         // Now we should see *edit* the reminder, and still no route schedule
         options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, occupancy, occupancyState);
-        if (isRunningOnTravis()) {
-            // We don't have the Embedded Social config set up on Travis, so it doesn't include that menu item.
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
+        if (!EmbeddedSocialUtils.isSocialEnabled()) {
+            // Developer hasn't configured ES SDK key (or we're on Travis), so it doesn't include that menu item.
             assertEquals(6, options.size());
         } else {
             assertEquals(7, options.size());
@@ -409,7 +433,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Report arrival time problem");
-        if (!isRunningOnTravis()) {
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
             assertEquals(options.get(6), "Join discussion");
         }
 
@@ -421,9 +445,9 @@ public class UIUtilTest extends ObaTestCase {
         occupancy = Occupancy.EMPTY;
         occupancyState = OccupancyState.HISTORICAL;
         options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, occupancy, occupancyState);
-        if (isRunningOnTravis()) {
-            // We don't have the Embedded Social config set up on Travis, so it doesn't include that menu item.
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
+        if (!EmbeddedSocialUtils.isSocialEnabled()) {
+            // Developer hasn't configured ES SDK key (or we're on Travis), so it doesn't include that menu item.
             assertEquals(7, options.size());
         } else {
             assertEquals(8, options.size());
@@ -434,7 +458,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Report arrival time problem");
-        if (!isRunningOnTravis()) {
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
             assertEquals(options.get(6), "Join discussion");
             assertEquals(options.get(7), "About historical occupancy");
         } else {
@@ -445,9 +469,9 @@ public class UIUtilTest extends ObaTestCase {
         occupancy = Occupancy.EMPTY;
         occupancyState = OccupancyState.PREDICTED;
         options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, occupancy, occupancyState);
-        if (isRunningOnTravis()) {
-            // We don't have the Embedded Social config set up on Travis, so it doesn't include that menu item.
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
+        if (!EmbeddedSocialUtils.isSocialEnabled()) {
+            // Developer hasn't configured ES SDK key (or we're on Travis), so it doesn't include that menu item.
             assertEquals(7, options.size());
         } else {
             assertEquals(8, options.size());
@@ -458,7 +482,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Report arrival time problem");
-        if (!isRunningOnTravis()) {
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
             assertEquals(options.get(6), "Join discussion");
             assertEquals(options.get(7), "About occupancy");
         } else {
@@ -469,9 +493,9 @@ public class UIUtilTest extends ObaTestCase {
         occupancy = Occupancy.EMPTY;
         occupancyState = OccupancyState.REALTIME;
         options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, occupancy, occupancyState);
-        if (isRunningOnTravis()) {
-            // We don't have the Embedded Social config set up on Travis, so it doesn't include that menu item.
+                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
+        if (!EmbeddedSocialUtils.isSocialEnabled()) {
+            // Developer hasn't configured ES SDK key (or we're on Travis), so it doesn't include that menu item.
             assertEquals(7, options.size());
         } else {
             assertEquals(8, options.size());
@@ -482,7 +506,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Report arrival time problem");
-        if (!isRunningOnTravis()) {
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
             assertEquals(options.get(6), "Join discussion");
             assertEquals(options.get(7), "About occupancy");
         } else {

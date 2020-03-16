@@ -864,8 +864,6 @@
     <string name="trip_plan_arriving">Llegando</string>
     <string name="trip_plan_stop_connector">a las</string>
 
-    <string name="trip_plan_location_hint">Indique una dirección o lugar</string>
-
     <string name="trip_plan_list_view">Vista de Lista</string>
     <string name="trip_plan_map_view">Vista de Mapa</string>
 

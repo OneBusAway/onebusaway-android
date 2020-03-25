@@ -23,5 +23,7 @@
         <item name="colorAccent">@color/theme_accent</item>
         <!-- Change the default cursor color so its visible in the action bar -->
         <item name="autoCompleteTextViewStyle">@style/cursorColor</item>
+        <!-- Implements Dark Theme throughout the app when the Dark Theme Systems Setting is on -->
+        <item name="android:forceDarkAllowed">true</item>
     </style>
 </resources>

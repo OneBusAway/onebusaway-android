@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import groovy.swing.SwingBuilder
 import org.apache.tools.ant.filters.ConcatFilter
 
 apply plugin: 'com.android.application'
@@ -53,8 +52,8 @@ android {
     defaultConfig {
         minSdkVersion 16
         targetSdkVersion 28
-        versionCode 116
-        versionName "2.6.7"
+        versionCode 117
+        versionName "2.7.0"
 
         multiDexEnabled true
 

@@ -406,7 +406,7 @@ public class HomeActivity extends AppCompatActivity
         if (b != null) {
             if (b.getBoolean(ShowcaseViewUtils.TUTORIAL_WELCOME)) {
                 // Show the welcome tutorial
-                ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_WELCOME, this, null);
+                ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_WELCOME, this, null, false);
             }
         }
     }
@@ -1276,7 +1276,7 @@ public class HomeActivity extends AppCompatActivity
 
         // Show the tutorial explaining arrival times
         ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_HEADER_ARRIVAL_INFO, this,
-                response);
+                response, false);
 
         // Make sure the panel is stationary before showing the starred routes tutorial
         if (mSlidingPanel != null &&
@@ -1286,9 +1286,9 @@ public class HomeActivity extends AppCompatActivity
                                 == SlidingUpPanelLayout.PanelState.EXPANDED)) {
             ShowcaseViewUtils
                     .showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_HEADER_STAR_ROUTE, this,
-                            response);
+                            response, false);
         }
-        ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_RECENT_STOPS_ROUTES, this, null);
+        ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_RECENT_STOPS_ROUTES, this, null, false);
     }
 
     /**

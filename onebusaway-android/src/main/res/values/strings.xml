@@ -840,6 +840,9 @@
     <string name="tutorial_send_feedback_transit_service_text">You can report a variety of issue
         types to your local government near this stop. Tap on the drop-down box to see a full list.
     </string>
+    <string name="tutorial_trip_plan_geocoder_title">Enter the address or location name</string>
+    <string name="tutorial_trip_plan_geocoder_text">You can use addresses or location names for origins and destinations when planning a trip. Stop IDs and cross streets are not currently supported in trip plans.
+    </string>
 
     <!-- Permissions -->
     <string name="location_permissions_title">Real-time location needs permission</string>

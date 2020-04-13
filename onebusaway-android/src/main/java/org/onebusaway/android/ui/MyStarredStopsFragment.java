@@ -30,6 +30,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
+
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -38,11 +43,6 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
-
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.loader.content.CursorLoader;
-import androidx.loader.content.Loader;
 
 public class MyStarredStopsFragment extends MyStopListFragmentBase {
 
@@ -101,11 +101,11 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
         }
         if (mAdapter.getCount() > 0) {
             ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_STARRED_STOPS_SHORTCUT,
-                    (AppCompatActivity) getActivity(), null);
+                    (AppCompatActivity) getActivity(), null, false);
         }
         if (mAdapter.getCount() > 1) {
             ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_STARRED_STOPS_SORT,
-                    (AppCompatActivity) getActivity(), null);
+                    (AppCompatActivity) getActivity(), null, false);
         }
     }
 

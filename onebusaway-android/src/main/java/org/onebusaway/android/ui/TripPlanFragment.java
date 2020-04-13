@@ -15,27 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.firebase.analytics.FirebaseAnalytics;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.directions.util.ConversionUtils;
-import org.onebusaway.android.directions.util.CustomAddress;
-import org.onebusaway.android.directions.util.OTPConstants;
-import org.onebusaway.android.directions.util.PlacesAutoCompleteAdapter;
-import org.onebusaway.android.directions.util.TripRequestBuilder;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.map.googlemapsv2.ProprietaryMapHelpV2;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
@@ -65,6 +44,32 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.directions.util.ConversionUtils;
+import org.onebusaway.android.directions.util.CustomAddress;
+import org.onebusaway.android.directions.util.OTPConstants;
+import org.onebusaway.android.directions.util.PlacesAutoCompleteAdapter;
+import org.onebusaway.android.directions.util.TripRequestBuilder;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.map.googlemapsv2.ProprietaryMapHelpV2;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
+import org.onebusaway.android.util.UIUtils;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,8 +77,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.Fragment;
+import static org.onebusaway.android.util.ShowcaseViewUtils.showTutorial;
 
 
 public class TripPlanFragment extends Fragment {
@@ -364,6 +368,10 @@ public class TripPlanFragment extends Fragment {
 
         mFromAddressTextArea.dismissDropDown();
         mToAddressTextArea.dismissDropDown();
+
+        if (BuildConfig.USE_PELIAS_GEOCODING) {
+            showTutorial(ShowcaseViewUtils.TUTORIAL_TRIP_PLAN_GEOCODER, (AppCompatActivity) getActivity(), null, true);
+        }
     }
 
     @Override

@@ -37,6 +37,9 @@ import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
@@ -67,8 +70,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import edu.usf.cutr.open311client.Open311;
 import edu.usf.cutr.open311client.Open311Manager;
 import edu.usf.cutr.open311client.models.Service;
@@ -943,7 +944,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
                     && ServiceUtils.isTransitOpen311ServiceByType(selectedService.getType())) {
                 ShowcaseViewUtils
                         .showTutorial(ShowcaseViewUtils.TUTORIAL_SEND_FEEDBACK_OPEN311_CATEGORIES,
-                                this, null);
+                                this, null, false);
             }
         }
     }

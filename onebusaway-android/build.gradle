@@ -74,6 +74,7 @@ android {
         google {
             // Normal Google Play release - see src/google
             dimension "platform"
+            isDefault = true
         }
 
         amazon {
@@ -99,6 +100,7 @@ android {
              * com.joulespersecond.seattlebusbot
              */
             dimension "brand"
+            isDefault = true
             applicationId "com.joulespersecond.seattlebusbot"
             manifestPlaceholders = [databaseAuthority: "com.joulespersecond.oba"]
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "0" // Defined in BuildFlavorConstants

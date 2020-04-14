@@ -112,6 +112,8 @@
         - Origin and destination search is now supported by the Pelias open-source project. Try it out with addresses and location names!\n&#8226;\u0020
         <b>Help us improve transit</b>
         - Optionally participate in research to improve multimodal transportation.\n&#8226;\u0020
+        <b>Improved route toggling</b>
+        - Now when showing arrivals for only one route, you can easily switch back to all routes (thanks egconley!).\n&#8226;\u0020
         <b>Bug fixes</b>
         - See https://bit.ly/oba-android-releases
     </string>
@@ -880,7 +882,8 @@
         "* Hillsborough Area Regional Transit (via Simon Jacobs at Cambridge Systematics)\n"
         "* Bridgette Eichelberger\n"
         "* Rodrigo Carvalho (Google Summer of Code 2017)\n"
-        "* Steve Moritani\n\n"
+        "* Steve Moritani\n"
+        "* Ellen Conley\n\n"
 
         "Want to contribute to this app? Check it out on Github at
         https://github.com/OneBusAway/onebusaway-android.\n\n"

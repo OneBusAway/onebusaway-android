@@ -135,9 +135,9 @@ public interface ObaTripStatus {
     public String getPhase();
 
     /**
-     * @return The status modifiers for the trip. Can be null.
+     * @return The status modifiers for the trip, defined by {@link Status}. Can be null.
      */
-    public String getStatus();
+    public Status getStatus();
 
     /**
      * @return The last known real-time update for the transit vehicle, or 0 if we

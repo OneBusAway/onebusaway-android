@@ -167,9 +167,12 @@ public final class ObaTripStatusElement implements ObaTripStatus, Serializable {
         return phase;
     }
 
+    /**
+     * @return The status modifiers for the trip, defined by {@link Status}. Can be null.
+     */
     @Override
-    public String getStatus() {
-        return status;
+    public Status getStatus() {
+        return Status.fromString(status);
     }
 
     @Override

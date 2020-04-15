@@ -17,7 +17,6 @@ package org.onebusaway.android.io.elements;
 
 /**
  * The status of the trip, used in {@link ObaTripStatus}
- * (https://github.com/google/transit/blob/master/gtfs-realtime/spec/en/reference.md#enum-occupancystatus)
  */
 public enum Status {
     DEFAULT("default"),

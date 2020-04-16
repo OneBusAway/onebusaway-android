@@ -21,6 +21,7 @@ package org.onebusaway.android.ui;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
@@ -32,6 +33,9 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.graphics.drawable.DrawableCompat;
+
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -40,6 +44,7 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.io.elements.Status;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
@@ -49,9 +54,6 @@ import org.onebusaway.util.comparators.AlphanumComparator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.graphics.drawable.DrawableCompat;
 
 /**
  * Styles of arrival times used by York Region Transit
@@ -252,6 +254,12 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             }
 
             occupancyView = (ConstraintLayout) inflater.inflate(R.layout.occupancy, null);
+
+            // CANCELED trips
+            if (Status.CANCELED.equals(stopInfo.getStatus())) {
+                // Strike through the text fields
+                scheduleView.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+            }
 
             // Occupancy
             if (stopInfo.getPredictedOccupancy() != null) {

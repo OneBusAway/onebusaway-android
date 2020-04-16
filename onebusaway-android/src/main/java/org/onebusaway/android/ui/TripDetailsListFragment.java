@@ -28,6 +28,7 @@ import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -79,6 +80,7 @@ import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.elements.ObaTripSchedule;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.io.elements.Status;
 import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
 import org.onebusaway.android.nav.NavigationService;
@@ -405,9 +407,16 @@ public class TripDetailsListFragment extends ListFragment {
 
         if (!status.isPredicted()) {
             // We have only schedule info, but the bus position can still be interpolated
-            vehicleDeviation.setText(context.getString(R.string.trip_details_scheduled_data));
             statusColor = R.color.stop_info_scheduled_time;
             d.setColor(getResources().getColor(statusColor));
+
+            if (Status.CANCELED.equals(status.getStatus())) {
+                // Canceled trip
+                vehicleDeviation.setText(context.getString(R.string.stop_info_canceled));
+            } else {
+                // Scheduled trip
+                vehicleDeviation.setText(context.getString(R.string.trip_details_scheduled_data));
+            }
             return;
         }
 
@@ -917,6 +926,13 @@ public class TripDetailsListFragment extends ListFragment {
                             DateUtils.FORMAT_NO_NOON |
                             DateUtils.FORMAT_NO_MIDNIGHT
             ));
+
+            if (Status.CANCELED.equals(mStatus.getStatus())) {
+                // CANCELED trip - Strike through the text fields
+                stopName.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+                time.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+            }
+
 
             if (stopTime.getPredictedOccupancy() != null) {
                 // Predicted occupancy data

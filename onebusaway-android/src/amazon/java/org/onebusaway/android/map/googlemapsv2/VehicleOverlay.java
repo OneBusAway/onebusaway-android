@@ -55,6 +55,7 @@ import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.elements.ObaTripDetails;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.io.elements.Status;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.ui.TripDetailsActivity;
 import org.onebusaway.android.ui.TripDetailsListFragment;
@@ -632,9 +633,9 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener, Mark
             for (ObaTripDetails trip : trips) {
                 ObaTripStatus status = trip.getStatus();
                 if (status != null) {
-                    // Check if this vehicle is running a route we're interested in
+                    // Check if this vehicle is running a route we're interested in and isn't CANCELED
                     String activeRoute = response.getTrip(status.getActiveTripId()).getRouteId();
-                    if (routeIds.contains(activeRoute)) {
+                    if (routeIds.contains(activeRoute) && !Status.CANCELED.equals(status.getStatus())) {
                         Location l = status.getLastKnownLocation();
                         boolean isRealtime = true;
 

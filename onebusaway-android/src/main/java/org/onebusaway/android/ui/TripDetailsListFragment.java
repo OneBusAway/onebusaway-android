@@ -933,7 +933,6 @@ public class TripDetailsListFragment extends ListFragment {
                 time.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
             }
 
-
             if (stopTime.getPredictedOccupancy() != null) {
                 // Predicted occupancy data
                 UIUtils.setOccupancyVisibilityAndColor(occupancyView, stopTime.getPredictedOccupancy(), OccupancyState.PREDICTED);

@@ -41,6 +41,9 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.collection.LruCache;
+import androidx.core.content.ContextCompat;
+
 import com.amazon.geo.mapsv2.AmazonMap;
 import com.amazon.geo.mapsv2.model.BitmapDescriptor;
 import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
@@ -68,9 +71,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import androidx.collection.LruCache;
-import androidx.core.content.ContextCompat;
 
 /**
  * A map overlay that shows vehicle positions on the map

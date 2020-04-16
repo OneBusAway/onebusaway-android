@@ -23,6 +23,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaArrivalInfo.Frequency;
 import org.onebusaway.android.io.elements.Occupancy;
+import org.onebusaway.android.io.elements.Status;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
@@ -57,6 +58,8 @@ public final class ArrivalInfo {
     private final Occupancy mHistoricalOccupancy;
 
     private final Occupancy mPredictedOccupancy;
+
+    private final Status mStatus;
 
     /**
      * @param includeArrivalDepartureInStatusLabel true if the arrival/departure label
@@ -109,6 +112,7 @@ public final class ArrivalInfo {
 
         mHistoricalOccupancy = info.getHistoricalOccupancy();
         mPredictedOccupancy = info.getPredictedOccupancy();
+        mStatus = info.getTripStatus().getStatus();
     }
 
     /**
@@ -128,10 +132,22 @@ public final class ArrivalInfo {
 
         final Resources res = context.getResources();
 
+        // CANCELED trips
+        if (Status.CANCELED.equals(info.getTripStatus().getStatus())) {
+            if (!includeArrivalDeparture) {
+                return context.getString(R.string.stop_info_canceled);
+            }
+
+            if (mIsArrival) {
+                return context.getString(R.string.stop_info_canceled_arrival);
+            } else {
+                return context.getString(R.string.stop_info_canceled_departure);
+            }
+        }
+
+        // Frequency (exact_times=0) trips
         Frequency frequency = info.getFrequency();
-
         if (frequency != null) {
-
             int headwayAsMinutes = (int) (frequency.getHeadway() / 60);
             DateFormat formatter = DateFormat.getTimeInstance(DateFormat.SHORT);
 
@@ -151,6 +167,7 @@ public final class ArrivalInfo {
         }
 
         if (predicted != 0) {
+            // Real-time info
             long delay = predictedMins - scheduledMins;
 
             if (mEta >= 0) {
@@ -368,5 +385,14 @@ public final class ArrivalInfo {
      */
     public Occupancy getPredictedOccupancy() {
         return mPredictedOccupancy;
+    }
+
+    /**
+     * Returns the status of the trip
+     *
+     * @return the status of the trip
+     */
+    public Status getStatus() {
+        return mStatus;
     }
 }

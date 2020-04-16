@@ -17,6 +17,7 @@ package org.onebusaway.android.ui;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.view.View;
@@ -29,6 +30,7 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.io.elements.Status;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
@@ -83,6 +85,16 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         starView.setImageResource(stopInfo.isRouteAndHeadsignFavorite() ?
                 R.drawable.focus_star_on :
                 R.drawable.focus_star_off);
+
+        // CANCELED trips
+        if (Status.CANCELED.equals(stopInfo.getStatus())) {
+            // Strike through the text fields
+            route.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+            destination.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+            time.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+            etaView.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+            minView.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+        }
 
         String shortName = arrivalInfo.getShortName();
         route.setText(shortName.trim());

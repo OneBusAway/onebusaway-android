@@ -223,6 +223,9 @@
     <string name="stop_info_scheduled_arrival">Scheduled arrival</string>
     <string name="stop_info_scheduled_departure">Scheduled departure</string>
     <string name="stop_info_scheduled">Scheduled</string>
+    <string name="stop_info_canceled_arrival">CANCELED arrival</string>
+    <string name="stop_info_canceled_departure">CANCELED departure</string>
+    <string name="stop_info_canceled">CANCELED</string>
     <string name="stop_info_time_arriving_at">Arriving at %1s</string>
     <string name="stop_info_time_departing_at">Departing at %1s</string>
     <string name="stop_info_time_arrived_at">Arrived at %1s</string>

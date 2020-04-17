@@ -27,6 +27,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
+import android.graphics.Paint;
 import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
 import android.net.Uri;
@@ -1080,6 +1081,18 @@ public class HomeActivity extends AppCompatActivity
         etaTextView = etaAndMin.findViewById(R.id.eta);
         etaTextView.setTextSize(etaTextFontSize);
         etaTextView.setText("5");
+
+        // Canceled View
+        etaAndMin = legendDialogView.findViewById(R.id.eta_view_canceled);
+        d1 = (GradientDrawable) etaAndMin.getBackground();
+        d1.setColor(resources.getColor(R.color.stop_info_scheduled_time));
+        etaAndMin.findViewById(R.id.eta_realtime_indicator).setVisibility(View.INVISIBLE);
+        etaTextView = etaAndMin.findViewById(R.id.eta);
+        etaTextView.setTextSize(etaTextFontSize);
+        etaTextView.setText("5");
+        etaTextView.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+        TextView etaMin = etaAndMin.findViewById(R.id.eta_min);
+        etaMin.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
 
         builder.setView(legendDialogView);
 

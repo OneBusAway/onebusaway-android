@@ -125,6 +125,9 @@
     <string name="main_help_legend_scheduled">Gray means \"Scheduled arrival\" - We don\'t know
         where the bus is now, but the schedule says there is an upcoming arrival
     </string>
+    <string name="main_help_legend_canceled">Gray with strikethrough means the trip has been
+        canceled - this bus is NOT coming
+    </string>
     <string name="main_nolocation_title">Location not enabled</string>
     <string name="main_nolocation">OneBusAway would like your location, do you want to enable it
         now?
@@ -816,7 +819,8 @@
     </string>
     <string name="tutorial_arrival_header_arrival_info_text">This long! Colored background tells you
         if the bus is early (red) or late (blue). On time = green background. If we don\'t know
-        where the bus is, the scheduled time is shown (gray background).
+        where the bus is, the scheduled time is shown (gray background). Gray with strikethrough text
+        (a line through it) means the trip is canceled.
     </string>
     <string name="tutorial_arrival_header_sliding_panel_title">Slide up to show more arrivals
     </string>

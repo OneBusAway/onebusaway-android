@@ -26,6 +26,7 @@ import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.elements.Occupancy;
+import org.onebusaway.android.io.elements.Status;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.mock.MockRegion;
@@ -179,6 +180,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertNotNull(arrivals);
         assertEquals(27.982215585882088, arrivals[0].getTripStatus().getPosition().getLatitude());
         assertEquals(-82.4224, arrivals[0].getTripStatus().getPosition().getLongitude());
+        assertEquals(Status.DEFAULT, arrivals[0].getTripStatus().getStatus());
 
         final List<ObaStop> nearbyStops = response.getNearbyStops();
         assertTrue(nearbyStops.size() > 0);
@@ -600,5 +602,34 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertNull(info.getHistoricalOccupancy());
         assertNull(info.getPredictedOccupancy());
         assertNull(info.getTripStatus().getRealtimeOccupancy());
+    }
+
+    /**
+     * Test canceled trips
+     */
+    @Test
+    public void testCanceledTrips() {
+        // Test by setting region
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
+        assertNotNull(tampa);
+        Application.get().setCurrentRegion(tampa);
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
+                        "Hillsborough Area Regional Transit_9999").build().call();
+        assertOK(response);
+        ObaStop stop = response.getStop();
+        assertNotNull(stop);
+        final List<ObaRoute> routes = response.getRoutes(stop.getRouteIds());
+        assertTrue(routes.size() > 0);
+        ObaAgency agency = response.getAgency(routes.get(0).getAgencyId());
+        assertEquals("Hillsborough Area Regional Transit", agency.getId());
+        ObaTrip trip = response.getTrip("Hillsborough Area Regional Transit_909841");
+        assertEquals("Hillsborough Area Regional Transit_266684", trip.getBlockId());
+
+        final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+        assertNotNull(arrivals);
+        assertEquals(27.982215585882088, arrivals[0].getTripStatus().getPosition().getLatitude());
+        assertEquals(-82.4224, arrivals[0].getTripStatus().getPosition().getLongitude());
+        assertEquals(Status.CANCELED, arrivals[0].getTripStatus().getStatus());
     }
 }

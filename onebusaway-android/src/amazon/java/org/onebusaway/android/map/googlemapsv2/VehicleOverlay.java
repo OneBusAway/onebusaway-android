@@ -41,6 +41,9 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.collection.LruCache;
+import androidx.core.content.ContextCompat;
+
 import com.amazon.geo.mapsv2.AmazonMap;
 import com.amazon.geo.mapsv2.model.BitmapDescriptor;
 import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
@@ -55,6 +58,7 @@ import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.elements.ObaTripDetails;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.elements.OccupancyState;
+import org.onebusaway.android.io.elements.Status;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.ui.TripDetailsActivity;
 import org.onebusaway.android.ui.TripDetailsListFragment;
@@ -67,9 +71,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import androidx.collection.LruCache;
-import androidx.core.content.ContextCompat;
 
 /**
  * A map overlay that shows vehicle positions on the map
@@ -632,9 +633,9 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener, Mark
             for (ObaTripDetails trip : trips) {
                 ObaTripStatus status = trip.getStatus();
                 if (status != null) {
-                    // Check if this vehicle is running a route we're interested in
+                    // Check if this vehicle is running a route we're interested in and isn't CANCELED
                     String activeRoute = response.getTrip(status.getActiveTripId()).getRouteId();
-                    if (routeIds.contains(activeRoute)) {
+                    if (routeIds.contains(activeRoute) && !Status.CANCELED.equals(status.getStatus())) {
                         Location l = status.getLastKnownLocation();
                         boolean isRealtime = true;
 

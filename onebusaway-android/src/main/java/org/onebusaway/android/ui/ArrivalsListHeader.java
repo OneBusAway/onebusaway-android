@@ -23,6 +23,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.graphics.Paint;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
@@ -49,6 +50,8 @@ import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TextView;
 
+import androidx.fragment.app.FragmentManager;
+
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -56,6 +59,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.Status;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
@@ -63,8 +67,6 @@ import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import androidx.fragment.app.FragmentManager;
 
 //
 // A helper class that gets most of the header interaction
@@ -721,6 +723,14 @@ class ArrivalsListHeader {
                         R.drawable.focus_star_on :
                         R.drawable.focus_star_off);
 
+                if (Status.CANCELED.equals(info1.getTripStatus().getStatus())) {
+                    // Trip is canceled - strike through text fields
+                    mEtaRouteName1.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+                    mEtaRouteDirection1.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+                    mEtaArrivalInfo1.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+                    mEtaMin1.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+                }
+
                 mEtaRouteName1.setText(info1.getShortName());
                 mEtaRouteDirection1.setText(UIUtils.formatDisplayText(info1.getHeadsign()));
                 long eta = mArrivalInfo.get(i1).getEta();
@@ -784,6 +794,15 @@ class ArrivalsListHeader {
                     mEtaRouteFavorite2.setImageResource(isFavorite2 ?
                             R.drawable.focus_star_on :
                             R.drawable.focus_star_off);
+
+                    if (Status.CANCELED.equals(info2.getTripStatus().getStatus())) {
+                        // Trip is canceled - strike through text fields
+                        mEtaRouteName2.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+                        mEtaRouteDirection2.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+                        mEtaArrivalInfo2.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+                        mEtaMin2.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+                    }
+
                     mEtaRouteName2.setText(info2.getShortName());
                     mEtaRouteDirection2.setText(UIUtils.formatDisplayText(info2.getHeadsign()));
                     eta = mArrivalInfo.get(i2).getEta();

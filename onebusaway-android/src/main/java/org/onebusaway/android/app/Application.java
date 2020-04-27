@@ -32,6 +32,12 @@ import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ProcessLifecycleOwner;
+import androidx.multidex.MultiDexApplication;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -55,16 +61,12 @@ import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
+import java.io.File;
 import java.security.MessageDigest;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
-import androidx.annotation.NonNull;
-import androidx.lifecycle.DefaultLifecycleObserver;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.ProcessLifecycleOwner;
-import androidx.multidex.MultiDexApplication;
 import edu.usf.cutr.open311client.Open311Manager;
 import edu.usf.cutr.open311client.models.Open311Option;
 
@@ -109,6 +111,8 @@ public class Application extends MultiDexApplication {
 
         mApp = this;
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        fixGoogleMapCrash();
 
         // Make sure ES SDK only runs when the app is in the foreground
         // (Workaround for #933 until ES SDK doesn't run Services in the background)
@@ -641,5 +645,38 @@ public class Application extends MultiDexApplication {
         }
 
         return false;
+    }
+
+    /**
+     * A workaround for https://issuetracker.google.com/issues/154855417, as specified in
+     * https://issuetracker.google.com/issues/154855417#comment457.
+     * <p>
+     * Deletes corrupted cached Google Play Services files on affected devices.
+     */
+    public void fixGoogleMapCrash() {
+        try {
+            SharedPreferences hasFixedGoogleBug154855417 = getSharedPreferences("google_bug_154855417", Context.MODE_PRIVATE);
+            if (!hasFixedGoogleBug154855417.contains("fixed")) {
+                File corruptedZoomTables = new File(getFilesDir(), "ZoomTables.data");
+                File corruptedSavedClientParameters = new File(getFilesDir(), "SavedClientParameters.data.cs");
+                File corruptedClientParametersData =
+                        new File(
+                                getFilesDir(),
+                                "DATA_ServerControlledParametersManager.data."
+                                        + getBaseContext().getPackageName());
+                File corruptedClientParametersDataV1 =
+                        new File(
+                                getFilesDir(),
+                                "DATA_ServerControlledParametersManager.data.v1."
+                                        + getBaseContext().getPackageName());
+                corruptedZoomTables.delete();
+                corruptedSavedClientParameters.delete();
+                corruptedClientParametersData.delete();
+                corruptedClientParametersDataV1.delete();
+                hasFixedGoogleBug154855417.edit().putBoolean("fixed", true).apply();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Exception when trying to fix Google Maps SDK crash - " + e);
+        }
     }
 }

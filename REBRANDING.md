@@ -76,8 +76,9 @@ We provide a few configuration options in `build.gradle` brand flavor definition
 **Arrival Information**
 
 Valid values are `0` and `1` - The default way that estimated arrival information is shown to the user.  There are two options, as defined in `BuildFlavorConstants`:
-    * `ARRIVAL_INFO_STYLE_A = 0` - The original OneBusAway presentation of arrival info to the user, with small rows sorted by estimated arrival time
-    * `ARRIVAL_INFO_STYLE_B = 1` - The presentation of arrival info created by York Region Transit/VIVA for their forked version of OBA, which groups arrival times by route, and shows scheduled arrival times - see [their apps here](http://www.yorkregiontransit.com/en/ridingwithus/apps.asp)
+
+* `ARRIVAL_INFO_STYLE_A = 0` - The original OneBusAway presentation of arrival info to the user, with small rows sorted by estimated arrival time
+* `ARRIVAL_INFO_STYLE_B = 1` - The presentation of arrival info created by York Region Transit/VIVA for their forked version of OBA, which groups arrival times by route, and shows scheduled arrival times - see [their apps here](http://www.yorkregiontransit.com/en/ridingwithus/apps.asp)
 
 No matter which default is defined, users can change the sorting style by using the "Sort by" button in the action bar.
 
@@ -92,8 +93,9 @@ No matter which default is defined, users can change the sorting style by using 
 `USE_PELIAS_GEOCODING` defines which software is used for searching for origins and destinations while trip planning (e.g., returning a latitude and longitude for a search for `airport`). Note that this doesn't affect the trip planner itself - OpenTripPlanner is always used to plan an itinerary from one latitude and longitude to another.
 
 Valid values are `true` and `false`:
-    * `USE_PELIAS_GEOCODING = true` - The [Pelias geocoder](https://github.com/pelias/pelias) (configured for [geocode.earth](https://geocode.earth/) by default) will be used to search for origins and destinations when planning a trip. You must also set the Pelias API key in `gradle.properties` (see below).
-    * `USE_PELIAS_GEOCODING = false` - The [Google Places SDK for Android](https://developers.google.com/places/android-sdk/intro) will be used to search for origins and destinations when planning a trip. Note that you'll need to set up your own billing account with the [Google Maps Platform](https://developers.google.com/maps/gmp-get-started) and configure that account for your app release signature.
+
+* `USE_PELIAS_GEOCODING = true` - The [Pelias geocoder](https://github.com/pelias/pelias) (configured for [geocode.earth](https://geocode.earth/) by default) will be used to search for origins and destinations when planning a trip. You must also set the Pelias API key in `gradle.properties` (see below).
+* `USE_PELIAS_GEOCODING = false` - The [Google Places SDK for Android](https://developers.google.com/places/android-sdk/intro) will be used to search for origins and destinations when planning a trip. Note that you'll need to set up your own billing account with the [Google Maps Platform](https://developers.google.com/maps/gmp-get-started) and configure that account for your app release signature.
 
 If `USE_PELIAS_GEOCODING = true`, you'll need to provide an API key (by default for [geocode.earth](https://geocode.earth/)).
 

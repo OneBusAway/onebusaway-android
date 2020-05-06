@@ -470,6 +470,8 @@ public class LocationUtils {
 
                 requestBuilder.setBoundaryRect(minLat, minLon, maxLat, maxLon);
             }
+            // Includes categories so we know if it's transit-related
+            requestBuilder.setCategories("");
 
             // Call the Pelias API
             PeliasResponse response = requestBuilder.build().call();

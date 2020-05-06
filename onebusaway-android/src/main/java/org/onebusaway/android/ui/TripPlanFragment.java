@@ -622,7 +622,7 @@ public class TripPlanFragment extends Fragment {
         }
 
         // Set up autocomplete with Pelias geocoder
-        tv.setAdapter(new PlacesAutoCompleteAdapter(getContext(), android.R.layout.simple_list_item_1, region));
+        tv.setAdapter(new PlacesAutoCompleteAdapter(getContext(), R.layout.geocode_result, region));
         tv.setOnItemClickListener((parent, view, position, id) -> {
             CustomAddress addr = (CustomAddress) parent.getAdapter().getItem(position);
 

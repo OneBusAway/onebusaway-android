@@ -481,7 +481,7 @@ dependencies {
     // POJOs used for full data-binding via Jackson
     implementation 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
     // Pelias for point-of-interest search and geocoding for trip planning origin and destination
-    implementation 'edu.usf.cutr:pelias-client-library:1.0.3'
+    implementation 'edu.usf.cutr:pelias-client-library:1.1.0'
     // Google Play Services Maps (only for Google flavor)
     googleImplementation 'com.google.android.gms:play-services-maps:16.1.0'
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)

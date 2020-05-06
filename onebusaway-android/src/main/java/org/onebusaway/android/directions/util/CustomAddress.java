@@ -16,14 +16,15 @@
 
 package org.onebusaway.android.directions.util;
 
-import org.geojson.Feature;
-import org.geojson.Point;
-
 import android.location.Address;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
 
+import org.geojson.Feature;
+import org.geojson.Point;
+
+import java.util.ArrayList;
 import java.util.Locale;
 
 
@@ -35,6 +36,8 @@ public class CustomAddress extends Address {
     // Seems that subThoroughFare is street number and thoroughfare is street name.
 
     private static final int ADDRESS_MAX_LINES_TO_SHOW = 5;
+
+    private boolean isTransitCategory = false;
 
     public CustomAddress(Locale locale) {
         super(locale);
@@ -98,6 +101,17 @@ public class CustomAddress extends Address {
         Point p = (Point) address.getGeometry();
         super.setLatitude(p.getCoordinates().getLatitude());
         super.setLongitude(p.getCoordinates().getLongitude());
+
+        // Check if the geocoder marked this location as having a public transportation category
+        ArrayList<String> categories = address.getProperty("category");
+        if (categories != null) {
+            for (String category : categories) {
+                if (category.equalsIgnoreCase("transport:public")) {
+                    isTransitCategory = true;
+                    break;
+                }
+            }
+        }
     }
 
     @Override
@@ -200,5 +214,16 @@ public class CustomAddress extends Address {
         addr.setLatitude(Double.MAX_VALUE);
         addr.setLongitude(Double.MAX_VALUE);
         return addr;
+    }
+
+    /**
+     * Return true if this location has been labeled under the category of "public transportation",
+     * false if it has not
+     *
+     * @return true if this location has been labeled under the category of "public transportation",
+     * false if it has not
+     */
+    public boolean isTransitCategory() {
+        return isTransitCategory;
     }
 }

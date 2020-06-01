@@ -133,7 +133,7 @@ public final class ArrivalInfo {
         final Resources res = context.getResources();
 
         // CANCELED trips
-        if (Status.CANCELED.equals(info.getTripStatus().getStatus())) {
+        if (info.getTripStatus() != null && Status.CANCELED.equals(info.getTripStatus().getStatus())) {
             if (!includeArrivalDeparture) {
                 return context.getString(R.string.stop_info_canceled);
             }

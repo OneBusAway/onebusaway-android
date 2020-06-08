@@ -723,7 +723,7 @@ class ArrivalsListHeader {
                         R.drawable.focus_star_on :
                         R.drawable.focus_star_off);
 
-                if (Status.CANCELED.equals(info1.getTripStatus().getStatus())) {
+                if (info1.getTripStatus() != null && Status.CANCELED.equals(info1.getTripStatus().getStatus())) {
                     // Trip is canceled - strike through text fields
                     mEtaRouteName1.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
                     mEtaRouteDirection1.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
@@ -795,7 +795,7 @@ class ArrivalsListHeader {
                             R.drawable.focus_star_on :
                             R.drawable.focus_star_off);
 
-                    if (Status.CANCELED.equals(info2.getTripStatus().getStatus())) {
+                    if (info2.getTripStatus() != null && Status.CANCELED.equals(info2.getTripStatus().getStatus())) {
                         // Trip is canceled - strike through text fields
                         mEtaRouteName2.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
                         mEtaRouteDirection2.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);

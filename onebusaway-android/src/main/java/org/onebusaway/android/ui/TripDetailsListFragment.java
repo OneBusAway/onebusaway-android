@@ -927,7 +927,7 @@ public class TripDetailsListFragment extends ListFragment {
                             DateUtils.FORMAT_NO_MIDNIGHT
             ));
 
-            if (Status.CANCELED.equals(mStatus.getStatus())) {
+            if (mStatus != null && Status.CANCELED.equals(mStatus.getStatus())) {
                 // CANCELED trip - Strike through the text fields
                 stopName.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);
                 time.setPaintFlags(Paint.STRIKE_THRU_TEXT_FLAG);

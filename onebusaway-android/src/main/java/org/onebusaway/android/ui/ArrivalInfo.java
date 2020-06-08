@@ -112,7 +112,11 @@ public final class ArrivalInfo {
 
         mHistoricalOccupancy = info.getHistoricalOccupancy();
         mPredictedOccupancy = info.getPredictedOccupancy();
-        mStatus = info.getTripStatus().getStatus();
+        if (info.getTripStatus() != null) {
+            mStatus = info.getTripStatus().getStatus();
+        } else {
+            mStatus = null;
+        }
     }
 
     /**
@@ -388,9 +392,9 @@ public final class ArrivalInfo {
     }
 
     /**
-     * Returns the status of the trip
+     * Returns the status of the trip, or null if the trip status doesn't exist
      *
-     * @return the status of the trip
+     * @return the status of the trip, or null if the trip status doesn't exist
      */
     public Status getStatus() {
         return mStatus;

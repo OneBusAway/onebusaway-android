@@ -49,8 +49,8 @@
         com.microsoft.embeddedsocial.sdk"/>
 
     <application
-            tools:replace="android:allowBackup"
-            android:allowBackup="false"
+            tools:replace="android:allowBackup, android:theme"
+        android:allowBackup="false"
             android:name="org.onebusaway.android.app.Application"
             android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name"

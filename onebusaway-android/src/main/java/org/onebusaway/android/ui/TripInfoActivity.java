@@ -44,6 +44,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import java.util.List;
@@ -270,7 +271,7 @@ public class TripInfoActivity extends AppCompatActivity {
         private boolean initFromCursor(Cursor cursor) {
             if (cursor == null || cursor.getCount() < 1) {
                 // Reminder defaults to 10 in the UI
-                mReminderTime = 10;
+                mReminderTime = PreferenceUtils.getInt(getString(R.string.preference_key_default_reminder_time), 10);
                 return false;
             }
             cursor.moveToFirst();
@@ -446,6 +447,8 @@ public class TripInfoActivity extends AppCompatActivity {
                 c.close();
             }
             TripService.scheduleAll(getActivity(), true);
+
+            PreferenceUtils.saveInt(getString(R.string.preference_key_default_reminder_time), reminder);
 
             Toast.makeText(getActivity(), R.string.trip_info_saved, Toast.LENGTH_SHORT)
                     .show();

@@ -50,6 +50,7 @@ import org.onebusaway.android.map.googlemapsv2.MapHelpV2;
 import org.onebusaway.android.map.googlemapsv2.MarkerListeners;
 import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.RegionUtils;
+import org.onebusaway.android.util.UIUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import java.util.ArrayList;
@@ -232,23 +233,13 @@ public class BikeStationOverlay
                 String bikeStationId = bikeStation.id.replace("bike_", "").replace("hub_", "")
                         .replace("\"", "");
 
-                if (bikeStation.isFloatingBike) {
-                    url = mContext.getString(R.string.sobi_deep_link_floating_bike_url)
-                            + bikeStationId;
-                } else {
-                    url = mContext.getString(R.string.sobi_deep_link_bike_station_url)
-                            + bikeStationId;
-                }
-
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         mContext.getString(bikeStation.isFloatingBike ?
                                 R.string.analytics_label_bike_station_balloon_clicked :
                                 R.string.analytics_label_floating_bike_balloon_clicked),
                         null);
 
-                Intent i = new Intent(Intent.ACTION_VIEW);
-                i.setData(Uri.parse(url));
-                mContext.startActivity(i);
+                UIUtils.launchTampaHoprApp(mContext);
             }
         }
     }

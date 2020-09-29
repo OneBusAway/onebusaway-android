@@ -205,6 +205,7 @@
 
     <!-- Analytics for payment -->
     <string name="analytics_label_button_fare_payment">fare_payment</string>
+    <string name="analytics_label_button_bike_share">bike_share</string>
     <string name="analytics_label_download_app">download_app</string>
     <string name="analytics_label_open_app">open_app</string>
 
@@ -248,9 +249,9 @@
     <string name="ri_app_feedback_email">android-app@onebusaway.org</string>
 
     <string name="arrival_list_stop_directions">\u0020(%1$s)</string>
-    <string name="sobi_deep_link_floating_bike_url">https://app.socialbicycles.com/map?bike_id=</string>
-    <string name="sobi_deep_link_bike_station_url">https://app.socialbicycles.com/map?hub_id=</string>
 
+    <!-- Bikeshare -->
+    <string name="hopr_android_app_id">hopr.com.hopr</string>
     <string name="traverse_mode_bicycle_rent">BICYCLE_RENT</string>
 
     <!-- User Feedback Firebase Analytics -->

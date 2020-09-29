@@ -1841,9 +1841,36 @@ public final class UIUtils {
     }
 
     /**
+     * Launches the HOPR bikeshare app for Tampa if the app is installed, otherwise directs the user
+     * to the Google Play store listing to download it.
+     *
+     * @param context context to launch the fare payment app or Google Play store from
+     */
+    public static void launchTampaHoprApp(@NonNull Context context) {
+        PackageManager manager = context.getPackageManager();
+        Intent intent = manager.getLaunchIntentForPackage(context.getString(R.string.hopr_android_app_id));
+        if (intent != null) {
+            // Launch installed app
+            intent.addCategory(Intent.CATEGORY_LAUNCHER);
+            context.startActivity(intent);
+            ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(context),
+                    Application.get().getString(R.string.analytics_label_button_bike_share),
+                    Application.get().getString(R.string.analytics_label_open_app));
+        } else {
+            // Go to Play Store listing to download app
+            intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, context.getString(R.string.hopr_android_app_id))));
+            context.startActivity(intent);
+            ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(context),
+                    Application.get().getString(R.string.analytics_label_button_bike_share),
+                    Application.get().getString(R.string.analytics_label_download_app));
+        }
+    }
+
+    /**
      * Shows the dialog to explain why location permissions are needed.  If this provided activity
      * can't manage dialogs then this method is a no-op.
-     *
+     * <p>
      * NOTE - this dialog can't be managed under the old dialog framework as the method
      * ActivityCompat.shouldShowRequestPermissionRationale() always returns false.
      */

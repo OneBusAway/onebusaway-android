@@ -17,11 +17,11 @@ package org.onebusaway.android.map.googlemapsv2.bike;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
+
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
@@ -39,14 +39,13 @@ import org.onebusaway.android.map.googlemapsv2.MapHelpV2;
 import org.onebusaway.android.map.googlemapsv2.MarkerListeners;
 import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.RegionUtils;
+import org.onebusaway.android.util.UIUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import androidx.core.content.ContextCompat;
 
 /**
  * Class to hold bike stations and control their display on the map.
@@ -215,29 +214,13 @@ public class BikeStationOverlay
                 && Application.get().getCurrentRegion().getId() == RegionUtils.TAMPA_REGION_ID) {
             BikeRentalStation bikeStation = mBikeStationData.getBikeStationOnMarker(marker);
             if (bikeStation != null) {
-                String url;
-
-                // Trim SoBi IDs - See https://github.com/OneBusAway/onebusaway-android/issues/402#issuecomment-321369719
-                String bikeStationId = bikeStation.id.replace("bike_", "").replace("hub_", "")
-                        .replace("\"", "");
-
-                if (bikeStation.isFloatingBike) {
-                    url = mContext.getString(R.string.sobi_deep_link_floating_bike_url)
-                            + bikeStationId;
-                } else {
-                    url = mContext.getString(R.string.sobi_deep_link_bike_station_url)
-                            + bikeStationId;
-                }
-
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         mContext.getString(bikeStation.isFloatingBike ?
                                 R.string.analytics_label_bike_station_balloon_clicked :
                                 R.string.analytics_label_floating_bike_balloon_clicked),
                         null);
 
-                Intent i = new Intent(Intent.ACTION_VIEW);
-                i.setData(Uri.parse(url));
-                mContext.startActivity(i);
+                UIUtils.launchTampaHoprApp(mContext);
             }
         }
     }

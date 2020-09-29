@@ -28,11 +28,11 @@ package org.onebusaway.android.map.googlemapsv2.bike;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
+
+import androidx.core.content.ContextCompat;
 
 import com.amazon.geo.mapsv2.AmazonMap;
 import com.amazon.geo.mapsv2.model.BitmapDescriptor;
@@ -57,8 +57,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import androidx.core.content.ContextCompat;
 
 /**
  * Class to hold bike stations and control their display on the map.
@@ -227,12 +225,6 @@ public class BikeStationOverlay
                 && Application.get().getCurrentRegion().getId() == RegionUtils.TAMPA_REGION_ID) {
             BikeRentalStation bikeStation = mBikeStationData.getBikeStationOnMarker(marker);
             if (bikeStation != null) {
-                String url;
-
-                // Trim SoBi IDs - See https://github.com/OneBusAway/onebusaway-android/issues/402#issuecomment-321369719
-                String bikeStationId = bikeStation.id.replace("bike_", "").replace("hub_", "")
-                        .replace("\"", "");
-
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         mContext.getString(bikeStation.isFloatingBike ?
                                 R.string.analytics_label_bike_station_balloon_clicked :

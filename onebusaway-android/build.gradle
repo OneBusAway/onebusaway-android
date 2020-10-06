@@ -34,14 +34,6 @@ repositories {
         // CUTR Releases
         url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
     }
-    maven {
-        // for EmbeddedSocial SDK
-        url "http://dl.bintray.com/acrowntest/ES_SDK"
-        metadataSources {
-            mavenPom()
-            artifact()
-        }
-    }
     mavenCentral()
 }
 
@@ -108,8 +100,6 @@ android {
             manifestPlaceholders = [databaseAuthority: "com.joulespersecond.oba"]
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "0" // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
-            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
-            buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
             buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
             buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Below fields need to be defined so flavor builds, but will not be used by app
@@ -125,7 +115,6 @@ android {
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL", "false"
             buildConfigField "String", "FIXED_REGION_TWITTER_URL", "null"
             buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
             buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
@@ -157,8 +146,6 @@ android {
             manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "0"  // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
-            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
-            buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
             buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
             buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Below fields need to be defined so flavor builds, but will not be used by app
@@ -174,7 +161,6 @@ android {
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL", "false"
             buildConfigField "String", "FIXED_REGION_TWITTER_URL", "null"
             buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
             buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
@@ -197,8 +183,6 @@ android {
             manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
-            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
-            buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
             buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
             buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Fixed region info that the app will use
@@ -215,7 +199,6 @@ android {
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL", "false"
             buildConfigField "String", "FIXED_REGION_TWITTER_URL",
                     "\"http://mobile.twitter.com/OBA_tampa\""
             buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
@@ -241,8 +224,6 @@ android {
             manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
-            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialKey("ApiKey", name) + "\""
-            buildConfigField "String", "EMBEDDED_SOCIAL_TELEMETRY_KEY", "\"" + getEmbeddedSocialKey("TelemetryKey", name) + "\""
             buildConfigField "boolean", "USE_PELIAS_GEOCODING", "false"
             buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
             // Fixed region info that the app will use
@@ -259,7 +240,6 @@ android {
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL", "false"
             buildConfigField "String", "FIXED_REGION_TWITTER_URL",
                     "\"https://twitter.com/YRTViva\""
             buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
@@ -302,9 +282,7 @@ android {
     // http://stackoverflow.com/questions/20673625/gradle-0-7-0-duplicate-files-during-packaging-of-apk
     packagingOptions {
         exclude 'META-INF/LICENSE'
-        exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE'
-        exclude 'META-INF/NOTICE.txt'
     }
 
     lintOptions {
@@ -386,17 +364,6 @@ android {
 }
 
 /**
- * Returns the Embedded Social key (e.g. "ApiKey" or "TelemetryKey") from gradle.properties for the given product flavor (e.g., "oba"), or returns the empty string if the key is not found
- */
-def getEmbeddedSocialKey(keyType, productFlavor) {
-    def keyName = "EmbeddedSocial" + keyType + "_" + productFlavor
-    if (project.hasProperty(keyName)) {
-        return project.property(keyName)
-    } else {
-        return ""
-    }
-}
-/**
  * Gets the Pelias geocoding API key for the given product flavor
  * @param productFlavor the product flavor being built
  * @return the Pelias geocoding API key for the given product flavor
@@ -433,15 +400,6 @@ task copyMapsApiV2Classes {
 }
 
 preBuild.dependsOn copyMapsApiV2Classes
-
-tasks.whenTaskAdded { theTask ->
-   // Make sure that OBA release builds always have an Embedded Social API key (#907)
-   def runningTask = project.gradle.startParameter.taskNames
-
-   if ((runningTask.toString().toLowerCase().matches("(.*)oba(.*)release(.*)") || runningTask.toString().toLowerCase().contains("assemblerelease") )  && !project.hasProperty('EmbeddedSocialApiKey_oba')) {
-        throw new InvalidUserDataException("gradle.properties must contain an EmbeddedSocialApiKey_oba API key for oba release builds")
-   }
-}
 
 // Exclude all classes from dependencies that conflict with Android platform classes (#849)
 configurations {
@@ -492,8 +450,6 @@ dependencies {
     googleImplementation 'com.google.android.libraries.places:places-compat:1.1.0'
     // Amazon Maps (only for Amazon flavor)
     amazonImplementation 'com.amazon.android:amazon-maps-api:2.0'
-    // Embedded Social SDK
-    implementation('com.acrowntest.ES_SDK:sdk:0.7.6')
     // Autocomplete text views with clear button for trip planning
     implementation 'com.google.android.material:material:1.1.0'
     // Required to support multidex for minSdkVersion <= 20

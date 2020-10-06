@@ -1279,11 +1279,6 @@ public final class UIUtils {
 
         list.add(c.getString(R.string.bus_options_menu_report_trip_problem));
 
-        ObaRegion currentRegion = Application.get().getCurrentRegion();
-        if (currentRegion != null && EmbeddedSocialUtils.isSocialEnabled()) {
-            list.add(c.getString(R.string.join_discussion));
-        }
-
         if (occupancy != null) {
             if (occupancyState == OccupancyState.HISTORICAL) {
                 list.add(c.getString(R.string.menu_title_about_historical_occupancy));
@@ -1320,10 +1315,6 @@ public final class UIUtils {
             list.add(R.drawable.ic_notification_event_note);
         }
         list.add(R.drawable.ic_alert_warning);
-        ObaRegion currentRegion = Application.get().getCurrentRegion();
-        if (currentRegion != null && EmbeddedSocialUtils.isSocialEnabled()) {
-            list.add(R.drawable.es_ic_comment);
-        }
         if (occupancy != null) {
             list.add(R.drawable.ic_occupancy);
         }

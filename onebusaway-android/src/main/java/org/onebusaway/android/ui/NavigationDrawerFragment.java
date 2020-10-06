@@ -20,12 +20,10 @@
  */
 package org.onebusaway.android.ui;
 
-import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.android.view.ScrimInsetsScrollView;
 
@@ -82,27 +80,14 @@ public class NavigationDrawerFragment extends Fragment {
     protected static final int NAVDRAWER_ITEM_SEND_FEEDBACK = 5;
 
     protected static final int NAVDRAWER_ITEM_PLAN_TRIP = 6;
-    
-    // 7 is reserved for re-adding the Embedded Social "Popular" item - See #889
-    //protected static final int NAVDRAWER_ITEM_POPULAR = 7;
 
-    protected static final int NAVDRAWER_ITEM_PINS = 8;
+    protected static final int NAVDRAWER_ITEM_OPEN_SOURCE = 7;
 
-    protected static final int NAVDRAWER_ITEM_ACTIVITY_FEED = 9;
-
-    protected static final int NAVDRAWER_ITEM_PROFILE = 10;
-
-    protected static final int NAVDRAWER_ITEM_SIGN_IN = 11;
-
-    protected static final int NAVDRAWER_ITEM_OPEN_SOURCE = 12;
-
-    protected static final int NAVDRAWER_ITEM_PAY_FARE = 13;
+    protected static final int NAVDRAWER_ITEM_PAY_FARE = 8;
 
     protected static final int NAVDRAWER_ITEM_INVALID = -1;
 
     protected static final int NAVDRAWER_ITEM_SEPARATOR = -2;
-
-    protected static final int NAVDRAWER_ITEM_SEPARATOR_SPECIAL = -3;
 
     // Currently selected navigation drawer item (must be value of one of the constants above)
     private int mCurrentSelectedPosition = NAVDRAWER_ITEM_NEARBY;
@@ -116,11 +101,6 @@ public class NavigationDrawerFragment extends Fragment {
             R.string.navdrawer_item_help,
             R.string.navdrawer_item_send_feedback,
             R.string.navdrawer_item_plan_trip,
-            R.string.navdrawer_item_popular,
-            R.string.navdrawer_item_pin,
-            R.string.navdrawer_item_activity_feed,
-            R.string.navdrawer_item_profile,
-            R.string.navdrawer_item_sign_in,
             R.string.navdrawer_item_open_source,
             R.string.navdrawer_item_pay_fare
     };
@@ -134,11 +114,6 @@ public class NavigationDrawerFragment extends Fragment {
             0, // Help
             0, // Send feedback
             R.drawable.ic_maps_directions, // Plan a trip
-            R.drawable.ic_drawer_popular, // Popular discussions
-            R.drawable.ic_drawer_pin, // Pinned discussions
-            R.drawable.ic_drawer_activity_feed, // Social activity feed
-            R.drawable.ic_username, // My profile
-            R.drawable.ic_username, // Sign in
             R.drawable.ic_drawer_github, // Open-source
             R.drawable.ic_payment // Pay my fare
     };
@@ -152,11 +127,6 @@ public class NavigationDrawerFragment extends Fragment {
             0, // Help
             0, // Send feedback
             0, // Plan a trip
-            0, // Popular discussions
-            0, // Pinned discussions
-            0, // Social activity feed
-            0, // My profile
-            0, // Sign in
             R.drawable.ic_drawer_link, // Open-source
             R.drawable.ic_drawer_link // Pay my fare
     };
@@ -310,7 +280,7 @@ public class NavigationDrawerFragment extends Fragment {
      */
     public void selectItem(int position) {
         setSelectedNavDrawerItem(position);
-        if (mDrawerLayout != null && mFragmentContainerView != null) {
+        if (mDrawerLayout != null) {
             mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
         if (mCallbacks != null) {
@@ -373,15 +343,6 @@ public class NavigationDrawerFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (EmbeddedSocialUtils.isSocialEnabled()) {
-            isSignedIn = EmbeddedSocial.isSignedIn();
-
-            // Do not allow unauthenticated users access fragments which require
-            // authentication via the back button
-            if(!isSignedIn && requiresSocialSignIn(mCurrentSelectedPosition)) {
-                selectItem(NAVDRAWER_ITEM_NEARBY);
-            }
-        }
         populateNavDrawer();
     }
 
@@ -435,20 +396,6 @@ public class NavigationDrawerFragment extends Fragment {
             if (!TextUtils.isEmpty(currentRegion.getPaymentAndroidAppId())) {
                 mNavDrawerItems.add(NAVDRAWER_ITEM_PAY_FARE);
             }
-
-            if (EmbeddedSocialUtils.isSocialEnabled()) {
-                // Social items
-                mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR_SPECIAL);
-                if (isSignedIn) {
-                    // user is signed in to Embedded Social
-                    mNavDrawerItems.add(NAVDRAWER_ITEM_PINS);
-                    mNavDrawerItems.add(NAVDRAWER_ITEM_ACTIVITY_FEED);
-                    mNavDrawerItems.add(NAVDRAWER_ITEM_PROFILE);
-                } else {
-                    // user is not signed in
-                    mNavDrawerItems.add(NAVDRAWER_ITEM_SIGN_IN);
-                }
-            }
         }
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR);
@@ -476,20 +423,10 @@ public class NavigationDrawerFragment extends Fragment {
                 findViewById(R.id.navdrawer_items_list);
         containerLayout.removeAllViews();
 
-        if (EmbeddedSocialUtils.isSocialEnabled() && isSignedIn) {
-            // user is signed in to Embedded Social
-            for (int itemId : mNavDrawerItems) {
-                mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, containerLayout);
-                containerLayout.addView(mNavDrawerItemViews[i]);
-                ++i;
-            }
-        } else {
-            // user is not signed in
-            for (int itemId : mNavDrawerItems) {
-                mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, containerLayout);
-                containerLayout.addView(mNavDrawerItemViews[i]);
-                ++i;
-            }
+        for (int itemId : mNavDrawerItems) {
+            mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, containerLayout);
+            containerLayout.addView(mNavDrawerItemViews[i]);
+            ++i;
         }
     }
 
@@ -498,8 +435,6 @@ public class NavigationDrawerFragment extends Fragment {
         int layoutToInflate;
         if (itemId == NAVDRAWER_ITEM_SEPARATOR) {
             layoutToInflate = R.layout.navdrawer_separator;
-        } else if (itemId == NAVDRAWER_ITEM_SEPARATOR_SPECIAL) {
-            layoutToInflate = R.layout.navdrawer_separator_special;
         } else {
             layoutToInflate = R.layout.navdrawer_item;
         }
@@ -586,7 +521,7 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     private boolean isSeparator(int itemId) {
-        return itemId == NAVDRAWER_ITEM_SEPARATOR || itemId == NAVDRAWER_ITEM_SEPARATOR_SPECIAL;
+        return itemId == NAVDRAWER_ITEM_SEPARATOR;
     }
 
     /**
@@ -604,19 +539,6 @@ public class NavigationDrawerFragment extends Fragment {
                 itemId == NAVDRAWER_ITEM_SEND_FEEDBACK ||
                 itemId == NAVDRAWER_ITEM_PLAN_TRIP ||
                 itemId == NAVDRAWER_ITEM_PAY_FARE ||
-                itemId == NAVDRAWER_ITEM_SIGN_IN ||
                 itemId == NAVDRAWER_ITEM_OPEN_SOURCE;
-    }
-
-    /**
-     * Returns true is this is an item that requires the user to be signed in to Embedded Social
-     *
-     * @return true if this is an item that requires the user to be signed in to Embedded Social,
-     * false otherwise
-     */
-    private boolean requiresSocialSignIn(int itemId) {
-        return itemId == NAVDRAWER_ITEM_PINS ||
-                itemId == NAVDRAWER_ITEM_ACTIVITY_FEED ||
-                itemId == NAVDRAWER_ITEM_PROFILE;
     }
 }

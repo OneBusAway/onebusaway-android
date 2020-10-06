@@ -24,11 +24,6 @@
     <string name="navdrawer_item_nearby">Cerca</string>
     <string name="navdrawer_item_starred_stops">Paradas favoritas</string>
     <string name="navdrawer_item_my_reminders">Mis recordatorios</string>
-    <string name="navdrawer_item_profile">Mi Perfil</string>
-    <string name="navdrawer_item_sign_in">Iniciar Sesión</string>
-    <string name="navdrawer_item_popular">Popular</string>
-    <string name="navdrawer_item_pin">Mis Guardados</string>
-    <string name="navdrawer_item_activity_feed">Actividad Reciente</string>
     <string name="navdrawer_item_settings">Configuración</string>
     <string name="navdrawer_item_help">Ayuda</string>
     <string name="navdrawer_item_send_feedback">Enviar comentarios</string>
@@ -449,10 +444,6 @@
     <string name="foreground_action_notify_text">Activando una notificación para su recordatorio&#8230;</string>
     <string name="foreground_action_cancel_text">Descartando tu recordatorio&#8230;</string>
 
-    <!-- Embedded Social -->
-    <string name="social">Social</string>
-    <string name="join_discussion">Ingresa a la discución</string>
-
     <!-- Report problem -->
     <string name="report_problem_comment_hint">Descripción del problema (opcional)</string>
     <string name="report_problem_send">Enviar</string>
@@ -556,7 +547,6 @@
     <string name="preferences_category_display">Pantalla</string>
     <string name="preferences_category_backup">Respaldar</string>
     <string name="preferences_category_notifications">Notificaciones</string>
-    <string name="preferences_category_social">Social</string>
     <string name="preferences_category_advanced">Avanzado</string>
     <string name="preferences_screen_advanced_summary">Profundizar en aspectos prácticos</string>
     <string name="preferences_category_about">Acerca de</string>
@@ -617,9 +607,6 @@
     <string name="preferences_save_summary">Guarda tus paradas y rutas favoritas y también las búsquedas recientes</string>
     <string name="preferences_restore_title">Restaurar desde el almacenamiento</string>
     <string name="preferences_restore_summary">Restaurar del respaldo anterior</string>
-    <string name="preferences_screen_social_title">Social Integrado</string>
-    <string name="preferences_screen_social_summary_signed_in">Salir, Políticas de Privacidad, Términos y Condiciones, cuentas vinculadas, eliminar cuenta</string>
-    <string name="preferences_screen_social_summary_signed_out">Iniciar sesión, Políticas de Privacidad, Términos y Condiciones</string>
     <string name="preferences_db_saved">¡Guardado exitosamente!</string>
     <string name="preferences_db_save_error">No se puede guardar: %1$s</string>
     <string name="preferences_db_restore_warning">¡Esto borrará todos los datos existentes! ¿Continuar?
@@ -1068,13 +1055,4 @@
     <string name="layers_speedial_bikeshare_label">Bicicleta Compartida</string>
     <string name="bike_station_title">Toca para reservar una bicicleta</string>
     <string name="floating_bike_title">Toca para reservar esta bicicleta</string>
-
-    <!-- Social -->
-    <string name="embedded_social_restriction">Habilitar funciones sociales</string>
-    <string name="es_missing_stop_conversation">No hay discusiones sociales aún disponibles para esta parada</string>
-    <string name="es_missing_route_conversation">No hay discusiones sociales aún disponibles para esta ruta</string>
-    <string name="es_msg_general_create_user_success">Cuenta Social Integrada creada</string>
-    <string name="es_msg_general_signin_success">Sesión Iniciada en Social Integrada</string>
-    <string name="es_msg_general_signout_success">Sesión Cerrada en Social Integrada</string>
-    <string name="es_msg_general_account_deleted">Cuenta Social Integrada eliminada</string>
 </resources>

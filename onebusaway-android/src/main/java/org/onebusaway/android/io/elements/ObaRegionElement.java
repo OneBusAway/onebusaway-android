@@ -171,8 +171,6 @@ public class ObaRegionElement implements ObaRegion {
 
     private final boolean supportsOtpBikeshare;
 
-    private final boolean supportsEmbeddedSocial;
-
     private final String paymentAndroidAppId;
 
     private final String paymentWarningTitle;
@@ -202,7 +200,6 @@ public class ObaRegionElement implements ObaRegion {
         otpBaseUrl = "";
         otpContactEmail = "";
         supportsOtpBikeshare = false;
-        supportsEmbeddedSocial = false;
         paymentAndroidAppId = null;
         paymentWarningTitle = null;
         paymentWarningBody = null;
@@ -228,7 +225,6 @@ public class ObaRegionElement implements ObaRegion {
                             String otpBaseUrl,
                             String otpContactEmail,
                             boolean supportsOtpBikeshare,
-                            boolean supportsEmbeddedSocial,
                             String paymentAndroidAppId,
                             String paymentWarningTitle,
                             String paymentWarningBody,
@@ -252,7 +248,6 @@ public class ObaRegionElement implements ObaRegion {
         this.otpBaseUrl = otpBaseUrl;
         this.otpContactEmail = otpContactEmail;
         this.supportsOtpBikeshare = supportsOtpBikeshare;
-        this.supportsEmbeddedSocial = supportsEmbeddedSocial;
         this.paymentAndroidAppId = paymentAndroidAppId;
         this.paymentWarningTitle = paymentWarningTitle;
         this.paymentWarningBody = paymentWarningBody;
@@ -352,7 +347,7 @@ public class ObaRegionElement implements ObaRegion {
 
     @Override
     public boolean getSupportsEmbeddedSocial() {
-        return supportsEmbeddedSocial;
+        return false;
     }
 
     @Override
@@ -431,7 +426,7 @@ public class ObaRegionElement implements ObaRegion {
                 ", otpBaseUrl='" + otpBaseUrl + '\'' +
                 ", otpContactEmail='" + otpContactEmail + '\'' +
                 ", supportsOtpBikeshare='" + supportsOtpBikeshare + '\'' +
-                ", supportsEmbeddedSocial=" + supportsEmbeddedSocial + '\'' +
+                ", supportsEmbeddedSocial=" + false + '\'' +
                 ", paymentAndroidAppId=" + paymentAndroidAppId + '\'' +
                 ", paymentWarningTitle=" + paymentWarningTitle + '\'' +
                 ", paymentWarningBody=" + paymentWarningBody + '\'' +

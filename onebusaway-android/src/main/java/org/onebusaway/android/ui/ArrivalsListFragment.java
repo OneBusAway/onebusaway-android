@@ -51,8 +51,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.util.Pair;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
@@ -65,7 +63,6 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -81,7 +78,6 @@ import org.onebusaway.android.util.ArrayAdapterWithIcon;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.DBUtil;
-import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -109,8 +105,6 @@ public class ArrivalsListFragment extends ListFragment
     public static final String STOP_CODE = ".StopCode";
 
     public static final String STOP_DIRECTION = ".StopDir";
-
-    public static final String DISCUSSION = ".Discussion";
 
     /**
      * Comma-delimited set of routes that serve this stop
@@ -350,17 +344,6 @@ public class ArrivalsListFragment extends ListFragment
                 UIUtils.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(),
                         false, false)
         );
-
-        if (mHeader != null) {
-            mHeader.refresh();
-            if (getStopId() != null) {
-                Bundle extras = getActivity().getIntent().getExtras();
-                if (extras != null && extras.containsKey(DISCUSSION)) {
-                    String discussionTitle = extras.getString(DISCUSSION);
-                    displaySocialFragment(discussionTitle, false);
-                }
-            }
-        }
     }
 
     @Override
@@ -601,11 +584,6 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
-        if (!isAdded()) {
-            // not attached to an activity (possibly due to screen rotation)
-            return;
-        }
-
         String title = mFavorite ?
                 getString(R.string.stop_info_option_removestar) :
                 getString(R.string.stop_info_option_addstar);
@@ -749,7 +727,6 @@ public class ArrivalsListFragment extends ListFragment
         List<Integer> icons = UIUtils.buildTripOptionsIcons(isRouteFavorite, hasUrl, occupancy);
 
         ListAdapter adapter = new ArrayAdapterWithIcon(getActivity(), items, icons);
-        final boolean isSocialEnabled = EmbeddedSocialUtils.isSocialEnabled();
 
         builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
@@ -806,14 +783,8 @@ public class ArrivalsListFragment extends ListFragment
                     InfrastructureIssueActivity.startWithService(getActivity(), intent,
                             getString(R.string.ri_selected_service_trip), arrivalInfo.getInfo(),
                             agencyName, blockId);
-                } else if (isSocialEnabled && ((!hasUrl && which == 6) || (hasUrl && which == 7))) {
-                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
-                            getActivity().getString(R.string.analytics_label_button_press_social_route_options),
-                            null);
-                    openRouteDiscussion(arrivalInfo.getInfo().getRouteId());
                 } else if (occupancy != null &&
-                        (((!hasUrl && !isSocialEnabled && which == 6) || (hasUrl && !isSocialEnabled && which == 7)) ||
-                                ((!hasUrl && isSocialEnabled && which == 7) || (hasUrl && isSocialEnabled && which == 8)))) {
+                        ((!hasUrl && which == 6) || (hasUrl && which == 7))) {
                     ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                             getActivity().getString(R.string.analytics_label_button_press_about_occupancy),
                             null);
@@ -824,63 +795,6 @@ public class ArrivalsListFragment extends ListFragment
         AlertDialog dialog = builder.create();
         dialog.setOwnerActivity(getActivity());
         dialog.show();
-    }
-
-    /**
-     * Opens the discussion item related to this route ID
-     * @param routeId route ID to use
-     */
-    public void openRouteDiscussion(String routeId) {
-        String discussionTitle = "";
-        ObaRegion region = Application.get().getCurrentRegion();
-        if (region != null) {
-            discussionTitle = EmbeddedSocialUtils.createRouteDiscussionTitle(region.getId(), routeId);
-        }
-        openDiscussion(discussionTitle);
-    }
-
-    /**
-     * Opens the discussion item related to the currently selected stop
-     */
-    public void openStopDiscussion() {
-        String discussionTitle = "";
-        ObaRegion region = Application.get().getCurrentRegion();
-        if (region != null) {
-            discussionTitle = EmbeddedSocialUtils.createStopDiscussionTitle(region.getId(), getStopId());
-        }
-        openDiscussion(discussionTitle);
-    }
-
-    /**
-     * Opens a discussion item in an ArrivalsListActivity
-     * @param discussionTitle title of the Embedded Social topic
-     */
-    private void openDiscussion(String discussionTitle) {
-        if (getActivity() instanceof ArrivalsListActivity) {
-            // do not create a new instance of ArrivalsListActivity
-            if (getFragmentManager().findFragmentByTag(discussionTitle) == null) {
-                // only fetch this fragment if it is not already displayed
-                displaySocialFragment(discussionTitle, true);
-            }
-        } else {
-            ArrivalsListActivity.start(getContext(), getStopId(), getStopName(), getStopDirection(), discussionTitle);
-        }
-    }
-
-    /**
-     * Displays a social fragment
-     * @param discussionTitle title of the Embedded Social topic
-     * @param addToBackStack true if this transaction should be added to the back stack
-     */
-    public void displaySocialFragment(String discussionTitle, boolean addToBackStack) {
-        Fragment discussionFragment = EmbeddedSocialUtils.getDiscussionFragment(discussionTitle);
-
-        final FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        transaction.add(R.id.listContainer, discussionFragment, discussionTitle);
-        if (addToBackStack) {
-            transaction.addToBackStack(null);
-        }
-        transaction.commit();
     }
 
     private void setCallbackToDialogFragment(RouteFavoriteDialogFragment routeDialog) {

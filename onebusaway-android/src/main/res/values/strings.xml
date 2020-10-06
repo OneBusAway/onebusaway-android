@@ -24,11 +24,6 @@
     <string name="navdrawer_item_nearby">Nearby</string>
     <string name="navdrawer_item_starred_stops">Starred stops</string>
     <string name="navdrawer_item_my_reminders">My reminders</string>
-    <string name="navdrawer_item_profile">My profile</string>
-    <string name="navdrawer_item_sign_in">Sign in</string>
-    <string name="navdrawer_item_popular">Popular</string>
-    <string name="navdrawer_item_pin">My pins</string>
-    <string name="navdrawer_item_activity_feed">Activity feed</string>
     <string name="navdrawer_item_settings">Settings</string>
     <string name="navdrawer_item_help">Help</string>
     <string name="navdrawer_item_send_feedback">Send feedback</string>
@@ -505,10 +500,6 @@
     <string name="foreground_action_notify_text">Triggering a notification for your reminder&#8230;</string>
     <string name="foreground_action_cancel_text">Dismissing your reminder&#8230;</string>
 
-    <!-- Embedded Social -->
-    <string name="social">Social</string>
-    <string name="join_discussion">Join discussion</string>
-
     <!-- Report problem -->
     <string name="report_problem_comment_hint">Problem description (optional)</string>
     <string name="report_problem_send">Send</string>
@@ -612,7 +603,6 @@
     <string name="preferences_category_display">Display</string>
     <string name="preferences_category_backup">Backup</string>
     <string name="preferences_category_notifications">Notifications</string>
-    <string name="preferences_category_social">Social</string>
     <string name="preferences_category_advanced">Advanced</string>
     <string name="preferences_screen_advanced_summary">Dig deeper into the nuts and bolts</string>
     <string name="preferences_category_about">About</string>
@@ -673,9 +663,6 @@
     <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
     <string name="preferences_restore_title">Restore from storage</string>
     <string name="preferences_restore_summary">Restores from previous save</string>
-    <string name="preferences_screen_social_title">Embedded Social</string>
-    <string name="preferences_screen_social_summary_signed_in">Sign out, privacy policy, terms and conditions, linked accounts, delete account</string>
-    <string name="preferences_screen_social_summary_signed_out">Sign in, privacy policy, terms and conditions</string>
     <string name="preferences_db_saved">Saved successfully!</string>
     <string name="preferences_db_save_error">Unable to save: %1$s</string>
     <string name="preferences_db_restore_warning">This will wipe out any existing data! Go ahead?
@@ -1141,15 +1128,6 @@
     <string name="layers_speedial_bikeshare_label">Bikeshare</string>
     <string name="bike_station_title">Tap to reserve a bike</string>
     <string name="floating_bike_title">Tap to reserve this bike</string>
-
-    <!-- Social -->
-    <string name="embedded_social_restriction">Enable social features</string>
-    <string name="es_missing_stop_conversation">Social discussion not yet available for this stop</string>
-    <string name="es_missing_route_conversation">Social discussion not yet available for this route</string>
-    <string name="es_msg_general_create_user_success">Created Embedded Social account</string>
-    <string name="es_msg_general_signin_success">Signed into Embedded Social</string>
-    <string name="es_msg_general_signout_success">Signed out of Embedded Social</string>
-    <string name="es_msg_general_account_deleted">Embedded Social account deleted</string>
 
     <string name="application_ignoring_battery_opt_title">Performance Alert!</string>
     <string name="application_ignoring_battery_opt_message">Battery optimizations are enabled for

@@ -1376,7 +1376,6 @@ public final class ObaContract {
                             c.getString(12),              // OtpBaseUrl
                             c.getString(13),               // OtpContactEmail
                             c.getInt(14) > 0,           // Supports OTP Bikeshare
-                            c.getInt(15) > 0,            // Supports Embedded Social
                             c.getString(16),               // Payment Android App ID
                             c.getString(17),               // Payment Warning Title
                             c.getString(18),               // Payment Warning Body

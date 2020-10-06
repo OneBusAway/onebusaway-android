@@ -43,13 +43,7 @@
     the HomeActivity's onCreate() method-->
     <!--<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>-->
 
-    <uses-sdk tools:overrideLibrary="net.openid.appauth,
-        android.support.customtabs,
-        com.microsoft.embeddedsocial.autorest,
-        com.microsoft.embeddedsocial.sdk"/>
-
     <application
-        tools:replace="android:allowBackup"
         android:allowBackup="false"
         android:name="org.onebusaway.android.app.Application"
         android:icon="@mipmap/ic_launcher"
@@ -287,12 +281,6 @@
             android:name=".nav.FeedbackReceiver"
             android:enabled="true">
         </receiver>
-        <!-- Receiver for restricted profiles -->
-        <receiver android:name=".util.GetRestrictionsReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.GET_RESTRICTION_ENTRIES" />
-            </intent-filter>
-        </receiver>
 
         <receiver android:name=".directions.realtime.RealtimeWakefulReceiver">
             <intent-filter>
@@ -332,9 +320,6 @@
 
         <!-- Opt-out of June 2018 Android Maps styling with pin POI icons - see #891 -->
         <meta-data android:name="com.google.android.gms.maps.API_OPTIONS" android:value="B3H9HE845CFHYG"/>
-        <!-- Below is required to enable Firebase Analytics and override the opposite setting in Embedded Social library -->
-        <meta-data android:name="firebase_analytics_collection_deactivated" android:value="false"
-                   tools:replace="android:value"/>
     </application>
 
     <uses-feature

@@ -60,19 +60,4 @@
                 android:layout_height="wrap_content">
         </TextView>
     </LinearLayout>
-
-    <ImageButton
-            android:id="@+id/stop_discussion"
-            android:src="@drawable/es_ic_comment"
-            android:contentDescription="@string/join_discussion"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:scaleType="fitCenter"
-            android:adjustViewBounds="true"
-            android:maxHeight="25dp"
-            android:maxWidth="25dp"
-            android:layout_marginLeft="5dp"
-            android:layout_centerVertical="true"
-            android:layout_alignParentLeft="true"
-            android:visibility="gone"/>
 </RelativeLayout>

@@ -280,7 +280,7 @@ public class NavigationDrawerFragment extends Fragment {
      */
     public void selectItem(int position) {
         setSelectedNavDrawerItem(position);
-        if (mDrawerLayout != null) {
+        if (mDrawerLayout != null && mFragmentContainerView != null) {
             mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
         if (mCallbacks != null) {

@@ -464,6 +464,7 @@ public class RegionUtils {
                         c.getString(12),             // OTP Base URL
                         c.getString(13),              // OTP Contact Email
                         c.getInt(14) > 0,           // Supports Otp Bikeshare
+                        c.getInt(15) > 0,            // Supports Embedded Social
                         c.getString(16),              // Android App ID for mobile fare payment app of region
                         c.getString(17),               // Payment Warning Title
                         c.getString(18),    // Payment Warning Body
@@ -652,6 +653,7 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_OTP_BASE_URL,
                 BuildConfig.FIXED_REGION_OTP_CONTACT_EMAIL,
                 BuildConfig.FIXED_REGION_SUPPORTS_OTP_BIKESHARE,
+                false,
                 BuildConfig.FIXED_REGION_PAYMENT_ANDROID_APP_ID,
                 BuildConfig.FIXED_REGION_PAYMENT_WARNING_TITLE,
                 BuildConfig.FIXED_REGION_PAYMENT_WARNING_BODY,

@@ -100,14 +100,18 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_ACTIVITY_FEED;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_NEARBY;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_OPEN_SOURCE;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PAY_FARE;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PINS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PLAN_TRIP;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PROFILE;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEND_FEEDBACK;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SETTINGS;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SIGN_IN;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
 import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
@@ -477,6 +481,11 @@ public class HomeActivity extends AppCompatActivity
                             null);
                 }
                 break;
+            // below values are deprecated; fall through to NAVDRAWER_ITEM_NEARBY
+            case NAVDRAWER_ITEM_SIGN_IN:
+            case NAVDRAWER_ITEM_PROFILE:
+            case NAVDRAWER_ITEM_PINS:
+            case NAVDRAWER_ITEM_ACTIVITY_FEED:
             case NAVDRAWER_ITEM_NEARBY:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
                     showMapFragment();

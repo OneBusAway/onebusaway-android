@@ -81,9 +81,22 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_PLAN_TRIP = 6;
 
-    protected static final int NAVDRAWER_ITEM_OPEN_SOURCE = 7;
+    //protected static final int NAVDRAWER_ITEM_POPULAR = 7;
+    @Deprecated
+    protected static final int NAVDRAWER_ITEM_PINS = 8;
 
-    protected static final int NAVDRAWER_ITEM_PAY_FARE = 8;
+    @Deprecated
+    protected static final int NAVDRAWER_ITEM_ACTIVITY_FEED = 9;
+
+    @Deprecated
+    protected static final int NAVDRAWER_ITEM_PROFILE = 10;
+
+    @Deprecated
+    protected static final int NAVDRAWER_ITEM_SIGN_IN = 11;
+
+    protected static final int NAVDRAWER_ITEM_OPEN_SOURCE = 12;
+
+    protected static final int NAVDRAWER_ITEM_PAY_FARE = 13;
 
     protected static final int NAVDRAWER_ITEM_INVALID = -1;
 
@@ -101,6 +114,11 @@ public class NavigationDrawerFragment extends Fragment {
             R.string.navdrawer_item_help,
             R.string.navdrawer_item_send_feedback,
             R.string.navdrawer_item_plan_trip,
+            0, // Popular discussions
+            0, // Pinned discussions
+            0, // Social activity feed
+            0, // My profile
+            0, // Sign in
             R.string.navdrawer_item_open_source,
             R.string.navdrawer_item_pay_fare
     };
@@ -114,6 +132,11 @@ public class NavigationDrawerFragment extends Fragment {
             0, // Help
             0, // Send feedback
             R.drawable.ic_maps_directions, // Plan a trip
+            0, // Popular discussions
+            0, // Pinned discussions
+            0, // Social activity feed
+            0, // My profile
+            0, // Sign in
             R.drawable.ic_drawer_github, // Open-source
             R.drawable.ic_payment // Pay my fare
     };
@@ -127,6 +150,11 @@ public class NavigationDrawerFragment extends Fragment {
             0, // Help
             0, // Send feedback
             0, // Plan a trip
+            0, // Popular discussions
+            0, // Pinned discussions
+            0, // Social activity feed
+            0, // My profile
+            0, // Sign in
             R.drawable.ic_drawer_link, // Open-source
             R.drawable.ic_drawer_link // Pay my fare
     };
@@ -343,6 +371,10 @@ public class NavigationDrawerFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        if (isItemDeprecated(mCurrentSelectedPosition)) {
+            // Prevent access of deprecated options
+            selectItem(NAVDRAWER_ITEM_NEARBY);
+        }
         populateNavDrawer();
     }
 
@@ -540,5 +572,14 @@ public class NavigationDrawerFragment extends Fragment {
                 itemId == NAVDRAWER_ITEM_PLAN_TRIP ||
                 itemId == NAVDRAWER_ITEM_PAY_FARE ||
                 itemId == NAVDRAWER_ITEM_OPEN_SOURCE;
+    }
+
+    /**
+     * Returns true if the item has been deprecated.
+     *
+     * @return true if the item has been deprecated, false if the item is a valid selection.
+     */
+    public boolean isItemDeprecated(int itemId) {
+        return itemId >= 7 && itemId <= 11;
     }
 }

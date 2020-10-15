@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -256,6 +257,16 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            // Ensure the software and hardware back buttons have the same behavior
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override

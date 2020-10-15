@@ -584,6 +584,11 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
+        if (!isAdded()) {
+            // not attached to an activity (possibly due to screen rotation)
+            return;
+        }
+
         String title = mFavorite ?
                 getString(R.string.stop_info_option_removestar) :
                 getString(R.string.stop_info_option_addstar);

@@ -79,7 +79,7 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
                 0.3967700000000036);
         assertEquals("https://otp.prod.obahart.org/otp/", tampa.getOtpBaseUrl());
         assertEquals("otp-tampa@onebusaway.org", tampa.getOtpContactEmail());
-        assertEquals("co.bytemark.hart", tampa.getPaymentAndroidAppId());
+        assertEquals("co.bytemark.flamingo", tampa.getPaymentAndroidAppId());
         assertNull(tampa.getPaymentWarningTitle());
         assertNull(tampa.getPaymentWarningBody());
     }

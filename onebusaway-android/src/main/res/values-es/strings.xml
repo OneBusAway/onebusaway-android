@@ -407,21 +407,21 @@
     <!-- Occupancy -->
     <string name="historically_full">Históricamente lleno</string>
     <string name="historically_standing_room">Históricamente estar de pie</string>
-    <string name="historically_seats_available">Históricamente asientos disponibles</string>
+    <string name="historically_many_seats_available">Históricamente asientos disponibles</string>
     <string name="historically_empty">Históricamente vacío</string>
     <string name="menu_title_about_historical_occupancy">Sobre la ocupación histórica</string>
     <string name="menu_title_about_occupancy">Sobre la ocupación</string>
     <string name="menu_text_about_historical_occupancy">La ocupación histórica (ícono gris) es un promedio del viaje en esta parada en los últimos 6 meses.</string>
-    <string name="menu_text_about_occupancy">La ocupación en tiempo real se muestra usando coloración verde cuando hay muchos asientos disponibles o espacio para estar disponible, y se muestra en color rojo cuando el vehículo está lleno. La ocupación histórica (ícono gris) es un promedio del viaje en esta parada en los últimos 6 meses.</string>
+    <string name="menu_text_about_occupancy">La ocupación en tiempo real se muestra usando coloración verde cuando hay muchos asientos disponibles o pocos asientos disponibles, y se muestra en color rojo cuando el vehículo está lleno. La ocupación histórica (ícono gris) es un promedio del viaje en esta parada en los últimos 6 meses.</string>
 
     <string name="realtime_full">Lleno</string>
     <string name="realtime_standing_room">Estar de pie</string>
-    <string name="realtime_seats_available">Asientos disponibles</string>
+    <string name="realtime_many_seats_available">Asientos disponibles</string>
     <string name="realtime_empty">Vacío</string>
 
     <string name="predicted_full">Lleno pronosticado</string>
     <string name="predicted_standing_room">Estar de pie pronosticado</string>
-    <string name="predicted_seats_available">Asientos disponibles pronosticado</string>
+    <string name="predicted_many_seats_available">Asientos disponibles pronosticado</string>
     <string name="predicted_empty">Vacío pronosticado</string>
 
 

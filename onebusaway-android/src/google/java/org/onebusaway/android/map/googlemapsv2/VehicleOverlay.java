@@ -965,10 +965,10 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
                 mMarkerRefreshHandler.postDelayed(mMarkerRefresh, MARKER_REFRESH_PERIOD);
             }
 
-            if (status.getRealtimeOccupancy() != null) {
+            if (status.getOccupancyStatus() != null) {
                 // Real-time occupancy data
-                UIUtils.setOccupancyVisibilityAndColor(occupancyView, status.getRealtimeOccupancy(), OccupancyState.REALTIME);
-                UIUtils.setOccupancyContentDescription(occupancyView, status.getRealtimeOccupancy(), OccupancyState.REALTIME);
+                UIUtils.setOccupancyVisibilityAndColor(occupancyView, status.getOccupancyStatus(), OccupancyState.REALTIME);
+                UIUtils.setOccupancyContentDescription(occupancyView, status.getOccupancyStatus(), OccupancyState.REALTIME);
             } else {
                 // Hide occupancy by setting null value
                 UIUtils.setOccupancyVisibilityAndColor(occupancyView, null, OccupancyState.REALTIME);

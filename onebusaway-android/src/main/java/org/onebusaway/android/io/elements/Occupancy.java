@@ -18,15 +18,18 @@ package org.onebusaway.android.io.elements;
 /**
  * The occupancy of the vehicle, based on the OccupancyStatus element from GTFS-realtime
  * (https://github.com/google/transit/blob/master/gtfs-realtime/spec/en/reference.md#enum-occupancystatus)
+ * <p>
+ * Also supports WMATA's extensions for occupancy of "MANY_SEATS_AVAILABLE", "FEW_SEATS_AVAILABLE",
+ * "MANY_SEATS_AVAILABLE" - #1059
  */
 public enum Occupancy {
-    EMPTY("empty"),
-    MANY_SEATS_AVAILABLE("manySeatsAvailable"),
-    FEW_SEATS_AVAILABLE("fewSeatsAvailable"),
-    STANDING_ROOM_ONLY("standingRoomOnly"),
-    CRUSHED_STANDING_ROOM_ONLY("crushedStandingRoomOnly"),
-    FULL("full"),
-    NOT_ACCEPTING_PASSENGERS("notAcceptingPassengers");
+    EMPTY("EMPTY"),
+    MANY_SEATS_AVAILABLE("MANY_SEATS_AVAILABLE"),
+    FEW_SEATS_AVAILABLE("FEW_SEATS_AVAILABLE"),
+    STANDING_ROOM_ONLY("STANDING_ROOM_ONLY"),
+    CRUSHED_STANDING_ROOM_ONLY("CRUSHED_STANDING_ROOM_ONLY"),
+    FULL("FULL"),
+    NOT_ACCEPTING_PASSENGERS("NOT_ACCEPTING_PASSENGERS");
 
     private final String mOccupancy;
 
@@ -46,19 +49,19 @@ public enum Occupancy {
      */
     public static Occupancy fromString(String occupancy) {
         switch (occupancy) {
-            case "empty":
+            case "EMPTY":
                 return EMPTY;
-            case "manySeatsAvailable":
+            case "MANY_SEATS_AVAILABLE":
                 return MANY_SEATS_AVAILABLE;
-            case "fewSeatsAvailable":
+            case "FEW_SEATS_AVAILABLE":
                 return FEW_SEATS_AVAILABLE;
-            case "standingRoomOnly":
+            case "STANDING_ROOM_ONLY":
                 return STANDING_ROOM_ONLY;
-            case "crushedStandingRoomOnly":
+            case "CRUSHED_STANDING_ROOM_ONLY":
                 return CRUSHED_STANDING_ROOM_ONLY;
-            case "full":
+            case "FULL":
                 return FULL;
-            case "notAcceptingPassengers":
+            case "NOT_ACCEPTING_PASSENGERS":
                 return NOT_ACCEPTING_PASSENGERS;
             default:
                 return null;

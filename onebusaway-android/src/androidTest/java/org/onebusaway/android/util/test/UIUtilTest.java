@@ -17,6 +17,15 @@
 
 package org.onebusaway.android.util.test;
 
+import android.graphics.Color;
+import android.location.Location;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.widget.TextView;
+
+import androidx.core.util.Pair;
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
@@ -41,19 +50,10 @@ import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.UIUtils;
 
-import android.graphics.Color;
-import android.location.Location;
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.widget.TextView;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-
-import androidx.core.util.Pair;
-import androidx.test.runner.AndroidJUnit4;
 
 import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
@@ -204,8 +204,8 @@ public class UIUtilTest extends ObaTestCase {
 
         Occupancy occupancy = null;
         OccupancyState occupancyState = null;
-        if (arrivalInfo.get(0).getInfo().getPredictedOccupancy() != null) {
-            occupancy = arrivalInfo.get(0).getInfo().getPredictedOccupancy();
+        if (arrivalInfo.get(0).getInfo().getOccupancyStatus() != null) {
+            occupancy = arrivalInfo.get(0).getInfo().getOccupancyStatus();
             occupancyState = OccupancyState.PREDICTED;
         } else if (arrivalInfo.get(0).getInfo().getHistoricalOccupancy() != null) {
             occupancy = arrivalInfo.get(0).getInfo().getHistoricalOccupancy();

@@ -176,5 +176,5 @@ public interface ObaTripStatus {
     /**
      * @return the real-time occupancy of the vehicle
      */
-    Occupancy getRealtimeOccupancy();
+    Occupancy getOccupancyStatus();
 }

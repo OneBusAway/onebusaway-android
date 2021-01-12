@@ -22,6 +22,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import androidx.core.widget.ImageViewCompat;
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
@@ -43,9 +46,6 @@ import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import androidx.core.widget.ImageViewCompat;
-import androidx.test.runner.AndroidJUnit4;
 
 import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertEquals;
@@ -358,7 +358,7 @@ public class AdapterTest extends ObaTestCase {
         UIUtils.setOccupancyVisibilityAndColor(occupancy, Occupancy.FEW_SEATS_AVAILABLE, OccupancyState.HISTORICAL);
         assertEquals(View.VISIBLE, occupancy.getVisibility());
         assertEquals(View.VISIBLE, silhouette1.getVisibility());
-        assertEquals(View.INVISIBLE, silhouette2.getVisibility());
+        assertEquals(View.VISIBLE, silhouette2.getVisibility());
         assertEquals(View.INVISIBLE, silhouette3.getVisibility());
         assertEquals(backgroundColorHistorical, ((GradientDrawable) occupancy.getBackground()).getColor().getDefaultColor());
         assertEquals(silhouetteColorHistorical, ImageViewCompat.getImageTintList(silhouette1).getDefaultColor());
@@ -369,7 +369,7 @@ public class AdapterTest extends ObaTestCase {
         UIUtils.setOccupancyVisibilityAndColor(occupancy, Occupancy.FEW_SEATS_AVAILABLE, OccupancyState.PREDICTED);
         assertEquals(View.VISIBLE, occupancy.getVisibility());
         assertEquals(View.VISIBLE, silhouette1.getVisibility());
-        assertEquals(View.INVISIBLE, silhouette2.getVisibility());
+        assertEquals(View.VISIBLE, silhouette2.getVisibility());
         assertEquals(View.INVISIBLE, silhouette3.getVisibility());
         assertEquals(backgroundColorPredicted, ((GradientDrawable) occupancy.getBackground()).getColor().getDefaultColor());
         assertEquals(silhouetteColorPredicted, ImageViewCompat.getImageTintList(silhouette1).getDefaultColor());
@@ -379,7 +379,7 @@ public class AdapterTest extends ObaTestCase {
         UIUtils.setOccupancyVisibilityAndColor(occupancy, Occupancy.FEW_SEATS_AVAILABLE, OccupancyState.REALTIME);
         assertEquals(View.VISIBLE, occupancy.getVisibility());
         assertEquals(View.VISIBLE, silhouette1.getVisibility());
-        assertEquals(View.INVISIBLE, silhouette2.getVisibility());
+        assertEquals(View.VISIBLE, silhouette2.getVisibility());
         assertEquals(View.INVISIBLE, silhouette3.getVisibility());
         assertEquals(backgroundColorPredicted, ((GradientDrawable) occupancy.getBackground()).getColor().getDefaultColor());
         assertEquals(silhouetteColorPredicted, ImageViewCompat.getImageTintList(silhouette1).getDefaultColor());
@@ -517,10 +517,10 @@ public class AdapterTest extends ObaTestCase {
         assertEquals("Historically standing room", occupancy.getContentDescription());
 
         UIUtils.setOccupancyContentDescription(occupancy, Occupancy.FEW_SEATS_AVAILABLE, OccupancyState.HISTORICAL);
-        assertEquals("Historically seats available", occupancy.getContentDescription());
+        assertEquals("Historically few seats available", occupancy.getContentDescription());
 
         UIUtils.setOccupancyContentDescription(occupancy, Occupancy.MANY_SEATS_AVAILABLE, OccupancyState.HISTORICAL);
-        assertEquals("Historically seats available", occupancy.getContentDescription());
+        assertEquals("Historically many seats available", occupancy.getContentDescription());
 
         UIUtils.setOccupancyContentDescription(occupancy, Occupancy.EMPTY, OccupancyState.HISTORICAL);
         assertEquals("Historically empty", occupancy.getContentDescription());
@@ -542,10 +542,10 @@ public class AdapterTest extends ObaTestCase {
         assertEquals("Standing room", occupancy.getContentDescription());
 
         UIUtils.setOccupancyContentDescription(occupancy, Occupancy.FEW_SEATS_AVAILABLE, OccupancyState.REALTIME);
-        assertEquals("Seats available", occupancy.getContentDescription());
+        assertEquals("Few seats available", occupancy.getContentDescription());
 
         UIUtils.setOccupancyContentDescription(occupancy, Occupancy.MANY_SEATS_AVAILABLE, OccupancyState.REALTIME);
-        assertEquals("Seats available", occupancy.getContentDescription());
+        assertEquals("Many seats available", occupancy.getContentDescription());
 
         UIUtils.setOccupancyContentDescription(occupancy, Occupancy.EMPTY, OccupancyState.REALTIME);
         assertEquals("Empty", occupancy.getContentDescription());
@@ -567,10 +567,10 @@ public class AdapterTest extends ObaTestCase {
         assertEquals("Predicted standing room", occupancy.getContentDescription());
 
         UIUtils.setOccupancyContentDescription(occupancy, Occupancy.FEW_SEATS_AVAILABLE, OccupancyState.PREDICTED);
-        assertEquals("Predicted seats available", occupancy.getContentDescription());
+        assertEquals("Predicted few seats available", occupancy.getContentDescription());
 
         UIUtils.setOccupancyContentDescription(occupancy, Occupancy.MANY_SEATS_AVAILABLE, OccupancyState.PREDICTED);
-        assertEquals("Predicted seats available", occupancy.getContentDescription());
+        assertEquals("Predicted many seats available", occupancy.getContentDescription());
 
         UIUtils.setOccupancyContentDescription(occupancy, Occupancy.EMPTY, OccupancyState.PREDICTED);
         assertEquals("Predicted empty", occupancy.getContentDescription());

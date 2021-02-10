@@ -37,7 +37,7 @@
           "scheduledDistanceAlongTrip": 857.661738417286,
           "serviceDate": 1444017600000,
           "situationIds": [],
-          "realtimeOccupancy": "empty",
+          "occupancyStatus": "EMPTY",
           "status": "default",
           "totalDistanceAlongTrip": 23220.832205772822,
           "vehicleId": "Hillsborough Area Regional Transit_2415"
@@ -77,7 +77,7 @@
           "scheduledDistanceAlongTrip": 7767.281145230052,
           "serviceDate": 1444017600000,
           "situationIds": [],
-          "realtimeOccupancy": "manySeatsAvailable",
+          "occupancyStatus": "MANY_SEATS_AVAILABLE",
           "status": "default",
           "totalDistanceAlongTrip": 19440.69118417295,
           "vehicleId": "Hillsborough Area Regional Transit_2321"
@@ -117,7 +117,7 @@
           "scheduledDistanceAlongTrip": 7022.496607917914,
           "serviceDate": 1444017600000,
           "situationIds": [],
-          "realtimeOccupancy": "fewSeatsAvailable",
+          "occupancyStatus": "FEW_SEATS_AVAILABLE",
           "status": "default",
           "totalDistanceAlongTrip": 18710.563037074742,
           "vehicleId": "Hillsborough Area Regional Transit_2401"
@@ -157,7 +157,7 @@
           "scheduledDistanceAlongTrip": 2506.2488887140644,
           "serviceDate": 1444017600000,
           "situationIds": [],
-          "realtimeOccupancy": "standingRoomOnly",
+          "occupancyStatus": "STANDING_ROOM_ONLY",
           "status": "default",
           "totalDistanceAlongTrip": 21051.99236295506,
           "vehicleId": "Hillsborough Area Regional Transit_1501"
@@ -197,7 +197,7 @@
           "scheduledDistanceAlongTrip": 21170.487273567443,
           "serviceDate": 1444017600000,
           "situationIds": [],
-          "realtimeOccupancy": "crushedStandingRoomOnly",
+          "occupancyStatus": "CRUSHED_STANDING_ROOM_ONLY",
           "status": "default",
           "totalDistanceAlongTrip": 22769.949306527073,
           "vehicleId": "Hillsborough Area Regional Transit_2307"
@@ -237,7 +237,7 @@
           "scheduledDistanceAlongTrip": 16418.692571141262,
           "serviceDate": 1444017600000,
           "situationIds": [],
-          "realtimeOccupancy": "full",
+          "occupancyStatus": "FULL",
           "status": "default",
           "totalDistanceAlongTrip": 17334.655174006934,
           "vehicleId": "Hillsborough Area Regional Transit_2607"
@@ -277,7 +277,7 @@
           "scheduledDistanceAlongTrip": 5722.908596385503,
           "serviceDate": 1444017600000,
           "situationIds": [],
-          "realtimeOccupancy": "notAcceptingPassengers",
+          "occupancyStatus": "NOT_ACCEPTING_PASSENGERS",
           "status": "default",
           "totalDistanceAlongTrip": 13231.917317472326,
           "vehicleId": "Hillsborough Area Regional Transit_2501"
@@ -317,7 +317,7 @@
           "scheduledDistanceAlongTrip": 9601.567329244077,
           "serviceDate": 1444017600000,
           "situationIds": [],
-          "realtimeOccupancy": "",
+          "occupancyStatus": "",
           "status": "default",
           "totalDistanceAlongTrip": 16099.779813459285,
           "vehicleId": "Hillsborough Area Regional Transit_2325"

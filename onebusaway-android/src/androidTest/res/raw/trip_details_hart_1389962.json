@@ -15,7 +15,7 @@
             "distanceAlongTrip": 18.00312947444871,
             "stopHeadsign": "",
             "stopId": "Hillsborough Area Regional Transit_7576",
-            "historicalOccupancy": "empty"
+            "historicalOccupancy": "EMPTY"
           },
           {
             "arrivalTime": 64346,
@@ -23,7 +23,7 @@
             "distanceAlongTrip": 854.9805970132652,
             "stopHeadsign": "",
             "stopId": "Hillsborough Area Regional Transit_6891",
-            "historicalOccupancy": "manySeatsAvailable"
+            "historicalOccupancy": "MANY_SEATS_AVAILABLE"
           },
           {
             "arrivalTime": 64385,
@@ -31,7 +31,7 @@
             "distanceAlongTrip": 1078.6900397175293,
             "stopHeadsign": "",
             "stopId": "Hillsborough Area Regional Transit_5325",
-            "historicalOccupancy": "fewSeatsAvailable"
+            "historicalOccupancy": "FEW_SEATS_AVAILABLE"
           },
           {
             "arrivalTime": 64460,
@@ -39,7 +39,7 @@
             "distanceAlongTrip": 1509.4865177310571,
             "stopHeadsign": "",
             "stopId": "Hillsborough Area Regional Transit_5763",
-            "historicalOccupancy": "standingRoomOnly"
+            "historicalOccupancy": "STANDING_ROOM_ONLY"
           },
           {
             "arrivalTime": 64523,
@@ -47,7 +47,7 @@
             "distanceAlongTrip": 1872.555307322457,
             "stopHeadsign": "",
             "stopId": "Hillsborough Area Regional Transit_5327",
-            "historicalOccupancy": "crushedStandingRoomOnly"
+            "historicalOccupancy": "CRUSHED_STANDING_ROOM_ONLY"
           },
           {
             "arrivalTime": 64628,
@@ -55,7 +55,7 @@
             "distanceAlongTrip": 2475.4296788421484,
             "stopHeadsign": "",
             "stopId": "Hillsborough Area Regional Transit_5764",
-            "historicalOccupancy": "full"
+            "historicalOccupancy": "FULL"
           },
           {
             "arrivalTime": 64680,
@@ -63,7 +63,7 @@
             "distanceAlongTrip": 2756.9267870136723,
             "stopHeadsign": "",
             "stopId": "Hillsborough Area Regional Transit_4020",
-            "historicalOccupancy": "notAcceptingPassengers"
+            "historicalOccupancy": "NOT_ACCEPTING_PASSENGERS"
           },
           {
             "arrivalTime": 64733,

@@ -552,56 +552,56 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         // EMPTY
         ObaArrivalInfo info = arrivals[0];
         assertEquals(Occupancy.EMPTY, info.getHistoricalOccupancy());
-        assertEquals(Occupancy.EMPTY, info.getPredictedOccupancy());
-        assertEquals(Occupancy.EMPTY, info.getTripStatus().getRealtimeOccupancy());
+        assertEquals(Occupancy.EMPTY, info.getOccupancyStatus());
+        assertEquals(Occupancy.EMPTY, info.getTripStatus().getOccupancyStatus());
 
         // MANY_SEATS_AVAILABLE
         info = arrivals[1];
         assertEquals(Occupancy.MANY_SEATS_AVAILABLE, info.getHistoricalOccupancy());
-        assertEquals(Occupancy.MANY_SEATS_AVAILABLE, info.getPredictedOccupancy());
-        assertEquals(Occupancy.MANY_SEATS_AVAILABLE, info.getTripStatus().getRealtimeOccupancy());
+        assertEquals(Occupancy.MANY_SEATS_AVAILABLE, info.getOccupancyStatus());
+        assertEquals(Occupancy.MANY_SEATS_AVAILABLE, info.getTripStatus().getOccupancyStatus());
 
         // FEW_SEATS_AVAILABLE
         info = arrivals[2];
         assertEquals(Occupancy.FEW_SEATS_AVAILABLE, info.getHistoricalOccupancy());
-        assertEquals(Occupancy.FEW_SEATS_AVAILABLE, info.getPredictedOccupancy());
-        assertEquals(Occupancy.FEW_SEATS_AVAILABLE, info.getTripStatus().getRealtimeOccupancy());
+        assertEquals(Occupancy.FEW_SEATS_AVAILABLE, info.getOccupancyStatus());
+        assertEquals(Occupancy.FEW_SEATS_AVAILABLE, info.getTripStatus().getOccupancyStatus());
 
         // STANDING_ROOM_ONLY
         info = arrivals[3];
         assertEquals(Occupancy.STANDING_ROOM_ONLY, info.getHistoricalOccupancy());
-        assertEquals(Occupancy.STANDING_ROOM_ONLY, info.getPredictedOccupancy());
-        assertEquals(Occupancy.STANDING_ROOM_ONLY, info.getTripStatus().getRealtimeOccupancy());
+        assertEquals(Occupancy.STANDING_ROOM_ONLY, info.getOccupancyStatus());
+        assertEquals(Occupancy.STANDING_ROOM_ONLY, info.getTripStatus().getOccupancyStatus());
 
         // CRUSHED_STANDING_ROOM_ONLY
         info = arrivals[4];
         assertEquals(Occupancy.CRUSHED_STANDING_ROOM_ONLY, info.getHistoricalOccupancy());
-        assertEquals(Occupancy.CRUSHED_STANDING_ROOM_ONLY, info.getPredictedOccupancy());
-        assertEquals(Occupancy.CRUSHED_STANDING_ROOM_ONLY, info.getTripStatus().getRealtimeOccupancy());
+        assertEquals(Occupancy.CRUSHED_STANDING_ROOM_ONLY, info.getOccupancyStatus());
+        assertEquals(Occupancy.CRUSHED_STANDING_ROOM_ONLY, info.getTripStatus().getOccupancyStatus());
 
         // FULL
         info = arrivals[5];
         assertEquals(Occupancy.FULL, info.getHistoricalOccupancy());
-        assertEquals(Occupancy.FULL, info.getPredictedOccupancy());
-        assertEquals(Occupancy.FULL, info.getTripStatus().getRealtimeOccupancy());
+        assertEquals(Occupancy.FULL, info.getOccupancyStatus());
+        assertEquals(Occupancy.FULL, info.getTripStatus().getOccupancyStatus());
 
         // NOT_ACCEPTING_PASSENGERS
         info = arrivals[6];
         assertEquals(Occupancy.NOT_ACCEPTING_PASSENGERS, info.getHistoricalOccupancy());
-        assertEquals(Occupancy.NOT_ACCEPTING_PASSENGERS, info.getPredictedOccupancy());
-        assertEquals(Occupancy.NOT_ACCEPTING_PASSENGERS, info.getTripStatus().getRealtimeOccupancy());
+        assertEquals(Occupancy.NOT_ACCEPTING_PASSENGERS, info.getOccupancyStatus());
+        assertEquals(Occupancy.NOT_ACCEPTING_PASSENGERS, info.getTripStatus().getOccupancyStatus());
 
         // Empty string
         info = arrivals[7];
         assertNull(info.getHistoricalOccupancy());
-        assertNull(info.getPredictedOccupancy());
-        assertNull(info.getTripStatus().getRealtimeOccupancy());
+        assertNull(info.getOccupancyStatus());
+        assertNull(info.getTripStatus().getOccupancyStatus());
 
         // Missing field
         info = arrivals[8];
         assertNull(info.getHistoricalOccupancy());
-        assertNull(info.getPredictedOccupancy());
-        assertNull(info.getTripStatus().getRealtimeOccupancy());
+        assertNull(info.getOccupancyStatus());
+        assertNull(info.getTripStatus().getOccupancyStatus());
     }
 
     /**

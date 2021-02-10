@@ -102,7 +102,7 @@ public final class ObaArrivalInfo implements Serializable{
 
     private final String historicalOccupancy;
 
-    private final String predictedOccupancy;
+    private final String occupancyStatus;
 
     ObaArrivalInfo() {
         routeId = "";
@@ -131,7 +131,7 @@ public final class ObaArrivalInfo implements Serializable{
         totalStopsInTrip = 0;
         blockTripSequence = 0;
         historicalOccupancy = "";
-        predictedOccupancy = "";
+        occupancyStatus = "";
     }
 
     /**
@@ -332,7 +332,7 @@ public final class ObaArrivalInfo implements Serializable{
     /**
      * @return the predicted occupancy of the vehicle when it arrives at this stop, or null if the occupancy is unknown
      */
-    public Occupancy getPredictedOccupancy() {
-        return Occupancy.fromString(predictedOccupancy);
+    public Occupancy getOccupancyStatus() {
+        return Occupancy.fromString(occupancyStatus);
     }
 }

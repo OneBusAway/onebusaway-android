@@ -176,38 +176,38 @@ public class TripsForRouteRequestTest extends ObaTestCase {
 
         // Occupancy - EMPTY
         ObaTripStatus status = trips[0].getStatus();
-        assertEquals(Occupancy.EMPTY, status.getRealtimeOccupancy());
+        assertEquals(Occupancy.EMPTY, status.getOccupancyStatus());
 
         // Occupancy - MANY_SEATS_AVAILABLE
         status = trips[1].getStatus();
-        assertEquals(Occupancy.MANY_SEATS_AVAILABLE, status.getRealtimeOccupancy());
+        assertEquals(Occupancy.MANY_SEATS_AVAILABLE, status.getOccupancyStatus());
 
         // Occupancy - FEW_SEATS_AVAILABLE
         status = trips[2].getStatus();
-        assertEquals(Occupancy.FEW_SEATS_AVAILABLE, status.getRealtimeOccupancy());
+        assertEquals(Occupancy.FEW_SEATS_AVAILABLE, status.getOccupancyStatus());
 
         // Occupancy - STANDING_ROOM_ONLY
         status = trips[3].getStatus();
-        assertEquals(Occupancy.STANDING_ROOM_ONLY, status.getRealtimeOccupancy());
+        assertEquals(Occupancy.STANDING_ROOM_ONLY, status.getOccupancyStatus());
 
         // Occupancy - CRUSHED_STANDING_ROOM_ONLY
         status = trips[4].getStatus();
-        assertEquals(Occupancy.CRUSHED_STANDING_ROOM_ONLY, status.getRealtimeOccupancy());
+        assertEquals(Occupancy.CRUSHED_STANDING_ROOM_ONLY, status.getOccupancyStatus());
 
         // Occupancy - FULL
         status = trips[5].getStatus();
-        assertEquals(Occupancy.FULL, status.getRealtimeOccupancy());
+        assertEquals(Occupancy.FULL, status.getOccupancyStatus());
 
         // Occupancy - NOT_ACCEPTING_PASSENGERS
         status = trips[6].getStatus();
-        assertEquals(Occupancy.NOT_ACCEPTING_PASSENGERS, status.getRealtimeOccupancy());
+        assertEquals(Occupancy.NOT_ACCEPTING_PASSENGERS, status.getOccupancyStatus());
 
         // Occupancy - Empty string
         status = trips[7].getStatus();
-        assertNull(status.getRealtimeOccupancy());
+        assertNull(status.getOccupancyStatus());
 
         // Occupancy - Missing field
         status = trips[8].getStatus();
-        assertNull(status.getRealtimeOccupancy());
+        assertNull(status.getOccupancyStatus());
     }
 }

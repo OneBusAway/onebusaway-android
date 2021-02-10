@@ -77,7 +77,7 @@ public class ObaArrivalInfoPojo {
 
     private final Occupancy historicalOccupancy;
 
-    private final Occupancy predictedOccupancy;
+    private final Occupancy occupancyStatus;
 
     public ObaArrivalInfoPojo() {
         routeId = "";
@@ -106,7 +106,7 @@ public class ObaArrivalInfoPojo {
         totalStopsInTrip = 0;
         blockTripSequence = 0;
         historicalOccupancy = null;
-        predictedOccupancy = null;
+        occupancyStatus = null;
     }
 
     public ObaArrivalInfoPojo(ObaArrivalInfo info) {
@@ -141,7 +141,7 @@ public class ObaArrivalInfoPojo {
         totalStopsInTrip = info.getTotalStopsInTrip();
         blockTripSequence = info.getBlockTripSequence();
         historicalOccupancy = info.getHistoricalOccupancy();
-        predictedOccupancy = info.getPredictedOccupancy();
+        occupancyStatus = info.getOccupancyStatus();
     }
 
     /**

@@ -111,7 +111,7 @@ public final class ArrivalInfo {
         mNotifyText = computeNotifyText(context);
 
         mHistoricalOccupancy = info.getHistoricalOccupancy();
-        mPredictedOccupancy = info.getPredictedOccupancy();
+        mPredictedOccupancy = info.getOccupancyStatus();
         if (info.getTripStatus() != null) {
             mStatus = info.getTripStatus().getStatus();
         } else {

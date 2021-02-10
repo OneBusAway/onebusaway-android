@@ -65,7 +65,7 @@ public final class ObaTripStatusElement implements ObaTripStatus, Serializable {
 
     private final int blockTripSequence;
 
-    private final String realtimeOccupancy;
+    private final String occupancyStatus;
 
     ObaTripStatusElement() {
         serviceDate = 0;
@@ -89,7 +89,7 @@ public final class ObaTripStatusElement implements ObaTripStatus, Serializable {
         lastLocationUpdateTime = null;
         lastKnownOrientation = null;
         blockTripSequence = 0;
-        realtimeOccupancy = "";
+        occupancyStatus = "";
     }
 
     @Override
@@ -201,10 +201,10 @@ public final class ObaTripStatusElement implements ObaTripStatus, Serializable {
     }
 
     /**
-     * @return the current realtime occupancy of this vevhicle, or null if the occupancy is unknown
+     * @return the current realtime occupancy of this vehicle, or null if the occupancy is unknown
      */
     @Override
-    public Occupancy getRealtimeOccupancy() {
-        return Occupancy.fromString(realtimeOccupancy);
+    public Occupancy getOccupancyStatus() {
+        return Occupancy.fromString(occupancyStatus);
     }
 }

@@ -504,8 +504,8 @@
           "departureEnabled": true,
           "scheduledArrivalInterval": null,
           "predictedDepartureTime": 1343583192000,
-          "predictedOccupancy": "empty",
-          "historicalOccupancy": "empty",
+          "occupancyStatus": "EMPTY",
+          "historicalOccupancy": "EMPTY",
           "situationIds": [
           ],
           "stopId": "1_10020",
@@ -520,7 +520,7 @@
             "vehicleId": "1_7028",
             "serviceDate": 1343545200000,
             "lastLocationUpdateTime": 0,
-            "realtimeOccupancy": "empty",
+            "occupancyStatus": "EMPTY",
             "status": "default",
             "lastUpdateTime": 1343583401000,
             "distanceAlongTrip": 4615.101547569451,
@@ -570,8 +570,8 @@
           "departureEnabled": true,
           "scheduledArrivalInterval": null,
           "predictedDepartureTime": 1343583256000,
-          "predictedOccupancy": "manySeatsAvailable",
-          "historicalOccupancy": "manySeatsAvailable",
+          "occupancyStatus": "MANY_SEATS_AVAILABLE",
+          "historicalOccupancy": "MANY_SEATS_AVAILABLE",
           "situationIds": [
           ],
           "stopId": "1_10020",
@@ -596,7 +596,7 @@
             "totalDistanceAlongTrip": 13972.111959564556,
             "lastKnownLocation": null,
             "scheduledDistanceAlongTrip": 6381.7176065370295,
-            "realtimeOccupancy": "manySeatsAvailable",
+            "occupancyStatus": "MANY_SEATS_AVAILABLE",
             "situationIds": [
             ],
             "scheduleDeviation": 287,
@@ -633,8 +633,8 @@
           "departureEnabled": true,
           "scheduledArrivalInterval": null,
           "predictedDepartureTime": 1343584769000,
-          "predictedOccupancy": "fewSeatsAvailable",
-          "historicalOccupancy": "fewSeatsAvailable",
+          "occupancyStatus": "FEW_SEATS_AVAILABLE",
+          "historicalOccupancy": "FEW_SEATS_AVAILABLE",
           "situationIds": [
           ],
           "stopId": "1_10020",
@@ -662,7 +662,7 @@
               "lat": 47.66044616699219
             },
             "scheduledDistanceAlongTrip": 11240.30192791592,
-            "realtimeOccupancy": "fewSeatsAvailable",
+            "occupancyStatus": "FEW_SEATS_AVAILABLE",
             "situationIds": [
             ],
             "scheduleDeviation": 310,
@@ -699,8 +699,8 @@
           "departureEnabled": true,
           "scheduledArrivalInterval": null,
           "predictedDepartureTime": 1343584828000,
-          "predictedOccupancy": "standingRoomOnly",
-          "historicalOccupancy": "standingRoomOnly",
+          "occupancyStatus": "STANDING_ROOM_ONLY",
+          "historicalOccupancy": "STANDING_ROOM_ONLY",
           "situationIds": [
           ],
           "stopId": "1_10020",
@@ -728,7 +728,7 @@
               "lat": 47.67125701904297
             },
             "scheduledDistanceAlongTrip": 14154.614218945204,
-            "realtimeOccupancy": "standingRoomOnly",
+            "occupancyStatus": "STANDING_ROOM_ONLY",
             "situationIds": [
             ],
             "scheduleDeviation": -71,
@@ -765,8 +765,8 @@
           "departureEnabled": true,
           "scheduledArrivalInterval": null,
           "predictedDepartureTime": 1343584828000,
-          "predictedOccupancy": "crushedStandingRoomOnly",
-          "historicalOccupancy": "crushedStandingRoomOnly",
+          "occupancyStatus": "CRUSHED_STANDING_ROOM_ONLY",
+          "historicalOccupancy": "CRUSHED_STANDING_ROOM_ONLY",
           "situationIds": [
           ],
           "stopId": "1_10020",
@@ -794,7 +794,7 @@
               "lat": 47.67125701904297
             },
             "scheduledDistanceAlongTrip": 14154.614218945204,
-            "realtimeOccupancy": "crushedStandingRoomOnly",
+            "occupancyStatus": "CRUSHED_STANDING_ROOM_ONLY",
             "situationIds": [
             ],
             "scheduleDeviation": -71,
@@ -831,8 +831,8 @@
           "departureEnabled": true,
           "scheduledArrivalInterval": null,
           "predictedDepartureTime": 1343584828000,
-          "predictedOccupancy": "full",
-          "historicalOccupancy": "full",
+          "occupancyStatus": "FULL",
+          "historicalOccupancy": "FULL",
           "situationIds": [
           ],
           "stopId": "1_10020",
@@ -860,7 +860,7 @@
               "lat": 47.67125701904297
             },
             "scheduledDistanceAlongTrip": 14154.614218945204,
-            "realtimeOccupancy": "full",
+            "occupancyStatus": "FULL",
             "situationIds": [
             ],
             "scheduleDeviation": -71,
@@ -897,8 +897,8 @@
           "departureEnabled": true,
           "scheduledArrivalInterval": null,
           "predictedDepartureTime": 1343584828000,
-          "predictedOccupancy": "notAcceptingPassengers",
-          "historicalOccupancy": "notAcceptingPassengers",
+          "occupancyStatus": "NOT_ACCEPTING_PASSENGERS",
+          "historicalOccupancy": "NOT_ACCEPTING_PASSENGERS",
           "situationIds": [
           ],
           "stopId": "1_10020",
@@ -926,7 +926,7 @@
               "lat": 47.67125701904297
             },
             "scheduledDistanceAlongTrip": 14154.614218945204,
-            "realtimeOccupancy": "notAcceptingPassengers",
+            "occupancyStatus": "NOT_ACCEPTING_PASSENGERS",
             "situationIds": [
             ],
             "scheduleDeviation": -71,
@@ -963,7 +963,7 @@
           "departureEnabled": true,
           "scheduledArrivalInterval": null,
           "predictedDepartureTime": 1343584828000,
-          "predictedOccupancy": "",
+          "occupancyStatus": "",
           "historicalOccupancy": "",
           "situationIds": [
           ],
@@ -992,7 +992,7 @@
               "lat": 47.67125701904297
             },
             "scheduledDistanceAlongTrip": 14154.614218945204,
-            "realtimeOccupancy": "",
+            "occupancyStatus": "",
             "situationIds": [
             ],
             "scheduleDeviation": -71,

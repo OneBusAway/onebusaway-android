@@ -1946,7 +1946,8 @@ public final class UIUtils {
                 // 2 icons
                 silhouette2.setVisibility(View.VISIBLE);
             case FEW_SEATS_AVAILABLE:
-                // 1 icon
+                // 2 icons
+                silhouette2.setVisibility(View.VISIBLE);
             case MANY_SEATS_AVAILABLE:
                 // 1 icon
                 silhouette1.setVisibility(View.VISIBLE);
@@ -2008,15 +2009,23 @@ public final class UIUtils {
                 }
                 break;
             case FEW_SEATS_AVAILABLE:
-                // "Standing room"
-            case MANY_SEATS_AVAILABLE:
-                // "Standing room"
+                // "Few seats available"
                 if (occupancyState == OccupancyState.HISTORICAL) {
-                    stringId = R.string.historically_seats_available;
+                    stringId = R.string.historically_few_seats_available;
                 } else if (occupancyState == OccupancyState.REALTIME) {
-                    stringId = R.string.realtime_seats_available;
+                    stringId = R.string.realtime_few_seats_available;
                 } else if (occupancyState == OccupancyState.PREDICTED) {
-                    stringId = R.string.predicted_seats_available;
+                    stringId = R.string.predicted_few_seats_available;
+                }
+                break;
+            case MANY_SEATS_AVAILABLE:
+                // "Many seats available"
+                if (occupancyState == OccupancyState.HISTORICAL) {
+                    stringId = R.string.historically_many_seats_available;
+                } else if (occupancyState == OccupancyState.REALTIME) {
+                    stringId = R.string.realtime_many_seats_available;
+                } else if (occupancyState == OccupancyState.PREDICTED) {
+                    stringId = R.string.predicted_many_seats_available;
                 }
                 break;
             case EMPTY:

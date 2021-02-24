@@ -52,7 +52,6 @@ import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
-import java.io.File;
 import java.security.MessageDigest;
 import java.util.Iterator;
 import java.util.List;
@@ -100,7 +99,6 @@ public class Application extends MultiDexApplication {
         mApp = this;
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        fixGoogleMapCrash();
         initOba();
         initObaRegion();
         initOpen311(getCurrentRegion());
@@ -601,38 +599,5 @@ public class Application extends MultiDexApplication {
         }
 
         return false;
-    }
-
-    /**
-     * A workaround for https://issuetracker.google.com/issues/154855417, as specified in
-     * https://issuetracker.google.com/issues/154855417#comment457.
-     * <p>
-     * Deletes corrupted cached Google Play Services files on affected devices.
-     */
-    public void fixGoogleMapCrash() {
-        try {
-            SharedPreferences hasFixedGoogleBug154855417 = getSharedPreferences("google_bug_154855417", Context.MODE_PRIVATE);
-            if (!hasFixedGoogleBug154855417.contains("fixed")) {
-                File corruptedZoomTables = new File(getFilesDir(), "ZoomTables.data");
-                File corruptedSavedClientParameters = new File(getFilesDir(), "SavedClientParameters.data.cs");
-                File corruptedClientParametersData =
-                        new File(
-                                getFilesDir(),
-                                "DATA_ServerControlledParametersManager.data."
-                                        + getBaseContext().getPackageName());
-                File corruptedClientParametersDataV1 =
-                        new File(
-                                getFilesDir(),
-                                "DATA_ServerControlledParametersManager.data.v1."
-                                        + getBaseContext().getPackageName());
-                corruptedZoomTables.delete();
-                corruptedSavedClientParameters.delete();
-                corruptedClientParametersData.delete();
-                corruptedClientParametersDataV1.delete();
-                hasFixedGoogleBug154855417.edit().putBoolean("fixed", true).apply();
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Exception when trying to fix Google Maps SDK crash - " + e);
-        }
     }
 }

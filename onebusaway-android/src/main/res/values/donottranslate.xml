@@ -59,8 +59,6 @@
     <string name="preference_key_preference_vibrate_allowed">preference_vibrate_allowed</string>
     <string name="preference_key_nav_test_id">preference_key_nav_test_id</string>
     <string name="preference_key_never_show_change_location_mode_dialog">preference_never_show_change_location_mode_dialog</string>
-    <string name="preference_key_social_category">preference_category_social</string>
-    <string name="preference_key_social">preference_social</string>
     <string name="preference_key_never_show_payment_warning_dialog">never_show_payment_warning_dialog</string>
     <string name="preferences_key_user_debugging_logs_category">preferences_key_user_debugging_logs_category</string>
     <string name="preferences_key_user_share_destination_logs">preferences_user_share_logs</string>
@@ -190,17 +188,7 @@
     <string name="analytics_label_destination_reminder_variant_exit_at_next_stop">destination_reminder_exit_at_next_stop</string>
     <string name="analytics_label_destination_reminder_variant_ended">destination_reminder_ended</string>
 
-    <!-- Analytics for social -->
-    <string name="analytics_label_button_press_social_sign_in">Clicked Social Sign In</string>
-    <string name="analytics_label_button_press_social_profile">Clicked Social Profile</string>
-    <string name="analytics_label_button_press_social_popular">Clicked Social Popular Feed</string>
-    <string name="analytics_label_button_press_social_pins">Clicked Social Pins</string>
-    <string name="analytics_label_button_press_social_activity_feed">Clicked Social Activity Feed</string>
-    <string name="analytics_label_button_press_social_settings">Clicked Social Settings</string>
-    <string name="analytics_label_button_press_social_stop">Clicked Social Stop Arrivals Header</string>
-    <string name="analytics_label_button_press_social_route_options">Clicked Social Route Options</string>
-    <string name="analytics_label_button_press_social_route_style_b">Clicked Social Route Style B Card</string>
-    <string name="analytics_login_embedded_social">embedded_social</string>
+    <!-- Analytics for occupancy -->
     <string name="analytics_label_button_press_about_occupancy">Clicked About Occupancy</string>
 
     <!-- Analytics for payment -->

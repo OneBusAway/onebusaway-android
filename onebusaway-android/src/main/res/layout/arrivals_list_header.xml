@@ -221,25 +221,6 @@
                         android:adjustViewBounds="true"
                         android:padding="5dp"/>
             </LinearLayout>
-
-            <ImageButton
-                    android:id="@+id/stop_discussion"
-                    android:src="@drawable/es_ic_comment"
-                    android:contentDescription="@string/join_discussion"
-                    android:background="?attr/selectableItemBackground"
-                    android:maxHeight="14dp"
-                    android:maxWidth="14dp"
-                    android:minHeight="14dp"
-                    android:minWidth="14dp"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:layout_marginLeft="2dp"
-                    android:layout_gravity="center_vertical"
-                    android:scaleType="fitCenter"
-                    android:adjustViewBounds="true"
-                    android:gravity="center"
-                    android:padding="5dp"/>
-
         </LinearLayout>
 
         <ProgressBar

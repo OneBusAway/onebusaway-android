@@ -65,10 +65,6 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
-import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
-import com.microsoft.embeddedsocial.ui.fragment.MyProfileFragment;
-import com.microsoft.embeddedsocial.ui.fragment.PinsFragment;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.onebusaway.android.BuildConfig;
@@ -222,12 +218,6 @@ public class HomeActivity extends AppCompatActivity
 
     MyRemindersFragment mMyRemindersFragment;
 
-    PinsFragment mMyPinsFragment;
-
-    ActivityFeedFragment mActivityFeedFragment;
-
-    MyProfileFragment mMyProfileFragment;
-
     /**
      * Control which menu options are shown per fragment menu groups
      */
@@ -363,9 +353,6 @@ public class HomeActivity extends AppCompatActivity
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
-        // Workaround to make sure ES SDK is initialized in case we startup to ES Fragments (#953)
-        Application.get().setUpSocial();
-
         setContentView(R.layout.main);
 
         mActivityWeakRef = new WeakReference<>(this);
@@ -494,6 +481,11 @@ public class HomeActivity extends AppCompatActivity
                             null);
                 }
                 break;
+            // below values are deprecated; fall through to NAVDRAWER_ITEM_NEARBY
+            case NAVDRAWER_ITEM_SIGN_IN:
+            case NAVDRAWER_ITEM_PROFILE:
+            case NAVDRAWER_ITEM_PINS:
+            case NAVDRAWER_ITEM_ACTIVITY_FEED:
             case NAVDRAWER_ITEM_NEARBY:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
                     showMapFragment();
@@ -522,38 +514,6 @@ public class HomeActivity extends AppCompatActivity
             case NAVDRAWER_ITEM_PAY_FARE:
                 UIUtils.launchPayMyFareApp(this);
                 break;
-            case NAVDRAWER_ITEM_SIGN_IN:
-                ObaAnalytics.reportLoginEvent(mFirebaseAnalytics,
-                        getString(R.string.analytics_login_embedded_social));
-                EmbeddedSocial.launchSignInActivity(this);
-                break;
-            case NAVDRAWER_ITEM_PROFILE:
-                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PROFILE) {
-                    showMyProfileFragment();
-                    mCurrentNavDrawerPosition = item;
-                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
-                            getString(R.string.analytics_label_button_press_social_profile),
-                            null);
-                }
-                break;
-            case NAVDRAWER_ITEM_PINS:
-                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PINS) {
-                    showPinsFragment();
-                    mCurrentNavDrawerPosition = item;
-                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
-                            getString(R.string.analytics_label_button_press_social_pins),
-                            null);
-                }
-                break;
-            case NAVDRAWER_ITEM_ACTIVITY_FEED:
-                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_ACTIVITY_FEED) {
-                    showActivityFeedFragment();
-                    mCurrentNavDrawerPosition = item;
-                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
-                            getString(R.string.analytics_label_button_press_social_activity_feed),
-                            null);
-                }
-                break;
             case NAVDRAWER_ITEM_SETTINGS:
                 Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
                 startActivity(preferences);
@@ -562,9 +522,6 @@ public class HomeActivity extends AppCompatActivity
                         null);
                 break;
             case NAVDRAWER_ITEM_HELP:
-                if (noActiveFragments()) {
-                    showMapFragment();
-                }
                 showDialog(HELP_DIALOG);
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                         getString(R.string.analytics_label_button_press_help),
@@ -588,11 +545,6 @@ public class HomeActivity extends AppCompatActivity
         invalidateOptionsMenu();
     }
 
-    // Return true if this HomeActivity has no active content fragments
-    private boolean noActiveFragments() {
-        return mMapFragment == null && mMyStarredStopsFragment == null && mMyRemindersFragment == null;
-    }
-
     private void handleNearbySelection() {
     }
 
@@ -603,9 +555,6 @@ public class HomeActivity extends AppCompatActivity
          */
         hideStarredStopsFragment();
         hideReminderFragment();
-        hidePinsFragment();
-        hideActivityFeedFragment();
-        hideMyProfileFragment();
         mShowStarredStopsMenu = false;
         /**
          * Show fragment (we use show instead of replace to keep the map state)
@@ -663,9 +612,6 @@ public class HomeActivity extends AppCompatActivity
         hideMapFragment();
         hideReminderFragment();
         hideSlidingPanel();
-        hidePinsFragment();
-        hideActivityFeedFragment();
-        hideMyProfileFragment();
         mShowArrivalsMenu = false;
         showZoomControls(false);
 
@@ -700,9 +646,6 @@ public class HomeActivity extends AppCompatActivity
         hideStarredStopsFragment();
         hideMapFragment();
         hideSlidingPanel();
-        hidePinsFragment();
-        hideActivityFeedFragment();
-        hideMyProfileFragment();
         mShowArrivalsMenu = false;
         mShowStarredStopsMenu = false;
         showZoomControls(false);
@@ -724,114 +667,6 @@ public class HomeActivity extends AppCompatActivity
         }
         fm.beginTransaction().show(mMyRemindersFragment).commit();
         setTitle(getResources().getString(R.string.navdrawer_item_my_reminders));
-    }
-
-    private void showPinsFragment() {
-        FragmentManager fm = getSupportFragmentManager();
-        /**
-         * Hide everything that shouldn't be shown
-         */
-        hideFloatingActionButtons();
-        hideMapProgressBar();
-        hideMapFragment();
-        hideStarredStopsFragment();
-        hideReminderFragment();
-        hideActivityFeedFragment();
-        hideMyProfileFragment();
-        hideSlidingPanel();
-        mShowArrivalsMenu = false;
-        showZoomControls(false);
-        /**
-         * Show fragment (we use show instead of replace to keep the map state)
-         */
-        mShowStarredStopsMenu = false;
-        if (mMyPinsFragment == null) {
-            // First check to see if an instance of PinsFragment already exists (see #356)
-            mMyPinsFragment = (PinsFragment) fm
-                    .findFragmentByTag(PinsFragment.TAG);
-
-            if (mMyPinsFragment == null) {
-                // No existing fragment was found, so create a new one
-                Log.d(TAG, "Creating new PinsFragment");
-                mMyPinsFragment = new PinsFragment();
-                fm.beginTransaction().add(R.id.main_fragment_container, mMyPinsFragment,
-                        PinsFragment.TAG).commit();
-            }
-        }
-        fm.beginTransaction().show(mMyPinsFragment).commit();
-        setTitle(getResources().getString(R.string.navdrawer_item_pin));
-    }
-
-    private void showActivityFeedFragment() {
-        FragmentManager fm = getSupportFragmentManager();
-        /**
-         * Hide everything that shouldn't be shown
-         */
-        hideFloatingActionButtons();
-        hideMapProgressBar();
-        hideMapFragment();
-        hideStarredStopsFragment();
-        hideReminderFragment();
-        hidePinsFragment();
-        hideMyProfileFragment();
-        hideSlidingPanel();
-        mShowArrivalsMenu = false;
-        showZoomControls(false);
-        /**
-         * Show fragment (we use show instead of replace to keep the map state)
-         */
-        mShowStarredStopsMenu = false;
-        if (mActivityFeedFragment == null) {
-            // First check to see if an instance of PinsFragment already exists (see #356)
-            mActivityFeedFragment = (ActivityFeedFragment) fm
-                    .findFragmentByTag(ActivityFeedFragment.TAG);
-
-            if (mActivityFeedFragment == null) {
-                // No existing fragment was found, so create a new one
-                Log.d(TAG, "Creating new ActivityFeedFragment");
-                mActivityFeedFragment = new ActivityFeedFragment();
-                fm.beginTransaction().add(R.id.main_fragment_container, mActivityFeedFragment,
-                        ActivityFeedFragment.TAG).commit();
-            }
-        }
-        fm.beginTransaction().show(mActivityFeedFragment).commit();
-        setTitle(getResources().getString(R.string.navdrawer_item_activity_feed));
-    }
-
-    private void showMyProfileFragment() {
-        FragmentManager fm = getSupportFragmentManager();
-        /**
-         * Hide everything that shouldn't be shown
-         */
-        hideFloatingActionButtons();
-        hideMapProgressBar();
-        hideMapFragment();
-        hideStarredStopsFragment();
-        hideReminderFragment();
-        hidePinsFragment();
-        hideActivityFeedFragment();
-        hideSlidingPanel();
-        mShowArrivalsMenu = false;
-        showZoomControls(false);
-        /**
-         * Show fragment (we use show instead of replace to keep the map state)
-         */
-        mShowStarredStopsMenu = false;
-        if (mMyProfileFragment == null) {
-            // First check to see if an instance of PinsFragment already exists (see #356)
-            mMyProfileFragment = (MyProfileFragment) fm
-                    .findFragmentByTag(MyProfileFragment.TAG);
-
-            if (mMyProfileFragment == null) {
-                // No existing fragment was found, so create a new one
-                Log.d(TAG, "Creating new MyProfileFragment");
-                mMyProfileFragment = new MyProfileFragment();
-                fm.beginTransaction().add(R.id.main_fragment_container, mMyProfileFragment,
-                        MyProfileFragment.TAG).commit();
-            }
-        }
-        fm.beginTransaction().show(mMyProfileFragment).commit();
-        setTitle(getResources().getString(R.string.navdrawer_item_profile));
     }
 
     private void hideMapFragment() {
@@ -857,33 +692,6 @@ public class HomeActivity extends AppCompatActivity
                 .findFragmentByTag(MyRemindersFragment.TAG);
         if (mMyRemindersFragment != null && !mMyRemindersFragment.isHidden()) {
             fm.beginTransaction().hide(mMyRemindersFragment).commit();
-        }
-    }
-
-    private void hidePinsFragment() {
-        FragmentManager fm = getSupportFragmentManager();
-        mMyPinsFragment = (PinsFragment) fm.findFragmentByTag(
-                PinsFragment.TAG);
-        if (mMyPinsFragment != null && !mMyPinsFragment.isHidden()) {
-            fm.beginTransaction().hide(mMyPinsFragment).commit();
-        }
-    }
-
-    private void hideActivityFeedFragment() {
-        FragmentManager fm = getSupportFragmentManager();
-        mActivityFeedFragment = (ActivityFeedFragment) fm.findFragmentByTag(
-                ActivityFeedFragment.TAG);
-        if (mActivityFeedFragment != null && !mActivityFeedFragment.isHidden()) {
-            fm.beginTransaction().hide(mActivityFeedFragment).commit();
-        }
-    }
-
-    private void hideMyProfileFragment() {
-        FragmentManager fm = getSupportFragmentManager();
-        mMyProfileFragment = (MyProfileFragment) fm.findFragmentByTag(
-                MyProfileFragment.TAG);
-        if (mMyProfileFragment != null && !mMyProfileFragment.isHidden()) {
-            fm.beginTransaction().hide(mMyProfileFragment).commit();
         }
     }
 
@@ -974,9 +782,7 @@ public class HomeActivity extends AppCompatActivity
                         switch (which) {
                             case 0:
                                 ShowcaseViewUtils.resetAllTutorials(HomeActivity.this);
-                                mNavigationDrawerFragment.setSavedPosition(NAVDRAWER_ITEM_NEARBY);
                                 NavHelp.goHome(HomeActivity.this, true);
-
                                 break;
                             case 1:
                                 showDialog(LEGEND_DIALOG);

@@ -62,7 +62,6 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.Status;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
-import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
@@ -133,11 +132,6 @@ class ArrivalsListHeader {
          * Triggers a full refresh of arrivals from the OBA server
          */
         void refresh();
-
-        /**
-         * Opens the discussion item related to the currently selected stop
-         */
-        void openStopDiscussion();
     }
 
     private static final String TAG = "ArrivalsListHeader";
@@ -168,8 +162,6 @@ class ArrivalsListHeader {
     private EditText mEditNameView;
 
     private ImageButton mStopFavorite;
-
-    private ImageButton mStopDiscussion;
 
     private View mFilterGroup;
 
@@ -345,11 +337,6 @@ class ArrivalsListHeader {
         mEditNameView = (EditText) mView.findViewById(R.id.edit_name);
         mStopFavorite = (ImageButton) mView.findViewById(R.id.stop_favorite);
         mStopFavorite.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
-        mStopDiscussion = (ImageButton) mView.findViewById(R.id.stop_discussion);
-        mStopDiscussion.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
-        if (!EmbeddedSocialUtils.isSocialEnabled()) {
-            mStopDiscussion.setVisibility(View.GONE);
-        }
 
         mFilterGroup = mView.findViewById(R.id.filter_group);
 
@@ -451,16 +438,6 @@ class ArrivalsListHeader {
             public void onClick(View v) {
                 mController.setFavoriteStop(!mController.isFavoriteStop());
                 refreshStopFavorite();
-            }
-        });
-
-        mStopDiscussion.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
-                        mContext.getString(R.string.analytics_label_button_press_social_stop),
-                        null);
-                mController.openStopDiscussion();
             }
         });
 
@@ -1417,7 +1394,6 @@ class ArrivalsListHeader {
         mNameContainerView.setVisibility(View.GONE);
         mFilterGroup.setVisibility(View.GONE);
         mStopFavorite.setVisibility(View.GONE);
-        mStopDiscussion.setVisibility(View.GONE);
         mEtaContainer1.setVisibility(View.GONE);
         mEtaSeparator.setVisibility(View.GONE);
         mEtaContainer2.setVisibility(View.GONE);
@@ -1455,7 +1431,6 @@ class ArrivalsListHeader {
         mNameContainerView.setVisibility(View.VISIBLE);
         mEditNameContainerView.setVisibility(View.GONE);
         mStopFavorite.setVisibility(View.VISIBLE);
-        mStopDiscussion.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
         mNoArrivals.setVisibility(View.VISIBLE);
         if (mHasError || mHasWarning) {

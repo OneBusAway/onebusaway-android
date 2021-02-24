@@ -96,13 +96,6 @@
                 android:title="@string/preferences_restore_title"
                 android:summary="@string/preferences_restore_summary"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/preferences_category_social"
-            android:key="@string/preference_key_social_category">
-        <PreferenceScreen
-                android:key="@string/preference_key_social"
-                android:title="@string/preferences_screen_social_title"
-                android:summary="@string/preferences_screen_social_summary_signed_out"/>
-    </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_advanced">
         <PreferenceScreen
                 android:title="@string/preferences_category_advanced"

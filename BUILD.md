@@ -50,19 +50,6 @@ Add the following to `onebusaway-android/gradle.properties`:
 
 ...where `XXXXXX` is your API key. Note that the suffix of `_oba` can be changed to configure API keys for other build flavors.
 
-### Configuration the Embedded Social SDK API key (Optional)
-
-If you want the Embedded Social features to show up within the OneBusAway app, you'll need to add an Embedded Social API key.
-
-To do this, you'll need these lines in `gradle.properties` in the `onebusaway-android` folder:
-
-```
-EmbeddedSocialApiKey_oba=xxxxxx
-EmbeddedSocialTelemetryKey_oba=xxxxxx
-```
-
-This step is optional if you're just looking to build and test the project for development purposes - if you don't include the keys in the config file, the social features will be hidden.
-
 ### Release builds
 
 To build a release build, you need to create a `gradle.properties` file that points to a `secure.properties` file, and a `secure.properties` file that points to your keystore and alias.

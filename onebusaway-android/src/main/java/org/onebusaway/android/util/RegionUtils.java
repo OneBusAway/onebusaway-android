@@ -653,7 +653,7 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_OTP_BASE_URL,
                 BuildConfig.FIXED_REGION_OTP_CONTACT_EMAIL,
                 BuildConfig.FIXED_REGION_SUPPORTS_OTP_BIKESHARE,
-                BuildConfig.FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL,
+                false,
                 BuildConfig.FIXED_REGION_PAYMENT_ANDROID_APP_ID,
                 BuildConfig.FIXED_REGION_PAYMENT_WARNING_TITLE,
                 BuildConfig.FIXED_REGION_PAYMENT_WARNING_BODY,

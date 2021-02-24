@@ -47,16 +47,9 @@ public class ArrivalsListActivity extends AppCompatActivity {
         private Intent mIntent;
 
         public Builder(Context context, String stopId) {
-            this(context, stopId, null);
-        }
-
-        public Builder(Context context, String stopId, String discussionTitle) {
             mContext = context;
             mIntent = new Intent(context, ArrivalsListActivity.class);
             mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
-            if (discussionTitle != null) {
-                mIntent.putExtra(ArrivalsListFragment.DISCUSSION, discussionTitle);
-            }
         }
 
         /**
@@ -114,14 +107,6 @@ public class ArrivalsListActivity extends AppCompatActivity {
     //
     public static void start(Context context, String stopId) {
         new Builder(context, stopId).start();
-    }
-
-    public static void start(Context context, String stopId, String stopName, String stopDirection,
-                             String discussionTitle) {
-        new Builder(context, stopId, discussionTitle)
-                .setStopName(stopName)
-                .setStopDirection(stopDirection)
-                .start();
     }
 
     /**

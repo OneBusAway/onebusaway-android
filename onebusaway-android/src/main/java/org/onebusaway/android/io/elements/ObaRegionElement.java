@@ -171,6 +171,8 @@ public class ObaRegionElement implements ObaRegion {
 
     private final boolean supportsOtpBikeshare;
 
+    // Embedded Social is no longer supported
+    @Deprecated
     private final boolean supportsEmbeddedSocial;
 
     private final String paymentAndroidAppId;

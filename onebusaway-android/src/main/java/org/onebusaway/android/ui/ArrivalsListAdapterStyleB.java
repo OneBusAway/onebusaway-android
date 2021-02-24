@@ -36,18 +36,12 @@ import android.widget.TextView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.drawable.DrawableCompat;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
-
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.io.elements.Status;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
-import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.util.comparators.AlphanumComparator;
 
@@ -160,9 +154,6 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
         ImageButton mapImageBtn = view.findViewById(R.id.mapImageBtn);
         mapImageBtn.setColorFilter(r.getColor(R.color.theme_primary));
 
-        ImageButton discussBtn = view.findViewById(R.id.route_discussion);
-        discussBtn.setColorFilter(r.getColor(R.color.theme_primary));
-
         ImageButton routeMoreInfo = view.findViewById(R.id.route_more_info);
         routeMoreInfo.setColorFilter(r.getColor(R.color.switch_thumb_normal_material_dark));
 
@@ -190,19 +181,6 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
         // Setup map
         mapImageBtn.setOnClickListener(v -> mFragment.showRouteOnMap(stopInfo));
-
-        // Setup discussion
-        discussBtn.setOnClickListener(v -> {
-            ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(getContext()),
-                    context.getString(R.string.analytics_label_button_press_social_route_style_b),
-                    null);
-            mFragment.openRouteDiscussion(arrivalInfo.getRouteId());
-        });
-
-        ObaRegion currentRegion = Application.get().getCurrentRegion();
-        if (currentRegion != null && !EmbeddedSocialUtils.isSocialEnabled()) {
-            discussBtn.setVisibility(View.GONE);
-        }
 
         // Setup more
         routeMoreInfo.setOnClickListener(new View.OnClickListener() {

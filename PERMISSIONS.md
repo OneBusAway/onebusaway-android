@@ -10,5 +10,4 @@ In order to support certain features in OneBusAway, we need to request various p
 * **View network connections** - Used to create more descriptive error messages if there is a problem with loading stops or arrivals (e.g., do you have airplane mode on?)
 * **Install shortcuts** - Used to create icons on your home screen for a specific stop, so you can tap on that stop icon from your home screen and immediately see arrivals 
 * **Control vibration** - Used to vibrate your phone when a reminder is triggered
-* **Find accounts on the device** - Used to make sure that if the user removes a Google account from the device that they are logged out of the social features (Embedded Social) of OneBusAway.
 

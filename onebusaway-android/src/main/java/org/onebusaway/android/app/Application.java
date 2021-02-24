@@ -32,10 +32,6 @@ import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-import androidx.lifecycle.DefaultLifecycleObserver;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.multidex.MultiDexApplication;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -44,7 +40,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
@@ -52,12 +47,8 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.report.ui.util.SocialReportHandler;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
-import org.onebusaway.android.ui.social.SocialAppProfile;
-import org.onebusaway.android.ui.social.SocialNavigationDrawerHandler;
 import org.onebusaway.android.util.BuildFlavorUtils;
-import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
@@ -100,9 +91,6 @@ public class Application extends MultiDexApplication {
     // Magnetic declination is based on location, so track this centrally too.
     static GeomagneticField mGeomagneticField = null;
 
-    // Workaround for #933 until ES SDK doesn't run Services in the background
-    static boolean mEmbeddedSocialInitiated = false;
-
     private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
@@ -113,17 +101,6 @@ public class Application extends MultiDexApplication {
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         fixGoogleMapCrash();
-
-        // Make sure ES SDK only runs when the app is in the foreground
-        // (Workaround for #933 until ES SDK doesn't run Services in the background)
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(
-                new DefaultLifecycleObserver() {
-                    @Override
-                    public void onStart(@NonNull LifecycleOwner owner) {
-                        setUpSocial();
-                    }
-                });
-
         initOba();
         initObaRegion();
         initOpen311(getCurrentRegion());
@@ -569,27 +546,6 @@ public class Application extends MultiDexApplication {
                 Boolean.FALSE);
         Boolean autoRegion = getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region),
                 true);
-    }
-
-    /**
-     * Initializes Embedded Social if the device and current build support social functionality
-     * This method is only public as a workaround to avoid running ES SDK in the background - see
-     * #953.  When ES SDK no longer runs servers in the background this can be made private again
-     * and all ES SDK initialization can happen in Application.onCreate().
-     */
-    public synchronized void setUpSocial() {
-        if (!mEmbeddedSocialInitiated) {
-            if (EmbeddedSocialUtils.isBuildVersionSupportedBySocial() &&
-                    EmbeddedSocialUtils.isSocialApiKeyDefined()) {
-                EmbeddedSocial.init(mApp, R.raw.embedded_social_config,
-                        BuildConfig.EMBEDDED_SOCIAL_API_KEY,
-                        BuildConfig.EMBEDDED_SOCIAL_TELEMETRY_KEY);
-                EmbeddedSocial.setReportHandler(new SocialReportHandler());
-                EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
-                EmbeddedSocial.setAppProfile(new SocialAppProfile());
-            }
-            mEmbeddedSocialInitiated = true;
-        }
     }
 
     /**

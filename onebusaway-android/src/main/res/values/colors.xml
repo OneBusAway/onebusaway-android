@@ -111,17 +111,6 @@
     <color name="layer_disabled">#FF777777</color>
     <color name="layer_bikeshare_color">#3a4677</color>
 
-    <!-- Social -->
-    <color name="es_button_base_gray" tools:override="true">#ff999999</color>
-    <color name="es_accent_color" tools:override="true">@color/theme_primary</color>
-    <color name="es_progressbar" tools:override="true">@color/theme_primary</color>
-    <color name="es_toolbar_background" tools:override="true">@color/theme_primary</color>
-    <color name="es_text_primary_dark" tools:override="true">@color/header_text_color</color>
-    <color name="es_tab_text_active" tools:override="true">@color/header_text_color</color>
-    <color name="es_tab_text_not_active" tools:override="true">@color/header_text_faded_color</color>
-    <color name="es_tab_bottom_line" tools:override="true">@color/header_text_color</color>
-    <color name="es_status_bar" tools:override="true">@color/theme_primary_dark</color>
-
     <!-- Shortcuts -->
     <color name="shortcut_icon">@color/material_gray</color>
     <color name="shortcut_background">#dfffffff</color>

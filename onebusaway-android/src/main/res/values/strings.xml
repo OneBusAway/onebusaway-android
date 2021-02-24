@@ -806,11 +806,14 @@
     <string name="night_light_dialog_title">Never miss the bus at night again!</string>
     <string name="night_light_dialog_message">Tired of watching your bus fly by because the driver
         couldn\'t see you in the dark? Hold up your flashing Night Light and make yourself visible!
+        \n\nWARNING: This feature may potentially trigger seizures for people with photosensitive epilepsy. User discretion is advised.
     </string>
     <string name="night_light_create_shortcut">Create shortcut</string>
+    <string name="night_light_start">Start</string>
+    <string name="night_light_cancel">Cancel</string>
 
     <!-- Tutorials -->
-    <string name="tutorial_button_text" >Got it!</string>
+    <string name="tutorial_button_text">Got it!</string>
     <string name="tutorial_welcome_title">Welcome to OneBusAway!</string>
     <string name="tutorial_welcome_text">Tap on a stop (green dot on the map) to see arrival
         times.

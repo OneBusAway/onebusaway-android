@@ -554,6 +554,7 @@
     <string name="night_light_dialog_title">Älä myöhästy bussista enää öisin!</string>
     <string name="night_light_dialog_message">Kyllästyttääkö kun bussikuski ei huomaa sinua pimeässä
         ja ajaa ohitsesi? Näytä bussille vilkkuvaa Yövaloa ja tule huomatuksi!
+        \n\nVAROITUS: Tämä ominaisuus voi aiheuttaa kohtauksia ihmisille, joilla on valoherkkä epilepsia. Käyttäjän harkintaa suositellaan.
     </string>
     <string name="night_light_create_shortcut">Luo pikakuvake</string>
 

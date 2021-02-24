@@ -744,6 +744,7 @@
     <string name="night_light_dialog_title">¡Nunca pierdas el bus en la noche otra vez!</string>
     <string name="night_light_dialog_message">¿Cansado de ver pasar tu bus porque el conductor
         no te podía ver en la oscuridad? ¡Enciende la luz parpadeante para la noche y hazte visible!
+        \n\nADVERTENCIA: esta función puede provocar convulsiones en personas con epilepsia fotosensible. Se aconseja la discreción del usuario.
     </string>
     <string name="night_light_create_shortcut">Crear un acceso directo</string>
 

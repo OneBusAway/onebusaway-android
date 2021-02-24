@@ -17,11 +17,7 @@
 
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.util.UIUtils;
-
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -37,6 +33,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.util.UIUtils;
 
 /**
  * A flashing light that riders can show at night to flag bus drivers
@@ -201,12 +200,14 @@ public class NightLightActivity extends AppCompatActivity {
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle(R.string.night_light_dialog_title);
             builder.setCancelable(false);
-            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    sp.edit().putBoolean(PREFERENCE_SHOWED_DIALOG, true).commit();
-                    // Start the flashing
-                    onViewedDialog();
-                }
+            builder.setPositiveButton(R.string.night_light_start, (dialog, which) -> {
+                sp.edit().putBoolean(PREFERENCE_SHOWED_DIALOG, true).commit();
+                // Start the flashing
+                onViewedDialog();
+            });
+            builder.setNegativeButton(R.string.night_light_cancel, (dialog, which) -> {
+                // Close the activity without starting the flashing
+                finish();
             });
             builder.setMessage(R.string.night_light_dialog_message);
             builder.create().show();

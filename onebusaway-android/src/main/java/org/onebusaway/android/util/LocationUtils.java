@@ -72,7 +72,7 @@ public class LocationUtils {
     public static Location getDefaultSearchCenter() {
         ObaRegion region = Application.get().getCurrentRegion();
         if (region != null) {
-            double results[] = new double[4];
+            double[] results = new double[4];
             RegionUtils.getRegionSpan(region, results);
             return LocationUtils.makeLocation(results[2], results[3]);
         } else {
@@ -369,7 +369,7 @@ public class LocationUtils {
         boolean resultsCloseEnough = true;
 
         if (geocodingForMarker && latLngSet) {
-            float results[] = new float[1];
+            float[] results = new float[1];
             resultsCloseEnough = false;
 
             for (CustomAddress addressToCheck : addresses) {
@@ -392,7 +392,7 @@ public class LocationUtils {
         addresses = filterAddressesBBox(region, addresses);
 
         if (geocodingForMarker && latLngSet && addresses != null && !addresses.isEmpty()) {
-            float results[] = new float[1];
+            float[] results = new float[1];
             float minDistanceToOriginalLatLon = Float.MAX_VALUE;
             CustomAddress closestAddress = addresses.get(0);
 
@@ -487,7 +487,7 @@ public class LocationUtils {
         boolean resultsCloseEnough = true;
 
         if (geocodingForMarker && latLngSet) {
-            float results[] = new float[1];
+            float[] results = new float[1];
             resultsCloseEnough = false;
 
             for (CustomAddress addressToCheck : addresses) {
@@ -510,7 +510,7 @@ public class LocationUtils {
         addresses = filterAddressesBBox(region, addresses);
 
         if (geocodingForMarker && latLngSet && addresses != null && !addresses.isEmpty()) {
-            float results[] = new float[1];
+            float[] results = new float[1];
             float minDistanceToOriginalLatLon = Float.MAX_VALUE;
             CustomAddress closestAddress = addresses.get(0);
 

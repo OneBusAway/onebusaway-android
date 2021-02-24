@@ -391,7 +391,7 @@ public final class UIUtils {
      * @return list of route display names
      */
     public static List<String> deserializeRouteDisplayNames(String serializedRouteDisplayNames) {
-        String routes[] = serializedRouteDisplayNames.split(",");
+        String[] routes = serializedRouteDisplayNames.split(",");
         return Arrays.asList(routes);
     }
 

@@ -22,7 +22,6 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ImageSpan;
@@ -80,18 +79,6 @@ public class ShowcaseViewUtils {
     private static ShowcaseView mShowcaseView;
 
     /**
-     * Returns true if this API level supports the ShowcaseView library tutorials, false if it does
-     * not
-     *
-     * @return true if this API level supports the ShowcaseView library tutorials, false if it does
-     * not
-     */
-    public static boolean supportsShowcaseView() {
-        // ShowcaseView only works on API Level >= 11
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB;
-    }
-
-    /**
      * Shows the tutorial for the specified tutorialType.  This method handles checking to see if
      * other ShowcaseViews are already being shown, as well as if this tutorial has already been
      * shown - if either of these cases are true, this method is a no-op.
@@ -107,7 +94,7 @@ public class ShowcaseViewUtils {
      */
     public synchronized static void showTutorial(String tutorialType,
                                                  final AppCompatActivity activity, final ObaArrivalInfoResponse response, boolean alwaysShow) {
-        if (!supportsShowcaseView() || activity == null) {
+        if (activity == null) {
             return;
         }
         if (isShowcaseViewShowing()

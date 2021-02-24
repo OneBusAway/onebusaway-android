@@ -171,10 +171,6 @@ public class HomeActivity extends AppCompatActivity
 
     View mArrivalsListHeaderSubView;
 
-    private ImageButton mZoomInBtn;
-
-    private ImageButton mZoomOutBtn;
-
     private FloatingActionButton mFabMyLocation;
 
     uk.co.markormesher.android_fab.FloatingActionButton mLayersFab;
@@ -1341,13 +1337,9 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void setupZoomButtons() {
-
-        mZoomInBtn = findViewById(R.id.btnZoomIn);
-
-        mZoomOutBtn = findViewById(R.id.btnZoomOut);
-
+        ImageButton mZoomInBtn = findViewById(R.id.btnZoomIn);
+        ImageButton mZoomOutBtn = findViewById(R.id.btnZoomOut);
         mZoomInBtn.setOnClickListener(view -> mMapFragment.zoomIn());
-
         mZoomOutBtn.setOnClickListener(view -> mMapFragment.zoomOut());
     }
 

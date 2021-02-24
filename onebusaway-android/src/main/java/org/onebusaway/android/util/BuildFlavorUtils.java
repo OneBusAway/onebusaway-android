@@ -53,11 +53,11 @@ public class BuildFlavorUtils {
      */
     public static String getPreferenceOptionForArrivalInfoBuildFlavorStyle(int buildFlavorStyle) {
         switch (buildFlavorStyle) {
-            case BuildFlavorUtils.ARRIVAL_INFO_STYLE_A:
+            case ARRIVAL_INFO_STYLE_A:
                 // OBA Classic
                 return Application.get().getResources()
                         .getString(R.string.preferences_arrival_info_style_options_a);
-            case BuildFlavorUtils.ARRIVAL_INFO_STYLE_B:
+            case ARRIVAL_INFO_STYLE_B:
                 // Use a card-styled footer
                 return Application.get().getResources()
                         .getString(R.string.preferences_arrival_info_style_options_b);

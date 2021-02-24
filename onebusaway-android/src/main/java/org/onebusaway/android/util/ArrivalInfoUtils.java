@@ -16,13 +16,13 @@
 
 package org.onebusaway.android.util;
 
+import android.content.Context;
+import android.content.res.Resources;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.ui.ArrivalInfo;
-
-import android.content.Context;
-import android.content.res.Resources;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,16 +49,15 @@ public class ArrivalInfoUtils {
      *                                             not
      * @return ArrayList of arrival info to be used with the adapter
      */
-    public static final ArrayList<ArrivalInfo> convertObaArrivalInfo(Context context,
-                                                                     ObaArrivalInfo[] arrivalInfo,
-                                                                     ArrayList<String> filter, long ms,
-                                                                     boolean includeArrivalDepartureInStatusLabel) {
+    public static ArrayList<ArrivalInfo> convertObaArrivalInfo(Context context,
+                                                               ObaArrivalInfo[] arrivalInfo,
+                                                               ArrayList<String> filter, long ms,
+                                                               boolean includeArrivalDepartureInStatusLabel) {
         final int len = arrivalInfo.length;
         ArrayList<ArrivalInfo> result = new ArrayList<ArrivalInfo>(len);
         if (filter != null && filter.size() > 0) {
             // Only add routes that haven't been filtered out
-            for (int i = 0; i < len; ++i) {
-                ObaArrivalInfo arrival = arrivalInfo[i];
+            for (ObaArrivalInfo arrival : arrivalInfo) {
                 if (filter.contains(arrival.getRouteId())) {
                     ArrivalInfo info = new ArrivalInfo(context, arrival, ms,
                             includeArrivalDepartureInStatusLabel);
@@ -69,8 +68,8 @@ public class ArrivalInfoUtils {
             }
         } else {
             // Add arrivals for all routes
-            for (int i = 0; i < len; ++i) {
-                ArrivalInfo info = new ArrivalInfo(context, arrivalInfo[i], ms,
+            for (ObaArrivalInfo obaArrivalInfo : arrivalInfo) {
+                ArrivalInfo info = new ArrivalInfo(context, obaArrivalInfo, ms,
                         includeArrivalDepartureInStatusLabel);
                 if (shouldAddEta(info)) {
                     result.add(info);

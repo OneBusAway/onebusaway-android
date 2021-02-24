@@ -15,16 +15,15 @@
  */
 package org.onebusaway.android.util;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.map.MapParams;
-
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.os.Build;
 import android.os.Bundle;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.map.MapParams;
 
 import java.util.Locale;
 
@@ -37,12 +36,7 @@ public class PreferenceUtils {
     public static void saveString(SharedPreferences prefs, String key, String value) {
         SharedPreferences.Editor edit = prefs.edit();
         edit.putString(key, value);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            edit.apply();
-        } else {
-            edit.commit();
-        }
+        edit.apply();
     }
 
     public static void saveString(String key, String value) {
@@ -53,12 +47,7 @@ public class PreferenceUtils {
     public static void saveInt(SharedPreferences prefs, String key, int value) {
         SharedPreferences.Editor edit = prefs.edit();
         edit.putInt(key, value);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            edit.apply();
-        } else {
-            edit.commit();
-        }
+        edit.apply();
     }
 
     public static void saveInt(String key, int value) {
@@ -69,12 +58,7 @@ public class PreferenceUtils {
     public static void saveLong(SharedPreferences prefs, String key, long value) {
         SharedPreferences.Editor edit = prefs.edit();
         edit.putLong(key, value);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            edit.apply();
-        } else {
-            edit.commit();
-        }
+        edit.apply();
     }
 
     public static void saveLong(String key, long value) {
@@ -85,12 +69,7 @@ public class PreferenceUtils {
     public static void saveBoolean(SharedPreferences prefs, String key, boolean value) {
         SharedPreferences.Editor edit = prefs.edit();
         edit.putBoolean(key, value);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            edit.apply();
-        } else {
-            edit.commit();
-        }
+        edit.apply();
     }
 
     public static void saveBoolean(String key, boolean value) {
@@ -101,12 +80,7 @@ public class PreferenceUtils {
     public static void saveFloat(SharedPreferences prefs, String key, float value) {
         SharedPreferences.Editor edit = prefs.edit();
         edit.putFloat(key, value);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            edit.apply();
-        } else {
-            edit.commit();
-        }
+        edit.apply();
     }
 
     public static void saveFloat(String key, float value) {
@@ -117,12 +91,7 @@ public class PreferenceUtils {
     public static void saveDouble(SharedPreferences prefs, String key, double value) {
         SharedPreferences.Editor edit = prefs.edit();
         edit.putLong(key, Double.doubleToRawLongBits(value));
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            edit.apply();
-        } else {
-            edit.commit();
-        }
+        edit.apply();
     }
 
     @TargetApi(9)

@@ -12,6 +12,12 @@ to last stop.
 7. A final "Pull the cord" notification is triggered when nearing the
 destination stop.
 
+![image](https://user-images.githubusercontent.com/928045/109177395-c2429100-7755-11eb-93bf-5e61bac7b1b7.png)
+
+![image](https://user-images.githubusercontent.com/928045/109177452-d1294380-7755-11eb-905b-dfd87fb933c2.png)
+
+![image](https://user-images.githubusercontent.com/928045/109177486-dbe3d880-7755-11eb-8b87-79fa7515a44d.png)
+
 **How It Works**
 
 The NavigationService is started when the user begins a trip, this service listens

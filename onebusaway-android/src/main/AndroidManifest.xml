@@ -243,8 +243,8 @@
         </service>
 
         <service
-            android:name=".nav.NavigationService" >
-        </service>
+            android:name=".nav.NavigationService"
+            android:foregroundServiceType="location"></service>
 
         <receiver android:name=".tripservice.AlarmReceiver">
             <intent-filter>

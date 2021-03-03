@@ -59,6 +59,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Implements the "destination reminders" feature in the app that notifies the user as they
+ * are approaching their destination stop on-board the transit vehicle.
+ * <p>
  * The NavigationService is started when the user begins a trip, this service listens for location
  * updates and passes the locations to its instance of NavigationServiceProvider each time.
  * NavigationServiceProvider is responsible for computing the statuses of the trips and issuing

@@ -15,16 +15,6 @@
  */
 package org.onebusaway.android.directions.realtime;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.directions.model.ItineraryDescription;
-import org.onebusaway.android.directions.tasks.TripRequest;
-import org.onebusaway.android.directions.util.OTPConstants;
-import org.onebusaway.android.directions.util.TripRequestBuilder;
-import org.opentripplanner.api.model.Itinerary;
-import org.opentripplanner.api.model.Leg;
-import org.opentripplanner.api.model.TripPlan;
-
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.IntentService;
@@ -37,14 +27,29 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.core.app.NotificationCompat;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.directions.model.ItineraryDescription;
+import org.onebusaway.android.directions.tasks.TripRequest;
+import org.onebusaway.android.directions.util.OTPConstants;
+import org.onebusaway.android.directions.util.TripRequestBuilder;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
+import org.opentripplanner.api.model.TripPlan;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import androidx.core.app.NotificationCompat;
-
-
+/**
+ * This service is started after a trip is planned by the user so they can be notified if the
+ * trip results for their request change in the near future. For example, if a user plans a trip,
+ * and then the top result for that trip gets delayed by 20 minutes, the user will be notified
+ * that new trip results are available.
+ */
 public class RealtimeService extends IntentService {
 
     private static final String TAG = "RealtimeService";

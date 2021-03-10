@@ -16,12 +16,6 @@
  */
 package org.onebusaway.android.tripservice;
 
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -38,22 +32,28 @@ import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.Log;
 
+import androidx.core.app.NotificationCompat;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.UIUtils;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import androidx.core.app.NotificationCompat;
-
 /**
  * A container Service for a thread pool that manages the scheduling, polling, and notifying the
- * user of an upcoming bus at their stop.. The thread pool can contain executing threads for
- * various
- * tasks related to the reminders feature - the SchedulerTask (executed when a new reminder is
- * saved, or after boot (via BootstrapService) to register all reminders saved in the database with
- * the Android platform), the PollerTask (triggered by the platform via AlarmReceiver to begin
- * polling the server 30 min ahead of the scheduled time of the arrival for which the reminder is
- * set), the NotifierTask (triggered by OBA Android when we should fire a notification for a
- * reminder), or the CancelNotifyTask (for when a notification is canceled).
+ * user of an upcoming bus while they are waiting at their stop. The thread pool can contain
+ * executing threads for various tasks related to the reminders feature - the SchedulerTask
+ * (executed when a new reminder is saved, or after boot (via BootstrapService) to register all
+ * reminders saved in the database with the Android platform), the PollerTask (triggered by the
+ * platform via AlarmReceiver to begin polling the server 30 min ahead of the scheduled time of the
+ * arrival for which the reminder is set), the NotifierTask (triggered by OBA Android when we should
+ * fire a notification for a reminder), or the CancelNotifyTask (for when a notification is
+ * canceled).
  *
  * This Service is not constructed to continously run - instead, it can shut down in between the
  * execution of tasks.  For example, the PollerTask actually reschedules itself each time it polls

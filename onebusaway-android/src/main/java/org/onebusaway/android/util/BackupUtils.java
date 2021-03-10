@@ -18,6 +18,7 @@ package org.onebusaway.android.util;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -35,6 +36,7 @@ import java.util.List;
 import static org.onebusaway.android.util.PermissionUtils.STORAGE_PERMISSIONS;
 
 public class BackupUtils {
+    private static final String TAG = "BackupUtils";
 
     /**
      * Restores a backed up OBA database from storage.  If storage permission hasn't been granted
@@ -81,6 +83,7 @@ public class BackupUtils {
             Toast.makeText(context,
                     context.getString(R.string.preferences_db_restore_error, e.getMessage()),
                     Toast.LENGTH_LONG).show();
+            Log.e(TAG, e.toString());
         }
     }
 
@@ -108,6 +111,7 @@ public class BackupUtils {
             Toast.makeText(context,
                     context.getString(R.string.preferences_db_save_error, e.getMessage()),
                     Toast.LENGTH_LONG).show();
+            Log.e(TAG, e.toString());
         }
     }
 }

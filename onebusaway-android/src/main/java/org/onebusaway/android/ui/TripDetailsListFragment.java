@@ -69,6 +69,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import org.apache.commons.lang3.StringUtils;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -362,11 +363,19 @@ public class TripDetailsListFragment extends ListFragment {
         ObaTrip trip = refs.getTrip(tripId);
         mRouteId = trip.getRouteId();
         ObaRoute route = refs.getRoute(mRouteId);
-        TextView shortName = (TextView) getView().findViewById(R.id.short_name);
-        shortName.setText(route.getShortName());
+        TextView routeShortName = (TextView) getView().findViewById(R.id.short_name);
+        routeShortName.setText(route.getShortName());
 
-        TextView longName = (TextView) getView().findViewById(R.id.long_name);
-        longName.setText(trip.getHeadsign());
+        TextView headsign = (TextView) getView().findViewById(R.id.long_name);
+        headsign.setText(trip.getHeadsign());
+
+        TextView tripShortName = (TextView) getView().findViewById(R.id.trip_short_name);
+        if (!StringUtils.isBlank(trip.getShortName())) {
+            tripShortName.setVisibility(View.VISIBLE);
+            tripShortName.setText(trip.getShortName());
+        } else {
+            tripShortName.setVisibility(View.GONE);
+        }
 
         TextView agency = (TextView) getView().findViewById(R.id.agency);
         agency.setText(refs.getAgency(route.getAgencyId()).getName());

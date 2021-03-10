@@ -66,6 +66,13 @@
                 android:layout_height="wrap_content"
                 tools:text="Vehicle: Hillsborough Area Regional Transit_1720" />
 
+            <TextView
+                android:id="@+id/trip_short_name"
+                style="@style/TripDetailsVehicle"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                tools:text="via Stadium" />
+
             <LinearLayout
                 android:id="@+id/status_layout"
                 android:layout_width="wrap_content"

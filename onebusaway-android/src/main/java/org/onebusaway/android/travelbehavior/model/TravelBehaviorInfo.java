@@ -121,6 +121,10 @@ public class TravelBehaviorInfo {
 
     public Boolean isIgnoringBatteryOptimizations;
 
+    // For Firebase to be able to query TravelBehaviorInfo by time, we need a timestamp here,
+    // even if it is duplicate data as in List<TravelBehaviorActivity>.
+    public Long firstActivityEventTimeMillis;
+
     public TravelBehaviorInfo() {
     }
 
@@ -128,5 +132,8 @@ public class TravelBehaviorInfo {
                               Boolean isIgnoringBatteryOptimizations) {
         this.activities = activities;
         this.isIgnoringBatteryOptimizations = isIgnoringBatteryOptimizations;
+        if (activities != null && !activities.isEmpty()) {
+            firstActivityEventTimeMillis = activities.get(0).eventTimeMillis;
+        }
     }
 }

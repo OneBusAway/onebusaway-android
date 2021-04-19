@@ -103,15 +103,9 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Removing social discussions</b>
-        - Social features will be disabled and removed on October 26th. Thank you to all who participated in this experimental feature.\n&#8226;\u0020
-        <b>Save default reminder time</b>
-        - When creating reminders, your previous time will be remembered (thanks tjasz!).\n&#8226;\u0020
-        <b>New Tampa fare payment app</b>
-        - See \"Pay my fare\" to try out the new Flamingo Fares app.\n&#8226;\u0020
-        <b>Improved launcher icon</b>
-        - Support for adaptive icons on supported devices.\n&#8226;\u0020
-        <b>Bug fixes</b>
+        <b>Support real-time occupancy for WMATA</b>
+        - See how many passengers are on supported vehicles in real-time for the Washington, D.C. region.\n&#8226;\u0020
+        <b>Bug fixes and improvements</b>
         - See https://bit.ly/oba-android-releases
     </string>
     <string name="main_help_close">Close</string>

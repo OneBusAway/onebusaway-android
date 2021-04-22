@@ -103,7 +103,7 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Support real-time occupancy for WMATA</b>
+        <b>Real-time occupancy for WMATA</b>
         - See how many passengers are on supported vehicles in real-time for the Washington, D.C. region.\n&#8226;\u0020
         <b>Bug fixes and improvements</b>
         - See https://bit.ly/oba-android-releases

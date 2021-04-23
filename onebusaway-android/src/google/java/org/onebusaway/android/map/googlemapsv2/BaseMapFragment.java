@@ -189,6 +189,8 @@ public class BaseMapFragment extends SupportMapFragment
 
     private FirebaseAnalytics mFirebaseAnalytics;
 
+    private AlertDialog locationPermissionDialog;
+
     @Override
     public void onActivateLayer(LayerInfo layer) {
         switch (layer.getLayerlabel()) {
@@ -1369,6 +1371,9 @@ public class BaseMapFragment extends SupportMapFragment
         if (!canManageDialog(getActivity())) {
             return;
         }
+        if (locationPermissionDialog != null && locationPermissionDialog.isShowing()) {
+            return;
+        }
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
                 .setTitle(R.string.location_permissions_title)
                 .setMessage(R.string.location_permissions_message)
@@ -1389,7 +1394,8 @@ public class BaseMapFragment extends SupportMapFragment
                             }
                         }
                 );
-        builder.create().show();
+        locationPermissionDialog = builder.create();
+        locationPermissionDialog.show();
     }
 
     /**

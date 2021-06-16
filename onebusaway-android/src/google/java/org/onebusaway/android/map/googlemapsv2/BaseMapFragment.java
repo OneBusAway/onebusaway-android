@@ -25,7 +25,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -36,6 +35,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.fragment.app.DialogFragment;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -87,12 +90,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.fragment.app.DialogFragment;
-
 import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
 import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSION_REQUEST;
+import static org.onebusaway.android.util.UIUtils.canManageDialog;
 
 /**
  * The MapFragment class is split into two basic modes:
@@ -120,8 +120,6 @@ public class BaseMapFragment extends SupportMapFragment
     public static final String TAG = "BaseMapFragment";
 
     private static final int REQUEST_NO_LOCATION = 41;
-
-    private static final String USER_DENIED_PERMISSION = ".UserDeniedPermission";
 
     //
     // Location Services and Maps API v2 constants
@@ -190,6 +188,8 @@ public class BaseMapFragment extends SupportMapFragment
     private boolean mUserDeniedPermission = false;
 
     private FirebaseAnalytics mFirebaseAnalytics;
+
+    private AlertDialog locationPermissionDialog;
 
     @Override
     public void onActivateLayer(LayerInfo layer) {
@@ -279,9 +279,7 @@ public class BaseMapFragment extends SupportMapFragment
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
 
-        if (savedInstanceState != null) {
-            savedInstanceState.getBoolean(USER_DENIED_PERMISSION, false);
-        }
+        mUserDeniedPermission = PreferenceUtils.userDeniedLocationPermission();
 
         mLocationHelper = new LocationHelper(getActivity());
 
@@ -329,12 +327,10 @@ public class BaseMapFragment extends SupportMapFragment
 
     private void initMap(Bundle savedInstanceState) {
         UiSettings uiSettings = mMap.getUiSettings();
+        mUserDeniedPermission = PreferenceUtils.userDeniedLocationPermission();
 
         if (!mUserDeniedPermission) {
             requestPermissionAndInit(getActivity());
-        } else {
-            // Explain permission to user
-            UIUtils.showLocationPermissionDialog(this);
         }
 
         // Set location source
@@ -392,8 +388,8 @@ public class BaseMapFragment extends SupportMapFragment
             // Make sure location helper is registered
             mLocationHelper.registerListener(this);
         } else {
-            // Request permissions from the user
-            requestPermissions(LOCATION_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
+            // Explain permission to user
+            showLocationPermissionDialog();
         }
     }
 
@@ -473,6 +469,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onResume() {
+        mUserDeniedPermission = PreferenceUtils.userDeniedLocationPermission();
         if (mLocationHelper != null) {
             mLocationHelper.onResume();
         }
@@ -507,7 +504,6 @@ public class BaseMapFragment extends SupportMapFragment
         outState.putInt(MapParams.MAP_PADDING_TOP, mMapPaddingTop);
         outState.putInt(MapParams.MAP_PADDING_RIGHT, mMapPaddingRight);
         outState.putInt(MapParams.MAP_PADDING_BOTTOM, mMapPaddingBottom);
-        outState.putBoolean(USER_DENIED_PERMISSION, mUserDeniedPermission);
     }
 
     @Override
@@ -724,7 +720,7 @@ public class BaseMapFragment extends SupportMapFragment
         String serverName = Application.get().getCustomApiUrl();
         if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils
                 .isEmpty(serverName))) {
-            if (mRunning && UIUtils.canManageDialog(getActivity())) {
+            if (mRunning && canManageDialog(getActivity())) {
                 showDialog(MapDialogFragment.OUTOFRANGE_DIALOG);
             }
         }
@@ -826,15 +822,16 @@ public class BaseMapFragment extends SupportMapFragment
 
         Location lastLocation = Application.getLastKnownLocation(getActivity(), apiClient);
         if (lastLocation == null) {
-            String text;
             if (!PermissionUtils.hasGrantedPermissions(Application.get(), LOCATION_PERMISSIONS)) {
-                text = getResources().getString(R.string.no_location_permission);
+                if (!PreferenceUtils.userDeniedLocationPermission()) {
+                    requestPermissionAndInit(getActivity());
+                }
             } else {
-                text = getResources().getString(R.string.main_waiting_for_location);
+                Toast.makeText(getActivity(),
+                        getResources().getString(R.string.main_waiting_for_location),
+                        Toast.LENGTH_SHORT).show();
+
             }
-            Toast.makeText(getActivity(),
-                    text,
-                    Toast.LENGTH_SHORT).show();
             return false;
         }
 
@@ -925,7 +922,7 @@ public class BaseMapFragment extends SupportMapFragment
             // If we don't even have a response object, something went really wrong
             code = ObaApi.OBA_INTERNAL_ERROR;
         }
-        if (UIUtils.canManageDialog(context)) {
+        if (canManageDialog(context)) {
             Toast.makeText(context,
                     context.getString(UIUtils.getMapErrorString(context, code)),
                     Toast.LENGTH_LONG).show();
@@ -1361,6 +1358,44 @@ public class BaseMapFragment extends SupportMapFragment
                     );
             return builder.create();
         }
+    }
+
+    /**
+     * Shows the dialog to explain why location permissions are needed.  If this provided activity
+     * can't manage dialogs then this method is a no-op.
+     * <p>
+     * NOTE - this dialog can't be managed under the old dialog framework as the method
+     * ActivityCompat.shouldShowRequestPermissionRationale() always returns false.
+     */
+    public void showLocationPermissionDialog() {
+        if (!canManageDialog(getActivity())) {
+            return;
+        }
+        if (locationPermissionDialog != null && locationPermissionDialog.isShowing()) {
+            return;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
+                .setTitle(R.string.location_permissions_title)
+                .setMessage(R.string.location_permissions_message)
+                .setCancelable(false)
+                .setPositiveButton(R.string.ok,
+                        (dialog, which) -> {
+                            PreferenceUtils.setUserDeniedLocationPermissions(false);
+                            // Request permissions from the user
+                            requestPermissions(LOCATION_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
+                        }
+                )
+                .setNegativeButton(R.string.no_thanks,
+                        (dialog, which) -> {
+                            if (mOnLocationPermissionResultListener != null) {
+                                mUserDeniedPermission = true;
+                                PreferenceUtils.setUserDeniedLocationPermissions(true);
+                                mOnLocationPermissionResultListener.onLocationPermissionResult(PackageManager.PERMISSION_DENIED);
+                            }
+                        }
+                );
+        locationPermissionDialog = builder.create();
+        locationPermissionDialog.show();
     }
 
     /**

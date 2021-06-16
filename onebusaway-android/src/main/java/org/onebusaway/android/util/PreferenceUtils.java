@@ -203,6 +203,26 @@ public class PreferenceUtils {
     }
 
     /**
+     * Returns true if the user has previously indicated that they don't want to be prompted to provide
+     * location permissions. Note that this means they haven't actually be prompted with the
+     * system permission dialog.
+     */
+    public static boolean userDeniedLocationPermission() {
+        Resources r = Application.get().getResources();
+        return getBoolean(r.getString(R.string.preferences_key_user_denied_location_permissions), false);
+    }
+
+    /**
+     * Set value to true if the user has previously indicated that they don't want to be prompted to provide
+     * location permissions, or false if they have indicated that they want to be prompted with
+     * the system permission dialog.
+     */
+    public static void setUserDeniedLocationPermissions(boolean value) {
+        Resources r = Application.get().getResources();
+        saveBoolean(r.getString(R.string.preferences_key_user_denied_location_permissions), value);
+    }
+
+    /**
      * Returns true if preferred units are metric, false if Imperial. If set to Automatic,
      * assume Imperial if the default locale is the US, metric otherwise.
      *

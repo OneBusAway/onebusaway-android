@@ -123,9 +123,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
-import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSION_REQUEST;
-
 /**
  * A class containing utility methods related to the user interface
  */
@@ -1856,35 +1853,6 @@ public final class UIUtils {
                     Application.get().getString(R.string.analytics_label_button_bike_share),
                     Application.get().getString(R.string.analytics_label_download_app));
         }
-    }
-
-    /**
-     * Shows the dialog to explain why location permissions are needed.  If this provided activity
-     * can't manage dialogs then this method is a no-op.
-     * <p>
-     * NOTE - this dialog can't be managed under the old dialog framework as the method
-     * ActivityCompat.shouldShowRequestPermissionRationale() always returns false.
-     */
-    public static void showLocationPermissionDialog(@NonNull Fragment fragment) {
-        if (!canManageDialog(fragment.getActivity())) {
-            return;
-        }
-        AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getActivity())
-                .setTitle(R.string.location_permissions_title)
-                .setMessage(R.string.location_permissions_message)
-                .setCancelable(false)
-                .setPositiveButton(R.string.ok,
-                        (dialog, which) -> {
-                            // Request permissions from the user
-                            fragment.requestPermissions(LOCATION_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
-                        }
-                )
-                .setNegativeButton(R.string.no_thanks,
-                        (dialog, which) -> {
-                            // No-op
-                        }
-                );
-        builder.create().show();
     }
 
     /**

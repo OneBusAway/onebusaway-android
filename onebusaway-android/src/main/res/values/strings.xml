@@ -845,10 +845,13 @@
     </string>
 
     <!-- Permissions -->
-    <string name="location_permissions_title">Real-time location needs permission</string>
-    <string name="location_permissions_message">To show your real-time position on the map
-        you\'ll need to grant location permissions. If you select \"Never ask again\" you will need
-        to reinstall the app or enable permissions via system settings to see your real-time location.
+    <string name="location_permissions_title">Location permissions</string>
+    <string name="location_permissions_message">We recommend allowing location use while the app is
+        running to show your real-time position on the map and automatically select your OneBusAway
+        region for your local transit agency. This location data is not collected by OneBusAway.
+
+        \n\nAlternately, you can manually select your region if you choose not to allow
+        location permissions.
     </string>
     <string name="no_thanks">No thanks</string>
 

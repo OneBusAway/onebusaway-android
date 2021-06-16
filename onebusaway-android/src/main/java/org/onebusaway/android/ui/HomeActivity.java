@@ -1350,6 +1350,7 @@ public class HomeActivity extends AppCompatActivity
             if (mMapFragment != null) {
                 // Reset the preference to ask user to enable location
                 PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_location_dialog), false);
+                PreferenceUtils.setUserDeniedLocationPermissions(false);
 
                 mMapFragment.setMyLocation(true, true);
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,

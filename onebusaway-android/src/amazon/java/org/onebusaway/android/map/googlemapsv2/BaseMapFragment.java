@@ -1382,8 +1382,7 @@ public class BaseMapFragment extends SupportMapFragment
         if (!canManageDialog(getActivity())) {
             return;
         }
-        if (locationPermissionDialog != null &&
-            locationPermissionDialog.isShowing()) {
+        if (locationPermissionDialog != null && locationPermissionDialog.isShowing()) {
             return;
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())

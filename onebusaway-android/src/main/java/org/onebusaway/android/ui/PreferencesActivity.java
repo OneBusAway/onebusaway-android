@@ -17,6 +17,10 @@
  */
 package org.onebusaway.android.ui;
 
+import static org.onebusaway.android.util.PermissionUtils.RESTORE_BACKUP_PERMISSION_REQUEST;
+import static org.onebusaway.android.util.PermissionUtils.SAVE_BACKUP_PERMISSION_REQUEST;
+import static org.onebusaway.android.util.PermissionUtils.STORAGE_PERMISSIONS;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.DialogInterface;
@@ -45,6 +49,10 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.BuildConfig;
@@ -58,20 +66,13 @@ import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
 import org.onebusaway.android.util.BackupUtils;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.PermissionUtils;
+import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-
-import static org.onebusaway.android.util.PermissionUtils.RESTORE_BACKUP_PERMISSION_REQUEST;
-import static org.onebusaway.android.util.PermissionUtils.SAVE_BACKUP_PERMISSION_REQUEST;
-import static org.onebusaway.android.util.PermissionUtils.STORAGE_PERMISSIONS;
 
 public class PreferencesActivity extends PreferenceActivity
         implements Preference.OnPreferenceClickListener, OnPreferenceChangeListener,
@@ -434,23 +435,48 @@ public class PreferencesActivity extends PreferenceActivity
             //Report if the analytics turns off, just before shared preference changed
             ObaAnalytics.setSendAnonymousData(mFirebaseAnalytics, isAnalyticsActive);
         } else if (preference.equals(mTravelBehaviorPref) && newValue instanceof Boolean) {
-            Boolean isTravelBehaviorActive = (Boolean) newValue;
-            if(isTravelBehaviorActive) {
+            Boolean activateTravelBehaviorCollection = (Boolean) newValue;
+            if (activateTravelBehaviorCollection) {
                 new TravelBehaviorManager(this, getApplicationContext()).
                         registerTravelBehaviorParticipant(true);
             } else {
-                new TravelBehaviorManager(this, getApplicationContext()).
-                        stopCollectingData();
-                TravelBehaviorManager.optOutUser();
-                TravelBehaviorManager.optOutUserOnServer();
+                showOptOutDialog();
+                return false;
             }
-
         } else if (preference.equals(mLeftHandMode) && newValue instanceof Boolean) {
             Boolean isLeftHandEnabled = (Boolean) newValue;
             //Report if left handed mode is turned on, just before shared preference changed
             ObaAnalytics.setLeftHanded(mFirebaseAnalytics, isLeftHandEnabled);
         }
         return true;
+    }
+
+    /**
+     * Shows the dialog to explain user is choosing to opt out of travel behavior research study
+     */
+    private void showOptOutDialog() {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.travel_behavior_dialog_opt_out_title)
+                .setMessage(R.string.travel_behavior_dialog_opt_out_message)
+                .setCancelable(false)
+                .setPositiveButton(R.string.ok,
+                        (dialog, which) -> {
+                            // Remove user from study
+                            new TravelBehaviorManager(this, getApplicationContext()).
+                                    stopCollectingData();
+                            TravelBehaviorManager.optOutUser();
+                            TravelBehaviorManager.optOutUserOnServer();
+                            // Change preference
+                            mTravelBehaviorPref.setChecked(false);
+                            PreferenceUtils.saveBoolean(getString(R.string.preferences_key_travel_behavior), false);
+                        }
+                )
+                .setNegativeButton(R.string.cancel,
+                        (dialog, which) -> {
+                            // No-op
+                        }
+                );
+        builder.create().show();
     }
 
     @Override

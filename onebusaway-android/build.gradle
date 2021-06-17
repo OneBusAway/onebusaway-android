@@ -55,8 +55,8 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        // This enables us to tell when we're running unit tests on Travis (#1010)
-        buildConfigField("String", "TRAVIS", "\"" + System.getenv('TRAVIS') + "\"")
+        // This enables us to tell when we're running unit tests on CI (#1010 for Travis, #1072 for GitHub)
+        buildConfigField("String", "CI", "\"" + System.getenv('CI') + "\"")
     }
 
     /**

@@ -1,0 +1,912 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com)
+    Benjamin Du (bendu@me.com),
+    Microsoft Corporation
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+--><resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <string name="app_name">OneBusAway</string>
+
+    <!-- Navigation Drawer -->
+    <string name="navdrawer_item_nearby">Nei dintorni</string>
+    <string name="navdrawer_item_starred_stops">Fermate preferite</string>
+    <string name="navdrawer_item_my_reminders">I miei promemoria</string>
+    <string name="navdrawer_item_settings">Impostazioni</string>
+    <string name="navdrawer_item_help">Aiuto</string>
+    <string name="navdrawer_item_send_feedback">Invia feedback</string>
+    <string name="navdrawer_item_open_source">Scoprici su GitHub!</string>
+    <string name="navdrawer_item_plan_trip">Pianifica un viaggio (beta)</string>
+    <string name="navdrawer_item_pay_fare">Compra biglietto</string>
+
+    <!-- Permissions -->
+    <string name="trip_service_perm_label">avvia il servizio di viaggi </string>
+    <string name="trip_service_perm_description">Consenti all\'applicazione di mostrare i promemoria per gli autobus in arrivo.</string>
+
+    <!-- Generic -->
+    <string name="generic_comm_error">Si è verificato un errore di comunicazione. Quest\'informazione non è disponibile. Prova di nuovo, potrebbe funzionare.</string>
+    <string name="generic_comm_error_toast">Impossibile aggiornare. Riproveremo tra qualche minuto.</string>
+    <string name="route_not_found_error_no_region">Spiacenti, impossibile trovare questa linea. Se si tratta di una scorciatoia, è possibile che il link sia obsoleto o che non sia ancora stata selezionata l\'area. (Cambia in\&quot;Preferenze-&gt;La tua area\&quot;)</string>
+    <string name="route_not_found_error_with_region_name">Spiacenti, impossibile trovare questa linea. Se si tratta di una scorciatoia, è possibile che il link sia obsoleto o che l\'area selezionata sia errata. (La tua area è: %1$s. Cambia in \&quot;Preferenze-&gt;La tua area\&quot;)</string>
+    <string name="stop_not_found_error_no_region">Spiacenti, impossibile trovare questa fermata. Se si tratta di una scorciatoia, è possibile che il link sia obsoleto o che non sia ancora stata selezionata l\'area. (Cambia in\&quot;Preferenze-&gt;La tua area\&quot;)</string>
+    <string name="stop_not_found_error_with_region_name">Spiacenti, impossibile trovare questa fermata. Se si tratta di una scorciatoia, è possibile che il link sia obsoleto o che l\'area selezionata sia errata. (La tua area è: %1$s. Cambia in \&quot;Preferenze-&gt;La tua area\&quot;)</string>
+    <string name="internal_error">Ops, qualcosa è andato storto. Controlla la tua connessione Internet e riprova.</string>
+    <string name="out_of_memory_error">Spiacenti, la memoria disponibile è insufficiente per questa operazione.</string>
+    <string name="bad_gateway_error">I server di OneBusAway sono sovraccarichi. Siamo davvero spiacenti!</string>
+    <string name="map_generic_error">Impossibile caricare le fermate.</string>
+    <string name="no_network_error">Il dispositivo risulta offline o non connesso alla rete.</string>
+    <string name="airplane_mode_error">Il dispositivo non è connesso alla rete.\nDisabilitare la modalità aereo?</string>
+    <string name="custom_api_url_error">URL non valido. Seleziona un server OneBusAway funzionante.</string>
+    <string name="custom_otp_api_url_error">URL non valido. Seleziona un server OpenTripPlanner funzionante.</string>
+    <string name="direction_n">Direzione nord</string>
+    <string name="direction_ne">Direzione nord-est</string>
+    <string name="direction_e">Direzione est</string>
+    <string name="direction_se">Direzione sud-est</string>
+    <string name="direction_s">Direzione sud</string>
+    <string name="direction_sw">Direzione sud-ovest</string>
+    <string name="direction_w">Direzione ovest</string>
+    <string name="direction_nw">Direzione nord-ovest</string>
+    <string name="direction_none"/>
+    <string name="loading">Caricamento...</string>
+    <string name="browser_error">Impossibile avviare il browser.</string>
+    <string name="search_hint">Cerca codice linea o fermata</string>
+    <string name="search">Cerca</string>
+    <string name="checkmark_description">Spunta di selezione</string>
+
+    <!--  Option strings -->
+    <string name="map_option_mylocation">La mia posizione</string>
+    <string name="map_option_search">Cerca</string>
+    <string name="main_help_title">Aiuto</string>
+    <string name="main_help_whatsnew_title">Novità</string>
+    <string name="main_help_whatsnew">•\u0020 <b>Occupazione in tempo reale per la WMATA</b> - Mostra il numero di passeggeri attuale sui veicoli supportati nell\'area Washington, D.C. \n•\u0020 <b>Correzione dei bug e miglioramenti</b> - Vedi https://bit.ly/oba-android-releases</string>
+    <string name="main_help_close">Chiudi</string>
+    <string name="main_help_legend_title">Legenda</string>
+    <string name="main_help_legend_ontime">Verde significa \&quot;In orario\&quot;</string>
+    <string name="main_help_legend_late">Blu significa \&quot;In ritardo\&quot;</string>
+    <string name="main_help_legend_early">Rosso significa \&quot;In anticipo\&quot;</string>
+    <string name="main_help_legend_scheduled">Grigio significa \&quot;Arrivo previsto\&quot; - Non sappiamo dove sia ora l\'autobus, ma l\'orario indica che l\'arrivo è imminente</string>
+    <string name="main_help_legend_canceled">Grigio barrato significa che il tragitto è stato cancellato, questo autobus NON arriverà</string>
+    <string name="main_nolocation_title">Posizione non abilitata</string>
+    <string name="main_nolocation">OneBusAway vorrebbe accedere alla tua posizione, abilitarla ora?</string>
+    <string name="main_never_ask_again">Non chiedere più</string>
+    <string name="main_never_show_again">Non mostrare più</string>
+
+    <string name="main_waiting_for_location">Ricerca della posizione...</string>
+    <string name="no_location_permission">Impossibile individuare la posizione. Fornisci all\'app l\'accesso alla posizione nelle impostazioni di sistema.</string>
+    <string name="main_outofrange_title">Fuori portata</string>
+    <string name="main_outofrange">Il servizio di trasporti di %1$s non copre il luogo in cui ti trovi.\n\nSpostare mappa su %1$s?</string>
+    <string name="main_outofrange_yes">Portami lì</string>
+    <string name="main_outofrange_no">Resta qui</string>
+
+    <string name="bus_options_menu_add_star">Aggiungi linea ai preferiti</string>
+    <string name="bus_options_menu_remove_star">Rimuovi linea dai preferiti</string>
+    <string name="bus_options_menu_show_route_on_map">Mostra linea sulla mappa</string>
+    <string name="bus_options_menu_show_trip_details">Mostra stato viaggio</string>
+    <string name="bus_options_menu_set_reminder">Imposta un promemoria</string>
+    <string name="bus_options_menu_edit_reminder">Modifica il promemoria</string>
+    <string name="bus_options_menu_show_only_this_route">Mostra solo questa linea</string>
+    <string name="bus_options_menu_show_all_routes">&quot;Mostra tutte le linee&quot;</string>
+    <string name="bus_options_menu_show_route_schedule">Mostra orario linea</string>
+    <string name="bus_options_menu_report_trip_problem">Segnala problema con orario d\'arrivo</string>
+
+    <!--  Stop Info -->
+    <string name="stop_info_ontime">In orario</string>
+    <string name="stop_info_arrived_ontime">Arrivato in orario</string>
+    <string name="stop_info_departed_ontime">Partito in orario</string>
+    <plurals name="stop_info_arrive_delayed">
+        <item quantity="one">1 min di ritardo</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g> min di ritardo</item>
+    </plurals>
+    <plurals name="stop_info_arrive_early">
+        <item quantity="one">1 min di anticipo</item>
+        <!-- Below element should remain on same line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g> min di anticipo</item>
+    </plurals>
+    <plurals name="stop_info_depart_delayed">
+        <item quantity="one">Partito in ritardo di 1 min</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Partito in ritardo di  <xliff:g id="count">%d</xliff:g> min</item>
+    </plurals>
+    <plurals name="stop_info_depart_early">
+        <item quantity="one">Partito in anticipo di 1 min</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Partito in anticipo di <xliff:g id="count">%d</xliff:g> min</item>
+    </plurals>
+    <plurals name="stop_info_arrived_delayed">
+        <item quantity="one">Arrivato in ritardo di 1 min</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Arrivato in ritardo di <xliff:g id="count">%d</xliff:g> min</item>
+    </plurals>
+    <plurals name="stop_info_arrived_early">
+        <item quantity="one">Arrivato in anticipo di 1 min</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Arrivato in anticipo di <xliff:g id="count">%d</xliff:g> min</item>
+    </plurals>
+    <plurals name="stop_info_status_late_without_arrive_depart">
+        <item quantity="one">1 min di ritardo</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g> min di ritardo</item>
+    </plurals>
+    <plurals name="stop_info_status_early_without_arrive_depart">
+        <item quantity="one">1 min di anticipo</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g> min di anticipo</item>
+    </plurals>
+    <string name="stop_info_scheduled_arrival">Arrivo previsto</string>
+    <string name="stop_info_scheduled_departure">Partenza prevista</string>
+    <string name="stop_info_scheduled">Previsione</string>
+    <string name="stop_info_canceled_arrival">Arrivo CANCELLATO</string>
+    <string name="stop_info_canceled_departure">Partenza CANCELLATA</string>
+    <string name="stop_info_canceled">CANCELLATO</string>
+    <string name="stop_info_time_arriving_at">Arrivo alle ore %1s</string>
+    <string name="stop_info_time_departing_at">Partenza alle ore %1s</string>
+    <string name="stop_info_time_arrived_at">Arrivato alle ore %1s</string>
+    <string name="stop_info_time_departed_at">Partito alle ore %1s</string>
+
+    <string name="stop_info_frequency_from">Ogni %1$d min dalle ore %2$s</string>
+    <string name="stop_info_frequency_until">Ogni %1$d min fino alle ore %2$s</string>
+    <string name="stop_info_eta_now">ORA</string>
+    <string name="stop_info_eta_unknown">---\u0020\u0020</string>
+    <string name="stop_info_option_showonmap">Mostra sulla mappa</string>
+    <string name="menu_option_sort_by">Ordina per</string>
+    <string name="stop_info_option_refresh">Aggiorna</string>
+    <string name="stop_info_option_filter">Filtra linee</string>
+    <string name="stop_info_option_hide_header_arrivals">Nascondi arrivi nell\'intestazione</string>
+    <string name="stop_info_option_show_header_arrivals">Mostra arrivi nell\'intestazione</string>
+    <string name="stop_info_option_editname">Modifica nome fermata</string>
+    <string name="stop_info_option_addstar">Aggiungi fermata ai preferiti</string>
+    <string name="stop_info_option_show_details">Mostra dettagli fermata</string>
+    <string name="stop_info_option_removestar">Rimuovi fermata dai preferiti</string>
+    <string name="stop_info_option_report_problem">Segnala problema con fermata</string>
+    <string name="stop_info_option_night_light">Luce notturna</string>
+    <string name="stop_info_nodata_minutes">Nessun arrivo nei prossimi %1$d min.</string>
+    <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
+    <plurals name="stop_info_nodata_hours_minutes">
+        <item quantity="one">Nessun arrivo nella prossima ora e %1$d min.</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Nessun arrivo nelle prossime <xliff:g id="count">%2$d</xliff:g> ore e %1$d min.</item>
+    </plurals>
+    <plurals name="stop_info_nodata_hours_minutes_short_format">
+        <item quantity="one">1h %1$d+ min</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
+        </item>
+    </plurals>
+    <string name="stop_info_no_additional_data_minutes">Nessun altro arrivo nei prossimi %1$d min.</string>
+    <string name="stop_info_no_additional_data_minutes_short_format">%1$d+ min</string>
+    <plurals name="stop_info_no_additional_data_hours_minutes">
+        <item quantity="one">Nessun altro arrivo nella prossima ora e %1$d min.</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Nessun altro arrivo nelle prossime<xliff:g id="count">%2$d</xliff:g> ore e %1$d min.</item>
+    </plurals>
+    <plurals name="stop_info_no_additional_data_hours_minutes_short_format">
+        <item quantity="one">1h %1$d+ min</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
+        </item>
+    </plurals>
+    <string name="stop_info_load_more_arrivals">Carica più arrivi</string>
+    <string name="stop_info_item_options_title">Opzioni</string>
+    <string name="stop_info_filter_title">Mostra solo queste linee</string>
+    <string name="stop_info_filter_header">Visualizzate: %1$d di %2$d linee</string>
+    <string name="stop_info_filter_showall">(mostra tutto)</string>
+    <string name="stop_info_save">Salva</string>
+    <string name="stop_info_cancel">Annulla</string>
+    <string name="stop_info_clear">Cancella</string>
+    <string name="stop_info_old_data">Dati aggiornati %s</string>
+    <string name="stop_info_favorite">La mia fermata</string>
+    <string name="stop_info_official_stop_name_label">Nome ufficiale: %1$s</string>
+    <string name="stop_info_route_ids_label">Linee:</string>
+    <string name="stop_info_button_content_description">Informazioni fermata</string>
+    <string name="stop_info_frequency_approximate">~</string>
+    <string name="stop_header_sliding_panel_open">Pannello di scorrimento esteso. Tocca o premi il pulsante Indietro per ridurre.</string>
+    <string name="stop_header_sliding_panel_collapsed">Pannello di scorrimento ridotto. Tocca per estendere e mostrare la lista completa degli arrivi, o premi il pulsante Indietro per nasconderla.</string>
+
+    <!-- Destination reminders -->
+    <string name="destination_reminder_dialog_title">Promemoria di destinazione (beta)</string>
+    <string name="destination_reminder_dialog_msg">Desideri ricevere una notifica quando sei nei pressi di questa fermata?</string>
+    <string name="destination_reminder_confirm">Sì</string>
+    <string name="destination_reminder_cancel">Annulla</string>
+    <string name="destination_reminder_title">Promemoria di destinazione impostato</string>
+    <string name="destination_reminder_cancel_trip">Annulla promemoria</string>
+    <string name="destination_reminder_beta_title">I promemoria di destinazione sono in beta</string>
+    <string name="destination_reminder_beta_summary">I promemoria di destinazione utilizzano il GPS, che non è sempre affidabile e non funziona in ambienti chiusi, sotterranei o in aree senza una chiara visione del cielo. Fai sempre attenzione a ciò che ti circonda.</string>
+
+    <!-- Destination reminder voice commands -->
+    <string name="destination_voice_get_ready">Preparati!</string>
+    <string name="destination_voice_request_stop">Scendi alla prossima fermata!</string>
+    <string name="destination_voice_arriving_destination">Hai raggiunto la destinazione!</string>
+
+    <!-- Destination reminder feedback notifications -->
+    <string name="feedback_notify_title">Aiutaci a migliorare i promemoria di destinazione</string>
+    <string name="feedback_notify_dialog_msg">Hai ricevuto la notifica al momento giusto?</string>
+    <string name="feedback_notify_confirmation">Grazie del feedback!</string>
+    <string name="feedback_label">Feedback</string>
+    <string name="feedback_action_reply_no">No</string>
+    <string name="feedback_action_reply_yes">Sì</string>
+
+    <!-- Destination reminder feedback Activity -->
+    <string name="feedback_msg">Hai ricevuto la notifica di scendere alla fermata al momento giusto?</string>
+    <string name="feedback_freeText">Scrivi il tuo feedback</string>
+    <string name="feedback_checkbox_text">Includi registro di sistema (la tua scelta verrà salvata per il futuro)</string>
+    <string name="feedback_log_guide">Il tuo feedback sarà inviato a OneBusAway. Se selezioni \&quot;Includi registro di sistema\&quot;, OneBusAway riceverà dal dispositivo la posizione in tempo reale mentre arrivi a destinazione. Questo ci aiuterà a migliorare la funzione promemoria di destinazione.\n\nCambia le tue preferenze per la condivisione del registro di sistema su Impostazioni.</string>
+
+    <!-- Destination reminder feedback Preferences -->
+    <string name="preferences_category_user_logs">Condividi informazioni di debug</string>
+    <string name="preferences_user_share_destination_logs_title">Includi registri dei promemoria di destinazione</string>
+    <string name="preferences_user_share_destination_logs_summary">Il dispositivo invierà informazioni anonime sulla posizione in tempo reale a OneBusAway per migliorare la funzione promemoria di destinazione.</string>
+
+    <!-- Destination reminder change location accuracy -->
+    <string name="main_changelocationmode_title">Modalità Alta precisione non abilitata</string>
+    <string name="main_changelocationmode">Le attuali impostazioni di localizzazione del dispositivo non consentono di rilevare una posizione accurata. Potresti non ricevere notifiche in prossimità della destinazione. Desideri cambiare la &quot;Modalità localizzazione&quot; in &quot;Alta precisione&quot;?</string>
+
+    <!-- Stop Details -->
+    <string name="stop_details_code">Fermata # %1$s</string>
+
+    <!-- Arrival Time Style B -->
+    <string name="arrival_estimated">Stima in tempo reale</string>
+    <string name="arrival_scheduled">Previsione</string>
+
+    <!-- Route Info  -->
+    <string name="route_info_context_get_stop_info">Mostra informazioni sull\'arrivo</string>
+    <string name="route_info_context_showonmap">Mostra sulla mappa</string>
+    <string name="route_info_goto_url">Mostra orario</string>
+    <string name="route_info_no_shape_data">Non è possibile visualizzare questa linea sulla mappa.</string>
+
+    <!-- My stops/routes -->
+    <string name="my_recent_title">Recenti</string>
+    <string name="my_recent_menu_title">Fermate/linee recenti</string>
+    <string name="my_recent_stops">Fermate</string>
+    <string name="my_recent_routes">Linee</string>
+    <string name="my_starred_title">Preferiti</string>
+    <string name="my_search_title">Cerca</string>
+    <string name="my_no_recent_stops">Non hai fermate recenti.</string>
+    <string name="my_no_starred_stops">Non hai fermate preferite.\n\nAggiungi una fermata ai preferiti dalla schermata degli arrivi toccando la stella vicino al nome della fermata.</string>
+    <string name="my_no_recent_routes">Non hai linee recenti.</string>
+    <!-- <string name="my_no_starred_routes">You have no starred routes.</string>-->
+    <string name="route_favorite_options_title_star">Aggiungi linea \&quot;%s\&quot; ai preferiti per:</string>
+    <string name="route_favorite_options_title_unstar">Rimuovi \&quot;%s\&quot; dai preferiti per:</string>
+
+    <string name="my_option_clear_recent_stops">Cancella fermate recenti</string>
+    <string name="my_option_clear_recent_routes">Cancella linee recenti</string>
+    <string name="my_option_clear_starred_stops">Rimuovi tutte le fermate dai preferiti</string>
+    <!-- <string name="my_option_clear_starred_routes">Remove all starred routes</string>-->
+    <string name="my_option_clear_confirm">Non si torna indietro! Vuoi procedere?</string>
+    <string name="my_option_clear_confirm_title">Confermi?</string>
+
+    <string name="my_context_get_stop_info">Mostra informazioni sull\'arrivo</string>
+    <string name="my_context_get_route_info">Mostra informazioni sulla linea</string>
+    <string name="my_context_create_shortcut">Crea scorciatoia nella schermata Home</string>
+    <string name="my_context_showonmap">Mostra sulla mappa</string>
+    <string name="my_context_remove_recent">Rimuovi dai recenti</string>
+    <string name="my_context_remove_star">Rimuovi dai preferiti</string>
+    <string name="my_context_show_schedule">Mostra orario</string>
+
+    <!-- Service Alerts  -->
+    <string name="alert_content_description_warning">Avviso sul servizio - tocca per mostrare ulteriori informazioni.</string>
+    <string name="alert_content_description_error">Avviso urgente sul servizio - tocca per mostrare ulteriori informazioni.</string>
+    <string name="situation_more_details">Altri dettagli</string>
+    <string name="hide">Nascondi</string>
+    <string name="close">Chiudi</string>
+    <string name="alert_hidden_snackbar_text">L\'avviso è nascosto</string>
+    <string name="alert_hidden_snackbar_action">ANNULLA</string>
+    <plurals name="alert_filter_text">
+        <item quantity="one">Hai %1$d avviso attivo nascosto</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            Hai <xliff:g id="count">%1$d</xliff:g> avvisi attivi nascosti</item>
+    </plurals>
+    <string name="alert_filter_showall">(mostra tutto)</string>
+
+    <!-- Find -->
+    <string name="find_hint_nofavoritestops">Trova una fermata inserendo il numero di fermata nella casella di ricerca.\n\nIl numero contiene da 1 a 6 cifre e si trova sul cartello o sulla pensilina della fermata.</string>
+    <string name="find_hint_nofavoriteroutes">Trova una linea inserendo il nome o il numero nella casella di ricerca.</string>
+    <string name="find_hint_noresults">Nessun risultato corrispondente alla tua ricerca.</string>
+    <string name="search_stop_hint">Inserisci numero di fermata</string>
+    <string name="search_route_hint">Inserisci nome/numero della linea</string>
+
+    <string name="route_shortcut">Linea</string>
+    <string name="stop_shortcut">Fermata</string>
+    <string name="recent_stops_shortcut">Fermate recenti</string>
+    <string name="recent_routes_shortcut">Linee recenti</string>
+    <string name="starred_stops_shortcut">Fermate preferite</string>
+    <!-- <string name="starred_routes_shortcut">Starred Routes</string> -->
+    <string name="route_name">Linea %s</string>
+
+    <!--  Trip info -->
+    <string name="trip_info_name">Nome promemoria</string>
+    <string name="trip_info_reminder_content_description">Promemoria</string>
+    <string name="trip_info_name_hint">Aggiungi nome promemoria</string>
+    <string name="trip_info_route">Linea %s</string>
+    <string name="trip_info_depart">Partenza alle ore %s</string>
+    <string name="trip_info_reminder_header">Orario promemoria</string>
+    <string name="trip_info_reminder_repeat">Ripeti</string>
+    <string name="trip_info_save">Salva</string>
+    <string name="trip_info_delete">Elimina</string>
+    <string name="trip_info_saved">Viaggio salvato.</string>
+    <string name="trip_info_dismiss">Annulla</string>
+    <string name="trip_info_delete_trip">Questo promemoria sarà eliminato.</string>
+    <string name="trip_info_repeat_every">Ogni %s</string>
+    <string name="trip_info_repeat_everyday">Tutti i giorni</string>
+    <string name="trip_info_repeat_weekdays">Da lunedì a venerdì</string>
+    <string name="trip_info_repeat_norepeat">Una sola volta</string>
+    <string name="trip_info_noname">(nessun nome)</string>
+    <string name="trip_info_option_showroute">Mostra linea</string>
+    <string name="trip_info_option_showstop">Mostra fermata</string>
+    <string name="trip_info_separator">-</string>
+
+    <!-- Occupancy -->
+    <string name="historically_full">Disponibilità media: pieno</string>
+    <string name="historically_standing_room">Disponibilità media: spazio in piedi</string>
+    <string name="historically_many_seats_available">Disponibilità media: molti posti a sedere</string>
+    <string name="historically_few_seats_available">Disponibilità media: pochi posti a sedere</string>
+    <string name="historically_empty">Disponibilità media: vuoto</string>
+    <string name="menu_title_about_historical_occupancy">Di più sulla media di occupazione</string>
+    <string name="menu_title_about_occupancy">Di più sull\'occupazione</string>
+    <string name="menu_text_about_historical_occupancy">La media di occupazione (icona grigia) è l\'utenza media a questa fermata negli ultimi 6 mesi.</string>
+    <string name="menu_text_about_occupancy">L\'occupazione in tempo reale appare verde quando ci sono molti o alcuni posti a sedere disponibili, e rossa quando il mezzo è pieno. La media di occupazione (icona grigia) è l\'utenza media a questa fermata negli ultimi 6 mesi.</string>
+
+    <string name="realtime_full">Pieno</string>
+    <string name="realtime_standing_room">Spazio in piedi</string>
+    <string name="realtime_many_seats_available">Molti posti a sedere</string>
+    <string name="realtime_few_seats_available">Pochi posti a sedere</string>
+    <string name="realtime_empty">Vuoto</string>
+
+    <string name="predicted_full">Previsione: pieno</string>
+    <string name="predicted_standing_room">Previsione: spazio in piedi</string>
+    <string name="predicted_many_seats_available">Previsione: molti posti a sedere</string>
+    <string name="predicted_few_seats_available">Previsione: pochi posti a sedere</string>
+    <string name="predicted_empty">Previsione: vuoto</string>
+
+
+    <!--  Trip list -->
+    <string name="trip_list_notrips">Non hai promemoria.\n\nPuoi creare dei promemoria toccando un autobus in arrivo alla tua fermata.</string>
+    <string name="trip_list_context_edit">Modifica tragitto</string>
+    <string name="trip_list_context_delete">Elimina tragitto</string>
+    <string name="trip_list_context_showstop">Mostra fermata</string>
+    <string name="trip_list_context_showroute">Mostra linea</string>
+
+    <!--  Trip notifications -->
+    <string name="trip_stat_gone_arrived">La linea %s è arrivata.</string>
+    <string name="trip_stat_gone_departed">La linea %s è partita.</string>
+    <string name="trip_stat_lessthanone_arriving">La linea %s è in arrivo!</string>
+    <string name="trip_stat_lessthanone_departing">La linea %s è in partenza!</string>
+    <string name="trip_stat_arriving">La linea %1$s arriverà tra %2$d min!</string>
+    <string name="trip_stat_departing">La linea %1$s partirà tra %2$d min!</string>
+
+    <!--  Foreground Service notifications -->
+    <string name="foreground_all_intent_title">Aggiornamento promemoria</string>
+    <string name="foreground_action_schedule_text">Impostazione promemoria...</string>
+    <string name="foreground_action_poll_text">Controllo previsioni per i tuoi promemoria...</string>
+    <string name="foreground_action_notify_text">Attivazione notifiche per il tuo promemoria...</string>
+    <string name="foreground_action_cancel_text">Eliminazione del tuo promemoria...</string>
+
+    <!-- Report problem -->
+    <string name="report_problem_comment_hint">Descrizione problema (facoltativo)</string>
+    <string name="report_problem_send">Invia</string>
+    <string name="report_problem_hint">Le segnalazioni aiutano OneBusAway a risolvere i problemi!</string>
+    <string name="report_problem_error">Impossibile inviare la segnalazione. Riprovare?</string>
+    <string name="report_problem_invalid_argument">Seleziona una categoria di problemi.</string>
+    <!-- TODO: Modes -->
+    <string name="report_problem_onvehicle_bus">Sei su questo autobus?</string>
+    <string name="report_problem_uservehicle_hint">Numero autobus (facoltativo)</string>
+    <string name="report_problem_report">Segnala</string>
+
+    <!-- Region list -->
+    <plurals name="distance_miles">
+        <item quantity="one">1 miglio di distanza</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g> miglia di distanza</item>
+    </plurals>
+    <plurals name="distance_feet">
+        <item quantity="one">1 piede di distanza</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g> piedi di distanza</item>
+    </plurals>
+    <plurals name="distance_kilometers">
+        <item quantity="one">1 chilometro di distanza</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g> chilometri di distanza</item>
+    </plurals>
+    <plurals name="distance_meters">
+        <item quantity="one">1 metro di distanza</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g> metri di distanza</item>
+    </plurals>
+
+    <string name="region_unavailable">non disponibile</string>
+    <string name="region_option_refresh">Aggiorna</string>
+    <string name="region_detecting_server">Ricerca servizi di trasporto pubblico...</string>
+    <string name="region_choose_region">Scegli l\'area</string>
+    <string name="region_disabled_auto_selection">Selezione automatica dell\'area disattivata. Puoi attivarla in Preferenze.</string>
+    <string name="region_selected_auto">selezionata automaticamente</string>
+    <string name="region_selected_manually">selezionata manualmente</string>
+    <string name="region_region_found">Trovata area: %1$s</string>
+
+    <!--  Bug report -->
+    <string name="bug_report_subject">OneBusAway Android: Feedback</string>
+    <string name="bug_report_subject_trip_plan">OneBusAway Android: Feedback Piano di viaggio</string>
+    <string name="bug_report_subject_trip_plan_fail">OneBusAway Android: Feedback Piano di viaggio fallito</string>
+    <string name="bug_report_body">Ti invitiamo a scriverci per reclami, apprezzamenti, e segnalazioni di bug!\n\n\nVersione app: %1$s\nModello: %2$s\nVersione SO: %3$s / %4$d\nApp Google Play Services: %5$s\n Libreria Google Play Services: %6$d\nArea/API: %7$s (%8$s)\nLoc: %9$s\n\n</string>
+    <string name="bug_report_body_without_location">Ti invitiamo a scriverci per reclami, apprezzamenti, e segnalazioni di bug!\n\n\nVersione app: %1$s\nModello: %2$s\nVersione SO: %3$s / %4$d\n\n</string>
+    <string name="bug_report_error">Impossibile inviare la segnalazione del bug: applicazione adatta non trovata.</string>
+    <string name="bug_report_body_trip_plan_fail">Ti invitiamo a scriverci per reclami, apprezzamenti, e segnalazioni di bug!\n\n\nVersione app: %1$s\nModello: %2$s\nVersione SO: %3$s / %4$d\nApp Google Play Services: %5$s\n Libreria Google Play Services: %6$d\nArea/API: %7$s (%8$s)\nLoc: %9$s\n\n Impossibile pianificare il viaggio utilizzando l\'URL: %10$s\n\n</string>
+    <string name="bug_report_body_trip_plan">Ti invitiamo a scriverci per reclami, apprezzamenti, e segnalazioni di bug!\n\n\nVersione app: %1$s\nModello: %2$s\nVersione SO: %3$s / %4$d\nApp Google Play Services: %5$s\n Libreria Google Play Services: %6$d\nArea/API: %7$s (%8$s)\nLoc: %9$s\n\n Pianificare il viaggio utilizzando l\'URL: %10$s\n\n</string>
+    <string name="bug_report_body_trip_plan_without_location">Ti invitiamo a scriverci per reclami, apprezzamenti, e segnalazioni di bug!\n\n\nVersione app: %1$s\nModello: %2$s\nVersione SO: %3$s / %4$d\n\nPianificare il viaggio utilizzando l\'URL: %5$s\n\n</string>
+    <string name="bug_report_body_trip_plan_without_location_fail">Ti invitiamo a scriverci per reclami, apprezzamenti, e segnalazioni di bug!\n\n\nVersione app: %1$s\nModello: %2$s\nVersione SO: %3$s / %4$d\n\nImpossibile pianificare il viaggio utilizzando l\'URL: %5$s\n\n</string>
+
+    <!-- Android Maps v2 -->
+    <string name="install_google_maps_positive_button">Installa</string>
+    <string name="please_install_google_maps_dialog_title">Installa Google Maps</string>
+    <string name="no_play_store">L\'App Play Store non è installata su questo dispositivo. Trova un metodo alternativo per installare Google Maps.</string>
+    <string name="ok">OK</string>
+
+    <!-- Application Preferences -->
+    <string name="preferences_category_location">Posizione</string>
+    <string name="preferences_category_display">Visualizzazione</string>
+    <string name="preferences_category_backup">Backup</string>
+    <string name="preferences_category_notifications">Notifiche</string>
+    <string name="preferences_category_advanced">Avanzate</string>
+    <string name="preferences_screen_advanced_summary">Vedi di più sui dettagli pratici</string>
+    <string name="preferences_category_about">Informazioni</string>
+    <string name="preferences_region_title">La tua area</string>
+    <string name="preferences_region_summary_custom_api">Server API personalizzato in uso</string>
+    <string name="preferences_auto_select_region_title">Area automatica</string>
+    <string name="preferences_auto_select_region_summary">Imposta area del servizio di trasporto in base alla posizione attuale</string>
+
+    <string name="preferences_preferred_units_title">Unità di misura preferite</string>
+    <string name="preferences_preferred_units_option_automatic">Automatico</string>
+    <string name="preferences_preferred_units_option_metric">Sistema metrico (km, m)</string>
+    <string name="preferences_preferred_units_option_imperial">Sistema imperiale (mi, ft)</string>
+
+    <string name="preferences_show_negative_arrivals_title">Mostra autobus già partiti</string>
+    <string name="preferences_show_negative_arrivals_summary">Includi autobus già partiti, mostrando il tempo trascorso dalla partenza come valore negativo</string>
+
+    <string name="preferences_show_zoom_controls_title">Mostra controlli zoom</string>
+    <string name="preferences_show_zoom_controls_summary">Mostra controlli zoom sulla mappa</string>
+
+    <string name="preferences_show_header_arrivals_title">Mostra arrivi sopra nome fermata</string>
+    <string name="preferences_show_header_arrivals_summary">Quando visualizzi i preferiti, mostra informazioni sugli arrivi nell\'intestazione (la visuale della mappa resta invariata)</string>
+
+    <string name="preferences_trip_plan_notifications_title">Notifiche sul piano di viaggio (beta)</string>
+    <string name="preferences_trip_plan_notifications_summary">Dopo aver pianificato un viaggio, invia notifiche se ci sono ritardi o se il viaggio non è più consigliato.</string>
+
+    <string name="preferences_show_tutorial_screens_title">Mostra schermate tutorial</string>
+    <string name="preferences_show_tutorial_screens_summary">Mostra popup informativi sull\'utilizzo delle funzionalità</string>
+
+    <string name="preferences_left_hand_mode_title">Modalità mano sinistra</string>
+    <string name="preferences_left_hand_mode_summary">Sposta alcuni pulsanti sul lato sinistro dello schermo</string>
+
+    <string name="preferences_arrival_info_style_options_a">OneBusAway classico</string>
+    <string name="preferences_arrival_info_style_options_b">Schede</string>
+
+    <string name="preferences_otp_api_servername_title">Server API di OpenTripPlanner</string>
+    <string name="preferences_otp_api_servername_summary">Determina il server per le chiamate API di OpenTripPlanner</string>
+    <string name="preferences_oba_api_servername_title">Server API di OneBusAway</string>
+    <string name="preferences_oba_api_servername_summary">Determina il server per le chiamate API di OneBusAway</string>
+    <string name="preferences_oba_api_servername_hint">example.onebusaway.org</string>
+    <string name="preferences_otp_api_servername_hint">example.opentripplanner.org/otp</string>
+    <string name="preferences_save_title">Salva in memoria</string>
+    <string name="preferences_save_summary">Salva fermate e linee preferite e recenti</string>
+    <string name="preferences_restore_title">Ripristina da memoria</string>
+    <string name="preferences_restore_summary">Ripristina dal salvataggio precedente</string>
+    <string name="preferences_db_saved">Salvataggio completato!</string>
+    <string name="preferences_db_save_error">Impossibile salvare: %1$s</string>
+    <string name="preferences_db_restore_warning">Questo cancellerà tutti i dati esistenti! Vuoi procedere?</string>
+    <string name="preferences_restore_loading">Ripristino dalla memoria…</string>
+    <string name="preferences_db_restored">Ripristino dati completato! Riavvia OneBusAway.</string>
+    <string name="preferences_db_restore_error">Impossibile ripristinare: %1$s</string>
+
+    <string name="preferences_experimental_regions_title">Aree sperimentali</string>
+    <string name="preferences_experimental_regions_summary">Abilita aree che potrebbero essere instabili</string>
+    <string name="preferences_experimental_regions_enable_warning">Le aree sperimentali potrebbero essere instabili e senza informazioni in tempo reale! Vuoi procedere?</string>
+    <string name="preferences_experimental_regions_disable_warning">L\'area sperimentale corrente non sarà disponibile! Vuoi procedere?</string>
+    <string name="preferences_analytics_title">Invia dati di utilizzo anonimi</string>
+    <string name="preferences_analytics_summary">Aiutaci a migliorare l\'app</string>
+    <string name="preferences_travel_behavior_title">Invia dati anonimi sulle abitudini di viaggio</string>
+    <string name="preferences_travel_behavior_summary">Aiutaci a migliorare il trasporto pubblico</string>
+    <string name="preferences_tutorial_title">Mostra tutorial</string>
+    <string name="preferences_tutorial_summary">Mostra istruzioni per utilizzare questa app</string>
+    <string name="preferences_donate_title">Dona</string>
+    <string name="preferences_donate_summary">Supporta il progetto open-source OneBusAway</string>
+    <string name="preferences_powered_by_oba_title">Powered by OneBusAway</string>
+    <string name="preferences_powered_by_oba_summary">Scopri di più su questo progetto open-source</string>
+    <string name="preferences_about_title">Informazioni</string>
+    <string name="preferences_about_summary">Informazioni su versione, collaboratori e licenza</string>
+    <!-- Units -->
+    <string name="feet_abbreviation">ft</string>
+    <string name="miles_abbreviation">mi</string>
+    <string name="meters_abbreviation">m</string>
+    <string name="kilometers_abbreviation">km</string>
+    <string name="minutes_abbreviation">min</string>
+    <string name="minutes_full">minuti</string>
+
+    <string name="preferences_preferred_vibration_title">Vibrazione</string>
+    <string name="preferences_preferred_vibration_summary">Consenti vibrazione per notifiche OneBusAway</string>
+
+    <string name="preferences_preferred_sound_title">Suoneria promemoria</string>
+    <string name="preferences_preferred_sound_summary">Seleziona suoneria per notifiche OneBusAway</string>
+
+    <!-- Navigation Drawer -->
+    <string name="navigation_drawer_open">Apri menù di spostamento</string>
+    <string name="navigation_drawer_close">Chiudi menù di spostamento</string>
+
+    <!-- Issue reporting implementation-->
+    <string name="region_dialog_message">Ti trovi nell\'area di %1$s?</string>
+    <string name="preference_region_dialog_message">La tua area è impostata su: %1$s. Se ci siamo sbagliati, premi su &quot;La tua area&quot; per cambiarla!</string>
+    <string name="preference_region_dialog_title">Controlla la tua area</string>
+    <string name="report_dialog_stop_header">Tocca la fermata sulla mappa</string>
+    <string name="report_dialog_trip">Seleziona un orario di arrivo.</string>
+
+    <!-- report issue screen-->
+    <string name="ri_others">Altro</string>
+    <string name="ri_desc_hint">Descrizione problema</string>
+    <string name="ri_button_camera">Fotocamera</string>
+    <string name="ri_button_image">AGGIUNGI IMMAGINE</string>
+    <string name="ri_button_gallery">Galleria</string>
+    <string name="ri_address_not_found">Indirizzo non trovato. Controlla l\'indirizzo inserito.</string>
+    <string name="ri_service_description_problem">Impossibile trovare la descrizione del servizio.</string>
+    <string name="ri_open_camera_problem">Impossibile avviare la fotocamera.</string>
+    <string name="ri_resize_image_problem">Impossibile ridimensionare immagine - utilizzo dim. intere.</string>
+    <string name="ri_service_default">Seleziona un problema</string>
+    <string name="ri_service_stop">Problema con fermata</string>
+    <string name="ri_service_trip">Problema con orario d\'arrivo</string>
+    <string name="ri_user_name_hint">Nome</string>
+    <string name="ri_user_lastname_hint">Cognome</string>
+    <string name="ri_user_email_hint">E-mail</string>
+    <string name="ri_user_phone_hint">Numero di telefono</string>
+    <string name="ri_no_trip">Orari non disponibili, controlla più tardi.</string>
+    <string name="ri_anonymous_checkbox">Segnalazione anonima</string>
+    <string name="ri_submitting_message">Invio segnalazione…</string>
+    <string name="ri_unsuccessful_submit">Si è verificato un errore durante l\'invio, riprova più tardi.</string>
+
+    <!-- report issue types screen-->
+    <!-- Remove rt_infrastructure_problem and use rt_stop_problem -->
+    <string name="rt_infrastructure_problem">Segnala problema con la fermata</string>
+    <string name="rt_customer_service">Contatta il Servizio clienti</string>
+    <string name="rt_stop_problem">Segnala problema con la fermata</string>
+    <string name="rt_arrival_problem">Segnala problema con l\'orario d\'arrivo</string>
+    <string name="rt_infrastructure_problem_title">Segnala un problema</string>
+    <string name="rt_stop_problem_title">Problema con fermata</string>
+    <string name="rt_arrival_problem_title">Problema con orario d\'arrivo</string>
+    <string name="rt_app_feedback">Invia feedback sull\'app</string>
+    <string name="rt_ideas">Idee per nuove funzionalità</string>
+    <string name="rt_message_infrastructure_problem">Linea mancante, panchina rotta, ecc.</string>
+    <string name="rt_message_customer_service">Complimenti e lamentele sugli autisti, oggetti smarriti, ecc.</string>
+    <string name="rt_message_stop_problem">Linea mancante, fermata con nome errato, ecc.</string>
+    <string name="rt_message_arrival_problem">Mezzo mai arrivato, orario di arrivo sbagliato, ecc.</string>
+    <string name="rt_message_app_feedback">Design, bug, ecc.</string>
+    <string name="rt_message_ideas">Invia e vota per i miglioramenti futuri</string>
+    <string name="rt_address_hint">Indirizzo del problema (facoltativo)</string>
+    <string name="rt_yes">SÌ</string>
+    <string name="rt_no">NO</string>
+
+    <!-- Tutorial Fragment -->
+    <string name="pager_button_prev">Indietro</string>
+    <string name="pager_button_next">Avanti</string>
+    <string name="pager_button_done">Fatto</string>
+
+    <!-- Trip Details -->
+    <string name="trip_details_vehicle">Mezzo: %1$s</string>
+    <string name="trip_details_scheduled_data">Dati orario</string>
+    <string name="trip_details_real_time_sec_late">%1$d s di ritardo (Ultimo aggiornamento: %2$s)</string>
+    <string name="trip_details_real_time_min_sec_late">%1$d min e %2$d s di ritardo (Ultimo aggiornamento: %3$s)</string>
+    <string name="trip_details_real_time_sec_early">%1$d s di anticipo (Ultimo aggiornamento: %2$s)</string>
+    <string name="trip_details_real_time_min_sec_early">%1$d min e %2$d s di anticipo (Ultimo aggiornamento: %3$s)</string>
+    <string name="trip_details_current_stop">Fermata attuale</string>
+    <string name="trip_details_current_bus_position">L\'autobus si trova qui:</string>
+    <string name="trip_details_dest_stop">Fermata di destinazione</string>
+
+    <!-- Vehicles on Map -->
+    <string name="vehicle_last_updated_sec">Dati aggiornati %1$d s fa</string>
+    <string name="vehicle_last_updated_min_and_sec">Data aggiornati %1$d min %2$d s fa</string>
+    <string name="vehicle_last_updated_scheduled">Posizione calcolata in base all\'orario</string>
+
+    <!-- Night Light -->
+    <string name="night_light_dialog_title">Non perdere più l\'autobus la sera!</string>
+    <string name="night_light_dialog_message">Non ne puoi più degli autobus che non si fermano perché è notte e l\'autista non ti vede? Usa la Luce notturna intermittente e renditi visibile! \n\nATTENZIONE: Questa funzionalità potrebbe scatenare attacchi epilettici in persone affette da epilessia fotosensibile. Utilizzare con cautela.</string>
+    <string name="night_light_create_shortcut">Crea scorciatoia</string>
+    <string name="night_light_start">Avvia</string>
+    <string name="night_light_cancel">Annulla</string>
+
+    <!-- Tutorials -->
+    <string name="tutorial_button_text">Capito!</string>
+    <string name="tutorial_welcome_title">OneBusAway ti dà il benvenuto!</string>
+    <string name="tutorial_welcome_text">Tocca una fermata (punto verde sulla mappa) per vedere gli orari di arrivo.</string>
+    <string name="tutorial_opt_out_dialog_title">Mostrare tutorial?</string>
+    <string name="tutorial_opt_out_dialog_text">Desideri che vengano mostrati popup informativi per l\'utilizzo di OneBusAway? Puoi sempre attivare e disattivare i popup nelle impostazioni, o mostrare il tutorial in seguito premendo su Aiuto.</string>
+    <string name="tutorial_arrival_header_arrival_info_title">Quanto manca all\'arrivo dell\'autobus?</string>
+    <string name="tutorial_arrival_header_arrival_info_text">Tanto così! Lo sfondo colorato ti dice se l\'autobus è in anticipo (rosso) o in ritardo (blu). In orario = sfondo verde. Se non sappiamo dove sia l\'autobus, ti mostriamo l\'orario previsto (sfondo grigio). Grigio con testo barrato significa che il tragitto è stato cancellato.</string>
+    <string name="tutorial_arrival_header_sliding_panel_title">Scorri in su per mostrare più arrivi</string>
+    <string name="tutorial_arrival_header_sliding_panel_text">Tocca la freccia o trascina il pannello in su per vedere altri arrivi a questa fermata.</string>
+    <string name="tutorial_arrival_sort_title">Ordina per orario di arrivo previsto o linea</string>
+    <string name="tutorial_arrival_sort_text">Gli arrivi possono essere ordinati per orario di arrivo previsto o per linea con il pulsante \&quot;Ordina\&quot; nella parte alta dello schermo.</string>
+    <string name="tutorial_arrival_header_star_route_title">Salva le tue linee preferite</string>
+    <string name="tutorial_arrival_header_star_route_text">Tocca sulla stella per fissare le tue linee preferite in cima al pannello di scorrimento.</string>
+    <string name="tutorial_recent_stops_routes_title">Fermate e linee recenti</string>
+    <string name="tutorial_recent_stops_routes_text">Per ritrovare le fermate e le linee cercate di recente, tocca il pulsante \&quot;Altro\&quot; in alto a destra.</string>
+    <string name="tutorial_starred_stops_sort_title">Ordina le tue fermate preferite</string>
+    <string name="tutorial_starred_stops_sort_text">Riordina le tue fermate preferite per nome o frequenza d\'uso con il pulsante \&quot;Ordina\&quot; nella parte alta dello schermo.</string>
+    <string name="tutorial_starred_stops_shortcut_title">Risparmia tempo con le scorciatoie</string>
+    <string name="tutorial_starred_stops_shortcut_text">Tieni premuto su una fermata per creare una scorciatoia sulla schermata Home. Tocca la scorciatoia per vedere subito gli arrivi!</string>
+    <string name="tutorial_send_feedback_transit_service_title">Non solo trasporti</string>
+    <string name="tutorial_send_feedback_transit_service_text">Puoi segnalare vari tipi di problemi all\'amministrazione locale per questa fermata. Tocca la casella a discesa per la lista completa.</string>
+    <string name="tutorial_trip_plan_geocoder_title">Inserisci indirizzo o nome del luogo</string>
+    <string name="tutorial_trip_plan_geocoder_text">Quando pianifichi un viaggio, puoi impostare indirizzi e nomi di luoghi come punti di partenza o di arrivo. I numeri di fermata e gli incroci non sono attualmente supportati nella pianificazione di viaggio.</string>
+
+    <!-- Permissions -->
+    <string name="location_permissions_title">Autorizzazioni per la posizione</string>
+    <string name="location_permissions_message">È consigliabile fornire l\'autorizzazione quando l\'applicazione è in esecuzione per mostrare la tua posizione in tempo reale sulla mappa e per consentire la scelta automatica dell\'area OnebusAway per l\'agenzia di transito locale. I dati di posizione non verranno raccolti da OneBusAway. \n\nSe non fornisci l\'accesso alla posizione, puoi selezionare la tua area manualmente.</string>
+    <string name="no_thanks">No, grazie</string>
+
+    <string name="storage_permissions_title">Accesso alla memoria del dispositivo richiesto.</string>
+    <string name="storage_permissions_message">Per backup e ripristino dati, OneBusAway necessita dell\'autorizzazione ad accedere alla memoria locale del dispositivo.</string>
+
+    <!-- About -->
+    <string name="title_activity_about">Informazioni</string>
+    <string name="about_text">&quot;Scopri di più sul progetto open-source OneBusAway su https://onebusaway.org.\n\n&quot; &quot;*** Codice ***\n\n&quot; &quot;Vogliamo ringraziare coloro che hanno contribuito a programmare l\'app OneBusAway Android:\n\n&quot; &quot;* Paul Watts\n&quot; &quot;* Brian Ferris\n&quot; &quot;* Daniel Welsh\n&quot; &quot;* Arno Hart\n&quot; &quot;* Sean Barbeau\n&quot; &quot;* York Region Transit\n&quot; &quot;* Ben Du\n&quot; &quot;* Cagri Cetin\n&quot; &quot;* Mike Karabushin\n&quot; &quot;* Aziz Batihk\n&quot; &quot;* Charles Bond\n&quot; &quot;* Hillsborough Area Regional Transit (tramite Simon Jacobs di Cambridge Systematics)\n&quot; &quot;* Bridgette Eichelberger\n&quot; &quot;* Rodrigo Carvalho (Google Summer of Code 2017)\n&quot; &quot;* Steve Moritani\n\n&quot; &quot;Vuoi contribuire a quest\'app? Scoprici su Github su https://github.com/OneBusAway/onebusaway-android.\n\n&quot; &quot;*** Traduzioni ***\n\n&quot; &quot;Vogliamo ringraziare coloro che hanno contribuito a tradurre l\'app OneBusAway Android:\n\n&quot; &quot;* Ari Rusakko\n&quot; &quot;* Edgar Andrés Moncada Taborda\n&quot; &quot;* Eleonora Fabbri\n&quot; &quot;* Paola Poletti\n\n&quot; &quot;*** Immagini ***\n\n&quot; &quot;Grazie ai designer che hanno creato le immagini utilizzate nelle icone dei veicoli, che sono state caricate&quot; &quot;sul Noun Project sotto licenza CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/us/):\n\n&quot; &quot;* Freccia realizzata da Zlatko Najdenovski, MK\n&quot; &quot;* Marcatore mappa realizzato da Housin Aziz, SE\n&quot; &quot;* Incognito realizzato da Christopher Schreiner\n&quot; &quot;* Bandiera triangolare realizzata da Austin Andrews\n\n&quot; &quot;Grazie a Google per le icone (https://github.com/google/material-design-icons), &quot; &quot;sotto licenza Apache v2.0 (https://www.apache.org/licenses/LICENSE-2.0).\n\n&quot;</string>
+
+    <!-- Trip Planner strings -->
+
+    <string name="title_activity_trip_plan">Pianificatore di viaggio (beta)</string>
+    <string name="trip_plan_from">Da:</string>
+    <string name="trip_plan_to">A:</string>
+    <string name="trip_plan_leaving">Partenza</string>
+    <string name="trip_plan_arriving">Arrivo</string>
+    <string name="trip_plan_stop_connector">alle ore</string>
+
+    <string name="trip_plan_start_location_hint">Indirizzo o nome del luogo di partenza</string>
+    <string name="trip_plan_end_location_hint">Indirizzo o nome del luogo di arrivo</string>
+
+    <string name="trip_plan_list_view">Vista elenco</string>
+    <string name="trip_plan_map_view">Vista mappa</string>
+
+    <string name="task_progress_tripplanner_progress">Pianificazione del viaggio. Attendere…</string>
+    <string name="tripplanner_no_server_selected_error">Nessuna area selezionata</string>
+    <string name="tripplanner_error_dialog_title">Impossibile pianificare</string>
+    <!-- Errors -->
+    <string name="tripplanner_error_not_defined">Spiacenti, qualcosa è andato storto. Riprova.</string>
+    <string name="tripplanner_error_request_timeout">Controlla la tua connessione Internet e riprova.</string>
+    <string name="tripplanner_error_system">Controlla la tua connessione Internet e riprova.</string>
+    <string name="tripplanner_error_outside_bounds">Il luogo di partenza/arrivo è al di fuori della rete del servizio di trasporti</string>
+    <string name="tripplanner_error_path_not_found">Impossibile trovare un percorso tra luogo di partenza e di arrivo</string>
+    <string name="tripplanner_error_no_transit_times">Orari del trasporto pubblico non disponibili per la data selezionata</string>
+    <string name="tripplanner_error_bogus_parameter">Qualcosa è andato storto. Modifica le tue opzioni di viaggio e riprova.</string>
+    <string name="tripplanner_error_geocode_from_not_found">Luogo di partenza non trovato</string>
+    <string name="tripplanner_error_geocode_to_not_found">Luogo di arrivo non trovato</string>
+    <string name="tripplanner_error_geocode_from_to_not_found">Luoghi di partenza e di arrivo non trovati</string>
+    <string name="tripplanner_error_too_close">Il viaggio è troppo breve</string>
+    <string name="tripplanner_error_location_not_accessible">La posizione scelta non è accessibile</string>
+    <string name="tripplanner_error_geocode_from_ambiguous">Luogo di partenza incerto</string>
+    <string name="tripplanner_error_geocode_to_ambiguous">Luogo di arrivo incerto</string>
+    <string name="tripplanner_error_geocode_from_to_ambiguous">Luoghi di partenza e di arrivo incerti</string>
+    <string name="tripplanner_error_triangle">Qualcosa è andato storto. Modifica opzioni bici e riprova</string>
+    <!-- When routing from my location -->
+    <string name="tripplanner_current_location">Posizione attuale</string>
+
+    <string name="tripplanner_no_contact">Non c\'è un contatto per la pianificazione del viaggio in ques\'area.</string>
+
+    <string name="tripplanner_reverse">Inverti</string>
+    <string name="tripplanner_report_trip_problem">Segnala problema con piano di viaggio</string>
+
+    <string name="no_trip_planner_title">Aumento del costo di Google</string>
+    <string name="no_trip_planner_message">Google chiede a OneBusAway di pagare per ogni piano di viaggio (circa 1.000$ al mese)! OBA è un progetto open-source e non può pagare tali cifre. Abbiamo creato un\'associazione no profit e fatto richiesta a Google for Nonprofits, ma stiamo ancora aspettando l\'approvazione. Nel frattempo, abbiamo dovuto chiudere il pianificatore di viaggio. Se vuoi esprimere il tuo sostegno per OneBusAway a Google for Nonprofits, contattali su Twitter all\'indirizzo https://twitter.com/googlenonprofit?s=17!</string>
+
+    <!-- Instructions generation -->
+
+    <!-- Step-by-step screen -->
+
+    <!-- Instructions generation -->
+
+    <!-- Transit -->
+
+    <!-- Transit instruction start -->
+    <string name="step_by_step_transit_get_on">Sali</string>
+    <string name="step_by_step_transit_get_off">Scendi</string>
+    <!--                This is exactly the formula that should be used, because the app won't include
+                    the destination stop under this text, so would be best to avoid expressions like
+                     "stops to destination". For example in the trip Barcelona/Paris/London/New York,
+                      stops in between are Paris and London, and not New York. See #394 for reference.-->
+    <string name="step_by_step_transit_stops_in_between">fermate intermedie</string>
+    <string name="step_by_step_transit_stops_in_between_singular">fermata intermedia</string>
+
+    <!-- Transit description start -->
+    <string name="step_by_step_transit_connector_stop_name">A:</string>
+
+    <!-- Transit headsign connector -->
+    <string name="step_by_step_transit_connector_headsign">verso</string>
+
+    <!-- Real time -->
+
+    <!-- Modes -->
+
+    <!-- Modes -->
+    <string name="step_by_step_transit_mode_tram">tram</string>
+    <string name="step_by_step_transit_mode_subway">metropolitana</string>
+    <string name="step_by_step_transit_mode_rail">treno</string>
+    <string name="step_by_step_transit_mode_bus">autobus</string>
+    <string name="step_by_step_transit_mode_ferry">traghetto</string>
+    <string name="step_by_step_transit_mode_cable_car">filobus</string>
+    <string name="step_by_step_transit_mode_gondola">funivia</string>
+    <string name="step_by_step_transit_mode_funicular">funicolare</string>
+
+    <!-- Non-transit -->
+
+    <!--  Main direction components -->
+    <string name="step_by_step_non_transit_mode_car_action">Guida</string>
+    <string name="step_by_step_non_transit_mode_walk_action">Cammina</string>
+    <string name="step_by_step_non_transit_mode_bicycle_action">Pedala</string>
+    <string name="step_by_step_non_transit_from">da</string>
+    <string name="step_by_step_non_transit_to">verso</string>
+
+    <!-- Subdirection components -->
+
+    <!-- Connectors -->
+    <string name="step_by_step_non_transit_turn">Gira</string>
+    <string name="step_by_step_non_transit_heading">in direzione</string>
+    <string name="step_by_step_non_transit_connector_street_name">on</string>
+    <string name="step_by_step_non_transit_connector_street_name_roundabout">verso</string>
+
+    <!-- Relative directions -->
+    <string name="step_by_step_non_transit_dir_relative_circle_clockwise">Alla rotonda prendi la</string>
+    <string name="step_by_step_non_transit_dir_relative_circle_counterclockwise">Alla rotonda prendi la</string>
+    <string name="step_by_step_non_transit_dir_relative_continue">Continua</string>
+    <string name="step_by_step_non_transit_dir_relative_depart">Parti</string>
+    <string name="step_by_step_non_transit_dir_relative_elevator">Prendi l\'ascensore</string>
+    <string name="step_by_step_non_transit_dir_relative_hard_left">Svolta a sinistra</string>
+    <string name="step_by_step_non_transit_dir_relative_hard_right">Svolta a destra</string>
+    <string name="step_by_step_non_transit_dir_relative_left">a sinistra</string>
+    <string name="step_by_step_non_transit_dir_relative_right">a destra</string>
+    <string name="step_by_step_non_transit_dir_relative_slightly_left">Gira leggermente a sinistra</string>
+    <string name="step_by_step_non_transit_dir_relative_slightly_right">Gira leggermente a destra</string>
+    <string name="step_by_step_non_transit_dir_relative_uturn_left">Fai un\'inversione a sinistra</string>
+    <string name="step_by_step_non_transit_dir_relative_uturn_right">Fai un\'inversione a destra</string>
+
+    <!-- Absolute directions -->
+    <string name="step_by_step_non_transit_dir_absolute_east">est</string>
+    <string name="step_by_step_non_transit_dir_absolute_north">nord</string>
+    <string name="step_by_step_non_transit_dir_absolute_northeast">nord-est</string>
+    <string name="step_by_step_non_transit_dir_absolute_northwest">nord-ovest</string>
+    <string name="step_by_step_non_transit_dir_absolute_south">sud</string>
+    <string name="step_by_step_non_transit_dir_absolute_southeast">sud-est</string>
+    <string name="step_by_step_non_transit_dir_absolute_southwest">sud-ovest</string>
+    <string name="step_by_step_non_transit_dir_absolute_west">ovest</string>
+
+    <!-- Roundabouts -->
+
+    <!-- Exit ordinals -->
+    <string name="step_by_step_non_transit_roundabout_ordinal_first">prima</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_second">seconda</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_third">terza</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_fourth">quarta</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_fifth">quinta</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_sixth">sesta</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_seventh">settima</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_eighth">ottava</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_ninth">nona</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_tenth">decima</string>
+
+    <!-- To complement the step_by_step_non_transit_roundabout_number for a bigger ordinal -->
+    <string name="step_by_step_non_transit_roundabout_number">numero</string>
+
+    <!-- After the ordinal -->
+    <string name="step_by_step_non_transit_roundabout_exit">uscita</string>
+
+    <!-- Street type -->
+    <string name="street_type_bike_path">pista ciclabile</string>
+    <string name="street_type_open_area">spazio aperto</string>
+    <string name="street_type_path">sentiero</string>
+    <string name="street_type_bridleway">ippovia</string>
+    <string name="street_type_footpath">sentiero pedonale</string>
+    <string name="street_type_platform">binario</string>
+    <string name="street_type_footbridge">ponte pedonale</string>
+    <string name="street_type_underpass">sottopassaggio</string>
+    <string name="street_type_road">strada</string>
+    <string name="street_type_ramp">rampa</string>
+    <string name="street_type_link">collegamento</string>
+    <string name="street_type_service_road">strada di servizio</string>
+    <string name="street_type_alley">vicolo</string>
+    <string name="street_type_parking_aisle">corsia di manovra</string>
+    <string name="street_type_byway">strada secondaria</string>
+    <string name="street_type_track">pista</string>
+    <string name="street_type_sidewalk">marciapiede</string>
+    <string name="street_type_steps">scalini</string>
+
+    <!-- Units -->
+    <string name="hours_abbreviation">h</string>
+    <string name="hours_full">ore</string>
+    <string name="hour_singular">ora</string>
+
+    <string name="seconds_abbrevation">s</string>
+    <string name="seconds_full">secondi</string>
+    <string name="seconds_singular">seconda</string>
+
+    <string name="minute_singular">minuto</string>
+
+    <!-- Connectors -->
+    <string name="time_connector_next_day">domani</string>
+    <string name="time_connector_before_time">alle ore</string>
+    <string name="time_connector_before_date">on</string>
+
+    <!-- Used to introduce route names in itineraries drop down (map view and step-by-step) and map mode markers popups -->
+    <string name="connector_before_route">Linea</string>
+
+
+    <!-- Real time -->
+
+    <string name="trip_plan_notification_new_plan_title">Piano di viaggio migliore trovato</string>
+    <string name="trip_plan_notification_new_plan_text">Tocca per vedere i nuovi risultati per i tuoi ultimi luoghi di partenza/arrivo.</string>
+    <string name="trip_plan_delay">Il tuo viaggio è in ritardo.</string>
+    <string name="trip_plan_early">Il tuo viaggio è in anticipo.</string>
+
+    <!-- Trip plan advanced settings -->
+    <string name="trip_plan_advanced_settings">Preferenze di viaggio aggiuntive</string>
+    <string name="minimize_transfers">Minor numero di cambi</string>
+    <string name="maximum_walk_distance">Massima distanza a piedi:</string>
+    <string name="wheelchair_accessible">Evita scale</string>
+
+    <string name="travel_by_label">Viaggia con:</string>
+    <string name="transit_mode_transit_only">Solo mezzi pubblici</string>
+    <string name="transit_mode_transit_and_bikeshare">Mezzi pubblici e bike sharing</string>
+    <string name="transit_mode_bus">Solo autobus</string>
+    <string name="transit_mode_rail">Solo treno</string>
+    <string name="transit_mode_bikeshare">Solo bike sharing</string>
+    <string name="transit_directions_bikeshare_label">Bike sharing</string>
+
+    <!-- Bikeshare info window -->
+    <string name="bike_info_window_bikes_title">Bici</string>
+
+    <!-- Bikeshare preference option -->
+    <string name="bike_info_window_spaces_title">Spazi</string>
+    <string name="layers_speedial_bikeshare_label">Bike sharing</string>
+    <string name="bike_station_title">Tocca per prenotare una bici</string>
+    <string name="floating_bike_title">Tocca per prenotare questa bici</string>
+
+    <string name="application_ignoring_battery_opt_title">Avviso sulle prestazioni!</string>
+    <string name="application_ignoring_battery_opt_message">Ottimizzazione della batteria abilitata per questa applicazione, ciò potrebbe diminuirne le prestazioni. Per una migliore esperienza d\'uso, disabilita l\'ottimizzazione delle prestazioni per OneBusAway nelle impostazioni.</string>
+
+    <!--Travel Behaviour data collection-->
+    <string name="travel_behavior_opt_in_message">Contribuisci alla ricerca su come migliorare il servizio di trasporto pubblico.</string>
+    <string name="travel_behavior_opt_in_title">Aiutaci a migliorare il trasporto pubblico!</string>
+    <string name="travel_behavior_age_message">Hai più di 18 anni?</string>
+    <string name="travel_behavior_age_invalid_message">Ti ringraziamo per l\'interesse, ma è necessario avere più di 18 anni per partecipare.</string>
+    <string name="travel_behavior_email_message">Fornisci un indirizzo e-mail per i sondaggi online</string>
+    <string name="travel_behavior_email_invalid">Conferma l\'indirizzo e-mail</string>
+    <string name="travel_behavior_enroll_success">Registrazione per la ricerca completata.</string>
+    <string name="travel_behavior_enroll_fail">Registrazione per la ricerca fallita. Riprova più tardi.</string>
+    <string name="travel_behavior_email_hint">E-mail</string>
+    <string name="travel_behavior_confirm_email_hint">Conferma e-mail</string>
+    <string name="travel_behavior_dialog_yes">Sì</string>
+    <string name="travel_behavior_dialog_no">No</string>
+    <string name="travel_behavior_dialog_learn_more">Scopri di più</string>
+    <string name="travel_behavior_dialog_not_now">Non ora</string>
+    <string name="travel_behavior_dialog_consent_agree">Accetta</string>
+    <string name="travel_behavior_dialog_consent_disagree">Rifiuta</string>
+    <string name="travel_behavior_dialog_email_save">Salva</string>
+    <string name="reset_time">Ripristina ora</string>
+    <string name="set_destination_to_my_location">Imposta la mia posizione come luogo di arrivo</string>
+    <string name="set_origin_to_my_location">Imposta la mia posizione come luogo di partenza</string>
+    <string name="travel_behavior_dialog_opt_out_title">Rifiutare partecipazione alla ricerca?</string>
+    <string name="travel_behavior_dialog_opt_out_message">Se scegli di non partecipare alla ricerca non riceveremo più informazioni riguardo alle tue abitudini di viaggio per migliorare il servizio di trasporto pubblico.</string>
+    <string name="cancel">Annulla</string>
+</resources>

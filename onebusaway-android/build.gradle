@@ -24,7 +24,7 @@ apply plugin: 'kotlin-android-extensions'
 repositories {
     maven {
         // OBA Releases - for comparator to sort alphanumeric routes
-        url "http://nexus.onebusaway.org/nexus/content/repositories/releases"
+        url "https://repo.camsys-apps.com/releases"
     }
     maven {
         // for Amazon Maps

@@ -38,12 +38,7 @@ repositories {
 }
 
 android {
-    dexOptions {
-        preDexLibraries true
-        javaMaxHeapSize "3g"
-    }
     compileSdkVersion 29
-    buildToolsVersion '29.0.3'
 
     defaultConfig {
         minSdkVersion 16

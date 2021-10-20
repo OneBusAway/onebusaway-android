@@ -88,6 +88,7 @@ public final class ArrivalInfo {
         final long scheduledMins = scheduled / ms_in_mins;
         final long predictedMins = predicted / ms_in_mins;
 
+        // TODO - we should use info.getPredicted() to set mPredicted to avoid showing bad arrival times - see #1083
         if (predicted != 0) {
             mPredicted = true;
             mEta = predictedMins - nowMins;

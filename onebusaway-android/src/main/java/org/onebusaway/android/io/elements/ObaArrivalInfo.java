@@ -262,6 +262,7 @@ public final class ObaArrivalInfo implements Serializable{
      * of a non-zero predicted start or end time.
      */
     public boolean getPredicted() {
+        // TODO - check predictedDepartureTime and predictedArrivalTime for non-zero and non-negative one values - see #1083
         return (predicted != null) ? predicted : (predictedDepartureTime != 0);
     }
 

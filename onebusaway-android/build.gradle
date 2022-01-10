@@ -38,11 +38,11 @@ repositories {
 }
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 29
+        minSdkVersion 19
+        targetSdkVersion 30
         versionCode 126
         versionName "2.9.3"
 
@@ -412,7 +412,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth:16.1.0'
     implementation 'com.google.firebase:firebase-storage:16.0.5'
     // Google Play Services Location (we need this on Amazon flavor too)
-    implementation 'com.google.android.gms:play-services-location:16.0.0'
+    implementation 'com.google.android.gms:play-services-location:18.0.0'
     // Support libraries
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'com.google.android.material:material:1.0.0'
@@ -440,7 +440,7 @@ dependencies {
     // Pelias for point-of-interest search and geocoding for trip planning origin and destination
     implementation 'edu.usf.cutr:pelias-client-library:1.1.0'
     // Google Play Services Maps (only for Google flavor)
-    googleImplementation 'com.google.android.gms:play-services-maps:16.1.0'
+    googleImplementation 'com.google.android.gms:play-services-maps:18.0.0'
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)
     googleImplementation 'com.google.android.libraries.places:places-compat:1.1.0'
     // Amazon Maps (only for Amazon flavor)

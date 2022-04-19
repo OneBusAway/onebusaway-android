@@ -11,3 +11,11 @@ In order to support certain features in OneBusAway, we need to request various p
 * **Install shortcuts** - Used to create icons on your home screen for a specific stop, so you can tap on that stop icon from your home screen and immediately see arrivals 
 * **Control vibration** - Used to vibrate your phone when a reminder is triggered
 
+# Privacy policy
+
+See the [OneBusAway website Privacy Policy](https://onebusaway.org/privacy/) for details on OneBusAway as a whole.
+
+OneBusAway uses the Google Maps Android SDK and Firebase SDK. Here are the relevant data disclosures for those app components:
+
+* Google Maps Android SDK - https://developers.google.com/maps/documentation/android-sdk/play-data-disclosure
+* Google Firebase SDK - https://firebase.google.com/docs/android/play-data-disclosure

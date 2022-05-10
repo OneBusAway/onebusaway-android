@@ -344,8 +344,14 @@ public class TravelBehaviorManager {
         // activity transitions
         // TODO: figure out the problem described above
 
+        int flags;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE;
+        } else {
+            flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        }
         PendingIntent pi = PendingIntent.getBroadcast(mApplicationContext, 100,
-                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                intent, flags);
         Task<Void> task = ActivityRecognition.getClient(mApplicationContext)
                 .requestActivityTransitionUpdates(atr, pi);
         task.addOnCompleteListener(task1 -> {
@@ -376,8 +382,14 @@ public class TravelBehaviorManager {
 
     public void stopCollectingData() {
         Intent intent = new Intent(mApplicationContext, TransitionBroadcastReceiver.class);
+        int flags;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            flags = PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_MUTABLE;
+        } else {
+            flags = PendingIntent.FLAG_NO_CREATE;
+        }
         PendingIntent pi = PendingIntent.getBroadcast(mApplicationContext, 100, intent,
-                PendingIntent.FLAG_NO_CREATE);
+                flags);
         if (pi != null) {
             ActivityRecognition.getClient(mApplicationContext).removeActivityUpdates(pi);
             pi.cancel();

@@ -179,7 +179,13 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
         intent.putExtra(TravelBehaviorConstants.RECORD_ID, mRecordId);
 
         int reqCode = PreferenceUtils.getInt(TravelBehaviorConstants.RECOGNITION_REQUEST_CODE, 0);
-        PendingIntent pi = PendingIntent.getBroadcast(mContext, reqCode++, intent, PendingIntent.FLAG_ONE_SHOT);
+        int flags;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            flags = PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE;
+        } else {
+            flags = PendingIntent.FLAG_ONE_SHOT;
+        }
+        PendingIntent pi = PendingIntent.getBroadcast(mContext, reqCode++, intent, flags);
         PreferenceUtils.saveInt(TravelBehaviorConstants.RECOGNITION_REQUEST_CODE, reqCode);
         client.requestActivityUpdates(TimeUnit.SECONDS.toMillis(10), pi);
     }
@@ -221,7 +227,13 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
             int reqCode = PreferenceUtils.getInt(TravelBehaviorConstants.LOCATION_REQUEST_CODE, 0);
             Intent intent = new Intent(mContext, LocationBroadcastReceiver.class);
             intent.putExtra(TravelBehaviorConstants.RECORD_ID, mRecordId);
-            PendingIntent pi = PendingIntent.getBroadcast(mContext, reqCode++, intent, PendingIntent.FLAG_ONE_SHOT);
+            int flags;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                flags = PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE;
+            } else {
+                flags = PendingIntent.FLAG_ONE_SHOT;
+            }
+            PendingIntent pi = PendingIntent.getBroadcast(mContext, reqCode++, intent, flags);
             lm.requestLocationUpdates(provider, 0, 0, pi);
             PreferenceUtils.saveInt(TravelBehaviorConstants.LOCATION_REQUEST_CODE, reqCode);
         }

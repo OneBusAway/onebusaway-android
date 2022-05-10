@@ -405,12 +405,12 @@ configurations {
 
 dependencies {
     // Firebase Analytics
-    implementation 'com.google.firebase:firebase-core:16.0.8'
-    implementation 'com.google.firebase:firebase-analytics:16.4.0'
+    implementation 'com.google.firebase:firebase-core:21.0.0'
+    implementation 'com.google.firebase:firebase-analytics:21.0.0'
     // Cloud Firestore (for storing destination alert test data)
-    implementation 'com.google.firebase:firebase-firestore:17.1.4'
-    implementation 'com.google.firebase:firebase-auth:16.1.0'
-    implementation 'com.google.firebase:firebase-storage:16.0.5'
+    implementation 'com.google.firebase:firebase-firestore:24.1.2'
+    implementation 'com.google.firebase:firebase-auth:21.0.3'
+    implementation 'com.google.firebase:firebase-storage:20.0.1'
     // Google Play Services Location (we need this on Amazon flavor too)
     implementation 'com.google.android.gms:play-services-location:19.0.1'
     // Support libraries
@@ -452,7 +452,7 @@ dependencies {
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
     androidTestImplementation 'androidx.test:runner:1.1.0'
     // WorkManager (Java only)
-    implementation 'androidx.work:work-runtime:2.0.0'
+    implementation 'androidx.work:work-runtime:2.7.1'
     implementation "androidx.concurrent:concurrent-futures:1.0.0-beta01"
     implementation "androidx.concurrent:concurrent-listenablefuture:1.0.0-beta01"
     implementation "androidx.concurrent:concurrent-listenablefuture-callback:1.0.0-beta01"

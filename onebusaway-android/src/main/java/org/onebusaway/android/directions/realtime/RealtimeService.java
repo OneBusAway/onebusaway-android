@@ -146,8 +146,14 @@ public class RealtimeService extends IntentService {
             Intent future = new Intent(OTPConstants.INTENT_START_CHECKS);
             future.putExtras(bundle);
 
+            int flags;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE;
+            } else {
+                flags = PendingIntent.FLAG_CANCEL_CURRENT;
+            }
             PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(),
-                    0, future, PendingIntent.FLAG_CANCEL_CURRENT);
+                    0, future, flags);
             getAlarmManager().set(AlarmManager.RTC_WAKEUP, queryStart.getTime(), pendingIntent);
         }
 
@@ -242,11 +248,17 @@ public class RealtimeService extends IntentService {
         openIntent.putExtra(OTPConstants.INTENT_SOURCE, OTPConstants.Source.NOTIFICATION);
         openIntent.putExtra(OTPConstants.ITINERARIES, (ArrayList<Itinerary>) itineraries);
         openIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        int flags;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE;
+        } else {
+            flags = PendingIntent.FLAG_CANCEL_CURRENT;
+        }
         PendingIntent openPendingIntent = PendingIntent
                 .getActivity(getApplicationContext(),
                         0,
                         openIntent,
-                        PendingIntent.FLAG_CANCEL_CURRENT);
+                        flags);
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(getApplicationContext(), Application.CHANNEL_TRIP_PLAN_UPDATES_ID)
@@ -292,8 +304,14 @@ public class RealtimeService extends IntentService {
             Bundle extras = getSimplifiedBundle(bundle);
             intent.putExtras(extras);
         }
+        int flags;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE;
+        } else {
+            flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        }
         PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                flags);
         return alarmIntent;
     }
 

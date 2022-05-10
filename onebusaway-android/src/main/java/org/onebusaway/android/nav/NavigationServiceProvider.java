@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.nav;
 
+import static android.app.PendingIntent.*;
+
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -576,11 +578,25 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         bldr = bldr.setDestinationId(mStopId);
         Intent intent = bldr.getIntent();
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        PendingIntent pIntent = PendingIntent.getActivity(app.getApplicationContext(), 1, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
+
+        int flags;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            flags = FLAG_UPDATE_CURRENT | FLAG_MUTABLE;
+        } else {
+            flags = FLAG_UPDATE_CURRENT;
+        }
+
+        PendingIntent pIntent = getActivity(app.getApplicationContext(), 1, intent,
+                flags);
 
         // Create deletion intent to stop repeated voice comands.
         Intent receiverIntent = new Intent(app.getApplicationContext(), NavigationReceiver.class);
+        int cancelFlags;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            cancelFlags = FLAG_MUTABLE;
+        } else {
+            cancelFlags = 0;
+        }
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(Application.get().getApplicationContext()
@@ -593,8 +609,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             // Build initial notification used to start the service in the foreground
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM, NavigationReceiver.CANCEL_TRIP);
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID);
-            PendingIntent pCancelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
-                    0, receiverIntent, 0);
+            PendingIntent pCancelIntent = getBroadcast(app.getApplicationContext(),
+                    0, receiverIntent, cancelFlags);
             mBuilder.addAction(R.drawable.ic_navigation_close,
                     app.getString(R.string.destination_reminder_cancel_trip), pCancelIntent);
             mBuilder.setOngoing(true);
@@ -638,8 +654,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM, NavigationReceiver.CANCEL_TRIP);
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID);
-            PendingIntent pCancelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
-                    0, receiverIntent, 0);
+            PendingIntent pCancelIntent = getBroadcast(app.getApplicationContext(),
+                    0, receiverIntent, cancelFlags);
 
             mBuilder.addAction(R.drawable.ic_navigation_close,
                     app.getString(R.string.destination_reminder_cancel_trip), pCancelIntent);
@@ -653,8 +669,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM,
                     NavigationReceiver.DISMISS_NOTIFICATION);
-            PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
-                    0, receiverIntent, 0);
+            PendingIntent pDelIntent = getBroadcast(app.getApplicationContext(),
+                    0, receiverIntent, cancelFlags);
 
             String message = Application.get().getString(R.string.destination_voice_get_ready);
             for (int i = 0; i < NUM_GET_READY_REPEAT; i++) {
@@ -679,8 +695,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM,
                     NavigationReceiver.DISMISS_NOTIFICATION);
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 2);
-            PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
-                    0, receiverIntent, 0);
+            PendingIntent pDelIntent = getBroadcast(app.getApplicationContext(),
+                    0, receiverIntent, cancelFlags);
 
             String message = Application.get().getString(R.string.destination_voice_request_stop);
             // TODO: Slow down voice commands, add count as property.

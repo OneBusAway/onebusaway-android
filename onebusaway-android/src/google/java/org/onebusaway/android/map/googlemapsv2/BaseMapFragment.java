@@ -382,7 +382,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     @SuppressLint("MissingPermission")
     private void requestPermissionAndInit(final Activity activity) {
-        if (PermissionUtils.hasGrantedPermissions(activity, LOCATION_PERMISSIONS)) {
+        if (PermissionUtils.hasGrantedAtLeastOnePermission(activity, LOCATION_PERMISSIONS)) {
             // Show the location on the map
             mMap.setMyLocationEnabled(true);
             // Make sure location helper is registered
@@ -822,7 +822,7 @@ public class BaseMapFragment extends SupportMapFragment
 
         Location lastLocation = Application.getLastKnownLocation(getActivity(), apiClient);
         if (lastLocation == null) {
-            if (!PermissionUtils.hasGrantedPermissions(Application.get(), LOCATION_PERMISSIONS)) {
+            if (!PermissionUtils.hasGrantedAtLeastOnePermission(Application.get(), LOCATION_PERMISSIONS)) {
                 if (!PreferenceUtils.userDeniedLocationPermission()) {
                     requestPermissionAndInit(getActivity());
                 }

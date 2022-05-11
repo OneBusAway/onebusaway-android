@@ -379,7 +379,7 @@ public class HomeActivity extends AppCompatActivity
         new TravelBehaviorManager(this, getApplicationContext()).
                 registerTravelBehaviorParticipant();
 
-        if (!mInitialStartup || PermissionUtils.hasGrantedPermissions(this, LOCATION_PERMISSIONS)) {
+        if (!mInitialStartup || PermissionUtils.hasGrantedAtLeastOnePermission(this, LOCATION_PERMISSIONS)) {
             // It's not the first startup or if the user has already granted location permissions (Android L and lower), then check the region status
             // Otherwise, wait for a permission callback from the BaseMapFragment before checking the region status
             checkRegionStatus();
@@ -1847,7 +1847,7 @@ public class HomeActivity extends AppCompatActivity
                 .setCancelable(false)
                 .setPositiveButton(R.string.travel_behavior_dialog_yes,
                         (dialog, which) -> {
-                            if (PermissionUtils.hasGrantedPermissions(this, new String[]{Manifest.
+                            if (PermissionUtils.hasGrantedAllPermissions(this, new String[]{Manifest.
                                     permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS})) {
                                 UIUtils.openBatteryIgnoreIntent(this);
                             } else {

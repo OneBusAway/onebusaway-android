@@ -259,14 +259,13 @@ public class TravelBehaviorManager {
     }
 
     private void checkPermissions() {
-        if (!PermissionUtils.hasGrantedPermissions(mApplicationContext, TravelBehaviorConstants.PERMISSIONS)) {
+        if (!PermissionUtils.hasGrantedAllPermissions(mApplicationContext, TravelBehaviorConstants.PERMISSIONS)) {
             Activity homeActivity = (Activity) mActivityContext;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 homeActivity.requestPermissions(TravelBehaviorConstants.PERMISSIONS, 1);
             }
         }
     }
-
 
     private void registerUser(String email) {
         Data myData = new Data.Builder()

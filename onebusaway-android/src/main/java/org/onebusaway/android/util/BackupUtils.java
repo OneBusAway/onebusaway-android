@@ -44,7 +44,7 @@ public class BackupUtils {
      * @param activityContext Activity context (used for permission check)
      */
     public static void restore(Context activityContext) {
-        if (!PermissionUtils.hasGrantedPermissions(activityContext, STORAGE_PERMISSIONS)) {
+        if (!PermissionUtils.hasGrantedAllPermissions(activityContext, STORAGE_PERMISSIONS)) {
             // Let the PreferenceActivity request permissions from the user first
             return;
         }
@@ -93,7 +93,7 @@ public class BackupUtils {
      * @param activityContext context of the calling activity (used to check permissions)
      */
     public static void save(Context activityContext) {
-        if (!PermissionUtils.hasGrantedPermissions(activityContext, STORAGE_PERMISSIONS)) {
+        if (!PermissionUtils.hasGrantedAllPermissions(activityContext, STORAGE_PERMISSIONS)) {
             // Let the PreferenceActivity request permissions from the user first
             return;
         }

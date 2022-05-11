@@ -345,7 +345,7 @@ public class PreferencesActivity extends PreferenceActivity
     }
 
     private void maybeRequestPermissions(int permissionRequest) {
-        if (!PermissionUtils.hasGrantedPermissions(this, STORAGE_PERMISSIONS)) {
+        if (!PermissionUtils.hasGrantedAllPermissions(this, STORAGE_PERMISSIONS)) {
             // Request permissions from the user
             ActivityCompat.requestPermissions(this, STORAGE_PERMISSIONS, permissionRequest);
         }

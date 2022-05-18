@@ -29,6 +29,7 @@ public class PermissionUtils {
     public static final int LOCATION_PERMISSION_REQUEST = 1;
     public static final int SAVE_BACKUP_PERMISSION_REQUEST = 2;
     public static final int RESTORE_BACKUP_PERMISSION_REQUEST = 3;
+    public static final int BACKGROUND_LOCATION_PERMISSION_REQUEST = 4;
 
     public static final String[] LOCATION_PERMISSIONS = {
             Manifest.permission.ACCESS_FINE_LOCATION,

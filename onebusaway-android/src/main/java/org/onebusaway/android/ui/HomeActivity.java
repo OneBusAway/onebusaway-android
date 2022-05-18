@@ -17,6 +17,26 @@
  */
 package org.onebusaway.android.ui;
 
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_ACTIVITY_FEED;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_NEARBY;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_OPEN_SOURCE;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PAY_FARE;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PINS;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PLAN_TRIP;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PROFILE;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEND_FEEDBACK;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SETTINGS;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SIGN_IN;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
+import static org.onebusaway.android.util.PermissionUtils.BACKGROUND_LOCATION_PERMISSION_REQUEST;
+import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
+import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_BOTTOM;
+import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_END;
+import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_START;
+
 import android.Manifest;
 import android.app.Dialog;
 import android.content.Context;
@@ -54,6 +74,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -82,6 +104,7 @@ import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
+import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
@@ -99,25 +122,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_ACTIVITY_FEED;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_NEARBY;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_OPEN_SOURCE;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PAY_FARE;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PINS;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PLAN_TRIP;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PROFILE;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEND_FEEDBACK;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SETTINGS;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SIGN_IN;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
-import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
-import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_BOTTOM;
-import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_END;
-import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_START;
 
 public class HomeActivity extends AppCompatActivity
         implements BaseMapFragment.OnFocusChangedListener,
@@ -249,6 +253,8 @@ public class HomeActivity extends AppCompatActivity
 
     private FirebaseAnalytics mFirebaseAnalytics;
 
+    private ActivityResultLauncher<String> travelBehaviorPermissionsLauncher;
+
     /**
      * Starts the MapActivity with a particular stop focused with the center of
      * the map at a particular point.
@@ -368,6 +374,8 @@ public class HomeActivity extends AppCompatActivity
         setupZoomButtons();
 
         setupGooglePlayServices();
+
+        setupPermissions(this);
 
         UIUtils.setupActionBar(this);
 
@@ -1806,6 +1814,37 @@ public class HomeActivity extends AppCompatActivity
             }
         }
         mMapProgressBar = findViewById(R.id.progress_horizontal);
+    }
+
+    /**
+     * Setup permissions that are only requested if the user joins the travel behavior study. This
+     * method must be called from #onCreate().
+     *
+     * A call to #requestPhysicalActivityPermission() invokes the permission request, and should only
+     * be called in the case when the user opts into the study.
+     * @param activity
+     */
+    private void setupPermissions(AppCompatActivity activity) {
+        travelBehaviorPermissionsLauncher =
+                registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                    if (isGranted) {
+                        // User opt-ed into study and granted physical activity tracking - now request background location permissions (when targeting Android 11 we can't request both simultaneously)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            activity.requestPermissions(TravelBehaviorConstants.BACKGROUND_LOCATION_PERMISSION, BACKGROUND_LOCATION_PERMISSION_REQUEST);
+                        }
+                    }
+                });
+    }
+
+    /**
+     * Requests physical activity permissions, and then subsequently background location
+     * permissions (based on the initialization in #setupPermissions() if the user grants physical
+     * activity permissions. This method should only be called after the user opts into the travel behavior study.
+     */
+    public void requestPhysicalActivityPermission() {
+        if (travelBehaviorPermissionsLauncher != null){
+            travelBehaviorPermissionsLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION);
+        }
     }
 
     /**

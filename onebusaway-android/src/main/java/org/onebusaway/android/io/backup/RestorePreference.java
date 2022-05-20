@@ -15,12 +15,12 @@
  */
 package org.onebusaway.android.io.backup;
 
-import org.onebusaway.android.util.BackupUtils;
-
 import android.content.Context;
 import android.os.Environment;
 import android.preference.Preference;
 import android.util.AttributeSet;
+
+import org.onebusaway.android.util.BackupUtils;
 
 public class RestorePreference extends Preference {
 
@@ -51,7 +51,7 @@ public class RestorePreference extends Preference {
         // Also, this is only enabled if there's a backup file
         return (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state) ||
                 Environment.MEDIA_MOUNTED.equals(state)) &&
-                Backup.isRestoreAvailable(getContext());
+                Backup.isRestoreAvailable();
     }
 
     @Override

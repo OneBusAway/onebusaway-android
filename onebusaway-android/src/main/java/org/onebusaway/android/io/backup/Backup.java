@@ -15,13 +15,14 @@
  */
 package org.onebusaway.android.io.backup;
 
+import android.content.ContentProviderClient;
+import android.content.Context;
+import android.os.Build;
+import android.os.Environment;
+
 import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.provider.ObaProvider;
-
-import android.content.ContentProviderClient;
-import android.content.Context;
-import android.os.Environment;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,17 +39,21 @@ import java.io.IOException;
  */
 public final class Backup {
 
-    private static final String BACKUP_TYPE = "OBABackups";
-
-    private static final String BACKUP_NAME = "db.backup";
+    private static final String FILE_NAME = "OneBusAway.backup";
 
     private static File getDB(Context context) {
         return ObaProvider.getDatabasePath(context);
     }
 
-    private static File getBackup(Context context) {
-        File backupDir = Environment.getExternalStoragePublicDirectory(BACKUP_TYPE);
-        return new File(backupDir, BACKUP_NAME);
+    private static File getBackup() {
+        File backupDir;
+        // FIXME - Save works but restore does not
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            backupDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        } else {
+            backupDir = Environment.getExternalStorageDirectory();
+        }
+        return new File(backupDir, FILE_NAME);
     }
 
     /**
@@ -58,7 +63,7 @@ public final class Backup {
         // We need two things:
         // 1. The path to the database;
         // 2. The path on the SD card to the backup file.
-        File backupPath = getBackup(context);
+        File backupPath = getBackup();
         FileUtils.copyFile(getDB(context), backupPath);
         return backupPath.getAbsolutePath();
     }
@@ -68,7 +73,7 @@ public final class Backup {
      */
     public static void restore(Context context) throws IOException {
         File dbPath = getDB(context);
-        File backupPath = getBackup(context);
+        File backupPath = getBackup();
 
         // At least here we can decide that the database is closed.
         ContentProviderClient client = null;
@@ -87,7 +92,7 @@ public final class Backup {
         }
     }
 
-    public static boolean isRestoreAvailable(Context context) {
-        return getBackup(context).exists();
+    public static boolean isRestoreAvailable() {
+        return getBackup().exists();
     }
 }

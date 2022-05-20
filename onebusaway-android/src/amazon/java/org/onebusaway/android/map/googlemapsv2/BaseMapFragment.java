@@ -27,6 +27,10 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
+import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSION_REQUEST;
+import static org.onebusaway.android.util.UIUtils.canManageDialog;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
@@ -36,7 +40,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -87,7 +90,6 @@ import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.map.bike.BikeshareMapController;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.ui.HomeActivity;
 import org.onebusaway.android.ui.LayersSpeedDialAdapter;
 import org.onebusaway.android.util.LocationHelper;
@@ -102,11 +104,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static org.onebusaway.android.util.PermissionUtils.BACKGROUND_LOCATION_PERMISSION_REQUEST;
-import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
-import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSION_REQUEST;
-import static org.onebusaway.android.util.UIUtils.canManageDialog;
 
 /**
  * The MapFragment class is split into two basic modes:

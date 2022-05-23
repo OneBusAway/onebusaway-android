@@ -82,6 +82,8 @@ public class PreferencesActivity extends PreferenceActivity
 
     public static final String SHOW_CHECK_REGION_DIALOG = ".checkRegionDialog";
 
+    public static final int REQUEST_CODE_RESTORE_BACKUP = 1234;
+
     Preference mPreference;
 
     Preference mLeftHandMode;
@@ -359,16 +361,24 @@ public class PreferencesActivity extends PreferenceActivity
         if (requestCode == SAVE_BACKUP_PERMISSION_REQUEST || requestCode == RESTORE_BACKUP_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 result = PackageManager.PERMISSION_GRANTED;
-                // The first time the user grants permission, we have to explictly call the save
-                // or restore utility method so that the save or restore is triggered after the permission is granted
+                // User granted permission
                 if (requestCode == SAVE_BACKUP_PERMISSION_REQUEST) {
                     BackupUtils.save(this);
                 } else {
-                    BackupUtils.restore(this);
+                    // For restore, ask them to browse to the backup file, because after targeting Android 11 we can't just access it directly
+                    // This is automatically invoked by RestorePreference.onClick(), so do nothing here
                 }
             } else {
                 showStoragePermissionDialog(this, requestCode);
             }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_RESTORE_BACKUP) {
+            BackupUtils.restore(this, data.getData());
         }
     }
 

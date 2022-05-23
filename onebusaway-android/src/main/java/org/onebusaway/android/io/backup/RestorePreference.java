@@ -15,12 +15,16 @@
  */
 package org.onebusaway.android.io.backup;
 
+import static org.onebusaway.android.io.backup.Backup.getBackupDirectory;
+import static org.onebusaway.android.ui.PreferencesActivity.REQUEST_CODE_RESTORE_BACKUP;
+
 import android.content.Context;
+import android.content.Intent;
 import android.os.Environment;
 import android.preference.Preference;
+import android.preference.PreferenceActivity;
+import android.provider.DocumentsContract;
 import android.util.AttributeSet;
-
-import org.onebusaway.android.util.BackupUtils;
 
 public class RestorePreference extends Preference {
 
@@ -56,6 +60,10 @@ public class RestorePreference extends Preference {
 
     @Override
     protected void onClick() {
-        BackupUtils.restore(getContext());
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("*/*");
+        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, getBackupDirectory().toURI());
+        ((PreferenceActivity) getContext()).startActivityForResult(intent, REQUEST_CODE_RESTORE_BACKUP);
+        super.onClick();
     }
 }

@@ -15,8 +15,11 @@
  */
 package org.onebusaway.android.io.backup;
 
+import static org.onebusaway.android.util.BackupUtilKt.uriToTempFile;
+
 import android.content.ContentProviderClient;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 
@@ -41,18 +44,14 @@ public final class Backup {
 
     private static final String FILE_NAME = "OneBusAway.backup";
 
+    private static final String DIRECTORY_NAME = "OBABackups";
+
     private static File getDB(Context context) {
         return ObaProvider.getDatabasePath(context);
     }
 
     private static File getBackup() {
-        File backupDir;
-        // FIXME - Save works but restore does not
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            backupDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-        } else {
-            backupDir = Environment.getExternalStorageDirectory();
-        }
+        File backupDir = getBackupDirectory();
         return new File(backupDir, FILE_NAME);
     }
 
@@ -70,10 +69,12 @@ public final class Backup {
 
     /**
      * Performs a restore from the SD card.
+     * @param uri URI to the backup file, as returned by the system UI picker. Following targeting
+     *            Android 11 we can't access this directory and need to rely on the system UI picker.
      */
-    public static void restore(Context context) throws IOException {
+    public static void restore(Context context, Uri uri) throws IOException {
         File dbPath = getDB(context);
-        File backupPath = getBackup();
+        File backupPath = uriToTempFile(context, uri);
 
         // At least here we can decide that the database is closed.
         ContentProviderClient client = null;
@@ -89,10 +90,21 @@ public final class Backup {
             if (client != null) {
                 client.release();
             }
+            if (backupPath != null) {
+                backupPath.delete();
+            }
         }
     }
 
     public static boolean isRestoreAvailable() {
         return getBackup().exists();
+    }
+
+    public static File getBackupDirectory() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS + "/" + DIRECTORY_NAME);
+        } else {
+            return Environment.getExternalStoragePublicDirectory(DIRECTORY_NAME);
+        }
     }
 }

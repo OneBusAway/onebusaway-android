@@ -138,8 +138,14 @@ public class TripService extends Service {
                 && !ACTION_NOTIFY.equals(action)) {
             // Create notification for running service in the foreground
             Intent notificationIntent = new Intent(this, TripService.class);
+            int piFlags;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                piFlags = PendingIntent.FLAG_MUTABLE;
+            } else {
+                piFlags = 0;
+            }
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                    notificationIntent, 0);
+                    notificationIntent, piFlags);
 
             String foregroundNotifyTitle = Application.get().getResources()
                     .getString(R.string.foreground_all_intent_title);
@@ -282,13 +288,22 @@ public class TripService extends Service {
     public static void pollTrip(Context context, Uri alertUri, long triggerTime) {
         Intent intent = new Intent(TripService.ACTION_POLL, alertUri,
                 context, AlarmReceiver.class);
+        int flags;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            flags = PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE;
+        } else {
+            flags = PendingIntent.FLAG_ONE_SHOT;
+        }
         PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0,
-                intent, PendingIntent.FLAG_ONE_SHOT);
+                intent, flags);
 
         AlarmManager alarm =
                 (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             // Try to cut through Doze so alarm still triggers - See #558
+            // Note that we intentionally do NOT use alarm.setAlarmClock() because this creates
+            // an alarm in the user's status bar and notification drawer which can be annoying - see
+            // https://stackoverflow.com/questions/34699662/how-does-alarmmanager-alarmclockinfos-pendingintent-work
             alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
         } else {
             alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);

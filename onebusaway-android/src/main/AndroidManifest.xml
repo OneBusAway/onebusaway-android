@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2011-2018 Paul Watts (paulcwatts@gmail.com),
+<!-- Copyright (C) 2011-2022 Paul Watts (paulcwatts@gmail.com),
      University of South Florida (sjbarbeau@gmail.com), 
      Microsoft Corporation.
 
@@ -44,6 +44,8 @@
     <!--To enable checkBatteryOptimizations feature, also uncomment checkBatteryOptimizations() in
     the HomeActivity's onCreate() method-->
     <!--<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>-->
+    <!-- For reminders - SCHEDULE_EXACT_ALARM is required when targeting Android 12 or higher-->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
 
     <application
         android:allowBackup="false"
@@ -59,7 +61,8 @@
 
         <activity
             android:name="org.onebusaway.android.ui.SearchActivity"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
@@ -69,7 +72,8 @@
         </activity>
 
         <activity
-                android:name="org.onebusaway.android.ui.HomeActivity">
+                android:name="org.onebusaway.android.ui.HomeActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -77,36 +81,42 @@
         </activity>
         <activity
                 android:name="org.onebusaway.android.ui.ArrivalsListActivity"
-                android:launchMode="singleTop">
+                android:launchMode="singleTop"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </activity>
         <activity
                 android:name="com.joulespersecond.seattlebusbot.ArrivalsListActivity"
-                android:launchMode="singleTop">
+                android:launchMode="singleTop"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </activity>
-        <activity android:name="org.onebusaway.android.ui.StopInfoActivity">
+        <activity android:name="org.onebusaway.android.ui.StopInfoActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </activity>
-        <activity android:name="org.onebusaway.android.ui.RouteInfoActivity">
+        <activity android:name="org.onebusaway.android.ui.RouteInfoActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </activity>
-        <activity android:name="com.joulespersecond.seattlebusbot.RouteInfoActivity">
+        <activity android:name="com.joulespersecond.seattlebusbot.RouteInfoActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </activity>
         <activity android:name="org.onebusaway.android.ui.TripInfoActivity"/>
         <activity android:name=".ui.MyRemindersActivity"/>
-        <activity android:name="org.onebusaway.android.ui.TripDetailsActivity">
+        <activity android:name="org.onebusaway.android.ui.TripDetailsActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
@@ -114,7 +124,8 @@
 
         <activity
                 android:name="org.onebusaway.android.ui.MyStopsActivity"
-                android:label="@string/stop_shortcut">
+                android:label="@string/stop_shortcut"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -123,14 +134,16 @@
 
         <activity
                 android:name="com.joulespersecond.seattlebusbot.MyStopsActivity"
-                android:label="@string/stop_shortcut">
+                android:label="@string/stop_shortcut"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
             </intent-filter>
         </activity>
         <activity
                 android:name="org.onebusaway.android.ui.MyRecentStopsActivity"
-                android:label="@string/recent_stops_shortcut">
+                android:label="@string/recent_stops_shortcut"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -138,7 +151,8 @@
         </activity>
         <activity
                 android:name="org.onebusaway.android.ui.MyStarredStopsActivity"
-                android:label="@string/starred_stops_shortcut">
+                android:label="@string/starred_stops_shortcut"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -146,7 +160,8 @@
         </activity>
         <activity
                 android:name="org.onebusaway.android.ui.MyRoutesActivity"
-                android:label="@string/route_shortcut">
+                android:label="@string/route_shortcut"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -154,14 +169,16 @@
         </activity>
         <activity
                 android:name="com.joulespersecond.seattlebusbot.MyRoutesActivity"
-                android:label="@string/route_shortcut">
+                android:label="@string/route_shortcut"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
             </intent-filter>
         </activity>
         <activity
                 android:name="org.onebusaway.android.ui.MyRecentRoutesActivity"
-                android:label="@string/recent_routes_shortcut">
+                android:label="@string/recent_routes_shortcut"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -184,7 +201,8 @@
         <activity
                 android:name="org.onebusaway.android.ui.MyRecentStopsAndRoutesActivity"
                 android:label="@string/my_recent_title"
-                android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
+                android:parentActivityName="org.onebusaway.android.ui.HomeActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -198,7 +216,8 @@
                 android:name="org.onebusaway.android.ui.NightLightActivity"
                 android:label="@string/stop_info_option_night_light"
                 android:parentActivityName="org.onebusaway.android.ui.HomeActivity"
-                android:screenOrientation="portrait">
+                android:screenOrientation="portrait"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -234,7 +253,8 @@
 
         <service
                 android:name=".tripservice.TripService"
-                android:permission="${applicationId}.permission.TRIP_SERVICE">
+                android:permission="${applicationId}.permission.TRIP_SERVICE"
+            android:exported="true">
             <intent-filter>
                 <action android:name="${applicationId}.AlarmReceiver"/>
                 <action android:name="${applicationId}.BootstrapService"/>
@@ -247,16 +267,18 @@
 
         <service
             android:name=".nav.NavigationService"
-            android:foregroundServiceType="location"></service>
+            android:foregroundServiceType="location" />
 
-        <receiver android:name=".tripservice.AlarmReceiver">
+        <receiver android:name=".tripservice.AlarmReceiver"
+            android:exported="true">
             <intent-filter>
                 <!-- Should match constants for actions defined in TripService -->
                 <action android:name="${applicationId}.action.SCHEDULE"/>
                 <action android:name="${applicationId}.action.POLL"/>
             </intent-filter>
         </receiver>
-        <receiver android:name=".tripservice.BootstrapService">
+        <receiver android:name=".tripservice.BootstrapService"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
@@ -265,7 +287,8 @@
             </intent-filter>
         </receiver>
         <!-- Legacy Receiver for backwards-compatibility support with v1.x - See Issue #558 -->
-        <receiver android:name="com.joulespersecond.seattlebusbot.AlarmReceiver">
+        <receiver android:name="com.joulespersecond.seattlebusbot.AlarmReceiver"
+            android:exported="true">
             <intent-filter>
                 <!-- Should match constants for actions defined in TripService -->
                 <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE"/>
@@ -285,7 +308,8 @@
             android:enabled="true">
         </receiver>
 
-        <receiver android:name=".directions.realtime.RealtimeWakefulReceiver">
+        <receiver android:name=".directions.realtime.RealtimeWakefulReceiver"
+            android:exported="true">
             <intent-filter>
                 <!-- Should match constants for actions defined in OTPConstants -->
                 <action android:name="${applicationId}.directions.action.START_CHECKS"/>

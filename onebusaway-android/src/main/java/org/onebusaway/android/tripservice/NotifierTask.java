@@ -113,12 +113,18 @@ public final class NotifierTask implements Runnable {
         Intent deleteIntent = new Intent(mContext, TripService.class);
         deleteIntent.setAction(TripService.ACTION_CANCEL);
         deleteIntent.setData(mUri);
+        int flags;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE;
+        } else {
+            flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        }
         PendingIntent pendingDeleteIntent = PendingIntent.getService(mContext, 0,
-                deleteIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                deleteIntent, flags);
 
         final PendingIntent pendingContentIntent = PendingIntent.getActivity(mContext, 0,
                 new ArrivalsListActivity.Builder(mContext, stopId).getIntent(),
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                flags);
 
         Notification notification = createNotification(mNotifyTitle, mNotifyText,
                 pendingContentIntent, pendingDeleteIntent);

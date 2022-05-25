@@ -659,7 +659,8 @@
     <string name="preferences_save_title">Save to storage</string>
     <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
     <string name="preferences_restore_title">Restore from storage</string>
-    <string name="preferences_restore_summary">Restores from previous save</string>
+    <string name="preferences_restore_summary">Restores from previous save. After selecting this option you\'ll be asked to pick a file. Please select \"db.backup\" or \"OneBusAway.backup\", which will be in a folder \"OBABackups\", likely on your SD card or under your \"Documents\" folder.</string>
+
     <string name="preferences_db_saved">Saved successfully!</string>
     <string name="preferences_db_save_error">Unable to save: %1$s</string>
     <string name="preferences_db_restore_warning">This will wipe out any existing data! Go ahead?

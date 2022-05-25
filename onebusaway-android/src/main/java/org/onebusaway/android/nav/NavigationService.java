@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.nav;
 
+import static android.app.PendingIntent.*;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -333,9 +335,16 @@ public class NavigationService extends Service implements LocationHelper.Listene
             fdIntent.putExtra(FeedbackActivity.TRIP_ID, mTripId);
             fdIntent.putExtra(FeedbackActivity.LOG_FILE, mLogFile.getAbsolutePath());
 
+            int flags;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                flags = FLAG_UPDATE_CURRENT | FLAG_MUTABLE;
+            } else {
+                flags = FLAG_UPDATE_CURRENT;
+            }
+
             //Pending intent used to handle feedback when user taps on 'No'
-            PendingIntent fdPendingIntentNo = PendingIntent.getActivity(app.getApplicationContext()
-                    , 1, fdIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent fdPendingIntentNo = getActivity(app.getApplicationContext()
+                    , 1, fdIntent, flags);
 
             fdIntent = new Intent(app.getApplicationContext(), FeedbackActivity.class);
             fdIntent.setAction(FeedbackReceiver.ACTION_REPLY);
@@ -345,12 +354,18 @@ public class NavigationService extends Service implements LocationHelper.Listene
             fdIntent.putExtra(FeedbackActivity.LOG_FILE, mLogFile.getAbsolutePath());
 
             //Pending intent used to handle feedback when user taps on 'Yes'
-            PendingIntent fdPendingIntentYes = PendingIntent.getActivity(app.getApplicationContext()
-                    , 2, fdIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent fdPendingIntentYes = getActivity(app.getApplicationContext()
+                    , 2, fdIntent, flags);
 
             delIntent.setAction(FeedbackReceiver.ACTION_DISMISS_FEEDBACK);
-            PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
-                    0, delIntent, 0);
+            int delFlags;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                delFlags = FLAG_MUTABLE;
+            } else {
+                delFlags = 0;
+            }
+            PendingIntent pDelIntent = getBroadcast(app.getApplicationContext(),
+                    0, delIntent, delFlags);
 
             mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext()
                     , Application.CHANNEL_DESTINATION_ALERT_ID)
@@ -374,9 +389,16 @@ public class NavigationService extends Service implements LocationHelper.Listene
             intentNo.putExtra(FeedbackReceiver.RESPONSE, FeedbackReceiver.FEEDBACK_NO);
             intentNo.putExtra(FeedbackReceiver.LOG_FILE, mLogFile.getAbsolutePath());
 
+            int flags;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                flags = FLAG_MUTABLE;
+            } else {
+                flags = 0;
+            }
+
             //PendingIntent to handle user feedback when a user taps on 'No'
-            PendingIntent fdPendingIntentNo = PendingIntent.getBroadcast(Application.get()
-                    .getApplicationContext(), 100, intentNo, 0);
+            PendingIntent fdPendingIntentNo = getBroadcast(Application.get()
+                    .getApplicationContext(), 100, intentNo, flags);
 
             String replyLabelNo = Application.get().getResources()
                     .getString(R.string.feedback_action_reply_no);
@@ -399,8 +421,8 @@ public class NavigationService extends Service implements LocationHelper.Listene
             intentYes.putExtra(FeedbackReceiver.LOG_FILE, mLogFile.getAbsolutePath());
 
             //PendingIntent to handle user feedback when a user taps on 'No'
-            PendingIntent fdPendingIntentYes = PendingIntent.getBroadcast(Application.get()
-                    .getApplicationContext(), 101, intentYes, 0);
+            PendingIntent fdPendingIntentYes = getBroadcast(Application.get()
+                    .getApplicationContext(), 101, intentYes, flags);
 
             String replyLabelYes = Application.get().getResources()
                     .getString(R.string.feedback_action_reply_yes);
@@ -415,8 +437,8 @@ public class NavigationService extends Service implements LocationHelper.Listene
                     .build();
 
             delIntent.setAction(FeedbackReceiver.ACTION_DISMISS_FEEDBACK);
-            PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
-                    0, delIntent, 0);
+            PendingIntent pDelIntent = getBroadcast(app.getApplicationContext(),
+                    0, delIntent, flags);
 
             mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext()
                     , Application.CHANNEL_DESTINATION_ALERT_ID)

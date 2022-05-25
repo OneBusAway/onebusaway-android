@@ -176,7 +176,7 @@ public class ObaAnalytics {
         bundle.putString(FirebaseAnalytics.Param.ITEM_ID, stopId);
         bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, stopName);
         bundle.putString(FirebaseAnalytics.Param.ITEM_CATEGORY, Application.get().getString(R.string.analytics_label_stop_category));
-        bundle.putString(FirebaseAnalytics.Param.ITEM_LOCATION_ID, proximityToStopCategory);
+        bundle.putString(FirebaseAnalytics.Param.LOCATION_ID, proximityToStopCategory);
         analytics.logEvent(FirebaseAnalytics.Event.VIEW_ITEM, bundle);
     }
 
@@ -268,7 +268,7 @@ public class ObaAnalytics {
             bundle.putString(FirebaseAnalytics.Param.CONTENT, feedbackText);
         }
         if (!isEmpty(fileName)) {
-            bundle.putString(FirebaseAnalytics.Param.ITEM_LOCATION_ID, fileName);
+            bundle.putString(FirebaseAnalytics.Param.LOCATION_ID, fileName);
         }
         analytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
     }

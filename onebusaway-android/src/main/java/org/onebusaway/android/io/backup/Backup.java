@@ -15,13 +15,17 @@
  */
 package org.onebusaway.android.io.backup;
 
-import org.apache.commons.io.FileUtils;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.provider.ObaProvider;
+import static org.onebusaway.android.util.BackupUtilKt.uriToTempFile;
 
 import android.content.ContentProviderClient;
 import android.content.Context;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
+
+import org.apache.commons.io.FileUtils;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.provider.ObaProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,17 +42,17 @@ import java.io.IOException;
  */
 public final class Backup {
 
-    private static final String BACKUP_TYPE = "OBABackups";
+    private static final String FILE_NAME = "OneBusAway.backup";
 
-    private static final String BACKUP_NAME = "db.backup";
+    private static final String DIRECTORY_NAME = "OBABackups";
 
     private static File getDB(Context context) {
         return ObaProvider.getDatabasePath(context);
     }
 
-    private static File getBackup(Context context) {
-        File backupDir = Environment.getExternalStoragePublicDirectory(BACKUP_TYPE);
-        return new File(backupDir, BACKUP_NAME);
+    private static File getBackup() {
+        File backupDir = getBackupDirectory();
+        return new File(backupDir, FILE_NAME);
     }
 
     /**
@@ -58,17 +62,19 @@ public final class Backup {
         // We need two things:
         // 1. The path to the database;
         // 2. The path on the SD card to the backup file.
-        File backupPath = getBackup(context);
+        File backupPath = getBackup();
         FileUtils.copyFile(getDB(context), backupPath);
         return backupPath.getAbsolutePath();
     }
 
     /**
      * Performs a restore from the SD card.
+     * @param uri URI to the backup file, as returned by the system UI picker. Following targeting
+     *            Android 11 we can't access this directory and need to rely on the system UI picker.
      */
-    public static void restore(Context context) throws IOException {
+    public static void restore(Context context, Uri uri) throws IOException {
         File dbPath = getDB(context);
-        File backupPath = getBackup(context);
+        File backupPath = uriToTempFile(context, uri);
 
         // At least here we can decide that the database is closed.
         ContentProviderClient client = null;
@@ -84,10 +90,21 @@ public final class Backup {
             if (client != null) {
                 client.release();
             }
+            if (backupPath != null) {
+                backupPath.delete();
+            }
         }
     }
 
-    public static boolean isRestoreAvailable(Context context) {
-        return getBackup(context).exists();
+    public static boolean isRestoreAvailable() {
+        return getBackup().exists();
+    }
+
+    public static File getBackupDirectory() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS + "/" + DIRECTORY_NAME);
+        } else {
+            return Environment.getExternalStoragePublicDirectory(DIRECTORY_NAME);
+        }
     }
 }

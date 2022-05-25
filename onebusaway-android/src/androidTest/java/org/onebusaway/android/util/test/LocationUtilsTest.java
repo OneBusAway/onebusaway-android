@@ -199,7 +199,7 @@ public class LocationUtilsTest extends ObaTestCase {
         Location loc;
 
         // Make sure we're not running on an emulator, since we'll get a null location there
-        if (!TestUtils.isRunningOnEmulator() && PermissionUtils.hasGrantedPermissions(getTargetContext(), LOCATION_PERMISSIONS)) {
+        if (!TestUtils.isRunningOnEmulator() && PermissionUtils.hasGrantedAllPermissions(getTargetContext(), LOCATION_PERMISSIONS)) {
             /**
              * Test without Google Play Services - should be a Location API v1 location.
              * Typically this is "gps" or "network", but some devices (e.g., HTC EVO LTE)
@@ -227,7 +227,7 @@ public class LocationUtilsTest extends ObaTestCase {
         if (api.isGooglePlayServicesAvailable(getTargetContext())
                 == ConnectionResult.SUCCESS &&
                 !TestUtils.isRunningOnEmulator() &&
-                PermissionUtils.hasGrantedPermissions(getTargetContext(), LOCATION_PERMISSIONS)) {
+                PermissionUtils.hasGrantedAllPermissions(getTargetContext(), LOCATION_PERMISSIONS)) {
             /**
              * Could return either a fused or Location API v1 location
              */

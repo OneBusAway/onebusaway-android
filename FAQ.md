@@ -2,9 +2,15 @@
 
 ### I did a backup via "Settings->Save to storage" - where is it located on my SD card?
 
- You might need to do a little hunting to find the backup using a File Manager app, or connect the device to your computer and browse the folder structure.  It should be under the folder `OBA Backups`, with the file name `db.backup`.  This could be on the SD card on your device, or on internal storage on your device, depending on your Android version and device manufacturer (it's complicated).
+ You might need to do a little hunting to find the backup using a File Manager app, or connect the device to your computer and browse the folder structure.  
+ 
+In OBA v2.9.3 and lower, it should be under the folder `OBA Backups`, with the file name `db.backup`.
 
- Note that you'll need to put it in the same folder on a new device to be able to "Restore backup" in the app.
+In OBA V2.9.4 and higher, it should be under your Documents folder, with the file name `OneBusAway.backup`. Note that sometimes devices have more than one Documents folder.
+
+This could be on the SD card on your device, or on internal storage on your device, depending on your Android version and device manufacturer (it's complicated).
+
+ Note that you'll need to put it in the same folder on a new device to be able to "Restore backup" in the app. If you need to load a v2.9.3 backup on v2.9.4, you'll need to rename the from `db.backup` to `OneBusAway.backup` and put it in the Documents folder.
 
 ### The blue dot on the map for my location isn't accurate - it's a few blocks away from my real position
 

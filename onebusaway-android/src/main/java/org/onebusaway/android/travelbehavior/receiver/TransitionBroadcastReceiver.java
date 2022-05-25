@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.travelbehavior.receiver;
 
-import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityRecognitionClient;
 import com.google.android.gms.location.ActivityTransitionEvent;
@@ -29,7 +28,6 @@ import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.io.worker.ArrivalsAndDeparturesDataReaderWorker;
 import org.onebusaway.android.travelbehavior.io.worker.DestinationReminderReaderWorker;
 import org.onebusaway.android.travelbehavior.io.worker.TripPlanDataReaderWorker;
-import org.onebusaway.android.travelbehavior.model.DeviceInformation;
 import org.onebusaway.android.travelbehavior.model.TravelBehaviorInfo;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
@@ -42,12 +40,8 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.location.LocationManager;
-import android.os.Build;
 import android.util.Log;
-import android.view.accessibility.AccessibilityManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,8 +51,6 @@ import java.util.concurrent.TimeUnit;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
-
-import static android.content.Context.ACCESSIBILITY_SERVICE;
 
 public class TransitionBroadcastReceiver extends BroadcastReceiver {
 
@@ -179,7 +171,13 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
         intent.putExtra(TravelBehaviorConstants.RECORD_ID, mRecordId);
 
         int reqCode = PreferenceUtils.getInt(TravelBehaviorConstants.RECOGNITION_REQUEST_CODE, 0);
-        PendingIntent pi = PendingIntent.getBroadcast(mContext, reqCode++, intent, PendingIntent.FLAG_ONE_SHOT);
+        int flags;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            flags = PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE;
+        } else {
+            flags = PendingIntent.FLAG_ONE_SHOT;
+        }
+        PendingIntent pi = PendingIntent.getBroadcast(mContext, reqCode++, intent, flags);
         PreferenceUtils.saveInt(TravelBehaviorConstants.RECOGNITION_REQUEST_CODE, reqCode);
         client.requestActivityUpdates(TimeUnit.SECONDS.toMillis(10), pi);
     }
@@ -187,7 +185,7 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
     private void requestLocationUpdates() {
         String[] requiredPermissions = {Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION};
-        if (PermissionUtils.hasGrantedPermissions(mContext, requiredPermissions)) {
+        if (PermissionUtils.hasGrantedAllPermissions(mContext, requiredPermissions)) {
             Log.d(TAG, "Location permissions are granted, requesting fused, GPS, and Network" +
                     "locations");
             requestFusedLocation();
@@ -221,7 +219,13 @@ public class TransitionBroadcastReceiver extends BroadcastReceiver {
             int reqCode = PreferenceUtils.getInt(TravelBehaviorConstants.LOCATION_REQUEST_CODE, 0);
             Intent intent = new Intent(mContext, LocationBroadcastReceiver.class);
             intent.putExtra(TravelBehaviorConstants.RECORD_ID, mRecordId);
-            PendingIntent pi = PendingIntent.getBroadcast(mContext, reqCode++, intent, PendingIntent.FLAG_ONE_SHOT);
+            int flags;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                flags = PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE;
+            } else {
+                flags = PendingIntent.FLAG_ONE_SHOT;
+            }
+            PendingIntent pi = PendingIntent.getBroadcast(mContext, reqCode++, intent, flags);
             lm.requestLocationUpdates(provider, 0, 0, pi);
             PreferenceUtils.saveInt(TravelBehaviorConstants.LOCATION_REQUEST_CODE, reqCode);
         }

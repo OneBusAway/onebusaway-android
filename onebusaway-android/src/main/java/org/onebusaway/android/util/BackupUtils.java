@@ -16,8 +16,11 @@
 
 package org.onebusaway.android.util;
 
+import static org.onebusaway.android.util.PermissionUtils.STORAGE_PERMISSIONS;
+
 import android.app.AlertDialog;
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -33,8 +36,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.onebusaway.android.util.PermissionUtils.STORAGE_PERMISSIONS;
-
 public class BackupUtils {
     private static final String TAG = "BackupUtils";
 
@@ -42,9 +43,11 @@ public class BackupUtils {
      * Restores a backed up OBA database from storage.  If storage permission hasn't been granted
      * this method is a no-op.
      * @param activityContext Activity context (used for permission check)
+     * @param uri URI to the backup file, as returned by the system UI picker. Following targeting
+     *      Android 11 we can't access this directory and need to rely on the system UI picker.
      */
-    public static void restore(Context activityContext) {
-        if (!PermissionUtils.hasGrantedPermissions(activityContext, STORAGE_PERMISSIONS)) {
+    public static void restore(Context activityContext, Uri uri) {
+        if (!PermissionUtils.hasGrantedAllPermissions(activityContext, STORAGE_PERMISSIONS)) {
             // Let the PreferenceActivity request permissions from the user first
             return;
         }
@@ -55,20 +58,26 @@ public class BackupUtils {
                 .setMessage(R.string.preferences_db_restore_warning)
                 .setPositiveButton(android.R.string.ok, (dialog12, which) -> {
                     dialog12.dismiss();
-                    doRestore(activityContext);
+                    doRestore(activityContext, uri);
                 })
                 .setNegativeButton(android.R.string.cancel, (dialog1, which) -> dialog1.dismiss())
                 .create();
         dialog.show();
     }
 
-    static private void doRestore(Context activityContext) {
+    /**
+     *
+     * @param activityContext
+     * @param uri URI to the backup file, as returned by the system UI picker. Following targeting
+     *      Android 11 we can't access this directory and need to rely on the system UI picker.
+     */
+    static private void doRestore(Context activityContext, Uri uri) {
         final Context context = Application.get().getApplicationContext();
         ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
                 context.getString(R.string.analytics_label_button_press_restore_preference),
                 null);
         try {
-            Backup.restore(context);
+            Backup.restore(context, uri);
 
             if (activityContext != null) {
                 List<ObaRegionsTask.Callback> callbacks = new ArrayList<>();
@@ -93,7 +102,7 @@ public class BackupUtils {
      * @param activityContext context of the calling activity (used to check permissions)
      */
     public static void save(Context activityContext) {
-        if (!PermissionUtils.hasGrantedPermissions(activityContext, STORAGE_PERMISSIONS)) {
+        if (!PermissionUtils.hasGrantedAllPermissions(activityContext, STORAGE_PERMISSIONS)) {
             // Let the PreferenceActivity request permissions from the user first
             return;
         }

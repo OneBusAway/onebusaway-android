@@ -121,7 +121,7 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
      * permissions have not been granted and no listener was registered
      */
     public synchronized boolean registerListener(Listener listener) {
-        if (!PermissionUtils.hasGrantedPermissions(mContext, LOCATION_PERMISSIONS)) {
+        if (!PermissionUtils.hasGrantedAtLeastOnePermission(mContext, LOCATION_PERMISSIONS)) {
             return false;
         }
         // User has granted permissions - continue to register listener for location updates

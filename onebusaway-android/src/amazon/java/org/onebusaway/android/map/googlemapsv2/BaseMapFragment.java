@@ -27,6 +27,10 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
+import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSION_REQUEST;
+import static org.onebusaway.android.util.UIUtils.canManageDialog;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
@@ -100,10 +104,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
-import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSION_REQUEST;
-import static org.onebusaway.android.util.UIUtils.canManageDialog;
 
 /**
  * The MapFragment class is split into two basic modes:
@@ -393,7 +393,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     @SuppressLint("MissingPermission")
     private void requestPermissionAndInit(final Activity activity) {
-        if (PermissionUtils.hasGrantedPermissions(activity, LOCATION_PERMISSIONS)) {
+        if (PermissionUtils.hasGrantedAtLeastOnePermission(activity, LOCATION_PERMISSIONS)) {
             // Show the location on the map
             mMap.setMyLocationEnabled(true);
             // Make sure location helper is registered
@@ -833,7 +833,7 @@ public class BaseMapFragment extends SupportMapFragment
 
         Location lastLocation = Application.getLastKnownLocation(getActivity(), apiClient);
         if (lastLocation == null) {
-            if (!PermissionUtils.hasGrantedPermissions(Application.get(), LOCATION_PERMISSIONS)) {
+            if (!PermissionUtils.hasGrantedAtLeastOnePermission(Application.get(), LOCATION_PERMISSIONS)) {
                 if (!PreferenceUtils.userDeniedLocationPermission()) {
                     requestPermissionAndInit(getActivity());
                 }

@@ -67,8 +67,10 @@ public class TravelBehaviorConstants {
 
     public static final String USER_OPT_OUT = "travelBehaviorUserOptOut";
 
+    public static final String[] BACKGROUND_LOCATION_PERMISSION = {
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+    };
     public static final String[] PERMISSIONS = {
-            Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_BACKGROUND_LOCATION,
             Manifest.permission.ACTIVITY_RECOGNITION
     };

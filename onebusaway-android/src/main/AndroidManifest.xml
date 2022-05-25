@@ -44,6 +44,8 @@
     <!--To enable checkBatteryOptimizations feature, also uncomment checkBatteryOptimizations() in
     the HomeActivity's onCreate() method-->
     <!--<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>-->
+    <!-- For reminders - SCHEDULE_EXACT_ALARM is required when targeting Android 12 or higher-->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
 
     <application
         android:allowBackup="false"

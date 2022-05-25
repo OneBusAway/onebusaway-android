@@ -301,6 +301,9 @@ public class TripService extends Service {
                 (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             // Try to cut through Doze so alarm still triggers - See #558
+            // Note that we intentionally do NOT use alarm.setAlarmClock() because this creates
+            // an alarm in the user's status bar and notification drawer which can be annoying - see
+            // https://stackoverflow.com/questions/34699662/how-does-alarmmanager-alarmclockinfos-pendingintent-work
             alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
         } else {
             alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);

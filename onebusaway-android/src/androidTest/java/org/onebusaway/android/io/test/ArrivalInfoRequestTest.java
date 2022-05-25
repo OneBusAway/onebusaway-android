@@ -15,6 +15,13 @@
  */
 package org.onebusaway.android.io.test;
 
+import static androidx.test.InstrumentationRegistry.getTargetContext;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+
 import org.junit.Test;
 import org.onebusaway.android.UriAssert;
 import org.onebusaway.android.app.Application;
@@ -34,12 +41,6 @@ import org.onebusaway.android.util.UIUtils;
 
 import java.util.HashMap;
 import java.util.List;
-
-import static androidx.test.InstrumentationRegistry.getTargetContext;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertTrue;
 
 /**
  * Tests requests and parsing JSON responses from /res/raw for the OBA server API
@@ -181,6 +182,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertEquals(27.982215585882088, arrivals[0].getTripStatus().getPosition().getLatitude());
         assertEquals(-82.4224, arrivals[0].getTripStatus().getPosition().getLongitude());
         assertEquals(Status.DEFAULT, arrivals[0].getTripStatus().getStatus());
+        assertTrue(arrivals[0].getPredicted());
 
         final List<ObaStop> nearbyStops = response.getNearbyStops();
         assertTrue(nearbyStops.size() > 0);
@@ -221,6 +223,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertOK(response);
 
         arrivals = response.getArrivalInfo();
+        assertTrue(arrivals[0].getPredicted());
         assertEquals(0, arrivals[0].getTotalStopsInTrip());
         assertEquals(0, arrivals[1].getTotalStopsInTrip());
         assertEquals(0, arrivals[2].getTotalStopsInTrip());
@@ -549,6 +552,8 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         final List<ObaStop> nearbyStops = response.getNearbyStops();
         assertTrue(nearbyStops.size() > 0);
 
+        assertTrue(arrivals[0].getPredicted());
+
         // EMPTY
         ObaArrivalInfo info = arrivals[0];
         assertEquals(Occupancy.EMPTY, info.getHistoricalOccupancy());
@@ -631,5 +636,63 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertEquals(27.982215585882088, arrivals[0].getTripStatus().getPosition().getLatitude());
         assertEquals(-82.4224, arrivals[0].getTripStatus().getPosition().getLongitude());
         assertEquals(Status.CANCELED, arrivals[0].getTripStatus().getStatus());
+        assertTrue(arrivals[0].getPredicted());
+    }
+
+    /**
+     * Test bad arrival data where it says a prediction exists but the values are -1.
+     *
+     * See https://github.com/OneBusAway/onebusaway-android/issues/1083.
+     */
+    @Test
+    public void testBadArrivalData() {
+        // Test by setting region
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
+        assertNotNull(tampa);
+        Application.get().setCurrentRegion(tampa);
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
+                        "Hillsborough Area Regional Transit_9998").build().call();
+        assertOK(response);
+        ObaStop stop = response.getStop();
+        assertNotNull(stop);
+        final List<ObaRoute> routes = response.getRoutes(stop.getRouteIds());
+        assertTrue(routes.size() > 0);
+        ObaAgency agency = response.getAgency(routes.get(0).getAgencyId());
+        assertEquals("Hillsborough Area Regional Transit", agency.getId());
+        ObaTrip trip = response.getTrip("Hillsborough Area Regional Transit_909841");
+        assertEquals("Hillsborough Area Regional Transit_266684", trip.getBlockId());
+
+        final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+        assertNotNull(arrivals);
+        assertEquals(27.982215585882088, arrivals[0].getTripStatus().getPosition().getLatitude());
+        assertEquals(-82.4224, arrivals[0].getTripStatus().getPosition().getLongitude());
+        assertEquals(Status.DEFAULT, arrivals[0].getTripStatus().getStatus());
+
+        // Even though the JSON data says "predicted": true, it doesn't contain valid prediction
+        // data, so we should discard it and consider this to be a scheduled time only
+        assertFalse(arrivals[0].getPredicted());
+    }
+
+    /**
+     * Test scheduled arrival time
+     */
+    @Test
+    public void testScheduledArrival() {
+        // Test by setting region
+        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
+        assertNotNull(tampa);
+        Application.get().setCurrentRegion(tampa);
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
+                        "Hillsborough Area Regional Transit_9997").build().call();
+        assertOK(response);
+
+        final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+        assertNotNull(arrivals);
+
+        assertTrue(arrivals[0].getPredicted());
+        assertTrue(arrivals[1].getPredicted());
+        assertFalse(arrivals[2].getPredicted());
     }
 }

@@ -258,12 +258,23 @@ public final class ObaArrivalInfo implements Serializable{
 
     /**
      * @return Whether this arrival has prediction information. If the 'predicted'
-     * value is set, then that is used; otherwise it is inferred from the existence
-     * of a non-zero predicted start or end time.
+     * value is set and the predicted arrival OR departure time is valid, then return true;
+     * otherwise it is inferred from the existence of a positive predicted start OR end time.
      */
     public boolean getPredicted() {
-        // TODO - check predictedDepartureTime and predictedArrivalTime for non-zero and non-negative one values - see #1083
-        return (predicted != null) ? predicted : (predictedDepartureTime != 0);
+        if (predicted != null) {
+            return predicted && isPredictedTimeValid();
+        } else {
+            return isPredictedTimeValid();
+        }
+    }
+
+    /**
+     * Returns true if the predicted arrival time or predicted departure time is greater than 0
+     * @return true if the predicted arrival time or predicted departure time is greater than 0
+     */
+    private boolean isPredictedTimeValid() {
+        return predictedArrivalTime > 0 || predictedDepartureTime > 0;
     }
 
     /**

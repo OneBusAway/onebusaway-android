@@ -527,7 +527,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
     */
 
     /**
-     * Test occupancy being parsed from a server reponse
+     * Test occupancy being parsed from a server response
      */
     @Test
     public void testOccupancy() {

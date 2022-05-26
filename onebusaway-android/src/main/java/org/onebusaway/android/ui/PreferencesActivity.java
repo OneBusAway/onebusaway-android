@@ -60,6 +60,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
@@ -95,6 +96,8 @@ public class PreferencesActivity extends PreferenceActivity
     Preference mAnalyticsPref;
 
     CheckBoxPreference mTravelBehaviorPref;
+
+    Preference mHideAlertsPref;
 
     Preference mTutorialPref;
 
@@ -160,6 +163,9 @@ public class PreferencesActivity extends PreferenceActivity
         } else {
             mTravelBehaviorPref.setChecked(TravelBehaviorUtils.isUserParticipatingInStudy());
         }
+
+        mHideAlertsPref = findPreference(getString(R.string.preference_key_hide_alerts));
+        mHideAlertsPref.setOnPreferenceChangeListener(this);
 
         mTutorialPref = findPreference(getString(R.string.preference_key_tutorial));
         mTutorialPref.setOnPreferenceClickListener(this);
@@ -457,6 +463,11 @@ public class PreferencesActivity extends PreferenceActivity
             Boolean isLeftHandEnabled = (Boolean) newValue;
             //Report if left handed mode is turned on, just before shared preference changed
             ObaAnalytics.setLeftHanded(mFirebaseAnalytics, isLeftHandEnabled);
+        } else if (preference.equals(mHideAlertsPref) && newValue instanceof Boolean) {
+            Boolean hideAlerts = (Boolean) newValue;
+            if (hideAlerts) {
+                ObaContract.ServiceAlerts.hideAllAlerts();
+            }
         }
         return true;
     }

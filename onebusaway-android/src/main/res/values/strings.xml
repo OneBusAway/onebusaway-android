@@ -241,6 +241,7 @@
     <string name="stop_info_option_removestar">Remove star from stop</string>
     <string name="stop_info_option_report_problem">Report stop problem</string>
     <string name="stop_info_option_night_light">Night light</string>
+    <string name="stop_info_option_hide_alerts">Hide active alerts</string>
     <string name="stop_info_nodata_minutes">No arrivals in the next %1$d min.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_nodata_hours_minutes">
@@ -395,8 +396,10 @@
     </string>
     <string name="situation_more_details">More details</string>
     <string name="hide">Hide</string>
+    <string name="hide_all">Hide all</string>
     <string name="close">Close</string>
     <string name="alert_hidden_snackbar_text">Alert is now hidden</string>
+    <string name="all_alert_hidden_snackbar_text">All alerts are now hidden</string>
     <string name="alert_hidden_snackbar_action">UNDO</string>
     <plurals name="alert_filter_text">
         <item quantity="one">%1$d active alert is hidden</item>
@@ -618,6 +621,12 @@
     <string name="preferences_show_negative_arrivals_title">Show departed buses</string>
     <string name="preferences_show_negative_arrivals_summary">Include buses that just left as
         negative arrival times
+    </string>
+
+    <string name="preferences_hide_alerts_title">Hide all alerts</string>
+    <string name="preferences_hide_alerts_summary">When selected, by default all service alerts will
+        be collapsed into a small bar at the top of the arrivals screen instead of shown as a full
+        list.
     </string>
 
     <string name="preferences_show_zoom_controls_title">Show zoom controls</string>

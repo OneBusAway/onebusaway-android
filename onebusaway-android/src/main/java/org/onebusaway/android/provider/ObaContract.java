@@ -1216,6 +1216,15 @@ public final class ObaContract {
                 if (markAsRead) {
                     values.put(MARKED_READ_TIME, System.currentTimeMillis());
                 }
+                if (hidden == null) {
+                    // If the user has selected to hide all alerts by default, mark this one as hidden when inserting
+                    boolean hideAllAlerts = Application.getPrefs()
+                            .getBoolean(Application.get().getResources()
+                                    .getString(R.string.preference_key_hide_alerts), false);
+                    if (hideAllAlerts) {
+                        hidden = true;
+                    }
+                }
                 if (hidden != null) {
                     if (hidden) {
                         values.put(HIDDEN, 1);
@@ -1267,6 +1276,18 @@ public final class ObaContract {
             ContentResolver cr = Application.get().getContentResolver();
             ContentValues values = new ContentValues();
             values.put(HIDDEN, 0);
+            return cr.update(CONTENT_URI, values, null, null);
+        }
+
+        /**
+         * Marks all alerts as hidden, and therefore not visible
+         *
+         * @return the number of rows updated
+         */
+        public static int hideAllAlerts() {
+            ContentResolver cr = Application.get().getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(HIDDEN, 1);
             return cr.update(CONTENT_URI, values, null, null);
         }
     }

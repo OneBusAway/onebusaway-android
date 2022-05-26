@@ -35,6 +35,11 @@
                 android:title="@string/preferences_show_negative_arrivals_title"
                 android:summary="@string/preferences_show_negative_arrivals_summary"
                 android:defaultValue="true"/>
+        <CheckBoxPreference
+            android:key="@string/preference_key_hide_alerts"
+            android:title="@string/preferences_hide_alerts_title"
+            android:summary="@string/preferences_hide_alerts_summary"
+            android:defaultValue="false"/>
 
         <CheckBoxPreference
             android:key="@string/preference_key_show_zoom_controls"

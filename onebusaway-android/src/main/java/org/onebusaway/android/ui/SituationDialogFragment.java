@@ -26,15 +26,16 @@ import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
+
 import com.google.android.material.snackbar.Snackbar;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
-
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.DialogFragment;
 
 /**
  * Displays service alerts (i.e., situations) is a dialog
@@ -125,6 +126,22 @@ public class SituationDialogFragment extends DialogFragment {
                         if (mListener != null) {
                             mListener.onDismiss(true);
                         }
+                    }
+                })
+                .setNeutralButton(R.string.hide_all, (dialog, which) -> {
+                    // Hide existing alerts in the database
+                    ObaContract.ServiceAlerts.hideAllAlerts();
+                    // Also set the user preference to hide new alerts
+                    PreferenceUtils.saveBoolean(getString(R.string.preference_key_hide_alerts), true);
+
+                    // Show the snackbar
+                    Snackbar.make(getActivity().findViewById(R.id.fragment_arrivals_list),
+                                    R.string.all_alert_hidden_snackbar_text, Snackbar.LENGTH_SHORT)
+                            .show();
+
+                    dialog.dismiss();
+                    if (mListener != null) {
+                        mListener.onDismiss(true);
                     }
                 })
                 .setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {

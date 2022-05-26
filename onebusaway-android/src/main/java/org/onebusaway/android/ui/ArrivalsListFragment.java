@@ -540,7 +540,7 @@ public class ArrivalsListFragment extends ListFragment
         if (situations != null) {
             refreshSituations(situations);
         } else {
-            refreshSituations(new ArrayList<ObaSituation>());
+            refreshSituations(new ArrayList<>());
         }
 
         if (info != null) {
@@ -655,6 +655,17 @@ public class ArrivalsListFragment extends ListFragment
             }
         } else if (id == R.id.night_light) {
             NightLightActivity.start(getActivity());
+        } else if (id == R.id.hide_alerts) {
+            if (mSituationAlerts == null || mSituationAlerts.isEmpty()) {
+                return false;
+            }
+            // Update the database to hide all currently active alerts at this stop
+            for (SituationAlert alert : mSituationAlerts) {
+                ObaContract.ServiceAlerts
+                        .insertOrUpdate(alert.getId(), new ContentValues(), false,
+                                true);
+            }
+            refresh();
         }
         return false;
     }

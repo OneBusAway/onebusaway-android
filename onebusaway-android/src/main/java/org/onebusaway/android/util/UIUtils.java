@@ -1877,14 +1877,15 @@ public final class UIUtils {
             v.setVisibility(View.VISIBLE);
         }
 
-        int silhouetteColor;
-        int backgroundColor;
+        int silhouetteColor = Application.get().getResources().getColor(R.color.stop_info_occupancy);
+        int backgroundColor = Application.get().getResources().getColor(R.color.stop_info_occupancy_background);
         if (occupancyState == OccupancyState.HISTORICAL) {
-            silhouetteColor = Application.get().getResources().getColor(R.color.stop_info_occupancy_historical);
-            backgroundColor = Application.get().getResources().getColor(R.color.stop_info_occupancy_background_historical);
-        } else {
-            silhouetteColor = Application.get().getResources().getColor(R.color.stop_info_occupancy_predicted);
-            backgroundColor = Application.get().getResources().getColor(R.color.stop_info_occupancy_background_predicted);
+            // Set the alpha for historical occupancy to 60%
+            float alpha = 0.6f;
+            v.setAlpha(alpha);
+            silhouette1.setAlpha(alpha);
+            silhouette2.setAlpha(alpha);
+            silhouette3.setAlpha(alpha);
         }
 
         // Below switch continues into following cases to minimize number of setVisibility() calls
@@ -1896,11 +1897,6 @@ public final class UIUtils {
             case CRUSHED_STANDING_ROOM_ONLY:
                 // 3 icons
                 silhouette3.setVisibility(View.VISIBLE);
-                if (occupancyState == OccupancyState.PREDICTED || occupancyState == OccupancyState.REALTIME) {
-                    // Highlight packed vehicles based on real-time data with a different color
-                    silhouetteColor = Application.get().getResources().getColor(R.color.stop_info_occupancy_predicted_full);
-                    backgroundColor = Application.get().getResources().getColor(R.color.stop_info_occupancy_background_predicted_full);
-                }
             case STANDING_ROOM_ONLY:
                 // 2 icons
                 silhouette2.setVisibility(View.VISIBLE);

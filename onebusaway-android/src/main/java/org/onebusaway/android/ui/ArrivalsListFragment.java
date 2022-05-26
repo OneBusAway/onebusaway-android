@@ -793,7 +793,7 @@ public class ArrivalsListFragment extends ListFragment
                     ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                             getActivity().getString(R.string.analytics_label_button_press_about_occupancy),
                             null);
-                    createOccupancyDialog(occupancyState).show();
+                    createOccupancyDialog().show();
                 }
             }
         });
@@ -1717,33 +1717,20 @@ public class ArrivalsListFragment extends ListFragment
     /**
      * Creates the dialog that will be shown to the user to explain the occupancy feature
      *
-     * @param occupancyState occupancy state for this trip
      * @return the dialog that will be shown to the user to explain the occupancy feature
      */
-    private Dialog createOccupancyDialog(OccupancyState occupancyState) {
+    private Dialog createOccupancyDialog() {
         androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(getContext());
-        if (occupancyState == OccupancyState.HISTORICAL) {
-            builder.setTitle(R.string.menu_title_about_historical_occupancy);
-        } else {
-            builder.setTitle(R.string.menu_title_about_occupancy);
-        }
+        builder.setTitle(R.string.menu_title_about_occupancy);
 
         LayoutInflater inflater = LayoutInflater.from(getContext());
         View occupancyDialogView = inflater.inflate(R.layout.occupancy_dialog, null);
         builder.setView(occupancyDialogView);
+        ViewGroup realtimeOccupancy = occupancyDialogView.findViewById(R.id.realtime_occupancy);
+        ViewGroup historicalOccupancy = occupancyDialogView.findViewById(R.id.historical_occupancy);
 
-        TextView occupancyDescription = occupancyDialogView.findViewById(R.id.occupancy_description);
-
-        if (occupancyState == OccupancyState.HISTORICAL) {
-            occupancyDescription.setText(R.string.menu_text_about_historical_occupancy);
-        } else {
-            occupancyDescription.setText(R.string.menu_text_about_occupancy);
-        }
-
-        // TODO - Implement About screen that includes real-time/predicted occupancy icons. Design is somewhat
-        // TBD at the moment, although I've added some placeholder coloring.  But let's wait to
-        // implement the full About until we've finalized the design.  We can use the main Legend as
-        // an example - see HomeActivity.createLegendDialog() and the legend_dialog.xml layout
+        UIUtils.setOccupancyVisibilityAndColor(realtimeOccupancy, Occupancy.FULL, OccupancyState.REALTIME);
+        UIUtils.setOccupancyVisibilityAndColor(historicalOccupancy, Occupancy.FULL, OccupancyState.HISTORICAL);
 
         builder.setNeutralButton(R.string.main_help_close, (dialogInterface, i) -> dialogInterface.dismiss());
         return builder.create();

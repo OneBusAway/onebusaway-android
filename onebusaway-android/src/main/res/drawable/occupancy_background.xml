@@ -6,5 +6,5 @@
         android:left="2dp"
         android:bottom="2dp"
         android:right="2dp" />
-    <solid android:color="@color/stop_info_occupancy_background_historical" />
+    <solid android:color="@color/stop_info_occupancy_background" />
 </shape>

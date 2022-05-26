@@ -20,7 +20,7 @@
         app:layout_constraintEnd_toStartOf="@id/silhouette2"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:srcCompat="@drawable/ic_occupancy"
-        android:tint="@color/stop_info_occupancy_historical" />
+        android:tint="@color/stop_info_occupancy" />
 
     <ImageView
         android:id="@+id/silhouette2"
@@ -33,7 +33,7 @@
         android:layout_marginStart="@dimen/occupancy_margin"
         android:layout_marginLeft="@dimen/occupancy_margin"
         app:srcCompat="@drawable/ic_occupancy"
-        android:tint="@color/stop_info_occupancy_historical" />
+        android:tint="@color/stop_info_occupancy" />
 
     <ImageView
         android:id="@+id/silhouette3"
@@ -48,6 +48,6 @@
         app:layout_constraintStart_toEndOf="@id/silhouette2"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_occupancy"
-        android:tint="@color/stop_info_occupancy_historical" />
+        android:tint="@color/stop_info_occupancy" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -105,6 +105,10 @@
     <string name="main_help_whatsnew">&#8226;\u0020
         <b>Real-time occupancy for WMATA</b>
         - See how many passengers are on supported vehicles in real-time for the Washington, D.C. region.\n&#8226;\u0020
+        <b>Options to hide all alerts</b>
+        - New menu option to hide all alerts for a stop in one tap, and a new Settings option to hide all alerts by default.\n&#8226;\u0020
+        <b>Italian translation</b>
+        - Thanks Eleonora Fabbri!\n&#8226;\u0020
         <b>Bug fixes and improvements</b>
         - See https://bit.ly/oba-android-releases
     </string>

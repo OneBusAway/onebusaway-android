@@ -99,7 +99,7 @@ After testing a release, I create a tag locally by using Android Studio "Git->Ne
 I then push this tag to GitHub using:
 
 ```
-git push vx.y.z
+git push origin vx.y.z
 ```
 
 Then I create a new release on GitHub using https://github.com/OneBusAway/onebusaway-android/releases/new, and reference this tag. I also attach the compiled APKs. Typically I'll also mark "This is a pre-release" because release go to the [OBA beta testing group](BETA_TESTING.md) first.

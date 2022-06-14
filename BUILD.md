@@ -106,14 +106,15 @@ Then I create a new release on GitHub using https://github.com/OneBusAway/onebus
 
 ### Releasing to Google Play
 
-After you've created the release on GitHub, head to the [Google Play developer console](https://developer.android.com/distribute/console) and follow these steps:
+After you've created the release on GitHub, head to the [Google Play developer console](https://developer.android.com/distribute/console) and follow these steps to publish a beta release:
 1. Go to OneBusAway main app and then "Testing->Open testing"
 2. Create a new release and upload the new `obaGoogleRelease-vx.y.z.apk` APK
 3. Keep all the existing APKs that are already there as "Included", except the current production release. This makes sure that everyone with older version Android devices can still download the app. So only the current production release should be under "Not Included".
 4. Type in the version number `vx.y.z` in the release name, and you can typically copy the release notes from a previous release and edit accordingly for whatever you want users to see in the "What's new" section of Google Play (typically this should match the in-app string `main_help_whatsnew` mentioned above).
 5. Review and publish release to beta testing group (I usually immediately push to all beta testing users)
+6. Announce beta release on the [onebusaway-developers Google Group](https://groups.google.com/g/onebusaway-developers).
 
-After the beta has soaked for a week or two and there have been no complaints (I typically check for crashes using Google Play Developer console for this version too), you can push the beta to production:
+After the beta has soaked for at least a week or two and there have been no complaints (I typically check for crashes using Google Play Developer console for this version too), you can push the beta to production:
 1. Go to OneBusAway main app and then "Testing->Open testing". You should see your release listed there
 2. Click on "Promote release", and then "Production". I usually start at 5% or 10% depending on the predicted likelihood of introducing new bugs (e.g., from invasive changes or lots of new code), and roll out over a week to two weeks, again depending on predicted likelihood of new bugs. To update rollout you'll need to look at "Production" "Releases" tab to see your release there, and click on "Manage rollout" and increase percentage. At 100% is full production rollout.
 

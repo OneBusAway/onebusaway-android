@@ -40,13 +40,9 @@ import android.preference.PreferenceScreen;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -610,41 +606,13 @@ public class PreferencesActivity extends PreferenceActivity
      * Imitate Action Bar with back button - from http://stackoverflow.com/a/27455363/937715
      */
     private void setupActionBar() {
-        Toolbar bar;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            LinearLayout root = (LinearLayout) findViewById(android.R.id.list).getParent()
-                    .getParent().getParent();
-            bar = (Toolbar) LayoutInflater.from(this)
-                    .inflate(R.layout.settings_toolbar, root, false);
-            root.addView(bar, 0); // insert at top
-        } else {
-            // For Gingerbread
-            ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
-            ListView content = (ListView) root.getChildAt(0);
-            root.removeAllViews();
+        LinearLayout root = (LinearLayout) findViewById(android.R.id.list).getParent()
+                .getParent().getParent();
+        Toolbar bar = (Toolbar) LayoutInflater.from(this)
+                .inflate(R.layout.settings_toolbar, root, false);
+        root.addView(bar, 0); // insert at top
 
-            bar = (Toolbar) LayoutInflater.from(this)
-                    .inflate(R.layout.settings_toolbar, root, false);
-
-            int height;
-            TypedValue tv = new TypedValue();
-            if (getTheme().resolveAttribute(R.attr.actionBarSize, tv, true)) {
-                height = TypedValue
-                        .complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
-            } else {
-                height = bar.getHeight();
-            }
-            content.setPadding(0, height, 0, 0);
-            root.addView(content);
-            root.addView(bar);
-        }
-
-        bar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        bar.setNavigationOnClickListener(v -> finish());
     }
 
     //

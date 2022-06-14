@@ -102,7 +102,7 @@ I then push this tag to GitHub using:
 git push origin vx.y.z
 ```
 
-Then I create a new release on GitHub using https://github.com/OneBusAway/onebusaway-android/releases/new, and reference this tag. I also attach the compiled APKs. Typically I'll also mark "This is a pre-release" because release go to the [OBA beta testing group](BETA_TESTING.md) first.
+Then I create a new release on GitHub using https://github.com/OneBusAway/onebusaway-android/releases/new, and reference this tag. I also attach the compiled APKs. I'll also mark "This is a pre-release" because release go to the [OBA beta testing group](BETA_TESTING.md) first.
 
 ### Releasing to Google Play
 

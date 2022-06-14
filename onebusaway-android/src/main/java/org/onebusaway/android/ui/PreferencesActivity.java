@@ -59,6 +59,7 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
+import org.onebusaway.android.travelbehavior.io.coroutines.FirebaseDataPusher;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
 import org.onebusaway.android.util.BackupUtils;
 import org.onebusaway.android.util.BuildFlavorUtils;
@@ -106,6 +107,8 @@ public class PreferencesActivity extends PreferenceActivity
     Preference mSaveBackup;
 
     Preference mRestoreBackup;
+
+    Preference pushFirebaseData;
 
     boolean mAutoSelectInitialValue;
 
@@ -159,6 +162,9 @@ public class PreferencesActivity extends PreferenceActivity
         } else {
             mTravelBehaviorPref.setChecked(TravelBehaviorUtils.isUserParticipatingInStudy());
         }
+
+        pushFirebaseData = findPreference(getString(R.string.preference_key_push_firebase_data));
+        pushFirebaseData.setOnPreferenceClickListener(this);
 
         mHideAlertsPref = findPreference(getString(R.string.preference_key_hide_alerts));
         mHideAlertsPref.setOnPreferenceChangeListener(this);
@@ -344,6 +350,10 @@ public class PreferencesActivity extends PreferenceActivity
             // RestorePreference will get the click event but will ignore it if permissions haven't
             // been granted yet so we can handle permissions here.
             maybeRequestPermissions(RESTORE_BACKUP_PERMISSION_REQUEST);
+        } else if (pref.equals(pushFirebaseData)) {
+            // Try to push firebase data to the server
+            FirebaseDataPusher pusher = new FirebaseDataPusher();
+            pusher.push(this);
         }
         return true;
     }

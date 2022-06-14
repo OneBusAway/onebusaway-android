@@ -123,6 +123,10 @@
                     android:key="@string/preference_key_otp_api_url"
                     android:summary="@string/preferences_otp_api_servername_summary"
                     android:title="@string/preferences_otp_api_servername_title" />
+                <Preference
+                    android:key="@string/preference_key_push_firebase_data"
+                    android:title="@string/preferences_push_firebase_data_title"
+                    android:summary="@string/preferences_push_firebase_data_summary"/>
             </PreferenceCategory>
         </PreferenceScreen>
     </PreferenceCategory>

@@ -704,7 +704,7 @@
     </string>
 
     <string name="preferences_push_firebase_data_title">Push Firebase data to server</string>
-    <string name="preferences_push_firebase_data_summary">Only used for testing opt-in travel behavior data collection. Tapping this option will trigger a push of collected travel behavior data to the Firebase server. For best results make sure you have a strong Internet connection first. If successful, all currently pending writes for the active user have been acknowledged by the Firebase backend.</string>
+    <string name="preferences_push_firebase_data_summary">If you\'ve opted into a travel behavior study, tapping this option will trigger a push of collected travel behavior data to the Firebase server. This is useful while testing the app and is intended for use by developers. For best results make sure you have a strong Internet connection first.</string>
 
     <string name="push_firebase_data_dialog_title">Pushing Firebase data…</string>
     <string name="push_firebase_data_dialog_summary">Waiting until all currently pending writes for the active user have been acknowledged by the backend…</string>

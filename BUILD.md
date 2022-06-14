@@ -52,7 +52,7 @@ Add the following to `onebusaway-android/gradle.properties`:
 
 ### Release builds
 
-To build a release build, you need to create a `gradle.properties` file that points to a `secure.properties` file, and a `secure.properties` file that points to your keystore and alias.
+To set up a release build, you need to create a `gradle.properties` file that points to a `secure.properties` file, and a `secure.properties` file that points to your keystore and alias.
 
 The `gradle.properties` file is located in the `onebusaway-android` directory and has the contents:
 ```
@@ -69,6 +69,10 @@ key.keypassword=<your_key_password>
 
 Note that the paths in these files always use the Unix path separator `/`, even on Windows. If you use the Windows path separator `\` you will get the error `No value has been specified for property 'signingConfig.keyAlias'.`
 
+Before doing each release build, you'll need to:
+1. Bump `onebusaway-android/build.gradle` `versionCode` by 1 and set `versionName` to the appropriate next semantic version name. 
+2. Check `onebusaway-android/src/main/res/values/strings.xml` element `main_help_whatsnew` to make sure that the latest changes we want to highlight for the user are entered there. After update, users see this in a dialog.
+
 Then, to build all flavors run:
 
 `gradlew assembleRelease`
@@ -76,6 +80,41 @@ Then, to build all flavors run:
 (If you want to assemble just the Google variant, use `gradlew assembleObaGoogleRelease`, and for Amazon Fire Phone-only use `gradlew assembleObaAmazonRelease`)
 
 The APK files will show up in the `onebusaway-android/build/outputs/apk` folder. `obaGoogleRelease-vx.x.x.apk` is the file that's uploaded to Google Play for release.
+
+### Release testing protocol
+
+Prior to uploading the app to Google Play, below is the release testing protocol. This effectively mirrors what a user would experience - installing the new release as an update to the existing release.
+
+1. Uninstall any existing version of OBA Android
+2. [Opt into beta testing](BETA_TESTING.md) if you haven't already
+3. Download the [latest version available on Google Play](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot)
+4. Launch the app, approve location permissions, ignore tutorial in those popups. Tap on a bus stop and "star" it by tapping on star next to bus stop name. Go to "Starred stops" in the main menu to ensure it saved the stop. This saves something to the database to ensure that data isn't lost in the update.
+5. Install the new APK over the existing APK as an update. I usually upload the new APK to Dropbox, then download to my device using "Export" from the Dropbox app, then using a file manager app to launch it by tapping on it. It will ask you if you want to install as an update, agree.
+6. Openly the newly updated app. Go to "Starred stops" in the main menu and confirm that the stop you starred in the above step is still there.
+
+### Tagging a release on GitHub
+
+After testing a release, I create a tag locally by using Android Studio "Git->New tag", and I enter a name in the format of `vx.y.z` and a summary of changes (see the GitHub [Releases](https://github.com/OneBusAway/onebusaway-android/releases)) for examples).
+
+I then push this tag to GitHub using:
+
+```
+git push vx.y.z
+```
+
+Then I create a new release on GitHub using https://github.com/OneBusAway/onebusaway-android/releases/new, and reference this tag. I also attach the compiled APKs. Typically I'll also mark "This is a pre-release" because release go to the [OBA beta testing group](BETA_TESTING.md) first.
+
+### Releasing to Google Play
+
+After you've created the release on GitHub, head to the [Google Play developer console](https://developer.android.com/distribute/console) and follow these steps:
+1. Go to OneBusAway main app and then "Testing->Open testing"
+2. Create a new release and upload the new `obaGoogleRelease-vx.y.z.apk` APK
+3. Keep all the existing APKs that are already there as "Included", except the current production release. This makes sure that everyone with older version Android devices can still download the app. So only the current production release should be under "Not Included".
+4. Type in the version number `vx.y.z` in the release name, and you can typically copy the release notes from a previous release and edit accordingly for whatever you want users to see in the "What's new" section of Google Play (typically this should match the in-app string `main_help_whatsnew` mentioned above).
+
+### Releasing to Amazon App Store
+
+I haven't done a release to the Amazon App Store in a long time because I don't want to break the app for existing users. I haven't had a device to test Amazon Maps for a while, so for now the APK is available on GitHub for users with Amazon devices that are adventurous enough to use it.
 
 ### Updating the Amazon Maps API library
 

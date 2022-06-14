@@ -118,6 +118,8 @@ After the beta has soaked for at least a week or two and there have been no comp
 1. Go to OneBusAway main app and then "Testing->Open testing". You should see your release listed there
 2. Click on "Promote release", and then "Production". I usually start at 5% or 10% depending on the predicted likelihood of introducing new bugs (e.g., from invasive changes or lots of new code), and roll out over a week to two weeks, again depending on predicted likelihood of new bugs. To update rollout you'll need to look at "Production" "Releases" tab to see your release there, and click on "Manage rollout" and increase percentage. At 100% is full production rollout.
 
+Hot fixes can be released straight to production (similar process as above, but starting on "Production" tab) but are only advised in emergency scenarios where unforeseen events lead to a large number of users experiencing adverse affects that a patch would relieve.
+
 ### Releasing to Amazon App Store
 
 I haven't done a release to the Amazon App Store in a long time because I don't want to break the app for existing users. I haven't had a device to test Amazon Maps for a while, so for now the APK is available on GitHub for users with Amazon devices that are adventurous enough to use it.

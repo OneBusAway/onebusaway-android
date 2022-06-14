@@ -79,7 +79,7 @@ Then, to build all flavors run:
 
 (If you want to assemble just the Google variant, use `gradlew assembleObaGoogleRelease`, and for Amazon Fire Phone-only use `gradlew assembleObaAmazonRelease`)
 
-The APK files will show up in the `onebusaway-android/build/outputs/apk` folder. `obaGoogleRelease-vx.x.x.apk` is the file that's uploaded to Google Play for release.
+The APK files will show up in the `onebusaway-android/build/outputs/apk` folder. `obaGoogleRelease-vx.y.z.apk` is the file that's uploaded to Google Play for release.
 
 ### Release testing protocol
 

@@ -702,6 +702,25 @@
     <string name="preferences_powered_by_oba_title">Powered by OneBusAway</string>
     <string name="preferences_powered_by_oba_summary">Find out more about the open-source project
     </string>
+
+    <string name="preferences_push_firebase_data_title">Push Firebase data to server</string>
+    <string name="preferences_push_firebase_data_summary">Only used for testing opt-in travel behavior data collection. Tapping this option will trigger a push of collected travel behavior data to the Firebase server. For best results make sure you have a strong Internet connection first. If successful, all currently pending writes for the active user have been acknowledged by the Firebase backend.</string>
+
+    <string name="push_firebase_data_dialog_title">Pushing Firebase data…</string>
+    <string name="push_firebase_data_dialog_summary">Waiting until all currently pending writes for the active user have been acknowledged by the backend…</string>
+
+    <string name="push_firebase_data_dialog_user_not_enrolled_title">User not enrolled</string>
+    <string name="push_firebase_data_dialog_user_not_enrolled_summary">Push to Firebase was not attempted as user is not enrolled in travel behavior data collection. You can enroll by enabling the Setting for \"Send anonymous travel behavior data\".</string>
+
+    <string name="push_firebase_data_dialog_success_title">Push successful</string>
+    <string name="push_firebase_data_dialog_success_summary">All currently pending writes for the active user have been acknowledged by the Firebase backend.</string>
+
+    <string name="push_firebase_data_dialog_failed_title">Push failed</string>
+    <string name="push_firebase_data_dialog_failed_summary">Something went wrong. Please make sure you have a strong Internet connection and try again.</string>
+
+    <string name="push_firebase_data_dialog_canceled_title">Push canceled</string>
+    <string name="push_firebase_data_dialog_canceled_summary">Something went wrong. Please make sure you have a strong Internet connection and try again.</string>
+
     <string name="preferences_about_title">About</string>
     <string name="preferences_about_summary">Version, contributor, and license information</string>
     <!-- Units -->

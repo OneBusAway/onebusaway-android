@@ -120,6 +120,8 @@ After the beta has soaked for at least a week or two and there have been no comp
 
 Hot fixes can be released straight to production (similar process as above, but starting on "Production" tab) but are only advised in emergency scenarios where unforeseen events lead to a large number of users experiencing adverse affects that a patch would relieve.
 
+Note that after promoting a beta to production you should go back to GitHub and edit the release and uncheck "This is a pre-release". I typically also include the date of the rollout in the release notes.
+
 ### Releasing to Amazon App Store
 
 I haven't done a release to the Amazon App Store in a long time because I don't want to break the app for existing users. I haven't had a device to test Amazon Maps for a while, so for now the APK is available on GitHub for users with Amazon devices that are adventurous enough to use it.

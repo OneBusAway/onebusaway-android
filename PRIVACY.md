@@ -2,7 +2,7 @@
 
 In order to support certain features in OneBusAway, we need to request various permissions to access information on your device.  Below is an explanation of why each of these is needed:
 
-* **Location** - Used to access the GPS or network (Wi-Fi, cell tower) location of your device so we can show your location on the map and show bus stops near you
+* **Location** - Used to access the GPS or network (Wi-Fi, cell tower) location of your device so we can show your location on the map and show bus stops near you. If you enroll in research studies (opt-in - see example study [here](https://digitalcommons.usf.edu/cutr_nctr/13/)), we may ask you for access to background location information and physical activity information. Example prompts in the app with the location use disclosures are shown in this video - https://www.youtube.com/watch?v=QOZt1iHK11g.
 * **Phone status and identify** - Used to create an anonymous ID for analytics purposes - we send a hashed version of the phone's unique ID (IMEI/MEID) to the server to determine unique users
 * **Storage** - Used to check for the presence of an SD card (or internal storage) so you can save or restore your favorite starred stops
 * **Run at startup** & **Start the trip service** - Used to schedule your reminders to alert you when the bus is approaching

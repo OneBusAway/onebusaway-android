@@ -46,6 +46,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 
@@ -116,6 +117,8 @@ public class PreferencesActivity extends PreferenceActivity
     //Save initial value so we can compare to current value in onDestroy()
 
     ListPreference preferredUnits;
+
+    ListPreference mThemePref;
 
     private FirebaseAnalytics mFirebaseAnalytics;
 
@@ -188,6 +191,10 @@ public class PreferencesActivity extends PreferenceActivity
         preferredUnits = (ListPreference) findPreference(
                 getString(R.string.preference_key_preferred_units));
 
+        mThemePref = (ListPreference) findPreference(
+                getString(R.string.preference_key_app_theme));
+        mThemePref.setOnPreferenceChangeListener(this);
+
         settings.registerOnSharedPreferenceChangeListener(this);
 
         PreferenceScreen preferenceScreen = getPreferenceScreen();
@@ -236,6 +243,7 @@ public class PreferencesActivity extends PreferenceActivity
 
         changePreferenceSummary(getString(R.string.preference_key_region));
         changePreferenceSummary(getString(R.string.preference_key_preferred_units));
+        changePreferenceSummary(getString(R.string.preference_key_app_theme));
         changePreferenceSummary(getString(R.string.preference_key_otp_api_url));
 
         // Remove preferences for notifications if no trip planning
@@ -300,6 +308,9 @@ public class PreferencesActivity extends PreferenceActivity
         } else if (preferenceKey
                 .equalsIgnoreCase(getString(R.string.preference_key_preferred_units))) {
             preferredUnits.setSummary(preferredUnits.getValue());
+        } else if (preferenceKey
+                .equalsIgnoreCase(getString(R.string.preference_key_app_theme))) {
+            mThemePref.setSummary(mThemePref.getValue());
         } else if (preferenceKey
                 .equalsIgnoreCase(getString(R.string.preference_key_otp_api_url))) {
             String customOtpApiUrl = Application.get().getCustomOtpApiUrl();
@@ -567,6 +578,11 @@ public class PreferencesActivity extends PreferenceActivity
         } else if (key.equalsIgnoreCase(getString(R.string.preference_key_preferred_units))) {
             // Change the preferred units description
             changePreferenceSummary(key);
+        } else if (key.equalsIgnoreCase(getString(R.string.preference_key_app_theme))) {
+            // Change the app theme preference description
+            changePreferenceSummary(key);
+            // Update the app theme
+            setAppTheme(settings.getString(key, getString(R.string.preferences_app_theme_option_system_default)));
         } else if (key.equalsIgnoreCase(getString(R.string.preference_key_auto_select_region))) {
             //Analytics
             boolean autoSelect = settings
@@ -648,6 +664,18 @@ public class PreferencesActivity extends PreferenceActivity
 
             // Since the current region was updated as a result of enabling/disabling experimental servers, go home
             NavHelp.goHome(this, false);
+        }
+    }
+
+    private void setAppTheme(String themeValue) {
+        if (themeValue.equalsIgnoreCase(Application.get().getString(R.string.preferences_app_theme_option_system_default))) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        }
+        if (themeValue.equalsIgnoreCase(Application.get().getString(R.string.preferences_app_theme_option_dark))) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        }
+        if (themeValue.equalsIgnoreCase(Application.get().getString(R.string.preferences_app_theme_option_light))) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         }
     }
 }

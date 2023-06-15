@@ -96,6 +96,11 @@
         <item>@string/preferences_preferred_units_option_metric</item>
         <item>@string/preferences_preferred_units_option_imperial</item>
     </string-array>
+    <string-array name="app_theme_options">
+        <item>@string/preferences_app_theme_option_system_default</item>
+        <item>@string/preferences_app_theme_option_light</item>
+        <item>@string/preferences_app_theme_option_dark</item>
+    </string-array>
     <string-array name="arrival_info_style_options">
         <item>@string/preferences_arrival_info_style_options_a</item>
         <item>@string/preferences_arrival_info_style_options_b</item>

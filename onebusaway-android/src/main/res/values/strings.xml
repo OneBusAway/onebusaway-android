@@ -622,6 +622,11 @@
     <string name="preferences_preferred_units_option_metric">Metric (km, m)</string>
     <string name="preferences_preferred_units_option_imperial">Imperial (mi, ft)</string>
 
+    <string name="preferences_app_theme_title">App Theme</string>
+    <string name="preferences_app_theme_option_system_default">System Default</string>
+    <string name="preferences_app_theme_option_light">Light Theme</string>
+    <string name="preferences_app_theme_option_dark">Dark Theme</string>
+
     <string name="preferences_show_negative_arrivals_title">Show departed buses</string>
     <string name="preferences_show_negative_arrivals_summary">Include buses that just left as
         negative arrival times

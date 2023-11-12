@@ -48,6 +48,8 @@ public class RouteFavoriteDialogFragment extends DialogFragment {
 
     private static final String KEY_FAVORITE = "favorite";
 
+    private static final int ROUTE_INFO_LOADER = 0;
+
     // Selections need to match strings.xml "route_favorite_options"
     private static final int SELECTION_THIS_STOP = 0;
 
@@ -71,6 +73,7 @@ public class RouteFavoriteDialogFragment extends DialogFragment {
          */
         void onSelectionComplete(boolean savedFavorite);
     }
+
 
     /**
      * Builder used to create a new RouteFavoriteDialogFragment
@@ -207,12 +210,20 @@ public class RouteFavoriteDialogFragment extends DialogFragment {
                                     // Saved the favorite for just this stop
                                     QueryUtils.setFavoriteRouteAndHeadsign(getActivity(),
                                             routeUri, headsign, stopId, values, favorite);
+                                    getLoaderManager().initLoader(ROUTE_INFO_LOADER, null,
+                                            new QueryUtils.RouteLoaderCallback(getActivity(),
+                                                    routeId));
                                     mCallback.onSelectionComplete(true);
                                 } else {
                                     Log.d(TAG, "All stops");
                                     // Saved the favorite for all stops by passing null as stopId
                                     QueryUtils.setFavoriteRouteAndHeadsign(getActivity(),
                                             routeUri, headsign, null, values, favorite);
+                                    // Request the full details of the starred route, so that
+                                    // the long name can be displayed later
+                                    getLoaderManager().initLoader(ROUTE_INFO_LOADER, null,
+                                            new QueryUtils.RouteLoaderCallback(getActivity(),
+                                                    routeId));
                                     mCallback.onSelectionComplete(true);
                                 }
                             }

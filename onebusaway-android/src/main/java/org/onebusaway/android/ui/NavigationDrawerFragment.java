@@ -71,17 +71,20 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_STARRED_STOPS = 1;
 
-    protected static final int NAVDRAWER_ITEM_MY_REMINDERS = 2;
+    protected static final int NAVDRAWER_ITEM_STARRED_ROUTES = 2;
 
-    protected static final int NAVDRAWER_ITEM_SETTINGS = 3;
+    protected static final int NAVDRAWER_ITEM_MY_REMINDERS = 3;
 
-    protected static final int NAVDRAWER_ITEM_HELP = 4;
+    protected static final int NAVDRAWER_ITEM_SETTINGS = 4;
 
-    protected static final int NAVDRAWER_ITEM_SEND_FEEDBACK = 5;
+    protected static final int NAVDRAWER_ITEM_HELP = 5;
 
-    protected static final int NAVDRAWER_ITEM_PLAN_TRIP = 6;
+    protected static final int NAVDRAWER_ITEM_SEND_FEEDBACK = 6;
 
-    //protected static final int NAVDRAWER_ITEM_POPULAR = 7;
+    protected static final int NAVDRAWER_ITEM_PLAN_TRIP = 7;
+
+
+
     @Deprecated
     protected static final int NAVDRAWER_ITEM_PINS = 8;
 
@@ -109,12 +112,12 @@ public class NavigationDrawerFragment extends Fragment {
     private static final int[] NAVDRAWER_TITLE_RES_ID = new int[]{
             R.string.navdrawer_item_nearby,
             R.string.navdrawer_item_starred_stops,
+            R.string.navdrawer_item_starred_routes,
             R.string.navdrawer_item_my_reminders,
             R.string.navdrawer_item_settings,
             R.string.navdrawer_item_help,
             R.string.navdrawer_item_send_feedback,
             R.string.navdrawer_item_plan_trip,
-            0, // Popular discussions
             0, // Pinned discussions
             0, // Social activity feed
             0, // My profile
@@ -126,13 +129,13 @@ public class NavigationDrawerFragment extends Fragment {
     // icons for navdrawer items (indices must correspond to above array)
     private static final int[] NAVDRAWER_ICON_RES_ID = new int[]{
             R.drawable.ic_drawer_maps_place,  // Nearby
-            R.drawable.ic_drawer_star, // Starred Stops
+            R.drawable.ic_stop_flag_triangle, // Starred Stops
+            R.drawable.ic_bus, // Starred Routes
             R.drawable.ic_drawer_alarm, // My reminders
             0, // Settings
             0, // Help
             0, // Send feedback
             R.drawable.ic_maps_directions, // Plan a trip
-            0, // Popular discussions
             0, // Pinned discussions
             0, // Social activity feed
             0, // My profile
@@ -145,12 +148,12 @@ public class NavigationDrawerFragment extends Fragment {
     private static final int[] NAVDRAWER_ICON_SECONDARY_RES_ID = new int[]{
             0,  // Nearby
             0, // Starred Stops
+            0, // Starred Routes
             0, // My reminders
             0, // Settings
             0, // Help
             0, // Send feedback
             0, // Plan a trip
-            0, // Popular discussions
             0, // Pinned discussions
             0, // Social activity feed
             0, // My profile
@@ -418,6 +421,7 @@ public class NavigationDrawerFragment extends Fragment {
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_NEARBY);
         mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_STOPS);
+        mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_ROUTES);
         mNavDrawerItems.add(NAVDRAWER_ITEM_MY_REMINDERS);
 
         if (currentRegion != null) {

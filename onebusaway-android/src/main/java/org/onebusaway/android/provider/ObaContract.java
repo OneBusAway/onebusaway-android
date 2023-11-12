@@ -18,6 +18,16 @@
  */
 package org.onebusaway.android.provider;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRegionElement;
+import org.onebusaway.android.nav.model.PathLink;
+
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -28,16 +38,6 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.text.format.Time;
-
-import com.google.firebase.analytics.FirebaseAnalytics;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRegionElement;
-import org.onebusaway.android.nav.model.PathLink;
 
 import java.util.ArrayList;
 
@@ -806,7 +806,7 @@ public final class ObaContract {
             return result;
         }
 
-        protected static boolean markAsFavorite(Context context,
+        public static boolean markAsFavorite(Context context,
                 Uri uri,
                 boolean favorite) {
             ContentResolver cr = context.getContentResolver();
@@ -1583,7 +1583,8 @@ public final class ObaContract {
          * all stops, then stopId should be null.
          *
          * @param routeId  routeId to be marked as favorite, in combination with headsign
-         * @param headsign headsign to be marked as favorite, in combination with routeId
+         * @param headsign headsign to be marked as favorite, in combination with routeId, or null
+         *                 if all headsigns should be marked for this routeId/stopId combo
          * @param stopId stopId to be marked as a favorite, or null if all stopIds should be marked
          *               for this routeId/headsign combo.
          * @param favorite true if this route and headsign combination should be marked as a
@@ -1594,8 +1595,11 @@ public final class ObaContract {
             if (context == null) {
                 return;
             }
+            final String WHERE;
             if (headsign == null) {
-                headsign = "";
+                WHERE = ROUTE_ID + "=? AND " + STOP_ID + "=?";
+            } else {
+                WHERE = ROUTE_ID + "=? AND " + HEADSIGN + "=? AND " + STOP_ID + "=?";
             }
 
             ContentResolver cr = context.getContentResolver();
@@ -1608,8 +1612,13 @@ public final class ObaContract {
                 stopIdInternal = ALL_STOPS;
             }
 
-            final String WHERE = ROUTE_ID + "=? AND " + HEADSIGN + "=? AND " + STOP_ID + "=?";
-            final String[] selectionArgs = {routeId, headsign, stopIdInternal};
+            final String[] selectionArgs;
+            if (headsign == null) {
+                selectionArgs = new String[] {routeId, stopIdInternal};
+            } else {
+                selectionArgs = new String[] {routeId, headsign, stopIdInternal};
+            }
+
             if (favorite) {
                 if (stopIdInternal != ALL_STOPS) {
                     // First, delete any potential exclusion records for this stop by removing all records
@@ -1632,8 +1641,15 @@ public final class ObaContract {
                 if (stopIdInternal == ALL_STOPS) {
                     // Also make sure we've deleted the single record for this specific stop, if it exists
                     // We don't have the stopId here, so we can just delete all records for this routeId/headsign
-                    final String[] selectionArgs2 = {routeId, headsign};
-                    final String WHERE2 = ROUTE_ID + "=? AND " + HEADSIGN + "=?";
+                    final String[] selectionArgs2;
+                    final String WHERE2;
+                    if (headsign == null) {
+                        selectionArgs2 = new String[] {routeId};
+                        WHERE2 = ROUTE_ID + "=?";
+                    } else {
+                        selectionArgs2 = new String[] {routeId, headsign};
+                        WHERE2 = ROUTE_ID + "=? AND " + HEADSIGN + "=?";
+                    }
                     cr.delete(CONTENT_URI, WHERE2, selectionArgs2);
                 }
 
@@ -1673,6 +1689,14 @@ public final class ObaContract {
             ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(context),
                     analyticsEvent.toString(),
                     analyticsParam.toString());
+        }
+
+        /**
+         * Delete all saved route/headsign favorites at once.
+         */
+        public static void clearAllFavorites(Context context) {
+            ContentResolver cr = context.getContentResolver();
+            cr.delete(CONTENT_URI, null, null);
         }
 
         /**

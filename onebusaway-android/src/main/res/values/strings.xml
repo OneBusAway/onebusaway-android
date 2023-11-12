@@ -23,6 +23,7 @@
     <!-- Navigation Drawer -->
     <string name="navdrawer_item_nearby">Nearby</string>
     <string name="navdrawer_item_starred_stops">Starred stops</string>
+    <string name="navdrawer_item_starred_routes">Starred routes</string>
     <string name="navdrawer_item_my_reminders">My reminders</string>
     <string name="navdrawer_item_settings">Settings</string>
     <string name="navdrawer_item_help">Help</string>
@@ -370,6 +371,9 @@
     <string name="my_no_recent_stops">You have no recent stops.</string>
     <string name="my_no_starred_stops">You have no starred stops.\n\nYou can add a star to a stop on
         the arrivals screen by tapping on the star next to the stop name.
+    </string>
+    <string name="my_no_starred_routes">You have no starred routes.\n\nYou can add a star to a route
+        on the arrivals screen by tapping on the star next to the route number.
     </string>
     <string name="my_no_recent_routes">You have no recent routes.</string>
     <!-- <string name="my_no_starred_routes">You have no starred routes.</string>-->
@@ -1201,4 +1205,5 @@
     <string name="travel_behavior_dialog_opt_out_title">Opt out of study?</string>
     <string name="travel_behavior_dialog_opt_out_message">If you opt out of the research study, we won\'t receive any more information about your travel behavior to help improve public transit.</string>
     <string name="cancel">Cancel</string>
+    <string name="my_option_clear_starred_routes">Remove all starred routes</string>
 </resources>

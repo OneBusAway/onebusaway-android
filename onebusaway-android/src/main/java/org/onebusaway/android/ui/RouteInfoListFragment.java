@@ -15,6 +15,19 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaStopGroup;
+import org.onebusaway.android.io.elements.ObaStopGrouping;
+import org.onebusaway.android.io.request.ObaRouteResponse;
+import org.onebusaway.android.io.request.ObaStopsForRouteRequest;
+import org.onebusaway.android.io.request.ObaStopsForRouteResponse;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.UIUtils;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
@@ -32,20 +45,6 @@ import android.view.ViewGroup;
 import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.ObaStopGroup;
-import org.onebusaway.android.io.elements.ObaStopGrouping;
-import org.onebusaway.android.io.request.ObaRouteRequest;
-import org.onebusaway.android.io.request.ObaRouteResponse;
-import org.onebusaway.android.io.request.ObaStopsForRouteRequest;
-import org.onebusaway.android.io.request.ObaStopsForRouteResponse;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,7 +97,6 @@ public class RouteInfoListFragment extends ListFragment {
             return;
         }
         mRouteId = uri.getLastPathSegment();
-
         getLoaderManager().initLoader(ROUTE_INFO_LOADER, null, mRouteCallback);
         getLoaderManager().initLoader(ROUTE_STOPS_LOADER, null, mStopsCallback);
     }
@@ -228,7 +226,7 @@ public class RouteInfoListFragment extends ListFragment {
 
         @Override
         public Loader<ObaRouteResponse> onCreateLoader(int id, Bundle args) {
-            return new RouteInfoLoader(getActivity(), mRouteId);
+            return new QueryUtils.RouteInfoLoader(getActivity(), mRouteId);
         }
 
         @Override
@@ -268,25 +266,6 @@ public class RouteInfoListFragment extends ListFragment {
     //
     // Loader
     //
-    private final static class RouteInfoLoader extends AsyncTaskLoader<ObaRouteResponse> {
-
-        private final String mRouteId;
-
-        RouteInfoLoader(Context context, String routeId) {
-            super(context);
-            mRouteId = routeId;
-        }
-
-        @Override
-        public void onStartLoading() {
-            forceLoad();
-        }
-
-        @Override
-        public ObaRouteResponse loadInBackground() {
-            return ObaRouteRequest.newRequest(getContext(), mRouteId).call();
-        }
-    }
 
     private final static class StopsForRouteLoader extends AsyncTaskLoader<StopsForRouteInfo> {
 

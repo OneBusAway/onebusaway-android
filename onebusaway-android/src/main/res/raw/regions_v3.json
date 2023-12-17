@@ -67,7 +67,7 @@
         "supportsObaDiscoveryApis": true,
         "supportsOtpBikeshare": false,
         "otpContactEmail": "otp-pugetsound@onebusaway.org",
-        "otpBaseUrl": "https://tpng.api.soundtransit.org/tripplanner/st/",
+        "otpBaseUrl": "https://otp.prod.sound.obaweb.org/otp/routers/default/",
         "paymentWarningBody": "The mobile fare payment app for Puget Sound does not support all transit service shown in OneBusAway. Please check that a ticket is eligible for your agency and route before you purchase!",
         "supportsSiriRealtimeApis": true,
         "twitterUrl": "https://mobile.twitter.com/oba_pugetsound",
@@ -75,7 +75,9 @@
         "paymentiOSAppStoreIdentifier": "1131345078",
         "paymentiOSAppUrlScheme": "co.bytemark.tgt",
         "active": true,
-        "open311Servers": [],
+        "open311Servers": [
+
+        ],
         "paymentWarningTitle": "Check before you buy!",
         "language": "en_US",
         "bounds": [
@@ -160,7 +162,9 @@
         "paymentiOSAppStoreIdentifier": null,
         "paymentiOSAppUrlScheme": null,
         "active": true,
-        "open311Servers": [],
+        "open311Servers": [
+
+        ],
         "paymentWarningTitle": null,
         "language": "en_US",
         "bounds": [
@@ -203,7 +207,9 @@
         "paymentiOSAppStoreIdentifier": null,
         "paymentiOSAppUrlScheme": null,
         "active": false,
-        "open311Servers": [],
+        "open311Servers": [
+
+        ],
         "paymentWarningTitle": null,
         "language": "en_US",
         "bounds": [
@@ -276,7 +282,9 @@
         "paymentiOSAppStoreIdentifier": null,
         "paymentiOSAppUrlScheme": null,
         "active": true,
-        "open311Servers": [],
+        "open311Servers": [
+
+        ],
         "paymentWarningTitle": null,
         "language": "en_US",
         "bounds": [
@@ -312,8 +320,10 @@
         "paymentAndroidAppId": null,
         "paymentiOSAppStoreIdentifier": null,
         "paymentiOSAppUrlScheme": null,
-        "active": true,
-        "open311Servers": [],
+        "active": false,
+        "open311Servers": [
+
+        ],
         "paymentWarningTitle": null,
         "language": "en_CA",
         "bounds": [
@@ -350,7 +360,9 @@
         "paymentiOSAppStoreIdentifier": null,
         "paymentiOSAppUrlScheme": null,
         "active": false,
-        "open311Servers": [],
+        "open311Servers": [
+
+        ],
         "paymentWarningTitle": null,
         "language": "en_US",
         "bounds": [
@@ -386,8 +398,10 @@
         "paymentAndroidAppId": null,
         "paymentiOSAppStoreIdentifier": null,
         "paymentiOSAppUrlScheme": null,
-        "active": true,
-        "open311Servers": [],
+        "active": false,
+        "open311Servers": [
+
+        ],
         "paymentWarningTitle": null,
         "language": "en_US",
         "bounds": [
@@ -429,8 +443,10 @@
         "paymentAndroidAppId": null,
         "paymentiOSAppStoreIdentifier": null,
         "paymentiOSAppUrlScheme": null,
-        "active": true,
-        "open311Servers": [],
+        "active": false,
+        "open311Servers": [
+
+        ],
         "paymentWarningTitle": null,
         "language": "fi_FI",
         "bounds": [
@@ -466,8 +482,10 @@
         "paymentAndroidAppId": null,
         "paymentiOSAppStoreIdentifier": null,
         "paymentiOSAppUrlScheme": null,
-        "active": true,
-        "open311Servers": [],
+        "active": false,
+        "open311Servers": [
+
+        ],
         "paymentWarningTitle": null,
         "language": "en_US",
         "bounds": [
@@ -504,7 +522,9 @@
         "paymentiOSAppStoreIdentifier": null,
         "paymentiOSAppUrlScheme": null,
         "active": false,
-        "open311Servers": [],
+        "open311Servers": [
+
+        ],
         "paymentWarningTitle": null,
         "language": "en_US",
         "bounds": [
@@ -537,11 +557,13 @@
         "paymentWarningBody": null,
         "supportsSiriRealtimeApis": false,
         "twitterUrl": "",
-        "paymentAndroidAppId": "org.sdmts.riderapp",
-        "paymentiOSAppStoreIdentifier": "1212568295",
-        "paymentiOSAppUrlScheme": "org.sdmts.riderapp.compassmobile.payments",
+        "paymentAndroidAppId": "org.sdmts.pronto",
+        "paymentiOSAppStoreIdentifier": "1577230742",
+        "paymentiOSAppUrlScheme": "org.sdmts.pronto",
         "active": true,
-        "open311Servers": [],
+        "open311Servers": [
+
+        ],
         "paymentWarningTitle": null,
         "language": "en_US",
         "bounds": [
@@ -590,7 +612,9 @@
         "paymentiOSAppStoreIdentifier": null,
         "paymentiOSAppUrlScheme": null,
         "active": true,
-        "open311Servers": [],
+        "open311Servers": [
+
+        ],
         "paymentWarningTitle": null,
         "language": "en_US",
         "bounds": [
@@ -599,6 +623,171 @@
             "latSpan": 0.29196599999999506,
             "lon": -117.397625,
             "lonSpan": 0.6162599999999969
+          }
+        ],
+        "facebookUrl": "",
+        "stopInfoUrl": null,
+        "experimental": false
+      },
+      {
+        "siriBaseUrl": null,
+        "supportsEmbeddedSocial": false,
+        "supportsObaRealtimeApis": true,
+        "contactEmail": "oba.uprm@gmail.com",
+        "enrollParticipantsInStudy": true,
+        "obaBaseUrl": "https://www.proba.live/",
+        "id": 13,
+        "regionName": "Mayaguez (beta)",
+        "obaVersionInfo": "2.1.0",
+        "travelBehaviorDataCollectionEnabled": true,
+        "supportsObaDiscoveryApis": true,
+        "supportsOtpBikeshare": false,
+        "otpContactEmail": null,
+        "otpBaseUrl": null,
+        "paymentWarningBody": null,
+        "supportsSiriRealtimeApis": false,
+        "twitterUrl": "",
+        "paymentAndroidAppId": null,
+        "paymentiOSAppStoreIdentifier": null,
+        "paymentiOSAppUrlScheme": null,
+        "active": true,
+        "open311Servers": [
+
+        ],
+        "paymentWarningTitle": null,
+        "language": "en_US",
+        "bounds": [
+          {
+            "lat": 18.205351924732334,
+            "latSpan": 0.09467721935961393,
+            "lon": -67.10329278541604,
+            "lonSpan": 0.1421846726844791
+          }
+        ],
+        "facebookUrl": "",
+        "stopInfoUrl": null,
+        "experimental": true
+      },
+      {
+        "siriBaseUrl": null,
+        "supportsEmbeddedSocial": false,
+        "supportsObaRealtimeApis": true,
+        "contactEmail": "vtxtransit@gcrpc.org",
+        "enrollParticipantsInStudy": true,
+        "obaBaseUrl": "https://oba.gcrpc.org/onebusaway-api-webapp",
+        "id": 14,
+        "regionName": "Victoria, Texas (beta)",
+        "obaVersionInfo": "2.0.0-SNAPSHOT|2|0|0|SNAPSHOT|",
+        "travelBehaviorDataCollectionEnabled": true,
+        "supportsObaDiscoveryApis": true,
+        "supportsOtpBikeshare": false,
+        "otpContactEmail": null,
+        "otpBaseUrl": null,
+        "paymentWarningBody": null,
+        "supportsSiriRealtimeApis": false,
+        "twitterUrl": "https://mobile.twitter.com/Vtx_transit",
+        "paymentAndroidAppId": null,
+        "paymentiOSAppStoreIdentifier": null,
+        "paymentiOSAppUrlScheme": null,
+        "active": true,
+        "open311Servers": [
+
+        ],
+        "paymentWarningTitle": null,
+        "language": "en_US",
+        "bounds": [
+          {
+            "lat": 28.822814,
+            "latSpan": 0.10912800000000189,
+            "lon": -96.98610149999999,
+            "lonSpan": 0.07200899999999422
+          }
+        ],
+        "facebookUrl": "https://www.facebook.com/GCRPC",
+        "stopInfoUrl": null,
+        "experimental": true
+      },
+      {
+        "siriBaseUrl": null,
+        "supportsEmbeddedSocial": false,
+        "supportsObaRealtimeApis": true,
+        "contactEmail": "transit@nautilus-tech.com.au",
+        "enrollParticipantsInStudy": false,
+        "obaBaseUrl": "https://transit.nautilus-tech.com.au/onebusaway-api-webapp/",
+        "id": 15,
+        "regionName": "Adelaide Metro",
+        "obaVersionInfo": "2.1.2-SNAPSHOT|2|1|2|SNAPSHOT|c436e52195a905b50441f28788e0d7bd460d7589",
+        "travelBehaviorDataCollectionEnabled": true,
+        "supportsObaDiscoveryApis": true,
+        "supportsOtpBikeshare": false,
+        "otpContactEmail": "transit@nautilus-tech.com.au",
+        "otpBaseUrl": "https://otp.nautilus-tech.com.au/otp/",
+        "paymentWarningBody": null,
+        "supportsSiriRealtimeApis": false,
+        "twitterUrl": "",
+        "paymentAndroidAppId": null,
+        "paymentiOSAppStoreIdentifier": null,
+        "paymentiOSAppUrlScheme": null,
+        "active": true,
+        "open311Servers": [
+
+        ],
+        "paymentWarningTitle": null,
+        "language": "en_AU",
+        "bounds": [
+          {
+            "lat": -34.89224,
+            "latSpan": 0.5954540000000037,
+            "lon": 138.61566499999998,
+            "lonSpan": 0.2644420000000025
+          },
+          {
+            "lat": -34.943813500000005,
+            "latSpan": 0.07320100000000451,
+            "lon": 138.5605365,
+            "lonSpan": 0.09742500000001542
+          },
+          {
+            "lat": -35.096154776118254,
+            "latSpan": 0.3999424477635003,
+            "lon": 138.8118255,
+            "lonSpan": 0.4485230000000229
+          },
+          {
+            "lat": -34.83309800000001,
+            "latSpan": 0.5241100000000003,
+            "lon": 138.6211112248135,
+            "lonSpan": 0.28507155037300436
+          },
+          {
+            "lat": -35.128530999999995,
+            "latSpan": 0.4213839999999962,
+            "lon": 138.529113,
+            "lonSpan": 0.16759400000000824
+          },
+          {
+            "lat": -35.1519865,
+            "latSpan": 0.3744729999999947,
+            "lon": 138.535168737546,
+            "lonSpan": 0.17908252490798304
+          },
+          {
+            "lat": -34.8541185,
+            "latSpan": 0.4444030000000012,
+            "lon": 138.6073665,
+            "lonSpan": 0.25774700000002326
+          },
+          {
+            "lat": -34.991378,
+            "latSpan": 0.18545800000000412,
+            "lon": 138.7513752659545,
+            "lonSpan": 0.32939346809101266
+          },
+          {
+            "lat": -34.932278,
+            "latSpan": 0.1703159999999997,
+            "lon": 138.6044295,
+            "lonSpan": 0.1155210000000011
           }
         ],
         "facebookUrl": "",

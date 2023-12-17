@@ -142,6 +142,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     // Use fully-qualified class name to avoid import statement, because it interferes with scripted
     // copying of Maps API v2 classes between Google/Amazon build flavors (see #254)
+    // TODO: We've eliminated Amazon Fire support. Let's reverse this.
     private com.google.android.gms.maps.GoogleMap mMap;
 
     private String mFocusStopId;

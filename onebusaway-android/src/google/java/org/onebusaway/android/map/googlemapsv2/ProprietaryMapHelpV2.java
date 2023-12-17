@@ -174,8 +174,7 @@ public class ProprietaryMapHelpV2 {
     }
 
     /**
-     * Sets the zIndex for the given marker to the given zIndex.  This is in ProprietaryMapHelpV2
-     * because there is no such corresponding Marker.setZIndex() method on Amazon Maps v2.
+     * Sets the zIndex for the given marker to the given zIndex.
      * @param m marker to set the zIndex for
      * @param zIndex zIndex to set on the given marker (default is 0)
      */

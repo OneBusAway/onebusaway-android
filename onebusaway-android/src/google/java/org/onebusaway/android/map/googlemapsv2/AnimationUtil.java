@@ -23,8 +23,8 @@ import android.view.animation.Interpolator;
 /**
  * Animation utilities for markers with Maps API.
  *
- * Note - this class must remain in this .map.googleMapsv2 package so that the Google and Amazon
- * build flavors work correctly.
+ * Note - this class must remain in this .map.googleMapsv2 package so that the Google build flavors
+ * work correctly.
  */
 public class AnimationUtil {
 

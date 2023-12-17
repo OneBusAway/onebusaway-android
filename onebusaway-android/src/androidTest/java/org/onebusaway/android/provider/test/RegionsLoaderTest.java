@@ -44,7 +44,7 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
         // Retrieve from provider
         ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromProvider(getTargetContext());
         assertNotNull(regions);
-        assertEquals(7, regions.size());  // Number of production regions
+        assertEquals(6, regions.size());  // Number of production regions
 
         // Production regions
         _assertTampa(regions.get(0));
@@ -108,7 +108,7 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
                 -122.4013255,
                 0.090694,
                 0.126793);
-        assertEquals("https://tpng.api.soundtransit.org/tripplanner/st/", ps.getOtpBaseUrl());
+        assertEquals("https://otp.prod.sound.obaweb.org/otp/routers/default/", ps.getOtpBaseUrl());
         assertEquals("co.bytemark.tgt", ps.getPaymentAndroidAppId());
         assertEquals("Check before you buy!", ps.getPaymentWarningTitle());
         assertEquals("The mobile fare payment app for Puget Sound does not support all transit service shown in OneBusAway. Please check that a ticket is eligible for your agency and route before you purchase!", ps.getPaymentWarningBody());

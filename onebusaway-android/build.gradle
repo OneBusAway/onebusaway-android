@@ -27,10 +27,6 @@ repositories {
         url "https://repo.camsys-apps.com/releases"
     }
     maven {
-        // for Amazon Maps
-        url uri('../.m2/repository')
-    }
-    maven {
         // CUTR Releases
         url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
     }
@@ -38,13 +34,13 @@ repositories {
 }
 
 android {
-    compileSdkVersion 31
+    compileSdk 33
 
     defaultConfig {
-        minSdkVersion 19
-        targetSdkVersion 31
+        minSdkVersion 21
+        targetSdkVersion 33
         versionCode 128
-        versionName "2.10.1"
+        versionName "2.11.0"
 
         multiDexEnabled true
 
@@ -56,29 +52,15 @@ android {
 
     /**
      * brand - how the name, look, and feel of each OneBusAway-based app is presented
-     * platform - Google or Amazon (for Maps API v2 dependencies)
+     * platform - Google
      */
-    flavorDimensions "brand", "platform"
+    flavorDimensions = ["brand", "platform"]
 
     productFlavors {
         google {
             // Normal Google Play release - see src/google
             dimension "platform"
             isDefault = true
-        }
-
-        amazon {
-            /**
-             * Amazon Fire Phone - see src/amazon
-             *
-             * NOTE: The "copyMapsApiV2Classes" task automatically copies the classes from
-             * src/google/java/org/onebusaway/android/map package to the
-             * src/amazon/java/org/onebusaway/android/map package (with the exception of
-             * ProprietaryMapHelpV2) when the project is built, and replaces the imports and
-             * GoogleMap class with the Amazon equivalents.  Therefore, the files in
-             * src/amazon/java/org/onebusaway/android/map should not be manually changed.
-             */
-            dimension "platform"
         }
 
         oba {
@@ -291,19 +273,6 @@ android {
         }
     }
 
-    // Filter out the Amazon release build variants for AgencyX and AgencyY brands because they are unused
-    variantFilter { variant ->
-        def names = variant.flavors*.name
-        def brand = names.get(0)
-        def platform = names.get(1)
-        def isRelease = variant.buildType.name.equals('release')
-        if (isRelease &&
-                ((brand.equals("agencyX") && platform.equals("amazon")) ||
-                        (brand.equals("agencyY") && platform.equals("amazon")) )) {
-            variant.setIgnore(true)
-        }
-    }
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -316,6 +285,7 @@ android {
     useLibrary 'android.test.runner'
     useLibrary 'android.test.base'
     useLibrary 'android.test.mock'
+    namespace 'org.onebusaway.android'
 }
 
 /**
@@ -332,30 +302,6 @@ def getPeliasKey(productFlavor) {
     }
 }
 
-/**
- * Copies our Maps API v2-based classes from the Google build flavor to the Amazon build flavor,
- * replacing the Google import packages and GoogleMap class with the Amazon import packages and
- * AmazonMap class.  Copy is only executed if the files in the google build flavor are no longer
- * equal to the ones in the amazon build flavor.
- */
-task copyMapsApiV2Classes {
-    inputs.dir 'src/google/java/org/onebusaway/android/map/googlemapsv2'
-    outputs.dir 'src/amazon/java/org/onebusaway/android/map/googlemapsv2'
-    // up-to-date check for outputs
-    doLast {
-        copy {
-            from 'src/google/java/org/onebusaway/android/map/googlemapsv2'
-            into 'src/amazon/java/org/onebusaway/android/map/googlemapsv2'
-            exclude { details -> details.file.name.equals('ProprietaryMapHelpV2.java') }
-            filter { line -> line.replace('com.google.android.gms.maps', 'com.amazon.geo.mapsv2') }
-            filter { line -> line.replace('GoogleMap', 'AmazonMap') }
-            filter(ConcatFilter, prepend: file('AmazonMapsFileHeader.txt'))
-        }
-    }
-}
-
-preBuild.dependsOn copyMapsApiV2Classes
-
 // Exclude all classes from dependencies that conflict with Android platform classes (#849)
 configurations {
     all {
@@ -371,7 +317,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore:24.1.2'
     implementation 'com.google.firebase:firebase-auth:21.0.5'
     implementation 'com.google.firebase:firebase-storage:20.0.1'
-    // Google Play Services Location (we need this on Amazon flavor too)
+    // Google Play Services Location
     implementation 'com.google.android.gms:play-services-location:19.0.1'
     // Support libraries
     implementation 'androidx.activity:activity:1.4.0'
@@ -405,8 +351,6 @@ dependencies {
     googleImplementation 'com.google.android.gms:play-services-maps:18.0.2'
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)
     googleImplementation 'com.google.android.libraries.places:places-compat:1.1.0'
-    // Amazon Maps (only for Amazon flavor)
-    amazonImplementation 'com.amazon.android:amazon-maps-api:2.0'
     // Autocomplete text views with clear button for trip planning
     implementation 'com.google.android.material:material:1.1.0'
     // Required to support multidex for minSdkVersion <= 20

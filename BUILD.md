@@ -2,10 +2,9 @@
 
 We use [Gradle build flavors](http://developer.android.com/tools/building/configuring-gradle.html#workBuildVariants) to enable a number of different build variants of OneBusAway Android.
 
-We have two Gradle "platform" flavor dimensions:
+We have one Gradle "platform" flavor dimension:
 
 * **google** = Normal Google Play release
-* **amazon** = Amazon Fire Phone release
 
 ...and three Gradle "brand" flavor dimensions:
 
@@ -13,10 +12,11 @@ We have two Gradle "platform" flavor dimensions:
 * **agencyX** = A sample rebranded version of OneBusAway for a fictitious "Agency X"
 * **agencyY** = A sample rebranded version of OneBusAway for a fictitious "Agency Y"
 
-This results in a total of 2 * 3 = 6 core build variants.  Each of these core variants also has a debug/release build type - the end result is that you'll have 12 build variants to choose to build.
+This results in a total of 1 * 3 = 3 core build variants.  Each of these core variants also has a debug/release build type - the end result is that you'll have 6 build variants to choose to build.
 
-The below instructions assume you're going to be building for the **google** platform flavor and original **oba** brand by default (e.g., `obaGoogleDebug`), but
-also mention how you would build/run the **amazon** flavor for the **oba** brand (e.g., `obaAmazonDebug`).  If you want more info about building the other brands, please see the [Rebranding OneBusAway Android page](https://github.com/OneBusAway/onebusaway-android/blob/master/REBRANDING.md).
+The below instructions assume you're going to be building for the **google** platform flavor and original **oba** brand by default (e.g., `obaGoogleDebug`).
+
+If you want more info about building the other brands, please see the [Rebranding OneBusAway Android page](https://github.com/OneBusAway/onebusaway-android/blob/master/REBRANDING.md).
 
 ### Prerequisites for both Android Studio and Gradle
 
@@ -29,16 +29,16 @@ also mention how you would build/run the **amazon** flavor for the **oba** brand
 1. At the welcome screen select `Import Project`, browse to the location of this repository and select it then select Ok.
 1. Open the Android SDK Manager (Tools->Android->SDK Manager) and add a checkmark for the necessary API level (see `compileSdkVersion` in [`onebusaway-android/build.gradle`](onebusaway-android/build.gradle)) then select OK.
 1. Connect a [debugging enabled](https://developer.android.com/tools/device.html) Android device to your computer or setup an Android Virtual Device (Tools->Andorid->AVD Manager).
-1. Open the "Build Variants" window (it appears as a vertical button on left side of workspace by default) & choose **obaGoogleDebug** to select the Google Play version, or **obaAmazonDebug** to select the Fire Phone.
+1. Open the "Build Variants" window (it appears as a vertical button on left side of workspace by default) & choose **obaGoogleDebug** to select the Google Play version.
 1. Click the green play button (or Alt+Shift+F10) to build and run the project!
 
 ### Building from the command line using Gradle
 
 1. Set the `JAVA_HOME` environmental variables to point to your JDK folder (e.g. `C:\Program Files\Java\jdk1.6.0_27`)
 1. Download and install the [Android SDK](http://developer.android.com/sdk/index.html). Make sure to install the Google APIs for your API level (e.g. 17), the Android SDK Build-tools version for your `buildToolsVersion` version, the Android Support Repository and the Google Repository.
-1. Set the `ANDROID_HOME` environmental variable to your Android SDK location.
-1. To build and push the app to the device, run `gradlew installObaGoogleDebug` from the command line at the root of the project (or `gradlew installObaAmazonDebug` for Amazon build flavor)
-1. To start the app, run `adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.ui.HomeActivity` (alternately, you can manually start the app)
+1. Set the `ANDROID_HOME` environment variable to your Android SDK location.
+1. To build and push the app to the device, run `gradlew installObaGoogleDebug` from the command line at the root of the project.
+1. To start the app, run `adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.ui.HomeActivity` (alternately, you can manually start the app).
 
 ### Configuration Pelias API key for geocoding
 
@@ -77,7 +77,7 @@ Then, to build all flavors run:
 
 `gradlew assembleRelease`
 
-(If you want to assemble just the Google variant, use `gradlew assembleObaGoogleRelease`, and for Amazon Fire Phone-only use `gradlew assembleObaAmazonRelease`)
+(If you want to assemble just the Google variant, use `gradlew assembleObaGoogleRelease`
 
 The APK files will show up in the `onebusaway-android/build/outputs/apk` folder. `obaGoogleRelease-vx.y.z.apk` is the file that's uploaded to Google Play for release.
 
@@ -124,13 +124,4 @@ Note that after promoting a beta to production you should go back to GitHub and 
 
 ### Releasing to Amazon App Store
 
-I haven't done a release to the Amazon App Store in a long time because I don't want to break the app for existing users. I haven't had a device to test Amazon Maps for a while, so for now the APK is available on GitHub for users with Amazon devices that are adventurous enough to use it.
-
-### Updating the Amazon Maps API library
-
-Occasionally Amazon will likely release updates to their `amazon-maps-api-v2` library.  These artifacts aren't currently hosted on Maven Central or Jcenter.  As a result, when they release an update, we need to update our bundled Maven repo with the new artifact.  The steps to do this are:
-
-1. Download updated Amazon Maps API `aar` and `pom` files
-1. Download [Apache Maven](https://maven.apache.org/download.cgi) & unzip Apache Maven (installation not required)
-1. Run following command, replacing appropriate paths:
-  `path-to-bin-folder-of-maven/mvn install:install-file -Dfile=path-to-amazon-files/amazon-maps-api-v2.aar -DpomFile=path-to-amazon-files/amazon-maps-api-v2.pom -DlocalRepositoryPath=path-to-git-repo/.m2/repository`
+We have fully deprecated support for the Amazon App Store. We won't pull the existing release from there, or remove the existing APKs from GitHub, but consider support for this platform to be EOL'd.

@@ -95,14 +95,7 @@
     <string name="map_option_search">Haku</string>
     <string name="main_help_title">Ohje</string>
     <string name="main_help_whatsnew_title">Mitä uutta?</string>
-    <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Uusi ulkoasu</b>
-        - Material design!\n&#8226;\u0020
-        <b>Reaaliaikaiset bussin liikkeet kartalla</b>
-        - Napsauta saapumisaikoja ja valitse\"Näytä reitti kartalla\"!\n&#8226;\u0020
-        <b>Reaaliaikaiset matkan tiedot</b>
-        - Napsauta saapumisaikoja ja valitse \"Näytä matkan tilanne\"!
-    </string>
+    <string name="main_help_whatsnew">• <b>Pimeä tila</b> - Sovellus tukee vihdoin pimeää tilaa! Hurraa! Kiitos Kevinille panoksestasi!\n• <b>Tähdellä merkityt reitit</b> - Voit nyt suosikoida (tai merkitä tähdellä) koko reitin - et vain yhtä pysäkkiä. Kiitos Millanille panoksestasi!\n• <b>Virheenkorjaukset ja parannukset</b> - Katso https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Sulje</string>
     <string name="main_nolocation_title">Sijaintitieto ei ole käytettävissä</string>
     <string name="main_nolocation">OneBusAway haluaa käyttää sijaintitietoasi,

@@ -13,33 +13,35 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="2dp"
-        android:paddingTop="3dp"
-        android:paddingLeft="5dp"
-        android:paddingRight="5dp"
-        android:orientation="vertical">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/stop_info_arrival_list_background"
+    android:orientation="vertical"
+    android:paddingLeft="5dp"
+    android:paddingTop="3dp"
+    android:paddingRight="5dp"
+    android:paddingBottom="2dp">
 
-    <androidx.cardview.widget.CardView
-            xmlns:card_view="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/no_arrivals_card_view"
-            android:layout_gravity="center"
+    <androidx.cardview.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/no_arrivals_card_view"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        card_view:cardCornerRadius="4dp"
+        card_view:cardUseCompatPadding="true">
+
+        <TextView
+            android:id="@+id/noArrivals"
+            style="@style/ListHintText"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            card_view:cardUseCompatPadding="true"
-            card_view:cardCornerRadius="4dp">
-
-        <TextView android:id="@+id/noArrivals"
-                  style="@style/ListHintText"
-                  android:paddingBottom="15sp"
-                  android:layout_width="fill_parent"
-                  android:layout_height="wrap_content"/>
+            android:paddingBottom="15sp" />
     </androidx.cardview.widget.CardView>
-    <include layout="@layout/arrivals_list_footer_style"
-             android:layout_width="match_parent"
-             android:layout_height="wrap_content"/>
+
+    <include
+        layout="@layout/arrivals_list_footer_style"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 </LinearLayout>
 

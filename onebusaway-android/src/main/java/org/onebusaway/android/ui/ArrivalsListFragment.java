@@ -1136,7 +1136,7 @@ public class ArrivalsListFragment extends ListFragment
         listParam.leftMargin = UIUtils.dpToPixels(getActivity(), 5);
         listParam.rightMargin = UIUtils.dpToPixels(getActivity(), 5);
         // Set the listview background to give the cards more contrast
-        getListView().setBackgroundColor(
+        getListView().getRootView().setBackgroundColor(
                 getResources().getColor(R.color.stop_info_arrival_list_background));
         // Update the layout parameters
         getListView().setLayoutParams(listParam);

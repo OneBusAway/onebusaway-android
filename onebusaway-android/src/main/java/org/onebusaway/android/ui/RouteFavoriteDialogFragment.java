@@ -28,6 +28,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import androidx.fragment.app.DialogFragment;
+import androidx.loader.app.LoaderManager;
 
 /**
  * Asks the user if they was to save a route/headsign favorite for all stops, or just this stop
@@ -210,7 +211,8 @@ public class RouteFavoriteDialogFragment extends DialogFragment {
                                     // Saved the favorite for just this stop
                                     QueryUtils.setFavoriteRouteAndHeadsign(getActivity(),
                                             routeUri, headsign, stopId, values, favorite);
-                                    getLoaderManager().initLoader(ROUTE_INFO_LOADER, null,
+                                    LoaderManager.getInstance(getActivity()).restartLoader(
+                                            ROUTE_INFO_LOADER, null,
                                             new QueryUtils.RouteLoaderCallback(getActivity(),
                                                     routeId));
                                     mCallback.onSelectionComplete(true);
@@ -221,7 +223,8 @@ public class RouteFavoriteDialogFragment extends DialogFragment {
                                             routeUri, headsign, null, values, favorite);
                                     // Request the full details of the starred route, so that
                                     // the long name can be displayed later
-                                    getLoaderManager().initLoader(ROUTE_INFO_LOADER, null,
+                                    LoaderManager.getInstance(getActivity()).restartLoader(
+                                            ROUTE_INFO_LOADER, null,
                                             new QueryUtils.RouteLoaderCallback(getActivity(),
                                                     routeId));
                                     mCallback.onSelectionComplete(true);

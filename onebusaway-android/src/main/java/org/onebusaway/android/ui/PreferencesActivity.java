@@ -20,6 +20,7 @@ package org.onebusaway.android.ui;
 import static org.onebusaway.android.util.PermissionUtils.RESTORE_BACKUP_PERMISSION_REQUEST;
 import static org.onebusaway.android.util.PermissionUtils.SAVE_BACKUP_PERMISSION_REQUEST;
 import static org.onebusaway.android.util.PermissionUtils.STORAGE_PERMISSIONS;
+import static org.onebusaway.android.util.UIUtils.setAppTheme;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -664,18 +665,6 @@ public class PreferencesActivity extends PreferenceActivity
 
             // Since the current region was updated as a result of enabling/disabling experimental servers, go home
             NavHelp.goHome(this, false);
-        }
-    }
-
-    private void setAppTheme(String themeValue) {
-        if (themeValue.equalsIgnoreCase(Application.get().getString(R.string.preferences_app_theme_option_system_default))) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
-        }
-        if (themeValue.equalsIgnoreCase(Application.get().getString(R.string.preferences_app_theme_option_dark))) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-        }
-        if (themeValue.equalsIgnoreCase(Application.get().getString(R.string.preferences_app_theme_option_light))) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         }
     }
 }

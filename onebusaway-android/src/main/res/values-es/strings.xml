@@ -102,7 +102,7 @@
     <string name="map_option_search">Buscar</string>
     <string name="main_help_title">Ayuda</string>
     <string name="main_help_whatsnew_title">Novedades en esta versión</string>
-    <string name="main_help_whatsnew">• <b>Modo Oscuro</b> - ¡La aplicación finalmente soporta el modo oscuro! ¡Hurra! Gracias a Kevin por tu contribución.\n• <b>Lista de Rutas Favoritas</b> - Ahora puedes favorizar (o marcar con una estrella) una ruta completa - no solo una parada. Gracias a Millan por tu contribución.\n• <b>Correcciones de errores y mejoras</b> - Ver https://bit.ly/oba-android-releases</string>
+    <string name="main_help_whatsnew">• <b>Correcciones de errores</b> el modo oscuro y el planificador de viajes funcionan nuevamente como se esperaba. Gracias por tu paciencia. - Ver https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Cerrar</string>
     <string name="main_help_legend_title">Leyenda</string>
     <string name="main_help_legend_ontime">Verde significa \"A tiempo\"</string>

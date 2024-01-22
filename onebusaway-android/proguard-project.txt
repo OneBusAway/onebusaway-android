@@ -42,6 +42,7 @@
 -keep class edu.usf.cutr.pelias.** { *; }
 
 # Keep all class members for GeoJSON Feature class and deserializers for geocoding
+-keep class org.geojson.** { *; }
 -keepclassmembers class org.geojson.Feature** { *; }
 -keepclassmembers class org.geojson.jackson.LngLatAltDeserializer** { *; }
 

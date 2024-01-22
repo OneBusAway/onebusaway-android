@@ -103,7 +103,7 @@
     <string name="map_option_search">Search</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
-    <string name="main_help_whatsnew">• <b>Dark Mode</b> - The app finally supports dark mode! Hooray! Thank you Kevin for your contribution!\n• <b>Starred Routes List</b> - You can now favorite (or star) an entire route - not just a single stop. Thank you Millan for your contribution! \n• <b>Bug fixes and improvements</b> - See https://bit.ly/oba-android-releases</string>
+    <string name="main_help_whatsnew">• <b>Bug fixes</b> dark mode and trip planner both work as expected again. Thanks for your patience. - See https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>
     <string name="main_help_legend_ontime">Green means \"On time\"</string>

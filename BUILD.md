@@ -16,7 +16,7 @@ This results in a total of 1 * 3 = 3 core build variants.  Each of these core va
 
 The below instructions assume you're going to be building for the **google** platform flavor and original **oba** brand by default (e.g., `obaGoogleDebug`).
 
-If you want more info about building the other brands, please see the [Rebranding OneBusAway Android page](https://github.com/OneBusAway/onebusaway-android/blob/master/REBRANDING.md).
+If you want more info about building the other brands, please see the [Rebranding OneBusAway Android page](https://github.com/OneBusAway/onebusaway-android/blob/main/REBRANDING.md).
 
 ### Prerequisites for both Android Studio and Gradle
 

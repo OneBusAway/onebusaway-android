@@ -44,4 +44,4 @@ You can also reach us via:
 * Email - android-app (at) onebusaway.org
 * Posting a messsage to the [OneBusAway Google+ Community](https://plus.google.com/u/0/communities/105092615216731099521)
 * Posting a messsage on the [onebusaway-developers Google Group](https://groups.google.com/forum/#!forum/onebusaway-developers)
-* Filing a issue on the [OBA Android Github issue tracker](https://github.com/OneBusAway/onebusaway-android/blob/master/CONTRIBUTING.md#issue-tracker)
+* Filing a issue on the [OBA Android Github issue tracker](https://github.com/OneBusAway/onebusaway-android/blob/main/CONTRIBUTING.md#issue-tracker)

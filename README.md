@@ -23,7 +23,7 @@ OneBusAway for Android automatically keeps track of your most used stops and rou
 
 ## Alpha and Beta Testing
 
-Get early access to new OneBusAway Android versions, and help us squash bugs! See our [Testing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/BETA_TESTING.md) for details.
+Get early access to new OneBusAway Android versions, and help us squash bugs! See our [Testing Guide](https://github.com/OneBusAway/onebusaway-android/blob/main/BETA_TESTING.md) for details.
 
 ## Build Setup
 
@@ -31,7 +31,7 @@ Want to build the project yourself and test some changes?  See our [build docume
 
 ## Contributing
 
-We welcome contributions to the project! Please see our [Contributing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/.github/CONTRIBUTING.md) for details, including Code Style Guidelines and Template.
+We welcome contributions to the project! Please see our [Contributing Guide](https://github.com/OneBusAway/onebusaway-android/blob/main/.github/CONTRIBUTING.md) for details, including Code Style Guidelines and Template.
 
 ## System Architecture
 
@@ -42,7 +42,7 @@ Curious what servers power certain features in OneBusAway Android?  Check out th
 There are two ways to deploy OneBusAway Android in your city:
 
 1. **Join the OneBusAway [multi-region project](https://github.com/OneBusAway/onebusaway/wiki/Multi-Region)** - The easiest way to get started - simply set up your own OneBusAway server with your own transit data, and get added to the OneBusAway apps!  See [this page](https://github.com/OneBusAway/onebusaway/wiki/Multi-Region) for details.
-2. **Deploy a rebranded version of OneBusAway Android as your own app on Google Play** - Requires a bit more maintenance, but it allows you to set up your own app on Google Play based on the OneBusAway Android source code. See [rebranding page](https://github.com/OneBusAway/onebusaway-android/blob/master/REBRANDING.md) for details.
+2. **Deploy a rebranded version of OneBusAway Android as your own app on Google Play** - Requires a bit more maintenance, but it allows you to set up your own app on Google Play based on the OneBusAway Android source code. See [rebranding page](https://github.com/OneBusAway/onebusaway-android/blob/main/REBRANDING.md) for details.
 
 ## Testing Your Own OneBusAway/OpenTripPlanner servers
 

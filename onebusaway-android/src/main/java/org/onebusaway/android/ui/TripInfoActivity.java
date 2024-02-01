@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
@@ -26,6 +27,7 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -415,6 +417,14 @@ public class TripInfoActivity extends AppCompatActivity {
             // Reminder time
             // Repeats
             //
+
+            // On Android Tiramisu and up, we must request
+            // permission to schedule exact alarms.
+            if (!TripService.canScheduleExactAlarms(getActivity())) {
+                showRequestAlarmsPermissionDialog(getActivity());
+                return;
+            }
+
             View view = getView();
             final Spinner reminderView = (Spinner) view.findViewById(R.id.trip_info_reminder_time);
             final TextView nameView = (TextView) view.findViewById(R.id.name);
@@ -453,6 +463,27 @@ public class TripInfoActivity extends AppCompatActivity {
             Toast.makeText(getActivity(), R.string.trip_info_saved, Toast.LENGTH_SHORT)
                     .show();
             finish();
+        }
+
+        private void showRequestAlarmsPermissionDialog(Context context) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(context)
+                    .setTitle(R.string.trip_info_grant_exact_alarms_permission_title)
+                    .setCancelable(true)
+                    .setMessage(R.string.trip_info_grant_exact_alarms_permission_message)
+                    .setPositiveButton(
+                            R.string.trip_info_grant_exact_alarms_permission_positive_button,
+                            (dialog, which) -> {
+                                TripService.requestScheduleExactAlarmsPermission(context);
+                                dialog.dismiss();
+                            }
+                    )
+                    .setNegativeButton(
+                            R.string.trip_info_grant_exact_alarms_permission_negative_button,
+                            (dialog, which) -> {
+                                dialog.dismiss();
+                            });
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
         }
 
         void showReminderDaysDialog() {

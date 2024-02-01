@@ -30,6 +30,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -286,28 +287,56 @@ public class TripService extends Service {
     }
 
     public static void pollTrip(Context context, Uri alertUri, long triggerTime) {
-        Intent intent = new Intent(TripService.ACTION_POLL, alertUri,
-                context, AlarmReceiver.class);
+        PendingIntent alarmIntent = createAlarmIntent(context, alertUri);
+        scheduleAlarm(context, triggerTime, alarmIntent);
+    }
+
+    private static void scheduleAlarm(Context context, long triggerTime, PendingIntent alarmIntent) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+        // Android 5.1 and earlier just uses `set()`.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
+            return;
+        }
+
+        // Android 6 - 12 can directly call `setExactAndAllowWhileIdle()`.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            setExactAlarm(alarmManager, triggerTime, alarmIntent);
+            return;
+        }
+
+        // Android 13 and up must have permission to call `setExactAndAllowWhileIdle()`.
+        if (alarmManager.canScheduleExactAlarms()) {
+            setExactAlarm(alarmManager, triggerTime, alarmIntent);
+            return;
+        }
+
+        Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+        context.startActivity(intent);
+    }
+
+    private static void setExactAlarm(AlarmManager alarmManager, long triggerTime, PendingIntent alarmIntent) {
+        // Try to cut through Doze so alarm still triggers - See #558
+        // Note that we intentionally do NOT use alarm.setAlarmClock() because this creates
+        // an alarm in the user's status bar and notification drawer which can be annoying - see
+        // https://stackoverflow.com/questions/34699662/how-does-alarmmanager-alarmclockinfos-pendingintent-work
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
+        }
+    }
+
+    private static PendingIntent createAlarmIntent(Context context, Uri alertUri) {
+        Intent intent = new Intent(TripService.ACTION_POLL, alertUri, context, AlarmReceiver.class);
+
         int flags;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             flags = PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE;
         } else {
             flags = PendingIntent.FLAG_ONE_SHOT;
         }
-        PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0,
-                intent, flags);
 
-        AlarmManager alarm =
-                (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // Try to cut through Doze so alarm still triggers - See #558
-            // Note that we intentionally do NOT use alarm.setAlarmClock() because this creates
-            // an alarm in the user's status bar and notification drawer which can be annoying - see
-            // https://stackoverflow.com/questions/34699662/how-does-alarmmanager-alarmclockinfos-pendingintent-work
-            alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
-        } else {
-            alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
-        }
+        return PendingIntent.getBroadcast(context, 0, intent, flags);
     }
 
     public static void notifyTrip(Context context, Uri alertUri, String notifyTitle, String notifyText) {

@@ -17,6 +17,9 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.request.ObaRouteRequest;
+import org.onebusaway.android.io.request.ObaRouteResponse;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.UIUtils;
 
@@ -24,13 +27,18 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
 
 import androidx.cursoradapter.widget.SimpleCursorAdapter;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.AsyncTaskLoader;
 import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
 
 /**
  * Utilities mainly to support queries for the Stops and Routes lists
@@ -247,5 +255,81 @@ public final class QueryUtils {
         // Mark the combination of route and headsign as a favorite or not favorite
         ObaContract.RouteHeadsignFavorites
                 .markAsFavorite(context, routeId, headsign, stopId, favorite);
+    }
+
+    final static class RouteInfoLoader extends AsyncTaskLoader<ObaRouteResponse> {
+
+        private final String mRouteId;
+
+        RouteInfoLoader(Context context, String routeId) {
+            super(context);
+            mRouteId = routeId;
+        }
+
+        @Override
+        public void onStartLoading() {
+            forceLoad();
+        }
+
+        @Override
+        public ObaRouteResponse loadInBackground() {
+            return ObaRouteRequest.newRequest(getContext(), mRouteId).call();
+        }
+    }
+
+    final static class RouteLoaderCallback
+            implements LoaderManager.LoaderCallbacks<ObaRouteResponse> {
+
+        private String mRouteId;
+        private Context mContext;
+
+        public RouteLoaderCallback(Context context, String routeId) {
+            super();
+            mRouteId = routeId;
+            mContext = context;
+        }
+
+        @Override
+        public Loader<ObaRouteResponse> onCreateLoader(int id, Bundle args) {
+            return new QueryUtils.RouteInfoLoader(mContext, mRouteId);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<ObaRouteResponse> loader,
+                                   ObaRouteResponse data) {
+            recordRouteInfo(data);
+        }
+
+        @Override
+        public void onLoaderReset(Loader<ObaRouteResponse> loader) {
+            // Nothing to do right here...
+        }
+
+        private void recordRouteInfo(ObaRouteResponse routeInfo) {
+            if (routeInfo.getCode() == ObaApi.OBA_OK) {
+                String url = routeInfo.getUrl();
+
+                String shortName = routeInfo.getShortName();
+                String longName = routeInfo.getLongName();
+
+                if (TextUtils.isEmpty(shortName)) {
+                    shortName = longName;
+                }
+                if (TextUtils.isEmpty(longName) || shortName.equals(longName)) {
+                    longName = routeInfo.getDescription();
+                }
+
+                ContentValues values = new ContentValues();
+                values.put(ObaContract.Routes.SHORTNAME, shortName);
+                values.put(ObaContract.Routes.LONGNAME, longName);
+                values.put(ObaContract.Routes.URL, url);
+                if (Application.get().getCurrentRegion() != null) {
+                    values.put(ObaContract.Routes.REGION_ID,
+                            Application.get().getCurrentRegion().getId());
+                }
+                ObaContract.Routes.insertOrUpdate(mContext, routeInfo.getId(), values,
+                        true);
+            }
+        }
     }
 }

@@ -1,11 +1,11 @@
 name: Android CI Build
 
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
+  # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -16,7 +16,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        api-level: [ 24, 29 ]
+        api-level: [ 29 ]
         target: [google_apis]
     steps:
       - name: checkout
@@ -25,7 +25,7 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
-          java-version: 11
+          java-version: 21
           distribution: 'temurin'
 
       - name: Gradle cache

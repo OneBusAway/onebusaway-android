@@ -3,7 +3,7 @@
 There are two ways to deploy OneBusAway Android in your city:
 
 1. **Join the OneBusAway [multi-region project](https://github.com/OneBusAway/onebusaway/wiki/Multi-Region)** - The easiest way to get started - simply set up your own OneBusAway server with your own transit data, and get added to *all* the OneBusAway apps!  See [this page](https://github.com/OneBusAway/onebusaway/wiki/Multi-Region) for details.
-2. **Deploy a rebranded version of OneBusAway Android as your own app on Google Play** - Requires a bit more maintenance, but it allows you to set up your own app on Google Play / Amazon App Store based on the OneBusAway Android source code, and with your brand name and colors.  This page discusses this option in detail.
+2. **Deploy a rebranded version of OneBusAway Android as your own app on Google Play** - Requires a bit more maintenance, but it allows you to set up your own app on Google Play based on the OneBusAway Android source code, and with your brand name and colors.  This page discusses this option in detail.
 
 ## Rebranding Using Gradle Build Flavors
 
@@ -12,7 +12,6 @@ We use [Gradle build flavors](http://developer.android.com/tools/building/config
 We have two Gradle "platform" flavor dimensions:
 
 * **google** = Normal Google Play release
-* **amazon** = Amazon Fire Phone release
 
 ...and three Gradle "brand" flavor dimensions:
 
@@ -30,9 +29,9 @@ And here are screenshots for these 3 brands:
 
 <img src="https://cloud.githubusercontent.com/assets/928045/23876835/a6ceb718-0815-11e7-866a-5daef01d0a08.png" width="496" height="281" align=center />
 
-Each of the 3 brands are deployed as an independent app on Google Play (using the **google** platform flavor) and the Amazon App Store (using the **amazon** platform flavor).
+Each of the 3 brands are deployed as an independent app on Google Play (using the **google** platform flavor).
 
-When building the project, this results in a total of 2 platforms * 3 brands = 6 core build variants.  Each of these core variants also has a debug/release build type - the end result is that you'll have 12 build variants to choose from within Android Studio or on the command line.
+When building the project, this results in a total of 1 platform * 3 brands = 3 core build variants.  Each of these core variants also has a debug/release build type - the end result is that you'll have 6 build variants to choose from within Android Studio or on the command line.
 
 To build a variant, you need to combine the platform flavor with the brand flavor.  For example, the original OneBusAway brand for the Google platform can be build with:
 

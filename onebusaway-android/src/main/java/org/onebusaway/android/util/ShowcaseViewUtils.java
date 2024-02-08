@@ -210,11 +210,6 @@ public class ShowcaseViewUtils {
                 addIcon(activity, text, R.drawable.ic_action_content_sort);
                 break;
             case TUTORIAL_STARRED_STOPS_SHORTCUT:
-                if (BuildConfig.FLAVOR_platform
-                        .equalsIgnoreCase(BuildFlavorUtils.AMAZON_FLAVOR_PLATFORM)) {
-                    // Amazon doesn't support shortcuts - see #419
-                    return;
-                }
                 title = r.getString(R.string.tutorial_starred_stops_shortcut_title);
                 text = new SpannableString(
                         r.getString(R.string.tutorial_starred_stops_shortcut_text));

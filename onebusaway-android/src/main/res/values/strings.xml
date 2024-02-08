@@ -23,6 +23,7 @@
     <!-- Navigation Drawer -->
     <string name="navdrawer_item_nearby">Nearby</string>
     <string name="navdrawer_item_starred_stops">Starred stops</string>
+    <string name="navdrawer_item_starred_routes">Starred routes</string>
     <string name="navdrawer_item_my_reminders">My reminders</string>
     <string name="navdrawer_item_settings">Settings</string>
     <string name="navdrawer_item_help">Help</string>
@@ -102,16 +103,7 @@
     <string name="map_option_search">Search</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
-    <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Real-time occupancy for WMATA</b>
-        - See how many passengers are on supported vehicles in real-time for the Washington, D.C. region.\n&#8226;\u0020
-        <b>Options to hide all alerts</b>
-        - New menu option to hide all alerts for a stop in one tap, and a new Settings option to hide all alerts by default.\n&#8226;\u0020
-        <b>Italian translation</b>
-        - Thanks Eleonora Fabbri!\n&#8226;\u0020
-        <b>Bug fixes and improvements</b>
-        - See https://bit.ly/oba-android-releases
-    </string>
+    <string name="main_help_whatsnew">• <b>Bug fixes</b> dark mode and trip planner both work as expected again. Thanks for your patience. - See https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>
     <string name="main_help_legend_ontime">Green means \"On time\"</string>
@@ -371,6 +363,9 @@
     <string name="my_no_starred_stops">You have no starred stops.\n\nYou can add a star to a stop on
         the arrivals screen by tapping on the star next to the stop name.
     </string>
+    <string name="my_no_starred_routes">You have no starred routes.\n\nYou can add a star to a route
+        on the arrivals screen by tapping on the star next to the route number.
+    </string>
     <string name="my_no_recent_routes">You have no recent routes.</string>
     <!-- <string name="my_no_starred_routes">You have no starred routes.</string>-->
     <string name="route_favorite_options_title_star">Star Route \"%s\" for:</string>
@@ -621,6 +616,11 @@
     <string name="preferences_preferred_units_option_automatic">Automatic</string>
     <string name="preferences_preferred_units_option_metric">Metric (km, m)</string>
     <string name="preferences_preferred_units_option_imperial">Imperial (mi, ft)</string>
+
+    <string name="preferences_app_theme_title">App Theme</string>
+    <string name="preferences_app_theme_option_system_default">System Default</string>
+    <string name="preferences_app_theme_option_light">Light Theme</string>
+    <string name="preferences_app_theme_option_dark">Dark Theme</string>
 
     <string name="preferences_show_negative_arrivals_title">Show departed buses</string>
     <string name="preferences_show_negative_arrivals_summary">Include buses that just left as
@@ -1196,4 +1196,5 @@
     <string name="travel_behavior_dialog_opt_out_title">Opt out of study?</string>
     <string name="travel_behavior_dialog_opt_out_message">If you opt out of the research study, we won\'t receive any more information about your travel behavior to help improve public transit.</string>
     <string name="cancel">Cancel</string>
+    <string name="my_option_clear_starred_routes">Remove all starred routes</string>
 </resources>

@@ -69,7 +69,7 @@
     <string name="map_option_search">Cerca</string>
     <string name="main_help_title">Aiuto</string>
     <string name="main_help_whatsnew_title">Novità</string>
-    <string name="main_help_whatsnew">•\u0020 <b>Occupazione in tempo reale per la WMATA</b> - Mostra il numero di passeggeri attuale sui veicoli supportati nell\'area Washington, D.C. \n•\u0020 <b>Correzione dei bug e miglioramenti</b> - Vedi https://bit.ly/oba-android-releases</string>
+    <string name="main_help_whatsnew">"• <b>Correzioni di bug</b> la modalità scura e il pianificatore di viaggio funzionano di nuovo come previsto. Grazie per la tua pazienza. - Vedi https://bit.ly/oba-android-releases "</string>
     <string name="main_help_close">Chiudi</string>
     <string name="main_help_legend_title">Legenda</string>
     <string name="main_help_legend_ontime">Verde significa \&quot;In orario\&quot;</string>

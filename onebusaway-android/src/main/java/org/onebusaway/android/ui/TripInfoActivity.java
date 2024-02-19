@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
@@ -25,6 +26,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -50,12 +52,15 @@ import org.onebusaway.android.util.UIUtils;
 import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
+
+import static org.onebusaway.android.util.PermissionUtils.NOTIFICATION_PERMISSION_REQUEST;
 
 public class TripInfoActivity extends AppCompatActivity {
 
@@ -415,6 +420,15 @@ public class TripInfoActivity extends AppCompatActivity {
             // Reminder time
             // Repeats
             //
+
+            // Make sure that the user has granted notification permissions,
+            // so that the arrival time notification actually shows up.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ActivityCompat.requestPermissions(this.getActivity(),
+                        new String[] {Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_REQUEST);
+            }
+
             View view = getView();
             final Spinner reminderView = (Spinner) view.findViewById(R.id.trip_info_reminder_time);
             final TextView nameView = (TextView) view.findViewById(R.id.name);

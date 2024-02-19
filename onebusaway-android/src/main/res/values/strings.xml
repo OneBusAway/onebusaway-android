@@ -450,6 +450,10 @@
     <string name="trip_info_option_showroute">Show Route</string>
     <string name="trip_info_option_showstop">Show Stop</string>
     <string name="trip_info_separator">-</string>
+    <string name="trip_info_grant_exact_alarms_permission_title">Permission Needed</string>
+    <string name="trip_info_grant_exact_alarms_permission_message">You must grant the app permission to schedule a reminder.</string>
+    <string name="trip_info_grant_exact_alarms_permission_positive_button">Grant Permission</string>
+    <string name="trip_info_grant_exact_alarms_permission_negative_button">Cancel</string>
 
     <!-- Occupancy -->
     <string name="historically_full">Historically full</string>

@@ -291,6 +291,41 @@ public class TripService extends Service {
         scheduleAlarm(context, triggerTime, alarmIntent);
     }
 
+    /**
+     * Informs the caller as to whether alarms can be scheduled, or if permission
+     * must be granted first.
+     *
+     * @apiNote On Android pre-Tiramisu, you could schedule an exact alarm without requesting
+     * any additional permissions. Newer versions of the OS, on the other hand,
+     * require the user to grant explicit permission.
+     *
+     * @param context
+     * @return True if an alarm can be scheduled and false if permission is required first.
+     */
+    public static boolean canScheduleExactAlarms(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return true;
+        }
+
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        return alarmManager.canScheduleExactAlarms();
+    }
+
+    /**
+     * Requests the SCHEDULE_EXACT_ALARM permission on Android Tiramisu and newer.
+     * Does nothing on older versions.
+     * @param context
+     */
+    public static void requestScheduleExactAlarmsPermission(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return;
+        }
+
+        Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+        intent.setData(Uri.parse("package:" + context.getPackageName()));
+        context.startActivity(intent);
+    }
+
     private static void scheduleAlarm(Context context, long triggerTime, PendingIntent alarmIntent) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
@@ -306,14 +341,9 @@ public class TripService extends Service {
             return;
         }
 
-        // Android 13 and up must have permission to call `setExactAndAllowWhileIdle()`.
-        if (alarmManager.canScheduleExactAlarms()) {
+        if (canScheduleExactAlarms(context)) {
             setExactAlarm(alarmManager, triggerTime, alarmIntent);
-            return;
         }
-
-        Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
-        context.startActivity(intent);
     }
 
     private static void setExactAlarm(AlarmManager alarmManager, long triggerTime, PendingIntent alarmIntent) {

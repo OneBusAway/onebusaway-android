@@ -95,7 +95,7 @@
     <string name="map_option_search">Haku</string>
     <string name="main_help_title">Ohje</string>
     <string name="main_help_whatsnew_title">Mitä uutta?</string>
-    <string name="main_help_whatsnew">• <b>Virheenkorjaukset</b> tumma tila ja matkasuunnittelija toimivat jälleen odotetusti. Kiitos kärsivällisyydestäsi. - Katso https://bit.ly/oba-android-releases</string>
+    <string name="main_help_whatsnew">• <b>Virheenkorjaukset</b> Lähtöhälytysilmoitukset toimivat jälleen odotetusti. Kiitos kärsivällisyydestäsi. - Katso https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Sulje</string>
     <string name="main_nolocation_title">Sijaintitieto ei ole käytettävissä</string>
     <string name="main_nolocation">OneBusAway haluaa käyttää sijaintitietoasi,

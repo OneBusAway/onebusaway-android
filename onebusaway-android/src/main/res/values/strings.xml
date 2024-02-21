@@ -103,7 +103,7 @@
     <string name="map_option_search">Search</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
-    <string name="main_help_whatsnew">• <b>Bug fixes</b> dark mode and trip planner both work as expected again. Thanks for your patience. - See https://bit.ly/oba-android-releases</string>
+    <string name="main_help_whatsnew">• <b>Bug fixes</b> departure alarm notifications work as expected again. Thanks for your patience. - See https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>
     <string name="main_help_legend_ontime">Green means \"On time\"</string>
@@ -450,6 +450,10 @@
     <string name="trip_info_option_showroute">Show Route</string>
     <string name="trip_info_option_showstop">Show Stop</string>
     <string name="trip_info_separator">-</string>
+    <string name="trip_info_grant_exact_alarms_permission_title">Permission Needed</string>
+    <string name="trip_info_grant_exact_alarms_permission_message">You must grant the app permission to schedule a reminder.</string>
+    <string name="trip_info_grant_exact_alarms_permission_positive_button">Grant Permission</string>
+    <string name="trip_info_grant_exact_alarms_permission_negative_button">Cancel</string>
 
     <!-- Occupancy -->
     <string name="historically_full">Historically full</string>

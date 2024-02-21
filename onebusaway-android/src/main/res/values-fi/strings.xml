@@ -95,7 +95,7 @@
     <string name="map_option_search">Haku</string>
     <string name="main_help_title">Ohje</string>
     <string name="main_help_whatsnew_title">Mitä uutta?</string>
-    <string name="main_help_whatsnew">• <b>Virheenkorjaukset</b> tumma tila ja matkasuunnittelija toimivat jälleen odotetusti. Kiitos kärsivällisyydestäsi. - Katso https://bit.ly/oba-android-releases</string>
+    <string name="main_help_whatsnew">• <b>Virheenkorjaukset</b> Lähtöhälytysilmoitukset toimivat jälleen odotetusti. Kiitos kärsivällisyydestäsi. - Katso https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Sulje</string>
     <string name="main_nolocation_title">Sijaintitieto ei ole käytettävissä</string>
     <string name="main_nolocation">OneBusAway haluaa käyttää sijaintitietoasi,
@@ -631,4 +631,8 @@
         (https://github.com/google/material-design-icons), "
         "licensed under Apache v2.0 (https://www.apache.org/licenses/LICENSE-2.0).\n\n"
     </string>
+    <string name="trip_info_grant_exact_alarms_permission_title">Lupa tarvitaan</string>
+    <string name="trip_info_grant_exact_alarms_permission_message">Sinun täytyy antaa sovellukselle lupa muistutuksen asettamiseen.</string>
+    <string name="trip_info_grant_exact_alarms_permission_positive_button">Myönnä lupa</string>
+    <string name="trip_info_grant_exact_alarms_permission_negative_button">Peruuta</string>
 </resources>

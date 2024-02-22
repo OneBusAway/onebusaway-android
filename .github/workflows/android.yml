@@ -26,6 +26,12 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: 21
+          distribution: 'temurin'
+
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
 

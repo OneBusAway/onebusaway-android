@@ -21,6 +21,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Html;
 import android.text.TextUtils;
 import android.text.style.ClickableSpan;
 import android.view.View;
@@ -154,7 +155,7 @@ public class SituationDialogFragment extends DialogFragment {
                     }
                 });
 
-        final androidx.appcompat.app.AlertDialog dialog = builder.create();
+        final AlertDialog dialog = builder.create();
         dialog.show();
 
         // Set the title, description, and URL (if provided)
@@ -162,8 +163,10 @@ public class SituationDialogFragment extends DialogFragment {
         title.setText(args.getString(TITLE));
 
         TextView desc = (TextView) dialog.findViewById(R.id.alert_description);
-        desc.setText(args.getString(DESCRIPTION));
 
+        if (desc != null) {
+            desc.setText(Html.fromHtml(args.getString(DESCRIPTION)));
+        }
         TextView urlView = (TextView) dialog.findViewById(R.id.alert_url);
 
         // Remove any previous clickable spans just to be safe

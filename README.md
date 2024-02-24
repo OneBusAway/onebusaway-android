@@ -1,4 +1,4 @@
-# OneBusAway for Android [![Android CI Build](https://github.com/OneBusAway/onebusaway-android/actions/workflows/android.yml/badge.svg)](https://github.com/OneBusAway/onebusaway-android/actions/workflows/android.yml) [![Join the OneBusAway chat](https://onebusaway.herokuapp.com/badge.svg)](https://onebusaway.herokuapp.com/)
+# OneBusAway for Android [![Android CI Build](https://github.com/OneBusAway/onebusaway-android/actions/workflows/android.yml/badge.svg)](https://github.com/OneBusAway/onebusaway-android/actions/workflows/android.yml)
 
 This is the official Android / Fire Phone app for [OneBusAway](https://onebusaway.org/), a project of the non-profit [Open Transit Software Foundation](https://opentransitsoftwarefoundation.org/)!
 

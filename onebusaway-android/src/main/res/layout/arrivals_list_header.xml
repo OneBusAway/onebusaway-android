@@ -21,8 +21,8 @@
                 android:layout_height="@dimen/arrival_header_height_two_arrivals"
                 android:orientation="vertical">
 
-    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                    style="@style/HeaderItem"
+    <RelativeLayout
+        style="@style/HeaderItem"
                     android:id="@+id/main_header_content"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/arrival_header_height_two_arrivals"
@@ -224,16 +224,17 @@
         </LinearLayout>
 
         <ProgressBar
-                android:id="@+id/header_loading_spinner"
-                style="?android:progressBarStyleLarge"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_marginLeft="8dp"
-                android:paddingRight="8dp"
-                android:paddingBottom="5dp"
-                android:visibility="visible"
-                android:layout_marginTop="8dp"
-                android:layout_centerInParent="true"/>
+            android:id="@+id/header_loading_spinner"
+            style="?android:progressBarStyleLarge"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_centerInParent="true"
+            android:layout_marginLeft="8dp"
+            android:layout_marginTop="8dp"
+           android:indeterminateTint="@color/header_text_faded_color"
+            android:paddingRight="8dp"
+            android:paddingBottom="5dp"
+            android:visibility="visible" />
 
         <TextView
                 android:id="@+id/no_arrivals"

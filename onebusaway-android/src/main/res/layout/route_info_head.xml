@@ -26,6 +26,7 @@
             android:paddingRight="8dp"
             android:paddingBottom="5dp"
             android:visibility="visible"
+            android:indeterminateTint="@color/header_text_faded_color"
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"/>
     <TableLayout

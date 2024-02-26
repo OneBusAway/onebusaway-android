@@ -619,14 +619,24 @@ public class PreferencesActivity extends PreferenceActivity
      * @return true if the provided apiUrl could be a valid URL, false if it could not
      */
     private boolean validateUrl(String apiUrl) {
-        try {
-            // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
-            URL url = new URL(apiUrl);
-        } catch (MalformedURLException e) {
+        if (!apiUrl.startsWith("http")) {
             // Assume HTTPS scheme if none is provided
             apiUrl = getString(R.string.https_prefix) + apiUrl;
         }
-        return Patterns.WEB_URL.matcher(apiUrl).matches();
+
+        URL url = null;
+        try {
+            // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
+            url = new URL(apiUrl);
+        } catch (MalformedURLException e) {
+            return false;
+        }
+
+        if (url.getHost().equals("localhost")) {
+            return true;
+        } else {
+            return Patterns.WEB_URL.matcher(apiUrl).matches();
+        }
     }
 
     /**

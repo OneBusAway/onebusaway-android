@@ -53,6 +53,7 @@ import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -60,6 +61,10 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.StampStyle;
+import com.google.android.gms.maps.model.StrokeStyle;
+import com.google.android.gms.maps.model.StyleSpan;
+import com.google.android.gms.maps.model.TextureStyle;
 import com.google.android.gms.maps.model.VisibleRegion;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
@@ -1038,12 +1043,18 @@ public class BaseMapFragment extends SupportMapFragment
                 mLineOverlay.clear();
             }
             PolylineOptions lineOptions;
+            StampStyle polylineArrow = TextureStyle.newBuilder(
+                BitmapDescriptorFactory.fromResource(R.drawable.ic_navigation_expand_more)
+            ).build();
+            StyleSpan polylineArrowSpan = new StyleSpan(
+                StrokeStyle.colorBuilder(lineOverlayColor).stamp(polylineArrow).build()
+            );
 
             int totalPoints = 0;
 
             for (ObaShape s : shapes) {
                 lineOptions = new PolylineOptions();
-                lineOptions.color(lineOverlayColor);
+                lineOptions.addSpan(polylineArrowSpan);
 
                 for (Location l : s.getPoints()) {
                     lineOptions.add(MapHelpV2.makeLatLng(l));

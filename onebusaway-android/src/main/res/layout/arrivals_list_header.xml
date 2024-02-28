@@ -227,6 +227,7 @@
                 android:id="@+id/header_loading_spinner"
                 style="?android:progressBarStyleLarge"
                 android:layout_width="60dp"
+                android:indeterminateTint="@color/header_text_faded_color"
                 android:layout_height="60dp"
                 android:layout_marginLeft="8dp"
                 android:paddingRight="8dp"

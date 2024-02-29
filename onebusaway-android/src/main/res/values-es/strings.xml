@@ -102,7 +102,7 @@
     <string name="map_option_search">Buscar</string>
     <string name="main_help_title">Ayuda</string>
     <string name="main_help_whatsnew_title">Novedades en esta versión</string>
-    <string name="main_help_whatsnew">• <b>Correcciones de errores</b> Las notificaciones de alarma de salida funcionan como se esperaba de nuevo. Gracias por tu paciencia. - Ver https://bit.ly/oba-android-releases</string>
+    <string name="main_help_whatsnew">• <b>Correcciones de errores</b> Varias correcciones de errores y mejoras en el acabado. - Ver https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Cerrar</string>
     <string name="main_help_legend_title">Leyenda</string>
     <string name="main_help_legend_ontime">Verde significa \"A tiempo\"</string>

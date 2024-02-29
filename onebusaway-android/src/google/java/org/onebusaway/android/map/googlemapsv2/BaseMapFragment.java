@@ -378,6 +378,10 @@ public class BaseMapFragment extends SupportMapFragment
             }
             initMapState(args);
         }
+
+        // Remove All POI from the map
+        String removePOIStyle = "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]";
+        mMap.setMapStyle(new MapStyleOptions(removePOIStyle));
     }
 
     private void initMapState(Bundle args) {

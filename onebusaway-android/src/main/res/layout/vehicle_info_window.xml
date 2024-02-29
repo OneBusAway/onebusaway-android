@@ -23,10 +23,12 @@
         style="@style/StopInfoDestination"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:text="5 - North to Univerity Area TC"
         android:ellipsize="end"
-        android:singleLine="true" />
+        android:singleLine="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="5 - North to Univerity Area TC" />
 
     <include
         android:id="@+id/status"
@@ -52,23 +54,26 @@
     <TextView
         android:id="@+id/last_updated"
         style="@style/StopInfoTime"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/trip_more_info"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/status"
+        app:layout_constraintVertical_bias="0.0"
         tools:text="Updated 3 min ago" />
 
     <ImageView
         android:id="@+id/trip_more_info"
         android:layout_width="28dp"
         android:layout_height="28dp"
-        app:layout_constraintEnd_toEndOf="@+id/route_and_destination"
-        app:layout_constraintBottom_toBottomOf="@id/last_updated"
-        android:translationY="4dp"
-        android:translationX="9dp"
-        android:src="@drawable/ic_navigation_chevron_right"
-        android:maxHeight="24dp"
+        android:adjustViewBounds="true"
         android:maxWidth="24dp"
+        android:maxHeight="24dp"
         android:scaleType="fitCenter"
-        android:adjustViewBounds="true" />
+        android:src="@drawable/ic_navigation_chevron_right"
+
+        app:layout_constraintBottom_toBottomOf="@id/last_updated"
+        app:layout_constraintEnd_toEndOf="@+id/route_and_destination"
+        app:layout_constraintTop_toTopOf="@+id/last_updated" />
 </androidx.constraintlayout.widget.ConstraintLayout>

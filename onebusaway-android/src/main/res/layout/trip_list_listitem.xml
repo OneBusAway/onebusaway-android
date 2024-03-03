@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com),
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com),
      University of South Florida
 
      Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,71 +14,74 @@
      limitations under the License.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                style="@style/ListItem"
-                android:id="@+id/stop_list_container"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-    <ImageView
-            android:id="@+id/stop_reminder"
-            android:src="@drawable/ic_drawer_alarm"
-            android:tint="@color/navdrawer_icon_tint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:scaleType="fitCenter"
-            android:adjustViewBounds="true"
-            android:maxHeight="25dp"
-            android:maxWidth="25dp"
-            android:layout_marginLeft="6dp"
-            android:layout_centerVertical="true"
-            android:layout_alignParentLeft="true"/>
+    android:id="@+id/stop_list_container"
+    style="@style/ListItem"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                  style="@style/ListItem"
-                  android:layout_marginLeft="@dimen/keyline_2"
-                  android:layout_alignParentLeft="true"
-                  android:layout_centerVertical="true"
-                  android:layout_width="fill_parent"
-                  android:layout_height="wrap_content"
-                  android:orientation="vertical">
+    <ImageView
+        android:id="@+id/stop_reminder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:adjustViewBounds="true"
+        android:maxWidth="25dp"
+        android:maxHeight="25dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_drawer_alarm"
+        android:tint="@color/navdrawer_icon_tint" />
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        style="@style/ListItem"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="55dp"
+        android:orientation="vertical">
+
         <TextView
-                android:id="@+id/name"
-                style="@style/Line1Text"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content">
-        </TextView>
+            android:id="@+id/name"
+            style="@style/Line1Text"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"/>
+
         <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content">
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
             <TextView
-                    style="@style/Line2Text"
-                    android:text="@string/trip_info_route"
-                    android:id="@+id/route_name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-            </TextView>
+                android:id="@+id/route_name"
+                style="@style/Line2Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/trip_info_route"/>
+
             <TextView
-                    style="@style/Line2Text"
-                    android:text="@string/trip_info_separator"
-                    android:paddingLeft="4dp"
-                    android:paddingRight="4dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-            </TextView>
+                style="@style/Line2Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:text="@string/trip_info_separator"/>
+
             <TextView
-                    style="@style/Line2Text"
-                    android:id="@+id/headsign"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-            </TextView>
+                android:id="@+id/headsign"
+                style="@style/Line2Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
         </LinearLayout>
 
         <TextView
-                android:id="@+id/departure_time"
-                style="@style/Line2Text"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content">
-        </TextView>
+            android:id="@+id/departure_time"
+            style="@style/Line2Text"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"/>
     </LinearLayout>
 </RelativeLayout>

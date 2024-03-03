@@ -590,6 +590,7 @@
     </string>
 
     <!-- About -->
+    <string name="location_permissions_message">Parantaaksesi kokemustasi, ota käyttöön sijainnin käyttö:\n  - Näytä reaaliaikainen sijaintisi kartalla.\n  - Aseta automaattisesti paikallinen liikennevirastosi.\n\nEmme kerää sijaintitietojasi. Vaihtoehtoisesti voit valita alueesi manuaalisesti ilman sijaintioikeuksien sallimista.</string>
     <string name="title_activity_about">Tietoja</string>
     <string name="about_text">
         "Lisätietoja tästä avoimen lähdekoodin projektista: http://onebusaway.org.\n\n"

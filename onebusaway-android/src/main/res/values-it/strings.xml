@@ -656,7 +656,7 @@
 
     <!-- Permissions -->
     <string name="location_permissions_title">Autorizzazioni per la posizione</string>
-    <string name="location_permissions_message">È consigliabile fornire l\'autorizzazione quando l\'applicazione è in esecuzione per mostrare la tua posizione in tempo reale sulla mappa e per consentire la scelta automatica dell\'area OnebusAway per l\'agenzia di transito locale. I dati di posizione non verranno raccolti da OneBusAway. \n\nSe non fornisci l\'accesso alla posizione, puoi selezionare la tua area manualmente.</string>
+    <string name="location_permissions_message">Per migliorare la tua esperienza, abilita l\'utilizzo della posizione per:\n  - Visualizzare la tua posizione in tempo reale sulla mappa.\n  - Impostare automaticamente la tua agenzia di transito locale.\n\nI tuoi dati di posizione non vengono raccolti da noi. In alternativa, puoi selezionare manualmente la tua regione senza abilitare i permessi di localizzazione.</string>
     <string name="no_thanks">No, grazie</string>
 
     <string name="storage_permissions_title">Accesso alla memoria del dispositivo richiesto.</string>

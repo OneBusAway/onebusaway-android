@@ -775,10 +775,7 @@
 
     <!-- Permissions -->
     <string name="location_permissions_title">La ubicación en tiempo real necesita permisos</string>
-    <string name="location_permissions_message">Para mostrar tu posición en tiempo real sobre el mapa
-        tendrás que otorgar permisos de ubicación. Si tu seleccionas \"No volver a preguntar de nuevo\" tu tendrás
-        que reinstalar la aplicación o habilitar los permisos por medio de la configuración del sistema para ver tu ubicación en tiempo real.
-    </string>
+    <string name="location_permissions_message">Para mejorar tu experiencia, activa el uso de ubicación para:\n  - Mostrar tu posición en tiempo real en el mapa.\n  - Establecer automáticamente tu agencia de tránsito local.\n\nTus datos de ubicación no son recopilados por nosotros. Alternativamente, puedes seleccionar manualmente tu región sin habilitar los permisos de ubicación.</string>
     <string name="no_thanks">No gracias</string>
 
     <string name="storage_permissions_title">Se requiere acceso al almacenamiento del dispositivo</string>

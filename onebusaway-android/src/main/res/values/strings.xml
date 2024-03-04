@@ -883,13 +883,7 @@
 
     <!-- Permissions -->
     <string name="location_permissions_title">Location permissions</string>
-    <string name="location_permissions_message">We recommend allowing location use while the app is
-        running to show your real-time position on the map and automatically select your OneBusAway
-        region for your local transit agency. This location data is not collected by OneBusAway.
-
-        \n\nAlternately, you can manually select your region if you choose not to allow
-        location permissions.
-    </string>
+    <string name="location_permissions_message">To enhance your experience, enable location use to:\n- Display your real-time position on the map.\n- Automatically set your local transit agency.\n\nYour location data is not collected by us. Alternatively, you may manually select your region without enabling location permissions.</string>
     <string name="no_thanks">No thanks</string>
 
     <string name="storage_permissions_title">Access to device storage is required</string>

@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
@@ -25,7 +27,9 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -50,12 +54,15 @@ import org.onebusaway.android.util.UIUtils;
 import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
+
+import static org.onebusaway.android.util.PermissionUtils.NOTIFICATION_PERMISSION_REQUEST;
 
 public class TripInfoActivity extends AppCompatActivity {
 
@@ -415,6 +422,19 @@ public class TripInfoActivity extends AppCompatActivity {
             // Reminder time
             // Repeats
             //
+
+            // Make sure that the user has granted permission for notifications
+            // and exact alarms.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (!TripService.canScheduleExactAlarms(getActivity())) {
+                    showRequestAlarmsPermissionDialog(getActivity());
+                    return;
+                }
+                ActivityCompat.requestPermissions(this.getActivity(),
+                        new String[] {Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_REQUEST);
+            }
+
             View view = getView();
             final Spinner reminderView = (Spinner) view.findViewById(R.id.trip_info_reminder_time);
             final TextView nameView = (TextView) view.findViewById(R.id.name);
@@ -453,6 +473,27 @@ public class TripInfoActivity extends AppCompatActivity {
             Toast.makeText(getActivity(), R.string.trip_info_saved, Toast.LENGTH_SHORT)
                     .show();
             finish();
+        }
+
+        private void showRequestAlarmsPermissionDialog(Context context) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(context)
+                    .setTitle(R.string.trip_info_grant_exact_alarms_permission_title)
+                    .setCancelable(true)
+                    .setMessage(R.string.trip_info_grant_exact_alarms_permission_message)
+                    .setPositiveButton(
+                            R.string.trip_info_grant_exact_alarms_permission_positive_button,
+                            (dialog, which) -> {
+                                TripService.requestScheduleExactAlarmsPermission(context);
+                                dialog.dismiss();
+                            }
+                    )
+                    .setNegativeButton(
+                            R.string.trip_info_grant_exact_alarms_permission_negative_button,
+                            (dialog, which) -> {
+                                dialog.dismiss();
+                            });
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
         }
 
         void showReminderDaysDialog() {

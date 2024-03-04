@@ -102,7 +102,7 @@
     <string name="map_option_search">Buscar</string>
     <string name="main_help_title">Ayuda</string>
     <string name="main_help_whatsnew_title">Novedades en esta versión</string>
-    <string name="main_help_whatsnew">• <b>Correcciones de errores</b> el modo oscuro y el planificador de viajes funcionan nuevamente como se esperaba. Gracias por tu paciencia. - Ver https://bit.ly/oba-android-releases</string>
+    <string name="main_help_whatsnew">• <b>Correcciones de errores</b> Varias correcciones de errores y mejoras en el acabado. - Ver https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Cerrar</string>
     <string name="main_help_legend_title">Leyenda</string>
     <string name="main_help_legend_ontime">Verde significa \"A tiempo\"</string>
@@ -775,10 +775,7 @@
 
     <!-- Permissions -->
     <string name="location_permissions_title">La ubicación en tiempo real necesita permisos</string>
-    <string name="location_permissions_message">Para mostrar tu posición en tiempo real sobre el mapa
-        tendrás que otorgar permisos de ubicación. Si tu seleccionas \"No volver a preguntar de nuevo\" tu tendrás
-        que reinstalar la aplicación o habilitar los permisos por medio de la configuración del sistema para ver tu ubicación en tiempo real.
-    </string>
+    <string name="location_permissions_message">Para mejorar tu experiencia, activa el uso de ubicación para:\n  - Mostrar tu posición en tiempo real en el mapa.\n  - Establecer automáticamente tu agencia de tránsito local.\n\nTus datos de ubicación no son recopilados por nosotros. Alternativamente, puedes seleccionar manualmente tu región sin habilitar los permisos de ubicación.</string>
     <string name="no_thanks">No gracias</string>
 
     <string name="storage_permissions_title">Se requiere acceso al almacenamiento del dispositivo</string>
@@ -1047,4 +1044,8 @@
     <string name="layers_speedial_bikeshare_label">Bicicleta Compartida</string>
     <string name="bike_station_title">Toca para reservar una bicicleta</string>
     <string name="floating_bike_title">Toca para reservar esta bicicleta</string>
+    <string name="trip_info_grant_exact_alarms_permission_title">Se requiere permiso</string>
+    <string name="trip_info_grant_exact_alarms_permission_message">Debes otorgar permiso a la aplicación para programar un recordatorio.</string>
+    <string name="trip_info_grant_exact_alarms_permission_positive_button">Otorgar permiso</string>
+    <string name="trip_info_grant_exact_alarms_permission_negative_button">Cancelar</string>
 </resources>

@@ -39,8 +39,8 @@ android {
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 33
-        versionCode 135
-        versionName "2.11.6"
+        versionCode 137
+        versionName "2.12.0"
 
         multiDexEnabled true
 
@@ -348,7 +348,7 @@ dependencies {
     // Pelias for point-of-interest search and geocoding for trip planning origin and destination
     implementation 'edu.usf.cutr:pelias-client-library:1.1.0'
     // Google Play Services Maps (only for Google flavor)
-    googleImplementation 'com.google.android.gms:play-services-maps:18.0.2'
+    googleImplementation 'com.google.android.gms:play-services-maps:18.2.0'
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)
     googleImplementation 'com.google.android.libraries.places:places-compat:1.1.0'
     // Autocomplete text views with clear button for trip planning

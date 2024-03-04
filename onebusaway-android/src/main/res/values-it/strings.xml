@@ -69,7 +69,7 @@
     <string name="map_option_search">Cerca</string>
     <string name="main_help_title">Aiuto</string>
     <string name="main_help_whatsnew_title">Novità</string>
-    <string name="main_help_whatsnew">"• <b>Correzioni di bug</b> la modalità scura e il pianificatore di viaggio funzionano di nuovo come previsto. Grazie per la tua pazienza. - Vedi https://bit.ly/oba-android-releases "</string>
+    <string name="main_help_whatsnew">"• <b>Correzioni di bug</b> Diverse correzioni di bug e miglioramenti nella rifinitura. - Vedi https://bit.ly/oba-android-releases "</string>
     <string name="main_help_close">Chiudi</string>
     <string name="main_help_legend_title">Legenda</string>
     <string name="main_help_legend_ontime">Verde significa \&quot;In orario\&quot;</string>
@@ -656,7 +656,7 @@
 
     <!-- Permissions -->
     <string name="location_permissions_title">Autorizzazioni per la posizione</string>
-    <string name="location_permissions_message">È consigliabile fornire l\'autorizzazione quando l\'applicazione è in esecuzione per mostrare la tua posizione in tempo reale sulla mappa e per consentire la scelta automatica dell\'area OnebusAway per l\'agenzia di transito locale. I dati di posizione non verranno raccolti da OneBusAway. \n\nSe non fornisci l\'accesso alla posizione, puoi selezionare la tua area manualmente.</string>
+    <string name="location_permissions_message">Per migliorare la tua esperienza, abilita l\'utilizzo della posizione per:\n  - Visualizzare la tua posizione in tempo reale sulla mappa.\n  - Impostare automaticamente la tua agenzia di transito locale.\n\nI tuoi dati di posizione non vengono raccolti da noi. In alternativa, puoi selezionare manualmente la tua regione senza abilitare i permessi di localizzazione.</string>
     <string name="no_thanks">No, grazie</string>
 
     <string name="storage_permissions_title">Accesso alla memoria del dispositivo richiesto.</string>
@@ -909,4 +909,8 @@
     <string name="travel_behavior_dialog_opt_out_title">Rifiutare partecipazione alla ricerca?</string>
     <string name="travel_behavior_dialog_opt_out_message">Se scegli di non partecipare alla ricerca non riceveremo più informazioni riguardo alle tue abitudini di viaggio per migliorare il servizio di trasporto pubblico.</string>
     <string name="cancel">Annulla</string>
+    <string name="trip_info_grant_exact_alarms_permission_title">Permesso necessario</string>
+    <string name="trip_info_grant_exact_alarms_permission_message">Devi concedere all\'app il permesso di pianificare un promemoria.</string>
+    <string name="trip_info_grant_exact_alarms_permission_positive_button">Concedi il permesso</string>
+    <string name="trip_info_grant_exact_alarms_permission_negative_button">Annulla</string>
 </resources>

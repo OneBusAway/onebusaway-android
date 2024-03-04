@@ -21,9 +21,13 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.Spanned;
 import android.widget.TextView;
 
 import com.google.android.material.appbar.CollapsingToolbarLayout;
+import com.google.android.material.textview.MaterialTextView;
 
 import org.onebusaway.android.R;
 
@@ -52,7 +56,14 @@ public class AboutActivity extends AppCompatActivity {
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        TextView tv = (TextView) findViewById(R.id.about_text);
+//        TextView tv = (TextView) findViewById(R.id.about_text);
+        MaterialTextView versionText,codeContributorsText,translationsText,imageCreditsText,howToContributeText;
+        versionText = findViewById(R.id.version_text);
+        codeContributorsText = findViewById(R.id.code_contributor_text);
+        translationsText = findViewById(R.id.translations_text);
+        imageCreditsText = findViewById(R.id.image_credit_text);
+        howToContributeText = findViewById(R.id.contribute_to_our_app_text);
+
         String versionString = "";
         int versionCode = 0;
         try {
@@ -65,16 +76,20 @@ public class AboutActivity extends AppCompatActivity {
 
         StringBuilder builder = new StringBuilder();
         // Version info
-        builder.append("v")
+        builder.append("Version: ")
                 .append(versionString)
-                .append(" (")
+                .append("(")
                 .append(versionCode)
-                .append(")\n\n");
+                .append(")");
 
         // Majority of content from string resource
-        builder.append(getString(R.string.about_text));
-        builder.append("\n\n");
-
-        tv.setText(builder.toString());
+//        builder.append(getString(R.string.about_text));
+//        builder.append("\n\n");
+        versionText.setText(builder);
+        //set Html text to textview
+        codeContributorsText.setText((Spannable) Html.fromHtml(getString(R.string.code_contributors_content)));
+        translationsText.setText((Spannable) Html.fromHtml(getString(R.string.translations_content)));
+        imageCreditsText.setText((Spannable) Html.fromHtml(getString(R.string.image_credits_content)));
+        howToContributeText.setText((Spannable) Html.fromHtml(getString(R.string.contribute_to_our_app_content)));
     }
 }

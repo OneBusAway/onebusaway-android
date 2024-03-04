@@ -31,10 +31,6 @@
         <item>Nazwa</item>
         <item>Najczęściej używane</item>
     </string-array>
-    <string-array name="sort_arrivals">
-        <item>Szacowany czas przyjazdu</item>
-        <item>Linia</item>
-    </string-array>
     <string-array name="search_stop_options">
         <item>Pokaż przyjazdy</item>
         <item>Pokaż na mapie</item>
@@ -125,89 +121,5 @@
         <!-- NW -->
         <item>lekko w prawo</item>
         <!-- NNW -->
-    </string-array>
-    <!-- Issue reporting -->
-    <string-array name="report_types">
-        <item>@string/rt_customer_service</item>
-        <item>@string/rt_infrastructure_problem</item>
-        <item>@string/rt_arrival_problem</item>
-        <item>@string/rt_app_feedback</item>
-        <item>@string/rt_ideas</item>
-    </string-array>
-    <string-array name="report_types_desc">
-        <item>@string/rt_message_customer_service</item>
-        <item>@string/rt_message_infrastructure_problem</item>
-        <item>@string/rt_message_arrival_problem</item>
-        <item>@string/rt_message_app_feedback</item>
-        <item>@string/rt_message_ideas</item>
-    </string-array>
-
-    <array name="report_types_icons">
-        <item>@drawable/ic_customer_service</item>
-        <item>@drawable/ri_flag_triangle</item>
-        <item>@drawable/ic_arrival_time</item>
-        <item>@drawable/ic_app_feedback</item>
-        <item>@drawable/ic_light_bulb</item>
-    </array>
-
-    <string-array name="report_types_without_open311">
-        <item>@string/rt_customer_service</item>
-        <item>@string/rt_stop_problem</item>
-        <item>@string/rt_arrival_problem</item>
-        <item>@string/rt_app_feedback</item>
-        <item>@string/rt_ideas</item>
-    </string-array>
-
-    <string-array name="report_types_desc_without_open311">
-        <item>@string/rt_message_customer_service</item>
-        <item>@string/rt_message_stop_problem</item>
-        <item>@string/rt_message_arrival_problem</item>
-        <item>@string/rt_message_app_feedback</item>
-        <item>@string/rt_message_ideas</item>
-    </string-array>
-
-    <array name="report_types_icons_without_open311">
-        <item>@drawable/ic_customer_service</item>
-        <item>@drawable/ri_flag_triangle</item>
-        <item>@drawable/ic_arrival_time</item>
-        <item>@drawable/ic_app_feedback</item>
-        <item>@drawable/ic_light_bulb</item>
-    </array>
-
-    <string-array name="report_stop_issue_tutorial_desc">
-        <item>Kliknij na przystanku, wobec którego chcesz wysłać raport.</item>
-        <item>Następnie wybierz rodzaj raportu.</item>
-        <item>Wyślij zgłoszenie związane z przystankiem.</item>
-    </string-array>
-
-    <string-array name="report_stop_transit_category_keywords">
-        <item>komunikacja</item>
-        <item>\u0020bus\u0020</item> <!-- Include spaces to not match as part of another word -->
-        <item>przystanek</item>
-        <item>brakuje linii/kursu</item>
-		<item>pasazer</item>
-        <item>onebusaway</item>			   
-    </string-array>
-
-    <string-array name="report_trip_transit_category_keywords">
-        <item>przyjazd</item>
-        <item>rozkład</item>
-    </string-array>
-
-    <string-array name="report_stop_id_field_keywords">
-        <item>przystanek</item>
-        <item>identyfikator</item>
-        <item>autobus</item>
-    </string-array>
-
-    <string-array name="transit_mode_array">
-        <item>@string/transit_mode_transit</item>
-        <item>@string/transit_mode_bus</item>
-        <item>@string/transit_mode_rail</item>
-    </string-array>
-
-    <string-array name="trip_plan_leaving_arriving_array">
-        <item>@string/trip_plan_leaving</item>
-        <item>@string/trip_plan_arriving</item>
     </string-array>
 </resources>

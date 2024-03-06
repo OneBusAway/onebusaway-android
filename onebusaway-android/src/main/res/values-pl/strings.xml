@@ -1131,7 +1131,6 @@
     </string>
 
     <!--Travel Behaviour data collection-->
-    <resources>
         <string name="travel_behavior_opt_in_message">Chcielibyśmy poprosić o pomoc w badaniach mających na celu poprawę usług transportu publicznego.</string>
         <string name="travel_behavior_opt_in_title">Pomóż nam poprawić transport publiczny!</string>
         <string name="travel_behavior_age_message">Czy masz więcej niż 18 lat?</string>
@@ -1156,4 +1155,4 @@
         <string name="travel_behavior_dialog_opt_out_message">Jeśli zrezygnujesz z udziału w badaniu, nie będziemy otrzymywać więcej informacji na temat twojego zachowania podróżnego w celu poprawy transportu publicznego.</string>
         <string name="cancel">Anuluj</string>
         <string name="my_option_clear_starred_routes">Usuń wszystkie wybrane trasy</string>
-    </resources>
+</resources>

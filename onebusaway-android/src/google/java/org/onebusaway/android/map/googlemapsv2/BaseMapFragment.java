@@ -117,13 +117,7 @@ import static org.onebusaway.android.util.UIUtils.canManageDialog;
  *
  * @author paulw, barbeau
  */
-public class BaseMapFragment extends SupportMapFragment
-        implements MapModeController.Callback, ObaRegionsTask.Callback,
-        MapModeController.ObaMapView,
-        LocationSource, LocationHelper.Listener,
-        com.google.android.gms.maps.GoogleMap.OnCameraChangeListener,
-        StopOverlay.OnFocusChangedListener, OnMapReadyCallback,
-        VehicleOverlay.Controller, LayersSpeedDialAdapter.LayerActivationListener {
+public class BaseMapFragment extends SupportMapFragment implements MapModeController.Callback, ObaRegionsTask.Callback, MapModeController.ObaMapView, LocationSource, LocationHelper.Listener, com.google.android.gms.maps.GoogleMap.OnCameraChangeListener, StopOverlay.OnFocusChangedListener, OnMapReadyCallback, VehicleOverlay.Controller, LayersSpeedDialAdapter.LayerActivationListener {
 
     public static final String TAG = "BaseMapFragment";
 
@@ -207,9 +201,7 @@ public class BaseMapFragment extends SupportMapFragment
                 for (MapModeController controller : mControllers) {
                     if (controller instanceof BikeshareMapController) {
                         ((BikeshareMapController) controller).showBikes(true);
-                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
-                                getString(R.string.analytics_layer_bikeshare),
-                                getString(R.string.analytics_label_bikeshare_activated));
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics, getString(R.string.analytics_layer_bikeshare), getString(R.string.analytics_label_bikeshare_activated));
                     }
                 }
                 break;
@@ -224,9 +216,7 @@ public class BaseMapFragment extends SupportMapFragment
                 for (MapModeController controller : mControllers) {
                     if (controller instanceof BikeshareMapController) {
                         ((BikeshareMapController) controller).showBikes(false);
-                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
-                                getString(R.string.analytics_layer_bikeshare),
-                                getString(R.string.analytics_label_bikeshare_deactivated));
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics, getString(R.string.analytics_layer_bikeshare), getString(R.string.analytics_label_bikeshare_deactivated));
                     }
                 }
                 break;
@@ -272,6 +262,7 @@ public class BaseMapFragment extends SupportMapFragment
 
         /**
          * Called when a result has been obtained after requesting user location permission.
+         *
          * @param grantResult The grant results for the location permission which is either PackageManager.PERMISSION_GRANTED or PackageManager.PERMISSION_DENIED. Never null.
          */
         void onLocationPermissionResult(int grantResult);
@@ -282,8 +273,7 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
@@ -302,8 +292,7 @@ public class BaseMapFragment extends SupportMapFragment
         }
 
         // If we have a recent location, show this while we're waiting on the LocationHelper
-        Location l = Application
-                .getLastKnownLocation(getActivity(), mLocationHelper.getGoogleApiClient());
+        Location l = Application.getLastKnownLocation(getActivity(), mLocationHelper.getGoogleApiClient());
         if (l != null) {
             final long TIME_THRESHOLD = TimeUnit.MINUTES.toMillis(5);
             if (System.currentTimeMillis() - l.getTime() < TIME_THRESHOLD) {
@@ -331,13 +320,15 @@ public class BaseMapFragment extends SupportMapFragment
         mMap.setOnMarkerClickListener(mapClickListeners);
         mMap.setOnMapClickListener(mapClickListeners);
 
-        if (
-                AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES || (
-                        AppCompatDelegate.getDefaultNightMode() != AppCompatDelegate.MODE_NIGHT_NO &&
-                                (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-                )
-        ) {
+        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES || (AppCompatDelegate.getDefaultNightMode() != AppCompatDelegate.MODE_NIGHT_NO && (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES)) {
             mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.dark_map));
+        } else {
+
+            // it's a light mode
+            // Remove All POI from the map
+
+            String removePOIStyle = "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]";
+            mMap.setMapStyle(new MapStyleOptions(removePOIStyle));
         }
 
         initMap(mLastSavedInstanceState);
@@ -379,9 +370,7 @@ public class BaseMapFragment extends SupportMapFragment
             initMapState(args);
         }
 
-        // Remove All POI from the map
-        String removePOIStyle = "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]";
-        mMap.setMapStyle(new MapStyleOptions(removePOIStyle));
+
     }
 
     private void initMapState(Bundle args) {
@@ -391,8 +380,7 @@ public class BaseMapFragment extends SupportMapFragment
         mMapPaddingTop = args.getInt(MapParams.MAP_PADDING_TOP, MapParams.DEFAULT_MAP_PADDING);
         mMapPaddingRight = args.getInt(MapParams.MAP_PADDING_RIGHT, MapParams.DEFAULT_MAP_PADDING);
 
-        mMapPaddingBottom = args
-                .getInt(MapParams.MAP_PADDING_BOTTOM, MapParams.DEFAULT_MAP_PADDING);
+        mMapPaddingBottom = args.getInt(MapParams.MAP_PADDING_BOTTOM, MapParams.DEFAULT_MAP_PADDING);
         setPadding(mMapPaddingLeft, mMapPaddingTop, mMapPaddingRight, mMapPaddingBottom);
 
         String mode = args.getString(MapParams.MODE);
@@ -417,8 +405,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     @SuppressLint("MissingPermission")
     @Override
-    public void onRequestPermissionsResult(
-            int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         int result = PackageManager.PERMISSION_DENIED;
         if (requestCode == LOCATION_PERMISSION_REQUEST) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -466,8 +453,7 @@ public class BaseMapFragment extends SupportMapFragment
 
         Location center = getMapCenterAsLocation();
         if (center != null) {
-            PreferenceUtils.saveMapViewToPreferences(center.getLatitude(), center.getLongitude(),
-                    getZoomLevelAsFloat());
+            PreferenceUtils.saveMapViewToPreferences(center.getLatitude(), center.getLongitude(), getZoomLevelAsFloat());
         }
 
         mRunning = false;
@@ -740,8 +726,7 @@ public class BaseMapFragment extends SupportMapFragment
         //Otherwise, its premature since we don't know the device's relationship to
         //available OBA regions or the manually set API region
         String serverName = Application.get().getCustomApiUrl();
-        if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils
-                .isEmpty(serverName))) {
+        if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils.isEmpty(serverName))) {
             if (mRunning && canManageDialog(getActivity())) {
                 showDialog(MapDialogFragment.OUTOFRANGE_DIALOG);
             }
@@ -758,15 +743,11 @@ public class BaseMapFragment extends SupportMapFragment
             return;
         }
 
-        Location l = Application
-                .getLastKnownLocation(getActivity(), mLocationHelper.getGoogleApiClient());
+        Location l = Application.getLastKnownLocation(getActivity(), mLocationHelper.getGoogleApiClient());
         // If the region changed, and we don't have a location or the map center is still (0,0),
         // then zoom to the region (or location if we have it)
         Location mapCenter = getMapCenterAsLocation();
-        if (currentRegionChanged &&
-                (l == null ||
-                        (mapCenter != null && mapCenter.getLatitude() == 0.0 &&
-                                mapCenter.getLongitude() == 0.0))) {
+        if (currentRegionChanged && (l == null || (mapCenter != null && mapCenter.getLatitude() == 0.0 && mapCenter.getLongitude() == 0.0))) {
             if (l != null) {
                 setMyLocation(true, false);
             } else {
@@ -779,8 +760,7 @@ public class BaseMapFragment extends SupportMapFragment
         mOnFocusChangedListener = onFocusChangedListener;
     }
 
-    public void setOnProgressBarChangedListener(
-            OnProgressBarChangedListener onProgressBarChangedListener) {
+    public void setOnProgressBarChangedListener(OnProgressBarChangedListener onProgressBarChangedListener) {
         mOnProgressBarChangedListener = onProgressBarChangedListener;
     }
 
@@ -793,8 +773,7 @@ public class BaseMapFragment extends SupportMapFragment
     //
     final Handler mStopChangedHandler = new Handler();
 
-    public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes,
-                               final Location location) {
+    public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes, final Location location) {
         // Run in a separate thread, to avoid blocking UI for long running events
         mStopChangedHandler.post(new Runnable() {
             public void run() {
@@ -827,8 +806,7 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     @SuppressWarnings("deprecation")
     public boolean setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
-        if (!LocationUtils.isLocationEnabled(getActivity()) && mRunning && UIUtils.canManageDialog(
-                getActivity())) {
+        if (!LocationUtils.isLocationEnabled(getActivity()) && mRunning && UIUtils.canManageDialog(getActivity())) {
             // If the user hasn't opted out of "Enable location" dialog, show it to them
             SharedPreferences prefs = Application.getPrefs();
             if (!prefs.getBoolean(getString(R.string.preference_key_never_show_location_dialog), false)) {
@@ -849,9 +827,7 @@ public class BaseMapFragment extends SupportMapFragment
                     requestPermissionAndInit(getActivity());
                 }
             } else {
-                Toast.makeText(getActivity(),
-                        getResources().getString(R.string.main_waiting_for_location),
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), getResources().getString(R.string.main_waiting_for_location), Toast.LENGTH_SHORT).show();
 
             }
             return false;
@@ -864,8 +840,7 @@ public class BaseMapFragment extends SupportMapFragment
     private void setMyLocation(Location l, boolean useDefaultZoom, boolean animateToLocation) {
         if (mMap != null) {
             // Move camera to current location
-            CameraPosition.Builder cameraPosition = new CameraPosition.Builder()
-                    .target(MapHelpV2.makeLatLng(l));
+            CameraPosition.Builder cameraPosition = new CameraPosition.Builder().target(MapHelpV2.makeLatLng(l));
 
             if (useDefaultZoom) {
                 // Use default zoom level
@@ -945,9 +920,7 @@ public class BaseMapFragment extends SupportMapFragment
             code = ObaApi.OBA_INTERNAL_ERROR;
         }
         if (canManageDialog(context)) {
-            Toast.makeText(context,
-                    context.getString(UIUtils.getMapErrorString(context, code)),
-                    Toast.LENGTH_LONG).show();
+            Toast.makeText(context, context.getString(UIUtils.getMapErrorString(context, code)), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -985,8 +958,7 @@ public class BaseMapFragment extends SupportMapFragment
      * @param overlayExpanded   true if the sliding panel is expanded, false if it is not
      */
     @Override
-    public void setMapCenter(Location location, boolean animateToLocation,
-                             boolean overlayExpanded) {
+    public void setMapCenter(Location location, boolean animateToLocation, boolean overlayExpanded) {
         if (mMap != null) {
             CameraPosition cp = mMap.getCameraPosition();
 
@@ -997,28 +969,15 @@ public class BaseMapFragment extends SupportMapFragment
                 // Adjust camera target if the route header is currently displayed - map padding
                 // doesn't get this quite right, as the header is slid up some and full padding doesn't apply
                 double percentageOffset = 0.2;
-                double bias =
-                        (getLongitudeSpanInDecDegrees() * percentageOffset) / 2;
+                double bias = (getLongitudeSpanInDecDegrees() * percentageOffset) / 2;
                 offsetTarget = new LatLng(target.latitude - bias, target.longitude);
                 target = offsetTarget;
             }
 
             if (animateToLocation) {
-                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(
-                        new CameraPosition.Builder().target(target)
-                                .zoom(cp.zoom)
-                                .bearing(cp.bearing)
-                                .tilt(cp.tilt)
-                                .build()
-                ));
+                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(target).zoom(cp.zoom).bearing(cp.bearing).tilt(cp.tilt).build()));
             } else {
-                mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-                        new CameraPosition.Builder().target(target)
-                                .zoom(cp.zoom)
-                                .bearing(cp.bearing)
-                                .tilt(cp.tilt)
-                                .build()
-                ));
+                mMap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(target).zoom(cp.zoom).bearing(cp.bearing).tilt(cp.tilt).build()));
             }
         }
     }
@@ -1111,12 +1070,10 @@ public class BaseMapFragment extends SupportMapFragment
                 Activity a = getActivity();
                 if (a != null) {
                     int padding = UIUtils.dpToPixels(a, DEFAULT_MAP_PADDING_DP);
-                    mMap.moveCamera(
-                            (CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
+                    mMap.moveCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
                 }
             } else {
-                Toast.makeText(getActivity(), getString(R.string.route_info_no_shape_data),
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), getString(R.string.route_info_no_shape_data), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -1135,11 +1092,7 @@ public class BaseMapFragment extends SupportMapFragment
                 Activity a = getActivity();
                 if (a != null) {
                     int padding = UIUtils.dpToPixels(a, DEFAULT_MAP_PADDING_DP);
-                    mMap.moveCamera(
-                            (CameraUpdateFactory.newLatLngBounds(builder.build(),
-                                    getResources().getDisplayMetrics().widthPixels,
-                                    getResources().getDisplayMetrics().heightPixels,
-                                    padding)));
+                    mMap.moveCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels, padding)));
                 }
             }
         }
@@ -1154,13 +1107,11 @@ public class BaseMapFragment extends SupportMapFragment
      *                 status
      */
     @Override
-    public void zoomIncludeClosestVehicle(HashSet<String> routeIds,
-                                          ObaTripsForRouteResponse response) {
+    public void zoomIncludeClosestVehicle(HashSet<String> routeIds, ObaTripsForRouteResponse response) {
         if (mMap == null) {
             return;
         }
-        LatLng closestVehicleLocation = MapHelpV2
-                .getClosestVehicle(response, routeIds, getMapCenterAsLocation());
+        LatLng closestVehicleLocation = MapHelpV2.getClosestVehicle(response, routeIds, getMapCenterAsLocation());
 
         LatLngBounds visibleBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
 
@@ -1314,8 +1265,7 @@ public class BaseMapFragment extends SupportMapFragment
                 case OUTOFRANGE_DIALOG:
                     return createOutOfRangeDialog();
                 default:
-                    throw new IllegalArgumentException(
-                            "Invalid map dialog type - " + DIALOG_TYPE_KEY);
+                    throw new IllegalArgumentException("Invalid map dialog type - " + DIALOG_TYPE_KEY);
             }
         }
 
@@ -1323,28 +1273,15 @@ public class BaseMapFragment extends SupportMapFragment
             Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_map);
             DrawableCompat.setTint(icon, getResources().getColor(R.color.theme_primary));
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
-                    .setTitle(R.string.main_outofrange_title)
-                    .setIcon(icon)
-                    .setCancelable(false)
-                    .setMessage(getString(R.string.main_outofrange,
-                            Application.get().getCurrentRegion() != null ?
-                                    Application.get().getCurrentRegion().getName() : ""
-                    ))
-                    .setPositiveButton(R.string.main_outofrange_yes,
-                            (dialog, which) -> {
-                                if (mMapFragment != null && mMapFragment.isAdded()) {
-                                    mMapFragment.zoomToRegion();
-                                }
-                            }
-                    )
-                    .setNegativeButton(R.string.main_outofrange_no,
-                            (dialog, which) -> {
-                                if (mMapFragment != null && mMapFragment.isAdded()) {
-                                    mMapFragment.mWarnOutOfRange = false;
-                                }
-                            }
-                    );
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity()).setTitle(R.string.main_outofrange_title).setIcon(icon).setCancelable(false).setMessage(getString(R.string.main_outofrange, Application.get().getCurrentRegion() != null ? Application.get().getCurrentRegion().getName() : "")).setPositiveButton(R.string.main_outofrange_yes, (dialog, which) -> {
+                if (mMapFragment != null && mMapFragment.isAdded()) {
+                    mMapFragment.zoomToRegion();
+                }
+            }).setNegativeButton(R.string.main_outofrange_no, (dialog, which) -> {
+                if (mMapFragment != null && mMapFragment.isAdded()) {
+                    mMapFragment.mWarnOutOfRange = false;
+                }
+            });
             return builder.create();
         }
 
@@ -1361,25 +1298,13 @@ public class BaseMapFragment extends SupportMapFragment
             Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_map);
             DrawableCompat.setTint(icon, getResources().getColor(R.color.theme_primary));
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
-                    .setTitle(R.string.main_nolocation_title)
-                    .setIcon(icon)
-                    .setCancelable(false)
-                    .setView(view)
-                    .setPositiveButton(R.string.rt_yes,
-                            (dialog, which) -> startActivityForResult(
-                                    new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS),
-                                    REQUEST_NO_LOCATION)
-                    )
-                    .setNegativeButton(R.string.rt_no,
-                            (dialog, which) -> {
-                                // Ok, I suppose we can just try looking from where we
-                                // are.
-                                for (MapModeController controller : mMapFragment.mControllers) {
-                                    controller.onLocation();
-                                }
-                            }
-                    );
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity()).setTitle(R.string.main_nolocation_title).setIcon(icon).setCancelable(false).setView(view).setPositiveButton(R.string.rt_yes, (dialog, which) -> startActivityForResult(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS), REQUEST_NO_LOCATION)).setNegativeButton(R.string.rt_no, (dialog, which) -> {
+                // Ok, I suppose we can just try looking from where we
+                // are.
+                for (MapModeController controller : mMapFragment.mControllers) {
+                    controller.onLocation();
+                }
+            });
             return builder.create();
         }
     }
@@ -1398,26 +1323,17 @@ public class BaseMapFragment extends SupportMapFragment
         if (locationPermissionDialog != null && locationPermissionDialog.isShowing()) {
             return;
         }
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
-                .setTitle(R.string.location_permissions_title)
-                .setMessage(R.string.location_permissions_message)
-                .setCancelable(false)
-                .setPositiveButton(R.string.ok,
-                        (dialog, which) -> {
-                            PreferenceUtils.setUserDeniedLocationPermissions(false);
-                            // Request permissions from the user
-                            requestPermissions(LOCATION_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
-                        }
-                )
-                .setNegativeButton(R.string.no_thanks,
-                        (dialog, which) -> {
-                            if (mOnLocationPermissionResultListener != null) {
-                                mUserDeniedPermission = true;
-                                PreferenceUtils.setUserDeniedLocationPermissions(true);
-                                mOnLocationPermissionResultListener.onLocationPermissionResult(PackageManager.PERMISSION_DENIED);
-                            }
-                        }
-                );
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity()).setTitle(R.string.location_permissions_title).setMessage(R.string.location_permissions_message).setCancelable(false).setPositiveButton(R.string.ok, (dialog, which) -> {
+            PreferenceUtils.setUserDeniedLocationPermissions(false);
+            // Request permissions from the user
+            requestPermissions(LOCATION_PERMISSIONS, LOCATION_PERMISSION_REQUEST);
+        }).setNegativeButton(R.string.no_thanks, (dialog, which) -> {
+            if (mOnLocationPermissionResultListener != null) {
+                mUserDeniedPermission = true;
+                PreferenceUtils.setUserDeniedLocationPermissions(true);
+                mOnLocationPermissionResultListener.onLocationPermissionResult(PackageManager.PERMISSION_DENIED);
+            }
+        });
         locationPermissionDialog = builder.create();
         locationPermissionDialog.show();
     }

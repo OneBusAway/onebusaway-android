@@ -331,20 +331,22 @@ public class BaseMapFragment extends SupportMapFragment
         mMap.setOnMarkerClickListener(mapClickListeners);
         mMap.setOnMapClickListener(mapClickListeners);
 
-        if (
-                AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES || (
-                        AppCompatDelegate.getDefaultNightMode() != AppCompatDelegate.MODE_NIGHT_NO &&
-                                (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-                )
-        ) {
+        if (inDarkMode()) {
             mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.dark_map));
-        }else{
-            // it's a light mode just remove POI
+        } else {
+            // When in light mode, just remove POIs.
             String removePOIStyle = "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]";
             mMap.setMapStyle(new MapStyleOptions(removePOIStyle));
         }
 
         initMap(mLastSavedInstanceState);
+    }
+
+    private boolean inDarkMode() {
+        return AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES || (
+                AppCompatDelegate.getDefaultNightMode() != AppCompatDelegate.MODE_NIGHT_NO &&
+                        (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        );
     }
 
     private void initMap(Bundle savedInstanceState) {

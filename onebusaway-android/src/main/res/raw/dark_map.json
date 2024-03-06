@@ -1,5 +1,14 @@
 [
   {
+    "featureType": "poi",
+    "elementType": "all",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
     "featureType": "all",
     "elementType": "geometry",
     "stylers": [

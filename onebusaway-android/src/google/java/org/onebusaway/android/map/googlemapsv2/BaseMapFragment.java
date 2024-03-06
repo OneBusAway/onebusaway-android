@@ -338,6 +338,10 @@ public class BaseMapFragment extends SupportMapFragment
                 )
         ) {
             mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.dark_map));
+        }else{
+            // it's a light mode just remove POI
+            String removePOIStyle = "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]";
+            mMap.setMapStyle(new MapStyleOptions(removePOIStyle));
         }
 
         initMap(mLastSavedInstanceState);
@@ -379,9 +383,7 @@ public class BaseMapFragment extends SupportMapFragment
             initMapState(args);
         }
 
-        // Remove All POI from the map
-        String removePOIStyle = "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]";
-        mMap.setMapStyle(new MapStyleOptions(removePOIStyle));
+
     }
 
     private void initMapState(Bundle args) {

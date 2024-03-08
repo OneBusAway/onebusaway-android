@@ -45,7 +45,6 @@
                     android:id="@+id/fromAddressTextArea"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/tripplanner_current_location"
                     android:hint="@string/trip_plan_start_location_hint"
                     android:linksClickable="true"
                     android:singleLine="true"

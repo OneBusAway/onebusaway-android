@@ -575,8 +575,7 @@ public class TripPlanFragment extends Fragment {
             address.setLatitude(loc.getLatitude());
             address.setLongitude(loc.getLongitude());
         }
-
-        address.setAddressLine(0, getString(R.string.tripplanner_current_location));
+        
         return address;
     }
 

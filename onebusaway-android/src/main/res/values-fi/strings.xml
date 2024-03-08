@@ -590,48 +590,84 @@
     </string>
 
     <!-- About -->
+    <string name="application_version">Versio</string>
+    <string name="about_content"><![CDATA[
+    <html>
+  <body>
+    <h1 style="color: #4caf50"><b>Tervetuloa OneBusAway-hankkeeseen!</b></h1>
+
+    <p>
+      OneBusAwayssa olemme intohimoisia luomaan innovatiivisia ratkaisuja, jotka yksinkertaistavat joukkoliikennekokemustasi. Android-sovelluksemme on rakkaudentyö, joka on mahdollista monien erilaisten yksilöiden ja organisaatioiden omistautumisen ja lahjakkuuden ansiosta. Tässä pieni kurkistus mahtaviin henkilöihin ja organisaatioihin, jotka ovat tehneet OneBusAwaysta sen, millainen se on tänään:
+    </p>
+    <h2><b>Koodinkehittäjät:</b></h2>
+    <p>
+      Omistautuneet avustajamme parantavat sovelluksen toiminnallisuutta ja käyttäjäkokemusta:
+    </p>
+
+    <ul>
+      <li><b>Paul Watts</b></li>
+      <li><b>Brian Ferris</b></li>
+      <li><b>Daniel Welsh</b></li>
+      <li><b>Arno Hart</b></li>
+      <li><b>Sean Barbeau</b></li>
+      <li><b>York Region Transit</b></li>
+      <li><b>Ben Du</b></li>
+      <li><b>Cagri Cetin</b></li>
+      <li><b>Mike Karabushin</b></li>
+      <li><b>Aziz Batihk</b></li>
+      <li><b>Charles Bond</b></li>
+      <li>
+        <b
+          >Hillsborough Area Regional Transit (Simon Jacobsin välityksellä, Cambridge
+          Systematics)</b
+        >
+      </li>
+      <li><b>Bridgette Eichelberger</b></li>
+      <li><b>Rodrigo Carvalho (Google Summer of Code 2017)</b></li>
+      <li><b>Steve Moritani</b></li>
+      <li><b>Ellen Conley</b></li>
+    </ul>
+    <h2><b>Kääntäjät:</b></h2>
+    <p>
+      Kiitos kääntäjillemme, OneBusAway on saavutettavissa ympäri maailmaa:
+    </p>
+    <ul>
+      <li><b>Ari Rusakko</b></li>
+      <li><b>Eleonora Fabbri</b></li>
+      <li><b>Edgar Andrés Moncada Taborda</b></li>
+    </ul>
+    <h2><b>Kuvien tekijät:</b></h2>
+    <p>
+      Kiitos suunnittelijoille, jotka ovat luoneet kuvat, joita käytetään ajoneuvojen kuvakkeissa, ja jotka on ladattu Noun Projectiin CC BY -lisenssillä 3.0 (https://creativecommons.org/licenses/by/3.0/us/):
+    </p>
+    <ul>
+      <li>Nuoli, jonka on luonut <b>Zlatko Najdenovski</b>, MK</li>
+      <li>Karttamerkki, jonka on luonut <b>Housin Aziz</b>, SE</li>
+      <li>Incognito, jonka on luonut <b>Christopher Schreiner</b></li>
+      <li>Lipputriangeli, jonka on luonut <b>Austin Andrews</b></li>
+    </ul>
+    <h2>
+      <b>Lähde mukaan matkalle: Osallistu sovelluksemme kehittämiseen!</b>
+      </h2>
+    <p>
+      Tutustu projektiimme GitHubissa osoitteessa https://github.com/OneBusAway/onebusaway-android.
+      <p>
+        Lue lisää OneBusAwayn avoimen lähdekoodin projektista osoitteessa https://onebusaway.org .</p>
+        <p>
+        Erityiskiitos Googlen upeista materiaalisen suunnittelun ikoneista (https://github.com/google/material-design-icons),
+        jotka lisäävät eleganssia sovellukseemme. Heidän anteliaisuutensa lisensoida nämä ikonit Apache v2.0 -lisenssillä (https://www.apache.org/licenses/LICENSE-2.0) on rikastuttanut huomattavasti käyttäjäkokemustamme.
+      </p>
+      <p>
+
+    <p>
+      Tutustu sovellukseemme ja aloita sujuva joukkoliikennematka OneBusAwayn kanssa!
+    </p>
+  </body>
+</html>
+
+    ]]></string>
     <string name="location_permissions_message">Parantaaksesi kokemustasi, ota käyttöön sijainnin käyttö:\n  - Näytä reaaliaikainen sijaintisi kartalla.\n  - Aseta automaattisesti paikallinen liikennevirastosi.\n\nEmme kerää sijaintitietojasi. Vaihtoehtoisesti voit valita alueesi manuaalisesti ilman sijaintioikeuksien sallimista.</string>
     <string name="title_activity_about">Tietoja</string>
-    <string name="about_text">
-        "Lisätietoja tästä avoimen lähdekoodin projektista: http://onebusaway.org.\n\n"
-
-        "*** Ohjelmakoodi ***\n\n"
-
-        "Haluaisimme kiittää seuraavia henkilöitä, jotka ovat osallistuneet OneBusAway Androidin kehittämiseen:\n\n"
-
-        "* Paul Watts\n"
-        "* Brian Ferris\n"
-        "* Daniel Welsh\n"
-        "* Arno Hart\n"
-        "* Sean Barbeau\n"
-        "* York Region Transit\n"
-        "* Ari Rusakko\n"
-        "* Ben Du\n"
-        "* Cagri Cetin\n"
-        "* Mike Karabushin\n\n"
-
-        "Haluaisitko osallistua sovelluksen kehittämiseen? Kurkkaa koodit Githubista
-        https://github.com/OneBusAway/onebusaway-android.\n\n"
-
-        "*** Käännökset ***\n\n"
-
-        "Kiitokset henkilöille, jotka ovat tehneet käännökset OneBusAway Androidiin:\n\n"
-
-        "* Ari Rusakko\n"
-        "* Edgar Andrés Moncada Taborda\n\n"
-
-        "*** Kuvat ***\n\n"
-
-        "Kiitokset suunnittelijoille, jotka tekivät ajoneuvojen ikoneissa käytetyt kuvat, jotka "
-        "kuuluvat Noun Project under CC BY 3.0 (http://creativecommons.org/licenses/by/3.0/us/):\n\n"
-
-        "* Arrow by Zlatko Najdenovski, MK\n"
-        "* Map Marker by Housin Aziz, SE\n\n"
-
-        "Kiitokset Googlelle 'material design' ikoneista
-        (https://github.com/google/material-design-icons), "
-        "licensed under Apache v2.0 (https://www.apache.org/licenses/LICENSE-2.0).\n\n"
-    </string>
     <string name="trip_info_grant_exact_alarms_permission_title">Lupa tarvitaan</string>
     <string name="trip_info_grant_exact_alarms_permission_message">Sinun täytyy antaa sovellukselle lupa muistutuksen asettamiseen.</string>
     <string name="trip_info_grant_exact_alarms_permission_positive_button">Myönnä lupa</string>

@@ -613,37 +613,83 @@
 
     <!-- About -->
     <string name="title_activity_about">O KiedyBus</string>
-    <string name="about_text">
-        "Dowiedz się więcej o naszej aplikacji KiedyBus na stronie http://www.kiedybus.pl\n\n"
+    <string name="about_content"><![CDATA[
+    <html>
+  <body>
+    <h1 style="color: #4caf50"><b>Witaj w OneBusAway!</b></h1>
 
-		"Dzięki KiedyBus możesz zobaczyć za ile minut autobus przyjedzie na przystanek."
+    <p>
+      W OneBusAway pasjonujemy się tworzeniem innowacyjnych rozwiązań, które upraszczają Twoje doświadczenia z transportem publicznym. Nasza aplikacja na platformę Android to dzieło miłości, możliwe dzięki zaangażowaniu i talentowi różnorodnej grupy osób i organizacji. Oto przegląd fantastycznych współpracowników, którzy uczynili OneBusAway tym, czym jest dzisiaj:
+    </p>
+    <h2><b>Współtwórcy Kodu:</b></h2>
+    <p>
+      Nasi oddani współpracownicy ciągle ulepszają funkcjonalność i doświadczenie użytkownika aplikacji:
+    </p>
 
-		"Rozpoczynamy w Środzie Wielkopolskiej, a już wkrótce w kolejnych miastach.\n\n"
+    <ul>
+      <li><b>Paul Watts</b></li>
+      <li><b>Brian Ferris</b></li>
+      <li><b>Daniel Welsh</b></li>
+      <li><b>Arno Hart</b></li>
+      <li><b>Sean Barbeau</b></li>
+      <li><b>York Region Transit</b></li>
+      <li><b>Ben Du</b></li>
+      <li><b>Cagri Cetin</b></li>
+      <li><b>Mike Karabushin</b></li>
+      <li><b>Aziz Batihk</b></li>
+      <li><b>Charles Bond</b></li>
+      <li>
+        <b
+          >Hillsborough Area Regional Transit (za pośrednictwem Simona Jacobsa z Cambridge
+          Systematics)</b
+        >
+      </li>
+      <li><b>Bridgette Eichelberger</b></li>
+      <li><b>Rodrigo Carvalho (Google Summer of Code 2017)</b></li>
+      <li><b>Steve Moritani</b></li>
+      <li><b>Ellen Conley</b></li>
+    </ul>
+    <h2><b>Tłumaczenia:</b></h2>
+    <p>
+      Dzięki naszym tłumaczom, OneBusAway jest dostępne na całym świecie:
+    </p>
+    <ul>
+      <li><b>Ari Rusakko</b></li>
+      <li><b>Eleonora Fabbri</b></li>
+      <li><b>Edgar Andrés Moncada Taborda</b></li>
+    </ul>
+    <h2><b>Zdjęcia:</b></h2>
+    <p>
+      Dziękujemy projektantom, którzy stworzyli obrazy wykorzystywane
+      w ikonach pojazdów, które zostały przesłane do Noun Project na licencji CC BY
+      3.0 (https://creativecommons.org/licenses/by/3.0/us/):
+    </p>
+    <ul>
+      <li>Strzałka autorstwa <b>Zlatko Najdenovski</b>, MK</li>
+      <li>Znacznik mapy autorstwa <b>Housin Aziz</b>, SE</li>
+      <li>Incognito autorstwa <b>Christophera Schreinera</b></li>
+      <li>Trójkąt flagi autorstwa <b>Austina Andrewsa</b></li>
+    </ul>
+    <h2>
+      <b>Dołącz do podróży: Współtwórz naszą aplikację!</b>
+      </h2>
+    <p>
+      Sprawdź nasz projekt na GitHubie pod adresem https://github.com/OneBusAway/onebusaway-android.
+      <p>
+        Dowiedz się więcej o projekcie open-source OneBusAway na stronie https://onebusaway.org .</p>
+        <p>
+        Szczególne podziękowania dla Google za wizualnie oszałamiające ikony designu materiałowego (https://github.com/google/material-design-icons),
+        które dodają elegancji naszej aplikacji. Ich hojność w udostępnieniu
+        tych ikon na licencji Apache v2.0 (https://www.apache.org/licenses/LICENSE-2.0) znacznie wzbogaciła nasze doświadczenie użytkownika.
+      </p>
+      <p>
 
-        "Aplikacja KiedyBus nie powstałaby, gdyby nie projekt OneBusAway oraz następujące osoby:\n\n"
+    <p>
+      Odkrywaj naszą aplikację i rozpocznij płynną podróż z OneBusAway!
+    </p>
+  </body>
+</html>
 
-        "* Paul Watts\n"
-        "* Brian Ferris\n"
-        "* Daniel Welsh\n"
-        "* Arno Hart\n"
-        "* Sean Barbeau\n"
-        "* York Region Transit\n"
-        "* Ben Du\n"
-        "* Cagri Cetin\n"
-        "* Mike Karabushin\n\n"
-
-        "Informacje o OneBusAway dostępne są na stronach: http://www.OneBusAway.org.\n\n"
-
-        "*** Grafika ***\n\n"
-
-        "Podziękowania dla projektantów ikonek pojazdów, które zostały umieszczone"
-        "w Noun Project w ramach CC BY 3.0 (http://creativecommons.org/licenses/by/3.0/us/):\n\n"
-
-        "* Strzałki - Zlatko Najdenovski, MK\n"
-        "* Markery mapy - Housin Aziz, SE\n\n"
-
-        "Podziękowania dla Google za ikony material design
-        (https://github.com/google/material-design-icons), "
-        "licencjonowane w ramach CC BY 4.0 (http://creativecommons.org/licenses/by/4.0/).\n\n"
-    </string>
+    ]]></string>
+    <string name="application_version">Wersja</string>
 </resources>

@@ -77,9 +77,6 @@ public class AboutActivity extends AppCompatActivity {
                 .append(")\n");
 
         // Majority of content from string resource
-//        builder.append(getString(R.string.about_text));
-//        builder.append("\n\n");
-
         version.setText(builder.toString());
         tv.setText((Spannable) Html.fromHtml(getString(R.string.about_content)));
     }

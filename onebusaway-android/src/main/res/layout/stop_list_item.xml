@@ -32,14 +32,14 @@
             android:adjustViewBounds="true"
             android:maxHeight="25dp"
             android:maxWidth="25dp"
-            android:layout_marginLeft="5dp"
+            android:layout_marginStart="6dp"
             android:layout_centerVertical="true"
             android:layout_alignParentLeft="true"
             android:visibility="gone"/>
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                   style="@style/ListItem"
-                  android:layout_marginLeft="@dimen/keyline_2"
+                  android:layout_marginLeft="55dp"
                   android:layout_alignParentLeft="true"
                   android:layout_centerVertical="true"
                   android:layout_width="fill_parent"

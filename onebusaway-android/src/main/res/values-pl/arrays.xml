@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com)
+    and individual contributors.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<resources>
+    <string-array name="main_help_options">
+        <item>Skorzystaj z samouczka</item>
+        <item>Legenda</item>
+        <item>Co nowego w tej wersji</item>
+        <item>Obsługiwani przewoźnicy</item>
+        <item>Twitter</item>
+        <item>Kontakt</item>
+    </string-array>
+    <string-array name="main_help_options_no_contact_us">
+        <item>Skorzystaj z samouczka</item>
+        <item>Legenda</item>
+        <item>Co nowego w tej wersji</item>
+        <item>Obsługiwani przewoźnicy</item>
+        <item>Twitter</item>
+    </string-array>
+    <string-array name="route_favorite_options">
+        <item>Ten przystanek</item>
+        <item>Wszystkie przystanki</item>
+    </string-array>
+    <string-array name="sort_stops">
+        <item>Nazwa</item>
+        <item>Najczęsciej używane</item>
+    </string-array>
+    <string-array name="sort_reminders">
+        <item>Nazwa</item>
+        <item>Tiempo</item>
+    </string-array>
+    <string-array name="sort_arrivals">
+        <item>Szacowany przyjazd</item>
+        <item>Linia</item>
+    </string-array>
+    <string-array name="search_stop_options">
+        <item>Pokaż przyjazdy</item>
+        <item>Pokaż na mapie</item>
+    </string-array>
+    <string-array name="search_route_options">
+        <item>Pokaż listę przystanków</item>
+        <item>Pokaż na mapie</item>
+    </string-array>
+    <string-array name="reminder_time">
+        <item>Sin recordatorio</item>
+        <item>1 minuta</item>
+        <item>3 minuty</item>
+        <item>5 minut</item>
+        <item>10 minut</item>
+        <item>15 minut</item>
+        <item>20 minut</item>
+        <item>25 minut</item>
+        <item>30 minut</item>
+    </string-array>
+    <string-array name="reminder_days">
+        <item>Poniedziałek</item>
+        <item>Wtorek</item>
+        <item>Środa</item>
+        <item>Czwartek</item>
+        <item>Piątek</item>
+        <item>Sobota</item>
+        <item>Niedziela</item>
+    </string-array>
+    <string-array name="report_stop_problem_code">
+        <item>Wybierz</item>
+        <item>Nieprawidłowa nazwa przystanku</item>
+        <item>Nieprawidłowy numer przystanku</item>
+        <item>Zła lokalizacja</item>
+        <item>Brakuje linii lub kursu</item>
+        <item>Coś innego</item>
+    </string-array>
+    <string-array name="report_trip_problem_code_bus">
+        <item>Wybierz</item>
+        <item>Nie przyjechał w ógole</item>
+        <item>Przyjechał wcześniej niż powinien</item>
+        <item>Przyjechał później niż powinien</item>
+        <item>Wyświetlał zły kierunek</item>
+        <item>Nie zatrzymuje się tutaj</item>
+        <item>Coś innego</item>
+    </string-array>
+    <string-array name="preferred_units_options">
+        <item>@string/preferences_preferred_units_option_automatic</item>
+        <item>@string/preferences_preferred_units_option_metric</item>
+        <item>@string/preferences_preferred_units_option_imperial</item>
+    </string-array>
+    <string-array name="arrival_info_style_options">
+        <item>@string/preferences_arrival_info_style_options_a</item>
+        <item>@string/preferences_arrival_info_style_options_b</item>
+    </string-array>
+
+    <!-- Spoken directions based on 16 compass points, but pointing from the user's current location
+         towards the selected bus stop instead of N/S/E/W. -->
+    <string-array name="spoken_compass_directions">
+        <item>prosto</item>
+        <!-- North -->
+        <item>lekko w lewo</item>
+        <!-- NNE -->
+        <item>lekko w lewo</item>
+        <!-- NE -->
+        <item>w lewo</item>
+        <!-- ENE -->
+        <item>w lewo</item>
+        <!-- East -->
+        <item>za Tobą w lewo</item>
+        <!-- ESE -->
+        <item>za Tobą w lewo</item>
+        <!-- SE -->
+        <item>za Tobą w lewo</item>
+        <!-- SSE -->
+        <item>za Tobą prosto</item>
+        <!-- South -->
+        <item>za Tobą w prawo</item>
+        <!-- SSW -->
+        <item>za Tobą w prawo</item>
+        <!-- SW -->
+        <item>za Tobą w prawo</item>
+        <!-- WSW -->
+        <item>w prawo</item>
+        <!-- West -->
+        <item>w prawo</item>
+        <!-- WNW -->
+        <item>lekko w prawo</item>
+        <!-- NW -->
+        <item>lekko w prawo</item>
+        <!-- NNW -->
+    </string-array>
+    <!-- Issue reporting -->
+    <string-array name="report_types">
+        <item>@string/rt_customer_service</item>
+        <item>@string/rt_infrastructure_problem</item>
+        <item>@string/rt_arrival_problem</item>
+        <item>@string/rt_app_feedback</item>
+        <item>@string/rt_ideas</item>
+    </string-array>
+    <string-array name="report_types_desc">
+        <item>@string/rt_message_customer_service</item>
+        <item>@string/rt_message_infrastructure_problem</item>
+        <item>@string/rt_message_arrival_problem</item>
+        <item>@string/rt_message_app_feedback</item>
+        <item>@string/rt_message_ideas</item>
+    </string-array>
+
+    <array name="report_types_icons">
+        <item>@drawable/ic_customer_service</item>
+        <item>@drawable/ic_stop_flag_triangle</item>
+        <item>@drawable/ic_arrival_time</item>
+        <item>@drawable/ic_app_feedback</item>
+        <item>@drawable/ic_light_bulb</item>
+    </array>
+
+    <string-array name="report_types_without_open311">
+        <item>@string/rt_customer_service</item>
+        <item>@string/rt_stop_problem</item>
+        <item>@string/rt_arrival_problem</item>
+        <item>@string/rt_app_feedback</item>
+        <item>@string/rt_ideas</item>
+    </string-array>
+
+    <string-array name="report_types_desc_without_open311">
+        <item>@string/rt_message_customer_service</item>
+        <item>@string/rt_message_stop_problem</item>
+        <item>@string/rt_message_arrival_problem</item>
+        <item>@string/rt_message_app_feedback</item>
+        <item>@string/rt_message_ideas</item>
+    </string-array>
+
+    <array name="report_types_icons_without_open311">
+        <item>@drawable/ic_customer_service</item>
+        <item>@drawable/ic_stop_flag_triangle</item>
+        <item>@drawable/ic_arrival_time</item>
+        <item>@drawable/ic_app_feedback</item>
+        <item>@drawable/ic_light_bulb</item>
+    </array>
+
+    <string-array name="report_stop_issue_tutorial_desc">
+        <item>Kliknij na przystanku, wobec którego chcesz wysłać raport.</item>
+        <item>Następnie wybierz rodzaj raportu.</item>
+        <item>Wyślij zgłoszenie związane z przystankiem.</item>
+    </string-array>
+
+    <string-array name="report_stop_transit_category_keywords">
+        <item>komunikacja</item>
+        <item>\u0020bus\u0020</item> <!-- Include spaces to not match as part of another word -->
+        <item>przystanek</item>
+        <item>brakuje linii/kursu</item>
+        <item>pasazer</item>
+        <item>kiedybus</item>
+    </string-array>
+
+    <string-array name="report_trip_transit_category_keywords">
+        <item>podróż</item>
+        <item>przyjazd</item>
+    </string-array>
+
+    <string-array name="report_stop_id_field_keywords">
+        <item>przystanek</item>
+        <item>identyfikator</item>
+        <item>autobus</item>
+    </string-array>
+
+    <string-array name="transit_mode_array">
+        <item>@string/transit_mode_transit_and_bikeshare</item>
+        <item>@string/transit_mode_transit_only</item>
+        <item>@string/transit_mode_bus</item>
+        <item>@string/transit_mode_rail</item>
+        <item>@string/transit_mode_bikeshare</item>
+    </string-array>
+
+    <string-array name="trip_plan_leaving_arriving_array">
+        <item>@string/trip_plan_leaving</item>
+        <item>@string/trip_plan_arriving</item>
+    </string-array>
+</resources>

@@ -9,7 +9,6 @@ import org.onebusaway.android.ui.ArrivalInfo;
 import android.content.ContentValues;
 import android.content.Context;
 
-import com.squareup.okhttp.Route;
 
 /**
  * Created by azizmb9494 on 2/20/16.

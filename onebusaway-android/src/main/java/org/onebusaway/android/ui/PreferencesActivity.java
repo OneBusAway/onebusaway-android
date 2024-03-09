@@ -24,10 +24,12 @@ import static org.onebusaway.android.util.UIUtils.setAppTheme;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -37,13 +39,16 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
+import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.Window;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -121,6 +126,11 @@ public class PreferencesActivity extends PreferenceActivity
 
     ListPreference mThemePref;
 
+
+    Preference mVolumePref;
+
+
+    SharedPreferences settings;
     private FirebaseAnalytics mFirebaseAnalytics;
 
     @SuppressWarnings("deprecation")
@@ -185,7 +195,11 @@ public class PreferencesActivity extends PreferenceActivity
         mAboutPref = findPreference(getString(R.string.preferences_key_about));
         mAboutPref.setOnPreferenceClickListener(this);
 
-        SharedPreferences settings = Application.getPrefs();
+        mVolumePref = findPreference("reminder_volume");
+        mVolumePref.setOnPreferenceClickListener(this);
+
+
+        settings = Application.getPrefs();
         mAutoSelectInitialValue = settings
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true);
 
@@ -366,8 +380,50 @@ public class PreferencesActivity extends PreferenceActivity
             // Try to push firebase data to the server
             FirebaseDataPusher pusher = new FirebaseDataPusher();
             pusher.push(this);
+        } else if (pref.equals(mVolumePref)) {
+            reminderVolumeDialog();
         }
         return true;
+    }
+
+    /*
+    * Dialog to set the volume for reminder using seekbar
+    * save volume in shared Preferences
+    */
+    private void reminderVolumeDialog() {
+        final int progress = settings.getInt("reminder_volume",100);
+        LayoutInflater inflater = getLayoutInflater();
+        View customLayout = inflater.inflate(R.layout.reminder_volume_adjuster, null);
+        SeekBar seekBar = customLayout.findViewById(R.id.seekBar);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setView(customLayout)
+                .setPositiveButton(R.string.save,
+                        (dialog, which)->{
+                                setReminderVolume(seekBar.getProgress());
+                        })
+                .setNegativeButton(R.string.cancel,
+                        (dialog, which)->{
+                            dialog.dismiss();
+                        }
+                );
+        seekBar.setProgress(progress);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void setReminderVolume(int progress) {
+        AudioManager audioManager = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        }
+        if (audioManager != null) {
+            int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM);
+            int scaledVolume = (int) (progress / 100f * maxVolume);
+            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, scaledVolume, 0);
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+            editor.putInt("reminder_volume", progress);
+            editor.apply();
+        }
     }
 
     private void maybeRequestPermissions(int permissionRequest) {

@@ -1048,4 +1048,8 @@
     <string name="trip_info_grant_exact_alarms_permission_message">Debes otorgar permiso a la aplicación para programar un recordatorio.</string>
     <string name="trip_info_grant_exact_alarms_permission_positive_button">Otorgar permiso</string>
     <string name="trip_info_grant_exact_alarms_permission_negative_button">Cancelar</string>
+
+    <!--    reminder volume adjuster layout-->
+    <string name="reminder_volume_adjuster_title">volumen</string>
+    <string name="save">guardar</string>
 </resources>

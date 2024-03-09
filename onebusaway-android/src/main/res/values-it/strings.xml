@@ -913,4 +913,8 @@
     <string name="trip_info_grant_exact_alarms_permission_message">Devi concedere all\'app il permesso di pianificare un promemoria.</string>
     <string name="trip_info_grant_exact_alarms_permission_positive_button">Concedi il permesso</string>
     <string name="trip_info_grant_exact_alarms_permission_negative_button">Annulla</string>
+
+    <!--    reminder volume adjuster layout-->
+    <string name="reminder_volume_adjuster_title">Volume</string>
+    <string name="save">"salvare "</string>
 </resources>

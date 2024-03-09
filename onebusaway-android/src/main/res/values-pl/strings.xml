@@ -646,4 +646,8 @@
         (https://github.com/google/material-design-icons), "
         "licencjonowane w ramach CC BY 4.0 (http://creativecommons.org/licenses/by/4.0/).\n\n"
     </string>
+
+    <!--    reminder volume adjuster layout-->
+    <string name="reminder_volume_adjuster_title">objętość</string>
+    <string name="save">"zapisać      "</string>
 </resources>

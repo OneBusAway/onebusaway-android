@@ -1195,4 +1195,8 @@
     <string name="travel_behavior_dialog_opt_out_message">If you opt out of the research study, we won\'t receive any more information about your travel behavior to help improve public transit.</string>
     <string name="cancel">Cancel</string>
     <string name="my_option_clear_starred_routes">Remove all starred routes</string>
+
+<!--    reminder volume adjuster layout-->
+    <string name="reminder_volume_adjuster_title">Volume</string>
+    <string name="save">save</string>
 </resources>

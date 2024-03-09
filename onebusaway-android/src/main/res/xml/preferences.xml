@@ -75,6 +75,13 @@
                 android:key="@string/preference_key_app_theme"
                 android:title="@string/preferences_app_theme_title" />
     </PreferenceCategory>
+    <PreferenceCategory android:title="Reminder"
+        android:key="reminder">
+            <Preference
+                android:key="reminder_volume"
+                android:title="Reminder Volume"
+                android:summary="Adjust the volume of reminder"/>
+    </PreferenceCategory>
     <PreferenceCategory
         android:key="@string/preference_key_notifications"
         android:title="@string/preferences_category_notifications">

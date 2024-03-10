@@ -8,8 +8,7 @@ import org.onebusaway.android.ui.ArrivalInfo;
 
 import android.content.ContentValues;
 import android.content.Context;
-
-import com.squareup.okhttp.Route;
+import android.text.TextUtils;
 
 /**
  * Created by azizmb9494 on 2/20/16.
@@ -34,8 +33,15 @@ public class DBUtil {
     public static void addRouteToDB(Context ctx, ArrivalInfo arrivalInfo){
         ContentValues routeValues = new ContentValues();
 
-        routeValues.put(ObaContract.Routes.SHORTNAME, arrivalInfo.getInfo().getShortName());
-        routeValues.put(ObaContract.Routes.LONGNAME, arrivalInfo.getInfo().getRouteLongName());
+        String shortName = arrivalInfo.getInfo().getShortName();
+        String longName = arrivalInfo.getInfo().getRouteLongName();
+
+        if (TextUtils.isEmpty(longName)) {
+            longName = UIUtils.formatDisplayText(arrivalInfo.getInfo().getHeadsign());
+        }
+
+        routeValues.put(ObaContract.Routes.SHORTNAME, shortName);
+        routeValues.put(ObaContract.Routes.LONGNAME, longName);
 
         if (Application.get().getCurrentRegion() != null) {
             routeValues.put(ObaContract.Routes.REGION_ID,
@@ -47,8 +53,18 @@ public class DBUtil {
     public static void addRouteToDB(Context ctx, ObaRoute route){
         ContentValues routeValues = new ContentValues();
 
-        routeValues.put(ObaContract.Routes.SHORTNAME, route.getShortName());
-        routeValues.put(ObaContract.Routes.LONGNAME, route.getLongName());
+        String shortName = route.getShortName();
+        String longName = route.getLongName();
+
+        if (TextUtils.isEmpty(shortName)) {
+            shortName = longName;
+        }
+        if (TextUtils.isEmpty(longName) || shortName.equals(longName)) {
+            longName = route.getDescription();
+        }
+        routeValues.put(ObaContract.Routes.SHORTNAME, shortName);
+        routeValues.put(ObaContract.Routes.LONGNAME, longName);
+        routeValues.put(ObaContract.Routes.URL, route.getUrl());
 
         if (Application.get().getCurrentRegion() != null) {
             routeValues.put(ObaContract.Routes.REGION_ID,

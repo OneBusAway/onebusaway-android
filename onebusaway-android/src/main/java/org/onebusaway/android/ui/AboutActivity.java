@@ -21,9 +21,13 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.Spanned;
 import android.widget.TextView;
 
 import com.google.android.material.appbar.CollapsingToolbarLayout;
+import com.google.android.material.textview.MaterialTextView;
 
 import org.onebusaway.android.R;
 
@@ -53,6 +57,7 @@ public class AboutActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         TextView tv = (TextView) findViewById(R.id.about_text);
+        MaterialTextView version= findViewById(R.id.version);
         String versionString = "";
         int versionCode = 0;
         try {
@@ -65,16 +70,14 @@ public class AboutActivity extends AppCompatActivity {
 
         StringBuilder builder = new StringBuilder();
         // Version info
-        builder.append("v")
+        builder.append("Version:")
                 .append(versionString)
                 .append(" (")
                 .append(versionCode)
-                .append(")\n\n");
+                .append(")\n");
 
         // Majority of content from string resource
-        builder.append(getString(R.string.about_text));
-        builder.append("\n\n");
-
-        tv.setText(builder.toString());
+        version.setText(builder.toString());
+        tv.setText((Spannable) Html.fromHtml(getString(R.string.about_content)));
     }
 }

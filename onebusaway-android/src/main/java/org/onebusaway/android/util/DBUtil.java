@@ -31,6 +31,8 @@ public class DBUtil {
     }
 
     public static void addRouteToDB(Context ctx, ArrivalInfo arrivalInfo){
+        if (Application.get().getCurrentRegion() == null) return;
+
         ContentValues routeValues = new ContentValues();
 
         String shortName = arrivalInfo.getInfo().getShortName();
@@ -42,15 +44,14 @@ public class DBUtil {
 
         routeValues.put(ObaContract.Routes.SHORTNAME, shortName);
         routeValues.put(ObaContract.Routes.LONGNAME, longName);
+        routeValues.put(ObaContract.Routes.REGION_ID, Application.get().getCurrentRegion().getId());
 
-        if (Application.get().getCurrentRegion() != null) {
-            routeValues.put(ObaContract.Routes.REGION_ID,
-                    Application.get().getCurrentRegion().getId());
-        }
         ObaContract.Routes.insertOrUpdate(ctx, arrivalInfo.getInfo().getRouteId(), routeValues, true);
     }
 
     public static void addRouteToDB(Context ctx, ObaRoute route){
+        if (Application.get().getCurrentRegion() == null) return;
+
         ContentValues routeValues = new ContentValues();
 
         String shortName = route.getShortName();
@@ -62,14 +63,12 @@ public class DBUtil {
         if (TextUtils.isEmpty(longName) || shortName.equals(longName)) {
             longName = route.getDescription();
         }
+
         routeValues.put(ObaContract.Routes.SHORTNAME, shortName);
         routeValues.put(ObaContract.Routes.LONGNAME, longName);
         routeValues.put(ObaContract.Routes.URL, route.getUrl());
+        routeValues.put(ObaContract.Routes.REGION_ID, Application.get().getCurrentRegion().getId());
 
-        if (Application.get().getCurrentRegion() != null) {
-            routeValues.put(ObaContract.Routes.REGION_ID,
-                    Application.get().getCurrentRegion().getId());
-        }
         ObaContract.Routes.insertOrUpdate(ctx, route.getId(), routeValues, true);
     }
 }

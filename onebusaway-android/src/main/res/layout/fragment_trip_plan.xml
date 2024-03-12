@@ -12,183 +12,163 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:layout_margin="16dp">
+    android:paddingStart="16dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="16dp">
 
-    <RelativeLayout
-        android:id="@+id/to_and_from_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <RelativeLayout
-            android:id="@+id/trip_plan_from_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_toLeftOf="@id/fromCurrentLocationImageButton"
-                android:layout_toStartOf="@id/fromCurrentLocationImageButton"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                app:endIconMode="clear_text">
-
-                <androidx.appcompat.widget.AppCompatAutoCompleteTextView
-                    style="@style/cursorColorTripPlan"
-                    android:id="@+id/fromAddressTextArea"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/tripplanner_current_location"
-                    android:hint="@string/trip_plan_start_location_hint"
-                    android:linksClickable="true"
-                    android:singleLine="true"
-                    android:ellipsize="end"
-                    android:requiresFadingEdge="horizontal" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <ImageButton
-                android:id="@+id/fromCurrentLocationImageButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="#00000000"
-                android:src="@drawable/ic_my_location"
-                android:tint="@color/material_gray"
-                android:layout_marginLeft="5dp"
-                android:layout_marginStart="5dp"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:contentDescription="@string/set_origin_to_my_location" />
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/trip_plan_to_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/trip_plan_from_layout">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
-                android:layout_toLeftOf="@id/toCurrentLocationImageButton"
-                android:layout_toStartOf="@id/toCurrentLocationImageButton"
-                android:layout_centerVertical="true"
-                app:endIconMode="clear_text">
-
-                <AutoCompleteTextView
-                    android:id="@+id/toAddressTextArea"
-                    style="@style/cursorColorTripPlan"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/trip_plan_end_location_hint"
-                    android:linksClickable="true"
-                    android:singleLine="true"
-                    android:requiresFadingEdge="horizontal" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <ImageButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
-                android:layout_marginStart="5dp"
-                android:id="@+id/toCurrentLocationImageButton"
-                android:background="#00000000"
-                android:src="@drawable/ic_my_location"
-                android:tint="@color/material_gray"
-                android:layout_gravity="center_vertical"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:contentDescription="@string/set_destination_to_my_location" />
-        </RelativeLayout>
-    </RelativeLayout>
-
-    <LinearLayout
-        android:id="@+id/time_layout"
-        android:layout_width="match_parent"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/textInputLayout"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_below="@id/to_and_from_layout"
-        android:orientation="horizontal"
-        android:paddingTop="8dp">
+        android:layout_marginEnd="8dp"
+        app:endIconMode="clear_text"
+        app:layout_constraintEnd_toStartOf="@+id/fromCurrentLocationImageButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <Spinner
-            android:id="@+id/leavingChoiceSpinner"
-            android:layout_width="wrap_content"
+        <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+            android:id="@+id/fromAddressTextArea"
+            style="@style/cursorColorTripPlan"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            tools:text="Leaving" />
+            android:ellipsize="end"
+            android:hint="@string/trip_plan_start_location_hint"
+            android:linksClickable="true"
+            android:requiresFadingEdge="horizontal"
+            android:singleLine="true"
+            android:text="@string/tripplanner_current_location" />
+    </com.google.android.material.textfield.TextInputLayout>
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
+    <ImageButton
+        android:id="@+id/fromCurrentLocationImageButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:background="#00000000"
+        android:contentDescription="@string/set_origin_to_my_location"
+        android:src="@drawable/ic_my_location"
+        android:tint="@color/material_gray"
+        app:layout_constraintBottom_toBottomOf="@+id/textInputLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/textInputLayout"
+        app:layout_constraintTop_toTopOf="@+id/textInputLayout" />
 
-        <Spinner
-            android:layout_width="wrap_content"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/textInputLayout2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        app:endIconMode="clear_text"
+        app:layout_constraintEnd_toStartOf="@+id/toCurrentLocationImageButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textInputLayout">
+
+        <AutoCompleteTextView
+            android:id="@+id/toAddressTextArea"
+            style="@style/cursorColorTripPlan"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/date"
-            tools:text="June 14"
-            android:inputType="none"
-            android:focusable="false"
-            android:layout_gravity="center_vertical"
-            android:textAppearance="?android:attr/textAppearanceSmall" />
+            android:hint="@string/trip_plan_end_location_hint"
+            android:linksClickable="true"
+            android:requiresFadingEdge="horizontal"
+            android:singleLine="true" />
+    </com.google.android.material.textfield.TextInputLayout>
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
+    <ImageButton
+        android:id="@+id/toCurrentLocationImageButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="#00000000"
+        android:contentDescription="@string/set_destination_to_my_location"
+        android:src="@drawable/ic_my_location"
+        android:tint="@color/material_gray"
+        app:layout_constraintBottom_toBottomOf="@+id/textInputLayout2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/textInputLayout2" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:color="@color/trip_plan_label"
-            android:text="@string/trip_plan_stop_connector"
-            android:layout_gravity="center_vertical"
-            android:paddingRight="8dp"
-            android:paddingEnd="8dp" />
+    <TextView
+        android:id="@+id/trip_plan_arrival_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:color="@color/trip_plan_label"
+        android:text="@string/trip_plan_arrival_departure"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textInputLayout2" />
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
+    <Spinner
+        android:id="@+id/leavingChoiceSpinner"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:minHeight="48dp"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/trip_plan_arrival_tv"
+        tools:text="Leaving" />
 
-        <Spinner
-            android:id="@+id/time"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            tools:text="04:01 pm"
-            android:inputType="none"
-            android:focusable="false"
-            android:layout_gravity="center_vertical"
-            android:textAppearance="?android:attr/textAppearanceSmall" />
+    <TextView
+        android:id="@+id/trip_plan_schedule_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:color="@color/trip_plan_label"
+        android:text="@string/trip_plan_schedule"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/leavingChoiceSpinner" />
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
+    <Spinner
+        android:id="@+id/date"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:focusable="false"
+        android:inputType="none"
+        android:minHeight="48dp"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        app:layout_constraintEnd_toStartOf="@+id/time"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/trip_plan_schedule_tv"
+        tools:text="June 14" />
 
-        <ImageButton
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true"
-            android:scaleType="fitXY"
-            android:id="@+id/resetTimeImageButton"
-            android:src="@drawable/ic_arrival_time"
-            android:background="#00000000"
-            android:tint="@color/material_gray"
-            android:layout_gravity="center_vertical"
-            android:contentDescription="@string/reset_time" />
-    </LinearLayout>
+    <Spinner
+        android:id="@+id/time"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:focusable="false"
+        android:inputType="none"
+        android:minHeight="48dp"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        app:layout_constraintBottom_toBottomOf="@+id/date"
+        app:layout_constraintEnd_toStartOf="@+id/resetTimeImageButton"
+        app:layout_constraintStart_toEndOf="@+id/date"
+        app:layout_constraintTop_toTopOf="@+id/date"
+        tools:text="04:01 pm" />
 
-</RelativeLayout>
+    <ImageButton
+        android:id="@+id/resetTimeImageButton"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="16dp"
+        android:background="#00000000"
+        android:contentDescription="@string/reset_time"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_arrival_time"
+        android:tint="@color/material_gray"
+        app:layout_constraintBottom_toBottomOf="@+id/time"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/time"
+        app:layout_constraintTop_toTopOf="@+id/time" />
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -175,9 +175,6 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
             mMarkerData.clear();
             mMarkerData = null;
         }
-        if (mCustomInfoWindowAdapter != null) {
-            mCustomInfoWindowAdapter.cancelUpdates();
-        }
     }
 
     /**
@@ -532,17 +529,12 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
             // Show trip details screen for the vehicle associated with this marker
             ObaTripStatus status = mMarkerData.getStatusFromMarker(marker);
             if (status != null) {
-                // Stop any callbacks to refresh the vehicle marker popup balloons
-                mCustomInfoWindowAdapter.cancelUpdates();
-
-                if (status != null) {
-                    if (mController != null && mController.getFocusedStopId() != null) {
-                        TripDetailsActivity.start(mActivity, status.getActiveTripId(),
-                                mController.getFocusedStopId(), TripDetailsListFragment.SCROLL_MODE_VEHICLE);
-                    } else {
-                        TripDetailsActivity.start(mActivity, status.getActiveTripId(),
-                                TripDetailsListFragment.SCROLL_MODE_VEHICLE);
-                    }
+                if (mController != null && mController.getFocusedStopId() != null) {
+                    TripDetailsActivity.start(mActivity, status.getActiveTripId(),
+                            mController.getFocusedStopId(), TripDetailsListFragment.SCROLL_MODE_VEHICLE);
+                } else {
+                    TripDetailsActivity.start(mActivity, status.getActiveTripId(),
+                            TripDetailsListFragment.SCROLL_MODE_VEHICLE);
                 }
             }
         }
@@ -960,11 +952,6 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
             }
             lastUpdatedView.setText(lastUpdated);
 
-            if (mMarkerRefreshHandler != null) {
-                mMarkerRefreshHandler.removeCallbacks(mMarkerRefresh);
-                mMarkerRefreshHandler.postDelayed(mMarkerRefresh, MARKER_REFRESH_PERIOD);
-            }
-
             if (status.getOccupancyStatus() != null) {
                 // Real-time occupancy data
                 UIUtils.setOccupancyVisibilityAndColor(occupancyView, status.getOccupancyStatus(), OccupancyState.REALTIME);
@@ -978,27 +965,6 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
             return view;
         }
 
-        private final long MARKER_REFRESH_PERIOD = TimeUnit.SECONDS.toMillis(1);
 
-        private final Handler mMarkerRefreshHandler = new Handler();
-
-        private final Runnable mMarkerRefresh = new Runnable() {
-            public void run() {
-                if (mCurrentFocusVehicleMarker != null &&
-                        mCurrentFocusVehicleMarker.isInfoWindowShown()) {
-                    // Force an update of the marker balloon, so "last updated" time ticks up
-                    mCurrentFocusVehicleMarker.showInfoWindow();
-                }
-            }
-        };
-
-        /**
-         * Cancels any pending updates of the marker balloon contents
-         */
-        public void cancelUpdates() {
-            if (mMarkerRefreshHandler != null) {
-                mMarkerRefreshHandler.removeCallbacks(mMarkerRefresh);
-            }
-        }
     }
 }

@@ -8,12 +8,22 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context="org.onebusaway.android.ui.AboutActivity">
-
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="10dp">
+    <com.google.android.material.textview.MaterialTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/version"
+        android:text="Version"
+        android:textStyle="bold"
+        />
     <TextView
             android:id="@+id/about_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="@dimen/text_margin"
             android:autoLink="web"/>
-
+</LinearLayout>
 </androidx.core.widget.NestedScrollView>

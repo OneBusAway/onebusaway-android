@@ -162,10 +162,12 @@ public class SituationDialogFragment extends DialogFragment {
         TextView title = (TextView) dialog.findViewById(R.id.alert_title);
         title.setText(args.getString(TITLE));
 
-        TextView desc = (TextView) dialog.findViewById(R.id.alert_description);
+        TextView descTxtView = (TextView) dialog.findViewById(R.id.alert_description);
 
-        if (desc != null) {
-            desc.setText(Html.fromHtml(args.getString(DESCRIPTION)));
+        String desc = args.getString(DESCRIPTION);
+
+        if (descTxtView != null &&!TextUtils.isEmpty(desc)) {
+            descTxtView.setText(Html.fromHtml(desc));
         }
         TextView urlView = (TextView) dialog.findViewById(R.id.alert_url);
 

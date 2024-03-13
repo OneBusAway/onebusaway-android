@@ -18,6 +18,8 @@ package org.onebusaway.android.directions.util;
 
 import org.onebusaway.android.BuildConfig;
 
+import android.graphics.Color;
+
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -73,6 +75,8 @@ public class OTPConstants {
 
     // flag to indicate intent sent by or on behalf of TripPlanActivity
     public static final String INTENT_SOURCE = "org.onebusaway.android.INTENT_SOURCE";
+
+    public static final int OTP_TRANSIT_COLOR = Color.parseColor("#006500");
 
     public enum Source {ACTIVITY, NOTIFICATION}
 

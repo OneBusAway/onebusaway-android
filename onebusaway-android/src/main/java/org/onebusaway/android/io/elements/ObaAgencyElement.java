@@ -114,14 +114,7 @@ public final class ObaAgencyElement implements ObaAgency {
             return false;
         }
         ObaAgencyElement other = (ObaAgencyElement) obj;
-        if (id == null) {
-            if (other.id != null) {
-                return false;
-            }
-        } else if (!id.equals(other.id)) {
-            return false;
-        }
-        return true;
+        return id.equals(other.id);
     }
 
     @Override

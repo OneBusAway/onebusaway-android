@@ -964,6 +964,10 @@
         which add a touch of elegance to our app. Their generosity in licensing
         these icons under Apache v2.0(https://www.apache.org/licenses/LICENSE-2.0) has greatly enriched our user experience.
       </p>
+        <p>
+        Special thanks to amcharts for free SVG weather icons(https://www.amcharts.com/free-animated-svg-weather-icons/),
+        these icons under Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/).
+      </p>
       <p>
 
     <p>
@@ -1227,4 +1231,8 @@
     <string name="travel_behavior_dialog_opt_out_message">If you opt out of the research study, we won\'t receive any more information about your travel behavior to help improve public transit.</string>
     <string name="cancel">Cancel</string>
     <string name="my_option_clear_starred_routes">Remove all starred routes</string>
+    <string name="preferred_temperature_unit">Preferred temperature unit</string>
+    <string name="fahrenheit">Fahrenheit</string>
+    <string name="celsius">Celsius</string>
+
 </resources>

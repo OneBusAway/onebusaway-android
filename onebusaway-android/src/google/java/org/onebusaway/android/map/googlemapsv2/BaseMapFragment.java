@@ -59,6 +59,7 @@ import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.ui.HomeActivity;
 import org.onebusaway.android.ui.LayersSpeedDialAdapter;
+import org.onebusaway.android.ui.weather.RegionCallback;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PermissionUtils;
@@ -721,6 +722,8 @@ public class BaseMapFragment extends SupportMapFragment
         // Make sure that the stop overlay has been successfully initialized
         if (setupStopOverlay() && stops != null) {
             mStopOverlay.populateStops(stops, refs);
+            // When we have stops that means we have a valid region to get the weather
+            checkRegionWeather(false);
         }
     }
 
@@ -744,12 +747,13 @@ public class BaseMapFragment extends SupportMapFragment
         //Otherwise, its premature since we don't know the device's relationship to
         //available OBA regions or the manually set API region
         String serverName = Application.get().getCustomApiUrl();
-        if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils
-                .isEmpty(serverName))) {
+        if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils.isEmpty(serverName))) {
             if (mRunning && canManageDialog(getActivity())) {
                 showDialog(MapDialogFragment.OUTOFRANGE_DIALOG);
             }
         }
+        // Notify weather view that we are out of range
+        checkRegionWeather(true);
     }
 
     //
@@ -775,6 +779,7 @@ public class BaseMapFragment extends SupportMapFragment
                 setMyLocation(true, false);
             } else {
                 zoomToRegion();
+                checkRegionWeather(false);
             }
         }
     }
@@ -907,6 +912,21 @@ public class BaseMapFragment extends SupportMapFragment
             int height = getResources().getDisplayMetrics().heightPixels;
             int padding = 0;
             mMap.animateCamera((CameraUpdateFactory.newLatLngBounds(b, width, height, padding)));
+        }
+    }
+    private RegionCallback regionCallback;
+
+    public void setRegionCallback(RegionCallback callback) {
+        this.regionCallback = callback;
+    }
+
+    public void checkRegionWeather(boolean isOutOfRange) {
+        // If we have a valid region, callback to home activity to get the weather.
+        ObaRegion region = Application.get().getCurrentRegion();
+        boolean isValid = (region != null && mMap != null && !isOutOfRange);
+
+        if (regionCallback != null) {
+            regionCallback.onValidRegion(isValid);
         }
     }
 
@@ -1339,6 +1359,7 @@ public class BaseMapFragment extends SupportMapFragment
                             (dialog, which) -> {
                                 if (mMapFragment != null && mMapFragment.isAdded()) {
                                     mMapFragment.zoomToRegion();
+                                    mMapFragment.checkRegionWeather(false);
                                 }
                             }
                     )

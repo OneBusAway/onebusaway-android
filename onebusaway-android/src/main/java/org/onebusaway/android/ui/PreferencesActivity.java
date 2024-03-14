@@ -118,6 +118,7 @@ public class PreferencesActivity extends PreferenceActivity
     //Save initial value so we can compare to current value in onDestroy()
 
     ListPreference preferredUnits;
+    ListPreference preferredTempUnits;
 
     ListPreference mThemePref;
 
@@ -192,6 +193,9 @@ public class PreferencesActivity extends PreferenceActivity
         preferredUnits = (ListPreference) findPreference(
                 getString(R.string.preference_key_preferred_units));
 
+        preferredTempUnits = (ListPreference) findPreference(
+                getString(R.string.preference_key_preferred_temperature_units));
+
         mThemePref = (ListPreference) findPreference(
                 getString(R.string.preference_key_app_theme));
         mThemePref.setOnPreferenceChangeListener(this);
@@ -244,6 +248,7 @@ public class PreferencesActivity extends PreferenceActivity
 
         changePreferenceSummary(getString(R.string.preference_key_region));
         changePreferenceSummary(getString(R.string.preference_key_preferred_units));
+        changePreferenceSummary(getString(R.string.preference_key_preferred_temperature_units));
         changePreferenceSummary(getString(R.string.preference_key_app_theme));
         changePreferenceSummary(getString(R.string.preference_key_otp_api_url));
 
@@ -322,6 +327,9 @@ public class PreferencesActivity extends PreferenceActivity
                         getString(R.string.preferences_otp_api_servername_summary));
             }
             Application.get().setUseOldOtpApiUrlVersion(false);
+        }else if (preferenceKey
+                .equalsIgnoreCase(getString(R.string.preference_key_preferred_temperature_units))) {
+            preferredTempUnits.setSummary(preferredTempUnits.getValue());
         }
     }
 
@@ -609,6 +617,9 @@ public class PreferencesActivity extends PreferenceActivity
             boolean showDepartedBuses = settings.getBoolean(Application.get().
                     getString(R.string.preference_key_show_negative_arrivals), Boolean.FALSE);
             ObaAnalytics.setShowDepartedVehicles(mFirebaseAnalytics, showDepartedBuses);
+        }else if (key.equalsIgnoreCase(getString(R.string.preference_key_preferred_temperature_units))) {
+            // Change the preferred temp unit description
+            changePreferenceSummary(key);
         }
     }
 

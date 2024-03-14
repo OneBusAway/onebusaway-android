@@ -33,6 +33,10 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.io.request.weather.ObaWeatherRequest;
+import org.onebusaway.android.io.request.weather.models.ObaWeatherResponse;
+import org.onebusaway.android.io.request.weather.WeatherRequestListener;
+import org.onebusaway.android.io.request.weather.WeatherRequestTask;
 import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
@@ -43,6 +47,8 @@ import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
 import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.ui.weather.RegionCallback;
+import org.onebusaway.android.ui.weather.WeatherUtils;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PermissionUtils;
@@ -101,6 +107,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
 
@@ -128,7 +135,7 @@ import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_START
 public class HomeActivity extends AppCompatActivity
         implements BaseMapFragment.OnFocusChangedListener,
         BaseMapFragment.OnProgressBarChangedListener,
-        ArrivalsListFragment.Listener, NavigationDrawerCallbacks,
+        ArrivalsListFragment.Listener, NavigationDrawerCallbacks, WeatherRequestListener , RegionCallback,
         ObaRegionsTask.Callback {
 
     interface SlidingPanelController {
@@ -176,6 +183,8 @@ public class HomeActivity extends AppCompatActivity
     View mArrivalsListHeaderView;
 
     View mArrivalsListHeaderSubView;
+
+    CardView weatherView;
 
     private FloatingActionButton mFabMyLocation;
 
@@ -259,6 +268,8 @@ public class HomeActivity extends AppCompatActivity
     private FirebaseAnalytics mFirebaseAnalytics;
 
     private ActivityResultLauncher<String> travelBehaviorPermissionsLauncher;
+
+    private ObaWeatherResponse weatherResponse;
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -406,6 +417,7 @@ public class HomeActivity extends AppCompatActivity
                 ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_WELCOME, this, null, false);
             }
         }
+        initWeatherView();
     }
 
     @Override
@@ -604,6 +616,7 @@ public class HomeActivity extends AppCompatActivity
         // Register listener for map focus callbacks
         mMapFragment.setOnFocusChangeListener(this);
         mMapFragment.setOnProgressBarChangedListener(this);
+        mMapFragment.setRegionCallback(this);
 
         getSupportFragmentManager().beginTransaction().show(mMapFragment).commit();
 
@@ -1967,5 +1980,58 @@ public class HomeActivity extends AppCompatActivity
                                     true);
                         })
                 .create().show();
+    }
+
+    // Getting a callback from BaseMapFragment to check if we are in a valid region or not
+    @Override
+    public void onValidRegion(boolean isValid) {
+        if(isValid){
+            makeWeatherRequest();
+        }else{
+            //
+            weatherView.setVisibility(View.GONE);
+            weatherResponse = null;
+        }
+    }
+
+    private void initWeatherView(){
+        weatherView = findViewById(R.id.weatherView);
+    }
+
+    private void setWeatherData(){
+        TextView tempTxtView = findViewById(R.id.weatherTextView);
+        ImageView weatherImageView = findViewById(R.id.weatherStateImageView);
+
+        WeatherUtils.setWeatherImage(weatherImageView,weatherResponse.getCurrent_forecast().getIcon(),this);
+        WeatherUtils.setWeatherTemp(tempTxtView,weatherResponse.getCurrent_forecast().getTemperature());
+        // Show weather state when click.
+        weatherView.setOnClickListener(view -> Toast.makeText(getApplicationContext(),weatherResponse.getCurrent_forecast().getSummary().trim(),Toast.LENGTH_SHORT).show());
+    }
+
+    private void makeWeatherRequest(){
+        // If weather response is null that means we need to call the weather api to get the new data
+        // Adding this will avoid doing multiple requests to the weather API when updating the map in real-time
+        if(weatherResponse == null){
+            ObaWeatherRequest weatherRequest = ObaWeatherRequest.newRequest(Application.get().getCurrentRegion().getId());
+            WeatherRequestTask task = new WeatherRequestTask(this);
+            task.execute(weatherRequest);
+            Log.d(TAG,"Weather requested");
+        }else{
+            // We have a weather data no need to make a request
+            setWeatherData();
+        }
+
+    }
+
+    @Override
+    public void onWeatherResponseReceived(ObaWeatherResponse response) {
+        weatherView.setVisibility(View.VISIBLE);
+        weatherResponse = response;
+        setWeatherData();
+    }
+
+    @Override
+    public void onWeatherRequestFailed() {
+        Log.d(TAG,"Weather Request Fail");
     }
 }

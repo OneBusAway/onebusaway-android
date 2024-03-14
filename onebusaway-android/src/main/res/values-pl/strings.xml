@@ -683,6 +683,10 @@
         tych ikon na licencji Apache v2.0 (https://www.apache.org/licenses/LICENSE-2.0) znacznie wzbogaciła nasze doświadczenie użytkownika.
       </p>
       <p>
+    Specjalne podziękowania dla amcharts za darmowe ikony pogody w formacie SVG (https://www.amcharts.com/free-animated-svg-weather-icons/),
+    te ikony są udostępnione na licencji Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/).
+    </p>
+      <p>
 
     <p>
       Odkrywaj naszą aplikację i rozpocznij płynną podróż z OneBusAway!
@@ -692,4 +696,9 @@
 
     ]]></string>
     <string name="application_version">Wersja</string>
+
+    <string name="preferred_temperature_unit">Preferowana jednostka temperatury</string>
+    <string name="fahrenheit">Fahrenheit</string>
+    <string name="celsius">Celsjusz</string>
+
 </resources>

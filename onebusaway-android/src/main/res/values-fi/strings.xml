@@ -658,6 +658,10 @@
         jotka lisäävät eleganssia sovellukseemme. Heidän anteliaisuutensa lisensoida nämä ikonit Apache v2.0 -lisenssillä (https://www.apache.org/licenses/LICENSE-2.0) on rikastuttanut huomattavasti käyttäjäkokemustamme.
       </p>
       <p>
+    Erityiskiitos amchartsille ilmaisista SVG-sääkuvakkeista (https://www.amcharts.com/free-animated-svg-weather-icons/),
+    nämä kuvakkeet ovat Creative Commons Attribution 4.0 -lisenssin alaisia (https://creativecommons.org/licenses/by/4.0/).
+     </p>
+      <p>
 
     <p>
       Tutustu sovellukseemme ja aloita sujuva joukkoliikennematka OneBusAwayn kanssa!
@@ -672,4 +676,9 @@
     <string name="trip_info_grant_exact_alarms_permission_message">Sinun täytyy antaa sovellukselle lupa muistutuksen asettamiseen.</string>
     <string name="trip_info_grant_exact_alarms_permission_positive_button">Myönnä lupa</string>
     <string name="trip_info_grant_exact_alarms_permission_negative_button">Peruuta</string>
+
+    <string name="preferred_temperature_unit">Suosittu lämpötilayksikkö</string>
+    <string name="fahrenheit">Fahrenheit</string>
+    <string name="celsius">Celsius</string>
+
 </resources>

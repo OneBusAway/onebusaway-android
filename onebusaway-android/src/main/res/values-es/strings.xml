@@ -851,6 +851,10 @@
         estos íconos bajo la licencia Apache v2.0 (https://www.apache.org/licenses/LICENSE-2.0) ha enriquecido enormemente nuestra experiencia de usuario.
       </p>
       <p>
+    Agradecimiento especial a amCharts por los iconos del clima en SVG gratuitos (https://www.amcharts.com/free-animated-svg-weather-icons/),
+    estos íconos están bajo la licencia Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/).
+     </p>
+      <p>
 
     <p>
       ¡Explora nuestra aplicación y emprende un viaje en transporte público sin contratiempos con OneBusAway!
@@ -1077,4 +1081,9 @@
     <string name="trip_info_grant_exact_alarms_permission_message">Debes otorgar permiso a la aplicación para programar un recordatorio.</string>
     <string name="trip_info_grant_exact_alarms_permission_positive_button">Otorgar permiso</string>
     <string name="trip_info_grant_exact_alarms_permission_negative_button">Cancelar</string>
+
+    <string name="preferred_temperature_unit">Unidad de temperatura preferida</string>
+    <string name="fahrenheit">Fahrenheit</string>
+    <string name="celsius">Celsius</string>
+
 </resources>

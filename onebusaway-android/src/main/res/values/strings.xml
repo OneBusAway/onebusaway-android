@@ -1228,7 +1228,12 @@
     <string name="cancel">Cancel</string>
     <string name="my_option_clear_starred_routes">Remove all starred routes</string>
 
-<!--    reminder volume adjuster layout-->
+<!-- Reminder volume adjuster layout-->
     <string name="reminder_volume_adjuster_title">Volume</string>
-    <string name="save">save</string>
+    <string name="reminder_volume_adjuster_save">Save</string>
+
+<!-- Reminder volume Preference-->
+    <string name="preference_category_reminder_title">Reminder</string>
+    <string name="preference_title_reminder_volume">Reminder Volume</string>
+    <string name="preference_summary_reminder_volume">Adjust the volume of reminder</string>
 </resources>

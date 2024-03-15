@@ -989,7 +989,12 @@
     <string name="trip_info_grant_exact_alarms_permission_positive_button">Concedi il permesso</string>
     <string name="trip_info_grant_exact_alarms_permission_negative_button">Annulla</string>
 
-    <!--    reminder volume adjuster layout-->
+    <!-- Reminder volume adjuster layout-->
     <string name="reminder_volume_adjuster_title">Volume</string>
-    <string name="save">"salvare "</string>
+    <string name="reminder_volume_adjuster_save">salvare</string>
+
+    <!-- Reminder volume Preference-->
+    <string name="preference_category_reminder_title">Promemoria</string>
+    <string name="preference_title_reminder_volume">Volume promemoria</string>
+    <string name="preference_summary_reminder_volume">Regola il volume del promemoria</string>
 </resources>

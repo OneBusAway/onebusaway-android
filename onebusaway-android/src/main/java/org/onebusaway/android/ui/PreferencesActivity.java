@@ -52,7 +52,6 @@ import android.widget.SeekBar;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 
@@ -126,9 +125,7 @@ public class PreferencesActivity extends PreferenceActivity
 
     ListPreference mThemePref;
 
-
     Preference mVolumePref;
-
 
     SharedPreferences settings;
     private FirebaseAnalytics mFirebaseAnalytics;
@@ -195,9 +192,8 @@ public class PreferencesActivity extends PreferenceActivity
         mAboutPref = findPreference(getString(R.string.preferences_key_about));
         mAboutPref.setOnPreferenceClickListener(this);
 
-        mVolumePref = findPreference("reminder_volume");
+        mVolumePref = findPreference(getString(R.string.preference_key_reminder_volume));
         mVolumePref.setOnPreferenceClickListener(this);
-
 
         settings = Application.getPrefs();
         mAutoSelectInitialValue = settings
@@ -229,6 +225,11 @@ public class PreferencesActivity extends PreferenceActivity
         // If the Android version is Oreo (8.0) hide "Notification" preference
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getPreferenceScreen().removePreference(findPreference(getString(R.string.preference_key_notifications)));
+        }
+
+        // If the Android version is less than Marshmallow (6.0) hide "Reminder" preference
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) {
+            getPreferenceScreen().removePreference(findPreference(getString(R.string.preference_key_category_reminder)));
         }
 
         // If the Android version is lower than Nougat (7.0) and equal to or above Pie (9.0) hide "Share trip logs" preference
@@ -391,41 +392,37 @@ public class PreferencesActivity extends PreferenceActivity
     * save volume in shared Preferences
     */
     private void reminderVolumeDialog() {
-        final int progress = settings.getInt("reminder_volume",100);
+        final int progress = settings.getInt(getString(R.string.preference_key_reminder_volume),100);
         LayoutInflater inflater = getLayoutInflater();
         View customLayout = inflater.inflate(R.layout.reminder_volume_adjuster, null);
         SeekBar seekBar = customLayout.findViewById(R.id.seekBar);
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setView(customLayout)
-                .setPositiveButton(R.string.save,
-                        (dialog, which)->{
-                                setReminderVolume(seekBar.getProgress());
-                        })
-                .setNegativeButton(R.string.cancel,
-                        (dialog, which)->{
-                            dialog.dismiss();
+                .setPositiveButton(R.string.reminder_volume_adjuster_save, (dialog, which)-> {
+                    setReminderVolume(seekBar.getProgress());
+                }).setNegativeButton(R.string.cancel, (dialog, which)-> {
+                    dialog.dismiss();
                         }
                 );
         seekBar.setProgress(progress);
         AlertDialog dialog = builder.create();
         dialog.show();
     }
-
     private void setReminderVolume(int progress) {
         AudioManager audioManager = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         }
-        if (audioManager != null) {
-            int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM);
-            int scaledVolume = (int) (progress / 100f * maxVolume);
-            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, scaledVolume, 0);
-            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
-            editor.putInt("reminder_volume", progress);
-            editor.apply();
+        if (audioManager == null) {
+            return;
         }
-    }
-
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM);
+        int scaledVolume = (int) (progress / 100f * maxVolume);
+        audioManager.setStreamVolume(AudioManager.STREAM_ALARM, scaledVolume, 0);
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+        editor.putInt(getString(R.string.preference_key_reminder_volume), progress);
+        editor.apply();
+        }
     private void maybeRequestPermissions(int permissionRequest) {
         if (!PermissionUtils.hasGrantedAllPermissions(this, STORAGE_PERMISSIONS)) {
             // Request permissions from the user

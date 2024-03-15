@@ -613,10 +613,6 @@
 
     <!-- About -->
     <string name="title_activity_about">O KiedyBus</string>
-    <!--    reminder volume adjuster layout-->
-    <string name="reminder_volume_adjuster_title">objętość</string>
-    <string name="save">"zapisać      "</string>
-
     <string name="about_content"><![CDATA[
     <html>
   <body>
@@ -697,4 +693,13 @@
     ]]></string>
     <string name="application_version">Wersja</string>
 
+
+    <!-- Reminder volume adjuster layout-->
+    <string name="reminder_volume_adjuster_title">objętość</string>
+    <string name="reminder_volume_adjuster_save">zapisać</string>
+
+    <!-- Reminder volume Preference-->
+    <string name="preference_category_reminder_title">Przypomnienie</string>
+    <string name="preference_title_reminder_volume">Głośność przypomnienia</string>
+    <string name="preference_summary_reminder_volume">Dostosuj głośność przypomnienia</string>
 </resources>

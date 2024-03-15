@@ -673,7 +673,6 @@
     <string name="ri_anonymous_checkbox">Mantenerlo anónimo</string>
     <string name="ri_submitting_message">Enviando tu reporte...</string>
     <string name="ri_unsuccessful_submit">Ocurrio un error durante el envío, por favor, intenta más tarde.</string>
-
     <!-- report issue types screen-->
     <!-- Remove rt_infrastructure_problem and use rt_stop_problem -->
     <string name="rt_infrastructure_problem">Reportar un Problema de Parada</string>
@@ -1078,7 +1077,12 @@
     <string name="trip_info_grant_exact_alarms_permission_positive_button">Otorgar permiso</string>
     <string name="trip_info_grant_exact_alarms_permission_negative_button">Cancelar</string>
 
-    <!--    reminder volume adjuster layout-->
+    <!-- Reminder volume adjuster layout-->
     <string name="reminder_volume_adjuster_title">volumen</string>
-    <string name="save">guardar</string>
+    <string name="reminder_volume_adjuster_save">guardar</string>
+
+    <!-- Reminder volume Preference-->
+    <string name="preference_category_reminder_title">Recordatorio</string>
+    <string name="preference_title_reminder_volume">Volumen de recordatorio</string>
+    <string name="preference_summary_reminder_volume">Ajusta el volumen del recordatorio</string>
 </resources>

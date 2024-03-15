@@ -131,7 +131,7 @@
     <dimen name="zoom_in_btn_right_offset">@dimen/zoom_in_btn_left_offset</dimen>
 
 
-    <!--    reminder volume adjuster layout-->
+    <!-- Reminder volume adjuster layout-->
     <dimen name="reminder_volume_adjuster_title_text_size">16sp</dimen>
     <dimen name="seekbar_vertical_margin">5dp</dimen>
     <dimen name="layout_padding">15dp</dimen>

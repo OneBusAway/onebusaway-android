@@ -991,7 +991,7 @@
 
     <!-- Reminder volume adjuster layout-->
     <string name="reminder_volume_adjuster_title">Volume</string>
-    <string name="reminder_volume_adjuster_save">salvare</string>
+    <string name="reminder_volume_adjuster_save">Salvare</string>
 
     <!-- Reminder volume Preference-->
     <string name="preference_category_reminder_title">Promemoria</string>

@@ -695,8 +695,8 @@
 
 
     <!-- Reminder volume adjuster layout-->
-    <string name="reminder_volume_adjuster_title">objętość</string>
-    <string name="reminder_volume_adjuster_save">zapisać</string>
+    <string name="reminder_volume_adjuster_title">Objętość</string>
+    <string name="reminder_volume_adjuster_save">Zapisać</string>
 
     <!-- Reminder volume Preference-->
     <string name="preference_category_reminder_title">Przypomnienie</string>

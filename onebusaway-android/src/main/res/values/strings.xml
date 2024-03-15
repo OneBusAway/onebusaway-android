@@ -1234,6 +1234,6 @@
 
 <!-- Reminder volume Preference-->
     <string name="preference_category_reminder_title">Reminder</string>
-    <string name="preference_title_reminder_volume">Reminder Volume</string>
+    <string name="preference_title_reminder_volume">Reminder volume</string>
     <string name="preference_summary_reminder_volume">Adjust the volume of reminder</string>
 </resources>

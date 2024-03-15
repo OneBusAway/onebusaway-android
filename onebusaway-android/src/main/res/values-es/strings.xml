@@ -1078,8 +1078,8 @@
     <string name="trip_info_grant_exact_alarms_permission_negative_button">Cancelar</string>
 
     <!-- Reminder volume adjuster layout-->
-    <string name="reminder_volume_adjuster_title">volumen</string>
-    <string name="reminder_volume_adjuster_save">guardar</string>
+    <string name="reminder_volume_adjuster_title">Volumen</string>
+    <string name="reminder_volume_adjuster_save">Guardar</string>
 
     <!-- Reminder volume Preference-->
     <string name="preference_category_reminder_title">Recordatorio</string>

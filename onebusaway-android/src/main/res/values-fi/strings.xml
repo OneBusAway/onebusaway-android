@@ -674,8 +674,8 @@
     <string name="trip_info_grant_exact_alarms_permission_negative_button">Peruuta</string>
 
     <!-- Reminder volume adjuster layout-->
-    <string name="reminder_volume_adjuster_title">tilavuus</string>
-    <string name="reminder_volume_adjuster_save">tallentaa</string>
+    <string name="reminder_volume_adjuster_title">Tilavuus</string>
+    <string name="reminder_volume_adjuster_save">Tallentaa</string>
 
     <!-- Reminder volume Preference-->
     <string name="preference_category_reminder_title">Muistutus</string>

@@ -18,6 +18,7 @@ package org.onebusaway.android.ui;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.TypedArray;
@@ -25,6 +26,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -177,6 +179,8 @@ public class TripPlanFragment extends Fragment {
             }
         };
 
+        Context context = new ContextThemeWrapper(getActivity(), R.style.MyTimePickerDialogTheme);
+
         final DatePickerDialog.OnDateSetListener dateCallback = new DatePickerDialog.OnDateSetListener() {
 
             @Override
@@ -196,7 +200,7 @@ public class TripPlanFragment extends Fragment {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
-                    new DatePickerDialog(view.getContext(), dateCallback, mMyCalendar
+                    new DatePickerDialog(context, dateCallback, mMyCalendar
                             .get(Calendar.YEAR), mMyCalendar.get(Calendar.MONTH),
                             mMyCalendar.get(Calendar.DAY_OF_MONTH)).show();
                 }
@@ -209,7 +213,7 @@ public class TripPlanFragment extends Fragment {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
-                    new TimePickerDialog(view.getContext(), timeCallback,
+                    new TimePickerDialog(context, timeCallback,
                             mMyCalendar.get(Calendar.HOUR_OF_DAY),
                             mMyCalendar.get(Calendar.MINUTE), false).show();
                 }

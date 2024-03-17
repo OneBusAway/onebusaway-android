@@ -25,5 +25,14 @@
         <item name="autoCompleteTextViewStyle">@style/cursorColor</item>
         <!-- Allows us to force Dark Theme throughout the app -->
         <item name="android:forceDarkAllowed">true</item>
+
     </style>
+
+    <!-- Custom TimePickerDialog theme for dark mode -->
+    <style name="MyTimePickerDialogTheme" parent="Theme.MaterialComponents.DayNight.Dialog">
+        <item name="colorPrimary">@color/theme_primary</item>
+        <item name="colorPrimaryDark">@color/theme_primary_dark</item>
+        <item name="colorAccent">@color/theme_accent</item>
+    </style>
+
 </resources>

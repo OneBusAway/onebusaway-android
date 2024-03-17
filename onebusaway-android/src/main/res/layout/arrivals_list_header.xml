@@ -62,6 +62,8 @@
                         android:id="@+id/edit_name_cancel"
                         style="@style/Header2Text"
                         android:text="@string/stop_info_cancel"
+                        android:textColor="@color/theme_primary"
+                        android:backgroundTint="@color/quantum_white_100"
                         android:layout_height="wrap_content"
                         android:layout_width="0dip"
                         android:layout_weight="1"/>
@@ -70,6 +72,8 @@
                         android:id="@+id/edit_name_save"
                         style="@style/Header2Text"
                         android:text="@string/stop_info_save"
+                        android:textColor="@color/theme_primary"
+                        android:backgroundTint="@color/quantum_white_100"
                         android:layout_height="wrap_content"
                         android:layout_width="0dip"
                         android:layout_weight="1"/>
@@ -78,6 +82,8 @@
                         android:id="@+id/edit_name_revert"
                         style="@style/Header2Text"
                         android:text="@string/stop_info_clear"
+                        android:textColor="@color/theme_primary"
+                        android:backgroundTint="@color/quantum_white_100"
                         android:layout_height="wrap_content"
                         android:layout_width="0dip"
                         android:layout_weight="1"/>

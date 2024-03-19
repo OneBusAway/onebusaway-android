@@ -236,6 +236,8 @@ public class PreferencesActivity extends PreferenceActivity
         if (showCheckRegionDialog) {
             showCheckRegionDialog();
         }
+
+        onAddCustomRegion();
     }
 
     @Override
@@ -526,7 +528,7 @@ public class PreferencesActivity extends PreferenceActivity
         boolean currentValue = settings
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true);
 
-        //If the use has selected to auto-select region, and the previous state of the setting was false, 
+        //If the use has selected to auto-select region, and the previous state of the setting was false,
         //then run the auto-select by going to HomeFragment
         if ((currentValue && !mAutoSelectInitialValue)) {
             Log.d(TAG,
@@ -677,6 +679,29 @@ public class PreferencesActivity extends PreferenceActivity
 
             // Since the current region was updated as a result of enabling/disabling experimental servers, go home
             NavHelp.goHome(this, false);
+        }
+    }
+
+    /**
+     * The function will process deep links used for adding custom regions
+     */
+    void onAddCustomRegion(){
+        Uri deepLink = getIntent().getData();
+        if (deepLink != null) {
+            String obaCustomUrl = deepLink.getQueryParameter("oba-url");
+            String otpCustomURl = deepLink.getQueryParameter("otp-url");
+
+            // onPreferenceChange is responsible for checking changes if it's valid
+            if(obaCustomUrl != null && onPreferenceChange(mCustomApiUrlPref,obaCustomUrl)){
+                Application.get().setCustomApiUrl(obaCustomUrl);
+            }
+
+            if(otpCustomURl != null && onPreferenceChange(mCustomOtpApiUrlPref,otpCustomURl)){
+                Application.get().setCustomOtpApiUrl(otpCustomURl);
+            }
+            Intent i = new Intent(this,HomeActivity.class);
+            startActivity(i);
+            finish();
         }
     }
 }

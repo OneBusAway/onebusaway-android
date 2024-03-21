@@ -23,12 +23,14 @@ import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.StampStyle;
@@ -56,9 +58,11 @@ import org.onebusaway.android.map.RouteMapController;
 import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.map.bike.BikeshareMapController;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
+import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.ui.HomeActivity;
 import org.onebusaway.android.ui.LayersSpeedDialAdapter;
+import org.onebusaway.android.ui.QueryUtils;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PermissionUtils;
@@ -70,10 +74,15 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
@@ -85,6 +94,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.CursorAdapter;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -93,10 +103,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
 
 import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
 import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSION_REQUEST;
@@ -123,18 +138,25 @@ public class BaseMapFragment extends SupportMapFragment
         LocationSource, LocationHelper.Listener,
         com.google.android.gms.maps.GoogleMap.OnCameraChangeListener,
         StopOverlay.OnFocusChangedListener, OnMapReadyCallback,
-        VehicleOverlay.Controller, LayersSpeedDialAdapter.LayerActivationListener {
+        VehicleOverlay.Controller, LayersSpeedDialAdapter.LayerActivationListener,
+        LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String TAG = "BaseMapFragment";
 
-    private static final int REQUEST_NO_LOCATION = 41;
+    private static final int LOADER_ID = 123;
 
+    private static final int REQUEST_NO_LOCATION = 41;
     //
     // Location Services and Maps API v2 constants
     //
     public static final float CAMERA_DEFAULT_ZOOM = 16.0f;
 
     public static final float DEFAULT_MAP_PADDING_DP = 20.0f;
+
+    private static final String[] PROJECTION = {
+        ObaContract.Stops.LATITUDE,
+            ObaContract.Stops.LONGITUDE
+    };
 
     // Keep track of current map padding
     private int mMapPaddingLeft = 0;
@@ -200,6 +222,28 @@ public class BaseMapFragment extends SupportMapFragment
 
     private AlertDialog locationPermissionDialog;
 
+    private final ContentObserver contentObserver = new ContentObserver(new Handler()) {
+        @Override
+        public void onChange(boolean selfChange) {
+            super.onChange(selfChange);
+            reloadMarkers();
+        }
+    };
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getMapAsync(this);
+    }
+
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        getActivity().getContentResolver().registerContentObserver(ObaContract.Stops.CONTENT_URI, true, contentObserver);
+        LoaderManager.getInstance(this).initLoader(LOADER_ID, null, this);
+    }
+
     @Override
     public void onActivateLayer(LayerInfo layer) {
         switch (layer.getLayerlabel()) {
@@ -232,6 +276,63 @@ public class BaseMapFragment extends SupportMapFragment
                 break;
             }
         }
+    }
+
+    /**
+     * <p>This will always be called from the process's main thread.
+     *
+     * @param id   The ID whose loader is to be created.
+     * @param args Any arguments supplied by the caller.
+     * @return Return a new Loader instance that is ready to start loading.
+     */
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
+        return new androidx.loader.content.CursorLoader(getActivity(),
+                ObaContract.Stops.CONTENT_URI,
+                PROJECTION,
+                ObaContract.Stops.FAVORITE + "=1" +
+                        (Application.get().getCurrentRegion() == null ? "" : " AND " +
+                                QueryUtils.getRegionWhere(ObaContract.Stops.REGION_ID,
+                                        Application.get().getCurrentRegion().getId())),
+                null,
+                null);
+    }
+
+     /*
+     * <p>This will always be called from the process's main thread.
+     *  @param loader The Loader that has finished.
+     *
+     * @param data The data generated by the Loader.
+     */
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.ic_starred_stop);
+        BitmapDescriptor starredStopIcon = BitmapDescriptorFactory.fromBitmap(bitmap);
+        if (data != null && data.moveToFirst()) {
+            do {
+                double latitude = data.getDouble(data.getColumnIndexOrThrow(ObaContract.Stops.LATITUDE));
+                double longitude = data.getDouble(data.getColumnIndexOrThrow(ObaContract.Stops.LONGITUDE));
+                MarkerOptions markerOption = new MarkerOptions()
+                        .position(new LatLng(latitude, longitude))
+                        .icon(starredStopIcon);
+                if(mMap!=null)
+                {
+                    mMap.addMarker(markerOption);
+                }
+            } while (data.moveToNext());
+        }
+    }
+
+    /**
+     *
+     * <p>This will always be called from the process's main thread.
+     *
+     * @param loader The Loader that is being reset.
+     */
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+            mMap.clear();
     }
 
     public interface OnFocusChangedListener {
@@ -338,7 +439,7 @@ public class BaseMapFragment extends SupportMapFragment
             String removePOIStyle = "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]";
             mMap.setMapStyle(new MapStyleOptions(removePOIStyle));
         }
-
+        reloadMarkers();
         initMap(mLastSavedInstanceState);
     }
 
@@ -349,6 +450,12 @@ public class BaseMapFragment extends SupportMapFragment
         );
     }
 
+    private void reloadMarkers() {
+        if (mMap != null) {
+            mMap.clear();
+            LoaderManager.getInstance(this).restartLoader(LOADER_ID, null, this);
+        }
+    }
     private void initMap(Bundle savedInstanceState) {
         UiSettings uiSettings = mMap.getUiSettings();
         mUserDeniedPermission = PreferenceUtils.userDeniedLocationPermission();

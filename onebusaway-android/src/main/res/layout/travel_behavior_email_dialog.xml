@@ -8,18 +8,32 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-    <EditText
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/travel_behavior_email_hint">
+
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/tb_email_edittext"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
-            android:inputType="textEmailAddress"
-            android:hint="@string/travel_behavior_email_hint" />
+            android:inputType="textEmailAddress" />
 
-    <EditText
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/travel_behavior_confirm_email_hint">
+
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/tb_email_edittext_confirm"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textEmailAddress"
-            android:hint="@string/travel_behavior_confirm_email_hint" />
+            android:layout_marginBottom="10dp"
+            android:inputType="textEmailAddress" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 </LinearLayout>

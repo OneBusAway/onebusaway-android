@@ -131,15 +131,21 @@
                                android:src="@drawable/ic_drawer_maps_place"
                                android:id="@+id/ri_ic_location"/>
 
-                    <EditText
-                            android:layout_width="fill_parent"
-                            android:layout_height="wrap_content"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/rt_address_hint">
+
+                        <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/ri_address_editText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
                             android:imeOptions="actionSearch"
                             android:inputType="textPostalAddress"
                             android:maxLines="2"
-                            style="@style/MaterialItem"
-                            android:hint="@string/rt_address_hint"/>
+                            android:layout_marginStart="56dp" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
 
                 </FrameLayout>
 

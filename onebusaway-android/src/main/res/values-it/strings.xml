@@ -732,6 +732,10 @@
         queste icone con licenza Apache v2.0 (https://www.apache.org/licenses/LICENSE-2.0) ha arricchito notevolmente la nostra esperienza utente.
       </p>
       <p>
+    Un ringraziamento speciale ad amCharts per le icone del meteo in formato SVG gratuito (https://www.amcharts.com/free-animated-svg-weather-icons/),
+    queste icone sono rilasciate sotto licenza Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/).
+     </p>
+      <p>
 
     <p>
       Esplora la nostra app e intraprendi un viaggio nel trasporto pubblico senza intoppi con OneBusAway!
@@ -988,4 +992,9 @@
     <string name="trip_info_grant_exact_alarms_permission_message">Devi concedere all\'app il permesso di pianificare un promemoria.</string>
     <string name="trip_info_grant_exact_alarms_permission_positive_button">Concedi il permesso</string>
     <string name="trip_info_grant_exact_alarms_permission_negative_button">Annulla</string>
+
+    <string name="preferred_temperature_unit">Unità di temperatura preferita</string>
+    <string name="fahrenheit">Fahrenheit</string>
+    <string name="celsius">Celsius</string>
+
 </resources>

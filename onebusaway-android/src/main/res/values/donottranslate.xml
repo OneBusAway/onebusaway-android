@@ -34,6 +34,7 @@
     <string name="preferences_key_powered_by_oba">preference_powered_by_oba</string>
     <string name="preferences_key_about">preference_about</string>
     <string name="preference_key_preferred_units">preference_preferred_units</string>
+    <string name="preference_key_preferred_temperature_units">preference_preferred_temperature_units</string>
     <string name="preference_key_app_theme">preference_app_theme</string>
     <string name="preference_key_arrival_info_style">preference_arrival_info_style</string>
     <string name="preference_key_show_negative_arrivals">preference_show_negative_arrivals</string>
@@ -71,6 +72,9 @@
 
     <!-- Regions API URL -->
     <string name="regions_api_url">https://regions.onebusaway.org/regions-v3.json</string>
+
+    <!-- Weather API URL -->
+    <string name="weather_api_url">https://onebusaway.co/api/v1/regions/regionID/weather.json</string>
 
     <!-- Donate URL -->
     <string name="donate_url">https://onebusaway.org/donate/</string>

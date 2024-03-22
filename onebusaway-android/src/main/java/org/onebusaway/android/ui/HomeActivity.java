@@ -1988,7 +1988,6 @@ public class HomeActivity extends AppCompatActivity
         if(isValid){
             makeWeatherRequest();
         }else{
-            //
             weatherView.setVisibility(View.GONE);
             weatherResponse = null;
         }

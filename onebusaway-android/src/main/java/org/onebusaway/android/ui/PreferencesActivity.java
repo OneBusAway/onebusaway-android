@@ -685,23 +685,25 @@ public class PreferencesActivity extends PreferenceActivity
     /**
      * The function will process deep links used for adding custom regions
      */
-    void onAddCustomRegion(){
+    void onAddCustomRegion() {
         Uri deepLink = getIntent().getData();
-        if (deepLink != null) {
-            String obaCustomUrl = deepLink.getQueryParameter("oba-url");
-            String otpCustomURl = deepLink.getQueryParameter("otp-url");
-
-            // onPreferenceChange is responsible for checking changes if it's valid
-            if(obaCustomUrl != null && onPreferenceChange(mCustomApiUrlPref,obaCustomUrl)){
-                Application.get().setCustomApiUrl(obaCustomUrl);
-            }
-
-            if(otpCustomURl != null && onPreferenceChange(mCustomOtpApiUrlPref,otpCustomURl)){
-                Application.get().setCustomOtpApiUrl(otpCustomURl);
-            }
-            Intent i = new Intent(this,HomeActivity.class);
-            startActivity(i);
-            finish();
+        if(deepLink == null){
+            return;
         }
+        String obaCustomUrl = deepLink.getQueryParameter("oba-url");
+        String otpCustomURl = deepLink.getQueryParameter("otp-url");
+
+        // onPreferenceChange is responsible for checking changes if it's valid
+        if (obaCustomUrl != null && onPreferenceChange(mCustomApiUrlPref, obaCustomUrl)) {
+            Application.get().setCustomApiUrl(obaCustomUrl);
+        }
+
+        if (otpCustomURl != null && onPreferenceChange(mCustomOtpApiUrlPref, otpCustomURl)) {
+            Application.get().setCustomOtpApiUrl(otpCustomURl);
+        }
+        Intent i = new Intent(this, HomeActivity.class);
+        startActivity(i);
+        finish();
+
     }
 }

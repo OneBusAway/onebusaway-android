@@ -13,64 +13,91 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-              android:paddingLeft="@dimen/dialog_margin"
-              android:paddingRight="@dimen/dialog_margin"
-              android:paddingTop="@dimen/dialog_margin">
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingStart="@dimen/dialog_margin"
+    android:paddingEnd="@dimen/dialog_margin"
+    android:paddingTop="@dimen/dialog_margin">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/travel_by_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/travel_by_label"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Spinner
+        android:id="@+id/spinner_travel_by"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/travel_by_textview"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/text_margin"
+        android:layout_marginEnd="8dp"
+        android:text="@string/maximum_walk_distance"
+        app:layout_constraintEnd_toStartOf="@+id/layout_maximum_walk_distance"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/travel_by_textview" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/layout_maximum_walk_distance"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/textView3"
+        app:layout_constraintEnd_toStartOf="@+id/label_minimum_walk_distance"
+        app:layout_constraintStart_toEndOf="@+id/textView3"
+        app:layout_constraintTop_toTopOf="@+id/textView3">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/number_maximum_walk_distance"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:inputType="number" />
 
-        <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/travel_by_label" />
+    </com.google.android.material.textfield.TextInputLayout>
 
-        <Spinner
-                android:id="@+id/spinner_travel_by"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+    <TextView
+        android:id="@+id/label_minimum_walk_distance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/meters_abbreviation"
+        app:layout_constraintBottom_toBottomOf="@+id/layout_maximum_walk_distance"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/layout_maximum_walk_distance" />
 
-    </LinearLayout>
+    <CheckBox
+        android:id="@+id/checkbox_minimize_transfers"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/text_margin"
+        android:minHeight="48dp"
+        android:text="@string/minimize_transfers"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/layout_maximum_walk_distance" />
 
-    <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+    <CheckBox
+        android:id="@+id/checkbox_wheelchair_acccesible"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/text_margin"
+        android:minHeight="48dp"
+        android:text="@string/wheelchair_accessible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/checkbox_minimize_transfers" />
 
-        <TextView
-                android:layout_width="0dip"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/maximum_walk_distance" />
-
-        <EditText
-                android:id="@+id/number_maximum_walk_distance"
-                android:layout_width="50dp"
-                android:layout_height="wrap_content"
-                android:inputType="number" />
-
-        <TextView
-                android:id="@+id/label_minimum_walk_distance"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/meters_abbreviation"/>
-
-    </LinearLayout>
-
-    <CheckBox android:id="@+id/checkbox_minimize_transfers"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:text="@string/minimize_transfers" />
-
-    <CheckBox android:id="@+id/checkbox_wheelchair_acccesible"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:text="@string/wheelchair_accessible" />
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

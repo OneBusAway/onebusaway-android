@@ -599,14 +599,14 @@ public class HomeActivity extends AppCompatActivity
                 Log.d(TAG, "Creating new BaseMapFragment");
                 mMapFragment = BaseMapFragment.newInstance();
                 mMapFragment.setOnLocationPermissionResultListener(result -> {
-                    if (mInitialStartup) {
-                        // Whether or not the user granted permissions, check region status
-                        // (they'll be asked to manually pick region if they denied)
-                        mInitialStartup = false;
-                        PreferenceUtils.saveBoolean(INITIAL_STARTUP, false);
-                        checkRegionStatus();
-                    }
-                });
+                            if (mInitialStartup) {
+                                // Whether or not the user granted permissions, check region status
+                                // (they'll be asked to manually pick region if they denied)
+                                mInitialStartup = false;
+                                PreferenceUtils.saveBoolean(INITIAL_STARTUP, false);
+                                checkRegionStatus();
+                            }
+                        });
                 fm.beginTransaction()
                         .add(R.id.main_fragment_container, mMapFragment, BaseMapFragment.TAG)
                         .commit();

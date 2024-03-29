@@ -2035,9 +2035,9 @@ public class HomeActivity extends AppCompatActivity
 
     @Override
     public void onWeatherResponseReceived(ObaWeatherResponse response) {
-        weatherView.setVisibility(View.VISIBLE);
-        weatherResponse = response;
-        if(weatherResponse != null && weatherResponse.getCurrent_forecast() != null){
+        if(response != null && response.getCurrent_forecast() != null){
+            weatherView.setVisibility(View.VISIBLE);
+            weatherResponse = response;
             setWeatherData();
         }
     }

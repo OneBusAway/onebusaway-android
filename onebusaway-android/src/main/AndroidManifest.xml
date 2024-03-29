@@ -62,6 +62,16 @@
             android:value="org.onebusaway.android.ui.SearchActivity" />
 
         <activity
+                android:name=".ui.DonationLearnMoreActivity"
+                android:exported="false"
+                android:label="@string/title_activity_donation_learn_more"
+                android:parentActivityName=".ui.HomeActivity">
+            <meta-data
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value="org.onebusaway.android.ui.PreferencesActivity" />
+        </activity>
+
+        <activity
             android:name="org.onebusaway.android.ui.SearchActivity"
             android:launchMode="singleTop"
             android:exported="true"

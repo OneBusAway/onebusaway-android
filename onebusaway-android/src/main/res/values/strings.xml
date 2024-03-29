@@ -1234,5 +1234,18 @@
     <string name="preferred_temperature_unit">Preferred temperature unit</string>
     <string name="fahrenheit">Fahrenheit</string>
     <string name="celsius">Celsius</string>
+    <string name="donation_view_title">🚨 OneBusAway needs your help</string>
+    <string name="donation_view_body">This app is currently built with 100% volunteer labor, and we need you to help us fund future development.</string>
+    <string name="donation_view_learn_more_button">Learn More</string>
+    <string name="donation_view_donate_now_button">Donate Now</string>
+    <string name="donation_dismiss_dialog_title">Please don\'t dismiss this request</string>
+    <string name="donation_dismiss_dialog_body">OneBusAway is a volunteer-run organization with almost no funding. We need your help to keep this app running.</string>
+    <string name="donation_dismiss_dialog_dont_want_to_help_button">I Don\'t Want to Help</string>
+    <string name="donation_dismiss_dialog_remind_me_later_button">Remind Me Later</string>
+    <string name="donation_dismiss_dialog_cancel_button">Cancel</string>
+    <string name="title_activity_donation_learn_more">Why we need your help</string>
+    <string name="donation_learn_more_explanation">We have big plans to improve OneBusAway, but we can\'t do it without your help. This app is currently built with 100% volunteer labor, and we need you to help us fund future development.\n\nAs a key project of the Open Transit Software Foundation, a 501(c)(3) non-profit, we rely on the goodwill of users like you to keep running and making this software better.\n\nEvery year, only a small fraction of our users donate, but every contribution, big or small, helps ensure that OneBusAway remains free, updated, and accessible to everyone. A small donation, even just the cost of one week of commuting, $27.50, can make all the difference.\n\nYour tax-deductible contribution ensures that OneBusAway remains free and accessible for everyone. Let\'s shape the future of transit together!\n\nThank you,\nThe OneBusAway Team</string>
+    <string name="preferences_reset_donation_timestamps_title">Reset Donation Timestamps</string>
+    <string name="preferences_reset_donation_timestamps_summary">Tapping this option will clear both the \'Remind Me Later\' and \'Don\'t Bother Me\' timestamps associated with donation requests.</string>
 
 </resources>

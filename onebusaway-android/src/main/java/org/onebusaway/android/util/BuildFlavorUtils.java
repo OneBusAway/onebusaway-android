@@ -102,4 +102,13 @@ public class BuildFlavorUtils {
         String peliasKey = BuildConfig.PELIAS_API_KEY;
         return peliasKey != null && peliasKey.length() != 0;
     }
+
+    /**
+     * Helper function to determine whether this is the official app or a white-label version.
+     * @return true if this is the OBA Build Flavor (i.e. the 'official' app),
+     * and false if it is not (i.e. a white-label app).
+     */
+    public static boolean isOBABuildFlavor() {
+        return BuildConfig.FLAVOR_brand.equalsIgnoreCase(OBA_FLAVOR_BRAND);
+    }
 }

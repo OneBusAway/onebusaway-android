@@ -141,6 +141,10 @@
                     android:key="@string/preference_key_push_firebase_data"
                     android:title="@string/preferences_push_firebase_data_title"
                     android:summary="@string/preferences_push_firebase_data_summary"/>
+                <Preference
+                    android:key="@string/preference_key_reset_donation_timestamps"
+                    android:title="@string/preferences_reset_donation_timestamps_title"
+                    android:summary="@string/preferences_reset_donation_timestamps_summary" />
             </PreferenceCategory>
         </PreferenceScreen>
     </PreferenceCategory>

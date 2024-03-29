@@ -112,6 +112,8 @@ public class PreferencesActivity extends PreferenceActivity
 
     Preference pushFirebaseData;
 
+    Preference resetDonationTimestamps;
+
     boolean mAutoSelectInitialValue;
 
     boolean mOtpCustomAPIUrlChanged = false;
@@ -171,6 +173,9 @@ public class PreferencesActivity extends PreferenceActivity
         pushFirebaseData = findPreference(getString(R.string.preference_key_push_firebase_data));
         pushFirebaseData.setOnPreferenceClickListener(this);
 
+        resetDonationTimestamps = findPreference(getString(R.string.preference_key_reset_donation_timestamps));
+        resetDonationTimestamps.setOnPreferenceClickListener(this);
+
         mHideAlertsPref = findPreference(getString(R.string.preference_key_hide_alerts));
         mHideAlertsPref.setOnPreferenceChangeListener(this);
 
@@ -229,7 +234,7 @@ public class PreferencesActivity extends PreferenceActivity
         // If its the OBA brand flavor, then show the "Donate" preference and hide "Powered by OBA"
         PreferenceCategory aboutCategory = (PreferenceCategory)
                 findPreference(getString(R.string.preferences_category_about));
-        if (BuildConfig.FLAVOR_brand.equalsIgnoreCase(BuildFlavorUtils.OBA_FLAVOR_BRAND)) {
+        if (BuildFlavorUtils.isOBABuildFlavor()) {
             aboutCategory.removePreference(mPoweredByObaPref);
         } else {
             // Its not the OBA brand flavor, then hide the "Donate" preference and show "Powered by OBA"
@@ -347,11 +352,7 @@ public class PreferencesActivity extends PreferenceActivity
             ShowcaseViewUtils.resetAllTutorials(this);
             NavHelp.goHome(this, true);
         } else if (pref.equals(mDonatePref)) {
-            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
-                    getString(R.string.analytics_label_button_press_donate),
-                    null);
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.donate_url)));
-            startActivity(intent);
+            startActivity(Application.getDonationsManager().buildOpenDonationsPageIntent());
         } else if (pref.equals(mPoweredByObaPref)) {
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                     getString(R.string.analytics_label_button_press_powered_by_oba),
@@ -376,6 +377,9 @@ public class PreferencesActivity extends PreferenceActivity
             // Try to push firebase data to the server
             FirebaseDataPusher pusher = new FirebaseDataPusher();
             pusher.push(this);
+        } else if (pref.equals(resetDonationTimestamps)) {
+            Application.getDonationsManager().setDonationRequestReminderDate(null);
+            Application.getDonationsManager().setDonationRequestDismissedDate(null);
         }
         return true;
     }

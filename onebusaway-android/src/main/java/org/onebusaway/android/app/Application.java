@@ -43,6 +43,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
+import org.onebusaway.android.donations.DonationsManager;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
@@ -75,6 +76,8 @@ public class Application extends MultiDexApplication {
     public static final String CHANNEL_DESTINATION_ALERT_ID = "destination_alerts";
 
     private SharedPreferences mPrefs;
+
+    private DonationsManager mDonationsManager;
 
     private static Application mApp;
 
@@ -109,6 +112,7 @@ public class Application extends MultiDexApplication {
         createNotificationChannels();
 
         TravelBehaviorManager.startCollectingData(getApplicationContext());
+        mDonationsManager = new DonationsManager(mPrefs, mFirebaseAnalytics, getResources());
     }
 
     /**
@@ -132,6 +136,8 @@ public class Application extends MultiDexApplication {
     public static SharedPreferences getPrefs() {
         return get().mPrefs;
     }
+
+    public static DonationsManager getDonationsManager() { return get().mDonationsManager; }
 
     /**
      * Returns the last known location that the application has seen, or null if we haven't seen a

@@ -28,6 +28,7 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.donations.DonationsManager;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
@@ -86,6 +87,7 @@ import android.view.Window;
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -107,6 +109,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
@@ -185,6 +188,8 @@ public class HomeActivity extends AppCompatActivity
     View mArrivalsListHeaderSubView;
 
     CardView weatherView;
+
+    View mDonationView;
 
     private FloatingActionButton mFabMyLocation;
 
@@ -395,6 +400,8 @@ public class HomeActivity extends AppCompatActivity
 
         UIUtils.setupActionBar(this);
 
+        setupDonationView(this);
+
         // To enable checkBatteryOptimizations, also uncomment the
         // REQUEST_IGNORE_BATTERY_OPTIMIZATIONS permission in AndroidManifest.xml
         // See https://github.com/OneBusAway/onebusaway-android/pull/988#discussion_r299950506
@@ -451,6 +458,8 @@ public class HomeActivity extends AppCompatActivity
         updateLayersFab();
 
         mFabMyLocation.requestLayout();
+
+        updateDonationsUIVisibility();
     }
 
     @Override
@@ -2045,5 +2054,70 @@ public class HomeActivity extends AppCompatActivity
     @Override
     public void onWeatherRequestFailed() {
         Log.d(TAG,"Weather Request Fail");
+    }
+
+    private void setupDonationView(HomeActivity homeActivity) {
+        mDonationView = findViewById(R.id.donationView);
+        AppCompatImageButton closeButton = mDonationView.findViewById(R.id.btnDonationViewClose);
+        Button learnMoreButton = mDonationView.findViewById(R.id.btnDonationViewLearnMore);
+        Button donateButton = mDonationView.findViewById(R.id.btnDonationViewDonate);
+
+        closeButton.setOnClickListener(b -> {
+            AlertDialog dismissDialog = buildDismissDonationsDialog();
+            dismissDialog.show();
+        });
+
+        learnMoreButton.setOnClickListener(b -> {
+            Intent intent = new Intent(this, DonationLearnMoreActivity.class);
+            startActivity(intent);
+        });
+
+        donateButton.setOnClickListener(b -> {
+            DonationsManager donationsManager = Application.getDonationsManager();
+            donationsManager.dismissDonationRequests();
+
+            Intent intent = donationsManager.buildOpenDonationsPageIntent();
+            startActivity(intent);
+        });
+
+        updateDonationsUIVisibility();
+    }
+
+    private void updateDonationsUIVisibility() {
+        mDonationView = findViewById(R.id.donationView);
+        DonationsManager donationsManager = Application.getDonationsManager();
+
+        if (donationsManager.shouldShowDonationUI()) {
+            mDonationView.setVisibility(View.VISIBLE);
+        }
+        else {
+            mDonationView.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Creates an AlertDialog that will give the user options for dismissing the donations UI.
+     * @return the AlertDialog for presentation.
+     */
+    private AlertDialog buildDismissDonationsDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle(R.string.donation_dismiss_dialog_title)
+                .setMessage(R.string.donation_dismiss_dialog_body)
+                .setNegativeButton(
+                        R.string.donation_dismiss_dialog_dont_want_to_help_button,
+                        (dialog, which) -> {
+                            Application.getDonationsManager().dismissDonationRequests();
+                            updateDonationsUIVisibility();
+                        }
+                )
+                .setNeutralButton(R.string.donation_dismiss_dialog_remind_me_later_button,
+                        (dialog, which) -> {
+                            Application.getDonationsManager().remindUserLater();
+                            updateDonationsUIVisibility();
+                        })
+                .setPositiveButton(R.string.donation_dismiss_dialog_cancel_button, (d, w) -> {})
+                .setCancelable(true);
+
+        return builder.create();
     }
 }

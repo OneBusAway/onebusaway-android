@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".ui.DonationLearnMoreActivity">
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+        <ImageView
+                android:src="@drawable/wmata"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="fitXY"
+                android:id="@+id/imageView2" />
+
+        <TextView
+                android:text="@string/donation_learn_more_explanation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/textView5"
+                android:layout_marginHorizontal="@dimen/dialog_margin"
+                android:layout_marginVertical="@dimen/dialog_margin"
+                android:textSize="16sp" />
+
+        <Button
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                android:textSize="24sp"
+                android:textColor="@color/quantum_white_100"
+                android:text="@string/donation_view_donate_now_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/dialog_margin"
+                android:layout_marginBottom="@dimen/dialog_margin"
+                android:id="@+id/btnDonationViewDonate" />
+    </LinearLayout>
+</ScrollView>

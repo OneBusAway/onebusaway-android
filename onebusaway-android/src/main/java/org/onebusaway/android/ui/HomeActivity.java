@@ -2013,7 +2013,7 @@ public class HomeActivity extends AppCompatActivity
         // Show weather state when click.
         weatherView.setOnClickListener(view -> {
             if (weatherSummary != null) {
-                Toast.makeText(getApplicationContext(), weatherResponse.getCurrent_forecast().getSummary().trim(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), weatherSummary.trim(), Toast.LENGTH_SHORT).show();
             }
         });
     }

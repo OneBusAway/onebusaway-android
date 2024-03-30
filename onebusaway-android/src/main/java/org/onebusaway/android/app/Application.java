@@ -43,6 +43,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
+import org.onebusaway.android.donations.DonationsManager;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
@@ -75,6 +76,8 @@ public class Application extends MultiDexApplication {
     public static final String CHANNEL_DESTINATION_ALERT_ID = "destination_alerts";
 
     private SharedPreferences mPrefs;
+
+    private DonationsManager mDonationsManager;
 
     private static Application mApp;
 
@@ -109,6 +112,10 @@ public class Application extends MultiDexApplication {
         createNotificationChannels();
 
         TravelBehaviorManager.startCollectingData(getApplicationContext());
+
+        incrementAppLaunchCount();
+
+        mDonationsManager = new DonationsManager(mPrefs, mFirebaseAnalytics, getResources(), getAppLaunchCount());
     }
 
     /**
@@ -131,6 +138,20 @@ public class Application extends MultiDexApplication {
 
     public static SharedPreferences getPrefs() {
         return get().mPrefs;
+    }
+
+    public static DonationsManager getDonationsManager() { return get().mDonationsManager; }
+
+    private static String appLaunchCountPreferencesKey = "appLaunchCountPreferencesKey";
+
+    private void incrementAppLaunchCount() {
+        int count = PreferenceUtils.getInt(appLaunchCountPreferencesKey, 0);
+        count += 1;
+        PreferenceUtils.saveInt(appLaunchCountPreferencesKey, count);
+    }
+
+    public int getAppLaunchCount() {
+        return PreferenceUtils.getInt(appLaunchCountPreferencesKey, 0);
     }
 
     /**

@@ -258,4 +258,5 @@
     <string name="analytics_label_custom_metadata_feedback">FeedbackText</string>
 
     <string name="not_request_battery_optimizations_key">request_battery_optimizations_key</string>
+    <string name="preference_key_reset_donation_timestamps">preference_key_reset_donation_timestamps</string>
 </resources>

@@ -17,13 +17,18 @@ import java.util.Date;
 
 public class DonationsManager {
     private SharedPreferences mPreferences;
-
     private Resources mResources;
+    private int mAppLaunchCount;
 
-    public DonationsManager(SharedPreferences preferences, FirebaseAnalytics firebaseAnalytics, Resources resources) {
+    public DonationsManager(
+            SharedPreferences preferences,
+            FirebaseAnalytics firebaseAnalytics,
+            Resources resources,
+            int appLaunchCount) {
         this.mPreferences = preferences;
         this.mAnalytics = firebaseAnalytics;
         this.mResources = resources;
+        this.mAppLaunchCount = appLaunchCount;
     }
 
     // region Analytics
@@ -124,6 +129,11 @@ public class DonationsManager {
     public boolean shouldShowDonationUI() {
         // white-label apps should not show the donation UI.
         if (!BuildFlavorUtils.isOBABuildFlavor()) {
+            return false;
+        }
+
+        // Don't show the donations UI on the first few launches of the app.
+        if (mAppLaunchCount < 3) {
             return false;
         }
 

@@ -112,7 +112,10 @@ public class Application extends MultiDexApplication {
         createNotificationChannels();
 
         TravelBehaviorManager.startCollectingData(getApplicationContext());
-        mDonationsManager = new DonationsManager(mPrefs, mFirebaseAnalytics, getResources());
+
+        incrementAppLaunchCount();
+
+        mDonationsManager = new DonationsManager(mPrefs, mFirebaseAnalytics, getResources(), getAppLaunchCount());
     }
 
     /**
@@ -138,6 +141,18 @@ public class Application extends MultiDexApplication {
     }
 
     public static DonationsManager getDonationsManager() { return get().mDonationsManager; }
+
+    private static String appLaunchCountPreferencesKey = "appLaunchCountPreferencesKey";
+
+    private void incrementAppLaunchCount() {
+        int count = PreferenceUtils.getInt(appLaunchCountPreferencesKey, 0);
+        count += 1;
+        PreferenceUtils.saveInt(appLaunchCountPreferencesKey, count);
+    }
+
+    public int getAppLaunchCount() {
+        return PreferenceUtils.getInt(appLaunchCountPreferencesKey, 0);
+    }
 
     /**
      * Returns the last known location that the application has seen, or null if we haven't seen a

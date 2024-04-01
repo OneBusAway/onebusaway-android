@@ -785,13 +785,11 @@
     <string name="rt_stop_problem_title">Stop Problem</string>
     <string name="rt_arrival_problem_title">Arrival Time Problem</string>
     <string name="rt_app_feedback">Send App Feedback</string>
-    <string name="rt_ideas">Ideas For New Features</string>
     <string name="rt_message_infrastructure_problem">Missing route, broken bench, etc.</string>
     <string name="rt_message_customer_service">Driver compliments and complaints, lost &amp; found, etc.</string>
     <string name="rt_message_stop_problem">Missing route, wrong stop name, etc.</string>
     <string name="rt_message_arrival_problem">Vehicle never came, wrong arrival time, etc.</string>
     <string name="rt_message_app_feedback">Design, bugs, etc.</string>
-    <string name="rt_message_ideas">Submit and vote on future improvements</string>
     <string name="rt_address_hint">Address of problem (optional)</string>
     <string name="rt_yes">YES</string>
     <string name="rt_no">NO</string>

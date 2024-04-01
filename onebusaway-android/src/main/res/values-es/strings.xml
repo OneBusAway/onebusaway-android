@@ -684,13 +684,11 @@
     <string name="rt_stop_problem_title">Problema de Parada</string>
     <string name="rt_arrival_problem_title">Problema de Tiempo de Llegada</string>
     <string name="rt_app_feedback">Enviar Comentarios de la App</string>
-    <string name="rt_ideas">Ideas para Nuevas Funciones</string>
     <string name="rt_message_infrastructure_problem">Ruta faltante, banco roto, etc.</string>
     <string name="rt_message_customer_service">Felicitaciones o Quejas al conductor, objetos perdidos, etc.</string>
     <string name="rt_message_stop_problem">Ruta faltante, mal nombre de la parada, etc.</string>
     <string name="rt_message_arrival_problem">El vehículo nunca llegó, mal tiempo de llegada, etc.</string>
     <string name="rt_message_app_feedback">Diseño, errores, etc.</string>
-    <string name="rt_message_ideas">Enviar y votar sobre las futuras mejoras</string>
     <string name="rt_address_hint">Dirección del problema (opcional)</string>
     <string name="rt_yes">SI</string>
     <string name="rt_no">NO</string>

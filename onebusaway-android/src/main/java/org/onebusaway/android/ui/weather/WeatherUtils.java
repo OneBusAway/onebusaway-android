@@ -13,21 +13,24 @@ import java.util.Locale;
 public class WeatherUtils {
 
     public static void setWeatherImage(ImageView imageView, String weatherCondition, Context context) {
+        // TODO FIXME: This is temporarily commented out because it was causing a large number
+        // of crashes in 2.13.0.
+        // See https://github.com/OneBusAway/onebusaway-android/issues/1196
 
-        String resName = weatherCondition.replace("-", "_");
-        
-        int resId = context.getResources().getIdentifier(resName, "drawable", context.getPackageName());
-        
-        if (resId != 0) {
-            // Adjusting scale for fog and wind icons.
-            if(weatherCondition.equals("fog") || weatherCondition.equals("wind")){
-                imageView.setScaleType(ImageView.ScaleType.CENTER);
-            }
-            imageView.setImageResource(resId);
-        } else {
-            // Default
-            imageView.setImageResource(R.drawable.clear_day);
-        }
+//        String resName = weatherCondition.replace("-", "_");
+//
+//        int resId = context.getResources().getIdentifier(resName, "drawable", context.getPackageName());
+//
+//        if (resId != 0) {
+//            // Adjusting scale for fog and wind icons.
+//            if(weatherCondition.equals("fog") || weatherCondition.equals("wind")){
+//                imageView.setScaleType(ImageView.ScaleType.CENTER);
+//            }
+//            imageView.setImageResource(resId);
+//        } else {
+//            // Default
+//            imageView.setImageResource(R.drawable.clear_day);
+//        }
     }
 
     public static void setWeatherTemp(TextView weatherTempTxtView, double temp) {

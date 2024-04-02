@@ -2014,7 +2014,7 @@ public class HomeActivity extends AppCompatActivity
         double weatherTemp = weatherResponse.getCurrent_forecast().getTemperature();
 
         if (weatherIcon != null && !weatherIcon.isEmpty()) {
-            WeatherUtils.setWeatherImage(weatherImageView, weatherIcon, this);
+            WeatherUtils.setWeatherImage(weatherImageView, weatherIcon);
         }else{
             weatherImageView.setVisibility(View.GONE);
         }

@@ -109,6 +109,7 @@
 
                         <ImageView
                             android:id="@+id/weatherStateImageView"
+                            android:visibility="gone"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:scaleType="centerCrop"

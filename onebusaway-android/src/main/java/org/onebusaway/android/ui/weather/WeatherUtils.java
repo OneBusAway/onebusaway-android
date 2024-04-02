@@ -16,6 +16,8 @@ public class WeatherUtils {
         // Adjusting scale for fog and wind icons.
         if (weatherCondition.equals("fog") || weatherCondition.equals("wind")) {
             imageView.setScaleType(ImageView.ScaleType.CENTER);
+        }else{
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
         }
         imageView.setImageResource(getWeatherDrawableRes(resName));
     }

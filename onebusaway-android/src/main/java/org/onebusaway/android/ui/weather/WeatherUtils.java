@@ -1,6 +1,5 @@
 package org.onebusaway.android.ui.weather;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -12,25 +11,15 @@ import java.util.Locale;
 
 public class WeatherUtils {
 
-    public static void setWeatherImage(ImageView imageView, String weatherCondition, Context context) {
-        // TODO FIXME: This is temporarily commented out because it was causing a large number
-        // of crashes in 2.13.0.
-        // See https://github.com/OneBusAway/onebusaway-android/issues/1196
-
-//        String resName = weatherCondition.replace("-", "_");
-//
-//        int resId = context.getResources().getIdentifier(resName, "drawable", context.getPackageName());
-//
-//        if (resId != 0) {
-//            // Adjusting scale for fog and wind icons.
-//            if(weatherCondition.equals("fog") || weatherCondition.equals("wind")){
-//                imageView.setScaleType(ImageView.ScaleType.CENTER);
-//            }
-//            imageView.setImageResource(resId);
-//        } else {
-//            // Default
-//            imageView.setImageResource(R.drawable.clear_day);
-//        }
+    public static void setWeatherImage(ImageView imageView, String weatherCondition) {
+        String resName = weatherCondition.replaceAll("-", "_");
+        // Adjusting scale for fog and wind icons.
+        if (weatherCondition.equals("fog") || weatherCondition.equals("wind")) {
+            imageView.setScaleType(ImageView.ScaleType.CENTER);
+        }else{
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        }
+        imageView.setImageResource(getWeatherDrawableRes(resName));
     }
 
     public static void setWeatherTemp(TextView weatherTempTxtView, double temp) {
@@ -48,6 +37,32 @@ public class WeatherUtils {
             temperatureText = preferredTempUnit.equals(app.getString(R.string.celsius)) ? (int) convertToCelsius(temp) + "° C" : (int) temp + "° F";
         }
         weatherTempTxtView.setText(temperatureText);
+    }
+
+
+    private static int getWeatherDrawableRes(String condition) {
+        switch (condition) {
+            case "clear_night":
+                return R.drawable.clear_night;
+            case "rain":
+                return R.drawable.rain;
+            case "snow":
+                return R.drawable.snow;
+            case "sleet":
+                return R.drawable.sleet;
+            case "wind":
+                return R.drawable.wind;
+            case "fog":
+                return R.drawable.fog;
+            case "cloudy":
+                return R.drawable.cloudy;
+            case "partly_cloudy_day":
+                return R.drawable.partly_cloudy_day;
+            case "partly_cloudy_night":
+                return R.drawable.partly_cloudy_night;
+            default:
+                return R.drawable.clear_day;
+        }
     }
 
 

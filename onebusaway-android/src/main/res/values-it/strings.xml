@@ -585,7 +585,7 @@
     <string name="rt_infrastructure_problem">Segnala problema con la fermata</string>
     <string name="rt_customer_service">Contatta il Servizio clienti</string>
     <string name="rt_stop_problem">Segnala problema con la fermata</string>
-    <string name="rt_arrival_problem">Segnala problema con l\'orario d\'arrivo</string>List
+    <string name="rt_arrival_problem">Segnala problema con l\'orario d\'arrivo</string>
     <string name="rt_infrastructure_problem_title">Segnala un problema</string>
     <string name="rt_stop_problem_title">Problema con fermata</string>
     <string name="rt_arrival_problem_title">Problema con orario d\'arrivo</string>

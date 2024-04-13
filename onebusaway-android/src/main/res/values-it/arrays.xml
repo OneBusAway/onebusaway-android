@@ -142,14 +142,12 @@
         <item>@string/rt_infrastructure_problem</item>
         <item>@string/rt_arrival_problem</item>
         <item>@string/rt_app_feedback</item>
-        <item>@string/rt_ideas</item>
     </string-array>
     <string-array name="report_types_desc">
         <item>@string/rt_message_customer_service</item>
         <item>@string/rt_message_infrastructure_problem</item>
         <item>@string/rt_message_arrival_problem</item>
         <item>@string/rt_message_app_feedback</item>
-        <item>@string/rt_message_ideas</item>
     </string-array>
 
     <array name="report_types_icons">
@@ -157,7 +155,6 @@
         <item>@drawable/ic_stop_flag_triangle</item>
         <item>@drawable/ic_arrival_time</item>
         <item>@drawable/ic_app_feedback</item>
-        <item>@drawable/ic_light_bulb</item>
     </array>
 
     <string-array name="report_types_without_open311">
@@ -165,7 +162,6 @@
         <item>@string/rt_stop_problem</item>
         <item>@string/rt_arrival_problem</item>
         <item>@string/rt_app_feedback</item>
-        <item>@string/rt_ideas</item>
     </string-array>
 
     <string-array name="report_types_desc_without_open311">
@@ -173,7 +169,6 @@
         <item>@string/rt_message_stop_problem</item>
         <item>@string/rt_message_arrival_problem</item>
         <item>@string/rt_message_app_feedback</item>
-        <item>@string/rt_message_ideas</item>
     </string-array>
 
     <array name="report_types_icons_without_open311">
@@ -181,7 +176,6 @@
         <item>@drawable/ic_stop_flag_triangle</item>
         <item>@drawable/ic_arrival_time</item>
         <item>@drawable/ic_app_feedback</item>
-        <item>@drawable/ic_light_bulb</item>
     </array>
 
     <string-array name="report_stop_issue_tutorial_desc">

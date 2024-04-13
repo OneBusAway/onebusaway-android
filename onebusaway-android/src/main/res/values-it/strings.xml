@@ -590,13 +590,11 @@
     <string name="rt_stop_problem_title">Problema con fermata</string>
     <string name="rt_arrival_problem_title">Problema con orario d\'arrivo</string>
     <string name="rt_app_feedback">Invia feedback sull\'app</string>
-    <string name="rt_ideas">Idee per nuove funzionalità</string>
     <string name="rt_message_infrastructure_problem">Linea mancante, panchina rotta, ecc.</string>
     <string name="rt_message_customer_service">Complimenti e lamentele sugli autisti, oggetti smarriti, ecc.</string>
     <string name="rt_message_stop_problem">Linea mancante, fermata con nome errato, ecc.</string>
     <string name="rt_message_arrival_problem">Mezzo mai arrivato, orario di arrivo sbagliato, ecc.</string>
     <string name="rt_message_app_feedback">Design, bug, ecc.</string>
-    <string name="rt_message_ideas">Invia e vota per i miglioramenti futuri</string>
     <string name="rt_address_hint">Indirizzo del problema (facoltativo)</string>
     <string name="rt_yes">SÌ</string>
     <string name="rt_no">NO</string>

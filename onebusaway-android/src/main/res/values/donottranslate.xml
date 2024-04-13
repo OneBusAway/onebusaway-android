@@ -79,9 +79,6 @@
     <!-- Donate URL -->
     <string name="donate_url">https://onebusaway.org/donate/</string>
 
-    <!-- IdeaScale URL -->
-    <string name="ideascale_url">https://onebusaway.ideascale.com/a/ideas/top/campaign-filter/byids/campaigns/46167</string>
-
     <!-- Powered by OBA URL -->
     <string name="powered_by_oba_url">https://onebusaway.org</string>
 
@@ -175,7 +172,6 @@
     <string name="analytics_label_customer_service_email">Send email</string>
     <string name="analytics_label_customer_service_email_without_location">Send email without location</string>
     <string name="analytics_label_customer_service_phone">Make phone call</string>
-    <string name="analytics_label_idea_scale">IdeaScale</string>
     <string name="analytics_label_custom_url">Custom URL</string>
     <string name="analytics_label_star_route">Starred route</string>
     <string name="analytics_label_unstar_route">Unstarred route</string>

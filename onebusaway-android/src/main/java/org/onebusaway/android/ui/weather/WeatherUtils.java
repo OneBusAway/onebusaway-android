@@ -17,7 +17,7 @@ public class WeatherUtils {
         // Adjusting scale for fog and wind icons.
         if (weatherCondition.equals("fog") || weatherCondition.equals("wind")) {
             imageView.setScaleType(ImageView.ScaleType.CENTER);
-        } else {
+        }else{
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
         }
         imageView.setImageResource(getWeatherDrawableRes(resName));
@@ -41,10 +41,13 @@ public class WeatherUtils {
     }
 
     public static void toggleWeatherViewVisibility(boolean shouldShow, View weatherView) {
-        if (weatherView == null) {
-            return;
+        if (weatherView != null) {
+            if (shouldShow) {
+                weatherView.setVisibility(View.VISIBLE);
+            } else {
+                weatherView.setVisibility(View.GONE);
+            }
         }
-        weatherView.setVisibility(shouldShow ? View.VISIBLE : View.GONE);
     }
 
 
@@ -78,7 +81,8 @@ public class WeatherUtils {
         Locale locale = Locale.getDefault();
         String countryCode = locale.getCountry();
 
-        if ("US".equals(countryCode) || "BS".equals(countryCode) || "KY".equals(countryCode) || "LR".equals(countryCode)) {
+        if ("US".equals(countryCode) || "BS".equals(countryCode) ||
+                "KY".equals(countryCode) || "LR".equals(countryCode)) {
             return "F";
         } else {
             return "C";

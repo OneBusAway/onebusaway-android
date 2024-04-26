@@ -1,6 +1,7 @@
 package org.onebusaway.android.ui.weather;
 
 import android.content.SharedPreferences;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -37,6 +38,16 @@ public class WeatherUtils {
             temperatureText = preferredTempUnit.equals(app.getString(R.string.celsius)) ? (int) convertToCelsius(temp) + "° C" : (int) temp + "° F";
         }
         weatherTempTxtView.setText(temperatureText);
+    }
+
+    public static void toggleWeatherViewVisibility(boolean shouldShow, View weatherView) {
+        if (weatherView != null) {
+            if (shouldShow) {
+                weatherView.setVisibility(View.VISIBLE);
+            } else {
+                weatherView.setVisibility(View.GONE);
+            }
+        }
     }
 
 

@@ -581,6 +581,11 @@ public class HomeActivity extends AppCompatActivity
                 startActivity(i);
                 break;
         }
+        if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
+            WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
+        }else{
+            setWeatherData();
+        }
         invalidateOptionsMenu();
     }
 
@@ -1997,7 +2002,7 @@ public class HomeActivity extends AppCompatActivity
         if(isValid){
             makeWeatherRequest();
         }else{
-            weatherView.setVisibility(View.GONE);
+            WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
             weatherResponse = null;
         }
     }
@@ -2007,6 +2012,8 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void setWeatherData() {
+        if(weatherResponse == null || mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) return;
+        WeatherUtils.toggleWeatherViewVisibility(true,weatherView);
         TextView tempTxtView = findViewById(R.id.weatherTextView);
         ImageView weatherImageView = findViewById(R.id.weatherStateImageView);
         String weatherIcon = weatherResponse.getCurrent_forecast().getIcon();
@@ -2045,7 +2052,6 @@ public class HomeActivity extends AppCompatActivity
     @Override
     public void onWeatherResponseReceived(ObaWeatherResponse response) {
         if(response != null && response.getCurrent_forecast() != null){
-            weatherView.setVisibility(View.VISIBLE);
             weatherResponse = response;
             setWeatherData();
         }

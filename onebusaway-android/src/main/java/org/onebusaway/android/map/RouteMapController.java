@@ -37,6 +37,7 @@ import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -282,6 +283,10 @@ public class RouteMapController implements MapModeController {
         // Prevents completely hiding vehicle markers at top of route
         private int VEHICLE_MARKER_PADDING;
 
+        private ImageButton mHeaderRouteStar;
+
+        private boolean mFavorite = false;
+
         RoutePopup() {
             mActivity = mFragment.getActivity();
             float paddingDp =
@@ -295,7 +300,16 @@ public class RouteMapController implements MapModeController {
             mRouteLongName = (TextView) mView.findViewById(R.id.long_name);
             mAgencyName = (TextView) mView.findViewById(R.id.agency);
             mProgressBar = (ProgressBar) mView.findViewById(R.id.route_info_loading_spinner);
-
+            mHeaderRouteStar = mView.findViewById(R.id.header_route_star);
+            mHeaderRouteStar.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+            mHeaderRouteStar.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    mHeaderRouteStar.setImageResource(!mFavorite ?
+                            R.drawable.focus_star_on :
+                            R.drawable.focus_star_off);
+                    mFavorite = !mFavorite;
+                }
+            });
             // Make sure the cancel button is shown
             View cancel = mView.findViewById(R.id.cancel_route_mode);
             cancel.setVisibility(View.VISIBLE);

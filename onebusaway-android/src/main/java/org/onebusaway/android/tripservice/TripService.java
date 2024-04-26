@@ -330,19 +330,16 @@ public class TripService extends Service {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
         // Android 5.1 and earlier just uses `set()`.
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (canScheduleExactAlarms(context)) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
+            } else {
+                Log.e(TAG, "Exact alarm scheduling not permitted. Requesting permission.");
+                requestScheduleExactAlarmsPermission(context);
+            }
+        } else {
+            // For Android versions below Marshmallow, set alarms directly
             alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
-            return;
-        }
-
-        // Android 6 - 12 can directly call `setExactAndAllowWhileIdle()`.
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            setExactAlarm(alarmManager, triggerTime, alarmIntent);
-            return;
-        }
-
-        if (canScheduleExactAlarms(context)) {
-            setExactAlarm(alarmManager, triggerTime, alarmIntent);
         }
     }
 

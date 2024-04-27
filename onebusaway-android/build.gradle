@@ -16,10 +16,10 @@
  */
 
 import org.apache.tools.ant.filters.ConcatFilter
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 
 repositories {
     maven {
@@ -278,8 +278,17 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
+
     testOptions {
         unitTests.includeAndroidResources true
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 
     useLibrary 'android.test.runner'
@@ -311,12 +320,12 @@ configurations {
 
 dependencies {
     // Firebase Analytics
-    implementation 'com.google.firebase:firebase-core:21.0.0'
-    implementation 'com.google.firebase:firebase-analytics:21.0.0'
+    implementation 'com.google.firebase:firebase-core:21.1.1'
+    implementation 'com.google.firebase:firebase-analytics:21.6.2'
     // Cloud Firestore (for storing destination alert test data)
-    implementation 'com.google.firebase:firebase-firestore:24.1.2'
-    implementation 'com.google.firebase:firebase-auth:21.0.5'
-    implementation 'com.google.firebase:firebase-storage:20.0.1'
+    implementation 'com.google.firebase:firebase-firestore:24.11.1'
+    implementation 'com.google.firebase:firebase-auth:22.3.1'
+    implementation 'com.google.firebase:firebase-storage:20.3.0'
     // Google Play Services Location
     implementation 'com.google.android.gms:play-services-location:19.0.1'
     // Support libraries
@@ -348,6 +357,7 @@ dependencies {
     // Pelias for point-of-interest search and geocoding for trip planning origin and destination
     implementation 'edu.usf.cutr:pelias-client-library:1.1.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.firebase:firebase-crashlytics-buildtools:2.9.9'
     // Google Play Services Maps (only for Google flavor)
     googleImplementation 'com.google.android.gms:play-services-maps:18.2.0'
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)

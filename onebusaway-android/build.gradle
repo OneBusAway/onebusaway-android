@@ -328,6 +328,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-storage:20.3.0'
     // Firebase crashlytics
     implementation 'com.google.firebase:firebase-crashlytics-buildtools:2.9.9'
+    implementation 'com.google.firebase:firebase-crashlytics:18.6.4'
     // Google Play Services Location
     implementation 'com.google.android.gms:play-services-location:19.0.1'
     // Support libraries
@@ -382,3 +383,4 @@ dependencies {
 }
 
 apply plugin:'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'

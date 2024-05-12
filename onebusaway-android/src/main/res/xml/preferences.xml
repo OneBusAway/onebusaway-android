@@ -64,6 +64,7 @@
             android:title="@string/preferences_show_header_arrivals_title" />
         <ListPreference
             android:defaultValue="@string/preferences_preferred_units_option_automatic"
+            android:negativeButtonText="@string/close"
             android:entries="@array/preferred_units_options"
             android:entryValues="@array/preferred_units_options"
             android:key="@string/preference_key_preferred_units"
@@ -71,13 +72,23 @@
 
         <ListPreference
             android:defaultValue="@string/preferences_preferred_units_option_automatic"
+            android:negativeButtonText="@string/close"
             android:entries="@array/preferred_temp_unit_options"
             android:entryValues="@array/preferred_temp_unit_options"
             android:key="@string/preference_key_preferred_temperature_units"
             android:title="@string/preferred_temperature_unit" />
 
         <ListPreference
+            android:defaultValue="@string/show"
+            android:negativeButtonText="@string/close"
+            android:entries="@array/preferred_weather_view_option"
+            android:entryValues="@array/preferred_weather_view_option"
+            android:key="@string/preference_key_show_weather_view"
+            android:title="@string/preferences_show_weather_view" />
+
+        <ListPreference
                 android:defaultValue="@string/preferences_app_theme_option_system_default"
+                android:negativeButtonText="@string/close"
                 android:entries="@array/app_theme_options"
                 android:entryValues="@array/app_theme_options"
                 android:key="@string/preference_key_app_theme"

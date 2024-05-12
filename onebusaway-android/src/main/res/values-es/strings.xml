@@ -1096,5 +1096,6 @@
     <string name="donation_learn_more_explanation">Tenemos grandes planes para mejorar OneBusAway, pero no podemos hacerlo sin tu ayuda. Esta aplicación está actualmente desarrollada con un 100% de trabajo voluntario, y necesitamos que nos ayudes a financiar el desarrollo futuro.\n\nComo un proyecto clave de la Open Transit Software Foundation, una organización sin fines de lucro 501(c)(3), dependemos de la buena voluntad de usuarios como tú para seguir funcionando y mejorando este software.\n\nCada año, solo una pequeña fracción de nuestros usuarios dona, pero cada contribución, grande o pequeña, ayuda a asegurar que OneBusAway permanezca gratuito, actualizado y accesible para todos. Una pequeña donación, incluso solo el costo de una semana de viaje, $27.50, puede marcar la diferencia.\n\nTu contribución deducible de impuestos asegura que OneBusAway permanezca libre y accesible para todos. ¡Formemos juntos el futuro del transporte!\n\nGracias,\nEl equipo de OneBusAway</string>
     <string name="preferences_reset_donation_timestamps_title">Restablecer las marcas de tiempo de donación</string>
     <string name="preferences_reset_donation_timestamps_summary">Al tocar esta opción se borrarán las marcas de tiempo de \'Recuérdame más tarde\' y \'No me molestes\' asociadas con las solicitudes de donación.</string>
-
+    <string name="preferences_show_weather_view">Mostrar vista del clima</string>
+    <string name="show">Mostrar</string>
 </resources>

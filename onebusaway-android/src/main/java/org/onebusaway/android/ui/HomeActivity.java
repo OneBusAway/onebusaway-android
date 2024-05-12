@@ -443,6 +443,10 @@ public class HomeActivity extends AppCompatActivity
     public void onResume() {
         super.onResume();
 
+        // Check if weather view visibility is changed to hidden
+        if(isWeatherViewHiddenPref()){
+            WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
+        }
         // Make sure header has sliding panel state
         if (mArrivalsListHeader != null && mSlidingPanel != null) {
             mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
@@ -2012,7 +2016,7 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void setWeatherData() {
-        if(weatherResponse == null || mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) return;
+        if(weatherResponse == null || mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY || isWeatherViewHiddenPref()) return;
         WeatherUtils.toggleWeatherViewVisibility(true,weatherView);
         TextView tempTxtView = findViewById(R.id.weatherTextView);
         ImageView weatherImageView = findViewById(R.id.weatherStateImageView);
@@ -2035,6 +2039,7 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void makeWeatherRequest(){
+        if(isWeatherViewHiddenPref()) return;
         // If weather response is null that means we need to call the weather api to get the new data
         // Adding this will avoid doing multiple requests to the weather API when updating the map in real-time
         if(weatherResponse == null){
@@ -2047,6 +2052,17 @@ public class HomeActivity extends AppCompatActivity
             setWeatherData();
         }
 
+    }
+
+
+    private boolean isWeatherViewHiddenPref(){
+        Application app = Application.get();
+        SharedPreferences sharedPreferences = Application.getPrefs();
+
+        String showOption = app.getString(R.string.show);
+        String pref = sharedPreferences.getString(app.getString(R.string.preference_key_show_weather_view), showOption);
+
+        return (!pref.equals(showOption));
     }
 
     @Override

@@ -35,6 +35,7 @@
     <string name="preferences_key_about">preference_about</string>
     <string name="preference_key_preferred_units">preference_preferred_units</string>
     <string name="preference_key_preferred_temperature_units">preference_preferred_temperature_units</string>
+    <string name="preference_key_show_weather_view">preference_key_show_weather_view</string>
     <string name="preference_key_app_theme">preference_app_theme</string>
     <string name="preference_key_arrival_info_style">preference_arrival_info_style</string>
     <string name="preference_key_show_negative_arrivals">preference_show_negative_arrivals</string>

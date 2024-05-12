@@ -101,6 +101,10 @@
         <item>@string/fahrenheit</item>
         <item>@string/celsius</item>
     </string-array>
+    <string-array name="preferred_weather_view_option">
+        <item>@string/show</item>
+        <item>@string/hide</item>
+    </string-array>
     <string-array name="app_theme_options">
         <item>@string/preferences_app_theme_option_system_default</item>
         <item>@string/preferences_app_theme_option_light</item>

@@ -695,5 +695,7 @@
     <string name="preferences_reset_donation_timestamps_summary">Tämän vaihtoehdon napauttaminen poistaa sekä \'Muistuta minua myöhemmin\' että \'Älä vaivaudu\' aikaleimat, jotka liittyvät lahjoituspyyntöihin.</string>
     <string name="preferences_show_weather_view">Näytä säätönäkymä</string>
     <string name="show">Näytä</string>
+    <string name="preferences_enable_map_3d_mode_title">Ota käyttöön kartan 3D-tila</string>
+    <string name="preferences_enable_map_3d_mode_summary">Sisällytä 3D-rakennukset karttaan</string>
 
 </resources>

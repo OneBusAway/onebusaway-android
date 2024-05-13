@@ -49,6 +49,12 @@
 
         <CheckBoxPreference
             android:defaultValue="true"
+            android:key="@string/preference_key_enable_map_3d_mode"
+            android:summary="@string/preferences_enable_map_3d_mode_summary"
+            android:title="@string/preferences_enable_map_3d_mode_title" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
             android:key="@string/preference_key_show_tutorial_screens"
             android:summary="@string/preferences_show_tutorial_screens_summary"
             android:title="@string/preferences_show_tutorial_screens_title" />

@@ -1500,6 +1500,15 @@ public class BaseMapFragment extends SupportMapFragment
 
         mMap.getUiSettings().setTiltGesturesEnabled(isEnabled);
         mMap.setBuildingsEnabled(isEnabled);
+
+        // Reset tilt to 0 degrees
+        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                new CameraPosition.Builder()
+                        .target(mMap.getCameraPosition().target)
+                        .zoom(mMap.getCameraPosition().zoom)
+                        .tilt(0)
+                        .build()
+        ));
     }
 
 }

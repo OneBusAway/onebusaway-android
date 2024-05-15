@@ -22,16 +22,11 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class OTPConstants {
-
-    public static final String INTENT_CHECK_TRIP_TIME
-            = BuildConfig.APPLICATION_ID + ".directions.action.CHECK";
-
-    public static final String INTENT_START_CHECKS
-            = BuildConfig.APPLICATION_ID + ".directions.action.START_CHECKS";
-
     public static final String PREFERENCE_KEY_LIVE_UPDATES = "live_updates";
 
-    public static final long DEFAULT_UPDATE_INTERVAL_TRIP_TIME = TimeUnit.SECONDS.toMillis(60);
+    public static final long DEFAULT_UPDATE_INTERVAL_TRIP_TIME = TimeUnit.MINUTES.toMillis(15);
+
+    public static final String REALTIME_UNIQUE_WORKER_NAME = "check_itineraries";
 
     public static final long REALTIME_SERVICE_QUERY_WINDOW = TimeUnit.HOURS.toMillis(1);
 

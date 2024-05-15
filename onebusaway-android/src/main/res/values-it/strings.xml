@@ -1009,5 +1009,7 @@
     <string name="preferences_reset_donation_timestamps_summary">Toccando questa opzione verranno cancellati i timestamp di \'Ricordamelo più tardi\' e \'Non disturbarmi\' associati alle richieste di donazione.</string>
     <string name="preferences_show_weather_view">Mostra vista meteo</string>
     <string name="show">Mostra</string>
+    <string name="preferences_enable_map_3d_mode_title">Abilita la modalità 3D della mappa</string>
+    <string name="preferences_enable_map_3d_mode_summary">Includi edifici in 3D nella mappa</string>
 
 </resources>

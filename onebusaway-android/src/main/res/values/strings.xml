@@ -1247,5 +1247,6 @@
     <string name="preferences_reset_donation_timestamps_summary">Tapping this option will clear both the \'Remind Me Later\' and \'Don\'t Bother Me\' timestamps associated with donation requests.</string>
     <string name="preferences_show_weather_view">Show weather view</string>
     <string name="show">Show</string>
-
+    <string name="preferences_enable_map_3d_mode_title">Enable map 3D mode</string>
+    <string name="preferences_enable_map_3d_mode_summary">Include 3D buildings in the map</string>
 </resources>

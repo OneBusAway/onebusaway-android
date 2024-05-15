@@ -1098,4 +1098,6 @@
     <string name="preferences_reset_donation_timestamps_summary">Al tocar esta opción se borrarán las marcas de tiempo de \'Recuérdame más tarde\' y \'No me molestes\' asociadas con las solicitudes de donación.</string>
     <string name="preferences_show_weather_view">Mostrar vista del clima</string>
     <string name="show">Mostrar</string>
+    <string name="preferences_enable_map_3d_mode_title">Activar modo 3D del mapa</string>
+    <string name="preferences_enable_map_3d_mode_summary">Incluir edificios en 3D en el mapa</string>
 </resources>

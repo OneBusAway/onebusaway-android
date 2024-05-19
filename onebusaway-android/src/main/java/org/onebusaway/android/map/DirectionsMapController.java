@@ -16,6 +16,7 @@
 
 package org.onebusaway.android.map;
 
+import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.io.elements.ObaShape;
 import org.onebusaway.android.io.elements.ObaShapeElement;
 import org.onebusaway.android.util.LocationUtils;
@@ -191,6 +192,12 @@ public class DirectionsMapController implements MapModeController {
     }
 
     private static int resolveColor(Leg leg) {
+        // Color for transit routes when planning a trip
+        if (TraverseMode.valueOf(leg.mode).isTransit()) {
+            return OTPConstants.OTP_TRANSIT_COLOR;
+        }
+
+        // Calculates color for non-trip planning situations
         if (leg.routeColor != null) {
             try {
                 return Long.decode("0xFF" + leg.routeColor).intValue();
@@ -199,10 +206,7 @@ public class DirectionsMapController implements MapModeController {
             }
         }
 
-        if (TraverseMode.valueOf(leg.mode).isTransit()) {
-            return Color.BLUE;
-        }
-
+        // Color defaults to grey which represents walking
         return Color.GRAY;
     }
 

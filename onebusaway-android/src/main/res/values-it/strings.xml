@@ -590,13 +590,11 @@
     <string name="rt_stop_problem_title">Problema con fermata</string>
     <string name="rt_arrival_problem_title">Problema con orario d\'arrivo</string>
     <string name="rt_app_feedback">Invia feedback sull\'app</string>
-    <string name="rt_ideas">Idee per nuove funzionalità</string>
     <string name="rt_message_infrastructure_problem">Linea mancante, panchina rotta, ecc.</string>
     <string name="rt_message_customer_service">Complimenti e lamentele sugli autisti, oggetti smarriti, ecc.</string>
     <string name="rt_message_stop_problem">Linea mancante, fermata con nome errato, ecc.</string>
     <string name="rt_message_arrival_problem">Mezzo mai arrivato, orario di arrivo sbagliato, ecc.</string>
     <string name="rt_message_app_feedback">Design, bug, ecc.</string>
-    <string name="rt_message_ideas">Invia e vota per i miglioramenti futuri</string>
     <string name="rt_address_hint">Indirizzo del problema (facoltativo)</string>
     <string name="rt_yes">SÌ</string>
     <string name="rt_no">NO</string>
@@ -731,6 +729,10 @@
         che aggiungono un tocco di eleganza alla nostra app. La loro generosità nel concedere
         queste icone con licenza Apache v2.0 (https://www.apache.org/licenses/LICENSE-2.0) ha arricchito notevolmente la nostra esperienza utente.
       </p>
+      <p>
+    Un ringraziamento speciale ad amCharts per le icone del meteo in formato SVG gratuito (https://www.amcharts.com/free-animated-svg-weather-icons/),
+    queste icone sono rilasciate sotto licenza Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/).
+     </p>
       <p>
 
     <p>
@@ -988,4 +990,26 @@
     <string name="trip_info_grant_exact_alarms_permission_message">Devi concedere all\'app il permesso di pianificare un promemoria.</string>
     <string name="trip_info_grant_exact_alarms_permission_positive_button">Concedi il permesso</string>
     <string name="trip_info_grant_exact_alarms_permission_negative_button">Annulla</string>
+
+    <string name="preferred_temperature_unit">Unità di temperatura preferita</string>
+    <string name="fahrenheit">Fahrenheit</string>
+    <string name="celsius">Celsius</string>
+    <string name="donation_view_title">🚨 OneBusAway ha bisogno del tuo aiuto</string>
+    <string name="donation_view_body">Questa app è attualmente sviluppata con il 100% di lavoro volontario, e abbiamo bisogno del tuo aiuto per finanziare lo sviluppo futuro.</string>
+    <string name="donation_view_learn_more_button">Scopri di più</string>
+    <string name="donation_view_donate_now_button">Dona Ora</string>
+    <string name="donation_dismiss_dialog_title">Per favore, non ignorare questa richiesta</string>
+    <string name="donation_dismiss_dialog_body">OneBusAway è un\'organizzazione gestita da volontari con quasi nessun finanziamento. Abbiamo bisogno del tuo aiuto per mantenere questa app in funzione.</string>
+    <string name="donation_dismiss_dialog_dont_want_to_help_button">Non Voglio Aiutare</string>
+    <string name="donation_dismiss_dialog_remind_me_later_button">Ricordamelo Più Tardi</string>
+    <string name="donation_dismiss_dialog_cancel_button">Annulla</string>
+    <string name="title_activity_donation_learn_more">Perché abbiamo bisogno del tuo aiuto</string>
+    <string name="donation_learn_more_explanation">"Abbiamo grandi piani per migliorare OneBusAway, ma non possiamo farlo senza il tuo aiuto. Questa app è attualmente sviluppata con il 100% di lavoro volontario, e abbiamo bisogno del tuo aiuto per finanziare lo sviluppo futuro.\n\nCome progetto chiave della Open Transit Software Foundation, un'organizzazione non profit 501(c)(3), ci affidiamo alla buona volontà di utenti come te per continuare a funzionare e migliorare questo software.\n\nOgni anno, solo una piccola frazione dei nostri utenti dona, ma ogni contributo, grande o piccolo, aiuta a garantire che OneBusAway rimanga gratuito, aggiornato e accessibile a tutti. Una piccola donazione, anche solo il costo di una settimana di pendolarismo, $27.50, può fare tutta la differenza.\n\nIl tuo contributo deducibile dalle tasse assicura che OneBusAway rimanga libero e accessibile per tutti. Modelliamo insieme il futuro del trasporto pubblico!\n\nGrazie,\nIl Team di OneBusAway"</string>
+    <string name="preferences_reset_donation_timestamps_title">Reimposta i Timestamp delle Donazioni</string>
+    <string name="preferences_reset_donation_timestamps_summary">Toccando questa opzione verranno cancellati i timestamp di \'Ricordamelo più tardi\' e \'Non disturbarmi\' associati alle richieste di donazione.</string>
+    <string name="preferences_show_weather_view">Mostra vista meteo</string>
+    <string name="show">Mostra</string>
+    <string name="preferences_enable_map_3d_mode_title">Abilita la modalità 3D della mappa</string>
+    <string name="preferences_enable_map_3d_mode_summary">Includi edifici in 3D nella mappa</string>
+
 </resources>

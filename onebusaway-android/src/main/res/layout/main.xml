@@ -89,6 +89,55 @@
 
                 </LinearLayout>
 
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/weatherView"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_alignParentTop="true"
+                    android:animateLayoutChanges="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_width="wrap_content"
+                    android:visibility="gone"
+                    android:background="@color/quantum_white_100"
+                    app:cardCornerRadius="12dp"
+                    android:layout_height="30dp">
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_margin="4dp"
+                        android:layout_height="wrap_content">
+
+                        <ImageView
+                            android:id="@+id/weatherStateImageView"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:scaleType="centerCrop"
+                            android:layout_marginEnd="2dp"
+                            android:padding="-8dp"
+                            tools:src="@drawable/clear_day"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            tools:ignore="ContentDescription" />
+
+                        <TextView
+                            android:id="@+id/weatherTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="2dp"
+                            tools:text="29° F"
+                            android:textColor="@color/quantum_black_text"
+                            app:layout_constraintBottom_toBottomOf="@+id/weatherStateImageView"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintHorizontal_bias="0.69"
+                            app:layout_constraintStart_toEndOf="@id/weatherStateImageView"
+                            app:layout_constraintTop_toTopOf="@+id/weatherStateImageView" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </androidx.cardview.widget.CardView>
+
+                <include layout="@layout/donation_view" />
+
                 <uk.co.markormesher.android_fab.FloatingActionButton
                         android:id="@+id/layersSpeedDial"
                         android:layout_width="wrap_content"
@@ -152,4 +201,3 @@
               android:name="org.onebusaway.android.ui.NavigationDrawerFragment"
               tools:layout="@layout/navigation_drawer"/>
 </androidx.drawerlayout.widget.DrawerLayout>
-

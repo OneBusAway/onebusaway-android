@@ -63,6 +63,7 @@ import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.ui.HomeActivity;
 import org.onebusaway.android.ui.LayersSpeedDialAdapter;
 import org.onebusaway.android.ui.QueryUtils;
+import org.onebusaway.android.ui.weather.RegionCallback;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PermissionUtils;
@@ -472,6 +473,8 @@ public class BaseMapFragment extends SupportMapFragment
         uiSettings.setMyLocationButtonEnabled(false);
         // Hide Toolbar
         uiSettings.setMapToolbarEnabled(false);
+        // Check for 3D map mode settings
+        updateMap3DModeSettings();
         // Instantiate class that holds generic markers to be added by outside classes
         mSimpleMarkerOverlay = new SimpleMarkerOverlay(mMap);
 
@@ -614,7 +617,7 @@ public class BaseMapFragment extends SupportMapFragment
                 controller.notifyMapChanged();
             }
         }
-
+        updateMap3DModeSettings();
         super.onResume();
     }
 
@@ -828,6 +831,8 @@ public class BaseMapFragment extends SupportMapFragment
         // Make sure that the stop overlay has been successfully initialized
         if (setupStopOverlay() && stops != null) {
             mStopOverlay.populateStops(stops, refs);
+            // When we have stops that means we have a valid region to get the weather
+            checkRegionWeather(false);
         }
     }
 
@@ -851,12 +856,13 @@ public class BaseMapFragment extends SupportMapFragment
         //Otherwise, its premature since we don't know the device's relationship to
         //available OBA regions or the manually set API region
         String serverName = Application.get().getCustomApiUrl();
-        if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils
-                .isEmpty(serverName))) {
+        if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils.isEmpty(serverName))) {
             if (mRunning && canManageDialog(getActivity())) {
                 showDialog(MapDialogFragment.OUTOFRANGE_DIALOG);
             }
         }
+        // Notify weather view that we are out of range
+        checkRegionWeather(true);
     }
 
     //
@@ -882,6 +888,7 @@ public class BaseMapFragment extends SupportMapFragment
                 setMyLocation(true, false);
             } else {
                 zoomToRegion();
+                checkRegionWeather(false);
             }
         }
     }
@@ -1014,6 +1021,21 @@ public class BaseMapFragment extends SupportMapFragment
             int height = getResources().getDisplayMetrics().heightPixels;
             int padding = 0;
             mMap.animateCamera((CameraUpdateFactory.newLatLngBounds(b, width, height, padding)));
+        }
+    }
+    private RegionCallback regionCallback;
+
+    public void setRegionCallback(RegionCallback callback) {
+        this.regionCallback = callback;
+    }
+
+    public void checkRegionWeather(boolean isOutOfRange) {
+        // If we have a valid region, callback to home activity to get the weather.
+        ObaRegion region = Application.get().getCurrentRegion();
+        boolean isValid = (region != null && mMap != null && !isOutOfRange);
+
+        if (regionCallback != null) {
+            regionCallback.onValidRegion(isValid);
         }
     }
 
@@ -1446,6 +1468,7 @@ public class BaseMapFragment extends SupportMapFragment
                             (dialog, which) -> {
                                 if (mMapFragment != null && mMapFragment.isAdded()) {
                                     mMapFragment.zoomToRegion();
+                                    mMapFragment.checkRegionWeather(false);
                                 }
                             }
                     )
@@ -1573,4 +1596,26 @@ public class BaseMapFragment extends SupportMapFragment
             return false;
         }
     }
+
+    /**
+     * Updates the map settings based on the current state of 3D mode preference.
+     */
+    private void updateMap3DModeSettings() {
+        if(mMap == null) return;
+
+        boolean isEnabled = Application.getPrefs().getBoolean(getString(R.string.preference_key_enable_map_3d_mode), true);
+
+        mMap.getUiSettings().setTiltGesturesEnabled(isEnabled);
+        mMap.setBuildingsEnabled(isEnabled);
+
+        // Reset tilt to 0 degrees
+        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                new CameraPosition.Builder()
+                        .target(mMap.getCameraPosition().target)
+                        .zoom(mMap.getCameraPosition().zoom)
+                        .tilt(0)
+                        .build()
+        ));
+    }
+
 }

@@ -28,11 +28,16 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.donations.DonationsManager;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.io.request.weather.ObaWeatherRequest;
+import org.onebusaway.android.io.request.weather.models.ObaWeatherResponse;
+import org.onebusaway.android.io.request.weather.WeatherRequestListener;
+import org.onebusaway.android.io.request.weather.WeatherRequestTask;
 import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
@@ -43,6 +48,8 @@ import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
 import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.ui.weather.RegionCallback;
+import org.onebusaway.android.ui.weather.WeatherUtils;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PermissionUtils;
@@ -80,6 +87,7 @@ import android.view.Window;
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -101,6 +109,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
 
@@ -128,7 +138,7 @@ import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_START
 public class HomeActivity extends AppCompatActivity
         implements BaseMapFragment.OnFocusChangedListener,
         BaseMapFragment.OnProgressBarChangedListener,
-        ArrivalsListFragment.Listener, NavigationDrawerCallbacks,
+        ArrivalsListFragment.Listener, NavigationDrawerCallbacks, WeatherRequestListener , RegionCallback,
         ObaRegionsTask.Callback {
 
     interface SlidingPanelController {
@@ -176,6 +186,10 @@ public class HomeActivity extends AppCompatActivity
     View mArrivalsListHeaderView;
 
     View mArrivalsListHeaderSubView;
+
+    CardView weatherView;
+
+    View mDonationView;
 
     private FloatingActionButton mFabMyLocation;
 
@@ -259,6 +273,8 @@ public class HomeActivity extends AppCompatActivity
     private FirebaseAnalytics mFirebaseAnalytics;
 
     private ActivityResultLauncher<String> travelBehaviorPermissionsLauncher;
+
+    private ObaWeatherResponse weatherResponse;
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -384,6 +400,8 @@ public class HomeActivity extends AppCompatActivity
 
         UIUtils.setupActionBar(this);
 
+        setupDonationView(this);
+
         // To enable checkBatteryOptimizations, also uncomment the
         // REQUEST_IGNORE_BATTERY_OPTIMIZATIONS permission in AndroidManifest.xml
         // See https://github.com/OneBusAway/onebusaway-android/pull/988#discussion_r299950506
@@ -406,6 +424,7 @@ public class HomeActivity extends AppCompatActivity
                 ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_WELCOME, this, null, false);
             }
         }
+        initWeatherView();
     }
 
     @Override
@@ -424,6 +443,10 @@ public class HomeActivity extends AppCompatActivity
     public void onResume() {
         super.onResume();
 
+        // Check if weather view visibility is changed to hidden
+        if(WeatherUtils.isWeatherViewHiddenPref()){
+            WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
+        }
         // Make sure header has sliding panel state
         if (mArrivalsListHeader != null && mSlidingPanel != null) {
             mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
@@ -439,6 +462,8 @@ public class HomeActivity extends AppCompatActivity
         updateLayersFab();
 
         mFabMyLocation.requestLayout();
+
+        updateDonationsUIVisibility();
     }
 
     @Override
@@ -560,6 +585,11 @@ public class HomeActivity extends AppCompatActivity
                 startActivity(i);
                 break;
         }
+        if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
+            WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
+        }else{
+            setWeatherData();
+        }
         invalidateOptionsMenu();
     }
 
@@ -604,6 +634,7 @@ public class HomeActivity extends AppCompatActivity
         // Register listener for map focus callbacks
         mMapFragment.setOnFocusChangeListener(this);
         mMapFragment.setOnProgressBarChangedListener(this);
+        mMapFragment.setRegionCallback(this);
 
         getSupportFragmentManager().beginTransaction().show(mMapFragment).commit();
 
@@ -1493,7 +1524,7 @@ public class HomeActivity extends AppCompatActivity
             }
         }
     }
-    
+
     /**
      * Moves both Floating Action Buttons as response to sliding panel height changes.
      * <p>
@@ -1967,5 +1998,137 @@ public class HomeActivity extends AppCompatActivity
                                     true);
                         })
                 .create().show();
+    }
+
+    // Getting a callback from BaseMapFragment to check if we are in a valid region or not
+    @Override
+    public void onValidRegion(boolean isValid) {
+        if(isValid){
+            makeWeatherRequest();
+        }else{
+            WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
+            weatherResponse = null;
+        }
+    }
+
+    private void initWeatherView(){
+        weatherView = findViewById(R.id.weatherView);
+    }
+
+    private void setWeatherData() {
+        if(weatherResponse == null || mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY || WeatherUtils.isWeatherViewHiddenPref()) return;
+        WeatherUtils.toggleWeatherViewVisibility(true,weatherView);
+        TextView tempTxtView = findViewById(R.id.weatherTextView);
+        ImageView weatherImageView = findViewById(R.id.weatherStateImageView);
+        String weatherIcon = weatherResponse.getCurrent_forecast().getIcon();
+        String weatherSummary = weatherResponse.getCurrent_forecast().getSummary();
+        double weatherTemp = weatherResponse.getCurrent_forecast().getTemperature();
+
+        if (weatherIcon != null && !weatherIcon.isEmpty()) {
+            WeatherUtils.setWeatherImage(weatherImageView, weatherIcon);
+        }else{
+            weatherImageView.setVisibility(View.GONE);
+        }
+        WeatherUtils.setWeatherTemp(tempTxtView, weatherTemp);
+        // Show weather state when click.
+        weatherView.setOnClickListener(view -> {
+            if (weatherSummary != null) {
+                Toast.makeText(getApplicationContext(), weatherSummary.trim(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void makeWeatherRequest(){
+        if(WeatherUtils.isWeatherViewHiddenPref()) return;
+        // If weather response is null that means we need to call the weather api to get the new data
+        // Adding this will avoid doing multiple requests to the weather API when updating the map in real-time
+        if(weatherResponse == null){
+            ObaWeatherRequest weatherRequest = ObaWeatherRequest.newRequest(Application.get().getCurrentRegion().getId());
+            WeatherRequestTask task = new WeatherRequestTask(this);
+            task.execute(weatherRequest);
+            Log.d(TAG,"Weather requested");
+        }else{
+            // We have a weather data no need to make a request
+            setWeatherData();
+        }
+
+    }
+
+    @Override
+    public void onWeatherResponseReceived(ObaWeatherResponse response) {
+        if(response != null && response.getCurrent_forecast() != null){
+            weatherResponse = response;
+            setWeatherData();
+        }
+    }
+
+    @Override
+    public void onWeatherRequestFailed() {
+        Log.d(TAG,"Weather Request Fail");
+    }
+
+    private void setupDonationView(HomeActivity homeActivity) {
+        mDonationView = findViewById(R.id.donationView);
+        AppCompatImageButton closeButton = mDonationView.findViewById(R.id.btnDonationViewClose);
+        Button learnMoreButton = mDonationView.findViewById(R.id.btnDonationViewLearnMore);
+        Button donateButton = mDonationView.findViewById(R.id.btnDonationViewDonate);
+
+        closeButton.setOnClickListener(b -> {
+            AlertDialog dismissDialog = buildDismissDonationsDialog();
+            dismissDialog.show();
+        });
+
+        learnMoreButton.setOnClickListener(b -> {
+            Intent intent = new Intent(this, DonationLearnMoreActivity.class);
+            startActivity(intent);
+        });
+
+        donateButton.setOnClickListener(b -> {
+            DonationsManager donationsManager = Application.getDonationsManager();
+            donationsManager.dismissDonationRequests();
+
+            Intent intent = donationsManager.buildOpenDonationsPageIntent();
+            startActivity(intent);
+        });
+
+        updateDonationsUIVisibility();
+    }
+
+    private void updateDonationsUIVisibility() {
+        mDonationView = findViewById(R.id.donationView);
+        DonationsManager donationsManager = Application.getDonationsManager();
+
+        if (donationsManager.shouldShowDonationUI()) {
+            mDonationView.setVisibility(View.VISIBLE);
+        }
+        else {
+            mDonationView.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Creates an AlertDialog that will give the user options for dismissing the donations UI.
+     * @return the AlertDialog for presentation.
+     */
+    private AlertDialog buildDismissDonationsDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle(R.string.donation_dismiss_dialog_title)
+                .setMessage(R.string.donation_dismiss_dialog_body)
+                .setNegativeButton(
+                        R.string.donation_dismiss_dialog_dont_want_to_help_button,
+                        (dialog, which) -> {
+                            Application.getDonationsManager().dismissDonationRequests();
+                            updateDonationsUIVisibility();
+                        }
+                )
+                .setNeutralButton(R.string.donation_dismiss_dialog_remind_me_later_button,
+                        (dialog, which) -> {
+                            Application.getDonationsManager().remindUserLater();
+                            updateDonationsUIVisibility();
+                        })
+                .setPositiveButton(R.string.donation_dismiss_dialog_cancel_button, (d, w) -> {})
+                .setCancelable(true);
+
+        return builder.create();
     }
 }

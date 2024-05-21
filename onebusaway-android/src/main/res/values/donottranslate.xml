@@ -34,10 +34,13 @@
     <string name="preferences_key_powered_by_oba">preference_powered_by_oba</string>
     <string name="preferences_key_about">preference_about</string>
     <string name="preference_key_preferred_units">preference_preferred_units</string>
+    <string name="preference_key_preferred_temperature_units">preference_preferred_temperature_units</string>
+    <string name="preference_key_show_weather_view">preference_key_show_weather_view</string>
     <string name="preference_key_app_theme">preference_app_theme</string>
     <string name="preference_key_arrival_info_style">preference_arrival_info_style</string>
     <string name="preference_key_show_negative_arrivals">preference_show_negative_arrivals</string>
     <string name="preference_key_show_zoom_controls">preference_show_zoom_controls</string>
+    <string name="preference_key_enable_map_3d_mode">preference_enable_map_3d_view</string>
     <string name="preference_key_hide_alerts">preference_hide_alerts</string>
     <string name="preference_key_default_stop_sort">preference_default_stop_sort</string>
     <string name="preference_key_default_reminder_time">preference_default_reminder_time</string>
@@ -72,11 +75,11 @@
     <!-- Regions API URL -->
     <string name="regions_api_url">https://regions.onebusaway.org/regions-v3.json</string>
 
+    <!-- Weather API URL -->
+    <string name="weather_api_url">https://onebusaway.co/api/v1/regions/regionID/weather.json</string>
+
     <!-- Donate URL -->
     <string name="donate_url">https://onebusaway.org/donate/</string>
-
-    <!-- IdeaScale URL -->
-    <string name="ideascale_url">https://onebusaway.ideascale.com/a/ideas/top/campaign-filter/byids/campaigns/46167</string>
 
     <!-- Powered by OBA URL -->
     <string name="powered_by_oba_url">https://onebusaway.org</string>
@@ -171,7 +174,6 @@
     <string name="analytics_label_customer_service_email">Send email</string>
     <string name="analytics_label_customer_service_email_without_location">Send email without location</string>
     <string name="analytics_label_customer_service_phone">Make phone call</string>
-    <string name="analytics_label_idea_scale">IdeaScale</string>
     <string name="analytics_label_custom_url">Custom URL</string>
     <string name="analytics_label_star_route">Starred route</string>
     <string name="analytics_label_unstar_route">Unstarred route</string>
@@ -254,4 +256,5 @@
     <string name="analytics_label_custom_metadata_feedback">FeedbackText</string>
 
     <string name="not_request_battery_optimizations_key">request_battery_optimizations_key</string>
+    <string name="preference_key_reset_donation_timestamps">preference_key_reset_donation_timestamps</string>
 </resources>

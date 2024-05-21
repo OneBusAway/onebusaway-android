@@ -683,6 +683,10 @@
         tych ikon na licencji Apache v2.0 (https://www.apache.org/licenses/LICENSE-2.0) znacznie wzbogaciła nasze doświadczenie użytkownika.
       </p>
       <p>
+    Specjalne podziękowania dla amcharts za darmowe ikony pogody w formacie SVG (https://www.amcharts.com/free-animated-svg-weather-icons/),
+    te ikony są udostępnione na licencji Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/).
+    </p>
+      <p>
 
     <p>
       Odkrywaj naszą aplikację i rozpocznij płynną podróż z OneBusAway!
@@ -692,4 +696,26 @@
 
     ]]></string>
     <string name="application_version">Wersja</string>
+
+    <string name="preferred_temperature_unit">Preferowana jednostka temperatury</string>
+    <string name="fahrenheit">Fahrenheit</string>
+    <string name="celsius">Celsjusz</string>
+    <string name="donation_view_title">🚨 OneBusAway potrzebuje twojej pomocy</string>
+    <string name="donation_view_body">Ta aplikacja jest obecnie tworzona w 100% dzięki pracy wolontariuszy, i potrzebujemy twojej pomocy, aby sfinansować przyszły rozwój.</string>
+    <string name="donation_view_learn_more_button">Dowiedz się więcej</string>
+    <string name="donation_view_donate_now_button">Wesprzyj Teraz</string>
+    <string name="donation_dismiss_dialog_title">Proszę, nie ignoruj tej prośby</string>
+    <string name="donation_dismiss_dialog_body">OneBusAway to organizacja prowadzona przez wolontariuszy, z prawie żadnym finansowaniem. Potrzebujemy twojej pomocy, aby utrzymać tę aplikację przy życiu.</string>
+    <string name="donation_dismiss_dialog_dont_want_to_help_button">Nie chcę pomagać</string>
+    <string name="donation_dismiss_dialog_remind_me_later_button">Przypomnij mi później</string>
+    <string name="donation_dismiss_dialog_cancel_button">Anuluj</string>
+    <string name="title_activity_donation_learn_more">Dlaczego potrzebujemy Twojej pomocy</string>
+    <string name="donation_learn_more_explanation">Mamy wielkie plany na ulepszenie OneBusAway, ale nie możemy tego zrobić bez Twojej pomocy. Ta aplikacja jest obecnie tworzona w 100% dzięki pracy wolontariuszy, i potrzebujemy Ciebie, abyś pomógł nam sfinansować przyszły rozwój.\n\nJako kluczowy projekt Open Transit Software Foundation, organizacji non-profit 501(c)(3), polegamy na dobrej woli użytkowników takich jak Ty, aby kontynuować działanie i ulepszanie tego oprogramowania.\n\nCo roku tylko mała część naszych użytkowników dokonuje darowizn, ale każdy wkład, duży czy mały, pomaga zapewnić, że OneBusAway pozostanie darmowe, aktualne i dostępne dla wszystkich. Mała darowizna, nawet tylko koszt tygodniowego dojazdu do pracy, 27,50 dolarów, może zrobić różnicę.\n\nTwoja darowizna odliczalna od podatku zapewnia, że OneBusAway pozostanie darmowe i dostępne dla każdego. Kształtujmy razem przyszłość transportu publicznego!\n\nDziękujemy,\nZespół OneBusAway</string>
+    <string name="preferences_reset_donation_timestamps_title">Zresetuj Znaczniki Czasu Dotacji</string>
+    <string name="preferences_reset_donation_timestamps_summary">Dotknięcie tej opcji spowoduje wyczyszczenie znaczników czasu \'Przypomnij mi później\' i \'Nie przeszkadzaj mi\' związanych z prośbami o darowizny.</string>
+    <string name="preferences_show_weather_view">Pokaż widok pogody</string>
+    <string name="show">Pokaż</string>
+    <string name="preferences_enable_map_3d_mode_title">Włącz tryb 3D mapy</string>
+    <string name="preferences_enable_map_3d_mode_summary">Uwzględnij budynki 3D na mapie</string>
+
 </resources>

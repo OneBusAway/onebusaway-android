@@ -112,12 +112,16 @@ public class PreferencesActivity extends PreferenceActivity
 
     Preference pushFirebaseData;
 
+    Preference resetDonationTimestamps;
+
     boolean mAutoSelectInitialValue;
 
     boolean mOtpCustomAPIUrlChanged = false;
     //Save initial value so we can compare to current value in onDestroy()
 
     ListPreference preferredUnits;
+    ListPreference preferredTempUnits;
+    ListPreference showWeatherDisplayPref;
 
     ListPreference mThemePref;
 
@@ -170,6 +174,9 @@ public class PreferencesActivity extends PreferenceActivity
         pushFirebaseData = findPreference(getString(R.string.preference_key_push_firebase_data));
         pushFirebaseData.setOnPreferenceClickListener(this);
 
+        resetDonationTimestamps = findPreference(getString(R.string.preference_key_reset_donation_timestamps));
+        resetDonationTimestamps.setOnPreferenceClickListener(this);
+
         mHideAlertsPref = findPreference(getString(R.string.preference_key_hide_alerts));
         mHideAlertsPref.setOnPreferenceChangeListener(this);
 
@@ -191,6 +198,12 @@ public class PreferencesActivity extends PreferenceActivity
 
         preferredUnits = (ListPreference) findPreference(
                 getString(R.string.preference_key_preferred_units));
+
+        preferredTempUnits = (ListPreference) findPreference(
+                getString(R.string.preference_key_preferred_temperature_units));
+
+        showWeatherDisplayPref = (ListPreference) findPreference(
+                getString(R.string.preference_key_show_weather_view));
 
         mThemePref = (ListPreference) findPreference(
                 getString(R.string.preference_key_app_theme));
@@ -225,7 +238,7 @@ public class PreferencesActivity extends PreferenceActivity
         // If its the OBA brand flavor, then show the "Donate" preference and hide "Powered by OBA"
         PreferenceCategory aboutCategory = (PreferenceCategory)
                 findPreference(getString(R.string.preferences_category_about));
-        if (BuildConfig.FLAVOR_brand.equalsIgnoreCase(BuildFlavorUtils.OBA_FLAVOR_BRAND)) {
+        if (BuildFlavorUtils.isOBABuildFlavor()) {
             aboutCategory.removePreference(mPoweredByObaPref);
         } else {
             // Its not the OBA brand flavor, then hide the "Donate" preference and show "Powered by OBA"
@@ -236,6 +249,8 @@ public class PreferencesActivity extends PreferenceActivity
         if (showCheckRegionDialog) {
             showCheckRegionDialog();
         }
+
+        onAddCustomRegion();
     }
 
     @Override
@@ -244,6 +259,8 @@ public class PreferencesActivity extends PreferenceActivity
 
         changePreferenceSummary(getString(R.string.preference_key_region));
         changePreferenceSummary(getString(R.string.preference_key_preferred_units));
+        changePreferenceSummary(getString(R.string.preference_key_preferred_temperature_units));
+        changePreferenceSummary(getString(R.string.preference_key_show_weather_view));
         changePreferenceSummary(getString(R.string.preference_key_app_theme));
         changePreferenceSummary(getString(R.string.preference_key_otp_api_url));
 
@@ -322,6 +339,11 @@ public class PreferencesActivity extends PreferenceActivity
                         getString(R.string.preferences_otp_api_servername_summary));
             }
             Application.get().setUseOldOtpApiUrlVersion(false);
+        }else if (preferenceKey
+                .equalsIgnoreCase(getString(R.string.preference_key_preferred_temperature_units))) {
+            preferredTempUnits.setSummary(preferredTempUnits.getValue());
+        }else if(preferenceKey.equalsIgnoreCase(getString(R.string.preference_key_show_weather_view))){
+            showWeatherDisplayPref.setSummary(showWeatherDisplayPref.getValue());
         }
     }
 
@@ -337,11 +359,7 @@ public class PreferencesActivity extends PreferenceActivity
             ShowcaseViewUtils.resetAllTutorials(this);
             NavHelp.goHome(this, true);
         } else if (pref.equals(mDonatePref)) {
-            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
-                    getString(R.string.analytics_label_button_press_donate),
-                    null);
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.donate_url)));
-            startActivity(intent);
+            startActivity(Application.getDonationsManager().buildOpenDonationsPageIntent());
         } else if (pref.equals(mPoweredByObaPref)) {
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
                     getString(R.string.analytics_label_button_press_powered_by_oba),
@@ -366,6 +384,9 @@ public class PreferencesActivity extends PreferenceActivity
             // Try to push firebase data to the server
             FirebaseDataPusher pusher = new FirebaseDataPusher();
             pusher.push(this);
+        } else if (pref.equals(resetDonationTimestamps)) {
+            Application.getDonationsManager().setDonationRequestReminderDate(null);
+            Application.getDonationsManager().setDonationRequestDismissedDate(null);
         }
         return true;
     }
@@ -402,7 +423,9 @@ public class PreferencesActivity extends PreferenceActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_RESTORE_BACKUP) {
-            BackupUtils.restore(this, data.getData());
+            if(data != null){
+                BackupUtils.restore(this, data.getData());
+            }
         }
     }
 
@@ -524,7 +547,7 @@ public class PreferencesActivity extends PreferenceActivity
         boolean currentValue = settings
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true);
 
-        //If the use has selected to auto-select region, and the previous state of the setting was false, 
+        //If the use has selected to auto-select region, and the previous state of the setting was false,
         //then run the auto-select by going to HomeFragment
         if ((currentValue && !mAutoSelectInitialValue)) {
             Log.d(TAG,
@@ -609,6 +632,12 @@ public class PreferencesActivity extends PreferenceActivity
             boolean showDepartedBuses = settings.getBoolean(Application.get().
                     getString(R.string.preference_key_show_negative_arrivals), Boolean.FALSE);
             ObaAnalytics.setShowDepartedVehicles(mFirebaseAnalytics, showDepartedBuses);
+        }else if (key.equalsIgnoreCase(getString(R.string.preference_key_preferred_temperature_units))) {
+            // Change the preferred temp unit description
+            changePreferenceSummary(key);
+        }else if (key.equalsIgnoreCase(getString(R.string.preference_key_show_weather_view))) {
+            // Change the preferred weather show or hide option
+            changePreferenceSummary(key);
         }
     }
 
@@ -676,5 +705,30 @@ public class PreferencesActivity extends PreferenceActivity
             // Since the current region was updated as a result of enabling/disabling experimental servers, go home
             NavHelp.goHome(this, false);
         }
+    }
+
+    /**
+     * The function will process deep links used for adding custom regions
+     */
+    void onAddCustomRegion() {
+        Uri deepLink = getIntent().getData();
+        if(deepLink == null){
+            return;
+        }
+        String obaCustomUrl = deepLink.getQueryParameter("oba-url");
+        String otpCustomURl = deepLink.getQueryParameter("otp-url");
+
+        // onPreferenceChange is responsible for checking changes if it's valid
+        if (obaCustomUrl != null && onPreferenceChange(mCustomApiUrlPref, obaCustomUrl)) {
+            Application.get().setCustomApiUrl(obaCustomUrl);
+        }
+
+        if (otpCustomURl != null && onPreferenceChange(mCustomOtpApiUrlPref, otpCustomURl)) {
+            Application.get().setCustomOtpApiUrl(otpCustomURl);
+        }
+        Intent i = new Intent(this, HomeActivity.class);
+        startActivity(i);
+        finish();
+
     }
 }

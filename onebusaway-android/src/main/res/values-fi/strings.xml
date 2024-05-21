@@ -658,6 +658,10 @@
         jotka lisäävät eleganssia sovellukseemme. Heidän anteliaisuutensa lisensoida nämä ikonit Apache v2.0 -lisenssillä (https://www.apache.org/licenses/LICENSE-2.0) on rikastuttanut huomattavasti käyttäjäkokemustamme.
       </p>
       <p>
+    Erityiskiitos amchartsille ilmaisista SVG-sääkuvakkeista (https://www.amcharts.com/free-animated-svg-weather-icons/),
+    nämä kuvakkeet ovat Creative Commons Attribution 4.0 -lisenssin alaisia (https://creativecommons.org/licenses/by/4.0/).
+     </p>
+      <p>
 
     <p>
       Tutustu sovellukseemme ja aloita sujuva joukkoliikennematka OneBusAwayn kanssa!
@@ -672,4 +676,26 @@
     <string name="trip_info_grant_exact_alarms_permission_message">Sinun täytyy antaa sovellukselle lupa muistutuksen asettamiseen.</string>
     <string name="trip_info_grant_exact_alarms_permission_positive_button">Myönnä lupa</string>
     <string name="trip_info_grant_exact_alarms_permission_negative_button">Peruuta</string>
+
+    <string name="preferred_temperature_unit">Suosittu lämpötilayksikkö</string>
+    <string name="fahrenheit">Fahrenheit</string>
+    <string name="celsius">Celsius</string>
+    <string name="donation_view_title">🚨 OneBusAway tarvitsee apuasi</string>
+    <string name="donation_view_body">Tämä sovellus on tällä hetkellä rakennettu 100% vapaaehtoistyöllä, ja tarvitsemme sinua auttamaan meitä rahoittamaan tulevaa kehitystä.</string>
+    <string name="donation_view_learn_more_button">Lue Lisää</string>
+    <string name="donation_view_donate_now_button">Lahjoita Nyt</string>
+    <string name="donation_dismiss_dialog_title">Ole hyvä äläkä hylkää tätä pyyntöä</string>
+    <string name="donation_dismiss_dialog_body">OneBusAway on vapaaehtoisten pyörittämä organisaatio, jolla on lähes ei lainkaan rahoitusta. Tarvitsemme apuasi pitääksemme tämän sovelluksen toiminnassa.</string>
+    <string name="donation_dismiss_dialog_dont_want_to_help_button">En Halua Auttaa</string>
+    <string name="donation_dismiss_dialog_remind_me_later_button">Muistuta Minua Myöhemmin</string>
+    <string name="donation_dismiss_dialog_cancel_button">Peruuta</string>
+    <string name="title_activity_donation_learn_more">Miksi tarvitsemme apuasi</string>
+    <string name="donation_learn_more_explanation">Meillä on suuria suunnitelmia OneBusAwayn parantamiseksi, mutta emme voi tehdä sitä ilman apuasi. Tämä sovellus on tällä hetkellä rakennettu 100% vapaaehtoistyöllä, ja tarvitsemme sinua auttamaan meitä rahoittamaan tulevan kehityksen.\n\nOpen Transit Software Foundationin, 501(c)(3) voittoa tavoittelemattoman järjestön, keskeisenä hankkeena me luotamme käyttäjien, kuten sinun, hyväntahtoisuuteen pysyäksemme toiminnassa ja tehdäksemme tästä ohjelmistosta paremman.\n\nJoka vuosi vain pieni osa käyttäjistämme lahjoittaa, mutta jokainen panos, suuri tai pieni, auttaa varmistamaan, että OneBusAway pysyy ilmaisena, päivitettynä ja kaikkien saavutettavissa. Pieni lahjoitus, vaikkapa vain yhden viikon työmatkakustannusten verran, 27,50 dollaria, voi tehdä suuren eron.\n\nVerovähennyskelpoinen panoksesi varmistaa, että OneBusAway pysyy vapaana ja kaikkien saavutettavissa. Muovataan yhdessä joukkoliikenteen tulevaisuutta!\n\nKiitos,\nOneBusAway-tiimi</string>
+    <string name="preferences_reset_donation_timestamps_title">Nollaa Lahjoituksen Aikaleimat</string>
+    <string name="preferences_reset_donation_timestamps_summary">Tämän vaihtoehdon napauttaminen poistaa sekä \'Muistuta minua myöhemmin\' että \'Älä vaivaudu\' aikaleimat, jotka liittyvät lahjoituspyyntöihin.</string>
+    <string name="preferences_show_weather_view">Näytä säätönäkymä</string>
+    <string name="show">Näytä</string>
+    <string name="preferences_enable_map_3d_mode_title">Ota käyttöön kartan 3D-tila</string>
+    <string name="preferences_enable_map_3d_mode_summary">Sisällytä 3D-rakennukset karttaan</string>
+
 </resources>

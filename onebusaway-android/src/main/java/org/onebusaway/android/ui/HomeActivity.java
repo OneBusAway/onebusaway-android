@@ -443,6 +443,10 @@ public class HomeActivity extends AppCompatActivity
     public void onResume() {
         super.onResume();
 
+        // Check if weather view visibility is changed to hidden
+        if(WeatherUtils.isWeatherViewHiddenPref()){
+            WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
+        }
         // Make sure header has sliding panel state
         if (mArrivalsListHeader != null && mSlidingPanel != null) {
             mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
@@ -580,6 +584,11 @@ public class HomeActivity extends AppCompatActivity
                 i.setData(Uri.parse(getString(R.string.open_source_github)));
                 startActivity(i);
                 break;
+        }
+        if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
+            WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
+        }else{
+            setWeatherData();
         }
         invalidateOptionsMenu();
     }
@@ -1997,7 +2006,7 @@ public class HomeActivity extends AppCompatActivity
         if(isValid){
             makeWeatherRequest();
         }else{
-            weatherView.setVisibility(View.GONE);
+            WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
             weatherResponse = null;
         }
     }
@@ -2007,6 +2016,8 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void setWeatherData() {
+        if(weatherResponse == null || mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY || WeatherUtils.isWeatherViewHiddenPref()) return;
+        WeatherUtils.toggleWeatherViewVisibility(true,weatherView);
         TextView tempTxtView = findViewById(R.id.weatherTextView);
         ImageView weatherImageView = findViewById(R.id.weatherStateImageView);
         String weatherIcon = weatherResponse.getCurrent_forecast().getIcon();
@@ -2014,7 +2025,7 @@ public class HomeActivity extends AppCompatActivity
         double weatherTemp = weatherResponse.getCurrent_forecast().getTemperature();
 
         if (weatherIcon != null && !weatherIcon.isEmpty()) {
-            WeatherUtils.setWeatherImage(weatherImageView, weatherIcon, this);
+            WeatherUtils.setWeatherImage(weatherImageView, weatherIcon);
         }else{
             weatherImageView.setVisibility(View.GONE);
         }
@@ -2028,6 +2039,7 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void makeWeatherRequest(){
+        if(WeatherUtils.isWeatherViewHiddenPref()) return;
         // If weather response is null that means we need to call the weather api to get the new data
         // Adding this will avoid doing multiple requests to the weather API when updating the map in real-time
         if(weatherResponse == null){
@@ -2045,7 +2057,6 @@ public class HomeActivity extends AppCompatActivity
     @Override
     public void onWeatherResponseReceived(ObaWeatherResponse response) {
         if(response != null && response.getCurrent_forecast() != null){
-            weatherView.setVisibility(View.VISIBLE);
             weatherResponse = response;
             setWeatherData();
         }

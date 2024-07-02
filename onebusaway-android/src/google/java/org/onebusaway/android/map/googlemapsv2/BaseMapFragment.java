@@ -366,6 +366,8 @@ public class BaseMapFragment extends SupportMapFragment
         uiSettings.setMyLocationButtonEnabled(false);
         // Hide Toolbar
         uiSettings.setMapToolbarEnabled(false);
+        // Check for 3D map mode settings
+        updateMap3DModeSettings();
         // Instantiate class that holds generic markers to be added by outside classes
         mSimpleMarkerOverlay = new SimpleMarkerOverlay(mMap);
 
@@ -508,7 +510,7 @@ public class BaseMapFragment extends SupportMapFragment
                 controller.notifyMapChanged();
             }
         }
-
+        updateMap3DModeSettings();
         super.onResume();
     }
 
@@ -1487,4 +1489,26 @@ public class BaseMapFragment extends SupportMapFragment
             return false;
         }
     }
+
+    /**
+     * Updates the map settings based on the current state of 3D mode preference.
+     */
+    private void updateMap3DModeSettings() {
+        if(mMap == null) return;
+
+        boolean isEnabled = Application.getPrefs().getBoolean(getString(R.string.preference_key_enable_map_3d_mode), true);
+
+        mMap.getUiSettings().setTiltGesturesEnabled(isEnabled);
+        mMap.setBuildingsEnabled(isEnabled);
+
+        // Reset tilt to 0 degrees
+        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                new CameraPosition.Builder()
+                        .target(mMap.getCameraPosition().target)
+                        .zoom(mMap.getCameraPosition().zoom)
+                        .tilt(0)
+                        .build()
+        ));
+    }
+
 }

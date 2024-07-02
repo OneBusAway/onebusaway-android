@@ -134,21 +134,11 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
                         getString(R.string.analytics_problem),
                         getString(R.string.analytics_label_app_feedback_without_location));
             }
-        } else if (getString(R.string.rt_ideas).equals(rti.getTitle())) {
-            // Direct to ideascale website
-            goToIdeaScale();
-            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
-                    getString(R.string.analytics_problem),
-                    getString(R.string.analytics_label_idea_scale));
         }
     }
 
     private void goToCustomerServices() {
         ((ReportActivity) getActivity()).createCustomerServiceFragment();
-    }
-
-    private void goToIdeaScale() {
-        UIUtils.goToUrl(getActivity(), getString(R.string.ideascale_url));
     }
 
     private Boolean isOpen311Active() {

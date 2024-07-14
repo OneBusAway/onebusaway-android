@@ -78,6 +78,9 @@
     <!-- Weather API URL -->
     <string name="weather_api_url">https://onebusaway.co/api/v1/regions/regionID/weather.json</string>
 
+    <!-- Survey API URL -->
+    <string name="survey_api_url">https://onebusaway.co/api/v1/regions/1/surveys.json</string>
+
     <!-- Donate URL -->
     <string name="donate_url">https://onebusaway.org/donate/</string>
 

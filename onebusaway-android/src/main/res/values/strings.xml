@@ -1249,4 +1249,9 @@
     <string name="show">Show</string>
     <string name="preferences_enable_map_3d_mode_title">Enable map 3D mode</string>
     <string name="preferences_enable_map_3d_mode_summary">Include 3D buildings in the map</string>
+    <string name="dismiss_survey">Dismiss survey</string>
+    <string name="onebusaway_survey">OneBusAway Survey</string>
+    <string name="you_can_select_multiple_options_for_this_pool">(You can select multiple options for this pool)</string>
+    <string name="write_your_answer_here">Write your answer here</string>
+    <string name="submit">Submit</string>
 </resources>

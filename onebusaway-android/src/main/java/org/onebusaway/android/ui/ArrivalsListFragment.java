@@ -41,7 +41,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -54,7 +56,11 @@ import androidx.fragment.app.DialogFragment;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -70,10 +76,16 @@ import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.elements.Occupancy;
 import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.io.request.survey.ObaSurveyRequest;
+import org.onebusaway.android.io.request.survey.SurveyRequestListener;
+import org.onebusaway.android.io.request.survey.SurveyRequestTask;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
+import org.onebusaway.android.ui.survey.SurveyUtils;
+import org.onebusaway.android.ui.survey.adapter.SurveyAdapter;
+import org.onebusaway.android.ui.survey.model.StudyResponse;
 import org.onebusaway.android.util.ArrayAdapterWithIcon;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.BuildFlavorUtils;
@@ -94,9 +106,8 @@ import java.util.Set;
 // We don't use the ListFragment because the support library's version of
 // the ListFragment doesn't work well with our header.
 //
-public class ArrivalsListFragment extends ListFragment
-        implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>,
-        ArrivalsListHeader.Controller {
+public class ArrivalsListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>, ArrivalsListHeader.Controller,
+        SurveyRequestListener {
 
     private static final String TAG = "ArrivalsListFragment";
 
@@ -134,6 +145,7 @@ public class ArrivalsListFragment extends ListFragment
     private ArrivalsListHeader mHeader;
 
     private View mHeaderView;
+    private View surveyHeaderView;
 
     private View mFooter;
 
@@ -174,6 +186,8 @@ public class ArrivalsListFragment extends ListFragment
     ObaArrivalInfo[] mArrivalInfo;
 
     private FirebaseAnalytics mFirebaseAnalytics;
+
+    private RecyclerView surveyRecycleView;
 
     public interface Listener {
 
@@ -284,6 +298,7 @@ public class ArrivalsListFragment extends ListFragment
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
 
         initArrivalInfoViews(inflater);
+        initSurveyHeaderView(inflater);
 
         return inflater.inflate(R.layout.fragment_arrivals_list, null);
     }
@@ -344,6 +359,8 @@ public class ArrivalsListFragment extends ListFragment
                 UIUtils.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(),
                         false, false)
         );
+
+        requestSurveyData();
     }
 
     @Override
@@ -1752,4 +1769,138 @@ public class ArrivalsListFragment extends ListFragment
         builder.setNeutralButton(R.string.main_help_close, (dialogInterface, i) -> dialogInterface.dismiss());
         return builder.create();
     }
+
+
+    @Override
+    public void onSurveyResponseReceived(StudyResponse response) {
+        setSurveyData(response);
+    }
+
+    public void requestSurveyData() {
+        ObaSurveyRequest surveyRequest = ObaSurveyRequest.newRequest();
+        SurveyRequestTask task = new SurveyRequestTask(this);
+        task.execute(surveyRequest);
+        Log.d(TAG, "Survey requested");
+    }
+
+    @Override
+    public void onSurveyFail() {
+        Log.d(TAG, "Survey Fail");
+    }
+
+    private void updateData(StudyResponse response) {
+        if (getView() == null || surveyHeaderView == null) return;
+
+        ImageButton closeBtn = surveyHeaderView.findViewById(R.id.close_btn);
+        Button next = surveyHeaderView.findViewById(R.id.nextBtn);
+        closeBtn.setVisibility(View.VISIBLE);
+        next.setVisibility(View.VISIBLE);
+
+        StudyResponse.Surveys.Questions heroQuestion = response.getSurveys().get(0).getQuestions().get(0);
+        String type = heroQuestion.getContent().getType();
+        switch (type) {
+            case "radio":
+                SurveyUtils.showRadioGroupQuestion(getContext(), surveyHeaderView, heroQuestion);
+                break;
+            case "text":
+                SurveyUtils.showTextInputQuestion(getContext(), surveyHeaderView, heroQuestion);
+                break;
+            case "checkbox":
+                SurveyUtils.showCheckBoxQuestion(getContext(), surveyHeaderView, heroQuestion);
+                break;
+            case "label":
+                break;
+        }
+
+    }
+
+
+    private void setSurveyData(StudyResponse studyResponse) {
+        if (getView() == null || studyResponse.getSurveys().isEmpty()) return;
+        updateData(studyResponse);
+        // Add the hero question to the arrival list header
+        getListView().addHeaderView(surveyHeaderView);
+        Button next = getView().findViewById(R.id.nextBtn);
+        List<StudyResponse.Surveys.Questions> surveyQuestions = studyResponse.getSurveys().get(0).getQuestions();
+        // Remove the hero question
+        surveyQuestions.remove(0);
+        next.setOnClickListener(view -> {
+            showAllSurveyQuestions(studyResponse);
+            initSurveyAdapter(surveyQuestions);
+        });
+
+    }
+
+    private void initSurveyAdapter(List<StudyResponse.Surveys.Questions> questions) {
+        SurveyAdapter surveyAdapter = new SurveyAdapter(requireContext(), questions);
+        surveyRecycleView.setAdapter(surveyAdapter);
+    }
+
+    private void showAllSurveyQuestions(StudyResponse response) {
+        BottomSheetDialog bottomSheet = createBottomSheetDialog();
+        setupBottomSheetContent(bottomSheet, response);
+        setupBottomSheetBehavior(bottomSheet);
+        setupCloseButton(bottomSheet);
+        bottomSheet.show();
+    }
+
+    private BottomSheetDialog createBottomSheetDialog() {
+        BottomSheetDialog bottomSheet = new BottomSheetDialog(requireContext());
+        bottomSheet.setContentView(R.layout.survey_questions_view);
+        return bottomSheet;
+    }
+
+    private void setupBottomSheetContent(BottomSheetDialog bottomSheet, StudyResponse response) {
+        if (response == null || response.getSurveys() == null || response.getSurveys().isEmpty()) {
+            return;
+        }
+
+        StudyResponse.Surveys firstSurvey = response.getSurveys().get(0);
+        if (firstSurvey == null || firstSurvey.getStudy() == null) {
+            return;
+        }
+
+        surveyRecycleView = bottomSheet.findViewById(R.id.recycleView);
+        TextView surveyTitle = bottomSheet.findViewById(R.id.surveyTitle);
+        TextView surveyDescription = bottomSheet.findViewById(R.id.surveyDescription);
+
+        if (surveyTitle != null) {
+            surveyTitle.setText(firstSurvey.getStudy().getName());
+        }
+        if (surveyDescription != null) {
+            surveyDescription.setText(firstSurvey.getStudy().getDescription());
+        }
+        if (surveyRecycleView != null) {
+            surveyRecycleView.setLayoutManager(new LinearLayoutManager(getContext()));
+        }
+    }
+
+
+    private void setupBottomSheetBehavior(BottomSheetDialog bottomSheet) {
+        bottomSheet.setOnShowListener(dialog -> {
+            BottomSheetDialog bottomSheetDialog = (BottomSheetDialog) dialog;
+            View parentLayout = bottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (parentLayout != null) {
+                BottomSheetBehavior<?> behavior = BottomSheetBehavior.from(parentLayout);
+                ViewGroup.LayoutParams layoutParams = parentLayout.getLayoutParams();
+                layoutParams.height = WindowManager.LayoutParams.MATCH_PARENT;
+                parentLayout.setLayoutParams(layoutParams);
+                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            }
+        });
+    }
+
+    private void setupCloseButton(BottomSheetDialog bottomSheet) {
+        ImageButton closeBtn = bottomSheet.findViewById(R.id.close_btn);
+        if (closeBtn != null) {
+            closeBtn.setOnClickListener(v -> bottomSheet.dismiss());
+        }
+    }
+
+
+    void initSurveyHeaderView(LayoutInflater inflater) {
+        surveyHeaderView = inflater.inflate(R.layout.item_survey, null);
+    }
+
+
 }

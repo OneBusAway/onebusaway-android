@@ -1,8 +1,8 @@
 package org.onebusaway.android.io.request.survey;
 
-import org.onebusaway.android.ui.survey.model.StudyResponse;
+import org.onebusaway.android.io.request.survey.model.StudyResponse;
 
-public interface SurveyRequestListener {
+public interface StudyRequestListener {
     void onSurveyResponseReceived(StudyResponse response);
     void onSurveyFail();
 }

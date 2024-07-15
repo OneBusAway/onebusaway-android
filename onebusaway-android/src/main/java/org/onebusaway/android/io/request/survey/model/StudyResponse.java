@@ -1,4 +1,4 @@
-package org.onebusaway.android.ui.survey.model;
+package org.onebusaway.android.io.request.survey.model;
 
 import java.io.Serializable;
 import java.lang.Integer;

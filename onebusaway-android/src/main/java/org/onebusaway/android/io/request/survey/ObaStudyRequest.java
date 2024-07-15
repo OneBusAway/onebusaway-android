@@ -7,14 +7,14 @@ import androidx.annotation.NonNull;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.request.RequestBase;
-import org.onebusaway.android.ui.survey.model.StudyResponse;
+import org.onebusaway.android.io.request.survey.model.StudyResponse;
 
 import java.util.concurrent.Callable;
 
 
-public final class ObaSurveyRequest extends RequestBase implements Callable<StudyResponse> {
+public final class ObaStudyRequest extends RequestBase implements Callable<StudyResponse> {
 
-    private ObaSurveyRequest(Uri uri) {
+    private ObaStudyRequest(Uri uri) {
         super(uri);
     }
 
@@ -23,16 +23,16 @@ public final class ObaSurveyRequest extends RequestBase implements Callable<Stud
         private static Uri URI = null;
 
         public Builder() {
-            String weatherAPIURL = Application.get().getResources().getString(R.string.survey_api_url);
-            URI = Uri.parse(weatherAPIURL);
+            String studyAPIURL = Application.get().getResources().getString(R.string.studies_api_url);
+            URI = Uri.parse(studyAPIURL);
         }
 
-        public ObaSurveyRequest build() {
-            return new ObaSurveyRequest(URI);
+        public ObaStudyRequest build() {
+            return new ObaStudyRequest(URI);
         }
     }
 
-    public static ObaSurveyRequest newRequest() {
+    public static ObaStudyRequest newRequest() {
         return new Builder().build();
     }
 

@@ -3,18 +3,18 @@ package org.onebusaway.android.io.request.survey;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import org.onebusaway.android.ui.survey.model.StudyResponse;
+import org.onebusaway.android.io.request.survey.model.StudyResponse;
 
-public class SurveyRequestTask extends AsyncTask<ObaSurveyRequest, Void, StudyResponse> {
+public class StudyRequestTask extends AsyncTask<ObaStudyRequest, Void, StudyResponse> {
     private static final String TAG = "Survey Request";
-    private SurveyRequestListener mListener;
+    private StudyRequestListener mListener;
 
-    public SurveyRequestTask(SurveyRequestListener listener) {
+    public StudyRequestTask(StudyRequestListener listener) {
         mListener = listener;
     }
 
     @Override
-    protected StudyResponse doInBackground(ObaSurveyRequest... requests) {
+    protected StudyResponse doInBackground(ObaStudyRequest... requests) {
         try {
             return requests[0].call();
         } catch (Exception e) {

@@ -76,16 +76,16 @@ import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.elements.Occupancy;
 import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.io.request.survey.ObaSurveyRequest;
-import org.onebusaway.android.io.request.survey.SurveyRequestListener;
-import org.onebusaway.android.io.request.survey.SurveyRequestTask;
+import org.onebusaway.android.io.request.survey.ObaStudyRequest;
+import org.onebusaway.android.io.request.survey.StudyRequestListener;
+import org.onebusaway.android.io.request.survey.StudyRequestTask;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.ui.survey.SurveyUtils;
 import org.onebusaway.android.ui.survey.adapter.SurveyAdapter;
-import org.onebusaway.android.ui.survey.model.StudyResponse;
+import org.onebusaway.android.io.request.survey.model.StudyResponse;
 import org.onebusaway.android.util.ArrayAdapterWithIcon;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.BuildFlavorUtils;
@@ -107,7 +107,7 @@ import java.util.Set;
 // the ListFragment doesn't work well with our header.
 //
 public class ArrivalsListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>, ArrivalsListHeader.Controller,
-        SurveyRequestListener {
+        StudyRequestListener {
 
     private static final String TAG = "ArrivalsListFragment";
 
@@ -1777,8 +1777,8 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
     }
 
     public void requestSurveyData() {
-        ObaSurveyRequest surveyRequest = ObaSurveyRequest.newRequest();
-        SurveyRequestTask task = new SurveyRequestTask(this);
+        ObaStudyRequest surveyRequest = ObaStudyRequest.newRequest();
+        StudyRequestTask task = new StudyRequestTask(this);
         task.execute(surveyRequest);
         Log.d(TAG, "Survey requested");
     }

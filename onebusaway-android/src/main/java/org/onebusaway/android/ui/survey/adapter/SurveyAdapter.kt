@@ -13,7 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.survey.SurveyUtils
-import org.onebusaway.android.ui.survey.model.StudyResponse
+import org.onebusaway.android.io.request.survey.model.StudyResponse
 
 
 class SurveyAdapter(

@@ -16,7 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.ui.survey.model.StudyResponse;
+import org.onebusaway.android.io.request.survey.model.StudyResponse;
 
 import java.util.ArrayList;
 import java.util.List;

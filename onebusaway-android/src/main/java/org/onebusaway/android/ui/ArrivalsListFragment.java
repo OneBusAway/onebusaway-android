@@ -93,6 +93,7 @@ import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.ui.survey.QuestionType;
 import org.onebusaway.android.ui.survey.SurveyLocalData;
+import org.onebusaway.android.ui.survey.SurveyManager;
 import org.onebusaway.android.ui.survey.SurveyUtils;
 import org.onebusaway.android.ui.survey.adapter.SurveyAdapter;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
@@ -197,16 +198,8 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
 
     private FirebaseAnalytics mFirebaseAnalytics;
 
-    private RecyclerView surveyRecycleView;
-    private Button submitSurveyButton;
+    private SurveyManager surveyManager;
 
-    private String updateSurveyPath;
-
-    private StudyResponse mStudyResponse;
-    private Integer curSurveyID;
-    private Integer curSurveyIndex = 0;
-
-    private BottomSheetDialog surveyBottomSheet;
 
     public interface Listener {
 
@@ -317,8 +310,9 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
 
         initArrivalInfoViews(inflater);
-        initSurveyHeaderView(inflater);
 
+        surveyManager = new SurveyManager(requireContext(),this,this);
+        surveyManager.initSurveyArrivalsHeaderView(inflater);
         return inflater.inflate(R.layout.fragment_arrivals_list, null);
     }
 
@@ -378,7 +372,9 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
                 UIUtils.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(),
                         false, false)
         );
-        requestSurveyData();
+
+        surveyManager.initSurveyArrivalsList(getListView());
+        surveyManager.requestSurveyData();
     }
 
     @Override
@@ -1788,207 +1784,25 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         return builder.create();
     }
 
-
-    public void requestSurveyData() {
-        ObaStudyRequest surveyRequest = ObaStudyRequest.newRequest();
-        StudyRequestTask task = new StudyRequestTask(this);
-        task.execute(surveyRequest);
-        Log.d(TAG, "Survey requested");
-    }
-
     @Override
     public void onSurveyResponseReceived(StudyResponse response) {
-        if(response == null) return;
-        mStudyResponse = response;
-        curSurveyIndex = SurveyUtils.getCurrentSurveyIndex(response,requireActivity());
-        if(curSurveyIndex == -1) return;
-        Log.d("CurSurveyIndex",curSurveyIndex + " ");
-        curSurveyID = mStudyResponse.getSurveys().get(curSurveyIndex).getId();
-        setSurveyData();
+        surveyManager.onSurveyResponseReceived(response);
+
     }
+
     @Override
     public void onSurveyFail() {
-        Log.d(TAG, "Survey Fail");
+        surveyManager.onSurveyFail();
     }
 
-    private void updateData() {
-        if(mStudyResponse.getSurveys().get(curSurveyIndex).getQuestions().isEmpty()) {
-            // No hero question remove the header.
-            getListView().removeHeaderView(surveyHeaderView);
-            return;
-        }
-        ImageButton closeBtn = surveyHeaderView.findViewById(R.id.close_btn);
-        Button next = surveyHeaderView.findViewById(R.id.nextBtn);
-
-        closeBtn.setVisibility(View.VISIBLE);
-        next.setVisibility(View.VISIBLE);
-
-        handleNextButton();
-
-        StudyResponse.Surveys.Questions heroQuestion = mStudyResponse.getSurveys().get(curSurveyIndex).getQuestions().get(0);
-        String questionType = heroQuestion.getContent().getType();
-
-        switch (questionType) {
-            case "radio":
-                SurveyUtils.showRadioGroupQuestion(getContext(), surveyHeaderView.getRootView(), heroQuestion);
-                break;
-            case "text":
-                SurveyUtils.showTextInputQuestion(getContext(), surveyHeaderView.getRootView(), heroQuestion);
-                break;
-            case "checkbox":
-                SurveyUtils.showCheckBoxQuestion(getContext(), surveyHeaderView.getRootView(), heroQuestion);
-                break;
-            case "label":
-                break;
-        }
-
-    }
-
-
-    private void setSurveyData() {
-        if (mStudyResponse == null || getView() == null || mStudyResponse.getSurveys().isEmpty() || curSurveyIndex == -1) return;
-        // Add survey to arrivals list header
-        getListView().addHeaderView(surveyHeaderView);
-        updateData();
-    }
-
-    private void handleNextButton(){
-        Button next = getView().findViewById(R.id.nextBtn);
-        next.setOnClickListener(view -> {
-            submitSurveyAnswers(mStudyResponse.getSurveys().get(curSurveyIndex),true);
-        });
-    }
-
-    private void handleSubmitSurveyButton(){
-        submitSurveyButton.setOnClickListener(view -> submitSurveyAnswers(mStudyResponse.getSurveys().get(curSurveyIndex),false));
-    }
-
-    private void initSurveyAdapter() {
-        List<StudyResponse.Surveys.Questions> surveyQuestions = mStudyResponse.getSurveys().get(curSurveyIndex).getQuestions();
-        // Remove the hero question
-        surveyQuestions.remove(0);
-        SurveyAdapter surveyAdapter = new SurveyAdapter(requireContext(), surveyQuestions);
-        surveyRecycleView.setAdapter(surveyAdapter);
-    }
-
-    private void showAllSurveyQuestions(StudyResponse response) {
-        surveyBottomSheet = createBottomSheetDialog();
-        initSurveyQuestionsBottomSheet(surveyBottomSheet, response);
-        setupBottomSheetBehavior(surveyBottomSheet);
-        setupBottomSheetCloseButton(surveyBottomSheet);
-        handleSubmitSurveyButton();
-        surveyBottomSheet.show();
-    }
-
-    private BottomSheetDialog createBottomSheetDialog() {
-        BottomSheetDialog bottomSheet = new BottomSheetDialog(requireContext());
-        bottomSheet.setContentView(R.layout.survey_questions_view);
-        return bottomSheet;
-    }
-
-    private void initSurveyQuestionsBottomSheet(BottomSheetDialog bottomSheet, StudyResponse response) {
-        if (response == null || response.getSurveys() == null || response.getSurveys().isEmpty()) {
-            return;
-        }
-        StudyResponse.Surveys firstSurvey = response.getSurveys().get(curSurveyIndex);
-        if (firstSurvey == null || firstSurvey.getStudy() == null) {
-            return;
-        }
-
-        surveyRecycleView = bottomSheet.findViewById(R.id.recycleView);
-        submitSurveyButton = bottomSheet.findViewById(R.id.submit_btn);
-        TextView surveyTitle = bottomSheet.findViewById(R.id.surveyTitle);
-        TextView surveyDescription = bottomSheet.findViewById(R.id.surveyDescription);
-
-        if (surveyTitle != null) {
-            surveyTitle.setText(firstSurvey.getStudy().getName());
-        }
-        if (surveyDescription != null) {
-            surveyDescription.setText(firstSurvey.getStudy().getDescription());
-        }
-        if (surveyRecycleView != null) {
-            surveyRecycleView.setLayoutManager(new LinearLayoutManager(getContext()));
-        }
-    }
-
-
-    private void setupBottomSheetBehavior(BottomSheetDialog bottomSheet) {
-        bottomSheet.setOnShowListener(dialog -> {
-            BottomSheetDialog bottomSheetDialog = (BottomSheetDialog) dialog;
-            View parentLayout = bottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
-            if (parentLayout != null) {
-                BottomSheetBehavior<?> behavior = BottomSheetBehavior.from(parentLayout);
-                ViewGroup.LayoutParams layoutParams = parentLayout.getLayoutParams();
-                layoutParams.height = WindowManager.LayoutParams.MATCH_PARENT;
-                parentLayout.setLayoutParams(layoutParams);
-                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-            }
-        });
-    }
-
-
-
-    private void setupBottomSheetCloseButton(BottomSheetDialog bottomSheet) {
-        ImageButton closeBtn = bottomSheet.findViewById(R.id.close_btn);
-        if (closeBtn != null) {
-            closeBtn.setOnClickListener(v -> bottomSheet.dismiss());
-        }
-    }
-
-    void initSurveyHeaderView(LayoutInflater inflater) {
-        surveyHeaderView = inflater.inflate(R.layout.item_survey, null);
-    }
-
-    public void submitSurveyAnswers(StudyResponse.Surveys survey, boolean heroQuestion){
-        String userIdentifier = SurveyUtils.getUserUUID(requireContext());
-        String apiUrl = getString(R.string.submit_survey_api_url);
-        if(!heroQuestion && updateSurveyPath != null){
-            apiUrl += updateSurveyPath;
-        }
-        JSONArray surveyResponseBody;
-        if(heroQuestion){
-            surveyResponseBody = (SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions().get(0),surveyHeaderView.getRootView()));
-        }else{
-            surveyResponseBody = (SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions()));
-        }
-        if(surveyResponseBody == null){
-            Toast.makeText(requireContext(),"Please fill all the questions",Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-
-        Log.d("SurveyResponseBody",surveyResponseBody.toString());
-        mRefreshProgressContainer.setVisibility(View.VISIBLE);
-        ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(requireContext(),apiUrl)
-                .setUserIdentifier(userIdentifier)
-                .setSurveyId(survey.getId())
-                .setResponses(surveyResponseBody)
-                .setListener(this)
-                .build();
-
-        new Thread(request::call).start();
-    }
     @Override
     public void onSubmitSurveyResponseReceived(SubmitSurveyResponse response) {
-        requireActivity().runOnUiThread(() ->{
-            mRefreshProgressContainer.setVisibility(View.GONE);
-            if(updateSurveyPath != null){
-                surveyBottomSheet.hide();
-                Toast.makeText(requireContext(),"Submitted Successfully",Toast.LENGTH_LONG).show();
-                return;
-        }
-        SurveyUtils.markSurveyAsDone(requireContext(), String.valueOf(curSurveyID));
-        updateSurveyPath = response.getSurveyResponse().getId();
-            showAllSurveyQuestions(mStudyResponse);
-            initSurveyAdapter();
-            // Remove the hero question
-            getListView().removeHeaderView(surveyHeaderView);
-        });
+        surveyManager.onSubmitSurveyResponseReceived(response);
     }
 
     @Override
     public void onSubmitSurveyFail() {
-        requireActivity().runOnUiThread(() -> mRefreshProgressContainer.setVisibility(View.GONE));
-        Log.e("SubmitSurveyFail",curSurveyID + "");
+        surveyManager.onSubmitSurveyFail();
     }
+
 }

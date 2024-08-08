@@ -15,13 +15,11 @@ import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.RecyclerView
-import com.google.api.Distribution.BucketOptions.Linear
-import kotlinx.android.synthetic.main.item_survey.view.radioGroup
 import org.onebusaway.android.R
-import org.onebusaway.android.ui.survey.SurveyUtils
 import org.onebusaway.android.io.request.survey.model.StudyResponse
+import org.onebusaway.android.ui.survey.SurveyUtils
+import org.onebusaway.android.ui.survey.SurveyViewUtils
 
 
 class SurveyAdapter(
@@ -62,7 +60,7 @@ class SurveyAdapter(
             )
             when (surveyQuestion.content.type) {
                 "text" -> {
-                    SurveyUtils.showTextInputQuestion(context, itemView, surveyQuestion)
+                    SurveyViewUtils.showTextInputQuestion(itemView, surveyQuestion)
                     setVisibility(
                         editText,
                         radioGroup,
@@ -75,7 +73,7 @@ class SurveyAdapter(
 
                 "radio" -> {
                     Log.d("Radio", adapterPosition.toString());
-                    SurveyUtils.showRadioGroupQuestion(context, itemView, surveyQuestion)
+                    SurveyViewUtils.showRadioGroupQuestion(context, itemView, surveyQuestion)
                     setVisibility(
                         editText,
                         radioGroup,
@@ -87,7 +85,7 @@ class SurveyAdapter(
                 }
 
                 "checkbox" -> {
-                    SurveyUtils.showCheckBoxQuestion(context, itemView, surveyQuestion)
+                    SurveyViewUtils.showCheckBoxQuestion(context, itemView, surveyQuestion)
                     setVisibility(
                         editText,
                         radioGroup,

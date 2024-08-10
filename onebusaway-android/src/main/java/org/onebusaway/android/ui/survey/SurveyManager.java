@@ -50,6 +50,8 @@ public class SurveyManager {
     private BottomSheetDialog surveyBottomSheet;
     private final Boolean fromArrivalsList;
 
+    // TODO CHANGE STATIC API URL TO SUPPORT DIFFERENT REGIONS
+
 
     public SurveyManager(Context context,Boolean fromArrivalsList ,StudyRequestListener studyRequestListener, SubmitSurveyRequestListener submitSurveyRequestListener) {
         this.context = context;

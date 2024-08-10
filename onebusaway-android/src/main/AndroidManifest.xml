@@ -47,7 +47,8 @@ To enable checkBatteryOptimizations feature, also uncomment checkBatteryOptimiza
         android:requestLegacyExternalStorage="true"
         android:theme="@style/Theme.OneBusAway">
         <activity
-            android:name=".ui.survey.activites.SurveyWebViewActivity"
+            android:theme="@style/Theme.OneBusAway.NoActionBar"
+            android:name=".ui.survey.activities.SurveyWebViewActivity"
             android:exported="false" />
 
         <meta-data

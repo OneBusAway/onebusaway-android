@@ -18,8 +18,8 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import org.onebusaway.android.R
 import org.onebusaway.android.io.request.survey.model.StudyResponse
-import org.onebusaway.android.ui.survey.SurveyUtils
-import org.onebusaway.android.ui.survey.SurveyViewUtils
+import org.onebusaway.android.ui.survey.Utils.SurveyUtils
+import org.onebusaway.android.ui.survey.Utils.SurveyViewUtils
 
 
 class SurveyAdapter(
@@ -59,7 +59,7 @@ class SurveyAdapter(
                 )
             )
             when (surveyQuestion.content.type) {
-                "text" -> {
+                SurveyUtils.TEXT_QUESTION -> {
                     SurveyViewUtils.showTextInputQuestion(itemView, surveyQuestion)
                     setVisibility(
                         editText,
@@ -71,7 +71,7 @@ class SurveyAdapter(
                     )
                 }
 
-                "radio" -> {
+                SurveyUtils.RADIO_BUTTON_QUESTION -> {
                     Log.d("Radio", adapterPosition.toString());
                     SurveyViewUtils.showRadioGroupQuestion(context, itemView, surveyQuestion)
                     setVisibility(
@@ -84,7 +84,7 @@ class SurveyAdapter(
                     )
                 }
 
-                "checkbox" -> {
+                SurveyUtils.CHECK_BOX_QUESTION -> {
                     SurveyViewUtils.showCheckBoxQuestion(context, itemView, surveyQuestion)
                     setVisibility(
                         editText,
@@ -96,7 +96,7 @@ class SurveyAdapter(
                     )
                 }
 
-                "label" -> {
+                SurveyUtils.LABEL -> {
                     surveyCard.setCardBackgroundColor(
                         ContextCompat.getColor(
                             context,
@@ -127,11 +127,10 @@ class SurveyAdapter(
     ) {
 
         when (type) {
-            "text" -> {
+            SurveyUtils.TEXT_QUESTION -> {
                 textLabel.addTextChangedListener(object : TextWatcher {
                     override fun afterTextChanged(s: Editable?) {
                         saveQuestionAnswer(position, itemView)
-                        Log.e("position", position.toString() + " " + "label")
                     }
 
                     override fun beforeTextChanged(
@@ -152,14 +151,14 @@ class SurveyAdapter(
                 })
             }
 
-            "radio" -> {
+            SurveyUtils.RADIO_BUTTON_QUESTION -> {
                 radioGroup.setOnCheckedChangeListener { _, _ ->
                     Log.e("position", position.toString() + " " + "radio")
                     saveQuestionAnswer(position, itemView)
                 }
             }
 
-            "checkbox" -> {
+            SurveyUtils.CHECK_BOX_QUESTION-> {
                 for (i in 0 until checkBoxContainer.childCount) {
                     val checkBox = checkBoxContainer.getChildAt(i) as CheckBox
                     checkBox.setOnCheckedChangeListener { _, _ ->
@@ -177,18 +176,18 @@ class SurveyAdapter(
 
     private fun saveQuestionAnswer(position: Int, holder: View) {
         val questionType = surveyQuestions[position].content.type
-        Log.d("QuestionClicked", "test");
+        Log.d("Survey Adapter", "Question Clicked");
         when (questionType) {
-            "text" -> {
+            SurveyUtils.TEXT_QUESTION -> {
                 surveyQuestions[position].questionAnswer = SurveyUtils.getTextInputAnswer(holder)
             }
 
-            "radio" -> {
+            SurveyUtils.RADIO_BUTTON_QUESTION -> {
                 surveyQuestions[position].questionAnswer =
                     SurveyUtils.getSelectedRadioButtonAnswer(holder)
             }
 
-            "checkbox" -> {
+            SurveyUtils.CHECK_BOX_QUESTION -> {
                 surveyQuestions[position].multipleAnswer =
                     SurveyUtils.getSelectedCheckBoxAnswer(holder)
             }

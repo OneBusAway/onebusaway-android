@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    android:id="@+id/container"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
 
     <androidx.cardview.widget.CardView
@@ -28,9 +27,24 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            <Button
+                android:id="@+id/openExternalSurveyBtn"
+                android:layout_width="90dp"
+                android:layout_height="35dp"
+                android:paddingStart="16dp"
+                android:visibility="gone"
+                android:paddingEnd="16dp"
+                android:drawableStart="@drawable/baseline_open_in_new_24"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/round_custom_button"
+                android:text="@string/go"
+                android:textColor="@android:color/white"
+                app:layout_constraintBottom_toBottomOf="@+id/survey_question_tv"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/survey_question_tv" />
+
             <ImageButton
                 android:id="@+id/close_btn"
-                android:visibility="gone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -38,6 +52,7 @@
                 android:background="@null"
                 android:contentDescription="@string/dismiss_survey"
                 android:src="@drawable/ic_close"
+                android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -54,7 +69,7 @@
                 android:textColor="@color/quantum_black_text"
                 android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/close_btn"
+                app:layout_constraintEnd_toStartOf="@+id/openExternalSurveyBtn"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -86,8 +101,8 @@
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="8dp"
                 android:hint="@string/write_your_answer_here"
-                android:inputType="text"
                 android:importantForAutofill="no"
+                android:inputType="text"
                 android:visibility="gone"
                 app:layout_constraintBottom_toTopOf="@+id/nextBtn"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -137,8 +152,8 @@
                 android:background="@drawable/round_custom_button"
                 android:text="@string/pager_button_next"
                 android:textAllCaps="false"
-                android:visibility="gone"
                 android:textColor="@android:color/white"
+                android:visibility="gone"
                 app:cornerRadius="20dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"

@@ -1,4 +1,4 @@
-package org.onebusaway.android.ui.survey.activites
+package org.onebusaway.android.ui.survey.activities
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -60,7 +60,7 @@ class SurveyWebViewActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
-                onBackPressed()
+                finish()
                 true
             }
             else -> super.onOptionsItemSelected(item)

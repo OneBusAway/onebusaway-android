@@ -41,11 +41,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -58,16 +54,9 @@ import androidx.fragment.app.DialogFragment;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -81,21 +70,14 @@ import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.elements.Occupancy;
 import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.io.request.survey.ObaStudyRequest;
 import org.onebusaway.android.io.request.survey.StudyRequestListener;
-import org.onebusaway.android.io.request.survey.StudyRequestTask;
 import org.onebusaway.android.io.request.survey.model.SubmitSurveyResponse;
-import org.onebusaway.android.io.request.survey.submit.ObaSubmitSurveyRequest;
 import org.onebusaway.android.io.request.survey.submit.SubmitSurveyRequestListener;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
-import org.onebusaway.android.ui.survey.QuestionType;
-import org.onebusaway.android.ui.survey.SurveyLocalData;
 import org.onebusaway.android.ui.survey.SurveyManager;
-import org.onebusaway.android.ui.survey.SurveyUtils;
-import org.onebusaway.android.ui.survey.adapter.SurveyAdapter;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
 import org.onebusaway.android.util.ArrayAdapterWithIcon;
 import org.onebusaway.android.util.ArrivalInfoUtils;
@@ -311,7 +293,7 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
 
         initArrivalInfoViews(inflater);
 
-        surveyManager = new SurveyManager(requireContext(),this,this);
+        surveyManager = new SurveyManager(requireContext(),true,this,this);
         surveyManager.initSurveyArrivalsHeaderView(inflater);
         return inflater.inflate(R.layout.fragment_arrivals_list, null);
     }
@@ -1787,7 +1769,6 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
     @Override
     public void onSurveyResponseReceived(StudyResponse response) {
         surveyManager.onSurveyResponseReceived(response);
-
     }
 
     @Override

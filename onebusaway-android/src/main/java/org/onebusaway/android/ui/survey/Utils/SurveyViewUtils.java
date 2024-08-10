@@ -1,4 +1,4 @@
-package org.onebusaway.android.ui.survey;
+package org.onebusaway.android.ui.survey.Utils;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
@@ -26,33 +26,51 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
 
 public class SurveyViewUtils {
-    public static void showButtons(View surveyHeaderView) {
-        ImageButton closeBtn = surveyHeaderView.findViewById(R.id.close_btn);
-        Button next = surveyHeaderView.findViewById(R.id.nextBtn);
-        closeBtn.setVisibility(View.VISIBLE);
+
+    public static void showHeroQuestionButtons(View surveyView) {
+        showCloseBtn(surveyView);
+        Button next = surveyView.findViewById(R.id.nextBtn);
         next.setVisibility(View.VISIBLE);
+    }
+    public static void showExternalSurveyButtons(View surveyView) {
+        showCloseBtn(surveyView);
+        Button openExternalSurveyBtn = surveyView.findViewById(R.id.openExternalSurveyBtn);
+        openExternalSurveyBtn.setVisibility(View.VISIBLE);
+    }
+
+    public static void showCloseBtn(View surveyView) {
+        ImageButton closeBtn = surveyView.findViewById(R.id.close_btn);
+        closeBtn.setVisibility(View.VISIBLE);
     }
 
     public static void showQuestion(Context context, View rootView, StudyResponse.Surveys.Questions heroQuestion, String questionType) {
         switch (questionType) {
-            case "radio":
+            case SurveyUtils.RADIO_BUTTON_QUESTION:
                 showRadioGroupQuestion(context, rootView, heroQuestion);
                 break;
-            case "text":
+            case SurveyUtils.TEXT_QUESTION:
                 showTextInputQuestion(rootView, heroQuestion);
                 break;
-            case "checkbox":
+            case SurveyUtils.CHECK_BOX_QUESTION:
                 showCheckBoxQuestion(context, rootView, heroQuestion);
                 break;
-            case "label":
+            case SurveyUtils.EXTERNAL_SURVEY:
+                showExternalSurveyView(rootView,heroQuestion);
+                break;
+            case SurveyUtils.LABEL:
                 break;
         }
+    }
+
+    private static void showExternalSurveyView(View rootView, StudyResponse.Surveys.Questions heroQuestion) {
+        TextView surveyTitle = rootView.findViewById(R.id.survey_question_tv);
+        surveyTitle.setText(heroQuestion.getContent().getLabel_text());
     }
 
     public static void setupBottomSheetBehavior(BottomSheetDialog bottomSheet) {
         bottomSheet.setOnShowListener(dialog -> {
             BottomSheetDialog bottomSheetDialog = (BottomSheetDialog) dialog;
-            View parentLayout = bottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            View parentLayout = bottomSheetDialog.findViewById(R.id.design_bottom_sheet);
             if (parentLayout != null) {
                 BottomSheetBehavior<?> behavior = BottomSheetBehavior.from(parentLayout);
                 ViewGroup.LayoutParams layoutParams = parentLayout.getLayoutParams();

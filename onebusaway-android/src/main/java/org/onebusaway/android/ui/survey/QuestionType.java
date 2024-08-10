@@ -1,5 +1,5 @@
 package org.onebusaway.android.ui.survey;
 
 public enum QuestionType {
-    radio, text, checkbox, label
+    radio, text, checkbox, label,external_survey
 }

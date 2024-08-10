@@ -73,6 +73,11 @@ public class SurveyUtils {
         return editText.getText().toString().trim();
     }
 
+    /**
+     * @param studyResponse
+     * @param context
+     * @return Current survey index zero based
+     */
     public static Integer getCurrentSurveyIndex(StudyResponse studyResponse, Context context) {
         HashMap<String, Boolean> doneSurvey = SurveyLocalData.getAnsweredSurveys(context);
         List<StudyResponse.Surveys> surveys = studyResponse.getSurveys();
@@ -91,6 +96,13 @@ public class SurveyUtils {
         // Save to the local storage
         SurveyLocalData.setAnsweredSurveys(context, doneSurvey);
     }
+
+    /**
+     * Extract answers from a question view
+     * @param questions
+     * @param questionView
+     * @return JSON array as a request body
+     */
 
     public static JSONArray getSurveyAnswersRequestBody(StudyResponse.Surveys.Questions questions, View questionView) {
         JSONArray requestBody = new JSONArray();
@@ -139,15 +151,20 @@ public class SurveyUtils {
         return requestBody;
     }
 
+    /**
+     * @param questionsList
+     * @return true if all questions are answered
+     */
+
     public static Boolean checkAllQuestionsAnswered(List<StudyResponse.Surveys.Questions> questionsList) {
         for (StudyResponse.Surveys.Questions question : questionsList) {
             String questionType = question.getContent().getType();
             switch (questionType) {
-                case "checkbox":
+                case CHECK_BOX_QUESTION:
                     if (question.getMultipleAnswer() == null) return false;
                     break;
-                case "text":
-                case "radio":
+                case TEXT_QUESTION:
+                case RADIO_BUTTON_QUESTION:
                     if (question.getQuestionAnswer() == null || question.getQuestionAnswer().isEmpty())
                         return false;
                     break;
@@ -158,11 +175,11 @@ public class SurveyUtils {
 
     private static String getHeroQuestionAnswers(String type, View view) {
         switch (type) {
-            case "radio":
+            case RADIO_BUTTON_QUESTION:
                 return SurveyUtils.getSelectedRadioButtonAnswer(view);
-            case "text":
+            case TEXT_QUESTION:
                 return SurveyUtils.getTextInputAnswer(view);
-            case "checkbox":
+            case CHECK_BOX_QUESTION:
                 return SurveyUtils.getSelectedCheckBoxAnswer(view).toString();
         }
         return "";

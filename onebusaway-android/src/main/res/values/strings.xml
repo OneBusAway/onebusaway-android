@@ -1253,4 +1253,7 @@
     <string name="you_can_select_multiple_options_for_this_pool">(You can select multiple options for this pool)</string>
     <string name="write_your_answer_here">Write your answer here</string>
     <string name="submit">Submit</string>
+    <string name="go">GO !</string>
+    <string name="submitted_successfully">Submitted Successfully</string>
+    <string name="please_fill_all_the_questions">Please fill all the questions</string>
 </resources>

@@ -180,7 +180,7 @@ public class SurveyUtils {
                 String questionAnswer = question.getQuestionAnswer();
 
                 // Skip "label" type questions as they don't require an answer
-                if ("label".equals(questionType)) {
+                if (questionType.equals("label")) {
                     continue;
                 }
 
@@ -191,7 +191,7 @@ public class SurveyUtils {
                 data.put("question_label", question.getContent().getLabel_text());
 
                 // Handle multiple answers for "checkbox" type questions
-                if ("checkbox".equals(questionType)) {
+                if (questionType.equals("checkbox")) {
                     questionAnswer = question.getMultipleAnswer().toString();
                 }
 

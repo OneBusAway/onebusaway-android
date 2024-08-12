@@ -252,7 +252,7 @@ public class SurveyUtils {
                 return SurveyUtils.getSelectedCheckBoxAnswer(view).toString();
 
             default:
-                Log.w("UnknownQuestionType", "Unrecognized question type: " + type);
+                Log.d("UnknownQuestionType", "Unrecognized question type: " + type);
                 return "";
         }
     }

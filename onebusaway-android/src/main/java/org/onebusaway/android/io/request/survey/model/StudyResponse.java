@@ -37,6 +37,14 @@ public class StudyResponse implements Serializable {
 
         private Integer id;
 
+        private Boolean show_on_map;
+
+        private Boolean show_on_stops;
+
+        private List<String> visible_stop_list;
+
+        private List<String> visible_route_list;
+
         public Study getStudy() {
             return this.study;
         }
@@ -69,6 +77,22 @@ public class StudyResponse implements Serializable {
 
         public void setId(Integer id) {
             this.id = id;
+        }
+
+        public Boolean getShow_on_map() {
+            return show_on_map;
+        }
+
+        public Boolean getShow_on_stops() {
+            return show_on_stops;
+        }
+
+        public List<String> getVisible_stop_list() {
+            return visible_stop_list;
+        }
+
+        public List<String> getVisible_route_list() {
+            return visible_route_list;
         }
 
         public static class Study implements Serializable {

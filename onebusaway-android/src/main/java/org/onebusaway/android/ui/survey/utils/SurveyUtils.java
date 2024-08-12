@@ -92,20 +92,20 @@ public class SurveyUtils {
             Boolean showQuestionOnMaps = surveys.get(index).getShow_on_map();
 
             // Skip this survey if it shouldn't be shown on either map or stops
-            if (!showQuestionOnStops && !showQuestionOnMaps) {
+            if (Boolean.FALSE.equals(showQuestionOnStops) && Boolean.FALSE.equals(showQuestionOnMaps)) {
                 continue;
             }
 
             if (isVisibleOnStop) {
                 // Skip if the survey is not meant for stops
-                if (!showQuestionOnStops) continue;
+                if (Boolean.FALSE.equals(showQuestionOnStops)) continue;
             } else {
                 // Skip if the survey is not meant for maps
-                if (!showQuestionOnMaps) continue;
+                if (Boolean.FALSE.equals(showQuestionOnMaps)) continue;
             }
 
             // Return the index if the survey is uncompleted
-            if (completedSurveysMap.get(surveys.get(index).getId().toString()) == null) {
+            if (!Boolean.TRUE.equals(completedSurveysMap.get(surveys.get(index).getId().toString()))) {
                 return index;
             }
         }

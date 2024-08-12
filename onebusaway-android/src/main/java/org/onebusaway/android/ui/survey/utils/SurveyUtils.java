@@ -207,12 +207,6 @@ public class SurveyUtils {
         return requestBody;
     }
 
-
-    /**
-     * @param questionsList
-     * @return true if all questions are answered
-     */
-
     /**
      * Checks if all survey questions in the list have been answered.
      *

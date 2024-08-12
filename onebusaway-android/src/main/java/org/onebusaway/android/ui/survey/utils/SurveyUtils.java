@@ -134,7 +134,7 @@ public class SurveyUtils {
         String questionAnswer = getHeroQuestionAnswers(questions.getContent().getType(), questionView);
 
         // If the answer is empty or invalid, return null
-        if (questionAnswer.isEmpty() || "[]".equals(questionAnswer)) {
+        if (questionAnswer.isEmpty() || questionAnswer.equals("[]")) {
             return null;
         }
 

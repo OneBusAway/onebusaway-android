@@ -1,4 +1,4 @@
-package org.onebusaway.android.ui.survey.Utils;
+package org.onebusaway.android.ui.survey.utils;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;

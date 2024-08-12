@@ -40,20 +40,21 @@ public class SurveyManager {
     private final StudyRequestListener studyRequestListener;
     private final SubmitSurveyRequestListener submitSurveyRequestListener;
     private StudyResponse mStudyResponse;
+    // Holds the current survey index, determined by the survey location (stops, supported routes/stops, map)
     private int curSurveyIndex = 0;
     private Integer curSurveyID;
     private View surveyView;
     private RecyclerView surveyRecycleView;
     private Button submitSurveyButton;
+    // Stores the update path after the hero question is submitted
     private String updateSurveyPath;
     private ListView arrivalsList;
     private BottomSheetDialog surveyBottomSheet;
+    // true if from arrivals list false if survey in the map
     private final Boolean fromArrivalsList;
 
     // TODO CHANGE STATIC API URL TO SUPPORT DIFFERENT REGIONS
-
-
-    public SurveyManager(Context context,Boolean fromArrivalsList ,StudyRequestListener studyRequestListener, SubmitSurveyRequestListener submitSurveyRequestListener) {
+    public SurveyManager(Context context, Boolean fromArrivalsList, StudyRequestListener studyRequestListener, SubmitSurveyRequestListener submitSurveyRequestListener) {
         this.context = context;
         this.studyRequestListener = studyRequestListener;
         this.submitSurveyRequestListener = submitSurveyRequestListener;
@@ -104,7 +105,9 @@ public class SurveyManager {
 
     private void setSurveyData() {
         if (!checkValidResponse() || curSurveyIndex == -1) return;
-        arrivalsList.addHeaderView(surveyView);
+        if (fromArrivalsList){
+            arrivalsList.addHeaderView(surveyView);
+        }
         updateSurveyData();
     }
 
@@ -121,6 +124,7 @@ public class SurveyManager {
         } else {
             surveyResponseBody = (SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions()));
         }
+        // Empty questions
         if (surveyResponseBody == null) {
             Toast.makeText(context, context.getString(R.string.please_fill_all_the_questions), Toast.LENGTH_SHORT).show();
             return;
@@ -151,15 +155,15 @@ public class SurveyManager {
 
     private void showExternalSurveyDialog(String url) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        // TODO remove external survey dialog
         builder.setTitle("OneBusAway Survey");
         builder.setMessage("Are you sure you want to proceed? we will share this information \n BLA BLA BLA BLA BLA");
 
         builder.setPositiveButton("GO !", (dialog, which) -> {
-            // TODO Mark survey done here
             handleDoneSurvey();
-            Intent i = new Intent(context, SurveyWebViewActivity.class);
-            i.putExtra("url", url);
-            context.startActivity(i);
+            Intent intent = new Intent(context, SurveyWebViewActivity.class);
+            intent.putExtra("url", url);
+            context.startActivity(intent);
         });
 
         builder.setNegativeButton("CANCEL", (dialog, which) -> {
@@ -263,16 +267,19 @@ public class SurveyManager {
     }
 
     public void onSubmitSurveyResponseReceived(SubmitSurveyResponse response) {
+        // Switch back to the main thread to update UI elements
         ContextCompat.getMainExecutor(context).execute(() -> {
             if (updateSurveyPath != null) {
                 surveyBottomSheet.hide();
                 Toast.makeText(context, R.string.submitted_successfully, Toast.LENGTH_LONG).show();
                 return;
             }
+            // Mark survey as done
             handleDoneSurvey();
             // Don't show survey question bottom sheet if we don't have another questions
             if (haveOnlyHeroQuestion()) return;
             updateSurveyPath = response.getSurveyResponse().getId();
+            // Display the bottom sheet containing survey questions
             showAllSurveyQuestions();
             initSurveyAdapter(context, surveyRecycleView);
         });
@@ -281,7 +288,6 @@ public class SurveyManager {
     /**
      * Mark current survey as done
      */
-
     public void handleDoneSurvey() {
         SurveyUtils.markSurveyAsDone(context, String.valueOf(curSurveyID));
         // Remove the hero question view
@@ -289,6 +295,6 @@ public class SurveyManager {
     }
 
     public void onSubmitSurveyFail() {
-        Log.e("SubmitSurveyFail", curSurveyID + "");
+        Log.d("SubmitSurveyFail", curSurveyID + "");
     }
 }

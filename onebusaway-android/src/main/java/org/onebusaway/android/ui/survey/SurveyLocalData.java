@@ -15,9 +15,13 @@ public class SurveyLocalData {
     private static final String UUID_KEY = "my_uuid";
 
     /**
-       Save the answered surveys to SharedPreferences as hash map [survey_id, boolean]
+     * Saves the answered surveys to SharedPreferences.
+     * The HashMap contains survey IDs as keys and their completion status as boolean values.
+     *
+     * @param context The context used to access SharedPreferences.
+     * @param hashMap A HashMap where the keys are survey IDs and the values are booleans indicating completion status.
      */
-    public static void setAnsweredSurveys(Context context, HashMap<String, Boolean> hashMap) {
+    public static void setCompletedSurveys(Context context, HashMap<String, Boolean> hashMap) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         JSONObject jsonObject = new JSONObject(hashMap);
@@ -27,9 +31,13 @@ public class SurveyLocalData {
     }
 
     /**
-     * Get the answered surveys from SharedPreferences as a HashMap [survey_id, boolean]
+     * Retrieves the answered surveys from SharedPreferences as a HashMap.
+     * The map contains survey IDs as keys and their completion status as boolean values.
+     *
+     * @param context The context used to access SharedPreferences.
+     * @return A HashMap where the keys are survey IDs and the values are booleans indicating completion status.
      */
-    public static HashMap<String, Boolean> getAnsweredSurveys(Context context) {
+    public static HashMap<String, Boolean> getCompletedSurveys(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         String jsonString = prefs.getString(HASH_MAP_KEY, "{}");
         HashMap<String, Boolean> hashMap = new HashMap<>();

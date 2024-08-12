@@ -27,8 +27,8 @@ import org.onebusaway.android.io.request.survey.model.StudyResponse;
 import org.onebusaway.android.io.request.survey.model.SubmitSurveyResponse;
 import org.onebusaway.android.io.request.survey.submit.ObaSubmitSurveyRequest;
 import org.onebusaway.android.io.request.survey.submit.SubmitSurveyRequestListener;
-import org.onebusaway.android.ui.survey.Utils.SurveyUtils;
-import org.onebusaway.android.ui.survey.Utils.SurveyViewUtils;
+import org.onebusaway.android.ui.survey.utils.SurveyUtils;
+import org.onebusaway.android.ui.survey.utils.SurveyViewUtils;
 import org.onebusaway.android.ui.survey.activities.SurveyWebViewActivity;
 import org.onebusaway.android.ui.survey.adapter.SurveyAdapter;
 
@@ -73,7 +73,7 @@ public class SurveyManager {
 
         if (questionsList.isEmpty()) {
             // TODO REMOVE THIS BEFORE RELEASING WE CAN'T HAVE EMPTY QUESTION (for testing purposes).
-            SurveyUtils.markSurveyAsDone(context, String.valueOf(curSurveyID));
+            handleCompleteSurvey();
             Log.d("SurveyState", "No questions found, survey marked as done.");
             arrivalsList.removeHeaderView(surveyView);
             return;
@@ -160,7 +160,7 @@ public class SurveyManager {
         builder.setMessage("Are you sure you want to proceed? we will share this information \n BLA BLA BLA BLA BLA");
 
         builder.setPositiveButton("GO !", (dialog, which) -> {
-            handleDoneSurvey();
+            handleCompleteSurvey();
             Intent intent = new Intent(context, SurveyWebViewActivity.class);
             intent.putExtra("url", url);
             context.startActivity(intent);
@@ -255,7 +255,7 @@ public class SurveyManager {
     public void onSurveyResponseReceived(StudyResponse response) {
         if (response == null) return;
         mStudyResponse = response;
-        curSurveyIndex = SurveyUtils.getCurrentSurveyIndex(response, context);
+        curSurveyIndex = SurveyUtils.getCurrentSurveyIndex(response, context,fromArrivalsList);
         Log.d("CurSurveyIndex", curSurveyIndex + " ");
         if (curSurveyIndex == -1) return;
         curSurveyID = mStudyResponse.getSurveys().get(curSurveyIndex).getId();
@@ -275,7 +275,7 @@ public class SurveyManager {
                 return;
             }
             // Mark survey as done
-            handleDoneSurvey();
+            handleCompleteSurvey();
             // Don't show survey question bottom sheet if we don't have another questions
             if (haveOnlyHeroQuestion()) return;
             updateSurveyPath = response.getSurveyResponse().getId();
@@ -288,8 +288,8 @@ public class SurveyManager {
     /**
      * Mark current survey as done
      */
-    public void handleDoneSurvey() {
-        SurveyUtils.markSurveyAsDone(context, String.valueOf(curSurveyID));
+    public void handleCompleteSurvey() {
+        SurveyUtils.markSurveyAsCompleted(context, String.valueOf(curSurveyID));
         // Remove the hero question view
         if (fromArrivalsList) arrivalsList.removeHeaderView(surveyView);
     }

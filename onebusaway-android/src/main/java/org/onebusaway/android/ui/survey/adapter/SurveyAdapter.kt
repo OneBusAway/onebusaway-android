@@ -18,8 +18,8 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import org.onebusaway.android.R
 import org.onebusaway.android.io.request.survey.model.StudyResponse
-import org.onebusaway.android.ui.survey.Utils.SurveyUtils
-import org.onebusaway.android.ui.survey.Utils.SurveyViewUtils
+import org.onebusaway.android.ui.survey.utils.SurveyUtils
+import org.onebusaway.android.ui.survey.utils.SurveyViewUtils
 
 
 class SurveyAdapter(

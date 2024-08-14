@@ -13,10 +13,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
 import org.onebusaway.android.ui.survey.SurveyLocalData;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -67,8 +69,8 @@ public class SurveyUtils {
         return selectedRadioButton.getText().toString();
     }
 
-    public static String getTextInputAnswer(View view) {
-        EditText editText = view.findViewById(R.id.editText);
+    public static String getTextInputAnswer(View surveyView) {
+        EditText editText = surveyView.findViewById(R.id.editText);
         return editText.getText().toString().trim();
     }
 
@@ -80,7 +82,7 @@ public class SurveyUtils {
      * @param isVisibleOnStop Indicates whether the survey view is related to stops.
      * @return The zero-based index of the current survey, or -1 if all surveys are completed or filtered out.
      */
-    public static Integer getCurrentSurveyIndex(StudyResponse studyResponse, Context context, Boolean isVisibleOnStop) {
+    public static Integer getCurrentSurveyIndex(StudyResponse studyResponse, Context context, Boolean isVisibleOnStop, ObaStop currentStop) {
         // Map of completed surveys with survey IDs as keys and completion status as values
         HashMap<String, Boolean> completedSurveysMap = SurveyLocalData.getCompletedSurveys(context);
 
@@ -91,21 +93,28 @@ public class SurveyUtils {
             Boolean showQuestionOnStops = surveys.get(index).getShow_on_stops();
             Boolean showQuestionOnMaps = surveys.get(index).getShow_on_map();
 
+            List<String> visibleStopsList = surveys.get(index).getVisible_stop_list();
+            List<String> visibleRouteList = surveys.get(index).getVisible_route_list();
+
             // Skip this survey if it shouldn't be shown on either map or stops
-            if (Boolean.FALSE.equals(showQuestionOnStops) && Boolean.FALSE.equals(showQuestionOnMaps)) {
+            if (!showQuestionOnStops && !showQuestionOnMaps) {
                 continue;
             }
 
             if (isVisibleOnStop) {
                 // Skip if the survey is not meant for stops
-                if (Boolean.FALSE.equals(showQuestionOnStops)) continue;
+                if (!showQuestionOnStops) continue;
+                // Check for if survey available for the current stop
+                boolean showSurvey = showSurvey(currentStop, visibleStopsList, visibleRouteList);
+                Log.d("SurveyStopState", "Show survey: " + showSurvey);
+                if (!showSurvey) continue;
             } else {
                 // Skip if the survey is not meant for maps
-                if (Boolean.FALSE.equals(showQuestionOnMaps)) continue;
+                if (!showQuestionOnMaps) continue;
             }
 
             // Return the index if the survey is uncompleted
-            if (!Boolean.TRUE.equals(completedSurveysMap.get(surveys.get(index).getId().toString()))) {
+            if (completedSurveysMap.get(surveys.get(index).getId().toString()) == null) {
                 return index;
             }
         }
@@ -113,11 +122,43 @@ public class SurveyUtils {
         return -1;
     }
 
+    /**
+     * Determines whether to show a survey for the given stop based on the provided visible stops and routes lists.
+     *
+     * @param currentStop The current stop for which the survey visibility is being checked.
+     * @param visibleStopsList A list of stop IDs where the survey should be shown. Can be null.
+     * @param visibleRouteList A list of route IDs where the survey should be shown. Can be null.
+     * @return true if the survey should be shown for the current stop, otherwise false.
+     */
+    private static boolean showSurvey(ObaStop currentStop, List<String> visibleStopsList, List<String> visibleRouteList) {
+        // If both visibleStopsList and visibleRouteList are null, show the survey by default.
+        if (visibleRouteList == null && visibleStopsList == null) {
+            return true;
+        }
+
+        // If visibleStopsList is not null, show the survey if the current stop's ID is in the list.
+        if (visibleStopsList != null && visibleStopsList.contains(currentStop.getId())) {
+            return true;
+        }
+
+        // If visibleRouteList is not empty, check if any of the current stop's route IDs are in the list.
+        // If a match is found, show the survey.
+        if (visibleRouteList != null) {
+            for (String routeID : currentStop.getRouteIds()) {
+                if (visibleRouteList.contains(routeID)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public static void markSurveyAsCompleted(Context context, String surveyID) {
-        HashMap<String, Boolean> doneSurvey = SurveyLocalData.getCompletedSurveys(context);
-        doneSurvey.put(surveyID, true);
+        HashMap<String, Boolean> completedSurveys = SurveyLocalData.getCompletedSurveys(context);
+        completedSurveys.put(surveyID, true);
         // Save to the local storage
-        SurveyLocalData.setCompletedSurveys(context, doneSurvey);
+        SurveyLocalData.setCompletedSurveys(context, completedSurveys);
     }
 
     /**

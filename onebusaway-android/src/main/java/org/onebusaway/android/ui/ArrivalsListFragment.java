@@ -182,6 +182,8 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
 
     private SurveyManager surveyManager;
 
+    private boolean isSurveyManagerInitialized = false;
+
 
     public interface Listener {
 
@@ -292,9 +294,6 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
 
         initArrivalInfoViews(inflater);
-
-        surveyManager = new SurveyManager(requireContext(),true,this,this);
-        surveyManager.initSurveyArrivalsHeaderView(inflater);
         return inflater.inflate(R.layout.fragment_arrivals_list, null);
     }
 
@@ -354,9 +353,6 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
                 UIUtils.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(),
                         false, false)
         );
-
-        surveyManager.initSurveyArrivalsList(getListView());
-        surveyManager.requestSurveyData();
     }
 
     @Override
@@ -472,6 +468,7 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         }
 
         setResponseData(info, situations, refs);
+        initSurveyManager();
 
         // The list should now be shown.
         if (isResumed()) {
@@ -1764,6 +1761,17 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
 
         builder.setNeutralButton(R.string.main_help_close, (dialogInterface, i) -> dialogInterface.dismiss());
         return builder.create();
+    }
+
+    private void initSurveyManager(){
+        // Avoiding doing multiple calls when updating the stop arrivals list
+        if(isSurveyManagerInitialized) return;
+        surveyManager = new SurveyManager(requireContext(),true,this,this);
+        surveyManager.requestSurveyData();
+        surveyManager.setCurrentStop(mStop);
+        surveyManager.initSurveyArrivalsHeaderView(getLayoutInflater());
+        surveyManager.initSurveyArrivalsList(getListView());
+        isSurveyManagerInitialized = true;
     }
 
     @Override

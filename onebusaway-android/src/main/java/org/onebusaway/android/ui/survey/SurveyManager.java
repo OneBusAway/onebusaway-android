@@ -20,6 +20,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import org.json.JSONArray;
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.survey.ObaStudyRequest;
 import org.onebusaway.android.io.request.survey.StudyRequestListener;
 import org.onebusaway.android.io.request.survey.StudyRequestTask;
@@ -32,6 +33,7 @@ import org.onebusaway.android.ui.survey.utils.SurveyViewUtils;
 import org.onebusaway.android.ui.survey.activities.SurveyWebViewActivity;
 import org.onebusaway.android.ui.survey.adapter.SurveyAdapter;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -51,14 +53,18 @@ public class SurveyManager {
     private ListView arrivalsList;
     private BottomSheetDialog surveyBottomSheet;
     // true if from arrivals list false if survey in the map
-    private final Boolean fromArrivalsList;
+    private final Boolean isVisibleOnStops;
+    // Cur stop if the survey visible on the stops
+    private ObaStop currentStop;
+
 
     // TODO CHANGE STATIC API URL TO SUPPORT DIFFERENT REGIONS
+
     public SurveyManager(Context context, Boolean fromArrivalsList, StudyRequestListener studyRequestListener, SubmitSurveyRequestListener submitSurveyRequestListener) {
         this.context = context;
         this.studyRequestListener = studyRequestListener;
         this.submitSurveyRequestListener = submitSurveyRequestListener;
-        this.fromArrivalsList = fromArrivalsList;
+        this.isVisibleOnStops = fromArrivalsList;
     }
 
     public void requestSurveyData() {
@@ -105,7 +111,7 @@ public class SurveyManager {
 
     private void setSurveyData() {
         if (!checkValidResponse() || curSurveyIndex == -1) return;
-        if (fromArrivalsList){
+        if (isVisibleOnStops) {
             arrivalsList.addHeaderView(surveyView);
         }
         updateSurveyData();
@@ -255,7 +261,7 @@ public class SurveyManager {
     public void onSurveyResponseReceived(StudyResponse response) {
         if (response == null) return;
         mStudyResponse = response;
-        curSurveyIndex = SurveyUtils.getCurrentSurveyIndex(response, context,fromArrivalsList);
+        curSurveyIndex = SurveyUtils.getCurrentSurveyIndex(response, context, isVisibleOnStops, currentStop);
         Log.d("CurSurveyIndex", curSurveyIndex + " ");
         if (curSurveyIndex == -1) return;
         curSurveyID = mStudyResponse.getSurveys().get(curSurveyIndex).getId();
@@ -291,10 +297,17 @@ public class SurveyManager {
     public void handleCompleteSurvey() {
         SurveyUtils.markSurveyAsCompleted(context, String.valueOf(curSurveyID));
         // Remove the hero question view
-        if (fromArrivalsList) arrivalsList.removeHeaderView(surveyView);
+        if (isVisibleOnStops) arrivalsList.removeHeaderView(surveyView);
     }
 
     public void onSubmitSurveyFail() {
         Log.d("SubmitSurveyFail", curSurveyID + "");
+    }
+
+    public void setCurrentStop(ObaStop stop) {
+        if(stop == null || !isVisibleOnStops) return;
+        this.currentStop = stop;
+        Log.d("CurrentStopID", currentStop.getId() + " ");
+        Log.d("CurrentStopRoutes", Arrays.toString(currentStop.getRouteIds()));
     }
 }

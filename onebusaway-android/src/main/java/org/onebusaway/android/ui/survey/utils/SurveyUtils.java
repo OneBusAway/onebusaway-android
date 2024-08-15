@@ -95,6 +95,9 @@ public class SurveyUtils {
             List<String> visibleStopsList = surveys.get(index).getVisible_stop_list();
             List<String> visibleRouteList = surveys.get(index).getVisible_route_list();
 
+            // Skip if there is not questions
+            if(surveys.get(index).getQuestions().isEmpty()) continue;
+
             // Skip this survey if it shouldn't be shown on either map or stops
             if (!showQuestionOnStops && !showQuestionOnMaps) {
                 continue;

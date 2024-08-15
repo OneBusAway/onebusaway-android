@@ -77,14 +77,6 @@ public class SurveyManager {
     private void updateSurveyData() {
         List<StudyResponse.Surveys.Questions> questionsList = mStudyResponse.getSurveys().get(curSurveyIndex).getQuestions();
 
-        if (questionsList.isEmpty()) {
-            // TODO REMOVE THIS BEFORE RELEASING WE CAN'T HAVE EMPTY QUESTION (for testing purposes).
-            handleCompleteSurvey();
-            Log.d("SurveyState", "No questions found, survey marked as done.");
-            arrivalsList.removeHeaderView(surveyView);
-            return;
-        }
-
         int externalSurveyResult = SurveyUtils.checkExternalSurvey(questionsList);
         Log.d("SurveyState", "External survey result: " + externalSurveyResult);
 

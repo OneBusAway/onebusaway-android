@@ -90,10 +90,12 @@ public class SurveyManager {
 
         switch (externalSurveyResult) {
             case SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION:
+                SurveyViewUtils.showSharedInfoDetailsTextView(context,surveyView,questionsList.get(0).getContent().getEmbedded_data_fields());
                 SurveyViewUtils.showExternalSurveyButtons(surveyView);
                 handleOpenExternalSurvey(surveyView, questionsList.get(0).getContent().getUrl());
                 break;
             case SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION:
+                SurveyViewUtils.showSharedInfoDetailsTextView(context,surveyView,questionsList.get(1).getContent().getEmbedded_data_fields());
                 SurveyViewUtils.showHeroQuestionButtons(surveyView);
                 handleNextButton(surveyView, externalSurveyResult, questionsList.size() > 1 ? questionsList.get(1).getContent().getUrl() : "");
                 break;
@@ -145,7 +147,7 @@ public class SurveyManager {
         Button nextBtn = view.findViewById(R.id.nextBtn);
         nextBtn.setOnClickListener(view1 -> {
             if (externalSurveyResult == 2) {
-                showExternalSurveyDialog(externalSurveyUrl);
+                openExternalSurvey(externalSurveyUrl);
             } else {
                 submitSurveyAnswers(mStudyResponse.getSurveys().get(curSurveyIndex), true);
             }
@@ -155,30 +157,17 @@ public class SurveyManager {
     public void handleOpenExternalSurvey(View view, String url) {
         Button externalSurveyBtn = view.findViewById(R.id.openExternalSurveyBtn);
         externalSurveyBtn.setOnClickListener(view1 -> {
-            showExternalSurveyDialog(url);
+            openExternalSurvey(url);
         });
     }
 
-    private void showExternalSurveyDialog(String url) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        // TODO remove external survey dialog
-        builder.setTitle("OneBusAway Survey");
-        builder.setMessage("Are you sure you want to proceed? we will share this information \n BLA BLA BLA BLA BLA");
 
-        builder.setPositiveButton("GO !", (dialog, which) -> {
-            handleCompleteSurvey();
-            Intent intent = new Intent(context, SurveyWebViewActivity.class);
-            intent.putExtra("url", url);
-            context.startActivity(intent);
-        });
 
-        builder.setNegativeButton("CANCEL", (dialog, which) -> {
-            // TODO perform survey dismiss
-            dialog.cancel();
-        });
-
-        AlertDialog dialog = builder.create();
-        dialog.show();
+    private void openExternalSurvey(String url){
+        Intent intent = new Intent(context, SurveyWebViewActivity.class);
+        intent.putExtra("url",url);
+        context.startActivity(intent);
+        handleCompleteSurvey();
     }
 
 

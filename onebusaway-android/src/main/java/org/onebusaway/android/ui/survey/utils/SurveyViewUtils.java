@@ -25,6 +25,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
 
+import java.util.List;
+
 public class SurveyViewUtils {
 
     public static void showHeroQuestionButtons(View surveyView) {
@@ -32,6 +34,7 @@ public class SurveyViewUtils {
         Button next = surveyView.findViewById(R.id.nextBtn);
         next.setVisibility(View.VISIBLE);
     }
+
     public static void showExternalSurveyButtons(View surveyView) {
         showCloseBtn(surveyView);
         Button openExternalSurveyBtn = surveyView.findViewById(R.id.openExternalSurveyBtn);
@@ -55,7 +58,7 @@ public class SurveyViewUtils {
                 showCheckBoxQuestion(context, rootView, heroQuestion);
                 break;
             case SurveyUtils.EXTERNAL_SURVEY:
-                showExternalSurveyView(rootView,heroQuestion);
+                showExternalSurveyView(rootView, heroQuestion);
                 break;
             case SurveyUtils.LABEL:
                 break;
@@ -184,6 +187,23 @@ public class SurveyViewUtils {
     @NonNull
     private static CheckBox createCheckBox(Context ctx, StudyResponse.Surveys.Questions question, int position) {
         return createButton(ctx, question, position, CheckBox.class);
+    }
+
+    public static void showSharedInfoDetailsTextView(Context context,View surveyView, List<String> questions) {
+        if (questions.isEmpty()) return;
+        TextView sharedInfoTextView = surveyView.findViewById(R.id.shared_info_tv);
+        StringBuilder surveySharedInfo = new StringBuilder();
+        surveySharedInfo.append(context.getString(R.string.sharing_survey_info_message));
+
+        for (int i = 0; i < questions.size(); i++) {
+            surveySharedInfo.append(questions.get(i).replace("_", " "));
+            if (i < questions.size() - 1) {
+                surveySharedInfo.append(", ");
+            }
+        }
+        sharedInfoTextView.setVisibility(View.VISIBLE);
+        sharedInfoTextView.setText(surveySharedInfo);
+        
     }
 
 }

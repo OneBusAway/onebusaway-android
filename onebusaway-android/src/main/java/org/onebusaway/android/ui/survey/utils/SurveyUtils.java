@@ -18,7 +18,6 @@ import org.onebusaway.android.io.request.survey.model.StudyResponse;
 import org.onebusaway.android.ui.survey.SurveyLocalData;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;

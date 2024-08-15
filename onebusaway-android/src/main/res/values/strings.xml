@@ -1256,4 +1256,5 @@
     <string name="go">GO !</string>
     <string name="submitted_successfully">Submitted Successfully</string>
     <string name="please_fill_all_the_questions">Please fill all the questions</string>
+    <string name="sharing_survey_info_message">"This survey will share your "</string>
 </resources>

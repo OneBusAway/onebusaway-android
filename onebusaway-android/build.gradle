@@ -351,7 +351,7 @@ dependencies {
     // Google Play Services Maps (only for Google flavor)
     googleImplementation 'com.google.android.gms:play-services-maps:18.2.0'
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)
-    googleImplementation 'com.google.android.libraries.places:places-compat:1.1.0'
+    googleImplementation 'com.google.android.libraries.places:places-compat:2.6.0'
     // Autocomplete text views with clear button for trip planning
     implementation 'com.google.android.material:material:1.1.0'
     // Required to support multidex for minSdkVersion <= 20

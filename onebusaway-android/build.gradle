@@ -339,7 +339,7 @@ dependencies {
     // Bottom sliding panel
     implementation 'com.sothree.slidinguppanel:library:3.3.0'
     // For floating action button speed dial
-    implementation 'com.github.OneBusAway:android-fab:2.2.0'
+    implementation 'com.github.OneBusAway:android-fab:2.4.1'
     // For sorting alphanumeric route names
     implementation 'org.onebusaway.util:comparators:1.0.0'
     // For tutorial (ShowcaseView) library

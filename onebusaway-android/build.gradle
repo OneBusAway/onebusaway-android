@@ -30,6 +30,10 @@ repositories {
         // CUTR Releases
         url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
     }
+    maven {
+        // OBA - open311 client
+        url 'https://maven.pkg.github.com/OneBusAway/open311-client'
+    }
     mavenCentral()
 }
 

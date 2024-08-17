@@ -31,6 +31,7 @@ repositories {
         url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
     }
     mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 android {
@@ -330,7 +331,7 @@ dependencies {
     implementation 'commons-io:commons-io:2.4'
     implementation 'org.apache.commons:commons-lang3:3.0'
     // Open311 client library
-    implementation files('libs/open311client-1.0.10.jar')
+    implementation 'com.github.OneBusAway:open311-client:1.0.10'
     // JSON data binding for OBA REST API responses
     implementation 'com.fasterxml.jackson.core:jackson-core:2.12.4'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.4'

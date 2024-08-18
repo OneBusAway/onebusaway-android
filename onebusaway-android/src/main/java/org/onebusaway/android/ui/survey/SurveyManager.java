@@ -1,7 +1,6 @@
 package org.onebusaway.android.ui.survey;
 
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
@@ -56,6 +55,10 @@ public class SurveyManager {
     private final Boolean isVisibleOnStops;
     // Cur stop if the survey visible on the stops
     private ObaStop currentStop;
+    // Stores external survey URL
+    private String externalSurveyUrl = null;
+    // true if we have a question as an external survey
+    private Integer externalSurveyResult = 0;
 
 
     // TODO CHANGE STATIC API URL TO SUPPORT DIFFERENT REGIONS
@@ -77,24 +80,25 @@ public class SurveyManager {
     private void updateSurveyData() {
         List<StudyResponse.Surveys.Questions> questionsList = mStudyResponse.getSurveys().get(curSurveyIndex).getQuestions();
 
-        int externalSurveyResult = SurveyUtils.checkExternalSurvey(questionsList);
+        externalSurveyResult = SurveyUtils.checkExternalSurvey(questionsList);
         Log.d("SurveyState", "External survey result: " + externalSurveyResult);
 
         switch (externalSurveyResult) {
             case SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION:
-                SurveyViewUtils.showSharedInfoDetailsTextView(context,surveyView,questionsList.get(0).getContent().getEmbedded_data_fields());
+                SurveyViewUtils.showSharedInfoDetailsTextView(context, surveyView, questionsList.get(0).getContent().getEmbedded_data_fields());
                 SurveyViewUtils.showExternalSurveyButtons(surveyView);
                 handleOpenExternalSurvey(surveyView, questionsList.get(0).getContent().getUrl());
                 break;
             case SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION:
-                SurveyViewUtils.showSharedInfoDetailsTextView(context,surveyView,questionsList.get(1).getContent().getEmbedded_data_fields());
+                externalSurveyUrl = questionsList.get(1).getContent().getUrl();
+                SurveyViewUtils.showSharedInfoDetailsTextView(context, surveyView, questionsList.get(1).getContent().getEmbedded_data_fields());
                 SurveyViewUtils.showHeroQuestionButtons(surveyView);
-                handleNextButton(surveyView, externalSurveyResult, questionsList.size() > 1 ? questionsList.get(1).getContent().getUrl() : "");
+                handleNextButton(surveyView);
                 break;
 
             default:
                 SurveyViewUtils.showHeroQuestionButtons(surveyView);
-                handleNextButton(surveyView, externalSurveyResult, "");
+                handleNextButton(surveyView);
                 break;
         }
 
@@ -135,14 +139,10 @@ public class SurveyManager {
         new Thread(request::call).start();
     }
 
-    public void handleNextButton(View view, int externalSurveyResult, String externalSurveyUrl) {
+    public void handleNextButton(View view) {
         Button nextBtn = view.findViewById(R.id.nextBtn);
         nextBtn.setOnClickListener(view1 -> {
-            if (externalSurveyResult == 2) {
-                openExternalSurvey(externalSurveyUrl);
-            } else {
-                submitSurveyAnswers(mStudyResponse.getSurveys().get(curSurveyIndex), true);
-            }
+            submitSurveyAnswers(mStudyResponse.getSurveys().get(curSurveyIndex), true);
         });
     }
 
@@ -154,10 +154,10 @@ public class SurveyManager {
     }
 
 
-
-    private void openExternalSurvey(String url){
+    private void openExternalSurvey(String url) {
+        // TODO handle passing embedded data
         Intent intent = new Intent(context, SurveyWebViewActivity.class);
-        intent.putExtra("url",url);
+        intent.putExtra("url", url);
         context.startActivity(intent);
         handleCompleteSurvey();
     }
@@ -263,6 +263,11 @@ public class SurveyManager {
             }
             // Mark survey as done
             handleCompleteSurvey();
+            // Check if the external survey needs to be opened after responding to a hero question
+            if (externalSurveyResult == SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION) {
+                handleExternalSurvey();
+                return;
+            }
             // Don't show survey question bottom sheet if we don't have another questions
             if (haveOnlyHeroQuestion()) return;
             updateSurveyPath = response.getSurveyResponse().getId();
@@ -270,6 +275,17 @@ public class SurveyManager {
             showAllSurveyQuestions();
             initSurveyAdapter(context, surveyRecycleView);
         });
+    }
+
+
+    /**
+     * Handles the external survey process after responding to a hero question.
+     */
+    private void handleExternalSurvey() {
+        if (externalSurveyUrl == null) return;
+
+        externalSurveyResult = SurveyUtils.DEFAULT_SURVEY;
+        openExternalSurvey(externalSurveyUrl);
     }
 
     /**
@@ -286,7 +302,7 @@ public class SurveyManager {
     }
 
     public void setCurrentStop(ObaStop stop) {
-        if(stop == null || !isVisibleOnStops) return;
+        if (stop == null || !isVisibleOnStops) return;
         this.currentStop = stop;
         Log.d("CurrentStopID", currentStop.getId() + " ");
         Log.d("CurrentStopRoutes", Arrays.toString(currentStop.getRouteIds()));

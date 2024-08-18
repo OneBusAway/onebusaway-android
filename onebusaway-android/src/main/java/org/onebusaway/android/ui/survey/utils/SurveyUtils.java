@@ -30,6 +30,7 @@ public class SurveyUtils {
     public static final String EXTERNAL_SURVEY = "external_survey";
     public static final String TEXT_QUESTION = "text";
 
+    public static final int DEFAULT_SURVEY = 0;
     public static final int EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION = 1;
     public static final int EXTERNAL_SURVEY_WITH_HERO_QUESTION = 2;
 
@@ -133,6 +134,7 @@ public class SurveyUtils {
      * @return true if the survey should be shown for the current stop, otherwise false.
      */
     private static boolean showSurvey(ObaStop currentStop, List<String> visibleStopsList, List<String> visibleRouteList) {
+        if(currentStop == null || currentStop.getId() == null) return false;
         // If both visibleStopsList and visibleRouteList are null, show the survey by default.
         if (visibleRouteList == null && visibleStopsList == null) {
             return true;
@@ -304,7 +306,7 @@ public class SurveyUtils {
     /**
      * Checks if the current survey for the user has an external survey.
      *
-     * @return 0 if it's a normal survey.
+     * @return 0 if it's a default survey.
      * 1 if there is an external survey without a hero question.
      * 2 if there is an external survey with a hero question.
      */

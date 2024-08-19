@@ -27,6 +27,7 @@ import org.onebusaway.android.io.request.survey.model.StudyResponse;
 import org.onebusaway.android.io.request.survey.model.SubmitSurveyResponse;
 import org.onebusaway.android.io.request.survey.submit.ObaSubmitSurveyRequest;
 import org.onebusaway.android.io.request.survey.submit.SubmitSurveyRequestListener;
+import org.onebusaway.android.ui.survey.utils.SurveyDbHelper;
 import org.onebusaway.android.ui.survey.utils.SurveyUtils;
 import org.onebusaway.android.ui.survey.utils.SurveyViewUtils;
 import org.onebusaway.android.ui.survey.activities.SurveyWebViewActivity;
@@ -292,7 +293,8 @@ public class SurveyManager {
      * Mark current survey as done
      */
     public void handleCompleteSurvey() {
-        SurveyUtils.markSurveyAsCompleted(context, String.valueOf(curSurveyID));
+        StudyResponse.Surveys currentSurvey = mStudyResponse.getSurveys().get(curSurveyIndex);
+        SurveyDbHelper.markSurveyAsCompleted(context, currentSurvey);
         // Remove the hero question view
         if (isVisibleOnStops) arrivalsList.removeHeaderView(surveyView);
     }

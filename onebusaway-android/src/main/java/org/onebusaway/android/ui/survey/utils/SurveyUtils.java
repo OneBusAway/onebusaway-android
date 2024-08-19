@@ -18,7 +18,6 @@ import org.onebusaway.android.io.request.survey.model.StudyResponse;
 import org.onebusaway.android.ui.survey.SurveyLocalData;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -83,9 +82,6 @@ public class SurveyUtils {
      * @return The zero-based index of the current survey, or -1 if all surveys are completed or filtered out.
      */
     public static Integer getCurrentSurveyIndex(StudyResponse studyResponse, Context context, Boolean isVisibleOnStop, ObaStop currentStop) {
-        // Map of completed surveys with survey IDs as keys and completion status as values
-        HashMap<String, Boolean> completedSurveysMap = SurveyLocalData.getCompletedSurveys(context);
-
         List<StudyResponse.Surveys> surveys = studyResponse.getSurveys();
 
         // Iterate through the surveys to find the first uncompleted one
@@ -97,7 +93,7 @@ public class SurveyUtils {
             List<String> visibleRouteList = surveys.get(index).getVisible_route_list();
 
             // Skip if there is not questions
-            if(surveys.get(index).getQuestions().isEmpty()) continue;
+            if (surveys.get(index).getQuestions().isEmpty()) continue;
 
             // Skip this survey if it shouldn't be shown on either map or stops
             if (!showQuestionOnStops && !showQuestionOnMaps) {
@@ -116,8 +112,12 @@ public class SurveyUtils {
                 if (!showQuestionOnMaps) continue;
             }
 
+            boolean isSurveyCompleted = SurveyDbHelper.isSurveyCompleted(context,surveys.get(index).getId());
+
+            Log.d("isSurveyCompleted",isSurveyCompleted + " ");
+
             // Return the index if the survey is uncompleted
-            if (completedSurveysMap.get(surveys.get(index).getId().toString()) == null) {
+            if (!isSurveyCompleted) {
                 return index;
             }
         }
@@ -128,13 +128,13 @@ public class SurveyUtils {
     /**
      * Determines whether to show a survey for the given stop based on the provided visible stops and routes lists.
      *
-     * @param currentStop The current stop for which the survey visibility is being checked.
+     * @param currentStop      The current stop for which the survey visibility is being checked.
      * @param visibleStopsList A list of stop IDs where the survey should be shown. Can be null.
      * @param visibleRouteList A list of route IDs where the survey should be shown. Can be null.
      * @return true if the survey should be shown for the current stop, otherwise false.
      */
     private static boolean showSurvey(ObaStop currentStop, List<String> visibleStopsList, List<String> visibleRouteList) {
-        if(currentStop == null || currentStop.getId() == null) return false;
+        if (currentStop == null || currentStop.getId() == null) return false;
         // If both visibleStopsList and visibleRouteList are null, show the survey by default.
         if (visibleRouteList == null && visibleStopsList == null) {
             return true;
@@ -156,13 +156,6 @@ public class SurveyUtils {
         }
 
         return false;
-    }
-
-    public static void markSurveyAsCompleted(Context context, String surveyID) {
-        HashMap<String, Boolean> completedSurveys = SurveyLocalData.getCompletedSurveys(context);
-        completedSurveys.put(surveyID, true);
-        // Save to the local storage
-        SurveyLocalData.setCompletedSurveys(context, completedSurveys);
     }
 
     /**

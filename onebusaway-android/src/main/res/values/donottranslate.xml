@@ -79,7 +79,7 @@
     <string name="weather_api_url">https://onebusaway.co/api/v1/regions/regionID/weather.json</string>
 
     <!-- GET Survey API URL -->
-    <string name="studies_api_url">https://onebusaway.co/api/v1/regions/1/surveys.json</string>
+    <string name="studies_api_url">https://onebusaway.co/api/v1/regions/regionID/surveys.json</string>
 
     <!-- POST Survey API URL -->
     <string name="submit_survey_api_url">https://onebusaway.co/api/v1/survey_responses/</string>

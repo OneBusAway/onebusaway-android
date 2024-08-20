@@ -37,7 +37,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class SurveyManager {
+public class SurveyManager implements SurveyActionsListener {
     private final Context context;
     private final StudyRequestListener studyRequestListener;
     private final SubmitSurveyRequestListener submitSurveyRequestListener;
@@ -69,6 +69,7 @@ public class SurveyManager {
         this.studyRequestListener = studyRequestListener;
         this.submitSurveyRequestListener = submitSurveyRequestListener;
         this.isVisibleOnStops = fromArrivalsList;
+        setupSurveyDismissDialog();
     }
 
     public void requestSurveyData() {
@@ -87,18 +88,18 @@ public class SurveyManager {
         switch (externalSurveyResult) {
             case SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION:
                 SurveyViewUtils.showSharedInfoDetailsTextView(context, surveyView, questionsList.get(0).getContent().getEmbedded_data_fields());
-                SurveyViewUtils.showExternalSurveyButtons(surveyView);
+                SurveyViewUtils.showExternalSurveyButtons(context, surveyView);
                 handleOpenExternalSurvey(surveyView, questionsList.get(0).getContent().getUrl());
                 break;
             case SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION:
                 externalSurveyUrl = questionsList.get(1).getContent().getUrl();
                 SurveyViewUtils.showSharedInfoDetailsTextView(context, surveyView, questionsList.get(1).getContent().getEmbedded_data_fields());
-                SurveyViewUtils.showHeroQuestionButtons(surveyView);
+                SurveyViewUtils.showHeroQuestionButtons(context, surveyView);
                 handleNextButton(surveyView);
                 break;
 
             default:
-                SurveyViewUtils.showHeroQuestionButtons(surveyView);
+                SurveyViewUtils.showHeroQuestionButtons(context, surveyView);
                 handleNextButton(surveyView);
                 break;
         }
@@ -180,7 +181,7 @@ public class SurveyManager {
         surveyBottomSheet = SurveyViewUtils.createSurveyBottomSheetDialog(context);
         initSurveyQuestionsBottomSheet(context);
         SurveyViewUtils.setupBottomSheetBehavior(surveyBottomSheet);
-        SurveyViewUtils.setupBottomSheetCloseButton(surveyBottomSheet);
+        SurveyViewUtils.setupBottomSheetCloseButton(context, surveyBottomSheet);
         handleSubmitSurveyButton(Objects.requireNonNull(surveyBottomSheet.findViewById(R.id.submit_btn)));
         surveyBottomSheet.show();
     }
@@ -280,8 +281,9 @@ public class SurveyManager {
 
 
     /**
-     * Handles the external survey process after responding to a hero question.
+     * Handles the external survey open process after responding to a hero question.
      */
+
     private void handleExternalSurvey() {
         if (externalSurveyUrl == null) return;
 
@@ -294,9 +296,9 @@ public class SurveyManager {
      */
     public void handleCompleteSurvey() {
         StudyResponse.Surveys currentSurvey = mStudyResponse.getSurveys().get(curSurveyIndex);
-        SurveyDbHelper.markSurveyAsCompleted(context, currentSurvey);
-        // Remove the hero question view
-        if (isVisibleOnStops) arrivalsList.removeHeaderView(surveyView);
+        SurveyDbHelper.markSurveyAsCompletedOrSkipped(context, currentSurvey, SurveyDbHelper.SURVEY_COMPLETED);
+        // Remove the hero question view from the arrivals list if it was previously visible on the stops view
+        handleRemoveSurveyFromArrivalsHeader();
     }
 
     public void onSubmitSurveyFail() {
@@ -308,5 +310,36 @@ public class SurveyManager {
         this.currentStop = stop;
         Log.d("CurrentStopID", currentStop.getId() + " ");
         Log.d("CurrentStopRoutes", Arrays.toString(currentStop.getRouteIds()));
+    }
+
+    public void handleRemoveSurveyFromArrivalsHeader() {
+        if (!isVisibleOnStops || arrivalsList == null) return;
+        arrivalsList.removeHeaderView(surveyView);
+    }
+
+    public void setupSurveyDismissDialog() {
+        SurveyDialogActions.setDialogActionListener(this);
+        SurveyViewUtils.createDismissSurveyDialog(context);
+    }
+
+    /**
+     * Handles skipping the survey. The survey will be marked as skipped in the database with a state value of 2
+     * indicating it was not completed by the user.
+     */
+    @Override
+    public void onSkipSurvey() {
+        handleRemoveSurveyFromArrivalsHeader();
+        StudyResponse.Surveys currentSurvey = mStudyResponse.getSurveys().get(curSurveyIndex);
+        SurveyDbHelper.markSurveyAsCompletedOrSkipped(context, currentSurvey, SurveyDbHelper.SURVEY_SKIPPED);
+    }
+
+    @Override
+    public void onRemindMeLater() {
+        // TODO: implement
+    }
+
+    @Override
+    public void onCancelSurvey() {
+        // By default will dismiss the survey
     }
 }

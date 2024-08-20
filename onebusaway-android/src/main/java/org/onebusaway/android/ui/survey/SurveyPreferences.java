@@ -2,13 +2,10 @@ package org.onebusaway.android.ui.survey;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import org.json.JSONObject;
-import org.json.JSONException;
-import java.util.HashMap;
-import java.util.Iterator;
+
 import java.util.UUID;
 
-public class SurveyLocalData {
+public class SurveyPreferences {
 
     private static final String PREFS_NAME = "survey_pref";
     private static final String UUID_KEY = "my_uuid";

@@ -1,5 +1,7 @@
 package org.onebusaway.android.ui.survey.utils;
 
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.util.TypedValue;
@@ -24,26 +26,31 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
+import org.onebusaway.android.ui.survey.SurveyDialogActions;
 
 import java.util.List;
 
 public class SurveyViewUtils {
 
-    public static void showHeroQuestionButtons(View surveyView) {
-        showCloseBtn(surveyView);
+    public static void showHeroQuestionButtons(Context context, View surveyView) {
+        handleCLoseButton(context, surveyView);
         Button next = surveyView.findViewById(R.id.nextBtn);
         next.setVisibility(View.VISIBLE);
     }
 
-    public static void showExternalSurveyButtons(View surveyView) {
-        showCloseBtn(surveyView);
+    public static void showExternalSurveyButtons(Context context, View surveyView) {
+        handleCLoseButton(context, surveyView);
         Button openExternalSurveyBtn = surveyView.findViewById(R.id.openExternalSurveyBtn);
         openExternalSurveyBtn.setVisibility(View.VISIBLE);
     }
 
-    public static void showCloseBtn(View surveyView) {
+    public static void handleCLoseButton(Context context, View surveyView) {
         ImageButton closeBtn = surveyView.findViewById(R.id.close_btn);
         closeBtn.setVisibility(View.VISIBLE);
+
+        closeBtn.setOnClickListener(v -> {
+            createDismissSurveyDialog(context).show();
+        });
     }
 
     public static void showQuestion(Context context, View rootView, StudyResponse.Surveys.Questions heroQuestion, String questionType) {
@@ -76,6 +83,20 @@ public class SurveyViewUtils {
             View parentLayout = bottomSheetDialog.findViewById(R.id.design_bottom_sheet);
             if (parentLayout != null) {
                 BottomSheetBehavior<?> behavior = BottomSheetBehavior.from(parentLayout);
+                // This disable bottom sheet draggable swipe
+                behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+                    @Override
+                    public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                        if (newState == BottomSheetBehavior.STATE_DRAGGING) {
+                            behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                        }
+                    }
+
+                    @Override
+                    public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                    }
+                });
+
                 ViewGroup.LayoutParams layoutParams = parentLayout.getLayoutParams();
                 layoutParams.height = WindowManager.LayoutParams.MATCH_PARENT;
                 parentLayout.setLayoutParams(layoutParams);
@@ -85,15 +106,29 @@ public class SurveyViewUtils {
     }
 
     public static BottomSheetDialog createSurveyBottomSheetDialog(Context context) {
-        BottomSheetDialog bottomSheet = new BottomSheetDialog(context);
+        BottomSheetDialog bottomSheet = new BottomSheetDialog(context) {
+            @SuppressLint("MissingSuperCall")
+            @Override
+            public void onBackPressed() {
+                // Show a confirmation dialog when back is pressed
+                handleDismissSurveyBottomSheet(context, this);
+            }
+        };
         bottomSheet.setContentView(R.layout.survey_questions_view);
         return bottomSheet;
+
     }
 
-    public static void setupBottomSheetCloseButton(BottomSheetDialog bottomSheet) {
+    public static void handleDismissSurveyBottomSheet(Context context, BottomSheetDialog surveyBottomSheet) {
+        new AlertDialog.Builder(context).setMessage(R.string.are_you_sure_you_want_to_dismiss_the_survey).setPositiveButton(context.getString(R.string.rt_yes), (dialog, which) -> {
+            surveyBottomSheet.hide();
+        }).setNegativeButton(context.getString(R.string.rt_no), null).show();
+    }
+
+    public static void setupBottomSheetCloseButton(Context context, BottomSheetDialog bottomSheet) {
         ImageButton closeBtn = bottomSheet.findViewById(R.id.close_btn);
         if (closeBtn != null) {
-            closeBtn.setOnClickListener(v -> bottomSheet.dismiss());
+            closeBtn.setOnClickListener(v -> handleDismissSurveyBottomSheet(context, bottomSheet));
         }
     }
 
@@ -189,7 +224,16 @@ public class SurveyViewUtils {
         return createButton(ctx, question, position, CheckBox.class);
     }
 
-    public static void showSharedInfoDetailsTextView(Context context,View surveyView, List<String> questions) {
+    /**
+     * Displays a TextView containing user information that will be shared with an external survey.
+     * This method checks if there is any user information (in the form of survey questions) to be shared.
+     * If available, it constructs a message that lists the shared information and separates each piece of information with a comma.
+     *
+     * @param context    The Context used to access resources.
+     * @param surveyView The View containing the TextView where the shared information will be displayed.
+     * @param questions  A List of strings representing the user information that will be shared in the survey.
+     */
+    public static void showSharedInfoDetailsTextView(Context context, View surveyView, List<String> questions) {
         if (questions.isEmpty()) return;
         TextView sharedInfoTextView = surveyView.findViewById(R.id.shared_info_tv);
         StringBuilder surveySharedInfo = new StringBuilder();
@@ -203,7 +247,33 @@ public class SurveyViewUtils {
         }
         sharedInfoTextView.setVisibility(View.VISIBLE);
         sharedInfoTextView.setText(surveySharedInfo);
-        
     }
+    /**
+     * Creates an AlertDialog for dismissing a survey.
+     * This dialog allows the user to either skip the survey, be reminded later, or cancel the action.
+     *
+     * @param context The context in which the dialog will be displayed.
+     * @return The AlertDialog instance to be shown configured for the dismiss survey dialog.
+     */
+    public static AlertDialog.Builder createDismissSurveyDialog(Context context) {
+        AlertDialog.Builder dismissSurveyDialog =
+                new AlertDialog.Builder(context)
+                        .setTitle(R.string.dismiss_survey_dialog_title)
+                        .setMessage(R.string.dismiss_survey_dialog_body)
+                        .setNegativeButton(R.string.survey_dismiss_dialog_skip_this_survey, (dialog, which) -> {
+                            SurveyDialogActions.handleSkipSurvey();
+                        })
+                        .setNeutralButton(R.string.remind_me_latter, (dialog, which) -> {
+                            SurveyDialogActions.handleRemindMeLater();
+                        })
+                        .setPositiveButton(R.string.cancel, (dialog, which) -> {
+                            SurveyDialogActions.handleCancel();
+                        })
+                        .setCancelable(true);
+
+        dismissSurveyDialog.create();
+        return dismissSurveyDialog;
+    }
+
 
 }

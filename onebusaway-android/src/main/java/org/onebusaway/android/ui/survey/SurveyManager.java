@@ -292,7 +292,8 @@ public class SurveyManager implements SurveyActionsListener {
     }
 
     /**
-     * Mark current survey as done
+     * Marks the current survey as completed.
+     * If the survey was visible in the stops view, it removes the corresponding hero question view from the arrivals list.
      */
     public void handleCompleteSurvey() {
         StudyResponse.Surveys currentSurvey = mStudyResponse.getSurveys().get(curSurveyIndex);
@@ -305,6 +306,10 @@ public class SurveyManager implements SurveyActionsListener {
         Log.d("SubmitSurveyFail", curSurveyID + "");
     }
 
+    /**
+     * Sets the current stop only if the survey is visible at the stops.
+     * @param stop The current stop
+     */
     public void setCurrentStop(ObaStop stop) {
         if (stop == null || !isVisibleOnStops) return;
         this.currentStop = stop;
@@ -312,18 +317,26 @@ public class SurveyManager implements SurveyActionsListener {
         Log.d("CurrentStopRoutes", Arrays.toString(currentStop.getRouteIds()));
     }
 
+    /**
+     * Removes the survey view from the arrivals list header if it is visible on stops.
+     */
     public void handleRemoveSurveyFromArrivalsHeader() {
         if (!isVisibleOnStops || arrivalsList == null) return;
         arrivalsList.removeHeaderView(surveyView);
     }
 
+    /**
+     * Initializes and displays the survey dismiss dialog.
+     * Sets the listener for survey actions callbacks
+     */
     public void setupSurveyDismissDialog() {
         SurveyDialogActions.setDialogActionListener(this);
         SurveyViewUtils.createDismissSurveyDialog(context);
     }
 
     /**
-     * Handles skipping the survey. The survey will be marked as skipped in the database with a state value of 2
+     * Handles skipping the survey.
+     * The survey will be marked as skipped in the database with a state value of 2
      * indicating it was not completed by the user.
      */
     @Override

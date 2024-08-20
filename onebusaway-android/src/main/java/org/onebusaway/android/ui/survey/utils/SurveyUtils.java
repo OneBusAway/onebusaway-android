@@ -34,6 +34,12 @@ public class SurveyUtils {
     public static final int EXTERNAL_SURVEY_WITH_HERO_QUESTION = 2;
 
 
+    /**
+     * Retrieves the user's UUID. If the UUID is not already stored, generates a new UUID and saves it.
+     *
+     * @param context The application context used to access preferences.
+     * @return The user's UUID as a String.
+     */
     public static String getUserUUID(Context context) {
         if (SurveyPreferences.getUserUUID(context) == null) {
             UUID uuid = UUID.randomUUID();
@@ -42,14 +48,21 @@ public class SurveyUtils {
         return SurveyPreferences.getUserUUID(context);
     }
 
+    /**
+     * Retrieves the answers from selected checkboxes in the provided view.
+     *
+     * @param view The view containing the checkboxes.
+     * @return A list of selected checkbox answers as Strings.
+     */
     public static List<String> getSelectedCheckBoxAnswer(View view) {
-
         LinearLayout container = view.findViewById(R.id.checkBoxContainer);
 
         List<String> selectedItems = new ArrayList<>();
         for (int i = 0; i < container.getChildCount(); i++) {
+
             if (container.getChildAt(i) instanceof CheckBox) {
                 CheckBox checkBox = (CheckBox) container.getChildAt(i);
+
                 if (checkBox.isChecked()) {
                     selectedItems.add(checkBox.getText().toString());
                 }
@@ -58,9 +71,16 @@ public class SurveyUtils {
         return selectedItems;
     }
 
+    /**
+     * Retrieves the answer from the selected radio button in the provided view.
+     *
+     * @param view The view containing the RadioGroup.
+     * @return The text of the selected radio button, or an empty String if none is selected.
+     */
     public static String getSelectedRadioButtonAnswer(View view) {
         RadioGroup radioGroup = view.findViewById(R.id.radioGroup);
         int selectedId = radioGroup.getCheckedRadioButtonId();
+        // Return an empty string if no radio button is selected.
         if (selectedId == -1) {
             return "";
         }
@@ -68,10 +88,17 @@ public class SurveyUtils {
         return selectedRadioButton.getText().toString();
     }
 
+    /**
+     * Retrieves the text input answer from an EditText in the provided view.
+     *
+     * @param surveyView The view containing the EditText.
+     * @return The text from the EditText, trimmed of leading and trailing whitespace.
+     */
     public static String getTextInputAnswer(View surveyView) {
-        EditText editText = surveyView.findViewById(R.id.editText);
-        return editText.getText().toString().trim();
+        EditText answerEditText = surveyView.findViewById(R.id.editText);
+        return answerEditText.getText().toString().trim();
     }
+
 
     /**
      * Returns the index of the first uncompleted survey in the list, based on visibility settings.
@@ -112,9 +139,9 @@ public class SurveyUtils {
                 if (!showQuestionOnMaps) continue;
             }
 
-            boolean isSurveyCompleted = SurveyDbHelper.isSurveyCompleted(context,surveys.get(index).getId());
+            boolean isSurveyCompleted = SurveyDbHelper.isSurveyCompleted(context, surveys.get(index).getId());
 
-            Log.d("isSurveyCompleted",isSurveyCompleted + " ");
+            Log.d("isSurveyCompleted", isSurveyCompleted + " ");
 
             // Return the index if the survey is uncompleted
             if (!isSurveyCompleted) {
@@ -194,6 +221,12 @@ public class SurveyUtils {
     }
 
 
+    /**
+     * Generates a JSON array representing the survey answers request body from a list of questions.
+     *
+     * @param questionsList A list of SurveyResponse.Surveys.Questions objects containing the survey questions.
+     * @return A JSONArray containing the answers for the survey questions.
+     */
     public static JSONArray getSurveyAnswersRequestBody(List<StudyResponse.Surveys.Questions> questionsList) {
         return getAllSurveyQuestionAnswers(questionsList);
     }
@@ -277,6 +310,14 @@ public class SurveyUtils {
         return true;
     }
 
+    /**
+     * Retrieves the answer from the view based on the type of question.
+     *
+     * @param type The type of the question (e.g., RADIO_BUTTON_QUESTION, TEXT_QUESTION, CHECK_BOX_QUESTION).
+     * @param view The view from which to retrieve the answer.
+     * @return The answer as a String, or an empty String if the question type is unknown.
+     */
+
     private static String getHeroQuestionAnswers(String type, View view) {
         Log.d("QuestionType", type);
         switch (type) {
@@ -305,9 +346,9 @@ public class SurveyUtils {
      */
     public static Integer checkExternalSurvey(List<StudyResponse.Surveys.Questions> questionsList) {
         if (questionsList.size() == 1) {
-            if (questionsList.get(0).getContent().getType().equals("external_survey")) return 1;
+            if (questionsList.get(0).getContent().getType().equals(EXTERNAL_SURVEY)) return 1;
         } else if (questionsList.size() >= 2) {
-            if (questionsList.get(1).getContent().getType().equals("external_survey")) {
+            if (questionsList.get(1).getContent().getType().equals(EXTERNAL_SURVEY)) {
                 return 2;
             }
         }

@@ -13,7 +13,6 @@ import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.TextView
 import androidx.cardview.widget.CardView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import org.onebusaway.android.R
@@ -46,7 +45,6 @@ class SurveyAdapter(
         private val checkBoxContainer: LinearLayout = itemView.findViewById(R.id.checkBoxContainer)
         private val surveyCard: CardView = itemView.findViewById(R.id.surveyCard)
         private val checkBoxLabel: TextView = itemView.findViewById(R.id.checkBoxLabel)
-        private val container: ConstraintLayout = itemView.findViewById(R.id.container)
 
         fun bind(surveyQuestion: StudyResponse.Surveys.Questions) {
 
@@ -153,7 +151,7 @@ class SurveyAdapter(
 
             SurveyUtils.RADIO_BUTTON_QUESTION -> {
                 radioGroup.setOnCheckedChangeListener { _, _ ->
-                    Log.e("position", position.toString() + " " + "radio")
+                    Log.d("position", position.toString() + " " + "radio")
                     saveQuestionAnswer(position, itemView)
                 }
             }

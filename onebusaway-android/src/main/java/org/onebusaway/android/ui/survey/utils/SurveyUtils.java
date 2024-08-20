@@ -15,7 +15,7 @@ import org.json.JSONObject;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
-import org.onebusaway.android.ui.survey.SurveyLocalData;
+import org.onebusaway.android.ui.survey.SurveyPreferences;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,11 +35,11 @@ public class SurveyUtils {
 
 
     public static String getUserUUID(Context context) {
-        if (SurveyLocalData.getUserUUID(context) == null) {
+        if (SurveyPreferences.getUserUUID(context) == null) {
             UUID uuid = UUID.randomUUID();
-            SurveyLocalData.saveUserUUID(context, uuid);
+            SurveyPreferences.saveUserUUID(context, uuid);
         }
-        return SurveyLocalData.getUserUUID(context);
+        return SurveyPreferences.getUserUUID(context);
     }
 
     public static List<String> getSelectedCheckBoxAnswer(View view) {

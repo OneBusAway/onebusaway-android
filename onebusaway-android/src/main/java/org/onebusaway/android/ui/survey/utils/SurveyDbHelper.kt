@@ -13,17 +13,21 @@ import org.onebusaway.android.ui.survey.entity.Survey
 import org.onebusaway.android.ui.survey.repository.SurveyRepository
 
 class SurveyDbHelper {
+
     companion object {
         private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+        const val SURVEY_COMPLETED = 1
+        const val SURVEY_SKIPPED = 2
+
         @JvmStatic
-        fun markSurveyAsCompleted(context: Context, survey: StudyResponse.Surveys) {
+        fun markSurveyAsCompletedOrSkipped(context: Context, survey: StudyResponse.Surveys, state:Int) {
             val surveyRepo = SurveyRepository(context)
 
             val newStudy = Study(
                 survey.study.id, survey.study.name, survey.study.description, true
             )
-            val newSurvey = Survey(survey.id, survey.study.id, survey.name)
+            val newSurvey = Survey(survey.id, survey.study.id, survey.name, state)
             coroutineScope.launch {
                 try {
                     surveyRepo.addOrUpdateStudy(newStudy)

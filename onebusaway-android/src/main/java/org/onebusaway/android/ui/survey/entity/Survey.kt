@@ -13,5 +13,5 @@ import androidx.room.PrimaryKey
     )]
 )
 data class Survey(
-    @PrimaryKey val survey_id: Int, val study_id: Int, val name: String
+    @PrimaryKey val survey_id: Int, val study_id: Int, val name: String, val state:Int
 )

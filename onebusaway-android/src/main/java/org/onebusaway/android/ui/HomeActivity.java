@@ -34,6 +34,9 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.io.request.survey.SurveyListener;
+import org.onebusaway.android.io.request.survey.model.StudyResponse;
+import org.onebusaway.android.io.request.survey.model.SubmitSurveyResponse;
 import org.onebusaway.android.io.request.weather.ObaWeatherRequest;
 import org.onebusaway.android.io.request.weather.models.ObaWeatherResponse;
 import org.onebusaway.android.io.request.weather.WeatherRequestListener;
@@ -48,6 +51,7 @@ import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
 import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.ui.survey.SurveyManager;
 import org.onebusaway.android.ui.weather.RegionCallback;
 import org.onebusaway.android.ui.weather.WeatherUtils;
 import org.onebusaway.android.util.FragmentUtils;
@@ -139,7 +143,8 @@ public class HomeActivity extends AppCompatActivity
         implements BaseMapFragment.OnFocusChangedListener,
         BaseMapFragment.OnProgressBarChangedListener,
         ArrivalsListFragment.Listener, NavigationDrawerCallbacks, WeatherRequestListener , RegionCallback,
-        ObaRegionsTask.Callback {
+        ObaRegionsTask.Callback, SurveyListener {
+
 
     interface SlidingPanelController {
 
@@ -188,6 +193,8 @@ public class HomeActivity extends AppCompatActivity
     View mArrivalsListHeaderSubView;
 
     CardView weatherView;
+
+    View mSurveyView;
 
     View mDonationView;
 
@@ -276,6 +283,7 @@ public class HomeActivity extends AppCompatActivity
 
     private ObaWeatherResponse weatherResponse;
 
+    private SurveyManager surveyManager;
     /**
      * Starts the MapActivity with a particular stop focused with the center of
      * the map at a particular point.
@@ -425,6 +433,11 @@ public class HomeActivity extends AppCompatActivity
             }
         }
         initWeatherView();
+
+        // Show survey
+        if(Application.get().getCurrentRegion() != null){
+            setupSurvey();
+        }
     }
 
     @Override
@@ -2133,4 +2146,35 @@ public class HomeActivity extends AppCompatActivity
 
         return builder.create();
     }
+    private void setupSurvey() {
+        mSurveyView = findViewById(R.id.surveyView);
+        initSurveyManager(mSurveyView);
+    }
+
+    private void initSurveyManager(View surveyView){
+        surveyManager = new SurveyManager(this, this, false);
+        surveyManager.setSurveyView(surveyView);
+        surveyManager.requestSurveyData();
+    }
+
+    @Override
+    public void onSurveyResponseReceived(StudyResponse response) {
+        surveyManager.onSurveyResponseReceived(response);
+    }
+
+    @Override
+    public void onSurveyFail() {
+        surveyManager.onSurveyFail();
+    }
+
+    @Override
+    public void onSubmitSurveyResponseReceived(SubmitSurveyResponse response) {
+        surveyManager.onSubmitSurveyResponseReceived(response);
+    }
+
+    @Override
+    public void onSubmitSurveyFail() {
+        surveyManager.onSubmitSurveyFail();
+    }
+
 }

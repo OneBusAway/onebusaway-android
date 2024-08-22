@@ -15,11 +15,9 @@ import org.json.JSONObject;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
-import org.onebusaway.android.ui.survey.SurveyPreferences;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class SurveyUtils {
 
@@ -33,20 +31,6 @@ public class SurveyUtils {
     public static final int EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION = 1;
     public static final int EXTERNAL_SURVEY_WITH_HERO_QUESTION = 2;
 
-
-    /**
-     * Retrieves the user's UUID. If the UUID is not already stored, generates a new UUID and saves it.
-     *
-     * @param context The application context used to access preferences.
-     * @return The user's UUID as a String.
-     */
-    public static String getUserUUID(Context context) {
-        if (SurveyPreferences.getUserUUID(context) == null) {
-            UUID uuid = UUID.randomUUID();
-            SurveyPreferences.saveUserUUID(context, uuid);
-        }
-        return SurveyPreferences.getUserUUID(context);
-    }
 
     /**
      * Retrieves the answers from selected checkboxes in the provided view.

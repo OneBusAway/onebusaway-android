@@ -137,6 +137,15 @@
                 </androidx.cardview.widget.CardView>
 
                 <include layout="@layout/donation_view" />
+                <include
+                    android:id="@+id/surveyView"
+                    android:layout_width="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:visibility="gone"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginTop="62dp"
+                    android:layout_height="wrap_content"
+                    layout="@layout/item_survey"/>
 
                 <uk.co.markormesher.android_fab.FloatingActionButton
                         android:id="@+id/layersSpeedDial"

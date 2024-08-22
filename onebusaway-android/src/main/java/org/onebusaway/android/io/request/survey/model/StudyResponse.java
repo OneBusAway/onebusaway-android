@@ -3,6 +3,7 @@ package org.onebusaway.android.io.request.survey.model;
 import java.io.Serializable;
 import java.lang.Integer;
 import java.lang.String;
+import java.util.ArrayList;
 import java.util.List;
 
 public class StudyResponse implements Serializable {
@@ -184,7 +185,7 @@ public class StudyResponse implements Serializable {
                 private String label_text;
                 private List<String> options;
                 private String url;
-                private List<String> embedded_data_fields;
+                private ArrayList<String> embedded_data_fields;
                 private String survey_provider;
 
                 private String type;
@@ -213,7 +214,7 @@ public class StudyResponse implements Serializable {
                     return url;
                 }
 
-                public List<String> getEmbedded_data_fields() {
+                public ArrayList<String> getEmbedded_data_fields() {
                     return embedded_data_fields;
                 }
 

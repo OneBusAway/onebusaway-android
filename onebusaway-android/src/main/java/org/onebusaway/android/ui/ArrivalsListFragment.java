@@ -70,9 +70,8 @@ import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.elements.Occupancy;
 import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.io.request.survey.StudyRequestListener;
+import org.onebusaway.android.io.request.survey.SurveyListener;
 import org.onebusaway.android.io.request.survey.model.SubmitSurveyResponse;
-import org.onebusaway.android.io.request.survey.submit.SubmitSurveyRequestListener;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
@@ -99,8 +98,7 @@ import java.util.Set;
 // We don't use the ListFragment because the support library's version of
 // the ListFragment doesn't work well with our header.
 //
-public class ArrivalsListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>, ArrivalsListHeader.Controller, SubmitSurveyRequestListener,
-        StudyRequestListener {
+public class ArrivalsListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>, ArrivalsListHeader.Controller, SurveyListener {
 
     private static final String TAG = "ArrivalsListFragment";
 
@@ -1766,7 +1764,7 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
     private void initSurveyManager(){
         // Avoiding doing multiple calls when updating the stop arrivals list
         if(isSurveyManagerInitialized) return;
-        surveyManager = new SurveyManager(requireContext(),true,this,this);
+        surveyManager = new SurveyManager(requireContext(),this,true);
         surveyManager.requestSurveyData();
         surveyManager.setCurrentStop(mStop);
         surveyManager.initSurveyArrivalsHeaderView(getLayoutInflater());

@@ -23,6 +23,7 @@ import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.survey.ObaStudyRequest;
 import org.onebusaway.android.io.request.survey.StudyRequestListener;
 import org.onebusaway.android.io.request.survey.StudyRequestTask;
+import org.onebusaway.android.io.request.survey.SurveyListener;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
 import org.onebusaway.android.io.request.survey.model.SubmitSurveyResponse;
 import org.onebusaway.android.io.request.survey.submit.ObaSubmitSurveyRequest;
@@ -33,6 +34,7 @@ import org.onebusaway.android.ui.survey.utils.SurveyViewUtils;
 import org.onebusaway.android.ui.survey.activities.SurveyWebViewActivity;
 import org.onebusaway.android.ui.survey.adapter.SurveyAdapter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -44,7 +46,9 @@ public class SurveyManager implements SurveyActionsListener {
     private StudyResponse mStudyResponse;
     // Holds the current survey index, determined by the survey location (stops, supported routes/stops, map)
     private int curSurveyIndex = 0;
+    // Holds current survey ID
     private Integer curSurveyID;
+    // Holds the survey view
     private View surveyView;
     private RecyclerView surveyRecycleView;
     private Button submitSurveyButton;
@@ -62,13 +66,11 @@ public class SurveyManager implements SurveyActionsListener {
     private Integer externalSurveyResult = 0;
 
 
-    // TODO CHANGE STATIC API URL TO SUPPORT DIFFERENT REGIONS
-
-    public SurveyManager(Context context, Boolean fromArrivalsList, StudyRequestListener studyRequestListener, SubmitSurveyRequestListener submitSurveyRequestListener) {
+    public SurveyManager(Context context,SurveyListener surveyListener , Boolean isVisibleOnStops) {
         this.context = context;
-        this.studyRequestListener = studyRequestListener;
-        this.submitSurveyRequestListener = submitSurveyRequestListener;
-        this.isVisibleOnStops = fromArrivalsList;
+        this.studyRequestListener = surveyListener;
+        this.submitSurveyRequestListener = surveyListener;
+        this.isVisibleOnStops = isVisibleOnStops;
         setupSurveyDismissDialog();
     }
 
@@ -109,24 +111,27 @@ public class SurveyManager implements SurveyActionsListener {
     }
 
 
-    private void setSurveyData() {
+    private void addSurveyView() {
         if (!checkValidResponse() || curSurveyIndex == -1) return;
         if (isVisibleOnStops) {
             arrivalsList.addHeaderView(surveyView);
+        } else {
+            surveyView.setVisibility(View.VISIBLE);
         }
         updateSurveyData();
     }
 
     public void submitSurveyAnswers(StudyResponse.Surveys survey, boolean heroQuestion) {
         // TODO ADD PROGRESS BAR
-        String userIdentifier = SurveyUtils.getUserUUID(context);
-        String apiUrl = context.getString(R.string.submit_survey_api_url);
+        String userIdentifier = SurveyPreferences.getUserUUID(context);
+        String submitSurveyAPIURL = context.getString(R.string.submit_survey_api_url);
+        // Add the update path for updating remaining survey questions
         if (!heroQuestion && updateSurveyPath != null) {
-            apiUrl += updateSurveyPath;
+            submitSurveyAPIURL += updateSurveyPath;
         }
         JSONArray surveyResponseBody;
         if (heroQuestion) {
-            surveyResponseBody = (SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions().get(0), surveyView.getRootView()));
+            surveyResponseBody = (SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions().get(0), surveyView));
         } else {
             surveyResponseBody = (SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions()));
         }
@@ -136,19 +141,19 @@ public class SurveyManager implements SurveyActionsListener {
             return;
         }
         Log.d("SurveyResponseBody", surveyResponseBody.toString());
-        ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(context, apiUrl).setUserIdentifier(userIdentifier).setSurveyId(survey.getId()).setResponses(surveyResponseBody).setListener(submitSurveyRequestListener).build();
+        ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(context, submitSurveyAPIURL).setUserIdentifier(userIdentifier).setSurveyId(survey.getId()).setResponses(surveyResponseBody).setListener(submitSurveyRequestListener).build();
 
         new Thread(request::call).start();
     }
 
-    public void handleNextButton(View view) {
+    private void handleNextButton(View view) {
         Button nextBtn = view.findViewById(R.id.nextBtn);
         nextBtn.setOnClickListener(view1 -> {
             submitSurveyAnswers(mStudyResponse.getSurveys().get(curSurveyIndex), true);
         });
     }
 
-    public void handleOpenExternalSurvey(View view, String url) {
+    private void handleOpenExternalSurvey(View view, String url) {
         Button externalSurveyBtn = view.findViewById(R.id.openExternalSurveyBtn);
         externalSurveyBtn.setOnClickListener(view1 -> {
             openExternalSurvey(url);
@@ -157,27 +162,47 @@ public class SurveyManager implements SurveyActionsListener {
 
 
     private void openExternalSurvey(String url) {
-        // TODO handle passing embedded data
+        ArrayList<String> embeddedDataList = new ArrayList<>();
+        StudyResponse.Surveys curSurvey = mStudyResponse.getSurveys().get(curSurveyIndex);
+        switch (externalSurveyResult) {
+            case SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION:
+                embeddedDataList = curSurvey.getQuestions().get(0).getContent().getEmbedded_data_fields();
+                break;
+            case SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION:
+                embeddedDataList = curSurvey.getQuestions().get(1).getContent().getEmbedded_data_fields();
+                break;
+            default:
+                break;
+        }
+
+
         Intent intent = new Intent(context, SurveyWebViewActivity.class);
         intent.putExtra("url", url);
+        if(isVisibleOnStops && currentStop != null) {
+            intent.putExtra("stop_id", currentStop.getId());
+            if(currentStop.getRouteIds().length > 0){
+                intent.putExtra("route_id", currentStop.getRouteIds()[0]);
+            }
+        }
+        intent.putStringArrayListExtra("embedded_data", embeddedDataList);
         context.startActivity(intent);
         handleCompleteSurvey();
     }
 
 
-    public void handleSubmitSurveyButton(View view) {
+    private void handleSubmitSurveyButton(View view) {
         submitSurveyButton = view.findViewById(R.id.submit_btn);
         submitSurveyButton.setOnClickListener(v -> submitSurveyAnswers(mStudyResponse.getSurveys().get(curSurveyIndex), false));
     }
 
-    public void initSurveyAdapter(Context context, RecyclerView recyclerView) {
+    private void initSurveyAdapter(Context context, RecyclerView recyclerView) {
         List<StudyResponse.Surveys.Questions> surveyQuestions = mStudyResponse.getSurveys().get(curSurveyIndex).getQuestions();
         surveyQuestions.remove(0); // Remove the hero question
         SurveyAdapter surveyAdapter = new SurveyAdapter(context, surveyQuestions);
         recyclerView.setAdapter(surveyAdapter);
     }
 
-    public void showAllSurveyQuestions() {
+    private void showAllSurveyQuestions() {
         surveyBottomSheet = SurveyViewUtils.createSurveyBottomSheetDialog(context);
         initSurveyQuestionsBottomSheet(context);
         SurveyViewUtils.setupBottomSheetBehavior(surveyBottomSheet);
@@ -196,6 +221,10 @@ public class SurveyManager implements SurveyActionsListener {
         surveyView = inflater.inflate(R.layout.item_survey, null);
     }
 
+    public void setSurveyView(View surveyView) {
+        this.surveyView = surveyView;
+    }
+
     public void initSurveyArrivalsList(ListView arrivalsList) {
         this.arrivalsList = arrivalsList;
     }
@@ -203,8 +232,8 @@ public class SurveyManager implements SurveyActionsListener {
     private void initSurveyQuestionsBottomSheet(Context context) {
         if (!checkValidResponse()) return;
 
-        StudyResponse.Surveys firstSurvey = mStudyResponse.getSurveys().get(curSurveyIndex);
-        if (!isSurveyValid(firstSurvey)) {
+        StudyResponse.Surveys curSurvey = mStudyResponse.getSurveys().get(curSurveyIndex);
+        if (!isSurveyValid(curSurvey)) {
             return;
         }
 
@@ -213,7 +242,7 @@ public class SurveyManager implements SurveyActionsListener {
         TextView surveyTitle = surveyBottomSheet.findViewById(R.id.surveyTitle);
         TextView surveyDescription = surveyBottomSheet.findViewById(R.id.surveyDescription);
 
-        setSurveyTitleAndDescription(surveyTitle, surveyDescription, firstSurvey);
+        setSurveyTitleAndDescription(surveyTitle, surveyDescription, curSurvey);
         initRecyclerView(context);
     }
 
@@ -221,8 +250,8 @@ public class SurveyManager implements SurveyActionsListener {
         return mStudyResponse != null && mStudyResponse.getSurveys() != null && !mStudyResponse.getSurveys().isEmpty();
     }
 
-    private Boolean isSurveyValid(StudyResponse.Surveys firstSurvey) {
-        return firstSurvey != null && firstSurvey.getStudy() != null;
+    private Boolean isSurveyValid(StudyResponse.Surveys survey) {
+        return survey != null && survey.getStudy() != null;
     }
 
     private void setSurveyTitleAndDescription(TextView surveyTitle, TextView surveyDescription, StudyResponse.Surveys firstSurvey) {
@@ -235,9 +264,8 @@ public class SurveyManager implements SurveyActionsListener {
     }
 
     private void initRecyclerView(Context context) {
-        if (surveyRecycleView != null) {
-            surveyRecycleView.setLayoutManager(new LinearLayoutManager(context));
-        }
+        if (surveyRecycleView == null) return;
+        surveyRecycleView.setLayoutManager(new LinearLayoutManager(context));
     }
 
 
@@ -245,10 +273,12 @@ public class SurveyManager implements SurveyActionsListener {
         if (response == null) return;
         mStudyResponse = response;
         curSurveyIndex = SurveyUtils.getCurrentSurveyIndex(response, context, isVisibleOnStops, currentStop);
+
         Log.d("CurSurveyIndex", curSurveyIndex + " ");
+
         if (curSurveyIndex == -1) return;
         curSurveyID = mStudyResponse.getSurveys().get(curSurveyIndex).getId();
-        setSurveyData();
+        addSurveyView();
     }
 
     public void onSurveyFail() {
@@ -258,12 +288,13 @@ public class SurveyManager implements SurveyActionsListener {
     public void onSubmitSurveyResponseReceived(SubmitSurveyResponse response) {
         // Switch back to the main thread to update UI elements
         ContextCompat.getMainExecutor(context).execute(() -> {
+            // User answered the hero question and completed the survey
             if (updateSurveyPath != null) {
                 surveyBottomSheet.hide();
                 Toast.makeText(context, R.string.submitted_successfully, Toast.LENGTH_LONG).show();
                 return;
             }
-            // Mark survey as done
+            // Mark survey as completed
             handleCompleteSurvey();
             // Check if the external survey needs to be opened after responding to a hero question
             if (externalSurveyResult == SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION) {
@@ -272,9 +303,11 @@ public class SurveyManager implements SurveyActionsListener {
             }
             // Don't show survey question bottom sheet if we don't have another questions
             if (haveOnlyHeroQuestion()) return;
+            // Set the URL Update path for submitting the remaining questions
             updateSurveyPath = response.getSurveyResponse().getId();
             // Display the bottom sheet containing survey questions
             showAllSurveyQuestions();
+            // Init survey question list
             initSurveyAdapter(context, surveyRecycleView);
         });
     }
@@ -286,8 +319,9 @@ public class SurveyManager implements SurveyActionsListener {
 
     private void handleExternalSurvey() {
         if (externalSurveyUrl == null) return;
-
+        // Reset state to the default survey type
         externalSurveyResult = SurveyUtils.DEFAULT_SURVEY;
+
         openExternalSurvey(externalSurveyUrl);
     }
 
@@ -295,11 +329,11 @@ public class SurveyManager implements SurveyActionsListener {
      * Marks the current survey as completed.
      * If the survey was visible in the stops view, it removes the corresponding hero question view from the arrivals list.
      */
-    public void handleCompleteSurvey() {
+    private void handleCompleteSurvey() {
         StudyResponse.Surveys currentSurvey = mStudyResponse.getSurveys().get(curSurveyIndex);
         SurveyDbHelper.markSurveyAsCompletedOrSkipped(context, currentSurvey, SurveyDbHelper.SURVEY_COMPLETED);
-        // Remove the hero question view from the arrivals list if it was previously visible on the stops view
-        handleRemoveSurveyFromArrivalsHeader();
+        // Remove the survey view if it's visible on the arrivals list or map
+        handleRemoveSurvey();
     }
 
     public void onSubmitSurveyFail() {
@@ -308,6 +342,7 @@ public class SurveyManager implements SurveyActionsListener {
 
     /**
      * Sets the current stop only if the survey is visible at the stops.
+     *
      * @param stop The current stop
      */
     public void setCurrentStop(ObaStop stop) {
@@ -320,16 +355,21 @@ public class SurveyManager implements SurveyActionsListener {
     /**
      * Removes the survey view from the arrivals list header if it is visible on stops.
      */
-    public void handleRemoveSurveyFromArrivalsHeader() {
-        if (!isVisibleOnStops || arrivalsList == null) return;
-        arrivalsList.removeHeaderView(surveyView);
+    private void handleRemoveSurvey() {
+        if (arrivalsList != null && isVisibleOnStops) {
+            arrivalsList.removeHeaderView(surveyView);
+        }
+
+        if (!isVisibleOnStops) {
+            surveyView.setVisibility(View.GONE);
+        }
     }
 
     /**
      * Initializes and displays the survey dismiss dialog.
      * Sets the listener for survey actions callbacks
      */
-    public void setupSurveyDismissDialog() {
+    private void setupSurveyDismissDialog() {
         SurveyDialogActions.setDialogActionListener(this);
         SurveyViewUtils.createDismissSurveyDialog(context);
     }
@@ -337,22 +377,23 @@ public class SurveyManager implements SurveyActionsListener {
     /**
      * Handles skipping the survey.
      * The survey will be marked as skipped in the database with a state value of 2
-     * indicating it was not completed by the user.
+     * indicating it was not completed by the user and should be skipped.
      */
     @Override
     public void onSkipSurvey() {
-        handleRemoveSurveyFromArrivalsHeader();
+        handleRemoveSurvey();
         StudyResponse.Surveys currentSurvey = mStudyResponse.getSurveys().get(curSurveyIndex);
         SurveyDbHelper.markSurveyAsCompletedOrSkipped(context, currentSurvey, SurveyDbHelper.SURVEY_SKIPPED);
     }
 
     @Override
     public void onRemindMeLater() {
-        // TODO: implement
+        // TODO handle reminder button
+        handleRemoveSurvey();
     }
 
     @Override
     public void onCancelSurvey() {
-        // By default will dismiss the survey
+        // By default will dismiss the survey dialog
     }
 }

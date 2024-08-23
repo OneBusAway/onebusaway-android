@@ -229,11 +229,12 @@ public class SurveyViewUtils {
      * This method checks if there is any user information (in the form of survey questions) to be shared.
      * If available, it constructs a message that lists the shared information and separates each piece of information with a comma.
      *
-     * @param context    The Context used to access resources.
-     * @param surveyView The View containing the TextView where the shared information will be displayed.
-     * @param questions  A List of strings representing the user information that will be shared in the survey.
+     * @param context                           The Context used to access resources.
+     * @param surveyView                        The View containing the TextView where the shared information will be displayed.
+     * @param questions                         A List of strings representing the user information that will be shared in the survey.
+     * @param externalSurveyState                 With hero question or not
      */
-    public static void showSharedInfoDetailsTextView(Context context, View surveyView, List<String> questions) {
+    public static void showSharedInfoDetailsTextView(Context context, View surveyView, List<String> questions, int externalSurveyState) {
         if (questions.isEmpty()) return;
         TextView sharedInfoTextView = surveyView.findViewById(R.id.shared_info_tv);
         StringBuilder surveySharedInfo = new StringBuilder();
@@ -245,7 +246,7 @@ public class SurveyViewUtils {
                 surveySharedInfo.append(", ");
             }
         }
-        hideQuestionsView(surveyView);
+        if(SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION == externalSurveyState) hideQuestionsView(surveyView);
         sharedInfoTextView.setVisibility(View.VISIBLE);
         sharedInfoTextView.setText(surveySharedInfo);
     }

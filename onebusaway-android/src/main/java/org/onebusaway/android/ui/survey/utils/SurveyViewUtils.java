@@ -245,6 +245,7 @@ public class SurveyViewUtils {
                 surveySharedInfo.append(", ");
             }
         }
+        hideQuestionsView(surveyView);
         sharedInfoTextView.setVisibility(View.VISIBLE);
         sharedInfoTextView.setText(surveySharedInfo);
     }
@@ -283,6 +284,11 @@ public class SurveyViewUtils {
     public static void hideProgress(View surveyView){
         View progress = surveyView.findViewById(R.id.surveyProgress);
         progress.setVisibility(View.GONE);
+    }
+
+    private static void hideQuestionsView(View surveyView){
+        View questionsView = surveyView.findViewById(R.id.questionsContainer);
+        questionsView.setVisibility(View.GONE);
     }
 
 }

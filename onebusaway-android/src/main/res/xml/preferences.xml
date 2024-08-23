@@ -55,6 +55,12 @@
 
         <CheckBoxPreference
             android:defaultValue="true"
+            android:key="@string/preference_key_show_available_studies"
+            android:summary="@string/preferences_show_available_studies_body"
+            android:title="@string/preferences_show_available_studies_title" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
             android:key="@string/preference_key_show_tutorial_screens"
             android:summary="@string/preferences_show_tutorial_screens_summary"
             android:title="@string/preferences_show_tutorial_screens_title" />

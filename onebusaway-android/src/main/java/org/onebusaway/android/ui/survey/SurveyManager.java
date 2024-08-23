@@ -19,6 +19,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import org.json.JSONArray;
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.survey.ObaStudyRequest;
 import org.onebusaway.android.io.request.survey.StudyRequestListener;
@@ -37,7 +38,6 @@ import org.onebusaway.android.ui.survey.adapter.SurveyAdapter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public class SurveyManager implements SurveyActionsListener {
     private final Context context;
@@ -75,7 +75,9 @@ public class SurveyManager implements SurveyActionsListener {
     }
 
     public void requestSurveyData() {
-        ObaStudyRequest surveyRequest = ObaStudyRequest.newRequest();
+        boolean isStudiesEnabled = Application.getPrefs().getBoolean(context.getString(R.string.preference_key_show_available_studies),true);
+        if(!isStudiesEnabled) return;
+        ObaStudyRequest surveyRequest = ObaStudyRequest.newRequest(context);
         StudyRequestTask task = new StudyRequestTask(studyRequestListener);
         task.execute(surveyRequest);
         Log.d("SurveyManager", "Survey requested");

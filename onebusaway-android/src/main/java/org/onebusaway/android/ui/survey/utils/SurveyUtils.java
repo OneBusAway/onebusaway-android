@@ -94,6 +94,7 @@ public class SurveyUtils {
      */
     public static Integer getCurrentSurveyIndex(StudyResponse studyResponse, Context context, Boolean isVisibleOnStop, ObaStop currentStop) {
         List<StudyResponse.Surveys> surveys = studyResponse.getSurveys();
+        if(surveys == null) return -1;
 
         // Iterate through the surveys to find the first uncompleted one
         for (int index = 0; index < surveys.size(); index++) {

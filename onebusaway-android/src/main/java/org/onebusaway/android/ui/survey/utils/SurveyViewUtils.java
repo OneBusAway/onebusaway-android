@@ -275,5 +275,14 @@ public class SurveyViewUtils {
         return dismissSurveyDialog;
     }
 
+    public static void showProgress(View surveyView){
+        View progress = surveyView.findViewById(R.id.surveyProgress);
+        progress.setVisibility(View.VISIBLE);
+    }
+
+    public static void hideProgress(View surveyView){
+        View progress = surveyView.findViewById(R.id.surveyProgress);
+        progress.setVisibility(View.GONE);
+    }
 
 }

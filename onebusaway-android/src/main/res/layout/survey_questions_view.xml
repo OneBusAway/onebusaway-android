@@ -10,6 +10,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <include
+            android:id="@+id/surveyProgress"
+            layout="@layout/progress_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone"
+            android:focusableInTouchMode="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
             android:id="@+id/close_btn"

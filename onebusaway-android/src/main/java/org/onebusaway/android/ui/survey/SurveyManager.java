@@ -66,7 +66,7 @@ public class SurveyManager implements SurveyActionsListener {
     private Integer externalSurveyResult = 0;
 
 
-    public SurveyManager(Context context,SurveyListener surveyListener , Boolean isVisibleOnStops) {
+    public SurveyManager(Context context, SurveyListener surveyListener, Boolean isVisibleOnStops) {
         this.context = context;
         this.studyRequestListener = surveyListener;
         this.submitSurveyRequestListener = surveyListener;
@@ -122,7 +122,6 @@ public class SurveyManager implements SurveyActionsListener {
     }
 
     public void submitSurveyAnswers(StudyResponse.Surveys survey, boolean heroQuestion) {
-        // TODO ADD PROGRESS BAR
         String userIdentifier = SurveyPreferences.getUserUUID(context);
         String submitSurveyAPIURL = context.getString(R.string.submit_survey_api_url);
         // Add the update path for updating remaining survey questions
@@ -140,6 +139,7 @@ public class SurveyManager implements SurveyActionsListener {
             Toast.makeText(context, context.getString(R.string.please_fill_all_the_questions), Toast.LENGTH_SHORT).show();
             return;
         }
+        SurveyViewUtils.showProgress(surveyView);
         Log.d("SurveyResponseBody", surveyResponseBody.toString());
         ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(context, submitSurveyAPIURL).setUserIdentifier(userIdentifier).setSurveyId(survey.getId()).setResponses(surveyResponseBody).setListener(submitSurveyRequestListener).build();
 
@@ -178,9 +178,9 @@ public class SurveyManager implements SurveyActionsListener {
 
         Intent intent = new Intent(context, SurveyWebViewActivity.class);
         intent.putExtra("url", url);
-        if(isVisibleOnStops && currentStop != null) {
+        if (isVisibleOnStops && currentStop != null) {
             intent.putExtra("stop_id", currentStop.getId());
-            if(currentStop.getRouteIds().length > 0){
+            if (currentStop.getRouteIds().length > 0) {
                 intent.putExtra("route_id", currentStop.getRouteIds()[0]);
             }
         }
@@ -189,10 +189,15 @@ public class SurveyManager implements SurveyActionsListener {
         handleCompleteSurvey();
     }
 
-
-    private void handleSubmitSurveyButton(View view) {
-        submitSurveyButton = view.findViewById(R.id.submit_btn);
-        submitSurveyButton.setOnClickListener(v -> submitSurveyAnswers(mStudyResponse.getSurveys().get(curSurveyIndex), false));
+    private void setSubmitSurveyButton() {
+        submitSurveyButton = surveyBottomSheet.findViewById(R.id.submit_btn);
+        View bottomSheetProgress = surveyBottomSheet.findViewById(R.id.surveyProgress);
+        submitSurveyButton.setOnClickListener(v -> {
+            if (bottomSheetProgress != null) {
+                bottomSheetProgress.setVisibility(View.VISIBLE);
+            }
+            submitSurveyAnswers(mStudyResponse.getSurveys().get(curSurveyIndex), false);
+        });
     }
 
     private void initSurveyAdapter(Context context, RecyclerView recyclerView) {
@@ -207,7 +212,7 @@ public class SurveyManager implements SurveyActionsListener {
         initSurveyQuestionsBottomSheet(context);
         SurveyViewUtils.setupBottomSheetBehavior(surveyBottomSheet);
         SurveyViewUtils.setupBottomSheetCloseButton(context, surveyBottomSheet);
-        handleSubmitSurveyButton(Objects.requireNonNull(surveyBottomSheet.findViewById(R.id.submit_btn)));
+        setSubmitSurveyButton();
         surveyBottomSheet.show();
     }
 
@@ -288,6 +293,7 @@ public class SurveyManager implements SurveyActionsListener {
     public void onSubmitSurveyResponseReceived(SubmitSurveyResponse response) {
         // Switch back to the main thread to update UI elements
         ContextCompat.getMainExecutor(context).execute(() -> {
+            SurveyViewUtils.hideProgress(surveyView);
             // User answered the hero question and completed the survey
             if (updateSurveyPath != null) {
                 surveyBottomSheet.hide();
@@ -337,6 +343,7 @@ public class SurveyManager implements SurveyActionsListener {
     }
 
     public void onSubmitSurveyFail() {
+        SurveyViewUtils.hideProgress(surveyView);
         Log.d("SubmitSurveyFail", curSurveyID + "");
     }
 

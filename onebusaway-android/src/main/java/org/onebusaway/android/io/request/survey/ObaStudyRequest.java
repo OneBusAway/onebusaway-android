@@ -1,5 +1,6 @@
 package org.onebusaway.android.io.request.survey;
 
+import android.content.Context;
 import android.net.Uri;
 
 import androidx.annotation.NonNull;
@@ -8,6 +9,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.request.RequestBase;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
+import org.onebusaway.android.ui.survey.SurveyPreferences;
 
 import java.util.concurrent.Callable;
 
@@ -22,10 +24,10 @@ public final class ObaStudyRequest extends RequestBase implements Callable<Study
 
         private static Uri URI = null;
 
-        public Builder() {
+        public Builder(Context context) {
             String studyAPIURL = Application.get().getResources().getString(R.string.studies_api_url);
             studyAPIURL = studyAPIURL.replace("regionID", String.valueOf(Application.get().getCurrentRegion().getId()));
-            URI = Uri.parse(studyAPIURL);
+            URI = Uri.parse(studyAPIURL).buildUpon().appendQueryParameter("user_id", SurveyPreferences.getUserUUID(context)).build();
         }
 
         public ObaStudyRequest build() {
@@ -33,8 +35,8 @@ public final class ObaStudyRequest extends RequestBase implements Callable<Study
         }
     }
 
-    public static ObaStudyRequest newRequest() {
-        return new Builder().build();
+    public static ObaStudyRequest newRequest(Context context) {
+        return new Builder(context).build();
     }
 
     @Override

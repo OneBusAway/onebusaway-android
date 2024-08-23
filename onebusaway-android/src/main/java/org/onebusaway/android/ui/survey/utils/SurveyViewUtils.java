@@ -48,9 +48,7 @@ public class SurveyViewUtils {
         ImageButton closeBtn = surveyView.findViewById(R.id.close_btn);
         closeBtn.setVisibility(View.VISIBLE);
 
-        closeBtn.setOnClickListener(v -> {
-            createDismissSurveyDialog(context).show();
-        });
+        closeBtn.setOnClickListener(v -> createDismissSurveyDialog(context).show());
     }
 
     public static void showQuestion(Context context, View rootView, StudyResponse.Surveys.Questions heroQuestion, String questionType) {
@@ -229,10 +227,10 @@ public class SurveyViewUtils {
      * This method checks if there is any user information (in the form of survey questions) to be shared.
      * If available, it constructs a message that lists the shared information and separates each piece of information with a comma.
      *
-     * @param context                           The Context used to access resources.
-     * @param surveyView                        The View containing the TextView where the shared information will be displayed.
-     * @param questions                         A List of strings representing the user information that will be shared in the survey.
-     * @param externalSurveyState                 With hero question or not
+     * @param context             The Context used to access resources.
+     * @param surveyView          The View containing the TextView where the shared information will be displayed.
+     * @param questions           A List of strings representing the user information that will be shared in the survey.
+     * @param externalSurveyState With hero question or not
      */
     public static void showSharedInfoDetailsTextView(Context context, View surveyView, List<String> questions, int externalSurveyState) {
         if (questions.isEmpty()) return;
@@ -246,10 +244,12 @@ public class SurveyViewUtils {
                 surveySharedInfo.append(", ");
             }
         }
-        if(SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION == externalSurveyState) hideQuestionsView(surveyView);
+        if (SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION == externalSurveyState)
+            hideQuestionsView(surveyView);
         sharedInfoTextView.setVisibility(View.VISIBLE);
         sharedInfoTextView.setText(surveySharedInfo);
     }
+
     /**
      * Creates an AlertDialog for dismissing a survey.
      * This dialog allows the user to either skip the survey, be reminded later, or cancel the action.
@@ -258,36 +258,29 @@ public class SurveyViewUtils {
      * @return The AlertDialog instance to be shown configured for the dismiss survey dialog.
      */
     public static AlertDialog.Builder createDismissSurveyDialog(Context context) {
-        AlertDialog.Builder dismissSurveyDialog =
-                new AlertDialog.Builder(context)
-                        .setTitle(R.string.dismiss_survey_dialog_title)
-                        .setMessage(R.string.dismiss_survey_dialog_body)
-                        .setNegativeButton(R.string.survey_dismiss_dialog_skip_this_survey, (dialog, which) -> {
-                            SurveyDialogActions.handleSkipSurvey();
-                        })
-                        .setNeutralButton(R.string.remind_me_latter, (dialog, which) -> {
-                            SurveyDialogActions.handleRemindMeLater();
-                        })
-                        .setPositiveButton(R.string.cancel, (dialog, which) -> {
-                            SurveyDialogActions.handleCancel();
-                        })
-                        .setCancelable(true);
+        AlertDialog.Builder dismissSurveyDialog = new AlertDialog.Builder(context).setTitle(R.string.dismiss_survey_dialog_title).setMessage(R.string.dismiss_survey_dialog_body).setNegativeButton(R.string.survey_dismiss_dialog_skip_this_survey, (dialog, which) -> {
+            SurveyDialogActions.handleSkipSurvey();
+        }).setNeutralButton(R.string.remind_me_latter, (dialog, which) -> {
+            SurveyDialogActions.handleRemindMeLater();
+        }).setPositiveButton(R.string.cancel, (dialog, which) -> {
+            SurveyDialogActions.handleCancel();
+        }).setCancelable(true);
 
         dismissSurveyDialog.create();
         return dismissSurveyDialog;
     }
 
-    public static void showProgress(View surveyView){
+    public static void showProgress(View surveyView) {
         View progress = surveyView.findViewById(R.id.surveyProgress);
         progress.setVisibility(View.VISIBLE);
     }
 
-    public static void hideProgress(View surveyView){
+    public static void hideProgress(View surveyView) {
         View progress = surveyView.findViewById(R.id.surveyProgress);
         progress.setVisibility(View.GONE);
     }
 
-    private static void hideQuestionsView(View surveyView){
+    private static void hideQuestionsView(View surveyView) {
         View questionsView = surveyView.findViewById(R.id.questionsContainer);
         questionsView.setVisibility(View.GONE);
     }

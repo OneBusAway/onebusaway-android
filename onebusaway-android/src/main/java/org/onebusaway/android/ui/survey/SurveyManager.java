@@ -83,32 +83,49 @@ public class SurveyManager implements SurveyActionsListener {
 
     private void updateSurveyData() {
         List<StudyResponse.Surveys.Questions> questionsList = mStudyResponse.getSurveys().get(curSurveyIndex).getQuestions();
-
         externalSurveyResult = SurveyUtils.checkExternalSurvey(questionsList);
         Log.d("SurveyState", "External survey result: " + externalSurveyResult);
 
+        handleSurveyResult(externalSurveyResult, questionsList);
+        showHeroQuestion(questionsList.get(0));
+    }
+
+    private void handleSurveyResult(int externalSurveyResult, List<StudyResponse.Surveys.Questions> questionsList) {
         switch (externalSurveyResult) {
             case SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION:
-                SurveyViewUtils.showSharedInfoDetailsTextView(context, surveyView, questionsList.get(0).getContent().getEmbedded_data_fields());
-                SurveyViewUtils.showExternalSurveyButtons(context, surveyView);
-                handleOpenExternalSurvey(surveyView, questionsList.get(0).getContent().getUrl());
+                handleExternalSurveyWithoutHero(questionsList);
                 break;
             case SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION:
-                externalSurveyUrl = questionsList.get(1).getContent().getUrl();
-                SurveyViewUtils.showSharedInfoDetailsTextView(context, surveyView, questionsList.get(1).getContent().getEmbedded_data_fields());
-                SurveyViewUtils.showHeroQuestionButtons(context, surveyView);
-                handleNextButton(surveyView);
+                handleExternalSurveyWithHero(questionsList);
                 break;
-
             default:
-                SurveyViewUtils.showHeroQuestionButtons(context, surveyView);
-                handleNextButton(surveyView);
+                handleDefaultSurvey();
                 break;
         }
-
-        StudyResponse.Surveys.Questions heroQuestion = questionsList.get(0);
-        SurveyViewUtils.showQuestion(context, surveyView.getRootView(), heroQuestion, heroQuestion.getContent().getType());
     }
+
+    private void handleExternalSurveyWithoutHero(List<StudyResponse.Surveys.Questions> questionsList) {
+        SurveyViewUtils.showSharedInfoDetailsTextView(context, surveyView, questionsList.get(0).getContent().getEmbedded_data_fields(), SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION);
+        SurveyViewUtils.showExternalSurveyButtons(context, surveyView);
+        handleOpenExternalSurvey(surveyView, questionsList.get(0).getContent().getUrl());
+    }
+
+    private void handleExternalSurveyWithHero(List<StudyResponse.Surveys.Questions> questionsList) {
+        externalSurveyUrl = questionsList.get(1).getContent().getUrl();
+        SurveyViewUtils.showSharedInfoDetailsTextView(context, surveyView, questionsList.get(1).getContent().getEmbedded_data_fields(), SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION);
+        SurveyViewUtils.showHeroQuestionButtons(context, surveyView);
+        handleNextButton(surveyView);
+    }
+
+    private void handleDefaultSurvey() {
+        SurveyViewUtils.showHeroQuestionButtons(context, surveyView);
+        handleNextButton(surveyView);
+    }
+
+    private void showHeroQuestion(StudyResponse.Surveys.Questions heroQuestion) {
+        SurveyViewUtils.showQuestion(context, surveyView, heroQuestion, heroQuestion.getContent().getType());
+    }
+
 
 
     private void addSurveyView() {

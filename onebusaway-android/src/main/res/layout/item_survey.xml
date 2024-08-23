@@ -101,7 +101,7 @@
 
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/constraintLayout"
+                android:id="@+id/questionsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintBottom_toTopOf="@+id/shared_info_tv"
@@ -166,11 +166,11 @@
             <TextView
                 android:id="@+id/shared_info_tv"
                 android:layout_width="0dp"
+                android:visibility="gone"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="8dp"
-                android:visibility="gone"
                 app:layout_constraintBottom_toTopOf="@+id/nextBtn"
                 app:layout_constraintEnd_toStartOf="@+id/openExternalSurveyBtn"
                 app:layout_constraintStart_toStartOf="parent"

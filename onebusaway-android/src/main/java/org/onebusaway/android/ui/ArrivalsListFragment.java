@@ -98,7 +98,7 @@ import java.util.Set;
 // We don't use the ListFragment because the support library's version of
 // the ListFragment doesn't work well with our header.
 //
-public class ArrivalsListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>, ArrivalsListHeader.Controller, SurveyListener {
+public class ArrivalsListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>, ArrivalsListHeader.Controller {
 
     private static final String TAG = "ArrivalsListFragment";
 
@@ -179,9 +179,6 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
     private FirebaseAnalytics mFirebaseAnalytics;
 
     private SurveyManager surveyManager;
-
-    private boolean isSurveyManagerInitialized = false;
-
 
     public interface Listener {
 
@@ -1763,33 +1760,51 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
 
     private void initSurveyManager(){
         // Avoiding doing multiple calls when updating the stop arrivals list
-        if(isSurveyManagerInitialized) return;
-        surveyManager = new SurveyManager(requireContext(),this,true);
-        surveyManager.requestSurveyData();
-        surveyManager.setCurrentStop(mStop);
-        surveyManager.initSurveyArrivalsHeaderView(getLayoutInflater());
-        surveyManager.initSurveyArrivalsList(getListView());
-        isSurveyManagerInitialized = true;
+        if(surveyManager == null){
+            View surveyView = getLayoutInflater().inflate(R.layout.item_survey,null);
+            surveyManager = new SurveyManager(requireContext(), surveyView,true, new SurveyListener() {
+                @Override
+                public void onSurveyResponseReceived(StudyResponse response) {
+                    surveyManager.onSurveyResponseReceived(response);
+                }
+
+                @Override
+                public void onSurveyResponseFail() {
+                    surveyManager.onSurveyResponseFail();
+                }
+
+                @Override
+                public void onSubmitSurveyResponseReceived(SubmitSurveyResponse response) {
+                    surveyManager.onSubmitSurveyResponseReceived(response);
+                }
+
+                @Override
+                public void onSubmitSurveyFail() {
+                    surveyManager.onSubmitSurveyFail();
+                }
+
+
+                @Override
+                public void onSkipSurvey() {
+                    surveyManager.onSkipSurvey();
+                }
+
+                @Override
+                public void onRemindMeLater() {
+                    surveyManager.onRemindMeLater();
+                }
+
+                @Override
+                public void onCancelSurvey() {
+                    surveyManager.onCancelSurvey();
+                }
+
+            });
+            surveyManager.requestSurveyData();
+            surveyManager.setCurrentStop(mStop);
+            surveyManager.initSurveyArrivalsList(getListView());
+        }
     }
 
-    @Override
-    public void onSurveyResponseReceived(StudyResponse response) {
-        surveyManager.onSurveyResponseReceived(response);
-    }
-
-    @Override
-    public void onSurveyResponseFail() {
-        surveyManager.onSurveyResponseFail();
-    }
-
-    @Override
-    public void onSubmitSurveyResponseReceived(SubmitSurveyResponse response) {
-        surveyManager.onSubmitSurveyResponseReceived(response);
-    }
-
-    @Override
-    public void onSubmitSurveyFail() {
-        surveyManager.onSubmitSurveyFail();
-    }
 
 }

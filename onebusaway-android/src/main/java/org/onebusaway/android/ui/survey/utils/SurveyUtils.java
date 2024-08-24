@@ -17,13 +17,16 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.donations.DonationsManager;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
+import org.onebusaway.android.ui.survey.SurveyPreferences;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class SurveyUtils {
     // Number of app launches required to show the survey
     public static int launchesUntilSurveyShown = 3;
+    public static int remindMeLaterDays = 3;
 
     public static final String CHECK_BOX_QUESTION = "checkbox";
     public static final String RADIO_BUTTON_QUESTION = "radio";
@@ -344,10 +347,15 @@ public class SurveyUtils {
         return 0;
     }
 
-    public static Boolean shouldShowSurveyView(boolean isVisibleOnStops) {
+    public static Boolean shouldShowSurveyView(Context context,boolean isVisibleOnStops) {
         // User will receive a survey every `surveyLaunchCount` app launches
-        Log.d("Launch_Count",Application.get().getAppLaunchCount() + " ");
         if (Application.get().getAppLaunchCount() % launchesUntilSurveyShown != 0) return false;
+
+        // Don't show the UI if there's a reminder date that is still in the future.
+        Date reminderDate = getSurveyRequestReminderDate(context);
+        if (reminderDate != null && reminderDate.after(new Date())) {
+            return false;
+        }
 
         // If the survey view is not visible on stops, perform additional checks
         if (!isVisibleOnStops) {
@@ -360,6 +368,29 @@ public class SurveyUtils {
         return true;
     }
 
+    public static void remindUserLater(Context context) {
+        // Calculate the delay in milliseconds:
+        // 86400 seconds in a day * remindMeLaterDays * 1000 milliseconds per second
+        long dateInMilliSeconds = 86400L * remindMeLaterDays * 1000;
+
+        // Future date when the reminder should be triggered
+        Date futureDate = new Date((new Date()).getTime() + dateInMilliSeconds);
+
+        // Save the calculated future date in SharedPreferences as the survey reminder date
+        SurveyPreferences.setSurveyReminderDate(context, futureDate);
+    }
+
+    /**
+     * @return Optional date at which the app should remind the user to take survey.
+     */
+    private static Date getSurveyRequestReminderDate(Context context) {
+        long timestamp = SurveyPreferences.getSurveyReminderDate(context);
+        if (timestamp < 1) {
+            return null;
+        }
+
+        return new Date(timestamp);
+    }
 
 
 }

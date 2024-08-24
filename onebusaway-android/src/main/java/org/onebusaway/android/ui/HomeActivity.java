@@ -143,7 +143,7 @@ public class HomeActivity extends AppCompatActivity
         implements BaseMapFragment.OnFocusChangedListener,
         BaseMapFragment.OnProgressBarChangedListener,
         ArrivalsListFragment.Listener, NavigationDrawerCallbacks, WeatherRequestListener , RegionCallback,
-        ObaRegionsTask.Callback, SurveyListener {
+        ObaRegionsTask.Callback {
 
 
     interface SlidingPanelController {
@@ -2152,29 +2152,45 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void initSurveyManager(View surveyView){
-        surveyManager = new SurveyManager(this, this, false);
-        surveyManager.setSurveyView(surveyView);
+        surveyManager = new SurveyManager(this, surveyView,false, new SurveyListener() {
+            @Override
+            public void onSurveyResponseReceived(StudyResponse response) {
+                surveyManager.onSurveyResponseReceived(response);
+            }
+
+            @Override
+            public void onSurveyResponseFail() {
+                surveyManager.onSurveyResponseFail();
+            }
+
+            @Override
+            public void onSubmitSurveyResponseReceived(SubmitSurveyResponse response) {
+                surveyManager.onSubmitSurveyResponseReceived(response);
+            }
+
+            @Override
+            public void onSubmitSurveyFail() {
+                surveyManager.onSubmitSurveyFail();
+            }
+
+
+            @Override
+            public void onSkipSurvey() {
+                surveyManager.onSkipSurvey();
+            }
+
+            @Override
+            public void onRemindMeLater() {
+                surveyManager.onRemindMeLater();
+            }
+
+            @Override
+            public void onCancelSurvey() {
+                surveyManager.onCancelSurvey();
+            }
+
+        });
         surveyManager.requestSurveyData();
-    }
-
-    @Override
-    public void onSurveyResponseReceived(StudyResponse response) {
-        surveyManager.onSurveyResponseReceived(response);
-    }
-
-    @Override
-    public void onSurveyResponseFail() {
-        surveyManager.onSurveyResponseFail();
-    }
-
-    @Override
-    public void onSubmitSurveyResponseReceived(SubmitSurveyResponse response) {
-        surveyManager.onSubmitSurveyResponseReceived(response);
-    }
-
-    @Override
-    public void onSubmitSurveyFail() {
-        surveyManager.onSubmitSurveyFail();
     }
 
 }

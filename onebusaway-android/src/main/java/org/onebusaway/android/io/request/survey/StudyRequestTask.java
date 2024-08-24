@@ -28,7 +28,7 @@ public class StudyRequestTask extends AsyncTask<ObaStudyRequest, Void, StudyResp
         if (response != null) {
             mListener.onSurveyResponseReceived(response);
         } else {
-            mListener.onSurveyFail();
+            mListener.onSurveyResponseFail();
         }
     }
 }

@@ -2163,8 +2163,8 @@ public class HomeActivity extends AppCompatActivity
     }
 
     @Override
-    public void onSurveyFail() {
-        surveyManager.onSurveyFail();
+    public void onSurveyResponseFail() {
+        surveyManager.onSurveyResponseFail();
     }
 
     @Override

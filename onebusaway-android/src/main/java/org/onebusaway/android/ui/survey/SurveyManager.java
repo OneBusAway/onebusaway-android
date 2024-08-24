@@ -50,8 +50,10 @@ public class SurveyManager implements SurveyActionsListener {
     private Integer curSurveyID;
     // Holds the survey view
     private View surveyView;
-    private RecyclerView surveyRecycleView;
-    private Button submitSurveyButton;
+    // Bottom sheet RecyclerView for surveys
+    private RecyclerView bottomSheetSurveyRecyclerView;
+    // Button to submit the survey from the bottom sheet
+    private Button bottomSheetSubmitSurveyButton;
     // Stores the update path after the hero question is submitted
     private String updateSurveyPath;
     private ListView arrivalsList;
@@ -65,7 +67,6 @@ public class SurveyManager implements SurveyActionsListener {
     // true if we have a question as an external survey
     private Integer externalSurveyResult = 0;
 
-
     public SurveyManager(Context context, SurveyListener surveyListener, Boolean isVisibleOnStops) {
         this.context = context;
         this.studyRequestListener = surveyListener;
@@ -75,8 +76,12 @@ public class SurveyManager implements SurveyActionsListener {
     }
 
     public void requestSurveyData() {
-        boolean isStudiesEnabled = Application.getPrefs().getBoolean(context.getString(R.string.preference_key_show_available_studies),true);
-        if(!isStudiesEnabled) return;
+        // Indicates whether the option to show available studies is enabled in preferences
+        boolean areStudiesEnabled = Application.getPrefs().getBoolean(context.getString(R.string.preference_key_show_available_studies), true);
+        boolean shouldShowSurvey = SurveyUtils.shouldShowSurveyView(isVisibleOnStops);
+
+        if (!areStudiesEnabled || !shouldShowSurvey) return;
+
         ObaStudyRequest surveyRequest = ObaStudyRequest.newRequest(context);
         StudyRequestTask task = new StudyRequestTask(studyRequestListener);
         task.execute(surveyRequest);
@@ -129,7 +134,6 @@ public class SurveyManager implements SurveyActionsListener {
     }
 
 
-
     private void addSurveyView() {
         if (!checkValidResponse() || curSurveyIndex == -1) return;
         if (isVisibleOnStops) {
@@ -147,12 +151,14 @@ public class SurveyManager implements SurveyActionsListener {
         if (!heroQuestion && updateSurveyPath != null) {
             submitSurveyAPIURL += updateSurveyPath;
         }
-        JSONArray surveyResponseBody;
-        if (heroQuestion) {
-            surveyResponseBody = (SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions().get(0), surveyView));
-        } else {
-            surveyResponseBody = (SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions()));
-        }
+
+        // Reset `launchesUntilSurveyShown` for this session to trigger showing the next survey after the specified launch count
+        SurveyUtils.launchesUntilSurveyShown = Integer.MAX_VALUE;
+
+        JSONArray surveyResponseBody = heroQuestion
+                ? SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions().get(0), surveyView)
+                : SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions());
+
         // Empty questions
         if (surveyResponseBody == null) {
             Toast.makeText(context, context.getString(R.string.please_fill_all_the_questions), Toast.LENGTH_SHORT).show();
@@ -161,7 +167,6 @@ public class SurveyManager implements SurveyActionsListener {
         SurveyViewUtils.showProgress(surveyView);
         Log.d("SurveyResponseBody", surveyResponseBody.toString());
         ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(context, submitSurveyAPIURL).setUserIdentifier(userIdentifier).setSurveyId(survey.getId()).setResponses(surveyResponseBody).setListener(submitSurveyRequestListener).build();
-
         new Thread(request::call).start();
     }
 
@@ -209,9 +214,9 @@ public class SurveyManager implements SurveyActionsListener {
     }
 
     private void setSubmitSurveyButton() {
-        submitSurveyButton = surveyBottomSheet.findViewById(R.id.submit_btn);
+        bottomSheetSubmitSurveyButton = surveyBottomSheet.findViewById(R.id.submit_btn);
         View bottomSheetProgress = surveyBottomSheet.findViewById(R.id.surveyProgress);
-        submitSurveyButton.setOnClickListener(v -> {
+        bottomSheetSubmitSurveyButton.setOnClickListener(v -> {
             if (bottomSheetProgress != null) {
                 bottomSheetProgress.setVisibility(View.VISIBLE);
             }
@@ -261,8 +266,8 @@ public class SurveyManager implements SurveyActionsListener {
             return;
         }
 
-        surveyRecycleView = surveyBottomSheet.findViewById(R.id.recycleView);
-        submitSurveyButton = surveyBottomSheet.findViewById(R.id.submit_btn);
+        bottomSheetSurveyRecyclerView = surveyBottomSheet.findViewById(R.id.recycleView);
+        bottomSheetSubmitSurveyButton = surveyBottomSheet.findViewById(R.id.submit_btn);
         TextView surveyTitle = surveyBottomSheet.findViewById(R.id.surveyTitle);
         TextView surveyDescription = surveyBottomSheet.findViewById(R.id.surveyDescription);
 
@@ -288,8 +293,8 @@ public class SurveyManager implements SurveyActionsListener {
     }
 
     private void initRecyclerView(Context context) {
-        if (surveyRecycleView == null) return;
-        surveyRecycleView.setLayoutManager(new LinearLayoutManager(context));
+        if (bottomSheetSurveyRecyclerView == null) return;
+        bottomSheetSurveyRecyclerView.setLayoutManager(new LinearLayoutManager(context));
     }
 
 
@@ -305,7 +310,7 @@ public class SurveyManager implements SurveyActionsListener {
         addSurveyView();
     }
 
-    public void onSurveyFail() {
+    public void onSurveyResponseFail() {
         Log.d("SurveyManager", "Survey Fail");
     }
 
@@ -333,7 +338,7 @@ public class SurveyManager implements SurveyActionsListener {
             // Display the bottom sheet containing survey questions
             showAllSurveyQuestions();
             // Init survey question list
-            initSurveyAdapter(context, surveyRecycleView);
+            initSurveyAdapter(context, bottomSheetSurveyRecyclerView);
         });
     }
 
@@ -389,6 +394,8 @@ public class SurveyManager implements SurveyActionsListener {
         if (!isVisibleOnStops) {
             surveyView.setVisibility(View.GONE);
         }
+        // Reset `launchesUntilSurveyShown` for this session to trigger showing the next survey after the specified launch count
+        SurveyUtils.launchesUntilSurveyShown = Integer.MAX_VALUE;
     }
 
     /**

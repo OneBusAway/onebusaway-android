@@ -1,10 +1,8 @@
 package org.onebusaway.android.ui.survey;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
@@ -39,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class SurveyManager implements SurveyActionsListener {
+public class SurveyManager extends SurveyViewUtils implements SurveyActionsListener{
     private final Context context;
     private final StudyRequestListener studyRequestListener;
     private final SubmitSurveyRequestListener submitSurveyRequestListener;
@@ -49,7 +47,7 @@ public class SurveyManager implements SurveyActionsListener {
     // Holds current survey ID
     private Integer curSurveyID;
     // Holds the survey view
-    private View surveyView;
+    private final View surveyView;
     // Bottom sheet RecyclerView for surveys
     private RecyclerView bottomSheetSurveyRecyclerView;
     // Button to submit the survey from the bottom sheet
@@ -67,18 +65,19 @@ public class SurveyManager implements SurveyActionsListener {
     // true if we have a question as an external survey
     private Integer externalSurveyResult = 0;
 
-    public SurveyManager(Context context, SurveyListener surveyListener, Boolean isVisibleOnStops) {
+    public SurveyManager(Context context, View surveyView,Boolean isVisibleOnStops ,SurveyListener surveyListener) {
+        super(surveyView, context, surveyListener);
         this.context = context;
         this.studyRequestListener = surveyListener;
         this.submitSurveyRequestListener = surveyListener;
+        this.surveyView = surveyView;
         this.isVisibleOnStops = isVisibleOnStops;
-        setupSurveyDismissDialog();
     }
 
     public void requestSurveyData() {
         // Indicates whether the option to show available studies is enabled in preferences
         boolean areStudiesEnabled = Application.getPrefs().getBoolean(context.getString(R.string.preference_key_show_available_studies), true);
-        boolean shouldShowSurvey = SurveyUtils.shouldShowSurveyView(isVisibleOnStops);
+        boolean shouldShowSurvey = SurveyUtils.shouldShowSurveyView(context, isVisibleOnStops);
 
         if (!areStudiesEnabled || !shouldShowSurvey) return;
 
@@ -112,25 +111,25 @@ public class SurveyManager implements SurveyActionsListener {
     }
 
     private void handleExternalSurveyWithoutHero(List<StudyResponse.Surveys.Questions> questionsList) {
-        SurveyViewUtils.showSharedInfoDetailsTextView(context, surveyView, questionsList.get(0).getContent().getEmbedded_data_fields(), SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION);
-        SurveyViewUtils.showExternalSurveyButtons(context, surveyView);
+        showSharedInfoDetailsTextView(context, questionsList.get(0).getContent().getEmbedded_data_fields(), SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION);
+        showExternalSurveyButtons();
         handleOpenExternalSurvey(surveyView, questionsList.get(0).getContent().getUrl());
     }
 
     private void handleExternalSurveyWithHero(List<StudyResponse.Surveys.Questions> questionsList) {
         externalSurveyUrl = questionsList.get(1).getContent().getUrl();
-        SurveyViewUtils.showSharedInfoDetailsTextView(context, surveyView, questionsList.get(1).getContent().getEmbedded_data_fields(), SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION);
-        SurveyViewUtils.showHeroQuestionButtons(context, surveyView);
+        showSharedInfoDetailsTextView(context, questionsList.get(1).getContent().getEmbedded_data_fields(), SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION);
+        showHeroQuestionButtons();
         handleNextButton(surveyView);
     }
 
     private void handleDefaultSurvey() {
-        SurveyViewUtils.showHeroQuestionButtons(context, surveyView);
+        showHeroQuestionButtons();
         handleNextButton(surveyView);
     }
 
     private void showHeroQuestion(StudyResponse.Surveys.Questions heroQuestion) {
-        SurveyViewUtils.showQuestion(context, surveyView, heroQuestion, heroQuestion.getContent().getType());
+        showQuestion(context, heroQuestion, heroQuestion.getContent().getType());
     }
 
 
@@ -155,16 +154,14 @@ public class SurveyManager implements SurveyActionsListener {
         // Reset `launchesUntilSurveyShown` for this session to trigger showing the next survey after the specified launch count
         SurveyUtils.launchesUntilSurveyShown = Integer.MAX_VALUE;
 
-        JSONArray surveyResponseBody = heroQuestion
-                ? SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions().get(0), surveyView)
-                : SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions());
+        JSONArray surveyResponseBody = heroQuestion ? SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions().get(0), surveyView) : SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions());
 
         // Empty questions
         if (surveyResponseBody == null) {
             Toast.makeText(context, context.getString(R.string.please_fill_all_the_questions), Toast.LENGTH_SHORT).show();
             return;
         }
-        SurveyViewUtils.showProgress(surveyView);
+        showProgress();
         Log.d("SurveyResponseBody", surveyResponseBody.toString());
         ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(context, submitSurveyAPIURL).setUserIdentifier(userIdentifier).setSurveyId(survey.getId()).setResponses(surveyResponseBody).setListener(submitSurveyRequestListener).build();
         new Thread(request::call).start();
@@ -245,15 +242,6 @@ public class SurveyManager implements SurveyActionsListener {
         return questionsSize == 1;
     }
 
-    @SuppressLint("InflateParams")
-    public void initSurveyArrivalsHeaderView(LayoutInflater inflater) {
-        surveyView = inflater.inflate(R.layout.item_survey, null);
-    }
-
-    public void setSurveyView(View surveyView) {
-        this.surveyView = surveyView;
-    }
-
     public void initSurveyArrivalsList(ListView arrivalsList) {
         this.arrivalsList = arrivalsList;
     }
@@ -317,7 +305,7 @@ public class SurveyManager implements SurveyActionsListener {
     public void onSubmitSurveyResponseReceived(SubmitSurveyResponse response) {
         // Switch back to the main thread to update UI elements
         ContextCompat.getMainExecutor(context).execute(() -> {
-            SurveyViewUtils.hideProgress(surveyView);
+            hideProgress();
             // User answered the hero question and completed the survey
             if (updateSurveyPath != null) {
                 surveyBottomSheet.hide();
@@ -367,7 +355,7 @@ public class SurveyManager implements SurveyActionsListener {
     }
 
     public void onSubmitSurveyFail() {
-        SurveyViewUtils.hideProgress(surveyView);
+        hideProgress();
         Log.d("SubmitSurveyFail", curSurveyID + "");
     }
 
@@ -399,15 +387,6 @@ public class SurveyManager implements SurveyActionsListener {
     }
 
     /**
-     * Initializes and displays the survey dismiss dialog.
-     * Sets the listener for survey actions callbacks
-     */
-    private void setupSurveyDismissDialog() {
-        SurveyDialogActions.setDialogActionListener(this);
-        SurveyViewUtils.createDismissSurveyDialog(context);
-    }
-
-    /**
      * Handles skipping the survey.
      * The survey will be marked as skipped in the database with a state value of 2
      * indicating it was not completed by the user and should be skipped.
@@ -418,14 +397,15 @@ public class SurveyManager implements SurveyActionsListener {
         StudyResponse.Surveys currentSurvey = mStudyResponse.getSurveys().get(curSurveyIndex);
         SurveyDbHelper.markSurveyAsCompletedOrSkipped(context, currentSurvey, SurveyDbHelper.SURVEY_SKIPPED);
     }
-
     @Override
+
     public void onRemindMeLater() {
-        // TODO handle reminder button
+        SurveyUtils.remindUserLater(context);
         handleRemoveSurvey();
     }
 
     @Override
+
     public void onCancelSurvey() {
         // By default will dismiss the survey dialog
     }

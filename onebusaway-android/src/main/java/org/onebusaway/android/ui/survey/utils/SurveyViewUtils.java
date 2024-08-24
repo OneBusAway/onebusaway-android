@@ -26,52 +26,61 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
-import org.onebusaway.android.ui.survey.SurveyDialogActions;
+import org.onebusaway.android.ui.survey.SurveyActionsListener;
 
 import java.util.List;
 
 public class SurveyViewUtils {
+    private final View surveyView;
+    private final Context mContext;
+    private final SurveyActionsListener mSurveyActionsListener;
 
-    public static void showHeroQuestionButtons(Context context, View surveyView) {
-        handleCLoseButton(context, surveyView);
+    public SurveyViewUtils(View surveyView, Context context, SurveyActionsListener surveyActionsListener) {
+        this.surveyView = surveyView;
+        this.mContext = context;
+        mSurveyActionsListener = surveyActionsListener;
+    }
+
+    public void showHeroQuestionButtons() {
+        handleCLoseButton();
         Button next = surveyView.findViewById(R.id.nextBtn);
         next.setVisibility(View.VISIBLE);
     }
 
-    public static void showExternalSurveyButtons(Context context, View surveyView) {
-        handleCLoseButton(context, surveyView);
+    public void showExternalSurveyButtons() {
+        handleCLoseButton();
         Button openExternalSurveyBtn = surveyView.findViewById(R.id.openExternalSurveyBtn);
         openExternalSurveyBtn.setVisibility(View.VISIBLE);
     }
 
-    public static void handleCLoseButton(Context context, View surveyView) {
+    private void handleCLoseButton() {
         ImageButton closeBtn = surveyView.findViewById(R.id.close_btn);
         closeBtn.setVisibility(View.VISIBLE);
 
-        closeBtn.setOnClickListener(v -> createDismissSurveyDialog(context).show());
+        closeBtn.setOnClickListener(v -> createDismissSurveyDialog(mContext).show());
     }
 
-    public static void showQuestion(Context context, View rootView, StudyResponse.Surveys.Questions heroQuestion, String questionType) {
+    public void showQuestion(Context context, StudyResponse.Surveys.Questions heroQuestion, String questionType) {
         switch (questionType) {
             case SurveyUtils.RADIO_BUTTON_QUESTION:
-                showRadioGroupQuestion(context, rootView, heroQuestion);
+                showRadioGroupQuestion(context, surveyView, heroQuestion);
                 break;
             case SurveyUtils.TEXT_QUESTION:
-                showTextInputQuestion(rootView, heroQuestion);
+                showTextInputQuestion(surveyView, heroQuestion);
                 break;
             case SurveyUtils.CHECK_BOX_QUESTION:
-                showCheckBoxQuestion(context, rootView, heroQuestion);
+                showCheckBoxQuestion(context, surveyView, heroQuestion);
                 break;
             case SurveyUtils.EXTERNAL_SURVEY:
-                showExternalSurveyView(rootView, heroQuestion);
+                showExternalSurveyView(heroQuestion);
                 break;
             case SurveyUtils.LABEL:
                 break;
         }
     }
 
-    private static void showExternalSurveyView(View rootView, StudyResponse.Surveys.Questions heroQuestion) {
-        TextView surveyTitle = rootView.findViewById(R.id.survey_question_tv);
+    private void showExternalSurveyView(StudyResponse.Surveys.Questions heroQuestion) {
+        TextView surveyTitle = surveyView.findViewById(R.id.survey_question_tv);
         surveyTitle.setText(heroQuestion.getContent().getLabel_text());
     }
 
@@ -228,11 +237,10 @@ public class SurveyViewUtils {
      * If available, it constructs a message that lists the shared information and separates each piece of information with a comma.
      *
      * @param context             The Context used to access resources.
-     * @param surveyView          The View containing the TextView where the shared information will be displayed.
      * @param questions           A List of strings representing the user information that will be shared in the survey.
      * @param externalSurveyState With hero question or not
      */
-    public static void showSharedInfoDetailsTextView(Context context, View surveyView, List<String> questions, int externalSurveyState) {
+    public void showSharedInfoDetailsTextView(Context context, List<String> questions, int externalSurveyState) {
         if (questions.isEmpty()) return;
         TextView sharedInfoTextView = surveyView.findViewById(R.id.shared_info_tv);
         StringBuilder surveySharedInfo = new StringBuilder();
@@ -245,7 +253,7 @@ public class SurveyViewUtils {
             }
         }
         if (SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION == externalSurveyState)
-            hideQuestionsView(surveyView);
+            hideQuestionsView();
         sharedInfoTextView.setVisibility(View.VISIBLE);
         sharedInfoTextView.setText(surveySharedInfo);
     }
@@ -257,30 +265,30 @@ public class SurveyViewUtils {
      * @param context The context in which the dialog will be displayed.
      * @return The AlertDialog instance to be shown configured for the dismiss survey dialog.
      */
-    public static AlertDialog.Builder createDismissSurveyDialog(Context context) {
+    public AlertDialog.Builder createDismissSurveyDialog(Context context) {
         AlertDialog.Builder dismissSurveyDialog = new AlertDialog.Builder(context).setTitle(R.string.dismiss_survey_dialog_title).setMessage(R.string.dismiss_survey_dialog_body).setNegativeButton(R.string.survey_dismiss_dialog_skip_this_survey, (dialog, which) -> {
-            SurveyDialogActions.handleSkipSurvey();
+            mSurveyActionsListener.onSkipSurvey();
         }).setNeutralButton(R.string.remind_me_latter, (dialog, which) -> {
-            SurveyDialogActions.handleRemindMeLater();
+            mSurveyActionsListener.onRemindMeLater();
         }).setPositiveButton(R.string.cancel, (dialog, which) -> {
-            SurveyDialogActions.handleCancel();
+            mSurveyActionsListener.onCancelSurvey();
         }).setCancelable(true);
 
         dismissSurveyDialog.create();
         return dismissSurveyDialog;
     }
 
-    public static void showProgress(View surveyView) {
+    public void showProgress() {
         View progress = surveyView.findViewById(R.id.surveyProgress);
         progress.setVisibility(View.VISIBLE);
     }
 
-    public static void hideProgress(View surveyView) {
+    public void hideProgress() {
         View progress = surveyView.findViewById(R.id.surveyProgress);
         progress.setVisibility(View.GONE);
     }
 
-    private static void hideQuestionsView(View surveyView) {
+    private void hideQuestionsView() {
         View questionsView = surveyView.findViewById(R.id.questionsContainer);
         questionsView.setVisibility(View.GONE);
     }

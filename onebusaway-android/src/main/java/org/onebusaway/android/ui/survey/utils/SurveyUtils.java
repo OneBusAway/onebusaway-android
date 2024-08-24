@@ -13,6 +13,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.donations.DonationsManager;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
 
@@ -20,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SurveyUtils {
+    // Number of app launches required to show the survey
+    public static int launchesUntilSurveyShown = 3;
 
     public static final String CHECK_BOX_QUESTION = "checkbox";
     public static final String RADIO_BUTTON_QUESTION = "radio";
@@ -94,7 +98,7 @@ public class SurveyUtils {
      */
     public static Integer getCurrentSurveyIndex(StudyResponse studyResponse, Context context, Boolean isVisibleOnStop, ObaStop currentStop) {
         List<StudyResponse.Surveys> surveys = studyResponse.getSurveys();
-        if(surveys == null) return -1;
+        if (surveys == null) return -1;
 
         // Iterate through the surveys to find the first uncompleted one
         for (int index = 0; index < surveys.size(); index++) {
@@ -339,5 +343,23 @@ public class SurveyUtils {
         }
         return 0;
     }
+
+    public static Boolean shouldShowSurveyView(boolean isVisibleOnStops) {
+        // User will receive a survey every `surveyLaunchCount` app launches
+        Log.d("Launch_Count",Application.get().getAppLaunchCount() + " ");
+        if (Application.get().getAppLaunchCount() % launchesUntilSurveyShown != 0) return false;
+
+        // If the survey view is not visible on stops, perform additional checks
+        if (!isVisibleOnStops) {
+            DonationsManager donationsManager = Application.getDonationsManager();
+            // If the donation UI is visible, do not show the survey on the map
+            // Otherwise, show the survey on the map
+            return !donationsManager.shouldShowDonationUI();
+        }
+
+        return true;
+    }
+
+
 
 }

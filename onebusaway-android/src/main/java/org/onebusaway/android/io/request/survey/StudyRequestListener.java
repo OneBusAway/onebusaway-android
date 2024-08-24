@@ -4,5 +4,5 @@ import org.onebusaway.android.io.request.survey.model.StudyResponse;
 
 public interface StudyRequestListener {
     void onSurveyResponseReceived(StudyResponse response);
-    void onSurveyFail();
+    void onSurveyResponseFail();
 }

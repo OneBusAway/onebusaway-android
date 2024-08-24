@@ -32,6 +32,7 @@ class SurveyAdapter(
     }
 
     override fun onBindViewHolder(holder: SurveyViewHolder, position: Int) {
+        holder.setIsRecyclable(false);
         val surveyQuestion = surveyQuestions[position]
         holder.bind(surveyQuestion)
     }
@@ -45,7 +46,6 @@ class SurveyAdapter(
         private val checkBoxContainer: LinearLayout = itemView.findViewById(R.id.checkBoxContainer)
         private val surveyCard: CardView = itemView.findViewById(R.id.surveyCard)
         private val checkBoxLabel: TextView = itemView.findViewById(R.id.checkBoxLabel)
-
         fun bind(surveyQuestion: StudyResponse.Surveys.Questions) {
 
             surveyQuestionTv.text = surveyQuestion.content.label_text

@@ -242,8 +242,8 @@ public class SurveyUtils {
                 String questionType = question.getContent().getType();
                 String questionAnswer = question.getQuestionAnswer();
 
-                // Skip "label" type questions as they don't require an answer
-                if (questionType.equals("label")) {
+                // Skip "label" and "extern survey" type questions as they don't require an answer
+                if (questionType.equals(LABEL) || questionType.equals(EXTERNAL_SURVEY)) {
                     continue;
                 }
 
@@ -349,21 +349,21 @@ public class SurveyUtils {
 
     public static Boolean shouldShowSurveyView(Context context,boolean isVisibleOnStops) {
         // User will receive a survey every `surveyLaunchCount` app launches
-        if (Application.get().getAppLaunchCount() % launchesUntilSurveyShown != 0) return false;
-
-        // Don't show the UI if there's a reminder date that is still in the future.
-        Date reminderDate = getSurveyRequestReminderDate(context);
-        if (reminderDate != null && reminderDate.after(new Date())) {
-            return false;
-        }
-
-        // If the survey view is not visible on stops, perform additional checks
-        if (!isVisibleOnStops) {
-            DonationsManager donationsManager = Application.getDonationsManager();
-            // If the donation UI is visible, do not show the survey on the map
-            // Otherwise, show the survey on the map
-            return !donationsManager.shouldShowDonationUI();
-        }
+//        if (Application.get().getAppLaunchCount() % launchesUntilSurveyShown != 0) return false;
+//
+//        // Don't show the UI if there's a reminder date that is still in the future.
+//        Date reminderDate = getSurveyRequestReminderDate(context);
+//        if (reminderDate != null && reminderDate.after(new Date())) {
+//            return false;
+//        }
+//
+//        // If the survey view is not visible on stops, perform additional checks
+//        if (!isVisibleOnStops) {
+//            DonationsManager donationsManager = Application.getDonationsManager();
+//            // If the donation UI is visible, do not show the survey on the map
+//            // Otherwise, show the survey on the map
+//            return !donationsManager.shouldShowDonationUI();
+//        }
 
         return true;
     }

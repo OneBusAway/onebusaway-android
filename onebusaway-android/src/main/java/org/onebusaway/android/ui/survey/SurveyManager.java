@@ -170,7 +170,7 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
     private boolean validateSurveyAnswers(StudyResponse.Surveys survey, boolean heroQuestion) {
         JSONArray surveyResponseBody = getSurveyAnswersRequestBody(survey, heroQuestion);
         if (surveyResponseBody == null) {
-            Toast.makeText(context, context.getString(R.string.please_fill_all_the_questions), Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.please_complete_all_the_questions), Toast.LENGTH_SHORT).show();
             return false;
         }
         return true;
@@ -402,15 +402,16 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         SurveyDbHelper.markSurveyAsCompletedOrSkipped(context, getCurrentSurvey(), SurveyDbHelper.SURVEY_SKIPPED);
     }
 
+    /**
+     * Handles the logic for postponing the survey reminder.
+     */
     @Override
-
     public void onRemindMeLater() {
         SurveyUtils.remindUserLater(context);
         handleRemoveSurvey();
     }
 
     @Override
-
     public void onCancelSurvey() {
         // By default will dismiss the survey dialog
     }

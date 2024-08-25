@@ -1012,4 +1012,21 @@
     <string name="preferences_enable_map_3d_mode_title">Abilita la modalità 3D della mappa</string>
     <string name="preferences_enable_map_3d_mode_summary">Includi edifici in 3D nella mappa</string>
 
+    <!-- Survey -->
+    <string name="preferences_show_available_studies_title">Mostra studi disponibili</string>
+    <string name="preferences_show_available_studies_body">Partecipa agli studi per aiutare a migliorare la tua esperienza di trasporto e con l\'app.</string>
+    <string name="dismiss_survey">Ignora sondaggio</string>
+    <string name="onebusaway_survey">Sondaggio OneBusAway</string>
+    <string name="you_can_select_multiple_options_for_this_pool">(Puoi selezionare più opzioni per questo gruppo.)</string>
+    <string name="write_your_answer_here">Scrivi qui la tua risposta</string>
+    <string name="submit">Invia</string>
+    <string name="go">VAI!</string>
+    <string name="submitted_successfully">Inviato con successo</string>
+    <string name="please_complete_all_the_questions">Per favore completa tutte le domande</string>
+    <string name="sharing_survey_info_message">Questo sondaggio condividerà i tuoi</string>
+    <string name="are_you_sure_you_want_to_dismiss_the_survey">Sei sicuro di voler ignorare questo sondaggio?</string>
+    <string name="dismiss_survey_dialog_title">Conferma ignoramento del sondaggio</string>
+    <string name="remind_me_latter">Ricordamelo più tardi</string>
+    <string name="survey_dismiss_dialog_skip_this_survey">Salta questo sondaggio</string>
+    <string name="dismiss_survey_dialog_body">Il tuo feedback aiuta a migliorare i servizi di trasporto e le esperienze con l\'app.</string>
 </resources>

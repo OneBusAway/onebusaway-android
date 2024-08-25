@@ -199,8 +199,8 @@ public class SurveyViewUtils {
 
         // Set padding
         int paddingInPx = (int) (paddingInDp * scale + 0.5f);
-        int extraPadding = (int) ((paddingInDp + 2) * scale + 0.5f);
-        button.setPadding(paddingInPx + extraPadding, paddingInPx, paddingInPx, paddingInPx);
+//        int extraPadding = (int) ((paddingInDp + 2) * scale + 0.5f);
+        button.setPadding(paddingInPx, paddingInPx, paddingInPx, paddingInPx);
         button.setLayoutParams(params);
 
         // Remove default button drawable
@@ -209,9 +209,12 @@ public class SurveyViewUtils {
         // Set custom drawable to the right
         Drawable customCheckIcon = ContextCompat.getDrawable(ctx, R.drawable.survey_custom_button);
         if (customCheckIcon != null) {
-            customCheckIcon.setBounds(0, 0, customCheckIcon.getIntrinsicWidth(), customCheckIcon.getIntrinsicHeight());
+            customCheckIcon.setBounds(customCheckIcon.getIntrinsicWidth(), 0, 0, customCheckIcon.getIntrinsicHeight());
         }
-        button.setCompoundDrawablesWithIntrinsicBounds(null, null, customCheckIcon, null);
+        int customCheckIconPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, ctx.getResources().getDisplayMetrics());
+        button.setCompoundDrawablePadding(customCheckIconPadding);
+
+        button.setCompoundDrawablesWithIntrinsicBounds(customCheckIcon, null,null, null);
 
         // Change button text size
         button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);

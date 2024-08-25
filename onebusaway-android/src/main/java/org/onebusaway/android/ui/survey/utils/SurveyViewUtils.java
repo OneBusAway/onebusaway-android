@@ -232,6 +232,15 @@ public class SurveyViewUtils {
         return createButton(ctx, question, position, CheckBox.class);
     }
 
+    public void setSurveyTitleAndDescription(TextView surveyTitle, TextView surveyDescription, StudyResponse.Surveys firstSurvey) {
+        if (surveyTitle != null) {
+            surveyTitle.setText(firstSurvey.getStudy().getName());
+        }
+        if (surveyDescription != null) {
+            surveyDescription.setText(firstSurvey.getStudy().getDescription());
+        }
+    }
+
     /**
      * Displays a TextView containing user information that will be shared with an external survey.
      * This method checks if there is any user information (in the form of survey questions) to be shared.

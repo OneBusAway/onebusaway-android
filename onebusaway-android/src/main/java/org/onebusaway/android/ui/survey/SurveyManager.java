@@ -201,38 +201,39 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
     }
 
     private void openExternalSurvey(String url) {
-        ArrayList<String> embeddedDataList = new ArrayList<>();
-        switch (externalSurveyResult) {
-            case SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION:
-                embeddedDataList = getCurrentSurvey().getQuestions().get(0).getContent().getEmbedded_data_fields();
-                break;
-            case SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION:
-                embeddedDataList = getCurrentSurvey().getQuestions().get(1).getContent().getEmbedded_data_fields();
-                break;
-            default:
-                break;
-        }
+        ArrayList<String> embeddedDataList = getEmbeddedDataList();
 
+        Intent intent = createOpenExternalSurveyIntent(url, embeddedDataList);
+        context.startActivity(intent);
 
+        handleCompleteSurvey();
+    }
+
+    private ArrayList<String> getEmbeddedDataList() {
+        int questionIndex = (externalSurveyResult == SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION) ? 1 : 0;
+        return getCurrentSurvey().getQuestions().get(questionIndex).getContent().getEmbedded_data_fields();
+    }
+
+    private Intent createOpenExternalSurveyIntent(String url, ArrayList<String> embeddedDataList) {
         Intent intent = new Intent(context, SurveyWebViewActivity.class);
         intent.putExtra("url", url);
+
         if (isVisibleOnStops && currentStop != null) {
             intent.putExtra("stop_id", currentStop.getId());
             if (currentStop.getRouteIds().length > 0) {
                 intent.putExtra("route_id", currentStop.getRouteIds()[0]);
             }
         }
+
         intent.putStringArrayListExtra("embedded_data", embeddedDataList);
-        context.startActivity(intent);
-        handleCompleteSurvey();
+        return intent;
     }
+
 
     private void setSubmitSurveyButton() {
         bottomSheetSubmitSurveyButton = surveyBottomSheet.findViewById(R.id.submit_btn);
         View bottomSheetProgress = surveyBottomSheet.findViewById(R.id.surveyProgress);
-        bottomSheetSubmitSurveyButton.setOnClickListener(v -> {
-            submitSurveyAnswers(getCurrentSurvey(), bottomSheetProgress, false);
-        });
+        bottomSheetSubmitSurveyButton.setOnClickListener(v -> submitSurveyAnswers(getCurrentSurvey(), bottomSheetProgress, false));
     }
 
     private void initSurveyAdapter(Context context, RecyclerView recyclerView) {
@@ -263,7 +264,7 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
     private void initSurveyQuestionsBottomSheet(Context context) {
         if (!checkValidResponse()) return;
 
-        if (!isSurveyValid(getCurrentSurvey())) {
+        if (!SurveyUtils.isSurveyValid(getCurrentSurvey())) {
             return;
         }
 
@@ -280,18 +281,6 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         return mStudyResponse != null && mStudyResponse.getSurveys() != null && !mStudyResponse.getSurveys().isEmpty();
     }
 
-    private Boolean isSurveyValid(StudyResponse.Surveys survey) {
-        return survey != null && survey.getStudy() != null;
-    }
-
-    private void setSurveyTitleAndDescription(TextView surveyTitle, TextView surveyDescription, StudyResponse.Surveys firstSurvey) {
-        if (surveyTitle != null) {
-            surveyTitle.setText(firstSurvey.getStudy().getName());
-        }
-        if (surveyDescription != null) {
-            surveyDescription.setText(firstSurvey.getStudy().getDescription());
-        }
-    }
 
     private void initRecyclerView(Context context) {
         if (bottomSheetSurveyRecyclerView == null) return;

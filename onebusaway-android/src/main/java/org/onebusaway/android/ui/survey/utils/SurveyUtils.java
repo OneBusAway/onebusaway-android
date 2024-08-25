@@ -395,4 +395,9 @@ public class SurveyUtils {
     public static Boolean isSurveyValid(StudyResponse.Surveys survey) {
         return survey != null && survey.getStudy() != null;
     }
+
+    public static boolean isValidEmbeddedDataList(ArrayList<String> embeddedDataList) {
+        return embeddedDataList != null && !embeddedDataList.isEmpty();
+    }
+
 }

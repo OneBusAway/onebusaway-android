@@ -202,10 +202,8 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
 
     private void openExternalSurvey(String url) {
         ArrayList<String> embeddedDataList = getEmbeddedDataList();
-
         Intent intent = createOpenExternalSurveyIntent(url, embeddedDataList);
         context.startActivity(intent);
-
         handleCompleteSurvey();
     }
 
@@ -220,12 +218,14 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
 
         if (isVisibleOnStops && currentStop != null) {
             intent.putExtra("stop_id", currentStop.getId());
+            // Add logic to determine if we should send the first route or all routes (TODO: clarify)
             if (currentStop.getRouteIds().length > 0) {
                 intent.putExtra("route_id", currentStop.getRouteIds()[0]);
             }
         }
-
-        intent.putStringArrayListExtra("embedded_data", embeddedDataList);
+        if (SurveyUtils.isValidEmbeddedDataList(embeddedDataList)) {
+            intent.putStringArrayListExtra("embedded_data", embeddedDataList);
+        }
         return intent;
     }
 
@@ -343,10 +343,9 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
 
     private void handleExternalSurvey() {
         if (externalSurveyUrl == null) return;
+        openExternalSurvey(externalSurveyUrl);
         // Reset state to the default survey type
         externalSurveyResult = SurveyUtils.DEFAULT_SURVEY;
-
-        openExternalSurvey(externalSurveyUrl);
     }
 
     /**

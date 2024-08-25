@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class SurveyManager extends SurveyViewUtils implements SurveyActionsListener{
+public class SurveyManager extends SurveyViewUtils implements SurveyActionsListener {
     private final Context context;
     private final StudyRequestListener studyRequestListener;
     private final SubmitSurveyRequestListener submitSurveyRequestListener;
@@ -65,7 +65,7 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
     // true if we have a question as an external survey
     private Integer externalSurveyResult = 0;
 
-    public SurveyManager(Context context, View surveyView,Boolean isVisibleOnStops ,SurveyListener surveyListener) {
+    public SurveyManager(Context context, View surveyView, Boolean isVisibleOnStops, SurveyListener surveyListener) {
         super(surveyView, context, surveyListener);
         this.context = context;
         this.studyRequestListener = surveyListener;
@@ -143,17 +143,20 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         updateSurveyUI();
     }
 
-    private void submitSurveyAnswers(StudyResponse.Surveys survey, boolean heroQuestion) {
-        if(!validateSurveyAnswers(survey,heroQuestion)) return;
+    private void submitSurveyAnswers(StudyResponse.Surveys survey, View bottomSheetProgress, boolean heroQuestion) {
+        if (!validateSurveyAnswers(survey, heroQuestion)) return;
 
-        String userIdentifier = SurveyPreferences.getUserUUID(context);
+        String userID = SurveyPreferences.getUserUUID(context);
         String apiUrl = getSubmitSurveyApiUrl(heroQuestion);
 
         // Reset `launchesUntilSurveyShown` for this session to trigger showing the next survey after the specified launch count
         SurveyUtils.launchesUntilSurveyShown = Integer.MAX_VALUE;
 
-        JSONArray surveyResponseBody = getSurveyAnswersRequestBody(survey,heroQuestion);
-        sendSurveySubmission(apiUrl,userIdentifier,survey.getId(),surveyResponseBody);
+        if (bottomSheetProgress != null) {
+            bottomSheetProgress.setVisibility(View.VISIBLE);
+        }
+        JSONArray surveyResponseBody = getSurveyAnswersRequestBody(survey, heroQuestion);
+        sendSurveySubmission(apiUrl, userID, survey.getId(), surveyResponseBody);
     }
 
     private JSONArray getSurveyAnswersRequestBody(StudyResponse.Surveys survey, boolean heroQuestion) {
@@ -163,13 +166,13 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
             return SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions());
         }
     }
-    private boolean validateSurveyAnswers(StudyResponse.Surveys survey,boolean heroQuestion) {
-        JSONArray surveyResponseBody = getSurveyAnswersRequestBody(survey,heroQuestion);
+
+    private boolean validateSurveyAnswers(StudyResponse.Surveys survey, boolean heroQuestion) {
+        JSONArray surveyResponseBody = getSurveyAnswersRequestBody(survey, heroQuestion);
         if (surveyResponseBody == null) {
             Toast.makeText(context, context.getString(R.string.please_fill_all_the_questions), Toast.LENGTH_SHORT).show();
             return false;
         }
-        Log.d("SurveyResponseBody", surveyResponseBody.toString());
         return true;
     }
 
@@ -183,28 +186,19 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
 
     private void sendSurveySubmission(String apiUrl, String userIdentifier, int surveyId, JSONArray requestBody) {
         showProgress();
-        ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(context, apiUrl)
-                .setUserIdentifier(userIdentifier)
-                .setSurveyId(surveyId)
-                .setResponses(requestBody)
-                .setListener(submitSurveyRequestListener)
-                .build();
+        ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(context, apiUrl).setUserIdentifier(userIdentifier).setSurveyId(surveyId).setResponses(requestBody).setListener(submitSurveyRequestListener).build();
         new Thread(request::call).start();
     }
 
-
     private void handleNextButton(View view) {
         Button nextBtn = view.findViewById(R.id.nextBtn);
-        nextBtn.setOnClickListener(view1 -> {
-            submitSurveyAnswers(getCurrentSurvey(), true);
-        });
+        nextBtn.setOnClickListener(v -> submitSurveyAnswers(getCurrentSurvey(), null, true));
     }
 
     private void handleOpenExternalSurvey(View view, String url) {
         Button externalSurveyBtn = view.findViewById(R.id.openExternalSurveyBtn);
         externalSurveyBtn.setOnClickListener(view1 -> openExternalSurvey(url));
     }
-
 
     private void openExternalSurvey(String url) {
         ArrayList<String> embeddedDataList = new ArrayList<>();
@@ -237,10 +231,7 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         bottomSheetSubmitSurveyButton = surveyBottomSheet.findViewById(R.id.submit_btn);
         View bottomSheetProgress = surveyBottomSheet.findViewById(R.id.surveyProgress);
         bottomSheetSubmitSurveyButton.setOnClickListener(v -> {
-            if (bottomSheetProgress != null) {
-                bottomSheetProgress.setVisibility(View.VISIBLE);
-            }
-            submitSurveyAnswers(getCurrentSurvey(), false);
+            submitSurveyAnswers(getCurrentSurvey(), bottomSheetProgress, false);
         });
     }
 
@@ -352,7 +343,7 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         });
     }
 
-    private StudyResponse.Surveys getCurrentSurvey(){
+    private StudyResponse.Surveys getCurrentSurvey() {
         return mStudyResponse.getSurveys().get(curSurveyIndex);
     }
 
@@ -421,6 +412,7 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         handleRemoveSurvey();
         SurveyDbHelper.markSurveyAsCompletedOrSkipped(context, getCurrentSurvey(), SurveyDbHelper.SURVEY_SKIPPED);
     }
+
     @Override
 
     public void onRemindMeLater() {

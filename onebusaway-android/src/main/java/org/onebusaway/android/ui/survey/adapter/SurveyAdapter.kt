@@ -48,12 +48,10 @@ class SurveyAdapter(
         private val checkBoxLabel: TextView = itemView.findViewById(R.id.checkBoxLabel)
         fun bind(surveyQuestion: StudyResponse.Surveys.Questions) {
 
-            surveyQuestionTv.text = surveyQuestion.content.label_text
             checkBoxLabel.visibility = View.GONE
             surveyCard.setCardBackgroundColor(
                 ContextCompat.getColor(
-                    context,
-                    R.color.quantum_white_100
+                    context, R.color.quantum_white_100
                 )
             )
             when (surveyQuestion.content.type) {
@@ -97,8 +95,7 @@ class SurveyAdapter(
                 SurveyUtils.LABEL -> {
                     surveyCard.setCardBackgroundColor(
                         ContextCompat.getColor(
-                            context,
-                            R.color.quantum_yellow50
+                            context, R.color.quantum_yellow50
                         )
                     )
                     setVisibility(
@@ -111,7 +108,17 @@ class SurveyAdapter(
                     )
                 }
             }
-            handleOnSelectionEvents(radioGroup, editText, checkBoxContainer, adapterPosition, itemView, surveyQuestion.content.type)
+            val questionNumber = adapterPosition + 1
+            val questionText = surveyQuestion.content.label_text
+            surveyQuestionTv.text = "$questionNumber. $questionText"
+            handleOnSelectionEvents(
+                radioGroup,
+                editText,
+                checkBoxContainer,
+                adapterPosition,
+                itemView,
+                surveyQuestion.content.type
+            )
         }
     }
 
@@ -132,18 +139,12 @@ class SurveyAdapter(
                     }
 
                     override fun beforeTextChanged(
-                        s: CharSequence?,
-                        start: Int,
-                        count: Int,
-                        after: Int
+                        s: CharSequence?, start: Int, count: Int, after: Int
                     ) {
                     }
 
                     override fun onTextChanged(
-                        s: CharSequence?,
-                        start: Int,
-                        before: Int,
-                        count: Int
+                        s: CharSequence?, start: Int, before: Int, count: Int
                     ) {
                     }
                 })
@@ -156,13 +157,12 @@ class SurveyAdapter(
                 }
             }
 
-            SurveyUtils.CHECK_BOX_QUESTION-> {
+            SurveyUtils.CHECK_BOX_QUESTION -> {
                 for (i in 0 until checkBoxContainer.childCount) {
                     val checkBox = checkBoxContainer.getChildAt(i) as CheckBox
                     checkBox.setOnCheckedChangeListener { _, _ ->
                         saveQuestionAnswer(
-                            position,
-                            itemView
+                            position, itemView
                         )
                     }
                 }
@@ -196,6 +196,9 @@ class SurveyAdapter(
 
     override fun getItemId(position: Int): Long = position.toLong()
 
+    override fun getItemViewType(position: Int): Int {
+        return position
+    }
 
     fun setVisibility(
         editText: View,

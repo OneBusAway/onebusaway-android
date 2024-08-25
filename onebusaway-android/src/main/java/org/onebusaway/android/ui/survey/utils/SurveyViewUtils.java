@@ -27,6 +27,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
 import org.onebusaway.android.ui.survey.SurveyActionsListener;
+import org.onebusaway.android.ui.survey.activities.SurveyWebViewActivity;
 
 import java.util.List;
 
@@ -247,6 +248,7 @@ public class SurveyViewUtils {
         surveySharedInfo.append(context.getString(R.string.sharing_survey_info_message));
 
         for (int i = 0; i < questions.size(); i++) {
+            if(questions.get(i).equals(SurveyWebViewActivity.USER_ID)) continue;
             surveySharedInfo.append(questions.get(i).replace("_", " "));
             if (i < questions.size() - 1) {
                 surveySharedInfo.append(", ");

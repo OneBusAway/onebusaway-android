@@ -250,26 +250,27 @@ public class SurveyViewUtils {
      * If available, it constructs a message that lists the shared information and separates each piece of information with a comma.
      *
      * @param context             The Context used to access resources.
-     * @param questions           A List of strings representing the user information that will be shared in the survey.
+     * @param embeddedDataList           A List of strings representing the user information that will be shared in the survey.
      * @param externalSurveyState With hero question or not
      */
-    public void showSharedInfoDetailsTextView(Context context, List<String> questions, int externalSurveyState) {
-        if (questions.isEmpty()) return;
+    public void showSharedInfoDetailsTextView(Context context, List<String> embeddedDataList, int externalSurveyState) {
+        if (embeddedDataList.isEmpty()) return;
         TextView sharedInfoTextView = surveyView.findViewById(R.id.shared_info_tv);
         StringBuilder surveySharedInfo = new StringBuilder();
-        surveySharedInfo.append(context.getString(R.string.sharing_survey_info_message));
 
-        for (int i = 0; i < questions.size(); i++) {
-            if(questions.get(i).equals(SurveyWebViewActivity.USER_ID)) continue;
-            surveySharedInfo.append(questions.get(i).replace("_", " "));
-            if (i < questions.size() - 1) {
+        for (int i = 0; i < embeddedDataList.size(); i++) {
+            if(embeddedDataList.get(i).equals(SurveyWebViewActivity.USER_ID)) continue;
+            surveySharedInfo.append(embeddedDataList.get(i).replace("_", " "));
+            if (i < embeddedDataList.size() - 1) {
                 surveySharedInfo.append(", ");
             }
         }
-        if (SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION == externalSurveyState)
-            hideQuestionsView();
-        sharedInfoTextView.setVisibility(View.VISIBLE);
-        sharedInfoTextView.setText(surveySharedInfo);
+        if (SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION == externalSurveyState) hideQuestionsView();
+        if(surveySharedInfo.length() > 0){
+            surveySharedInfo.insert(0,context.getString(R.string.sharing_survey_info_message));
+            sharedInfoTextView.setVisibility(View.VISIBLE);
+            sharedInfoTextView.setText(surveySharedInfo);
+        }
     }
 
     /**

@@ -55,8 +55,7 @@ class SurveyWebViewActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progressBar)
 
         val url = intent.getStringExtra("url") as String
-        val embeddedValuesList =
-            intent.getStringArrayListExtra("embedded_data") as (ArrayList<String>)
+        val embeddedValuesList = intent.getStringArrayListExtra("embedded_data") as? ArrayList<String> ?: arrayListOf()
         mStopID = intent.getStringExtra("stop_id")
         mRouteID = intent.getStringExtra("route_id")
 

@@ -434,7 +434,7 @@ public class HomeActivity extends AppCompatActivity
         }
         initWeatherView();
 
-        // Show survey
+        initSurveyView();
         if(Application.get().getCurrentRegion() != null){
             setupSurvey();
         }
@@ -600,6 +600,8 @@ public class HomeActivity extends AppCompatActivity
         }
         updateDonationsUIVisibility();
         if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
+            // Hide survey view unless it's on the map
+            mSurveyView.setVisibility(View.GONE);
             WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
         }else{
             setWeatherData();
@@ -2146,8 +2148,10 @@ public class HomeActivity extends AppCompatActivity
 
         return builder.create();
     }
-    private void setupSurvey() {
+    private void initSurveyView(){
         mSurveyView = findViewById(R.id.surveyView);
+    }
+    private void setupSurvey() {
         initSurveyManager(mSurveyView);
     }
 

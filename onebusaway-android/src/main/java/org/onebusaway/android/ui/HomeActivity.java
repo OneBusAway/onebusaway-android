@@ -52,6 +52,7 @@ import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.ui.survey.SurveyManager;
+import org.onebusaway.android.ui.survey.utils.SurveyViewUtils;
 import org.onebusaway.android.ui.weather.RegionCallback;
 import org.onebusaway.android.ui.weather.WeatherUtils;
 import org.onebusaway.android.util.FragmentUtils;
@@ -433,11 +434,7 @@ public class HomeActivity extends AppCompatActivity
             }
         }
         initWeatherView();
-
-        initSurveyView();
-        if(Application.get().getCurrentRegion() != null){
-            setupSurvey();
-        }
+        setupSurvey();
     }
 
     @Override
@@ -601,7 +598,7 @@ public class HomeActivity extends AppCompatActivity
         updateDonationsUIVisibility();
         if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
             // Hide survey view unless it's on the map
-            mSurveyView.setVisibility(View.GONE);
+            SurveyViewUtils.hideSurveyView(mSurveyView);
             WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
         }else{
             setWeatherData();
@@ -2152,6 +2149,8 @@ public class HomeActivity extends AppCompatActivity
         mSurveyView = findViewById(R.id.surveyView);
     }
     private void setupSurvey() {
+        if(Application.get().getCurrentRegion() == null || mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) return;
+        initSurveyView();
         initSurveyManager(mSurveyView);
     }
 

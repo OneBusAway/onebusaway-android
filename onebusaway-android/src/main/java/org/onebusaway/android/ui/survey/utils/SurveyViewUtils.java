@@ -315,6 +315,10 @@ public class SurveyViewUtils {
         return dismissSurveyDialog;
     }
 
+    public static void hideSurveyView(View surveyView){
+        if(surveyView == null) return;
+        surveyView.setVisibility(View.GONE);
+    }
     public void showProgress() {
         progressOverlay.setVisibility(View.VISIBLE);
     }

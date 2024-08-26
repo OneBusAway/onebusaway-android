@@ -1800,9 +1800,9 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
                 }
 
             });
+            surveyManager.initSurveyArrivalsList(getListView());
             surveyManager.requestSurveyData();
             surveyManager.setCurrentStop(mStop);
-            surveyManager.initSurveyArrivalsList(getListView());
         }
     }
 

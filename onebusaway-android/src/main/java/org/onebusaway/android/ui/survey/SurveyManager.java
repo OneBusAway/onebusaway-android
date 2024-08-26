@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,7 +53,7 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
     private Button bottomSheetSubmitSurveyButton;
     // Stores the update path after the hero question is submitted
     private String updateSurveyPath;
-    private ListView arrivalsList;
+    // Bottom sheet dialog for displaying the remaining survey questions
     private BottomSheetDialog surveyBottomSheet;
     // true if from arrivals list false if survey in the map
     private final Boolean isVisibleOnStops;
@@ -93,7 +92,8 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         Log.d("SurveyState", "External survey result: " + externalSurveyResult);
 
         handleSurveyResult(externalSurveyResult, questionsList);
-        showHeroQuestion(questionsList.get(0));
+        // Show the hero question
+        showHeroQuestion(context, questionsList.get(0));
     }
 
     private void handleSurveyResult(int externalSurveyResult, List<StudyResponse.Surveys.Questions> questionsList) {
@@ -120,21 +120,16 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         externalSurveyUrl = questionsList.get(1).getContent().getUrl();
         showSharedInfoDetailsTextView(context, questionsList.get(1).getContent().getEmbedded_data_fields(), SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION);
         showHeroQuestionButtons();
-        handleNextButton(surveyView);
+        handleNextButton();
     }
 
     private void handleDefaultSurvey() {
         showHeroQuestionButtons();
-        handleNextButton(surveyView);
+        handleNextButton();
     }
-
-    private void showHeroQuestion(StudyResponse.Surveys.Questions heroQuestion) {
-        showQuestion(context, heroQuestion, heroQuestion.getContent().getType());
-    }
-
 
     private void addSurveyView() {
-        if (!checkValidResponse() || curSurveyIndex == -1) return;
+        if (!SurveyUtils.checkValidResponse(mStudyResponse) || curSurveyIndex == -1) return;
         if (isVisibleOnStops) {
             arrivalsList.addHeaderView(surveyView);
         } else {
@@ -155,11 +150,11 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         if (bottomSheetProgress != null) {
             bottomSheetProgress.setVisibility(View.VISIBLE);
         }
-        JSONArray surveyResponseBody = getSurveyAnswersRequestBody(survey, heroQuestion);
+        JSONArray surveyResponseBody = getFinalSurveyAnswersRequestBody(survey, heroQuestion);
         sendSurveySubmission(apiUrl, userID, survey.getId(), surveyResponseBody);
     }
 
-    private JSONArray getSurveyAnswersRequestBody(StudyResponse.Surveys survey, boolean heroQuestion) {
+    private JSONArray getFinalSurveyAnswersRequestBody(StudyResponse.Surveys survey, boolean heroQuestion) {
         if (heroQuestion) {
             return SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions().get(0), surveyView);
         } else {
@@ -168,7 +163,7 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
     }
 
     private boolean validateSurveyAnswers(StudyResponse.Surveys survey, boolean heroQuestion) {
-        JSONArray surveyResponseBody = getSurveyAnswersRequestBody(survey, heroQuestion);
+        JSONArray surveyResponseBody = getFinalSurveyAnswersRequestBody(survey, heroQuestion);
         if (surveyResponseBody == null) {
             Toast.makeText(context, context.getString(R.string.please_complete_all_the_questions), Toast.LENGTH_SHORT).show();
             return false;
@@ -186,18 +181,20 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
 
     private void sendSurveySubmission(String apiUrl, String userIdentifier, int surveyId, JSONArray requestBody) {
         showProgress();
-        ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(context, apiUrl).setUserIdentifier(userIdentifier).setSurveyId(surveyId).setResponses(requestBody).setListener(submitSurveyRequestListener).build();
+        ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(context, apiUrl)
+                .setUserIdentifier(userIdentifier)
+                .setSurveyId(surveyId)
+                .setResponses(requestBody)
+                .setListener(submitSurveyRequestListener).build();
         new Thread(request::call).start();
     }
 
-    private void handleNextButton(View view) {
-        Button nextBtn = view.findViewById(R.id.nextBtn);
-        nextBtn.setOnClickListener(v -> submitSurveyAnswers(getCurrentSurvey(), null, true));
+    private void handleNextButton() {
+        nextButton.setOnClickListener(v -> submitSurveyAnswers(getCurrentSurvey(), null, true));
     }
 
     private void handleOpenExternalSurvey(View view, String url) {
-        Button externalSurveyBtn = view.findViewById(R.id.openExternalSurveyBtn);
-        externalSurveyBtn.setOnClickListener(view1 -> openExternalSurvey(url));
+        openExternalSurveyButton.setOnClickListener(view1 -> openExternalSurvey(url));
     }
 
     private void openExternalSurvey(String url) {
@@ -257,12 +254,8 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         return questionsSize == 1;
     }
 
-    public void initSurveyArrivalsList(ListView arrivalsList) {
-        this.arrivalsList = arrivalsList;
-    }
-
     private void initSurveyQuestionsBottomSheet(Context context) {
-        if (!checkValidResponse()) return;
+        if (!SurveyUtils.checkValidResponse(mStudyResponse)) return;
 
         if (!SurveyUtils.isSurveyValid(getCurrentSurvey())) {
             return;
@@ -274,15 +267,10 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         TextView surveyDescription = surveyBottomSheet.findViewById(R.id.surveyDescription);
 
         setSurveyTitleAndDescription(surveyTitle, surveyDescription, getCurrentSurvey());
-        initRecyclerView(context);
+        initSurveyBottomSheetRecyclerView(context);
     }
 
-    private Boolean checkValidResponse() {
-        return mStudyResponse != null && mStudyResponse.getSurveys() != null && !mStudyResponse.getSurveys().isEmpty();
-    }
-
-
-    private void initRecyclerView(Context context) {
+    private void initSurveyBottomSheetRecyclerView(Context context) {
         if (bottomSheetSurveyRecyclerView == null) return;
         bottomSheetSurveyRecyclerView.setLayoutManager(new LinearLayoutManager(context));
     }

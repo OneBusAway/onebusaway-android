@@ -7,8 +7,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.onebusaway.android.io.request.RequestBase;
 import org.onebusaway.android.io.request.survey.model.SubmitSurveyResponse;
 
@@ -27,13 +25,11 @@ public final class ObaSubmitSurveyRequest extends RequestBase implements Callabl
     public static class Builder extends PostBuilderBase {
 
         private static Uri URI = null;
-        private final JSONObject postData;
         private SubmitSurveyRequestListener listener;
 
         public Builder(Context context, String path) {
             super(context, path);
             URI = Uri.parse(path);
-            postData = new JSONObject();
         }
 
         public Builder setUserIdentifier(String userIdentifier) {

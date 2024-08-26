@@ -392,6 +392,10 @@ public class SurveyUtils {
         return new Date(timestamp);
     }
 
+    public static Boolean checkValidResponse(StudyResponse studyResponse) {
+        return studyResponse != null && studyResponse.getSurveys() != null && !studyResponse.getSurveys().isEmpty();
+    }
+
     public static Boolean isSurveyValid(StudyResponse.Surveys survey) {
         return survey != null && survey.getStudy() != null;
     }

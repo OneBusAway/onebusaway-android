@@ -14,6 +14,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -35,33 +36,55 @@ public class SurveyViewUtils {
     private final View surveyView;
     private final Context mContext;
     private final SurveyActionsListener mSurveyActionsListener;
+    public Button nextButton;
+    public Button openExternalSurveyButton;
+    // List of arrivals to which the survey will be added
+    public ListView arrivalsList;
+    private ImageButton closeSurveyButton;
+    private TextView surveyTitleTextView;
+    private TextView sharedInfoTextView;
+    private View progressOverlay;
+    private View questionsContainer;
+
+
 
     public SurveyViewUtils(View surveyView, Context context, SurveyActionsListener surveyActionsListener) {
         this.surveyView = surveyView;
         this.mContext = context;
         mSurveyActionsListener = surveyActionsListener;
+        initViews();
+    }
+
+    public void initViews() {
+        nextButton = surveyView.findViewById(R.id.nextBtn);
+        openExternalSurveyButton = surveyView.findViewById(R.id.openExternalSurveyBtn);
+        closeSurveyButton = surveyView.findViewById(R.id.close_btn);
+        surveyTitleTextView = surveyView.findViewById(R.id.survey_question_tv);
+        sharedInfoTextView = surveyView.findViewById(R.id.shared_info_tv);
+        progressOverlay = surveyView.findViewById(R.id.surveyProgress);
+        questionsContainer = surveyView.findViewById(R.id.questionsContainer);
     }
 
     public void showHeroQuestionButtons() {
         handleCLoseButton();
-        Button next = surveyView.findViewById(R.id.nextBtn);
-        next.setVisibility(View.VISIBLE);
+        nextButton.setVisibility(View.VISIBLE);
     }
 
     public void showExternalSurveyButtons() {
         handleCLoseButton();
-        Button openExternalSurveyBtn = surveyView.findViewById(R.id.openExternalSurveyBtn);
-        openExternalSurveyBtn.setVisibility(View.VISIBLE);
+        openExternalSurveyButton.setVisibility(View.VISIBLE);
     }
 
     private void handleCLoseButton() {
-        ImageButton closeBtn = surveyView.findViewById(R.id.close_btn);
-        closeBtn.setVisibility(View.VISIBLE);
-
-        closeBtn.setOnClickListener(v -> createDismissSurveyDialog(mContext).show());
+        closeSurveyButton.setVisibility(View.VISIBLE);
+        closeSurveyButton.setOnClickListener(v -> createDismissSurveyDialog(mContext).show());
     }
 
-    public void showQuestion(Context context, StudyResponse.Surveys.Questions heroQuestion, String questionType) {
+    public void initSurveyArrivalsList(ListView arrivalsList) {
+        this.arrivalsList = arrivalsList;
+    }
+    public void showHeroQuestion(Context context, StudyResponse.Surveys.Questions heroQuestion) {
+        String questionType = heroQuestion.getContent().getType();
         switch (questionType) {
             case SurveyUtils.RADIO_BUTTON_QUESTION:
                 showRadioGroupQuestion(context, surveyView, heroQuestion);
@@ -81,8 +104,7 @@ public class SurveyViewUtils {
     }
 
     private void showExternalSurveyView(StudyResponse.Surveys.Questions heroQuestion) {
-        TextView surveyTitle = surveyView.findViewById(R.id.survey_question_tv);
-        surveyTitle.setText(heroQuestion.getContent().getLabel_text());
+        surveyTitleTextView.setText(heroQuestion.getContent().getLabel_text());
     }
 
     public static void setupBottomSheetBehavior(BottomSheetDialog bottomSheet) {
@@ -214,7 +236,7 @@ public class SurveyViewUtils {
         int customCheckIconPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, ctx.getResources().getDisplayMetrics());
         button.setCompoundDrawablePadding(customCheckIconPadding);
 
-        button.setCompoundDrawablesWithIntrinsicBounds(customCheckIcon, null,null, null);
+        button.setCompoundDrawablesWithIntrinsicBounds(customCheckIcon, null, null, null);
 
         // Change button text size
         button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
@@ -250,24 +272,24 @@ public class SurveyViewUtils {
      * If available, it constructs a message that lists the shared information and separates each piece of information with a comma.
      *
      * @param context             The Context used to access resources.
-     * @param embeddedDataList           A List of strings representing the user information that will be shared in the survey.
+     * @param embeddedDataList    A List of strings representing the user information that will be shared in the survey.
      * @param externalSurveyState With hero question or not
      */
     public void showSharedInfoDetailsTextView(Context context, List<String> embeddedDataList, int externalSurveyState) {
         if (embeddedDataList.isEmpty()) return;
-        TextView sharedInfoTextView = surveyView.findViewById(R.id.shared_info_tv);
         StringBuilder surveySharedInfo = new StringBuilder();
 
         for (int i = 0; i < embeddedDataList.size(); i++) {
-            if(embeddedDataList.get(i).equals(SurveyWebViewActivity.USER_ID)) continue;
+            if (embeddedDataList.get(i).equals(SurveyWebViewActivity.USER_ID)) continue;
             surveySharedInfo.append(embeddedDataList.get(i).replace("_", " "));
             if (i < embeddedDataList.size() - 1) {
                 surveySharedInfo.append(", ");
             }
         }
-        if (SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION == externalSurveyState) hideQuestionsView();
-        if(surveySharedInfo.length() > 0){
-            surveySharedInfo.insert(0,context.getString(R.string.sharing_survey_info_message));
+        if (SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION == externalSurveyState)
+            hideQuestionsView();
+        if (surveySharedInfo.length() > 0) {
+            surveySharedInfo.insert(0, context.getString(R.string.sharing_survey_info_message));
             sharedInfoTextView.setVisibility(View.VISIBLE);
             sharedInfoTextView.setText(surveySharedInfo);
         }
@@ -294,18 +316,15 @@ public class SurveyViewUtils {
     }
 
     public void showProgress() {
-        View progress = surveyView.findViewById(R.id.surveyProgress);
-        progress.setVisibility(View.VISIBLE);
+        progressOverlay.setVisibility(View.VISIBLE);
     }
 
     public void hideProgress() {
-        View progress = surveyView.findViewById(R.id.surveyProgress);
-        progress.setVisibility(View.GONE);
+        progressOverlay.setVisibility(View.GONE);
     }
 
     private void hideQuestionsView() {
-        View questionsView = surveyView.findViewById(R.id.questionsContainer);
-        questionsView.setVisibility(View.GONE);
+        questionsContainer.setVisibility(View.GONE);
     }
 
 }

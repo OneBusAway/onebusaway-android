@@ -585,8 +585,8 @@ public class HomeActivity extends AppCompatActivity
                 startActivity(i);
                 break;
         }
+        updateDonationsUIVisibility();
         if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
-            updateDonationsUIVisibility();
             WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
         }else{
             setWeatherData();
@@ -2097,6 +2097,7 @@ public class HomeActivity extends AppCompatActivity
 
     private void updateDonationsUIVisibility() {
         mDonationView = findViewById(R.id.donationView);
+        if(mDonationView == null) return;
         DonationsManager donationsManager = Application.getDonationsManager();
 
         if (donationsManager.shouldShowDonationUI() && mCurrentNavDrawerPosition == NAVDRAWER_ITEM_NEARBY) {

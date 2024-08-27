@@ -280,8 +280,10 @@ public class SurveyViewUtils {
         StringBuilder surveySharedInfo = new StringBuilder();
 
         for (int i = 0; i < embeddedDataList.size(); i++) {
-            if (embeddedDataList.get(i).equals(SurveyWebViewActivity.USER_ID)) continue;
-            surveySharedInfo.append(embeddedDataList.get(i).replace("_", " "));
+            if (embeddedDataList.get(i).equals(SurveyUtils.USER_ID)) continue;
+            String sharedInfo = embeddedDataList.get(i).replace("_id", "");
+            sharedInfo = sharedInfo.replace("_"," ");
+            surveySharedInfo.append(sharedInfo);
             if (i < embeddedDataList.size() - 1) {
                 surveySharedInfo.append(", ");
             }

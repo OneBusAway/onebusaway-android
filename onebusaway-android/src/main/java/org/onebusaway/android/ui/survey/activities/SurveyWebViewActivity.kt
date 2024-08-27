@@ -16,6 +16,7 @@ import com.google.android.gms.common.api.GoogleApiClient
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.ui.survey.SurveyPreferences
+import org.onebusaway.android.ui.survey.utils.SurveyUtils
 import org.onebusaway.android.util.LocationUtils
 
 
@@ -26,16 +27,6 @@ class SurveyWebViewActivity : AppCompatActivity() {
     private lateinit var mGoogleApiClient: GoogleApiClient
     private var mStopID: String? = null
     private var mRouteID: String? = null
-
-
-    companion object {
-        const val USER_ID = "user_id"
-        const val REGION_ID = "region_id"
-        const val ROUTE_ID = "route_id"
-        const val STOP_ID = "stop_id"
-        const val CURRENT_LOCATION = "current_location"
-    }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -142,11 +133,11 @@ class SurveyWebViewActivity : AppCompatActivity() {
      */
     private fun getEmbeddedDataValue(key : String): String {
         return when (key) {
-            USER_ID -> SurveyPreferences.getUserUUID(this@SurveyWebViewActivity)
-            REGION_ID -> Application.get().currentRegion.id.toString()
-            ROUTE_ID -> getRouteID()
-            STOP_ID -> getStopID()
-            CURRENT_LOCATION -> getCurrentLocation()
+            SurveyUtils.USER_ID -> SurveyPreferences.getUserUUID(this@SurveyWebViewActivity)
+            SurveyUtils.REGION_ID -> Application.get().currentRegion.id.toString()
+            SurveyUtils.ROUTE_ID -> getRouteID()
+            SurveyUtils.STOP_ID -> getStopID()
+            SurveyUtils.CURRENT_LOCATION -> getCurrentLocation()
             else -> ""
         }
     }

@@ -35,11 +35,11 @@ repositories {
 }
 
 android {
-    compileSdk 34
+    compileSdk 33
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 33
         versionCode 143
         versionName "2.14.0"
 

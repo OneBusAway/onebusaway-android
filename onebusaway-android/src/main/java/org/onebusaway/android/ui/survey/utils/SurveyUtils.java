@@ -39,6 +39,14 @@ public class SurveyUtils {
     public static final int EXTERNAL_SURVEY_WITH_HERO_QUESTION = 2;
 
 
+    public static  String USER_ID = "user_id";
+    public static  String REGION_ID = "region_id";
+    public static  String ROUTE_ID = "route_id";
+    public static  String STOP_ID = "stop_id";
+    public static  String CURRENT_LOCATION = "current_location";
+    public static  String RECENT_STOP_IDS = "recent_stop_ids";
+
+
     /**
      * Retrieves the answers from selected checkboxes in the provided view.
      *

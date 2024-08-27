@@ -2100,7 +2100,7 @@ public class HomeActivity extends AppCompatActivity
         if(mDonationView == null) return;
         DonationsManager donationsManager = Application.getDonationsManager();
 
-        if (donationsManager.shouldShowDonationUI() && mCurrentNavDrawerPosition == NAVDRAWER_ITEM_NEARBY) {
+        if (donationsManager.shouldShowDonationUI()) {
             mDonationView.setVisibility(View.VISIBLE);
         }
         else {

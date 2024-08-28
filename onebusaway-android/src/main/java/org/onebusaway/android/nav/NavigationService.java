@@ -23,6 +23,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.location.Location;
 import android.os.Build;
 import android.os.IBinder;
@@ -155,7 +156,11 @@ public class NavigationService extends Service implements LocationHelper.Listene
             mNavProvider.navigate(path);
         }
         Notification notification = mNavProvider.getForegroundStartingNotification();
-        startForeground(NavigationServiceProvider.NOTIFICATION_ID, notification);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(NavigationServiceProvider.NOTIFICATION_ID, notification,ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+        }else{
+            startForeground(NavigationServiceProvider.NOTIFICATION_ID, notification);
+        }
         return START_STICKY;
     }
 

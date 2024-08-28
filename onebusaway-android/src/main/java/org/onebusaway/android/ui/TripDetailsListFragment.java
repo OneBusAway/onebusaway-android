@@ -1192,7 +1192,11 @@ public class TripDetailsListFragment extends ListFragment {
         // filter specifies which event Receiver should listen to
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_SERVICE_DESTROYED);
-        getActivity().registerReceiver(new TripEndReceiver(), filter);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE){
+            getActivity().registerReceiver(new TripEndReceiver(), filter, Context.RECEIVER_NOT_EXPORTED);
+        }else{
+            getActivity().registerReceiver(new TripEndReceiver(), filter);
+        }
     }
 
     /**

@@ -23,6 +23,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
@@ -170,7 +171,12 @@ public class TripService extends Service {
                     .setContentText(foregroundNotifyText)
                     .setContentIntent(pendingIntent).build();
 
-            startForeground(FOREGROUND_NOTIFICATION_ID, notification);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(FOREGROUND_NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+            }else{
+                startForeground(FOREGROUND_NOTIFICATION_ID, notification);
+            }
         }
         return handleCommand(intent, startId);
     }

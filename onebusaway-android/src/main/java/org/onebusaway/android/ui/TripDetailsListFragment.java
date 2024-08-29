@@ -16,6 +16,7 @@
  */
 package org.onebusaway.android.ui;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -53,6 +54,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.AsyncTaskLoader;
@@ -95,6 +97,8 @@ import org.onebusaway.android.util.UIUtils;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
+
+import static org.onebusaway.android.util.PermissionUtils.NOTIFICATION_PERMISSION_REQUEST;
 
 public class TripDetailsListFragment extends ListFragment {
 
@@ -553,6 +557,12 @@ public class TripDetailsListFragment extends ListFragment {
                         }
 
                         ObaAnalytics.reportUiEvent(mFirebaseAnalytics, getString(R.string.analytics_label_destination_reminder), getString(R.string.analytics_label_destination_reminder_variant_started));
+
+                        // Request the user to grant the POST_NOTIFICATIONS permission.
+                        ActivityCompat.requestPermissions(getActivity(),
+                                new String[] {Manifest.permission.POST_NOTIFICATIONS},
+                                NOTIFICATION_PERMISSION_REQUEST);
+                        dialog.dismiss();
 
                         startNavigationService(setUpNavigationService(position));
                         Toast.makeText(Application.get(),

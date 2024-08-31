@@ -32,6 +32,9 @@ import org.onebusaway.android.ui.survey.activities.SurveyWebViewActivity;
 
 import java.util.List;
 
+/**
+ *Utility class for managing and manipulating survey-related views within the application.
+ */
 public class SurveyViewUtils {
     private final View surveyView;
     private final Context mContext;

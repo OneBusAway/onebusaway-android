@@ -23,6 +23,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Utility class for managing and processing surveys within the application.
+ */
 public class SurveyUtils {
     // Number of app launches required to show the survey
     public static int launchesUntilSurveyShown = 3;
@@ -39,12 +42,12 @@ public class SurveyUtils {
     public static final int EXTERNAL_SURVEY_WITH_HERO_QUESTION = 2;
 
 
-    public static  String USER_ID = "user_id";
-    public static  String REGION_ID = "region_id";
-    public static  String ROUTE_ID = "route_id";
-    public static  String STOP_ID = "stop_id";
-    public static  String CURRENT_LOCATION = "current_location";
-    public static  String RECENT_STOP_IDS = "recent_stop_ids";
+    public static String USER_ID = "user_id";
+    public static String REGION_ID = "region_id";
+    public static String ROUTE_ID = "route_id";
+    public static String STOP_ID = "stop_id";
+    public static String CURRENT_LOCATION = "current_location";
+    public static String RECENT_STOP_IDS = "recent_stop_ids";
 
 
     /**
@@ -355,7 +358,7 @@ public class SurveyUtils {
         return 0;
     }
 
-    public static Boolean shouldShowSurveyView(Context context,boolean isVisibleOnStops) {
+    public static Boolean shouldShowSurveyView(Context context, boolean isVisibleOnStops) {
         // User will receive a survey every `surveyLaunchCount` app launches
         if (Application.get().getAppLaunchCount() % launchesUntilSurveyShown != 0) return false;
 

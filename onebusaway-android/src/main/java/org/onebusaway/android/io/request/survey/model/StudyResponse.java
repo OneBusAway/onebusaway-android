@@ -6,6 +6,9 @@ import java.lang.String;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a survey response containing survey data and associated region information.
+ */
 public class StudyResponse implements Serializable {
     private List<Surveys> surveys;
 

@@ -6,6 +6,10 @@ import android.content.SharedPreferences;
 import java.util.Date;
 import java.util.UUID;
 
+/**
+ * Utility class for managing survey-related preferences using SharedPreferences.
+ * This class handles storing and retrieving user UUIDs and survey reminder dates.
+ */
 public class SurveyPreferences {
 
     private static final String PREFS_NAME = "survey_pref";

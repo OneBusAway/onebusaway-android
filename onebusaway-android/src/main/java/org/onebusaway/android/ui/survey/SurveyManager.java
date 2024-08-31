@@ -313,10 +313,13 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         intent.putExtra("url", url);
         // If visible on stops, pass the current stop ID and route ID if available
         if (isVisibleOnStops && currentStop != null) {
+
             intent.putExtra("stop_id", currentStop.getId());
-            //TODO send all routes ids
-            if (currentStop.getRouteIds().length > 0) {
-                intent.putExtra("route_id", currentStop.getRouteIds()[0]);
+
+            String[] routeIds = currentStop.getRouteIds();
+
+            if (routeIds != null && routeIds.length > 0) {
+                intent.putStringArrayListExtra("route_ids", SurveyUtils.getRoutesIDList(routeIds));
             }
         }
         if (SurveyUtils.isValidEmbeddedDataList(embeddedDataList)) {

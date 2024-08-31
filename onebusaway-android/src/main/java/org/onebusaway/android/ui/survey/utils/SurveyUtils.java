@@ -20,6 +20,7 @@ import org.onebusaway.android.io.request.survey.model.StudyResponse;
 import org.onebusaway.android.ui.survey.SurveyPreferences;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -414,5 +415,16 @@ public class SurveyUtils {
     public static boolean isValidEmbeddedDataList(ArrayList<String> embeddedDataList) {
         return embeddedDataList != null && !embeddedDataList.isEmpty();
     }
+
+    /**
+     * Converts an array of route IDs to an ArrayList.
+     * @param routes An array of route IDs.
+     * @return An ArrayList containing the route IDs from the input array.
+     */
+    public static ArrayList<String> getRoutesIDList(String[] routes) {
+        return new ArrayList<>(Arrays.asList(routes));
+    }
+
+
 
 }

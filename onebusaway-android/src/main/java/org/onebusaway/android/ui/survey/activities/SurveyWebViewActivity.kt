@@ -28,7 +28,7 @@ class SurveyWebViewActivity : AppCompatActivity() {
     private lateinit var toolbar: androidx.appcompat.widget.Toolbar
     private lateinit var mGoogleApiClient: GoogleApiClient
     private var mStopID: String? = null
-    private var mRouteID: String? = null
+    private var mRouteIDList: ArrayList<String>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,8 +50,8 @@ class SurveyWebViewActivity : AppCompatActivity() {
         val url = intent.getStringExtra("url") as String
         val embeddedValuesList = intent.getStringArrayListExtra("embedded_data") as? ArrayList<String> ?: arrayListOf()
         mStopID = intent.getStringExtra("stop_id")
-        mRouteID = intent.getStringExtra("route_id")
-
+        mRouteIDList  = intent.getStringArrayListExtra("route_ids") as? ArrayList<String> ?: arrayListOf()
+        Log.d("Routes",mRouteIDList.toString())
         val newURl = getEmbeddedLink(url, embeddedValuesList)
 
         Log.d("ExternalSurveyData", embeddedValuesList.toString())
@@ -167,8 +167,18 @@ class SurveyWebViewActivity : AppCompatActivity() {
         return mStopID ?: "NA"
     }
 
+    /**
+     * Retrieves a comma-separated string of route IDs from the list.
+     *
+     * If `mRouteIDList` is not null and contains elements, it converts the list
+     * to a comma-separated.
+     *
+     * @return A comma-separated string of route IDs or "NA" if the list is null or empty.
+     */
     private fun getRouteID(): String {
-        return mRouteID ?: "NA"
+        return mRouteIDList?.takeIf { it.isNotEmpty() }
+            ?.joinToString(separator = ",")
+            ?: "NA"
     }
 
 

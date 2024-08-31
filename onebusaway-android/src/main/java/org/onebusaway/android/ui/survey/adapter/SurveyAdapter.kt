@@ -20,7 +20,9 @@ import org.onebusaway.android.io.request.survey.model.StudyResponse
 import org.onebusaway.android.ui.survey.utils.SurveyUtils
 import org.onebusaway.android.ui.survey.utils.SurveyViewUtils
 
-
+/**
+ * Recycle view adapter used for displaying a list of remaining survey questions
+ */
 class SurveyAdapter(
     private val context: Context,
     private val surveyQuestions: MutableList<StudyResponse.Surveys.Questions>

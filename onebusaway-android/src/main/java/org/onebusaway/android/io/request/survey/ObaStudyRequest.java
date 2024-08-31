@@ -13,6 +13,9 @@ import org.onebusaway.android.ui.survey.SurveyPreferences;
 
 import java.util.concurrent.Callable;
 
+/**
+ * Represents a request to fetch study data.
+ */
 
 public final class ObaStudyRequest extends RequestBase implements Callable<StudyResponse> {
 

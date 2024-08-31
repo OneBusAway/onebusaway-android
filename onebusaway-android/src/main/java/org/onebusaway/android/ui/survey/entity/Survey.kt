@@ -4,6 +4,9 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
+/**
+ * Entity class representing a Survey, linked to a Study via a foreign key, with fields for ID, study ID, name, and state.
+ */
 @Entity(
     tableName = "surveys", foreignKeys = [ForeignKey(
         entity = Study::class,

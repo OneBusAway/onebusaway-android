@@ -6,6 +6,10 @@ import org.onebusaway.android.database.AppDatabase
 import org.onebusaway.android.ui.survey.entity.Study
 import org.onebusaway.android.ui.survey.entity.Survey
 
+/**
+ * Repository class for managing Study and Survey data operations.
+ * Provides methods for interacting with Study and Survey entities.
+ */
 
 class SurveyRepository(context: Context) {
     private val db: AppDatabase = Room.databaseBuilder(

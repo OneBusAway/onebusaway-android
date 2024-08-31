@@ -3,6 +3,10 @@ package org.onebusaway.android.ui.survey.dao
 import androidx.room.*
 import org.onebusaway.android.ui.survey.entity.Survey
 
+/**
+ * DAO interface for managing database operations related to Survey entities
+ * including queries by study and survey IDs.
+*/
 @Dao
 interface SurveysDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)

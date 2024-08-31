@@ -19,7 +19,9 @@ import org.onebusaway.android.ui.survey.SurveyPreferences
 import org.onebusaway.android.ui.survey.utils.SurveyUtils
 import org.onebusaway.android.util.LocationUtils
 
-
+/**
+ Activity that hosts a WebView for launching and displaying external surveys
+ */
 class SurveyWebViewActivity : AppCompatActivity() {
     private lateinit var webView: WebView
     private lateinit var progressBar: ProgressBar

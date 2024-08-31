@@ -5,6 +5,9 @@ import android.util.Log;
 
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
 
+/**
+ * AsyncTask for performing background operations related to study requests.
+ */
 public class StudyRequestTask extends AsyncTask<ObaStudyRequest, Void, StudyResponse> {
     private static final String TAG = "Survey Request";
     private StudyRequestListener mListener;

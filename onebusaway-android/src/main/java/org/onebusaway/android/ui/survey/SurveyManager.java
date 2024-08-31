@@ -36,6 +36,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Manages the survey functionality, handling the retrieval, display, and submission of surveys.
+ */
 public class SurveyManager extends SurveyViewUtils implements SurveyActionsListener {
     private final Context context;
     private final StudyRequestListener studyRequestListener;
@@ -73,6 +76,9 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         this.isVisibleOnStops = isVisibleOnStops;
     }
 
+    /**
+     * Requests survey data from the server if surveys are enabled and should be displayed based on the current context.
+     */
     public void requestSurveyData() {
         // Indicates whether the option to show available studies is enabled in preferences
         boolean areStudiesEnabled = Application.getPrefs().getBoolean(context.getString(R.string.preference_key_show_available_studies), true);
@@ -86,6 +92,11 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         Log.d("SurveyManager", "Survey requested");
     }
 
+    /**
+     * Updates the UI with the current survey questions and handles external survey results.
+     * - Handles the survey result type.
+     * - Displays the hero question (first question in the list).
+     */
     private void updateSurveyUI() {
         List<StudyResponse.Surveys.Questions> questionsList = getCurrentSurvey().getQuestions();
         externalSurveyResult = SurveyUtils.checkExternalSurvey(questionsList);
@@ -96,6 +107,15 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         showHeroQuestion(context, questionsList.get(0));
     }
 
+    /**
+     * Handles survey results based on the type of external survey.
+     * - If the survey is external without a hero question, handle accordingly.
+     * - If the survey is external with a hero question, handle accordingly.
+     * - For other cases, handle as a default survey.
+     *
+     * @param externalSurveyResult The type of external survey detected.
+     * @param questionsList        The list of survey questions.
+     */
     private void handleSurveyResult(int externalSurveyResult, List<StudyResponse.Surveys.Questions> questionsList) {
         switch (externalSurveyResult) {
             case SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION:
@@ -110,12 +130,27 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         }
     }
 
+    /**
+     * Handles the scenario where the external survey does not include a hero question.
+     * - Displays the shared information and embedded data fields for the first question.
+     * - Shows buttons for interacting with the external survey.
+     *
+     * @param questionsList The list of survey questions.
+     */
     private void handleExternalSurveyWithoutHero(List<StudyResponse.Surveys.Questions> questionsList) {
         showSharedInfoDetailsTextView(context, questionsList.get(0).getContent().getEmbedded_data_fields(), SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION);
         showExternalSurveyButtons();
         handleOpenExternalSurvey(surveyView, questionsList.get(0).getContent().getUrl());
     }
 
+    /**
+     * Handles the scenario where the external survey includes a hero question.
+     * - Sets the URL for the external survey.
+     * - Displays the shared information and embedded data fields for the hero question.
+     * - Shows buttons for interacting with the hero question and handles the next button logic.
+     *
+     * @param questionsList The list of survey questions.
+     */
     private void handleExternalSurveyWithHero(List<StudyResponse.Surveys.Questions> questionsList) {
         externalSurveyUrl = questionsList.get(1).getContent().getUrl();
         showSharedInfoDetailsTextView(context, questionsList.get(1).getContent().getEmbedded_data_fields(), SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION);
@@ -128,6 +163,11 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         handleNextButton();
     }
 
+    /**
+     * Adds the survey view to the UI based on current conditions.
+     * - If the survey is to be shown on stops, adds the survey view as a header to the arrivals list.
+     * - Otherwise, makes the survey view visible.
+     */
     private void addSurveyView() {
         if (!SurveyUtils.checkValidResponse(mStudyResponse) || curSurveyIndex == -1) return;
         if (isVisibleOnStops) {
@@ -138,6 +178,14 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         updateSurveyUI();
     }
 
+    /**
+     * Submits the survey answers to the server.
+     * - Validates the provided survey answers. If invalid, exits early.
+     *
+     * @param survey              The survey containing the answers to submit.
+     * @param bottomSheetProgress The progress indicator view to show while submitting.
+     * @param heroQuestion        True if the survey includes a hero question.
+     */
     private void submitSurveyAnswers(StudyResponse.Surveys survey, View bottomSheetProgress, boolean heroQuestion) {
         if (!validateSurveyAnswers(survey, heroQuestion)) return;
 
@@ -154,6 +202,15 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         sendSurveySubmission(apiUrl, userID, survey.getId(), surveyResponseBody);
     }
 
+    /**
+     * Constructs the JSON request body for submitting survey answers.
+     * - Uses the hero question-specific request body if the survey includes a hero question.
+     * - Otherwise, constructs the request body for all survey questions.
+     *
+     * @param survey       The survey with the answers to submit.
+     * @param heroQuestion True if the survey includes a hero question.
+     * @return The JSON array representing the survey answers.
+     */
     private JSONArray getFinalSurveyAnswersRequestBody(StudyResponse.Surveys survey, boolean heroQuestion) {
         if (heroQuestion) {
             return SurveyUtils.getSurveyAnswersRequestBody(survey.getQuestions().get(0), surveyView);
@@ -162,6 +219,13 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         }
     }
 
+    /**
+     * Validates the survey answers before submission.
+     *
+     * @param survey       The survey with the answers to validate.
+     * @param heroQuestion True if the survey includes a hero question.
+     * @return True if the survey answers are valid, false otherwise.
+     */
     private boolean validateSurveyAnswers(StudyResponse.Surveys survey, boolean heroQuestion) {
         JSONArray surveyResponseBody = getFinalSurveyAnswersRequestBody(survey, heroQuestion);
         if (surveyResponseBody == null) {
@@ -171,6 +235,15 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         return true;
     }
 
+
+    /**
+     * Constructs the API URL for submitting survey responses based on if it's a hero question or not
+     * - Returns the base API URL for surveys.
+     * - Appends the update survey path to the URL if the survey have remaining questions for the next submission
+     *
+     * @param isHeroQuestion True if the survey includes a hero question.
+     * @return apiURl
+     */
     private String getSubmitSurveyApiUrl(boolean isHeroQuestion) {
         String apiUrl = context.getString(R.string.submit_survey_api_url);
         if (!isHeroQuestion && updateSurveyPath != null) {
@@ -179,24 +252,38 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         return apiUrl;
     }
 
+    /**
+     * Sends the survey submission to the specified API URL with the user's identifier and survey responses.
+     *
+     */
     private void sendSurveySubmission(String apiUrl, String userIdentifier, int surveyId, JSONArray requestBody) {
         showProgress();
-        ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(context, apiUrl)
-                .setUserIdentifier(userIdentifier)
-                .setSurveyId(surveyId)
-                .setResponses(requestBody)
-                .setListener(submitSurveyRequestListener).build();
+        ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(context, apiUrl).setUserIdentifier(userIdentifier).setSurveyId(surveyId).setResponses(requestBody).setListener(submitSurveyRequestListener).build();
         new Thread(request::call).start();
     }
 
+    /**
+     * Sets up the click listener for the "Next" button to submit the current survey.
+     */
     private void handleNextButton() {
         nextButton.setOnClickListener(v -> submitSurveyAnswers(getCurrentSurvey(), null, true));
     }
 
+    /**
+     * Sets up the click listener for opening an external survey.
+     *
+     * @param view  The view associated with the external survey button.
+     * @param url   The URL of the external survey.
+     */
     private void handleOpenExternalSurvey(View view, String url) {
         openExternalSurveyButton.setOnClickListener(view1 -> openExternalSurvey(url));
     }
 
+    /**
+     * Opens an external survey using the specified URL and embedded data.
+     *
+     * @param url  The URL of the external survey.
+     */
     private void openExternalSurvey(String url) {
         ArrayList<String> embeddedDataList = getEmbeddedDataList();
         Intent intent = createOpenExternalSurveyIntent(url, embeddedDataList);
@@ -204,18 +291,30 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         handleCompleteSurvey();
     }
 
+    /**
+     * Retrieves the embedded data fields based on the external survey result.
+     *
+     * @return A list of embedded data fields for the current survey question.
+     */
     private ArrayList<String> getEmbeddedDataList() {
         int questionIndex = (externalSurveyResult == SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION) ? 1 : 0;
         return getCurrentSurvey().getQuestions().get(questionIndex).getContent().getEmbedded_data_fields();
     }
 
+    /**
+     * Creates an intent to open the external survey in a web view activity with the provided URL and embedded data.
+     *
+     * @param url               The URL of the external survey.
+     * @param embeddedDataList The list of embedded data fields to pass to the web view activity.
+     * @return The intent configured to open the SurveyWebViewActivity.
+     */
     private Intent createOpenExternalSurveyIntent(String url, ArrayList<String> embeddedDataList) {
         Intent intent = new Intent(context, SurveyWebViewActivity.class);
         intent.putExtra("url", url);
-
+        // If visible on stops, pass the current stop ID and route ID if available
         if (isVisibleOnStops && currentStop != null) {
             intent.putExtra("stop_id", currentStop.getId());
-            // Add logic to determine if we should send the first route or all routes (TODO: clarify)
+            //TODO send all routes ids
             if (currentStop.getRouteIds().length > 0) {
                 intent.putExtra("route_id", currentStop.getRouteIds()[0]);
             }
@@ -226,13 +325,22 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         return intent;
     }
 
-
+    /**
+     * Initializes the submit button in the bottom sheet for the remaining questions.
+     */
     private void setSubmitSurveyButton() {
         bottomSheetSubmitSurveyButton = surveyBottomSheet.findViewById(R.id.submit_btn);
         View bottomSheetProgress = surveyBottomSheet.findViewById(R.id.surveyProgress);
         bottomSheetSubmitSurveyButton.setOnClickListener(v -> submitSurveyAnswers(getCurrentSurvey(), bottomSheetProgress, false));
     }
 
+    /**
+     * Initializes the adapter for the survey BottomSheet RecyclerView.
+     * Removes the hero question from the list before setting the adapter.
+     *
+     * @param context The context for the adapter.
+     * @param recyclerView The RecyclerView to set the adapter on.
+     */
     private void initSurveyAdapter(Context context, RecyclerView recyclerView) {
         List<StudyResponse.Surveys.Questions> surveyQuestions = getCurrentSurvey().getQuestions();
         surveyQuestions.remove(0); // Remove the hero question
@@ -275,7 +383,13 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         bottomSheetSurveyRecyclerView.setLayoutManager(new LinearLayoutManager(context));
     }
 
-
+    /**
+     * Handles the survey response by updating the current survey index and ID.
+     * If the response is valid, it sets the current survey index.
+     * and adds the survey view if a valid survey index is valid != -1.
+     *
+     * @param response The survey response received.
+     */
     public void onSurveyResponseReceived(StudyResponse response) {
         if (response == null) return;
         mStudyResponse = response;
@@ -292,6 +406,10 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         Log.d("SurveyManager", "Survey Fail");
     }
 
+    /**
+     * Handles the survey submission response.
+     * @param response The submission response from the survey.
+     */
     public void onSubmitSurveyResponseReceived(SubmitSurveyResponse response) {
         // Switch back to the main thread to update UI elements
         ContextCompat.getMainExecutor(context).execute(() -> {
@@ -320,6 +438,11 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         });
     }
 
+    /**
+     * Retrieves the current survey based on the current survey index.
+     *
+     * @return The `StudyResponse.Surveys` object representing the current survey.
+     */
     private StudyResponse.Surveys getCurrentSurvey() {
         return mStudyResponse.getSurveys().get(curSurveyIndex);
     }

@@ -12,6 +12,12 @@ import org.onebusaway.android.io.request.survey.model.SubmitSurveyResponse;
 
 import java.util.concurrent.Callable;
 
+/**
+ * Represents a request to submit survey data.
+ * This class is responsible for creating and executing a POST request
+ * to submit survey responses.
+ */
+
 public final class ObaSubmitSurveyRequest extends RequestBase implements Callable<SubmitSurveyResponse> {
 
     private SubmitSurveyRequestListener listener;

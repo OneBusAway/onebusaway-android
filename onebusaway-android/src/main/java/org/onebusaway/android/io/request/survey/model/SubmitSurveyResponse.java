@@ -3,6 +3,9 @@ package org.onebusaway.android.io.request.survey.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Represents the response received after submitting a survey.
+ */
 public class SubmitSurveyResponse {
 
     private final SurveyResponse surveyResponse;

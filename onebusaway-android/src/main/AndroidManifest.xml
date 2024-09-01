@@ -1,12 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<!-- Copyright (C) 2011-2022 Paul Watts (paulcwatts@gmail.com),
+     University of South Florida (sjbarbeau@gmail.com),
+     Microsoft Corporation.
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<manifest xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <permission
         android:name="${applicationId}.permission.TRIP_SERVICE"
-        android:description="@string/trip_service_perm_description"
         android:label="@string/trip_service_perm_label"
-        android:protectionLevel="normal" />
+        android:description="@string/trip_service_perm_description"
+        android:protectionLevel="normal"/>
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -23,37 +39,34 @@
     <uses-permission android:name="${applicationId}.permission.TRIP_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" /> <!-- ACTIVITY_RECOGNITION API 28 and lower -->
+    <!-- ACTIVITY_RECOGNITION API 28 and lower -->
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
+    <!-- ACTIVITY_RECOGNITION API 29 and higher -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
-    <!--
-To enable checkBatteryOptimizations feature, also uncomment checkBatteryOptimizations() in
-    the HomeActivity's onCreate() method
-    -->
-    <!-- <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/> -->
-    <!-- For reminders - SCHEDULE_EXACT_ALARM is required when targeting Android 12 or higher -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" /> <!-- For notifications, POST_NOTIFICATIONS is required when targeting Android 12 or higher -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
-    <uses-feature
-        android:glEsVersion="0x00020000"
-        android:required="true" />
+    <!--To enable checkBatteryOptimizations feature, also uncomment checkBatteryOptimizations() in
+    the HomeActivity's onCreate() method-->
+    <!--<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>-->
+    <!-- For reminders - SCHEDULE_EXACT_ALARM is required when targeting Android 12 or higher-->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- For notifications, POST_NOTIFICATIONS is required when targeting Android 12 or higher-->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
-        android:name=".app.Application"
         android:allowBackup="false"
+        android:name="org.onebusaway.android.app.Application"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:theme="@style/Theme.OneBusAway"
         android:networkSecurityConfig="@xml/network_security_config"
-        android:requestLegacyExternalStorage="true"
-        android:theme="@style/Theme.OneBusAway">
+        android:requestLegacyExternalStorage="true">
+        <meta-data
+            android:name="android.app.default_searchable"
+            android:value="org.onebusaway.android.ui.SearchActivity" />
+
         <activity
             android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:name=".ui.survey.activities.SurveyWebViewActivity"
             android:exported="false" />
-
-        <meta-data
-            android:name="android.app.default_searchable"
-            android:value="org.onebusaway.android.ui.SearchActivity" />
 
         <activity
             android:name=".ui.DonationLearnMoreActivity"
@@ -64,158 +77,152 @@ To enable checkBatteryOptimizations feature, also uncomment checkBatteryOptimiza
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.onebusaway.android.ui.PreferencesActivity" />
         </activity>
+
         <activity
-            android:name=".ui.SearchActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:name="org.onebusaway.android.ui.SearchActivity"
+            android:launchMode="singleTop"
             android:exported="true"
-            android:launchMode="singleTop">
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
-
             <meta-data
                 android:name="android.app.searchable"
-                android:resource="@xml/searchable" />
+                android:resource="@xml/searchable"/>
         </activity>
-        <activity
-            android:name=".ui.HomeActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
+        <activity
+            android:name="org.onebusaway.android.ui.HomeActivity"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.ArrivalsListActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:name="org.onebusaway.android.ui.ArrivalsListActivity"
+            android:launchMode="singleTop"
             android:exported="true"
-            android:launchMode="singleTop">
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </activity>
         <activity
             android:name="com.joulespersecond.seattlebusbot.ArrivalsListActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:launchMode="singleTop"
             android:exported="true"
-            android:launchMode="singleTop">
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ui.StopInfoActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".ui.RouteInfoActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name="com.joulespersecond.seattlebusbot.RouteInfoActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".ui.TripInfoActivity" />
-        <activity android:name=".ui.MyRemindersActivity" />
-        <activity
-            android:name=".ui.TripDetailsActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".ui.MyStopsActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+        <activity android:name="org.onebusaway.android.ui.StopInfoActivity"
             android:exported="true"
-            android:label="@string/stop_shortcut">
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="org.onebusaway.android.ui.RouteInfoActivity"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="com.joulespersecond.seattlebusbot.RouteInfoActivity"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="org.onebusaway.android.ui.TripInfoActivity"/>
+        <activity android:name=".ui.MyRemindersActivity"/>
+        <activity android:name="org.onebusaway.android.ui.TripDetailsActivity"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity>
 
-                <category android:name="android.intent.category.DEFAULT" />
+        <activity
+            android:name="org.onebusaway.android.ui.MyStopsActivity"
+            android:label="@string/stop_shortcut"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
+
         <activity
             android:name="com.joulespersecond.seattlebusbot.MyStopsActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/stop_shortcut"
             android:exported="true"
-            android:label="@string/stop_shortcut">
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.MyRecentStopsActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:name="org.onebusaway.android.ui.MyRecentStopsActivity"
+            android:label="@string/recent_stops_shortcut"
             android:exported="true"
-            android:label="@string/recent_stops_shortcut">
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
-
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.MyStarredStopsActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:name="org.onebusaway.android.ui.MyStarredStopsActivity"
+            android:label="@string/starred_stops_shortcut"
             android:exported="true"
-            android:label="@string/starred_stops_shortcut">
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
-
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.MyRoutesActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:name="org.onebusaway.android.ui.MyRoutesActivity"
+            android:label="@string/route_shortcut"
             android:exported="true"
-            android:label="@string/route_shortcut">
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
-
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <activity
             android:name="com.joulespersecond.seattlebusbot.MyRoutesActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/route_shortcut"
             android:exported="true"
-            android:label="@string/route_shortcut">
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.MyRecentRoutesActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:name="org.onebusaway.android.ui.MyRecentRoutesActivity"
+            android:label="@string/recent_routes_shortcut"
             android:exported="true"
-            android:label="@string/recent_routes_shortcut">
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
-
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
-        </activity> <!-- ActionBarCompat library doesn't have an ActionBarPreferenceActivity, so define parent here -->
+        </activity>
+        <!-- ActionBarCompat library doesn't have an ActionBarPreferenceActivity, so define parent here-->
         <activity
-            android:name=".ui.PreferencesActivity"
+            android:name="org.onebusaway.android.ui.PreferencesActivity"
+            android:parentActivityName="org.onebusaway.android.ui.HomeActivity"
             android:exported="true"
-            android:parentActivityName=".ui.HomeActivity"
             tools:ignore="ExportedPreferenceActivity">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -227,68 +234,70 @@ To enable checkBatteryOptimizations feature, also uncomment checkBatteryOptimiza
                     android:host="add-region"
                     android:scheme="onebusaway" />
             </intent-filter>
-
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.HomeActivity" />
+                android:value="org.onebusaway.android.ui.HomeActivity"/>
         </activity>
-        <activity android:name=".ui.RegionsActivity" />
-        <activity android:name=".ui.AgenciesActivity" />
-        <activity android:name=".report.ui.ReportActivity" />
-        <activity android:name=".report.ui.InfrastructureIssueActivity" />
+        <activity android:name="org.onebusaway.android.ui.RegionsActivity"/>
+        <activity android:name="org.onebusaway.android.ui.AgenciesActivity"/>
+
+        <activity android:name="org.onebusaway.android.report.ui.ReportActivity"/>
+        <activity android:name="org.onebusaway.android.report.ui.InfrastructureIssueActivity"/>
+
         <activity
-            android:name=".ui.MyRecentStopsAndRoutesActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true"
+            android:name="org.onebusaway.android.ui.MyRecentStopsAndRoutesActivity"
             android:label="@string/my_recent_title"
-            android:parentActivityName=".ui.HomeActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <!-- Parent activity meta-data to support 4.0 and lower -->
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.HomeActivity" />
-        </activity>
-        <activity
-            android:name=".ui.NightLightActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:parentActivityName="org.onebusaway.android.ui.HomeActivity"
             android:exported="true"
-            android:label="@string/stop_info_option_night_light"
-            android:parentActivityName=".ui.HomeActivity"
-            android:screenOrientation="portrait">
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
-
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.HomeActivity" />
+                android:value="org.onebusaway.android.ui.HomeActivity"/>
         </activity>
         <activity
-            android:name=".ui.TripPlanActivity"
-            android:label="@string/title_activity_trip_plan"
-            android:parentActivityName=".ui.HomeActivity">
+            android:name="org.onebusaway.android.ui.NightLightActivity"
+            android:label="@string/stop_info_option_night_light"
+            android:parentActivityName="org.onebusaway.android.ui.HomeActivity"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+            <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.HomeActivity" />
+                android:value="org.onebusaway.android.ui.HomeActivity"/>
         </activity>
         <activity
-            android:name=".ui.FeedbackActivity"
+            android:name="org.onebusaway.android.ui.TripPlanActivity"
+            android:label="@string/title_activity_trip_plan"
+            android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.onebusaway.android.ui.HomeActivity"/>
+        </activity>
+        <activity
+            android:name="org.onebusaway.android.ui.FeedbackActivity"
             android:label="@string/feedback_notify_title"
             android:noHistory="true"
-            android:parentActivityName=".ui.HomeActivity">
+            android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.HomeActivity" />
-        </activity> <!-- Provider is defined in build.gradle flavors -->
+                android:value="org.onebusaway.android.ui.HomeActivity"/>
+        </activity>
+
+
+        <!-- Provider is defined in build.gradle flavors -->
         <provider
-            android:name=".provider.ObaProvider"
-            android:authorities="${databaseAuthority}" />
+            android:name="org.onebusaway.android.provider.ObaProvider"
+            android:authorities="${databaseAuthority}"/>
 
         <service
             android:name=".tripservice.TripService"
@@ -296,95 +305,100 @@ To enable checkBatteryOptimizations feature, also uncomment checkBatteryOptimiza
             android:permission="${applicationId}.permission.TRIP_SERVICE"
             android:exported="true">
             <intent-filter>
-                <action android:name="${applicationId}.AlarmReceiver" />
-                <action android:name="${applicationId}.BootstrapService" />
+                <action android:name="${applicationId}.AlarmReceiver"/>
+                <action android:name="${applicationId}.BootstrapService"/>
             </intent-filter>
         </service>
-        <service android:name=".directions.realtime.RealtimeService"></service>
+
+        <service
+            android:name=".directions.realtime.RealtimeService">
+        </service>
+
         <service
             android:name=".nav.NavigationService"
             android:foregroundServiceType="location" />
 
-        <receiver
-            android:name=".tripservice.AlarmReceiver"
+        <receiver android:name=".tripservice.AlarmReceiver"
             android:exported="true">
             <intent-filter>
-
                 <!-- Should match constants for actions defined in TripService -->
-                <action android:name="${applicationId}.action.SCHEDULE" />
-                <action android:name="${applicationId}.action.POLL" />
+                <action android:name="${applicationId}.action.SCHEDULE"/>
+                <action android:name="${applicationId}.action.POLL"/>
             </intent-filter>
         </receiver>
-        <receiver
-            android:name=".tripservice.BootstrapService"
+        <receiver android:name=".tripservice.BootstrapService"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
             </intent-filter>
-        </receiver> <!-- Legacy Receiver for backwards-compatibility support with v1.x - See Issue #558 -->
-        <receiver
-            android:name="com.joulespersecond.seattlebusbot.AlarmReceiver"
+        </receiver>
+        <!-- Legacy Receiver for backwards-compatibility support with v1.x - See Issue #558 -->
+        <receiver android:name="com.joulespersecond.seattlebusbot.AlarmReceiver"
             android:exported="true">
             <intent-filter>
-
                 <!-- Should match constants for actions defined in TripService -->
-                <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE" />
-                <action android:name="com.joulespersecond.seattlebusbot.action.POLL" />
+                <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE"/>
+                <action android:name="com.joulespersecond.seattlebusbot.action.POLL"/>
             </intent-filter>
         </receiver>
         <receiver
             android:name=".nav.NavigationReceiver"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true" >
             <intent-filter>
                 <action android:name=".nav.NavigationReceiver" />
             </intent-filter>
         </receiver>
         <receiver
             android:name=".nav.FeedbackReceiver"
-            android:enabled="true"></receiver>
-        <receiver
-            android:name=".directions.realtime.RealtimeWakefulReceiver"
+            android:enabled="true">
+        </receiver>
+
+        <receiver android:name=".directions.realtime.RealtimeWakefulReceiver"
             android:exported="true">
             <intent-filter>
-
                 <!-- Should match constants for actions defined in OTPConstants -->
-                <action android:name="${applicationId}.directions.action.START_CHECKS" />
-                <action android:name="${applicationId}.directions.action.CHECK" />
+                <action android:name="${applicationId}.directions.action.START_CHECKS"/>
+                <action android:name="${applicationId}.directions.action.CHECK"/>
             </intent-filter>
         </receiver>
+
         <receiver
-            android:name=".travelbehavior.receiver.TransitionBroadcastReceiver"
-            android:enabled="true"></receiver>
+            android:enabled="true" android:name=".travelbehavior.receiver.TransitionBroadcastReceiver">
+        </receiver>
         <receiver
-            android:name=".travelbehavior.receiver.RecognitionBroadcastReceiver"
-            android:enabled="true"></receiver>
+            android:enabled="true" android:name=".travelbehavior.receiver.RecognitionBroadcastReceiver">
+        </receiver>
         <receiver
-            android:name=".travelbehavior.receiver.LocationBroadcastReceiver"
-            android:enabled="true"></receiver>
+            android:enabled="true" android:name=".travelbehavior.receiver.LocationBroadcastReceiver">
+        </receiver>
 
         <meta-data
             android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
+            android:value="@integer/google_play_services_version"/>
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/apiv2_key" />
+            android:value="@string/apiv2_key"/>
 
         <activity
-            android:name=".ui.AboutActivity"
+            android:name="org.onebusaway.android.ui.AboutActivity"
             android:label="@string/title_activity_about"
-            android:parentActivityName=".ui.PreferencesActivity"
+            android:parentActivityName="org.onebusaway.android.ui.PreferencesActivity"
             android:theme="@style/Theme.OneBusAway.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.PreferencesActivity" />
-        </activity> <!-- Opt-out of June 2018 Android Maps styling with pin POI icons - see #891 -->
-        <meta-data
-            android:name="com.google.android.gms.maps.API_OPTIONS"
-            android:value="B3H9HE845CFHYG" />
+                android:value="org.onebusaway.android.ui.PreferencesActivity"/>
+        </activity>
+
+        <!-- Opt-out of June 2018 Android Maps styling with pin POI icons - see #891 -->
+        <meta-data android:name="com.google.android.gms.maps.API_OPTIONS" android:value="B3H9HE845CFHYG"/>
     </application>
 
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true"/>
 </manifest>

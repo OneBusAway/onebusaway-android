@@ -314,12 +314,12 @@ configurations {
 
 dependencies {
     // Firebase Analytics
-    implementation 'com.google.firebase:firebase-core:21.0.0'
-    implementation 'com.google.firebase:firebase-analytics:21.0.0'
+    implementation 'com.google.firebase:firebase-core:21.1.1'
+    implementation 'com.google.firebase:firebase-analytics:22.1.0'
     // Cloud Firestore (for storing destination alert test data)
-    implementation 'com.google.firebase:firebase-firestore:24.1.2'
+    implementation 'com.google.firebase:firebase-firestore:25.1.0'
     implementation 'com.google.firebase:firebase-auth:21.0.5'
-    implementation 'com.google.firebase:firebase-storage:20.0.1'
+    implementation 'com.google.firebase:firebase-storage:21.0.0'
     // Google Play Services Location
     implementation 'com.google.android.gms:play-services-location:19.0.1'
     // Support libraries

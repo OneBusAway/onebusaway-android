@@ -1,6 +1,8 @@
 package org.onebusaway.android.ui.survey.activities
 
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
@@ -118,6 +120,9 @@ class SurveyWebViewActivity : AppCompatActivity() {
             newUrl += getEmbeddedDataValue(embeddedValueList[index])
             if (index + 1 != size) newUrl += "&"
         }
+        newUrl+="&os=android"
+        newUrl+=getAppVersionCode()
+        newUrl+=getAndroidVersionCode()
         return newUrl
     }
 
@@ -198,6 +203,37 @@ class SurveyWebViewActivity : AppCompatActivity() {
         return recentStops.takeIf { it.isNotEmpty() }
             ?.joinToString(separator = ",")
             ?: "NA"
+    }
+
+    // Return app version code
+    private fun getAppVersionCode(): String {
+        val packageInfo = try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                packageManager.getPackageInfo(packageName, 0)
+            }
+        } catch (e: PackageManager.NameNotFoundException) {
+            e.printStackTrace()
+            return "&app_version=NA"
+        }
+
+        val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            packageInfo.longVersionCode
+        } else {
+            @Suppress("DEPRECATION")
+            packageInfo.versionCode.toLong()
+        }
+
+        return "&app_version=$versionCode"
+    }
+
+
+    // Return the version as a string, e.g., "9.1"
+    private fun getAndroidVersionCode():String{
+        val androidVersion = Build.VERSION.RELEASE
+        val versionInfo = "&os_version=$androidVersion"
+        return versionInfo
     }
 
 

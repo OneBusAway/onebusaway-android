@@ -15,6 +15,6 @@ interface RegionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRegion(region: RegionEntity): Long
 
-    @Query("SELECT *FROM regions WHERE :regionId = regionId")
+    @Query("SELECT * FROM regions WHERE :regionId = regionId")
     suspend fun getRegionByID(regionId:Int):Int?
 }

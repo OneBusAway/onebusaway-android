@@ -59,6 +59,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.database.recentStops.RecentStopsManager;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
@@ -231,6 +232,7 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         public IntentBuilder(Context context, ObaStop stop, HashMap<String, ObaRoute> routes) {
             mIntent = new Intent(context, ArrivalsListFragment.class);
             mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stop.getId()));
+            RecentStopsManager.saveStop(context,stop);
             setStopName(stop.getName());
             setStopCode(stop.getStopCode());
             setStopDirection(stop.getDirection());

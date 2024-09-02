@@ -15,6 +15,7 @@ import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.api.GoogleApiClient
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.database.recentStops.RecentStopsManager
 import org.onebusaway.android.ui.survey.SurveyPreferences
 import org.onebusaway.android.ui.survey.utils.SurveyUtils
 import org.onebusaway.android.util.LocationUtils
@@ -140,6 +141,7 @@ class SurveyWebViewActivity : AppCompatActivity() {
             SurveyUtils.ROUTE_ID -> getRouteID()
             SurveyUtils.STOP_ID -> getStopID()
             SurveyUtils.CURRENT_LOCATION -> getCurrentLocation()
+            SurveyUtils.RECENT_STOP_IDS -> getRecentStops()
             else -> ""
         }
     }
@@ -180,6 +182,24 @@ class SurveyWebViewActivity : AppCompatActivity() {
             ?.joinToString(separator = ",")
             ?: "NA"
     }
+
+
+    /**
+     * Retrieves a comma-separated string of recent stop IDs.
+     *
+     * If the list is not empty, it concatenates the stop IDs into a single string with each ID separated by a comma.
+     * If the list is empty, it returns "NA" as a placeholder.
+     *
+     * @return A comma-separated string of recent stop IDs if available, otherwise "NA".
+     */
+
+    private fun getRecentStops(): String {
+        val recentStops = RecentStopsManager.getRecentStops(this)
+        return recentStops.takeIf { it.isNotEmpty() }
+            ?.joinToString(separator = ",")
+            ?: "NA"
+    }
+
 
 
 }

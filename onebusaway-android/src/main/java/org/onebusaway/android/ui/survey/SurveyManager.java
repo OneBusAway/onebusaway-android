@@ -258,7 +258,12 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
      */
     private void sendSurveySubmission(String apiUrl, String userIdentifier, int surveyId, JSONArray requestBody) {
         showProgress();
-        ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(context, apiUrl).setUserIdentifier(userIdentifier).setSurveyId(surveyId).setResponses(requestBody).setListener(submitSurveyRequestListener).build();
+        ObaSubmitSurveyRequest request = new ObaSubmitSurveyRequest.Builder(context, apiUrl)
+                .setUserIdentifier(userIdentifier)
+                .setSurveyId(surveyId)
+                .setStopIdentifier(SurveyUtils.getCurrentStopIdentifier(currentStop,isVisibleOnStops))
+                .setResponses(requestBody)
+                .setListener(submitSurveyRequestListener).build();
         new Thread(request::call).start();
     }
 

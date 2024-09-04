@@ -425,6 +425,21 @@ public class SurveyUtils {
         return new ArrayList<>(Arrays.asList(routes));
     }
 
+    /**
+     * Returns the stop identifier if the stop is non-null, has a valid ID,
+     * and is marked as visible; otherwise, returns null.
+     *
+     * @param currentStop      The current stop object.
+     * @param visibleOnStops   Indicates if the stop is visible.
+     * @return The stop identifier or null if conditions are not met.
+     */
+    public static String getCurrentStopIdentifier(ObaStop currentStop, boolean visibleOnStops) {
+        return (currentStop != null && currentStop.getId() != null && visibleOnStops)
+                ? currentStop.getId()
+                : null;
+    }
+
+
 
 
 }

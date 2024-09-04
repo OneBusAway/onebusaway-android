@@ -47,6 +47,15 @@ public final class ObaSubmitSurveyRequest extends RequestBase implements Callabl
             return this;
         }
 
+        public Builder setStopIdentifier(String stopIdentifier) {
+            try {
+                mPostData.appendQueryParameter("stop_identifier", stopIdentifier);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return this;
+        }
+
         public Builder setSurveyId(int surveyId) {
             try {
                 mPostData.appendQueryParameter("survey_id", Integer.toString(surveyId));

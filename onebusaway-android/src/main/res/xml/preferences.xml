@@ -179,11 +179,11 @@
             android:key="@string/preferences_key_analytics"
             android:summary="@string/preferences_analytics_summary"
             android:title="@string/preferences_analytics_title" />
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="@string/preferences_key_travel_behavior"
-            android:summary="@string/preferences_travel_behavior_summary"
-            android:title="@string/preferences_travel_behavior_title" />
+<!--        <CheckBoxPreference-->
+<!--            android:defaultValue="false"-->
+<!--            android:key="@string/preferences_key_travel_behavior"-->
+<!--            android:summary="@string/preferences_travel_behavior_summary"-->
+<!--            android:title="@string/preferences_travel_behavior_title" />-->
         <Preference
             android:key="@string/preference_key_tutorial"
             android:summary="@string/preferences_tutorial_summary"

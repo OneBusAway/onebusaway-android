@@ -280,7 +280,7 @@ public class HomeActivity extends AppCompatActivity
 
     private FirebaseAnalytics mFirebaseAnalytics;
 
-    private ActivityResultLauncher<String> travelBehaviorPermissionsLauncher;
+    //private ActivityResultLauncher<String> travelBehaviorPermissionsLauncher;
 
     private ObaWeatherResponse weatherResponse;
 
@@ -405,7 +405,7 @@ public class HomeActivity extends AppCompatActivity
 
         setupGooglePlayServices();
 
-        setupPermissions(this);
+        //setupPermissions(this);
 
         UIUtils.setupActionBar(this);
 
@@ -1931,15 +1931,15 @@ public class HomeActivity extends AppCompatActivity
      * @param activity
      */
     private void setupPermissions(AppCompatActivity activity) {
-        travelBehaviorPermissionsLauncher =
-                registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-                    if (isGranted) {
-                        // User opt-ed into study and granted physical activity tracking - now request background location permissions (when targeting Android 11 we can't request both simultaneously)
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            activity.requestPermissions(TravelBehaviorConstants.BACKGROUND_LOCATION_PERMISSION, BACKGROUND_LOCATION_PERMISSION_REQUEST);
-                        }
-                    }
-                });
+//        travelBehaviorPermissionsLauncher =
+//                registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+//                    if (isGranted) {
+//                        // User opt-ed into study and granted physical activity tracking - now request background location permissions (when targeting Android 11 we can't request both simultaneously)
+//                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                            activity.requestPermissions(TravelBehaviorConstants.BACKGROUND_LOCATION_PERMISSION, BACKGROUND_LOCATION_PERMISSION_REQUEST);
+//                        }
+//                    }
+//                });
     }
 
     /**
@@ -1948,9 +1948,9 @@ public class HomeActivity extends AppCompatActivity
      * activity permissions. This method should only be called after the user opts into the travel behavior study.
      */
     public void requestPhysicalActivityPermission() {
-        if (travelBehaviorPermissionsLauncher != null){
-            travelBehaviorPermissionsLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION);
-        }
+//        if (travelBehaviorPermissionsLauncher != null){
+//            travelBehaviorPermissionsLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION);
+//        }
     }
 
     /**

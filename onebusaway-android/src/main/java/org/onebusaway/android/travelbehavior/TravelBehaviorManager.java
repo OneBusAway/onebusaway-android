@@ -93,9 +93,9 @@ public class TravelBehaviorManager {
     private FirebaseAnalytics mFirebaseAnalytics;
 
     public TravelBehaviorManager(Context activityContext, Context applicationContext) {
-        mActivityContext = activityContext;
-        mApplicationContext = applicationContext;
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(activityContext);
+//        mActivityContext = activityContext;
+//        mApplicationContext = applicationContext;
+//        mFirebaseAnalytics = FirebaseAnalytics.getInstance(activityContext);
     }
 
     public void registerTravelBehaviorParticipant() {

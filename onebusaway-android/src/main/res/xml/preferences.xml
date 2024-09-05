@@ -179,6 +179,8 @@
             android:key="@string/preferences_key_analytics"
             android:summary="@string/preferences_analytics_summary"
             android:title="@string/preferences_analytics_title" />
+
+<!--         Disabled due to issues related to ticket #1240 ,see: https://github.com/OneBusAway/onebusaway-android/issues/1240-->
 <!--        <CheckBoxPreference-->
 <!--            android:defaultValue="false"-->
 <!--            android:key="@string/preferences_key_travel_behavior"-->

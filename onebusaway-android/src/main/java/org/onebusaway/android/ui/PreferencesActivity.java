@@ -158,18 +158,18 @@ public class PreferencesActivity extends PreferenceActivity
         mAnalyticsPref = findPreference(getString(R.string.preferences_key_analytics));
         mAnalyticsPref.setOnPreferenceChangeListener(this);
 
-        mTravelBehaviorPref = (CheckBoxPreference) findPreference(getString(R.string.preferences_key_travel_behavior));
-        mTravelBehaviorPref.setOnPreferenceChangeListener(this);
+//        mTravelBehaviorPref = (CheckBoxPreference) findPreference(getString(R.string.preferences_key_travel_behavior));
+//        mTravelBehaviorPref.setOnPreferenceChangeListener(this);
 
-        if (!TravelBehaviorUtils.isTravelBehaviorActiveInRegion() ||
-                (!TravelBehaviorUtils.allowEnrollMoreParticipantsInStudy() &&
-                        !TravelBehaviorUtils.isUserParticipatingInStudy())) {
-            PreferenceCategory aboutCategory = (PreferenceCategory)
-                    findPreference(getString(R.string.preferences_category_about));
-            aboutCategory.removePreference(mTravelBehaviorPref);
-        } else {
-            mTravelBehaviorPref.setChecked(TravelBehaviorUtils.isUserParticipatingInStudy());
-        }
+//        if (!TravelBehaviorUtils.isTravelBehaviorActiveInRegion() ||
+//                (!TravelBehaviorUtils.allowEnrollMoreParticipantsInStudy() &&
+//                        !TravelBehaviorUtils.isUserParticipatingInStudy())) {
+//            PreferenceCategory aboutCategory = (PreferenceCategory)
+//                    findPreference(getString(R.string.preferences_category_about));
+//            aboutCategory.removePreference(mTravelBehaviorPref);
+//        } else {
+//            mTravelBehaviorPref.setChecked(TravelBehaviorUtils.isUserParticipatingInStudy());
+//        }
 
         pushFirebaseData = findPreference(getString(R.string.preference_key_push_firebase_data));
         pushFirebaseData.setOnPreferenceClickListener(this);
@@ -492,14 +492,14 @@ public class PreferencesActivity extends PreferenceActivity
             //Report if the analytics turns off, just before shared preference changed
             ObaAnalytics.setSendAnonymousData(mFirebaseAnalytics, isAnalyticsActive);
         } else if (preference.equals(mTravelBehaviorPref) && newValue instanceof Boolean) {
-            Boolean activateTravelBehaviorCollection = (Boolean) newValue;
-            if (activateTravelBehaviorCollection) {
-                new TravelBehaviorManager(this, getApplicationContext()).
-                        registerTravelBehaviorParticipant(true);
-            } else {
-                showOptOutDialog();
-                return false;
-            }
+//            Boolean activateTravelBehaviorCollection = (Boolean) newValue;
+//            if (activateTravelBehaviorCollection) {
+//                new TravelBehaviorManager(this, getApplicationContext()).
+//                        registerTravelBehaviorParticipant(true);
+//            } else {
+//                showOptOutDialog();
+//                return false;
+//            }
         } else if (preference.equals(mLeftHandMode) && newValue instanceof Boolean) {
             Boolean isLeftHandEnabled = (Boolean) newValue;
             //Report if left handed mode is turned on, just before shared preference changed
@@ -515,31 +515,32 @@ public class PreferencesActivity extends PreferenceActivity
 
     /**
      * Shows the dialog to explain user is choosing to opt out of travel behavior research study
+     * Currently disabled see ticket https://github.com/OneBusAway/onebusaway-android/issues/1240
      */
-    private void showOptOutDialog() {
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle(R.string.travel_behavior_dialog_opt_out_title)
-                .setMessage(R.string.travel_behavior_dialog_opt_out_message)
-                .setCancelable(false)
-                .setPositiveButton(R.string.ok,
-                        (dialog, which) -> {
-                            // Remove user from study
-                            new TravelBehaviorManager(this, getApplicationContext()).
-                                    stopCollectingData();
-                            TravelBehaviorManager.optOutUser();
-                            TravelBehaviorManager.optOutUserOnServer();
-                            // Change preference
-                            mTravelBehaviorPref.setChecked(false);
-                            PreferenceUtils.saveBoolean(getString(R.string.preferences_key_travel_behavior), false);
-                        }
-                )
-                .setNegativeButton(R.string.cancel,
-                        (dialog, which) -> {
-                            // No-op
-                        }
-                );
-        builder.create().show();
-    }
+//    private void showOptOutDialog() {
+//        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this)
+//                .setTitle(R.string.travel_behavior_dialog_opt_out_title)
+//                .setMessage(R.string.travel_behavior_dialog_opt_out_message)
+//                .setCancelable(false)
+//                .setPositiveButton(R.string.ok,
+//                        (dialog, which) -> {
+//                            // Remove user from study
+//                            new TravelBehaviorManager(this, getApplicationContext()).
+//                                    stopCollectingData();
+//                            TravelBehaviorManager.optOutUser();
+//                            TravelBehaviorManager.optOutUserOnServer();
+//                            // Change preference
+//                            mTravelBehaviorPref.setChecked(false);
+//                            PreferenceUtils.saveBoolean(getString(R.string.preferences_key_travel_behavior), false);
+//                        }
+//                )
+//                .setNegativeButton(R.string.cancel,
+//                        (dialog, which) -> {
+//                            // No-op
+//                        }
+//                );
+//        builder.create().show();
+//    }
 
     @Override
     protected void onDestroy() {

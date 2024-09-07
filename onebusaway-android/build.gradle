@@ -355,7 +355,7 @@ dependencies {
     implementation 'com.github.OneBusAway:pelias-client-library:v1.1.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     // Google Play Services Maps (only for Google flavor)
-    googleImplementation 'com.google.android.gms:play-services-maps:18.2.0'
+    googleImplementation 'com.google.android.gms:play-services-maps:19.0.0'
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)
     googleImplementation 'com.google.android.libraries.places:places-compat:2.6.0'
     // Autocomplete text views with clear button for trip planning

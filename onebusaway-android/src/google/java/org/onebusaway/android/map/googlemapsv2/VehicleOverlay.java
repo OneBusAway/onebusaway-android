@@ -549,6 +549,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
 
     @Override
     public boolean markerClicked(Marker marker) {
+        if(mMarkerData == null) return false;
         ObaTripStatus status = mMarkerData.getStatusFromMarker(marker);
         if (status != null) {
             setupInfoWindow();

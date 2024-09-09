@@ -17,17 +17,12 @@
  */
 package org.onebusaway.android.ui;
 
-import static org.onebusaway.android.util.PermissionUtils.RESTORE_BACKUP_PERMISSION_REQUEST;
-import static org.onebusaway.android.util.PermissionUtils.SAVE_BACKUP_PERMISSION_REQUEST;
-import static org.onebusaway.android.util.PermissionUtils.STORAGE_PERMISSIONS;
+
 import static org.onebusaway.android.util.UIUtils.setAppTheme;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -47,9 +42,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 
@@ -60,13 +53,9 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.travelbehavior.io.coroutines.FirebaseDataPusher;
-import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
 import org.onebusaway.android.util.BackupUtils;
 import org.onebusaway.android.util.BuildFlavorUtils;
-import org.onebusaway.android.util.PermissionUtils;
-import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 
 import java.net.MalformedURLException;
@@ -83,6 +72,7 @@ public class PreferencesActivity extends PreferenceActivity
     public static final String SHOW_CHECK_REGION_DIALOG = ".checkRegionDialog";
 
     public static final int REQUEST_CODE_RESTORE_BACKUP = 1234;
+    public static final int REQUEST_CODE_SAVE_BACKUP = 1199;
 
     Preference mPreference;
 
@@ -373,13 +363,9 @@ public class PreferencesActivity extends PreferenceActivity
                     null);
             AboutActivity.start(this);
         } else if (pref.equals(mSaveBackup)) {
-            // SavePreference will get the click event but will ignore it if permissions haven't
-            // been granted yet so we can handle permissions here
-            maybeRequestPermissions(SAVE_BACKUP_PERMISSION_REQUEST);
+            BackupUtils.createBackupFile(this);
         } else if (pref.equals(mRestoreBackup)){
-            // RestorePreference will get the click event but will ignore it if permissions haven't
-            // been granted yet so we can handle permissions here.
-            maybeRequestPermissions(RESTORE_BACKUP_PERMISSION_REQUEST);
+            BackupUtils.selectBackupFile(this);
         } else if (pref.equals(pushFirebaseData)) {
             // Try to push firebase data to the server
             FirebaseDataPusher pusher = new FirebaseDataPusher();
@@ -391,67 +377,19 @@ public class PreferencesActivity extends PreferenceActivity
         return true;
     }
 
-    private void maybeRequestPermissions(int permissionRequest) {
-        if (!PermissionUtils.hasGrantedAllPermissions(this, STORAGE_PERMISSIONS)) {
-            // Request permissions from the user
-            ActivityCompat.requestPermissions(this, STORAGE_PERMISSIONS, permissionRequest);
-        }
-    }
-
-    @SuppressLint("MissingPermission")
-    @Override
-    public void onRequestPermissionsResult(
-            int requestCode, String[] permissions, int[] grantResults) {
-        int result = PackageManager.PERMISSION_DENIED;
-        if (requestCode == SAVE_BACKUP_PERMISSION_REQUEST || requestCode == RESTORE_BACKUP_PERMISSION_REQUEST) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                result = PackageManager.PERMISSION_GRANTED;
-                // User granted permission
-                if (requestCode == SAVE_BACKUP_PERMISSION_REQUEST) {
-                    BackupUtils.save(this);
-                } else {
-                    // For restore, ask them to browse to the backup file, because after targeting Android 11 we can't just access it directly
-                    // This is automatically invoked by RestorePreference.onClick(), so do nothing here
-                }
-            } else {
-                showStoragePermissionDialog(this, requestCode);
-            }
-        }
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_RESTORE_BACKUP) {
-            if(data != null){
-                BackupUtils.restore(this, data.getData());
+        if(resultCode != RESULT_OK) return;
+        Uri uri = data.getData();
+        if(uri != null){
+            if (requestCode == REQUEST_CODE_RESTORE_BACKUP) {
+                BackupUtils.restore(this, uri);
+            }else if(requestCode == REQUEST_CODE_SAVE_BACKUP){
+                BackupUtils.save(this,uri);
             }
         }
-    }
-
-    /**
-     * Shows the dialog to explain why storage permissions are needed
-     * @param activity Activity used to show the dialog
-     * @param requestCode The requesting permission code (SAVE_BACKUP_PERMISSION_REQUEST or RESTORE_BACKUP_PERMISSION_REQUEST)
-     */
-    private void showStoragePermissionDialog(Activity activity, int requestCode) {
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle(R.string.storage_permissions_title)
-                .setMessage(R.string.storage_permissions_message)
-                .setCancelable(false)
-                .setPositiveButton(R.string.ok,
-                        (dialog, which) -> {
-                            // Request permissions from the user
-                            ActivityCompat
-                                    .requestPermissions(activity, STORAGE_PERMISSIONS, requestCode);
-                        }
-                )
-                .setNegativeButton(R.string.no_thanks,
-                        (dialog, which) -> {
-                            // No-op
-                        }
-                );
-        builder.create().show();
     }
 
     @Override

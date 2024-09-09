@@ -20,15 +20,19 @@ import static org.onebusaway.android.util.BackupUtilKt.uriToTempFile;
 import android.content.ContentProviderClient;
 import android.content.Context;
 import android.net.Uri;
-import android.os.Build;
-import android.os.Environment;
+import android.util.Log;
+import android.widget.Toast;
 
 import org.apache.commons.io.FileUtils;
+import org.onebusaway.android.R;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.provider.ObaProvider;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Big note, that this is currently fairly unsafe.
@@ -42,33 +46,43 @@ import java.io.IOException;
  */
 public final class Backup {
 
-    private static final String FILE_NAME = "OneBusAway.backup";
-
-    private static final String DIRECTORY_NAME = "OBABackups";
+    public static final String FILE_NAME = "OneBusAway.backup";
 
     private static File getDB(Context context) {
         return ObaProvider.getDatabasePath(context);
     }
 
-    private static File getBackup() {
-        File backupDir = getBackupDirectory();
-        return new File(backupDir, FILE_NAME);
-    }
-
     /**
-     * Performs a backup to the SD card.
+     * Initiates a backup process, allowing the user to choose a location
+     * (such as the Documents directory) to save the backup file.
      */
-    public static String backup(Context context) throws IOException {
-        // We need two things:
-        // 1. The path to the database;
-        // 2. The path on the SD card to the backup file.
-        File backupPath = getBackup();
-        FileUtils.copyFile(getDB(context), backupPath);
-        return backupPath.getAbsolutePath();
+    public static void backup(Context context,Uri uri) throws IOException{
+        try (InputStream inputStream = new FileInputStream(getDB(context));
+             OutputStream outputStream = context.getContentResolver().openOutputStream(uri)) {
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) > 0) {
+                if (outputStream != null) {
+                    outputStream.write(buffer, 0, length);
+                }
+            }
+            if (outputStream != null) {
+                outputStream.flush();
+            }
+            Toast.makeText(context,
+                    context.getString(R.string.preferences_db_saved),
+                    Toast.LENGTH_LONG).show();
+            Log.d("Backup", "Database backup saved successfully to: " + uri);
+        } catch (IOException e) {
+            Toast.makeText(context,
+                    context.getString(R.string.preferences_db_save_error, e.getMessage()),
+                    Toast.LENGTH_LONG).show();
+            Log.e("Backup", "Error saving database backup", e);
+        }
     }
 
     /**
-     * Performs a restore from the SD card.
+     * Restores data from the location where the user saved the backup.
      * @param uri URI to the backup file, as returned by the system UI picker. Following targeting
      *            Android 11 we can't access this directory and need to rely on the system UI picker.
      */
@@ -96,15 +110,4 @@ public final class Backup {
         }
     }
 
-    public static boolean isRestoreAvailable() {
-        return getBackup().exists();
-    }
-
-    public static File getBackupDirectory() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS + "/" + DIRECTORY_NAME);
-        } else {
-            return Environment.getExternalStoragePublicDirectory(DIRECTORY_NAME);
-        }
-    }
 }

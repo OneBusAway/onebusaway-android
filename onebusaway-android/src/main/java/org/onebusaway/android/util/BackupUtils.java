@@ -16,11 +16,13 @@
 
 package org.onebusaway.android.util;
 
-import static org.onebusaway.android.util.PermissionUtils.STORAGE_PERMISSIONS;
-
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -35,22 +37,21 @@ import org.onebusaway.android.region.ObaRegionsTask;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+
+import static org.onebusaway.android.ui.PreferencesActivity.REQUEST_CODE_RESTORE_BACKUP;
+import static org.onebusaway.android.ui.PreferencesActivity.REQUEST_CODE_SAVE_BACKUP;
 
 public class BackupUtils {
     private static final String TAG = "BackupUtils";
 
     /**
-     * Restores a backed up OBA database from storage.  If storage permission hasn't been granted
-     * this method is a no-op.
+     * Restores a backed up OBA database from storage.
      * @param activityContext Activity context (used for permission check)
      * @param uri URI to the backup file, as returned by the system UI picker. Following targeting
      *      Android 11 we can't access this directory and need to rely on the system UI picker.
      */
     public static void restore(Context activityContext, Uri uri) {
-        if (!PermissionUtils.hasGrantedAllPermissions(activityContext, STORAGE_PERMISSIONS)) {
-            // Let the PreferenceActivity request permissions from the user first
-            return;
-        }
         //
         // Because this is a destructive operation, we should warn the user.
         //
@@ -97,30 +98,62 @@ public class BackupUtils {
     }
 
     /**
-     * Creates a backup of the current OBA database on local storage. If storage permission hasn't
-     * been granted this method is a no-op.
+     * Creates a backup of the current OBA database on local storage.
+     * @param uri The URI representing the location where the backup file should be saved.
      * @param activityContext context of the calling activity (used to check permissions)
      */
-    public static void save(Context activityContext) {
-        if (!PermissionUtils.hasGrantedAllPermissions(activityContext, STORAGE_PERMISSIONS)) {
-            // Let the PreferenceActivity request permissions from the user first
-            return;
-        }
-
+    public static void save(Context activityContext,Uri uri) {
         Context context = Application.get().getApplicationContext();
         ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
                 context.getString(R.string.analytics_label_button_press_save_preference),
                 null);
         try {
-            Backup.backup(context);
-            Toast.makeText(context,
-                    context.getString(R.string.preferences_db_saved),
-                    Toast.LENGTH_LONG).show();
+            Backup.backup(context,uri);
         } catch (IOException e) {
-            Toast.makeText(context,
-                    context.getString(R.string.preferences_db_save_error, e.getMessage()),
-                    Toast.LENGTH_LONG).show();
-            Log.e(TAG, e.toString());
+            Log.d(TAG, Objects.requireNonNull(e.getMessage()));
         }
     }
+
+    /**
+     * Launches an intent to create a backup file with the specified file name.
+     * The user will be prompted to choose a location to save the backup file.
+     *
+     * @param activity The activity that triggers the file creation process.
+     */
+    public static void createBackupFile(Activity activity) {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+        // Restricts file type to binary files
+        intent.setType("application/octet-stream");
+        intent.putExtra(Intent.EXTRA_TITLE, Backup.FILE_NAME);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Uri initialUri = Uri.parse("content://com.android.externalstorage.documents/document/primary:Documents");
+            intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initialUri);
+        }
+        activity.startActivityForResult(intent, REQUEST_CODE_SAVE_BACKUP);
+    }
+
+    /**
+     * Launches an intent to allow the user to select a backup file for restoration.
+     * Only binary files (with the .bin extension) can be selected.
+     *
+     * @param activity The activity that triggers the file selection process.
+     */
+    public static void selectBackupFile(Activity activity) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        // Restricts file type to binary files
+        intent.setType("application/octet-stream");
+        intent.putExtra(Intent.EXTRA_TITLE, "backup.bin");
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Uri initialUri = Uri.parse("content://com.android.externalstorage.documents/document/primary:Documents");
+            intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initialUri);
+        }
+        activity.startActivityForResult(intent, REQUEST_CODE_RESTORE_BACKUP);
+    }
+
+
 }

@@ -343,14 +343,14 @@ public class SurveyViewUtils {
         // Append asterisk with a space
         questionText = questionText.trim();
         questionText += " ";
-        SpannableString spannableString = new SpannableString(questionText + (isAnswerRequired ? "*" : ""));
+        SpannableString questionTitleFormatted = new SpannableString(questionText + (isAnswerRequired ? "*" : ""));
         int asteriskColor = ContextCompat.getColor(context, R.color.quantum_googredA700);
         if (isAnswerRequired) {
             // Set the color of the asterisk
-            spannableString.setSpan(new ForegroundColorSpan(asteriskColor), questionText.length(), questionText.length() + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            questionTitleFormatted.setSpan(new ForegroundColorSpan(asteriskColor), questionText.length(), questionText.length() + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
-        return spannableString;
+        return questionTitleFormatted;
     }
 
 }

@@ -4,6 +4,9 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,12 +31,11 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
 import org.onebusaway.android.ui.survey.SurveyActionsListener;
-import org.onebusaway.android.ui.survey.activities.SurveyWebViewActivity;
 
 import java.util.List;
 
 /**
- *Utility class for managing and manipulating survey-related views within the application.
+ * Utility class for managing and manipulating survey-related views within the application.
  */
 public class SurveyViewUtils {
     private final View surveyView;
@@ -48,7 +50,6 @@ public class SurveyViewUtils {
     private TextView sharedInfoTextView;
     private View progressOverlay;
     private View questionsContainer;
-
 
 
     public SurveyViewUtils(View surveyView, Context context, SurveyActionsListener surveyActionsListener) {
@@ -86,6 +87,7 @@ public class SurveyViewUtils {
     public void initSurveyArrivalsList(ListView arrivalsList) {
         this.arrivalsList = arrivalsList;
     }
+
     public void showHeroQuestion(Context context, StudyResponse.Surveys.Questions heroQuestion) {
         String questionType = heroQuestion.getContent().getType();
         switch (questionType) {
@@ -93,7 +95,7 @@ public class SurveyViewUtils {
                 showRadioGroupQuestion(context, surveyView, heroQuestion);
                 break;
             case SurveyUtils.TEXT_QUESTION:
-                showTextInputQuestion(surveyView, heroQuestion);
+                showTextInputQuestion(context, surveyView, heroQuestion);
                 break;
             case SurveyUtils.CHECK_BOX_QUESTION:
                 showCheckBoxQuestion(context, surveyView, heroQuestion);
@@ -173,7 +175,7 @@ public class SurveyViewUtils {
             RadioButton radioButton = createRadioButton(ctx, question, i);
             radio.addView(radioButton);
         }
-        surveyTitle.setText(question.getContent().getLabel_text());
+        surveyTitle.setText(formatQuestionText(ctx, question.getContent().getLabel_text(), question.isRequired()));
     }
 
 
@@ -190,16 +192,16 @@ public class SurveyViewUtils {
             checkboxContainer.addView(checkBox);
         }
 
-        surveyTitle.setText(question.getContent().getLabel_text());
+        surveyTitle.setText(formatQuestionText(ctx, question.getContent().getLabel_text(), question.isRequired()));
     }
 
-    public static void showTextInputQuestion(View view, StudyResponse.Surveys.Questions question) {
+    public static void showTextInputQuestion(Context ctx, View view, StudyResponse.Surveys.Questions question) {
         EditText lableEditText = view.findViewById(R.id.editText);
         TextView surveyTitle = view.findViewById(R.id.survey_question_tv);
 
         lableEditText.setVisibility(View.VISIBLE);
 
-        surveyTitle.setText(question.getContent().getLabel_text());
+        surveyTitle.setText(formatQuestionText(ctx, question.getContent().getLabel_text(), question.isRequired()));
     }
 
     @NonNull
@@ -285,7 +287,7 @@ public class SurveyViewUtils {
         for (int i = 0; i < embeddedDataList.size(); i++) {
             if (embeddedDataList.get(i).equals(SurveyUtils.USER_ID)) continue;
             String sharedInfo = embeddedDataList.get(i).replace("_id", "");
-            sharedInfo = sharedInfo.replace("_"," ");
+            sharedInfo = sharedInfo.replace("_", " ");
             surveySharedInfo.append(sharedInfo);
             if (i < embeddedDataList.size() - 1) {
                 surveySharedInfo.append(", ");
@@ -320,10 +322,11 @@ public class SurveyViewUtils {
         return dismissSurveyDialog;
     }
 
-    public static void hideSurveyView(View surveyView){
-        if(surveyView == null) return;
+    public static void hideSurveyView(View surveyView) {
+        if (surveyView == null) return;
         surveyView.setVisibility(View.GONE);
     }
+
     public void showProgress() {
         progressOverlay.setVisibility(View.VISIBLE);
     }
@@ -334,6 +337,20 @@ public class SurveyViewUtils {
 
     private void hideQuestionsView() {
         questionsContainer.setVisibility(View.GONE);
+    }
+
+    public static SpannableString formatQuestionText(Context context, String questionText, boolean isAnswerRequired) {
+        // Append asterisk with a space
+        questionText = questionText.trim();
+        questionText += " ";
+        SpannableString spannableString = new SpannableString(questionText + (isAnswerRequired ? "*" : ""));
+        int asteriskColor = ContextCompat.getColor(context, R.color.quantum_googredA700);
+        if (isAnswerRequired) {
+            // Set the color of the asterisk
+            spannableString.setSpan(new ForegroundColorSpan(asteriskColor), questionText.length(), questionText.length() + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        return spannableString;
     }
 
 }

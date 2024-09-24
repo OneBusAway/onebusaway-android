@@ -290,7 +290,13 @@ public class SurveyUtils {
      */
     public static boolean checkAllQuestionsAnswered(List<StudyResponse.Surveys.Questions> questionsList) {
         for (StudyResponse.Surveys.Questions question : questionsList) {
+            Boolean isAnswerRequired = question.isRequired();
             String questionType = question.getContent().getType();
+
+            // Skip validating the question answer if it's optional
+            if (!isAnswerRequired) {
+                continue;
+            }
 
             switch (questionType) {
                 case CHECK_BOX_QUESTION:

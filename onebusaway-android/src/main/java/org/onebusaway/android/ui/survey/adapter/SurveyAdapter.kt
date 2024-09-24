@@ -58,7 +58,7 @@ class SurveyAdapter(
             )
             when (surveyQuestion.content.type) {
                 SurveyUtils.TEXT_QUESTION -> {
-                    SurveyViewUtils.showTextInputQuestion(itemView, surveyQuestion)
+                    SurveyViewUtils.showTextInputQuestion(context, itemView, surveyQuestion)
                     setVisibility(
                         editText,
                         radioGroup,
@@ -111,8 +111,11 @@ class SurveyAdapter(
                 }
             }
             val questionNumber = adapterPosition + 1
-            val questionText = surveyQuestion.content.label_text
-            surveyQuestionTv.text = "$questionNumber. $questionText"
+            val isAnswerRequired = surveyQuestion.isRequired
+            val questionText = "$questionNumber. ${surveyQuestion.content.label_text}"
+            val formattedQuestionText = SurveyViewUtils.formatQuestionText(context,questionText, isAnswerRequired)
+
+            surveyQuestionTv.text = formattedQuestionText
             handleOnSelectionEvents(
                 radioGroup,
                 editText,

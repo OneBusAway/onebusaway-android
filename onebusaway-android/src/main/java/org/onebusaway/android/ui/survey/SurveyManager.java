@@ -229,7 +229,7 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
     private boolean validateSurveyAnswers(StudyResponse.Surveys survey, boolean heroQuestion) {
         JSONArray surveyResponseBody = getFinalSurveyAnswersRequestBody(survey, heroQuestion);
         if (surveyResponseBody == null) {
-            Toast.makeText(context, context.getString(R.string.please_complete_all_the_questions), Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.please_complete_required_questions), Toast.LENGTH_SHORT).show();
             return false;
         }
         return true;

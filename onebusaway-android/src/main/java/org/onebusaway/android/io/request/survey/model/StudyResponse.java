@@ -136,6 +136,8 @@ public class StudyResponse implements Serializable {
 
             private Integer position;
 
+            private Boolean required;
+
             private Content content;
 
             // Used for setting the question answer for each question
@@ -150,6 +152,10 @@ public class StudyResponse implements Serializable {
 
             public void setId(Integer id) {
                 this.id = id;
+            }
+
+            public Boolean isRequired(){
+                return required;
             }
 
             public Integer getPosition() {

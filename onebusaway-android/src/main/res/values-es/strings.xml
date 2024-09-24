@@ -1111,7 +1111,7 @@
     <string name="submit">Enviar</string>
     <string name="go">¡IR!</string>
     <string name="submitted_successfully">Enviado con éxito</string>
-    <string name="please_complete_all_the_questions">Por favor completa todas las preguntas</string>
+    <string name="please_complete_required_questions">Por favor, responde todas las preguntas obligatorias.</string>
     <string name="sharing_survey_info_message">Esta encuesta compartirá tu</string>
     <string name="are_you_sure_you_want_to_dismiss_the_survey">¿Estás seguro de que deseas descartar esta encuesta?</string>
     <string name="dismiss_survey_dialog_title">Confirmar descarte de la encuesta</string>

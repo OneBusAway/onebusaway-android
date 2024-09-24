@@ -1260,7 +1260,7 @@
     <string name="submit">Submit</string>
     <string name="go">GO!</string>
     <string name="submitted_successfully">Submission Successful</string>
-    <string name="please_complete_all_the_questions">Please complete all the questions</string>
+    <string name="please_complete_required_questions">Please answer all required questions.</string>
     <string name="sharing_survey_info_message">"This survey will share your "</string>
     <string name="are_you_sure_you_want_to_dismiss_the_survey">Are you sure you want to dismiss this survey?</string>
     <string name="dismiss_survey_dialog_title">Confirm Survey Dismissal</string>

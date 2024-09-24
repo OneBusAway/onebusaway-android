@@ -1022,7 +1022,7 @@
     <string name="submit">Invia</string>
     <string name="go">VAI!</string>
     <string name="submitted_successfully">Inviato con successo</string>
-    <string name="please_complete_all_the_questions">Per favore completa tutte le domande</string>
+    <string name="please_complete_required_questions">Per favore, rispondi a tutte le domande obbligatorie.</string>
     <string name="sharing_survey_info_message">Questo sondaggio condividerà i tuoi</string>
     <string name="are_you_sure_you_want_to_dismiss_the_survey">Sei sicuro di voler ignorare questo sondaggio?</string>
     <string name="dismiss_survey_dialog_title">Conferma ignoramento del sondaggio</string>

@@ -29,7 +29,7 @@
         <item name="alertDialogTheme">@style/customAlertDialogTheme</item>
 
     </style>
-K
+
     <!-- Custom TimePickerDialog theme for dark mode -->
     <style name="dayNightTimePickerDialogTheme" parent="Theme.MaterialComponents.DayNight.Dialog">
         <item name="colorPrimary">@color/theme_primary</item>

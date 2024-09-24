@@ -45,11 +45,12 @@ object RecentStopsManager {
      */
     @JvmStatic
     fun saveStop(context: Context, stop: ObaStop) {
+        val regionId = Application.get().currentRegion?.id?.toInt() ?: return
+
         val db = DatabaseProvider.getDatabase(context)
         val stopDao = db.stopDao()
 
         CoroutineScope(Dispatchers.IO).launch {
-            val regionId = Application.get().currentRegion.id.toInt()
             val currentTime = System.currentTimeMillis()
             val stopCount = stopDao.getStopCount(regionId)
 

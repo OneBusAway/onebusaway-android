@@ -94,7 +94,7 @@
 
     <string name="bus_options_menu_add_star">Dodaj trasę do ulubionych</string>
     <string name="bus_options_menu_remove_star">Usuń linię z ulubionych</string>
-    <string name="bus_options_menu_show_route_on_map">Pokaż linię na mapie</string>
+    <string name="bus_options_menu_show_vehicles_on_map">Pokaż pojazdy na mapie</string>
     <string name="bus_options_menu_show_trip_details">Pokaż status kursu</string>
     <string name="bus_options_menu_set_reminder">Ustaw przypomnienie</string>
     <string name="bus_options_menu_edit_reminder">Edytuj przypomnienie</string>

@@ -91,7 +91,7 @@
 
     <string name="bus_options_menu_add_star">Aggiungi linea ai preferiti</string>
     <string name="bus_options_menu_remove_star">Rimuovi linea dai preferiti</string>
-    <string name="bus_options_menu_show_route_on_map">Mostra linea sulla mappa</string>
+    <string name="bus_options_menu_show_vehicles_on_map">Mostra veicoli sulla mappa</string>
     <string name="bus_options_menu_show_trip_details">Mostra stato viaggio</string>
     <string name="bus_options_menu_set_reminder">Imposta un promemoria</string>
     <string name="bus_options_menu_edit_reminder">Modifica il promemoria</string>

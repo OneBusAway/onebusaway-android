@@ -110,7 +110,7 @@
 
     <string name="bus_options_menu_add_star">Lisää reitti suosikiksi</string>
     <string name="bus_options_menu_remove_star">Poista reitti suosikeista</string>
-    <string name="bus_options_menu_show_route_on_map">Näytä reitti kartalla</string>
+    <string name="bus_options_menu_show_vehicles_on_map">Näytä ajoneuvot kartalla</string>
     <string name="bus_options_menu_show_trip_details">Näytä matkan tilanne</string>
     <string name="bus_options_menu_set_reminder">Aseta muistutus</string>
     <string name="bus_options_menu_edit_reminder">Muokkaa tätä muistutusta</string>

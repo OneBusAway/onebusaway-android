@@ -127,7 +127,7 @@
 
     <string name="bus_options_menu_add_star">Adicionar la ruta a favoritos</string>
     <string name="bus_options_menu_remove_star">Remover la ruta de favoritos</string>
-    <string name="bus_options_menu_show_route_on_map">Mostrar la ruta sobre el mapa</string>
+    <string name="bus_options_menu_show_vehicles_on_map">Mostrar vehículos en el mapa</string>
     <string name="bus_options_menu_show_trip_details">Mostrar el estado del viaje</string>
     <string name="bus_options_menu_set_reminder">Adicionar un recordatorio</string>
     <string name="bus_options_menu_edit_reminder">Editar este recordatorio</string>

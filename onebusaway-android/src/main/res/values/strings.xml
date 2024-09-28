@@ -132,7 +132,7 @@
 
     <string name="bus_options_menu_add_star">Add star to route</string>
     <string name="bus_options_menu_remove_star">Remove star from route</string>
-    <string name="bus_options_menu_show_route_on_map">Show route on map</string>
+    <string name="bus_options_menu_show_vehicles_on_map">Show vehicles on map</string>
     <string name="bus_options_menu_show_trip_details">Show trip status</string>
     <string name="bus_options_menu_set_reminder">Set a reminder</string>
     <string name="bus_options_menu_edit_reminder">Edit this reminder</string>

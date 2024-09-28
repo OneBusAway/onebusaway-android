@@ -1256,7 +1256,7 @@ public final class UIUtils {
             list.add(c.getString(R.string.bus_options_menu_remove_star));
         }
 
-        list.add(c.getString(R.string.bus_options_menu_show_route_on_map));
+        list.add(c.getString(R.string.bus_options_menu_show_vehicles_on_map));
         list.add(c.getString(R.string.bus_options_menu_show_trip_details));
 
         if (!isReminderVisible) {

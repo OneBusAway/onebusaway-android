@@ -715,4 +715,5 @@
     <string name="remind_me_latter">Muistuta myöhemmin</string>
     <string name="survey_dismiss_dialog_skip_this_survey">Ohita tämä kysely</string>
     <string name="dismiss_survey_dialog_body">Palautteesi auttaa parantamaan liikennepalveluja ja sovelluskokemuksia.</string>
+    <string name="preferences_show_weather_view_on_map">Näytä säätiedot kartalla</string>
 </resources>

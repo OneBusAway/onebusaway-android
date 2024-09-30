@@ -54,6 +54,12 @@
             android:title="@string/preferences_enable_map_3d_mode_title" />
 
         <CheckBoxPreference
+                android:defaultValue="true"
+                android:key="@string/preference_key_display_weather_view"
+                android:summary="@string/preferences_show_weather_view_on_map"
+                android:title="@string/preferences_show_weather_view" />
+
+        <CheckBoxPreference
             android:defaultValue="true"
             android:key="@string/preference_key_show_available_studies"
             android:summary="@string/preferences_show_available_studies_body"
@@ -89,14 +95,6 @@
             android:entryValues="@array/preferred_temp_unit_options"
             android:key="@string/preference_key_preferred_temperature_units"
             android:title="@string/preferred_temperature_unit" />
-
-        <ListPreference
-            android:defaultValue="@string/show"
-            android:negativeButtonText="@string/close"
-            android:entries="@array/preferred_weather_view_option"
-            android:entryValues="@array/preferred_weather_view_option"
-            android:key="@string/preference_key_show_weather_view"
-            android:title="@string/preferences_show_weather_view" />
 
         <ListPreference
                 android:defaultValue="@string/preferences_app_theme_option_system_default"

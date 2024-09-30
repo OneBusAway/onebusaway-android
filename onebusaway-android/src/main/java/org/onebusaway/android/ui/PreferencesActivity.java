@@ -111,7 +111,6 @@ public class PreferencesActivity extends PreferenceActivity
 
     ListPreference preferredUnits;
     ListPreference preferredTempUnits;
-    ListPreference showWeatherDisplayPref;
 
     ListPreference mThemePref;
 
@@ -192,9 +191,6 @@ public class PreferencesActivity extends PreferenceActivity
         preferredTempUnits = (ListPreference) findPreference(
                 getString(R.string.preference_key_preferred_temperature_units));
 
-        showWeatherDisplayPref = (ListPreference) findPreference(
-                getString(R.string.preference_key_show_weather_view));
-
         mThemePref = (ListPreference) findPreference(
                 getString(R.string.preference_key_app_theme));
         mThemePref.setOnPreferenceChangeListener(this);
@@ -250,7 +246,6 @@ public class PreferencesActivity extends PreferenceActivity
         changePreferenceSummary(getString(R.string.preference_key_region));
         changePreferenceSummary(getString(R.string.preference_key_preferred_units));
         changePreferenceSummary(getString(R.string.preference_key_preferred_temperature_units));
-        changePreferenceSummary(getString(R.string.preference_key_show_weather_view));
         changePreferenceSummary(getString(R.string.preference_key_app_theme));
         changePreferenceSummary(getString(R.string.preference_key_otp_api_url));
 
@@ -332,8 +327,6 @@ public class PreferencesActivity extends PreferenceActivity
         }else if (preferenceKey
                 .equalsIgnoreCase(getString(R.string.preference_key_preferred_temperature_units))) {
             preferredTempUnits.setSummary(preferredTempUnits.getValue());
-        }else if(preferenceKey.equalsIgnoreCase(getString(R.string.preference_key_show_weather_view))){
-            showWeatherDisplayPref.setSummary(showWeatherDisplayPref.getValue());
         }
     }
 
@@ -573,9 +566,6 @@ public class PreferencesActivity extends PreferenceActivity
             ObaAnalytics.setShowDepartedVehicles(mFirebaseAnalytics, showDepartedBuses);
         }else if (key.equalsIgnoreCase(getString(R.string.preference_key_preferred_temperature_units))) {
             // Change the preferred temp unit description
-            changePreferenceSummary(key);
-        }else if (key.equalsIgnoreCase(getString(R.string.preference_key_show_weather_view))) {
-            // Change the preferred weather show or hide option
             changePreferenceSummary(key);
         }
     }

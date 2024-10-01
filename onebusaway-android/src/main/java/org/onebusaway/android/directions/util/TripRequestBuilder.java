@@ -16,11 +16,6 @@
 
 package org.onebusaway.android.directions.util;
 
-import android.app.Activity;
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
-
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.directions.tasks.TripRequest;
@@ -29,6 +24,11 @@ import org.onebusaway.android.util.RegionUtils;
 import org.opentripplanner.api.ws.Request;
 import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.TraverseMode;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
@@ -40,6 +40,9 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+
+import androidx.work.Data;
 
 public class TripRequestBuilder {
 
@@ -367,6 +370,59 @@ public class TripRequestBuilder {
         if (getDateTime() != null) {
             target.putLong(DATE_TIME, getDateTime().getTime());
         }
+    }
+
+    /**
+     *  Converts all the data from this builder's bundle into Data only using simple data types
+     */
+    public Data getRealTimeData() {
+        Data.Builder dataBuilder = new Data.Builder();
+        dataBuilder.putBoolean(ARRIVE_BY, getArriveBy());
+        CustomAddress from = getFrom(), to = getTo();
+        dataBuilder.putDouble(FROM_LAT, from.getLatitude());
+        dataBuilder.putDouble(FROM_LON, from.getLongitude());
+        dataBuilder.putString(FROM_NAME, from.toString());
+        dataBuilder.putDouble(TO_LAT, to.getLatitude());
+        dataBuilder.putDouble(TO_LON, to.getLongitude());
+        dataBuilder.putString(TO_NAME, to.toString());
+        dataBuilder.putString(OPTIMIZE_TRANSFERS, getOptimizeType().toString());
+        dataBuilder.putBoolean(WHEELCHAIR_ACCESSIBLE, getWheelchairAccessible());
+        dataBuilder.putString(MODE_SET, getModeString());
+        if (getMaxWalkDistance() != null) {
+            dataBuilder.putDouble(MAX_WALK_DISTANCE, getMaxWalkDistance());
+        }
+        if (getDateTime() != null) {
+            dataBuilder.putLong(DATE_TIME, getDateTime().getTime());
+        }
+
+        Data result = dataBuilder.build();
+        return result;
+    }
+
+    /**
+     *  Converts the data back into a Bundle only using simple data types
+     * @param data Data to be converted
+     */
+    public static Bundle convertRealTimeData(Data data) {
+        Bundle result = new Bundle();
+        Map<String, Object> map = data.getKeyValueMap();
+        result.putBoolean(ARRIVE_BY, (Boolean) map.get(ARRIVE_BY));
+        result.putDouble(FROM_LAT, (Double) map.get(FROM_LAT));
+        result.putDouble(FROM_LON, (Double) map.get(FROM_LON));
+        result.putString(FROM_NAME, (String) map.get(FROM_NAME));
+        result.putDouble(TO_LAT, (Double) map.get(TO_LAT));
+        result.putDouble(TO_LON, (Double) map.get(TO_LON));
+        result.putString(TO_NAME, (String) map.get(TO_NAME));
+        result.putString(OPTIMIZE_TRANSFERS, (String) map.get(OPTIMIZE_TRANSFERS));
+        result.putBoolean(WHEELCHAIR_ACCESSIBLE, (Boolean) map.get(WHEELCHAIR_ACCESSIBLE));
+        if (map.get(MAX_WALK_DISTANCE) != null) {
+            result.putDouble(MAX_WALK_DISTANCE, (Double) map.get(MAX_WALK_DISTANCE));
+        }
+        result.putString(MODE_SET, (String) map.get(MODE_SET));
+        if (map.get(DATE_TIME) != null) {
+            result.putLong(DATE_TIME, (Long) map.get(DATE_TIME));
+        }
+        return result;
     }
 
     /**

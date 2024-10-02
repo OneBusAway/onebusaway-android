@@ -41,6 +41,10 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import com.onesignal.Continue;
+import com.onesignal.OneSignal;
+import com.onesignal.debug.LogLevel;
+
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.donations.DonationsManager;
@@ -67,6 +71,9 @@ import static org.onebusaway.android.util.UIUtils.setAppTheme;
 public class Application extends MultiDexApplication {
 
     public static final String APP_UID = "app_uid";
+
+    // OneSignal App ID
+    private static final String ONESIGNAL_APP_ID = "d5d0d28a-6091-46cd-9627-0ce01ffa9f9e";
 
     // Region preference (long id)
     private static final String TAG = "Application";
@@ -114,6 +121,8 @@ public class Application extends MultiDexApplication {
         TravelBehaviorManager.startCollectingData(getApplicationContext());
 
         incrementAppLaunchCount();
+
+        initOneSignal();
 
         mDonationsManager = new DonationsManager(mPrefs, mFirebaseAnalytics, getResources(), getAppLaunchCount());
     }
@@ -631,5 +640,17 @@ public class Application extends MultiDexApplication {
         }
 
         return false;
+    }
+
+    private void initOneSignal(){
+        // Verbose Logging set to help debug issues, remove before releasing your app.
+        OneSignal.getDebug().setLogLevel(LogLevel.VERBOSE);
+
+        // OneSignal Initialization
+        OneSignal.initWithContext(this, ONESIGNAL_APP_ID);
+
+        // requestPermission will show the native Android notification permission prompt.
+        // NOTE: It's recommended to use a OneSignal In-App Message to prompt instead.
+        OneSignal.getNotifications().requestPermission(false, Continue.none());
     }
 }

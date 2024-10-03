@@ -95,19 +95,6 @@
                     android:layout_height="wrap_content">
             </Spinner>
 
-            <TextView
-                    style="@style/FormLabel"
-                    android:text="@string/trip_info_reminder_repeat"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </TextView>
-            <Button
-                    android:id="@+id/trip_info_reminder_days"
-                    android:ellipsize="end"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </Button>
-
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

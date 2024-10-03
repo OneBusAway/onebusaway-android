@@ -1027,7 +1027,10 @@ class ArrivalsListHeader {
                             info1.getShortName(),
                             mController.getStopName(),
                             info1.getScheduledDepartureTime(),
-                            info1.getHeadsign());
+                            info1.getHeadsign(),
+                            info1.getStopSequence(),
+                            info1.getServiceDate(),
+                            info1.getVehicleId());
                 }
             });
 
@@ -1088,7 +1091,10 @@ class ArrivalsListHeader {
                             info2.getShortName(),
                             mController.getStopName(),
                             info2.getScheduledDepartureTime(),
-                            info2.getHeadsign());
+                            info2.getHeadsign(),
+                            info2.getStopSequence(),
+                            info2.getServiceDate(),
+                            info2.getVehicleId());
                 }
             });
 

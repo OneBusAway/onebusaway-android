@@ -85,6 +85,9 @@
     <!-- POST Survey API URL -->
     <string name="submit_survey_api_url">https://onebusaway.co/api/v1/survey_responses/</string>
 
+    <!-- Create Arrivals Alarm API URL -->
+    <string name="create_arrivals_reminders_api_url">https://onebusaway.co/api/v1/regions/regionID/alarms</string>
+
     <!-- Donate URL -->
     <string name="donate_url">https://onebusaway.org/donate/</string>
 

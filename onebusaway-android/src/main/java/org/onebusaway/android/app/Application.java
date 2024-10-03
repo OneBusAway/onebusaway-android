@@ -72,7 +72,6 @@ public class Application extends MultiDexApplication {
 
     public static final String APP_UID = "app_uid";
 
-
     // Region preference (long id)
     private static final String TAG = "Application";
 

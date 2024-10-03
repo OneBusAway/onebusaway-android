@@ -72,8 +72,6 @@ public class Application extends MultiDexApplication {
 
     public static final String APP_UID = "app_uid";
 
-    // OneSignal App ID
-    private static final String ONESIGNAL_APP_ID = "d5d0d28a-6091-46cd-9627-0ce01ffa9f9e";
 
     // Region preference (long id)
     private static final String TAG = "Application";
@@ -647,10 +645,14 @@ public class Application extends MultiDexApplication {
         OneSignal.getDebug().setLogLevel(LogLevel.VERBOSE);
 
         // OneSignal Initialization
-        OneSignal.initWithContext(this, ONESIGNAL_APP_ID);
+        OneSignal.initWithContext(this, BuildConfig.ONESIGNAL_APP_ID);
 
         // requestPermission will show the native Android notification permission prompt.
         // NOTE: It's recommended to use a OneSignal In-App Message to prompt instead.
         OneSignal.getNotifications().requestPermission(false, Continue.none());
+
+        String userPushId = OneSignal.getUser().getOnesignalId();
+        Log.d("OneSignal", "User Push ID: " + userPushId);
+
     }
 }

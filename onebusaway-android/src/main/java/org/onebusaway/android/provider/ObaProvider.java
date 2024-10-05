@@ -49,7 +49,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 30;
+        private static final int DATABASE_VERSION = 31;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -305,7 +305,14 @@ public class ObaProvider extends ContentProvider {
                         " ADD COLUMN " + ObaContract.Regions.TRAVEL_BEHAVIOR_DATA_COLLECTION + " INTEGER");
                 db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
                         " ADD COLUMN " + ObaContract.Regions.ENROLL_PARTICIPANTS_IN_STUDY + " INTEGER");
+                ++oldVersion;
             }
+
+            if (oldVersion == 30) {
+                db.execSQL("DROP TABLE IF EXISTS " + ObaContract.Trips.PATH);
+                createTripsTable(db);
+            }
+
         }
 
         @Override
@@ -341,6 +348,11 @@ public class ObaProvider extends ContentProvider {
                             ObaContract.Routes.LONGNAME + " VARCHAR, " +
                             ObaContract.Routes.USE_COUNT + " INTEGER NOT NULL" +
                             ");");
+
+            createTripsTable(db);
+        }
+
+        private void createTripsTable(SQLiteDatabase db){
             db.execSQL(
                     "CREATE TABLE " +
                             ObaContract.Trips.PATH + " (" +
@@ -351,7 +363,11 @@ public class ObaProvider extends ContentProvider {
                             ObaContract.Trips.HEADSIGN + " VARCHAR NOT NULL, " +
                             ObaContract.Trips.NAME + " VARCHAR NOT NULL, " +
                             ObaContract.Trips.REMINDER + " INTEGER NOT NULL, " +
-                            ObaContract.Trips.DAYS + " INTEGER NOT NULL" +
+                            ObaContract.Trips.ALARM_ID + " VARCHAR NOT NULL ," +
+                            ObaContract.Trips.SERVICE_DATE + " INTEGER NOT NULL ," +
+                            ObaContract.Trips.STOP_SEQUENCE + " INTEGER NOT NULL ," +
+                            ObaContract.Trips.TRIP_ID + " VARCHAR NOT NULL ," +
+                            ObaContract.Trips.VEHICLE_ID + " VARCHAR NOT NULL " +
                             ");");
         }
 
@@ -514,7 +530,12 @@ public class ObaProvider extends ContentProvider {
         sTripsProjectionMap.put(ObaContract.Trips.HEADSIGN, ObaContract.Trips.HEADSIGN);
         sTripsProjectionMap.put(ObaContract.Trips.NAME, ObaContract.Trips.NAME);
         sTripsProjectionMap.put(ObaContract.Trips.REMINDER, ObaContract.Trips.REMINDER);
-        sTripsProjectionMap.put(ObaContract.Trips.DAYS, ObaContract.Trips.DAYS);
+        sTripsProjectionMap.put(ObaContract.Trips.ALARM_ID, ObaContract.Trips.ALARM_ID);
+        sTripsProjectionMap.put(ObaContract.Trips.TRIP_ID, ObaContract.Trips.TRIP_ID);
+        sTripsProjectionMap.put(ObaContract.Trips.STOP_SEQUENCE, ObaContract.Trips.STOP_SEQUENCE);
+        sTripsProjectionMap.put(ObaContract.Trips.SERVICE_DATE, ObaContract.Trips.SERVICE_DATE);
+        sTripsProjectionMap.put(ObaContract.Trips.VEHICLE_ID, ObaContract.Trips.VEHICLE_ID);
+
         sTripsProjectionMap.put(ObaContract.Trips._COUNT, "count(*)");
 
         sTripAlertsProjectionMap = new HashMap<String, String>();

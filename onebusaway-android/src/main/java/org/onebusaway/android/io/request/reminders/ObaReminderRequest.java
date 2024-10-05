@@ -92,6 +92,15 @@ public final class ObaReminderRequest extends RequestBase implements Callable<Re
             return this;
         }
 
+        public Builder setVehicleID(String vehicleID) {
+            try {
+                mPostData.appendQueryParameter("vehicle_id", String.valueOf(vehicleID));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return this;
+        }
+
         public Builder setListener(ReminderRequestListener listener) {
             this.listener = listener;
             return this;

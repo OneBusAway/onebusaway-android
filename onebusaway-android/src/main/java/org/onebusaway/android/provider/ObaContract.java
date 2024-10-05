@@ -208,12 +208,22 @@ public final class ObaContract {
         public static final String REMINDER = "reminder";
 
         /**
-         * A bitmask representing the days the reminder should be used.
+         * A String representing the alarm id from the post request
+         * used for updating and deleting the alarm
          * <P>
-         * Type: INTEGER
+         * Type: String
          * </P>
          */
-        public static final String DAYS = "days";
+        public static final String ALARM_ID = "alarm_id";
+
+        public static final String TRIP_ID = "trip_id";
+
+        public static final String SERVICE_DATE = "service_date";
+
+        public static final String STOP_SEQUENCE = "stop_sequence";
+
+        public static final String VEHICLE_ID = "vehicle_id";
+
     }
 
     protected interface TripAlertsColumns {

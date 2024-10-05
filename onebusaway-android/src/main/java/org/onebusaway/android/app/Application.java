@@ -640,18 +640,7 @@ public class Application extends MultiDexApplication {
     }
 
     private void initOneSignal(){
-        // Verbose Logging set to help debug issues, remove before releasing your app.
-        OneSignal.getDebug().setLogLevel(LogLevel.VERBOSE);
-
-        // OneSignal Initialization
+    //    OneSignal.getDebug().setLogLevel(LogLevel.VERBOSE);
         OneSignal.initWithContext(this, BuildConfig.ONESIGNAL_APP_ID);
-
-        // requestPermission will show the native Android notification permission prompt.
-        // NOTE: It's recommended to use a OneSignal In-App Message to prompt instead.
-        OneSignal.getNotifications().requestPermission(false, Continue.none());
-
-        String userPushId = OneSignal.getUser().getOnesignalId();
-        Log.d("OneSignal", "User Push ID: " + userPushId);
-
     }
 }

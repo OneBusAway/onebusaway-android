@@ -1268,4 +1268,5 @@
     <string name="survey_dismiss_dialog_skip_this_survey">Skip This Survey</string>
     <string name="dismiss_survey_dialog_body">Your feedback helps improve transit services and app experiences.</string>
     <string name="preferences_show_weather_view_on_map">Display the weather view on the map</string>
+    <string name="failed_to_set_reminder">Failed to set reminder</string>
 </resources>

@@ -13,107 +13,108 @@
      limitations under the License.
 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
 
     <include
-            android:id="@+id/progress"
-            android:visibility="gone"
-            layout="@layout/progress_overlay" />
+        android:id="@+id/progress"
+        layout="@layout/progress_overlay"
+        android:visibility="gone" />
 
     <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <!-- This isn't useless, it's for stealing the focus to
                the system doesn't focus the trip name by default. -->
         <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:focusable="true"
-                android:focusableInTouchMode="true" />
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true" />
 
         <LinearLayout
-                style="@style/HeaderItem"
-                android:orientation="vertical"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:paddingBottom="16dp">
+            style="@style/HeaderItem"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="16dp">
 
             <TextView
-                    android:id="@+id/stop_name"
-                    style="@style/HeaderText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"></TextView>
+                android:id="@+id/stop_name"
+                style="@style/HeaderText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
 
             <LinearLayout
-                    android:gravity="center_horizontal"
-                    android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/route_name"
+                    style="@style/Header2Text"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:text="@string/trip_info_route" />
 
                 <TextView
-                        style="@style/Header2Text"
-                        android:text="@string/trip_info_route"
-                        android:id="@+id/route_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"></TextView>
+                    style="@style/Header2Text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:text="@string/trip_info_separator" />
 
                 <TextView
-                        style="@style/Header2Text"
-                        android:paddingLeft="4dp"
-                        android:paddingRight="4dp"
-                        android:text="@string/trip_info_separator"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"></TextView>
-
-                <TextView
-                        style="@style/Header2Text"
-                        android:id="@+id/headsign"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"></TextView>
+                    android:id="@+id/headsign"
+                    style="@style/Header2Text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
             </LinearLayout>
 
             <TextView
-                    style="@style/Header2Text"
-                    android:text="@string/trip_info_depart"
-                    android:id="@+id/departure_time"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"></TextView>
+                android:id="@+id/departure_time"
+                style="@style/Header2Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/trip_info_depart" />
         </LinearLayout>
 
         <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:padding="4dp">
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="4dp">
 
             <TextView
-                    style="@style/FormLabel"
-                    android:text="@string/trip_info_reminder_header"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"></TextView>
+                style="@style/FormLabel"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/trip_info_reminder_header" />
 
             <Spinner
-                    android:id="@+id/trip_info_reminder_time"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"></Spinner>
+                android:id="@+id/trip_info_reminder_time"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" />
 
             <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/trip_info_name_hint">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:hint="@string/trip_info_name_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/name"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content" />
+                    android:id="@+id/name"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content" />
 
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>

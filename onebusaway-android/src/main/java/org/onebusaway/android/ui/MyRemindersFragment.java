@@ -40,8 +40,8 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.ReminderUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import androidx.cursoradapter.widget.SimpleCursorAdapter;
@@ -231,7 +231,7 @@ public final class MyRemindersFragment extends ListFragment
                     //
                     TextView text = (TextView) view;
                     final String routeId = cursor.getString(columnIndex);
-                    final String routeName = TripService.getRouteShortName(
+                    final String routeName = ReminderUtils.getRouteShortName(
                             getActivity(), routeId);
                     if (routeName != null) {
                         text.setText(getString(R.string.trip_info_route,
@@ -306,7 +306,6 @@ public final class MyRemindersFragment extends ListFragment
         // TODO: Confirmation dialog?
         ContentResolver cr = getActivity().getContentResolver();
         cr.delete(ObaContract.Trips.buildUri(ids[0], ids[1]), null, null);
-        TripService.scheduleAll(getActivity(), true);
 
         getLoaderManager().getLoader(0).onContentChanged();
     }

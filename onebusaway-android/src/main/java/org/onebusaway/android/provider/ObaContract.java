@@ -208,21 +208,46 @@ public final class ObaContract {
         public static final String REMINDER = "reminder";
 
         /**
-         * A String representing the alarm id from the post request
-         * used for updating and deleting the alarm
+         * A String representing the ALARM_DELETE_PATH from the post request
+         * used for deleting an alarm.
          * <P>
          * Type: String
          * </P>
          */
-        public static final String ALARM_ID = "alarm_id";
+        public static final String ALARM_DELETE_PATH = "alarm_delete_path";
 
+        /**
+         * A String representing the ID of a trip.
+         * <p>
+         * Type: String
+         * </p>
+         */
         public static final String TRIP_ID = "trip_id";
 
+        /**
+         * A String representing the service date for a particular trip.
+         * <p>
+         * Type: String
+         * </p>
+         */
         public static final String SERVICE_DATE = "service_date";
 
+        /**
+         * A String representing the stop sequence number in the trip.
+         * <p>
+         * Type: String
+         * </p>
+         */
         public static final String STOP_SEQUENCE = "stop_sequence";
 
+        /**
+         * A String representing the ID of a vehicle assigned to the trip.
+         * <p>
+         * Type: String
+         * </p>
+         */
         public static final String VEHICLE_ID = "vehicle_id";
+
 
     }
 

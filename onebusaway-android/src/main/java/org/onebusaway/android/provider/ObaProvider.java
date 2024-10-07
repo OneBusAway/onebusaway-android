@@ -363,7 +363,7 @@ public class ObaProvider extends ContentProvider {
                             ObaContract.Trips.HEADSIGN + " VARCHAR NOT NULL, " +
                             ObaContract.Trips.NAME + " VARCHAR NOT NULL, " +
                             ObaContract.Trips.REMINDER + " INTEGER NOT NULL, " +
-                            ObaContract.Trips.ALARM_ID + " VARCHAR NOT NULL ," +
+                            ObaContract.Trips.ALARM_DELETE_PATH + " VARCHAR NOT NULL ," +
                             ObaContract.Trips.SERVICE_DATE + " INTEGER NOT NULL ," +
                             ObaContract.Trips.STOP_SEQUENCE + " INTEGER NOT NULL ," +
                             ObaContract.Trips.TRIP_ID + " VARCHAR NOT NULL ," +
@@ -530,7 +530,7 @@ public class ObaProvider extends ContentProvider {
         sTripsProjectionMap.put(ObaContract.Trips.HEADSIGN, ObaContract.Trips.HEADSIGN);
         sTripsProjectionMap.put(ObaContract.Trips.NAME, ObaContract.Trips.NAME);
         sTripsProjectionMap.put(ObaContract.Trips.REMINDER, ObaContract.Trips.REMINDER);
-        sTripsProjectionMap.put(ObaContract.Trips.ALARM_ID, ObaContract.Trips.ALARM_ID);
+        sTripsProjectionMap.put(ObaContract.Trips.ALARM_DELETE_PATH, ObaContract.Trips.ALARM_DELETE_PATH);
         sTripsProjectionMap.put(ObaContract.Trips.TRIP_ID, ObaContract.Trips.TRIP_ID);
         sTripsProjectionMap.put(ObaContract.Trips.STOP_SEQUENCE, ObaContract.Trips.STOP_SEQUENCE);
         sTripsProjectionMap.put(ObaContract.Trips.SERVICE_DATE, ObaContract.Trips.SERVICE_DATE);

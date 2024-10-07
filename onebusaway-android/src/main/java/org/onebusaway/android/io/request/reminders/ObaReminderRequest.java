@@ -1,5 +1,7 @@
 package org.onebusaway.android.io.request.reminders;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.request.RequestBase;
 import org.onebusaway.android.io.request.reminders.model.ReminderResponse;
 
@@ -12,9 +14,7 @@ import java.util.concurrent.Callable;
 import androidx.annotation.NonNull;
 
 /**
- * Represents a request to create an alarm.
- * This class is responsible for creating and executing a POST request
- * to create bus reminder alarms.
+ * This class represent the POST request to create a arrivals alarm.
  */
 
 public final class ObaReminderRequest extends RequestBase implements Callable<ReminderResponse> {
@@ -29,74 +29,54 @@ public final class ObaReminderRequest extends RequestBase implements Callable<Re
 
     public static class Builder extends PostBuilderBase {
 
-        private static Uri URI = null;
+        private final Uri.Builder uriBuilder;
         private ReminderRequestListener listener;
 
-        public Builder(Context context, String path) {
-            super(context, path);
-            URI = Uri.parse(path);
+        public Builder(Context context) {
+            super(context, null);
+            String baseUrl = context.getString(R.string.arrivals_reminders_api_url);
+            Application app = Application.get();
+            uriBuilder = Uri.parse(baseUrl).buildUpon();
+            buildAPIURL(String.valueOf(app.getCurrentRegion().getId()));
+        }
+
+        public void buildAPIURL(String regionId) {
+            uriBuilder.appendPath(regionId).appendPath("alarms");
         }
 
         public Builder setStopID(String stopID) {
-            try {
-                mPostData.appendQueryParameter("stop_id", stopID);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            mPostData.appendQueryParameter("stop_id", stopID);
             return this;
         }
 
         public Builder setServiceDate(long serviceDate) {
-            try {
-                mPostData.appendQueryParameter("service_date", String.valueOf(serviceDate));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            mPostData.appendQueryParameter("service_date", String.valueOf(serviceDate));
             return this;
         }
 
         public Builder setStopSequence(int stopSequence) {
-            try {
-                mPostData.appendQueryParameter("stop_sequence", String.valueOf(stopSequence));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            mPostData.appendQueryParameter("stop_sequence", String.valueOf(stopSequence));
             return this;
         }
 
         public Builder setTripID(String tripID) {
-            try {
-                mPostData.appendQueryParameter("trip_id", tripID);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            mPostData.appendQueryParameter("trip_id", tripID);
             return this;
         }
 
         public Builder setUserPushId(String userPushId) {
-            try {
-                mPostData.appendQueryParameter("user_push_id", userPushId);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            mPostData.appendQueryParameter("user_push_id", userPushId);
             return this;
         }
 
-
         public Builder setSecondsBefore(int secondsBefore) {
-            try {
-                mPostData.appendQueryParameter("seconds_before", String.valueOf(secondsBefore));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            mPostData.appendQueryParameter("seconds_before", String.valueOf(secondsBefore));
             return this;
         }
 
         public Builder setVehicleID(String vehicleID) {
-            try {
-                mPostData.appendQueryParameter("vehicle_id", String.valueOf(vehicleID));
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (vehicleID != null) {
+                mPostData.appendQueryParameter("vehicle_id", vehicleID);
             }
             return this;
         }
@@ -112,12 +92,9 @@ public final class ObaReminderRequest extends RequestBase implements Callable<Re
         }
 
         public ObaReminderRequest build() {
-            return new ObaReminderRequest(URI, buildPostData(), listener);
+            Uri finalUri = uriBuilder.build();
+            return new ObaReminderRequest(finalUri, buildPostData(), listener);
         }
-    }
-
-    public static ObaReminderRequest newRequest(Context context, String path) {
-        return new Builder(context, path).build();
     }
 
     @Override

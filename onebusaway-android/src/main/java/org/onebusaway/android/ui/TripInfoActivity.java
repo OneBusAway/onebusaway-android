@@ -42,13 +42,15 @@ import android.widget.Toast;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.request.reminders.DeleteRequestListener;
+import org.onebusaway.android.io.request.reminders.ObaReminderDeleteRequest;
 import org.onebusaway.android.io.request.reminders.ObaReminderRequest;
 import org.onebusaway.android.io.request.reminders.ReminderRequestListener;
 import org.onebusaway.android.io.request.reminders.model.ReminderResponse;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.ReminderUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import java.util.List;
@@ -62,6 +64,8 @@ import androidx.fragment.app.FragmentManager;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
+
+import static org.onebusaway.android.util.ReminderUtils.getRouteShortName;
 
 
 public class TripInfoActivity extends AppCompatActivity {
@@ -90,6 +94,8 @@ public class TripInfoActivity extends AppCompatActivity {
     private static final String VEHICLE_ID = ".VehicleID";
 
     private static final String TRIP_ID = ".TripID";
+
+    private static final String ALARM_DELETE_PATH = ".DeleteAlarmPath";
 
 
     public static void start(Context context, String tripId, String stopId) {
@@ -146,8 +152,7 @@ public class TripInfoActivity extends AppCompatActivity {
 
         private static final String TAG_DELETE_DIALOG = ".DeleteDialog";
 
-        private static final String[] PROJECTION = {ObaContract.Trips.NAME, ObaContract.Trips.REMINDER, ObaContract.Trips.ROUTE_ID, ObaContract.Trips.HEADSIGN, ObaContract.Trips.DEPARTURE
-        ,ObaContract.Trips.ALARM_ID, ObaContract.Trips.STOP_SEQUENCE, ObaContract.Trips.SERVICE_DATE, ObaContract.Trips.TRIP_ID, ObaContract.Trips.VEHICLE_ID };
+        private static final String[] PROJECTION = {ObaContract.Trips.NAME, ObaContract.Trips.REMINDER, ObaContract.Trips.ROUTE_ID, ObaContract.Trips.HEADSIGN, ObaContract.Trips.DEPARTURE, ObaContract.Trips.ALARM_DELETE_PATH, ObaContract.Trips.STOP_SEQUENCE, ObaContract.Trips.SERVICE_DATE, ObaContract.Trips.TRIP_ID, ObaContract.Trips.VEHICLE_ID};
 
         private static final int COL_NAME = 0;
 
@@ -159,7 +164,7 @@ public class TripInfoActivity extends AppCompatActivity {
 
         private static final int COL_DEPARTURE = 4;
 
-        private static final int COL_ALARM_ID = 5;
+        private static final int COL_ALARM_DELETE_PATH = 5;
 
         private static final int COL_STOP_SEQUENCE = 6;
 
@@ -168,7 +173,6 @@ public class TripInfoActivity extends AppCompatActivity {
         private static final int COL_TRIP_ID = 8;
 
         private static final int COL_VEHICLE_ID = 9;
-
 
 
         private Uri mTripUri;
@@ -187,7 +191,7 @@ public class TripInfoActivity extends AppCompatActivity {
 
         private String mTripName;
 
-        private String mAlarmID;
+        private String mAlarmDeletePath;
 
         private long mDepartTime;
 
@@ -270,16 +274,8 @@ public class TripInfoActivity extends AppCompatActivity {
             mStopSequence = bundle.getInt(STOP_SEQUENCE);
             mServiceDate = bundle.getLong(SERVICE_DATE);
 
-            mVehicleID = bundle.getString(mVehicleID);
-
-            Log.d("DEBUG", "mStopID: " + mStopId);
-            Log.d("DEBUG", "mRouteId: " + mRouteId);
-            Log.d("DEBUG", "mStopSequence: " + mStopSequence);
-            Log.d("DEBUG", "mServiceDate: " + mServiceDate);
-            Log.d("DEBUG", "mTripID: " + mTripId);
-            Log.d("DEBUG", "mVehicleID: " + mVehicleID);
-            Log.d("DEBUG", "user-push-id" + OneSignal.getUser().getOnesignalId());
-
+            mVehicleID = bundle.getString(VEHICLE_ID);
+            mAlarmDeletePath = ReminderUtils.getAlarmDeletePath(getContext(), mTripUri);
 
             // If we get this, update it in the DB.
             if (mRouteName != null) {
@@ -319,33 +315,34 @@ public class TripInfoActivity extends AppCompatActivity {
                 mDepartTime = ObaContract.Trips.convertDBToTime(cursor.getInt(COL_DEPARTURE));
             }
 
-            if(mServiceDate == 0) {
+            if (mServiceDate == 0) {
                 mServiceDate = cursor.getLong(COL_SERVICE_DATE);
             }
 
-            if(mStopSequence == 0){
+            if (mStopSequence == 0) {
                 mStopSequence = cursor.getInt(COL_STOP_SEQUENCE);
             }
 
-            if(mTripId == null){
+            if (mTripId == null) {
                 mTripId = cursor.getString(COL_TRIP_ID);
             }
 
-            if(mVehicleID == null){
+            if (mVehicleID == null) {
                 mVehicleID = cursor.getString(COL_VEHICLE_ID);
             }
 
-            if(mAlarmID == null){
-                mAlarmID = cursor.getString(COL_ALARM_ID);
+            if (mAlarmDeletePath == null) {
+                mAlarmDeletePath = cursor.getString(COL_ALARM_DELETE_PATH);
             }
 
             // If we don't have the route name, look it up in the DB
             if (mRouteName == null) {
-                mRouteName = TripService.getRouteShortName(getActivity(), mRouteId);
+                mRouteName = getRouteShortName(getActivity(), mRouteId);
             }
             if (mStopName == null) {
                 mStopName = UIUtils.stringForQuery(getActivity(), Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, mStopId), ObaContract.Stops.NAME);
             }
+            logReminderDetails(mReminderTime,"DB");
             return true;
         }
 
@@ -398,6 +395,7 @@ public class TripInfoActivity extends AppCompatActivity {
             outState.putLong(DEPARTURE_TIME, mDepartTime);
             outState.putLong(SERVICE_DATE, mServiceDate);
             outState.putLong(STOP_SEQUENCE, mStopSequence);
+            outState.putString(ALARM_DELETE_PATH, mAlarmDeletePath);
             outState.putString(TRIP_ID, mTripId);
             outState.putString(VEHICLE_ID, mVehicleID);
 
@@ -411,7 +409,7 @@ public class TripInfoActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
             inflater.inflate(R.menu.trip_info_options, menu);
         }
 
@@ -424,7 +422,7 @@ public class TripInfoActivity extends AppCompatActivity {
         public boolean onOptionsItemSelected(MenuItem item) {
             int id = item.getItemId();
             if (id == R.id.trip_info_save) {
-                handleSaveClick();
+                onSave();
             } else if (id == R.id.trip_info_delete) {
                 Bundle args = new Bundle();
                 args.putParcelable("uri", mTripUri);
@@ -441,7 +439,11 @@ public class TripInfoActivity extends AppCompatActivity {
             return false;
         }
 
-        public void handleSaveClick() {
+        public void onSave() {
+            // If update delete alarm before creating a new one
+            if (ReminderUtils.isAlarmExist(getContext(), mTripUri)) {
+                requestDeleteAlarm(getContext(), mTripUri);
+            }
             OneSignal.getNotifications().requestPermission(false, Continue.none());
             View view = getView();
             final Spinner reminderView = view.findViewById(R.id.trip_info_reminder_time);
@@ -454,7 +456,8 @@ public class TripInfoActivity extends AppCompatActivity {
             createAlarmRequest(reminderTime);
         }
 
-        private void saveTrip(int reminder, String alarmID){
+
+        private void saveTrip(int reminder, String alarmDeletePath) {
             View view = getView();
             final TextView nameView = view.findViewById(R.id.name);
 
@@ -465,46 +468,38 @@ public class TripInfoActivity extends AppCompatActivity {
             values.put(ObaContract.Trips.NAME, nameView.getText().toString());
             // Convert seconds to minutes
             values.put(ObaContract.Trips.REMINDER, reminder / 60);
-            values.put(ObaContract.Trips.ALARM_ID, alarmID);
+            values.put(ObaContract.Trips.ALARM_DELETE_PATH, alarmDeletePath);
             values.put(ObaContract.Trips.TRIP_ID, mTripId);
             values.put(ObaContract.Trips.SERVICE_DATE, mServiceDate);
             values.put(ObaContract.Trips.STOP_SEQUENCE, mStopSequence);
             values.put(ObaContract.Trips.VEHICLE_ID, mVehicleID);
 
-            // Insert or update?
             ContentResolver cr = getActivity().getContentResolver();
             Cursor c = cr.query(mTripUri, new String[]{ObaContract.Trips._ID}, null, null, null);
-            if (c != null && c.getCount() > 0) {
-                // Update
-                cr.update(mTripUri, values, null, null);
-            } else {
-                values.put(ObaContract.Trips._ID, mTripId);
-                values.put(ObaContract.Trips.STOP_ID, mStopId);
-                cr.insert(ObaContract.Trips.CONTENT_URI, values);
-            }
+
+            values.put(ObaContract.Trips._ID, mTripId);
+            values.put(ObaContract.Trips.STOP_ID, mStopId);
+            cr.insert(ObaContract.Trips.CONTENT_URI, values);
+
             if (c != null) {
                 c.close();
             }
         }
 
         private void createAlarmRequest(int reminderTime) {
-            Log.d("DEBUG", "mStopID: " + mStopId);
-            Log.d("DEBUG", "mRouteId: " + mRouteId);
-            Log.d("DEBUG", "mReminderTime: " + reminderTime);
-            Log.d("DEBUG", "mStopSequence: " + mStopSequence);
-            Log.d("DEBUG", "mServiceDate: " + mServiceDate);
-            Log.d("DEBUG", "mTripID: " + mTripId);
-            Log.d("DEBUG", "mVehicleID: " + mVehicleID);
-            Log.d("DEBUG", "user-push-id" + OneSignal.getUser().getOnesignalId());
-
-            if(mVehicleID == null) mVehicleID = "";
+            logReminderDetails(reminderTime, "Request");
 
             progressView.setVisibility(View.VISIBLE);
-            String apiUrl = getContext().getString(R.string.create_arrivals_reminders_api_url);
-            String userPushID = OneSignal.getUser().getPushSubscription().getId();
-            Log.d("UserAmr",userPushID);
-            apiUrl = apiUrl.replaceAll("regionID", String.valueOf(Application.get().getCurrentRegion().getId()));
-            ObaReminderRequest request = new ObaReminderRequest.Builder(getContext(), apiUrl)
+
+            String userPushID = Application.getUserPushNotificationID();
+
+            ObaReminderRequest request = createObaReminderRequest(reminderTime, userPushID);
+
+            new Thread(request::call).start();
+        }
+
+        private ObaReminderRequest createObaReminderRequest(int reminderTime, String userPushID) {
+            return new ObaReminderRequest.Builder(getContext())
                     .setStopID(mStopId)
                     .setServiceDate(mServiceDate)
                     .setStopSequence(mStopSequence)
@@ -512,30 +507,66 @@ public class TripInfoActivity extends AppCompatActivity {
                     .setUserPushId(userPushID)
                     .setSecondsBefore(reminderTime)
                     .setVehicleID(mVehicleID)
-                    .setListener(new ReminderRequestListener() {
+                    .setListener(createReminderRequestListener(reminderTime)).build();
+        }
+
+        private ReminderRequestListener createReminderRequestListener(int reminderTime) {
+            return new ReminderRequestListener() {
                 @Override
                 public void onReminderResponseReceived(ReminderResponse response) {
-                    Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-                        if(response != null && response.getUrl() != null){
-                            saveTrip(reminderTime,response.getUrl());
-                            progressView.setVisibility(View.GONE);
-                            Toast.makeText(getActivity(), R.string.trip_info_saved, Toast.LENGTH_SHORT).show();
-                            finish();
-                            Log.d(TAG, "Reminder set successfully: " + response.getUrl());
-                        }else{
-                            Log.d(TAG, "Response or url is null");
-                        }
-                    });
+                    handleReminderResponse(reminderTime, response);
                 }
 
                 @Override
                 public void onReminderResponseFailed() {
-                    progressView.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), R.string.failed_to_set_reminder,Toast.LENGTH_SHORT).show();
-                    Log.d(TAG, "Failed to set reminder");
+                    handleReminderFailure();
                 }
-            }).build();
-            new Thread(request::call).start();
+            };
+        }
+
+        private void handleReminderResponse(int reminderTime, ReminderResponse response) {
+            Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+                if (response != null && response.getUrl() != null) {
+                    saveTrip(reminderTime, response.getUrl());
+                    progressView.setVisibility(View.GONE);
+                    Toast.makeText(getActivity(), R.string.trip_info_saved, Toast.LENGTH_SHORT).show();
+                    finish();
+                    Log.d(TAG, "Reminder set successfully");
+                } else {
+                    Log.d(TAG, "Response or url is null");
+                }
+            });
+        }
+
+        private void handleReminderFailure() {
+            progressView.setVisibility(View.GONE);
+            Toast.makeText(getContext(), R.string.failed_to_set_reminder, Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Failed to set reminder");
+        }
+
+        /**
+         * Sends a request to delete a reminder alarm for the specified trip URI and
+         * physically removes the reminder from the content provider. Success or failure
+         */
+        public static void requestDeleteAlarm(Context context, Uri tripUri) {
+            String alarmDeletePath = ReminderUtils.getAlarmDeletePath(context, tripUri);
+            ObaReminderDeleteRequest deleteRequest = new ObaReminderDeleteRequest();
+            deleteRequest.sendDeleteRequest(alarmDeletePath, new DeleteRequestListener() {
+                @Override
+                public void onDeleteSuccess() {
+                    Log.d(TAG, "Delete request successful");
+
+                }
+
+                @Override
+                public void onDeleteFailed() {
+                    Log.d(TAG, "Delete request failed");
+                }
+            });
+
+            // Delete it physically
+            ContentResolver cr = context.getContentResolver();
+            cr.delete(tripUri, null, null);
         }
 
 
@@ -549,13 +580,14 @@ public class TripInfoActivity extends AppCompatActivity {
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder.setMessage(R.string.trip_info_delete_trip).setTitle(R.string.trip_info_delete).setIcon(android.R.drawable.ic_dialog_alert).setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    ContentResolver cr = getActivity().getContentResolver();
-                    cr.delete(tripUri, null, null);
-                    TripService.scheduleAll(getActivity(), true);
+                    if (tripUri != null) {
+                        requestDeleteAlarm(getContext(), tripUri);
+                    }
                     getActivity().finish();
                 }).setNegativeButton(android.R.string.cancel, (dialog, which) -> dialog.dismiss());
                 return builder.create();
             }
+
         }
 
         // This converts what's in the database to what can be displayed in the spinner.
@@ -609,6 +641,18 @@ public class TripInfoActivity extends AppCompatActivity {
                     Log.e(TAG, "Invalid selection: " + selection);
                     return 0;
             }
+        }
+
+        private void logReminderDetails(int reminderTime, String from) {
+            Log.d(TAG,"From = " + from);
+            Log.d(TAG, "mStopID: " + mStopId);
+            Log.d(TAG, "mRouteId: " + mRouteId);
+            Log.d(TAG, "mReminderTime: " + reminderTime);
+            Log.d(TAG, "mStopSequence: " + mStopSequence);
+            Log.d(TAG, "mServiceDate: " + mServiceDate);
+            Log.d(TAG, "mTripID: " + mTripId);
+            Log.d(TAG, "mVehicleID: " + mVehicleID);
+            Log.d(TAG, "user-push-id: " + OneSignal.getUser().getOnesignalId());
         }
     }
 

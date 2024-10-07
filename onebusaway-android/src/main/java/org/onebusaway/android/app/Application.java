@@ -41,9 +41,7 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
-import com.onesignal.Continue;
 import com.onesignal.OneSignal;
-import com.onesignal.debug.LogLevel;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
@@ -56,6 +54,7 @@ import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.ReminderUtils;
 
 import java.security.MessageDigest;
 import java.util.Iterator;
@@ -639,8 +638,17 @@ public class Application extends MultiDexApplication {
         return false;
     }
 
-    private void initOneSignal(){
-    //    OneSignal.getDebug().setLogLevel(LogLevel.VERBOSE);
+    private void initOneSignal() {
         OneSignal.initWithContext(this, BuildConfig.ONESIGNAL_APP_ID);
+
+        // Handle click on the notification
+        OneSignal.getNotifications().addClickListener(iNotificationClickEvent -> {
+            ReminderUtils.openStopInfo(getBaseContext(), iNotificationClickEvent.getNotification());
+        });
     }
+
+    public static String getUserPushNotificationID() {
+        return OneSignal.getUser().getPushSubscription().getId();
+    }
+
 }

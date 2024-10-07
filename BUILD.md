@@ -50,6 +50,16 @@ Add the following to `onebusaway-android/gradle.properties`:
 
 ...where `XXXXXX` is your API key. Note that the suffix of `_oba` can be changed to configure API keys for other build flavors.
 
+### Configuration for OneSignal App ID
+
+If push arrivals notifications are active, you'll need to provide an App ID for [OneSignal](https://onesignal.com/).
+
+Add the following to `onebusaway-android/gradle.properties`:
+
+`OneSignal_App_ID=YOUR_APP_ID`
+
+...where `YOUR_APP_ID` is the unique identifier for your OneSignal application.
+
 ### Release builds
 
 To set up a release build, you need to create a `gradle.properties` file that points to a `secure.properties` file, and a `secure.properties` file that points to your keystore and alias.

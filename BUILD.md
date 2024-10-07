@@ -56,7 +56,7 @@ If push arrivals notifications are active, you'll need to provide an App ID for 
 
 Add the following to `onebusaway-android/gradle.properties`:
 
-`OneSignal_App_ID=YOUR_APP_ID`
+`ONESIGNAL_APP_ID=YOUR_APP_ID`
 
 ...where `YOUR_APP_ID` is the unique identifier for your OneSignal application.
 

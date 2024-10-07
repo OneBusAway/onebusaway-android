@@ -62,7 +62,7 @@
         android:requestLegacyExternalStorage="true">
 
         <meta-data android:name="com.onesignal.NotificationServiceExtension"
-                android:value="org.onebusaway.android.app.NotificationServiceExtension" />
+                android:value="org.onebusaway.android.tripservice.ArrivalsRemindersServiceExtension" />
 
         <meta-data
             android:name="android.app.default_searchable"
@@ -305,17 +305,6 @@
             android:authorities="${databaseAuthority}"/>
 
         <service
-            android:name=".tripservice.TripService"
-            android:foregroundServiceType="specialUse"
-            android:permission="${applicationId}.permission.TRIP_SERVICE"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="${applicationId}.AlarmReceiver"/>
-                <action android:name="${applicationId}.BootstrapService"/>
-            </intent-filter>
-        </service>
-
-        <service
             android:name=".directions.realtime.RealtimeService">
         </service>
 
@@ -323,32 +312,6 @@
             android:name=".nav.NavigationService"
             android:foregroundServiceType="location" />
 
-        <receiver android:name=".tripservice.AlarmReceiver"
-            android:exported="true">
-            <intent-filter>
-                <!-- Should match constants for actions defined in TripService -->
-                <action android:name="${applicationId}.action.SCHEDULE"/>
-                <action android:name="${applicationId}.action.POLL"/>
-            </intent-filter>
-        </receiver>
-        <receiver android:name=".tripservice.BootstrapService"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
-            </intent-filter>
-        </receiver>
-        <!-- Legacy Receiver for backwards-compatibility support with v1.x - See Issue #558 -->
-        <receiver android:name="com.joulespersecond.seattlebusbot.AlarmReceiver"
-            android:exported="true">
-            <intent-filter>
-                <!-- Should match constants for actions defined in TripService -->
-                <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE"/>
-                <action android:name="com.joulespersecond.seattlebusbot.action.POLL"/>
-            </intent-filter>
-        </receiver>
         <receiver
             android:name=".nav.NavigationReceiver"
             android:enabled="true"

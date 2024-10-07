@@ -652,7 +652,7 @@ public class TripInfoActivity extends AppCompatActivity {
             Log.d(TAG, "mServiceDate: " + mServiceDate);
             Log.d(TAG, "mTripID: " + mTripId);
             Log.d(TAG, "mVehicleID: " + mVehicleID);
-            Log.d(TAG, "user-push-id: " + OneSignal.getUser().getOnesignalId());
+            Log.d(TAG, "user-push-id: " + OneSignal.getUser().getPushSubscription().getId());
         }
     }
 

@@ -2,6 +2,7 @@ package org.onebusaway.android.io.request.reminders.model;
 
 import androidx.annotation.NonNull;
 
+// Holds create alarm request response
 public class ReminderResponse {
     String url;
 

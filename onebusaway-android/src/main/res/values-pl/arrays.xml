@@ -55,7 +55,6 @@
         <item>Pokaż na mapie</item>
     </string-array>
     <string-array name="reminder_time">
-        <item>Sin recordatorio</item>
         <item>1 minuta</item>
         <item>3 minuty</item>
         <item>5 minut</item>

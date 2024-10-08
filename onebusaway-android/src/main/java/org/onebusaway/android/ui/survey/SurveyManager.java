@@ -52,8 +52,6 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
     private final View surveyView;
     // Bottom sheet RecyclerView for surveys
     private RecyclerView bottomSheetSurveyRecyclerView;
-    // Button to submit the survey from the bottom sheet
-    private Button bottomSheetSubmitSurveyButton;
     // Stores the update path after the hero question is submitted
     private String updateSurveyPath;
     // Bottom sheet dialog for displaying the remaining survey questions
@@ -140,7 +138,7 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
     private void handleExternalSurveyWithoutHero(List<StudyResponse.Surveys.Questions> questionsList) {
         showSharedInfoDetailsTextView(context, questionsList.get(0).getContent().getEmbedded_data_fields(), SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION);
         showExternalSurveyButtons();
-        handleOpenExternalSurvey(surveyView, questionsList.get(0).getContent().getUrl());
+        handleOpenExternalSurvey(questionsList.get(0).getContent().getUrl());
     }
 
     /**
@@ -277,10 +275,9 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
     /**
      * Sets up the click listener for opening an external survey.
      *
-     * @param view  The view associated with the external survey button.
      * @param url   The URL of the external survey.
      */
-    private void handleOpenExternalSurvey(View view, String url) {
+    private void handleOpenExternalSurvey(String url) {
         openExternalSurveyButton.setOnClickListener(view1 -> openExternalSurvey(url));
     }
 
@@ -337,9 +334,15 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
      * Initializes the submit button in the bottom sheet for the remaining questions.
      */
     private void setSubmitSurveyButton() {
-        bottomSheetSubmitSurveyButton = surveyBottomSheet.findViewById(R.id.submit_btn);
+        Button bottomSheetSubmitBtnTop = surveyBottomSheet.findViewById(R.id.submit_btn);
+        Button bottomSheetSubmitBtnBottom = surveyBottomSheet.findViewById(R.id.submit_btn2);
         View bottomSheetProgress = surveyBottomSheet.findViewById(R.id.surveyProgress);
-        bottomSheetSubmitSurveyButton.setOnClickListener(v -> submitSurveyAnswers(getCurrentSurvey(), bottomSheetProgress, false));
+        if (bottomSheetSubmitBtnTop != null) {
+            bottomSheetSubmitBtnTop.setOnClickListener(v -> submitSurveyAnswers(getCurrentSurvey(), bottomSheetProgress, false));
+        }
+        if (bottomSheetSubmitBtnBottom != null) {
+            bottomSheetSubmitBtnBottom.setOnClickListener(v -> submitSurveyAnswers(getCurrentSurvey(), bottomSheetProgress, false));
+        }
     }
 
     /**
@@ -378,7 +381,6 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
         }
 
         bottomSheetSurveyRecyclerView = surveyBottomSheet.findViewById(R.id.recycleView);
-        bottomSheetSubmitSurveyButton = surveyBottomSheet.findViewById(R.id.submit_btn);
         TextView surveyTitle = surveyBottomSheet.findViewById(R.id.surveyTitle);
         TextView surveyDescription = surveyBottomSheet.findViewById(R.id.surveyDescription);
 

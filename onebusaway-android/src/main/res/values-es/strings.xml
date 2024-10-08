@@ -1120,4 +1120,5 @@
     <string name="dismiss_survey_dialog_body">Tu opinión ayuda a mejorar los servicios de tránsito y las experiencias en la aplicación.</string>
     <string name="preferences_show_weather_view_on_map">Mostrar la vista del clima en el mapa</string>
     <string name="failed_to_set_reminder">Error al establecer el recordatorio</string>
+    <string name="reminder_not_enabled">Recordatorio no habilitado</string>
 </resources>

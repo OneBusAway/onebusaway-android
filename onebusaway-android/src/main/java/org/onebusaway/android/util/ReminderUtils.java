@@ -15,11 +15,23 @@
  */
 package org.onebusaway.android.util;
 
-import org.onebusaway.android.tripservice.TripService;
+import com.onesignal.notifications.INotification;
 
+import org.json.JSONObject;
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.ui.ArrivalsListActivity;
+
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.PowerManager;
+import android.database.Cursor;
+import android.net.Uri;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Utilities to assist in the registering of reminder alarms for arriving/departing buses
@@ -27,27 +39,127 @@ import android.os.PowerManager;
 public class ReminderUtils {
 
     /**
-     * Starts the TripService service to schedule/poll/notify/cancel alarms for the "My Reminders"
-     * feature.  This is called from a BroadcastReceiver triggered by an Intent registered with
-     * Android.
+     * Retrieves the short name of a bus route based on the provided route ID.
      *
-     * For now, just forward anything to the TripService. Eventually, we can distinguish by action
-     * or Content URI. Also, handle CPU wake locking..
-     *
-     * TODO - We should be extending the support library version of WakefulBroadcastReceiver and
-     * starting the service using startWakefulService().  See #493 for details.
-     *
-     * @param context Context from which to start the reminder service
-     * @param intent  Intent received by the BroadcastReceiver
-     * @param TAG     class name (or other tag) for debugging purposes.
+     * @param context the application context
+     * @param id the ID of the route
+     * @return the short name of the route
      */
-    public static void startReminderService(Context context, Intent intent, String TAG) {
-        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock lock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
-        lock.acquire(10 * 1000);
-        Intent tripService = new Intent(context, TripService.class);
-        tripService.setAction(intent.getAction());
-        tripService.setData(intent.getData());
-        context.startService(tripService);
+    public static String getRouteShortName(Context context, String id) {
+        return UIUtils.stringForQuery(context, Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, id), ObaContract.Routes.SHORTNAME);
+    }
+
+    /**
+     * Opens the stop information activity when a notification is received.
+     *
+     * @param context the application context
+     * @param notification the notification containing additional data
+     */
+    public static void openStopInfo(Context context, INotification notification) {
+        JSONObject data = notification.getAdditionalData();
+        if (data != null) {
+            try {
+                JSONObject arrivalAndDeparture = data.getJSONObject("arrival_and_departure");
+                String stopId = arrivalAndDeparture.optString("stop_id");
+                Intent intent = new ArrivalsListActivity.Builder(context, stopId).getIntent();
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                context.startActivity(intent);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Deletes a saved reminder for a specific trip and stop ID.
+     *
+     * @param context the application context
+     * @param tripId the ID of the trip
+     * @param stopId the ID of the stop
+     */
+    public static void deleteSavedReminder(Context context, String tripId, String stopId) {
+        String selection = ObaContract.Trips.TRIP_ID + " = ? AND " + ObaContract.Trips.STOP_ID + " = ?";
+        String[] selectionArgs = new String[]{tripId, stopId};
+
+        Uri uri = ObaContract.Trips.CONTENT_URI;
+
+        try {
+            context.getContentResolver().delete(uri, selection, selectionArgs);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Retrieves the delete path for an alarm based on the provided trip URI.
+     *
+     * @param context the application context
+     * @param tripUri the URI of the trip
+     * @return the delete path for the alarm, or null if not found
+     */
+    public static String getAlarmDeletePath(Context context, Uri tripUri) {
+        ContentResolver cr = context.getContentResolver();
+        String alarmDeletePath = null;
+
+        try (Cursor cursor = cr.query(tripUri, new String[]{ObaContract.Trips.ALARM_DELETE_PATH}, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                alarmDeletePath = cursor.getString(cursor.getColumnIndexOrThrow(ObaContract.Trips.ALARM_DELETE_PATH));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return alarmDeletePath;
+    }
+
+    /**
+     * Checks if an alarm exists for the specified trip URI.
+     *
+     * @param context the application context
+     * @param tripURI the URI of the trip
+     * @return true if the alarm exists, false otherwise
+     */
+    public static boolean isAlarmExist(Context context, Uri tripURI) {
+        ContentResolver cr = context.getContentResolver();
+        Cursor c = cr.query(tripURI, new String[]{ObaContract.Trips._ID}, null, null, null);
+        return (c != null && c.getCount() > 0);
+    }
+
+    /**
+     * This is not useless it's checking if the app is configured to show reminders
+     * Checks if reminders should be shown to the user
+     * @return true if reminders should be shown, false otherwise
+     */
+
+    public static boolean shouldShowReminders(){
+        return BuildConfig.ONESIGNAL_APP_ID != null && !BuildConfig.ONESIGNAL_APP_ID.isEmpty();
+    }
+
+    /**
+     * Returns the valid reminder times based on the provided departure time.
+     * @param departTime the departure time in milliseconds
+     * @return the valid reminder times
+     */
+
+    public static String[] getReminderTimes(long departTime) {
+        Integer[] times = {3,5,10,15,20,25,30};
+        // Convert milliseconds to minutes and calculate the time until departure
+        long departTimeInMinutes = (long) Math.ceil((departTime - System.currentTimeMillis()) / 60000.0);
+        String[] allTimes = Application.get().getResources().getStringArray(R.array.reminder_time);
+        List<String> validTimes = new ArrayList<>();
+
+        // Add at least 1 minute to the list of valid times
+        validTimes.add(allTimes[0]);
+
+        int index = 1;
+        for (Integer time : times) {
+            if (time <= departTimeInMinutes) {
+                validTimes.add(allTimes[index]);
+            }else{
+                break;
+            }
+            ++index;
+        }
+
+        return validTimes.toArray(new String[0]);
     }
 }

@@ -86,6 +86,7 @@ import org.onebusaway.android.util.DBUtil;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.ReminderUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
 
@@ -773,7 +774,11 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
                 } else if (which == 2) {
                     goToTripDetails(arrivalInfo);
                 } else if (which == 3) {
-                    goToTrip(arrivalInfo);
+                    if(ReminderUtils.shouldShowReminders()){
+                        goToTrip(arrivalInfo);
+                    }else{
+                        Toast.makeText(getActivity(), R.string.reminder_not_enabled, Toast.LENGTH_SHORT).show();
+                    }
                 } else if (which == 4) {
                     ArrayList<String> routes = new ArrayList<String>(1);
                     routes.add(arrivalInfo.getInfo().getRouteId());
@@ -1433,8 +1438,11 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
                 stopInfo.getRouteId(),
                 stopInfo.getShortName(),
                 mStop.getName(),
-                stopInfo.getScheduledDepartureTime(),
-                stopInfo.getHeadsign());
+                stopInfo.getPredictedDepartureTime(),
+                stopInfo.getHeadsign(),
+                stopInfo.getStopSequence(),
+                stopInfo.getServiceDate(),
+                stopInfo.getVehicleId());
     }
 
     private void goToTripDetails(ArrivalInfo stop) {

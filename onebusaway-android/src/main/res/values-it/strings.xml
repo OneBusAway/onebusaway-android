@@ -1030,4 +1030,6 @@
     <string name="survey_dismiss_dialog_skip_this_survey">Salta questo sondaggio</string>
     <string name="dismiss_survey_dialog_body">Il tuo feedback aiuta a migliorare i servizi di trasporto e le esperienze con l\'app.</string>
     <string name="preferences_show_weather_view_on_map">Mostra la vista del meteo sulla mappa</string>
+    <string name="failed_to_set_reminder">Impossibile impostare il promemoria</string>
+    <string name="reminder_not_enabled">Promemoria non abilitato</string>
 </resources>

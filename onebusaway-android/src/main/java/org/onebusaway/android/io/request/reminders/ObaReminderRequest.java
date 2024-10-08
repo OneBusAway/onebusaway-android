@@ -88,11 +88,23 @@ public final class ObaReminderRequest extends RequestBase implements Callable<Re
 
         @Override
         public String buildPostData() {
-            return mPostData.build().getEncodedQuery();
+            return super.buildPostData();
         }
 
         public ObaReminderRequest build() {
             Uri finalUri = uriBuilder.build();
+            Uri bodyData = mPostData.build();
+
+            if (bodyData.getQueryParameter("stop_id") == null ||
+                    bodyData.getQueryParameter("service_date") == null ||
+                    bodyData.getQueryParameter("stop_sequence") == null ||
+                    bodyData.getQueryParameter("trip_id") == null ||
+                    bodyData.getQueryParameter("user_push_id") == null ||
+                    bodyData.getQueryParameter("seconds_before") == null) {
+
+                Log.e(TAG, "Missing required parameters");
+                return null;
+            }
             return new ObaReminderRequest(finalUri, buildPostData(), listener);
         }
     }

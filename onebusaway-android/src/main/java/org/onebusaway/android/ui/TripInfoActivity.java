@@ -342,7 +342,7 @@ public class TripInfoActivity extends AppCompatActivity {
             if (mStopName == null) {
                 mStopName = UIUtils.stringForQuery(getActivity(), Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, mStopId), ObaContract.Stops.NAME);
             }
-            logReminderDetails(mReminderTime,"DB");
+            logReminderDetails(mReminderTime, "DB");
             return true;
         }
 
@@ -495,7 +495,11 @@ public class TripInfoActivity extends AppCompatActivity {
 
             ObaReminderRequest request = createObaReminderRequest(reminderTime, userPushID);
 
-            new Thread(request::call).start();
+            if (request != null) {
+                new Thread(request::call).start();
+            } else {
+                Toast.makeText(getContext(), R.string.failed_to_set_reminder, Toast.LENGTH_SHORT).show();
+            }
         }
 
         private ObaReminderRequest createObaReminderRequest(int reminderTime, String userPushID) {
@@ -644,7 +648,7 @@ public class TripInfoActivity extends AppCompatActivity {
         }
 
         private void logReminderDetails(int reminderTime, String from) {
-            Log.d(TAG,"From = " + from);
+            Log.d(TAG, "From = " + from);
             Log.d(TAG, "mStopID: " + mStopId);
             Log.d(TAG, "mRouteId: " + mRouteId);
             Log.d(TAG, "mReminderTime: " + reminderTime);

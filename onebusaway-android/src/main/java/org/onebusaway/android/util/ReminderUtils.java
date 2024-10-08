@@ -18,6 +18,7 @@ package org.onebusaway.android.util;
 import com.onesignal.notifications.INotification;
 
 import org.json.JSONObject;
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalsListActivity;
 
@@ -115,5 +116,15 @@ public class ReminderUtils {
         ContentResolver cr = context.getContentResolver();
         Cursor c = cr.query(tripURI, new String[]{ObaContract.Trips._ID}, null, null, null);
         return (c != null && c.getCount() > 0);
+    }
+
+    /**
+     * This is not useless it's checking if the app is configured to show reminders
+     * Checks if reminders should be shown to the user
+     * @return true if reminders should be shown, false otherwise
+     */
+
+    public static boolean shouldShowReminders(){
+        return BuildConfig.ONESIGNAL_APP_ID != null && !BuildConfig.ONESIGNAL_APP_ID.isEmpty();
     }
 }

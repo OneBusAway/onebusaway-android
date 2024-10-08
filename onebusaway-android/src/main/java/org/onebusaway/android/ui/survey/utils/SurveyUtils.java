@@ -424,6 +424,7 @@ public class SurveyUtils {
 
     /**
      * Converts an array of route IDs to an ArrayList.
+     *
      * @param routes An array of route IDs.
      * @return An ArrayList containing the route IDs from the input array.
      */
@@ -435,17 +436,37 @@ public class SurveyUtils {
      * Returns the stop identifier if the stop is non-null, has a valid ID,
      * and is marked as visible; otherwise, returns null.
      *
-     * @param currentStop      The current stop object.
-     * @param visibleOnStops   Indicates if the stop is visible.
+     * @param currentStop    The current stop object.
+     * @param visibleOnStops Indicates if the stop is visible.
      * @return The stop identifier or null if conditions are not met.
      */
     public static String getCurrentStopIdentifier(ObaStop currentStop, boolean visibleOnStops) {
-        return (currentStop != null && currentStop.getId() != null && visibleOnStops)
-                ? currentStop.getId()
-                : null;
+        return (currentStop != null && currentStop.getId() != null && visibleOnStops) ? currentStop.getId() : null;
     }
 
+    /**
+     * Returns the current stop latitude if the stop is non-null and visible.
+     *
+     * @param currentStop    The current stop object.
+     * @param visibleOnStops Indicates if the stop is visible.
+     * @return The current stop latitude or 0 if the stop is null or not visible.
+     */
 
+    public static double getCurrentStopLatitude(ObaStop currentStop, boolean visibleOnStops) {
+        if (currentStop == null || !visibleOnStops) return 0;
+        return currentStop.getLatitude();
+    }
 
+    /**
+     * Returns the current stop longitude if the stop is non-null and visible.
+     *
+     * @param currentStop    The current stop object.
+     * @param visibleOnStops Indicates if the stop is visible.
+     * @return The current stop longitude or 0 if the stop is null or not visible.
+     */
 
+    public static double getCurrentStopLongitude(ObaStop currentStop, boolean visibleOnStops) {
+        if (currentStop == null || !visibleOnStops) return 0;
+        return currentStop.getLongitude();
+    }
 }

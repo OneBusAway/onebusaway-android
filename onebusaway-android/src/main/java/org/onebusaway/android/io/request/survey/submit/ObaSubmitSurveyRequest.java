@@ -65,6 +65,24 @@ public final class ObaSubmitSurveyRequest extends RequestBase implements Callabl
             return this;
         }
 
+        public Builder setStopLatitude(double stopLatitude) {
+            try {
+                mPostData.appendQueryParameter("stop_latitude", String.valueOf(stopLatitude));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return this;
+        }
+
+        public Builder setStopLongitude(double stopLongitude) {
+            try {
+                mPostData.appendQueryParameter("stop_longitude", String.valueOf(stopLongitude));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return this;
+        }
+
         public Builder setResponses(JSONArray responses) {
             try {
                 mPostData.appendQueryParameter("responses", responses.toString());

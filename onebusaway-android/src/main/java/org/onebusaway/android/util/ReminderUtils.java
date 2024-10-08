@@ -19,6 +19,8 @@ import com.onesignal.notifications.INotification;
 
 import org.json.JSONObject;
 import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalsListActivity;
 
@@ -27,6 +29,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Utilities to assist in the registering of reminder alarms for arriving/departing buses
  */
@@ -126,5 +132,34 @@ public class ReminderUtils {
 
     public static boolean shouldShowReminders(){
         return BuildConfig.ONESIGNAL_APP_ID != null && !BuildConfig.ONESIGNAL_APP_ID.isEmpty();
+    }
+
+    /**
+     * Returns the valid reminder times based on the provided departure time.
+     * @param departTime the departure time in milliseconds
+     * @return the valid reminder times
+     */
+
+    public static String[] getReminderTimes(long departTime) {
+        Integer[] times = {3,5,10,15,20,25,30};
+        // Convert milliseconds to minutes and calculate the time until departure
+        long departTimeInMinutes = (long) Math.ceil((departTime - System.currentTimeMillis()) / 60000.0);
+        String[] allTimes = Application.get().getResources().getStringArray(R.array.reminder_time);
+        List<String> validTimes = new ArrayList<>();
+
+        // Add at least 1 minute to the list of valid times
+        validTimes.add(allTimes[0]);
+
+        int index = 1;
+        for (Integer time : times) {
+            if (time <= departTimeInMinutes) {
+                validTimes.add(allTimes[index]);
+            }else{
+                break;
+            }
+            ++index;
+        }
+
+        return validTimes.toArray(new String[0]);
     }
 }

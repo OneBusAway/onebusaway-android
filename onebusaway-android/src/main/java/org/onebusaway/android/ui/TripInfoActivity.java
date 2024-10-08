@@ -350,7 +350,9 @@ public class TripInfoActivity extends AppCompatActivity {
             View view = getView();
             final Spinner reminder = view.findViewById(R.id.trip_info_reminder_time);
             progressView = view.findViewById(R.id.progress);
-            ArrayAdapter<?> adapter = ArrayAdapter.createFromResource(getActivity(), R.array.reminder_time, android.R.layout.simple_spinner_item);
+
+            String[] reminderTimes = ReminderUtils.getReminderTimes(mDepartTime);
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, reminderTimes);
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             reminder.setAdapter(adapter);
 
@@ -372,8 +374,8 @@ public class TripInfoActivity extends AppCompatActivity {
             final TextView tripName = view.findViewById(R.id.name);
             tripName.setText(mTripName);
 
-            reminder.setSelection(reminderToSelection(mReminderTime));
-
+            int selectionIdx = Math.min(reminderTimes.length - 1, reminderToSelection(mReminderTime));
+            reminder.setSelection(selectionIdx);
         }
 
         void finish() {
@@ -583,7 +585,7 @@ public class TripInfoActivity extends AppCompatActivity {
                 final Uri tripUri = args.getParcelable("uri");
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                builder.setMessage(R.string.trip_info_delete_trip).setTitle(R.string.trip_info_delete).setIcon(android.R.drawable.ic_dialog_alert).setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                builder.setMessage(R.string.trip_info_delete_trip).setTitle(R.string.trip_info_delete).setIcon(R.drawable.baseline_delete_forever_48).setPositiveButton(android.R.string.ok, (dialog, which) -> {
                     if (tripUri != null) {
                         requestDeleteAlarm(getContext(), tripUri);
                     }
@@ -597,24 +599,22 @@ public class TripInfoActivity extends AppCompatActivity {
         // This converts what's in the database to what can be displayed in the spinner.
         private static int reminderToSelection(int reminder) {
             switch (reminder) {
-                case 0:
-                    return 0;
                 case 1:
-                    return 1;
+                    return 0;
                 case 3:
-                    return 2;
+                    return 1;
                 case 5:
-                    return 3;
+                    return 2;
                 case 10:
-                    return 4;
+                    return 3;
                 case 15:
-                    return 5;
+                    return 4;
                 case 20:
-                    return 6;
+                    return 5;
                 case 25:
-                    return 7;
+                    return 6;
                 case 30:
-                    return 8;
+                    return 7;
                 default:
                     Log.e(TAG, "Invalid reminder value in DB: " + reminder);
                     return 0;
@@ -624,22 +624,20 @@ public class TripInfoActivity extends AppCompatActivity {
         private static int selectionToReminder(int selection) {
             switch (selection) {
                 case 0:
-                    return 0;
-                case 1:
                     return 1;
-                case 2:
+                case 1:
                     return 3;
-                case 3:
+                case 2:
                     return 5;
-                case 4:
+                case 3:
                     return 10;
-                case 5:
+                case 4:
                     return 15;
-                case 6:
+                case 5:
                     return 20;
-                case 7:
+                case 6:
                     return 25;
-                case 8:
+                case 7:
                     return 30;
                 default:
                     Log.e(TAG, "Invalid selection: " + selection);

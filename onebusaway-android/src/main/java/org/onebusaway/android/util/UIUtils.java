@@ -1259,12 +1259,10 @@ public final class UIUtils {
         list.add(c.getString(R.string.bus_options_menu_show_vehicles_on_map));
         list.add(c.getString(R.string.bus_options_menu_show_trip_details));
 
-        if(ReminderUtils.shouldShowReminders()){
-            if (!isReminderVisible) {
-                list.add(c.getString(R.string.bus_options_menu_set_reminder));
-            } else {
-                list.add(c.getString(R.string.bus_options_menu_edit_reminder));
-            }
+        if (!isReminderVisible) {
+            list.add(c.getString(R.string.bus_options_menu_set_reminder));
+        } else {
+            list.add(c.getString(R.string.bus_options_menu_edit_reminder));
         }
 
         if (!hasRouteFilter) {

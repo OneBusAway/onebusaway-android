@@ -31,6 +31,7 @@
         <TextView
                 android:id="@+id/alert_title"
                 style="@style/HeaderText"
+                android:background="@color/theme_primary"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"

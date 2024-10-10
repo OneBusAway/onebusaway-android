@@ -25,6 +25,11 @@
     <string name="navdrawer_item_settings">Asetukset</string>
     <string name="navdrawer_item_help">Ohjeet</string>
     <string name="navdrawer_item_send_feedback">Lähetä palautetta</string>
+    <string name="navdrawer_item_starred_routes">Tähdellä merkityt reitit</string>
+    <string name="navdrawer_item_open_source">Vieraile meillä GitHubissa</string>
+    <string name="navdrawer_item_plan_trip">Suunnittele matka (beta)</string>
+    <string name="navdrawer_item_pay_fare">Maksa matkalippuni</string>
+
 
     <!-- Permissions -->
     <string name="trip_service_perm_label">käynnistä matkapalvelu</string>
@@ -101,6 +106,14 @@
     <string name="main_nolocation">OneBusAway haluaa käyttää sijaintitietoasi,
         sallitaanko?
     </string>
+    <string name="main_help_legend_title">Selite</string>
+    <string name="main_help_legend_ontime">Vihreä tarkoittaa \"Aikataulussa\"</string>
+    <string name="main_help_legend_late">Sininen tarkoittaa \"Myöhässä\"</string>
+    <string name="main_help_legend_early">Punainen tarkoittaa \"Aikaisessa\"</string>
+    <string name="main_help_legend_scheduled">Harmaa tarkoittaa \"Suunniteltu saapuminen\" - Emme tiedä, missä bussi on nyt, mutta aikataulu kertoo tulevasta saapumisesta</string>
+    <string name="main_help_legend_canceled">Harmaa yliviivattuna tarkoittaa, että matka on peruttu - tämä bussi EI tule</string>
+    <string name="main_never_ask_again">Älä koskaan kysy uudelleen</string>
+    <string name="main_never_show_again">Älä näytä enää koskaan</string>
     <string name="main_waiting_for_location">Sijaintiasi yritetään paikantaa&#8230;</string>
     <string name="no_location_permission">Sijaintiasi ei pystytty määrittämään.</string>
     <string name="main_outofrange_title">Ulkona alueelta</string>
@@ -188,7 +201,10 @@
     </plurals>
     <string name="stop_info_scheduled_arrival">Aikataulun mukainen saapuminen</string>
     <string name="stop_info_scheduled_departure">Aikataulun mukainen lähtö</string>
-    <string name="stop_info_scheduled">Scheduled</string>
+    <string name="stop_info_scheduled">Aikataulutettu</string>
+    <string name="stop_info_canceled_arrival">PERUTTU saapuminen</string>
+    <string name="stop_info_canceled_departure">PERUTTU lähtö</string>
+    <string name="stop_info_canceled">PERUTTU</string>
     <string name="stop_info_time_arriving_at">Saapumassa %1s</string>
     <string name="stop_info_time_departing_at">Lähtemässä %1s</string>
     <string name="stop_info_time_arrived_at">Saapui %1s</string>
@@ -208,7 +224,9 @@
     <string name="stop_info_option_addstar">Lisää suosikiksi</string>
     <string name="stop_info_option_show_details">Pysäkin tiedot</string>
     <string name="stop_info_option_removestar">Poista suosikeista</string>
+    <string name="stop_info_option_report_problem">Ilmoita pysäkin ongelmasta</string>
     <string name="stop_info_option_night_light">Yövalo</string>
+    <string name="stop_info_option_hide_alerts">Piilota aktiiviset varoitukset</string>
     <string name="stop_info_nodata_minutes">Ei saapuvia kulkuneuvoja seuraavaan %1$d min.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_nodata_hours_minutes">
@@ -253,6 +271,7 @@
     <string name="stop_info_clear">Tyhjennä</string>
     <string name="stop_info_old_data">Tiedot päivitetty %s</string>
     <string name="stop_info_favorite">Suosikkipysäkki</string>
+    <string name="stop_info_official_stop_name_label">Virallinen nimi: %1$s</string>
     <string name="stop_info_route_ids_label">Reitit:</string>
     <string name="stop_info_button_content_description">Tietoja pysäkistä</string>
     <string name="stop_info_frequency_approximate">~</string>
@@ -261,6 +280,49 @@
     </string>
     <string name="stop_header_sliding_panel_collapsed">Paneeli pienennetty. Napsauta nähdäksesi
         tarkemmat saapumisajat, tai sulje Takaisin painikeella.
+    </string>
+
+    <!-- Destination reminders -->
+    <string name="destination_reminder_dialog_title">Määränpään muistutus (beeta)</string>
+    <string name="destination_reminder_dialog_msg">Haluatko saada ilmoituksen, kun lähestyt tätä pysäkkiä?</string>
+    <string name="destination_reminder_confirm">Kyllä</string>
+    <string name="destination_reminder_cancel">Peruuta</string>
+    <string name="destination_reminder_title">Määränpään muistutus on asetettu</string>
+    <string name="destination_reminder_cancel_trip">Peruuta muistutus</string>
+    <string name="destination_reminder_beta_title">Määränpään muistutukset ovat beeta-vaiheessa</string>
+    <string name="destination_reminder_beta_summary">Määränpään muistutukset perustuvat GPS:ään, joka ei aina ole luotettava ja ei toimi sisätiloissa, maan alla tai alueilla, joissa taivaan näkyvyys ei ole kirkas. Ole aina tietoinen ympäristöstäsi.</string>
+
+    <!-- Destination reminder voice commands -->
+    <string name="destination_voice_get_ready">Ole valmiina!</string>
+    <string name="destination_voice_request_stop">Poistu seuraavalla pysäkillä!</string>
+    <string name="destination_voice_arriving_destination">Saavutaan määränpäähän!</string>
+
+    <!-- Destination reminder feedback notifications -->
+    <string name="feedback_notify_title">Auttakaa parantamaan määränpään muistutuksia</string>
+    <string name="feedback_notify_dialog_msg">Olitko ilmoitettu oikeaan aikaan?</string>
+    <string name="feedback_notify_confirmation">Kiitos palautteestasi!</string>
+    <string name="feedback_label">Palaute</string>
+    <string name="feedback_action_reply_no">Ei</string>
+    <string name="feedback_action_reply_yes">Kyllä</string>
+
+    <!-- Destination reminder feedback Activity -->
+    <string name="feedback_msg">Olitko ilmoitettu oikeaan aikaan poistumaan pysäkillä?</string>
+    <string name="feedback_freeText">Kirjoita palautteesi</string>
+    <string name="feedback_checkbox_text">Sisällytä järjestelmäloki (valintasi tallennetaan tulevia matkoja varten)</string>
+    <string name="feedback_log_guide">Palaute lähetetään OneBusAway:lle. Jos valitset "Sisällytä järjestelmäloki",
+    laitteen reaaliaikainen sijaintitieto tallennetaan, kun lähestyt määränpääpysäkkiä, ja se jaetaan OneBusAway:n kanssa kehittäjien voimaa
+    parantaa määränpään muistutustoimintoa.\n\nVaihda asetuksista, kuinka paljon jaat järjestelmälokiasi.</string>
+
+    <!-- Destination reminder feedback Preferences -->
+    <string name="preferences_category_user_logs">Jaa vianmääritystiedot</string>
+    <string name="preferences_user_share_destination_logs_title">Sisällytä määränpään muistutuslokit</string>
+    <string name="preferences_user_share_destination_logs_summary">Anonyymi reaaliaikainen sijaintitieto laitteeltasi jaetaan OneBusAway:lle määränpään muistutustoiminnon parantamiseksi.</string>
+
+    <!-- Destination reminder change location accuracy -->
+    <string name="main_changelocationmode_title">Korkea tarkkuus sijainti ei ole käytössä</string>
+    <string name="main_changelocationmode">Nykyinen laitteesi "Sijaintimenetelmä" asetus voi olla epätarkka ja voi
+    epäonnistua ilmoittamasta sinua lähestymästä määränpäätäsi epätarkkojen sijaintitietojen vuoksi.
+    Haluatko vaihtaa laitteesi "Sijaintimenetelmän" "Korkeaksi tarkkuudeksi" nyt?
     </string>
 
     <!-- Stop Details -->
@@ -288,18 +350,15 @@
     <string name="my_no_starred_stops">Sinulla ei ole suosikkipysäkkejä.\n\nVoit lisätä pysäkin 
         suosikiksi saapuvien vuorojen näkymässä.
     </string>
+    <string name="my_no_starred_routes">Sinulla ei ole suosikkireittejä.\n\nVoit lisätä tähden reitille saapumisnäytössä napauttamalla tähden vieressä olevaa reittinumeroa.</string>
     <string name="my_no_recent_routes">Sinulla ei ole aiempia reittejä.</string>
-    <!-- <string name="my_no_starred_routes">Sinulla ei ole suosikkireittejä.</string>-->
     <string name="route_favorite_options_title_star">Lisää suosikki \"%s\":</string>
     <string name="route_favorite_options_title_unstar">Poista suosikki \"%s\":</string>
-
     <string name="my_option_clear_recent_stops">Tyhjennä aiemmat pysäkit</string>
     <string name="my_option_clear_recent_routes">Tyhjennä aiemmat reitit</string>
     <string name="my_option_clear_starred_stops">Poista kaikki suosikkipysäkit</string>
-    <!-- <string name="my_option_clear_starred_routes">Poista kaikki suosikkireitit</string>-->
     <string name="my_option_clear_confirm">Tätä toimintoa ei voi peruuttaa! Suoritetaanko silti?</string>
     <string name="my_option_clear_confirm_title">Oletko aivan varma?</string>
-
     <string name="my_context_get_stop_info">Näytä saapuvien vuorojen tiedot</string>
     <string name="my_context_get_route_info">Näytä reittitiedot</string>
     <string name="my_context_create_shortcut">Luo pikakuvake</string>
@@ -315,6 +374,22 @@
     <string name="alert_content_description_error">Varoitus - napsauta nähdäksesi
         enemmän.
     </string>
+    <string name="situation_more_details">Lisätietoja</string>
+    <string name="hide">Piilota</string>
+    <string name="hide_all">Piilota kaikki</string>
+    <string name="close">Sulje</string>
+    <string name="alert_hidden_snackbar_text">Varoitus on nyt piilotettu</string>
+    <string name="all_alert_hidden_snackbar_text">Kaikki varoitukset on nyt piilotettu</string>
+    <string name="alert_hidden_snackbar_action">PERUUTA</string>
+    <plurals name="alert_filter_text">
+        <item quantity="one">%1$d aktiivinen varoitus on piilotettu</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+        <xliff:g id="count">%1$d</xliff:g>
+        aktiivista varoitusta on piilotettu
+    </item>
+    </plurals>
+    <string name="alert_filter_showall">(näytä kaikki)</string>
 
     <!-- Find -->
     <string name="find_hint_nofavoritestops">Etsi pysäkki syöttämällä pysäkin numero hakukenttään.\n\n
@@ -332,7 +407,6 @@
     <string name="recent_stops_shortcut">Aiemmat pysäkit</string>
     <string name="recent_routes_shortcut">Aiemmat reitit</string>
     <string name="starred_stops_shortcut">Suosikkipysäkit</string>
-    <!-- <string name="starred_routes_shortcut">Suosikkireitit</string> -->
     <string name="route_name">Reitti %s</string>
 
     <!--  Trip info -->
@@ -356,6 +430,35 @@
     <string name="trip_info_option_showroute">Näytä reitti</string>
     <string name="trip_info_option_showstop">Näytä pysäkki</string>
     <string name="trip_info_separator">-</string>
+    <string name="trip_info_grant_exact_alarms_permission_title">Lupa tarvitaan</string>
+    <string name="trip_info_grant_exact_alarms_permission_message">Sinun täytyy antaa sovellukselle lupa muistutuksen asettamiseen.</string>
+    <string name="trip_info_grant_exact_alarms_permission_positive_button">Myönnä lupa</string>
+    <string name="trip_info_grant_exact_alarms_permission_negative_button">Peruuta</string>
+
+    <!-- Occupancy-->
+    <string name="historically_full">Historiallisesti täysi</string>
+    <string name="historically_standing_room">Historiallisesti seisomapaikkoja</string>
+    <string name="historically_many_seats_available">Historiallisesti paljon istumapaikkoja saatavilla</string>
+    <string name="historically_few_seats_available">Historiallisesti vähän istumapaikkoja saatavilla</string>
+    <string name="historically_empty">Historiallisesti tyhjä</string>
+    <string name="menu_title_about_historical_occupancy">Tietoja historiallisesta täyttöasteesta</string>
+    <string name="menu_title_about_occupancy">Tietoja täyttöasteesta</string>
+    <string name="menu_text_about_historical_occupancy">Historiallinen täyttöaste (haalea kuvake) on keskiarvo matkan matkustajamääristä tällä pysäkillä viimeisen 6 kuukauden aikana.</string>
+    <string name="menu_text_about_realtime_occupancy">Reaaliaikainen täyttöaste näytetään yhtenä tai kahtena henkilökuvakkeena, kun paljon istumapaikkoja on saatavilla tai vähän istumapaikkoja on saatavilla, ja se näytetään kolmen henkilön kuvakkeina, kun ajoneuvo on täynnä.</string>
+
+    <!-- Real-time -->
+    <string name="realtime_full">Täysi</string>
+    <string name="realtime_standing_room">Seisomapaikkoja</string>
+    <string name="realtime_many_seats_available">Paljon istumapaikkoja saatavilla</string>
+    <string name="realtime_few_seats_available">Vähän istumapaikkoja saatavilla</string>
+    <string name="realtime_empty">Tyhjä</string>
+
+    <!-- Predicted -->
+    <string name="predicted_full">Ennustettu täysi</string>
+    <string name="predicted_standing_room">Ennustettu seisomapaikkoja</string>
+    <string name="predicted_many_seats_available">Ennustettu paljon istumapaikkoja saatavilla</string>
+    <string name="predicted_few_seats_available">Ennustettu vähän istumapaikkoja saatavilla</string>
+    <string name="predicted_empty">Ennustettu tyhjä</string>
 
     <!--  Trip list -->
     <string name="trip_list_notrips">Sinulla ei ole yhtään muistutusta.\n\nVoit luoda muistutuksia
@@ -366,6 +469,21 @@
     <string name="trip_list_context_showstop">Näytä pysäkki</string>
     <string name="trip_list_context_showroute">Näytä reitti</string>
 
+    <!-- Trip notifications -->
+    <string name="trip_stat_gone_arrived">Reitti %s on saapunut.</string>
+    <string name="trip_stat_gone_departed">Reitti %s on lähtenyt.</string>
+    <string name="trip_stat_lessthanone_arriving">Reitti %s saapuu nyt!</string>
+    <string name="trip_stat_lessthanone_departing">Reitti %s lähtee nyt!</string>
+    <string name="trip_stat_arriving">Reitti %1$s saapuu %2$d minuutin kuluttua!</string>
+    <string name="trip_stat_departing">Reitti %1$s lähtee %2$d minuutin kuluttua!</string>
+
+    <!-- Foreground Service notifications -->
+    <string name="foreground_all_intent_title">Muistutustesi päivittäminen</string>
+    <string name="foreground_action_schedule_text">Muistutustesi asettaminen&#8230;</string>
+    <string name="foreground_action_poll_text">Ennusteiden tarkistaminen muistutuksillesi&#8230;</string>
+    <string name="foreground_action_notify_text">Ilmoituksen laukaiseminen muistutuksellesi&#8230;</string>
+    <string name="foreground_action_cancel_text">Muistutuksesi poistaminen&#8230;</string>
+
     <!-- Report problem -->
     <string name="report_problem_comment_hint">valinnainen</string>
     <string name="report_problem_send">Lähetä</string>
@@ -375,6 +493,7 @@
     <!-- TODO: Modes -->
     <string name="report_problem_onvehicle_bus">Oletko tässä kulkuneuvossa?</string>
     <string name="report_problem_uservehicle_hint">vaihtoehtoinen</string>
+    <string name="report_problem_report">Ilmoita</string>
 
     <!-- Region list -->
     <plurals name="distance_miles">
@@ -418,9 +537,13 @@
         aktivoida sen asetuksista.
     </string>
     <string name="region_region_found">Löytyi %1$s aluetta</string>
+    <string name="region_selected_auto">valittu automaattisesti</string>
+    <string name="region_selected_manually">valittu manuaalisesti</string>
 
     <!--  Bug report -->
     <string name="bug_report_subject">OneBusAway Android: Palaute</string>
+    <string name="bug_report_subject_trip_plan">OneBusAway Android: Matkasuunnitelma Palaute</string>
+    <string name="bug_report_subject_trip_plan_fail">OneBusAway Android: Matkasuunnitelman epäonnistuminen Palaute</string>
     <string name="bug_report_body">Valitukset, kiitokset ja virheraportit ovat tervetulleita!\n\n\nApp Version:
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nGoogle Play Services App: %5$s\n
         Google Play Services Library: %6$d\nRegion/API: %7$s (%8$s)\nLoc: %9$s
@@ -431,6 +554,26 @@
     </string>
     <string name="bug_report_error">Virheraporttia ei pystytä lähettämään: sopivaa ohjelmaa ei löytynyt.
     </string>
+    <string name="bug_report_body_trip_plan_fail">Valituksia, kehuja tai vikailmoituksia otetaan vastaan!\n\n\nSovelluksen
+    Versio:
+    %1$s\nMalli: %2$s\nKäyttöjärjestelmäversio: %3$s / %4$d\nGoogle Play -palvelut Sovellus: %5$s\n
+    Google Play -palvelut Kirjasto: %6$d\nAlue/API: %7$s (%8$s)\nSijainti: %9$s\n\n
+    Matkasuunnitelman laatiminen URL-osoitteesta epäonnistui: %10$s\n\n
+</string>
+    <string name="bug_report_body_trip_plan">Valituksia, kehuja tai vikailmoituksia otetaan vastaan!\n\n\nSovelluksen
+    Versio:
+    %1$s\nMalli: %2$s\nKäyttöjärjestelmäversio: %3$s / %4$d\nGoogle Play -palvelut Sovellus: %5$s\n
+    Google Play -palvelut Kirjasto: %6$d\nAlue/API: %7$s (%8$s)\nSijainti: %9$s\n\n
+    Matkasuunnitelma laaditaan URL-osoitteesta: %10$s\n\n
+</string>
+    <string name="bug_report_body_trip_plan_without_location">Valituksia, kehuja tai vikailmoituksia otetaan
+    vastaan!\n\n\nSovelluksen Versio:
+    %1$s\nMalli: %2$s\nKäyttöjärjestelmäversio: %3$s / %4$d\n\nMatkasuunnitelma laaditaan URL-osoitteesta: %5$s\n\n
+</string>
+    <string name="bug_report_body_trip_plan_without_location_fail">Valituksia, kehuja tai vikailmoituksia otetaan
+    vastaan!\n\n\nSovelluksen Versio:
+    %1$s\nMalli: %2$s\nKäyttöjärjestelmäversio: %3$s / %4$d\n\nMatkasuunnitelman laatiminen URL-osoitteesta epäonnistui: %5$s\n\n
+</string>
 
     <!-- Android Maps v2 -->
     <string name="install_google_maps_positive_button">Asenna</string>
@@ -508,6 +651,40 @@
     </string>
     <string name="preferences_about_title">Tietoja</string>
     <string name="preferences_about_summary">Version, contributor, and license information</string>
+    <string name="preferences_category_notifications">Ilmoitukset</string>
+    <string name="preferences_app_theme_title">Sovelluksen teema</string>
+    <string name="preferences_app_theme_option_system_default">Järjestelmän oletus</string>
+    <string name="preferences_app_theme_option_light">Vaalea teema</string>
+    <string name="preferences_app_theme_option_dark">Tumma teema</string>
+    <string name="preferences_hide_alerts_title">Piilota kaikki hälytykset</string>
+    <string name="preferences_hide_alerts_summary">Kun tämä on valittuna, kaikki palveluhälytykset ovat oletuksena pienessä palkissa saapumisnäytön yläosassa, eivätkä ne näy koko listana.</string>
+    <string name="preferences_show_zoom_controls_title">Näytä zoomausohjaimet</string>
+    <string name="preferences_show_zoom_controls_summary">Näytä zoomausohjaimet kartalla</string>
+    <string name="preferences_trip_plan_notifications_title">Matkasuunnitelman ilmoitukset (beeta)</string>
+    <string name="preferences_trip_plan_notifications_summary">Suunniteltaessa matkaa lähetä ilmoituksia, jos matka viivästyy tai ei enää suositella.</string>
+    <string name="preferences_show_tutorial_screens_title">Näytä opetusnäytöt</string>
+    <string name="preferences_show_tutorial_screens_summary">Näytä informatiivisia pop-up-ikkunoita, jotka selittävät, miten ominaisuuksia käytetään</string>
+    <string name="preferences_left_hand_mode_title">Vasenkätinen tila</string>
+    <string name="preferences_left_hand_mode_summary">Vaihda joitakin painikkeiden sijoittelu vasemmalle näytön reunalle</string>
+    <string name="preferences_otp_api_servername_title">OpenTripPlanner API-palvelin</string>
+    <string name="preferences_otp_api_servername_summary">Määrittää OpenTripPlanner API-kutsuissa käytettävän palvelimen</string>
+    <string name="preferences_otp_api_servername_hint">esimerkki.opentripplanner.org/otp</string>
+    <string name="preferences_restore_loading">Palautetaan tallennustilasta…</string>
+    <string name="preferences_travel_behavior_title">Lähetä anonymisoitua matkustuskäyttäytymistietoa</string>
+    <string name="preferences_travel_behavior_summary">Auttakaa meitä parantamaan julkista liikennettä</string>
+    <string name="preferences_push_firebase_data_title">Työnnä Firebase-tietoja palvelimeen</string>
+    <string name="preferences_push_firebase_data_summary">Jos olet osallistunut matkustuskäyttäytymistutkimukseen, tämän vaihtoehdon napauttaminen laukaisee kerätyn matkustuskäyttäytymistiedon työntämisen Firebase-palvelimeen. Tämä on hyödyllistä sovelluksen testaamisessa ja on tarkoitettu kehittäjien käyttöön. Parhaiden tulosten saavuttamiseksi varmista ensin, että sinulla on vahva Internet-yhteys.</string>
+    <string name="push_firebase_data_dialog_title">Firebase-tietojen työntäminen…</string>
+    <string name="push_firebase_data_dialog_summary">Odota, kunnes kaikki aktiivisen käyttäjän tällä hetkellä odottavat kirjoitukset on tunnustettu takaisin päätepalvelimeen…</string>
+    <string name="push_firebase_data_dialog_user_not_enrolled_title">Käyttäjä ei ole rekisteröitynyt</string>
+    <string name="push_firebase_data_dialog_user_not_enrolled_summary">Firebaseen ei yritetty työntää, koska käyttäjä ei ole rekisteröity matkustuskäyttäytymistiedon keruuseen. Voit rekisteröityä ottamalla käyttöön asetuksen "Lähetä anonymisoitua matkustuskäyttäytymistietoa".</string>
+    <string name="push_firebase_data_dialog_success_title">Työntäminen onnistui</string>
+    <string name="push_firebase_data_dialog_success_summary">Kaikki aktiivisen käyttäjän tällä hetkellä odottavat kirjoitukset on tunnustettu Firebase-päätepalvelimella.</string>
+    <string name="push_firebase_data_dialog_failed_title">Työntäminen epäonnistui</string>
+    <string name="push_firebase_data_dialog_failed_summary">Jotain meni pieleen. Varmista, että sinulla on vahva Internet-yhteys, ja yritä uudelleen.</string>
+    <string name="push_firebase_data_dialog_canceled_title">Työntäminen peruutettu</string>
+    <string name="push_firebase_data_dialog_canceled_summary">Jotain meni pieleen. Varmista, että sinulla on vahva Internet-yhteys, ja yritä uudelleen.</string>
+
     <!-- Units -->
     <string name="feet_abbreviation">ft</string>
     <string name="miles_abbreviation">mi</string>
@@ -515,10 +692,64 @@
     <string name="kilometers_abbreviation">km</string>
     <string name="minutes_abbreviation">min</string>
     <string name="minutes_full">minuuttia</string>
+    <string name="preferences_preferred_vibration_title">Värinä</string>
+    <string name="preferences_preferred_vibration_summary">Salli OneBusAway-ilmoitusten värähtely</string>
+
+    <string name="preferences_preferred_sound_title">Muistutusääni</string>
+    <string name="preferences_preferred_sound_summary">Valitse OneBusAway-ilmoituksen soittoääni</string>
+
 
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Avaa navigointi</string>
     <string name="navigation_drawer_close">Sulje navigointi</string>
+    <!-- Issue reporting implementation -->
+    <string name="region_dialog_message">Oletko alueella %1$s?</string>
+    <string name="preference_region_dialog_message">Alueesi on tällä hetkellä asetettu %1$s.
+Jos tämä on väärin, napauta \'Alueesi\' vaihtaaksesi sen!</string>
+    <string name="preference_region_dialog_title">Tarkista alue</string>
+    <string name="report_dialog_stop_header">Napauta pysäkkiä kartalla</string>
+    <string name="report_dialog_trip"> Valitse saapumisaika.</string>
+
+    <!-- report issue screen -->
+    <string name="ri_others">Muut</string>
+    <string name="ri_desc_hint">Ongelman kuvaus</string>
+    <string name="ri_button_camera">Kamera</string>
+    <string name="ri_button_image">LISÄÄ KUVA</string>
+    <string name="ri_button_gallery">Galleria</string>
+    <string name="ri_address_not_found">Osoitetta ei löytynyt. Tarkista osoitteesi.</string>
+    <string name="ri_service_description_problem">Palvelun kuvausta ei löytynyt.</string>
+    <string name="ri_open_camera_problem">Kameraa ei voitu avata.</string>
+    <string name="ri_resize_image_problem">Kuvaa ei voitu muuttaa kokoon - käytetään täyskokoa.</string>
+    <string name="ri_service_default">Valitse ongelma</string>
+    <string name="ri_service_stop">Pysäkin ongelma</string>
+    <string name="ri_service_trip">Saapumisajan ongelma</string>
+    <string name="ri_user_name_hint">Etunimi</string>
+    <string name="ri_user_lastname_hint">Sukunimi</string>
+    <string name="ri_user_email_hint">Sähköposti</string>
+    <string name="ri_user_phone_hint">Puhelinnumero</string>
+    <string name="ri_no_trip">Ei saapumisaikoja, tarkista myöhemmin uudelleen.</string>
+    <string name="ri_anonymous_checkbox">Pidä se anonyyminä</string>
+    <string name="ri_submitting_message">Raporttisi lähettäminen…</string>
+    <string name="ri_unsuccessful_submit">Virhe tapahtui lähetyksen aikana, yritä uudelleen myöhemmin.</string>
+
+    <!-- report issue types screen -->
+    <!-- Remove rt_infrastructure_problem and use rt_stop_problem -->
+    <string name="rt_infrastructure_problem">Ilmoita pysäkin ongelmasta</string>
+    <string name="rt_customer_service">Ota yhteyttä asiakaspalveluun</string>
+    <string name="rt_stop_problem">Ilmoita pysäkin ongelmasta</string>
+    <string name="rt_arrival_problem">Ilmoita saapumisajan ongelmasta</string>
+    <string name="rt_infrastructure_problem_title">Ilmoita ongelmasta</string>
+    <string name="rt_stop_problem_title">Pysäkin ongelma</string>
+    <string name="rt_arrival_problem_title">Saapumisajan ongelma</string>
+    <string name="rt_app_feedback">Lähetä sovelluspalaute</string>
+    <string name="rt_message_infrastructure_problem">Puuttuva reitti, rikki oleva penkki jne.</string>
+    <string name="rt_message_customer_service">Kuljettajan kehut ja valitukset, löytöjen toimittaminen jne.</string>
+    <string name="rt_message_stop_problem">Puuttuva reitti, väärä pysäkin nimi jne.</string>
+    <string name="rt_message_arrival_problem">Ajoneuvoa ei tullut, väärä saapumisaika jne.</string>
+    <string name="rt_message_app_feedback">Suunnittelu, bugit jne.</string>
+    <string name="rt_address_hint">Ongelman osoite (valinnainen)</string>
+    <string name="rt_yes">KYLLÄ</string>
+    <string name="rt_no">EI</string>
 
     <!-- Tutorial Fragment -->
     <string name="pager_button_prev">Edellinen</string>
@@ -537,6 +768,7 @@
     </string>
     <string name="trip_details_current_stop">Nykyinen pysäkki</string>
     <string name="trip_details_current_bus_position">Bussin nykyinen sijainti</string>
+    <string name="trip_details_dest_stop">Määränpään pysäkki</string>
 
     <!-- Vehicles on Map -->
     <string name="vehicle_last_updated_sec">Tiedot päivitetty %1$d s sitten</string>
@@ -550,6 +782,8 @@
         \n\nVAROITUS: Tämä ominaisuus voi aiheuttaa kohtauksia ihmisille, joilla on valoherkkä epilepsia. Käyttäjän harkintaa suositellaan.
     </string>
     <string name="night_light_create_shortcut">Luo pikakuvake</string>
+    <string name="night_light_start">Aloita</string>
+    <string name="night_light_cancel">Peruuta</string>
 
     <!-- Tutorials -->
     <string name="tutorial_button_text" >Tajusin!</string>
@@ -588,6 +822,22 @@
     <string name="tutorial_starred_stops_shortcut_text">Painamalla pitkään pysäkkiä voit luoda laitteesi 
         työpöydälle pikakuvakkeen. Pikakuvaketta napsauttamalla näet suoraan pysäkille saapuvat vuorot.
     </string>
+    <string name="tutorial_opt_out_dialog_title">Näytetäänkö opastus?</string>
+    <string name="tutorial_opt_out_dialog_text">Haluaisitko nähdä ponnahdusikkunoiden kuvauksia siitä, miten käytät OneBusAwayta? Voit aina kytkeä ponnahdusikkunat päälle tai pois Asetuksissa tai näyttää opastuksen myöhemmin Ohje-osion kautta.
+    </string>
+    <string name="tutorial_send_feedback_transit_service_title">Enemmän kuin pelkkä joukkoliikenne</string>
+    <string name="tutorial_send_feedback_transit_service_text">Voit ilmoittaa monenlaisista ongelmatyypeistä paikalliselle hallitukselle tämän pysäkin läheisyydessä. Napauta pudotusvalikkoa nähdäksesi täydellisen luettelon.
+    </string>
+    <string name="tutorial_trip_plan_geocoder_title">Syötä osoite tai paikan nimi</string>
+    <string name="tutorial_trip_plan_geocoder_text">Voit käyttää osoitteita tai paikan nimiä alkupisteinä ja määränpäinä matkasuunnitelmaa tehdessäsi. Pysäkkien tunnisteita ja risteyksiä ei tällä hetkellä tueta matkasuunnitelmissa.
+    </string>
+
+    <!-- Permissions -->
+    <string name="location_permissions_message">Parantaaksesi kokemustasi, ota käyttöön sijainnin käyttö:\n  - Näytä reaaliaikainen sijaintisi kartalla.\n  - Aseta automaattisesti paikallinen liikennevirastosi.\n\nEmme kerää sijaintitietojasi. Vaihtoehtoisesti voit valita alueesi manuaalisesti ilman sijaintioikeuksien sallimista.</string>
+    <string name="location_permissions_title">Sijaintiluvat</string>
+    <string name="no_thanks">Ei kiitos</string>
+    <string name="storage_permissions_title">Pääsy laitteen tallennustilaan vaaditaan</string>
+    <string name="storage_permissions_message">OneBusAway tarvitsee luvan käyttää paikallista laitteen tallennustilaa tietojesi varmuuskopiointia tai palauttamista varten.</string>
 
     <!-- About -->
     <string name="application_version">Versio</string>
@@ -670,13 +920,251 @@
 </html>
 
     ]]></string>
-    <string name="location_permissions_message">Parantaaksesi kokemustasi, ota käyttöön sijainnin käyttö:\n  - Näytä reaaliaikainen sijaintisi kartalla.\n  - Aseta automaattisesti paikallinen liikennevirastosi.\n\nEmme kerää sijaintitietojasi. Vaihtoehtoisesti voit valita alueesi manuaalisesti ilman sijaintioikeuksien sallimista.</string>
     <string name="title_activity_about">Tietoja</string>
-    <string name="trip_info_grant_exact_alarms_permission_title">Lupa tarvitaan</string>
-    <string name="trip_info_grant_exact_alarms_permission_message">Sinun täytyy antaa sovellukselle lupa muistutuksen asettamiseen.</string>
-    <string name="trip_info_grant_exact_alarms_permission_positive_button">Myönnä lupa</string>
-    <string name="trip_info_grant_exact_alarms_permission_negative_button">Peruuta</string>
 
+    <!-- Trip Planner strings -->
+    <string name="title_activity_trip_plan">Matkasuunnittelija (beeta)</string>
+    <string name="trip_plan_from">Lähtöpaikka: </string>
+    <string name="trip_plan_to">Määränpää: </string>
+    <string name="trip_plan_leaving">Lähtöaika</string>
+    <string name="trip_plan_arriving">Saapuminen</string>
+    <string name="trip_plan_stop_connector">kohteeseen</string>
+
+    <string name="trip_plan_start_location_hint">Lähtöosoite tai sijainnin nimi</string>
+    <string name="trip_plan_end_location_hint">Saapumisosoite tai sijainnin nimi</string>
+
+    <string name="trip_plan_list_view">Luettelonäkymä</string>
+    <string name="trip_plan_map_view">Karttanäkymä</string>
+
+    <string name="task_progress_tripplanner_progress">Suunnitellaan matkaa. Odota hetki...</string>
+    <string name="tripplanner_no_server_selected_error">Ei valittua aluetta</string>
+    <string name="tripplanner_error_dialog_title">Suunnitelmaa ei voida tehdä</string>
+    <!-- Errors -->
+    <string name="tripplanner_error_not_defined">Pahoittelut, jotain meni pieleen. Yritä uudelleen.</string>
+    <string name="tripplanner_error_request_timeout">Tarkista internet-yhteys ja yritä uudelleen.</string>
+    <string name="tripplanner_error_system">Tarkista internet-yhteys ja yritä uudelleen.</string>
+    <string name="tripplanner_error_outside_bounds">Lähtö- tai määränpääsi on liikenneverkon ulkopuolella</string>
+    <string name="tripplanner_error_path_not_found">Reittiä lähtö- ja määränpään välillä ei löytynyt</string>
+    <string name="tripplanner_error_no_transit_times">Valitulle päivälle ei ole saatavilla joukkoliikenteen aikoja</string>
+    <string name="tripplanner_error_bogus_parameter">Jotain meni pieleen. Muuta matkavaihtoehtoja ja yritä uudelleen.</string>
+    <string name="tripplanner_error_geocode_from_not_found">Lähtöpaikkaa ei löytynyt</string>
+    <string name="tripplanner_error_geocode_to_not_found">Määränpäätä ei löytynyt</string>
+    <string name="tripplanner_error_geocode_from_to_not_found">Lähtö- ja määränpäätä ei löytynyt</string>
+    <string name="tripplanner_error_too_close">Matka on liian lyhyt</string>
+    <string name="tripplanner_error_location_not_accessible">Valittu sijainti ei ole saavutettavissa</string>
+    <string name="tripplanner_error_geocode_from_ambiguous">Lähtöpaikka on epävarma</string>
+    <string name="tripplanner_error_geocode_to_ambiguous">Määränpää on epävarma</string>
+    <string name="tripplanner_error_geocode_from_to_ambiguous">Lähtö- ja määränpää ovat epävarmoja</string>
+    <string name="tripplanner_error_triangle">Jotain meni pieleen. Muuta pyöräilyvaihtoehtoja ja yritä uudelleen</string>
+    <!-- When routing from my location -->
+    <string name="tripplanner_current_location">Nykyinen sijainti</string>
+
+    <string name="tripplanner_no_contact">Tälle alueelle ei ole matkasuunnitteluyhteyttä.</string>
+
+    <string name="tripplanner_reverse">Käänteinen</string>
+    <string name="tripplanner_report_trip_problem">Raportoi matkasuunnitelman ongelma</string>
+
+    <string name="no_trip_planner_title">Google-kustannusten nousu</string>
+    <string name="no_trip_planner_message">Google veloittaa OneBusAwayta kaikista matkasuunnitelmista (noin 1000 dollaria kuukaudessa)! OBA on avoimen lähdekoodin projekti, eikä voi maksaa näitä kustannuksia. Olemme perustaneet voittoa tavoittelemattoman organisaation ja hakenut Google for Nonprofits -ohjelmaan, mutta odotamme edelleen hyväksyntää. Sillä välin olemme joutuneet sulkemaan matkasuunnittelijan. Jos haluat ilmaista tukeasi OneBusAwaylle Google for Nonprofitsille, ota heihin yhteyttä Twitterissä osoitteessa https://twitter.com/googlenonprofit?s=17!</string>
+
+    <!-- Instructions generation -->
+
+    <!-- Step-by-step screen -->
+
+    <!-- Instructions generation -->
+
+    <!-- Transit -->
+
+    <!-- Transit instruction start -->
+    <string name="step_by_step_transit_get_on">Nouse kyytiin</string>
+    <string name="step_by_step_transit_get_off">Poistu kyydistä</string>
+    <!--                This is exactly the formula that should be used, because the app won't include
+                        the destination stop under this text, so would be best to avoid expressions like
+                         "stops to destination". For example in the trip Barcelona/Paris/London/New York,
+                          stops in between are Paris and London, and not New York. See #394 for reference.-->
+    <string name="step_by_step_transit_stops_in_between">välikohdetta</string>
+    <string name="step_by_step_transit_stops_in_between_singular">välikohde</string>
+
+    <!-- Transit description start -->
+    <string name="step_by_step_transit_connector_stop_name">Pysäkillä</string>
+
+    <!-- Transit headsign connector -->
+    <string name="step_by_step_transit_connector_headsign">kohteeseen</string>
+
+    <!-- Real time -->
+
+    <!-- Modes -->
+
+    <!-- Modes -->
+    <string name="step_by_step_transit_mode_tram">ratikka</string>
+    <string name="step_by_step_transit_mode_subway">metro</string>
+    <string name="step_by_step_transit_mode_rail">juna</string>
+    <string name="step_by_step_transit_mode_bus">bussi</string>
+    <string name="step_by_step_transit_mode_ferry">lautta</string>
+    <string name="step_by_step_transit_mode_cable_car">köysirata</string>
+    <string name="step_by_step_transit_mode_gondola">gondoli</string>
+    <string name="step_by_step_transit_mode_funicular">hissi</string>
+
+    <!-- Non-transit -->
+
+    <!--  Main direction components -->
+    <string name="step_by_step_non_transit_mode_car_action">Aja</string>
+    <string name="step_by_step_non_transit_mode_walk_action">Kävele</string>
+    <string name="step_by_step_non_transit_mode_bicycle_action">Pyöräile</string>
+    <string name="step_by_step_non_transit_from">Lähtöpaikka</string>
+    <string name="step_by_step_non_transit_to">Määränpää</string>
+
+    <!-- Subdirection components -->
+
+    <!-- Connectors -->
+    <string name="step_by_step_non_transit_turn">Käänny</string>
+    <string name="step_by_step_non_transit_heading">suuntaan</string>
+    <string name="step_by_step_non_transit_connector_street_name">kohti</string>
+    <string name="step_by_step_non_transit_connector_street_name_roundabout">kohti</string>
+
+    <!-- Relative directions -->
+    <string name="step_by_step_non_transit_dir_relative_circle_clockwise">Pyöräile liikenneympyrään ja ota</string>
+    <string name="step_by_step_non_transit_dir_relative_circle_counterclockwise">Pyöräile liikenneympyrään ja ota</string>
+    <string name="step_by_step_non_transit_dir_relative_continue">Jatka</string>
+    <string name="step_by_step_non_transit_dir_relative_depart">Lähde</string>
+    <string name="step_by_step_non_transit_dir_relative_elevator">Ota hissi</string>
+    <string name="step_by_step_non_transit_dir_relative_hard_left">Käännä jyrkästi vasemmalle</string>
+    <string name="step_by_step_non_transit_dir_relative_hard_right">Käännä jyrkästi oikealle</string>
+    <string name="step_by_step_non_transit_dir_relative_left">vasemmalle</string>
+    <string name="step_by_step_non_transit_dir_relative_right">oikealle</string>
+    <string name="step_by_step_non_transit_dir_relative_slightly_left">Käännä hieman vasemmalle</string>
+    <string name="step_by_step_non_transit_dir_relative_slightly_right">Käännä hieman oikealle</string>
+    <string name="step_by_step_non_transit_dir_relative_uturn_left">Tee vasen U-käännös</string>
+    <string name="step_by_step_non_transit_dir_relative_uturn_right">Tee oikea U-käännös</string>
+
+    <!-- Absolute directions -->
+    <string name="step_by_step_non_transit_dir_absolute_east">itä</string>
+    <string name="step_by_step_non_transit_dir_absolute_north">pohjoinen</string>
+    <string name="step_by_step_non_transit_dir_absolute_northeast">koillinen</string>
+    <string name="step_by_step_non_transit_dir_absolute_northwest">luode</string>
+    <string name="step_by_step_non_transit_dir_absolute_south">etelä</string>
+    <string name="step_by_step_non_transit_dir_absolute_southeast">kaakko</string>
+    <string name="step_by_step_non_transit_dir_absolute_southwest">lounas</string>
+    <string name="step_by_step_non_transit_dir_absolute_west">länsi</string>
+
+    <!-- Roundabouts -->
+
+    <!-- Exit ordinals -->
+    <string name="step_by_step_non_transit_roundabout_ordinal_first">ensimmäinen</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_second">toinen</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_third">kolmas</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_fourth">neljäs</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_fifth">viides</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_sixth">kuudes</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_seventh">seitsemäs</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_eighth">kahdeksas</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_ninth">yhdeksäs</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_tenth">kymmenes</string>
+
+    <!-- To complement the step_by_step_non_transit_roundabout_number for a bigger ordinal -->
+    <string name="step_by_step_non_transit_roundabout_number">numero</string>
+
+    <!-- After the ordinal -->
+    <string name="step_by_step_non_transit_roundabout_exit">uloskäynti</string>
+
+    <!-- Street type -->
+    <string name="street_type_bike_path">pyörätie</string>
+    <string name="street_type_open_area">avoin alue</string>
+    <string name="street_type_path">polku</string>
+    <string name="street_type_bridleway">ratsastustie</string>
+    <string name="street_type_footpath">kävelytie</string>
+    <string name="street_type_platform">laituri</string>
+    <string name="street_type_footbridge">jalkasilta</string>
+    <string name="street_type_underpass">alikulkutunneli</string>
+    <string name="street_type_road">tie</string>
+    <string name="street_type_ramp">ramppi</string>
+    <string name="street_type_link">liitäntätie</string>
+    <string name="street_type_service_road">huollettu tie</string>
+    <string name="street_type_alley">piha</string>
+    <string name="street_type_parking_aisle">parkkialue</string>
+    <string name="street_type_byway">sivutie</string>
+    <string name="street_type_track">raide</string>
+    <string name="street_type_sidewalk">jalkakäytävä</string>
+    <string name="street_type_steps">portaat</string>
+
+    <!-- Units -->
+    <string name="hours_abbreviation">t</string>
+    <string name="hours_full">tuntia</string>
+    <string name="hour_singular">tunti</string>
+
+    <string name="seconds_abbrevation">s</string>
+    <string name="seconds_full">sekuntia</string>
+    <string name="seconds_singular">sekunti</string>
+
+    <string name="minute_singular">minuutti</string>
+
+    <!-- Connectors -->
+    <string name="time_connector_next_day">huomenna</string>
+    <string name="time_connector_before_time">klo</string>
+    <string name="time_connector_before_date">päivämäärällä</string>
+
+    <!-- Used to introduce route names in itineraries drop down (map view and step-by-step) and map mode markers popups -->
+    <string name="connector_before_route">Reitti</string>
+
+
+    <!-- Real time -->
+
+    <string name="trip_plan_notification_new_plan_title">Löysimme paremman matkasuunnitelman</string>
+    <string name="trip_plan_notification_new_plan_text">Napauta nähdäksesi uudet tulokset viimeisimmälle lähtö- ja määränpäällesi.</string>
+    <string name="trip_plan_delay">Matkasi on myöhässä.</string>
+    <string name="trip_plan_early">Matkasi on aikaisessa.</string>
+
+    <!-- Trip plan advanced settings -->
+    <string name="trip_plan_advanced_settings">Lisäasetukset matkalle</string>
+    <string name="minimize_transfers">Minimoi vaihdot</string>
+    <string name="maximum_walk_distance">Maksimikävelymatka: </string>
+    <string name="wheelchair_accessible">Vältä portaita</string>
+
+    <string name="travel_by_label">Matkustustapa: </string>
+    <string name="transit_mode_transit_only">Vain joukkoliikenne</string>
+    <string name="transit_mode_transit_and_bikeshare">Joukkoliikenne &amp; pyörävuokraus</string>
+    <string name="transit_mode_bus">Vain bussi</string>
+    <string name="transit_mode_rail">Vain juna</string>
+    <string name="transit_mode_bikeshare">Vain pyörävuokraus</string>
+    <string name="transit_directions_bikeshare_label">Pyörävuokraus</string>
+
+    <!-- Bikeshare info window -->
+    <string name="bike_info_window_bikes_title">Polkupyörät</string>
+
+    <!-- Bikeshare preference option -->
+    <string name="bike_info_window_spaces_title">Paikat</string>
+    <string name="layers_speedial_bikeshare_label">Pyörävuokraus</string>
+    <string name="bike_station_title">Napauta varataksesi pyörän</string>
+    <string name="floating_bike_title">Napauta varataksesi tämän pyörän</string>
+
+    <string name="application_ignoring_battery_opt_title">Suorituskykyhälytys!</string>
+    <string name="application_ignoring_battery_opt_message">Akun optimoinnit ovat käytössä tälle sovellukselle, mikä voi heikentää sovelluksen suorituskykyä. Saadaksesi parhaan käyttökokemuksen tästä sovelluksesta, siirry asetuksiin ja poista suorituskyvyn optimoinnit käytöstä OneBusAway-sovellukselle.</string>
+
+    <!--Travel Behaviour data collection-->
+    <string name="travel_behavior_opt_in_message">Haluaisimme apuasi tutkimuksessa joukkoliikennepalveluiden parantamiseksi.</string>
+    <string name="travel_behavior_opt_in_title">Autathan meitä kehittämään joukkoliikennettä!</string>
+    <string name="travel_behavior_age_message">Oletko yli 18-vuotias?</string>
+    <string name="travel_behavior_age_invalid_message">Kiitos kiinnostuksestasi, mutta sinun tulee olla yli 18-vuotias osallistuaksesi.</string>
+    <string name="travel_behavior_email_message">Ole hyvä ja anna sähköpostiosoitteesi verkkokyselyjä varten</string>
+    <string name="travel_behavior_email_invalid">Ole hyvä ja syötä sähköpostiosoitteesi uudelleen</string>
+    <string name="travel_behavior_enroll_success">Ilmoittauduit onnistuneesti tutkimukseen.</string>
+    <string name="travel_behavior_enroll_fail">Ilmoittautuminen tutkimukseen epäonnistui. Yritä myöhemmin uudelleen.</string>
+    <string name="travel_behavior_email_hint">Sähköposti</string>
+    <string name="travel_behavior_confirm_email_hint">Vahvista sähköposti</string>
+    <string name="travel_behavior_dialog_yes">Kyllä</string>
+    <string name="travel_behavior_dialog_no">Ei</string>
+    <string name="travel_behavior_dialog_learn_more">Lue lisää</string>
+    <string name="travel_behavior_dialog_not_now">Ei nyt</string>
+    <string name="travel_behavior_dialog_consent_agree">Hyväksy</string>
+    <string name="travel_behavior_dialog_consent_disagree">Hylkää</string>
+    <string name="travel_behavior_dialog_email_save">Tallenna</string>
+    <string name="reset_time">Nollaa aika</string>
+    <string name="set_destination_to_my_location">Aseta määränpääksi nykyinen sijaintini</string>
+    <string name="set_origin_to_my_location">Aseta lähtöpaikaksi nykyinen sijaintini</string>
+    <string name="travel_behavior_dialog_opt_out_title">Haluatko poistua tutkimuksesta?</string>
+    <string name="travel_behavior_dialog_opt_out_message">Jos poistut tutkimuksesta, emme saa enää tietoa matkustuskäyttäytymisestäsi joukkoliikenteen parantamiseksi.</string>
+    <string name="cancel">Peruuta</string>
+    <string name="my_option_clear_starred_routes">Poista kaikki merkityt reitit</string>
     <string name="preferred_temperature_unit">Suosittu lämpötilayksikkö</string>
     <string name="fahrenheit">Fahrenheit</string>
     <string name="celsius">Celsius</string>

@@ -44,7 +44,6 @@
         <item>Näytä kartalla</item>
     </string-array>
     <string-array name="reminder_time">
-        <item>Ei muistutusta</item>
         <item>1 minuutti</item>
         <item>3 minuuttia</item>
         <item>5 minuuttia</item>

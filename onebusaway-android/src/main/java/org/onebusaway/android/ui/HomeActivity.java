@@ -48,9 +48,7 @@ import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
-import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
-import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.ui.survey.SurveyManager;
 import org.onebusaway.android.ui.survey.utils.SurveyViewUtils;
 import org.onebusaway.android.ui.weather.RegionCallback;
@@ -109,8 +107,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -134,7 +130,6 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_ROUTES;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
-import static org.onebusaway.android.util.PermissionUtils.BACKGROUND_LOCATION_PERMISSION_REQUEST;
 import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_BOTTOM;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_END;
@@ -1043,11 +1038,6 @@ public class HomeActivity extends AppCompatActivity
 
         if (oldVer < newVer && mActivityWeakRef.get() != null && !mActivityWeakRef.get().isFinishing()) {
             mActivityWeakRef.get().showDialog(WHATSNEW_DIALOG);
-
-            // Updates will remove the alarms. This should put them back.
-            // (Unfortunately I can't find a way to reschedule them without
-            // having the app run again).
-            TripService.scheduleAll(this, true);
             PreferenceUtils.saveInt(WHATS_NEW_VER, appInfo.versionCode);
             return true;
         }
@@ -2195,5 +2185,4 @@ public class HomeActivity extends AppCompatActivity
         });
         surveyManager.requestSurveyData();
     }
-
 }

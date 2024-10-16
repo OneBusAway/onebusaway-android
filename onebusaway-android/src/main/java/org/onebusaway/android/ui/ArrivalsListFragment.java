@@ -1438,7 +1438,7 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
                 stopInfo.getRouteId(),
                 stopInfo.getShortName(),
                 mStop.getName(),
-                stopInfo.getPredictedDepartureTime(),
+                ReminderUtils.getReminderDepartureTime(stopInfo),
                 stopInfo.getHeadsign(),
                 stopInfo.getStopSequence(),
                 stopInfo.getServiceDate(),

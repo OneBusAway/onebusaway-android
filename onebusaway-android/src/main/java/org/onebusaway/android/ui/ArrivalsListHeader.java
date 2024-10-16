@@ -62,6 +62,7 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.Status;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.ReminderUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
@@ -1026,7 +1027,7 @@ class ArrivalsListHeader {
                             info1.getRouteId(),
                             info1.getShortName(),
                             mController.getStopName(),
-                            info1.getScheduledDepartureTime(),
+                            ReminderUtils.getReminderDepartureTime(info1),
                             info1.getHeadsign(),
                             info1.getStopSequence(),
                             info1.getServiceDate(),
@@ -1090,7 +1091,7 @@ class ArrivalsListHeader {
                             info2.getRouteId(),
                             info2.getShortName(),
                             mController.getStopName(),
-                            info2.getScheduledDepartureTime(),
+                            ReminderUtils.getReminderDepartureTime(info2),
                             info2.getHeadsign(),
                             info2.getStopSequence(),
                             info2.getServiceDate(),

@@ -342,13 +342,11 @@ public class TripResultsFragment extends Fragment {
                 NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
                 NotificationChannel channel = manager.getNotificationChannel(Application.CHANNEL_TRIP_PLAN_UPDATES_ID);
                 if(channel.getImportance() != NotificationManager.IMPORTANCE_NONE){
-                    RealtimeService.start(getActivity(), getArguments());
+                    RealtimeService.start(getArguments(), getActivity(), context);
                 }
             } else {
-                if (Application.getPrefs()
-                        .getBoolean(getString(R.string.preference_key_trip_plan_notifications), true)) {
-
-                    RealtimeService.start(getActivity(), getArguments());
+                if (Application.getPrefs().getBoolean(getString(R.string.preference_key_trip_plan_notifications), true)) {
+                    RealtimeService.start(getArguments(), getActivity(), context);
                 }
             }
         }

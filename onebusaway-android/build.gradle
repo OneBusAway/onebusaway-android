@@ -367,7 +367,7 @@ dependencies {
     // Required to support multidex for minSdkVersion <= 20
     implementation 'androidx.multidex:multidex:2.0.1'
     // Explicit dependency on Gson is now apparently needed
-    implementation 'com.google.code.gson:gson:2.9.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
     androidTestImplementation 'androidx.test:runner:1.1.0'
     // WorkManager (Java only)

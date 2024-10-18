@@ -28,8 +28,8 @@
                 android:textSize="16sp" />
 
         <Button
-                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                 android:textSize="24sp"
+                android:backgroundTint="@color/theme_primary"
                 android:textColor="@color/quantum_white_100"
                 android:text="@string/donation_view_donate_now_button"
                 android:layout_width="match_parent"

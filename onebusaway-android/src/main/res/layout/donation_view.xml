@@ -70,8 +70,9 @@
             android:layout_height="wrap_content">
 
             <Button
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:textSize="16sp"
+                android:textColor="@color/theme_primary"
+                android:backgroundTint="@android:color/white"
                 android:text="@string/donation_view_learn_more_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -79,7 +80,7 @@
                 android:layout_weight="1" />
 
             <Button
-                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                android:backgroundTint="@color/theme_primary"
                 android:textSize="16sp"
                 android:textColor="@color/quantum_white_100"
                 android:text="@string/donation_view_donate_now_button"

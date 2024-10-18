@@ -318,26 +318,25 @@ configurations {
 dependencies {
     // Firebase Analytics
     implementation 'com.google.firebase:firebase-core:21.1.1'
-    implementation 'com.google.firebase:firebase-analytics:22.1.0'
+    implementation 'com.google.firebase:firebase-analytics:22.1.2'
     // Cloud Firestore (for storing destination alert test data)
     implementation 'com.google.firebase:firebase-firestore:25.1.0'
     implementation 'com.google.firebase:firebase-auth:21.0.5'
-    implementation 'com.google.firebase:firebase-storage:21.0.0'
+    implementation 'com.google.firebase:firebase-storage:21.0.1'
     // Firebase Crashlytics
-    implementation 'com.google.firebase:firebase-crashlytics:19.0.3'
+    implementation 'com.google.firebase:firebase-crashlytics:19.2.0'
     implementation 'com.google.firebase:firebase-crashlytics-buildtools:3.0.2'
     // Google Play Services Location
-    implementation 'com.google.android.gms:play-services-location:19.0.1'
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
     // OneSignal
     implementation 'com.onesignal:OneSignal:[5.0.0, 5.99.99]'
     // Support libraries
-    implementation 'androidx.activity:activity:1.4.0'
-    implementation 'androidx.fragment:fragment:1.4.1'
+    implementation 'androidx.activity:activity-ktx:1.9.3'
+    implementation 'androidx.fragment:fragment-ktx:1.8.4'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'com.google.android.material:material:1.0.0'
     implementation 'android.arch.lifecycle:extensions:1.1.1'
     implementation 'android.arch.lifecycle:common-java8:1.1.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha3'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'commons-io:commons-io:2.4'
     implementation 'org.apache.commons:commons-lang3:3.0'
     // Open311 client library
@@ -358,25 +357,25 @@ dependencies {
     implementation 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
     // Pelias for point-of-interest search and geocoding for trip planning origin and destination
     implementation 'com.github.OneBusAway:pelias-client-library:v1.1.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
     // Google Play Services Maps (only for Google flavor)
     googleImplementation 'com.google.android.gms:play-services-maps:19.0.0'
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)
     googleImplementation 'com.google.android.libraries.places:places-compat:2.6.0'
     // Autocomplete text views with clear button for trip planning
-    implementation 'com.google.android.material:material:1.1.0'
+    implementation 'com.google.android.material:material:1.12.0'
     // Required to support multidex for minSdkVersion <= 20
     implementation 'androidx.multidex:multidex:2.0.1'
     // Explicit dependency on Gson is now apparently needed
-    implementation 'com.google.code.gson:gson:2.9.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
-    androidTestImplementation 'androidx.test:runner:1.1.0'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
     // WorkManager (Java only)
-    implementation 'androidx.work:work-runtime:2.7.1'
-    implementation "androidx.concurrent:concurrent-futures:1.0.0-beta01"
+    implementation 'androidx.work:work-runtime:2.9.1'
+    implementation "androidx.concurrent:concurrent-futures:1.2.0"
     implementation "androidx.concurrent:concurrent-listenablefuture:1.0.0-beta01"
     implementation "androidx.concurrent:concurrent-listenablefuture-callback:1.0.0-beta01"
-    implementation "androidx.core:core-ktx:1.7.0"
+    implementation "androidx.core:core-ktx:1.13.1"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     // RoomDB
     implementation "androidx.room:room-runtime:2.6.1"

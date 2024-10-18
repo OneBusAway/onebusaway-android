@@ -371,8 +371,8 @@ dependencies {
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
     androidTestImplementation 'androidx.test:runner:1.6.2'
     // WorkManager (Java only)
-    implementation 'androidx.work:work-runtime:2.7.1'
-    implementation "androidx.concurrent:concurrent-futures:1.0.0-beta01"
+    implementation 'androidx.work:work-runtime:2.9.1'
+    implementation "androidx.concurrent:concurrent-futures:1.2.0"
     implementation "androidx.concurrent:concurrent-listenablefuture:1.0.0-beta01"
     implementation "androidx.concurrent:concurrent-listenablefuture-callback:1.0.0-beta01"
     implementation "androidx.core:core-ktx:1.13.1"

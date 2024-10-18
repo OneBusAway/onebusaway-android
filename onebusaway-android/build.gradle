@@ -369,7 +369,7 @@ dependencies {
     // Explicit dependency on Gson is now apparently needed
     implementation 'com.google.code.gson:gson:2.10.1'
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
-    androidTestImplementation 'androidx.test:runner:1.1.0'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
     // WorkManager (Java only)
     implementation 'androidx.work:work-runtime:2.7.1'
     implementation "androidx.concurrent:concurrent-futures:1.0.0-beta01"

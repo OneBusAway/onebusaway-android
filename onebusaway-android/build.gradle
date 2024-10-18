@@ -331,8 +331,8 @@ dependencies {
     // OneSignal
     implementation 'com.onesignal:OneSignal:[5.0.0, 5.99.99]'
     // Support libraries
-    implementation 'androidx.activity:activity:1.4.0'
-    implementation 'androidx.fragment:fragment:1.4.1'
+    implementation 'androidx.activity:activity-ktx:1.9.3'
+    implementation 'androidx.fragment:fragment-ktx:1.8.4'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'android.arch.lifecycle:extensions:1.1.1'

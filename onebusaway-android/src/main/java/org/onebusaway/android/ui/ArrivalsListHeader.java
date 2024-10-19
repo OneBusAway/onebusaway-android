@@ -52,6 +52,7 @@ import android.widget.TextView;
 
 import androidx.fragment.app.FragmentManager;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -437,6 +438,7 @@ class ArrivalsListHeader {
         mStopFavorite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                notifyStopFavoriteChanged(mController.isFavoriteStop());
                 mController.setFavoriteStop(!mController.isFavoriteStop());
                 refreshStopFavorite();
             }
@@ -1008,6 +1010,7 @@ class ArrivalsListHeader {
                         @Override
                         public void onSelectionComplete(boolean savedFavorite) {
                             if (savedFavorite) {
+                                notifyRouteFavoriteChanged(isRouteFavorite);
                                 mController.refreshLocal();
                             }
                         }
@@ -1073,6 +1076,7 @@ class ArrivalsListHeader {
                         @Override
                         public void onSelectionComplete(boolean savedFavorite) {
                             if (savedFavorite) {
+                                notifyRouteFavoriteChanged(isRouteFavorite2);
                                 mController.refreshLocal();
                             }
                         }
@@ -1468,6 +1472,22 @@ class ArrivalsListHeader {
             mProgressBar.setVisibility(View.VISIBLE);
         } else {
             mProgressBar.setVisibility(View.GONE);
+        }
+    }
+
+    private void notifyRouteFavoriteChanged(boolean isRouteSaved) {
+        if(isRouteSaved){
+            Snackbar.make(mView, R.string.route_removed_from_favorites, Snackbar.LENGTH_SHORT).show();
+        }else{
+            Snackbar.make(mView, R.string.route_added_to_favorites, Snackbar.LENGTH_SHORT).show();
+        }
+    }
+
+    private void notifyStopFavoriteChanged(boolean isStopSaved){
+        if(isStopSaved) {
+            Snackbar.make(mView, R.string.stop_removed_from_favorites, Snackbar.LENGTH_SHORT).show();
+        } else {
+            Snackbar.make(mView, R.string.stop_added_to_favorites, Snackbar.LENGTH_SHORT).show();
         }
     }
 }

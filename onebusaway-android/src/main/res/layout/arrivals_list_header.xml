@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2011-2017 Paul Watts (paulcwatts@gmail.com),
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2011-2017 Paul Watts (paulcwatts@gmail.com),
     University of South Florida (sjbarbeau@gmail.com),
     Microsoft Corporation
 
@@ -16,19 +15,19 @@
     limitations under the License.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:id="@+id/arrivals_list_header"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/arrival_header_height_two_arrivals"
-                android:orientation="vertical">
+        android:id="@+id/arrivals_list_header"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/arrival_header_height_two_arrivals"
+        android:orientation="vertical">
 
-    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                    style="@style/HeaderItem"
-                    android:id="@+id/main_header_content"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/arrival_header_height_two_arrivals"
-                    android:layout_alignParentTop="true"
-                    android:layout_above="@+id/filter_group"
-                    android:orientation="vertical">
+    <RelativeLayout
+            style="@style/HeaderItem"
+            android:id="@+id/main_header_content"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/arrival_header_height_two_arrivals"
+            android:layout_alignParentTop="true"
+            android:layout_above="@+id/filter_group"
+            android:orientation="vertical">
 
         <LinearLayout
                 android:id="@+id/edit_name_container"
@@ -48,7 +47,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
-                    android:imeOptions="actionDone"/>
+                    android:imeOptions="actionDone" />
 
             <LinearLayout
                     android:orientation="horizontal"
@@ -66,7 +65,7 @@
                         android:backgroundTint="@color/quantum_white_100"
                         android:layout_height="wrap_content"
                         android:layout_width="0dip"
-                        android:layout_weight="1"/>
+                        android:layout_weight="1" />
 
                 <Button
                         android:id="@+id/edit_name_save"
@@ -76,7 +75,7 @@
                         android:backgroundTint="@color/quantum_white_100"
                         android:layout_height="wrap_content"
                         android:layout_width="0dip"
-                        android:layout_weight="1"/>
+                        android:layout_weight="1" />
 
                 <Button
                         android:id="@+id/edit_name_revert"
@@ -86,57 +85,65 @@
                         android:backgroundTint="@color/quantum_white_100"
                         android:layout_height="wrap_content"
                         android:layout_width="0dip"
-                        android:layout_weight="1"/>
+                        android:layout_weight="1" />
             </LinearLayout>
         </LinearLayout>
 
         <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                     android:id="@+id/eta_table"
-                     android:layout_width="match_parent"
-                     android:layout_height="wrap_content"
-                     android:stretchColumns="1, 2"
-                     android:shrinkColumns="1"
-                     android:layout_above="@+id/stop_details_container">
+                android:id="@+id/eta_table"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:stretchColumns="1, 2"
+                android:shrinkColumns="1"
+                android:layout_above="@+id/stop_details_container">
 
             <!-- First ETA row -->
-            <include android:id="@+id/eta_container1"
-                     layout="@layout/arrivals_list_header_row_template"
-                     android:layout_width="match_parent"
-                     android:layout_height="wrap_content"
-                     android:paddingBottom="5dp"
-                     android:visibility="gone"/>
+            <include
+                    android:id="@+id/eta_container1"
+                    layout="@layout/arrivals_list_header_row_template"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="5dp"
+                    android:visibility="gone" />
 
             <!-- Line separator -->
-            <TableRow
-                    xmlns:android="http://schemas.android.com/apk/res/android"
+            <TableRow xmlns:android="http://schemas.android.com/apk/res/android"
                     android:gravity="center_vertical"
                     android:id="@+id/eta_separator"
                     android:visibility="gone">
                 <!-- Because the other TableRows arrivals_list_header_row_template have 4 columns,
                  we need to break up the line separator into the same, otherwise it makes
                  the first favorites column bigger than it needs to be -->
-                <View android:layout_width="match_parent"
-                      android:layout_height="1dp"
-                      android:layout_marginLeft="@dimen/keyline_1"
-                      android:background="@color/header_text_faded_color"/>
-                <View android:layout_width="match_parent"
-                      android:layout_height="1dp"
-                      android:background="@color/header_text_faded_color"/>
-                <View android:layout_width="match_parent"
-                      android:layout_height="1dp"
-                      android:background="@color/header_text_faded_color"/>
-                <View android:layout_width="match_parent"
-                      android:layout_height="1dp"
-                      android:layout_marginRight="@dimen/keyline_1"
-                      android:background="@color/header_text_faded_color"/>
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginLeft="@dimen/keyline_1"
+                        android:background="@color/header_text_faded_color" />
+
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/header_text_faded_color" />
+
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/header_text_faded_color" />
+
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginRight="@dimen/keyline_1"
+                        android:background="@color/header_text_faded_color" />
             </TableRow>
 
             <!-- Second ETA row -->
-            <include android:id="@+id/eta_container2"
-                     layout="@layout/arrivals_list_header_row_template"
-                     android:layout_width="match_parent"
-                     android:layout_height="wrap_content"
-                     android:visibility="gone"/>
+            <include
+                    android:id="@+id/eta_container2"
+                    layout="@layout/arrivals_list_header_row_template"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
         </TableLayout>
 
         <!-- Stop name, star, and stopinfo button  -->
@@ -147,8 +154,8 @@
                 android:orientation="horizontal"
                 android:layout_alignParentBottom="true"
                 android:layout_centerInParent="true"
-                android:layout_marginLeft="32dp"
-                android:layout_marginRight="32dp"
+                android:layout_marginLeft="24dp"
+                android:layout_marginRight="24dp"
                 android:paddingRight="@dimen/keyline_1"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="@dimen/arrival_header_bottom_margin">
@@ -169,7 +176,7 @@
                     android:scaleType="fitCenter"
                     android:adjustViewBounds="true"
                     android:gravity="center"
-                    android:padding="5dp"/>
+                    android:padding="5dp" />
 
             <LinearLayout
                     android:id="@+id/stop_name_and_info_container"
@@ -179,8 +186,8 @@
                     android:layout_toRightOf="@+id/stop_favorite"
                     android:weightSum="1"
                     android:layout_weight="1">
-                    <!-- The layout_weight on this container indicates that this layout can fill
-                    any space not consumed by the stop_favorite and stop_discussion images -->
+                <!-- The layout_weight on this container indicates that this layout can fill
+                any space not consumed by the stop_favorite and stop_discussion images -->
 
                 <TextView
                         android:id="@+id/stop_name"
@@ -194,7 +201,7 @@
                         android:layout_gravity="left|center_vertical"
                         android:layout_weight=".95"
                         android:textIsSelectable="false"
-                        android:layout_marginLeft="1dp"/>
+                        android:layout_marginLeft="1dp" />
 
                 <TextView
                         android:id="@+id/stop_direction"
@@ -207,7 +214,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="left|center_vertical"
                         android:layout_weight=".05"
-                        android:textIsSelectable="false"/>
+                        android:textIsSelectable="false" />
 
                 <ImageButton
                         android:id="@+id/stop_info_button"
@@ -225,7 +232,7 @@
                         android:maxHeight="12dp"
                         android:scaleType="fitCenter"
                         android:adjustViewBounds="true"
-                        android:padding="5dp"/>
+                        android:padding="5dp" />
             </LinearLayout>
         </LinearLayout>
 
@@ -240,7 +247,7 @@
                 android:paddingBottom="5dp"
                 android:visibility="visible"
                 android:layout_marginTop="8dp"
-                android:layout_centerInParent="true"/>
+                android:layout_centerInParent="true" />
 
         <TextView
                 android:id="@+id/no_arrivals"
@@ -253,9 +260,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"
                 android:layout_above="@+id/stop_details_container"
-                android:textIsSelectable="false" android:layout_centerVertical="true"
+                android:textIsSelectable="false"
+                android:layout_centerVertical="true"
                 android:layout_centerHorizontal="true"
-                android:visibility="gone"/>
+                android:visibility="gone" />
 
         <ImageView
                 android:id="@+id/expand_collapse"
@@ -266,7 +274,7 @@
                 android:layout_marginBottom="@dimen/arrival_header_bottom_margin_expand_collapse"
                 android:layout_alignParentBottom="true"
                 android:layout_alignParentRight="true"
-                android:layout_marginRight="@dimen/keyline_1"/>
+                android:layout_marginRight="@dimen/keyline_1" />
 
         <ImageView
                 android:id="@+id/alert"
@@ -277,7 +285,7 @@
                 android:layout_alignParentBottom="true"
                 android:layout_alignParentLeft="true"
                 android:layout_marginLeft="6dp"
-                android:visibility="gone"/>
+                android:visibility="gone" />
     </RelativeLayout>
 
     <!-- Filter by route -->
@@ -300,7 +308,7 @@
                 android:layout_weight="1"
                 android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp"
-                android:gravity="center_vertical|right"/>
+                android:gravity="center_vertical|right" />
 
         <TextView
                 android:id="@+id/show_all"
@@ -313,6 +321,6 @@
                 android:gravity="center_vertical"
                 android:bufferType="spannable"
                 android:linksClickable="true"
-                android:textColorLink="@color/theme_accent"/>
+                android:textColorLink="@color/theme_accent" />
     </LinearLayout>
 </RelativeLayout>

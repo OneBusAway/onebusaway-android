@@ -718,4 +718,8 @@
     <string name="preferences_show_weather_view_on_map">Näytä säätiedot kartalla</string>
     <string name="failed_to_set_reminder">Muistutuksen asettaminen epäonnistui</string>
     <string name="reminder_not_enabled">Muistutus ei ole käytössä</string>
+    <string name="stop_added_to_favorites">Pysäkki lisätty suosikkeihin</string>
+    <string name="stop_removed_from_favorites">Pysäkki poistettu suosikeista</string>
+    <string name="route_added_to_favorites">Reitti lisätty suosikkeihin</string>
+    <string name="route_removed_from_favorites">Reitti poistettu suosikeista</string>
 </resources>

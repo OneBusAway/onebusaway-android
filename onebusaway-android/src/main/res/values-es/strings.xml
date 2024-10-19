@@ -1121,4 +1121,8 @@
     <string name="preferences_show_weather_view_on_map">Mostrar la vista del clima en el mapa</string>
     <string name="failed_to_set_reminder">Error al establecer el recordatorio</string>
     <string name="reminder_not_enabled">Recordatorio no habilitado</string>
+    <string name="stop_added_to_favorites">Parada añadida a favoritos</string>
+    <string name="stop_removed_from_favorites">Parada eliminada de favoritos</string>
+    <string name="route_added_to_favorites">Ruta añadida a favoritos</string>
+    <string name="route_removed_from_favorites">Ruta eliminada de favoritos</string>
 </resources>

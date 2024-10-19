@@ -147,8 +147,8 @@
                 android:orientation="horizontal"
                 android:layout_alignParentBottom="true"
                 android:layout_centerInParent="true"
-                android:layout_marginLeft="@dimen/keyline_1"
-                android:layout_marginRight="@dimen/keyline_1"
+                android:layout_marginLeft="32dp"
+                android:layout_marginRight="32dp"
                 android:paddingRight="@dimen/keyline_1"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="@dimen/arrival_header_bottom_margin">
@@ -276,7 +276,7 @@
                 android:layout_marginBottom="@dimen/arrival_header_bottom_margin_expand_collapse"
                 android:layout_alignParentBottom="true"
                 android:layout_alignParentLeft="true"
-                android:layout_marginLeft="@dimen/keyline_1"
+                android:layout_marginLeft="6dp"
                 android:visibility="gone"/>
     </RelativeLayout>
 

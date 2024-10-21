@@ -1270,4 +1270,8 @@
     <string name="preferences_show_weather_view_on_map">Display the weather view on the map</string>
     <string name="failed_to_set_reminder">Failed to set reminder</string>
     <string name="reminder_not_enabled">Reminder not enabled</string>
+    <string name="stop_added_to_favorites">Stop added to favorites</string>
+    <string name="stop_removed_from_favorites">Stop removed from favorites</string>
+    <string name="route_added_to_favorites">Route added to favorites</string>
+    <string name="route_removed_from_favorites">Route removed from favorites</string>
 </resources>

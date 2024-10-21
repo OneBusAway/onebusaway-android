@@ -1032,4 +1032,8 @@
     <string name="preferences_show_weather_view_on_map">Mostra la vista del meteo sulla mappa</string>
     <string name="failed_to_set_reminder">Impossibile impostare il promemoria</string>
     <string name="reminder_not_enabled">Promemoria non abilitato</string>
+    <string name="stop_added_to_favorites">Fermata aggiunta ai preferiti</string>
+    <string name="stop_removed_from_favorites">Fermata rimossa dai preferiti</string>
+    <string name="route_added_to_favorites">Percorso aggiunto ai preferiti</string>
+    <string name="route_removed_from_favorites">Percorso rimosso dai preferiti</string>
 </resources>

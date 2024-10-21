@@ -1476,18 +1476,12 @@ class ArrivalsListHeader {
     }
 
     private void notifyRouteFavoriteChanged(boolean isRouteSaved) {
-        if(isRouteSaved){
-            Snackbar.make(mView, R.string.route_removed_from_favorites, Snackbar.LENGTH_SHORT).show();
-        }else{
-            Snackbar.make(mView, R.string.route_added_to_favorites, Snackbar.LENGTH_SHORT).show();
-        }
+        int message = isRouteSaved ? R.string.route_removed_from_favorites : R.string.route_added_to_favorites;
+        Snackbar.make(mView, message, Snackbar.LENGTH_SHORT).show();
     }
 
-    private void notifyStopFavoriteChanged(boolean isStopSaved){
-        if(isStopSaved) {
-            Snackbar.make(mView, R.string.stop_removed_from_favorites, Snackbar.LENGTH_SHORT).show();
-        } else {
-            Snackbar.make(mView, R.string.stop_added_to_favorites, Snackbar.LENGTH_SHORT).show();
-        }
+    private void notifyStopFavoriteChanged(boolean isStopSaved) {
+        int message = isStopSaved ? R.string.stop_removed_from_favorites : R.string.stop_added_to_favorites;
+        Snackbar.make(mView, message, Snackbar.LENGTH_SHORT).show();
     }
 }

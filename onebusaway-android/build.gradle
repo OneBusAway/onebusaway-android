@@ -49,6 +49,13 @@ android {
 
         // This enables us to tell when we're running unit tests on CI (#1010 for Travis, #1072 for GitHub)
         buildConfigField("String", "CI", "\"" + System.getenv('CI') + "\"")
+
+        // Configure Java compile options to specify the schema location for Room database to keep track of schema versions
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
+            }
+        }
     }
 
     /**
@@ -320,7 +327,12 @@ dependencies {
     implementation 'com.google.firebase:firebase-core:21.1.1'
     implementation 'com.google.firebase:firebase-analytics:22.1.2'
     // Cloud Firestore (for storing destination alert test data)
-    implementation 'com.google.firebase:firebase-firestore:25.1.0'
+    implementation('com.google.firebase:firebase-firestore:25.1.0') {
+        // Exclude protobuf-lite and protolite-well-known-types to avoid conflicts with GTFS-realtime bindings
+        // See https://github.com/firebase/firebase-android-sdk/issues/5997
+        exclude group: 'com.google.firebase', module: 'protolite-well-known-types'
+        exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
+    }
     implementation 'com.google.firebase:firebase-auth:21.0.5'
     implementation 'com.google.firebase:firebase-storage:21.0.1'
     // Firebase Crashlytics
@@ -381,7 +393,8 @@ dependencies {
     implementation "androidx.room:room-runtime:2.6.1"
     kapt "androidx.room:room-compiler:2.6.1"
     implementation "androidx.room:room-ktx:2.6.1"
-
+    // GTFS Realtime bindings for parsing GTFS-realtime data
+    implementation group: 'org.mobilitydata', name: 'gtfs-realtime-bindings', version: '0.0.8'
 }
 
 apply plugin:'com.google.gms.google-services'

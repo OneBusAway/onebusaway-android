@@ -1,0 +1,192 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "4db170986b81dc2388f0e2a0f3aee2f0",
+    "entities": [
+      {
+        "tableName": "studies",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`study_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `is_subscribed` INTEGER NOT NULL, PRIMARY KEY(`study_id`))",
+        "fields": [
+          {
+            "fieldPath": "study_id",
+            "columnName": "study_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "is_subscribed",
+            "columnName": "is_subscribed",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "study_id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "surveys",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`survey_id` INTEGER NOT NULL, `study_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `state` INTEGER NOT NULL, PRIMARY KEY(`survey_id`), FOREIGN KEY(`study_id`) REFERENCES `studies`(`study_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "survey_id",
+            "columnName": "survey_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "study_id",
+            "columnName": "study_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "survey_id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "studies",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "study_id"
+            ],
+            "referencedColumns": [
+              "study_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "regions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`regionId` INTEGER NOT NULL, PRIMARY KEY(`regionId`))",
+        "fields": [
+          {
+            "fieldPath": "regionId",
+            "columnName": "regionId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "regionId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "stops",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`stop_id` TEXT NOT NULL, `name` TEXT NOT NULL, `regionId` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`stop_id`), FOREIGN KEY(`regionId`) REFERENCES `regions`(`regionId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "stop_id",
+            "columnName": "stop_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "regionId",
+            "columnName": "regionId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "stop_id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "regions",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "regionId"
+            ],
+            "referencedColumns": [
+              "regionId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "alerts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4db170986b81dc2388f0e2a0f3aee2f0')"
+    ]
+  }
+}

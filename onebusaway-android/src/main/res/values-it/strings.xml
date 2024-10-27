@@ -1036,4 +1036,8 @@
     <string name="stop_removed_from_favorites">Fermata rimossa dai preferiti</string>
     <string name="route_added_to_favorites">Percorso aggiunto ai preferiti</string>
     <string name="route_removed_from_favorites">Percorso rimosso dai preferiti</string>
+    <string name="dismiss">Ignora</string>
+    <string name="more_info">Maggiori informazioni</string>
+    <string name="display_test_alerts">Mostra avvisi di prova</string>
+    <string name="display_test_wide_alerts_for_regions">Mostra avvisi di prova per regioni</string>
 </resources>

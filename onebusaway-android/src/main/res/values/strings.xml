@@ -1274,4 +1274,8 @@
     <string name="stop_removed_from_favorites">Stop removed from favorites</string>
     <string name="route_added_to_favorites">Route added to favorites</string>
     <string name="route_removed_from_favorites">Route removed from favorites</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="more_info">More Info</string>
+    <string name="display_test_alerts">Display test alerts</string>
+    <string name="display_test_wide_alerts_for_regions">Display test-wide alerts for regions</string>
 </resources>

@@ -146,6 +146,11 @@
                     android:key="@string/preference_key_experimental_regions"
                     android:summary="@string/preferences_experimental_regions_summary"
                     android:title="@string/preferences_experimental_regions_title" />
+                <CheckBoxPreference
+                        android:key="@string/preferences_display_test_alerts"
+                        android:defaultValue="false"
+                        android:summary="@string/display_test_wide_alerts_for_regions"
+                        android:title="@string/display_test_alerts" />
                 <EditTextPreference
                     android:hint="@string/preferences_oba_api_servername_hint"
                     android:inputType="text|textNoSuggestions"

@@ -722,4 +722,8 @@
     <string name="stop_removed_from_favorites">Pysäkki poistettu suosikeista</string>
     <string name="route_added_to_favorites">Reitti lisätty suosikkeihin</string>
     <string name="route_removed_from_favorites">Reitti poistettu suosikeista</string>
+    <string name="dismiss">Hylkää</string>
+    <string name="more_info">Lisätietoja</string>
+    <string name="display_test_alerts">Näytä testihälytykset</string>
+    <string name="display_test_wide_alerts_for_regions">Näytä laajat testihälytykset alueille</string>
 </resources>

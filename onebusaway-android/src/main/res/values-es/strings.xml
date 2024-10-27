@@ -1125,4 +1125,8 @@
     <string name="stop_removed_from_favorites">Parada eliminada de favoritos</string>
     <string name="route_added_to_favorites">Ruta añadida a favoritos</string>
     <string name="route_removed_from_favorites">Ruta eliminada de favoritos</string>
+    <string name="dismiss">Descartar</string>
+    <string name="more_info">Más información</string>
+    <string name="display_test_alerts">Mostrar alertas de prueba</string>
+    <string name="display_test_wide_alerts_for_regions">Mostrar alertas de prueba amplias para regiones</string>
 </resources>

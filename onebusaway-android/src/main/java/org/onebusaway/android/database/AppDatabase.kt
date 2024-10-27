@@ -1,6 +1,5 @@
 package org.onebusaway.android.database
 
-import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import org.onebusaway.android.database.recentStops.dao.RegionDao
@@ -20,11 +19,11 @@ import org.onebusaway.android.ui.survey.entity.Survey
  * The `@Database` annotation sets up Room with version 1 of the schema.
  */
 
+// Beginning from version 2 we should support auto migration
 @Database(
     entities = [Study::class, Survey::class, RegionEntity::class, StopEntity::class, AlertEntity::class],
     version = 2,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2)]
 )
 abstract class AppDatabase : RoomDatabase() {
     // Studies

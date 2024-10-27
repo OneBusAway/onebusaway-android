@@ -55,6 +55,7 @@ import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ReminderUtils;
+import org.onebusaway.android.widealerts.GtfsAlerts;
 
 import java.security.MessageDigest;
 import java.util.Iterator;
@@ -81,6 +82,8 @@ public class Application extends MultiDexApplication {
     private SharedPreferences mPrefs;
 
     private DonationsManager mDonationsManager;
+
+    private GtfsAlerts mGtfsAlerts;
 
     private static Application mApp;
 
@@ -121,6 +124,8 @@ public class Application extends MultiDexApplication {
         initOneSignal();
 
         mDonationsManager = new DonationsManager(mPrefs, mFirebaseAnalytics, getResources(), getAppLaunchCount());
+
+        mGtfsAlerts = new GtfsAlerts(getApplicationContext());
     }
 
     /**
@@ -146,6 +151,10 @@ public class Application extends MultiDexApplication {
     }
 
     public static DonationsManager getDonationsManager() { return get().mDonationsManager; }
+
+    public static GtfsAlerts getGtfsAlerts() {
+        return get().mGtfsAlerts;
+    }
 
     private static String appLaunchCountPreferencesKey = "appLaunchCountPreferencesKey";
 

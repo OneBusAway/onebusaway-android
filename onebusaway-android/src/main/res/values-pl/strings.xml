@@ -742,4 +742,8 @@
     <string name="stop_removed_from_favorites">Przystanek usunięty z ulubionych</string>
     <string name="route_added_to_favorites">Trasa dodana do ulubionych</string>
     <string name="route_removed_from_favorites">Trasa usunięta z ulubionych</string>
+    <string name="dismiss">Odrzuć</string>
+    <string name="more_info">Więcej informacji</string>
+    <string name="display_test_alerts">Wyświetl alerty testowe</string>
+    <string name="display_test_wide_alerts_for_regions">Wyświetl szerokie alerty testowe dla regionów</string>
 </resources>

@@ -27,6 +27,7 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
+import org.onebusaway.android.widealerts.GtfsAlertCallBack;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.donations.DonationsManager;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -60,6 +61,7 @@ import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
+import org.onebusaway.android.widealerts.GtfsAlertsHelper;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import android.Manifest;
@@ -79,6 +81,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -2008,6 +2011,7 @@ public class HomeActivity extends AppCompatActivity
     public void onValidRegion(boolean isValid) {
         if(isValid){
             makeWeatherRequest();
+            getGtfsAlerts();
         }else{
             WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
             weatherResponse = null;
@@ -2185,4 +2189,17 @@ public class HomeActivity extends AppCompatActivity
         });
         surveyManager.requestSurveyData();
     }
+
+    private void getGtfsAlerts() {
+        String regionId = String.valueOf(Application.get().getCurrentRegion().getId());
+        Application.getGtfsAlerts().fetchAlerts(regionId, new GtfsAlertCallBack() {
+            @Override
+            public void onAlert(String title, String message, String url) {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    GtfsAlertsHelper.showWideAlertDialog(HomeActivity.this, title, message, url);
+                });
+            }
+        });
+    }
+
 }

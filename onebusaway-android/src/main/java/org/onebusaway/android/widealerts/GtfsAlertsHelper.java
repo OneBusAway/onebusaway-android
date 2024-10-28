@@ -4,6 +4,7 @@ import com.google.transit.realtime.GtfsRealtime;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.database.widealerts.AlertsRepository;
+import org.onebusaway.android.database.widealerts.entity.AlertEntity;
 
 import android.content.Context;
 import android.content.Intent;
@@ -143,6 +144,16 @@ public class GtfsAlertsHelper {
 
     public static boolean isAlertRead(Context context, GtfsRealtime.FeedEntity entity) {
         return AlertsRepository.isAlertExists(context, entity.getId());
+    }
+
+    /**
+     * Marks the alert as read by inserting it into the database.
+     *
+     * @param context The context to access the database.
+     * @param entity The `GtfsRealtime.FeedEntity` object representing the alert.
+     */
+    public static void markAlertAsRead(Context context, GtfsRealtime.FeedEntity entity) {
+        AlertsRepository.insertAlert(context, new AlertEntity(entity.getId()));
     }
 
     public static String getCurrentAppLanguageCode() {

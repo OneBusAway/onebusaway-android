@@ -4,8 +4,6 @@ import com.google.transit.realtime.GtfsRealtime;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.database.widealerts.AlertsRepository;
-import org.onebusaway.android.database.widealerts.entity.AlertEntity;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -63,12 +61,11 @@ public class GtfsAlerts {
      */
     public void processAlerts(List<GtfsRealtime.FeedEntity> alerts, GtfsAlertCallBack callback) {
         for (GtfsRealtime.FeedEntity entity : alerts) {
-            GtfsRealtime.Alert alert = entity.getAlert();
             if (!GtfsAlertsHelper.isValidEntity(mContext, entity)) {
                 continue;
             }
-            // Store the alert in the database.
-            AlertsRepository.insertAlert(mContext, new AlertEntity(entity.getId()));
+            GtfsRealtime.Alert alert = entity.getAlert();
+            GtfsAlertsHelper.markAlertAsRead(Application.get().getApplicationContext() ,entity);
 
             String id = entity.getId();
             String title = GtfsAlertsHelper.getAlertTitle(alert);

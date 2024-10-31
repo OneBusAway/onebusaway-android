@@ -395,6 +395,7 @@ dependencies {
     implementation "androidx.room:room-ktx:2.6.1"
     // GTFS Realtime bindings for parsing GTFS-realtime data
     implementation group: 'org.mobilitydata', name: 'gtfs-realtime-bindings', version: '0.0.8'
+    implementation 'com.google.api.grpc:proto-google-common-protos:2.9.0'
 }
 
 apply plugin:'com.google.gms.google-services'

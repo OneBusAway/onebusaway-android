@@ -65,15 +65,16 @@ public class GtfsAlerts {
                 continue;
             }
             GtfsRealtime.Alert alert = entity.getAlert();
-            GtfsAlertsHelper.markAlertAsRead(Application.get().getApplicationContext() ,entity);
-
             String id = entity.getId();
             String title = GtfsAlertsHelper.getAlertTitle(alert);
             String description = GtfsAlertsHelper.getAlertDescription(alert);
             String url = GtfsAlertsHelper.getAlertUrl(alert);
 
             Log.d(TAG, "Alert: " + id + " - " + title + " - " + description + " - " + url);
+            GtfsAlertsHelper.markAlertAsRead(Application.get().getApplicationContext(), entity);
             callback.onAlert(title, description, url);
+            // Only trigger the callback for one alert.
+            break;
         }
     }
 

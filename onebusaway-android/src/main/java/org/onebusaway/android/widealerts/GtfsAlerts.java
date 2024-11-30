@@ -38,10 +38,13 @@ public class GtfsAlerts {
             Log.d(TAG, "Alerts already fetched for region: " + regionId);
             return;
         }
+        String pathUrl = getGtfsAlertsUrl(regionId);
+        if (pathUrl == null) {
+            return;
+        }
         Log.d(TAG, "fetchAlerts for region: " + regionId);
         new Thread(() -> {
             try {
-                String pathUrl = getGtfsAlertsUrl(regionId);
                 URL url = new URL(pathUrl);
                 GtfsRealtime.FeedMessage feed = GtfsRealtime.FeedMessage.parseFrom(url.openStream());
                 processAlerts(feed.getEntityList(), callback);
@@ -87,11 +90,13 @@ public class GtfsAlerts {
     public String getGtfsAlertsUrl(String regionId) {
         Application app = Application.get();
         SharedPreferences sharedPreferences = Application.getPrefs();
-
+        String baseUrl = app.getCurrentRegion().getSidecarBaseUrl();
+        if (baseUrl == null) return null;
         boolean isTestAlert = sharedPreferences.getBoolean(app.getString(R.string.preferences_display_test_alerts), false);
-        String url = "https://onebusaway.co/api/v1/regions/" + regionId + "/alerts.pb";
-        if (isTestAlert) url += "?test=1";
-        return url;
+        String alertAPIURL = baseUrl + app.getString(R.string.alerts_api_endpoint);
+        alertAPIURL = alertAPIURL.replace("regionID", regionId);
+        if (isTestAlert) alertAPIURL += "?test=1";
+        return alertAPIURL;
     }
 
 }

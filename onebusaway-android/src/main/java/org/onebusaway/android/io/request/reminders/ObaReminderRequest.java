@@ -34,7 +34,7 @@ public final class ObaReminderRequest extends RequestBase implements Callable<Re
 
         public Builder(Context context) {
             super(context, null);
-            String baseUrl = context.getString(R.string.arrivals_reminders_api_url);
+            String baseUrl = context.getString(R.string.arrivals_reminders_api_endpoint);
             Application app = Application.get();
             uriBuilder = Uri.parse(baseUrl).buildUpon();
             buildAPIURL(String.valueOf(app.getCurrentRegion().getId()));

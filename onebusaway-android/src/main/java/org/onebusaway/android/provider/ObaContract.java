@@ -368,6 +368,14 @@ public final class ObaContract {
         public static final String OBA_BASE_URL = "oba_base_url";
 
         /**
+         * The Sidecar Base URL for the API.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String SIDECAR_BASE_URL = "sidecar_base_url";
+
+        /**
          * The base SIRI URL.
          * <P>
          * Type: TEXT
@@ -1404,7 +1412,8 @@ public final class ObaContract {
                     PAYMENT_WARNING_TITLE,
                     PAYMENT_WARNING_BODY,
                     TRAVEL_BEHAVIOR_DATA_COLLECTION,
-                    ENROLL_PARTICIPANTS_IN_STUDY
+                    ENROLL_PARTICIPANTS_IN_STUDY,
+                    SIDECAR_BASE_URL
             };
 
             Cursor c = cr.query(buildUri((int) id), PROJECTION, null, null, null);
@@ -1437,7 +1446,8 @@ public final class ObaContract {
                             c.getString(17),               // Payment Warning Title
                             c.getString(18),               // Payment Warning Body
                             c.getInt(19) > 0, // Travel behavior data collection
-                            c.getInt(20) > 0 // Enroll participants in travel behavior study
+                            c.getInt(20) > 0, // Enroll participants in travel behavior study
+                            c.getString(21) // Sidecar Base URL
                     );
                 } finally {
                     c.close();

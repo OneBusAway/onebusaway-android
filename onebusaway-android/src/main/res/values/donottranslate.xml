@@ -77,16 +77,19 @@
     <string name="regions_api_url">https://regions.onebusaway.org/regions-v3.json</string>
 
     <!-- Weather API URL -->
-    <string name="weather_api_url">https://onebusaway.co/api/v1/regions/regionID/weather.json</string>
+    <string name="weather_api_endpoint">/api/v1/regions/regionID/weather.json</string>
 
     <!-- GET Survey API URL -->
-    <string name="studies_api_url">https://onebusaway.co/api/v1/regions/regionID/surveys.json</string>
+    <string name="studies_api_endpoint">/api/v1/regions/regionID/surveys.json</string>
 
     <!-- POST Survey API URL -->
-    <string name="submit_survey_api_url">https://onebusaway.co/api/v1/survey_responses/</string>
+    <string name="submit_survey_api_endpoint">/api/v1/survey_responses/</string>
 
     <!-- Arrivals Alarm API URL -->
-    <string name="arrivals_reminders_api_url">https://onebusaway.co/api/v1/regions/</string>
+    <string name="arrivals_reminders_api_endpoint">/api/v1/regions/</string>
+
+    <!-- Alerts API Endpoint -->
+    <string name="alerts_api_endpoint">/api/v1/regions/regionID/alerts.pb</string>
 
     <!-- Donate URL -->
     <string name="donate_url">https://onebusaway.org/donate/</string>

@@ -1,6 +1,7 @@
 package org.onebusaway.android.io.request.weather;
 
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -23,10 +24,12 @@ public final class ObaWeatherRequest extends RequestBase implements Callable<Oba
         private static Uri URI = null;
 
         public Builder(long regionId) {
-            String weatherAPIURL = Application.get().getResources().getString(R.string.weather_api_url);
-
+            String baseUrl = Application.get().getCurrentRegion().getSidecarBaseUrl();
+            if(baseUrl == null) return;
+            String weatherAPIURL = baseUrl + Application.get().getResources().getString(R.string.weather_api_endpoint);
             // Replacing param regionID with our current region id.
             weatherAPIURL = weatherAPIURL.replace("regionID",String.valueOf(regionId));
+            Log.e("WeatherAPIURL", weatherAPIURL);
             URI = Uri.parse(weatherAPIURL);
         }
 

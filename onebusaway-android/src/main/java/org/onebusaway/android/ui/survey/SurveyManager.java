@@ -243,7 +243,8 @@ public class SurveyManager extends SurveyViewUtils implements SurveyActionsListe
      * @return apiURl
      */
     private String getSubmitSurveyApiUrl(boolean isHeroQuestion) {
-        String apiUrl = context.getString(R.string.submit_survey_api_url);
+        String baseUrl = Application.get().getCurrentRegion().getSidecarBaseUrl();
+        String apiUrl = baseUrl + context.getString(R.string.submit_survey_api_endpoint);
         if (!isHeroQuestion && updateSurveyPath != null) {
             apiUrl += updateSurveyPath;
         }

@@ -28,7 +28,9 @@ public final class ObaStudyRequest extends RequestBase implements Callable<Study
         private static Uri URI = null;
 
         public Builder(Context context) {
-            String studyAPIURL = Application.get().getResources().getString(R.string.studies_api_url);
+            String baseUrl = Application.get().getCurrentRegion().getSidecarBaseUrl();
+            if(baseUrl == null) return;
+            String studyAPIURL = baseUrl + Application.get().getResources().getString(R.string.studies_api_endpoint);
             studyAPIURL = studyAPIURL.replace("regionID", String.valueOf(Application.get().getCurrentRegion().getId()));
             URI = Uri.parse(studyAPIURL).buildUpon().appendQueryParameter("user_id", SurveyPreferences.getUserUUID(context)).build();
         }

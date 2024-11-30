@@ -68,6 +68,12 @@ public interface ObaRegion {
     public String getObaBaseUrl();
 
     /**
+     * @return The sideCar Vase URL for this region, or null if it doesn't have a sideCar URL.
+     */
+
+    public String getSidecarBaseUrl();
+
+    /**
      * @return The base SIRI URL for this region, or null if it doesn't use SIRI.
      */
     public String getSiriBaseUrl();

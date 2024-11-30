@@ -49,7 +49,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 31;
+        private static final int DATABASE_VERSION = 32;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -311,6 +311,12 @@ public class ObaProvider extends ContentProvider {
             if (oldVersion == 30) {
                 db.execSQL("DROP TABLE IF EXISTS " + ObaContract.Trips.PATH);
                 createTripsTable(db);
+                ++oldVersion;
+            }
+
+            if(oldVersion == 31) {
+                db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
+                        " ADD COLUMN " + ObaContract.Regions.SIDECAR_BASE_URL + " VARCHAR");
             }
 
         }
@@ -621,6 +627,8 @@ public class ObaProvider extends ContentProvider {
                 .put(ObaContract.RegionOpen311Servers.API_KEY, ObaContract.RegionOpen311Servers.API_KEY);
         sRegionOpen311ProjectionMap
                 .put(ObaContract.RegionOpen311Servers.BASE_URL, ObaContract.RegionOpen311Servers.BASE_URL);
+        sRegionsProjectionMap
+                .put(ObaContract.Regions.SIDECAR_BASE_URL, ObaContract.Regions.SIDECAR_BASE_URL);
     }
 
     private SQLiteDatabase mDb;

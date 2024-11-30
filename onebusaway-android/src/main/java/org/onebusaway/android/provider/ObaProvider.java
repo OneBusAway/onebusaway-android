@@ -316,7 +316,7 @@ public class ObaProvider extends ContentProvider {
 
             if(oldVersion == 31) {
                 db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
-                        " ADD COLUMN " + ObaContract.Regions.SIDECAR_BASE_URL + " VARCHAR");
+                        " ADD COLUMN " + ObaContract.Regions.SIDECAR_BASE_URL + " VARCHAR DEFAULT 'https://onebusaway.co'");
             }
 
         }

@@ -68,7 +68,7 @@ public interface ObaRegion {
     public String getObaBaseUrl();
 
     /**
-     * @return The sideCar Vase URL for this region, or null if it doesn't have a sideCar URL.
+     * @return The Sidecar Base URL for this region, or null if it doesn't have a sideCar URL.
      */
 
     public String getSidecarBaseUrl();

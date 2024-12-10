@@ -540,6 +540,7 @@ public class TripInfoActivity extends AppCompatActivity {
                     Log.d(TAG, "Reminder set successfully");
                 } else {
                     Log.d(TAG, "Response or url is null");
+                    handleReminderFailure();
                 }
             });
         }

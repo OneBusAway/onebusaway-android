@@ -15,34 +15,29 @@
  */
 package org.onebusaway.android.directions.realtime;
 
-import android.app.Activity;
-import android.app.AlarmManager;
-import android.app.IntentService;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.Bundle;
-import android.util.Log;
-
-import androidx.core.app.NotificationCompat;
-
-import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.directions.model.ItineraryDescription;
-import org.onebusaway.android.directions.tasks.TripRequest;
 import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.Leg;
-import org.opentripplanner.api.model.TripPlan;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import androidx.work.Data;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 /**
  * This service is started after a trip is planned by the user so they can be notified if the
@@ -50,76 +45,96 @@ import java.util.List;
  * and then the top result for that trip gets delayed by 20 minutes, the user will be notified
  * that new trip results are available.
  */
-public class RealtimeService extends IntentService {
-
+public class RealtimeService {
     private static final String TAG = "RealtimeService";
-
     private static final String ITINERARY_DESC = ".ItineraryDesc";
     private static final String ITINERARY_END_DATE = ".ItineraryEndDate";
-
-    public RealtimeService() {
-        super("RealtimeService");
-    }
 
     /**
      * Start realtime updates.
      *
-     * @param source Activity from which updates are started
+     * @param source Activity from which class information is read
      * @param bundle Bundle with selected itinerary/parameters
+     * @param context Context with which work manager is initialized
      */
-    public static void start(Activity source, Bundle bundle) {
+    public static void start(Bundle bundle, Activity source, Context context){
 
-        SharedPreferences prefs = Application.getPrefs();
-        if (!prefs.getBoolean(OTPConstants.PREFERENCE_KEY_LIVE_UPDATES, true)) {
+        // FIXME - Figure out why sometimes the bundle is empty - see #790 and #791
+        if(bundle == null){
+            Log.d(TAG, "Bundle is null");
             return;
         }
 
-        bundle.putSerializable(OTPConstants.NOTIFICATION_TARGET, source.getClass());
-        Intent intent = new Intent(OTPConstants.INTENT_START_CHECKS);
-        intent.putExtras(bundle);
-        source.sendBroadcast(intent);
-    }
+        if(isRealTimeEnabled() && isItineraryRealTime(bundle)){
+            Data data = buildData(bundle, source.getClass());
 
-    @Override
-    public void onHandleIntent(Intent intent) {
-        Bundle bundle = intent.getExtras();
+            PeriodicWorkRequest checkItineraries = new PeriodicWorkRequest
+                    .Builder(RealTimeWorker.class, OTPConstants.DEFAULT_UPDATE_INTERVAL_TRIP_TIME, TimeUnit.MILLISECONDS)
+                    .setInputData(data)
+                    .setInitialDelay(getStartTime(bundle), TimeUnit.MILLISECONDS)
+                    .build();
 
-        if (intent.getAction().equals(OTPConstants.INTENT_START_CHECKS)) {
-            disableListenForTripUpdates();
-            if (!rescheduleRealtimeUpdates(bundle)) {
-                Itinerary itinerary = getItinerary(bundle);
-                startRealtimeUpdates(bundle, itinerary);
-            }
-        } else if (intent.getAction().equals(OTPConstants.INTENT_CHECK_TRIP_TIME)) {
-            checkForItineraryChange(bundle);
+            Log.d(TAG, "RealtimeService Enqueued");
+            WorkManager workManager = WorkManager.getInstance(context);
+
+            workManager.enqueueUniquePeriodicWork(
+                    OTPConstants.REALTIME_UNIQUE_WORKER_NAME,
+                    ExistingPeriodicWorkPolicy.REPLACE,
+                    checkItineraries);
         }
-
-        RealtimeWakefulReceiver.completeWakefulIntent(intent);
     }
 
-    // Depending on preferences / whether there is realtime info, start updates.
-    private void startRealtimeUpdates(Bundle params, Itinerary itinerary) {
+    private static boolean isRealTimeEnabled(){
+        SharedPreferences prefs = Application.getPrefs();
+        Log.d(TAG, "RealtimeEnabled :"+String.valueOf(prefs.getBoolean(OTPConstants.PREFERENCE_KEY_LIVE_UPDATES, true)));
+        return prefs.getBoolean(OTPConstants.PREFERENCE_KEY_LIVE_UPDATES, true);
+    }
 
-        Log.d(TAG, "Checking whether to start realtime updates.");
-
+    private static boolean isItineraryRealTime(Bundle bundle){
+        Itinerary itinerary = getItinerary(bundle);
         boolean realtimeLegsOnItineraries = false;
-
         for (Leg leg : itinerary.legs) {
             if (leg.realTime) {
                 realtimeLegsOnItineraries = true;
             }
         }
+        Log.d(TAG, "RealtimeItinerary :"+String.valueOf(realtimeLegsOnItineraries));
+        return realtimeLegsOnItineraries;
+    }
 
-        if (realtimeLegsOnItineraries) {
-            Log.d(TAG, "Starting realtime updates for itinerary");
+    private static Data buildData(Bundle bundle, final Class<? extends Activity> source) {
+        bundle.putSerializable(OTPConstants.NOTIFICATION_TARGET, source);
 
-            // init alarm mgr
-            getAlarmManager().setInexactRepeating(AlarmManager.RTC, new Date().getTime(),
-                    OTPConstants.DEFAULT_UPDATE_INTERVAL_TRIP_TIME, getAlarmIntent(params));
-        } else {
-            Log.d(TAG, "No realtime legs on itinerary");
-        }
+        Data result = new TripRequestBuilder(bundle).getRealTimeData();
+        Data.Builder builder = new Data.Builder();
+        builder.putAll(result);
 
+        Itinerary itinerary = getItinerary(bundle);
+        ItineraryDescription desc = new ItineraryDescription(itinerary);
+        List<String> idList = desc.getTripIds();
+
+        String[] ids = idList.toArray(new String[idList.size()]);
+        long endDate = desc.getEndDate().getTime();
+        builder.putStringArray(ITINERARY_DESC, ids);
+        builder.putLong(ITINERARY_END_DATE, endDate);
+
+        builder.putString(OTPConstants.NOTIFICATION_TARGET,
+                bundle.getSerializable(OTPConstants.NOTIFICATION_TARGET).toString());
+
+        Data simplifiedData = builder.build();
+        return simplifiedData;
+    }
+
+    public static Bundle toBundle(Data data) {
+        Bundle bundle = TripRequestBuilder.convertRealTimeData(data);
+        Map<String, Object> map = data.getKeyValueMap();
+
+        bundle.putStringArray(ITINERARY_DESC, (String[]) map.get(ITINERARY_DESC));
+        bundle.putLong(ITINERARY_END_DATE, (Long) map.get(ITINERARY_END_DATE));
+
+        bundle.putSerializable(OTPConstants.NOTIFICATION_TARGET, (String) map.get(OTPConstants.NOTIFICATION_TARGET));
+
+        return bundle;
     }
 
     /**
@@ -127,235 +142,22 @@ public class RealtimeService extends IntentService {
      * reschedule it
      *
      * @param bundle trip details to be passed to TripRequestBuilder constructor
-     * @return true if the start of trip real-time updates has been rescheduled, false if updates
-     * should begin immediately
+     * @return Time to delay the start of trip updates
      */
-    private boolean rescheduleRealtimeUpdates(Bundle bundle) {
-        // Delay if this trip doesn't start for at least an hour
+    private static long getStartTime(Bundle bundle){
         Date start = new TripRequestBuilder(bundle).getDateTime();
-        if (start == null) {
-            // To avoid NPE, return true to say that it's been rescheduled, but don't actually reschedule it
-            // FIXME - Figure out why sometimes the bundle is empty - see #790 and #791
-            return true;
-        }
         Date queryStart = new Date(start.getTime() - OTPConstants.REALTIME_SERVICE_QUERY_WINDOW);
         boolean reschedule = new Date().before(queryStart);
-
-        if (reschedule) {
-            Log.d(TAG, "Start service at " + queryStart);
-            Intent future = new Intent(OTPConstants.INTENT_START_CHECKS);
-            future.putExtras(bundle);
-
-            int flags;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE;
-            } else {
-                flags = PendingIntent.FLAG_CANCEL_CURRENT;
-            }
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(),
-                    0, future, flags);
-            getAlarmManager().set(AlarmManager.RTC_WAKEUP, queryStart.getTime(), pendingIntent);
+        if(reschedule){
+            return queryStart.getTime();
         }
-
-        return reschedule;
+        return 0;
     }
 
-    private void checkForItineraryChange(final Bundle bundle) {
-        TripRequestBuilder builder = TripRequestBuilder.initFromBundleSimple(bundle);
-        ItineraryDescription desc = getItineraryDescription(bundle);
-        Class target = getNotificationTarget(bundle);
-        if (target == null) {
-            disableListenForTripUpdates();
-            return;
-        }
-        checkForItineraryChange(target, builder, desc);
-    }
-
-    private void checkForItineraryChange(final Class<? extends Activity> source, final TripRequestBuilder builder, final ItineraryDescription itineraryDescription) {
-
-        Log.d(TAG, "Check for change");
-
-        TripRequest.Callback callback = new TripRequest.Callback() {
-            @Override
-            public void onTripRequestComplete(TripPlan tripPlan, String url) {
-                if (tripPlan == null || tripPlan.itineraries == null || tripPlan.itineraries.isEmpty()) {
-                    onTripRequestFailure(-1, null);
-                    return;
-                }
-
-                // Check each itinerary. Notify user if our *current* itinerary doesn't exist
-                // or has a lower rank.
-                for (int i = 0; i < tripPlan.itineraries.size(); i++) {
-                    ItineraryDescription other = new ItineraryDescription(tripPlan.itineraries.get(i));
-
-                    if (itineraryDescription.itineraryMatches(other)) {
-
-                        long delay = itineraryDescription.getDelay(other);
-                        Log.d(TAG, "Schedule deviation on itinerary: " + delay);
-
-                        if (Math.abs(delay) > OTPConstants.REALTIME_SERVICE_DELAY_THRESHOLD) {
-                            Log.d(TAG, "Notify due to large early/late schedule deviation.");
-                            showNotification(itineraryDescription,
-                                    (delay > 0) ? R.string.trip_plan_delay
-                                            : R.string.trip_plan_early,
-                                    R.string.trip_plan_notification_new_plan_text,
-                                    source, builder.getBundle(), tripPlan.itineraries);
-                            disableListenForTripUpdates();
-                            return;
-                        }
-
-                        // Otherwise, we are still good.
-                        Log.d(TAG, "Itinerary exists and no large schedule deviation.");
-                        checkDisableDueToTimeout(itineraryDescription);
-
-                        return;
-                    }
-                }
-                Log.d(TAG, "Did not find a matching itinerary in new call - notify user that something has changed.");
-                showNotification(itineraryDescription,
-                        R.string.trip_plan_notification_new_plan_title,
-                        R.string.trip_plan_notification_new_plan_text, source,
-                        builder.getBundle(), tripPlan.itineraries);
-                disableListenForTripUpdates();
-            }
-
-            @Override
-            public void onTripRequestFailure(int result, String url) {
-                Log.e(TAG, "Failure checking itineraries. Result=" + result + ", url=" + url);
-                disableListenForTripUpdates();
-            }
-        };
-
-        builder.setListener(callback);
-
-        try {
-            builder.execute();
-        } catch (Exception e) {
-            e.printStackTrace();
-            disableListenForTripUpdates();
-        }
-    }
-
-    private void showNotification(ItineraryDescription description, int title, int message,
-                                  Class<? extends Activity> notificationTarget,
-                                  Bundle params, List<Itinerary> itineraries) {
-
-        String titleText = getResources().getString(title);
-        String messageText = getResources().getString(message);
-
-        Intent openIntent = new Intent(getApplicationContext(), notificationTarget);
-        openIntent.putExtras(params);
-        openIntent.putExtra(OTPConstants.INTENT_SOURCE, OTPConstants.Source.NOTIFICATION);
-        openIntent.putExtra(OTPConstants.ITINERARIES, (ArrayList<Itinerary>) itineraries);
-        openIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        int flags;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE;
-        } else {
-            flags = PendingIntent.FLAG_CANCEL_CURRENT;
-        }
-        PendingIntent openPendingIntent = PendingIntent
-                .getActivity(getApplicationContext(),
-                        0,
-                        openIntent,
-                        flags);
-
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(getApplicationContext(), Application.CHANNEL_TRIP_PLAN_UPDATES_ID)
-                        .setSmallIcon(R.drawable.ic_stat_notification)
-                        .setContentTitle(titleText)
-                        .setStyle(new NotificationCompat.BigTextStyle().bigText(messageText))
-                        .setContentText(messageText)
-                        .setPriority(NotificationCompat.PRIORITY_MAX)
-                        .setContentIntent(openPendingIntent);
-
-        NotificationManager notificationManager =
-                (NotificationManager) getApplicationContext()
-                        .getSystemService(Context.NOTIFICATION_SERVICE);
-        Notification notification = mBuilder.build();
-        notification.defaults = Notification.DEFAULT_ALL;
-        notification.flags |= Notification.FLAG_AUTO_CANCEL | Notification.FLAG_SHOW_LIGHTS;
-
-        Integer notificationId = description.getId();
-        notificationManager.notify(notificationId, notification);
-    }
-
-    // If the end time for this itinerary has passed, disable trip updates.
-    private void checkDisableDueToTimeout(ItineraryDescription itineraryDescription) {
-        if (itineraryDescription.isExpired()) {
-            Log.d(TAG, "End of trip has passed.");
-            disableListenForTripUpdates();
-        }
-    }
-
-    public void disableListenForTripUpdates() {
-        Log.d(TAG, "Disable trip updates.");
-        getAlarmManager().cancel(getAlarmIntent(null));
-    }
-
-
-    private AlarmManager getAlarmManager() {
-        return (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-    }
-
-    private PendingIntent getAlarmIntent(Bundle bundle) {
-        Intent intent = new Intent(OTPConstants.INTENT_CHECK_TRIP_TIME);
-        if (bundle != null) {
-            Bundle extras = getSimplifiedBundle(bundle);
-            intent.putExtras(extras);
-        }
-        int flags;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE;
-        } else {
-            flags = PendingIntent.FLAG_UPDATE_CURRENT;
-        }
-        PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent,
-                flags);
-        return alarmIntent;
-    }
-
-    private Itinerary getItinerary(Bundle bundle) {
+    private static Itinerary getItinerary(Bundle bundle) {
         ArrayList<Itinerary> itineraries = (ArrayList<Itinerary>) bundle
                 .getSerializable(OTPConstants.ITINERARIES);
         int i = bundle.getInt(OTPConstants.SELECTED_ITINERARY);
         return itineraries.get(i);
     }
-
-    private ItineraryDescription getItineraryDescription(Bundle bundle) {
-        String ids[] = bundle.getStringArray(ITINERARY_DESC);
-        long date = bundle.getLong(ITINERARY_END_DATE);
-        return new ItineraryDescription(Arrays.asList(ids), new Date(date));
-    }
-
-    private Class getNotificationTarget(Bundle bundle) {
-        String name = bundle.getString(OTPConstants.NOTIFICATION_TARGET);
-        try {
-            return Class.forName(name);
-        } catch(ClassNotFoundException e) {
-            Log.e(TAG, "unable to find class for name " + name);
-        }
-        return null;
-    }
-
-    private Bundle getSimplifiedBundle(Bundle params) {
-        Itinerary itinerary = getItinerary(params);
-        ItineraryDescription desc = new ItineraryDescription(itinerary);
-
-        Bundle extras = new Bundle();
-        new TripRequestBuilder(params).copyIntoBundleSimple(extras);
-
-        List<String> idList = desc.getTripIds();
-        String[] ids = idList.toArray(new String[idList.size()]);
-        extras.putStringArray(ITINERARY_DESC, ids);
-        extras.putLong(ITINERARY_END_DATE, desc.getEndDate().getTime());
-
-        Class<? extends Activity> source = (Class<? extends Activity>)
-                params.getSerializable(OTPConstants.NOTIFICATION_TARGET);
-
-        extras.putString(OTPConstants.NOTIFICATION_TARGET, source.getName());
-
-        return extras;
-    }
-
 }

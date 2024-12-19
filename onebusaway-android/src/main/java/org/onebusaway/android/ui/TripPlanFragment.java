@@ -49,6 +49,7 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContract;
 import androidx.annotation.NonNull;
@@ -136,43 +137,48 @@ public class TripPlanFragment extends Fragment {
 
     private FirebaseAnalytics mFirebaseAnalytics;
 
-    //sets the address in the text view from the user selected contact
-    private final String ID = "id";
-    private ActivityResultLauncher<TextView> mSelectAddressFromContactLauncher = registerForActivityResult(
-            new ActivityResultContract<TextView, Intent>() {
-                int tvId;
+    // Updates the Address Input field with the formatted address selected by the user from their contacts.
+    private final String ADDRESS_INPUT_ID_KEY = "addressInputId";
+    private final ActivityResultContract<TextView, Intent> selectAddressFromContactContract = new ActivityResultContract<TextView, Intent>() {
+        private int addressInputId;
 
-                @NonNull
-                @Override
-                public Intent createIntent(@NonNull Context context, TextView textView) {
-                    Intent intent = new Intent(Intent.ACTION_PICK);
-                    intent.setType(ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_TYPE);
-                    tvId = textView.getId();
-                    return intent;
-                }
+        @NonNull
+        @Override
+        public Intent createIntent(@NonNull Context context, TextView addressInput) {
+            Intent pickContactIntent = new Intent(Intent.ACTION_PICK);
+            pickContactIntent.setType(ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_TYPE);
+            addressInputId = addressInput.getId();
+            return pickContactIntent;
+        }
 
-                @Override
-                public Intent parseResult(int i, @Nullable Intent intent) {
-                    if (intent != null) {
-                        return intent.putExtra(ID, tvId);
-                    }
-                    return null;
-                }
-            },
-            addressIntent -> {
-                if (addressIntent == null) {
-                    return;
-                }
-                Uri addressUri = addressIntent.getData();
-                String[] projection = new String[]{ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS};
-                Cursor cursor = getContext().getContentResolver().query(addressUri, projection, null, null, null);
-                if (cursor != null && cursor.moveToFirst()) {
-                    int addressIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS);
-                    String address = cursor.getString(addressIndex).replace("\n", ", ");
-                    TextView tv = getActivity().findViewById(addressIntent.getIntExtra(ID, -1));
-                    tv.post(() -> tv.setText(address));
-                }
+        @Override
+        public Intent parseResult(int i, @Nullable Intent addressIntent) {
+            if (addressIntent != null) {
+                return addressIntent.putExtra(ADDRESS_INPUT_ID_KEY, addressInputId);
             }
+            return null;
+        }
+    };
+
+    private final ActivityResultCallback<Intent> addressIntentActivityResultCallback = addressIntent -> {
+        if (addressIntent == null) {
+            return;
+        }
+        Uri addressUri = addressIntent.getData();
+        String[] projection = new String[]{ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS};
+        try (Cursor cursor = getContext().getContentResolver().query(addressUri, projection, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int addressIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS);
+                String address = cursor.getString(addressIndex).replace("\n", ", ");
+                TextView addressInput = getActivity().findViewById(addressIntent.getIntExtra(ADDRESS_INPUT_ID_KEY, -1));
+                addressInput.post(() -> addressInput.setText(address));
+            }
+        }
+    };
+
+    private final ActivityResultLauncher<TextView> mSelectAddressFromContactLauncher = registerForActivityResult(
+            selectAddressFromContactContract,
+            addressIntentActivityResultCallback
     );
 
     // Create view, initialize state

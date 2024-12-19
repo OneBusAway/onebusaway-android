@@ -33,8 +33,8 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_toLeftOf="@id/fromCurrentLocationImageButton"
-                android:layout_toStartOf="@id/fromCurrentLocationImageButton"
+                android:layout_toLeftOf="@id/fromContactsImageButton"
+                android:layout_toStartOf="@id/fromContactsImageButton"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
@@ -52,6 +52,21 @@
                     android:ellipsize="end"
                     android:requiresFadingEdge="horizontal" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginStart="5dp"
+                android:id="@+id/fromContactsImageButton"
+                android:background="#00000000"
+                android:src="@drawable/baseline_contacts_24"
+                android:tint="@color/material_gray"
+                android:layout_gravity="center_vertical"
+                android:layout_toLeftOf="@id/fromCurrentLocationImageButton"
+                android:layout_centerVertical="true"
+                android:contentDescription="@string/set_destination_to_my_location" />
+
 
             <ImageButton
                 android:id="@+id/fromCurrentLocationImageButton"
@@ -79,8 +94,8 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentStart="true"
-                android:layout_toLeftOf="@id/toCurrentLocationImageButton"
-                android:layout_toStartOf="@id/toCurrentLocationImageButton"
+                android:layout_toLeftOf="@id/toContactsImageButton"
+                android:layout_toStartOf="@id/toContactsImageButton"
                 android:layout_centerVertical="true"
                 app:endIconMode="clear_text">
 
@@ -94,6 +109,20 @@
                     android:singleLine="true"
                     android:requiresFadingEdge="horizontal" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginStart="5dp"
+                android:id="@+id/toContactsImageButton"
+                android:background="#00000000"
+                android:src="@drawable/baseline_contacts_24"
+                android:tint="@color/material_gray"
+                android:layout_gravity="center_vertical"
+                android:layout_toLeftOf="@id/toCurrentLocationImageButton"
+                android:layout_centerVertical="true"
+                android:contentDescription="@string/set_destination_to_my_location" />
 
             <ImageButton
                 android:layout_width="wrap_content"

@@ -92,6 +92,9 @@ import static org.onebusaway.android.util.ShowcaseViewUtils.showTutorial;
 
 public class TripPlanFragment extends Fragment {
 
+    private String fromAddress;
+    private String toAddress;
+
     /**
      * Allows calling activity to register to know when to send request.
      */
@@ -436,6 +439,22 @@ public class TripPlanFragment extends Fragment {
         if (BuildConfig.USE_PELIAS_GEOCODING) {
             showTutorial(ShowcaseViewUtils.TUTORIAL_TRIP_PLAN_GEOCODER, (AppCompatActivity) getActivity(), null, true);
         }
+
+        if (fromAddress != null) {
+            mFromAddressTextArea.setText(fromAddress);
+        }
+        if (toAddress != null) {
+            mToAddressTextArea.setText(toAddress);
+        }
+    }
+
+
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        fromAddress = mFromAddressTextArea.getText().toString();
+        toAddress = mToAddressTextArea.getText().toString();
     }
 
     @Override

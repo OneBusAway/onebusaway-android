@@ -173,8 +173,18 @@ public class TripPlanFragment extends Fragment {
             if (cursor != null && cursor.moveToFirst()) {
                 int addressIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS);
                 String address = cursor.getString(addressIndex).replace("\n", ", ");
-                TextView addressInput = getActivity().findViewById(addressIntent.getIntExtra(ADDRESS_INPUT_ID_KEY, -1));
+                int addressInputId = addressIntent.getIntExtra(ADDRESS_INPUT_ID_KEY, -1);
+                TextView addressInput = getActivity().findViewById(addressInputId);
                 addressInput.post(() -> addressInput.setText(address));
+                if (addressInputId == mToAddressTextArea.getId() && mBuilder.ready()) {
+                    new AlertDialog.Builder(getContext())
+                            .setTitle(R.string.plan_trip)
+                            .setMessage(R.string.do_you_want_to_plan_the_trip_now)
+                            .setPositiveButton(R.string.ok, (dialog, which) -> checkRequestAndSubmit())
+                            .setNegativeButton(R.string.cancel, null)
+                            .create()
+                            .show();
+                }
             }
         }
     };

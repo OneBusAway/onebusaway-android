@@ -167,27 +167,54 @@ public class TripPlanFragment extends Fragment {
         if (addressIntent == null) {
             return;
         }
+
         Uri addressUri = addressIntent.getData();
-        String[] projection = new String[]{ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS};
+        if (addressUri == null) {
+            return;
+        }
+
+        String[] projection = {ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS};
+
         try (Cursor cursor = getContext().getContentResolver().query(addressUri, projection, null, null, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                int addressIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS);
-                String address = cursor.getString(addressIndex).replace("\n", ", ");
-                int addressInputId = addressIntent.getIntExtra(ADDRESS_INPUT_ID_KEY, -1);
-                TextView addressInput = getActivity().findViewById(addressInputId);
-                addressInput.post(() -> addressInput.setText(address));
-                if (addressInputId == mToAddressTextArea.getId() && mBuilder.ready()) {
-                    new AlertDialog.Builder(getContext())
-                            .setTitle(R.string.plan_trip)
-                            .setMessage(R.string.do_you_want_to_plan_the_trip_now)
-                            .setPositiveButton(R.string.ok, (dialog, which) -> checkRequestAndSubmit())
-                            .setNegativeButton(R.string.cancel, null)
-                            .create()
-                            .show();
-                }
+            if (cursor == null || !cursor.moveToFirst()) {
+                return;
             }
+
+            String address = extractAddress(cursor);
+            int addressInputId = addressIntent.getIntExtra(ADDRESS_INPUT_ID_KEY, -1);
+            if (addressInputId == -1) {
+                return;
+            }
+
+            updateAddressInput(address, addressInputId);
+            updateAddressData(address, addressInputId);
         }
     };
+
+    private String extractAddress(Cursor cursor) {
+        int addressIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS);
+        return cursor.getString(addressIndex).replace("\n", ", ");
+    }
+
+    private void updateAddressInput(String address, int addressInputId) {
+        TextView addressInput = getActivity().findViewById(addressInputId);
+        addressInput.post(() -> addressInput.setText(address));
+        addressInput.requestFocus();
+    }
+
+    private void updateAddressData(String address, int addressInputId) {
+        CustomAddress customAddress = CustomAddress.getEmptyAddress();
+        customAddress.setAddressLine(0, address);
+
+        if (addressInputId == mFromAddressTextArea.getId()) {
+            mFromAddress = customAddress;
+            mBuilder.setFrom(mFromAddress);
+        } else if (addressInputId == mToAddressTextArea.getId()) {
+            mToAddress = customAddress;
+            mBuilder.setTo(mToAddress);
+        }
+    }
+
 
     private final ActivityResultLauncher<TextView> mSelectAddressFromContactLauncher = registerForActivityResult(
             selectAddressFromContactContract,
@@ -373,6 +400,8 @@ public class TripPlanFragment extends Fragment {
         if (mBuilder.ready() && mListener != null) {
             mFromAddressTextArea.dismissDropDown();
             mToAddressTextArea.dismissDropDown();
+            mFromAddressTextArea.clearFocus();
+            mToAddressTextArea.clearFocus();
             UIUtils.closeKeyboard(getContext(), mFromAddressTextArea);
             mListener.onTripRequestReady();
         }

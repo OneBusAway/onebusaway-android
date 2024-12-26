@@ -227,4 +227,10 @@
         <item>@string/trip_plan_arriving</item>
     </string-array>
 
+    <string-array name="stop_info_arrival_filter_options">
+        <item>Both</item>
+        <item>Arrivals only</item>
+        <item>Departures only</item>
+    </string-array>
+
 </resources>

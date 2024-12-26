@@ -47,6 +47,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.util.Pair;
@@ -81,6 +82,7 @@ import org.onebusaway.android.ui.survey.SurveyManager;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
 import org.onebusaway.android.util.ArrayAdapterWithIcon;
 import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.ArrivalInfoUtils.ArrivalFilter;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.DBUtil;
 import org.onebusaway.android.util.FragmentUtils;
@@ -181,6 +183,10 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
     private FirebaseAnalytics mFirebaseAnalytics;
 
     private SurveyManager surveyManager;
+
+    private final ArrivalFilterDialog mArrivalFilterDialog = new ArrivalFilterDialog();
+
+    private ArrivalFilter mArrivalFilter = mArrivalFilterDialog.arrivalFilter;
 
     public interface Listener {
 
@@ -641,6 +647,8 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
             if (mStop != null) {
                 showRoutesFilterDialog();
             }
+        } else if (id == R.id.filter_arrivals_departures) {
+            mArrivalFilterDialog.show(getActivity().getSupportFragmentManager(), ".ArrivalFilterDialog");
         } else if (id == R.id.show_header_arrivals) {
             doShowHideHeaderArrivals();
         } else if (id == R.id.edit_name) {
@@ -1381,15 +1389,7 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         @Override
         public void onClick(DialogInterface dialog, int which) {
             Activity act = getActivity();
-            ArrivalsListFragment frag = null;
-
-            // Get the fragment we want...
-            if (act instanceof ArrivalsListActivity) {
-                frag = ((ArrivalsListActivity) act).getArrivalsListFragment();
-            } else if (act instanceof HomeActivity) {
-                frag = ((HomeActivity) act).getArrivalsListFragment();
-            }
-
+            ArrivalsListFragment frag = getArrivalsListFragment(act);
             frag.setRoutesFilter(mChecks);
             dialog.dismiss();
         }
@@ -1398,6 +1398,67 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         public void onClick(DialogInterface arg0, int which, boolean isChecked) {
             mChecks[which] = isChecked;
         }
+    }
+
+    public static class ArrivalFilterDialog extends DialogFragment
+            implements DialogInterface.OnClickListener {
+
+        // The default state
+        private ArrivalFilter arrivalFilter = ArrivalFilter.BOTH;
+
+        private int which = arrivalFilter.arrayResourceIndex;
+
+        @NonNull
+        @Override
+        public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+            return new AlertDialog.Builder(getActivity())
+                    .setSingleChoiceItems(
+                            ArrivalFilter.getOptionsArray(getResources()),
+                            arrivalFilter.arrayResourceIndex,
+                            this
+                    )
+                    .setPositiveButton(R.string.stop_info_save, this)
+                    .setNegativeButton(R.string.stop_info_cancel, null)
+                    .create();
+        }
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            //updates the current state of the ArrivalFilterDialog only if a radio button is clicked
+            this.which = which >=0 ? which : this.which;
+            if (which == DialogInterface.BUTTON_POSITIVE) {
+                //exports the current state to the ArrivalsListFragment
+                getArrivalsListFragment(getActivity()).setArrivalFilter(
+                        arrivalFilter = ArrivalFilter.fromArrayResourceIndex(this.which)
+                );
+                dialog.dismiss();
+            }
+        }
+
+        @Override
+        public void onDismiss(@NonNull DialogInterface dialog) {
+            super.onDismiss(dialog);
+            //makes sure the state is consistent
+            which = arrivalFilter.arrayResourceIndex;
+        }
+    }
+
+    @Nullable
+    private static ArrivalsListFragment getArrivalsListFragment(Activity act) {
+        ArrivalsListFragment frag = null;
+
+        // Get the fragment we want...
+        if (act instanceof ArrivalsListActivity) {
+            frag = ((ArrivalsListActivity) act).getArrivalsListFragment();
+        } else if (act instanceof HomeActivity) {
+            frag = ((HomeActivity) act).getArrivalsListFragment();
+        }
+        return frag;
+    }
+
+    private void setArrivalFilter(ArrivalFilter arrivalFilter) {
+        mArrivalFilter = arrivalFilter;
+        refreshLocal();
     }
 
     private void setRoutesFilter(boolean[] checks) {
@@ -1518,7 +1579,7 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
                 // Nothing to refresh yet
                 return;
             }
-            mAdapter.setData(response.getArrivalInfo(), mRoutesFilter, System.currentTimeMillis());
+            mAdapter.setData(response.getArrivalInfo(), mRoutesFilter, System.currentTimeMillis(), mArrivalFilter);
         }
         if (mHeader != null) {
             mHeader.refresh();

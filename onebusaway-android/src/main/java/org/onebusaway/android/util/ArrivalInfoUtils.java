@@ -19,6 +19,8 @@ package org.onebusaway.android.util;
 import android.content.Context;
 import android.content.res.Resources;
 
+import androidx.annotation.NonNull;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
@@ -52,7 +54,8 @@ public class ArrivalInfoUtils {
     public static ArrayList<ArrivalInfo> convertObaArrivalInfo(Context context,
                                                                ObaArrivalInfo[] arrivalInfo,
                                                                ArrayList<String> filter, long ms,
-                                                               boolean includeArrivalDepartureInStatusLabel) {
+                                                               boolean includeArrivalDepartureInStatusLabel,
+                                                               ArrivalFilter arrivalFilter) {
         final int len = arrivalInfo.length;
         ArrayList<ArrivalInfo> result = new ArrayList<ArrivalInfo>(len);
         if (filter != null && filter.size() > 0) {
@@ -61,7 +64,7 @@ public class ArrivalInfoUtils {
                 if (filter.contains(arrival.getRouteId())) {
                     ArrivalInfo info = new ArrivalInfo(context, arrival, ms,
                             includeArrivalDepartureInStatusLabel);
-                    if (shouldAddEta(info)) {
+                    if (shouldAddEta(info) && shouldAddArrivalFilter(info, arrivalFilter)) {
                         result.add(info);
                     }
                 }
@@ -71,7 +74,7 @@ public class ArrivalInfoUtils {
             for (ObaArrivalInfo obaArrivalInfo : arrivalInfo) {
                 ArrivalInfo info = new ArrivalInfo(context, obaArrivalInfo, ms,
                         includeArrivalDepartureInStatusLabel);
-                if (shouldAddEta(info)) {
+                if (shouldAddEta(info) && shouldAddArrivalFilter(info, arrivalFilter)) {
                     result.add(info);
                 }
             }
@@ -80,6 +83,43 @@ public class ArrivalInfoUtils {
         // Sort by ETA
         Collections.sort(result, new InfoComparator());
         return result;
+    }
+
+    public static ArrayList<ArrivalInfo> convertObaArrivalInfo(Context context,
+                                                               ObaArrivalInfo[] arrivalInfo,
+                                                               ArrayList<String> filter, long ms,
+                                                               boolean includeArrivalDepartureInStatusLabel) {
+        return convertObaArrivalInfo(context, arrivalInfo, filter, ms, includeArrivalDepartureInStatusLabel, ArrivalFilter.BOTH);
+    }
+
+    // This enum class represents the string array resource R.array.stop_info_arrival_filter_options
+    public enum ArrivalFilter {
+        BOTH(0),
+        ARRIVALS_ONLY(1),
+        DEPARTURES_ONLY(2);
+
+        public final int arrayResourceIndex;
+
+        ArrivalFilter(int arrayResourceIndex) {
+            this.arrayResourceIndex = arrayResourceIndex;
+        }
+
+        public String getOptionString(Resources appResources) {
+            return appResources.getStringArray(R.array.stop_info_arrival_filter_options)[arrayResourceIndex];
+        }
+
+        public static String[] getOptionsArray(Resources appResources) {
+            return appResources.getStringArray(R.array.stop_info_arrival_filter_options);
+        }
+
+        public static ArrivalFilter fromArrayResourceIndex(int arrayResourceIndex) {
+            switch (arrayResourceIndex) {
+                case 0: return BOTH;
+                case 1: return ARRIVALS_ONLY;
+                case 2: return DEPARTURES_ONLY;
+                default: throw new IllegalArgumentException();
+            }
+        }
     }
 
     /**
@@ -104,6 +144,15 @@ public class ArrivalInfoUtils {
             }
         }
         return false;
+    }
+
+    private static boolean shouldAddArrivalFilter(ArrivalInfo info, @NonNull ArrivalFilter arrivalFilter) {
+        switch (arrivalFilter) {
+            case BOTH: return true;
+            case ARRIVALS_ONLY: return info.isArrival();
+            case DEPARTURES_ONLY: return !info.isArrival();
+            default: throw new IllegalArgumentException();
+        }
     }
 
     /**

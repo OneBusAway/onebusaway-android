@@ -50,7 +50,7 @@ Did you just set up your own [OneBusAway](https://github.com/OneBusAway/onebusaw
 
 ## Permissions
 
-In order to support certain features in OneBusAway, we need to request various permissions to access information on your device.  See an explanation of why each permission is needed [here](PERMISSIONS.md).
+In order to support certain features in OneBusAway, we need to request various permissions to access information on your device.  See an explanation of why each permission is needed [here](PRIVACY.md).
 
 ## Troubleshooting
 

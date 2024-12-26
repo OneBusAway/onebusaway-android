@@ -1278,4 +1278,6 @@
     <string name="more_info">More Info</string>
     <string name="display_test_alerts">Display test alerts</string>
     <string name="display_test_wide_alerts_for_regions">Display test-wide alerts for regions</string>
+    <string name="do_you_want_to_plan_the_trip_now">Do you want to plan the trip now?</string>
+    <string name="plan_trip">Plan Trip?</string>
 </resources>

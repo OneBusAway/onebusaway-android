@@ -16,14 +16,10 @@
 package org.onebusaway.android.io.test;
 
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.report.connection.ServiceListTask;
-import org.onebusaway.android.report.constants.ReportConstants;
-import org.onebusaway.android.report.ui.util.ServiceUtils;
-import org.onebusaway.android.util.LocationUtils;
 
 import android.location.Location;
 import android.text.TextUtils;
@@ -45,97 +41,102 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 
-/**
- * Tests to evaluate interactions with Open311 system for regions that use Open311.
- *
- * NOTE: These tests make actual HTTP requests to live Open311 servers (SeeClickFix), because we
- * make some assumptions required for text heuristic matching to identify transit-related services.
- * If there are changes in the live server (e.g., new services added than aren't transit-related
- * but include some of the text we're using to identify transit services), these could break our
- * assumptions, and we want to know about that.
+/*
+    TODO: Fix me, this test is disabled as of December 25, 2024, due to undefined behavior. Please refer to the associated ticket for more information.
+    https://github.com/OneBusAway/onebusaway-android/issues/1289.
  */
-@RunWith(AndroidJUnit4.class)
-public class ReportProblemOpen311Test {
+
+///**
+// * Tests to evaluate interactions with Open311 system for regions that use Open311.
+// *
+// * NOTE: These tests make actual HTTP requests to live Open311 servers (SeeClickFix), because we
+// * make some assumptions required for text heuristic matching to identify transit-related services.
+// * If there are changes in the live server (e.g., new services added than aren't transit-related
+// * but include some of the text we're using to identify transit services), these could break our
+// * assumptions, and we want to know about that.
+// */
+//@RunWith(AndroidJUnit4.class)
+//public class ReportProblemOpen311Test {
 
     // Mock region to use in tests
-    ObaRegion mTampaRegion;
+//    ObaRegion mTampaRegion;
+//
+//    @Before
+//    public void before() {
+//        mTampaRegion = MockRegion.getTampa(getTargetContext());
+//
+//        // Clear all open311 endpoints
+//        Open311Manager.clearOpen311();
+//
+//        assertNotNull(mTampaRegion.getOpen311Servers());
+//
+//        // Read the open311 preferences from the region and set
+//        if (mTampaRegion.getOpen311Servers() != null) {
+//            for (ObaRegion.Open311Server open311Server : mTampaRegion.getOpen311Servers()) {
+//                String jurisdictionId = open311Server.getJuridisctionId();
+//
+//                Open311Option option = new Open311Option(open311Server.getBaseUrl(),
+//                        open311Server.getApiKey(),
+//                        TextUtils.isEmpty(jurisdictionId) ? null : jurisdictionId);
+//                Open311Manager.initOpen311WithOption(option);
+//            }
+//        }
+//    }
 
-    @Before
-    public void before() {
-        mTampaRegion = MockRegion.getTampa(getTargetContext());
-
-        // Clear all open311 endpoints
-        Open311Manager.clearOpen311();
-
-        assertNotNull(mTampaRegion.getOpen311Servers());
-
-        // Read the open311 preferences from the region and set
-        if (mTampaRegion.getOpen311Servers() != null) {
-            for (ObaRegion.Open311Server open311Server : mTampaRegion.getOpen311Servers()) {
-                String jurisdictionId = open311Server.getJuridisctionId();
-
-                Open311Option option = new Open311Option(open311Server.getBaseUrl(),
-                        open311Server.getApiKey(),
-                        TextUtils.isEmpty(jurisdictionId) ? null : jurisdictionId);
-                Open311Manager.initOpen311WithOption(option);
-            }
-        }
-    }
-
-    /**
-     * Tests locations in Hillsborough County for services at that location.  There should be at
-     * least
-     * ReportConstants.NUM_TRANSIT_SERVICES_THRESHOLD services marked as transit services, as HART
-     * is the primary SeeClickFix account holder and therefore all services are transit-related.
-     * As of Dec. 2, 2016 services are heuristically matched based on text in the service name
-     * (SeeClickFix does not support the group or keyword Open311 elements for explicit matching).
-     */
-    @Test
-    public void testHillsboroughCounty() {
-        List<Location> locations = new ArrayList<>();
-
-        // USF area
-        locations.add(LocationUtils.makeLocation(28.0612088, -82.415747));
-        // Downtown
-        locations.add(LocationUtils.makeLocation(27.9577463, -82.4559472));
-        // Brandon
-        locations.add(LocationUtils.makeLocation(27.9520925, -82.3039963));
-
-        List<Service> serviceList = _testOpen311AtLocation(locations);
-
-        // Make sure we get a valid response here - a failure could be intermittent network issues
-        assertNotNull(serviceList);
-
-        // Mark the services that are transit-related
-        boolean mIsAllTransitHeuristicMatch = ServiceUtils
-                .markTransitServices(getTargetContext(), serviceList);
-        assertTrue(mIsAllTransitHeuristicMatch);
-
-        int countGroupTransit = 0;
-        int countDynamicStop = 0;
-        int countDynamicTrip = 0;
-
-        for (Service s : serviceList) {
-            if (s.getGroup().equals(ReportConstants.ISSUE_GROUP_TRANSIT)) {
-                countGroupTransit++;
-            }
-            if (s.getType().equals(ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP)) {
-                countDynamicStop++;
-            }
-            if (s.getType().equals(ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP)) {
-                countDynamicTrip++;
-            }
-        }
-
-        // We should be over the threshold of assuming that all services (request types) are transit-related
-        assertTrue(countGroupTransit >= ReportConstants.NUM_TRANSIT_SERVICES_THRESHOLD);
-
-        // Everything not arrival times related should be marked as dynamic stop
-        assertTrue(countDynamicStop >= ReportConstants.NUM_TRANSIT_SERVICES_THRESHOLD);
-
-        // There should only be one arrival times (trip) request type, because we treat that differently (show arrivals to pick from)
-        assertTrue(countDynamicTrip == 1);
-    }
+//    /**
+//     * Tests locations in Hillsborough County for services at that location.  There should be at
+//     * least
+//     * ReportConstants.NUM_TRANSIT_SERVICES_THRESHOLD services marked as transit services, as HART
+//     * is the primary SeeClickFix account holder and therefore all services are transit-related.
+//     * As of Dec. 2, 2016 services are heuristically matched based on text in the service name
+//     * (SeeClickFix does not support the group or keyword Open311 elements for explicit matching).
+//     */
+//    @Test
+//    public void testHillsboroughCounty() {
+//        List<Location> locations = new ArrayList<>();
+//
+//        // USF area
+//        locations.add(LocationUtils.makeLocation(28.0612088, -82.415747));
+//        // Downtown
+//        locations.add(LocationUtils.makeLocation(27.9577463, -82.4559472));
+//        // Brandon
+//        locations.add(LocationUtils.makeLocation(27.9520925, -82.3039963));
+//
+//        List<Service> serviceList = _testOpen311AtLocation(locations);
+//
+//        // Make sure we get a valid response here - a failure could be intermittent network issues
+//        assertNotNull(serviceList);
+//
+//        // Mark the services that are transit-related
+//        boolean mIsAllTransitHeuristicMatch = ServiceUtils
+//                .markTransitServices(getTargetContext(), serviceList);
+//        assertTrue(mIsAllTransitHeuristicMatch);
+//
+//        int countGroupTransit = 0;
+//        int countDynamicStop = 0;
+//        int countDynamicTrip = 0;
+//
+//        for (Service s : serviceList) {
+//            if (s.getGroup().equals(ReportConstants.ISSUE_GROUP_TRANSIT)) {
+//                countGroupTransit++;
+//            }
+//            if (s.getType().equals(ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP)) {
+//                countDynamicStop++;
+//            }
+//            if (s.getType().equals(ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP)) {
+//                countDynamicTrip++;
+//            }
+//        }
+//
+//        // We should be over the threshold of assuming that all services (request types) are transit-related
+//        assertTrue(countGroupTransit >= ReportConstants.NUM_TRANSIT_SERVICES_THRESHOLD);
+//
+//        // Everything not arrival times related should be marked as dynamic stop
+//        assertTrue(countDynamicStop >= ReportConstants.NUM_TRANSIT_SERVICES_THRESHOLD);
+//
+//        // There should only be one arrival times (trip) request type, because we treat that differently (show arrivals to pick from)
+//        assertTrue(countDynamicTrip == 1);
+//    }
 
 //      TODO: Re-enable this test. I have disabled this as of December 16, 2023 because the behavior
 //      that worked in December 2016 is no longer functioning as expected. Figure out if this can
@@ -198,38 +199,38 @@ public class ReportProblemOpen311Test {
 //        assertTrue(countDynamicTrip == 1);
 //    }
 
-    private List<Service> _testOpen311AtLocation(List<Location> locations) {
-        for (Location l : locations) {
-            ServiceListRequest slr = new ServiceListRequest(l.getLatitude(), l.getLongitude());
-            List<Open311> open311List = Open311Manager.getAllOpen311();
-            ServiceListTask.Callback callback = new ServiceListTask.Callback() {
-                @Override
-                public void onServicesTaskCompleted(ServiceListResponse services, Open311 open311) {
-                }
-            };
-
-            ServiceListTask serviceListTask = new ServiceListTask(slr, open311List, callback);
-
-            try {
-                // Execute the AsyncTask synchronously
-                ServiceListResponse services = serviceListTask.execute().get();
-                List<Service> serviceList = new ArrayList<>();
-
-                // Add services to list if service response is successful
-                if (services != null && services.isSuccess() &&
-                        Open311Manager.isAreaManagedByOpen311(services.getServiceList())) {
-                    for (Service s : services.getServiceList()) {
-                        if (s.getService_name() != null && s.getService_code() != null) {
-                            serviceList.add(s);
-                        }
-                    }
-                }
-                return serviceList;
-            } catch (InterruptedException | ExecutionException e) {
-                // Print any network errors
-                e.printStackTrace();
-            }
-        }
-        return null;
-    }
-}
+////    private List<Service> _testOpen311AtLocation(List<Location> locations) {
+////        for (Location l : locations) {
+////            ServiceListRequest slr = new ServiceListRequest(l.getLatitude(), l.getLongitude());
+////            List<Open311> open311List = Open311Manager.getAllOpen311();
+////            ServiceListTask.Callback callback = new ServiceListTask.Callback() {
+////                @Override
+////                public void onServicesTaskCompleted(ServiceListResponse services, Open311 open311) {
+////                }
+////            };
+////
+////            ServiceListTask serviceListTask = new ServiceListTask(slr, open311List, callback);
+////
+////            try {
+////                // Execute the AsyncTask synchronously
+////                ServiceListResponse services = serviceListTask.execute().get();
+////                List<Service> serviceList = new ArrayList<>();
+////
+////                // Add services to list if service response is successful
+////                if (services != null && services.isSuccess() &&
+////                        Open311Manager.isAreaManagedByOpen311(services.getServiceList())) {
+////                    for (Service s : services.getServiceList()) {
+////                        if (s.getService_name() != null && s.getService_code() != null) {
+////                            serviceList.add(s);
+////                        }
+////                    }
+////                }
+////                return serviceList;
+////            } catch (InterruptedException | ExecutionException e) {
+////                // Print any network errors
+////                e.printStackTrace();
+////            }
+////        }
+////        return null;
+////    }
+//}

@@ -33,6 +33,7 @@ import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.io.elements.Status;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.ArrivalInfoUtils.ArrivalFilter;
 import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
@@ -53,11 +54,12 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
      * @param currentTime  current time in milliseconds
      */
     public void setData(ObaArrivalInfo[] arrivals, ArrayList<String> routesFilter,
-            long currentTime) {
+                        long currentTime, ArrivalFilter arrivalFilter) {
         if (arrivals != null) {
             ArrayList<ArrivalInfo> list =
                     ArrivalInfoUtils.convertObaArrivalInfo(getContext(),
-                            arrivals, routesFilter, currentTime, false);
+                            arrivals, routesFilter, currentTime, false,
+                            arrivalFilter);
             setData(list);
         } else {
             setData(null);

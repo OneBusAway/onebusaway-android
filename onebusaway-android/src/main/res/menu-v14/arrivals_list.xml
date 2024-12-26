@@ -33,6 +33,9 @@
         <item android:id="@+id/show_header_arrivals"
               android:title="@string/stop_info_option_filter"
               android:icon="@drawable/ic_menu_trip"/>
+        <item android:id="@+id/filter_arrivals_departures"
+            android:title="@string/stop_info_option_filter_arrivals_departures"
+            android:icon="@drawable/ic_menu_trip"/>
         <item android:id="@+id/filter"
               android:title="@string/stop_info_option_filter"
               android:icon="@drawable/ic_menu_trip"/>

@@ -17,7 +17,8 @@
     <!-- DO NOT TRANSLATE ANY STRINGS IN THIS FILE. -->
 
     <!-- Android Maps API v2 key for Agency Y -->
-    <string name="apiv2_key">AIzaSyBooMg0AliKO3WXfg8Z4s7ASS9pjSU9TJY</string>
+    <string name="apiv2_key">AIzaSyAfndYYEwBXWIUGOzC1Zh0RDBk4awhj8Nw</string>
+    <string name="regions_api_url">https://kiedybus.pl/regions-v4.json</string>
 
     <!-- See src/main/res/do_not_translate.xml for more strings you can override here -->
 </resources>

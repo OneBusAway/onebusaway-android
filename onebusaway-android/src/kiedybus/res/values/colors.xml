@@ -25,4 +25,5 @@
     <color name="tutorial_background">#df2196F3</color>
 
     <!-- See src/main/res/colors.xml for more colors you can override here -->
+    <color name="ic_launcher_background">#2196F3</color>
 </resources>

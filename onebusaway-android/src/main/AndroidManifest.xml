@@ -305,7 +305,8 @@
             android:authorities="${databaseAuthority}"/>
 
         <service
-            android:name=".directions.realtime.RealtimeService">
+            android:name=".directions.realtime.RealtimeService"
+            android:permission="android.permission.BIND_JOB_SERVICE">
         </service>
 
         <service

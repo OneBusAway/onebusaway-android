@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2016 Cambridge Systematics, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package org.onebusaway.android.directions.realtime;
 
 import android.app.Activity;
 import android.app.AlarmManager;
-import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -27,6 +26,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.core.app.JobIntentService;
 import androidx.core.app.NotificationCompat;
 
 import org.onebusaway.android.R;
@@ -50,7 +50,7 @@ import java.util.List;
  * and then the top result for that trip gets delayed by 20 minutes, the user will be notified
  * that new trip results are available.
  */
-public class RealtimeService extends IntentService {
+public class RealtimeService extends JobIntentService {
 
     private static final String TAG = "RealtimeService";
 
@@ -58,7 +58,7 @@ public class RealtimeService extends IntentService {
     private static final String ITINERARY_END_DATE = ".ItineraryEndDate";
 
     public RealtimeService() {
-        super("RealtimeService");
+        super();
     }
 
     /**
@@ -77,11 +77,11 @@ public class RealtimeService extends IntentService {
         bundle.putSerializable(OTPConstants.NOTIFICATION_TARGET, source.getClass());
         Intent intent = new Intent(OTPConstants.INTENT_START_CHECKS);
         intent.putExtras(bundle);
-        source.sendBroadcast(intent);
+        enqueueWork(source, RealtimeService.class, 1000, intent);
     }
 
     @Override
-    public void onHandleIntent(Intent intent) {
+    protected void onHandleWork(Intent intent) {
         Bundle bundle = intent.getExtras();
 
         if (intent.getAction().equals(OTPConstants.INTENT_START_CHECKS)) {
@@ -93,8 +93,6 @@ public class RealtimeService extends IntentService {
         } else if (intent.getAction().equals(OTPConstants.INTENT_CHECK_TRIP_TIME)) {
             checkForItineraryChange(bundle);
         }
-
-        RealtimeWakefulReceiver.completeWakefulIntent(intent);
     }
 
     // Depending on preferences / whether there is realtime info, start updates.
@@ -332,7 +330,7 @@ public class RealtimeService extends IntentService {
         String name = bundle.getString(OTPConstants.NOTIFICATION_TARGET);
         try {
             return Class.forName(name);
-        } catch(ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             Log.e(TAG, "unable to find class for name " + name);
         }
         return null;

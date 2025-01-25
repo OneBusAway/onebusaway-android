@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2016 Cambridge Systematics, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,13 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 
-import androidx.core.app.JobIntentService;
+import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+import androidx.work.Data;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
+import androidx.work.WorkManager;
+import androidx.work.OneTimeWorkRequest;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -43,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This service is started after a trip is planned by the user so they can be notified if the
@@ -50,15 +56,15 @@ import java.util.List;
  * and then the top result for that trip gets delayed by 20 minutes, the user will be notified
  * that new trip results are available.
  */
-public class RealtimeService extends JobIntentService {
+public class RealtimeService extends Worker {
 
     private static final String TAG = "RealtimeService";
 
     private static final String ITINERARY_DESC = ".ItineraryDesc";
     private static final String ITINERARY_END_DATE = ".ItineraryEndDate";
 
-    public RealtimeService() {
-        super();
+    public RealtimeService(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+        super(context, workerParams);
     }
 
     /**
@@ -75,24 +81,33 @@ public class RealtimeService extends JobIntentService {
         }
 
         bundle.putSerializable(OTPConstants.NOTIFICATION_TARGET, source.getClass());
-        Intent intent = new Intent(OTPConstants.INTENT_START_CHECKS);
-        intent.putExtras(bundle);
-        enqueueWork(source, RealtimeService.class, 1000, intent);
+        Data inputData = new Data.Builder()
+                .putAll(toMap(bundle))
+                .build();
+        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(RealtimeService.class)
+                .setInputData(inputData)
+                .build();
+        WorkManager.getInstance(source).enqueue(workRequest);
     }
 
+    @NonNull
     @Override
-    protected void onHandleWork(Intent intent) {
-        Bundle bundle = intent.getExtras();
+    public Result doWork() {
+        Data inputData = getInputData();
+        Bundle bundle = toBundle(inputData);
 
-        if (intent.getAction().equals(OTPConstants.INTENT_START_CHECKS)) {
+        String action = inputData.getString("action");
+        if (OTPConstants.INTENT_START_CHECKS.equals(action)) {
             disableListenForTripUpdates();
             if (!rescheduleRealtimeUpdates(bundle)) {
                 Itinerary itinerary = getItinerary(bundle);
                 startRealtimeUpdates(bundle, itinerary);
             }
-        } else if (intent.getAction().equals(OTPConstants.INTENT_CHECK_TRIP_TIME)) {
+        } else if (OTPConstants.INTENT_CHECK_TRIP_TIME.equals(action)) {
             checkForItineraryChange(bundle);
         }
+
+        return Result.success();
     }
 
     // Depending on preferences / whether there is realtime info, start updates.
@@ -141,18 +156,15 @@ public class RealtimeService extends JobIntentService {
 
         if (reschedule) {
             Log.d(TAG, "Start service at " + queryStart);
-            Intent future = new Intent(OTPConstants.INTENT_START_CHECKS);
-            future.putExtras(bundle);
-
-            int flags;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE;
-            } else {
-                flags = PendingIntent.FLAG_CANCEL_CURRENT;
-            }
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(),
-                    0, future, flags);
-            getAlarmManager().set(AlarmManager.RTC_WAKEUP, queryStart.getTime(), pendingIntent);
+            Data inputData = new Data.Builder()
+                    .putAll(toMap(bundle))
+                    .putString("action", OTPConstants.INTENT_START_CHECKS)
+                    .build();
+            OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(RealtimeService.class)
+                    .setInitialDelay(queryStart.getTime() - System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+                    .setInputData(inputData)
+                    .build();
+            WorkManager.getInstance(getApplicationContext()).enqueue(workRequest);
         }
 
         return reschedule;
@@ -238,8 +250,8 @@ public class RealtimeService extends JobIntentService {
                                   Class<? extends Activity> notificationTarget,
                                   Bundle params, List<Itinerary> itineraries) {
 
-        String titleText = getResources().getString(title);
-        String messageText = getResources().getString(message);
+        String titleText = getApplicationContext().getResources().getString(title);
+        String messageText = getApplicationContext().getResources().getString(message);
 
         Intent openIntent = new Intent(getApplicationContext(), notificationTarget);
         openIntent.putExtras(params);
@@ -330,7 +342,7 @@ public class RealtimeService extends JobIntentService {
         String name = bundle.getString(OTPConstants.NOTIFICATION_TARGET);
         try {
             return Class.forName(name);
-        } catch (ClassNotFoundException e) {
+        } catch(ClassNotFoundException e) {
             Log.e(TAG, "unable to find class for name " + name);
         }
         return null;
@@ -356,4 +368,69 @@ public class RealtimeService extends JobIntentService {
         return extras;
     }
 
+    private static Data toMap(Bundle bundle) {
+        Data.Builder builder = new Data.Builder();
+        for (String key : bundle.keySet()) {
+            Object value = bundle.get(key);
+            if (value instanceof String) {
+                builder.putString(key, (String) value);
+            } else if (value instanceof Integer) {
+                builder.putInt(key, (Integer) value);
+            } else if (value instanceof Long) {
+                builder.putLong(key, (Long) value);
+            } else if (value instanceof Boolean) {
+                builder.putBoolean(key, (Boolean) value);
+            } else if (value instanceof Float) {
+                builder.putFloat(key, (Float) value);
+            } else if (value instanceof Double) {
+                builder.putDouble(key, (Double) value);
+            } else if (value instanceof String[]) {
+                builder.putStringArray(key, (String[]) value);
+            } else if (value instanceof int[]) {
+                builder.putIntArray(key, (int[]) value);
+            } else if (value instanceof long[]) {
+                builder.putLongArray(key, (long[]) value);
+            } else if (value instanceof boolean[]) {
+                builder.putBooleanArray(key, (boolean[]) value);
+            } else if (value instanceof float[]) {
+                builder.putFloatArray(key, (float[]) value);
+            } else if (value instanceof double[]) {
+                builder.putDoubleArray(key, (double[]) value);
+            }
+        }
+        return builder.build();
+    }
+
+    private static Bundle toBundle(Data data) {
+        Bundle bundle = new Bundle();
+        for (String key : data.getKeyValueMap().keySet()) {
+            Object value = data.getKeyValueMap().get(key);
+            if (value instanceof String) {
+                bundle.putString(key, (String) value);
+            } else if (value instanceof Integer) {
+                bundle.putInt(key, (Integer) value);
+            } else if (value instanceof Long) {
+                bundle.putLong(key, (Long) value);
+            } else if (value instanceof Boolean) {
+                bundle.putBoolean(key, (Boolean) value);
+            } else if (value instanceof Float) {
+                bundle.putFloat(key, (Float) value);
+            } else if (value instanceof Double) {
+                bundle.putDouble(key, (Double) value);
+            } else if (value instanceof String[]) {
+                bundle.putStringArray(key, (String[]) value);
+            } else if (value instanceof int[]) {
+                bundle.putIntArray(key, (int[]) value);
+            } else if (value instanceof long[]) {
+                bundle.putLongArray(key, (long[]) value);
+            } else if (value instanceof boolean[]) {
+                bundle.putBooleanArray(key, (boolean[]) value);
+            } else if (value instanceof float[]) {
+                bundle.putFloatArray(key, (float[]) value);
+            } else if (value instanceof double[]) {
+                bundle.putDoubleArray(key, (double[]) value);
+            }
+        }
+        return bundle;
+    }
 }

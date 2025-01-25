@@ -40,10 +40,10 @@
     <!-- Permission request for activity recognition and background location is disabled because the related feature has been turned off.
     See issue #1240 for more details: https://github.com/OneBusAway/onebusaway-android/issues/1240-->
     <!-- ACTIVITY_RECOGNITION API 28 and lower -->
-<!--    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />-->
-<!--    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />-->
+    <!--    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />-->
+    <!--    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />-->
     <!-- ACTIVITY_RECOGNITION API 29 and higher -->
-<!--    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />-->
+    <!--    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />-->
     <!--To enable checkBatteryOptimizations feature, also uncomment checkBatteryOptimizations() in
     the HomeActivity's onCreate() method-->
     <!--<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>-->
@@ -62,7 +62,7 @@
         android:requestLegacyExternalStorage="true">
 
         <meta-data android:name="com.onesignal.NotificationServiceExtension"
-                android:value="org.onebusaway.android.tripservice.ArrivalsRemindersServiceExtension" />
+            android:value="org.onebusaway.android.tripservice.ArrivalsRemindersServiceExtension" />
 
         <meta-data
             android:name="android.app.default_searchable"
@@ -303,11 +303,6 @@
         <provider
             android:name="org.onebusaway.android.provider.ObaProvider"
             android:authorities="${databaseAuthority}"/>
-
-        <service
-            android:name=".directions.realtime.RealtimeService"
-            android:permission="android.permission.BIND_JOB_SERVICE">
-        </service>
 
         <service
             android:name=".nav.NavigationService"

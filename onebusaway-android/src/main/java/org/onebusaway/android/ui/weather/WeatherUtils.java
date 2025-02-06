@@ -1,10 +1,10 @@
 package org.onebusaway.android.ui.weather;
 
 import android.content.SharedPreferences;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 
@@ -23,7 +23,7 @@ public class WeatherUtils {
         imageView.setImageResource(getWeatherDrawableRes(resName));
     }
 
-    public static void setWeatherTemp(TextView weatherTempTxtView, double temp) {
+    public static void setWeatherTemp(TextView weatherTempTxtView, double temp, String units) {
         Application app = Application.get();
         SharedPreferences sharedPreferences = Application.getPrefs();
 
@@ -33,7 +33,8 @@ public class WeatherUtils {
         String temperatureText;
 
         if (preferredTempUnit.equals(automatic)) {
-            temperatureText = (int) temp + "° " + getDefaultUserTemp();
+            temperatureText = (int) temp + "° " + getDefaultUserTemp(units);
+
         } else {
             temperatureText = preferredTempUnit.equals(app.getString(R.string.celsius)) ? (int) convertToCelsius(temp) + "° C" : (int) temp + "° F";
         }
@@ -80,11 +81,9 @@ public class WeatherUtils {
     }
 
 
-    public static String getDefaultUserTemp() {
-        Locale locale = Locale.getDefault();
-        String countryCode = locale.getCountry();
+    public static String getDefaultUserTemp(String countryCode) {
 
-        if ("US".equals(countryCode) || "BS".equals(countryCode) || "KY".equals(countryCode) || "LR".equals(countryCode)) {
+        if ("us".equals(countryCode) || "bs".equals(countryCode) || "ky".equals(countryCode) || "lr".equals(countryCode)) {
             return "F";
         } else {
             return "C";

@@ -2035,7 +2035,7 @@ public class HomeActivity extends AppCompatActivity
         }else{
             weatherImageView.setVisibility(View.GONE);
         }
-        WeatherUtils.setWeatherTemp(tempTxtView, weatherTemp );
+        WeatherUtils.setWeatherTemp(tempTxtView, weatherTemp);
         // Show weather state when click.
         weatherView.setOnClickListener(view -> {
             if (weatherSummary != null) {

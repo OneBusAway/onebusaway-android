@@ -31,24 +31,19 @@ public class WeatherUtils {
         String preferredTempUnit = sharedPreferences.getString(app.getString(R.string.preference_key_preferred_temperature_units), automatic);
 
         String temperatureText;
+        String defaultTempUnit = getDefaultUserTemp();
+        boolean isCelsius = defaultTempUnit.equals("C");
 
-        if (preferredTempUnit.equals(automatic)) {
-            String defaultTempUnit = getDefaultUserTemp();
-            if (defaultTempUnit.equals("C")) {
-                double tempInCelsius = convertToCelsius(temp);
-                temperatureText = (int) tempInCelsius + "° C";
-            } else {
-                temperatureText = (int) temp + "° F";
-            }
-        } else {
-            if (preferredTempUnit.equals(app.getString(R.string.celsius))) {
-                double tempInCelsius = convertToCelsius(temp);
-                temperatureText = (int) tempInCelsius + "° C";
-            } else {
-                temperatureText = (int) temp + "° F";
-            }
-        }
+        int convertedTemp = (preferredTempUnit.equals(automatic))
+                ? (int) (isCelsius ? convertToCelsius(temp) : temp)
+                : (preferredTempUnit.equals(app.getString(R.string.celsius)) ? (int) convertToCelsius(temp) : (int) temp);
+
+        String unit = (preferredTempUnit.equals(automatic)) ? defaultTempUnit : (preferredTempUnit.equals(app.getString(R.string.celsius)) ? "C" : "F");
+
+        temperatureText = convertedTemp + "° " + unit;
+
         weatherTempTxtView.setText(temperatureText);
+
     }
 
     public static boolean isWeatherViewHiddenPref() {
@@ -92,8 +87,11 @@ public class WeatherUtils {
     public static String getDefaultUserTemp() {
         Locale locale = Locale.getDefault();
         String countryCode = locale.getCountry();
-        String defaultTemp = ("US".equals(countryCode) || "BS".equals(countryCode) || "KY".equals(countryCode) || "LR".equals(countryCode)) ? "F" : "C";
-        return defaultTemp;
+        if ("US".equals(countryCode) || "BS".equals(countryCode) || "KY".equals(countryCode) || "LR".equals(countryCode)) {
+            return "F";
+        } else {
+            return "C";
+        }
     }
 
     public static double convertToCelsius(double fahrenheitTemp) {

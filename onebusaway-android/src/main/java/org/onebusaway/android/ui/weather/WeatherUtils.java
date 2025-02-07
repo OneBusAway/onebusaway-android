@@ -1,7 +1,7 @@
 package org.onebusaway.android.ui.weather;
 
 import android.content.SharedPreferences;
-import android.util.Log;
+
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -23,7 +23,7 @@ public class WeatherUtils {
         imageView.setImageResource(getWeatherDrawableRes(resName));
     }
 
-    public static void setWeatherTemp(TextView weatherTempTxtView, double temp, String units) {
+    public static void setWeatherTemp(TextView weatherTempTxtView, double temp) {
         Application app = Application.get();
         SharedPreferences sharedPreferences = Application.getPrefs();
 
@@ -33,10 +33,20 @@ public class WeatherUtils {
         String temperatureText;
 
         if (preferredTempUnit.equals(automatic)) {
-            temperatureText = (int) temp + "° " + getDefaultUserTemp(units);
-
+            String defaultTempUnit = getDefaultUserTemp();
+            if (defaultTempUnit.equals("C")) {
+                double tempInCelsius = convertToCelsius(temp);
+                temperatureText = (int) tempInCelsius + "° C";
+            } else {
+                temperatureText = (int) temp + "° F";
+            }
         } else {
-            temperatureText = preferredTempUnit.equals(app.getString(R.string.celsius)) ? (int) convertToCelsius(temp) + "° C" : (int) temp + "° F";
+            if (preferredTempUnit.equals(app.getString(R.string.celsius))) {
+                double tempInCelsius = convertToCelsius(temp);
+                temperatureText = (int) tempInCelsius + "° C";
+            } else {
+                temperatureText = (int) temp + "° F";
+            }
         }
         weatherTempTxtView.setText(temperatureText);
     }
@@ -53,7 +63,6 @@ public class WeatherUtils {
         }
         weatherView.setVisibility(shouldShow ? View.VISIBLE : View.GONE);
     }
-
 
     private static int getWeatherDrawableRes(String condition) {
         switch (condition) {
@@ -80,14 +89,11 @@ public class WeatherUtils {
         }
     }
 
-
-    public static String getDefaultUserTemp(String countryCode) {
-
-        if ("us".equals(countryCode) || "bs".equals(countryCode) || "ky".equals(countryCode) || "lr".equals(countryCode)) {
-            return "F";
-        } else {
-            return "C";
-        }
+    public static String getDefaultUserTemp() {
+        Locale locale = Locale.getDefault();
+        String countryCode = locale.getCountry();
+        String defaultTemp = ("US".equals(countryCode) || "BS".equals(countryCode) || "KY".equals(countryCode) || "LR".equals(countryCode)) ? "F" : "C";
+        return defaultTemp;
     }
 
     public static double convertToCelsius(double fahrenheitTemp) {

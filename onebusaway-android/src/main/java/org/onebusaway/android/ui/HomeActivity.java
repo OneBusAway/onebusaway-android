@@ -2029,14 +2029,13 @@ public class HomeActivity extends AppCompatActivity
         ImageView weatherImageView = findViewById(R.id.weatherStateImageView);
         String weatherIcon = weatherResponse.getCurrent_forecast().getIcon();
         String weatherSummary = weatherResponse.getCurrent_forecast().getSummary();
-        String unit = weatherResponse.getUnits();
         double weatherTemp = weatherResponse.getCurrent_forecast().getTemperature();
         if (weatherIcon != null && !weatherIcon.isEmpty()) {
             WeatherUtils.setWeatherImage(weatherImageView, weatherIcon);
         }else{
             weatherImageView.setVisibility(View.GONE);
         }
-        WeatherUtils.setWeatherTemp(tempTxtView, weatherTemp , unit);
+        WeatherUtils.setWeatherTemp(tempTxtView, weatherTemp );
         // Show weather state when click.
         weatherView.setOnClickListener(view -> {
             if (weatherSummary != null) {

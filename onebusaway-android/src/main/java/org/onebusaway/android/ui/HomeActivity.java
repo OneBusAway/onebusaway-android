@@ -2030,6 +2030,7 @@ public class HomeActivity extends AppCompatActivity
         String weatherIcon = weatherResponse.getCurrent_forecast().getIcon();
         String weatherSummary = weatherResponse.getCurrent_forecast().getSummary();
         double weatherTemp = weatherResponse.getCurrent_forecast().getTemperature();
+
         if (weatherIcon != null && !weatherIcon.isEmpty()) {
             WeatherUtils.setWeatherImage(weatherImageView, weatherIcon);
         }else{

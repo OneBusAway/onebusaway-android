@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 
@@ -43,7 +44,6 @@ public class WeatherUtils {
         temperatureText = convertedTemp + "° " + unit;
 
         weatherTempTxtView.setText(temperatureText);
-
     }
 
     public static boolean isWeatherViewHiddenPref() {

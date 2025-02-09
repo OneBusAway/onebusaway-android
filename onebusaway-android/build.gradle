@@ -30,6 +30,9 @@ repositories {
         // CUTR Releases
         url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
     }
+    maven {
+        url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+    }
     mavenCentral()
     maven { url 'https://jitpack.io' }
 }
@@ -114,6 +117,7 @@ android {
             buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
             buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
             buildConfigField "String", "FIXED_REGION_SIDECAR_BASE_URL", "\"https://onebusaway.co\""
+            buildConfigField "String", "FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL", "null"
             buildConfigField "String", "ONESIGNAL_APP_ID", ONESIGNAL_APP_ID
         }
 
@@ -329,6 +333,8 @@ dependencies {
     // Firebase Analytics
     implementation 'com.google.firebase:firebase-core:21.1.1'
     implementation 'com.google.firebase:firebase-analytics:22.1.2'
+    // Plausible Analytics
+    implementation 'com.wbrawner.plausible:plausible-android:0.1.0-SNAPSHOT'
     // Cloud Firestore (for storing destination alert test data)
     implementation('com.google.firebase:firebase-firestore:25.1.0') {
         // Exclude protobuf-lite and protolite-well-known-types to avoid conflicts with GTFS-realtime bindings

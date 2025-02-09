@@ -49,7 +49,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 32;
+        private static final int DATABASE_VERSION = 33;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -317,8 +317,12 @@ public class ObaProvider extends ContentProvider {
             if(oldVersion == 31) {
                 db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
                         " ADD COLUMN " + ObaContract.Regions.SIDECAR_BASE_URL + " VARCHAR DEFAULT 'https://onebusaway.co'");
+                ++oldVersion;
             }
-
+            if (oldVersion == 32){
+                db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
+                        " ADD COLUMN " + ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL + " VARCHAR DEFAULT NULL");
+            }
         }
 
         @Override
@@ -629,6 +633,8 @@ public class ObaProvider extends ContentProvider {
                 .put(ObaContract.RegionOpen311Servers.BASE_URL, ObaContract.RegionOpen311Servers.BASE_URL);
         sRegionsProjectionMap
                 .put(ObaContract.Regions.SIDECAR_BASE_URL, ObaContract.Regions.SIDECAR_BASE_URL);
+        sRegionsProjectionMap
+                .put(ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL, ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL);
     }
 
     private SQLiteDatabase mDb;

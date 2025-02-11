@@ -42,6 +42,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -119,6 +120,11 @@ public class PreferencesActivity extends PreferenceActivity
     @SuppressWarnings("deprecation")
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+            setTheme(R.style.PreferenceScreen);
+        } else {
+            setTheme(R.style.PreferenceScreen_Light);
+        }
         super.onCreate(savedInstanceState);
         setProgressBarIndeterminate(true);
 
@@ -238,7 +244,6 @@ public class PreferencesActivity extends PreferenceActivity
 
         onAddCustomRegion();
     }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -440,6 +445,10 @@ public class PreferencesActivity extends PreferenceActivity
             if (hideAlerts) {
                 ObaContract.ServiceAlerts.hideAllAlerts();
             }
+        }else if (preference.equals(mThemePref) && newValue instanceof String) {
+            String theme = ((String) newValue);
+            setAppTheme(theme);
+            recreate();
         }
         return true;
     }

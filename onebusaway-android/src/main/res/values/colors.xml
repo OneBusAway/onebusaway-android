@@ -124,7 +124,4 @@
     <color name="zoom_btn_color_default">#BEFFFFFF</color>
     <color name="zoom_btn_color_pressed">#82CCCCCC</color>
     <color name="zoom_btn_color">#82CCCCCC</color>
-
-    <color name="light_dark_background">#2E2E2E</color>
-
 </resources>

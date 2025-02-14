@@ -16,8 +16,7 @@
     limitations under the License.
 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    android:key="preferences_root"
-          android:theme="@style/PreferenceScreen">
+    android:key="preferences_root">
     <PreferenceCategory
         android:key="@string/preferences_category_location"
         android:title="@string/preferences_category_location">

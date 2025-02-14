@@ -121,9 +121,9 @@ public class PreferencesActivity extends PreferenceActivity
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
-            setTheme(R.style.PreferenceScreen);
+            setTheme(android.R.style.ThemeOverlay_Material_Dark);
         } else {
-            setTheme(R.style.PreferenceScreen_Light);
+            setTheme(android.R.style.ThemeOverlay_Material_Light);
         }
         super.onCreate(savedInstanceState);
         setProgressBarIndeterminate(true);

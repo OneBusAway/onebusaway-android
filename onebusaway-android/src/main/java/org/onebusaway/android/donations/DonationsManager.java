@@ -5,6 +5,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
@@ -34,14 +35,13 @@ public class DonationsManager {
     // region Analytics
 
     private FirebaseAnalytics mAnalytics;
-
     /**
      * Reports UI events using Firebase
      * @param resourceID ID of the UI element to report
      * @param state the state or variant of the UI item, or null if the item doesn't have a state or variant
      */
     private void reportUIEvent(Integer resourceID, String state) {
-        ObaAnalytics.reportUiEvent(mAnalytics, mResources.getString(resourceID), state);
+        ObaAnalytics.reportUiEvent(mAnalytics, Application.get().getPlausibleInstance(), PlausibleAnalytics.REPORT_DONATE_EVENT_URL, mResources.getString(resourceID), state);
     }
 
     // endregion

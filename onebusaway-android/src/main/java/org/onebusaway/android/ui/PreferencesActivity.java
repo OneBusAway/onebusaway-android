@@ -50,6 +50,7 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.region.ObaRegionsTask;
@@ -337,6 +338,8 @@ public class PreferencesActivity extends PreferenceActivity
             RegionsActivity.start(this);
         } else if (pref.equals(mTutorialPref)) {
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                     getString(R.string.analytics_label_button_press_tutorial),
                     null);
             ShowcaseViewUtils.resetAllTutorials(this);
@@ -345,6 +348,8 @@ public class PreferencesActivity extends PreferenceActivity
             startActivity(Application.getDonationsManager().buildOpenDonationsPageIntent());
         } else if (pref.equals(mPoweredByObaPref)) {
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                     getString(R.string.analytics_label_button_press_powered_by_oba),
                     null);
             Intent intent = new Intent(Intent.ACTION_VIEW,
@@ -352,6 +357,8 @@ public class PreferencesActivity extends PreferenceActivity
             startActivity(intent);
         } else if (pref.equals(mAboutPref)) {
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                     getString(R.string.analytics_label_button_press_about),
                     null);
             AboutActivity.start(this);
@@ -518,10 +525,14 @@ public class PreferencesActivity extends PreferenceActivity
             //Analytics
             if (experimentalServers) {
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                         getString(R.string.analytics_label_button_press_experimental_on),
                         null);
             } else {
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                         getString(R.string.analytics_label_button_press_experimental_off),
                         null);
             }
@@ -545,10 +556,14 @@ public class PreferencesActivity extends PreferenceActivity
                     .getBoolean(getString(R.string.preference_key_auto_select_region), true);
             if (autoSelect) {
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                         getString(R.string.analytics_label_button_press_auto),
                         null);
             } else {
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                         getString(R.string.analytics_label_button_press_manual),
                         null);
             }

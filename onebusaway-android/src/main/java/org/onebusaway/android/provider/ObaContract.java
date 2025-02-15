@@ -24,6 +24,7 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
 import org.onebusaway.android.nav.model.PathLink;
@@ -1742,6 +1743,8 @@ public final class ObaContract {
                 analyticsParam.append("all stops");
             }
             ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(context),
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_BOOKMARK_EVENT_URL,
                     analyticsEvent.toString(),
                     analyticsParam.toString());
         }

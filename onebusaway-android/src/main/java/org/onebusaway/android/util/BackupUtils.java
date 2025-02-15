@@ -31,6 +31,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.backup.Backup;
 import org.onebusaway.android.region.ObaRegionsTask;
 
@@ -75,6 +76,8 @@ public class BackupUtils {
     static private void doRestore(Context activityContext, Uri uri) {
         final Context context = Application.get().getApplicationContext();
         ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
+                Application.get().getPlausibleInstance(),
+                PlausibleAnalytics.REPORT_BACKUP_EVENT_URL,
                 context.getString(R.string.analytics_label_button_press_restore_preference),
                 null);
         try {
@@ -105,6 +108,8 @@ public class BackupUtils {
     public static void save(Context activityContext,Uri uri) {
         Context context = Application.get().getApplicationContext();
         ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
+                Application.get().getPlausibleInstance(),
+                PlausibleAnalytics.REPORT_BACKUP_EVENT_URL,
                 context.getString(R.string.analytics_label_button_press_save_preference),
                 null);
         try {

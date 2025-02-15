@@ -58,6 +58,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.Status;
@@ -428,6 +429,8 @@ class ArrivalsListHeader {
                     //Analytics
                     if (obaRegion.getName() != null) {
                         ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                Application.get().getPlausibleInstance(),
+                                PlausibleAnalytics.REPORT_ARRIVALS_EVENT_URL,
                                 mContext.getString(R.string.analytics_label_button_press_stopinfo),
                                 null);
                     }

@@ -38,7 +38,9 @@ import android.widget.TextView;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ReminderUtils;
@@ -381,6 +383,8 @@ public final class MyRemindersFragment extends ListFragment
                 Log.d(TAG, "setSortByClause: sort by name");
                 sortBy = ObaContract.Trips.NAME + " asc";
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_REMINDERS_EVENT_URL,
                         getString(R.string.analytics_label_sort_by_name_reminder),
                         null);
                 break;
@@ -388,6 +392,8 @@ public final class MyRemindersFragment extends ListFragment
                 Log.d(TAG, "setSortByClause: sort by time");
                 sortBy = ObaContract.Trips.DEPARTURE + " asc";
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_REMINDERS_EVENT_URL,
                         getString(R.string.analytics_label_sort_by_departure_time_reminder),
                         null);
                 break;

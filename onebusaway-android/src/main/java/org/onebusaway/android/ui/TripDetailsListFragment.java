@@ -76,6 +76,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -556,7 +557,7 @@ public class TripDetailsListFragment extends ListFragment {
                             createDestinationReminderBetaDialog().show();
                         }
 
-                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics, getString(R.string.analytics_label_destination_reminder), getString(R.string.analytics_label_destination_reminder_variant_started));
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics, Application.get().getPlausibleInstance(), PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL, getString(R.string.analytics_label_destination_reminder), getString(R.string.analytics_label_destination_reminder_variant_started));
 
                         // Request the user to grant the POST_NOTIFICATIONS permission.
                         ActivityCompat.requestPermissions(getActivity(),

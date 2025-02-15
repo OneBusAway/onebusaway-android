@@ -41,6 +41,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.region.ObaRegionsLoader;
 import org.onebusaway.android.util.ArrayAdapter;
@@ -147,6 +148,8 @@ public class RegionsFragment extends ListFragment
         Log.d(TAG, "User manually set region to '" + region.getName() + "'.");
 
         ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                Application.get().getPlausibleInstance(),
+                PlausibleAnalytics.REPORT_REGION_EVENT_URL,
                 getString(R.string.region_selected_manually),
                 region.getName());
 

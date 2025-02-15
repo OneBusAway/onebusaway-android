@@ -33,6 +33,7 @@ import android.widget.Toast;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.request.ObaReportProblemWithTripRequest;
 import org.onebusaway.android.util.UIUtils;
@@ -196,6 +197,8 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
         imm.hideSoftInputFromWindow(mUserComment.getWindowToken(), 0);
         if (isReportArgumentsValid()) {
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_VEHICLE_PROBLEM_EVENT_URL,
                     getString(R.string.analytics_problem),
                     getString(R.string.analytics_label_report_trip_problem));
             super.sendReport();

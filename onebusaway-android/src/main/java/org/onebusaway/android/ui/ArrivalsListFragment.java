@@ -62,6 +62,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.database.recentStops.RecentStopsManager;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
@@ -446,7 +447,7 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
             // Report Stop distance metric
             Location stopLocation = mStop.getLocation();
             Location myLocation = Application.getLastKnownLocation(getActivity(), null);
-            ObaAnalytics.reportViewStopEvent(mFirebaseAnalytics, mStop.getId(), mStop.getName(), myLocation, stopLocation);
+            ObaAnalytics.reportViewStopEvent(Application.get().getPlausibleInstance(), mFirebaseAnalytics, mStop.getId(), mStop.getName(), myLocation, stopLocation);
         } else {
             // If there was a last good response, then this is a refresh
             // and we should use a toast. Otherwise, it's a initial
@@ -813,7 +814,10 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
                             agencyName, blockId);
                 } else if (occupancy != null &&
                         ((!hasUrl && which == 6) || (hasUrl && which == 7))) {
-                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    ObaAnalytics.reportUiEvent(
+                            mFirebaseAnalytics,
+                            Application.get().getPlausibleInstance(),
+                            PlausibleAnalytics.REPORT_ARRIVALS_EVENT_URL,
                             getActivity().getString(R.string.analytics_label_button_press_about_occupancy),
                             null);
                     createOccupancyDialog().show();
@@ -1026,7 +1030,10 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         // menus like we did before...
         getActivity().supportInvalidateOptionsMenu();
 
-        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+        ObaAnalytics.reportUiEvent(
+                mFirebaseAnalytics,
+                Application.get().getPlausibleInstance(),
+                PlausibleAnalytics.REPORT_BOOKMARK_EVENT_URL,
                 getString(R.string.analytics_label_edit_field_bookmark),
                 null);
 
@@ -1200,12 +1207,16 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
                             // Sort by eta
                             Log.d(TAG, "Sort by ETA");
                             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                    Application.get().getPlausibleInstance(),
+                                    PlausibleAnalytics.REPORT_ARRIVALS_EVENT_URL,
                                     getString(R.string.analytics_label_sort_by_eta_arrival),
                                     null);
                         } else if (index == 1) {
                             // Sort by route
                             Log.d(TAG, "Sort by route");
                             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                    Application.get().getPlausibleInstance(),
+                                    PlausibleAnalytics.REPORT_ARRIVALS_EVENT_URL,
                                     getString(R.string.analytics_label_sort_by_route_arrival),
                                     null);
                         }
@@ -1240,12 +1251,16 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
             // Currently we're showing arrivals in header - we need to remove them
             mHeader.showArrivals(false);
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_ARRIVALS_EVENT_URL,
                     getString(R.string.analytics_label_hide_arrivals_in_header),
                     null);
         } else {
             // Currently we're hiding arrivals - we need to show them
             mHeader.showArrivals(true);
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_ARRIVALS_EVENT_URL,
                     getString(R.string.analytics_label_show_arrivals_in_header),
                     null);
         }
@@ -1305,6 +1320,8 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
                 (String) stopDetails.second).show();
 
         ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                Application.get().getPlausibleInstance(),
+                PlausibleAnalytics.REPORT_ARRIVALS_EVENT_URL,
                 getActivity().getString(R.string.analytics_label_button_press_stop_details),
                 null);
     }
@@ -1485,6 +1502,8 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         refresh();
 
         ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                Application.get().getPlausibleInstance(),
+                PlausibleAnalytics.REPORT_ARRIVALS_EVENT_URL,
                 getActivity().getString(R.string.analytics_label_load_more_arrivals),
                 null);
     }
@@ -1697,6 +1716,8 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
 
         for (String agencyId : agencyIds) {
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_ARRIVALS_EVENT_URL,
                     getString(R.string.analytics_service_alerts),
                     getString(R.string.analytics_label_service_alerts) + agencyId);
         }

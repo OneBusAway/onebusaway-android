@@ -27,6 +27,7 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.widealerts.GtfsAlertCallBack;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.donations.DonationsManager;
@@ -519,6 +520,8 @@ public class HomeActivity extends AppCompatActivity
                     showStarredStopsFragment();
                     mCurrentNavDrawerPosition = item;
                     ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            Application.get().getPlausibleInstance(),
+                            PlausibleAnalytics.REPORT_MENU_EVENT_URL,
                             getString(R.string.analytics_label_button_press_star),
                             null);
                 }
@@ -528,6 +531,8 @@ public class HomeActivity extends AppCompatActivity
                     showStarredRoutesFragment();
                     mCurrentNavDrawerPosition = item;
                     ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            Application.get().getPlausibleInstance(),
+                            PlausibleAnalytics.REPORT_MENU_EVENT_URL,
                             getString(R.string.analytics_label_button_press_star),
                             null);
                 }
@@ -542,6 +547,8 @@ public class HomeActivity extends AppCompatActivity
                     showMapFragment();
                     mCurrentNavDrawerPosition = NAVDRAWER_ITEM_NEARBY;
                     ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            Application.get().getPlausibleInstance(),
+                            PlausibleAnalytics.REPORT_MENU_EVENT_URL,
                             getString(R.string.analytics_label_button_press_nearby),
                             null);
                 }
@@ -551,6 +558,8 @@ public class HomeActivity extends AppCompatActivity
                     showMyRemindersFragment();
                     mCurrentNavDrawerPosition = item;
                     ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            Application.get().getPlausibleInstance(),
+                            PlausibleAnalytics.REPORT_MENU_EVENT_URL,
                             getString(R.string.analytics_label_button_press_reminders),
                             null);
                 }
@@ -559,6 +568,8 @@ public class HomeActivity extends AppCompatActivity
                 Intent planTrip = new Intent(HomeActivity.this, TripPlanActivity.class);
                 startActivity(planTrip);
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_MENU_EVENT_URL,
                         getString(R.string.analytics_label_button_press_trip_plan),
                         null);
                 break;
@@ -569,23 +580,31 @@ public class HomeActivity extends AppCompatActivity
                 Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
                 startActivity(preferences);
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_MENU_EVENT_URL,
                         getString(R.string.analytics_label_button_press_settings),
                         null);
                 break;
             case NAVDRAWER_ITEM_HELP:
                 showDialog(HELP_DIALOG);
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_MENU_EVENT_URL,
                         getString(R.string.analytics_label_button_press_help),
                         null);
                 break;
             case NAVDRAWER_ITEM_SEND_FEEDBACK:
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_MENU_EVENT_URL,
                         getString(R.string.analytics_label_button_press_feedback),
                         null);
                 goToSendFeedBack();
                 break;
             case NAVDRAWER_ITEM_OPEN_SOURCE:
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_MENU_EVENT_URL,
                         getString(R.string.analytics_label_button_press_open_source),
                         null);
                 Intent i = new Intent(Intent.ACTION_VIEW);
@@ -845,6 +864,8 @@ public class HomeActivity extends AppCompatActivity
         if (id == R.id.search) {
             onSearchRequested();
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_SEARCH_EVENT_URL,
                     getString(R.string.analytics_label_button_press_search_box),
                     null);
             return true;
@@ -911,6 +932,8 @@ public class HomeActivity extends AppCompatActivity
                                 }
                                 UIUtils.goToUrl(HomeActivity.this, twitterUrl);
                                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                        Application.get().getPlausibleInstance(),
+                                        PlausibleAnalytics.REPORT_MENU_EVENT_URL,
                                         getString(R.string.analytics_label_twitter),
                                         null);
                                 break;
@@ -1078,6 +1101,8 @@ public class HomeActivity extends AppCompatActivity
                     routes);
 
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                     getString(R.string.analytics_label_button_press_map_icon),
                     null);
         } else {
@@ -1461,6 +1486,8 @@ public class HomeActivity extends AppCompatActivity
 
                 mMapFragment.setMyLocation(true, true);
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                         getString(R.string.analytics_label_button_press_location),
                         null);
             }

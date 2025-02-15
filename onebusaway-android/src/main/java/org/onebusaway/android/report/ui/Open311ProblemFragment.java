@@ -59,6 +59,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.elements.ObaTripStatus;
@@ -531,7 +532,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             mRequestTask = new ServiceRequestTask(mOpen311, serviceRequest, this);
             mRequestTask.execute();
 
-            ObaAnalytics.reportUiEvent(mFirebaseAnalytics, getString(R.string.analytics_problem), mService.getService_name());
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,Application.get().getPlausibleInstance(), PlausibleAnalytics.REPORT_OPEN311_SERVER_EVENT_URL,getString(R.string.analytics_problem), mService.getService_name());
         } else {
             createToastMessage(Open311Validator.getErrorMessageForServiceRequestByErrorCode(errorCode));
         }

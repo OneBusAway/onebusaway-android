@@ -44,6 +44,7 @@ import org.onebusaway.android.directions.tasks.TripRequest;
 import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.UIUtils;
@@ -286,6 +287,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         bundle.remove(OTPConstants.SELECTED_ITINERARY);
 
         ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                Application.get().getPlausibleInstance(),
+                PlausibleAnalytics.REPORT_TRIP_PLANNER_EVENT_URL,
                 getString(R.string.analytics_label_trip_plan),
                 null);
 
@@ -370,6 +373,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                                 UIUtils.sendEmail(TripPlanActivity.this, email, locString, url,
                                         true);
                                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                        Application.get().getPlausibleInstance(),
+                                        PlausibleAnalytics.REPORT_TRIP_PLANNER_EVENT_URL,
                                         getString(R.string.analytics_label_app_feedback_otp),
                                         null);
                             } else {

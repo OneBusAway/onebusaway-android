@@ -42,6 +42,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
@@ -209,6 +210,8 @@ public class BaseMapFragment extends SupportMapFragment
                     if (controller instanceof BikeshareMapController) {
                         ((BikeshareMapController) controller).showBikes(true);
                         ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                Application.get().getPlausibleInstance(),
+                                PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                                 getString(R.string.analytics_layer_bikeshare),
                                 getString(R.string.analytics_label_bikeshare_activated));
                     }
@@ -226,6 +229,8 @@ public class BaseMapFragment extends SupportMapFragment
                     if (controller instanceof BikeshareMapController) {
                         ((BikeshareMapController) controller).showBikes(false);
                         ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                Application.get().getPlausibleInstance(),
+                                PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                                 getString(R.string.analytics_layer_bikeshare),
                                 getString(R.string.analytics_label_bikeshare_deactivated));
                     }

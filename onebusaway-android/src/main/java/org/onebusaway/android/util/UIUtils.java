@@ -96,6 +96,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
@@ -1781,7 +1782,10 @@ public final class UIUtils {
             // Launch installed app
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
             activity.startActivity(intent);
-            ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activity),
+            ObaAnalytics.reportUiEvent(
+                    FirebaseAnalytics.getInstance(activity),
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                     Application.get().getString(R.string.analytics_label_button_fare_payment),
                     Application.get().getString(R.string.analytics_label_open_app));
         } else {
@@ -1790,6 +1794,8 @@ public final class UIUtils {
             intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, region.getPaymentAndroidAppId())));
             activity.startActivity(intent);
             ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activity),
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                     Application.get().getString(R.string.analytics_label_button_fare_payment),
                     Application.get().getString(R.string.analytics_label_download_app));
         }
@@ -1843,6 +1849,8 @@ public final class UIUtils {
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
             context.startActivity(intent);
             ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(context),
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                     Application.get().getString(R.string.analytics_label_button_bike_share),
                     Application.get().getString(R.string.analytics_label_open_app));
         } else {
@@ -1851,6 +1859,8 @@ public final class UIUtils {
             intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, context.getString(R.string.hopr_android_app_id))));
             context.startActivity(intent);
             ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(context),
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                     Application.get().getString(R.string.analytics_label_button_bike_share),
                     Application.get().getString(R.string.analytics_label_download_app));
         }

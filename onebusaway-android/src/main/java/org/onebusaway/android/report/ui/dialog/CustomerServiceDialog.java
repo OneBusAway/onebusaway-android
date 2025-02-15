@@ -29,7 +29,9 @@ import android.widget.TextView;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaAgency;
 import org.onebusaway.android.io.elements.ObaAgencyWithCoverage;
 import org.onebusaway.android.io.request.ObaAgenciesWithCoverageRequest;
@@ -133,10 +135,14 @@ public class CustomerServiceDialog extends DialogFragment implements
                     UIUtils.sendEmail(getActivity(), agency.getEmail(), locationString);
 
                     ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            Application.get().getPlausibleInstance(),
+                            PlausibleAnalytics.REPORT_MORE_EVENT_URL,
                             agency.getName() + "_" + getString(R.string.analytics_customer_service),
                             getString(R.string.analytics_label_customer_service_email));
                     if (locationString == null) {
                         ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                                Application.get().getPlausibleInstance(),
+                                PlausibleAnalytics.REPORT_MORE_EVENT_URL,
                                 agency.getName() + "_" + getString(R.string.analytics_customer_service),
                                 getString(R.string.analytics_label_customer_service_email_without_location));
                     }
@@ -150,6 +156,8 @@ public class CustomerServiceDialog extends DialogFragment implements
                 webButton.setOnClickListener(view1 -> {
                     UIUtils.goToUrl(getActivity(), agency.getUrl());
                     ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            Application.get().getPlausibleInstance(),
+                            PlausibleAnalytics.REPORT_MORE_EVENT_URL,
                             agency.getName() + "_" + getString(R.string.analytics_customer_service),
                             getString(R.string.analytics_label_customer_service_web));
 
@@ -163,6 +171,8 @@ public class CustomerServiceDialog extends DialogFragment implements
                 phoneButton.setOnClickListener(view12 -> {
                     UIUtils.goToPhoneDialer(getActivity(), "tel:" + agency.getPhone());
                     ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                            Application.get().getPlausibleInstance(),
+                            PlausibleAnalytics.REPORT_MORE_EVENT_URL,
                             agency.getName() + "_" + getString(R.string.analytics_customer_service),
                             getString(R.string.analytics_label_customer_service_phone));
                 });

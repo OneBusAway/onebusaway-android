@@ -23,6 +23,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
@@ -164,6 +165,8 @@ public class MyStarredRoutesFragment extends MyRouteListFragmentBase {
                 sortBy = "length(" + ObaContract.Routes.SHORTNAME + "), "
                         + ObaContract.Routes.SHORTNAME + " asc";
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_STARRED_ROUTES_EVENT_URL,
                         getString(R.string.analytics_label_sort_by_name_stops),
                         null);
                 break;
@@ -172,6 +175,8 @@ public class MyStarredRoutesFragment extends MyRouteListFragmentBase {
                 Log.d(TAG, "Sort by frequently used");
                 sortBy = ObaContract.Routes.USE_COUNT + " desc";
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_STARRED_ROUTES_EVENT_URL,
                         getString(R.string.analytics_label_sort_by_mfu_stops),
                         null);
                 break;
@@ -195,6 +200,8 @@ public class MyStarredRoutesFragment extends MyRouteListFragmentBase {
             ObaContract.Routes.markAsFavorite(getActivity(), ObaContract.Routes.CONTENT_URI, false);
             ObaContract.RouteHeadsignFavorites.clearAllFavorites(getActivity());
             ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(getContext()),
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_BOOKMARK_EVENT_URL,
                     getString(R.string.analytics_label_edit_field_bookmark_delete),
                     null);
         }

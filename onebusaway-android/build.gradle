@@ -30,9 +30,6 @@ repositories {
         // CUTR Releases
         url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
     }
-    maven {
-        url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
-    }
     mavenCentral()
     maven { url 'https://jitpack.io' }
 }
@@ -334,7 +331,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-core:21.1.1'
     implementation 'com.google.firebase:firebase-analytics:22.1.2'
     // Plausible Analytics
-    implementation 'com.wbrawner.plausible:plausible-android:0.1.0-SNAPSHOT'
+    implementation 'com.github.OneBusAway:plausible-android-sdk:3.3'
     // Cloud Firestore (for storing destination alert test data)
     implementation('com.google.firebase:firebase-firestore:25.1.0') {
         // Exclude protobuf-lite and protolite-well-known-types to avoid conflicts with GTFS-realtime bindings

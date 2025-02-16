@@ -269,5 +269,4 @@
     <style name="CustomText2" parent="TextAppearance.ShowcaseView.Detail.Light">
         <item name="android:textColor">@color/tutorial_text</item>
     </style>
-
 </resources>

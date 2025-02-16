@@ -120,12 +120,9 @@ public class PreferencesActivity extends PreferenceActivity
     @SuppressWarnings("deprecation")
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
-            setTheme(android.R.style.ThemeOverlay_Material_Dark);
-        } else {
-            setTheme(android.R.style.ThemeOverlay_Material_Light);
-        }
+        setTheme();
         super.onCreate(savedInstanceState);
+
         setProgressBarIndeterminate(true);
 
         addPreferencesFromResource(R.xml.preferences);
@@ -668,5 +665,16 @@ public class PreferencesActivity extends PreferenceActivity
         startActivity(i);
         finish();
 
+    }
+
+    /**
+     * Set the theme based on the current night mode
+     */
+    private void setTheme(){
+        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+            setTheme(android.R.style.ThemeOverlay_Material_Dark);
+        } else {
+            setTheme(android.R.style.ThemeOverlay_Material_Light);
+        }
     }
 }

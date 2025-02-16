@@ -379,6 +379,7 @@ public class Application extends MultiDexApplication {
      * @param region
      */
     private void buildPlausibleInstance(ObaRegion region) {
+        mPlausible = null;
         if (region == null || region.getObaBaseUrl() == null || region.getPlausibleAnalyticsServerUrl() == null) return;
         String domain;
         try {

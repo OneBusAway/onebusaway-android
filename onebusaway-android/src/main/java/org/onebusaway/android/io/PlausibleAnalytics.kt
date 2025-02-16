@@ -64,15 +64,4 @@ object PlausibleAnalytics {
         if(plausible == null) return
         plausible.pageView(REPORT_VIEW_STOP_EVENT_URL, props = mapOf("id" to id, "distance" to stopDistance))
     }
-
-    /**
-     * Report a set region event to Plausible.
-     * @param plausible The Plausible instance to report to.
-     * @param region The region that was set.
-     */
-    @JvmStatic
-    fun reportSetRegion(plausible: Plausible?, region: String) {
-        if(plausible == null) return
-        plausible.event("Set Region", REPORT_REGION_EVENT_URL, props = mapOf("region" to region))
-    }
 }

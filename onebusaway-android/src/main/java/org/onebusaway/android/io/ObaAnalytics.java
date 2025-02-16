@@ -200,7 +200,6 @@ public class ObaAnalytics {
             return;
         }
         analytics.setUserProperty(Application.get().getString(R.string.analytics_label_region_name), regionName);
-        PlausibleAnalytics.reportSetRegion(plausible, regionName);
     }
 
     /**

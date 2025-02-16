@@ -42,6 +42,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -119,7 +120,9 @@ public class PreferencesActivity extends PreferenceActivity
     @SuppressWarnings("deprecation")
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        setTheme();
         super.onCreate(savedInstanceState);
+
         setProgressBarIndeterminate(true);
 
         addPreferencesFromResource(R.xml.preferences);
@@ -238,7 +241,6 @@ public class PreferencesActivity extends PreferenceActivity
 
         onAddCustomRegion();
     }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -440,6 +442,10 @@ public class PreferencesActivity extends PreferenceActivity
             if (hideAlerts) {
                 ObaContract.ServiceAlerts.hideAllAlerts();
             }
+        }else if (preference.equals(mThemePref) && newValue instanceof String) {
+            String theme = ((String) newValue);
+            setAppTheme(theme);
+            recreate();
         }
         return true;
     }
@@ -659,5 +665,16 @@ public class PreferencesActivity extends PreferenceActivity
         startActivity(i);
         finish();
 
+    }
+
+    /**
+     * Set the theme based on the current night mode
+     */
+    private void setTheme(){
+        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+            setTheme(android.R.style.ThemeOverlay_Material_Dark);
+        } else {
+            setTheme(android.R.style.ThemeOverlay_Material_Light);
+        }
     }
 }

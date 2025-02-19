@@ -1508,8 +1508,8 @@ public final class UIUtils {
             // We assume a situation is active if it doesn't contain any active window information
             return true;
         }
-        // Active window times are in seconds since epoch
-        long currentTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(currentTime);
+        // Active window times are in milliseconds since epoch
+        long currentTimeSeconds = TimeUnit.MILLISECONDS.toMillis(currentTime);
         boolean isActiveWindowForSituation = false;
         for (ObaSituation.ActiveWindow activeWindow : situation.getActiveWindows()) {
             long from = activeWindow.getFrom();

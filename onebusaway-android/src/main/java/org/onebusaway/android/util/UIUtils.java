@@ -1508,19 +1508,37 @@ public final class UIUtils {
             // We assume a situation is active if it doesn't contain any active window information
             return true;
         }
-        // Active window times are in milliseconds since epoch
-        long currentTimeSeconds = TimeUnit.MILLISECONDS.toMillis(currentTime);
+        // Active window times are in seconds or milliseconds since epoch
+        long currentTimeConverted = TimeUnit.MILLISECONDS.toMillis(currentTime);
         boolean isActiveWindowForSituation = false;
         for (ObaSituation.ActiveWindow activeWindow : situation.getActiveWindows()) {
             long from = activeWindow.getFrom();
             long to = activeWindow.getTo();
+
+            if(!isTimestampInSeconds(from)){
+                currentTimeConverted = TimeUnit.MILLISECONDS.toMillis(currentTime);
+            }
             // 0 is a valid end time that means no end to the window - see #990
-            if (from <= currentTimeSeconds && (to == 0 || currentTimeSeconds <= to)) {
+            if (from <= currentTimeConverted && (to == 0 || currentTimeConverted <= to)) {
                 isActiveWindowForSituation = true;
                 break;
             }
         }
         return isActiveWindowForSituation;
+    }
+
+    /**
+     * Checks if the given timestamp is in seconds.
+     *
+     * @param timestamp the timestamp to check
+     * @return true if the timestamp is in seconds, false if it is in milliseconds
+     */
+    public static boolean isTimestampInSeconds(long timestamp) {
+        // Get the current time in milliseconds
+        long currentTimeMillis = System.currentTimeMillis();
+
+        // If the timestamp is smaller than the current time divided by 1000, it's likely in seconds
+        return timestamp < currentTimeMillis / 1000L;
     }
 
     /**

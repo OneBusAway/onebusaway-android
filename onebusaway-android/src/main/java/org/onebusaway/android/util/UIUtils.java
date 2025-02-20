@@ -1509,7 +1509,7 @@ public final class UIUtils {
             return true;
         }
         // Active window times are in seconds or milliseconds since epoch
-        long currentTimeConverted = TimeUnit.MILLISECONDS.toMillis(currentTime);
+        long currentTimeConverted = TimeUnit.MILLISECONDS.toSeconds(currentTime);
         boolean isActiveWindowForSituation = false;
         for (ObaSituation.ActiveWindow activeWindow : situation.getActiveWindows()) {
             long from = activeWindow.getFrom();

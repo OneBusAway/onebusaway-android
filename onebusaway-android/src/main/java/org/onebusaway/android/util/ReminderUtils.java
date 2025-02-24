@@ -106,7 +106,7 @@ public class ReminderUtils {
      */
 
     public static boolean shouldShowReminders(){
-        return BuildConfig.ONESIGNAL_APP_ID != null && !BuildConfig.ONESIGNAL_APP_ID.isEmpty();
+        return Application.getUserPushID() != null && !Application.getUserPushID().isEmpty();
     }
 
     /**

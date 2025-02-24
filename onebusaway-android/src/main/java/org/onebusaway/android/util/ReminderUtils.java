@@ -15,19 +15,14 @@
  */
 package org.onebusaway.android.util;
 
-import com.onesignal.notifications.INotification;
-
-import org.json.JSONObject;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.ui.ArrivalsListActivity;
 
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 
@@ -48,27 +43,6 @@ public class ReminderUtils {
      */
     public static String getRouteShortName(Context context, String id) {
         return UIUtils.stringForQuery(context, Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, id), ObaContract.Routes.SHORTNAME);
-    }
-
-    /**
-     * Opens the stop information activity when a notification is received.
-     *
-     * @param context the application context
-     * @param notification the notification containing additional data
-     */
-    public static void openStopInfo(Context context, INotification notification) {
-        JSONObject data = notification.getAdditionalData();
-        if (data != null) {
-            try {
-                JSONObject arrivalAndDeparture = data.getJSONObject("arrival_and_departure");
-                String stopId = arrivalAndDeparture.optString("stop_id");
-                Intent intent = new ArrivalsListActivity.Builder(context, stopId).getIntent();
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                context.startActivity(intent);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     /**

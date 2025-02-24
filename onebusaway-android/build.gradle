@@ -227,8 +227,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-crashlytics:19.2.0'
     // Google Play Services Location
     implementation 'com.google.android.gms:play-services-location:21.3.0'
-    // OneSignal
-    implementation 'com.onesignal:OneSignal:5.6.2'
     // Support libraries
     implementation 'androidx.activity:activity-ktx:1.9.3'
     implementation 'androidx.fragment:fragment-ktx:1.8.4'
@@ -255,6 +253,7 @@ dependencies {
     // Pelias for point-of-interest search and geocoding for trip planning origin and destination
     implementation 'com.github.OneBusAway:pelias-client-library:v1.1.0'
     implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.firebase:firebase-messaging:24.1.0'
     // Google Play Services Maps (only for Google flavor)
     googleImplementation 'com.google.android.gms:play-services-maps:19.0.0'
     // MapLibre GL Native (only for MapLibre flavor)

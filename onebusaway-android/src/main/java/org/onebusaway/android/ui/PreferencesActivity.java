@@ -23,6 +23,7 @@ import static org.onebusaway.android.util.UIUtils.setAppTheme;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -685,11 +686,19 @@ public class PreferencesActivity extends PreferenceActivity
     /**
      * Set the theme based on the current night mode
      */
-    private void setTheme(){
-        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+    private void setTheme() {
+        int nightMode = AppCompatDelegate.getDefaultNightMode();
+        if (nightMode == AppCompatDelegate.MODE_NIGHT_YES) {
             setTheme(android.R.style.ThemeOverlay_Material_Dark);
-        } else {
+        } else if (nightMode == AppCompatDelegate.MODE_NIGHT_NO) {
             setTheme(android.R.style.ThemeOverlay_Material_Light);
+        } else if (nightMode == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) {
+            int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+            if (currentNightMode == Configuration.UI_MODE_NIGHT_YES) {
+                setTheme(android.R.style.ThemeOverlay_Material_Dark);
+            } else {
+                setTheme(android.R.style.ThemeOverlay_Material_Light);
+            }
         }
     }
 }

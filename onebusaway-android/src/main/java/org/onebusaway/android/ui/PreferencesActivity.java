@@ -23,6 +23,7 @@ import static org.onebusaway.android.util.UIUtils.setAppTheme;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -685,11 +686,27 @@ public class PreferencesActivity extends PreferenceActivity
     /**
      * Set the theme based on the current night mode
      */
-    private void setTheme(){
-        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
-            setTheme(android.R.style.ThemeOverlay_Material_Dark);
-        } else {
-            setTheme(android.R.style.ThemeOverlay_Material_Light);
+    private void setTheme() {
+        int nightMode = AppCompatDelegate.getDefaultNightMode();
+        int theme = getThemeForMode(nightMode);
+        setTheme(theme);
+    }
+
+    private int getThemeForMode(int nightMode) {
+        switch (nightMode) {
+            case AppCompatDelegate.MODE_NIGHT_YES:
+                return android.R.style.ThemeOverlay_Material_Dark;
+            case AppCompatDelegate.MODE_NIGHT_NO:
+                return android.R.style.ThemeOverlay_Material_Light;
+            case AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM:
+            default:
+                return isSystemInNightMode() ? android.R.style.ThemeOverlay_Material_Dark
+                        : android.R.style.ThemeOverlay_Material_Light;
         }
+    }
+
+    private boolean isSystemInNightMode() {
+        int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == Configuration.UI_MODE_NIGHT_YES;
     }
 }

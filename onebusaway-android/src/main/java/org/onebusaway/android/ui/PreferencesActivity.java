@@ -688,17 +688,25 @@ public class PreferencesActivity extends PreferenceActivity
      */
     private void setTheme() {
         int nightMode = AppCompatDelegate.getDefaultNightMode();
-        if (nightMode == AppCompatDelegate.MODE_NIGHT_YES) {
-            setTheme(android.R.style.ThemeOverlay_Material_Dark);
-        } else if (nightMode == AppCompatDelegate.MODE_NIGHT_NO) {
-            setTheme(android.R.style.ThemeOverlay_Material_Light);
-        } else if (nightMode == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) {
-            int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
-            if (currentNightMode == Configuration.UI_MODE_NIGHT_YES) {
-                setTheme(android.R.style.ThemeOverlay_Material_Dark);
-            } else {
-                setTheme(android.R.style.ThemeOverlay_Material_Light);
-            }
+        int theme = getThemeForMode(nightMode);
+        setTheme(theme);
+    }
+
+    private int getThemeForMode(int nightMode) {
+        switch (nightMode) {
+            case AppCompatDelegate.MODE_NIGHT_YES:
+                return android.R.style.ThemeOverlay_Material_Dark;
+            case AppCompatDelegate.MODE_NIGHT_NO:
+                return android.R.style.ThemeOverlay_Material_Light;
+            case AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM:
+            default:
+                return isSystemInNightMode() ? android.R.style.ThemeOverlay_Material_Dark
+                        : android.R.style.ThemeOverlay_Material_Light;
         }
+    }
+
+    private boolean isSystemInNightMode() {
+        int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == Configuration.UI_MODE_NIGHT_YES;
     }
 }

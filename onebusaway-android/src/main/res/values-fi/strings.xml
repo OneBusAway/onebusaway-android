@@ -726,4 +726,5 @@
     <string name="more_info">Lisätietoja</string>
     <string name="display_test_alerts">Näytä testihälytykset</string>
     <string name="display_test_wide_alerts_for_regions">Näytä laajat testihälytykset alueille</string>
+    <string name="close_donation_card">Sulje lahjoituskortti</string>
 </resources>

@@ -1129,4 +1129,5 @@
     <string name="more_info">Más información</string>
     <string name="display_test_alerts">Mostrar alertas de prueba</string>
     <string name="display_test_wide_alerts_for_regions">Mostrar alertas de prueba amplias para regiones</string>
+    <string name="close_donation_card">Cerrar tarjeta de donación</string>
 </resources>

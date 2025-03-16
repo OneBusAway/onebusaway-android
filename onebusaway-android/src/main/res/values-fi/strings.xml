@@ -726,6 +726,7 @@
     <string name="more_info">Lisätietoja</string>
     <string name="display_test_alerts">Näytä testihälytykset</string>
     <string name="display_test_wide_alerts_for_regions">Näytä laajat testihälytykset alueille</string>
+    <string name="no_description_available">Kuvausta ei ole saatavilla</string>
     <string name="close_donation_card">Sulje lahjoituskortti</string>
     <string name="send_email">Lähetä sähköposti</string>
     <string name="make_a_phone_call">Soita puhelu</string>

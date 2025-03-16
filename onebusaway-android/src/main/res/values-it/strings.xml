@@ -1040,5 +1040,6 @@
     <string name="more_info">Maggiori informazioni</string>
     <string name="display_test_alerts">Mostra avvisi di prova</string>
     <string name="display_test_wide_alerts_for_regions">Mostra avvisi di prova per regioni</string>
+    <string name="no_description_available">Nessuna descrizione disponibile</string>
     <string name="close_donation_card">Chiudi la scheda di donazione</string>
 </resources>

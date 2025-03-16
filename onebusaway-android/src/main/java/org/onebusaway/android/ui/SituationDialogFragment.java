@@ -166,8 +166,12 @@ public class SituationDialogFragment extends DialogFragment {
 
         String desc = args.getString(DESCRIPTION);
 
-        if (descTxtView != null &&!TextUtils.isEmpty(desc)) {
-            descTxtView.setText(Html.fromHtml(desc));
+        if (descTxtView != null) {
+            if (!TextUtils.isEmpty(desc)) {
+                descTxtView.setText(Html.fromHtml(desc));
+            } else {
+                descTxtView.setText(R.string.no_description_available);
+            }
         }
         TextView urlView = (TextView) dialog.findViewById(R.id.alert_url);
 

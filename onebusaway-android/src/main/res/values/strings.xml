@@ -1280,5 +1280,6 @@
     <string name="display_test_wide_alerts_for_regions">Display test-wide alerts for regions</string>
     <string name="do_you_want_to_plan_the_trip_now">Do you want to plan the trip now?</string>
     <string name="plan_trip">Plan Trip?</string>
+    <string name="no_description_available">No description available</string>
     <string name="close_donation_card">Close donation card</string>
 </resources>

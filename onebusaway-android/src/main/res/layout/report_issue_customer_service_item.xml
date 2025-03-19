@@ -42,6 +42,7 @@
                     android:scaleType="fitCenter"
                     android:id="@+id/ricsi_email"
                     android:src="@drawable/ic_customer_service_email"
+                    android:contentDescription="@string/send_email"
                     android:background="?attr/selectableItemBackground"
                     android:layout_alignParentBottom="true"
                     android:layout_centerVertical="true"

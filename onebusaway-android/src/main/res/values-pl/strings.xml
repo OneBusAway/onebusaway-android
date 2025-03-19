@@ -747,4 +747,5 @@
     <string name="display_test_alerts">Wyświetl alerty testowe</string>
     <string name="display_test_wide_alerts_for_regions">Wyświetl szerokie alerty testowe dla regionów</string>
     <string name="close_donation_card">Zamknij kartę darowizny</string>
+    <string name="send_email">Wyślij email</string>
 </resources>

@@ -1282,4 +1282,5 @@
     <string name="plan_trip">Plan Trip?</string>
     <string name="close_donation_card">Close donation card</string>
     <string name="send_email">Send email</string>
+    <string name="make_a_phone_call">Make a phone call</string>
 </resources>

@@ -60,6 +60,7 @@
                     android:scaleType="fitCenter"
                     android:id="@+id/ricsi_phone"
                     android:src="@drawable/ic_customer_service_phone"
+                    android:contentDescription="@string/make_a_phone_call"
                     android:background="?attr/selectableItemBackground"
                     android:layout_alignParentBottom="true"
                     android:layout_centerVertical="true"

@@ -12,18 +12,14 @@
                 android:src="@drawable/ic_toggle_star"
                 android:contentDescription="@string/stop_info_favorite"
                 android:background="?attr/selectableItemBackground"
-                android:maxHeight="14dp"
-                android:maxWidth="14dp"
-                android:minHeight="14dp"
-                android:minWidth="14dp"
-                android:layout_width="25dp"
-                android:layout_height="25dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_marginBottom="1dp"
                 android:layout_marginLeft="@dimen/arrival_header_left_margin"
                 android:scaleType="fitCenter"
                 android:adjustViewBounds="true"
                 android:gravity="center"
-                android:padding="5dp"/>
+                android:padding="12dp"/>
         <ImageButton
                 android:id="@+id/reminder"
                 android:src="@drawable/ic_drawer_alarm"

@@ -1132,4 +1132,5 @@
     <string name="close_donation_card">Cerrar tarjeta de donación</string>
     <string name="send_email">Enviar correo electrónico</string>
     <string name="make_a_phone_call">Hacer una llamada</string>
+    <string name="browse_the_web">Navegar por la web</string>
 </resources>

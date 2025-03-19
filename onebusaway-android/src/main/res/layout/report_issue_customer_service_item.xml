@@ -79,6 +79,7 @@
                     android:scaleType="fitCenter"
                     android:id="@+id/ricsi_web"
                     android:src="@drawable/ic_customer_service_web"
+                    android:contentDescription="@string/browse_the_web"
                     android:background="?attr/selectableItemBackground"
                     android:layout_alignParentBottom="true"
                     android:layout_centerVertical="true"

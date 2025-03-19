@@ -1043,4 +1043,5 @@
     <string name="close_donation_card">Chiudi la scheda di donazione</string>
     <string name="send_email">Invia email</string>
     <string name="make_a_phone_call">Fare una telefonata</string>
+    <string name="browse_the_web">Naviga sul web</string>
 </resources>

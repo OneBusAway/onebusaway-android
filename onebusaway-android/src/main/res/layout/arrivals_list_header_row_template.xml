@@ -47,13 +47,13 @@
     </LinearLayout>
 
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/route_name_and_direction"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_toLeftOf="@+id/eta_and_min"
-            android:layout_column="1"
-            android:gravity="left"
-            android:orientation="horizontal">
+                    android:id="@+id/route_name_and_direction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toLeftOf="@+id/eta_and_min"
+                    android:layout_column="1"
+                    android:gravity="left"
+                    android:orientation="horizontal">
 
         <TextView
                 android:id="@+id/eta_route_name"

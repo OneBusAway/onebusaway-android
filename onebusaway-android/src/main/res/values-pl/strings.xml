@@ -746,6 +746,7 @@
     <string name="more_info">Więcej informacji</string>
     <string name="display_test_alerts">Wyświetl alerty testowe</string>
     <string name="display_test_wide_alerts_for_regions">Wyświetl szerokie alerty testowe dla regionów</string>
+    <string name="no_description_available">Brak dostępnego opisu</string>
     <string name="close_donation_card">Zamknij kartę darowizny</string>
     <string name="send_email">Wyślij email</string>
     <string name="make_a_phone_call">Wykonaj telefon</string>

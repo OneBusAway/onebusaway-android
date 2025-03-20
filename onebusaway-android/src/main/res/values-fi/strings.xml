@@ -727,4 +727,7 @@
     <string name="display_test_alerts">Näytä testihälytykset</string>
     <string name="display_test_wide_alerts_for_regions">Näytä laajat testihälytykset alueille</string>
     <string name="close_donation_card">Sulje lahjoituskortti</string>
+    <string name="send_email">Lähetä sähköposti</string>
+    <string name="make_a_phone_call">Soita puhelu</string>
+    <string name="browse_the_web">Selaa verkkoa</string>
 </resources>

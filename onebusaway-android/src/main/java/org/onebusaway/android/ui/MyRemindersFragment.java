@@ -21,6 +21,7 @@ import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -310,8 +311,8 @@ public final class MyRemindersFragment extends ListFragment
                 .setTitle(R.string.trip_info_delete)
                 .setIcon(R.drawable.baseline_delete_forever_48)
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    ContentResolver cr = getActivity().getContentResolver();
-                    cr.delete(ObaContract.Trips.buildUri(ids[0], ids[1]), null, null);
+                    Uri tripUri = ObaContract.Trips.buildUri(ids[0], ids[1]);
+                    TripInfoActivity.TripInfoFragment.requestDeleteAlarm(getActivity(), tripUri);
 
                     getLoaderManager().getLoader(0).onContentChanged();
                 })

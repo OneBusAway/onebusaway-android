@@ -23,6 +23,7 @@ import static org.onebusaway.android.util.UIUtils.setAppTheme;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -42,6 +43,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -50,6 +52,7 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.region.ObaRegionsTask;
@@ -119,7 +122,9 @@ public class PreferencesActivity extends PreferenceActivity
     @SuppressWarnings("deprecation")
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        setTheme();
         super.onCreate(savedInstanceState);
+
         setProgressBarIndeterminate(true);
 
         addPreferencesFromResource(R.xml.preferences);
@@ -238,7 +243,6 @@ public class PreferencesActivity extends PreferenceActivity
 
         onAddCustomRegion();
     }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -337,6 +341,8 @@ public class PreferencesActivity extends PreferenceActivity
             RegionsActivity.start(this);
         } else if (pref.equals(mTutorialPref)) {
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                     getString(R.string.analytics_label_button_press_tutorial),
                     null);
             ShowcaseViewUtils.resetAllTutorials(this);
@@ -345,6 +351,8 @@ public class PreferencesActivity extends PreferenceActivity
             startActivity(Application.getDonationsManager().buildOpenDonationsPageIntent());
         } else if (pref.equals(mPoweredByObaPref)) {
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                     getString(R.string.analytics_label_button_press_powered_by_oba),
                     null);
             Intent intent = new Intent(Intent.ACTION_VIEW,
@@ -352,6 +360,8 @@ public class PreferencesActivity extends PreferenceActivity
             startActivity(intent);
         } else if (pref.equals(mAboutPref)) {
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                     getString(R.string.analytics_label_button_press_about),
                     null);
             AboutActivity.start(this);
@@ -440,6 +450,10 @@ public class PreferencesActivity extends PreferenceActivity
             if (hideAlerts) {
                 ObaContract.ServiceAlerts.hideAllAlerts();
             }
+        }else if (preference.equals(mThemePref) && newValue instanceof String) {
+            String theme = ((String) newValue);
+            setAppTheme(theme);
+            recreate();
         }
         return true;
     }
@@ -518,10 +532,14 @@ public class PreferencesActivity extends PreferenceActivity
             //Analytics
             if (experimentalServers) {
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                         getString(R.string.analytics_label_button_press_experimental_on),
                         null);
             } else {
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                         getString(R.string.analytics_label_button_press_experimental_off),
                         null);
             }
@@ -545,10 +563,14 @@ public class PreferencesActivity extends PreferenceActivity
                     .getBoolean(getString(R.string.preference_key_auto_select_region), true);
             if (autoSelect) {
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                         getString(R.string.analytics_label_button_press_auto),
                         null);
             } else {
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
                         getString(R.string.analytics_label_button_press_manual),
                         null);
             }
@@ -659,5 +681,32 @@ public class PreferencesActivity extends PreferenceActivity
         startActivity(i);
         finish();
 
+    }
+
+    /**
+     * Set the theme based on the current night mode
+     */
+    private void setTheme() {
+        int nightMode = AppCompatDelegate.getDefaultNightMode();
+        int theme = getThemeForMode(nightMode);
+        setTheme(theme);
+    }
+
+    private int getThemeForMode(int nightMode) {
+        switch (nightMode) {
+            case AppCompatDelegate.MODE_NIGHT_YES:
+                return android.R.style.ThemeOverlay_Material_Dark;
+            case AppCompatDelegate.MODE_NIGHT_NO:
+                return android.R.style.ThemeOverlay_Material_Light;
+            case AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM:
+            default:
+                return isSystemInNightMode() ? android.R.style.ThemeOverlay_Material_Dark
+                        : android.R.style.ThemeOverlay_Material_Light;
+        }
+    }
+
+    private boolean isSystemInNightMode() {
+        int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == Configuration.UI_MODE_NIGHT_YES;
     }
 }

@@ -45,6 +45,10 @@ public class StudyResponse implements Serializable {
 
         private Boolean show_on_stops;
 
+        private Boolean allows_multiple_responses;
+
+        private Boolean always_visible;
+
         private List<String> visible_stop_list;
 
         private List<String> visible_route_list;
@@ -97,6 +101,14 @@ public class StudyResponse implements Serializable {
 
         public List<String> getVisible_route_list() {
             return visible_route_list;
+        }
+
+        public Boolean getAlways_visible() {
+            return always_visible;
+        }
+
+        public Boolean getAllows_multiple_responses() {
+            return allows_multiple_responses;
         }
 
         public static class Study implements Serializable {

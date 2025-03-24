@@ -73,6 +73,7 @@ import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.PlacesAutoCompleteAdapter;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.map.googlemapsv2.ProprietaryMapHelpV2;
 import org.onebusaway.android.util.LocationUtils;
@@ -672,6 +673,8 @@ public class TripPlanFragment extends Fragment {
                 UIUtils.sendEmail(getActivity(), email, locString, null, true);
             }
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_TRIP_PLANNER_EVENT_URL,
                     getString(R.string.analytics_label_app_feedback_otp),
                     null);
         }

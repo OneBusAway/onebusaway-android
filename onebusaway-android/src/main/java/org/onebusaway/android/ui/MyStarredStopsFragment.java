@@ -40,6 +40,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
@@ -186,6 +187,8 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
                 Log.d(TAG, "Sort by name");
                 sortBy = ObaContract.Stops.UI_NAME + " asc";
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_STARRED_STOPS_EVENT_URL,
                         getString(R.string.analytics_label_sort_by_name_stops),
                         null);
                 break;
@@ -194,6 +197,8 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
                 Log.d(TAG, "Sort by frequently used");
                 sortBy = ObaContract.Stops.USE_COUNT + " desc";
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_STARRED_STOPS_EVENT_URL,
                         getString(R.string.analytics_label_sort_by_mfu_stops),
                         null);
                 break;
@@ -216,6 +221,8 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
         protected void doClear() {
             ObaContract.Stops.markAsFavorite(getActivity(), ObaContract.Stops.CONTENT_URI, false);
             ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(getContext()),
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_BOOKMARK_EVENT_URL,
                     getString(R.string.analytics_label_edit_field_bookmark_delete),
                     null);
         }

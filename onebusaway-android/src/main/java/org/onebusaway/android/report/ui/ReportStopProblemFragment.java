@@ -31,6 +31,7 @@ import android.widget.Toast;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaReportProblemWithStopRequest;
 
@@ -141,7 +142,11 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         imm.hideSoftInputFromWindow(mUserComment.getWindowToken(), 0);
 
         if (isReportArgumentsValid()) {
-            ObaAnalytics.reportUiEvent(mFirebaseAnalytics, getString(R.string.analytics_problem), getString(R.string.analytics_label_report_stop_problem));
+            ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_STOP_PROBLEM_EVENT_URL,
+                    getString(R.string.analytics_problem),
+                    getString(R.string.analytics_label_report_stop_problem));
             super.sendReport();
         } else {
             // Show error message if report arguments is not valid

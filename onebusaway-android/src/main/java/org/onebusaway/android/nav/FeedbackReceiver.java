@@ -21,7 +21,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.apache.commons.io.FileUtils;
@@ -29,6 +31,8 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.ui.FeedbackActivity;
+import org.onebusaway.android.ui.HomeActivity;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +46,6 @@ import androidx.work.WorkManager;
 import static android.text.TextUtils.isEmpty;
 import static org.onebusaway.android.nav.NavigationService.LOG_DIRECTORY;
 
-
 public class FeedbackReceiver extends BroadcastReceiver {
     public static final String TAG = "FeedbackReceiver";
     public static final String ACTION_REPLY = BuildConfig.APPLICATION_ID + ".action.REPLY";
@@ -51,6 +54,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
     public static final String NOTIFICATION_ID = ".NOTIFICATION_ID";
     public static final String RESPONSE = ".RESPONSE";
     public static final String LOG_FILE = ".LOG_FILE";
+    public static final String SHOW_SNACKBAR = "show_snackbar";
 
     public static final int FEEDBACK_NO = 1;
     public static final int FEEDBACK_YES = 2;
@@ -68,10 +72,10 @@ public class FeedbackReceiver extends BroadcastReceiver {
         //int actionNum = intent.getIntExtra(ACTION_NUM, 0);
         String action = intent.getAction();
 
-        if (action == ACTION_DISMISS_FEEDBACK) {
-            Log.d(TAG, "Dismiss intent");
-            //TODO : Create Snack bar if user dismissed feedback notification without providing feedback
-        } else if (action == ACTION_REPLY) {
+        if (ACTION_DISMISS_FEEDBACK.equals(action)) {
+            Log.d(TAG, "Dismiss intent - showing Snackbar");
+            showFeedbackDismissedSnackbar(context, intent);
+        } else if (ACTION_REPLY.equals(action)) {
             Log.d(TAG, "Capturing user feedback from notification");
             captureFeedback(context, intent, notifyId);
         }
@@ -189,4 +193,30 @@ public class FeedbackReceiver extends BroadcastReceiver {
                 + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText)) ? feedbackText : null));
     }
 
+    /**
+     * Shows a Snackbar when feedback notification is dismissed
+     */
+    private void showFeedbackDismissedSnackbar(Context context, Intent originalIntent) {
+        // Get notification ID and optional extras
+        int notifyId = originalIntent.getIntExtra(NOTIFICATION_ID, 
+                NavigationServiceProvider.NOTIFICATION_ID + 1);
+        String tripId = originalIntent.getStringExtra(TRIP_ID);
+        String logFilePath = originalIntent.getStringExtra(LOG_FILE);
+        
+        // Launch HomeActivity to show the Snackbar
+        Intent intent = new Intent(context, HomeActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.putExtra(SHOW_SNACKBAR, true);
+        intent.putExtra(NOTIFICATION_ID, notifyId);
+        
+        // Pass trip ID and log file if available
+        if (tripId != null) {
+            intent.putExtra(TRIP_ID, tripId);
+        }
+        if (logFilePath != null) {
+            intent.putExtra(LOG_FILE, logFilePath);
+        }
+        
+        context.startActivity(intent);
+    }
 }

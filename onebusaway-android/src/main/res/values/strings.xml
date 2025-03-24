@@ -1285,4 +1285,6 @@
     <string name="send_email">Send email</string>
     <string name="make_a_phone_call">Make a phone call</string>
     <string name="browse_the_web">Browse the web</string>
+    <string name="feedback_dismissed_message">Please consider providing feedback to help us improve.</string>
+    <string name="feedback">Feedback</string>
 </resources>

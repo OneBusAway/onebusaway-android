@@ -21,6 +21,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
@@ -47,6 +48,7 @@ import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.map.googlemapsv2.LayerInfo;
+import org.onebusaway.android.nav.FeedbackReceiver;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
@@ -2229,4 +2231,32 @@ public class HomeActivity extends AppCompatActivity
         });
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        
+        // Check if we need to show a Snackbar
+        if (intent.getBooleanExtra(FeedbackReceiver.SHOW_SNACKBAR, false)) {
+            showFeedbackSnackbar(intent);
+        }
+    }
+    
+    /**
+     * Shows a Snackbar for feedback
+     */
+    private void showFeedbackSnackbar(Intent intent) {
+        View rootView = findViewById(android.R.id.content);
+        if (rootView != null) {
+            Snackbar snackbar = Snackbar.make(rootView, R.string.feedback_dismissed_message, 5000); // Show for 5 seconds instead of default
+            snackbar.setAction(R.string.feedback, v -> {
+                // Open FeedbackActivity with the same extras
+                Intent feedbackIntent = new Intent(this, FeedbackActivity.class);
+                feedbackIntent.setAction(FeedbackReceiver.ACTION_REPLY);
+                feedbackIntent.putExtras(intent);
+                startActivity(feedbackIntent);
+            });
+            snackbar.show();
+        }
+    }
 }

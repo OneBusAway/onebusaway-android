@@ -715,8 +715,10 @@
     <string name="preferences_reset_donation_timestamps_summary">Dotknięcie tej opcji spowoduje wyczyszczenie znaczników czasu \'Przypomnij mi później\' i \'Nie przeszkadzaj mi\' związanych z prośbami o darowizny.</string>
     <string name="preferences_show_weather_view">Pokaż widok pogody</string>
     <string name="show">Pokaż</string>
-    <string name="preferences_enable_map_3d_mode_title">Włącz tryb 3D mapy</string>
-    <string name="preferences_enable_map_3d_mode_summary">Uwzględnij budynki 3D na mapie</string>
+    <string name="preferences_preferred_maps_title">Preferowany Typ Mapy</string>
+    <string name="preferences_preferred_map_option_normal2d">Domyślna mapa</string>
+    <string name="preferences_preferred_map_option_normal3d">Domyślna mapa z budynkami 3D</string>
+    <string name="preferences_preferred_map_option_satellite">Mapa satelitarna</string>
 
     <!--Survey-->
     <string name="preferences_show_available_studies_title">Pokaż dostępne badania</string>
@@ -746,7 +748,6 @@
     <string name="more_info">Więcej informacji</string>
     <string name="display_test_alerts">Wyświetl alerty testowe</string>
     <string name="display_test_wide_alerts_for_regions">Wyświetl szerokie alerty testowe dla regionów</string>
-    <string name="no_description_available">Brak dostępnego opisu</string>
     <string name="close_donation_card">Zamknij kartę darowizny</string>
     <string name="send_email">Wyślij email</string>
     <string name="make_a_phone_call">Wykonaj telefon</string>

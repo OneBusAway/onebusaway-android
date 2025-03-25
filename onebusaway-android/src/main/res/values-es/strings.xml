@@ -1098,8 +1098,10 @@
     <string name="preferences_reset_donation_timestamps_summary">Al tocar esta opción se borrarán las marcas de tiempo de \'Recuérdame más tarde\' y \'No me molestes\' asociadas con las solicitudes de donación.</string>
     <string name="preferences_show_weather_view">Mostrar vista del clima</string>
     <string name="show">Mostrar</string>
-    <string name="preferences_enable_map_3d_mode_title">Activar modo 3D del mapa</string>
-    <string name="preferences_enable_map_3d_mode_summary">Incluir edificios en 3D en el mapa</string>
+    <string name="preferences_preferred_maps_title">Tipo de Mapa Preferido</string>
+    <string name="preferences_preferred_map_option_normal2d">Mapa predeterminado</string>
+    <string name="preferences_preferred_map_option_normal3d">Mapa predeterminado con edificios 3D</string>
+    <string name="preferences_preferred_map_option_satellite">Mapa satelital</string>
 
     <!-- Survey -->
     <string name="preferences_show_available_studies_title">Mostrar estudios disponibles</string>
@@ -1129,7 +1131,6 @@
     <string name="more_info">Más información</string>
     <string name="display_test_alerts">Mostrar alertas de prueba</string>
     <string name="display_test_wide_alerts_for_regions">Mostrar alertas de prueba amplias para regiones</string>
-    <string name="no_description_available">No hay descripción disponible</string>
     <string name="close_donation_card">Cerrar tarjeta de donación</string>
     <string name="send_email">Enviar correo electrónico</string>
     <string name="make_a_phone_call">Hacer una llamada</string>

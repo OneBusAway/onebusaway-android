@@ -21,7 +21,6 @@ import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.database.ContentObserver;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -306,18 +305,11 @@ public final class MyRemindersFragment extends ListFragment
     private void deleteTrip(ListView l, int position) {
         String[] ids = getIds(l, position);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setMessage(R.string.trip_info_delete_trip)
-                .setTitle(R.string.trip_info_delete)
-                .setIcon(R.drawable.baseline_delete_forever_48)
-                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    Uri tripUri = ObaContract.Trips.buildUri(ids[0], ids[1]);
-                    TripInfoActivity.TripInfoFragment.requestDeleteAlarm(getActivity(), tripUri);
+        // TODO: Confirmation dialog?
+        ContentResolver cr = getActivity().getContentResolver();
+        cr.delete(ObaContract.Trips.buildUri(ids[0], ids[1]), null, null);
 
-                    getLoaderManager().getLoader(0).onContentChanged();
-                })
-                .setNegativeButton(android.R.string.cancel, (dialog, which) -> dialog.dismiss());
-        builder.create().show();
+        getLoaderManager().getLoader(0).onContentChanged();
     }
 
     private void goToStop(ListView l, int position) {

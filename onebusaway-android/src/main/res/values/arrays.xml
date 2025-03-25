@@ -90,6 +90,11 @@
         <item>The bus doesn\'t stop here</item>
         <item>Something else</item>
     </string-array>
+    <string-array name="preferred_map_options">
+        <item>@string/preferences_preferred_map_option_normal2d</item>
+        <item>@string/preferences_preferred_map_option_normal3d</item>
+        <item>@string/preferences_preferred_map_option_satellite</item>
+    </string-array>
     <string-array name="preferred_units_options">
         <item>@string/preferences_preferred_units_option_automatic</item>
         <item>@string/preferences_preferred_units_option_metric</item>

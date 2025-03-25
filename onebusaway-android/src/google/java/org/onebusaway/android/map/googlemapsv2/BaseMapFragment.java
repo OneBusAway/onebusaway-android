@@ -278,6 +278,7 @@ public class BaseMapFragment extends SupportMapFragment
 
         /**
          * Called when a result has been obtained after requesting user location permission.
+         *
          * @param grantResult The grant results for the location permission which is either PackageManager.PERMISSION_GRANTED or PackageManager.PERMISSION_DENIED. Never null.
          */
         void onLocationPermissionResult(int grantResult);
@@ -371,8 +372,8 @@ public class BaseMapFragment extends SupportMapFragment
         uiSettings.setMyLocationButtonEnabled(false);
         // Hide Toolbar
         uiSettings.setMapToolbarEnabled(false);
-        // Check for 3D map mode settings
-        updateMap3DModeSettings();
+        // Check for map mode settings
+        updateMapModeSettings();
         // Instantiate class that holds generic markers to be added by outside classes
         mSimpleMarkerOverlay = new SimpleMarkerOverlay(mMap);
 
@@ -515,7 +516,7 @@ public class BaseMapFragment extends SupportMapFragment
                 controller.notifyMapChanged();
             }
         }
-        updateMap3DModeSettings();
+        updateMapModeSettings();
         super.onResume();
     }
 
@@ -921,6 +922,7 @@ public class BaseMapFragment extends SupportMapFragment
             mMap.animateCamera((CameraUpdateFactory.newLatLngBounds(b, width, height, padding)));
         }
     }
+
     private RegionCallback regionCallback;
 
     public void setRegionCallback(RegionCallback callback) {
@@ -1496,15 +1498,31 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     /**
-     * Updates the map settings based on the current state of 3D mode preference.
+     * Updates the map settings based on the current state of map mode preference.
      */
-    private void updateMap3DModeSettings() {
-        if(mMap == null) return;
+    private void updateMapModeSettings() {
+        if (mMap == null) return;
 
-        boolean isEnabled = Application.getPrefs().getBoolean(getString(R.string.preference_key_enable_map_3d_mode), true);
+        String normal = getString(R.string.preferences_preferred_map_option_normal2d);
+        String mapType = Application.getPrefs().getString(getString(R.string.preference_key_map_mode), normal);
 
-        mMap.getUiSettings().setTiltGesturesEnabled(isEnabled);
-        mMap.setBuildingsEnabled(isEnabled);
+        if (mapType.equals(normal)) {
+            mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+            mMap.getUiSettings().setTiltGesturesEnabled(false);
+            mMap.setBuildingsEnabled(false);
+        } else if (mapType.equals(getString(R.string.preferences_preferred_map_option_normal3d))) {
+            // previously was hybrid
+            if (mMap.getMapType() == GoogleMap.MAP_TYPE_HYBRID) {
+                mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+            }
+            mMap.getUiSettings().setTiltGesturesEnabled(true);
+            mMap.setBuildingsEnabled(true);
+        } else if (mapType.equals(getString(R.string.preferences_preferred_map_option_satellite))) {
+            mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+        } else {
+            // should never happen
+            return;
+        }
 
         // Reset tilt to 0 degrees
         mMap.moveCamera(CameraUpdateFactory.newCameraPosition(

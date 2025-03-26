@@ -115,6 +115,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.appcompat.widget.SearchView;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
@@ -145,6 +146,7 @@ public class HomeActivity extends AppCompatActivity
         ArrivalsListFragment.Listener, NavigationDrawerCallbacks, WeatherRequestListener , RegionCallback,
         ObaRegionsTask.Callback {
 
+    private Menu mOptionsMenu;
 
     interface SlidingPanelController {
 
@@ -830,7 +832,9 @@ public class HomeActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_options, menu);
-
+        
+        mOptionsMenu = menu;
+        
         UIUtils.setupSearch(this, menu);
 
         // Initialize fragment menu visibility here, so we don't have overlap between the various fragments
@@ -1276,6 +1280,16 @@ public class HomeActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
+        // First, check if search view is expanded and collapse it if it is
+        MenuItem searchItem = mOptionsMenu != null ? mOptionsMenu.findItem(R.id.action_search) : null;
+        if (searchItem != null) {
+            SearchView searchView = (SearchView) searchItem.getActionView();
+            if (searchView != null && !searchView.isIconified()) {
+                searchView.setIconified(true);
+                return;
+            }
+        }
+        
         // Collapse the panel when the user presses the back button
         if (mSlidingPanel != null) {
             // Collapse the sliding panel if its anchored or expanded

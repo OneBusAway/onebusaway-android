@@ -142,4 +142,11 @@ public class MyRecentStopsAndRoutesActivity extends MyTabActivityBase {
                 new Intent(this, MyRecentStopsAndRoutesActivity.class),
                 R.drawable.ic_history);
     }
+
+    @Override
+    public void onBackPressed() {
+        // Use the same behavior as the toolbar's back arrow (up button)
+        super.onBackPressed();
+        NavHelp.goHome(this, false);
+    }
 }

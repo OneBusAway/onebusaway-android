@@ -132,8 +132,8 @@ abstract class MyListFragmentBase extends ListFragment
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             return new AlertDialog.Builder(getActivity())
-                    .setMessage(R.string.my_option_clear_confirm)
-                    .setTitle(R.string.my_option_clear_confirm_title)
+                    .setMessage(getConfirmMessage())
+                    .setTitle(getConfirmTitle())
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .setPositiveButton(android.R.string.yes,
                             new DialogInterface.OnClickListener() {
@@ -150,6 +150,16 @@ abstract class MyListFragmentBase extends ListFragment
                                 }
                             })
                     .create();
+        }
+
+        // Return the message resource ID for the confirmation dialog
+        protected int getConfirmMessage() {
+            return R.string.my_option_clear_confirm;
+        }
+
+        // Return the title resource ID for the confirmation dialog
+        protected int getConfirmTitle() {
+            return R.string.my_option_clear_confirm_title;
         }
 
         abstract protected void doClear();

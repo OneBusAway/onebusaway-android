@@ -205,5 +205,15 @@ public class MyStarredRoutesFragment extends MyRouteListFragmentBase {
                     getString(R.string.analytics_label_edit_field_bookmark_delete),
                     null);
         }
+
+        @Override
+        protected int getConfirmMessage() {
+            return R.string.my_option_clear_starred_routes_confirm;
+        }
+
+        @Override
+        protected int getConfirmTitle() {
+            return R.string.my_option_clear_starred_routes_title;
+        }
     }
 }

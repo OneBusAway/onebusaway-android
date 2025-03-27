@@ -216,6 +216,10 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     }
 
     public static class ClearDialog extends ClearConfirmDialog {
+        
+        public ClearDialog() {
+            super(R.string.my_option_clear_starred_stops_confirm, R.string.my_option_clear_starred_stops_title);
+        }
 
         @Override
         protected void doClear() {
@@ -225,16 +229,6 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
                     PlausibleAnalytics.REPORT_BOOKMARK_EVENT_URL,
                     getString(R.string.analytics_label_edit_field_bookmark_delete),
                     null);
-        }
-
-        @Override
-        protected int getConfirmMessage() {
-            return R.string.my_option_clear_starred_stops_confirm;
-        }
-
-        @Override
-        protected int getConfirmTitle() {
-            return R.string.my_option_clear_starred_stops_title;
         }
     }
 }

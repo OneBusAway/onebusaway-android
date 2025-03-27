@@ -95,20 +95,14 @@ public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
     }
 
     public static class ClearDialog extends ClearConfirmDialog {
+        
+        public ClearDialog() {
+            super(R.string.my_option_clear_recent_routes_confirm, R.string.my_option_clear_recent_routes_title);
+        }
 
         @Override
         protected void doClear() {
             ObaContract.Routes.markAsUnused(getActivity(), ObaContract.Routes.CONTENT_URI);
-        }
-
-        @Override
-        protected int getConfirmMessage() {
-            return R.string.my_option_clear_recent_routes_confirm;
-        }
-
-        @Override
-        protected int getConfirmTitle() {
-            return R.string.my_option_clear_recent_routes_title;
         }
     }
 }

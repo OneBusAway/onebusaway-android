@@ -96,20 +96,14 @@ public class MyRecentStopsFragment extends MyStopListFragmentBase {
     }
 
     public static class ClearDialog extends ClearConfirmDialog {
-
+        
+        public ClearDialog() {
+            super(R.string.my_option_clear_recent_stops_confirm, R.string.my_option_clear_recent_stops_title);
+        }
+        
         @Override
         protected void doClear() {
             ObaContract.Stops.markAsUnused(getActivity(), ObaContract.Stops.CONTENT_URI);
-        }
-
-        @Override
-        protected int getConfirmMessage() {
-            return R.string.my_option_clear_recent_stops_confirm;
-        }
-
-        @Override
-        protected int getConfirmTitle() {
-            return R.string.my_option_clear_recent_stops_title;
         }
     }
 }

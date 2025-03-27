@@ -128,12 +128,23 @@ abstract class MyListFragmentBase extends ListFragment
     }
 
     protected static abstract class ClearConfirmDialog extends DialogFragment {
+        private int messageResId = R.string.my_option_clear_confirm;
+        private int titleResId = R.string.my_option_clear_confirm_title;
+
+        public ClearConfirmDialog() {
+            // Default constructor
+        }
+
+        public ClearConfirmDialog(int messageResId, int titleResId) {
+            this.messageResId = messageResId;
+            this.titleResId = titleResId;
+        }
 
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             return new AlertDialog.Builder(getActivity())
-                    .setMessage(getConfirmMessage())
-                    .setTitle(getConfirmTitle())
+                    .setMessage(messageResId)
+                    .setTitle(titleResId)
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .setPositiveButton(android.R.string.yes,
                             new DialogInterface.OnClickListener() {
@@ -150,16 +161,6 @@ abstract class MyListFragmentBase extends ListFragment
                                 }
                             })
                     .create();
-        }
-
-        // Return the message resource ID for the confirmation dialog
-        protected int getConfirmMessage() {
-            return R.string.my_option_clear_confirm;
-        }
-
-        // Return the title resource ID for the confirmation dialog
-        protected int getConfirmTitle() {
-            return R.string.my_option_clear_confirm_title;
         }
 
         abstract protected void doClear();

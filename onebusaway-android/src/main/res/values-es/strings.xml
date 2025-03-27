@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
     University of South Florida (sjbarbeau@gmail.com)
     Benjamin Du (bendu@me.com),
     Microsoft Corporation
@@ -326,6 +325,18 @@
     <string name="my_context_remove_recent">Remover de recientes</string>
     <string name="my_context_remove_star">Remover de favoritos</string>
     <string name="my_context_show_schedule">Mostrar horarios</string>
+
+    <string name="my_option_clear_recent_stops_title">¿Borrar paradas recientes?</string>
+    <string name="my_option_clear_recent_stops_confirm">Esto eliminará permanentemente todas las paradas recientes.</string>
+
+    <string name="my_option_clear_recent_routes_title">¿Eliminar rutas recientes?</string>
+    <string name="my_option_clear_recent_routes_confirm">Esto eliminará permanentemente todas las rutas recientes.</string>
+
+    <string name="my_option_clear_starred_stops_title">¿Quitar todas las paradas destacadas?</string>
+    <string name="my_option_clear_starred_stops_confirm">Esto eliminará permanentemente todas las paradas marcadas con estrella.</string>
+
+    <string name="my_option_clear_starred_routes_title">¿Eliminar todas las rutas destacadas?</string>
+    <string name="my_option_clear_starred_routes_confirm">Esto eliminará permanentemente todas las rutas destacadas.</string>
 
     <!-- Service Alerts  -->
     <string name="alert_content_description_warning">Advertencia sobre el Servicio - toque para deslizar hacia arriba
@@ -725,7 +736,7 @@
     <string name="night_light_create_shortcut">Crear un acceso directo</string>
 
     <!-- Tutorials -->
-    <string name="tutorial_button_text" >¡Entendido!</string>
+    <string name="tutorial_button_text">¡Entendido!</string>
     <string name="tutorial_welcome_title">¡Bienvenido a OneBusAway!</string>
     <string name="tutorial_welcome_text">Toca una parada (punto verde en el mapa) para ver los tiempos
         de llegada.

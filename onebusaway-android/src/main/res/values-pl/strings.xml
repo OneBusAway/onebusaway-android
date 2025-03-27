@@ -288,6 +288,18 @@
     <string name="my_option_clear_confirm">Nie ma odwrotu! Iść dalej?</string>
     <string name="my_option_clear_confirm_title">Jesteś pewien?</string>
 
+    <string name="my_option_clear_recent_stops_title">Usunąć ostatnie przystanki?</string>
+    <string name="my_option_clear_recent_stops_confirm">Spowoduje to trwałe usunięcie wszystkich ostatnich przystanków.</string>
+
+    <string name="my_option_clear_recent_routes_title">Usunąć ostatnie trasy?</string>
+    <string name="my_option_clear_recent_routes_confirm">Spowoduje to trwałe usunięcie wszystkich ostatnich tras.</string>
+
+    <string name="my_option_clear_starred_stops_title">Usunąć wszystkie przystanki oznaczone gwiazdką?</string>
+    <string name="my_option_clear_starred_stops_confirm">Spowoduje to trwałe usunięcie wszystkich przystanków oznaczonych gwiazdką.</string>
+
+    <string name="my_option_clear_starred_routes_title">Usunąć wszystkie trasy oznaczone gwiazdką?</string>
+    <string name="my_option_clear_starred_routes_confirm">Spowoduje to trwałe usunięcie wszystkich tras oznaczonych gwiazdką.</string>
+
     <string name="my_context_get_stop_info">Pokaż informację o przyjazdach</string>
     <string name="my_context_get_route_info">Pokaż informację o trasie</string>
     <string name="my_context_create_shortcut">Utwórz skrót</string>

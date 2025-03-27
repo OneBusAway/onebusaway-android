@@ -385,14 +385,17 @@
     <string name="my_context_remove_star">Remove star</string>
     <string name="my_context_show_schedule">Show schedule</string>
 
-    <string name="my_option_clear_recent_stops_title">Clear Recent Stops?</string>
-    <string name="my_option_clear_recent_stops_confirm">This will remove all recent stops from your history. This action cannot be undone.</string>
-    <string name="my_option_clear_recent_routes_title">Clear Recent Routes?</string>
-    <string name="my_option_clear_recent_routes_confirm">This will remove all recent routes from your history. This action cannot be undone.</string>
+    <string name="my_option_clear_recent_stops_title">Delete Recent Stops?</string>
+    <string name="my_option_clear_recent_stops_confirm">This will permanently delete all recent stops.</string>
+
+    <string name="my_option_clear_recent_routes_title">Delete Recent Routes?</string>
+    <string name="my_option_clear_recent_routes_confirm">This will permanently delete all recent routes.</string>
+
     <string name="my_option_clear_starred_stops_title">Remove All Starred Stops?</string>
-    <string name="my_option_clear_starred_stops_confirm">This will remove all starred stops from your favorites. This action cannot be undone.</string>
+    <string name="my_option_clear_starred_stops_confirm">This will permanently remove all starred stops.</string>
+
     <string name="my_option_clear_starred_routes_title">Remove All Starred Routes?</string>
-    <string name="my_option_clear_starred_routes_confirm">This will remove all starred routes from your favorites. This action cannot be undone.</string>
+    <string name="my_option_clear_starred_routes_confirm">This will permanently remove all starred routes.</string>
 
     <!-- Service Alerts  -->
     <string name="alert_content_description_warning">Service alert warning - tap to slide up panel

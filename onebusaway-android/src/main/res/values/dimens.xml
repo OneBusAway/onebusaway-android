@@ -62,6 +62,7 @@
 
     <!-- Arrivals Style B -->
     <dimen name="arrival_style_b_status_min_width">77dp</dimen>
+    <dimen name="arrival_style_b_status_min_width_small">60dp</dimen>
 
     <!-- Trip details - transit stop and line -->
     <dimen name="trip_details_transit_line_width">3dp</dimen>

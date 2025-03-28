@@ -216,6 +216,10 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     }
 
     public static class ClearDialog extends ClearConfirmDialog {
+        
+        public ClearDialog() {
+            super(R.string.my_option_clear_starred_stops_confirm, R.string.my_option_clear_starred_stops_title);
+        }
 
         @Override
         protected void doClear() {

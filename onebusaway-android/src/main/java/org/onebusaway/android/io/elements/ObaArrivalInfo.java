@@ -357,7 +357,7 @@ public final class ObaArrivalInfo implements Serializable{
         String[] splitByBracket = this.getVehicleId().split("\\[");
         if (splitByBracket.length == 2) {
             int numCars = splitByBracket[1].split("-").length;
-            return numCars + " " + ((numCars > 1) ? "cars" : "car");
+            return numCars + " " + "car";
         } else {
             return null;
         }

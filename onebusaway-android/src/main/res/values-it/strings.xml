@@ -751,6 +751,9 @@
     <string name="trip_plan_leaving">Partenza</string>
     <string name="trip_plan_arriving">Arrivo</string>
     <string name="trip_plan_stop_connector">alle ore</string>
+    <string name="trip_plan_departure_type">Tipo</string>
+    <string name="trip_plan_date">Data</string>
+    <string name="trip_plan_time">Tempo</string>
 
     <string name="trip_plan_start_location_hint">Indirizzo o nome del luogo di partenza</string>
     <string name="trip_plan_end_location_hint">Indirizzo o nome del luogo di arrivo</string>

@@ -3,7 +3,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:minWidth="55dp"
+        android:minWidth="@dimen/arrival_style_b_status_min_width_small"
         android:paddingLeft="5dp"
         android:paddingRight="5dp"
         android:paddingTop="2dp"

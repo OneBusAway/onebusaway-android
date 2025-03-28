@@ -385,6 +385,18 @@
     <string name="my_context_remove_star">Remove star</string>
     <string name="my_context_show_schedule">Show schedule</string>
 
+    <string name="my_option_clear_recent_stops_title">Delete Recent Stops?</string>
+    <string name="my_option_clear_recent_stops_confirm">This will permanently delete all recent stops.</string>
+
+    <string name="my_option_clear_recent_routes_title">Delete Recent Routes?</string>
+    <string name="my_option_clear_recent_routes_confirm">This will permanently delete all recent routes.</string>
+
+    <string name="my_option_clear_starred_stops_title">Remove All Starred Stops?</string>
+    <string name="my_option_clear_starred_stops_confirm">This will permanently remove all starred stops.</string>
+
+    <string name="my_option_clear_starred_routes_title">Remove All Starred Routes?</string>
+    <string name="my_option_clear_starred_routes_confirm">This will permanently remove all starred routes.</string>
+
     <!-- Service Alerts  -->
     <string name="alert_content_description_warning">Service alert warning - tap to slide up panel
         and reveal more info.

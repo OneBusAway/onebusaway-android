@@ -327,6 +327,18 @@
     <string name="my_context_remove_star">Remover de favoritos</string>
     <string name="my_context_show_schedule">Mostrar horarios</string>
 
+    <string name="my_option_clear_recent_stops_title">¿Borrar paradas recientes?</string>
+    <string name="my_option_clear_recent_stops_confirm">Esto eliminará permanentemente todas las paradas recientes.</string>
+
+    <string name="my_option_clear_recent_routes_title">¿Eliminar rutas recientes?</string>
+    <string name="my_option_clear_recent_routes_confirm">Esto eliminará permanentemente todas las rutas recientes.</string>
+
+    <string name="my_option_clear_starred_stops_title">¿Quitar todas las paradas destacadas?</string>
+    <string name="my_option_clear_starred_stops_confirm">Esto eliminará permanentemente todas las paradas marcadas con estrella.</string>
+
+    <string name="my_option_clear_starred_routes_title">¿Eliminar todas las rutas destacadas?</string>
+    <string name="my_option_clear_starred_routes_confirm">Esto eliminará permanentemente todas las rutas destacadas.</string>
+
     <!-- Service Alerts  -->
     <string name="alert_content_description_warning">Advertencia sobre el Servicio - toque para deslizar hacia arriba
         el panel y ver más información.

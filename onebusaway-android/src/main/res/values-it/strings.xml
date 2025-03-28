@@ -1045,4 +1045,16 @@
     <string name="send_email">Invia email</string>
     <string name="make_a_phone_call">Fare una telefonata</string>
     <string name="browse_the_web">Naviga sul web</string>
+
+    <string name="my_option_clear_recent_stops_title">Eliminare le fermate recenti?</string>
+    <string name="my_option_clear_recent_stops_confirm">Questa operazione eliminerà definitivamente tutte le fermate recenti.</string>
+
+    <string name="my_option_clear_recent_routes_title">Eliminare i percorsi recenti?</string>
+    <string name="my_option_clear_recent_routes_confirm">Questa operazione eliminerà definitivamente tutti i percorsi recenti.</string>
+
+    <string name="my_option_clear_starred_stops_title">Vuoi rimuovere tutte le fermate contrassegnate con una stella?</string>
+    <string name="my_option_clear_starred_stops_confirm">Questa operazione rimuoverà definitivamente tutte le fermate contrassegnate con una stella.</string>
+
+    <string name="my_option_clear_starred_routes_title">Vuoi rimuovere tutti i percorsi contrassegnati con una stella?</string>
+    <string name="my_option_clear_starred_routes_confirm">Questa operazione rimuoverà definitivamente tutti i percorsi contrassegnati con una stella.</string>
 </resources>

@@ -95,6 +95,10 @@ public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
     }
 
     public static class ClearDialog extends ClearConfirmDialog {
+        
+        public ClearDialog() {
+            super(R.string.my_option_clear_recent_routes_confirm, R.string.my_option_clear_recent_routes_title);
+        }
 
         @Override
         protected void doClear() {

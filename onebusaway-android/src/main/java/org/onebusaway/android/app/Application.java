@@ -41,6 +41,7 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import com.onebusaway.plausible.android.Plausible;
 import com.onesignal.OneSignal;
 
 import org.onebusaway.android.BuildConfig;
@@ -57,6 +58,8 @@ import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ReminderUtils;
 import org.onebusaway.android.widealerts.GtfsAlerts;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.util.Iterator;
 import java.util.List;
@@ -101,6 +104,8 @@ public class Application extends MultiDexApplication {
     static GeomagneticField mGeomagneticField = null;
 
     private FirebaseAnalytics mFirebaseAnalytics;
+
+    private Plausible mPlausible;
 
     @Override
     public void onCreate() {
@@ -346,6 +351,7 @@ public class Application extends MultiDexApplication {
             if (regionChanged && region.getOtpBaseUrl() != null) {
                 setCustomOtpApiUrl(null);
                 setUseOldOtpApiUrlVersion(false);
+                buildPlausibleInstance(region);
             }
         } else {
             //User must have just entered a custom API URL via Preferences, so clear the region info
@@ -355,6 +361,35 @@ public class Application extends MultiDexApplication {
         // Init the reporting with the new endpoints
         initOpen311(region);
     }
+
+    /**
+     * Return Plausible instance for the application
+     * @return Plausible instance
+     */
+    public Plausible getPlausibleInstance() {
+        if(mPlausible == null) {
+            buildPlausibleInstance(getCurrentRegion());
+        }
+        return mPlausible;
+    }
+
+    /**
+     * Build the Plausible instance for the application
+     * Include the domain and the plausible server url for the current region
+     * @param region
+     */
+    private void buildPlausibleInstance(ObaRegion region) {
+        mPlausible = null;
+        if (region == null || region.getObaBaseUrl() == null || region.getPlausibleAnalyticsServerUrl() == null) return;
+        String domain;
+        try {
+            domain = new URI(region.getObaBaseUrl()).getHost();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+        mPlausible = new Plausible(this, domain, region.getPlausibleAnalyticsServerUrl());
+    }
+
 
     /**
      * Gets the date at which the region information was last updated, in the number of
@@ -572,7 +607,8 @@ public class Application extends MultiDexApplication {
     private void reportAnalytics() {
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         if (getCustomApiUrl() == null && getCurrentRegion() != null) {
-            ObaAnalytics.setRegion(mFirebaseAnalytics, getCurrentRegion().getName());
+            buildPlausibleInstance(getCurrentRegion());
+            ObaAnalytics.setRegion(mPlausible, mFirebaseAnalytics, getCurrentRegion().getName());
         } else if (Application.get().getCustomApiUrl() != null) {
             String customUrl = null;
             MessageDigest digest = null;
@@ -584,7 +620,7 @@ public class Application extends MultiDexApplication {
             } catch (Exception e) {
                 customUrl = Application.get().getString(R.string.analytics_label_custom_url);
             }
-            ObaAnalytics.setRegion(mFirebaseAnalytics, customUrl);
+            ObaAnalytics.setRegion(mPlausible, mFirebaseAnalytics, customUrl);
         }
         Boolean experimentalRegions = getPrefs().getBoolean(getString(R.string.preference_key_experimental_regions),
                 Boolean.FALSE);

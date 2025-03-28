@@ -114,6 +114,7 @@ android {
             buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
             buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
             buildConfigField "String", "FIXED_REGION_SIDECAR_BASE_URL", "\"https://onebusaway.co\""
+            buildConfigField "String", "FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL", "null"
             buildConfigField "String", "ONESIGNAL_APP_ID", ONESIGNAL_APP_ID
         }
 
@@ -162,6 +163,7 @@ android {
             buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
             buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
             buildConfigField "String", "FIXED_REGION_SIDECAR_BASE_URL", "null"
+            buildConfigField "String", "FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL", "null"
             buildConfigField "String", "ONESIGNAL_APP_ID", ONESIGNAL_APP_ID
         }
 
@@ -206,6 +208,7 @@ android {
             buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
             buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
             buildConfigField "String", "FIXED_REGION_SIDECAR_BASE_URL", "null"
+            buildConfigField "String", "FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL", "null"
             buildConfigField "String", "ONESIGNAL_APP_ID", ONESIGNAL_APP_ID
         }
         /**
@@ -329,6 +332,8 @@ dependencies {
     // Firebase Analytics
     implementation 'com.google.firebase:firebase-core:21.1.1'
     implementation 'com.google.firebase:firebase-analytics:22.1.2'
+    // Plausible Analytics
+    implementation 'com.github.OneBusAway:plausible-android-sdk:3.3'
     // Cloud Firestore (for storing destination alert test data)
     implementation('com.google.firebase:firebase-firestore:25.1.0') {
         // Exclude protobuf-lite and protolite-well-known-types to avoid conflicts with GTFS-realtime bindings

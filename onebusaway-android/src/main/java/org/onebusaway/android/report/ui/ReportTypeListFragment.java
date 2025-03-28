@@ -27,6 +27,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.ui.MaterialListAdapter;
 import org.onebusaway.android.ui.MaterialListItem;
@@ -97,18 +98,24 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
         if (getString(R.string.rt_customer_service).equals(rti.getTitle())) {
             goToCustomerServices();
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_MORE_EVENT_URL,
                     getString(R.string.analytics_problem),
                     getString(R.string.analytics_label_customer_service));
         } else if (getString(R.string.rt_infrastructure_problem).equals(rti.getTitle())) {
             ((ReportActivity) getActivity()).createInfrastructureIssueActivity(
                     getString(R.string.ri_selected_service_stop));
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_STOP_PROBLEM_EVENT_URL,
                     getString(R.string.analytics_problem),
                     getString(R.string.analytics_label_stop_problem));
         } else if (getString(R.string.rt_stop_problem).equals(rti.getTitle())) {
             ((ReportActivity) getActivity()).createInfrastructureIssueActivity(
                     getString(R.string.ri_selected_service_stop));
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_STOP_PROBLEM_EVENT_URL,
                     getString(R.string.analytics_problem),
                     getString(R.string.analytics_label_stop_problem));
         } else if (getString(R.string.rt_arrival_problem).equals(rti.getTitle())) {
@@ -116,6 +123,8 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
             ((ReportActivity) getActivity()).createInfrastructureIssueActivity(
                     getString(R.string.ri_selected_service_trip));
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_VEHICLE_PROBLEM_EVENT_URL,
                     getString(R.string.analytics_problem),
                     getString(R.string.analytics_label_trip_problem));
         } else if (getString(R.string.rt_app_feedback).equals(rti.getTitle())) {
@@ -127,10 +136,14 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
             UIUtils.sendEmail(getActivity(), email, locationString);
 
             ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_MORE_EVENT_URL,
                     getString(R.string.analytics_problem),
                     getString(R.string.analytics_label_app_feedback));
             if (locationString == null) {
                 ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        Application.get().getPlausibleInstance(),
+                        PlausibleAnalytics.REPORT_VEHICLE_PROBLEM_EVENT_URL,
                         getString(R.string.analytics_problem),
                         getString(R.string.analytics_label_app_feedback_without_location));
             }

@@ -157,7 +157,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                     //No region has been set, so set region application-wide to closest region
                     Application.get().setCurrentRegion(closestRegion);
                     Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'");
-                    ObaAnalytics.setRegion(mFirebaseAnalytics,  closestRegion.getName());
+                    ObaAnalytics.setRegion(Application.get().getPlausibleInstance(), mFirebaseAnalytics,  closestRegion.getName());
                     doCallback(true);
                 } else {
                     //No region has been set, and we couldn't find a usable region based on RegionUtil.isRegionUsable()
@@ -171,7 +171,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 Application.get().setCurrentRegion(closestRegion);
                 Log.d(TAG, "Detected closer region '" + closestRegion.getName()
                         + "', changed from " + oldRegionName + " to this region.");
-                ObaAnalytics.setRegion(mFirebaseAnalytics, closestRegion.getName());
+                ObaAnalytics.setRegion(Application.get().getPlausibleInstance(), mFirebaseAnalytics, closestRegion.getName());
                 doCallback(true);
             } else if (Application.get().getCurrentRegion() != null && closestRegion != null
                     && Application.get().getCurrentRegion().equals(closestRegion)) {

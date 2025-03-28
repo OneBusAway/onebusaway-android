@@ -347,4 +347,19 @@ public final class ObaArrivalInfo implements Serializable{
     public Occupancy getOccupancyStatus() {
         return Occupancy.fromString(occupancyStatus);
     }
+
+    /**
+     * @return a String indicating the number of cars, if this is a light rail arrival.
+     *         Otherwise returns null.
+     */
+    public String getNumCars() {
+        assert this.getVehicleId() != null;
+        String[] splitByBracket = this.getVehicleId().split("\\[");
+        if (splitByBracket.length == 2) {
+            int numCars = splitByBracket[1].split("-").length;
+            return numCars + " " + ((numCars > 1) ? "cars" : "car");
+        } else {
+            return null;
+        }
+    }
 }

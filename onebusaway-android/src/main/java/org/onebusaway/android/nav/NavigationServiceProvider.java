@@ -22,6 +22,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
 import org.onebusaway.android.ui.TripDetailsActivity;
@@ -504,7 +505,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     if (proximityEvent(EVENT_TYPE_GET_READY, ALERT_STATE_NONE)) {
                         mNavProvider.updateUi(EVENT_TYPE_GET_READY);
                         Log.d(TAG, "-----Get ready!");
-                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics, Application.get().getString(R.string.analytics_label_destination_reminder), Application.get().getString(R.string.analytics_label_destination_reminder_variant_get_ready));
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics, Application.get().getPlausibleInstance(), PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL, Application.get().getString(R.string.analytics_label_destination_reminder), Application.get().getString(R.string.analytics_label_destination_reminder_variant_get_ready));
                         return EVENT_TYPE_GET_READY; //Get ready alert played
                     }
                 }
@@ -514,7 +515,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     if (proximityEvent(EVENT_TYPE_PULL_CORD, ALERT_STATE_SHOWN_TO_RIDER)) {
                         mNavProvider.updateUi(EVENT_TYPE_PULL_CORD);
                         Log.d(TAG, "-----Get off the bus!");
-                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics, Application.get().getString(R.string.analytics_label_destination_reminder), Application.get().getString(R.string.analytics_label_destination_reminder_variant_exit_at_next_stop));
+                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics, Application.get().getPlausibleInstance(), PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL, Application.get().getString(R.string.analytics_label_destination_reminder), Application.get().getString(R.string.analytics_label_destination_reminder_variant_exit_at_next_stop));
                         return EVENT_TYPE_PULL_CORD; // Get off bus alert played
                     }
                 }

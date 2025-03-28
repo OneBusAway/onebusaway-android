@@ -24,6 +24,7 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
 import org.onebusaway.android.nav.model.PathLink;
@@ -374,6 +375,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String SIDECAR_BASE_URL = "sidecar_base_url";
+
+        /**
+         * The plausible analytics server URL for the region.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String PLAUSIBLE_ANALYTICS_SERVER_URL = "plausible_analytics_server_url";
 
         /**
          * The base SIRI URL.
@@ -1413,7 +1422,8 @@ public final class ObaContract {
                     PAYMENT_WARNING_BODY,
                     TRAVEL_BEHAVIOR_DATA_COLLECTION,
                     ENROLL_PARTICIPANTS_IN_STUDY,
-                    SIDECAR_BASE_URL
+                    SIDECAR_BASE_URL,
+                    PLAUSIBLE_ANALYTICS_SERVER_URL
             };
 
             Cursor c = cr.query(buildUri((int) id), PROJECTION, null, null, null);
@@ -1447,7 +1457,8 @@ public final class ObaContract {
                             c.getString(18),               // Payment Warning Body
                             c.getInt(19) > 0, // Travel behavior data collection
                             c.getInt(20) > 0, // Enroll participants in travel behavior study
-                            c.getString(21) // Sidecar Base URL
+                            c.getString(21), // Sidecar Base URL
+                            c.getString(22) // Plausible analytics server url
                     );
                 } finally {
                     c.close();
@@ -1732,6 +1743,8 @@ public final class ObaContract {
                 analyticsParam.append("all stops");
             }
             ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(context),
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_BOOKMARK_EVENT_URL,
                     analyticsEvent.toString(),
                     analyticsParam.toString());
         }

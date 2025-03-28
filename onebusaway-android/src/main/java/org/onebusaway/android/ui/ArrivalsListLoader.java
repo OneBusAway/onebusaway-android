@@ -41,7 +41,7 @@ public class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> 
     public static final int DEFAULT_MINUTES_AFTER = 65;
 
     private static final int MINUTES_INCREMENT = 60; // minutes
-
+    private static final int MAX_MINUTES_AFTER = 1440;
     private String mUrl;
 
     public ArrivalsListLoader(Context context, String stopId) {
@@ -51,11 +51,23 @@ public class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> 
 
     @Override
     public ObaArrivalInfoResponse loadInBackground() {
-        ObaArrivalInfoRequest obaArrivalInfoRequest = ObaArrivalInfoRequest.newRequest(getContext(),
-                mStopId, mMinutesAfter);
-        // Cache the URL so we have a record of the request w/ params made to the server
-        mUrl = obaArrivalInfoRequest.getUri().toString();
-        return obaArrivalInfoRequest.call();
+        ObaArrivalInfoResponse response;
+
+        do {
+            // Create and execute the request for the specified time window
+            ObaArrivalInfoRequest obaArrivalInfoRequest = ObaArrivalInfoRequest.newRequest(
+                    getContext(), mStopId, mMinutesAfter);
+            mUrl = obaArrivalInfoRequest.getUri().toString();
+            response = obaArrivalInfoRequest.call();
+
+            // Check if the arrival info is null or has no entries
+            if (response.getArrivalInfo() == null || response.getArrivalInfo().length == 0) {
+                incrementMinutesAfter(); // Extend the time window
+            }
+        } while ((response.getArrivalInfo() == null || response.getArrivalInfo().length == 0)
+                && mMinutesAfter <= MAX_MINUTES_AFTER); // Continue until arrivals are found or limit reached
+
+        return response;
     }
 
     @Override

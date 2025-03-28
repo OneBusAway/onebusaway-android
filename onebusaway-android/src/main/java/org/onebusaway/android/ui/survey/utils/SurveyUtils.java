@@ -115,45 +115,59 @@ public class SurveyUtils {
         List<StudyResponse.Surveys> surveys = studyResponse.getSurveys();
         if (surveys == null) return -1;
 
-        // Iterate through the surveys to find the first uncompleted one
+        int alwaysVisibleIndex = -1;
+        int oneTimeSurveyIndex = -1;
+
         for (int index = 0; index < surveys.size(); index++) {
-            Boolean showQuestionOnStops = surveys.get(index).getShow_on_stops();
-            Boolean showQuestionOnMaps = surveys.get(index).getShow_on_map();
+            StudyResponse.Surveys survey = surveys.get(index);
 
-            List<String> visibleStopsList = surveys.get(index).getVisible_stop_list();
-            List<String> visibleRouteList = surveys.get(index).getVisible_route_list();
+            Boolean showQuestionOnStops = survey.getShow_on_stops();
+            Boolean showQuestionOnMaps = survey.getShow_on_map();
+            Boolean alwaysVisible = survey.getAlways_visible();
+            Boolean allowMultipleResponses = survey.getAllows_multiple_responses();
 
-            // Skip if there is not questions
-            if (surveys.get(index).getQuestions().isEmpty()) continue;
+            List<String> visibleStopsList = survey.getVisible_stop_list();
+            List<String> visibleRouteList = survey.getVisible_route_list();
+
+            if (survey.getQuestions().isEmpty()) continue;
 
             // Skip this survey if it shouldn't be shown on either map or stops
-            if (!showQuestionOnStops && !showQuestionOnMaps) {
+            if (!Boolean.TRUE.equals(showQuestionOnStops) && !Boolean.TRUE.equals(showQuestionOnMaps)) {
                 continue;
             }
 
             if (isVisibleOnStop) {
                 // Skip if the survey is not meant for stops
-                if (!showQuestionOnStops) continue;
+                if (!Boolean.TRUE.equals(showQuestionOnStops)) continue;
                 // Check for if survey available for the current stop
                 boolean showSurvey = showSurvey(currentStop, visibleStopsList, visibleRouteList);
-                Log.d("SurveyStopState", "Show survey: " + showSurvey);
                 if (!showSurvey) continue;
             } else {
                 // Skip if the survey is not meant for maps
-                if (!showQuestionOnMaps) continue;
+                if (!Boolean.TRUE.equals(showQuestionOnMaps)) continue;
             }
 
-            boolean isSurveyCompleted = SurveyDbHelper.isSurveyCompleted(context, surveys.get(index).getId());
+            boolean isSurveyCompleted = SurveyDbHelper.isSurveyCompleted(context, survey.getId());
 
-            Log.d("isSurveyCompleted", isSurveyCompleted + " ");
-
-            // Return the index if the survey is uncompleted
-            if (!isSurveyCompleted) {
-                return index;
+            if (Boolean.TRUE.equals(alwaysVisible)) {
+                if (Boolean.TRUE.equals(allowMultipleResponses)) {
+                    // Always visible and multiple responses allowed, show always unless a one-time survey exists
+                    alwaysVisibleIndex = index;
+                } else {
+                    // Always visible but single response only, show if not completed
+                    if (!isSurveyCompleted) {
+                        return index;
+                    }
+                }
+            } else {
+                // Normal behavior: Show if not completed
+                if (!isSurveyCompleted) {
+                    oneTimeSurveyIndex = index;
+                }
             }
         }
-        // Return -1 if all surveys are completed or filtered out
-        return -1;
+
+        return oneTimeSurveyIndex != -1 ? oneTimeSurveyIndex : alwaysVisibleIndex;
     }
 
     /**

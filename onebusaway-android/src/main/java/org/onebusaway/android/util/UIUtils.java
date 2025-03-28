@@ -96,6 +96,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
@@ -1507,19 +1508,37 @@ public final class UIUtils {
             // We assume a situation is active if it doesn't contain any active window information
             return true;
         }
-        // Active window times are in seconds since epoch
-        long currentTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(currentTime);
+        // Active window times are in seconds or milliseconds since epoch
+        long currentTimeConverted = TimeUnit.MILLISECONDS.toSeconds(currentTime);
         boolean isActiveWindowForSituation = false;
         for (ObaSituation.ActiveWindow activeWindow : situation.getActiveWindows()) {
             long from = activeWindow.getFrom();
             long to = activeWindow.getTo();
+
+            if(!isTimestampInSeconds(from)){
+                currentTimeConverted = TimeUnit.MILLISECONDS.toMillis(currentTime);
+            }
             // 0 is a valid end time that means no end to the window - see #990
-            if (from <= currentTimeSeconds && (to == 0 || currentTimeSeconds <= to)) {
+            if (from <= currentTimeConverted && (to == 0 || currentTimeConverted <= to)) {
                 isActiveWindowForSituation = true;
                 break;
             }
         }
         return isActiveWindowForSituation;
+    }
+
+    /**
+     * Checks if the given timestamp is in seconds.
+     *
+     * @param timestamp the timestamp to check
+     * @return true if the timestamp is in seconds, false if it is in milliseconds
+     */
+    public static boolean isTimestampInSeconds(long timestamp) {
+        // Get the current time in milliseconds
+        long currentTimeMillis = System.currentTimeMillis();
+
+        // If the timestamp is smaller than the current time divided by 1000, it's likely in seconds
+        return timestamp < currentTimeMillis / 1000L;
     }
 
     /**
@@ -1781,7 +1800,10 @@ public final class UIUtils {
             // Launch installed app
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
             activity.startActivity(intent);
-            ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activity),
+            ObaAnalytics.reportUiEvent(
+                    FirebaseAnalytics.getInstance(activity),
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                     Application.get().getString(R.string.analytics_label_button_fare_payment),
                     Application.get().getString(R.string.analytics_label_open_app));
         } else {
@@ -1790,6 +1812,8 @@ public final class UIUtils {
             intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, region.getPaymentAndroidAppId())));
             activity.startActivity(intent);
             ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activity),
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                     Application.get().getString(R.string.analytics_label_button_fare_payment),
                     Application.get().getString(R.string.analytics_label_download_app));
         }
@@ -1843,6 +1867,8 @@ public final class UIUtils {
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
             context.startActivity(intent);
             ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(context),
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                     Application.get().getString(R.string.analytics_label_button_bike_share),
                     Application.get().getString(R.string.analytics_label_open_app));
         } else {
@@ -1851,6 +1877,8 @@ public final class UIUtils {
             intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, context.getString(R.string.hopr_android_app_id))));
             context.startActivity(intent);
             ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(context),
+                    Application.get().getPlausibleInstance(),
+                    PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                     Application.get().getString(R.string.analytics_label_button_bike_share),
                     Application.get().getString(R.string.analytics_label_download_app));
         }

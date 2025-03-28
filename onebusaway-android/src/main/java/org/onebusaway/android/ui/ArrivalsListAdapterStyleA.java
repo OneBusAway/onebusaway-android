@@ -73,6 +73,7 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         TextView destination = (TextView) view.findViewById(R.id.destination);
         TextView time = (TextView) view.findViewById(R.id.time);
         TextView status = (TextView) view.findViewById(R.id.status);
+        TextView carCount = (TextView) view.findViewById(R.id.car_count);
         TextView etaView = (TextView) view.findViewById(R.id.eta);
         TextView minView = (TextView) view.findViewById(R.id.eta_min);
         ViewGroup realtimeView = (ViewGroup) view.findViewById(R.id.eta_realtime_indicator);
@@ -103,6 +104,17 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         destination.setText(UIUtils.formatDisplayText(arrivalInfo.getHeadsign()));
         status.setText(stopInfo.getStatusText());
 
+
+        String numCars = stopInfo.getInfo().getNumCars();
+        if (numCars != null) {
+            carCount.setBackgroundResource(R.drawable.round_corners_style_b_status);
+            carCount.setText(stopInfo.getInfo().getNumCars());
+            carCount.setVisibility(View.VISIBLE);
+        } else {
+            carCount.setVisibility(View.GONE);
+        }
+
+
         long eta = stopInfo.getEta();
         if (eta == 0) {
             etaView.setText(R.string.stop_info_eta_now);
@@ -129,6 +141,8 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         etaView.setTextColor(color);
         minView.setTextColor(color);
         d.setColor(color);
+
+        ((GradientDrawable) carCount.getBackground()).setColor(color);
 
         // Set padding on status view
         int pSides = UIUtils.dpToPixels(context, 5);

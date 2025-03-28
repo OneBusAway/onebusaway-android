@@ -23,6 +23,7 @@ import android.view.Window;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.util.UIUtils;
 
@@ -35,7 +36,6 @@ public class SearchActivity extends AppCompatActivity {
     //private static final String TAG = "SearchActivity";
 
     private FirebaseAnalytics mFirebaseAnalytics;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
@@ -71,7 +71,7 @@ public class SearchActivity extends AppCompatActivity {
         } else if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             // handles a search query
             String query = intent.getStringExtra(SearchManager.QUERY);
-            ObaAnalytics.reportSearchEvent(mFirebaseAnalytics, query);
+            ObaAnalytics.reportSearchEvent(Application.get().getPlausibleInstance(), mFirebaseAnalytics, query);
             doSearch(query);
         }
     }

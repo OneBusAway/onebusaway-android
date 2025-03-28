@@ -1,6 +1,7 @@
 package org.onebusaway.android.ui.weather;
 
 import android.content.SharedPreferences;
+
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -31,12 +32,17 @@ public class WeatherUtils {
         String preferredTempUnit = sharedPreferences.getString(app.getString(R.string.preference_key_preferred_temperature_units), automatic);
 
         String temperatureText;
+        String defaultTempUnit = getDefaultUserTemp();
+        boolean isCelsius = defaultTempUnit.equals("C");
 
-        if (preferredTempUnit.equals(automatic)) {
-            temperatureText = (int) temp + "° " + getDefaultUserTemp();
-        } else {
-            temperatureText = preferredTempUnit.equals(app.getString(R.string.celsius)) ? (int) convertToCelsius(temp) + "° C" : (int) temp + "° F";
-        }
+        int convertedTemp = (preferredTempUnit.equals(automatic))
+                ? (int) (isCelsius ? convertToCelsius(temp) : temp)
+                : (preferredTempUnit.equals(app.getString(R.string.celsius)) ? (int) convertToCelsius(temp) : (int) temp);
+
+        String unit = (preferredTempUnit.equals(automatic)) ? defaultTempUnit : (preferredTempUnit.equals(app.getString(R.string.celsius)) ? "C" : "F");
+
+        temperatureText = convertedTemp + "° " + unit;
+
         weatherTempTxtView.setText(temperatureText);
     }
 
@@ -52,7 +58,6 @@ public class WeatherUtils {
         }
         weatherView.setVisibility(shouldShow ? View.VISIBLE : View.GONE);
     }
-
 
     private static int getWeatherDrawableRes(String condition) {
         switch (condition) {
@@ -79,11 +84,9 @@ public class WeatherUtils {
         }
     }
 
-
     public static String getDefaultUserTemp() {
         Locale locale = Locale.getDefault();
         String countryCode = locale.getCountry();
-
         if ("US".equals(countryCode) || "BS".equals(countryCode) || "KY".equals(countryCode) || "LR".equals(countryCode)) {
             return "F";
         } else {

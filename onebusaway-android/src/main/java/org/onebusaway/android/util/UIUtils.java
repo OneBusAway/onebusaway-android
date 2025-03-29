@@ -58,6 +58,7 @@ import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -162,6 +163,12 @@ public final class UIUtils {
                 }
             }
         });
+
+        // Limit the search view width to 70% of screen width to show kebab menu
+        DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
+        int screenWidth = metrics.widthPixels;
+        int searchViewWidth = (int) (screenWidth * 0.7);
+        searchView.setMaxWidth(searchViewWidth);
     }
 
     public static void showProgress(Fragment fragment, boolean visible) {

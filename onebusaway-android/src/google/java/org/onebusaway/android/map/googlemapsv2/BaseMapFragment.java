@@ -1503,28 +1503,47 @@ public class BaseMapFragment extends SupportMapFragment
     private void updateMapModeSettings() {
         if (mMap == null) return;
 
-        String normal = getString(R.string.preferences_preferred_map_option_normal2d);
-        String mapType = Application.getPrefs().getString(getString(R.string.preference_key_map_mode), normal);
+        String normal2D = getString(R.string.preferences_preferred_map_option_normal2d);
+        String normal3D = getString(R.string.preferences_preferred_map_option_normal3d);
+        String satellite = getString(R.string.preferences_preferred_map_option_satellite);
 
-        if (mapType.equals(normal)) {
-            mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-            mMap.getUiSettings().setTiltGesturesEnabled(false);
-            mMap.setBuildingsEnabled(false);
-        } else if (mapType.equals(getString(R.string.preferences_preferred_map_option_normal3d))) {
-            // previously was hybrid
+        String mapType = Application.getPrefs().getString(getString(R.string.preference_key_map_mode), normal2D);
+
+        if (mapType.equals(normal2D)) {
+            setMapType(GoogleMap.MAP_TYPE_NORMAL, false, false);
+        } else if (mapType.equals(normal3D)) {
             if (mMap.getMapType() == GoogleMap.MAP_TYPE_HYBRID) {
                 mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
             }
-            mMap.getUiSettings().setTiltGesturesEnabled(true);
-            mMap.setBuildingsEnabled(true);
-        } else if (mapType.equals(getString(R.string.preferences_preferred_map_option_satellite))) {
-            mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+            setMapType(GoogleMap.MAP_TYPE_NORMAL, true, true);
+        } else if (mapType.equals(satellite)) {
+            setMapType(GoogleMap.MAP_TYPE_HYBRID, false, false);
         } else {
-            // should never happen
-            return;
+            return; // Should never happen
         }
 
-        // Reset tilt to 0 degrees
+        resetCameraTilt();
+    }
+
+    /**
+     * Sets the map type, tilt gestures, and 3D buildings visibility for the Google Map.
+     *
+     * @param type The map type to be set. Can be one of the following constants:
+     *             - GoogleMap.MAP_TYPE_NORMAL
+     *             - GoogleMap.MAP_TYPE_HYBRID
+     * @param tiltEnabled A boolean value to determine whether tilt gestures are enabled on the map.
+     * @param buildingsEnabled A boolean value that determines whether 3D buildings are enabled on the map.
+     */
+    private void setMapType(int type, boolean tiltEnabled, boolean buildingsEnabled) {
+        mMap.setMapType(type);
+        mMap.getUiSettings().setTiltGesturesEnabled(tiltEnabled);
+        mMap.setBuildingsEnabled(buildingsEnabled);
+    }
+
+    /**
+     * Resets camera tilt to defaults (0 degrees)
+     */
+    private void resetCameraTilt() {
         mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
                 new CameraPosition.Builder()
                         .target(mMap.getCameraPosition().target)

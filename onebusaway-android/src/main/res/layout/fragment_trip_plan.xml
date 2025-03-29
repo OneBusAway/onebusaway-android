@@ -13,12 +13,12 @@
      limitations under the License.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:layout_margin="16dp">
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_margin="16dp">
 
     <RelativeLayout
             android:id="@+id/to_and_from_layout"
@@ -150,60 +150,95 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/to_and_from_layout"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:paddingTop="8dp">
 
-        <Spinner
-                android:id="@+id/leavingChoiceSpinner"
-                android:layout_width="wrap_content"
+        <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                tools:text="Leaving" />
+                android:orientation="horizontal">
 
+            <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/trip_plan_departure_status"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textColor="@color/material_gray" />
 
-        <Spinner
-                android:layout_width="wrap_content"
+            <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/trip_plan_date"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textColor="@color/material_gray" />
+
+            <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/trip_plan_time"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textColor="@color/material_gray" />
+        </LinearLayout>
+
+        <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/date"
-                tools:text="June 14"
-                android:inputType="none"
-                android:focusable="false"
-                android:layout_gravity="center_vertical"
-                android:textAppearance="?android:attr/textAppearanceSmall" />
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
 
+            <Spinner
+                    android:id="@+id/leavingChoiceSpinner"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    tools:text="Leaving" />
 
-        <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:color="@color/trip_plan_label"
-                android:text="@string/trip_plan_stop_connector"
-                android:layout_gravity="center_vertical"
-                android:paddingEnd="8dp" />
+            <Spinner
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:id="@+id/date"
+                    tools:text="June 14"
+                    android:inputType="none"
+                    android:focusable="false"
+                    android:layout_gravity="center_vertical"
+                    android:textAppearance="?android:attr/textAppearanceSmall" />
 
+            <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
 
-        <Spinner
-                android:id="@+id/time"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                tools:text="04:01 pm"
-                android:layout_weight="1"
-                android:inputType="none"
-                android:focusable="false"
-                android:layout_gravity="center_vertical"
-                android:textAppearance="?android:attr/textAppearanceSmall" />
+                <Spinner
+                        android:id="@+id/time"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        tools:text="04:01 pm"
+                        android:inputType="none"
+                        android:focusable="false"
+                        android:layout_gravity="center_vertical"
+                        android:textAppearance="?android:attr/textAppearanceSmall" />
 
-
-        <ImageButton
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:scaleType="fitXY"
-                android:id="@+id/resetTimeImageButton"
-                android:src="@drawable/ic_arrival_time"
-                android:background="#00000000"
-                android:layout_gravity="center_vertical"
-                android:contentDescription="@string/reset_time"
-                app:tint="@color/material_gray" />
+                <ImageButton
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:padding="2dp"
+                        android:scaleType="fitXY"
+                        android:id="@+id/resetTimeImageButton"
+                        android:src="@drawable/ic_arrival_time"
+                        android:background="#00000000"
+                        android:layout_gravity="center_vertical"
+                        android:contentDescription="@string/reset_time"
+                        app:tint="@color/material_gray" />
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
 
 </RelativeLayout>

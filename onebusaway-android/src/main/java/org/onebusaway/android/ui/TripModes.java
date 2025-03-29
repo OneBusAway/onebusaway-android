@@ -27,7 +27,7 @@ public class TripModes {
     public static final int BUS_ONLY = 1;
     public static final int RAIL_ONLY = 2;
     public static final int BIKESHARE = 3;
-    public static final int TRANSIT_ONLY = 4;
+    public static final int ALL_MODES = 4;
 
     /**
      * Return the trip mode code based on the selected label string resource id from the spinner
@@ -40,8 +40,8 @@ public class TripModes {
         switch (selection) {
             case R.string.transit_mode_transit_and_bikeshare:
                 return TRANSIT_AND_BIKE;
-            case R.string.transit_mode_transit_only:
-                return TRANSIT_ONLY;
+            case R.string.transit_mode_all_modes:
+                return ALL_MODES;
             case R.string.transit_mode_bus:
                 return BUS_ONLY;
             case R.string.transit_mode_rail:
@@ -63,7 +63,7 @@ public class TripModes {
             switch (selectedCode) {
                 case TRANSIT_AND_BIKE:
                     return 0;
-                case TRANSIT_ONLY:
+                case ALL_MODES:
                     return 1;
                 case BUS_ONLY:
                     return 2;
@@ -74,7 +74,7 @@ public class TripModes {
             }
         } else {
             switch (selectedCode) {
-                case TRANSIT_ONLY:
+                case ALL_MODES:
                     return 0;
                 case BUS_ONLY:
                     return 1;

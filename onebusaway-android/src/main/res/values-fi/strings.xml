@@ -731,4 +731,18 @@
     <string name="send_email">Lähetä sähköposti</string>
     <string name="make_a_phone_call">Soita puhelu</string>
     <string name="browse_the_web">Selaa verkkoa</string>
+
+    <!-- Trip plan advanced settings -->
+    <string name="trip_plan_advanced_settings">Muut matka-asetukset</string>
+    <string name="minimize_transfers">Minimoi siirrot</string>
+    <string name="maximum_walk_distance">Suurin kävelyetäisyys: </string>
+    <string name="wheelchair_accessible">Vältä portaita</string>
+
+    <string name="travel_by_label">Matkustaa: </string>
+    <string name="transit_mode_all_modes">Kaikki tilat</string>
+    <string name="transit_mode_transit_and_bikeshare">Transit &amp; bikeshare</string>
+    <string name="transit_mode_bus">Vain bussi</string>
+    <string name="transit_mode_rail">Vain rautatie</string>
+    <string name="transit_mode_bikeshare">Vain polkupyörän jako</string>
+    <string name="transit_directions_bikeshare_label">Bikeshare</string>
 </resources>

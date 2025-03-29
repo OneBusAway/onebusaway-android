@@ -156,8 +156,8 @@ public class TripRequestBuilder {
 
         mModeId = id;
         switch (id) {
-            // Transit only
-            case TripModes.TRANSIT_ONLY:
+            // All modes
+            case TripModes.ALL_MODES:
                 modes = Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
                 break;
             // Transit & bikeshare
@@ -194,7 +194,7 @@ public class TripRequestBuilder {
     public int getModeSetId() {
         // IF bike mode is selected in the trip plan additional preferences but bikeshare is not enabled use the default mode (TRANSTI)
         if (TripModes.BIKESHARE == mModeId && !Application.isBikeshareEnabled()) {
-            return TripModes.TRANSIT_ONLY;
+            return TripModes.ALL_MODES;
         }
         return mModeId;
     }

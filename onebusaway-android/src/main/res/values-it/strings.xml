@@ -943,7 +943,7 @@
     <string name="wheelchair_accessible">Evita scale</string>
 
     <string name="travel_by_label">Viaggia con:</string>
-    <string name="transit_mode_transit_only">Solo mezzi pubblici</string>
+    <string name="transit_mode_all_modes">Tutte le modalità</string>
     <string name="transit_mode_transit_and_bikeshare">Mezzi pubblici e bike sharing</string>
     <string name="transit_mode_bus">Solo autobus</string>
     <string name="transit_mode_rail">Solo treno</string>

@@ -637,7 +637,7 @@ public class TripPlanFragment extends Fragment {
         }
 
         if (unitsAreImperial) {
-            TextView label = (TextView) dialog.findViewById(R.id.label_minimum_walk_distance);
+            TextView label = (TextView) dialog.findViewById(R.id.label_maximum_walk_distance);
             label.setText(getString(R.string.feet_abbreviation));
         }
     }

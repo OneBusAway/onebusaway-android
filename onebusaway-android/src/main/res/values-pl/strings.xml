@@ -751,4 +751,18 @@
     <string name="send_email">Wyślij email</string>
     <string name="make_a_phone_call">Wykonaj telefon</string>
     <string name="browse_the_web">Naviga sul web</string>
+
+    <!-- Trip plan advanced settings -->
+    <string name="trip_plan_advanced_settings">Dodatkowe preferencje dotyczące podróży</string>
+    <string name="minimize_transfers">Zminimalizuj transfery</string>
+    <string name="maximum_walk_distance">Maksymalna odległość spaceru: </string>
+    <string name="wheelchair_accessible">Unikaj schodów</string>
+
+    <string name="travel_by_label">Podróżuj: </string>
+    <string name="transit_mode_all_modes">Wszystkie tryby</string>
+    <string name="transit_mode_transit_and_bikeshare">Transport publiczny i rowery miejskie</string>
+    <string name="transit_mode_bus">Tylko autobus</string>
+    <string name="transit_mode_rail">Tylko kolej</string>
+    <string name="transit_mode_bikeshare">Tylko rowery</string>
+    <string name="transit_directions_bikeshare_label">Udostępnianie rowerów</string>
 </resources>

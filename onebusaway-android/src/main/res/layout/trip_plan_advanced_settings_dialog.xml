@@ -56,7 +56,7 @@
                 android:inputType="number" />
 
         <TextView
-                android:id="@+id/label_minimum_walk_distance"
+                android:id="@+id/label_maximum_walk_distance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/meters_abbreviation"/>

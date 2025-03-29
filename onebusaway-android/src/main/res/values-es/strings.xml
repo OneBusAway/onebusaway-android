@@ -870,7 +870,7 @@
     <string name="trip_plan_leaving">Saliendo</string>
     <string name="trip_plan_arriving">Llegando</string>
     <string name="trip_plan_stop_connector">a las</string>
-    <string name="trip_plan_departure_type">Tipo</string>
+    <string name="trip_plan_departure_status">Estado</string>
     <string name="trip_plan_date">Fecha</string>
     <string name="trip_plan_time">Tiempo</string>
 

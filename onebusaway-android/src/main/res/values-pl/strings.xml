@@ -753,7 +753,7 @@
     <string name="browse_the_web">Naviga sul web</string>
 
     <!-- Trip Planner strings -->
-    <string name="trip_plan_departure_type">Typ</string>
+    <string name="trip_plan_departure_status">Status</string>
     <string name="trip_plan_date">Data</string>
     <string name="trip_plan_time">Czas</string>
 </resources>

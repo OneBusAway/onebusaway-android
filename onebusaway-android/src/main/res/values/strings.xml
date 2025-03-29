@@ -983,7 +983,7 @@
     <string name="trip_plan_leaving">Leaving</string>
     <string name="trip_plan_arriving">Arriving</string>
     <string name="trip_plan_stop_connector">at</string>
-    <string name="trip_plan_departure_type">Type</string>
+    <string name="trip_plan_departure_status">Status</string>
     <string name="trip_plan_date">Date</string>
     <string name="trip_plan_time">Time</string>
 

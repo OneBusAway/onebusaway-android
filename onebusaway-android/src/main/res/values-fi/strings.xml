@@ -707,8 +707,10 @@
     <string name="preferences_reset_donation_timestamps_summary">Tämän vaihtoehdon napauttaminen poistaa sekä \'Muistuta minua myöhemmin\' että \'Älä vaivaudu\' aikaleimat, jotka liittyvät lahjoituspyyntöihin.</string>
     <string name="preferences_show_weather_view">Näytä säätönäkymä</string>
     <string name="show">Näytä</string>
-    <string name="preferences_enable_map_3d_mode_title">Ota käyttöön kartan 3D-tila</string>
-    <string name="preferences_enable_map_3d_mode_summary">Sisällytä 3D-rakennukset karttaan</string>
+    <string name="preferences_preferred_maps_title">Ensisijainen Karttatyyppi</string>
+    <string name="preferences_preferred_map_option_normal2d">Oletuskartta</string>
+    <string name="preferences_preferred_map_option_normal3d">Oletuskartta 3D-rakennuksilla</string>
+    <string name="preferences_preferred_map_option_satellite">Satelliitti kartta</string>
 
     <!-- Survey -->
     <string name="preferences_show_available_studies_title">Näytä saatavilla olevat tutkimukset</string>

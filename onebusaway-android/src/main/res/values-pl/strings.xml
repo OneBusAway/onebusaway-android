@@ -765,4 +765,9 @@
     <string name="send_email">Wyślij email</string>
     <string name="make_a_phone_call">Wykonaj telefon</string>
     <string name="browse_the_web">Naviga sul web</string>
+
+    <!-- Trip Planner strings -->
+    <string name="trip_plan_departure_status">Status</string>
+    <string name="trip_plan_date">Data</string>
+    <string name="trip_plan_time">Czas</string>
 </resources>

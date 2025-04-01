@@ -750,4 +750,6 @@
     <string name="trip_plan_departure_status">Tila</string>
     <string name="trip_plan_date">Päivämäärä</string>
     <string name="trip_plan_time">Aika</string>
+    <string name="select_origin_from_contacts">Valitse alkuperä yhteystiedoista</string>
+    <string name="select_destination_from_contacts">Valitse kohde yhteystiedoista</string>
 </resources>

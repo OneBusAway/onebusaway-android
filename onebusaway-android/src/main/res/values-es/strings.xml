@@ -888,6 +888,8 @@
 
     <string name="trip_plan_list_view">Vista de Lista</string>
     <string name="trip_plan_map_view">Vista de Mapa</string>
+    <string name="select_origin_from_contacts">Seleccionar origen de contactos</string>
+    <string name="select_destination_from_contacts">Seleccionar destino de contactos</string>
 
     <string name="task_progress_tripplanner_progress">Planeando viaje. Por favor espere&#8230;</string>
     <string name="tripplanner_no_server_selected_error">No hay ninguna región seleccionada</string>

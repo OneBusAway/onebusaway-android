@@ -750,4 +750,6 @@
     <string name="trip_plan_departure_status">Tila</string>
     <string name="trip_plan_date">Päivämäärä</string>
     <string name="trip_plan_time">Aika</string>
+
+    <string name="map_option_layers">Karttatasojen painike</string>
 </resources>

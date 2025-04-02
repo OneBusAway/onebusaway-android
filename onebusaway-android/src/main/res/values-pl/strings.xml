@@ -770,4 +770,6 @@
     <string name="trip_plan_departure_status">Status</string>
     <string name="trip_plan_date">Data</string>
     <string name="trip_plan_time">Czas</string>
+
+    <string name="map_option_layers">Przycisk warstw mapy</string>
 </resources>

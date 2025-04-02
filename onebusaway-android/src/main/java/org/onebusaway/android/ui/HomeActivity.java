@@ -117,6 +117,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.AccessibilityDelegateCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.fragment.app.FragmentManager;
 
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_ACTIVITY_FEED;
@@ -1719,6 +1722,9 @@ public class HomeActivity extends AppCompatActivity
         mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp);
         mLayersFab.setButtonBackgroundColour(ContextCompat.getColor(this, R.color.theme_accent));
 
+        // Find and set content description on the card view (the actual clickable element)
+        View fabCard = mLayersFab.findViewById(R.id.fab_card);
+
         LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
         // Add the BaseMapFragment listener to activate the layer on the map
         adapter.addLayerActivationListener(mMapFragment);
@@ -1741,7 +1747,14 @@ public class HomeActivity extends AppCompatActivity
         });
         mLayersFab.setSpeedDialMenuAdapter(adapter);
         mLayersFab.setOnSpeedDialMenuOpenListener(
-                v -> mLayersFab.setButtonIconResource(R.drawable.ic_add_white_24dp));
+                v -> {
+                    mLayersFab.setButtonIconResource(R.drawable.ic_add_white_24dp);
+                    // Update content description to match the new state
+                    mLayersFab.setContentDescription(getString(R.string.map_option_layers_close));
+                    if (fabCard != null) {
+                        fabCard.setContentDescription(getString(R.string.map_option_layers_close));
+                    }
+                });
         mLayersFab.setOnSpeedDialMenuCloseListener(
                 v -> mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp));
         mLayersFab.setContentCoverEnabled(false);

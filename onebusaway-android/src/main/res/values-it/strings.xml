@@ -1064,4 +1064,6 @@
 
     <string name="my_option_clear_starred_routes_title">Vuoi rimuovere tutti i percorsi contrassegnati con una stella?</string>
     <string name="my_option_clear_starred_routes_confirm">Questa operazione rimuoverà definitivamente tutti i percorsi contrassegnati con una stella.</string>
+    <string name="map_option_zoom_out">Riduci</string>
+    <string name="map_option_zoom_in">Ingrandisci</string>
 </resources>

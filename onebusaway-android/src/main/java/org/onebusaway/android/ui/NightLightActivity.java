@@ -201,7 +201,7 @@ public class NightLightActivity extends AppCompatActivity {
             builder.setTitle(R.string.night_light_dialog_title);
             builder.setCancelable(false);
             builder.setPositiveButton(R.string.night_light_start, (dialog, which) -> {
-                sp.edit().putBoolean(PREFERENCE_SHOWED_DIALOG, true).commit();
+                sp.edit().putBoolean(PREFERENCE_SHOWED_DIALOG, true).apply();
                 // Start the flashing
                 onViewedDialog();
             });

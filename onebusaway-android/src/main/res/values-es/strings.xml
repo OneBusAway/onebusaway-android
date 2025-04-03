@@ -1153,6 +1153,6 @@
     <string name="send_email">Enviar correo electrónico</string>
     <string name="make_a_phone_call">Hacer una llamada</string>
     <string name="browse_the_web">Navegar por la web</string>
-    <string name="map_option_zoom_out">alejar</string>
-    <string name="map_option_zoom_in">acercar</string>
+    <string name="map_option_zoom_out">Alejar</string>
+    <string name="map_option_zoom_in">Acercar</string>
 </resources>

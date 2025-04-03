@@ -77,8 +77,10 @@
                     android:id="@+id/ri_imageView"
                     style="@style/MaterialItem"/>
             <Button
-                    android:layout_width="120dp"
-                    android:layout_height="32dp"
+                    android:layout_width="wrap_content"
+                    android:minWidth="120dp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
                     android:layout_marginLeft="176dp"
                     android:background="@color/material_background"
                     android:text="@string/ri_button_image"
@@ -106,9 +108,9 @@
             <CheckBox
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="48dp"
                     android:id="@+id/rici_anonymous_checkbox"
                     android:text="@string/ri_anonymous_checkbox"
-                    android:layout_marginTop="10dp"
                     style="@style/MaterialItem"
                     android:textSize="15sp"
                     android:textStyle="bold"
@@ -132,6 +134,7 @@
             <EditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="48dp"
                     android:inputType="textPersonName"
                     android:hint="@string/ri_user_name_hint"
                     android:ems="10"
@@ -152,6 +155,7 @@
             <EditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="48dp"
                     android:inputType="textPersonName"
                     android:hint="@string/ri_user_lastname_hint"
                     android:ems="10"
@@ -173,6 +177,7 @@
             <EditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="48dp"
                     android:inputType="textEmailAddress"
                     android:ems="10"
                     android:hint="@string/ri_user_email_hint"
@@ -195,6 +200,7 @@
             <EditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="48dp"
                     android:inputType="phone"
                     android:ems="10"
                     android:hint="@string/ri_user_phone_hint"

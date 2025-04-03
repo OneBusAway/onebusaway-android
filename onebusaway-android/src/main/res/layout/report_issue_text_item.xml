@@ -21,7 +21,8 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/riti_editText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:minHeight="48dp" />
 
         </com.google.android.material.textfield.TextInputLayout>
 

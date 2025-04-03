@@ -755,4 +755,8 @@
     <string name="map_option_zoom_out">Loitontaa</string>
     <string name="map_option_zoom_in">Lähentää</string>
     <string name="map_option_layers_close">Sulje karttatasojen painike</string>
+
+    <!-- Destination reminder feedback Activity -->
+    <string name="feedback_like_button_description">Kyllä, minulle ilmoitettiin oikeaan aikaan</string>
+    <string name="feedback_dislike_button_description">Ei, minulle ei ilmoitettu oikeaan aikaan</string>
 </resources>

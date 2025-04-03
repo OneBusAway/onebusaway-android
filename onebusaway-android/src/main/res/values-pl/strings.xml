@@ -775,4 +775,8 @@
     <string name="map_option_zoom_out">Riduci</string>
     <string name="map_option_zoom_in">Przybliż</string>
     <string name="map_option_layers_close">Zamknij przycisk warstw mapy</string>
+
+    <!-- Destination reminder feedback Activity -->
+    <string name="feedback_like_button_description">Tak, zostałem powiadomiony we właściwym czasie</string>
+    <string name="feedback_dislike_button_description">Nie, nie zostałem powiadomiony we właściwym czasie</string>
 </resources>

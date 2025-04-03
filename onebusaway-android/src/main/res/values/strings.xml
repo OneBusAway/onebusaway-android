@@ -1304,5 +1304,8 @@
     <string name="send_email">Send email</string>
     <string name="make_a_phone_call">Make a phone call</string>
     <string name="browse_the_web">Browse the web</string>
+    <string name="map_option_zoom_out">Zoom out</string>
+    <string name="map_option_zoom_in">Zoom in</string>
+    <string name="map_option_layers_close">Close Map Layers Button</string>
     <string name="map_option_layers">Maps Layers Button</string>
 </resources>

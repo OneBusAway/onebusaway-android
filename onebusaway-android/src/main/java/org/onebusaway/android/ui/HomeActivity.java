@@ -1726,6 +1726,9 @@ public class HomeActivity extends AppCompatActivity
 
         // Find and set content description on the card view (the actual clickable element)
         View fabCard = mLayersFab.findViewById(R.id.fab_card);
+
+        // Find and set content description on the card view (the actual clickable element)
+        View fabCard = mLayersFab.findViewById(R.id.fab_card);
         if (fabCard != null) {
             fabCard.setContentDescription(getString(R.string.map_option_layers));
             fabCard.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
@@ -1753,7 +1756,14 @@ public class HomeActivity extends AppCompatActivity
         });
         mLayersFab.setSpeedDialMenuAdapter(adapter);
         mLayersFab.setOnSpeedDialMenuOpenListener(
-                v -> mLayersFab.setButtonIconResource(R.drawable.ic_add_white_24dp));
+                v -> {
+                    mLayersFab.setButtonIconResource(R.drawable.ic_add_white_24dp);
+                    // Update content description to match the new state
+                    mLayersFab.setContentDescription(getString(R.string.map_option_layers_close));
+                    if (fabCard != null) {
+                        fabCard.setContentDescription(getString(R.string.map_option_layers_close));
+                    }
+                });
         mLayersFab.setOnSpeedDialMenuCloseListener(
                 v -> {
                     mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp);

@@ -1728,7 +1728,6 @@ public class HomeActivity extends AppCompatActivity
         View fabCard = mLayersFab.findViewById(R.id.fab_card);
 
         // Find and set content description on the card view (the actual clickable element)
-        View fabCard = mLayersFab.findViewById(R.id.fab_card);
         if (fabCard != null) {
             fabCard.setContentDescription(getString(R.string.map_option_layers));
             fabCard.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);

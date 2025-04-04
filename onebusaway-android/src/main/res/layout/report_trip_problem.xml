@@ -101,6 +101,7 @@
                     android:text="@string/report_problem_onvehicle_bus"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
+                    android:minHeight="48dp"
                     style="@style/MaterialItem">
             </CheckBox>
         </FrameLayout>

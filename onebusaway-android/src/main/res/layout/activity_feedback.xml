@@ -20,7 +20,7 @@
             android:text="@string/feedback_msg"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textColor="@android:color/black"
-            android:textSize="14sp" />
+            android:textSize="16sp" />
     </FrameLayout>
     <FrameLayout
         style="@style/MaterialLayout"

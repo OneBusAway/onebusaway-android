@@ -98,7 +98,9 @@
                 style="@style/FormLabel"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/trip_info_reminder_header" />
+                android:text="@string/trip_info_reminder_header"
+                android:textSize="20dp"/>
+
 
             <Spinner
                 android:id="@+id/trip_info_reminder_time"

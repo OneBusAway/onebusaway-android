@@ -352,8 +352,13 @@ public class TripInfoActivity extends AppCompatActivity {
             progressView = view.findViewById(R.id.progress);
 
             String[] reminderTimes = ReminderUtils.getReminderTimes(mDepartTime);
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, reminderTimes);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                    getActivity(),
+                    R.layout.spinner_item_reminder,           // custom layout with 24sp text
+                    R.id.text_spinner_item,                   // TextView ID from the layout
+                    reminderTimes
+            );
+            adapter.setDropDownViewResource(R.layout.spinner_dropdown_reminder); // optional, for dropdown styling
             reminder.setAdapter(adapter);
 
             //

@@ -82,6 +82,14 @@
         - Stuknij na czas przyjazdu i wybierz \"Pokaż status podróży\"!
     </string>
     <string name="main_help_close">Zamknij</string>
+    <string name="main_help_legend_title">Legenda</string>
+    <string name="main_help_legend_ontime">Zielony oznacza „Na czas”</string>
+    <string name="main_help_legend_late">Niebieski oznacza „Spóźnienie”</string>
+    <string name="main_help_legend_early">Czerwony oznacza „Bieganie wcześnie”</string>
+    <string name="main_help_legend_scheduled">Szary oznacza „Planowany przyjazd” – nie wiemy, gdzie teraz jest autobus, ale rozkład jazdy mówi, że jest nadchodzący przyjazd
+    </string>
+    <string name="main_help_legend_canceled">Szary z przekreśleniem oznacza, że ​​podróż została odwołana – ten autobus NIE przyjedzie
+    </string>
     <string name="main_nolocation_title">Lokacja niedostępna</string>
     <string name="main_nolocation">KiedyBus would like your location, czy chcesz wybrać ją teraz?
     </string>

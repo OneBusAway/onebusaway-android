@@ -96,7 +96,7 @@
                 <androidx.cardview.widget.CardView
                     android:id="@+id/weatherView"
                     android:layout_marginEnd="16dp"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="10dp"
                     android:layout_alignParentTop="true"
                     android:animateLayoutChanges="true"
                     android:layout_alignParentEnd="true"
@@ -104,12 +104,12 @@
                     android:visibility="gone"
                     android:background="@color/quantum_white_100"
                     app:cardCornerRadius="12dp"
-                    android:layout_height="30dp">
+                    android:layout_height="48dp">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_margin="4dp"
-                        android:layout_height="wrap_content">
+                        android:layout_height="match_parent">
 
                         <ImageView
                             android:id="@+id/weatherStateImageView"

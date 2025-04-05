@@ -1156,4 +1156,8 @@
     <string name="map_option_zoom_out">Alejar</string>
     <string name="map_option_zoom_in">Acercar</string>
     <string name="map_option_layers_close">Cerrar botón de capas del mapa</string>
+
+    <!-- Destination reminder feedback Activity -->
+    <string name="feedback_like_button_description">Sí, me avisaron en el momento oportuno</string>
+    <string name="feedback_dislike_button_description">No, no me avisaron en el momento oportuno</string>
 </resources>

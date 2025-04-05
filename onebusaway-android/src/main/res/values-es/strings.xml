@@ -1156,4 +1156,5 @@
     <string name="map_option_zoom_out">Alejar</string>
     <string name="map_option_zoom_in">Acercar</string>
     <string name="map_option_layers_close">Cerrar botón de capas del mapa</string>
+    <string name="map_option_layers">Botón de capas del mapa</string>
 </resources>

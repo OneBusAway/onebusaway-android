@@ -359,8 +359,10 @@ class ArrivalsListHeader {
         mEtaContainer1 = mView.findViewById(R.id.eta_container1);
         mEtaRouteFavorite1 = (ImageButton) mEtaContainer1.findViewById(R.id.eta_route_favorite);
         mEtaRouteFavorite1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mEtaRouteFavorite1.setContentDescription(mContext.getString(R.string.arrival_favorite_first_description));
         mEtaReminder1 = (ImageButton) mEtaContainer1.findViewById(R.id.reminder);
         mEtaReminder1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mEtaReminder1.setContentDescription(mContext.getString(R.string.arrival_reminder_first_description));
         mEtaRouteName1 = (TextView) mEtaContainer1.findViewById(R.id.eta_route_name);
         mEtaRouteDirection1 = (TextView) mEtaContainer1.findViewById(R.id.eta_route_direction);
         mEtaAndMin1 = (RelativeLayout) mEtaContainer1.findViewById(R.id.eta_and_min);
@@ -369,6 +371,7 @@ class ArrivalsListHeader {
         mEtaRealtime1 = (ViewGroup) mEtaContainer1.findViewById(R.id.eta_realtime_indicator);
         mEtaMoreVert1 = (ImageButton) mEtaContainer1.findViewById(R.id.eta_more_vert);
         mEtaMoreVert1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mEtaMoreVert1.setContentDescription(mContext.getString(R.string.arrival_options_first_description));
 
         mEtaSeparator = mView.findViewById(R.id.eta_separator);
 
@@ -376,8 +379,10 @@ class ArrivalsListHeader {
         mEtaContainer2 = mView.findViewById(R.id.eta_container2);
         mEtaRouteFavorite2 = (ImageButton) mEtaContainer2.findViewById(R.id.eta_route_favorite);
         mEtaRouteFavorite2.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mEtaRouteFavorite2.setContentDescription(mContext.getString(R.string.arrival_favorite_second_description));
         mEtaReminder2 = (ImageButton) mEtaContainer2.findViewById(R.id.reminder);
         mEtaReminder2.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mEtaReminder2.setContentDescription(mContext.getString(R.string.arrival_reminder_second_description));
         mEtaRouteName2 = (TextView) mEtaContainer2.findViewById(R.id.eta_route_name);
         mEtaAndMin2 = (RelativeLayout) mEtaContainer2.findViewById(R.id.eta_and_min);
         mEtaRouteDirection2 = (TextView) mEtaContainer2.findViewById(R.id.eta_route_direction);
@@ -386,6 +391,7 @@ class ArrivalsListHeader {
         mEtaRealtime2 = (ViewGroup) mEtaContainer2.findViewById(R.id.eta_realtime_indicator);
         mEtaMoreVert2 = (ImageButton) mEtaContainer2.findViewById(R.id.eta_more_vert);
         mEtaMoreVert2.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mEtaMoreVert2.setContentDescription(mContext.getString(R.string.arrival_options_second_description));
 
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
         mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);

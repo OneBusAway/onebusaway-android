@@ -1069,4 +1069,12 @@
     <string name="map_option_zoom_out">Riduci</string>
     <string name="map_option_zoom_in">Ingrandisci</string>
     <string name="map_option_layers_close">Chiudi pulsante livelli mappa</string>
+
+    <!-- Accessibility content descriptions for ETA rows -->
+    <string name="arrival_favorite_first_description">Salva il primo percorso come preferito</string>
+    <string name="arrival_favorite_second_description">Salva il secondo percorso come preferito</string>
+    <string name="arrival_reminder_first_description">Imposta promemoria per il primo arrivo</string>
+    <string name="arrival_reminder_second_description">Imposta promemoria per il secondo arrivo</string>
+    <string name="arrival_options_first_description">Opzioni per il primo arrivo</string>
+    <string name="arrival_options_second_description">Opzioni per il secondo arrivo</string>
 </resources>

@@ -1309,4 +1309,12 @@
     <string name="map_option_zoom_out">Zoom out</string>
     <string name="map_option_zoom_in">Zoom in</string>
     <string name="map_option_layers_close">Close Map Layers Button</string>
+
+    <!-- Accessibility content descriptions for ETA rows -->
+    <string name="arrival_favorite_first_description">Save first route as favorite</string>
+    <string name="arrival_favorite_second_description">Save second route as favorite</string>
+    <string name="arrival_reminder_first_description">Set reminder for first arrival</string>
+    <string name="arrival_reminder_second_description">Set reminder for second arrival</string>
+    <string name="arrival_options_first_description">Options for first arrival</string>
+    <string name="arrival_options_second_description">Options for second arrival</string>
 </resources>

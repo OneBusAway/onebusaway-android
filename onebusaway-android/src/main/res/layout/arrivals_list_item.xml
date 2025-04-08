@@ -57,7 +57,8 @@
                 <TextView
                     android:id="@+id/route"
                     style="@style/StopInfoRoute"
-                    android:layout_width="80sp"
+                    android:layout_width="wrap_content"
+                    android:minWidth="80dp"
                     android:layout_column="0"
                     android:gravity="center"
                     tools:text="5" />

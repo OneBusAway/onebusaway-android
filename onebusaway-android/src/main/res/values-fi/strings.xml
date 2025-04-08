@@ -769,4 +769,12 @@
     <!-- Destination reminder feedback Activity -->
     <string name="feedback_like_button_description">Kyllä, minulle ilmoitettiin oikeaan aikaan</string>
     <string name="feedback_dislike_button_description">Ei, minulle ei ilmoitettu oikeaan aikaan</string>
+
+    <!-- Accessibility content descriptions for ETA rows -->
+    <string name="arrival_favorite_first_description">Tallenna ensimmäinen reitti suosikiksi</string>
+    <string name="arrival_favorite_second_description">Tallenna toinen reitti suosikiksi</string>
+    <string name="arrival_reminder_first_description">Aseta muistutus ensimmäisestä saapumisesta</string>
+    <string name="arrival_reminder_second_description">Aseta muistutus toiselle saapumiselle</string>
+    <string name="arrival_options_first_description">Vaihtoehdot ensimmäiselle saapumiselle</string>
+    <string name="arrival_options_second_description">Vaihtoehdot toiselle saapumiselle</string>
 </resources>

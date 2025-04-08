@@ -787,4 +787,12 @@
     <!-- Destination reminder feedback Activity -->
     <string name="feedback_like_button_description">Tak, zostałem powiadomiony we właściwym czasie</string>
     <string name="feedback_dislike_button_description">Nie, nie zostałem powiadomiony we właściwym czasie</string>
+
+    <!-- Accessibility content descriptions for ETA rows -->
+    <string name="arrival_favorite_first_description">Zapisz pierwszą trasę jako ulubioną</string>
+    <string name="arrival_favorite_second_description">Zapisz drugą trasę jako ulubioną</string>
+    <string name="arrival_reminder_first_description">Ustaw przypomnienie o pierwszym przybyciu</string>
+    <string name="arrival_reminder_second_description">Ustaw przypomnienie o drugim przybyciu</string>
+    <string name="arrival_options_first_description">Opcje pierwszego przyjazdu</string>
+    <string name="arrival_options_second_description">Opcje drugiego przyjazdu</string>
 </resources>

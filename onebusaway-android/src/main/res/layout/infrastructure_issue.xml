@@ -87,7 +87,7 @@
                     android:layout_height="wrap_content"
                     android:text="Fixed Header"
                     android:ellipsize="end"
-                    android:singleLine="true"
+                    android:maxLines="1"
                     android:layout_margin="4dp"
                     android:id="@+id/ri_bus_stop_text"
                     android:textColor="@android:color/white"
@@ -112,7 +112,7 @@
 
             <LinearLayout
                     android:orientation="vertical"
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
                 <FrameLayout

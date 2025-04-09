@@ -19,7 +19,7 @@
             android:textColor="@color/header_text_color"
             android:textStyle="bold"
             android:ellipsize="end"
-            android:singleLine="true"/>
+            android:maxLines="1"/>
     <TextView
             android:id="@+id/eta_min"
             android:layout_width="wrap_content"
@@ -28,7 +28,7 @@
             android:text="min"
             android:textColor="@color/header_text_faded_color"
             android:ellipsize="end"
-            android:singleLine="true"
+            android:maxLines="1"
             android:textIsSelectable="false"
             android:layout_marginLeft="5dp"
             android:layout_toRightOf="@id/eta"

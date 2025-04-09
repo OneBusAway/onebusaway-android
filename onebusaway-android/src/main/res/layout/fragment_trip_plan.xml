@@ -48,7 +48,7 @@
                     android:text="@string/tripplanner_current_location"
                     android:hint="@string/trip_plan_start_location_hint"
                     android:linksClickable="true"
-                    android:singleLine="true"
+                    android:maxLines="1"
                     android:ellipsize="end"
                     android:requiresFadingEdge="horizontal" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -91,7 +91,7 @@
                     android:layout_height="wrap_content"
                     android:hint="@string/trip_plan_end_location_hint"
                     android:linksClickable="true"
-                    android:singleLine="true"
+                    android:maxLines="1"
                     android:requiresFadingEdge="horizontal" />
             </com.google.android.material.textfield.TextInputLayout>
 

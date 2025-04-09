@@ -17,7 +17,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 style="@style/ListItem"
                 android:id="@+id/stop_list_container"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
     <ImageView
@@ -39,18 +39,18 @@
                   android:layout_marginLeft="@dimen/keyline_2"
                   android:layout_alignParentLeft="true"
                   android:layout_centerVertical="true"
-                  android:layout_width="fill_parent"
+                  android:layout_width="match_parent"
                   android:layout_height="wrap_content"
                   android:orientation="vertical">
         <TextView
                 android:id="@+id/name"
                 style="@style/Line1Text"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content">
         </TextView>
         <LinearLayout
                 android:orientation="horizontal"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content">
             <TextView
                     style="@style/Line2Text"
@@ -78,7 +78,7 @@
         <TextView
                 android:id="@+id/departure_time"
                 style="@style/Line2Text"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content">
         </TextView>
     </LinearLayout>

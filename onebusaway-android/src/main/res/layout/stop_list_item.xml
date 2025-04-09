@@ -19,7 +19,7 @@
                 style="@style/ListItem"
                 android:id="@+id/stop_list_container"
                 android:layout_height="wrap_content"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:minHeight="77dp"
                 android:orientation="horizontal">
     <ImageView
@@ -42,7 +42,7 @@
                   android:layout_marginLeft="@dimen/keyline_2"
                   android:layout_alignParentLeft="true"
                   android:layout_centerVertical="true"
-                  android:layout_width="fill_parent"
+                  android:layout_width="match_parent"
                   android:layout_height="wrap_content"
                   android:orientation="vertical">
         <TextView

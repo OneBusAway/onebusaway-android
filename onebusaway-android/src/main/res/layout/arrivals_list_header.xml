@@ -32,7 +32,7 @@
         <LinearLayout
                 android:id="@+id/edit_name_container"
                 android:orientation="vertical"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:visibility="gone">
@@ -51,7 +51,7 @@
 
             <LinearLayout
                     android:orientation="horizontal"
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:paddingLeft="10dip"
                     android:paddingRight="10dip"
@@ -195,7 +195,7 @@
                         android:text="University Area Transit Center"
                         android:textColor="@color/header_text_color"
                         android:ellipsize="end"
-                        android:singleLine="true"
+                        android:maxLines="1"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="left|center_vertical"
@@ -209,7 +209,7 @@
                         android:text=" (N)"
                         android:textColor="@color/header_text_faded_color"
                         android:ellipsize="none"
-                        android:singleLine="true"
+                        android:maxLines="1"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="left|center_vertical"
@@ -254,7 +254,7 @@
                 android:textSize="18sp"
                 android:textColor="@color/header_text_color"
                 android:ellipsize="end"
-                android:singleLine="true"
+                android:maxLines="1"
                 android:layout_gravity="center"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

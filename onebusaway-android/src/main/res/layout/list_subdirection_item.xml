@@ -15,15 +15,15 @@
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="horizontal"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
               android:paddingLeft="10dp"
               android:paddingRight="10dp">
 
     <ImageView
             android:id="@+id/imgIcon"
             android:layout_width="16dp"
-            android:layout_height="fill_parent"
+            android:layout_height="match_parent"
             android:gravity="center_vertical"
             android:layout_alignParentTop="true"
             android:layout_alignParentBottom="true"
@@ -32,8 +32,8 @@
 
     <TextView
             android:id="@+id/directionText"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:gravity="center_vertical"
             android:layout_alignParentTop="true"
             android:layout_alignParentBottom="true"

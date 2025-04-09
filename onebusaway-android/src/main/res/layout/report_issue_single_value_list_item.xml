@@ -51,8 +51,8 @@
                     android:layout_alignParentEnd="true"/>
 
             <RadioGroup
-                    android:layout_width="fill_parent"
-                    android:layout_height="fill_parent"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     android:layout_centerVertical="true"
                     android:layout_below="@+id/risvli_textView"
                     android:id="@+id/risvli_radioGroup"

@@ -25,7 +25,7 @@
 
     <androidx.cardview.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
         android:id="@+id/no_arrivals_card_view"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         card_view:cardCornerRadius="4dp"
@@ -34,7 +34,7 @@
         <TextView
             android:id="@+id/noArrivals"
             style="@style/ListHintText"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingBottom="15sp" />
     </androidx.cardview.widget.CardView>

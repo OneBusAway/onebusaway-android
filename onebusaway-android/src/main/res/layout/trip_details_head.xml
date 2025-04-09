@@ -16,7 +16,7 @@
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     style="@style/HeaderItem"
-    android:layout_width="fill_parent"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
@@ -28,7 +28,7 @@
             android:layout_marginLeft="6dp"
             android:layout_marginStart="6dp"
             android:layout_gravity="center_vertical"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_column="0"
             android:maxLength="6"
@@ -48,7 +48,7 @@
             <TextView
                 android:id="@+id/long_name"
                 style="@style/RouteInfoLongName"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 tools:text="South to Netpark" />
 
@@ -62,14 +62,14 @@
             <TextView
                 android:id="@+id/vehicle"
                 style="@style/TripDetailsVehicle"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 tools:text="Vehicle: Hillsborough Area Regional Transit_1720" />
 
             <TextView
                 android:id="@+id/trip_short_name"
                 style="@style/TripDetailsVehicle"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 tools:text="via Stadium" />
 
@@ -87,7 +87,7 @@
                 <TextView
                     android:id="@+id/status"
                     style="@style/TripDetailsStatus"
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     tools:text="13 min 0 sec late (Last update: 6:37 PM)" />
 

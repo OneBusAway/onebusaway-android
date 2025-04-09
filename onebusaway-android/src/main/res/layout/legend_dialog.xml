@@ -30,7 +30,7 @@
                     android:background="@drawable/round_corners_style_b_header_status"/>
 
             <TextView
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="16dp"
                     style="@style/legendDialogTextStyle"
@@ -61,7 +61,7 @@
                     android:background="@drawable/round_corners_style_b_header_status"/>
 
             <TextView
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="16dp"
                     style="@style/legendDialogTextStyle"
@@ -92,7 +92,7 @@
                     android:background="@drawable/round_corners_style_b_header_status"/>
 
             <TextView
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="16dp"
                     style="@style/legendDialogTextStyle"
@@ -123,7 +123,7 @@
                     android:background="@drawable/round_corners_style_b_header_status"/>
 
             <TextView
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="16dp"
                     style="@style/legendDialogTextStyle"
@@ -155,7 +155,7 @@
                 android:background="@drawable/round_corners_style_b_header_status" />
 
             <TextView
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
                 style="@style/legendDialogTextStyle"

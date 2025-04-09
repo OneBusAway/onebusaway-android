@@ -25,14 +25,14 @@
             xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/load_arrivals_card_view"
             android:layout_gravity="center"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             card_view:cardUseCompatPadding="true"
             card_view:cardCornerRadius="4dp"
             card_view:cardBackgroundColor="@color/primary_material_light">
 
         <include
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 layout="@layout/load_more_arrivals_button"/>

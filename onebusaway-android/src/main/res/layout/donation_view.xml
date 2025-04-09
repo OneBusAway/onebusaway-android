@@ -9,7 +9,7 @@
     android:layout_alignParentTop="true"
     android:animateLayoutChanges="true"
     android:layout_alignParentEnd="true"
-    android:layout_width="fill_parent"
+    android:layout_width="match_parent"
     android:visibility="visible"
     android:background="@color/quantum_white_100"
     app:cardCornerRadius="8dp"

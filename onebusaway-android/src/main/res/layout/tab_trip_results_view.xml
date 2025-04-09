@@ -30,7 +30,7 @@
             android:gravity="center"
             android:layout_gravity="center"
             android:ellipsize="end"
-            android:singleLine="true"
+            android:maxLines="1"
             android:textSize="@dimen/trip_results_tab_text_size"
             android:textColor="@color/body_text_1"
             android:textAllCaps="true"

@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:elevation="3dp"
                 android:layout_height="wrap_content"
                 style="@style/HeaderItem">
@@ -31,7 +31,7 @@
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"/>
     <TableLayout
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"
@@ -40,12 +40,11 @@
             <TextView
                     android:id="@+id/short_name"
                     style="@style/RouteInfoShortName"
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_column="0"
-                    android:singleLine="true"
-                    android:maxLength="6"
                     android:maxLines="1"
+                    android:maxLength="6"
                     android:ellipsize="end">
             </TextView>
             <LinearLayout
@@ -56,13 +55,13 @@
                 <TextView
                         android:id="@+id/long_name"
                         style="@style/RouteInfoLongName"
-                        android:layout_width="fill_parent"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content">
                 </TextView>
                 <TextView
                         android:id="@+id/agency"
                         style="@style/RouteInfoAgency"
-                        android:layout_width="fill_parent"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content">
                 </TextView>
             </LinearLayout>

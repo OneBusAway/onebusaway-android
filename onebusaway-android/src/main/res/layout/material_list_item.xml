@@ -63,7 +63,7 @@
 
             <TextView
                     android:id="@+id/rtl_desc"
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/rtl_title"
                     style="@style/Line2Text"

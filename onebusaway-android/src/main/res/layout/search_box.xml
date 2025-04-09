@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="fill_parent"
+              android:layout_width="match_parent"
               android:layout_height="wrap_content"
               style="@style/FindSearchBox">
 
@@ -28,7 +28,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
-            android:singleLine="true"
+            android:maxLines="1"
             android:imeOptions="actionSearch"/>
 
     </com.google.android.material.textfield.TextInputLayout>

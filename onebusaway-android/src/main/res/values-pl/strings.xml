@@ -795,4 +795,6 @@
     <string name="arrival_reminder_second_description">Ustaw przypomnienie o drugim przybyciu</string>
     <string name="arrival_options_first_description">Opcje pierwszego przyjazdu</string>
     <string name="arrival_options_second_description">Opcje drugiego przyjazdu</string>
+
+    <string name="map_option_layers">Przycisk warstw mapy</string>
 </resources>

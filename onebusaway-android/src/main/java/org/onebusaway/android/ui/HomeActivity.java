@@ -1714,7 +1714,6 @@ public class HomeActivity extends AppCompatActivity
 
     private void setupLayersSpeedDial() {
         mLayersFab = findViewById(R.id.layersSpeedDial);
-
         ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mLayersFab
                 .getLayoutParams();
         LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
@@ -1722,8 +1721,15 @@ public class HomeActivity extends AppCompatActivity
         mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp);
         mLayersFab.setButtonBackgroundColour(ContextCompat.getColor(this, R.color.theme_accent));
 
-        // Find and set content description on the card view (the actual clickable element)
+        // Find the card view (the actual clickable element) to set accessibility properties
         View fabCard = mLayersFab.findViewById(R.id.fab_card);
+        if (fabCard != null) {
+            fabCard.setContentDescription(getString(R.string.map_option_layers));
+            fabCard.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+        } else {
+            // Fallback to the main container if card isn't available
+            mLayersFab.setContentDescription(getString(R.string.map_option_layers));
+        }
 
         LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
         // Add the BaseMapFragment listener to activate the layer on the map
@@ -1750,13 +1756,22 @@ public class HomeActivity extends AppCompatActivity
                 v -> {
                     mLayersFab.setButtonIconResource(R.drawable.ic_add_white_24dp);
                     // Update content description to match the new state
-                    mLayersFab.setContentDescription(getString(R.string.map_option_layers_close));
                     if (fabCard != null) {
                         fabCard.setContentDescription(getString(R.string.map_option_layers_close));
+                    } else {
+                        mLayersFab.setContentDescription(getString(R.string.map_option_layers_close));
                     }
                 });
         mLayersFab.setOnSpeedDialMenuCloseListener(
-                v -> mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp));
+                v -> {
+                    mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp);
+                    // Reset content description to default state
+                    if (fabCard != null) {
+                        fabCard.setContentDescription(getString(R.string.map_option_layers));
+                    } else {
+                        mLayersFab.setContentDescription(getString(R.string.map_option_layers));
+                    }
+                });
         mLayersFab.setContentCoverEnabled(false);
     }
 

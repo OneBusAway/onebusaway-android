@@ -1317,4 +1317,5 @@
     <string name="arrival_reminder_second_description">Set reminder for second arrival</string>
     <string name="arrival_options_first_description">Options for first arrival</string>
     <string name="arrival_options_second_description">Options for second arrival</string>
+    <string name="map_option_layers">Maps Layers Button</string>
 </resources>

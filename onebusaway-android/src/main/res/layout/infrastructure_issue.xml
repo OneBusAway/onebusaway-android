@@ -140,6 +140,7 @@
                             android:id="@+id/ri_address_editText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:minHeight="48dp"
                             android:imeOptions="actionSearch"
                             android:inputType="textPostalAddress"
                             android:maxLines="2"

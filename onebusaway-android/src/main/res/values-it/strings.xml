@@ -245,6 +245,8 @@
     <string name="feedback_msg">Hai ricevuto la notifica di scendere alla fermata al momento giusto?</string>
     <string name="feedback_freeText">Scrivi il tuo feedback</string>
     <string name="feedback_checkbox_text">Includi registro di sistema (la tua scelta verrà salvata per il futuro)</string>
+    <string name="feedback_like_button_description">Sì, sono stato avvisato al momento giusto</string>
+    <string name="feedback_dislike_button_description">No, non sono stato avvisato al momento giusto</string>
     <string name="feedback_log_guide">Il tuo feedback sarà inviato a OneBusAway. Se selezioni \&quot;Includi registro di sistema\&quot;, OneBusAway riceverà dal dispositivo la posizione in tempo reale mentre arrivi a destinazione. Questo ci aiuterà a migliorare la funzione promemoria di destinazione.\n\nCambia le tue preferenze per la condivisione del registro di sistema su Impostazioni.</string>
 
     <!-- Destination reminder feedback Preferences -->
@@ -1067,5 +1069,13 @@
     <string name="map_option_zoom_out">Riduci</string>
     <string name="map_option_zoom_in">Ingrandisci</string>
     <string name="map_option_layers_close">Chiudi pulsante livelli mappa</string>
+
+    <!-- Accessibility content descriptions for ETA rows -->
+    <string name="arrival_favorite_first_description">Salva il primo percorso come preferito</string>
+    <string name="arrival_favorite_second_description">Salva il secondo percorso come preferito</string>
+    <string name="arrival_reminder_first_description">Imposta promemoria per il primo arrivo</string>
+    <string name="arrival_reminder_second_description">Imposta promemoria per il secondo arrivo</string>
+    <string name="arrival_options_first_description">Opzioni per il primo arrivo</string>
+    <string name="arrival_options_second_description">Opzioni per il secondo arrivo</string>
     <string name="map_option_layers">Pulsante livelli mappa</string>
 </resources>

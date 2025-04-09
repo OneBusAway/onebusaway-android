@@ -68,7 +68,7 @@
 
     <!--Reporting-->
     <color name="light_gray">#CCCCCC</color>
-    <color name="material_gray">#7F7F7F</color>
+    <color name="material_gray">#6A6A6A</color>
     <color name="material_background">#F9F9F9</color>
     <color name="focus">#ff8e00</color>
     <color name="alert_info">@color/theme_primary_dark</color>

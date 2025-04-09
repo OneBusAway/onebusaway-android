@@ -319,6 +319,8 @@
     <string name="feedback_msg">Were you notified at the right time to exit at your stop?</string>
     <string name="feedback_freeText">Write your feedback</string>
     <string name="feedback_checkbox_text">Include system log (your choice will be saved for future trips)</string>
+    <string name="feedback_like_button_description">Yes, I was notified at the right time</string>
+    <string name="feedback_dislike_button_description">No, I was not notified at the right time</string>
     <string name="feedback_log_guide">Your feedback will be sent to OneBusAway. If you check \"Include system logs\"
         , real-time location information from your device recorded as you
         approached your destination stop will be shared with OneBusAway so developers can improve
@@ -1307,5 +1309,13 @@
     <string name="map_option_zoom_out">Zoom out</string>
     <string name="map_option_zoom_in">Zoom in</string>
     <string name="map_option_layers_close">Close Map Layers Button</string>
+
+    <!-- Accessibility content descriptions for ETA rows -->
+    <string name="arrival_favorite_first_description">Save first route as favorite</string>
+    <string name="arrival_favorite_second_description">Save second route as favorite</string>
+    <string name="arrival_reminder_first_description">Set reminder for first arrival</string>
+    <string name="arrival_reminder_second_description">Set reminder for second arrival</string>
+    <string name="arrival_options_first_description">Options for first arrival</string>
+    <string name="arrival_options_second_description">Options for second arrival</string>
     <string name="map_option_layers">Maps Layers Button</string>
 </resources>

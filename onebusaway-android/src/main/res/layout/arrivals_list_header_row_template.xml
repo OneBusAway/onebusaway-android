@@ -10,7 +10,6 @@
         <ImageButton
                 android:id="@+id/eta_route_favorite"
                 android:src="@drawable/ic_toggle_star"
-                android:contentDescription="@string/stop_info_favorite"
                 android:background="?attr/selectableItemBackground"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
@@ -23,7 +22,6 @@
         <ImageButton
                 android:id="@+id/reminder"
                 android:src="@drawable/ic_drawer_alarm"
-                android:contentDescription="@string/trip_info_reminder_content_description"
                 android:background="?attr/selectableItemBackground"
                 android:maxHeight="12dp"
                 android:maxWidth="12dp"
@@ -94,7 +92,6 @@
     <ImageButton
             android:id="@+id/eta_more_vert"
             android:src="@drawable/ic_navigation_more_vert"
-            android:contentDescription="@string/stop_info_item_options_title"
             android:background="?attr/selectableItemBackground"
             android:layout_width="48dp"
             android:layout_height="48dp"

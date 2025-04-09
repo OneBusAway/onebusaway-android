@@ -82,6 +82,14 @@
         - Stuknij na czas przyjazdu i wybierz \"Pokaż status podróży\"!
     </string>
     <string name="main_help_close">Zamknij</string>
+    <string name="main_help_legend_title">Legenda</string>
+    <string name="main_help_legend_ontime">Zielony oznacza „Na czas”</string>
+    <string name="main_help_legend_late">Niebieski oznacza „Spóźnienie”</string>
+    <string name="main_help_legend_early">Czerwony oznacza „Bieganie wcześnie”</string>
+    <string name="main_help_legend_scheduled">Szary oznacza „Planowany przyjazd” – nie wiemy, gdzie teraz jest autobus, ale rozkład jazdy mówi, że jest nadchodzący przyjazd
+    </string>
+    <string name="main_help_legend_canceled">Szary z przekreśleniem oznacza, że ​​podróż została odwołana – ten autobus NIE przyjedzie
+    </string>
     <string name="main_nolocation_title">Lokacja niedostępna</string>
     <string name="main_nolocation">KiedyBus would like your location, czy chcesz wybrać ją teraz?
     </string>
@@ -775,6 +783,18 @@
     <string name="map_option_zoom_out">Riduci</string>
     <string name="map_option_zoom_in">Przybliż</string>
     <string name="map_option_layers_close">Zamknij przycisk warstw mapy</string>
+
+    <!-- Destination reminder feedback Activity -->
+    <string name="feedback_like_button_description">Tak, zostałem powiadomiony we właściwym czasie</string>
+    <string name="feedback_dislike_button_description">Nie, nie zostałem powiadomiony we właściwym czasie</string>
+
+    <!-- Accessibility content descriptions for ETA rows -->
+    <string name="arrival_favorite_first_description">Zapisz pierwszą trasę jako ulubioną</string>
+    <string name="arrival_favorite_second_description">Zapisz drugą trasę jako ulubioną</string>
+    <string name="arrival_reminder_first_description">Ustaw przypomnienie o pierwszym przybyciu</string>
+    <string name="arrival_reminder_second_description">Ustaw przypomnienie o drugim przybyciu</string>
+    <string name="arrival_options_first_description">Opcje pierwszego przyjazdu</string>
+    <string name="arrival_options_second_description">Opcje drugiego przyjazdu</string>
 
     <string name="map_option_layers">Przycisk warstw mapy</string>
 </resources>

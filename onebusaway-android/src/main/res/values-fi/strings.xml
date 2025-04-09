@@ -97,6 +97,16 @@
     <string name="main_help_whatsnew_title">Mitä uutta?</string>
     <string name="main_help_whatsnew">• <b>Virheenkorjaukset</b> Useita ohjelmistovirheiden korjauksia ja viimeistelyparannuksia. - Katso https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Sulje</string>
+    <string name="main_help_legend_title">Legenda</string>
+    <string name="main_help_legend_ontime">Vihreä tarkoittaa \"ajoissa\"</string>
+    <string name="main_help_legend_late">Sininen tarkoittaa \"Myöhässä\"</string>
+    <string name="main_help_legend_early">Punainen tarkoittaa \"juoksu aikaisin\"</string>
+    <string name="main_help_legend_scheduled">Harmaa tarkoittaa \"Suunniteltu saapuminen\" - Emme tiedä
+        missä bussi on nyt, mutta aikataulussa sanotaan, että saapuminen on tulossa
+    </string>
+    <string name="main_help_legend_canceled">Harmaa yliviivauksella tarkoittaa, että matka on ollut
+        peruttu - tämä bussi EI tule
+    </string>
     <string name="main_nolocation_title">Sijaintitieto ei ole käytettävissä</string>
     <string name="main_nolocation">OneBusAway haluaa käyttää sijaintitietoasi,
         sallitaanko?
@@ -755,6 +765,18 @@
     <string name="map_option_zoom_out">Loitontaa</string>
     <string name="map_option_zoom_in">Lähentää</string>
     <string name="map_option_layers_close">Sulje karttatasojen painike</string>
+
+    <!-- Destination reminder feedback Activity -->
+    <string name="feedback_like_button_description">Kyllä, minulle ilmoitettiin oikeaan aikaan</string>
+    <string name="feedback_dislike_button_description">Ei, minulle ei ilmoitettu oikeaan aikaan</string>
+
+    <!-- Accessibility content descriptions for ETA rows -->
+    <string name="arrival_favorite_first_description">Tallenna ensimmäinen reitti suosikiksi</string>
+    <string name="arrival_favorite_second_description">Tallenna toinen reitti suosikiksi</string>
+    <string name="arrival_reminder_first_description">Aseta muistutus ensimmäisestä saapumisesta</string>
+    <string name="arrival_reminder_second_description">Aseta muistutus toiselle saapumiselle</string>
+    <string name="arrival_options_first_description">Vaihtoehdot ensimmäiselle saapumiselle</string>
+    <string name="arrival_options_second_description">Vaihtoehdot toiselle saapumiselle</string>
 
     <string name="map_option_layers">Karttatasojen painike</string>
 </resources>

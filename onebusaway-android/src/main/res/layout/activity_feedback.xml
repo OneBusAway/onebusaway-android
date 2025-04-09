@@ -20,7 +20,7 @@
             android:text="@string/feedback_msg"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textColor="@android:color/black"
-            android:textSize="14sp" />
+            android:textSize="16sp" />
     </FrameLayout>
     <FrameLayout
         style="@style/MaterialLayout"
@@ -40,6 +40,7 @@
                 android:layout_weight="1"
                 android:background="@color/alert_icon_info"
                 android:onClick="likeBtnOnClick"
+                android:contentDescription="@string/feedback_like_button_description"
                 android:scaleType="fitEnd"
                 android:src="@drawable/ic_thumbs_up_custom" />
             <!--android:src="@drawable/ic_thumb_up" />-->
@@ -51,6 +52,7 @@
                 android:layout_weight="1"
                 android:background="@color/alert_icon_info"
                 android:onClick="dislikeBtnOnClick"
+                android:contentDescription="@string/feedback_dislike_button_description"
                 android:scaleType="fitStart"
                 android:src="@drawable/ic_thumbs_down_custom" />
             <!--android:background="@color/alert_icon_info"-->

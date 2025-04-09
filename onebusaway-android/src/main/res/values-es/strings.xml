@@ -1156,5 +1156,17 @@
     <string name="map_option_zoom_out">Alejar</string>
     <string name="map_option_zoom_in">Acercar</string>
     <string name="map_option_layers_close">Cerrar botón de capas del mapa</string>
+
+    <!-- Destination reminder feedback Activity -->
+    <string name="feedback_like_button_description">Sí, me avisaron en el momento oportuno</string>
+    <string name="feedback_dislike_button_description">No, no me avisaron en el momento oportuno</string>
+
+    <!-- Accessibility content descriptions for ETA rows -->
+    <string name="arrival_favorite_first_description">Guardar la primera ruta como favorita</string>
+    <string name="arrival_favorite_second_description">Guardar la segunda ruta como favorita</string>
+    <string name="arrival_reminder_first_description">Establecer recordatorio para la primera llegada</string>
+    <string name="arrival_reminder_second_description">Establecer recordatorio para la segunda llegada</string>
+    <string name="arrival_options_first_description">Opciones para la primera llegada</string>
+    <string name="arrival_options_second_description">Opciones para segunda llegada</string>
     <string name="map_option_layers">Botón de capas del mapa</string>
 </resources>

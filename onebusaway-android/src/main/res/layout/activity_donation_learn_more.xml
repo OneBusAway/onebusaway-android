@@ -25,7 +25,7 @@
                 android:id="@+id/textView5"
                 android:layout_marginHorizontal="@dimen/dialog_margin"
                 android:layout_marginVertical="@dimen/dialog_margin"
-                android:textSize="16sp" />
+                android:textSize="18sp" />
 
         <Button
                 android:textSize="24sp"

@@ -723,6 +723,18 @@ public class NavigationTest extends ObaTestCase {
     }
 
     /**
+     * Started Stop: MTS_18222357
+     * Destination Stop: MTS_40372
+     * Recorded In: MTS Route 34
+     * Device Used: Pixel 8 Pro
+     */
+    @Test
+    public void testTrip34() throws IOException {
+        checkCI();
+        runSimulation("nav_trip34", 100, 302);
+    }
+
+    /**
      * Runs the simulation with the provided CSV data and expected "Get ready" and "Pull the Cord Now" notification indexes
      *
      * @param csvFileName file name of the CSV file to load from the raw resources directory that contains the test location data from a user's trip

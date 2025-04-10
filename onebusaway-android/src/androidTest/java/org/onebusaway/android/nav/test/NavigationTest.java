@@ -18,8 +18,10 @@ package org.onebusaway.android.nav.test;
 import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
+import static junit.framework.Assert.assertEquals;
 import static org.onebusaway.android.util.TestUtils.isRunningOnCI;
 
+import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
@@ -31,15 +33,18 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.onebusaway.android.R;
 import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.mock.Resources;
 import org.onebusaway.android.nav.NavigationServiceProvider;
 import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
 import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.RegionUtils;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -732,6 +737,51 @@ public class NavigationTest extends ObaTestCase {
     public void testTrip34() throws IOException {
         checkCI();
         runSimulation("nav_trip34", 100, 302);
+    }
+
+    /**
+     * Test to verify that the distance unit conversion (miles/kilometers) works correctly
+     */
+    @Test
+    public void testDistanceUnitConversion() {
+        // Test conversion
+        double meters = 100.0;
+        double expectedFeet = 328.084; // 100 * RegionUtils.METERS_TO_FEET
+        double actualFeet = meters * RegionUtils.METERS_TO_FEET;
+        assertEquals("Meters to feet conversion should be accurate", expectedFeet, actualFeet, 0.1);
+        
+        double feet = 328.084;
+        double expectedMeters = 100.0; // 328.084 / RegionUtils.METERS_TO_FEET
+        double actualMeters = feet / RegionUtils.METERS_TO_FEET;
+        assertEquals("Feet to meters conversion should be accurate", expectedMeters, actualMeters, 0.1);
+        
+        // Test miles conversion
+        double expectedMiles = 0.0621371; // 100 * RegionUtils.METERS_TO_MILES
+        double actualMiles = meters * RegionUtils.METERS_TO_MILES;
+        assertEquals("Meters to miles conversion should be accurate", expectedMiles, actualMiles, 0.00001);
+
+        Context context = getTargetContext();
+        DecimalFormat fmt = new DecimalFormat("0.0");
+        
+        // Test imperial units (feet for small distances)
+        int feetImperial = 300;
+        String feetString = context.getResources().getQuantityString(R.plurals.distance_feet, feetImperial, feetImperial);
+        assertTrue("Imperial small distance should be formatted as feet", feetString.contains("300 feet"));
+        
+        // Test imperial units (miles for larger distances)
+        double mile = 1.0;
+        String milesString = context.getResources().getQuantityString(R.plurals.distance_miles, (int) mile, fmt.format(mile));
+        assertTrue("Imperial larger distance should be formatted as miles", milesString.contains("1 mile"));
+        
+        // Test metric units (meters for small distances)
+        int metersMetric = 300;
+        String metersString = context.getResources().getQuantityString(R.plurals.distance_meters, metersMetric, metersMetric);
+        assertTrue("Metric small distance should be formatted as meters", metersString.contains("300 meters"));
+        
+        // Test metric units (kilometers for larger distances)
+        double kilometer = 1.0;
+        String kilometersString = context.getResources().getQuantityString(R.plurals.distance_kilometers, (int) kilometer, fmt.format(kilometer));
+        assertTrue("Metric larger distance should be formatted as kilometers", kilometersString.contains("1 kilometer"));
     }
 
     /**

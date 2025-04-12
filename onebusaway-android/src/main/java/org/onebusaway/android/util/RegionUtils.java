@@ -58,6 +58,8 @@ public class RegionUtils {
 
     public static final double METERS_TO_MILES = 0.000621371;
 
+    public static final double METERS_TO_FEET = 3.28084;
+
     private static final int DISTANCE_LIMITER = 100;  // miles
 
     /**

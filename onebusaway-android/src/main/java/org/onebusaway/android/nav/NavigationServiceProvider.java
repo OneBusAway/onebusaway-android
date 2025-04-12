@@ -625,32 +625,51 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     .getString(app.getString(R.string.preference_key_preferred_units), AUTOMATIC);
             double distance = mProxCalculator.endDistance;
             double miles = distance * RegionUtils.METERS_TO_MILES;  // Get miles.
-            distance /= 1000;                                       // Get kilometers.
+            double kilometers = distance / 1000;                    // Get kilometers.
+            double feet = distance * RegionUtils.METERS_TO_FEET;    // Get feet.
+            int meters = (int) distance;                            // Get meters.
+
+            // Round distances to 50-meter/50-foot intervals for better readability
+            meters = Math.round(meters / 50f) * 50;
+            int roundedFeet = Math.round((float) feet / 50f) * 50;
+
             DecimalFormat fmt = new DecimalFormat("0.0");
 
             Locale mLocale = Locale.getDefault();
 
+            final boolean useImperial;
+
+            // Determine whether to use imperial or metric units
             if (preferredUnits.equalsIgnoreCase(AUTOMATIC)) {
                 Log.d(TAG, "Setting units automatically");
                 // If the country is set to USA, assume imperial, otherwise metric
                 // TODO - Method of guessing metric/imperial can definitely be improved
-                if (mLocale.getISO3Country().equalsIgnoreCase(Locale.US.getISO3Country())) {
-                    mBuilder.setContentText(Application.get().getResources().getQuantityString(R.plurals.distance_miles,
-                            (int) miles,
-                            fmt.format(miles)));
-                } else {
-                    mBuilder.setContentText(Application.get().getResources().getQuantityString(R.plurals.distance_kilometers,
-                            (int) distance,
-                            fmt.format(distance)));
-                }
-            } else if (preferredUnits.equalsIgnoreCase(IMPERIAL)) {
-                mBuilder.setContentText(Application.get().getResources().getQuantityString(R.plurals.distance_miles,
-                        (int) miles,
-                        fmt.format(miles)));
+                useImperial = mLocale.getISO3Country().equalsIgnoreCase(Locale.US.getISO3Country());
             } else {
-                mBuilder.setContentText(Application.get().getResources().getQuantityString(R.plurals.distance_kilometers,
-                        (int) distance,
-                        fmt.format(distance)));
+                useImperial = preferredUnits.equalsIgnoreCase(IMPERIAL);
+            }
+
+            // Set the appropriate distance text based on the unit system and distance
+            if (useImperial) {
+                if (miles < 0.1) {
+                    // Show feet when distance is less than 0.1 miles
+                    mBuilder.setContentText(Application.get().getResources().getQuantityString(
+                            R.plurals.distance_feet, roundedFeet, roundedFeet));
+                } else {
+                    // Show miles
+                    mBuilder.setContentText(Application.get().getResources().getQuantityString(
+                            R.plurals.distance_miles, (int) miles, fmt.format(miles)));
+                }
+            } else {
+                if (kilometers < 1) {
+                    // Show meters when distance is less than 1 km
+                    mBuilder.setContentText(Application.get().getResources().getQuantityString(
+                            R.plurals.distance_meters, meters, meters));
+                } else {
+                    // Show kilometers
+                    mBuilder.setContentText(Application.get().getResources().getQuantityString(
+                            R.plurals.distance_kilometers, (int) kilometers, fmt.format(kilometers)));
+                }
             }
 
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM, NavigationReceiver.CANCEL_TRIP);

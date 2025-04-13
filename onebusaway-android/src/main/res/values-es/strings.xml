@@ -1168,4 +1168,5 @@
     <string name="arrival_reminder_second_description">Establecer recordatorio para la segunda llegada</string>
     <string name="arrival_options_first_description">Opciones para la primera llegada</string>
     <string name="arrival_options_second_description">Opciones para segunda llegada</string>
+    <string name="map_option_layers">Botón de capas del mapa</string>
 </resources>

@@ -777,4 +777,6 @@
     <string name="arrival_reminder_second_description">Aseta muistutus toiselle saapumiselle</string>
     <string name="arrival_options_first_description">Vaihtoehdot ensimmäiselle saapumiselle</string>
     <string name="arrival_options_second_description">Vaihtoehdot toiselle saapumiselle</string>
+
+    <string name="map_option_layers">Karttatasojen painike</string>
 </resources>

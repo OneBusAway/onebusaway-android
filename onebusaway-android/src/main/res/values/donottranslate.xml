@@ -40,7 +40,7 @@
     <string name="preference_key_arrival_info_style">preference_arrival_info_style</string>
     <string name="preference_key_show_negative_arrivals">preference_show_negative_arrivals</string>
     <string name="preference_key_show_zoom_controls">preference_show_zoom_controls</string>
-    <string name="preference_key_enable_map_3d_mode">preference_enable_map_3d_view</string>
+    <string name="preference_key_map_mode">preference_key_map_mode</string>
     <string name="preference_key_show_available_studies">preference_show_available_studies</string>
     <string name="preference_key_hide_alerts">preference_hide_alerts</string>
     <string name="preference_key_default_stop_sort">preference_default_stop_sort</string>

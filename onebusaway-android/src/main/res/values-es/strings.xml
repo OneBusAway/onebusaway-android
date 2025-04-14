@@ -882,9 +882,14 @@
     <string name="trip_plan_leaving">Saliendo</string>
     <string name="trip_plan_arriving">Llegando</string>
     <string name="trip_plan_stop_connector">a las</string>
+    <string name="trip_plan_departure_status">Estado</string>
+    <string name="trip_plan_date">Fecha</string>
+    <string name="trip_plan_time">Tiempo</string>
 
     <string name="trip_plan_list_view">Vista de Lista</string>
     <string name="trip_plan_map_view">Vista de Mapa</string>
+    <string name="select_origin_from_contacts">Seleccionar origen de contactos</string>
+    <string name="select_destination_from_contacts">Seleccionar destino de contactos</string>
 
     <string name="task_progress_tripplanner_progress">Planeando viaje. Por favor espere&#8230;</string>
     <string name="tripplanner_no_server_selected_error">No hay ninguna región seleccionada</string>
@@ -1110,8 +1115,10 @@
     <string name="preferences_reset_donation_timestamps_summary">Al tocar esta opción se borrarán las marcas de tiempo de \'Recuérdame más tarde\' y \'No me molestes\' asociadas con las solicitudes de donación.</string>
     <string name="preferences_show_weather_view">Mostrar vista del clima</string>
     <string name="show">Mostrar</string>
-    <string name="preferences_enable_map_3d_mode_title">Activar modo 3D del mapa</string>
-    <string name="preferences_enable_map_3d_mode_summary">Incluir edificios en 3D en el mapa</string>
+    <string name="preferences_preferred_maps_title">Tipo de Mapa Preferido</string>
+    <string name="preferences_preferred_map_option_normal2d">Mapa predeterminado</string>
+    <string name="preferences_preferred_map_option_normal3d">Mapa predeterminado con edificios 3D</string>
+    <string name="preferences_preferred_map_option_satellite">Mapa satelital</string>
 
     <!-- Survey -->
     <string name="preferences_show_available_studies_title">Mostrar estudios disponibles</string>
@@ -1146,4 +1153,20 @@
     <string name="send_email">Enviar correo electrónico</string>
     <string name="make_a_phone_call">Hacer una llamada</string>
     <string name="browse_the_web">Navegar por la web</string>
+    <string name="map_option_zoom_out">Alejar</string>
+    <string name="map_option_zoom_in">Acercar</string>
+    <string name="map_option_layers_close">Cerrar botón de capas del mapa</string>
+
+    <!-- Destination reminder feedback Activity -->
+    <string name="feedback_like_button_description">Sí, me avisaron en el momento oportuno</string>
+    <string name="feedback_dislike_button_description">No, no me avisaron en el momento oportuno</string>
+
+    <!-- Accessibility content descriptions for ETA rows -->
+    <string name="arrival_favorite_first_description">Guardar la primera ruta como favorita</string>
+    <string name="arrival_favorite_second_description">Guardar la segunda ruta como favorita</string>
+    <string name="arrival_reminder_first_description">Establecer recordatorio para la primera llegada</string>
+    <string name="arrival_reminder_second_description">Establecer recordatorio para la segunda llegada</string>
+    <string name="arrival_options_first_description">Opciones para la primera llegada</string>
+    <string name="arrival_options_second_description">Opciones para segunda llegada</string>
+    <string name="map_option_layers">Botón de capas del mapa</string>
 </resources>

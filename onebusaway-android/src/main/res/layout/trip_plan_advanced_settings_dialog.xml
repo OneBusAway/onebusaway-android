@@ -47,12 +47,13 @@
                 android:layout_width="0dip"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/maximum_walk_distance" />
+                android:text="@string/maximum_walk_distance"
+                android:labelFor="@id/number_maximum_walk_distance" />
 
         <EditText
                 android:id="@+id/number_maximum_walk_distance"
                 android:layout_width="50dp"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:inputType="number" />
 
         <TextView

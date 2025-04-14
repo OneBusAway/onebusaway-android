@@ -82,6 +82,14 @@
         - Stuknij na czas przyjazdu i wybierz \"Pokaż status podróży\"!
     </string>
     <string name="main_help_close">Zamknij</string>
+    <string name="main_help_legend_title">Legenda</string>
+    <string name="main_help_legend_ontime">Zielony oznacza „Na czas”</string>
+    <string name="main_help_legend_late">Niebieski oznacza „Spóźnienie”</string>
+    <string name="main_help_legend_early">Czerwony oznacza „Bieganie wcześnie”</string>
+    <string name="main_help_legend_scheduled">Szary oznacza „Planowany przyjazd” – nie wiemy, gdzie teraz jest autobus, ale rozkład jazdy mówi, że jest nadchodzący przyjazd
+    </string>
+    <string name="main_help_legend_canceled">Szary z przekreśleniem oznacza, że ​​podróż została odwołana – ten autobus NIE przyjedzie
+    </string>
     <string name="main_nolocation_title">Lokacja niedostępna</string>
     <string name="main_nolocation">KiedyBus would like your location, czy chcesz wybrać ją teraz?
     </string>
@@ -727,8 +735,10 @@
     <string name="preferences_reset_donation_timestamps_summary">Dotknięcie tej opcji spowoduje wyczyszczenie znaczników czasu \'Przypomnij mi później\' i \'Nie przeszkadzaj mi\' związanych z prośbami o darowizny.</string>
     <string name="preferences_show_weather_view">Pokaż widok pogody</string>
     <string name="show">Pokaż</string>
-    <string name="preferences_enable_map_3d_mode_title">Włącz tryb 3D mapy</string>
-    <string name="preferences_enable_map_3d_mode_summary">Uwzględnij budynki 3D na mapie</string>
+    <string name="preferences_preferred_maps_title">Preferowany Typ Mapy</string>
+    <string name="preferences_preferred_map_option_normal2d">Domyślna mapa</string>
+    <string name="preferences_preferred_map_option_normal3d">Domyślna mapa z budynkami 3D</string>
+    <string name="preferences_preferred_map_option_satellite">Mapa satelitarna</string>
 
     <!--Survey-->
     <string name="preferences_show_available_studies_title">Pokaż dostępne badania</string>
@@ -763,4 +773,28 @@
     <string name="send_email">Wyślij email</string>
     <string name="make_a_phone_call">Wykonaj telefon</string>
     <string name="browse_the_web">Naviga sul web</string>
+
+    <!-- Trip Planner strings -->
+    <string name="trip_plan_departure_status">Status</string>
+    <string name="trip_plan_date">Data</string>
+    <string name="trip_plan_time">Czas</string>
+    <string name="select_origin_from_contacts">Wybierz źródło z kontaktóws</string>
+    <string name="select_destination_from_contacts">Wybierz miejsce docelowe z kontaktów</string>
+    <string name="map_option_zoom_out">Riduci</string>
+    <string name="map_option_zoom_in">Przybliż</string>
+    <string name="map_option_layers_close">Zamknij przycisk warstw mapy</string>
+
+    <!-- Destination reminder feedback Activity -->
+    <string name="feedback_like_button_description">Tak, zostałem powiadomiony we właściwym czasie</string>
+    <string name="feedback_dislike_button_description">Nie, nie zostałem powiadomiony we właściwym czasie</string>
+
+    <!-- Accessibility content descriptions for ETA rows -->
+    <string name="arrival_favorite_first_description">Zapisz pierwszą trasę jako ulubioną</string>
+    <string name="arrival_favorite_second_description">Zapisz drugą trasę jako ulubioną</string>
+    <string name="arrival_reminder_first_description">Ustaw przypomnienie o pierwszym przybyciu</string>
+    <string name="arrival_reminder_second_description">Ustaw przypomnienie o drugim przybyciu</string>
+    <string name="arrival_options_first_description">Opcje pierwszego przyjazdu</string>
+    <string name="arrival_options_second_description">Opcje drugiego przyjazdu</string>
+
+    <string name="map_option_layers">Przycisk warstw mapy</string>
 </resources>

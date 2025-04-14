@@ -116,6 +116,7 @@ public class PreferencesActivity extends PreferenceActivity
     ListPreference preferredTempUnits;
 
     ListPreference mThemePref;
+    ListPreference mapMode;
 
     private FirebaseAnalytics mFirebaseAnalytics;
 
@@ -186,6 +187,9 @@ public class PreferencesActivity extends PreferenceActivity
         mAboutPref = findPreference(getString(R.string.preferences_key_about));
         mAboutPref.setOnPreferenceClickListener(this);
 
+        mapMode = (ListPreference) findPreference(getString(R.string.preference_key_map_mode));
+        mapMode.setOnPreferenceChangeListener(this);
+
         SharedPreferences settings = Application.getPrefs();
         mAutoSelectInitialValue = settings
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true);
@@ -252,6 +256,8 @@ public class PreferencesActivity extends PreferenceActivity
         changePreferenceSummary(getString(R.string.preference_key_preferred_temperature_units));
         changePreferenceSummary(getString(R.string.preference_key_app_theme));
         changePreferenceSummary(getString(R.string.preference_key_otp_api_url));
+        changePreferenceSummary(getString(R.string.preference_key_map_mode));
+
 
         // Remove preferences for notifications if no trip planning
         ObaRegion obaRegion = Application.get().getCurrentRegion();
@@ -328,9 +334,11 @@ public class PreferencesActivity extends PreferenceActivity
                         getString(R.string.preferences_otp_api_servername_summary));
             }
             Application.get().setUseOldOtpApiUrlVersion(false);
-        }else if (preferenceKey
+        } else if (preferenceKey
                 .equalsIgnoreCase(getString(R.string.preference_key_preferred_temperature_units))) {
             preferredTempUnits.setSummary(preferredTempUnits.getValue());
+        } else if (preferenceKey.equalsIgnoreCase(getString(R.string.preference_key_map_mode))) {
+            mapMode.setSummary(mapMode.getValue());
         }
     }
 
@@ -450,7 +458,7 @@ public class PreferencesActivity extends PreferenceActivity
             if (hideAlerts) {
                 ObaContract.ServiceAlerts.hideAllAlerts();
             }
-        }else if (preference.equals(mThemePref) && newValue instanceof String) {
+        } else if (preference.equals(mThemePref) && newValue instanceof String) {
             String theme = ((String) newValue);
             setAppTheme(theme);
             recreate();
@@ -588,6 +596,9 @@ public class PreferencesActivity extends PreferenceActivity
             ObaAnalytics.setShowDepartedVehicles(mFirebaseAnalytics, showDepartedBuses);
         }else if (key.equalsIgnoreCase(getString(R.string.preference_key_preferred_temperature_units))) {
             // Change the preferred temp unit description
+            changePreferenceSummary(key);
+        } else if (key.equalsIgnoreCase(getString(R.string.preference_key_map_mode))) {
+            // Change map mode description
             changePreferenceSummary(key);
         }
     }

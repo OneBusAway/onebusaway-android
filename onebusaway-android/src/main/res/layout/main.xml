@@ -78,6 +78,8 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/zoom_btn_drop_shadow_left"
+                            android:contentDescription="@string/map_option_zoom_out"
+                            android:padding="8dp"
                             android:src="@drawable/zoom_out_button"/>
 
                     <ImageButton
@@ -85,6 +87,8 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/zoom_btn_drop_shadow_right"
+                            android:contentDescription="@string/map_option_zoom_in"
+                            android:padding="8dp"
                             android:src="@drawable/zoom_in_button"/>
 
                 </LinearLayout>

@@ -16,6 +16,7 @@
 <resources>
     <string-array name="main_help_options">
         <item>Opastus</item>
+        <item>Legenda</item>
         <item>Twitter</item>
         <item>Tuetut liikennöitsijät</item>
         <item>Uutta?</item>
@@ -23,6 +24,7 @@
     </string-array>
     <string-array name="main_help_options_no_contact_us">
         <item>Opastus</item>
+        <item>Legenda</item>
         <item>Twitter</item>
         <item>Tuetut liikennöitsijät</item>
         <item>Uutta?</item>
@@ -87,6 +89,11 @@
     <string-array name="arrival_info_style_options">
         <item>@string/preferences_arrival_info_style_options_a</item>
         <item>@string/preferences_arrival_info_style_options_b</item>
+    </string-array>
+    <string-array name="preferred_map_options">
+        <item>@string/preferences_preferred_map_option_normal2d</item>
+        <item>@string/preferences_preferred_map_option_normal3d</item>
+        <item>@string/preferences_preferred_map_option_satellite</item>
     </string-array>
 
     <!-- Spoken directions based on 16 compass points, but pointing from the user's current location

@@ -70,6 +70,7 @@ import edu.usf.cutr.open311client.models.Open311Option;
 
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 import static org.onebusaway.android.util.UIUtils.setAppTheme;
+import java.nio.charset.StandardCharsets;
 
 public class Application extends MultiDexApplication {
 
@@ -614,7 +615,7 @@ public class Application extends MultiDexApplication {
             MessageDigest digest = null;
             try {
                 digest = MessageDigest.getInstance("SHA-1");
-                digest.update(getCustomApiUrl().getBytes());
+                digest.update(getCustomApiUrl().getBytes(StandardCharsets.UTF_8));
                 customUrl = getString(R.string.analytics_label_custom_url) +
                         ": " + getHex(digest.digest());
             } catch (Exception e) {
@@ -660,7 +661,7 @@ public class Application extends MultiDexApplication {
                     CHANNEL_DESTINATION_ALERT_ID,
                     "Destination alerts",
                     NotificationManager.IMPORTANCE_LOW);
-            channel2.setDescription("All notifications relating to Destination alerts");
+            channel3.setDescription("All notifications relating to Destination alerts");
 
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(channel1);

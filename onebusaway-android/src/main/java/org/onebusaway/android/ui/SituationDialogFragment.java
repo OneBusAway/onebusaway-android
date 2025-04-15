@@ -168,7 +168,8 @@ public class SituationDialogFragment extends DialogFragment {
 
         if (descTxtView != null) {
             if (!TextUtils.isEmpty(desc)) {
-                descTxtView.setText(Html.fromHtml(desc));
+                String htmlDescription = desc.replaceAll("\\r\\n|\\r|\\n", "<br>");
+                descTxtView.setText(Html.fromHtml(htmlDescription));
             } else {
                 descTxtView.setText(R.string.no_description_available);
             }

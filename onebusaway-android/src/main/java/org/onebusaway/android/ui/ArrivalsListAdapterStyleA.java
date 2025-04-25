@@ -104,14 +104,12 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         destination.setText(UIUtils.formatDisplayText(arrivalInfo.getHeadsign()));
         status.setText(stopInfo.getStatusText());
 
-
         String numCars = stopInfo.getInfo().getNumCars(getContext());
         if (numCars != null) {
             carCount.setBackgroundResource(R.drawable.round_corners_style_b_status);
             carCount.setText(stopInfo.getInfo().getNumCars(getContext()));
             carCount.setVisibility(View.VISIBLE);
         }
-
 
         long eta = stopInfo.getEta();
         if (eta == 0) {

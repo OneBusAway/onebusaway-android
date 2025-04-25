@@ -105,10 +105,10 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         status.setText(stopInfo.getStatusText());
 
 
-        String numCars = stopInfo.getInfo().getNumCars();
+        String numCars = stopInfo.getInfo().getNumCars(getContext());
         if (numCars != null) {
             carCount.setBackgroundResource(R.drawable.round_corners_style_b_status);
-            carCount.setText(stopInfo.getInfo().getNumCars());
+            carCount.setText(stopInfo.getInfo().getNumCars(getContext()));
             carCount.setVisibility(View.VISIBLE);
         } else {
             carCount.setVisibility(View.GONE);

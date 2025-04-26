@@ -196,6 +196,14 @@
             min etuajassa
         </item>
     </plurals>
+    <plurals name="stop_info_car_count">
+        <item quantity="one">1 auton</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g>
+            atuon
+        </item>
+    </plurals>
     <string name="stop_info_scheduled_arrival">Aikataulun mukainen saapuminen</string>
     <string name="stop_info_scheduled_departure">Aikataulun mukainen lähtö</string>
     <string name="stop_info_scheduled">Scheduled</string>

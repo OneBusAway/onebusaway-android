@@ -15,6 +15,11 @@
  */
 package org.onebusaway.android.io.elements;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+
+import android.content.Context;
+
 import java.io.Serializable;
 
 public final class ObaArrivalInfo implements Serializable{
@@ -346,5 +351,28 @@ public final class ObaArrivalInfo implements Serializable{
      */
     public Occupancy getOccupancyStatus() {
         return Occupancy.fromString(occupancyStatus);
+    }
+
+    /**
+     * @return a String indicating the number of cars, if this is a light rail arrival.
+     *         Otherwise returns null.
+     */
+    public String getNumCars(Context context) {
+        boolean isPugetSoundRegion = Application.get().getCurrentRegion()
+                .getName().equals("Puget Sound");
+        boolean vehicleIdAvailable = this.getVehicleId() != null;
+        if (!vehicleIdAvailable || !isPugetSoundRegion) {
+            return null;
+        }
+
+        String[] splitByBracket = this.getVehicleId().split("\\[");
+        if (splitByBracket.length == 2) {
+            int numCars = splitByBracket[1].split("-").length;
+            return context.getResources().getQuantityString(
+                    R.plurals.stop_info_car_count, (int) numCars,
+                    numCars);
+        } else {
+            return null;
+        }
     }
 }

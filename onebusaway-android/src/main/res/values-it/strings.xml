@@ -148,6 +148,14 @@
         <item quantity="other">
             <xliff:g id="count">%d</xliff:g> min di anticipo</item>
     </plurals>
+    <plurals name="stop_info_car_count">
+        <item quantity="one">1 vagone</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g>
+            vagoni
+        </item>
+    </plurals>
     <string name="stop_info_scheduled_arrival">Arrivo previsto</string>
     <string name="stop_info_scheduled_departure">Partenza prevista</string>
     <string name="stop_info_scheduled">Previsione</string>

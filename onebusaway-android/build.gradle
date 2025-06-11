@@ -247,6 +247,7 @@ android {
             buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
             buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
             buildConfigField "String", "FIXED_REGION_SIDECAR_BASE_URL", "null"
+            buildConfigField "String", "FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL", "null"
             buildConfigField "String", "ONESIGNAL_APP_ID", ONESIGNAL_APP_ID
         }
     }

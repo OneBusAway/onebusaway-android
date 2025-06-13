@@ -69,7 +69,7 @@
     </string-array>
     <string-array name="report_trip_problem_code_bus">
         <item>Wybierz</item>
-        <item>Wogóle nie przyjechał</item>
+        <item>W ogóle nie przyjechał</item>
         <item>Przyjechał wcześniej niż powinien</item>
         <item>Przyjechał później niż powinien</item>
         <item>Wyświetlał zły kierunek</item>

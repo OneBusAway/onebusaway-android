@@ -212,7 +212,7 @@ android {
             buildConfigField "String", "ONESIGNAL_APP_ID", ONESIGNAL_APP_ID
         }
         kiedybus {
-            // "Agency X" rebranding OneBusAway as another app - see src/agencyX/res for branded resources
+            // "Kiedybus" rebranding OneBusAway as another app - see src/kiedybus/res for branded resources
             dimension "brand"
             applicationId "pl.kiedybus.android" // Unique listing of this brand on app store
             manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']

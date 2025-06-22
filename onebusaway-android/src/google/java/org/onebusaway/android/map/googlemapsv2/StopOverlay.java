@@ -15,6 +15,21 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.Projection;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
@@ -36,21 +51,6 @@ import android.util.Log;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.Toast;
-
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.Projection;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -91,7 +91,11 @@ public class StopOverlay implements MarkerListeners {
 
     private static final int NUM_DIRECTIONS = 9; // 8 directions + undirected mStops
 
-    private static Bitmap[] bus_stop_icons = new Bitmap[NUM_DIRECTIONS];
+    private static final Bitmap[] bus_stop_icons = new Bitmap[NUM_DIRECTIONS];
+
+    private static final Bitmap[] bus_stop_icons_focused = new Bitmap[NUM_DIRECTIONS];
+
+    private static final float FOCUS_ICON_SCALE = 1.5f;
 
     private static int mPx; // Bus stop icon size
 
@@ -199,6 +203,7 @@ public class StopOverlay implements MarkerListeners {
 
     /**
      * Clears any stop markers from the map
+     *
      * @param clearFocusedStop true to clear the currently focused stop, false to leave it on map
      */
     public synchronized void clear(boolean clearFocusedStop) {
@@ -229,15 +234,33 @@ public class StopOverlay implements MarkerListeners {
         mArrowPaintStroke.setStrokeWidth(1.0f);
         mArrowPaintStroke.setAntiAlias(true);
 
-        bus_stop_icons[0] = createBusStopIcon(NORTH);
-        bus_stop_icons[1] = createBusStopIcon(NORTH_WEST);
-        bus_stop_icons[2] = createBusStopIcon(WEST);
-        bus_stop_icons[3] = createBusStopIcon(SOUTH_WEST);
-        bus_stop_icons[4] = createBusStopIcon(SOUTH);
-        bus_stop_icons[5] = createBusStopIcon(SOUTH_EAST);
-        bus_stop_icons[6] = createBusStopIcon(EAST);
-        bus_stop_icons[7] = createBusStopIcon(NORTH_EAST);
-        bus_stop_icons[8] = createBusStopIcon(NO_DIRECTION);
+        bus_stop_icons[0] = createBusStopIcon(NORTH, false);
+        bus_stop_icons[1] = createBusStopIcon(NORTH_WEST, false);
+        bus_stop_icons[2] = createBusStopIcon(WEST, false);
+        bus_stop_icons[3] = createBusStopIcon(SOUTH_WEST, false);
+        bus_stop_icons[4] = createBusStopIcon(SOUTH, false);
+        bus_stop_icons[5] = createBusStopIcon(SOUTH_EAST, false);
+        bus_stop_icons[6] = createBusStopIcon(EAST, false);
+        bus_stop_icons[7] = createBusStopIcon(NORTH_EAST, false);
+        bus_stop_icons[8] = createBusStopIcon(NO_DIRECTION, false);
+
+        bus_stop_icons_focused[0] = createBusStopIcon(NORTH, true);
+        bus_stop_icons_focused[1] = createBusStopIcon(NORTH_WEST, true);
+        bus_stop_icons_focused[2] = createBusStopIcon(WEST, true);
+        bus_stop_icons_focused[3] = createBusStopIcon(SOUTH_WEST, true);
+        bus_stop_icons_focused[4] = createBusStopIcon(SOUTH, true);
+        bus_stop_icons_focused[5] = createBusStopIcon(SOUTH_EAST, true);
+        bus_stop_icons_focused[6] = createBusStopIcon(EAST, true);
+        bus_stop_icons_focused[7] = createBusStopIcon(NORTH_EAST, true);
+        bus_stop_icons_focused[8] = createBusStopIcon(NO_DIRECTION, true);
+
+        // Scale the focused icons to be larger than the normal icons
+        for (int i = 0; i < NUM_DIRECTIONS; i++) {
+            Bitmap bmp = bus_stop_icons_focused[i];
+            bus_stop_icons_focused[i] = Bitmap.createScaledBitmap(bmp,
+                    (int) (bmp.getWidth() * FOCUS_ICON_SCALE),
+                    (int) (bmp.getHeight() * FOCUS_ICON_SCALE), true);
+        }
     }
 
     /**
@@ -251,6 +274,21 @@ public class StopOverlay implements MarkerListeners {
      * if direction is NO_DIRECTION
      */
     private static Bitmap createBusStopIcon(String direction) throws NullPointerException {
+        return createBusStopIcon(direction, false);
+    }
+
+    /**
+     * Creates a bus stop icon with the given direction arrow, or without a direction arrow if
+     * the direction is NO_DIRECTION
+     *
+     * @param direction Bus stop direction, obtained from ObaStop.getDirection() and defined in
+     *                  constants in this class, or NO_DIRECTION if the stop icon shouldn't have a
+     *                  direction arrow
+     * @param selected  true to use the selected icon style, false for normal icon style
+     * @return a bus stop icon bitmap with the arrow pointing the given direction, or with no arrow
+     * if direction is NO_DIRECTION
+     */
+    private static Bitmap createBusStopIcon(String direction, boolean selected) throws NullPointerException {
         if (direction == null) {
             throw new IllegalArgumentException(direction);
         }
@@ -272,13 +310,13 @@ public class StopOverlay implements MarkerListeners {
             // Don't draw the arrow
             bm = Bitmap.createBitmap(mPx, mPx, Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
             shape.setBounds(0, 0, bm.getWidth(), bm.getHeight());
         } else if (direction.equals(NORTH)) {
             directionAngle = 0f;
             bm = Bitmap.createBitmap(mPx, (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
             shape.setBounds(0, (int) mBuffer, mPx, bm.getHeight());
             // Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
@@ -293,7 +331,7 @@ public class StopOverlay implements MarkerListeners {
             bm = Bitmap.createBitmap((int) (mPx + mBuffer),
                     (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
             shape.setBounds((int) mBuffer, (int) mBuffer, bm.getWidth(), bm.getHeight());
             // Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
@@ -307,7 +345,7 @@ public class StopOverlay implements MarkerListeners {
             directionAngle = 0f;  // Arrow is drawn pointing West, so no rotation
             bm = Bitmap.createBitmap((int) (mPx + mBuffer), mPx, Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
             shape.setBounds((int) mBuffer, 0, bm.getWidth(), bm.getHeight());
             arrowPaintFill.setShader(
                     new LinearGradient(0, bm.getHeight() / 2, mArrowHeightPx, bm.getHeight() / 2,
@@ -321,7 +359,7 @@ public class StopOverlay implements MarkerListeners {
             bm = Bitmap.createBitmap((int) (mPx + mBuffer),
                     (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
             shape.setBounds((int) mBuffer, 0, bm.getWidth(), mPx);
             arrowPaintFill.setShader(
                     new LinearGradient(0, bm.getHeight(), mBuffer, bm.getHeight() - mBuffer,
@@ -334,7 +372,7 @@ public class StopOverlay implements MarkerListeners {
             directionAngle = 180f;  // Arrow is drawn N, rotate 180 degrees
             bm = Bitmap.createBitmap(mPx, (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
             shape.setBounds(0, 0, bm.getWidth(), (int) (bm.getHeight() - mBuffer));
             arrowPaintFill.setShader(
                     new LinearGradient(bm.getWidth() / 2, bm.getHeight(), bm.getWidth() / 2,
@@ -348,7 +386,7 @@ public class StopOverlay implements MarkerListeners {
             bm = Bitmap.createBitmap((int) (mPx + mBuffer),
                     (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
             shape.setBounds(0, 0, mPx, mPx);
             arrowPaintFill.setShader(
                     new LinearGradient(bm.getWidth(), bm.getHeight(), bm.getWidth() - mBuffer,
@@ -362,7 +400,7 @@ public class StopOverlay implements MarkerListeners {
             directionAngle = 180f;  // Arrow is drawn pointing West, so rotate 180
             bm = Bitmap.createBitmap((int) (mPx + mBuffer), mPx, Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
             shape.setBounds(0, 0, mPx, bm.getHeight());
             arrowPaintFill.setShader(
                     new LinearGradient(bm.getWidth(), bm.getHeight() / 2,
@@ -376,7 +414,7 @@ public class StopOverlay implements MarkerListeners {
             bm = Bitmap.createBitmap((int) (mPx + mBuffer),
                     (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
             shape.setBounds(0, (int) mBuffer, mPx, bm.getHeight());
             // Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
@@ -567,6 +605,30 @@ public class StopOverlay implements MarkerListeners {
         }
     }
 
+    private static BitmapDescriptor getFocusedBitmapDescriptorForBusStopDirection(String direction) {
+        if (direction.equals(NORTH)) {
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[0]);
+        } else if (direction.equals(NORTH_WEST)) {
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[1]);
+        } else if (direction.equals(WEST)) {
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[2]);
+        } else if (direction.equals(SOUTH_WEST)) {
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[3]);
+        } else if (direction.equals(SOUTH)) {
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[4]);
+        } else if (direction.equals(SOUTH_EAST)) {
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[5]);
+        } else if (direction.equals(EAST)) {
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[6]);
+        } else if (direction.equals(NORTH_EAST)) {
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[7]);
+        } else if (direction.equals(NO_DIRECTION)) {
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[8]);
+        } else {
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[8]);
+        }
+    }
+
     /**
      * Returns the currently focused stop, or null if no stop is in focus
      *
@@ -646,13 +708,13 @@ public class StopOverlay implements MarkerListeners {
             mMarkerData.removeFocus();
         }
 
-         // Set map clicked location, if it exists
-         Location location = null;
-         if (latLng != null) {
-             location = MapHelpV2.makeLocation(latLng);
-         }
-         // Notify focus changed every time the map is clicked away from a stop marker
-         mOnFocusChangedListener.onFocusChanged(null, null, location);
+        // Set map clicked location, if it exists
+        Location location = null;
+        if (latLng != null) {
+            location = MapHelpV2.makeLocation(latLng);
+        }
+        // Notify focus changed every time the map is clicked away from a stop marker
+        mOnFocusChangedListener.onFocusChanged(null, null, location);
     }
 
     private void setupMarkerData() {
@@ -702,7 +764,7 @@ public class StopOverlay implements MarkerListeners {
 
         /**
          * Marker and stop used to indicate which bus stop has focus (i.e., was last
-         * clicked/tapped)
+         * clicked/tapped). The marker reference points to the stop marker itself.
          */
         private Marker mCurrentFocusMarker;
 
@@ -755,13 +817,19 @@ public class StopOverlay implements MarkerListeners {
          * @param stop   ObaStop that should be shown on the map
          * @param routes A list of ObaRoutes that serve this stop
          */
-        private void addMarkerToMap(ObaStop stop, List<ObaRoute> routes) {
+        private synchronized void addMarkerToMap(ObaStop stop, List<ObaRoute> routes) {
+            // Determine icon within synchronized block to prevent race condition with focus changes
+            BitmapDescriptor icon = getBitmapDescriptorForBusStopDirection(stop.getDirection());
+            if (mCurrentFocusStop != null && stop.getId().equals(mCurrentFocusStop.getId())) {
+                icon = getFocusedBitmapDescriptorForBusStopDirection(stop.getDirection());
+            }
+
             Marker m = mMap.addMarker(new MarkerOptions()
-                            .position(MapHelpV2.makeLatLng(stop.getLocation()))
-                            .icon(getBitmapDescriptorForBusStopDirection(stop.getDirection()))
-                            .flat(true)
-                            .anchor(getXPercentOffsetForDirection(stop.getDirection()),
-                                    getYPercentOffsetForDirection(stop.getDirection()))
+                    .position(MapHelpV2.makeLatLng(stop.getLocation()))
+                    .icon(icon)
+                    .flat(true)
+                    .anchor(getXPercentOffsetForDirection(stop.getDirection()),
+                            getYPercentOffsetForDirection(stop.getDirection()))
             );
             mStopMarkers.put(stop.getId(), m);
             mStops.put(m, stop);
@@ -820,12 +888,29 @@ public class StopOverlay implements MarkerListeners {
          *
          * @param stop ObaStop that should have focus
          */
-        void setFocus(ObaStop stop) {
-            if (mCurrentFocusMarker != null) {
-                // Remove the current focus marker from map
-                mCurrentFocusMarker.remove();
+        synchronized void setFocus(ObaStop stop) {
+            if (stop == null) {
+                removeFocus();
+                return;
+            }
+
+            if (mCurrentFocusMarker != null && mCurrentFocusStop != null) {
+                // Get the current marker from cache in case the old reference is stale
+                Marker currentMarker = mStopMarkers.get(mCurrentFocusStop.getId());
+                if (currentMarker != null) {
+                    // Restore previous marker icon
+                    currentMarker.setIcon(getBitmapDescriptorForBusStopDirection(
+                            mCurrentFocusStop.getDirection()));
+                }
             }
             mCurrentFocusStop = stop;
+            mCurrentFocusMarker = mStopMarkers.get(stop.getId());
+
+            // Check if the marker exists in our cache before proceeding
+            if (mCurrentFocusMarker == null) {
+                mCurrentFocusStop = null;
+                return;
+            }
 
             // Save a copy of ObaRoute references for this stop, so we have them when clearing cache
             mFocusedRoutes.clear();
@@ -837,17 +922,8 @@ public class StopOverlay implements MarkerListeners {
                 }
             }
 
-            // Reduce focus marker latitude by small amount to ensure it is always on top of the
-            // corresponding stop marker (i.e., so its not identical to stop marker latitude)
-            LatLng latLng = new LatLng(stop.getLatitude() - 0.000001, stop.getLongitude());
-
-            mCurrentFocusMarker = mMap.addMarker(new MarkerOptions()
-                            .position(latLng)
-            );
-
-            // TODO - This doesn't look good since when bouncing, the focus marker is drawn behind
-            // the bus stop marker.  Maybe fix with new z-order property?
-            // animateMarker(mCurrentFocusMarker);
+            mCurrentFocusMarker.setIcon(
+                    getFocusedBitmapDescriptorForBusStopDirection(stop.getDirection()));
         }
 
         /**
@@ -898,10 +974,14 @@ public class StopOverlay implements MarkerListeners {
         /**
          * Remove focus of a stop on the map
          */
-        void removeFocus() {
-            if (mCurrentFocusMarker != null) {
-                // Remove the current focus marker from map
-                mCurrentFocusMarker.remove();
+        synchronized void removeFocus() {
+            if (mCurrentFocusMarker != null && mCurrentFocusStop != null) {
+                // Get the current marker from cache in case the old reference is stale
+                Marker currentMarker = mStopMarkers.get(mCurrentFocusStop.getId());
+                if (currentMarker != null) {
+                    currentMarker.setIcon(getBitmapDescriptorForBusStopDirection(
+                            mCurrentFocusStop.getDirection()));
+                }
                 mCurrentFocusMarker = null;
             }
             mFocusedRoutes.clear();
@@ -916,6 +996,7 @@ public class StopOverlay implements MarkerListeners {
 
         /**
          * Clears any stop markers from the map
+         *
          * @param clearFocusedStop true to clear the currently focused stop, false to leave it on map
          */
         synchronized void clear(boolean clearFocusedStop) {

@@ -1467,9 +1467,11 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         // Save to recent routes
         DBUtil.addRouteToDB(getActivity(),stop);
 
-        TripDetailsActivity.start(getActivity(),
-                stop.getInfo().getTripId(), stop.getInfo().getStopId(),
-                TripDetailsListFragment.SCROLL_MODE_STOP);
+        new TripDetailsActivity.Builder(getActivity(), stop.getInfo().getTripId())
+                .setStopId(stop.getInfo().getStopId())
+                .setScrollMode(TripDetailsListFragment.SCROLL_MODE_STOP)
+                .setUpMode(NavHelp.UP_MODE_BACK)
+                .start();
     }
 
     private void goToRoute(ArrivalInfo stop) {

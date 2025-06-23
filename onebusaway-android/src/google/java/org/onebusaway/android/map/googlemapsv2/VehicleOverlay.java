@@ -530,11 +530,16 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
             ObaTripStatus status = mMarkerData.getStatusFromMarker(marker);
             if (status != null) {
                 if (mController != null && mController.getFocusedStopId() != null) {
-                    TripDetailsActivity.start(mActivity, status.getActiveTripId(),
-                            mController.getFocusedStopId(), TripDetailsListFragment.SCROLL_MODE_VEHICLE);
+                    new TripDetailsActivity.Builder(mActivity, status.getActiveTripId())
+                            .setStopId(mController.getFocusedStopId())
+                            .setScrollMode(TripDetailsListFragment.SCROLL_MODE_VEHICLE)
+                            .setUpMode("back")
+                            .start();
                 } else {
-                    TripDetailsActivity.start(mActivity, status.getActiveTripId(),
-                            TripDetailsListFragment.SCROLL_MODE_VEHICLE);
+                    new TripDetailsActivity.Builder(mActivity, status.getActiveTripId())
+                            .setScrollMode(TripDetailsListFragment.SCROLL_MODE_VEHICLE)
+                            .setUpMode("back")
+                            .start();
                 }
             }
         }

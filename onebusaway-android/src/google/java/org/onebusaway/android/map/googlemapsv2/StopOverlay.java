@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 public class StopOverlay implements MarkerListeners {
@@ -88,6 +89,20 @@ public class StopOverlay implements MarkerListeners {
     private static final String NORTH_EAST = "NE";
 
     private static final String NO_DIRECTION = "null";
+
+    private static final Map<String, Integer> directionToIndexMap = new HashMap<>();
+
+    static {
+        directionToIndexMap.put(NORTH, 0);
+        directionToIndexMap.put(NORTH_WEST, 1);
+        directionToIndexMap.put(WEST, 2);
+        directionToIndexMap.put(SOUTH_WEST, 3);
+        directionToIndexMap.put(SOUTH, 4);
+        directionToIndexMap.put(SOUTH_EAST, 5);
+        directionToIndexMap.put(EAST, 6);
+        directionToIndexMap.put(NORTH_EAST, 7);
+        directionToIndexMap.put(NO_DIRECTION, 8);
+    }
 
     private static final int NUM_DIRECTIONS = 9; // 8 directions + undirected mStops
 
@@ -590,28 +605,13 @@ public class StopOverlay implements MarkerListeners {
         }
     }
 
+    @NonNull
     private static BitmapDescriptor getFocusedBitmapDescriptorForBusStopDirection(String direction) {
-        if (direction.equals(NORTH)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[0]);
-        } else if (direction.equals(NORTH_WEST)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[1]);
-        } else if (direction.equals(WEST)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[2]);
-        } else if (direction.equals(SOUTH_WEST)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[3]);
-        } else if (direction.equals(SOUTH)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[4]);
-        } else if (direction.equals(SOUTH_EAST)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[5]);
-        } else if (direction.equals(EAST)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[6]);
-        } else if (direction.equals(NORTH_EAST)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[7]);
-        } else if (direction.equals(NO_DIRECTION)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[8]);
-        } else {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[8]);
+        Integer index = directionToIndexMap.get(direction);
+        if (index == null) {
+            index = 8;
         }
+        return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[index]);
     }
 
     /**

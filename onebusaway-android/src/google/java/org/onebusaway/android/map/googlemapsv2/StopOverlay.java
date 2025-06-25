@@ -234,26 +234,11 @@ public class StopOverlay implements MarkerListeners {
         mArrowPaintStroke.setStrokeWidth(1.0f);
         mArrowPaintStroke.setAntiAlias(true);
 
-        bus_stop_icons[0] = createBusStopIcon(NORTH, false);
-        bus_stop_icons[1] = createBusStopIcon(NORTH_WEST, false);
-        bus_stop_icons[2] = createBusStopIcon(WEST, false);
-        bus_stop_icons[3] = createBusStopIcon(SOUTH_WEST, false);
-        bus_stop_icons[4] = createBusStopIcon(SOUTH, false);
-        bus_stop_icons[5] = createBusStopIcon(SOUTH_EAST, false);
-        bus_stop_icons[6] = createBusStopIcon(EAST, false);
-        bus_stop_icons[7] = createBusStopIcon(NORTH_EAST, false);
-        bus_stop_icons[8] = createBusStopIcon(NO_DIRECTION, false);
-
-        bus_stop_icons_focused[0] = createBusStopIcon(NORTH, true);
-        bus_stop_icons_focused[1] = createBusStopIcon(NORTH_WEST, true);
-        bus_stop_icons_focused[2] = createBusStopIcon(WEST, true);
-        bus_stop_icons_focused[3] = createBusStopIcon(SOUTH_WEST, true);
-        bus_stop_icons_focused[4] = createBusStopIcon(SOUTH, true);
-        bus_stop_icons_focused[5] = createBusStopIcon(SOUTH_EAST, true);
-        bus_stop_icons_focused[6] = createBusStopIcon(EAST, true);
-        bus_stop_icons_focused[7] = createBusStopIcon(NORTH_EAST, true);
-        bus_stop_icons_focused[8] = createBusStopIcon(NO_DIRECTION, true);
-
+        int[] directions = {NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, EAST, NORTH_EAST, NO_DIRECTION};
+        for (int i = 0; i < directions.length; i++) {
+            bus_stop_icons[i] = createBusStopIcon(directions[i], false);
+            bus_stop_icons_focused[i] = createBusStopIcon(directions[i], true);
+        }
         // Scale the focused icons to be larger than the normal icons
         for (int i = 0; i < NUM_DIRECTIONS; i++) {
             Bitmap bmp = bus_stop_icons_focused[i];

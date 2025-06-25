@@ -234,7 +234,7 @@ public class StopOverlay implements MarkerListeners {
         mArrowPaintStroke.setStrokeWidth(1.0f);
         mArrowPaintStroke.setAntiAlias(true);
 
-        int[] directions = {NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, EAST, NORTH_EAST, NO_DIRECTION};
+        String[] directions = {NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, EAST, NORTH_EAST, NO_DIRECTION};
         for (int i = 0; i < directions.length; i++) {
             bus_stop_icons[i] = createBusStopIcon(directions[i], false);
             bus_stop_icons_focused[i] = createBusStopIcon(directions[i], true);

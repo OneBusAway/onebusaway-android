@@ -40,9 +40,9 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import com.onebusaway.plausible.android.Plausible;
-import com.onesignal.OneSignal;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
@@ -55,7 +55,6 @@ import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.ReminderUtils;
 import org.onebusaway.android.widealerts.GtfsAlerts;
 
 import java.net.URI;
@@ -127,7 +126,7 @@ public class Application extends MultiDexApplication {
 
         incrementAppLaunchCount();
 
-        initOneSignal();
+        initFirebaseMessaging();
 
         mDonationsManager = new DonationsManager(mPrefs, mFirebaseAnalytics, getResources(), getAppLaunchCount());
 
@@ -684,17 +683,22 @@ public class Application extends MultiDexApplication {
         return false;
     }
 
-    private void initOneSignal() {
-        OneSignal.initWithContext(this, BuildConfig.ONESIGNAL_APP_ID);
-
-        // Handle click on the notification
-        OneSignal.getNotifications().addClickListener(iNotificationClickEvent -> {
-            ReminderUtils.openStopInfo(getBaseContext(), iNotificationClickEvent.getNotification());
-        });
+    private void initFirebaseMessaging() {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w(TAG, "Fetching FCM registration token failed", task.getException());
+                        return;
+                    }
+                    String token = task.getResult();
+                    PreferenceUtils.saveString(getString(R.string.firebase_messaging_token), token);
+                });
     }
 
-    public static String getUserPushNotificationID() {
-        return OneSignal.getUser().getPushSubscription().getId();
+    public static String getUserPushID() {
+        SharedPreferences preferences = getPrefs();
+        return preferences.getString(get().
+                getApplicationContext().getString(R.string.firebase_messaging_token), "");
     }
 
 }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.OneBusAway" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!--   App branding color for the app bar -->
+        <item name="colorPrimary">@color/theme_primary</item>
+        <!--   Darker variant for the status bar and contextual app bars -->
+        <item name="colorPrimaryDark">@color/theme_primary_dark</item>
+        <!--   Theme UI controls like checkboxes and text fields -->
+        <item name="colorAccent">@color/theme_accent</item>
+        <!-- Change the default cursor color so its visible in the action bar -->
+        <item name="autoCompleteTextViewStyle">@style/cursorColor</item>
+        <!-- Allows us to force Dark Theme throughout the app -->
+        <item name="android:forceDarkAllowed">true</item>
+        <!-- Allows us to force AlertDialog Theme across the app -->
+        <item name="alertDialogTheme">@style/customAlertDialogTheme</item>
+
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+</resources>

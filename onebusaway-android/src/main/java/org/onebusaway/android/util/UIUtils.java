@@ -65,12 +65,15 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -82,10 +85,13 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.graphics.Insets;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.core.graphics.drawable.IconCompat;
 import androidx.core.util.Pair;
 import androidx.core.view.MenuItemCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.ImageViewCompat;
 import androidx.fragment.app.Fragment;
 
@@ -131,17 +137,81 @@ import java.util.concurrent.TimeUnit;
 public final class UIUtils {
 
     private static final String TAG = "UIHelp";
+    private static final String TAG_STATUS_BAR = "STATUS_BAR";
 
     public static void setupActionBar(AppCompatActivity activity) {
         ActionBar bar = activity.getSupportActionBar();
-        bar.setIcon(android.R.color.transparent);
-        bar.setDisplayShowTitleEnabled(true);
+        if (bar != null) {
+            bar.setIcon(android.R.color.transparent);
+            bar.setDisplayShowTitleEnabled(true);
+        }
+
+        View root = activity.findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            setStatusBarColor(activity, ContextCompat.getColor(activity, R.color.theme_primary_dark), true);
+            v.setPadding(sysBars.left, sysBars.top, sysBars.right, sysBars.bottom);
+            return insets;
+        });
 
         // HomeActivity is the root for all other activities
-        if (!(activity instanceof HomeActivity)) {
+        if (!(activity instanceof HomeActivity) && bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);
         }
     }
+
+    public static void setStatusBarColor(@NonNull final Activity activity, @ColorInt final int color, final boolean isDecor) {
+        transparentStatusBar(activity.getWindow());
+        applyStatusBarColor(activity.getWindow(), color, isDecor);
+    }
+
+    public static void transparentStatusBar(final Window window) {
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        int option = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+        int vis = window.getDecorView().getSystemUiVisibility();
+        window.getDecorView().setSystemUiVisibility(option | vis);
+        window.setStatusBarColor(Color.TRANSPARENT);
+    }
+
+    private static void applyStatusBarColor(final Window window, final int color, boolean isDecor) {
+        ViewGroup parent = isDecor
+                ? (ViewGroup) window.getDecorView()
+                : (ViewGroup) window.findViewById(android.R.id.content);
+
+        View fakeStatusBarView = parent.findViewWithTag(TAG_STATUS_BAR);
+        if (fakeStatusBarView != null) {
+            if (fakeStatusBarView.getVisibility() == View.GONE) {
+                fakeStatusBarView.setVisibility(View.VISIBLE);
+            }
+            fakeStatusBarView.setBackgroundColor(color);
+        } else {
+            fakeStatusBarView = createStatusBarView(window.getContext(), color, parent);
+            parent.addView(fakeStatusBarView, 0);
+        }
+    }
+
+    private static View createStatusBarView(final Context context, final int color, ViewGroup parent) {
+        View statusBarView = new View(context);
+        statusBarView.setBackgroundColor(color);
+        statusBarView.setTag(TAG_STATUS_BAR);
+
+        // Dynamically adjust height from insets
+        ViewCompat.setOnApplyWindowInsetsListener(parent, (v, insets) -> {
+            int statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+            ViewGroup.LayoutParams lp = statusBarView.getLayoutParams();
+            if (lp == null) {
+                lp = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, statusBarHeight);
+            } else {
+                lp.height = statusBarHeight;
+            }
+            statusBarView.setLayoutParams(lp);
+            return insets;
+        });
+
+        return statusBarView;
+    }
+
 
     /**
      * Sets up the search view in the action bar
@@ -2051,4 +2121,8 @@ public final class UIUtils {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         }
     }
+
+// In some utility class, e.g., UIUtils.java
+
+
 }

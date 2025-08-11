@@ -45,6 +45,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 
@@ -60,6 +61,7 @@ import org.onebusaway.android.travelbehavior.io.coroutines.FirebaseDataPusher;
 import org.onebusaway.android.util.BackupUtils;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -636,10 +638,11 @@ public class PreferencesActivity extends PreferenceActivity
     private void setupActionBar() {
         LinearLayout root = (LinearLayout) findViewById(android.R.id.list).getParent()
                 .getParent().getParent();
+        root.setFitsSystemWindows(true);
         Toolbar bar = (Toolbar) LayoutInflater.from(this)
                 .inflate(R.layout.settings_toolbar, root, false);
         root.addView(bar, 0); // insert at top
-
+        UIUtils.setStatusBarColor(PreferencesActivity.this, ContextCompat.getColor(PreferencesActivity.this, R.color.theme_primary_dark), true);
         bar.setNavigationOnClickListener(v -> finish());
     }
 

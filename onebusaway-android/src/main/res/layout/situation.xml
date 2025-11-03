@@ -19,9 +19,7 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/listview_background">
-
-    <LinearLayout
+        android:background="?android:attr/colorBackground"> <LinearLayout
             android:id="@+id/situation_header"
             style="@style/HeaderItem"
             android:layout_width="match_parent"
@@ -42,8 +40,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/situation_header"
-            android:background="@color/listview_background">
-        <LinearLayout
+            android:background="?android:attr/colorBackground"> <LinearLayout
                 xmlns:android="http://schemas.android.com/apk/res/android"
                 android:orientation="vertical"
                 android:layout_width="fill_parent"

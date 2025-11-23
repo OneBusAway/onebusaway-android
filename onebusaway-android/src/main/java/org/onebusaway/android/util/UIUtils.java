@@ -690,6 +690,26 @@ public final class UIUtils {
         UIUtils.sendEmail(context, email, location, obaRegionName, regionSelectionMethod,
                 tripPlanUrl, tripPlanFail);
     }
+/**
+     * Safely formats a string resource using the provided format arguments.
+     *
+     * This method replaces any null elements in the varargs array with an empty string
+     * before calling {@link Context#getString(int, Object...)} to avoid formatting errors
+     * or unexpected "null" text in the resulting string.
+     *
+     * @param context the Context used to retrieve the string resource
+     * @param resId the resource id of the string to format
+     * @param formatArgs optional format arguments to be interpolated into the resource;
+     *                   any null elements will be converted to empty strings
+     * @return the formatted string from resources with null format arguments replaced by empty strings
+     */
+    private static String safeGetString(Context context, int resId, Object... formatArgs) {
+        Object[] safeArgs = new Object[formatArgs.length];
+        for (int i = 0; i < formatArgs.length; i++) {
+            safeArgs[i] = (formatArgs[i] != null) ? formatArgs[i] : "";
+        }
+        return context.getString(resId, safeArgs);
+    }
 
     /**
      * Opens email apps based on the given email address
@@ -725,7 +745,7 @@ public final class UIUtils {
             // Have location
             if (tripPlanUrl == null) {
                 // No trip plan
-                body = context.getString(R.string.bug_report_body,
+                body = safeGetString(context,R.string.bug_report_body,
                         obaVersion,
                         Build.MODEL,
                         Build.VERSION.RELEASE,

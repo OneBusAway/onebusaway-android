@@ -109,6 +109,8 @@ public final class ObaArrivalInfo implements Serializable{
 
     private final String occupancyStatus;
 
+    private static final String PUGET_SOUND_REGION_NAME = "Puget Sound";
+
     ObaArrivalInfo() {
         routeId = "";
         routeShortName = "";
@@ -360,8 +362,7 @@ public final class ObaArrivalInfo implements Serializable{
     public String getNumCars(Context context) {
         ObaRegion currentRegion = Application.get().getCurrentRegion();
         if(currentRegion == null) return null;
-        boolean isPugetSoundRegion = currentRegion
-                .getName().equals("Puget Sound");
+        boolean isPugetSoundRegion = PUGET_SOUND_REGION_NAME.equals(currentRegion.getName());
         boolean vehicleIdAvailable = this.getVehicleId() != null;
         if (!vehicleIdAvailable || !isPugetSoundRegion) {
             return null;

@@ -358,7 +358,9 @@ public final class ObaArrivalInfo implements Serializable{
      *         Otherwise returns null.
      */
     public String getNumCars(Context context) {
-        boolean isPugetSoundRegion = Application.get().getCurrentRegion()
+        ObaRegion currentRegion = Application.get().getCurrentRegion();
+        if(currentRegion == null) return null;
+        boolean isPugetSoundRegion = currentRegion
                 .getName().equals("Puget Sound");
         boolean vehicleIdAvailable = this.getVehicleId() != null;
         if (!vehicleIdAvailable || !isPugetSoundRegion) {

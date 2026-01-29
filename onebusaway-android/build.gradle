@@ -71,150 +71,10 @@ android {
             isDefault = true
         }
 
-        oba {
-            /**
-             * Original OneBusAway brand
-             *
-             * To allow this app to be distributed via Google Play, the applicationId MUST remain the
-             * original package name of the app before it was re-branded to OneBusAway:
-             * com.joulespersecond.seattlebusbot
-             */
-            dimension "brand"
-            isDefault = true
-            applicationId "com.joulespersecond.seattlebusbot"
-            manifestPlaceholders = [databaseAuthority: "com.joulespersecond.oba"]
-            buildConfigField "int", "ARRIVAL_INFO_STYLE", "0" // Defined in BuildFlavorConstants
-            buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
-            buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
-            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
-            // Below fields need to be defined so flavor builds, but will not be used by app
-            buildConfigField "String", "FIXED_REGION_NAME", "null"
-            buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
-            buildConfigField "String", "FIXED_REGION_SIRI_BASE_URL", "null"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT", "0"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LON", "0"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT_SPAN", "0"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LON_SPAN", "0"
-            buildConfigField "String", "FIXED_REGION_LANG", "null"
-            buildConfigField "String", "FIXED_REGION_CONTACT_EMAIL", "null"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
-            buildConfigField "String", "FIXED_REGION_TWITTER_URL", "null"
-            buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
-            buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
-            buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "null"
-            buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
-            buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
-            buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "false"
-            buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "null"
-            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
-            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
-            buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
-            buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
-            buildConfigField "String", "FIXED_REGION_SIDECAR_BASE_URL", "\"https://onebusaway.co\""
-            buildConfigField "String", "FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL", "null"
-            buildConfigField "String", "ONESIGNAL_APP_ID", ONESIGNAL_APP_ID
-        }
-
-        /**
-         * Rebranded versions of OBA using brand build flavors are below.  To add a new brand:
-         *  1. Add a new brand build flavor variant below
-         *  2. Create a new folder src/{brandName}/res (or copy from one of the samples - src/agencyX or src/agencyY)
-         *  3. Edit resource files in src/{brandName}/res subfolders with the brand information
-         *
-         *  For generating icons for the res/mipmap-* folders, see http://romannurik.github.io/AndroidAssetStudio/icons-launcher.html
-         */
-
-        agencyX {
-            // "Agency X" rebranding OneBusAway as another app - see src/agencyX/res for branded resources
-            dimension "brand"
-            applicationId "org.agencyx.android" // Unique listing of this brand on app store
-            manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
-            buildConfigField "int", "ARRIVAL_INFO_STYLE", "0"  // Defined in BuildFlavorConstants
-            buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
-            buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
-            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
-            // Below fields need to be defined so flavor builds, but will not be used by app
-            buildConfigField "String", "FIXED_REGION_NAME", "null"
-            buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
-            buildConfigField "String", "FIXED_REGION_SIRI_BASE_URL", "null"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT", "0"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LON", "0"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT_SPAN", "0"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LON_SPAN", "0"
-            buildConfigField "String", "FIXED_REGION_LANG", "null"
-            buildConfigField "String", "FIXED_REGION_CONTACT_EMAIL", "null"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
-            buildConfigField "String", "FIXED_REGION_TWITTER_URL", "null"
-            buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
-            buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
-            buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "null"
-            buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
-            buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
-            buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "false"
-            buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "null"
-            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
-            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
-            buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
-            buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
-            buildConfigField "String", "FIXED_REGION_SIDECAR_BASE_URL", "null"
-            buildConfigField "String", "FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL", "null"
-            buildConfigField "String", "ONESIGNAL_APP_ID", ONESIGNAL_APP_ID
-        }
-
-        agencyY {
-            // "Agency Y" rebranding OneBusAway as another app - see src/agencyY/res for branded resources
-            dimension "brand"
-            applicationId "org.agencyy.android" // Unique listing of this brand on app store
-            manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
-            buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants
-            buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
-            buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
-            buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey(name) + "\""
-            // Fixed region info that the app will use
-            buildConfigField "String", "FIXED_REGION_NAME", "\"Agency Y\""
-            buildConfigField "String", "FIXED_REGION_OBA_BASE_URL",
-                    "\"http://api.tampa.onebusaway.org/api\""
-            buildConfigField "String", "FIXED_REGION_SIRI_BASE_URL", "null"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT", "27.976910500000002"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LON", "-82.445851"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT_SPAN", "0.5424609999999994"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LON_SPAN", "0.576357999999999"
-            buildConfigField "String", "FIXED_REGION_LANG", "\"en_US\""
-            buildConfigField "String", "FIXED_REGION_CONTACT_EMAIL", "\"onebusaway@gohart.org\""
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
-            buildConfigField "String", "FIXED_REGION_TWITTER_URL",
-                    "\"http://mobile.twitter.com/OBA_tampa\""
-            buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
-            buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
-            buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "\"937033cad3054ec58a1a8156dcdd6ad8a416af2f\""
-            buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL",
-                    "\"https://seeclickfix.com/open311/v2/\""
-            buildConfigField "String", "FIXED_REGION_OTP_BASE_URL",
-                    "\"http://otp.staging.obahart.org/otp/\""
-            buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL",
-                    "\"otp-tampa@onebusaway.org\""
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "true"
-            buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "\"co.bytemark.hart\""
-            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
-            buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
-            buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
-            buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
-            buildConfigField "String", "FIXED_REGION_SIDECAR_BASE_URL", "null"
-            buildConfigField "String", "FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL", "null"
-            buildConfigField "String", "ONESIGNAL_APP_ID", ONESIGNAL_APP_ID
-        }
-        /**
-         * Add more rebranding flavors here...
-         */
+        // Brand flavors are loaded from separate files in flavors/ directory.
+        // See flavors/README.md for instructions on adding new white-label brands.
     }
+
     packagingOptions {
         resources {
             excludes += ['META-INF/LICENSE', 'META-INF/NOTICE']
@@ -305,6 +165,18 @@ android {
     namespace 'org.onebusaway.android'
     lint {
         disable 'MissingTranslation', 'ExtraTranslation'
+    }
+}
+
+/**
+ * Load brand flavor configurations from separate files in flavors/ directory.
+ * This keeps build.gradle clean and makes it easy to add new white-label brands.
+ * See flavors/README.md for instructions.
+ */
+def flavorsDir = file("flavors")
+if (flavorsDir.exists()) {
+    flavorsDir.eachFileMatch(~/.*\.gradle/) { flavorFile ->
+        apply from: flavorFile
     }
 }
 

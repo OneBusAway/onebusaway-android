@@ -1,0 +1,54 @@
+/*
+ * Agency Y - Sample Fixed-Region White-Label Brand
+ *
+ * This is a sample flavor demonstrating a fixed-region configuration.
+ * Copy this file as a template for brands that serve a single region.
+ *
+ * See src/agencyY/res for branded resources.
+ */
+
+android.productFlavors {
+    agencyY {
+        dimension "brand"
+        applicationId "org.agencyy.android" // Unique listing of this brand on app store
+        manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
+        buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants
+        buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
+        buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
+        buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey("agencyY") + "\""
+        // Fixed region info that the app will use
+        buildConfigField "String", "FIXED_REGION_NAME", "\"Agency Y\""
+        buildConfigField "String", "FIXED_REGION_OBA_BASE_URL",
+                "\"http://api.tampa.onebusaway.org/api\""
+        buildConfigField "String", "FIXED_REGION_SIRI_BASE_URL", "null"
+        buildConfigField "double", "FIXED_REGION_BOUNDS_LAT", "27.976910500000002"
+        buildConfigField "double", "FIXED_REGION_BOUNDS_LON", "-82.445851"
+        buildConfigField "double", "FIXED_REGION_BOUNDS_LAT_SPAN", "0.5424609999999994"
+        buildConfigField "double", "FIXED_REGION_BOUNDS_LON_SPAN", "0.576357999999999"
+        buildConfigField "String", "FIXED_REGION_LANG", "\"en_US\""
+        buildConfigField "String", "FIXED_REGION_CONTACT_EMAIL", "\"onebusaway@gohart.org\""
+        buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
+        buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
+        buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
+        buildConfigField "String", "FIXED_REGION_TWITTER_URL",
+                "\"http://mobile.twitter.com/OBA_tampa\""
+        buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
+        buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
+        buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "\"937033cad3054ec58a1a8156dcdd6ad8a416af2f\""
+        buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL",
+                "\"https://seeclickfix.com/open311/v2/\""
+        buildConfigField "String", "FIXED_REGION_OTP_BASE_URL",
+                "\"http://otp.staging.obahart.org/otp/\""
+        buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL",
+                "\"otp-tampa@onebusaway.org\""
+        buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "true"
+        buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "\"co.bytemark.hart\""
+        buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
+        buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
+        buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
+        buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
+        buildConfigField "String", "FIXED_REGION_SIDECAR_BASE_URL", "null"
+        buildConfigField "String", "FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL", "null"
+        buildConfigField "String", "ONESIGNAL_APP_ID", ONESIGNAL_APP_ID
+    }
+}

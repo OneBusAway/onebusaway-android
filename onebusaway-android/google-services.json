@@ -140,6 +140,42 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:154561087802:android:3b3bc3125ef0abd5162803",
+        "android_client_info": {
+          "package_name": "pl.kiedybus.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "154561087802-6a3pj00o2a9teip4a83if9dli529l2hd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJSLdqs7kNZv6hrKbP8QD3BkBKVhbrHXs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "154561087802-6a3pj00o2a9teip4a83if9dli529l2hd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "154561087802-ltv4eqrkmahcnr8msbes10mv56evcueo.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "org.onebusaway.iphone"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"

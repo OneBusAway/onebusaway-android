@@ -215,6 +215,11 @@ android {
          * Add more rebranding flavors here...
          */
     }
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/LICENSE', 'META-INF/NOTICE']
+        }
+    }
 
     /**
      * Set brand BuildConfig.DATABASE_AUTHORITY, used in org.onebusaway.android.provider.ObaContract
@@ -234,14 +239,7 @@ android {
     }
 
     // http://stackoverflow.com/questions/20673625/gradle-0-7-0-duplicate-files-during-packaging-of-apk
-    packagingOptions {
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/NOTICE'
-    }
 
-    lintOptions {
-        disable 'MissingTranslation', 'ExtraTranslation'
-    }
 
     if (project.hasProperty("secure.properties")
             && new File(project.property("secure.properties")).exists()) {
@@ -305,6 +303,9 @@ android {
     useLibrary 'android.test.base'
     useLibrary 'android.test.mock'
     namespace 'org.onebusaway.android'
+    lint {
+        disable 'MissingTranslation', 'ExtraTranslation'
+    }
 }
 
 /**

@@ -549,7 +549,7 @@
     <string name="preferences_save_title">Tallenna muistikortille</string>
     <string name="preferences_save_summary">Tallentaa suosikkisi ja aiemmat pysäkit ja reitit</string>
     <string name="preferences_restore_title">Palauta muistikortilta</string>
-    <string name="preferences_restore_summary">Palauttaa edellisen tallennuksen</string>
+    <string name="preferences_restore_summary">Palauttaa aiemmasta varmuuskopiosta. Vaihtoehdon valitsemisen jälkeen sinua pyydetään valitsemaan tiedosto. Valitse varmuuskopiotiedosto (esim. \"db.backup\" tai \"%1$s.backup\"), joka voi olla \"Tiedostot\"-kansiossasi tai missä tahansa tallensit varmuuskopion.</string>
     <string name="preferences_db_saved">Tallennus onnistui!</string>
     <string name="preferences_db_save_error">Tallennus epäonnistui: %1$s</string>
     <string name="preferences_db_restore_warning">Kaikki tämänhetkiset tiedot pyyhitään! Jatketaanko?

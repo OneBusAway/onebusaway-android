@@ -168,17 +168,9 @@ android {
     }
 }
 
-/**
- * Load brand flavor configurations from separate files in flavors/ directory.
- * This keeps build.gradle clean and makes it easy to add new white-label brands.
- * See flavors/README.md for instructions.
- */
-def flavorsDir = file("flavors")
-if (flavorsDir.exists()) {
-    flavorsDir.eachFileMatch(~/.*\.gradle/) { flavorFile ->
-        apply from: flavorFile
-    }
-}
+// Load brand flavor configurations from flavors/ directory
+// See flavors/README.md for instructions on adding new white-label brands
+apply from: "flavors/load-flavors.gradle"
 
 /**
  * Gets the Pelias geocoding API key for the given product flavor

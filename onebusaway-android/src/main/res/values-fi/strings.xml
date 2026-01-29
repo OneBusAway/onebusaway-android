@@ -576,7 +576,7 @@
     <string name="preferences_powered_by_oba_summary">Lisää tietoja tästä avoimen lähdekoodin projektista
     </string>
     <string name="preferences_about_title">Tietoja</string>
-    <string name="preferences_about_summary">Version, contributor, and license information</string>
+    <string name="preferences_about_summary">Versio-, avustaja- ja lisenssitiedot</string>
     <string name="preferences_app_theme_title">Sovelluksen teema</string>
     <string name="preferences_app_theme_option_system_default">Järjestelmän oletus</string>
     <string name="preferences_app_theme_option_light">Vaalea teema</string>

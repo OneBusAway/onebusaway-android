@@ -135,6 +135,8 @@ getString(R.string.tutorial_welcome_title, getString(R.string.app_name))
 2. Update code to pass `getString(R.string.app_name)` as the format argument
 3. Update all translation files (`values-*/strings.xml`) with the same placeholder pattern
 
+**Important:** Strings referenced directly in XML layouts (via `@string/...`) cannot use placeholders - the placeholder would display as literal `%1$s` text. For these strings, set the text programmatically in Java/Kotlin code after inflating the view.
+
 This allows white-label brands to only override `app_name` instead of duplicating entire string files.
 
 ## Contributing

@@ -42,15 +42,13 @@
     <string name="internal_error">Oops, coś poszło nie tak. Spróbuj ponownie być może zadziała.</string>
     <string name="out_of_memory_error">Przepraszamy, nie ma tyle pamięci by poradzić sobie z tym.
     </string>
-    <string name="bad_gateway_error">Serwery KiedyBus są przeciążone. Wybacz nam!
-    </string>
+    <string name="bad_gateway_error">Serwery %1$s są przeciążone. Wybacz nam!</string>
     <string name="map_generic_error">Nie można pobrać przystanków.</string>
     <string name="no_network_error">Wygląda na to, że jesteś niepołączony z siecią
     </string>
     <string name="airplane_mode_error">Nie jestes połączony z internetem. Wyłącz tryb samolotowy.
     </string>
-    <string name="custom_api_url_error">Nieprawidłowy URL. Wpisz działający KiedyBus serwer.
-    </string>
+    <string name="custom_api_url_error">Nieprawidłowy URL. Wpisz działający serwer %1$s.</string>
     <string name="custom_otp_api_url_error">Nieprawidłowy URL. Wpisz działający serwer OpenTripPlanner.</string>
     <string name="direction_n">W kierunku północnym</string>
     <string name="direction_ne">W kierunku północno-wschodnim</string>
@@ -96,8 +94,7 @@
     <string name="main_help_legend_canceled">Szary z przekreśleniem oznacza, że ​​podróż została odwołana – ten autobus NIE przyjedzie
     </string>
     <string name="main_nolocation_title">Lokacja niedostępna</string>
-    <string name="main_nolocation">KiedyBus chciałby uzyskać dostęp do Twojej lokalizacji. Czy chcesz ją teraz włączyć?
-    </string>
+    <string name="main_nolocation">%1$s chciałoby uzyskać dostęp do Twojej lokalizacji. Czy chcesz ją teraz włączyć?</string>
     <string name="main_never_ask_again">Nigdy nie pytaj ponownie</string>
     <string name="main_never_show_again">Nigdy nie pokazuj ponownie</string>
     <string name="no_location_permission">Nie można uzyskać Twojej lokalizacji. Przyznaj aplikacji uprawnienia do lokalizacji w ustawieniach systemowych.</string>
@@ -309,12 +306,12 @@
     <string name="feedback_msg">Czy zostałeś powiadomiony we właściwym czasie, aby wysiąść na swoim przystanku?</string>
     <string name="feedback_freeText">Napisz swoją opinię</string>
     <string name="feedback_checkbox_text">Dołącz dziennik systemowy (Twój wybór zostanie zapisany dla przyszłych podróży)</string>
-    <string name="feedback_log_guide">Twoja opinia zostanie wysłana do OneBusAway. Jeśli zaznaczysz \"Dołącz dzienniki systemowe\", informacje o lokalizacji w czasie rzeczywistym z Twojego urządzenia zarejestrowane podczas zbliżania się do przystanku docelowego zostaną udostępnione OneBusAway, aby deweloperzy mogli ulepszyć funkcję przypomnień o celu podróży.\n\nZmień swoje preferencje dotyczące udostępniania dzienników systemowych w Ustawieniach.</string>
+    <string name="feedback_log_guide">Twoja opinia zostanie wysłana do %1$s. Jeśli zaznaczysz \"Dołącz dzienniki systemowe\", informacje o lokalizacji w czasie rzeczywistym z Twojego urządzenia zarejestrowane podczas zbliżania się do przystanku docelowego zostaną udostępnione %1$s, aby deweloperzy mogli ulepszyć funkcję przypomnień o celu podróży.\n\nZmień swoje preferencje dotyczące udostępniania dzienników systemowych w Ustawieniach.</string>
 
     <!-- Destination reminder feedback Preferences -->
     <string name="preferences_category_user_logs">Udostępnianie informacji do debugowania</string>
     <string name="preferences_user_share_destination_logs_title">Dołącz dzienniki przypomnień o celu podróży</string>
-    <string name="preferences_user_share_destination_logs_summary">Anonimowe informacje o lokalizacji w czasie rzeczywistym z Twojego urządzenia będą udostępniane OneBusAway w celu ulepszenia funkcji przypomnień o celu podróży.</string>
+    <string name="preferences_user_share_destination_logs_summary">Anonimowe informacje o lokalizacji w czasie rzeczywistym z Twojego urządzenia będą udostępniane %1$s w celu ulepszenia funkcji przypomnień o celu podróży.</string>
 
     <!-- Destination reminder change location accuracy -->
     <string name="main_changelocationmode_title">Wysoka dokładność lokalizacji nie jest włączona</string>
@@ -412,8 +409,8 @@
     <string name="search_stop_hint">Wpisz numer przystanku</string>
     <string name="search_route_hint">Wpisz nazwę/numer trasy</string>
 
-    <string name="route_shortcut">KiedyBus Trasa</string>
-    <string name="stop_shortcut">KiedyBus Przystanek</string>
+    <string name="route_shortcut">Trasa</string>
+    <string name="stop_shortcut">Przystanek</string>
     <string name="recent_stops_shortcut">Ostatnie przystanki</string>
     <string name="recent_routes_shortcut">Ostatnie trasy</string>
     <string name="starred_stops_shortcut">Ulubione przystanki</string>
@@ -508,7 +505,7 @@
     <string name="report_problem_email_hint">opcjonalnie</string>
     <string name="report_problem_cancel">Anuluj</string>
     <string name="report_problem_send">Wyślij</string>
-    <string name="report_problem_hint">Twoje zgłoszenie pomoże KiedyBus rozwiązać problem!</string>
+    <string name="report_problem_hint">Twoje zgłoszenie pomoże %1$s rozwiązać problem!</string>
     <string name="report_problem_sent">Zgłoszenie wysłane! Dziękujemy!</string>
     <string name="report_problem_error">Nie można wysłać Twojego zgłoszenia. Spróbować ponownie?</string>
     <string name="report_problem_invalid_argument">Wybierz kategorię problemu.</string>
@@ -565,14 +562,14 @@
     <string name="region_selected_manually">wybrano ręcznie</string>
 
     <!--  Bug report -->
-    <string name="bug_report_subject">KiedyBus Android: Opinie</string>
+    <string name="bug_report_subject">%1$s Android: Opinie</string>
     <string name="bug_report_body">Zażalenia, pochwały, lub problemy są mile widziane!\n\n\nWersja aplikacji:
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nLoc: %5$s
     </string>
     <string name="bug_report_error">Niemożna wysłać opisu problemu: brak odpowiedniej aplikacji.
     </string>
-    <string name="bug_report_subject_trip_plan">OneBusAway Android: Opinia o planowaniu podróży</string>
-    <string name="bug_report_subject_trip_plan_fail">OneBusAway Android: Opinia o nieudanym planowaniu podróży</string>
+    <string name="bug_report_subject_trip_plan">%1$s Android: Opinia o planowaniu podróży</string>
+    <string name="bug_report_subject_trip_plan_fail">%1$s Android: Opinia o nieudanym planowaniu podróży</string>
     <string name="bug_report_body_trip_plan_fail">Skargi, pochwały lub zgłoszenia błędów są mile widziane!\n\n\nWersja aplikacji:
         %1$s\nModel: %2$s\nWersja OS: %3$s / %4$d\nAplikacja Google Play Services: %5$s\n
         Biblioteka Google Play Services: %6$d\nRegion/API: %7$s (%8$s)\nLok: %9$s\n\n
@@ -654,13 +651,11 @@
     <string name="preferences_left_hand_mode_summary">Przenosi niektóre przyciski na lewą stronę ekranu
     </string>
 
-    <string name="preferences_arrival_info_style_options_a">KiedyBus klasyczny</string>
+    <string name="preferences_arrival_info_style_options_a">%1$s klasyczny</string>
     <string name="preferences_arrival_info_style_options_b">Karty</string>
 
-    <string name="preferences_oba_api_servername_title">KiedyBus API Server</string>
-    <string name="preferences_oba_api_servername_summary">Determines the server used in KiedyBus
-        API calls
-    </string>
+    <string name="preferences_oba_api_servername_title">Serwer API %1$s</string>
+    <string name="preferences_oba_api_servername_summary">Określa serwer używany w wywołaniach API %1$s</string>
     <string name="preferences_oba_api_servername_hint">example.KiedyBus.org</string>
     <string name="preferences_otp_api_servername_title">Serwer API OpenTripPlanner</string>
     <string name="preferences_otp_api_servername_summary">Określa serwer używany w wywołaniach API OpenTripPlanner
@@ -669,13 +664,13 @@
     <string name="preferences_save_title">Zapisz w pamięci urządzenia</string>
     <string name="preferences_save_summary">Zapisz swoje ulubione i ostatnie przystanki oraz linie</string>
     <string name="preferences_restore_title">Przywróć poprzedni zapis</string>
-    <string name="preferences_restore_summary">Przywraca z poprzedniej kopii zapasowej. Po wybraniu tej opcji zostaniesz poproszony o wybranie pliku. Wybierz plik kopii zapasowej (np. \"db.backup\" lub \"OneBusAway.backup\"), który może znajdować się w folderze \"Dokumenty\" lub w dowolnym miejscu, gdzie zapisałeś kopię zapasową.</string>
+    <string name="preferences_restore_summary">Przywraca z poprzedniej kopii zapasowej. Po wybraniu tej opcji zostaniesz poproszony o wybranie pliku. Wybierz plik kopii zapasowej (np. \"db.backup\" lub \"%1$s.backup\"), który może znajdować się w folderze \"Dokumenty\" lub w dowolnym miejscu, gdzie zapisałeś kopię zapasową.</string>
     <string name="preferences_restore_loading">Przywracanie z pamięci&#8230;</string>
     <string name="preferences_db_saved">Zapisano pomyślnie!</string>
     <string name="preferences_db_save_error">Niemożliwe by zapisać: %1$s</string>
     <string name="preferences_db_restore_warning">Wyczyści wszystkie istniejące dane! Iść dalej?
     </string>
-    <string name="preferences_db_restored">Przywrócono pomyślnie! Zrestartuj KiedyBus.</string>
+    <string name="preferences_db_restored">Przywrócono pomyślnie! Zrestartuj %1$s.</string>
     <string name="preferences_db_restore_error">Niemożliwe by przywrócić: %1$s</string>
 
     <string name="preferences_experimental_regions_title">Regiony eksperymentalne</string>
@@ -694,8 +689,8 @@
     <string name="preferences_tutorial_title">Pokaż samouczek</string>
     <string name="preferences_tutorial_summary">Pokaż instrukcję jak używać aplikację</string>
     <string name="preferences_donate_title">Dotacja</string>
-    <string name="preferences_donate_summary">Wspieraj KiedyBus</string>
-    <string name="preferences_powered_by_oba_title">Strona KiedyBus.pl</string>
+    <string name="preferences_donate_summary">Wspieraj %1$s</string>
+    <string name="preferences_powered_by_oba_title">Napędzane przez %1$s</string>
     <string name="preferences_powered_by_oba_summary">Dowiedz się więcej o tym projekcie
     </string>
 
@@ -727,10 +722,10 @@
     <string name="minutes_full">minuty</string>
 
     <string name="preferences_preferred_vibration_title">Wibracje</string>
-    <string name="preferences_preferred_vibration_summary">Pozwól powiadomieniom KiedyBus wibrować</string>
+    <string name="preferences_preferred_vibration_summary">Pozwól powiadomieniom %1$s wibrować</string>
 
     <string name="preferences_preferred_sound_title">Dźwięk przypomnienia</string>
-    <string name="preferences_preferred_sound_summary">Wybierz dźwięk powiadomień KiedyBus</string>
+    <string name="preferences_preferred_sound_summary">Wybierz dźwięk powiadomień %1$s</string>
 
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Otwórz panel nawigacyjny</string>
@@ -818,7 +813,7 @@
 
     <!-- Tutorials -->
     <string name="tutorial_button_text" >OK!</string>
-    <string name="tutorial_welcome_title">Witamy w KiedyBus!</string>
+    <string name="tutorial_welcome_title">Witamy w %1$s!</string>
     <string name="tutorial_welcome_text">Dotknij na przystanek (zielona kropka na mapie) by zobaczyć czasy przyjazdu.
     </string>
     <string name="tutorial_arrival_header_arrival_info_title">Jak długo pozostało do przyjazdu Twojego autobusu?
@@ -862,8 +857,7 @@
         i status podróży tego pojazdu na żywo.
     </string>
     <string name="tutorial_opt_out_dialog_title">Pokazać samouczek?</string>
-    <string name="tutorial_opt_out_dialog_text">Czy chcesz zobaczyć wyskakujące opisy jak korzystać z OneBusAway? Zawsze możesz włączyć lub wyłączyć wyskakujące okienka w Ustawieniach, lub wyświetlić samouczek później przez Pomoc.
-    </string>
+    <string name="tutorial_opt_out_dialog_text">Czy chcesz zobaczyć wyskakujące opisy jak korzystać z %1$s? Zawsze możesz włączyć lub wyłączyć wyskakujące okienka w Ustawieniach, lub wyświetlić samouczek później przez Pomoc.</string>
     <string name="tutorial_send_feedback_transit_service_title">Więcej niż tylko transport</string>
     <string name="tutorial_send_feedback_transit_service_text">Możesz zgłaszać różne rodzaje problemów do lokalnego samorządu w okolicy tego przystanku. Dotknij listy rozwijanej, aby zobaczyć pełną listę.
     </string>
@@ -885,7 +879,7 @@
     <string name="no_thanks">Nie, dziękuję</string>
 
     <string name="storage_permissions_title">Wymagany jest dostęp do pamięci urządzenia</string>
-    <string name="storage_permissions_message">Aby wykonać kopię zapasową lub przywrócić dane, KiedyBus potrzebuje uprawnień dostępu do lokalnej pamięci urządzenia.</string>
+    <string name="storage_permissions_message">Aby wykonać kopię zapasową lub przywrócić dane, %1$s potrzebuje uprawnień dostępu do lokalnej pamięci urządzenia.</string>
     <string name="tutorial_show_arrivals_in_header_title">Pokaż ulubione linie na górze</string>
     <string name="tutorial_show_arrivals_in_header_text">Chcesz zobaczyć swoje ulubione linie nad nazwami przystanku? Spróbuj opcji \"Pokaż przyjazdy w nagłówku\" klikając \"Więcej\" na górze ekranu po prawej stronie.
 
@@ -900,14 +894,13 @@
     </string>
 
     <!-- About -->
-    <string name="title_activity_about">O KiedyBus</string>
     <string name="about_content"><![CDATA[
     <html>
   <body>
-    <h1 style="color: #4caf50"><b>Witaj w OneBusAway!</b></h1>
+    <h1 style="color: #4caf50"><b>Witaj w %1$s!</b></h1>
 
     <p>
-        Ta aplikacja została stworzona przez zespół wolontariuszy i opiera się na poświęceniu, pasji oraz talentach jej współtwórców open source.
+        %1$s została stworzona przez zespół wolontariuszy i opiera się na poświęceniu, pasji oraz talentach jej współtwórców open source.
     </p>
     <h2><b>Współtwórcy Kodu:</b></h2>
     <p>
@@ -939,7 +932,7 @@
     </ul>
     <h2><b>Tłumaczenia:</b></h2>
     <p>
-      Dzięki naszym tłumaczom, OneBusAway jest dostępne na całym świecie:
+      Dzięki naszym tłumaczom, %1$s jest dostępne na całym świecie:
     </p>
     <ul>
       <li><b>Ari Rusakko</b></li>
@@ -977,7 +970,7 @@
       <p>
 
     <p>
-      Odkrywaj naszą aplikację i rozpocznij płynną podróż z OneBusAway!
+      Odkrywaj naszą aplikację i rozpocznij płynną podróż z %1$s!
     </p>
   </body>
 </html>
@@ -988,17 +981,17 @@
     <string name="preferred_temperature_unit">Preferowana jednostka temperatury</string>
     <string name="fahrenheit">Fahrenheit</string>
     <string name="celsius">Celsjusz</string>
-    <string name="donation_view_title">🚨 OneBusAway potrzebuje twojej pomocy</string>
+    <string name="donation_view_title">🚨 %1$s potrzebuje twojej pomocy</string>
     <string name="donation_view_body">Ta aplikacja jest obecnie tworzona w 100% dzięki pracy wolontariuszy, i potrzebujemy twojej pomocy, aby sfinansować przyszły rozwój.</string>
     <string name="donation_view_learn_more_button">Dowiedz się więcej</string>
     <string name="donation_view_donate_now_button">Wesprzyj Teraz</string>
     <string name="donation_dismiss_dialog_title">Proszę, nie ignoruj tej prośby</string>
-    <string name="donation_dismiss_dialog_body">OneBusAway to organizacja prowadzona przez wolontariuszy, z prawie żadnym finansowaniem. Potrzebujemy twojej pomocy, aby utrzymać tę aplikację przy życiu.</string>
+    <string name="donation_dismiss_dialog_body">%1$s to organizacja prowadzona przez wolontariuszy, z prawie żadnym finansowaniem. Potrzebujemy twojej pomocy, aby utrzymać tę aplikację przy życiu.</string>
     <string name="donation_dismiss_dialog_dont_want_to_help_button">Nie chcę pomagać</string>
     <string name="donation_dismiss_dialog_remind_me_later_button">Przypomnij mi później</string>
     <string name="donation_dismiss_dialog_cancel_button">Anuluj</string>
     <string name="title_activity_donation_learn_more">Dlaczego potrzebujemy Twojej pomocy</string>
-    <string name="donation_learn_more_explanation">Mamy wielkie plany na ulepszenie OneBusAway, ale nie możemy tego zrobić bez Twojej pomocy. Ta aplikacja jest obecnie tworzona w 100% dzięki pracy wolontariuszy, i potrzebujemy Ciebie, abyś pomógł nam sfinansować przyszły rozwój.\n\nJako kluczowy projekt Open Transit Software Foundation, organizacji non-profit 501(c)(3), polegamy na dobrej woli użytkowników takich jak Ty, aby kontynuować działanie i ulepszanie tego oprogramowania.\n\nCo roku tylko mała część naszych użytkowników dokonuje darowizn, ale każdy wkład, duży czy mały, pomaga zapewnić, że OneBusAway pozostanie darmowe, aktualne i dostępne dla wszystkich. Mała darowizna, nawet tylko koszt tygodniowego dojazdu do pracy, 27,50 dolarów, może zrobić różnicę.\n\nTwoja darowizna odliczalna od podatku zapewnia, że OneBusAway pozostanie darmowe i dostępne dla każdego. Kształtujmy razem przyszłość transportu publicznego!\n\nDziękujemy,\nZespół OneBusAway</string>
+    <string name="donation_learn_more_explanation">Mamy wielkie plany na ulepszenie %1$s, ale nie możemy tego zrobić bez Twojej pomocy. Ta aplikacja jest obecnie tworzona w 100% dzięki pracy wolontariuszy, i potrzebujemy Ciebie, abyś pomógł nam sfinansować przyszły rozwój.\n\nJako kluczowy projekt Open Transit Software Foundation, organizacji non-profit 501(c)(3), polegamy na dobrej woli użytkowników takich jak Ty, aby kontynuować działanie i ulepszanie tego oprogramowania.\n\nCo roku tylko mała część naszych użytkowników dokonuje darowizn, ale każdy wkład, duży czy mały, pomaga zapewnić, że %1$s pozostanie darmowe, aktualne i dostępne dla wszystkich. Mała darowizna, nawet tylko koszt tygodniowego dojazdu do pracy, 27,50 dolarów, może zrobić różnicę.\n\nTwoja darowizna odliczalna od podatku zapewnia, że %1$s pozostanie darmowe i dostępne dla każdego. Kształtujmy razem przyszłość transportu publicznego!\n\nDziękujemy,\nZespół %1$s</string>
     <string name="preferences_reset_donation_timestamps_title">Zresetuj Znaczniki Czasu Dotacji</string>
     <string name="preferences_reset_donation_timestamps_summary">Dotknięcie tej opcji spowoduje wyczyszczenie znaczników czasu \'Przypomnij mi później\' i \'Nie przeszkadzaj mi\' związanych z prośbami o darowizny.</string>
     <string name="preferences_show_weather_view">Pokaż widok pogody</string>
@@ -1012,7 +1005,7 @@
     <string name="preferences_show_available_studies_title">Pokaż dostępne badania</string>
     <string name="preferences_show_available_studies_body">Dołącz do badań, aby pomóc w poprawie doświadczeń z transportem i aplikacją.</string>
     <string name="dismiss_survey">Odrzuć ankietę</string>
-    <string name="onebusaway_survey">Ankieta OneBusAway</string>
+    <string name="onebusaway_survey">Ankieta %1$s</string>
     <string name="you_can_select_multiple_options_for_this_pool">(Możesz wybrać wiele opcji dla tej grupy.)</string>
     <string name="write_your_answer_here">Napisz swoją odpowiedź tutaj</string>
     <string name="submit">Wyślij</string>
@@ -1089,10 +1082,7 @@
     <string name="tripplanner_report_trip_problem">Zgłoś problem z planowaniem podróży</string>
 
     <string name="no_trip_planner_title">Wzrost kosztów Google</string>
-    <string name="no_trip_planner_message">Google pobiera teraz opłaty od OneBusAway za wszystkie planowania podróży (około 1000 USD miesięcznie)!
-        OBA to projekt open source i nie może pokryć tych kosztów. Utworzyliśmy organizację non-profit i złożyliśmy wniosek do Google for Nonprofits, ale wciąż czekamy na zatwierdzenie.
-        W międzyczasie musieliśmy wyłączyć planer podróży. Jeśli chcesz wyrazić swoje wsparcie dla OneBusAway wobec Google for Nonprofits,
-        skontaktuj się z nimi na Twitterze pod adresem https://twitter.com/googlenonprofit?s=17!</string>
+    <string name="no_trip_planner_message">Google pobiera teraz opłaty od %1$s za wszystkie planowania podróży (około 1000 USD miesięcznie)! OBA to projekt open source i nie może pokryć tych kosztów. Utworzyliśmy organizację non-profit i złożyliśmy wniosek do Google for Nonprofits, ale wciąż czekamy na zatwierdzenie. W międzyczasie musieliśmy wyłączyć planer podróży. Jeśli chcesz wyrazić swoje wsparcie dla %1$s wobec Google for Nonprofits, skontaktuj się z nimi na Twitterze pod adresem https://twitter.com/googlenonprofit?s=17!</string>
 
     <!-- Step-by-step screen -->
     <!-- Transit -->
@@ -1225,8 +1215,7 @@
     <string name="floating_bike_title">Dotknij, aby zarezerwować ten rower</string>
 
     <string name="application_ignoring_battery_opt_title">Alert wydajności!</string>
-    <string name="application_ignoring_battery_opt_message">Optymalizacje baterii są włączone dla tej aplikacji, co może zmniejszyć wydajność aplikacji. Aby uzyskać najlepsze wrażenia z tej aplikacji, przejdź do ustawień i wyłącz optymalizacje wydajności dla KiedyBus.
-    </string>
+    <string name="application_ignoring_battery_opt_message">Optymalizacje baterii są włączone dla tej aplikacji, co może zmniejszyć wydajność aplikacji. Aby uzyskać najlepsze wrażenia z tej aplikacji, przejdź do ustawień i wyłącz optymalizacje wydajności dla %1$s.</string>
 
     <!-- Travel Behaviour data collection -->
     <string name="travel_behavior_opt_in_message">Chcielibyśmy Twojej pomocy w badaniach mających na celu poprawę usług transportowych.</string>

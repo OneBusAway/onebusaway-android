@@ -71,7 +71,7 @@
     <string name="out_of_memory_error">Lo sentimos, no hay suficiente memoria disponible para manejar esta
         solicitud.
     </string>
-    <string name="bad_gateway_error">Los servidores de OneBusAway están sobrecargados. ¡Por favor disculpanos!
+    <string name="bad_gateway_error">Los servidores de %1$s están sobrecargados. ¡Por favor disculpanos!
     </string>
     <string name="map_generic_error">No se pueden obtener paradas.</string>
     <string name="no_network_error">Parece que estás fuera de línea o no estas conectado a la red.
@@ -79,7 +79,7 @@
     <string name="airplane_mode_error">No estás conectado a la red.\n¿Puedes apagar el modo
         Avión?
     </string>
-    <string name="custom_api_url_error">URL inválida. Por favor ingresa un servidor de OneBusAway que funcione.
+    <string name="custom_api_url_error">URL inválida. Por favor ingresa un servidor de %1$s que funcione.
     </string>
     <string name="custom_otp_api_url_error">URL inválida. Por favor ingresa un servidor de OpenTripPlanner que funcione.
     </string>
@@ -114,7 +114,7 @@
     </string>
     <string name="main_help_legend_canceled">Negro significa \"Cancelado\" - Este viaje ha sido cancelado</string>
     <string name="main_nolocation_title">La ubicación no esta habilitada</string>
-    <string name="main_nolocation">A OneBusAway le gustaría saber tú ubicación, ¿Quieres activarla
+    <string name="main_nolocation">A %1$s le gustaría saber tú ubicación, ¿Quieres activarla
         ahora?
     </string>
     <string name="main_never_ask_again">No volver a preguntar</string>
@@ -477,7 +477,7 @@
     <!-- Report problem -->
     <string name="report_problem_comment_hint">Descripción del problema (opcional)</string>
     <string name="report_problem_send">Enviar</string>
-    <string name="report_problem_hint">¡Tus reportes ayudan a OneBusAway a encontrar y arreglar los problemas!</string>
+    <string name="report_problem_hint">¡Tus reportes ayudan a %1$s a encontrar y arreglar los problemas!</string>
     <string name="report_problem_error">No se pudo enviar el reporte. ¿Intentar de nuevo?</string>
     <string name="report_problem_invalid_argument">Por favor, elija una categoría para el problema.</string>
     <!-- TODO: Modes -->
@@ -531,9 +531,9 @@
     <string name="region_region_found">Se encontró la región %1$s</string>
 
     <!--  Bug report -->
-    <string name="bug_report_subject">OneBusAway Android: Comentarios</string>
-    <string name="bug_report_subject_trip_plan">OneBusAway Android: Comentarios del Planeador de Viajes</string>
-    <string name="bug_report_subject_trip_plan_fail">OneBusAway Android: Comentarios de Fallas del Planeador de Viajes</string>
+    <string name="bug_report_subject">%1$s Android: Comentarios</string>
+    <string name="bug_report_subject_trip_plan">%1$s Android: Comentarios del Planeador de Viajes</string>
+    <string name="bug_report_subject_trip_plan_fail">%1$s Android: Comentarios de Fallas del Planeador de Viajes</string>
     <string name="bug_report_body">¡Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nApp Version:
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nGoogle Play Services App: %5$s\n
         Google Play Services Library: %6$d\nRegion/API: %7$s (%8$s)\nLoc: %9$s\n\n
@@ -626,16 +626,16 @@
     <string name="preferences_left_hand_mode_summary">Invierte la ubicación de algunos botones en el lado izquierdo de la pantalla
     </string>
 
-    <string name="preferences_arrival_info_style_options_a">OneBusAway clásica</string>
+    <string name="preferences_arrival_info_style_options_a">%1$s clásica</string>
     <string name="preferences_arrival_info_style_options_b">Tarjetas</string>
 
     <string name="preferences_otp_api_servername_title">Servidor API de OpenTripPlanner</string>
     <string name="preferences_otp_api_servername_summary">Determina el servidor usado para las llamadas del
         API de OpenTripPlanner
     </string>
-    <string name="preferences_oba_api_servername_title">Servidor API de OneBusAway</string>
+    <string name="preferences_oba_api_servername_title">Servidor API de %1$s</string>
     <string name="preferences_oba_api_servername_summary">Determina el servidor usado para llamadas del
-        API de OneBusAway
+        API de %1$s
     </string>
     <string name="preferences_oba_api_servername_hint">example.onebusaway.org</string>
     <string name="preferences_otp_api_servername_hint">example.opentripplanner.org/otp</string>
@@ -648,7 +648,7 @@
     <string name="preferences_db_restore_warning">¡Esto borrará todos los datos existentes! ¿Continuar?
     </string>
     <string name="preferences_restore_loading">Restaurando desde el almacenamiento&#8230;</string>
-    <string name="preferences_db_restored">¡Restauración exitosa! Por favor reinicia OneBusAway.</string>
+    <string name="preferences_db_restored">¡Restauración exitosa! Por favor reinicia %1$s.</string>
     <string name="preferences_db_restore_error">No se puede restaurar: %1$s</string>
 
     <string name="preferences_experimental_regions_title">Regiones experimentales</string>
@@ -665,8 +665,8 @@
     <string name="preferences_tutorial_title">Mostrar tutorial</string>
     <string name="preferences_tutorial_summary">Aprende a utilizar la aplicación con este tutorial</string>
     <string name="preferences_donate_title">Donar</string>
-    <string name="preferences_donate_summary">Apoyar el proyecto de código abierto OneBusAway</string>
-    <string name="preferences_powered_by_oba_title">Desarrollado por OneBusAway</string>
+    <string name="preferences_donate_summary">Apoyar el proyecto de código abierto %1$s</string>
+    <string name="preferences_powered_by_oba_title">Desarrollado por %1$s</string>
     <string name="preferences_powered_by_oba_summary">Obtener más información sobre el proyecto de código abierto
     </string>
     <string name="preferences_about_title">Acerca de</string>
@@ -694,10 +694,10 @@
     <string name="minutes_full">minutos</string>
 
     <string name="preferences_preferred_vibration_title">Vibrar</string>
-    <string name="preferences_preferred_vibration_summary">Dejar que las notificaciones de OneBusAway vibren</string>
+    <string name="preferences_preferred_vibration_summary">Dejar que las notificaciones de %1$s vibren</string>
 
     <string name="preferences_preferred_sound_title">Sonido de Recordatorio</string>
-    <string name="preferences_preferred_sound_summary">Selecciona los tonos de notificación de OneBusAway</string>
+    <string name="preferences_preferred_sound_summary">Selecciona los tonos de notificación de %1$s</string>
 
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Abra la bandeja de navegación</string>
@@ -792,13 +792,13 @@
 
     <!-- Tutorials -->
     <string name="tutorial_button_text" >¡Entendido!</string>
-    <string name="tutorial_welcome_title">¡Bienvenido a OneBusAway!</string>
+    <string name="tutorial_welcome_title">¡Bienvenido a %1$s!</string>
     <string name="tutorial_welcome_text">Toca una parada (punto verde en el mapa) para ver los tiempos
         de llegada.
     </string>
     <string name="tutorial_opt_out_dialog_title">¿Mostrar el tutorial?</string>
     <string name="tutorial_opt_out_dialog_text">¿Te gustaría ver las ventanas emergentes que describen como
-        usar OneBusAway? Siempre puedes activar o desactivar estas ventanas emergentes en Configuración o ver el
+        usar %1$s? Siempre puedes activar o desactivar estas ventanas emergentes en Configuración o ver el
         tutorial después en Ayuda.
     </string>
     <string name="tutorial_arrival_header_arrival_info_title">¿Cuánto tiempo hasta que llegue tu bus?
@@ -845,14 +845,14 @@
     <string name="no_thanks">No gracias</string>
 
     <string name="storage_permissions_title">Se requiere acceso al almacenamiento del dispositivo</string>
-    <string name="storage_permissions_message">Para hacer una copia de seguridad o restaurar sus datos, OneBusAway necesita permiso para acceder al almacenamiento de su dispositivo local.</string>
+    <string name="storage_permissions_message">Para hacer una copia de seguridad o restaurar sus datos, %1$s necesita permiso para acceder al almacenamiento de su dispositivo local.</string>
 
     <!-- About -->
     <string name="application_version">" Versión"</string>
     <string name="about_content"><![CDATA[
     <html>
   <body>
-    <h1 style="color: #4caf50"><b>¡Bienvenido a OneBusAway!</b></h1>
+    <h1 style="color: #4caf50"><b>¡Bienvenido a %1$s!</b></h1>
 
     <p>
       Esta aplicación ha sido creada por un equipo de voluntarios y depende de la dedicación, pasión y talentos de sus colaboradores de código abierto.
@@ -887,7 +887,7 @@
     </ul>
     <h2><b>Traducciones:</b></h2>
     <p>
-      Gracias a nuestros traductores, OneBusAway es accesible en todo el mundo:
+      Gracias a nuestros traductores, %1$s es accesible en todo el mundo:
     </p>
     <ul>
       <li><b>Ari Rusakko</b></li>
@@ -910,7 +910,7 @@
     <p>
       Visita nuestro proyecto en GitHub en https://github.com/OneBusAway/onebusaway-android.
       <p>
-        Obtén más información sobre el proyecto de código abierto de OneBusAway en https://onebusaway.org .</p>
+        Obtén más información sobre el proyecto de código abierto de %1$s en https://onebusaway.org .</p>
         <p>
         Un agradecimiento especial a Google por los increíbles íconos de diseño de material (https://github.com/google/material-design-icons),
         que añaden un toque de elegancia a nuestra aplicación. Su generosidad al licenciar
@@ -923,7 +923,7 @@
       <p>
 
     <p>
-      ¡Explora nuestra aplicación y emprende un viaje en transporte público sin contratiempos con OneBusAway!
+      ¡Explora nuestra aplicación y emprende un viaje en transporte público sin contratiempos con %1$s!
     </p>
   </body>
 </html>
@@ -1165,17 +1165,17 @@
     <string name="preferred_temperature_unit">Unidad de temperatura preferida</string>
     <string name="fahrenheit">Fahrenheit</string>
     <string name="celsius">Celsius</string>
-    <string name="donation_view_title">🚨 OneBusAway necesita tu ayuda</string>
+    <string name="donation_view_title">🚨 %1$s necesita tu ayuda</string>
     <string name="donation_view_body">Esta aplicación está actualmente desarrollada con un 100% de trabajo voluntario, y necesitamos que nos ayudes a financiar el desarrollo futuro.</string>
     <string name="donation_view_learn_more_button">Aprender Más</string>
     <string name="donation_view_donate_now_button">Donar Ahora</string>
     <string name="donation_dismiss_dialog_title">Por favor, no ignores esta solicitud</string>
-    <string name="donation_dismiss_dialog_body">OneBusAway es una organización dirigida por voluntarios con casi ningún financiamiento. Necesitamos tu ayuda para mantener esta aplicación funcionando.</string>
+    <string name="donation_dismiss_dialog_body">%1$s es una organización dirigida por voluntarios con casi ningún financiamiento. Necesitamos tu ayuda para mantener esta aplicación funcionando.</string>
     <string name="donation_dismiss_dialog_dont_want_to_help_button">No Quiero Ayudar</string>
     <string name="donation_dismiss_dialog_remind_me_later_button">Recuérdame Más Tarde</string>
     <string name="donation_dismiss_dialog_cancel_button">Cancelar</string>
     <string name="title_activity_donation_learn_more">Por qué necesitamos tu ayuda</string>
-    <string name="donation_learn_more_explanation">Tenemos grandes planes para mejorar OneBusAway, pero no podemos hacerlo sin tu ayuda. Esta aplicación está actualmente desarrollada con un 100% de trabajo voluntario, y necesitamos que nos ayudes a financiar el desarrollo futuro.\n\nComo un proyecto clave de la Open Transit Software Foundation, una organización sin fines de lucro 501(c)(3), dependemos de la buena voluntad de usuarios como tú para seguir funcionando y mejorando este software.\n\nCada año, solo una pequeña fracción de nuestros usuarios dona, pero cada contribución, grande o pequeña, ayuda a asegurar que OneBusAway permanezca gratuito, actualizado y accesible para todos. Una pequeña donación, incluso solo el costo de una semana de viaje, $27.50, puede marcar la diferencia.\n\nTu contribución deducible de impuestos asegura que OneBusAway permanezca libre y accesible para todos. ¡Formemos juntos el futuro del transporte!\n\nGracias,\nEl equipo de OneBusAway</string>
+    <string name="donation_learn_more_explanation">Tenemos grandes planes para mejorar %1$s, pero no podemos hacerlo sin tu ayuda. Esta aplicación está actualmente desarrollada con un 100% de trabajo voluntario, y necesitamos que nos ayudes a financiar el desarrollo futuro.\n\nComo un proyecto clave de la Open Transit Software Foundation, una organización sin fines de lucro 501(c)(3), dependemos de la buena voluntad de usuarios como tú para seguir funcionando y mejorando este software.\n\nCada año, solo una pequeña fracción de nuestros usuarios dona, pero cada contribución, grande o pequeña, ayuda a asegurar que %1$s permanezca gratuito, actualizado y accesible para todos. Una pequeña donación, incluso solo el costo de una semana de viaje, $27.50, puede marcar la diferencia.\n\nTu contribución deducible de impuestos asegura que %1$s permanezca libre y accesible para todos. ¡Formemos juntos el futuro del transporte!\n\nGracias,\nEl equipo de %1$s</string>
     <string name="preferences_reset_donation_timestamps_title">Restablecer las marcas de tiempo de donación</string>
     <string name="preferences_reset_donation_timestamps_summary">Al tocar esta opción se borrarán las marcas de tiempo de \'Recuérdame más tarde\' y \'No me molestes\' asociadas con las solicitudes de donación.</string>
     <string name="preferences_show_weather_view">Mostrar vista del clima</string>
@@ -1189,7 +1189,7 @@
     <string name="preferences_show_available_studies_title">Mostrar estudios disponibles</string>
     <string name="preferences_show_available_studies_body">Únete a estudios para ayudar a mejorar tu experiencia de tránsito y uso de la aplicación.</string>
     <string name="dismiss_survey">Descartar encuesta</string>
-    <string name="onebusaway_survey">Encuesta de OneBusAway</string>
+    <string name="onebusaway_survey">Encuesta de %1$s</string>
     <string name="you_can_select_multiple_options_for_this_pool">(Puedes seleccionar múltiples opciones para este grupo.)</string>
     <string name="write_your_answer_here">Escribe tu respuesta aquí</string>
     <string name="submit">Enviar</string>

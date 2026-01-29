@@ -273,3 +273,67 @@ dependencies {
 
 apply plugin:'com.google.gms.google-services'
 apply plugin: 'com.google.firebase.crashlytics'
+
+/**
+ * Validates that strings with %1$s placeholders in the base English strings.xml
+ * also have the placeholder in all translation files. This prevents runtime crashes
+ * from mismatched format strings in white-label brands.
+ *
+ * Run with: ./gradlew validateStringPlaceholders
+ */
+tasks.register('validateStringPlaceholders') {
+    group = 'verification'
+    description = 'Validates placeholder consistency across all string translations'
+
+    doLast {
+        def baseStringsFile = file("src/main/res/values/strings.xml")
+        if (!baseStringsFile.exists()) {
+            throw new GradleException("Base strings.xml not found at ${baseStringsFile}")
+        }
+
+        // Parse base strings and find those with %1$s placeholder
+        def baseXml = new XmlSlurper().parse(baseStringsFile)
+        def stringsWithPlaceholder = [:]
+        baseXml.string.each { stringNode ->
+            def name = stringNode.@name.toString()
+            def value = stringNode.text()
+            if (value.contains('%1$s')) {
+                stringsWithPlaceholder[name] = value
+            }
+        }
+
+        println "Found ${stringsWithPlaceholder.size()} strings with %1\$s placeholder in base strings.xml"
+
+        // Check each translation directory
+        def errors = []
+        def translationDirs = fileTree("src/main/res") {
+            include "values-*/strings.xml"
+        }
+
+        translationDirs.each { transFile ->
+            def locale = transFile.parentFile.name.replace("values-", "")
+            def transXml = new XmlSlurper().parse(transFile)
+
+            stringsWithPlaceholder.each { name, baseValue ->
+                def transNode = transXml.string.find { it.@name.toString() == name }
+                if (transNode != null) {
+                    def transValue = transNode.text()
+                    if (!transValue.contains('%1$s')) {
+                        errors << "[$locale] String '$name' is missing %1\$s placeholder"
+                    }
+                }
+                // Note: Missing translations are OK (they fall back to English)
+            }
+        }
+
+        if (errors) {
+            println "\n❌ Found ${errors.size()} placeholder consistency errors:\n"
+            errors.each { println "  - $it" }
+            println "\nThese strings have %1\$s in English but not in translations."
+            println "This can cause runtime crashes. Please add the placeholder to the translations."
+            throw new GradleException("String placeholder validation failed")
+        } else {
+            println "✓ All translations have consistent placeholders"
+        }
+    }
+}

@@ -137,3 +137,52 @@ buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "\"https://api.example.c
 2. **Maintainability** - Easy to review PRs that add new brands
 3. **Scalability** - build.gradle stays clean regardless of brand count
 4. **Discoverability** - Clear pattern for new white-labelers to follow
+
+## Troubleshooting
+
+### Gradle build fails after adding a new flavor file
+
+**Symptom:** Build fails with syntax errors or "Could not find method" errors.
+
+**Cause:** The flavor `.gradle` file has a syntax error or incorrect structure.
+
+**Solution:**
+1. Verify the file uses `android.productFlavors { }` block (not just `productFlavors { }`)
+2. Check for missing quotes, brackets, or commas
+3. Ensure all `buildConfigField` values are properly quoted
+4. Compare your file against a working example like `agencyX.gradle`
+
+### String shows literal `%1$s` instead of the app name
+
+**Symptom:** User sees text like "Welcome to %1$s!" instead of "Welcome to MyBrand!"
+
+**Cause:** The string is being displayed without passing the format argument.
+
+**Solution:**
+1. Find where the string is used in Java/Kotlin code
+2. Change `getString(R.string.my_string)` to `getString(R.string.my_string, getString(R.string.app_name))`
+3. If the string is referenced in XML layout (`android:text="@string/..."`), you must set it programmatically instead:
+   ```java
+   TextView tv = findViewById(R.id.my_text_view);
+   tv.setText(getString(R.string.my_string, getString(R.string.app_name)));
+   ```
+
+### App crashes with "Format string has wrong number of arguments"
+
+**Symptom:** App crashes when displaying a string, with a `MissingFormatArgumentException`.
+
+**Cause:** A translated string is missing the `%1$s` placeholder that exists in the English version.
+
+**Solution:**
+1. Check the translation file (`values-XX/strings.xml`) for the affected string
+2. Ensure it has the same `%1$s` placeholder as the English version in `values/strings.xml`
+3. Run `./gradlew lint` to check for `StringFormatInvalid` warnings
+
+### New flavor doesn't appear in Android Studio
+
+**Symptom:** After adding a new flavor file, it doesn't show up in Build Variants.
+
+**Solution:**
+1. Sync Gradle: File → Sync Project with Gradle Files
+2. If that doesn't work, try: File → Invalidate Caches and Restart
+3. Verify the flavor file is in the `flavors/` directory and ends with `.gradle`

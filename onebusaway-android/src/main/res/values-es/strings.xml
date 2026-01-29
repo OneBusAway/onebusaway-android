@@ -23,6 +23,7 @@
     <!-- Navigation Drawer -->
     <string name="navdrawer_item_nearby">Cerca</string>
     <string name="navdrawer_item_starred_stops">Paradas favoritas</string>
+    <string name="navdrawer_item_starred_routes">Rutas favoritas</string>
     <string name="navdrawer_item_my_reminders">Mis recordatorios</string>
     <string name="navdrawer_item_settings">Configuración</string>
     <string name="navdrawer_item_help">Ayuda</string>
@@ -111,11 +112,18 @@
     <string name="main_help_legend_scheduled">Gris significa \"Llegada planificada\" - No sabemos
         donde esta tu bus ahora, pero la programación dice que hay una próxima llegada
     </string>
+    <string name="main_help_legend_canceled">Negro significa \"Cancelado\" - Este viaje ha sido cancelado</string>
     <string name="main_nolocation_title">La ubicación no esta habilitada</string>
     <string name="main_nolocation">A OneBusAway le gustaría saber tú ubicación, ¿Quieres activarla
         ahora?
     </string>
     <string name="main_never_ask_again">No volver a preguntar</string>
+    <string name="main_never_show_again">No volver a mostrar</string>
+    <string name="main_changelocationmode">Modo de ubicación</string>
+    <string name="main_changelocationmode_title">Cambiar modo de ubicación</string>
+    <string name="main_changelocationmode_always">Cambiar a ubicación en segundo plano</string>
+    <string name="main_changelocationmode_foreground">Cambiar a ubicación en primer plano</string>
+    <string name="main_location_unavailable">Ubicación no disponible</string>
     <string name="main_waiting_for_location">Tratando de establecer tú ubicación&#8230;</string>
     <string name="no_location_permission">No se puede obtener tú ubicación.</string>
     <string name="main_outofrange_title">Fuera de alcance</string>
@@ -134,6 +142,7 @@
     <string name="bus_options_menu_show_only_this_route">Mostrar solamente esta ruta</string>
     <string name="bus_options_menu_show_route_schedule">Mostrar el horario de la ruta</string>
     <string name="bus_options_menu_report_trip_problem">Reportar un problema con el viaje</string>
+    <string name="bus_options_menu_show_all_routes">Mostrar todas las rutas</string>
 
     <!--  Stop Info -->
     <string name="stop_info_ontime">A tiempo</string>
@@ -235,6 +244,11 @@
     <string name="stop_info_option_removestar">Remover la parada de favoritos</string>
     <string name="stop_info_option_report_problem">Reportar un problema con la parada</string>
     <string name="stop_info_option_night_light">Iluminación de noche</string>
+    <string name="stop_info_option_hide_alerts">Ocultar alertas</string>
+    <string name="stop_info_option_sort_arrivals">Ordenar llegadas</string>
+    <string name="stop_info_canceled">CANCELADO</string>
+    <string name="stop_info_canceled_arrival">Llegada cancelada</string>
+    <string name="stop_info_canceled_departure">Salida cancelada</string>
     <string name="stop_info_nodata_minutes">Sin llegadas en los próximos %1$d min.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_nodata_hours_minutes">
@@ -359,6 +373,7 @@
     <string name="close">Cerrar</string>
     <string name="alert_hidden_snackbar_text">La alerta esta ahora oculta</string>
     <string name="alert_hidden_snackbar_action">DESHACER</string>
+    <string name="all_alert_hidden_snackbar_text">Todas las alertas están ahora ocultas</string>
     <plurals name="alert_filter_text">
         <item quantity="one">%1$d alerta activa está oculta</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
@@ -415,20 +430,24 @@
     <string name="historically_standing_room">Históricamente estar de pie</string>
     <string name="historically_many_seats_available">Históricamente asientos disponibles</string>
     <string name="historically_empty">Históricamente vacío</string>
+    <string name="historically_few_seats_available">Históricamente pocos asientos disponibles</string>
     <string name="menu_title_about_historical_occupancy">Sobre la ocupación histórica</string>
     <string name="menu_title_about_occupancy">Sobre la ocupación</string>
     <string name="menu_text_about_historical_occupancy">La ocupación histórica (ícono gris) es un promedio del viaje en esta parada en los últimos 6 meses.</string>
     <string name="menu_text_about_occupancy">La ocupación en tiempo real se muestra usando coloración verde cuando hay muchos asientos disponibles o pocos asientos disponibles, y se muestra en color rojo cuando el vehículo está lleno. La ocupación histórica (ícono gris) es un promedio del viaje en esta parada en los últimos 6 meses.</string>
+    <string name="menu_text_about_realtime_occupancy">La ocupación en tiempo real muestra cuántos pasajeros hay actualmente en el vehículo. Coloración verde significa muchos asientos disponibles, amarillo significa pocos asientos, y rojo significa lleno.</string>
 
     <string name="realtime_full">Lleno</string>
     <string name="realtime_standing_room">Estar de pie</string>
     <string name="realtime_many_seats_available">Asientos disponibles</string>
     <string name="realtime_empty">Vacío</string>
+    <string name="realtime_few_seats_available">Pocos asientos disponibles</string>
 
     <string name="predicted_full">Lleno pronosticado</string>
     <string name="predicted_standing_room">Estar de pie pronosticado</string>
     <string name="predicted_many_seats_available">Asientos disponibles pronosticado</string>
     <string name="predicted_empty">Vacío pronosticado</string>
+    <string name="predicted_few_seats_available">Pocos asientos pronosticados</string>
 
 
     <!--  Trip list -->
@@ -552,6 +571,12 @@
         otra manera de instalar Google Maps.
     </string>
     <string name="ok">Aceptar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="hide_all">Ocultar todo</string>
+    <string name="plan_trip">Planificar viaje</string>
+    <string name="reset_time">Restablecer hora</string>
+    <string name="set_origin_to_my_location">Establecer origen en mi ubicación</string>
+    <string name="set_destination_to_my_location">Establecer destino en mi ubicación</string>
 
     <!-- Application Preferences -->
     <string name="preferences_category_location">Ubicación</string>
@@ -646,6 +671,20 @@
     </string>
     <string name="preferences_about_title">Acerca de</string>
     <string name="preferences_about_summary">Información de versión, contribuyentes y licencia</string>
+    <string name="preferences_app_theme_title">Tema de la aplicación</string>
+    <string name="preferences_app_theme_option_system">Predeterminado del sistema</string>
+    <string name="preferences_app_theme_option_light">Claro</string>
+    <string name="preferences_app_theme_option_dark">Oscuro</string>
+    <string name="preferences_app_theme_option_system_default">Predeterminado del sistema</string>
+    <string name="preferences_category_user_logs">Registros de usuario</string>
+    <string name="preferences_hide_alerts_title">Ocultar alertas</string>
+    <string name="preferences_hide_alerts_summary">Ocultar alertas de servicio para paradas y rutas</string>
+    <string name="preferences_push_firebase_data_title">Enviar datos a Firebase</string>
+    <string name="preferences_push_firebase_data_summary">Ayudar a mejorar los servicios de tránsito compartiendo datos anónimos</string>
+    <string name="preferences_travel_behavior_title">Estudio de comportamiento de viaje</string>
+    <string name="preferences_travel_behavior_summary">Participar en el estudio de comportamiento de viaje para mejorar los servicios de tránsito</string>
+    <string name="preferences_user_share_destination_logs_title">Compartir registros de destino</string>
+    <string name="preferences_user_share_destination_logs_summary">Compartir datos anónimos de destino para mejorar las predicciones</string>
     <!-- Units -->
     <string name="feet_abbreviation">ft</string>
     <string name="miles_abbreviation">mi</string>
@@ -730,6 +769,7 @@
     </string>
     <string name="trip_details_current_stop">Parada actual</string>
     <string name="trip_details_current_bus_position">El bus se encuentra actualmente en</string>
+    <string name="trip_details_dest_stop">Parada de destino</string>
 
     <!-- Vehicles on Map -->
     <string name="vehicle_last_updated_sec">Datos actualizados hace %1$d seg</string>
@@ -743,6 +783,12 @@
         \n\nADVERTENCIA: esta función puede provocar convulsiones en personas con epilepsia fotosensible. Se aconseja la discreción del usuario.
     </string>
     <string name="night_light_create_shortcut">Crear un acceso directo</string>
+    <string name="night_light_start">Iniciar luz de noche</string>
+    <string name="night_light_cancel">Cancelar luz de noche</string>
+    <string name="night_light_dismiss_dialog_title">Cancelar la luz de noche</string>
+    <string name="night_light_dismiss_dialog_message">¿Estás seguro de que quieres apagar la luz de noche?</string>
+    <string name="night_light_dismiss_dialog_positive_button">Sí, apagarla</string>
+    <string name="night_light_dismiss_dialog_negative_button">No, mantenerla encendida</string>
 
     <!-- Tutorials -->
     <string name="tutorial_button_text" >¡Entendido!</string>
@@ -790,6 +836,8 @@
     <string name="tutorial_send_feedback_transit_service_text">Puedes reportar una variedad de tipos de
         problemas a tu gobierno local cerca a esta parada. Toca en el cuadro desplegable para ver una lista completa.
     </string>
+    <string name="tutorial_trip_plan_geocoder_title">Planificación de viajes</string>
+    <string name="tutorial_trip_plan_geocoder_text">Ingresa tu origen y destino para planificar un viaje. Puedes escribir direcciones o usar tu ubicación actual.</string>
 
     <!-- Permissions -->
     <string name="location_permissions_title">La ubicación en tiempo real necesita permisos</string>
@@ -930,6 +978,15 @@
 
     <string name="tripplanner_reverse">Invertir</string>
     <string name="tripplanner_report_trip_problem">Reportar un Problema al Planear el Viaje</string>
+    <string name="no_trip_planner_title">Planificador de viajes no disponible</string>
+    <string name="no_trip_planner_message">El planificador de viajes no está configurado para esta región</string>
+    <string name="no_trip_planner_available">No hay planificador de viajes disponible para esta región</string>
+    <string name="no_trip_planner_available_hint">El planificador de viajes no está disponible. Por favor intenta más tarde.</string>
+    <string name="do_you_want_to_plan_the_trip_now">¿Quieres planificar el viaje ahora?</string>
+    <string name="trip_plan_origin_location_hint">Ingresa el origen o usa tu ubicación actual</string>
+    <string name="trip_plan_destination_location_hint">Ingresa el destino</string>
+    <string name="trip_plan_start_location_hint">Origen del viaje</string>
+    <string name="trip_plan_end_location_hint">Destino del viaje</string>
 
     <!-- Instructions generation -->
 
@@ -1165,9 +1222,45 @@
     <string name="map_option_zoom_in">Acercar</string>
     <string name="map_option_layers_close">Cerrar botón de capas del mapa</string>
 
+    <!-- Destination reminder -->
+    <string name="destination_reminder_title">Recordatorio de destino</string>
+    <string name="destination_reminder_beta_title">Recordatorio de destino (beta)</string>
+    <string name="destination_reminder_beta_summary">Recibe alertas cuando te acerques a tu destino</string>
+    <string name="destination_reminder_dialog_title">Recordatorio de destino (beta)</string>
+    <string name="destination_reminder_dialog_message">Recibe una notificación cuando te acerques a tu destino. Esta función usa seguimiento de ubicación en segundo plano.</string>
+    <string name="destination_reminder_dialog_msg">¿Quieres activar el recordatorio de destino para este viaje?</string>
+    <string name="destination_reminder_dialog_positive_button">Activar</string>
+    <string name="destination_reminder_dialog_negative_button">Ahora no</string>
+    <string name="destination_reminder_notification_title">Acercándote a tu destino</string>
+    <string name="destination_reminder_notification_message">Prepárate para bajarte en %1$s</string>
+    <string name="destination_reminder_set">Recordatorio de destino establecido</string>
+    <string name="destination_reminder_removed">Recordatorio de destino eliminado</string>
+    <string name="destination_reminder_approaching">¡Estás llegando a tu destino!</string>
+    <string name="destination_reminder_arrived">Has llegado a tu destino</string>
+    <string name="destination_reminder_confirm">Confirmar recordatorio de destino</string>
+    <string name="destination_reminder_cancel">Cancelar recordatorio</string>
+    <string name="destination_reminder_cancel_trip">Cancelar viaje</string>
+    <string name="destination_voice_get_ready">Prepárate para bajarte</string>
+    <string name="destination_voice_arriving_destination">Llegando a tu destino</string>
+    <string name="destination_voice_request_stop">Solicita la parada</string>
+
     <!-- Destination reminder feedback Activity -->
     <string name="feedback_like_button_description">Sí, me avisaron en el momento oportuno</string>
     <string name="feedback_dislike_button_description">No, no me avisaron en el momento oportuno</string>
+    <string name="feedback_dialog_title">¿Cómo estuvo el recordatorio?</string>
+    <string name="feedback_dialog_message">¿Te avisamos en el momento adecuado?</string>
+    <string name="feedback_thank_you">¡Gracias por tus comentarios!</string>
+    <string name="feedback_submit">Enviar comentarios</string>
+    <string name="feedback_action_reply_yes">Sí</string>
+    <string name="feedback_action_reply_no">No</string>
+    <string name="feedback_label">Comentarios</string>
+    <string name="feedback_msg">Cuéntanos cómo estuvo tu experiencia</string>
+    <string name="feedback_freeText">Escribe tus comentarios aquí</string>
+    <string name="feedback_checkbox_text">Acepto compartir mis comentarios</string>
+    <string name="feedback_log_guide">Guía de registro de comentarios</string>
+    <string name="feedback_notify_title">Comentarios sobre el recordatorio</string>
+    <string name="feedback_notify_dialog_msg">¿El recordatorio de destino te fue útil?</string>
+    <string name="feedback_notify_confirmation">Gracias por compartir tus comentarios</string>
 
     <!-- Accessibility content descriptions for ETA rows -->
     <string name="arrival_favorite_first_description">Guardar la primera ruta como favorita</string>
@@ -1177,4 +1270,54 @@
     <string name="arrival_options_first_description">Opciones para la primera llegada</string>
     <string name="arrival_options_second_description">Opciones para segunda llegada</string>
     <string name="map_option_layers">Botón de capas del mapa</string>
+
+    <!-- Travel behavior study -->
+    <string name="travel_behavior_dialog_title">Estudio de comportamiento de viaje</string>
+    <string name="travel_behavior_dialog_message">Ayuda a mejorar los servicios de tránsito participando en nuestro estudio de comportamiento de viaje. Recopilaremos datos anónimos sobre tus patrones de viaje.</string>
+    <string name="travel_behavior_dialog_positive_button">Participar</string>
+    <string name="travel_behavior_dialog_negative_button">No, gracias</string>
+    <string name="travel_behavior_dialog_yes">Sí</string>
+    <string name="travel_behavior_dialog_no">No</string>
+    <string name="travel_behavior_dialog_not_now">Ahora no</string>
+    <string name="travel_behavior_dialog_learn_more">Más información</string>
+    <string name="travel_behavior_dialog_consent_agree">Acepto participar</string>
+    <string name="travel_behavior_dialog_consent_disagree">No acepto</string>
+    <string name="travel_behavior_dialog_email_save">Guardar correo electrónico</string>
+    <string name="travel_behavior_dialog_opt_out_title">Darse de baja del estudio</string>
+    <string name="travel_behavior_dialog_opt_out_message">¿Estás seguro de que quieres darte de baja del estudio de comportamiento de viaje?</string>
+    <string name="travel_behavior_opt_in">Inscrito en el estudio de comportamiento de viaje</string>
+    <string name="travel_behavior_opt_out">Dado de baja del estudio de comportamiento de viaje</string>
+    <string name="travel_behavior_opt_in_title">Inscribirse en el estudio</string>
+    <string name="travel_behavior_opt_in_message">¿Quieres participar en el estudio de comportamiento de viaje?</string>
+    <string name="travel_behavior_notification_title">Estudio de comportamiento de viaje</string>
+    <string name="travel_behavior_notification_message">Gracias por participar en el estudio de comportamiento de viaje</string>
+    <string name="travel_behavior_email_hint">Correo electrónico</string>
+    <string name="travel_behavior_confirm_email_hint">Confirmar correo electrónico</string>
+    <string name="travel_behavior_email_message">Ingresa tu correo electrónico para participar en el estudio</string>
+    <string name="travel_behavior_email_invalid">Por favor ingresa un correo electrónico válido</string>
+    <string name="travel_behavior_age_message">Ingresa tu edad</string>
+    <string name="travel_behavior_age_invalid_message">Por favor ingresa una edad válida</string>
+    <string name="travel_behavior_enroll_success">Te has inscrito exitosamente en el estudio</string>
+    <string name="travel_behavior_enroll_fail">Error al inscribirse en el estudio</string>
+
+    <!-- Firebase push data -->
+    <string name="push_firebase_data_dialog_title">Mejorar servicios de tránsito</string>
+    <string name="push_firebase_data_dialog_message">¿Quieres ayudar a mejorar los servicios de tránsito compartiendo datos anónimos de uso?</string>
+    <string name="push_firebase_data_dialog_positive_button">Sí, compartir datos</string>
+    <string name="push_firebase_data_dialog_negative_button">No, gracias</string>
+    <string name="push_firebase_data_dialog_summary">Comparte datos anónimos para mejorar los servicios de tránsito</string>
+    <string name="push_firebase_data_dialog_success_title">Datos enviados</string>
+    <string name="push_firebase_data_dialog_success_summary">Tus datos se han enviado exitosamente</string>
+    <string name="push_firebase_data_dialog_failed_title">Error al enviar datos</string>
+    <string name="push_firebase_data_dialog_failed_summary">No se pudieron enviar los datos. Intenta más tarde.</string>
+    <string name="push_firebase_data_dialog_canceled_title">Envío cancelado</string>
+    <string name="push_firebase_data_dialog_canceled_summary">Has cancelado el envío de datos</string>
+    <string name="push_firebase_data_dialog_user_not_enrolled_title">No inscrito</string>
+    <string name="push_firebase_data_dialog_user_not_enrolled_summary">No estás inscrito en el programa de compartir datos</string>
+
+    <!-- Battery optimization -->
+    <string name="application_ignoring_battery_opt_title">Optimización de batería</string>
+    <string name="application_ignoring_battery_opt_message">Para que los recordatorios funcionen correctamente, desactiva la optimización de batería para esta aplicación.</string>
+    <string name="application_ignoring_battery_opt_positive_button">Configurar</string>
+    <string name="application_ignoring_battery_opt_negative_button">Más tarde</string>
 </resources>

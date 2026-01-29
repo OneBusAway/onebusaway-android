@@ -99,6 +99,12 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         // Comment
         mUserComment = (TextView) view.findViewById(R.id.report_problem_comment);
 
+        // Update hint text with app name for white-label support
+        TextView hintView = (TextView) view.findViewById(R.id.report_problem_hint);
+        if (hintView != null) {
+            hintView.setText(getString(R.string.report_problem_hint, getString(R.string.app_name)));
+        }
+
         if (savedInstanceState != null) {
             int position = savedInstanceState.getInt(CODE);
             mCodeView.setSelection(position);

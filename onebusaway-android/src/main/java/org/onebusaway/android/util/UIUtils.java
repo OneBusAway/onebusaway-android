@@ -796,18 +796,19 @@ public final class UIUtils {
         send.putExtra(Intent.EXTRA_EMAIL,
                 new String[]{email});
         // Show trip planner subject line if we have a trip planning URL
+        String appName = context.getString(R.string.app_name);
         String subject;
         if (tripPlanUrl == null) {
             if (tripPlanFail) {
-                subject = context.getString(R.string.bug_report_subject_trip_plan);
+                subject = context.getString(R.string.bug_report_subject_trip_plan, appName);
             } else {
-                subject = context.getString(R.string.bug_report_subject);
+                subject = context.getString(R.string.bug_report_subject, appName);
             }
         } else {
             if (tripPlanFail) {
-                subject = context.getString(R.string.bug_report_subject_trip_plan_fail);
+                subject = context.getString(R.string.bug_report_subject_trip_plan_fail, appName);
             } else {
-                subject = context.getString(R.string.bug_report_subject_trip_plan);
+                subject = context.getString(R.string.bug_report_subject_trip_plan, appName);
             }
         }
         send.putExtra(Intent.EXTRA_SUBJECT, subject);
@@ -841,7 +842,7 @@ public final class UIUtils {
                     return context.getString(R.string.route_not_found_error_no_region);
                 }
             case ObaApi.OBA_BAD_GATEWAY:
-                return context.getString(R.string.bad_gateway_error);
+                return context.getString(R.string.bad_gateway_error, context.getString(R.string.app_name));
             case ObaApi.OBA_OUT_OF_MEMORY:
                 return context.getString(R.string.out_of_memory_error);
             default:
@@ -869,7 +870,7 @@ public final class UIUtils {
                     return context.getString(R.string.stop_not_found_error_no_region);
                 }
             case ObaApi.OBA_BAD_GATEWAY:
-                return context.getString(R.string.bad_gateway_error);
+                return context.getString(R.string.bad_gateway_error, context.getString(R.string.app_name));
             case ObaApi.OBA_OUT_OF_MEMORY:
                 return context.getString(R.string.out_of_memory_error);
             default:

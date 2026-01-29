@@ -248,7 +248,55 @@ public class PreferencesActivity extends PreferenceActivity
         }
 
         onAddCustomRegion();
+
+        // Update preference summaries that contain the app name placeholder
+        updateBrandedPreferenceSummaries();
     }
+
+    /**
+     * Updates preference summaries that contain the app name placeholder (%1$s).
+     * This enables white-label branding by injecting the app name into static XML summaries.
+     */
+    private void updateBrandedPreferenceSummaries() {
+        String appName = getString(R.string.app_name);
+
+        // Update API server title
+        if (mCustomApiUrlPref != null) {
+            mCustomApiUrlPref.setTitle(getString(R.string.preferences_oba_api_servername_title, appName));
+        }
+
+        // Update notification preferences
+        Preference soundPref = findPreference(getString(R.string.preference_key_notification_sound));
+        if (soundPref != null) {
+            soundPref.setSummary(getString(R.string.preferences_preferred_sound_summary, appName));
+        }
+
+        Preference vibratePref = findPreference(getString(R.string.preference_key_preference_vibrate_allowed));
+        if (vibratePref != null) {
+            vibratePref.setSummary(getString(R.string.preferences_preferred_vibration_summary, appName));
+        }
+
+        // Update backup preferences
+        if (mRestoreBackup != null) {
+            mRestoreBackup.setSummary(getString(R.string.preferences_restore_summary, appName));
+        }
+
+        // Update about/donate preferences
+        if (mDonatePref != null) {
+            mDonatePref.setSummary(getString(R.string.preferences_donate_summary, appName));
+        }
+
+        if (mPoweredByObaPref != null) {
+            mPoweredByObaPref.setTitle(getString(R.string.preferences_powered_by_oba_title, appName));
+        }
+
+        // Update destination logs preference
+        Preference destLogsPref = findPreference(getString(R.string.preferences_key_user_share_destination_logs));
+        if (destLogsPref != null) {
+            destLogsPref.setSummary(getString(R.string.preferences_user_share_destination_logs_summary, appName));
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -308,7 +356,7 @@ public class PreferencesActivity extends PreferenceActivity
             if (Application.get().getCurrentRegion() != null) {
                 mPreference.setSummary(Application.get().getCurrentRegion().getName());
                 mCustomApiUrlPref
-                        .setSummary(getString(R.string.preferences_oba_api_servername_summary));
+                        .setSummary(getString(R.string.preferences_oba_api_servername_summary, getString(R.string.app_name)));
                 String customOtpApiUrl = Application.get().getCustomOtpApiUrl();
                 if (!TextUtils.isEmpty(customOtpApiUrl)) {
                     mCustomOtpApiUrlPref.setSummary(customOtpApiUrl);
@@ -413,7 +461,7 @@ public class PreferencesActivity extends PreferenceActivity
             if (!TextUtils.isEmpty(apiUrl)) {
                 boolean validUrl = validateUrl(apiUrl);
                 if (!validUrl) {
-                    Toast.makeText(this, getString(R.string.custom_api_url_error),
+                    Toast.makeText(this, getString(R.string.custom_api_url_error, getString(R.string.app_name)),
                             Toast.LENGTH_SHORT).show();
                     return false;
                 }

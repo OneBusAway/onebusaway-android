@@ -50,18 +50,17 @@ public class BuildFlavorUtils {
      * @return preference options string for the provided arrival info style build flavor integer
      */
     public static String getPreferenceOptionForArrivalInfoBuildFlavorStyle(int buildFlavorStyle) {
+        Resources r = Application.get().getResources();
+        String appName = r.getString(R.string.app_name);
         switch (buildFlavorStyle) {
             case ARRIVAL_INFO_STYLE_A:
                 // OBA Classic
-                return Application.get().getResources()
-                        .getString(R.string.preferences_arrival_info_style_options_a);
+                return r.getString(R.string.preferences_arrival_info_style_options_a, appName);
             case ARRIVAL_INFO_STYLE_B:
                 // Use a card-styled footer
-                return Application.get().getResources()
-                        .getString(R.string.preferences_arrival_info_style_options_b);
+                return r.getString(R.string.preferences_arrival_info_style_options_b);
             default:
-                return Application.get().getResources()
-                        .getString(R.string.preferences_arrival_info_style_options_b);
+                return r.getString(R.string.preferences_arrival_info_style_options_b);
         }
     }
 
@@ -78,8 +77,9 @@ public class BuildFlavorUtils {
         String arrivalInfoStylePref = settings.getString(r.getString(
                 R.string.preference_key_arrival_info_style), null);
 
+        String appName = r.getString(R.string.app_name);
         String arrivalInfoStyleOptionA = r.getString(
-                R.string.preferences_arrival_info_style_options_a);
+                R.string.preferences_arrival_info_style_options_a, appName);
         String arrivalInfoStyleOptionB = r.getString(
                 R.string.preferences_arrival_info_style_options_b);
 

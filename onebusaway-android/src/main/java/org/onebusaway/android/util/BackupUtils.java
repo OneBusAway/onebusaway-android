@@ -86,7 +86,7 @@ public class BackupUtils {
             if (activityContext != null) {
                 List<ObaRegionsTask.Callback> callbacks = new ArrayList<>();
                 callbacks.add(currentRegionChanged -> Toast.makeText(context,
-                        R.string.preferences_db_restored,
+                        context.getString(R.string.preferences_db_restored, context.getString(R.string.app_name)),
                         Toast.LENGTH_LONG).show());
                 ObaRegionsTask task = new ObaRegionsTask(activityContext, callbacks, true, true);
                 task.setProgressDialogMessage(context.getString(R.string.preferences_restore_loading));

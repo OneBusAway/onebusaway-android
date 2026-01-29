@@ -77,6 +77,7 @@ public class AboutActivity extends AppCompatActivity {
 
         // Majority of content comes from a string resource:
         version.setText(builder.toString());
-        tv.setText((Spannable) Html.fromHtml(getString(R.string.about_content)));
+        String aboutHtml = getString(R.string.about_content, getString(R.string.app_name));
+        tv.setText((Spannable) Html.fromHtml(aboutHtml));
     }
 }

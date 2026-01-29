@@ -150,6 +150,13 @@ public class SurveyViewUtils {
             }
         };
         bottomSheet.setContentView(R.layout.survey_questions_view);
+
+        // Update survey title with app name for white-label support
+        TextView surveyTitleView = bottomSheet.findViewById(R.id.textView6);
+        if (surveyTitleView != null) {
+            surveyTitleView.setText(context.getString(R.string.onebusaway_survey, context.getString(R.string.app_name)));
+        }
+
         return bottomSheet;
 
     }

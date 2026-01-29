@@ -129,6 +129,12 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
         // Comment
         mUserComment = (TextView) view.findViewById(R.id.report_problem_comment);
 
+        // Update hint text with app name for white-label support
+        TextView hintView = (TextView) view.findViewById(R.id.report_problem_hint);
+        if (hintView != null) {
+            hintView.setText(getString(R.string.report_problem_hint, getString(R.string.app_name)));
+        }
+
         // On vehicle
         mUserOnVehicle = (CheckBox) view.findViewById(R.id.report_problem_onvehicle);
         mUserVehicle = (EditText) view.findViewById(R.id.report_problem_uservehicle);

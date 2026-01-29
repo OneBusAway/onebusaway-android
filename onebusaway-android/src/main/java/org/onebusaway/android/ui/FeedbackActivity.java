@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -86,6 +87,12 @@ public class FeedbackActivity extends AppCompatActivity {
             sendLogs.setChecked(true);
         } else {
             sendLogs.setChecked(false);
+        }
+
+        // Update feedback guide text with app name for white-label support
+        TextView feedbackGuide = findViewById(R.id.textView);
+        if (feedbackGuide != null) {
+            feedbackGuide.setText(getString(R.string.feedback_log_guide, getString(R.string.app_name)));
         }
 
     }

@@ -132,9 +132,10 @@ public class ShowcaseViewUtils {
         SpannableString text;
         Target target = Target.NONE;
 
+        String appName = r.getString(R.string.app_name);
         switch (tutorialType) {
             case TUTORIAL_WELCOME:
-                title = r.getString(R.string.tutorial_welcome_title);
+                title = r.getString(R.string.tutorial_welcome_title, appName);
                 text = new SpannableString(r.getString(R.string.tutorial_welcome_text));
                 break;
             case TUTORIAL_ARRIVAL_HEADER_ARRIVAL_INFO:
@@ -309,7 +310,7 @@ public class ShowcaseViewUtils {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setTitle(R.string.tutorial_opt_out_dialog_title)
-                .setMessage(R.string.tutorial_opt_out_dialog_text)
+                .setMessage(activity.getString(R.string.tutorial_opt_out_dialog_text, activity.getString(R.string.app_name)))
                 .setPositiveButton(R.string.rt_yes,
                         new DialogInterface.OnClickListener() {
                             @Override

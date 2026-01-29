@@ -76,6 +76,7 @@
                        android:id="@+id/ic_action_info"/>
 
             <TextView
+                    android:id="@+id/report_problem_hint"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     style="@style/MaterialItem"

@@ -2034,7 +2034,7 @@ public class HomeActivity extends AppCompatActivity
 
     private void showIgnoreBatteryOptimizationDialog() {
         new android.app.AlertDialog.Builder(this)
-                .setMessage(R.string.application_ignoring_battery_opt_message)
+                .setMessage(getString(R.string.application_ignoring_battery_opt_message, getString(R.string.app_name)))
                 .setTitle(R.string.application_ignoring_battery_opt_title)
                 .setIcon(R.drawable.ic_alert_warning)
                 .setCancelable(false)
@@ -2135,6 +2135,10 @@ public class HomeActivity extends AppCompatActivity
         Button learnMoreButton = mDonationView.findViewById(R.id.btnDonationViewLearnMore);
         Button donateButton = mDonationView.findViewById(R.id.btnDonationViewDonate);
 
+        // Update title with app name for white-label support
+        TextView titleView = mDonationView.findViewById(R.id.textView2);
+        titleView.setText(getString(R.string.donation_view_title, getString(R.string.app_name)));
+
         closeButton.setOnClickListener(b -> {
             AlertDialog dismissDialog = buildDismissDonationsDialog();
             dismissDialog.show();
@@ -2176,7 +2180,7 @@ public class HomeActivity extends AppCompatActivity
     private AlertDialog buildDismissDonationsDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle(R.string.donation_dismiss_dialog_title)
-                .setMessage(R.string.donation_dismiss_dialog_body)
+                .setMessage(getString(R.string.donation_dismiss_dialog_body, getString(R.string.app_name)))
                 .setNegativeButton(
                         R.string.donation_dismiss_dialog_dont_want_to_help_button,
                         (dialog, which) -> {

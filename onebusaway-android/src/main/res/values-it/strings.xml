@@ -22,6 +22,7 @@
     <!-- Navigation Drawer -->
     <string name="navdrawer_item_nearby">Nei dintorni</string>
     <string name="navdrawer_item_starred_stops">Fermate preferite</string>
+    <string name="navdrawer_item_starred_routes">Linee preferite</string>
     <string name="navdrawer_item_my_reminders">I miei promemoria</string>
     <string name="navdrawer_item_settings">Impostazioni</string>
     <string name="navdrawer_item_help">Aiuto</string>
@@ -183,6 +184,7 @@
     <string name="stop_info_option_removestar">Rimuovi fermata dai preferiti</string>
     <string name="stop_info_option_report_problem">Segnala problema con fermata</string>
     <string name="stop_info_option_night_light">Luce notturna</string>
+    <string name="stop_info_option_hide_alerts">Nascondi avvisi attivi</string>
     <string name="stop_info_nodata_minutes">Nessun arrivo nei prossimi %1$d min.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_nodata_hours_minutes">
@@ -289,14 +291,14 @@
     <string name="my_no_recent_stops">Non hai fermate recenti.</string>
     <string name="my_no_starred_stops">Non hai fermate preferite.\n\nAggiungi una fermata ai preferiti dalla schermata degli arrivi toccando la stella vicino al nome della fermata.</string>
     <string name="my_no_recent_routes">Non hai linee recenti.</string>
-    <!-- <string name="my_no_starred_routes">You have no starred routes.</string>-->
+    <string name="my_no_starred_routes">Non hai linee preferite.\n\nPuoi aggiungere una linea ai preferiti dalla schermata degli arrivi toccando la stella vicino al numero della linea.</string>
     <string name="route_favorite_options_title_star">Aggiungi linea \&quot;%s\&quot; ai preferiti per:</string>
     <string name="route_favorite_options_title_unstar">Rimuovi \&quot;%s\&quot; dai preferiti per:</string>
 
     <string name="my_option_clear_recent_stops">Cancella fermate recenti</string>
     <string name="my_option_clear_recent_routes">Cancella linee recenti</string>
     <string name="my_option_clear_starred_stops">Rimuovi tutte le fermate dai preferiti</string>
-    <!-- <string name="my_option_clear_starred_routes">Remove all starred routes</string>-->
+    <string name="my_option_clear_starred_routes">Rimuovi tutte le linee dai preferiti</string>
     <string name="my_option_clear_confirm">Non si torna indietro! Vuoi procedere?</string>
     <string name="my_option_clear_confirm_title">Confermi?</string>
 
@@ -313,8 +315,10 @@
     <string name="alert_content_description_error">Avviso urgente sul servizio - tocca per mostrare ulteriori informazioni.</string>
     <string name="situation_more_details">Altri dettagli</string>
     <string name="hide">Nascondi</string>
+    <string name="hide_all">Nascondi tutto</string>
     <string name="close">Chiudi</string>
     <string name="alert_hidden_snackbar_text">L\'avviso è nascosto</string>
+    <string name="all_alert_hidden_snackbar_text">Tutti gli avvisi sono ora nascosti</string>
     <string name="alert_hidden_snackbar_action">ANNULLA</string>
     <plurals name="alert_filter_text">
         <item quantity="one">Hai %1$d avviso attivo nascosto</item>
@@ -371,6 +375,7 @@
     <string name="menu_title_about_occupancy">Di più sull\'occupazione</string>
     <string name="menu_text_about_historical_occupancy">La media di occupazione (icona grigia) è l\'utenza media a questa fermata negli ultimi 6 mesi.</string>
     <string name="menu_text_about_occupancy">L\'occupazione in tempo reale appare verde quando ci sono molti o alcuni posti a sedere disponibili, e rossa quando il mezzo è pieno. La media di occupazione (icona grigia) è l\'utenza media a questa fermata negli ultimi 6 mesi.</string>
+    <string name="menu_text_about_realtime_occupancy">L\'occupazione in tempo reale è mostrata con una o due icone di persona quando ci sono molti o pochi posti disponibili, e con tre icone di persona quando il veicolo è pieno.</string>
 
     <string name="realtime_full">Pieno</string>
     <string name="realtime_standing_room">Spazio in piedi</string>
@@ -489,8 +494,16 @@
     <string name="preferences_preferred_units_option_metric">Sistema metrico (km, m)</string>
     <string name="preferences_preferred_units_option_imperial">Sistema imperiale (mi, ft)</string>
 
+    <string name="preferences_app_theme_title">Tema app</string>
+    <string name="preferences_app_theme_option_system_default">Predefinito di sistema</string>
+    <string name="preferences_app_theme_option_light">Tema chiaro</string>
+    <string name="preferences_app_theme_option_dark">Tema scuro</string>
+
     <string name="preferences_show_negative_arrivals_title">Mostra autobus già partiti</string>
     <string name="preferences_show_negative_arrivals_summary">Includi autobus già partiti, mostrando il tempo trascorso dalla partenza come valore negativo</string>
+
+    <string name="preferences_hide_alerts_title">Nascondi tutti gli avvisi</string>
+    <string name="preferences_hide_alerts_summary">Se selezionato, tutti gli avvisi di servizio verranno compressi in una piccola barra nella parte superiore della schermata degli arrivi invece di essere mostrati come elenco completo.</string>
 
     <string name="preferences_show_zoom_controls_title">Mostra controlli zoom</string>
     <string name="preferences_show_zoom_controls_summary">Mostra controlli zoom sulla mappa</string>
@@ -541,6 +554,25 @@
     <string name="preferences_donate_summary">Supporta il progetto open-source OneBusAway</string>
     <string name="preferences_powered_by_oba_title">Powered by OneBusAway</string>
     <string name="preferences_powered_by_oba_summary">Scopri di più su questo progetto open-source</string>
+
+    <string name="preferences_push_firebase_data_title">Invia dati Firebase al server</string>
+    <string name="preferences_push_firebase_data_summary">Se hai aderito a uno studio sul comportamento di viaggio, toccando questa opzione invierai i dati di comportamento di viaggio raccolti al server Firebase. Questa funzione è utile durante i test dell\'app ed è destinata agli sviluppatori. Per i migliori risultati, assicurati di avere una buona connessione Internet.</string>
+
+    <string name="push_firebase_data_dialog_title">Invio dati Firebase in corso…</string>
+    <string name="push_firebase_data_dialog_summary">In attesa che tutte le scritture in sospeso per l\'utente attivo vengano confermate dal backend…</string>
+
+    <string name="push_firebase_data_dialog_user_not_enrolled_title">Utente non iscritto</string>
+    <string name="push_firebase_data_dialog_user_not_enrolled_summary">L\'invio a Firebase non è stato tentato perché l\'utente non è iscritto alla raccolta dati sul comportamento di viaggio. Puoi iscriverti attivando l\'impostazione \"Invia dati anonimi sulle abitudini di viaggio\".</string>
+
+    <string name="push_firebase_data_dialog_success_title">Invio riuscito</string>
+    <string name="push_firebase_data_dialog_success_summary">Tutte le scritture in sospeso per l\'utente attivo sono state confermate dal backend Firebase.</string>
+
+    <string name="push_firebase_data_dialog_failed_title">Invio fallito</string>
+    <string name="push_firebase_data_dialog_failed_summary">Qualcosa è andato storto. Assicurati di avere una buona connessione Internet e riprova.</string>
+
+    <string name="push_firebase_data_dialog_canceled_title">Invio annullato</string>
+    <string name="push_firebase_data_dialog_canceled_summary">Qualcosa è andato storto. Assicurati di avere una buona connessione Internet e riprova.</string>
+
     <string name="preferences_about_title">Informazioni</string>
     <string name="preferences_about_summary">Informazioni su versione, collaboratori e licenza</string>
     <!-- Units -->
@@ -1057,6 +1089,8 @@
     <string name="more_info">Maggiori informazioni</string>
     <string name="display_test_alerts">Mostra avvisi di prova</string>
     <string name="display_test_wide_alerts_for_regions">Mostra avvisi di prova per regioni</string>
+    <string name="do_you_want_to_plan_the_trip_now">Vuoi pianificare il viaggio adesso?</string>
+    <string name="plan_trip">Pianificare il viaggio?</string>
     <string name="no_description_available">Nessuna descrizione disponibile</string>
     <string name="close_donation_card">Chiudi la scheda di donazione</string>
     <string name="send_email">Invia email</string>

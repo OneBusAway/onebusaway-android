@@ -86,7 +86,7 @@
     <string name="submit_survey_api_endpoint">/api/v1/survey_responses/</string>
 
     <!-- Arrivals Alarm API URL -->
-    <string name="arrivals_reminders_api_endpoint">/api/v1/regions/</string>
+    <string name="arrivals_reminders_api_endpoint">/api/v2/regions/</string>
 
     <!-- Alerts API Endpoint -->
     <string name="alerts_api_endpoint">/api/v1/regions/regionID/alerts.pb</string>
@@ -270,4 +270,7 @@
 
     <string name="not_request_battery_optimizations_key">request_battery_optimizations_key</string>
     <string name="preference_key_reset_donation_timestamps">preference_key_reset_donation_timestamps</string>
+
+    <!-- Firebase Messaging User Token -->
+    <string name="firebase_messaging_token">firebase_messaging_token</string>
 </resources>

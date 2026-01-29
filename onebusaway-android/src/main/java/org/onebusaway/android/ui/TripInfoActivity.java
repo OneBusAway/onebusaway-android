@@ -15,9 +15,8 @@
  */
 package org.onebusaway.android.ui;
 
-import com.onesignal.Continue;
-import com.onesignal.OneSignal;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
@@ -54,10 +53,10 @@ import org.onebusaway.android.util.ReminderUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import java.util.List;
-import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -65,6 +64,7 @@ import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 
+import static org.onebusaway.android.util.PermissionUtils.NOTIFICATION_PERMISSION_REQUEST;
 import static org.onebusaway.android.util.ReminderUtils.getRouteShortName;
 
 
@@ -446,7 +446,11 @@ public class TripInfoActivity extends AppCompatActivity {
             if (ReminderUtils.isAlarmExist(getContext(), mTripUri)) {
                 requestDeleteAlarm(getContext(), mTripUri);
             }
-            OneSignal.getNotifications().requestPermission(false, Continue.none());
+
+            // Request the user to grant the POST_NOTIFICATIONS permission.
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[] {Manifest.permission.POST_NOTIFICATIONS},
+                    NOTIFICATION_PERMISSION_REQUEST);
             View view = getView();
             final Spinner reminderView = view.findViewById(R.id.trip_info_reminder_time);
             final int reminder = selectionToReminder(reminderView.getSelectedItemPosition());
@@ -493,7 +497,7 @@ public class TripInfoActivity extends AppCompatActivity {
 
             progressView.setVisibility(View.VISIBLE);
 
-            String userPushID = Application.getUserPushNotificationID();
+            String userPushID = Application.getUserPushID();
 
             ObaReminderRequest request = createObaReminderRequest(reminderTime, userPushID);
 
@@ -531,7 +535,7 @@ public class TripInfoActivity extends AppCompatActivity {
         }
 
         private void handleReminderResponse(int reminderTime, ReminderResponse response) {
-            Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+            requireActivity().runOnUiThread(() -> {
                 if (response != null && response.getUrl() != null) {
                     saveTrip(reminderTime, response.getUrl());
                     progressView.setVisibility(View.GONE);
@@ -654,7 +658,7 @@ public class TripInfoActivity extends AppCompatActivity {
             Log.d(TAG, "mServiceDate: " + mServiceDate);
             Log.d(TAG, "mTripID: " + mTripId);
             Log.d(TAG, "mVehicleID: " + mVehicleID);
-            Log.d(TAG, "user-push-id: " + OneSignal.getUser().getPushSubscription().getId());
+            Log.d(TAG, "user-push-id: " + Application.getUserPushID());
         }
     }
 

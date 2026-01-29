@@ -563,8 +563,9 @@
 
     <!--  Bug report -->
     <string name="bug_report_subject">%1$s Android: Opinie</string>
-    <string name="bug_report_body">Zażalenia, pochwały, lub problemy są mile widziane!\n\n\nWersja aplikacji:
-        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nLoc: %5$s
+    <string name="bug_report_body">Zażalenia, pochwały lub zgłoszenia błędów są mile widziane!\n\n\nWersja aplikacji:
+        %1$s\nModel: %2$s\nWersja systemu: %3$s / %4$d\nGoogle Play Services: %5$s\n
+        Biblioteka Google Play Services: %6$d\nRegion/API: %7$s (%8$s)\nLokalizacja: %9$s\n\n
     </string>
     <string name="bug_report_error">Niemożna wysłać opisu problemu: brak odpowiedniej aplikacji.
     </string>

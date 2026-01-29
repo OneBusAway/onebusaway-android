@@ -532,7 +532,7 @@
     <string name="preferences_save_title">Salva in memoria</string>
     <string name="preferences_save_summary">Salva fermate e linee preferite e recenti</string>
     <string name="preferences_restore_title">Ripristina da memoria</string>
-    <string name="preferences_restore_summary">Ripristina dal salvataggio precedente</string>
+    <string name="preferences_restore_summary">Ripristina da un backup precedente. Dopo aver selezionato questa opzione, ti verrà chiesto di scegliere un file. Seleziona il file di backup (es. \"db.backup\" o \"%1$s.backup\"), che potrebbe trovarsi nella cartella \"Documenti\" o in qualsiasi posizione in cui hai salvato il backup.</string>
     <string name="preferences_db_saved">Salvataggio completato!</string>
     <string name="preferences_db_save_error">Impossibile salvare: %1$s</string>
     <string name="preferences_db_restore_warning">Questo cancellerà tutti i dati esistenti! Vuoi procedere?</string>

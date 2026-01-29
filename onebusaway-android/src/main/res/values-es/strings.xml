@@ -642,7 +642,7 @@
     <string name="preferences_save_title">Guardar al almacenamiento</string>
     <string name="preferences_save_summary">Guarda tus paradas y rutas favoritas y también las búsquedas recientes</string>
     <string name="preferences_restore_title">Restaurar desde el almacenamiento</string>
-    <string name="preferences_restore_summary">Restaurar del respaldo anterior</string>
+    <string name="preferences_restore_summary">Restaura desde un respaldo anterior. Después de seleccionar esta opción, se te pedirá que elijas un archivo. Por favor selecciona el archivo de respaldo (por ejemplo, \"db.backup\" o \"%1$s.backup\"), que puede estar en tu carpeta \"Documentos\" o en cualquier ubicación donde guardaste el respaldo.</string>
     <string name="preferences_db_saved">¡Guardado exitosamente!</string>
     <string name="preferences_db_save_error">No se puede guardar: %1$s</string>
     <string name="preferences_db_restore_warning">¡Esto borrará todos los datos existentes! ¿Continuar?
@@ -684,7 +684,7 @@
     <string name="preferences_travel_behavior_title">Estudio de comportamiento de viaje</string>
     <string name="preferences_travel_behavior_summary">Participar en el estudio de comportamiento de viaje para mejorar los servicios de tránsito</string>
     <string name="preferences_user_share_destination_logs_title">Compartir registros de destino</string>
-    <string name="preferences_user_share_destination_logs_summary">Compartir datos anónimos de destino para mejorar las predicciones</string>
+    <string name="preferences_user_share_destination_logs_summary">La información anónima de ubicación en tiempo real de tu dispositivo será compartida con %1$s para mejorar la función de recordatorio de destino.</string>
     <!-- Units -->
     <string name="feet_abbreviation">ft</string>
     <string name="miles_abbreviation">mi</string>
@@ -1257,7 +1257,7 @@
     <string name="feedback_msg">Cuéntanos cómo estuvo tu experiencia</string>
     <string name="feedback_freeText">Escribe tus comentarios aquí</string>
     <string name="feedback_checkbox_text">Acepto compartir mis comentarios</string>
-    <string name="feedback_log_guide">Guía de registro de comentarios</string>
+    <string name="feedback_log_guide">Tus comentarios serán enviados a %1$s. Si marcas \"Incluir registros del sistema\", la información de ubicación en tiempo real de tu dispositivo registrada al acercarte a tu parada de destino será compartida con %1$s para que los desarrolladores puedan mejorar la función de recordatorio de destino.\n\nCambia tu preferencia para compartir registros del sistema en Configuración.</string>
     <string name="feedback_notify_title">Comentarios sobre el recordatorio</string>
     <string name="feedback_notify_dialog_msg">¿El recordatorio de destino te fue útil?</string>
     <string name="feedback_notify_confirmation">Gracias por compartir tus comentarios</string>
@@ -1317,7 +1317,7 @@
 
     <!-- Battery optimization -->
     <string name="application_ignoring_battery_opt_title">Optimización de batería</string>
-    <string name="application_ignoring_battery_opt_message">Para que los recordatorios funcionen correctamente, desactiva la optimización de batería para esta aplicación.</string>
+    <string name="application_ignoring_battery_opt_message">Las optimizaciones de batería están habilitadas para esta aplicación, lo que puede disminuir el rendimiento. Para obtener la mejor experiencia, ve a configuración y desactiva las optimizaciones de rendimiento para %1$s.</string>
     <string name="application_ignoring_battery_opt_positive_button">Configurar</string>
     <string name="application_ignoring_battery_opt_negative_button">Más tarde</string>
 </resources>

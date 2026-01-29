@@ -978,8 +978,8 @@
 
     <string name="tripplanner_reverse">Invertir</string>
     <string name="tripplanner_report_trip_problem">Reportar un Problema al Planear el Viaje</string>
-    <string name="no_trip_planner_title">Planificador de viajes no disponible</string>
-    <string name="no_trip_planner_message">El planificador de viajes no está configurado para esta región</string>
+    <string name="no_trip_planner_title">Aumento de costos de Google</string>
+    <string name="no_trip_planner_message">Google ahora cobra a %1$s por todos los planes de viaje (¡aproximadamente $1,000 por mes)! OBA es un proyecto de código abierto y no puede pagar estos costos. Hemos creado una organización sin fines de lucro y solicitamos a Google for Nonprofits, pero aún estamos esperando la aprobación. Mientras tanto, hemos tenido que cerrar el planificador de viajes. Si deseas expresar tu apoyo a %1$s ante Google for Nonprofits, contáctalos en Twitter en https://twitter.com/googlenonprofit?s=17!</string>
     <string name="no_trip_planner_available">No hay planificador de viajes disponible para esta región</string>
     <string name="no_trip_planner_available_hint">El planificador de viajes no está disponible. Por favor intenta más tarde.</string>
     <string name="do_you_want_to_plan_the_trip_now">¿Quieres planificar el viaje ahora?</string>

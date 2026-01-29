@@ -834,7 +834,7 @@
     <string name="tripplanner_report_trip_problem">Segnala problema con piano di viaggio</string>
 
     <string name="no_trip_planner_title">Aumento del costo di Google</string>
-    <string name="no_trip_planner_message">Google chiede a OneBusAway di pagare per ogni piano di viaggio (circa 1.000$ al mese)! OBA è un progetto open-source e non può pagare tali cifre. Abbiamo creato un\'associazione no profit e fatto richiesta a Google for Nonprofits, ma stiamo ancora aspettando l\'approvazione. Nel frattempo, abbiamo dovuto chiudere il pianificatore di viaggio. Se vuoi esprimere il tuo sostegno per OneBusAway a Google for Nonprofits, contattali su Twitter all\'indirizzo https://twitter.com/googlenonprofit?s=17!</string>
+    <string name="no_trip_planner_message">Google chiede a %1$s di pagare per ogni piano di viaggio (circa 1.000$ al mese)! OBA è un progetto open-source e non può pagare tali cifre. Abbiamo creato un\'associazione no profit e fatto richiesta a Google for Nonprofits, ma stiamo ancora aspettando l\'approvazione. Nel frattempo, abbiamo dovuto chiudere il pianificatore di viaggio. Se vuoi esprimere il tuo sostegno per %1$s a Google for Nonprofits, contattali su Twitter all\'indirizzo https://twitter.com/googlenonprofit?s=17!</string>
 
     <!-- Instructions generation -->
 

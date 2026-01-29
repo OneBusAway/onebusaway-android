@@ -66,6 +66,45 @@ Typical resource values that you would override in a new brand include:
  * app theme colors (`theme_primary`, `theme_primary_dark`, `theme_muted`, `theme_accent`) in `src/newBrandName/res/values/colors.xml` - the default colors for the Action Bar, etc.  For example, the Agency X brand specifies red theme colors, while Agency Y brand specifies blue theme colors.
  * `stop_info_ontime` in `src/newBrandName/res/values/colors.xml` - the OneBusAway brand uses its green theme color for the "on-time" arrival color.  If your theme color isn't green, you need to specify green for this "on-time" arrival color - we suggest `#4CAF50`
 
+### Simplified String Localization with Placeholders
+
+The app uses a **placeholder system** for branded strings, which significantly reduces the work needed to support multiple languages in your rebranded app.
+
+**How it works:** Strings that mention the app name use `%1$s` as a placeholder, which is automatically replaced with your `app_name` at runtime. For example:
+
+```xml
+<!-- In src/main/res/values/strings.xml -->
+<string name="tutorial_welcome_title">Welcome to %1$s!</string>
+<string name="bad_gateway_error">%1$s\'s servers are overloaded. Please try again.</string>
+```
+
+**What this means for you:** You only need to override `app_name` in each language your brand supports. All other branded strings will automatically use your app name.
+
+```xml
+<!-- src/newBrandName/res/values/strings.xml -->
+<resources>
+    <string name="app_name">New Brand Name</string>
+</resources>
+
+<!-- src/newBrandName/res/values-es/strings.xml -->
+<resources>
+    <string name="app_name">New Brand Name</string>
+</resources>
+```
+
+**Optional overrides:** You may still need to override specific strings if your agency has different UI elements. For example, if your agency uses red stop markers instead of green:
+
+```xml
+<!-- src/newBrandName/res/values/strings.xml -->
+<resources>
+    <string name="app_name">New Brand Name</string>
+    <!-- Override because our stop dots are red, not green -->
+    <string name="tutorial_welcome_text">Tap on a stop (red dot on the map) to see arrival times.</string>
+</resources>
+```
+
+See the `agencyX` and `agencyY` sample flavors for working examples of this pattern.
+
 If you want to implement custom code, we recommend that you create a base abstract class, and split the implementation differences into subclasses that can be selected at runtime by different brands based on configuration options in `build.gradle`.  See `org.onebusaway.android.ui.ArrivalsListAdapterBase` for a sample base class, and `ArrivalsListAdapterStyleA` and `ArrivalsListAdapterStyleB` for examples of how different presentations of arrival times can be used in different brands, and see the following section for how these options are specified in `build.gradle`.
 
 ### Configuration Options

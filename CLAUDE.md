@@ -113,6 +113,30 @@ The app supports multiple OBA server deployments. Region configuration:
 - ObaRegionsTask handles async region discovery
 - Regions API auto-selects server based on device location
 
+## White-Label / Branding
+
+The app supports white-labeling via Gradle product flavors. See `REBRANDING.md` for full documentation.
+
+### Branded String Pattern
+Strings containing the app name use `%1$s` placeholders that are replaced at runtime:
+
+```xml
+<!-- In strings.xml -->
+<string name="tutorial_welcome_title">Welcome to %1$s!</string>
+```
+
+```java
+// In code - pass app_name as format argument
+getString(R.string.tutorial_welcome_title, getString(R.string.app_name))
+```
+
+**When adding new user-facing strings that mention the app name:**
+1. Use `%1$s` placeholder instead of hardcoding "OneBusAway"
+2. Update code to pass `getString(R.string.app_name)` as the format argument
+3. Update all translation files (`values-*/strings.xml`) with the same placeholder pattern
+
+This allows white-label brands to only override `app_name` instead of duplicating entire string files.
+
 ## Contributing
 
 - PRs should be single squashed commits

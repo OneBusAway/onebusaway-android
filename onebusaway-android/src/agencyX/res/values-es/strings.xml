@@ -14,16 +14,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
+<!--
+    White-label sample: Agency X (Spanish)
+
+    With the placeholder system, you only need to override app_name per language.
+    All branded strings (using %1$s) will automatically use this app name.
+-->
 <resources>
+    <!-- The only required override for this language -->
     <string name="app_name">Agency X</string>
 
-    <!-- Tutorial -->
-    <string name="tutorial_welcome_title">¡Bienvenido a Agency X!</string>
+    <!--
+        Optional: Override these if your agency uses different UI elements.
+        In this example, Agency X uses red stop dots instead of green.
+    -->
     <string name="tutorial_welcome_text">Toca una parada (punto rojo en el mapa) para ver los tiempos
         de llegada.
     </string>
     <string name="tutorial_arrival_header_arrival_info_text">¡Largo tiempo! El color de fondo te indica
-        si el bus esta adelantado (rojo oscuro) o va atrasado (azul). Si es rojo claro se encuentra a tiempo. 
+        si el bus esta adelantado (rojo oscuro) o va atrasado (azul). Si es rojo claro se encuentra a tiempo.
         Si nosotros no sabemos
         donde se encuentra el bus, se muestra el tiempo planificado (gris).
     </string>

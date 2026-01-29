@@ -14,11 +14,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
+<!--
+    White-label sample: Agency Y
+
+    With the placeholder system, you typically only need to override app_name.
+    All strings containing %1$s will automatically use this app name.
+
+    Only override other strings if your agency has specific UI differences
+    (e.g., different stop marker colors, custom descriptions).
+-->
 <resources>
+    <!-- The only required override - all branded strings use this automatically -->
     <string name="app_name">Agency Y</string>
 
-    <!-- Tutorial -->
-    <string name="tutorial_welcome_title">Welcome to Agency Y!</string>
+    <!--
+        Optional: Override these if your agency uses different UI elements.
+        In this example, Agency Y uses blue stop dots instead of green.
+    -->
     <string name="tutorial_welcome_text">Tap on a stop (blue dot on the map) to see arrival
         times.
     </string>

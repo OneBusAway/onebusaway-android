@@ -1,0 +1,26 @@
+/**
+ * Flavor Loader Script
+ *
+ * This script automatically loads all brand flavor configurations from .gradle files
+ * in the flavors/ directory. It is applied from the main build.gradle.
+ *
+ * To add a new brand:
+ * 1. Create a new file: flavors/mybrand.gradle
+ * 2. See README.md for the required structure
+ * 3. The flavor will be automatically loaded on next Gradle sync
+ *
+ * Note: This file (load-flavors.gradle) is excluded from the auto-loading to prevent
+ * infinite recursion.
+ */
+
+def flavorsDir = file("flavors")
+def loaderFile = "load-flavors.gradle"
+
+if (flavorsDir.exists()) {
+    flavorsDir.eachFileMatch(~/.*\.gradle/) { flavorFile ->
+        // Skip this loader script itself to prevent infinite recursion
+        if (flavorFile.name != loaderFile) {
+            apply from: flavorFile
+        }
+    }
+}

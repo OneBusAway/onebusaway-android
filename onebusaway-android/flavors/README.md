@@ -8,11 +8,12 @@ Instead of a large `productFlavors {}` block in `build.gradle`, each brand has i
 
 ```
 flavors/
-├── README.md          # This file
-├── oba.gradle         # OneBusAway (original brand)
-├── agencyX.gradle     # Sample multi-region brand
-├── agencyY.gradle     # Sample fixed-region brand
-└── kiedybus.gradle    # KiedyBus (Poland)
+├── README.md            # This file
+├── load-flavors.gradle  # Auto-loader script (applied from build.gradle)
+├── oba.gradle           # OneBusAway (original brand)
+├── agencyX.gradle       # Sample multi-region brand
+├── agencyY.gradle       # Sample fixed-region brand
+└── kiedybus.gradle      # KiedyBus (Poland)
 ```
 
 ## Adding a New White-Label Brand

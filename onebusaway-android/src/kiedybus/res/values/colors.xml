@@ -27,5 +27,8 @@
     <!-- Launcher icon background -->
     <color name="ic_launcher_background">#2196F3</color>
 
+    <!-- Keep on-time color green even though theme is blue -->
+    <color name="stop_info_ontime">#4CAF50</color>
+
     <!-- See src/main/res/colors.xml for more colors you can override here -->
 </resources>

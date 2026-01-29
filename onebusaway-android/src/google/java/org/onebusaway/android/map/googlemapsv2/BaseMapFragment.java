@@ -87,6 +87,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -1386,6 +1387,10 @@ public class BaseMapFragment extends SupportMapFragment
         private Dialog createNoLocationDialog() {
             View view = getActivity().getLayoutInflater().inflate(R.layout.no_location_dialog, null);
             CheckBox neverShowDialog = view.findViewById(R.id.location_never_ask_again);
+
+            // Set the dialog text programmatically to support app_name placeholder
+            TextView noLocationText = view.findViewById(R.id.no_location_text);
+            noLocationText.setText(getString(R.string.main_nolocation, getString(R.string.app_name)));
 
             neverShowDialog.setOnCheckedChangeListener((compoundButton, isChecked) -> {
                 // Save the preference

@@ -59,6 +59,8 @@ src/mybrand/
 
 That's it! All other branded strings use `%1$s` placeholders that automatically substitute your app name.
 
+**Note:** A few strings are referenced directly in XML layout files and cannot use placeholders (the placeholder would display as literal text). These strings are handled programmatically in the Java code to support the app name substitution. You don't need to do anything special for these.
+
 #### colors.xml
 
 ```xml
@@ -70,6 +72,8 @@ That's it! All other branded strings use `%1$s` placeholders that automatically 
     <color name="theme_accent">#YOUR_ACCENT_COLOR</color>
     <color name="tutorial_background">#dfYOUR_PRIMARY</color>
     <color name="ic_launcher_background">#YOUR_PRIMARY_COLOR</color>
+    <!-- Keep on-time arrivals green even if your theme isn't green -->
+    <color name="stop_info_ontime">#4CAF50</color>
 </resources>
 ```
 
@@ -95,19 +99,13 @@ Use [Android Asset Studio](http://romannurik.github.io/AndroidAssetStudio/icons-
 
 ### Step 4: Add Firebase Configuration (Optional)
 
-Add your app's Firebase client info to `google-services.json`:
+Add your app's Firebase client info to `google-services.json`. See `REBRANDING.md` for detailed instructions.
 
-```json
-{
-  "client_info": {
-    "mobilesdk_app_id": "YOUR_FIREBASE_APP_ID",
-    "android_client_info": {
-      "package_name": "com.mybrand.transit"
-    }
-  },
-  ...
-}
-```
+**Note on API key security:** Firebase API keys in `google-services.json` are safe to commit to version control. Unlike server-side API keys, these client-side keys are designed to be embedded in apps and are protected by:
+- Package name restrictions (the key only works for your specific app ID)
+- SHA-1 certificate fingerprint restrictions (the key only works with your signing certificate)
+
+The keys cannot be used by other apps or for server-side access.
 
 ### Step 5: Build
 

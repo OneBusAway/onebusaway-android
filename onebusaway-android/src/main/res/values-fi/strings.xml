@@ -69,7 +69,7 @@
     <string name="out_of_memory_error">Käytettävissä oleva muistin määrä ei riitä pyynnön
         käsittelyyn.
     </string>
-    <string name="bad_gateway_error">OneBusAway:n palvelin on ruuhkautunut. Pyydämme anteeksi!
+    <string name="bad_gateway_error">%1$s:n palvelin on ruuhkautunut. Pyydämme anteeksi!
     </string>
     <string name="map_generic_error">Pysäkkejä ei pystytä hakemaan.</string>
     <string name="no_network_error">Internet-yhteyttä ei ole saatavilla.
@@ -77,7 +77,7 @@
     <string name="airplane_mode_error">Et ole yhdistettynä internetiin.\nSuljetaanko
         lentokone-tila?
     </string>
-    <string name="custom_api_url_error">Virheellinen osoite. Käytä toimivan OneBusAway palvelimen osoitetta.
+    <string name="custom_api_url_error">Virheellinen osoite. Käytä toimivan %1$s palvelimen osoitetta.
     </string>
     <string name="direction_n">Pohjoiseen</string>
     <string name="direction_ne">Koilliseen</string>
@@ -112,7 +112,7 @@
         peruttu - tämä bussi EI tule
     </string>
     <string name="main_nolocation_title">Sijaintitieto ei ole käytettävissä</string>
-    <string name="main_nolocation">OneBusAway haluaa käyttää sijaintitietoasi,
+    <string name="main_nolocation">%1$s haluaa käyttää sijaintitietoasi,
         sallitaanko?
     </string>
     <string name="main_waiting_for_location">Sijaintiasi yritetään paikantaa&#8230;</string>
@@ -380,8 +380,8 @@
     <string name="search_stop_hint">Syötä pysäkin numero</string>
     <string name="search_route_hint">Syötä reitin nimi tai numero</string>
 
-    <string name="route_shortcut">OneBusAway reitti</string>
-    <string name="stop_shortcut">OneBusAway pysäkki</string>
+    <string name="route_shortcut">Reitti</string>
+    <string name="stop_shortcut">Pysäkki</string>
     <string name="recent_stops_shortcut">Aiemmat pysäkit</string>
     <string name="recent_routes_shortcut">Aiemmat reitit</string>
     <string name="starred_stops_shortcut">Suosikkipysäkit</string>
@@ -422,7 +422,7 @@
     <!-- Report problem -->
     <string name="report_problem_comment_hint">valinnainen</string>
     <string name="report_problem_send">Lähetä</string>
-    <string name="report_problem_hint">Raportit auttavat OneBusAway:tä löytämään ja korjaamaan ongelmia!</string>
+    <string name="report_problem_hint">Raportit auttavat %1$s:tä löytämään ja korjaamaan ongelmia!</string>
     <string name="report_problem_error">Raporttia ei pystytä lähettämään. Yritetäänkö uudestaan?</string>
     <string name="report_problem_invalid_argument">Valitse ongelman kategoria.</string>
     <!-- TODO: Modes -->
@@ -476,7 +476,7 @@
     <string name="region_selected_manually">valittu manuaalisesti</string>
 
     <!--  Bug report -->
-    <string name="bug_report_subject">OneBusAway Android: Palaute</string>
+    <string name="bug_report_subject">%1$s Android: Palaute</string>
     <string name="bug_report_body">Valitukset, kiitokset ja virheraportit ovat tervetulleita!\n\n\nApp Version:
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nGoogle Play Services App: %5$s\n
         Google Play Services Library: %6$d\nRegion/API: %7$s (%8$s)\nLoc: %9$s
@@ -487,8 +487,8 @@
     </string>
     <string name="bug_report_error">Virheraporttia ei pystytä lähettämään: sopivaa ohjelmaa ei löytynyt.
     </string>
-    <string name="bug_report_subject_trip_plan">OneBusAway Android: Matkasuunnittelupalaute</string>
-    <string name="bug_report_subject_trip_plan_fail">OneBusAway Android: Matkasuunnittelu epäonnistui -palaute</string>
+    <string name="bug_report_subject_trip_plan">%1$s Android: Matkasuunnittelupalaute</string>
+    <string name="bug_report_subject_trip_plan_fail">%1$s Android: Matkasuunnittelu epäonnistui -palaute</string>
     <string name="bug_report_body_trip_plan">Valitukset, kehut tai virheraportit ovat tervetulleita!\n\n\nSovellusversio: %1$s\nMalli: %2$s\nKäyttöjärjestelmäversio: %3$s / %4$d\nGoogle Play Services -sovellus: %5$s\nGoogle Play Services -kirjasto: %6$d\nAlue/API: %7$s (%8$s)\nSijainti: %9$s\n\nMatkan suunnittelu URL-osoitteella: %10$s\n\n</string>
     <string name="bug_report_body_trip_plan_fail">Valitukset, kehut tai virheraportit ovat tervetulleita!\n\n\nSovellusversio: %1$s\nMalli: %2$s\nKäyttöjärjestelmäversio: %3$s / %4$d\nGoogle Play Services -sovellus: %5$s\nGoogle Play Services -kirjasto: %6$d\nAlue/API: %7$s (%8$s)\nSijainti: %9$s\n\nMatkan suunnittelu epäonnistui URL-osoitteella: %10$s\n\n</string>
     <string name="bug_report_body_trip_plan_without_location">Valitukset, kehut tai virheraportit ovat tervetulleita!\n\n\nSovellusversio: %1$s\nMalli: %2$s\nKäyttöjärjestelmäversio: %3$s / %4$d\n\nMatkan suunnittelu URL-osoitteella: %5$s\n\n</string>
@@ -538,11 +538,11 @@
         saapuvien bussien tiedot otsikosssa (ei vaikuta karttaan)
     </string>
 
-    <string name="preferences_arrival_info_style_options_a">Klassinen OneBusAway</string>
+    <string name="preferences_arrival_info_style_options_a">Klassinen %1$s</string>
     <string name="preferences_arrival_info_style_options_b">Kortit</string>
 
-    <string name="preferences_oba_api_servername_title">OneBusAway API palvelin</string>
-    <string name="preferences_oba_api_servername_summary">Määrittää käytettävän palvelimen OneBusAway
+    <string name="preferences_oba_api_servername_title">%1$s API palvelin</string>
+    <string name="preferences_oba_api_servername_summary">Määrittää käytettävän palvelimen %1$s
         API kutsuille
     </string>
     <string name="preferences_oba_api_servername_hint">esimerkki.onebusaway.org</string>
@@ -554,7 +554,7 @@
     <string name="preferences_db_save_error">Tallennus epäonnistui: %1$s</string>
     <string name="preferences_db_restore_warning">Kaikki tämänhetkiset tiedot pyyhitään! Jatketaanko?
     </string>
-    <string name="preferences_db_restored">Palautus onnistui! Käynnistä OneBusAway uudestaan.</string>
+    <string name="preferences_db_restored">Palautus onnistui! Käynnistä %1$s uudestaan.</string>
     <string name="preferences_db_restore_error">Palautus epäonnistui: %1$s</string>
 
     <string name="preferences_experimental_regions_title">Kokeelliset alueet</string>
@@ -571,8 +571,8 @@
     <string name="preferences_tutorial_title">Näytä ohje</string>
     <string name="preferences_tutorial_summary">Tarkemmat ohjeet kuinka käyttää tätä sovellusta</string>
     <string name="preferences_donate_title">Lahjoita</string>
-    <string name="preferences_donate_summary">Tue OneBusAwayn avoimen lähdekoodin projektia</string>
-    <string name="preferences_powered_by_oba_title">Powered by OneBusAway</string>
+    <string name="preferences_donate_summary">Tue %1$sn avoimen lähdekoodin projektia</string>
+    <string name="preferences_powered_by_oba_title">Powered by %1$s</string>
     <string name="preferences_powered_by_oba_summary">Lisää tietoja tästä avoimen lähdekoodin projektista
     </string>
     <string name="preferences_about_title">Tietoja</string>
@@ -596,9 +596,9 @@
     <string name="preferences_otp_api_servername_hint">esimerkki.opentripplanner.org/otp</string>
     <string name="preferences_restore_loading">Palautetaan tallennustilasta&#8230;</string>
     <string name="preferences_preferred_vibration_title">Värinä</string>
-    <string name="preferences_preferred_vibration_summary">Salli OneBusAway-ilmoitusten värinä</string>
+    <string name="preferences_preferred_vibration_summary">Salli %1$s-ilmoitusten värinä</string>
     <string name="preferences_preferred_sound_title">Muistutusääni</string>
-    <string name="preferences_preferred_sound_summary">Valitse OneBusAway-ilmoitusääni</string>
+    <string name="preferences_preferred_sound_summary">Valitse %1$s-ilmoitusääni</string>
     <string name="preferences_trip_plan_notifications_title">Matkasuunnitelmailmoitukset (beta)</string>
     <string name="preferences_trip_plan_notifications_summary">Matkan suunnittelun jälkeen lähetä ilmoitukset, jos matka on myöhässä tai sitä ei enää suositella.</string>
     <string name="preferences_travel_behavior_title">Lähetä anonyymit matkakäyttäytymistiedot</string>
@@ -606,7 +606,7 @@
     <string name="preferences_push_firebase_data_title">Lähetä Firebase-tiedot palvelimelle</string>
     <string name="preferences_push_firebase_data_summary">Jos olet osallistunut matkakäyttäytymistutkimukseen, tämän vaihtoehdon napauttaminen lähettää kerätyt matkakäyttäytymistiedot Firebase-palvelimelle.</string>
     <string name="preferences_user_share_destination_logs_title">Sisällytä määränpäämuistutuslokit</string>
-    <string name="preferences_user_share_destination_logs_summary">Anonyymit reaaliaikaiset sijaintitiedot laitteestasi jaetaan OneBusAwayn kanssa määränpäämuistutusominaisuuden parantamiseksi.</string>
+    <string name="preferences_user_share_destination_logs_summary">Anonyymit reaaliaikaiset sijaintitiedot laitteestasi jaetaan %1$sn kanssa määränpäämuistutusominaisuuden parantamiseksi.</string>
     <string name="preference_region_dialog_title">Tarkista alue</string>
     <string name="preference_region_dialog_message">Alueeksesi on tällä hetkellä asetettu %1$s. Jos tämä on väärin, muuta sitä napauttamalla \'Alueesi\'!</string>
     <!-- Units -->
@@ -663,7 +663,7 @@
 
     <!-- Tutorials -->
     <string name="tutorial_button_text" >Tajusin!</string>
-    <string name="tutorial_welcome_title">Tervetuloa OneBusAwayhin!</string>
+    <string name="tutorial_welcome_title">Tervetuloa %1$siin!</string>
     <string name="tutorial_welcome_text">Napsauta pysäkkiä (vihreä piste kartallla) nähdäksesi
         saapumisajat.
     </string>
@@ -699,7 +699,7 @@
         työpöydälle pikakuvakkeen. Pikakuvaketta napsauttamalla näet suoraan pysäkille saapuvat vuorot.
     </string>
     <string name="tutorial_opt_out_dialog_title">Näytetäänkö opas?</string>
-    <string name="tutorial_opt_out_dialog_text">Haluatko nähdä ponnahdusikkunoiden kuvaukset OneBusAwayn käytöstä? Voit aina ottaa ponnahdusikkunat käyttöön tai poistaa ne käytöstä asetuksista, tai näyttää oppaan myöhemmin Ohje-valikon kautta.</string>
+    <string name="tutorial_opt_out_dialog_text">Haluatko nähdä ponnahdusikkunoiden kuvaukset %1$sn käytöstä? Voit aina ottaa ponnahdusikkunat käyttöön tai poistaa ne käytöstä asetuksista, tai näyttää oppaan myöhemmin Ohje-valikon kautta.</string>
     <string name="tutorial_send_feedback_transit_service_title">Enemmän kuin vain joukkoliikennettä</string>
     <string name="tutorial_send_feedback_transit_service_text">Voit ilmoittaa monenlaisia ongelmia paikallishallinnolle tämän pysäkin lähistöllä. Napauta pudotusvalikkoa nähdäksesi koko listan.</string>
     <string name="tutorial_trip_plan_geocoder_title">Syötä osoite tai sijainnin nimi</string>
@@ -710,7 +710,7 @@
     <string name="about_content"><![CDATA[
     <html>
   <body>
-    <h1 style="color: #4caf50"><b>Tervetuloa OneBusAway-hankkeeseen!</b></h1>
+    <h1 style="color: #4caf50"><b>Tervetuloa %1$s-hankkeeseen!</b></h1>
 
     <p>
         Tämä sovellus on vapaaehtoistiimin tekemä ja se nojaa sen avoimen lähdekoodin avustajien omistautumiseen, intohimoon ja kykyihin.
@@ -745,7 +745,7 @@
     </ul>
     <h2><b>Kääntäjät:</b></h2>
     <p>
-      Kiitos kääntäjillemme, OneBusAway on saavutettavissa ympäri maailmaa:
+      Kiitos kääntäjillemme, %1$s on saavutettavissa ympäri maailmaa:
     </p>
     <ul>
       <li><b>Ari Rusakko</b></li>
@@ -768,7 +768,7 @@
     <p>
       Tutustu projektiimme GitHubissa osoitteessa https://github.com/OneBusAway/onebusaway-android.
       <p>
-        Lue lisää OneBusAwayn avoimen lähdekoodin projektista osoitteessa https://onebusaway.org .</p>
+        Lue lisää %1$sn avoimen lähdekoodin projektista osoitteessa https://onebusaway.org .</p>
         <p>
         Erityiskiitos Googlen upeista materiaalisen suunnittelun ikoneista (https://github.com/google/material-design-icons),
         jotka lisäävät eleganssia sovellukseemme. Heidän anteliaisuutensa lisensoida nämä ikonit Apache v2.0 -lisenssillä (https://www.apache.org/licenses/LICENSE-2.0) on rikastuttanut huomattavasti käyttäjäkokemustamme.
@@ -780,7 +780,7 @@
       <p>
 
     <p>
-      Tutustu sovellukseemme ja aloita sujuva joukkoliikennematka OneBusAwayn kanssa!
+      Tutustu sovellukseemme ja aloita sujuva joukkoliikennematka %1$sn kanssa!
     </p>
   </body>
 </html>
@@ -789,7 +789,7 @@
     <string name="location_permissions_title">Sijaintioikeudet</string>
     <string name="location_permissions_message">Parantaaksesi kokemustasi, ota käyttöön sijainnin käyttö:\n  - Näytä reaaliaikainen sijaintisi kartalla.\n  - Aseta automaattisesti paikallinen liikennevirastosi.\n\nEmme kerää sijaintitietojasi. Vaihtoehtoisesti voit valita alueesi manuaalisesti ilman sijaintioikeuksien sallimista.</string>
     <string name="storage_permissions_title">Tallennustilan käyttöoikeus vaaditaan</string>
-    <string name="storage_permissions_message">Tietojen varmuuskopiointia tai palauttamista varten OneBusAway tarvitsee luvan käyttää laitteesi tallennustilaa.</string>
+    <string name="storage_permissions_message">Tietojen varmuuskopiointia tai palauttamista varten %1$s tarvitsee luvan käyttää laitteesi tallennustilaa.</string>
     <string name="title_activity_about">Tietoja</string>
     <string name="trip_info_grant_exact_alarms_permission_title">Lupa tarvitaan</string>
     <string name="trip_info_grant_exact_alarms_permission_message">Sinun täytyy antaa sovellukselle lupa muistutuksen asettamiseen.</string>
@@ -799,17 +799,17 @@
     <string name="preferred_temperature_unit">Suosittu lämpötilayksikkö</string>
     <string name="fahrenheit">Fahrenheit</string>
     <string name="celsius">Celsius</string>
-    <string name="donation_view_title">🚨 OneBusAway tarvitsee apuasi</string>
+    <string name="donation_view_title">🚨 %1$s tarvitsee apuasi</string>
     <string name="donation_view_body">Tämä sovellus on tällä hetkellä rakennettu 100% vapaaehtoistyöllä, ja tarvitsemme sinua auttamaan meitä rahoittamaan tulevaa kehitystä.</string>
     <string name="donation_view_learn_more_button">Lue Lisää</string>
     <string name="donation_view_donate_now_button">Lahjoita Nyt</string>
     <string name="donation_dismiss_dialog_title">Ole hyvä äläkä hylkää tätä pyyntöä</string>
-    <string name="donation_dismiss_dialog_body">OneBusAway on vapaaehtoisten pyörittämä organisaatio, jolla on lähes ei lainkaan rahoitusta. Tarvitsemme apuasi pitääksemme tämän sovelluksen toiminnassa.</string>
+    <string name="donation_dismiss_dialog_body">%1$s on vapaaehtoisten pyörittämä organisaatio, jolla on lähes ei lainkaan rahoitusta. Tarvitsemme apuasi pitääksemme tämän sovelluksen toiminnassa.</string>
     <string name="donation_dismiss_dialog_dont_want_to_help_button">En Halua Auttaa</string>
     <string name="donation_dismiss_dialog_remind_me_later_button">Muistuta Minua Myöhemmin</string>
     <string name="donation_dismiss_dialog_cancel_button">Peruuta</string>
     <string name="title_activity_donation_learn_more">Miksi tarvitsemme apuasi</string>
-    <string name="donation_learn_more_explanation">Meillä on suuria suunnitelmia OneBusAwayn parantamiseksi, mutta emme voi tehdä sitä ilman apuasi. Tämä sovellus on tällä hetkellä rakennettu 100% vapaaehtoistyöllä, ja tarvitsemme sinua auttamaan meitä rahoittamaan tulevan kehityksen.\n\nOpen Transit Software Foundationin, 501(c)(3) voittoa tavoittelemattoman järjestön, keskeisenä hankkeena me luotamme käyttäjien, kuten sinun, hyväntahtoisuuteen pysyäksemme toiminnassa ja tehdäksemme tästä ohjelmistosta paremman.\n\nJoka vuosi vain pieni osa käyttäjistämme lahjoittaa, mutta jokainen panos, suuri tai pieni, auttaa varmistamaan, että OneBusAway pysyy ilmaisena, päivitettynä ja kaikkien saavutettavissa. Pieni lahjoitus, vaikkapa vain yhden viikon työmatkakustannusten verran, 27,50 dollaria, voi tehdä suuren eron.\n\nVerovähennyskelpoinen panoksesi varmistaa, että OneBusAway pysyy vapaana ja kaikkien saavutettavissa. Muovataan yhdessä joukkoliikenteen tulevaisuutta!\n\nKiitos,\nOneBusAway-tiimi</string>
+    <string name="donation_learn_more_explanation">Meillä on suuria suunnitelmia %1$sn parantamiseksi, mutta emme voi tehdä sitä ilman apuasi. Tämä sovellus on tällä hetkellä rakennettu 100% vapaaehtoistyöllä, ja tarvitsemme sinua auttamaan meitä rahoittamaan tulevan kehityksen.\n\nOpen Transit Software Foundationin, 501(c)(3) voittoa tavoittelemattoman järjestön, keskeisenä hankkeena me luotamme käyttäjien, kuten sinun, hyväntahtoisuuteen pysyäksemme toiminnassa ja tehdäksemme tästä ohjelmistosta paremman.\n\nJoka vuosi vain pieni osa käyttäjistämme lahjoittaa, mutta jokainen panos, suuri tai pieni, auttaa varmistamaan, että %1$s pysyy ilmaisena, päivitettynä ja kaikkien saavutettavissa. Pieni lahjoitus, vaikkapa vain yhden viikon työmatkakustannusten verran, 27,50 dollaria, voi tehdä suuren eron.\n\nVerovähennyskelpoinen panoksesi varmistaa, että %1$s pysyy vapaana ja kaikkien saavutettavissa. Muovataan yhdessä joukkoliikenteen tulevaisuutta!\n\nKiitos,\n%1$s-tiimi</string>
     <string name="preferences_reset_donation_timestamps_title">Nollaa Lahjoituksen Aikaleimat</string>
     <string name="preferences_reset_donation_timestamps_summary">Tämän vaihtoehdon napauttaminen poistaa sekä \'Muistuta minua myöhemmin\' että \'Älä vaivaudu\' aikaleimat, jotka liittyvät lahjoituspyyntöihin.</string>
     <string name="preferences_show_weather_view">Näytä säätönäkymä</string>
@@ -823,7 +823,7 @@
     <string name="preferences_show_available_studies_title">Näytä saatavilla olevat tutkimukset</string>
     <string name="preferences_show_available_studies_body">Osallistu tutkimuksiin auttaaksesi parantamaan liikenne- ja sovelluskokemustasi.</string>
     <string name="dismiss_survey">Hylkää kysely</string>
-    <string name="onebusaway_survey">OneBusAway-kysely</string>
+    <string name="onebusaway_survey">%1$s-kysely</string>
     <string name="you_can_select_multiple_options_for_this_pool">(Voit valita useita vaihtoehtoja tästä ryhmästä.)</string>
     <string name="write_your_answer_here">Kirjoita vastauksesi tähän</string>
     <string name="submit">Lähetä</string>
@@ -1005,7 +1005,7 @@
     <string name="tripplanner_reverse">Käännä</string>
     <string name="tripplanner_report_trip_problem">Ilmoita matkasuunnitelman ongelmasta</string>
     <string name="no_trip_planner_title">Googlen kustannusten nousu</string>
-    <string name="no_trip_planner_message">Google veloittaa nyt OneBusAwaylta kaikista matkasuunnitelmista (noin 1000 dollaria kuukaudessa)! OBA on avoimen lähdekoodin projekti, eikä pysty maksamaan näitä kuluja.</string>
+    <string name="no_trip_planner_message">Google veloittaa nyt %1$slta kaikista matkasuunnitelmista (noin 1000 dollaria kuukaudessa)! OBA on avoimen lähdekoodin projekti, eikä pysty maksamaan näitä kuluja.</string>
     <string name="do_you_want_to_plan_the_trip_now">Haluatko suunnitella matkan nyt?</string>
     <string name="connector_before_route">Linja</string>
     <string name="time_connector_next_day">huomenna</string>
@@ -1121,7 +1121,7 @@
     <string name="feedback_msg">Saitko ilmoituksen oikeaan aikaan poistuaksesi pysäkilläsi?</string>
     <string name="feedback_freeText">Kirjoita palautteesi</string>
     <string name="feedback_checkbox_text">Sisällytä järjestelmäloki (valintasi tallennetaan tulevia matkoja varten)</string>
-    <string name="feedback_log_guide">Palautteesi lähetetään OneBusAwaylle. Jos valitset "Sisällytä järjestelmälokit", laitteestasi tallennettu reaaliaikainen sijaintitieto määränpääpysäkille lähestyttäessä jaetaan OneBusAwayn kanssa, jotta kehittäjät voivat parantaa määränpäämuistutusominaisuutta.\n\nVoit muuttaa järjestelmälokien jakamisasetusta Asetuksissa.</string>
+    <string name="feedback_log_guide">Palautteesi lähetetään %1$slle. Jos valitset "Sisällytä järjestelmälokit", laitteestasi tallennettu reaaliaikainen sijaintitieto määränpääpysäkille lähestyttäessä jaetaan %1$sn kanssa, jotta kehittäjät voivat parantaa määränpäämuistutusominaisuutta.\n\nVoit muuttaa järjestelmälokien jakamisasetusta Asetuksissa.</string>
     <string name="feedback_notify_title">Auta parantamaan määränpäämuistutuksia</string>
     <string name="feedback_notify_dialog_msg">Saitko ilmoituksen oikeaan aikaan?</string>
     <string name="feedback_notify_confirmation">Kiitos palautteesta!</string>
@@ -1161,5 +1161,5 @@
 
     <!-- Battery optimization -->
     <string name="application_ignoring_battery_opt_title">Suorituskykyvaroitus!</string>
-    <string name="application_ignoring_battery_opt_message">Akun optimointi on käytössä tälle sovellukselle, mikä voi heikentää sovelluksen suorituskykyä. Parhaan käyttökokemuksen saavuttamiseksi siirry asetuksiin ja poista akun optimointi käytöstä OneBusAway-sovellukselta.</string>
+    <string name="application_ignoring_battery_opt_message">Akun optimointi on käytössä tälle sovellukselle, mikä voi heikentää sovelluksen suorituskykyä. Parhaan käyttökokemuksen saavuttamiseksi siirry asetuksiin ja poista akun optimointi käytöstä %1$s-sovellukselta.</string>
 </resources>

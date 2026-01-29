@@ -197,7 +197,7 @@ public class DirectionsMapController implements MapModeController {
             return OTPConstants.OTP_TRANSIT_COLOR;
         }
 
-        // Calculates color for non-trip planning situations
+        // Use route's custom color if available
         if (leg.routeColor != null) {
             try {
                 return Long.decode("0xFF" + leg.routeColor).intValue();

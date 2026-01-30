@@ -22,8 +22,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.analytics.FirebaseAnalytics;
-import org.onebusaway.android.ui.SituationDialogFragment;
-import android.os.Bundle;
+
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.onebusaway.android.BuildConfig;
@@ -1478,7 +1477,7 @@ public class HomeActivity extends AppCompatActivity
         mZoomInBtn.setOnClickListener(view -> mMapFragment.zoomIn());
         mZoomOutBtn.setOnClickListener(view -> mMapFragment.zoomOut());
     }
-    
+
     private void setupMyLocationButton() {
         // Initialize the My Location button
         mFabMyLocation = findViewById(R.id.btnMyLocation);

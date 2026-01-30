@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,6 +28,8 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.ScrollView;
 import android.view.ViewGroup;
+import android.content.res.Configuration;
+import android.graphics.Color;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
@@ -55,13 +57,16 @@ public class SituationDialogFragment extends DialogFragment {
 
     public static final String URL = ".Url";
 
+    private static final float MAX_DIALOG_HEIGHT_RATIO = 0.65f;
+
     interface Listener {
 
         /**
          * Called when this dialog is dismissed
          *
-         * @param isAlertHidden true if the service alert was hidden by the user, false if it was
-         * not
+         * @param isAlertHidden true if the service alert was hidden by the user, false
+         *                      if it was
+         *                      not
          */
         void onDismiss(boolean isAlertHidden);
 
@@ -124,7 +129,8 @@ public class SituationDialogFragment extends DialogFragment {
                                                     mListener.onUndo();
                                                 }
                                             }
-                                        }).show();
+                                        })
+                                .show();
                         dialog.dismiss();
                         if (mListener != null) {
                             mListener.onDismiss(true);
@@ -139,7 +145,7 @@ public class SituationDialogFragment extends DialogFragment {
 
                     // Show the snackbar
                     Snackbar.make(getActivity().findViewById(R.id.fragment_arrivals_list),
-                                    R.string.all_alert_hidden_snackbar_text, Snackbar.LENGTH_SHORT)
+                            R.string.all_alert_hidden_snackbar_text, Snackbar.LENGTH_SHORT)
                             .show();
 
                     dialog.dismiss();
@@ -162,59 +168,61 @@ public class SituationDialogFragment extends DialogFragment {
 
         // Ensure the alert ScrollView has a max height so it becomes scrollable
         // when there is lots of content instead of expanding the dialog infinitely.
-        android.widget.ScrollView scrollView =
-                (android.widget.ScrollView) dialog.findViewById(R.id.alert_scrollview);
+        ScrollView scrollView = (ScrollView) dialog.findViewById(R.id.alert_scrollview);
         if (scrollView != null) {
+            // Capture screen height before posting to avoid accessing resources after
+            // detachment.
+            final int screenHeight = getResources().getDisplayMetrics().heightPixels;
             // Post to ensure views are measured before checking/setting height.
-            scrollView.post(new Runnable() {
-                @Override
-                public void run() {
-                    // Use ~65% of the screen height as a reasonable max dialog height.
-                    final int maxHeightPx = (int) (0.65f * getResources().getDisplayMetrics().heightPixels);
-                    if (scrollView.getHeight() > maxHeightPx) {
-                        android.view.ViewGroup.LayoutParams lp = scrollView.getLayoutParams();
-                        lp.height = maxHeightPx;
-                        scrollView.setLayoutParams(lp);
-                    }
+            scrollView.post(() -> {
+                if (!isAdded())
+                    return;
+                // Use ~65% of the screen height as a reasonable max dialog height.
+                final int maxHeightPx = (int) (MAX_DIALOG_HEIGHT_RATIO * screenHeight);
+                if (scrollView.getHeight() > maxHeightPx) {
+                    ViewGroup.LayoutParams lp = scrollView.getLayoutParams();
+                    lp.height = maxHeightPx;
+                    scrollView.setLayoutParams(lp);
                 }
             });
         }
 
         // --- START MANUAL DARK MODE CHECK ---
-        
+
         // 1. Get the current UI mode from the dialog's context
-        int currentNightMode = dialog.getContext().getResources().getConfiguration().uiMode 
-                               & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        int currentNightMode = dialog.getContext().getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_NIGHT_MASK;
 
         // 2. Define the colors based on the mode
         int textColor;
         int linkColor;
 
-        if (currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
+        if (currentNightMode == Configuration.UI_MODE_NIGHT_YES) {
             // Dark Mode: Use light colors
-            textColor = android.graphics.Color.WHITE;
-            linkColor = android.graphics.Color.CYAN; // A light blue for links
+            textColor = Color.WHITE;
+            linkColor = Color.CYAN; // A light blue for links
         } else {
             // Light Mode: Use dark colors
-            textColor = android.graphics.Color.BLACK;
-            linkColor = android.graphics.Color.BLUE;   // Standard dark blue for links
+            textColor = Color.BLACK;
+            linkColor = Color.BLUE; // Standard dark blue for links
         }
         // --- END MANUAL DARK MODE CHECK ---
 
-
         // 3. Apply the colors
         TextView title = (TextView) dialog.findViewById(R.id.alert_title);
-        title.setText(args.getString(TITLE));
-        // The title's background (@color/theme_primary) is dark, so title text should always be light.
-        title.setTextColor(android.graphics.Color.WHITE); 
+        if (title != null) {
+            title.setText(args.getString(TITLE));
+            // The title's background (@color/theme_primary) is dark, so title text should
+            // always be light.
+            title.setTextColor(Color.WHITE);
+        }
 
         TextView descTxtView = (TextView) dialog.findViewById(R.id.alert_description);
-        descTxtView.setTextColor(textColor); 
-        descTxtView.setLinkTextColor(linkColor); 
-
-        String desc = args.getString(DESCRIPTION);
-
         if (descTxtView != null) {
+            descTxtView.setTextColor(textColor);
+            descTxtView.setLinkTextColor(linkColor);
+
+            String desc = args.getString(DESCRIPTION);
             if (!TextUtils.isEmpty(desc)) {
                 String htmlDescription = desc.replaceAll("\\r\\n|\\r|\\n", "<br>");
                 descTxtView.setText(Html.fromHtml(htmlDescription));
@@ -222,27 +230,29 @@ public class SituationDialogFragment extends DialogFragment {
                 descTxtView.setText(R.string.no_description_available);
             }
         }
-        
+
         TextView urlView = (TextView) dialog.findViewById(R.id.alert_url);
-        urlView.setTextColor(linkColor); 
-        urlView.setLinkTextColor(linkColor); 
+        if (urlView != null) {
+            urlView.setTextColor(linkColor);
+            urlView.setLinkTextColor(linkColor);
 
-        // Remove any previous clickable spans just to be safe
-        UIUtils.removeAllClickableSpans(urlView);
+            // Remove any previous clickable spans just to be safe
+            UIUtils.removeAllClickableSpans(urlView);
 
-        final String url = args.getString(URL);
-        if (!TextUtils.isEmpty(url)) {
-            urlView.setVisibility(View.VISIBLE);
+            final String url = args.getString(URL);
+            if (!TextUtils.isEmpty(url)) {
+                urlView.setVisibility(View.VISIBLE);
 
-            ClickableSpan urlClick = new ClickableSpan() {
-                public void onClick(View v) {
-                    getActivity().startActivity(
-                            new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                }
-            };
-            UIUtils.setClickableSpan(urlView, urlClick);
-        } else {
-            urlView.setVisibility(View.GONE);
+                ClickableSpan urlClick = new ClickableSpan() {
+                    public void onClick(View v) {
+                        getActivity().startActivity(
+                                new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                    }
+                };
+                UIUtils.setClickableSpan(urlView, urlClick);
+            } else {
+                urlView.setVisibility(View.GONE);
+            }
         }
 
         // Update the database to indicate that this alert has been read

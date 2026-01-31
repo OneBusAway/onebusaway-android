@@ -64,8 +64,7 @@ public class SituationDialogFragment extends DialogFragment {
         /**
          * Called when this dialog is dismissed
          *
-         * @param isAlertHidden true if the service alert was hidden by the user, false
-         *                      if it was
+         * @param isAlertHidden true if the service alert was hidden by the user, false if it was
          *                      not
          */
         void onDismiss(boolean isAlertHidden);
@@ -129,8 +128,7 @@ public class SituationDialogFragment extends DialogFragment {
                                                     mListener.onUndo();
                                                 }
                                             }
-                                        })
-                                .show();
+                                        }).show();
                         dialog.dismiss();
                         if (mListener != null) {
                             mListener.onDismiss(true);
@@ -260,7 +258,6 @@ public class SituationDialogFragment extends DialogFragment {
                 .insertOrUpdate(args.getString(ID), new ContentValues(), true, null);
 
         return dialog;
-
     }
 
     public Listener getListener() {

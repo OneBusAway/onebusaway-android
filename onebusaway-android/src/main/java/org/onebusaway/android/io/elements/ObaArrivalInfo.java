@@ -27,6 +27,7 @@ public final class ObaArrivalInfo implements Serializable{
     public static final ObaArrivalInfo EMPTY_OBJECT = new ObaArrivalInfo();
 
     public static final ObaArrivalInfo[] EMPTY_ARRAY = new ObaArrivalInfo[]{};
+
     private static final String PUGET_SOUND_REGION_NAME = "Puget Sound";
 
     public static final class Frequency implements Serializable {

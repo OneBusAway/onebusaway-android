@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.request.RequestBase;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
 import org.onebusaway.android.ui.survey.SurveyPreferences;
@@ -28,7 +29,9 @@ public final class ObaStudyRequest extends RequestBase implements Callable<Study
         private static Uri URI = null;
 
         public Builder(Context context) {
-            String baseUrl = Application.get().getCurrentRegion().getSidecarBaseUrl();
+            ObaRegion region = Application.get().getCurrentRegion();
+            if (region == null) return;
+            String baseUrl = region.getSidecarBaseUrl();
             if(baseUrl == null) return;
             String studyAPIURL = baseUrl + Application.get().getResources().getString(R.string.studies_api_endpoint);
             studyAPIURL = studyAPIURL.replace("regionID", String.valueOf(Application.get().getCurrentRegion().getId()));

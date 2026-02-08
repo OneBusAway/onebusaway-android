@@ -22,6 +22,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.CameraUpdateFactory;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
@@ -155,6 +156,23 @@ public class StopOverlay implements MarkerListeners {
         }
 
         doFocusChange(stop);
+
+        float currentZoom = mMap.getCameraPosition().zoom;
+
+        if (currentZoom < BaseMapFragment.CAMERA_DEFAULT_ZOOM) {
+            mMap.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(
+                            marker.getPosition(),
+                            BaseMapFragment.CAMERA_DEFAULT_ZOOM
+                    )
+            );
+        } else {
+            mMap.animateCamera(
+                    CameraUpdateFactory.newLatLng(
+                            marker.getPosition()
+                    )
+            );
+        }
 
         return true;
     }

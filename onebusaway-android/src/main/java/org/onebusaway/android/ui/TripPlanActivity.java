@@ -35,6 +35,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
+
+import com.sothree.slidinguppanel.PanelState;
 import com.sothree.slidinguppanel.ScrollableViewHelper;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
@@ -168,7 +170,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         if (haveTripPlan) {
             initResultsFragment();
             if (bundle.getBoolean(PANEL_STATE_EXPANDED) || newItineraries) {
-                mPanel.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+                mPanel.setPanelState(PanelState.EXPANDED);
             }
         }
 
@@ -227,7 +229,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             boolean showMap = source.getBoolean(OTPConstants.SHOW_MAP);
             bundle.putBoolean(OTPConstants.SHOW_MAP, showMap);
 
-            boolean panelStateExpanded = (mPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED);
+            boolean panelStateExpanded = (mPanel.getPanelState() == PanelState.EXPANDED);
             bundle.putBoolean(PANEL_STATE_EXPANDED, panelStateExpanded);
 
             boolean showError = source.getBoolean(SHOW_ERROR_DIALOG);
@@ -253,8 +255,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     @Override
     public void onBackPressed() {
-        if (mPanel != null && mPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
-            mPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+        if (mPanel != null && mPanel.getPanelState() == PanelState.EXPANDED) {
+            mPanel.setPanelState(PanelState.COLLAPSED);
         } else {
             super.onBackPressed();
         }

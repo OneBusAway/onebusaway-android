@@ -229,7 +229,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.4'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
     // Bottom sliding panel
-    implementation 'com.sothree.slidinguppanel:library:3.3.0'
+    implementation 'com.github.hannesa2:AndroidSlidingUpPanel:4.6.1'
     // For floating action button speed dial
     implementation 'com.github.OneBusAway:android-fab:2.4.1'
     // For sorting alphanumeric route names

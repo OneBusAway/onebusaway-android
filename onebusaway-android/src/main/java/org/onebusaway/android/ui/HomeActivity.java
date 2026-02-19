@@ -1799,7 +1799,7 @@ public class HomeActivity extends AppCompatActivity
 
         mSlidingPanel.setPanelState(
                 PanelState.HIDDEN);  // Don't show the panel until we have content
-        mSlidingPanel.setOverlayed(true);
+        mSlidingPanel.setOverlayContent(true);
         mSlidingPanel.setAnchorPoint(MapModeController.OVERLAY_PERCENTAGE);
         mSlidingPanel.addPanelSlideListener(new PanelSlideListener() {
 

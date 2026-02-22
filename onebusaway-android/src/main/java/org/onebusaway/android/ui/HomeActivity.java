@@ -23,6 +23,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import com.sothree.slidinguppanel.PanelSlideListener;
+import com.sothree.slidinguppanel.PanelState;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.onebusaway.android.BuildConfig;
@@ -678,7 +680,7 @@ public class HomeActivity extends AppCompatActivity
         mShowArrivalsMenu = true;
         if (mFocusedStopId != null && mSlidingPanel != null) {
             // if we've focused on a stop, then show the panel that was previously hidden
-            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+            mSlidingPanel.setPanelState(PanelState.COLLAPSED);
         }
         setTitle(getResources().getString(R.string.navdrawer_item_nearby));
 
@@ -826,7 +828,7 @@ public class HomeActivity extends AppCompatActivity
 
     private void hideSlidingPanel() {
         if (mSlidingPanel != null) {
-            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+            mSlidingPanel.setPanelState(PanelState.HIDDEN);
         }
     }
 
@@ -1113,7 +1115,7 @@ public class HomeActivity extends AppCompatActivity
             // and clear the currently focused stopId
             mFocusedStopId = null;
             moveFabsLocation();
-            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+            mSlidingPanel.setPanelState(PanelState.HIDDEN);
             if (mArrivalsListFragment != null) {
                 fm.beginTransaction().remove(mArrivalsListFragment).commit();
             }
@@ -1185,7 +1187,7 @@ public class HomeActivity extends AppCompatActivity
             // Since mFocusedStop was null, the layout changed, and we should recenter map on stop
             if (mMapFragment != null && mSlidingPanel != null) {
                 mMapFragment.setMapCenter(mFocusedStop.getLocation(), false,
-                        mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED);
+                        mSlidingPanel.getPanelState() == PanelState.ANCHORED);
             }
 
             // ...and we should add a focus marker for this stop
@@ -1214,7 +1216,7 @@ public class HomeActivity extends AppCompatActivity
 
         // If we can't see the map or sliding panel, we can't see the arrival info, so return
         if (mMapFragment.isHidden() || !mMapFragment.isVisible() ||
-                mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.HIDDEN) {
+                mSlidingPanel.getPanelState() == PanelState.HIDDEN) {
             return;
         }
 
@@ -1231,9 +1233,9 @@ public class HomeActivity extends AppCompatActivity
         // Make sure the panel is stationary before showing the starred routes tutorial
         if (mSlidingPanel != null &&
                 (isSlidingPanelCollapsed() ||
-                        mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED ||
+                        mSlidingPanel.getPanelState() == PanelState.ANCHORED ||
                         mSlidingPanel.getPanelState()
-                                == SlidingUpPanelLayout.PanelState.EXPANDED)) {
+                                == PanelState.EXPANDED)) {
             ShowcaseViewUtils
                     .showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_HEADER_STAR_ROUTE, this,
                             response, false);
@@ -1252,7 +1254,7 @@ public class HomeActivity extends AppCompatActivity
     public boolean onShowRouteOnMapSelected(ArrivalInfo arrivalInfo) {
         // If the panel is fully expanded, change it to anchored so the user can see the map
         if (mSlidingPanel != null) {
-            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+            mSlidingPanel.setPanelState(PanelState.COLLAPSED);
         }
 
         Bundle bundle = new Bundle();
@@ -1272,7 +1274,7 @@ public class HomeActivity extends AppCompatActivity
         // If the sliding panel isn't open, then open it to show what we're sorting
         if (mSlidingPanel != null) {
             if (isSlidingPanelCollapsed()) {
-                mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED);
+                mSlidingPanel.setPanelState(PanelState.ANCHORED);
             }
         }
     }
@@ -1282,13 +1284,13 @@ public class HomeActivity extends AppCompatActivity
         // Collapse the panel when the user presses the back button
         if (mSlidingPanel != null) {
             // Collapse the sliding panel if its anchored or expanded
-            if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED
-                    || mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED) {
-                mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+            if (mSlidingPanel.getPanelState() == PanelState.EXPANDED
+                    || mSlidingPanel.getPanelState() == PanelState.ANCHORED) {
+                mSlidingPanel.setPanelState(PanelState.COLLAPSED);
                 return;
             }
             // Clear focused stop and close the sliding panel if its collapsed
-            if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED) {
+            if (mSlidingPanel.getPanelState() == PanelState.COLLAPSED) {
                 // Clear the stop focus in map fragment, which will trigger a callback to close the
                 // panel via BaseMapFragment.OnFocusChangedListener in this.onFocusChanged()
                 mMapFragment.setFocusStop(null, null);
@@ -1360,8 +1362,8 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void showSlidingPanel() {
-        if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.HIDDEN) {
-            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+        if (mSlidingPanel.getPanelState() == PanelState.HIDDEN) {
+            mSlidingPanel.setPanelState(PanelState.COLLAPSED);
         }
 
     }
@@ -1596,14 +1598,14 @@ public class HomeActivity extends AppCompatActivity
 
                 int tempMargin = initialMargin;
 
-                if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED) {
+                if (mSlidingPanel.getPanelState() == PanelState.COLLAPSED) {
                     tempMargin += mSlidingPanel.getPanelHeight();
                     if (p.bottomMargin == tempMargin) {
                         // Button is already in the right position, do nothing
                         return;
                     }
                 } else {
-                    if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.HIDDEN) {
+                    if (mSlidingPanel.getPanelState() == PanelState.HIDDEN) {
                         if (p.bottomMargin == tempMargin) {
                             // Button is already in the right position, do nothing
                             return;
@@ -1796,14 +1798,14 @@ public class HomeActivity extends AppCompatActivity
         mArrivalsListHeaderSubView = mArrivalsListHeaderView.findViewById(R.id.main_header_content);
 
         mSlidingPanel.setPanelState(
-                SlidingUpPanelLayout.PanelState.HIDDEN);  // Don't show the panel until we have content
-        mSlidingPanel.setOverlayed(true);
+                PanelState.HIDDEN);  // Don't show the panel until we have content
+        mSlidingPanel.setOverlayContent(true);
         mSlidingPanel.setAnchorPoint(MapModeController.OVERLAY_PERCENTAGE);
-        mSlidingPanel.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+        mSlidingPanel.addPanelSlideListener(new PanelSlideListener() {
 
             @Override
-            public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
-                if (previousState == SlidingUpPanelLayout.PanelState.HIDDEN) {
+            public void onPanelStateChanged(View panel, PanelState previousState, PanelState newState) {
+                if (previousState == PanelState.HIDDEN) {
                     return;
                 }
 
@@ -1906,9 +1908,9 @@ public class HomeActivity extends AppCompatActivity
             @Override
             public void setPanelHeightPixels(int heightInPixels) {
                 if (mSlidingPanel != null) {
-                    if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.DRAGGING ||
+                    if (mSlidingPanel.getPanelState() == PanelState.DRAGGING ||
                             mSlidingPanel.getPanelState()
-                                    == SlidingUpPanelLayout.PanelState.HIDDEN) {
+                                    == PanelState.HIDDEN) {
                         // Don't resize header yet - see #294 - header size will be refreshed on panel state change
                         return;
                     }
@@ -2012,8 +2014,8 @@ public class HomeActivity extends AppCompatActivity
      * @return true if the panel isn't expanded or anchored, false if it is not
      */
     private boolean isSlidingPanelCollapsed() {
-        return !(mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED ||
-                mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED);
+        return !(mSlidingPanel.getPanelState() == PanelState.EXPANDED ||
+                mSlidingPanel.getPanelState() == PanelState.ANCHORED);
     }
 
     public ArrivalsListFragment getArrivalsListFragment() {

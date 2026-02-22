@@ -62,7 +62,7 @@
 # Keep Open311 library (needed for unit tests)
 -keep class edu.usf.cutr.open311client.** { *; }
 
-# for AndroidSlidingUpPanel and compiling with API 28 (see https://github.com/OneBusAway/onebusaway-android/issues/944#issuecomment-446340531)
+# for AndroidSlidingUpPanel (com.github.hannesa2:AndroidSlidingUpPanel) and compiling with API 28 (see https://github.com/OneBusAway/onebusaway-android/issues/944#issuecomment-446340531)
 -dontwarn com.sothree.**
 -keep class com.sothree.**
 -keep interface com.sothree.**

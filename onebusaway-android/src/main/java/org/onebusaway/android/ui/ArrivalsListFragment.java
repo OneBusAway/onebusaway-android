@@ -1158,7 +1158,7 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         listParam.rightMargin = UIUtils.dpToPixels(getActivity(), 5);
         // Set the listview background to give the cards more contrast
         getListView().getRootView().setBackgroundColor(
-                getResources().getColor(R.color.stop_info_arrival_list_background));
+                getResources().getColor(R.color.trip_details_background));
         // Update the layout parameters
         getListView().setLayoutParams(listParam);
     }

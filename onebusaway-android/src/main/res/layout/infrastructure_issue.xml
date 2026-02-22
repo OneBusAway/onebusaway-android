@@ -17,7 +17,7 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:focusableInTouchMode="true"
-              android:background="@color/material_background"
+              android:background="@color/trip_details_background"
               android:orientation="vertical"
               android:configChanges="keyboardHidden|orientation|screenSize">
 
@@ -25,7 +25,7 @@
     <RelativeLayout
             android:id="@+id/ri_info_header"
             android:layout_width="match_parent"
-            android:background="@color/theme_primary_dark"
+            android:background="@color/theme_primary_variant"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:animateLayoutChanges="true"
@@ -58,7 +58,7 @@
     <RelativeLayout
             android:id="@+id/bus_stop_header"
             android:layout_width="match_parent"
-            android:background="@color/theme_primary_dark"
+            android:background="@color/theme_primary_variant"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:animateLayoutChanges="true"
@@ -193,7 +193,7 @@
                             style="@style/MaterialItem"
                             android:textSize="15sp"
                             android:textAppearance="?android:attr/textAppearanceMedium"
-                            android:textColor="@android:color/black"/>
+                            />
                 </FrameLayout>
 
                 <LinearLayout

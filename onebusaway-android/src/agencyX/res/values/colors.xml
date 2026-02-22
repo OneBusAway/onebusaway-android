@@ -16,8 +16,8 @@
 -->
 <resources>
     <!-- Agency X Theme -->
-    <color name="theme_primary">#F44336</color>
-    <color name="theme_primary_dark">#D32F2F</color>
+    <color name="brand_color">#F44336</color>
+    <color name="brand_color_dark">#D32F2F</color>
     <color name="theme_muted">#FFCAD2</color>
     <color name="theme_accent">#E53935</color>
 

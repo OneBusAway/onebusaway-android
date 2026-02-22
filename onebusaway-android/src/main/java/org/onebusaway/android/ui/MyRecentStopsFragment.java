@@ -34,7 +34,7 @@ import androidx.loader.content.Loader;
 
 public class MyRecentStopsFragment extends MyStopListFragmentBase {
 
-    public static final String TAB_NAME = "recent";
+    public static final String TAB_NAME = "recent_stops";
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {

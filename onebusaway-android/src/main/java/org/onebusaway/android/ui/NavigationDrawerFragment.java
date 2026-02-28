@@ -306,17 +306,17 @@ public class NavigationDrawerFragment extends Fragment {
      * Selects a navigation drawer item and persists it as the remembered default tab.
      * @param position one of the {@code NAVDRAWER_ITEM_*} constants.
      */
-    public void selectItem(int position){
+    public void selectItem(int position) {
         selectItem(position, true);
     }
 
     /**
      * Sets the currently selected navigation drawer item, based on the provided position
-     * parameter,
-     * which must be one of the NAVDRAWER_ITEM_* contants in this class.
+     * parameter, which must be one of the NAVDRAWER_ITEM_* constants in this class.
      *
-     * @param position the item to select in the navigation drawer - must be one of the
-     *                 NAVDRAWER_ITEM_* contants in this class
+     * @param position         the item to select in the navigation drawer - must be one of the
+     *                         NAVDRAWER_ITEM_* constants in this class
+     * @param persistSelection if true, saves the selection as the remembered default tab
      */
     public void selectItem(int position, boolean persistSelection) {
         setSelectedNavDrawerItem(position, persistSelection);

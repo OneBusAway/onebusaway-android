@@ -21,6 +21,7 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.nav.NavigationService;
 import org.onebusaway.android.nav.NavigationUploadWorker;
 import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +57,7 @@ public class FeedbackActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feedback);
+        UIUtils.setupActionBar(this);
         setTitle(getResources().getString(R.string.feedback_label));
 
         Intent intent = this.getIntent();

@@ -29,6 +29,7 @@ import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.textview.MaterialTextView;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.util.UIUtils;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -49,6 +50,7 @@ public class AboutActivity extends AppCompatActivity {
         setContentView(R.layout.activity_about);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        UIUtils.setupActionBar(this);
         CollapsingToolbarLayout toolBarLayout = (CollapsingToolbarLayout) findViewById(
                 R.id.toolbar_layout);
         toolBarLayout.setTitle(getTitle());

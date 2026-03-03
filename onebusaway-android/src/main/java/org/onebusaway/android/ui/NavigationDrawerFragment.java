@@ -303,15 +303,23 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     /**
-     * Sets the currently selected navigation drawer item, based on the provided position
-     * parameter,
-     * which must be one of the NAVDRAWER_ITEM_* contants in this class.
-     *
-     * @param position the item to select in the navigation drawer - must be one of the
-     *                 NAVDRAWER_ITEM_* contants in this class
+     * Selects a navigation drawer item and persists it as the remembered default tab.
+     * @param position one of the {@code NAVDRAWER_ITEM_*} constants.
      */
     public void selectItem(int position) {
-        setSelectedNavDrawerItem(position);
+        selectItem(position, true);
+    }
+
+    /**
+     * Sets the currently selected navigation drawer item, based on the provided position
+     * parameter, which must be one of the NAVDRAWER_ITEM_* constants in this class.
+     *
+     * @param position         the item to select in the navigation drawer - must be one of the
+     *                         NAVDRAWER_ITEM_* constants in this class
+     * @param persistSelection if true, saves the selection as the remembered default tab
+     */
+    public void selectItem(int position, boolean persistSelection) {
+        setSelectedNavDrawerItem(position, persistSelection);
         if (mDrawerLayout != null && mFragmentContainerView != null) {
             mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
@@ -332,11 +340,13 @@ public class NavigationDrawerFragment extends Fragment {
      * Sets up the given navdrawer item's appearance to the selected state. Note: this could
      * also be accomplished (perhaps more cleanly) with state-based layouts.
      */
-    private void setSelectedNavDrawerItem(int itemId) {
+    private void setSelectedNavDrawerItem(int itemId, boolean persistSelection) {
         if (!isNewActivityItem(itemId)) {
             // We only change the selected item if it doesn't launch a new activity
             mCurrentSelectedPosition = itemId;
-            setSavedPosition(mCurrentSelectedPosition);
+            if (persistSelection) {
+                setSavedPosition(mCurrentSelectedPosition);
+            }
         }
 
         if (mNavDrawerItemViews != null) {

@@ -1699,7 +1699,7 @@ public class HomeActivity extends AppCompatActivity
             String routeId = bundle.getString(MapParams.ROUTE_ID);
             String stopId = bundle.getString(MapParams.STOP_ID);
             if (routeId != null || stopId != null) {
-                mNavigationDrawerFragment.selectItem(NAVDRAWER_ITEM_NEARBY);
+                mNavigationDrawerFragment.selectItem(NAVDRAWER_ITEM_NEARBY, false);
             }
         }
     }

@@ -83,12 +83,19 @@ public class RealtimeService extends IntentService {
     @Override
     public void onHandleIntent(Intent intent) {
         Bundle bundle = intent.getExtras();
+        if (bundle == null) {
+            bundle = new Bundle();
+        }
 
         if (intent.getAction().equals(OTPConstants.INTENT_START_CHECKS)) {
             disableListenForTripUpdates();
             if (!rescheduleRealtimeUpdates(bundle)) {
                 Itinerary itinerary = getItinerary(bundle);
-                startRealtimeUpdates(bundle, itinerary);
+                if (itinerary != null) {
+                    startRealtimeUpdates(bundle, itinerary);
+                } else {
+                    Log.w(TAG, "Cannot start realtime updates - no itinerary in bundle");
+                }
             }
         } else if (intent.getAction().equals(OTPConstants.INTENT_CHECK_TRIP_TIME)) {
             checkForItineraryChange(bundle);
@@ -130,34 +137,35 @@ public class RealtimeService extends IntentService {
      * @return true if the start of trip real-time updates has been rescheduled, false if updates
      * should begin immediately
      */
-    private boolean rescheduleRealtimeUpdates(Bundle bundle) {
+    boolean rescheduleRealtimeUpdates(Bundle bundle) {
         // Delay if this trip doesn't start for at least an hour
         Date start = new TripRequestBuilder(bundle).getDateTime();
-        if (start == null) {
-            // To avoid NPE, return true to say that it's been rescheduled, but don't actually reschedule it
-            // FIXME - Figure out why sometimes the bundle is empty - see #790 and #791
-            return true;
-        }
-        Date queryStart = new Date(start.getTime() - OTPConstants.REALTIME_SERVICE_QUERY_WINDOW);
-        boolean reschedule = new Date().before(queryStart);
 
-        if (reschedule) {
-            Log.d(TAG, "Start service at " + queryStart);
-            Intent future = new Intent(OTPConstants.INTENT_START_CHECKS);
-            future.putExtras(bundle);
+        if (start != null) {
+            Date queryStart = new Date(start.getTime() - OTPConstants.REALTIME_SERVICE_QUERY_WINDOW);
+            if (new Date().before(queryStart)) {
+                Log.d(TAG, "Start service at " + queryStart);
+                Intent future = new Intent(getApplicationContext(), RealtimeWakefulReceiver.class);
+                future.setAction(OTPConstants.INTENT_START_CHECKS);
+                future.putExtras(bundle);
 
-            int flags;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE;
-            } else {
-                flags = PendingIntent.FLAG_CANCEL_CURRENT;
+                int flags;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                    flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE;
+                } else {
+                    flags = PendingIntent.FLAG_CANCEL_CURRENT;
+                }
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(),
+                        0, future, flags);
+                getAlarmManager().set(AlarmManager.RTC_WAKEUP, queryStart.getTime(), pendingIntent);
+                return true;
             }
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(),
-                    0, future, flags);
-            getAlarmManager().set(AlarmManager.RTC_WAKEUP, queryStart.getTime(), pendingIntent);
+        } else {
+            Log.w(TAG, "Trip start time is null - bundle may be incomplete. See #790 and #791. "
+                    + "Bundle keys: " + bundle.keySet());
         }
 
-        return reschedule;
+        return false;
     }
 
     private void checkForItineraryChange(final Bundle bundle) {
@@ -293,7 +301,6 @@ public class RealtimeService extends IntentService {
         getAlarmManager().cancel(getAlarmIntent(null));
     }
 
-
     private AlarmManager getAlarmManager() {
         return (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
     }
@@ -315,9 +322,12 @@ public class RealtimeService extends IntentService {
         return alarmIntent;
     }
 
-    private Itinerary getItinerary(Bundle bundle) {
+    Itinerary getItinerary(Bundle bundle) {
         ArrayList<Itinerary> itineraries = (ArrayList<Itinerary>) bundle
                 .getSerializable(OTPConstants.ITINERARIES);
+        if (itineraries == null || itineraries.isEmpty()) {
+            return null;
+        }
         int i = bundle.getInt(OTPConstants.SELECTED_ITINERARY);
         return itineraries.get(i);
     }

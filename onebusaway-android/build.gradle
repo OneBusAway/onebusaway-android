@@ -77,7 +77,11 @@ android {
 
     packagingOptions {
         resources {
-            excludes += ['META-INF/LICENSE', 'META-INF/NOTICE']
+            excludes += ['META-INF/LICENSE', 'META-INF/NOTICE',
+                         '**/dump_syms/**',
+                         '**/linux/dump_syms.bin',
+                         '**/mac/dump_syms'
+            ]
         }
     }
 

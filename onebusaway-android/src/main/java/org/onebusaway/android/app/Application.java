@@ -32,8 +32,6 @@ import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import androidx.multidex.MultiDexApplication;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -72,7 +70,7 @@ import static com.google.android.gms.location.LocationServices.getFusedLocationP
 import static org.onebusaway.android.util.UIUtils.setAppTheme;
 import java.nio.charset.StandardCharsets;
 
-public class Application extends MultiDexApplication {
+public class Application extends android.app.Application {
 
     public static final String APP_UID = "app_uid";
 

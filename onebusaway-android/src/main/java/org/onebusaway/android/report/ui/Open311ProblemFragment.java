@@ -331,15 +331,11 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 new PopupMenu.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.ri_button_camera:
-                                openCamera();
-                                break;
-                            case R.id.ri_button_gallery:
-                                openGallery();
-                                break;
-                            default:
-                                break;
+                        int id = item.getItemId();
+                        if (id == R.id.ri_button_camera) {
+                            openCamera();
+                        } else if (id == R.id.ri_button_gallery) {
+                            openGallery();
                         }
                         return true;
                     }

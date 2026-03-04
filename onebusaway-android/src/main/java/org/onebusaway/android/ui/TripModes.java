@@ -37,17 +37,16 @@ public class TripModes {
      * @return corresponding trip mode code
      */
     public static int getTripModeCodeFromSelection(int selection) {
-        switch (selection) {
-            case R.string.transit_mode_transit_and_bikeshare:
-                return TRANSIT_AND_BIKE;
-            case R.string.transit_mode_transit_only:
-                return TRANSIT_ONLY;
-            case R.string.transit_mode_bus:
-                return BUS_ONLY;
-            case R.string.transit_mode_rail:
-                return RAIL_ONLY;
-            case R.string.transit_mode_bikeshare:
-                return BIKESHARE;
+        if (selection == R.string.transit_mode_transit_and_bikeshare) {
+            return TRANSIT_AND_BIKE;
+        } else if (selection == R.string.transit_mode_transit_only) {
+            return TRANSIT_ONLY;
+        } else if (selection == R.string.transit_mode_bus) {
+            return BUS_ONLY;
+        } else if (selection == R.string.transit_mode_rail) {
+            return RAIL_ONLY;
+        } else if (selection == R.string.transit_mode_bikeshare) {
+            return BIKESHARE;
         }
         return -1;
 

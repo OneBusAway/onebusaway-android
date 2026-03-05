@@ -92,7 +92,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
+
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
@@ -117,6 +117,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.AccessibilityDelegateCompat;
@@ -384,12 +385,15 @@ public class HomeActivity extends AppCompatActivity
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         setContentView(R.layout.main);
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
         mActivityWeakRef = new WeakReference<>(this);
 
         mInitialStartup = Application.getPrefs().getBoolean(INITIAL_STARTUP, true);
@@ -1690,7 +1694,8 @@ public class HomeActivity extends AppCompatActivity
         // Set up the drawer.
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
-                findViewById(R.id.nav_drawer_left_pane));
+                findViewById(R.id.nav_drawer_left_pane),
+                findViewById(R.id.toolbar));
 
         // Was this activity started to show a route or stop on the map? If so, switch to MapFragment
         Bundle bundle = getIntent().getExtras();

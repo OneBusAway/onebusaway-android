@@ -146,15 +146,6 @@ public final class UIUtils {
             bar.setDisplayShowTitleEnabled(true);
         }
 
-        View root = activity.findViewById(android.R.id.content);
-        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-            Insets sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            setStatusBarColor(activity, ContextCompat.getColor(activity, R.color.theme_primary_variant), true);
-            v.setPadding(sysBars.left, sysBars.top, sysBars.right, sysBars.bottom);
-            return insets;
-        });
-
-        // HomeActivity is the root for all other activities
         if (!(activity instanceof HomeActivity) && bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);
         }
@@ -162,6 +153,25 @@ public final class UIUtils {
         if (bar != null) {
             bar.setElevation(0);
         }
+
+        // Toolbar inset listener - pass through insets (don't consume) so content receives them
+        View toolbar = activity.findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, windowInsets) -> {
+                Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
+                v.setPadding(v.getPaddingLeft(), insets.top, v.getPaddingRight(), v.getPaddingBottom());
+                return windowInsets;
+            });
+        }
+
+        // Content view inset listener
+        View root = activity.findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            setStatusBarColor(activity, ContextCompat.getColor(activity, R.color.theme_primary_variant), true);
+            v.setPadding(sysBars.left, sysBars.top, sysBars.right, sysBars.bottom);
+            return insets;
+        });
     }
 
     public static void setStatusBarColor(@NonNull final Activity activity, @ColorInt final int color, final boolean isDecor) {

@@ -31,6 +31,7 @@ import android.view.WindowManager;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
 
@@ -81,16 +82,20 @@ public class NightLightActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        UIUtils.setupActionBar(this);
 
         Intent intent = getIntent();
         if (Intent.ACTION_CREATE_SHORTCUT.equals(intent.getAction())) {
             ShortcutInfoCompat shortcut = createShortcut();
             setResult(RESULT_OK, shortcut.getIntent());
             finish();
+            return;
         }
 
         setContentView(R.layout.night_light);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        UIUtils.setupActionBar(this);
+
         screen = findViewById(R.id.screen);
         disableScreenSleep();
 

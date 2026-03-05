@@ -14,9 +14,20 @@
         android:theme="@style/Theme.OneBusAway.AppBarOverlay"
         app:popupTheme="@style/Theme.OneBusAway.PopupOverlay" />
 
-    <FrameLayout
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabs"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/r_fragment_layout">
-    </FrameLayout>
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        app:tabIconTint="@android:color/white"
+        app:tabIndicatorColor="@android:color/white"
+        app:tabSelectedTextColor="@android:color/white"
+        app:tabTextColor="@color/header_text_faded_color" />
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
 </LinearLayout>

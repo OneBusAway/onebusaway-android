@@ -22,11 +22,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentManager;
 
 
@@ -45,16 +47,19 @@ public class RouteInfoActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         UIUtils.setupActionBar(this);
 
         FragmentManager fm = getSupportFragmentManager();
 
         // Create the list fragment and add it as our sole content.
-        if (fm.findFragmentById(android.R.id.content) == null) {
+        if (fm.findFragmentById(R.id.content_frame) == null) {
             RouteInfoListFragment list = new RouteInfoListFragment();
             list.setArguments(FragmentUtils.getIntentArgs(getIntent()));
 
-            fm.beginTransaction().add(android.R.id.content, list).commit();
+            fm.beginTransaction().add(R.id.content_frame, list).commit();
         }
     }
 

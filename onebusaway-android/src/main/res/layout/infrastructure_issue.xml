@@ -14,12 +14,22 @@
      limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:focusableInTouchMode="true"
               android:background="@color/trip_details_background"
               android:orientation="vertical"
               android:configChanges="keyboardHidden|orientation|screenSize">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:theme="@style/Theme.OneBusAway.AppBarOverlay"
+        app:popupTheme="@style/Theme.OneBusAway.PopupOverlay" />
 
     <!-- Header aligned to top -->
     <RelativeLayout

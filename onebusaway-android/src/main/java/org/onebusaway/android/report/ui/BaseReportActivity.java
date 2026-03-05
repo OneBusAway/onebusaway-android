@@ -16,7 +16,6 @@
 package org.onebusaway.android.report.ui;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.util.UIUtils;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -45,7 +44,6 @@ public class BaseReportActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        UIUtils.setupActionBar(this);
     }
 
     public static final String CLOSE_REQUEST = "BaseReportActivityClose";

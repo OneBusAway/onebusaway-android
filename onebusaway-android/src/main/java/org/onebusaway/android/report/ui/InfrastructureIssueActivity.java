@@ -26,7 +26,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.EditText;
@@ -37,6 +36,7 @@ import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -55,6 +55,7 @@ import org.onebusaway.android.report.ui.adapter.EntrySpinnerAdapter;
 import org.onebusaway.android.report.ui.adapter.SectionItem;
 import org.onebusaway.android.report.ui.adapter.ServiceSpinnerItem;
 import org.onebusaway.android.report.ui.adapter.SpinnerItem;
+import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.android.report.ui.dialog.ReportSuccessDialog;
 import org.onebusaway.android.report.ui.util.IssueLocationHelper;
 import org.onebusaway.android.report.ui.util.ServiceUtils;
@@ -269,11 +270,13 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        supportRequestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.infrastructure_issue);
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        UIUtils.setupActionBar(this);
 
         setUpOpen311();
 

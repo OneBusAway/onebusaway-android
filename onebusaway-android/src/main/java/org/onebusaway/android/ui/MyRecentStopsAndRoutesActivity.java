@@ -37,7 +37,6 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 public class MyRecentStopsAndRoutesActivity extends MyTabActivityBase {
-    //private static final String TAG = "RecentRoutesStopsActivity";
 
     private ViewPager2 mViewPager2;
 
@@ -99,6 +98,20 @@ public class MyRecentStopsAndRoutesActivity extends MyTabActivityBase {
     }
 
     @Override
+    protected TabInfo[] getTabInfos() {
+        return new TabInfo[]{
+                new TabInfo(MyRecentStopsFragment.TAB_NAME,
+                        getString(R.string.my_recent_stops),
+                        R.drawable.ic_tab_recent,
+                        MyRecentStopsFragment.class),
+                new TabInfo(MyRecentRoutesFragment.TAB_NAME,
+                        getString(R.string.my_recent_routes),
+                        R.drawable.ic_tab_recent,
+                        MyRecentRoutesFragment.class)
+        };
+    }
+
+    @Override
     protected String getLastTabPref() {
         return "RecentRoutesStopsActivity.LastTab";
     }
@@ -136,7 +149,6 @@ public class MyRecentStopsAndRoutesActivity extends MyTabActivityBase {
      */
     @Override
     public void onDestroy() {
-        // If there was a tab in the intent, don't save it
         if (mDefaultTab == null) {
             if (mViewPager2 != null) {
                 int currentTab = mViewPager2.getCurrentItem();

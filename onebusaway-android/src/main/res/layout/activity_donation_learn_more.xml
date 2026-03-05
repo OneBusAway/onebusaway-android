@@ -1,41 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:context=".ui.DonationLearnMoreActivity">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".ui.DonationLearnMoreActivity">
 
-    <LinearLayout
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:theme="@style/Theme.OneBusAway.AppBarOverlay"
+        app:popupTheme="@style/Theme.OneBusAway.PopupOverlay" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-        <ImageView
-                android:src="@drawable/wmata"
+            <ImageView
+                android:id="@+id/imageView2"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:scaleType="fitXY"
-                android:id="@+id/imageView2" />
+                android:src="@drawable/wmata" />
 
-        <TextView
-                android:text="@string/donation_learn_more_explanation"
+            <TextView
+                android:id="@+id/textView5"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/textView5"
                 android:layout_marginHorizontal="@dimen/dialog_margin"
                 android:layout_marginVertical="@dimen/dialog_margin"
+                android:text="@string/donation_learn_more_explanation"
                 android:textSize="18sp" />
 
-        <Button
-                android:textSize="24sp"
-                android:backgroundTint="@color/theme_primary"
-                android:textColor="@color/quantum_white_100"
-                android:text="@string/donation_view_donate_now_button"
+            <Button
+                android:id="@+id/btnDonationViewDonate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="@dimen/dialog_margin"
                 android:layout_marginBottom="@dimen/dialog_margin"
-                android:id="@+id/btnDonationViewDonate" />
-    </LinearLayout>
-</ScrollView>
+                android:backgroundTint="@color/theme_primary"
+                android:text="@string/donation_view_donate_now_button"
+                android:textColor="@color/quantum_white_100"
+                android:textSize="24sp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

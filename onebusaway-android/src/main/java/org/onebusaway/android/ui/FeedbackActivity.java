@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
@@ -57,6 +58,9 @@ public class FeedbackActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feedback);
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         UIUtils.setupActionBar(this);
         setTitle(getResources().getString(R.string.feedback_label));
 

@@ -27,10 +27,17 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.view.Window;
 
-import androidx.appcompat.app.ActionBar;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
+
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 
 
 abstract class MyTabActivityBase extends AppCompatActivity {
@@ -47,12 +54,28 @@ abstract class MyTabActivityBase extends AppCompatActivity {
 
     protected String mDefaultTab;
 
+    protected static class TabInfo {
+        final String tag;
+        final String title;
+        final int iconResId;
+        final Class<? extends Fragment> fragmentClass;
+
+        TabInfo(String tag, String title, int iconResId, Class<? extends Fragment> fragmentClass) {
+            this.tag = tag;
+            this.title = title;
+            this.iconResId = iconResId;
+            this.fragmentClass = fragmentClass;
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_tabs);
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         UIUtils.setupActionBar(this);
-        setSupportProgressBarIndeterminateVisibility(false);
 
         final Intent intent = getIntent();
         final String action = intent.getAction();
@@ -63,7 +86,6 @@ abstract class MyTabActivityBase extends AppCompatActivity {
 
         mSearchCenter = getSearchCenter(intent);
 
-        // Determine what tab we're supposed to show by default
         if (savedInstanceState != null) {
             mDefaultTab = savedInstanceState.getString("tab");
         }
@@ -71,15 +93,38 @@ abstract class MyTabActivityBase extends AppCompatActivity {
         if (data != null && mDefaultTab == null) {
             mDefaultTab = getDefaultTabFromUri(data);
         }
+
+        setupTabs();
+    }
+
+    private void setupTabs() {
+        TabLayout tabLayout = findViewById(R.id.tabs);
+        ViewPager2 viewPager = findViewById(R.id.view_pager);
+
+        TabInfo[] tabInfos = getTabInfos();
+        viewPager.setAdapter(new TabPagerAdapter(this, tabInfos));
+        viewPager.setOffscreenPageLimit(tabInfos.length);
+
+        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
+            tab.setText(tabInfos[position].title);
+            tab.setIcon(tabInfos[position].iconResId);
+            tab.setTag(tabInfos[position].tag);
+        }).attach();
+
+        restoreDefaultTab();
     }
 
     @Override
     public void onDestroy() {
-        // If there was a tab in the intent, don't save it
         if (mDefaultTab == null) {
-            final ActionBar bar = getSupportActionBar();
-            final ActionBar.Tab tab = bar.getSelectedTab();
-            PreferenceUtils.saveString(getLastTabPref(), (String) tab.getTag());
+            TabLayout tabLayout = findViewById(R.id.tabs);
+            int selectedPosition = tabLayout.getSelectedTabPosition();
+            if (selectedPosition >= 0) {
+                TabLayout.Tab tab = tabLayout.getTabAt(selectedPosition);
+                if (tab != null) {
+                    PreferenceUtils.saveString(getLastTabPref(), (String) tab.getTag());
+                }
+            }
         }
 
         super.onDestroy();
@@ -103,12 +148,12 @@ abstract class MyTabActivityBase extends AppCompatActivity {
             def = settings.getString(getLastTabPref(), null);
         }
         if (def != null) {
-            // Find this tab...
-            final ActionBar bar = getSupportActionBar();
-            for (int i = 0; i < bar.getTabCount(); ++i) {
-                ActionBar.Tab tab = bar.getTabAt(i);
-                if (def.equals(tab.getTag())) {
+            TabLayout tabLayout = findViewById(R.id.tabs);
+            for (int i = 0; i < tabLayout.getTabCount(); i++) {
+                TabLayout.Tab tab = tabLayout.getTabAt(i);
+                if (tab != null && def.equals(tab.getTag())) {
                     tab.select();
+                    break;
                 }
             }
         }
@@ -143,6 +188,8 @@ abstract class MyTabActivityBase extends AppCompatActivity {
 
     protected abstract String getLastTabPref();
 
+    protected abstract TabInfo[] getTabInfos();
+
     //
     // Helper for getting the search center from the intent
     //
@@ -160,5 +207,29 @@ abstract class MyTabActivityBase extends AppCompatActivity {
             return LocationUtils.makeLocation(p[0], p[1]);
         }
         return null;
+    }
+
+    private static class TabPagerAdapter extends FragmentStateAdapter {
+        private final TabInfo[] tabInfos;
+
+        TabPagerAdapter(FragmentActivity activity, TabInfo[] tabInfos) {
+            super(activity);
+            this.tabInfos = tabInfos;
+        }
+
+        @NonNull
+        @Override
+        public Fragment createFragment(int position) {
+            try {
+                return tabInfos[position].fragmentClass.getDeclaredConstructor().newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return tabInfos.length;
+        }
     }
 }

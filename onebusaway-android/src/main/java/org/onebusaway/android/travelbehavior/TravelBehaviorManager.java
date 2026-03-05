@@ -49,7 +49,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.google.firebase.crashlytics.buildtools.reloc.org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -296,7 +295,7 @@ public class TravelBehaviorManager {
 //                getWorkInfoById(workRequest.getId());
 //        Futures.addCallback(listenableFuture, new FutureCallback<WorkInfo>() {
 //            @Override
-//            public void onSuccess(@NullableDecl WorkInfo result) {
+//            public void onSuccess(@Nullable WorkInfo result) {
 //                AppCompatActivity activity = (AppCompatActivity) mActivityContext;
 //                activity.runOnUiThread(() -> Toast.makeText(mApplicationContext, R.string.travel_behavior_enroll_success,
 //                        Toast.LENGTH_LONG).show());

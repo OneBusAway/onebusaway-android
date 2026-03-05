@@ -92,7 +92,6 @@ src/newBrandName/
     │   └── ic_launcher_round.png
     └── values-night/
         └── colors.xml          # Dark Theme colors (required)
-   
 ```
 
 ### Step 3: Configure Resources

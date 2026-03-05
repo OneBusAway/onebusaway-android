@@ -86,7 +86,7 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
             Warn the user before enabling, since experimental regions
             may not have real-time info or may be unavailable.
             */
-            androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(getContext())
+            AlertDialog dialog = new MaterialAlertDialogBuilder(getContext())
                     .setMessage(R.string.preferences_experimental_regions_enable_warning)
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override

@@ -443,6 +443,7 @@ public class SettingsActivity extends AppCompatActivity
         public void onDisplayPreferenceDialog(@NonNull Preference preference) {
             if (preference instanceof ListPreference) {
                 // This ensures the popup uses the M3 Alert Dialog Builder
+                // Will be dismissed if device is rotated while open
                 new MaterialAlertDialogBuilder(requireContext())
                         .setTitle(preference.getTitle())
                         .setSingleChoiceItems(

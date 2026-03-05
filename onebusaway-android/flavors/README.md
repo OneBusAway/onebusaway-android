@@ -49,7 +49,6 @@ src/mybrand/
     │   └── ic_launcher_round.png
     └── values-night/
         └── colors.xml          # Theme colors (required)
-   
 ```
 
 #### Minimal strings.xml (thanks to placeholder system)

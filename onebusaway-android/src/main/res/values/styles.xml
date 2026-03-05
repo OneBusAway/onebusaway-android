@@ -18,12 +18,11 @@
     <!-- Navigation Drawer -->
     <style name="NavDrawerListItem" parent="Widget.AppCompat.ListView.Menu">
         <item name="android:background">@drawable/navdrawer_item_selectable</item>
-        <item name="android:shape">oval</item>
     </style>
 
     <!-- General styles -->
     <style name="HeaderItem">
-        <item name="android:background">@color/theme_primary</item>
+        <item name="android:background">@color/md_theme_surfaceContainer</item>
         <item name="android:padding">4dp</item>
     </style>
     <style name="HeaderList">
@@ -33,12 +32,11 @@
         <item name="android:padding">10sp</item>
     </style>
     <style name="HeaderText">
-        <item name="android:textColor">@android:color/white</item>
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">bold</item>
     </style>
     <style name="Header2Text">
-        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textColor">@color/md_theme_onSurface</item>
     </style>
     <style name="Header3Text">
         <item name="android:textSize">12sp</item>
@@ -210,7 +208,7 @@
     </style>
     <style name="TripDetailsStatus">
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">@color/header_text_color</item>
+        <item name="android:textColor">@android:color/white</item>
     </style>
 
     <style name="MaterialLayout">

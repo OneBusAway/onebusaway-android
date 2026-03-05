@@ -61,7 +61,7 @@
     <!-- Time Picker Style inherited from base theme -->
     <!-- Clear Dialog Theming inherited from base theme -->
     <!-- Custom Theme For Alert Dialog -->
-    <style name="customAlertDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+    <style name="customAlertDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="buttonBarPositiveButtonStyle">@style/customAlertDialogButton</item>
         <item name="buttonBarNegativeButtonStyle">@style/customAlertDialogButton</item>
         <item name="buttonBarNeutralButtonStyle">@style/customAlertDialogButton</item>

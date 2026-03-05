@@ -36,7 +36,7 @@
     <color name="body_text_2_inverse">#8affffff</color>
 
     <!-- Navigation Drawer -->
-    <color name="navdrawer_background">@android:color/white</color>
+    <color name="navdrawer_background">@color/md_theme_surfaceContainer</color>
     <color name="navdrawer_text_color">@color/body_text_1</color>
     <color name="navdrawer_text_color_selected">@color/theme_primary_brand</color>
     <color name="navdrawer_background_color_selected">#11000000</color>
@@ -48,8 +48,9 @@
     <color name="route_text_color_default">@android:color/black</color>
 
     <!-- Arrival times header -->
-    <color name="header_text_color">@android:color/white</color>
-    <color name="header_text_faded_color">#bbffffff</color>
+    <color name="header_text_color">@color/body_text_1</color>
+    <color name="header_eta_text_color">@android:color/white</color>
+    <color name="header_text_faded_color">@color/body_text_1</color>
     <color name="header_stop_info_ontime">@color/theme_primary_brand</color>
 
     <!-- Arrival time colors -->
@@ -73,15 +74,15 @@
     <color name="material_background">#F9F9F9</color>
     <color name="focus">#ff8e00</color>
     <color name="alert_info">@color/theme_primary_variant</color>
-    <color name="alert_text_background_error">#ff9999</color>
+    <color name="alert_text_background_error">@color/md_theme_errorContainer</color>
     <color name="alert_text_background_warning">#999900</color>
     <color name="alert_text_background_info">@color/theme_primary_variant</color>
 
-    <color name="alert_text_color_error">#101000</color>
+    <color name="alert_text_color_error">@color/md_theme_onErrorContainer</color>
     <color name="alert_text_color_warning">@color/header_text_color</color>
     <color name="alert_text_color_info">@color/header_text_color</color>
 
-    <color name="alert_icon_error">@color/stop_info_early</color>
+    <color name="alert_icon_error">@color/md_theme_error</color>
     <color name="alert_icon_warning">#fbfb00</color>
     <color name="alert_icon_info">@color/header_text_color</color>
 
@@ -131,4 +132,31 @@
     <color name="quantum_black_text">#DE000000</color>
     <color name="quantum_yellow50">#FFFDE7</color>
     <color name="quantum_googredA700">#D50000</color>
+
+    <!-- Material 3 Styles   -->
+    <color name="md_theme_primary">#3B6939</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#BCF0B4</color>
+    <color name="md_theme_onPrimaryContainer">#235024</color>
+
+    <color name="md_theme_secondary">#436833</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <color name="md_theme_secondaryContainer">#C4EFAC</color>
+    <color name="md_theme_onSecondaryContainer">#2C4F1D</color>
+
+    <color name="md_theme_error">#BA1A1A</color>
+    <color name="md_theme_onError">#FFFFFF</color>
+    <color name="md_theme_errorContainer">#FFDAD6</color>
+    <color name="md_theme_onErrorContainer">#93000A</color>
+
+    <color name="md_theme_background">#F7FBF1</color>
+    <color name="md_theme_onBackground">#191D17</color>
+    <color name="md_theme_surface">#F7FBF1</color>
+    <color name="md_theme_onSurface">#191D17</color>
+
+    <color name="md_theme_surfaceContainerLowest">#FFFFFF</color>
+    <color name="md_theme_surfaceContainerLow">#F1F5EC</color>
+    <color name="md_theme_surfaceContainer">#ECEFE6</color>
+    <color name="md_theme_surfaceContainerHigh">#E6E9E0</color>
+    <color name="md_theme_surfaceContainerHighest">#E0E4DB</color>
 </resources>

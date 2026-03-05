@@ -45,8 +45,11 @@ src/mybrand/
     │   ├── colors.xml           # Theme colors (required)
     │   └── do_not_translate.xml # API keys, URLs (required)
     └── mipmap-*/
-        ├── ic_launcher.png      # App icon (all densities)
-        └── ic_launcher_round.png
+    │   ├── ic_launcher.png      # App icon (all densities)
+    │   └── ic_launcher_round.png
+    └── values-night/
+        └── colors.xml          # Theme colors (required)
+   
 ```
 
 #### Minimal strings.xml (thanks to placeholder system)
@@ -77,6 +80,7 @@ That's it! All other branded strings use `%1$s` placeholders that automatically 
     <color name="stop_info_ontime">#4CAF50</color>
 </resources>
 ```
+To override material 3 colors, please checkout the [theme builder](https://material-foundation.github.io/material-theme-builder).
 
 #### do_not_translate.xml
 

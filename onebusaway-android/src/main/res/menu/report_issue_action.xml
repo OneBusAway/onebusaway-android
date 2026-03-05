@@ -5,5 +5,6 @@
         android:title="@string/report_problem_send"
         android:icon="@drawable/ic_action_social_send_now"
         android:visibility="gone"
+        onebusaway:iconTint="?attr/colorControlNormal"
         onebusaway:showAsAction="always|withText"/>
 </menu>

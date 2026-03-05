@@ -20,6 +20,7 @@ package org.onebusaway.android.ui;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
@@ -904,7 +905,7 @@ public class HomeActivity extends AppCompatActivity
 
     @SuppressWarnings("deprecation")
     private Dialog createHelpDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(R.string.main_help_title);
         // If a custom API URL is set, hide Contact Us, as we don't have a contact email to use
         int options;
@@ -962,7 +963,7 @@ public class HomeActivity extends AppCompatActivity
         TextView textView = (TextView) getLayoutInflater().inflate(R.layout.whats_new_dialog, null);
         textView.setText(R.string.main_help_whatsnew);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(R.string.main_help_whatsnew_title);
         builder.setIcon(R.mipmap.ic_launcher);
         builder.setView(textView);
@@ -984,7 +985,7 @@ public class HomeActivity extends AppCompatActivity
 
     @SuppressWarnings("deprecation")
     private Dialog createLegendDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(R.string.main_help_legend_title);
 
         Resources resources = getResources();
@@ -2041,7 +2042,7 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void showIgnoreBatteryOptimizationDialog() {
-        new android.app.AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setMessage(getString(R.string.application_ignoring_battery_opt_message, getString(R.string.app_name)))
                 .setTitle(R.string.application_ignoring_battery_opt_title)
                 .setIcon(R.drawable.ic_alert_warning)
@@ -2186,7 +2187,7 @@ public class HomeActivity extends AppCompatActivity
      * @return the AlertDialog for presentation.
      */
     private AlertDialog buildDismissDonationsDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.donation_dismiss_dialog_title)
                 .setMessage(getString(R.string.donation_dismiss_dialog_body, getString(R.string.app_name)))
                 .setNegativeButton(

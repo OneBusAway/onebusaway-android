@@ -264,6 +264,19 @@ public class ListFragment extends Fragment {
         }
 
         mStandardEmptyView.setText(text);
+
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int targetWidth = (int) (screenWidth * 0.8);
+        ViewGroup.LayoutParams params = mStandardEmptyView.getLayoutParams();
+        params.width = targetWidth;
+        if (params instanceof FrameLayout.LayoutParams) {
+            ((FrameLayout.LayoutParams) params).gravity = Gravity.CENTER;
+        } else if (params instanceof LinearLayout.LayoutParams) {
+            ((LinearLayout.LayoutParams) params).gravity = Gravity.CENTER;
+        }
+
+        mStandardEmptyView.setLayoutParams(params);
+        mStandardEmptyView.setGravity(Gravity.CENTER);
         if (mEmptyText == null) {
             mList.setEmptyView(mStandardEmptyView);
         }

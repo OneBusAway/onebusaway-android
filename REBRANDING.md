@@ -87,11 +87,12 @@ src/newBrandName/
     │   ├── strings.xml          # App name (required)
     │   ├── colors.xml           # Theme colors (required)
     │   └── do_not_translate.xml # API keys, URLs (required)
-    ├── values-es/               # Optional: localized app name
-    │   └── strings.xml
     └── mipmap-*/
-        ├── ic_launcher.png
-        └── ic_launcher_round.png
+    │   ├── ic_launcher.png      # App icon (all densities)
+    │   └── ic_launcher_round.png
+    └── values-night/
+        └── colors.xml          # Dark Theme colors (required)
+   
 ```
 
 ### Step 3: Configure Resources
@@ -124,6 +125,8 @@ All other branded strings use `%1$s` placeholders that automatically substitute 
     <color name="stop_info_ontime">#4CAF50</color>
 </resources>
 ```
+
+To override material 3 colors, please checkout the [theme builder](https://material-foundation.github.io/material-theme-builder).
 
 #### do_not_translate.xml
 

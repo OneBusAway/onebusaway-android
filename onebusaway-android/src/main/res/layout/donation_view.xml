@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/donationView"
     android:layout_marginStart="16dp"
@@ -11,7 +11,6 @@
     android:layout_alignParentEnd="true"
     android:layout_width="fill_parent"
     android:visibility="visible"
-    android:background="@color/quantum_white_100"
     app:cardCornerRadius="8dp"
     android:layout_height="wrap_content">
 
@@ -70,17 +69,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
+                style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:textSize="16sp"
                 android:textColor="@color/theme_primary"
-                android:backgroundTint="@android:color/white"
                 android:text="@string/donation_view_learn_more_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/btnDonationViewLearnMore"
                 android:layout_weight="1" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:backgroundTint="@color/theme_primary"
                 android:textSize="16sp"
                 android:textColor="@color/quantum_white_100"
@@ -91,4 +90,4 @@
                 android:layout_weight="1" />
         </LinearLayout>
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

@@ -16,6 +16,8 @@
 
 package org.onebusaway.android.util;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -308,7 +310,7 @@ public class ShowcaseViewUtils {
         final String showTutorialsKey = activity
                 .getString(R.string.preference_key_show_tutorial_screens);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity);
         builder.setTitle(R.string.tutorial_opt_out_dialog_title)
                 .setMessage(activity.getString(R.string.tutorial_opt_out_dialog_text, activity.getString(R.string.app_name)))
                 .setPositiveButton(R.string.rt_yes,

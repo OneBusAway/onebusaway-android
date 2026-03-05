@@ -25,6 +25,7 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.Toolbar;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.AsyncTaskLoader;
 import androidx.loader.content.Loader;
@@ -76,9 +77,9 @@ public class CustomerServiceActivity extends BaseReportActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.report_issue_customer_service);
 
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        UIUtils.setupActionBar(this);
 
         setTitle(R.string.rt_customer_service);
 

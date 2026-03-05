@@ -72,6 +72,7 @@
                     android:visibility="gone"
                     android:src="@drawable/ic_navigation_close"
                     android:background="?attr/selectableItemBackground"
+                    android:tint="@color/md_theme_onSurface"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"

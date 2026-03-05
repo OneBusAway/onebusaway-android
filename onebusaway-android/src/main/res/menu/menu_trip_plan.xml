@@ -19,7 +19,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto"
       xmlns:tools="http://schemas.android.com/tools"
-      tools:context="org.onebusaway.android.ui.TripPlanActivity">
+      tools:context="org.onebusaway.android.ui.TripPlanActivity"
+        >
     <item android:id="@+id/action_settings"
           android:title="@string/trip_plan_advanced_settings"
           android:orderInCategory="100"

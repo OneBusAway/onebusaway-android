@@ -15,18 +15,20 @@
 */
 package org.onebusaway.android.report.ui.dialog;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.report.constants.ReportConstants;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.util.PreferenceUtils;
 
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 
 /**
  * Show to validate if the current user is in expected region
@@ -43,7 +45,7 @@ public class RegionValidateDialog extends BaseReportDialogFragment {
         String regionName = Application.get().getCurrentRegion().getName();
         message.append(getResources().getString(R.string.region_dialog_message, regionName));
 
-        AlertDialog dialog =  new AlertDialog.Builder(getActivity())
+        AlertDialog dialog =  new MaterialAlertDialogBuilder(getActivity())
                 .setMessage(message.toString())
                 .setPositiveButton(R.string.rt_yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {

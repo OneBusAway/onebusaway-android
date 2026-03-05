@@ -18,8 +18,7 @@
         android:id="@+id/situation_container"
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?android:attr/colorBackground">
+        android:layout_height="wrap_content">
 
     <LinearLayout
             android:id="@+id/situation_header"
@@ -31,7 +30,6 @@
         <TextView
                 android:id="@+id/alert_title"
                 style="@style/HeaderText"
-                android:background="@color/theme_primary"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"
@@ -41,8 +39,7 @@
             android:id="@+id/alert_scrollview"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/situation_header"
-            android:background="?android:attr/colorBackground">
+            android:layout_below="@+id/situation_header">
 
         <LinearLayout
                 xmlns:android="http://schemas.android.com/apk/res/android"
@@ -72,8 +69,7 @@
                     android:textSize="14sp"
                     android:padding="4dp"
                     android:bufferType="spannable"
-                    android:linksClickable="true"
-                    android:textColorLink="@color/theme_accent"/>
+                    android:linksClickable="true"/>
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>

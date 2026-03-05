@@ -17,7 +17,6 @@
 package org.onebusaway.android.util;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -26,6 +25,7 @@ import android.provider.DocumentsContract;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -39,6 +39,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import androidx.appcompat.app.AlertDialog;
 
 import static org.onebusaway.android.ui.SettingsActivity.REQUEST_CODE_RESTORE_BACKUP;
 import static org.onebusaway.android.ui.SettingsActivity.REQUEST_CODE_SAVE_BACKUP;
@@ -56,7 +58,7 @@ public class BackupUtils {
         //
         // Because this is a destructive operation, we should warn the user.
         //
-        AlertDialog dialog = new AlertDialog.Builder(activityContext)
+        AlertDialog dialog = new MaterialAlertDialogBuilder(activityContext)
                 .setMessage(R.string.preferences_db_restore_warning)
                 .setPositiveButton(android.R.string.ok, (dialog12, which) -> {
                     dialog12.dismiss();

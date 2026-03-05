@@ -5,12 +5,10 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fitsSystemWindows="true"
         tools:context="org.onebusaway.android.ui.AboutActivity">
 
     <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/app_bar"
-            android:fitsSystemWindows="true"
             android:layout_height="@dimen/app_bar_height"
             android:layout_width="match_parent"
             android:theme="@style/Theme.OneBusAway.AppBarOverlay">
@@ -20,8 +18,7 @@
                 android:fitsSystemWindows="true"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:layout_scrollFlags="scroll|exitUntilCollapsed"
-                app:contentScrim="?attr/colorPrimary">
+                app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
             <com.google.android.material.appbar.MaterialToolbar
                     android:id="@+id/toolbar"

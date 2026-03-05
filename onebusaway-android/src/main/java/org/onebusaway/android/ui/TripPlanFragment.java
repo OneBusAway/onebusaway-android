@@ -508,18 +508,15 @@ public class TripPlanFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        switch (id) {
-            case R.id.action_settings:
-                advancedSettings();
-                return true;
-            case R.id.action_reverse:
-                reverseTrip();
-                return true;
-            case R.id.action_report_trip_problem:
-                reportTripPlanProblem();
-                return true;
-            default:
-                break;
+        if (id == R.id.action_settings) {
+            advancedSettings();
+            return true;
+        } else if (id == R.id.action_reverse) {
+            reverseTrip();
+            return true;
+        } else if (id == R.id.action_report_trip_problem) {
+            reportTripPlanProblem();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);

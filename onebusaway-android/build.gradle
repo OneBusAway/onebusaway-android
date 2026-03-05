@@ -18,8 +18,7 @@
 import org.apache.tools.ant.filters.ConcatFilter
 
 apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-kapt'
+apply plugin: 'com.google.devtools.ksp'
 
 repositories {
     maven {
@@ -35,7 +34,7 @@ repositories {
 }
 
 android {
-    compileSdk 36
+    compileSdk=36
 
     defaultConfig {
         minSdkVersion 21
@@ -43,18 +42,14 @@ android {
         versionCode 153
         versionName "2.14.9"
 
-        multiDexEnabled true
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         // This enables us to tell when we're running unit tests on CI (#1010 for Travis, #1072 for GitHub)
         buildConfigField("String", "CI", "\"" + System.getenv('CI') + "\"")
 
         // Configure Java compile options to specify the schema location for Room database to keep track of schema versions
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
-            }
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
         }
     }
 
@@ -79,23 +74,6 @@ android {
         resources {
             excludes += ['META-INF/LICENSE', 'META-INF/NOTICE']
         }
-    }
-
-    /**
-     * Set brand BuildConfig.DATABASE_AUTHORITY, used in org.onebusaway.android.provider.ObaContract
-     */
-    applicationVariants.all {
-        variant ->
-            def authority;
-            if (variant.productFlavors.get(0).name == "oba") {
-                authority = '"' + "com.joulespersecond.oba" + '"'
-                // Must keep the original OBA authority
-                variant.buildConfigField "String", "DATABASE_AUTHORITY", authority
-            } else {
-                // It's cleaner to just append ".provider" to the applicationId for brand flavors
-                authority = '"' + applicationId.toString() + '.provider' + '"'
-                variant.buildConfigField "String", "DATABASE_AUTHORITY", authority
-            }
     }
 
     // http://stackoverflow.com/questions/20673625/gradle-0-7-0-duplicate-files-during-packaging-of-apk
@@ -133,18 +111,10 @@ android {
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
-        }
-        // Append the version name to the end of aligned APKs
-        android.applicationVariants.all { variant ->
-            if (variant.buildType.name == "release") {
-                variant.outputs.all { output ->
-                    outputFileName = "${variant.name}-v${variant.versionName}.apk"
-                }
-            }
+            signingConfig=signingConfigs.release
+            minifyEnabled=true
+            shrinkResources=true
+            proguardFiles(getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt')
         }
     }
 
@@ -152,20 +122,56 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
+    kotlin {
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+        }
     }
     testOptions {
         unitTests.includeAndroidResources true
+    }
+    namespace='org.onebusaway.android'
+    lint {
+        disable 'MissingTranslation', 'ExtraTranslation'
     }
 
     useLibrary 'android.test.runner'
     useLibrary 'android.test.base'
     useLibrary 'android.test.mock'
-    namespace 'org.onebusaway.android'
-    lint {
-        disable 'MissingTranslation', 'ExtraTranslation'
+
+    buildFeatures {
+        buildConfig = true
     }
+
+}
+
+/**
+ * Set brand BuildConfig.DATABASE_AUTHORITY, used in org.onebusaway.android.provider.ObaContract
+ */
+androidComponents {
+    onVariants(selector().all(), { variant ->
+        def authority
+        // Check if the primary flavor is "oba"
+        if (variant.productFlavors.any { it.second == "oba" }) {
+            authority = '"' + "com.joulespersecond.oba" + '"'
+            // Must keep the original OBA authority
+        } else {
+            // It's cleaner to just append ".provider" to the applicationId for brand flavors
+            authority = '"' + variant.applicationId.get() + '.provider' + '"'
+        }
+
+        variant.buildConfigFields.put("DATABASE_AUTHORITY",
+                new com.android.build.api.variant.BuildConfigField("String", authority, null)
+        )
+    })
+
+    onVariants(selector().withBuildType("release"), { variant ->
+        // Append the version name to the end of aligned APKs
+        variant.outputs.forEach { output ->
+            // Access versionName from the output object
+            output.outputFileName.set("${variant.name}-v${output.versionName.get()}.apk")
+        }
+    })
 }
 
 // Load brand flavor configurations from flavors/ directory
@@ -247,8 +253,6 @@ dependencies {
     googleImplementation 'com.google.android.libraries.places:places-compat:2.6.0'
     // Autocomplete text views with clear button for trip planning
     implementation 'com.google.android.material:material:1.12.0'
-    // Required to support multidex for minSdkVersion <= 20
-    implementation 'androidx.multidex:multidex:2.0.1'
     // Explicit dependency on Gson is now apparently needed
     implementation 'com.google.code.gson:gson:2.10.1'
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
@@ -261,12 +265,13 @@ dependencies {
     implementation "androidx.core:core-ktx:1.13.1"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     // RoomDB
-    implementation "androidx.room:room-runtime:2.6.1"
-    kapt "androidx.room:room-compiler:2.6.1"
-    implementation "androidx.room:room-ktx:2.6.1"
+    implementation "androidx.room:room-runtime:2.7.0"
+    ksp "androidx.room:room-compiler:2.7.0"
+    implementation "androidx.room:room-ktx:2.7.0"
     // GTFS Realtime bindings for parsing GTFS-realtime data
-    implementation group: 'org.mobilitydata', name: 'gtfs-realtime-bindings', version: '0.0.8'
+    implementation "org.mobilitydata:gtfs-realtime-bindings:0.0.8"
     implementation 'com.google.api.grpc:proto-google-common-protos:2.9.0'
+
 }
 
 apply plugin:'com.google.gms.google-services'
@@ -290,7 +295,7 @@ tasks.register('validateStringPlaceholders') {
         }
 
         // Parse base strings and find those with %1$s placeholder
-        def baseXml = new XmlSlurper().parse(baseStringsFile)
+        def baseXml = new groovy.xml.XmlSlurper().parse(baseStringsFile)
         def stringsWithPlaceholder = [:]
         baseXml.string.each { stringNode ->
             def name = stringNode.@name.toString()
@@ -310,7 +315,7 @@ tasks.register('validateStringPlaceholders') {
 
         translationDirs.each { transFile ->
             def locale = transFile.parentFile.name.replace("values-", "")
-            def transXml = new XmlSlurper().parse(transFile)
+            def transXml = new groovy.xml.XmlSlurper().parse(transFile)
 
             stringsWithPlaceholder.each { name, baseValue ->
                 def transNode = transXml.string.find { it.@name.toString() == name }
@@ -335,3 +340,4 @@ tasks.register('validateStringPlaceholders') {
         }
     }
 }
+

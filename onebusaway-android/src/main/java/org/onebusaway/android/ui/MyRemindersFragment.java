@@ -16,9 +16,9 @@
  */
 package org.onebusaway.android.ui;
 
-import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
+import android.content.res.ColorStateList;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
@@ -36,6 +36,8 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -47,6 +49,8 @@ import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ReminderUtils;
 import org.onebusaway.android.util.UIUtils;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.view.MenuItemCompat;
 import androidx.cursoradapter.widget.SimpleCursorAdapter;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
@@ -299,7 +303,7 @@ public final class MyRemindersFragment extends ListFragment
     private void deleteTrip(ListView l, int position) {
         String[] ids = getIds(l, position);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity());
         builder.setMessage(R.string.trip_info_delete_trip)
                 .setTitle(R.string.trip_info_delete)
                 .setIcon(R.drawable.baseline_delete_forever_48)
@@ -338,7 +342,12 @@ public final class MyRemindersFragment extends ListFragment
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        menu.add(R.string.menu_option_sort_by).setIcon(R.drawable.ic_action_content_sort).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        MenuItem menuItem = menu.add(R.string.menu_option_sort_by);
+        menuItem.setIcon(R.drawable.ic_action_content_sort);
+        menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
+        int color = MaterialColors.getColor(getView(), R.attr.colorControlNormal);
+        MenuItemCompat.setIconTintList(menuItem, ColorStateList.valueOf(color));
     }
 
     @Override
@@ -351,7 +360,7 @@ public final class MyRemindersFragment extends ListFragment
     }
 
     private void showSortByDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity());
         builder.setTitle(R.string.menu_option_sort_by);
         mCurrentSortOrder = PreferenceUtils.getReminderSortOrderFromPreferences();
         builder.setSingleChoiceItems(R.array.sort_reminders, mCurrentSortOrder,

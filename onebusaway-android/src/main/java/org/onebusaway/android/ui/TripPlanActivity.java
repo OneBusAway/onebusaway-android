@@ -17,7 +17,6 @@
  */
 package org.onebusaway.android.ui;
 
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -31,10 +30,12 @@ import android.view.ViewTreeObserver;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import com.sothree.slidinguppanel.PanelState;
@@ -349,7 +350,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         }
 
         final Bundle bundle = mBuilder.getBundle();
-        AlertDialog.Builder feedback = new AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder feedback = new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.tripplanner_error_dialog_title)
                 .setMessage(msg);
         feedback.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {

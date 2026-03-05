@@ -23,7 +23,7 @@
     android:paddingRight="5dp"
     android:paddingBottom="2dp">
 
-    <androidx.cardview.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    <com.google.android.material.card.MaterialCardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
         android:id="@+id/no_arrivals_card_view"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -37,7 +37,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:paddingBottom="15sp" />
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 
     <include
         layout="@layout/arrivals_list_footer_style"

@@ -1,5 +1,6 @@
 package org.onebusaway.android.widealerts;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.transit.realtime.GtfsRealtime;
 
 import org.onebusaway.android.R;
@@ -161,7 +162,7 @@ public class GtfsAlertsHelper {
     }
 
     public static void showWideAlertDialog(Context context, String title, String message, String url) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
         builder.setTitle(title)
                 .setMessage(message)
                 .setIcon(R.drawable.baseline_warning_24)

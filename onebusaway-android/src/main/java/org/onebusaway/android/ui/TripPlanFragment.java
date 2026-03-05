@@ -15,9 +15,7 @@
  */
 package org.onebusaway.android.ui;
 
-import android.app.DatePickerDialog;
 import android.app.Dialog;
-import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -28,8 +26,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.text.format.DateFormat;
 import android.util.Log;
-import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -41,12 +39,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultCallback;
@@ -62,6 +58,10 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.BuildConfig;
@@ -87,6 +87,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import static org.onebusaway.android.util.ShowcaseViewUtils.showTutorial;
 
@@ -264,45 +265,39 @@ public class TripPlanFragment extends Fragment {
         mLeavingChoiceAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mLeavingChoice.setAdapter(mLeavingChoiceAdapter);
 
-        // Set mLeavingChoice onclick adapter in onResume() so we do not fire it when setting it
-        final TimePickerDialog.OnTimeSetListener timeCallback = new TimePickerDialog.OnTimeSetListener() {
-            @Override
-            public void onTimeSet(TimePicker view, int hour, int minute) {
-                mMyCalendar.set(Calendar.HOUR_OF_DAY, hour);
-                mMyCalendar.set(Calendar.MINUTE, minute);
-                resetDateTimeLabels();
-                mBuilder.setDateTime(mMyCalendar);
-                checkRequestAndSubmit();
-            }
-        };
 
         Context context = view.getContext();
 
-        final DatePickerDialog.OnDateSetListener dateCallback = new DatePickerDialog.OnDateSetListener() {
-
-            @Override
-            public void onDateSet(DatePicker view, int year, int monthOfYear,
-                                  int dayOfMonth) {
-                mMyCalendar.set(Calendar.YEAR, year);
-                mMyCalendar.set(Calendar.MONTH, monthOfYear);
-                mMyCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                resetDateTimeLabels();
-                mBuilder.setDateTime(mMyCalendar);
-                checkRequestAndSubmit();
-            }
-
-        };
+        mMyCalendar = Calendar.getInstance();
 
         mDate.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
-                    new DatePickerDialog(context, dateCallback, mMyCalendar
-                            .get(Calendar.YEAR), mMyCalendar.get(Calendar.MONTH),
-                            mMyCalendar.get(Calendar.DAY_OF_MONTH)).show();
-                }
 
-                return true;
+                    // Date Picker
+                    MaterialDatePicker<Long> materialDatePicker = MaterialDatePicker.Builder.datePicker()
+                            .setTitleText(R.string.trip_plan_date)
+                            .setSelection(mMyCalendar.getTimeInMillis())
+                            .build();
+
+                    materialDatePicker.addOnPositiveButtonClickListener(selection -> {
+                        // Use UTC calendar to read the selection exactly as the user saw it
+                        Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+                        utcCalendar.setTimeInMillis(selection);
+                        mMyCalendar.set(Calendar.YEAR, utcCalendar.get(Calendar.YEAR));
+                        mMyCalendar.set(Calendar.MONTH, utcCalendar.get(Calendar.MONTH));
+                        mMyCalendar.set(Calendar.DAY_OF_MONTH, utcCalendar.get(Calendar.DAY_OF_MONTH));
+
+                        resetDateTimeLabels();
+                        mBuilder.setDateTime(mMyCalendar);
+                        checkRequestAndSubmit();
+                    });
+
+                    materialDatePicker.show(getChildFragmentManager(), "DATE_PICKER");
+                    return true;
+                }
+                return false;
             }
         });
 
@@ -310,11 +305,29 @@ public class TripPlanFragment extends Fragment {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
-                    new TimePickerDialog(context, timeCallback,
-                            mMyCalendar.get(Calendar.HOUR_OF_DAY),
-                            mMyCalendar.get(Calendar.MINUTE), false).show();
+                    // M3 Picker
+                    int timeFormat = DateFormat.is24HourFormat(getContext())
+                            ? TimeFormat.CLOCK_24H : TimeFormat.CLOCK_12H;
+                    MaterialTimePicker materialTimePicker = new MaterialTimePicker.Builder()
+                            .setTimeFormat(timeFormat)
+                            .setHour(mMyCalendar.get(Calendar.HOUR_OF_DAY))
+                            .setMinute(mMyCalendar.get(Calendar.MINUTE))
+                            .setTitleText(R.string.trip_plan_time)
+                            .setTheme(R.style.ThemeOverlay_App_TimePicker)
+                            .build();
+                    // Callback
+                    materialTimePicker.addOnPositiveButtonClickListener(v -> {
+                        mMyCalendar.set(Calendar.HOUR_OF_DAY, materialTimePicker.getHour());
+                        mMyCalendar.set(Calendar.MINUTE, materialTimePicker.getMinute());
+
+                        resetDateTimeLabels();
+                        mBuilder.setDateTime(mMyCalendar);
+                        checkRequestAndSubmit();
+                    });
+                    materialTimePicker.show(getChildFragmentManager(), "MATERIAL_TIME_PICKER");
+                    return true;
                 }
-                return true;
+                return false;
             }
         });
 
@@ -531,7 +544,7 @@ public class TripPlanFragment extends Fragment {
 
     private void advancedSettings() {
 
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getActivity());
+        MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(getActivity());
 
         final boolean unitsAreImperial = !PreferenceUtils.getUnitsAreMetricFromPreferences(getContext());
 

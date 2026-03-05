@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -25,6 +24,7 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.view.View;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -34,6 +34,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.libraries.places.compat.Place;
 import com.google.android.libraries.places.compat.ui.PlaceAutocomplete;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.directions.util.CustomAddress;
@@ -65,7 +66,7 @@ public class ProprietaryMapHelpV2 {
      * Prompts the user to install Android Maps V2 from Google Play
      */
     public static void promptUserInstallMaps(final Context context) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
         builder.setMessage(context.getString(R.string.please_install_google_maps_dialog_title));
         builder.setCancelable(false);
         builder.setPositiveButton(context.getString(R.string.install_google_maps_positive_button),
@@ -80,7 +81,7 @@ public class ProprietaryMapHelpV2 {
                             context.startActivity(intent);
                         } else {
                             // User doesn't have Play Store installed
-                            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
                             builder.setMessage(context.getString(
                                     R.string.no_play_store));
                             builder.setCancelable(true);

@@ -1,7 +1,7 @@
 package org.onebusaway.android.ui.survey.utils;
 
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.text.SpannableString;
@@ -27,6 +27,7 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.request.survey.model.StudyResponse;
@@ -162,7 +163,7 @@ public class SurveyViewUtils {
     }
 
     public static void handleDismissSurveyBottomSheet(Context context, BottomSheetDialog surveyBottomSheet) {
-        new AlertDialog.Builder(context).setMessage(R.string.are_you_sure_you_want_to_dismiss_the_survey).setPositiveButton(context.getString(R.string.rt_yes), (dialog, which) -> {
+        new MaterialAlertDialogBuilder(context).setMessage(R.string.are_you_sure_you_want_to_dismiss_the_survey).setPositiveButton(context.getString(R.string.rt_yes), (dialog, which) -> {
             surveyBottomSheet.hide();
         }).setNegativeButton(context.getString(R.string.rt_no), null).show();
     }
@@ -316,8 +317,8 @@ public class SurveyViewUtils {
      * @param context The context in which the dialog will be displayed.
      * @return The AlertDialog instance to be shown configured for the dismiss survey dialog.
      */
-    public AlertDialog.Builder createDismissSurveyDialog(Context context) {
-        AlertDialog.Builder dismissSurveyDialog = new AlertDialog.Builder(context).setTitle(R.string.dismiss_survey_dialog_title).setMessage(R.string.dismiss_survey_dialog_body).setNegativeButton(R.string.survey_dismiss_dialog_skip_this_survey, (dialog, which) -> {
+    public MaterialAlertDialogBuilder createDismissSurveyDialog(Context context) {
+        MaterialAlertDialogBuilder dismissSurveyDialog = new MaterialAlertDialogBuilder(context).setTitle(R.string.dismiss_survey_dialog_title).setMessage(R.string.dismiss_survey_dialog_body).setNegativeButton(R.string.survey_dismiss_dialog_skip_this_survey, (dialog, which) -> {
             mSurveyActionsListener.onSkipSurvey();
         }).setNeutralButton(R.string.remind_me_latter, (dialog, which) -> {
             mSurveyActionsListener.onRemindMeLater();

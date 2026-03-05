@@ -42,7 +42,7 @@
                 android:layout_height="match_parent"
                 android:gravity="bottom"
                 sothree:umanoPanelHeight="@dimen/arrival_header_height_two_arrivals"
-                sothree:umanoShadowHeight="5dp"
+                sothree:umanoShadowHeight="0dp"
                 sothree:umanoParallaxOffset="100dp"
                 sothree:umanoFadeColor="@android:color/transparent"
                 sothree:umanoInitialState="hidden">
@@ -191,7 +191,6 @@
             <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="#eeeeee"
                     android:orientation="vertical"
                     android:clickable="true"
                     android:focusable="false"

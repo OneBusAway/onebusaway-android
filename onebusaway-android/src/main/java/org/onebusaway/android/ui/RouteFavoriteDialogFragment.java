@@ -16,10 +16,12 @@
 
 package org.onebusaway.android.ui;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.provider.ObaContract;
 
-import android.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
@@ -180,7 +182,7 @@ public class RouteFavoriteDialogFragment extends DialogFragment {
         values.put(ObaContract.Routes.SHORTNAME, routeShortName);
         values.put(ObaContract.Routes.LONGNAME, routeLongName);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity());
 
         // Default to the first element in the list, which is "This stop"
         mSelectedItem = SELECTION_THIS_STOP;

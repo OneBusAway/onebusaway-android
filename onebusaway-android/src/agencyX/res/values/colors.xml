@@ -26,5 +26,29 @@
     <!-- Tutorials -->
     <color name="tutorial_background">#dfF44336</color>
 
+    <!--  Material 3  -->
+    <color name="md_theme_primary">#904A42</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#FFDAD5</color>
+    <color name="md_theme_onPrimaryContainer">#73342C</color>
+
+    <color name="md_theme_secondary">#904A45</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <color name="md_theme_secondaryContainer">#FFDAD6</color>
+    <color name="md_theme_onSecondaryContainer">#73332F</color>
+
+    <color name="md_theme_background">#FFF8F7</color>
+    <color name="md_theme_onBackground">#231918</color>
+    <color name="md_theme_surface">#FFF8F7</color>
+    <color name="md_theme_onSurface">#231918</color>
+
+    <!-- Error Colors are inherited from base app -->
+
+    <color name="md_theme_surfaceContainerLowest">#FFFFFF</color>
+    <color name="md_theme_surfaceContainerLow">#FFF0EE</color>
+    <color name="md_theme_surfaceContainer">#FCEAE7</color>
+    <color name="md_theme_surfaceContainerHigh">#F7E4E1</color>
+    <color name="md_theme_surfaceContainerHighest">#F1DEDC</color>
+
     <!-- See src/main/res/colors.xml for more colors you can override here -->
 </resources>

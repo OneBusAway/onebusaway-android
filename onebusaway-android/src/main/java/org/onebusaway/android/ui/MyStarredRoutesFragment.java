@@ -18,6 +18,7 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -128,7 +129,7 @@ public class MyStarredRoutesFragment extends MyRouteListFragmentBase {
     }
 
     private void showSortByDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity());
         builder.setTitle(R.string.menu_option_sort_by);
 
         final int currentRouteOrder = PreferenceUtils.getStopSortOrderFromPreferences();

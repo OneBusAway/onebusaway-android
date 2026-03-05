@@ -17,6 +17,8 @@
 
 package org.onebusaway.android.ui;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -202,7 +204,7 @@ public class NightLightActivity extends AppCompatActivity {
     private void maybeShowIntroDialog() {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         if (!sp.getBoolean(PREFERENCE_SHOWED_DIALOG, false)) {
-            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            final MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
             builder.setTitle(R.string.night_light_dialog_title);
             builder.setCancelable(false);
             builder.setPositiveButton(R.string.night_light_start, (dialog, which) -> {

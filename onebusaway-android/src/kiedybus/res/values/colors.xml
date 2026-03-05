@@ -30,5 +30,29 @@
     <!-- Keep on-time color green even though theme is blue -->
     <color name="stop_info_ontime">#4CAF50</color>
 
+    <!-- Material 3 -->
+    <color name="md_theme_primary">#36618E</color>
+    <color name="md_theme_onPrimary">#FFFFFF</color>
+    <color name="md_theme_primaryContainer">#D1E4FF</color>
+    <color name="md_theme_onPrimaryContainer">#194975</color>
+
+    <color name="md_theme_secondary">#3C6090</color>
+    <color name="md_theme_onSecondary">#FFFFFF</color>
+    <color name="md_theme_secondaryContainer">#D4E3FF</color>
+    <color name="md_theme_onSecondaryContainer">#224876</color>
+
+    <color name="md_theme_background">#F8F9FF</color>
+    <color name="md_theme_onBackground">#191C20</color>
+    <color name="md_theme_surface">#F8F9FF</color>
+    <color name="md_theme_onSurface">#191C20</color>
+
+    <!-- Error Colors are inherited from base app   -->
+
+    <color name="md_theme_surfaceContainerLowest">#FFFFFF</color>
+    <color name="md_theme_surfaceContainerLow">#F2F3FA</color>
+    <color name="md_theme_surfaceContainer">#ECEEF4</color>
+    <color name="md_theme_surfaceContainerHigh">#E6E8EE</color>
+    <color name="md_theme_surfaceContainerHighest">#E1E2E8</color>
+
     <!-- See src/main/res/colors.xml for more colors you can override here -->
 </resources>

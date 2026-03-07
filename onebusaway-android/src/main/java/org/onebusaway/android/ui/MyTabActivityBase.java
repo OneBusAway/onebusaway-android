@@ -222,8 +222,10 @@ abstract class MyTabActivityBase extends AppCompatActivity {
         public Fragment createFragment(int position) {
             try {
                 return tabInfos[position].fragmentClass.getDeclaredConstructor().newInstance();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(
+                        "Failed to instantiate " + tabInfos[position].fragmentClass.getName()
+                                + ". Ensure it has a public no-arg constructor.", e);
             }
         }
 

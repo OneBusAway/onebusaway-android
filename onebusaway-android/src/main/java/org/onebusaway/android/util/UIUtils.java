@@ -144,14 +144,11 @@ public final class UIUtils {
         if (bar != null) {
             bar.setIcon(android.R.color.transparent);
             bar.setDisplayShowTitleEnabled(true);
+            bar.setElevation(0);
         }
 
         if (!(activity instanceof HomeActivity) && bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);
-        }
-
-        if (bar != null) {
-            bar.setElevation(0);
         }
 
         // Toolbar inset listener - pass through insets (don't consume) so content receives them
@@ -164,14 +161,15 @@ public final class UIUtils {
             });
         }
 
-        // Content view inset listener
-        View root = activity.findViewById(android.R.id.content);
-        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-            Insets sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            setStatusBarColor(activity, ContextCompat.getColor(activity, R.color.theme_primary_variant), true);
-            v.setPadding(sysBars.left, sysBars.top, sysBars.right, sysBars.bottom);
-            return insets;
-        });
+        View contentView = activity.findViewById(android.R.id.content);
+        if (contentView != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(contentView, (v, windowInsets) -> {
+                Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                setStatusBarColor(activity, ContextCompat.getColor(activity, R.color.theme_primary_variant), true);
+                v.setPadding(insets.left, v.getPaddingTop(), insets.right, insets.bottom);
+                return windowInsets;
+            });
+        }
     }
 
     public static void setStatusBarColor(@NonNull final Activity activity, @ColorInt final int color, final boolean isDecor) {

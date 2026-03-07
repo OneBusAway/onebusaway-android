@@ -57,7 +57,7 @@
         android:name="org.onebusaway.android.app.Application"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/Theme.OneBusAway"
+        android:theme="@style/Theme.OneBusAway.NoActionBar"
         android:networkSecurityConfig="@xml/network_security_config">
 
         <meta-data android:name="com.onesignal.NotificationServiceExtension"
@@ -68,7 +68,6 @@
             android:value="org.onebusaway.android.ui.SearchActivity" />
 
         <activity
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:name=".ui.survey.activities.SurveyWebViewActivity"
             android:exported="false" />
 
@@ -76,7 +75,6 @@
             android:name=".ui.DonationLearnMoreActivity"
             android:exported="false"
             android:label="@string/title_activity_donation_learn_more"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:parentActivityName=".ui.HomeActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -87,7 +85,6 @@
             android:name="org.onebusaway.android.ui.SearchActivity"
             android:launchMode="singleTop"
             android:exported="true"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
@@ -100,7 +97,6 @@
         <activity
             android:name="org.onebusaway.android.ui.HomeActivity"
             android:exported="true"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -111,7 +107,6 @@
             android:name="org.onebusaway.android.ui.ArrivalsListActivity"
             android:launchMode="singleTop"
             android:exported="true"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -135,7 +130,6 @@
         </activity>
         <activity android:name="org.onebusaway.android.ui.RouteInfoActivity"
             android:exported="true"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -148,13 +142,10 @@
                 <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </activity>
-        <activity android:name="org.onebusaway.android.ui.TripInfoActivity"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"/>
-        <activity android:name=".ui.MyRemindersActivity"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"/>
+        <activity android:name="org.onebusaway.android.ui.TripInfoActivity"/>
+        <activity android:name=".ui.MyRemindersActivity"/>
         <activity android:name="org.onebusaway.android.ui.TripDetailsActivity"
             android:exported="true"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -165,7 +156,6 @@
             android:name="org.onebusaway.android.ui.MyStopsActivity"
             android:label="@string/stop_shortcut"
             android:exported="true"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
@@ -196,7 +186,6 @@
             android:name="org.onebusaway.android.ui.MyStarredStopsActivity"
             android:label="@string/starred_stops_shortcut"
             android:exported="true"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
@@ -207,7 +196,6 @@
             android:name="org.onebusaway.android.ui.MyRoutesActivity"
             android:label="@string/route_shortcut"
             android:exported="true"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
@@ -238,7 +226,6 @@
             android:name="org.onebusaway.android.ui.PreferencesActivity"
             android:parentActivityName="org.onebusaway.android.ui.HomeActivity"
             android:exported="true"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             tools:ignore="ExportedPreferenceActivity">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -254,22 +241,17 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.onebusaway.android.ui.HomeActivity"/>
         </activity>
-        <activity android:name="org.onebusaway.android.ui.RegionsActivity"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"/>
-        <activity android:name="org.onebusaway.android.ui.AgenciesActivity"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"/>
+        <activity android:name="org.onebusaway.android.ui.RegionsActivity"/>
+        <activity android:name="org.onebusaway.android.ui.AgenciesActivity"/>
 
-        <activity android:name="org.onebusaway.android.report.ui.ReportActivity"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"/>
-        <activity android:name="org.onebusaway.android.report.ui.InfrastructureIssueActivity"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"/>
+        <activity android:name="org.onebusaway.android.report.ui.ReportActivity"/>
+        <activity android:name="org.onebusaway.android.report.ui.InfrastructureIssueActivity"/>
 
         <activity
             android:name="org.onebusaway.android.ui.MyRecentStopsAndRoutesActivity"
             android:label="@string/my_recent_title"
             android:parentActivityName="org.onebusaway.android.ui.HomeActivity"
             android:exported="true"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
@@ -286,7 +268,6 @@
             android:parentActivityName="org.onebusaway.android.ui.HomeActivity"
             android:screenOrientation="portrait"
             android:exported="true"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
@@ -300,7 +281,6 @@
         <activity
             android:name="org.onebusaway.android.ui.TripPlanActivity"
             android:label="@string/title_activity_trip_plan"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -310,7 +290,6 @@
             android:name="org.onebusaway.android.ui.FeedbackActivity"
             android:label="@string/feedback_notify_title"
             android:noHistory="true"
-            android:theme="@style/Theme.OneBusAway.NoActionBar"
             android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -374,8 +353,7 @@
         <activity
             android:name="org.onebusaway.android.ui.AboutActivity"
             android:label="@string/title_activity_about"
-            android:parentActivityName="org.onebusaway.android.ui.PreferencesActivity"
-            android:theme="@style/Theme.OneBusAway.NoActionBar">
+            android:parentActivityName="org.onebusaway.android.ui.PreferencesActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.onebusaway.android.ui.PreferencesActivity"/>

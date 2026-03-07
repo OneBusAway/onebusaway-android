@@ -3,5 +3,7 @@
     <style name="Theme.OneBusAway.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@color/theme_primary_variant</item>
     </style>
 </resources>

@@ -196,6 +196,7 @@
                     android:layout_weight="1"
                     android:layout_gravity="center_vertical"
                     android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textColor="@color/body_text_1"
                     tools:text="Leaving" />
 
             <Spinner

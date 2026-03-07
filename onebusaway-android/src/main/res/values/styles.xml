@@ -53,11 +53,10 @@
     <!-- Reporting -->
     <style name="Line3Text">
         <item name="android:textSize">15sp</item>
-        <item name="android:textColor">@android:color/black</item>
     </style>
     <style name="legendDialogTextStyle">
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textColor">@color/body_text_1</item>
         <item name="android:textStyle">bold</item>
     </style>
     <style name="LoadingProgress" parent="@style/Widget.AppCompat.ProgressBar">
@@ -72,9 +71,6 @@
     </style>
 
     <!-- Form styles -->
-    <style name="FormBackground">
-        <item name="android:background">@android:color/background_light</item>
-    </style>
     <style name="FormLabel">
         <item name="android:paddingTop">8sp</item>
         <item name="android:textStyle">bold</item>
@@ -161,7 +157,7 @@
     </style>
     <style name="ArrivalsListNextTimeETA">
         <item name="android:textSize">22sp</item>
-        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textColor">@color/body_text_1</item>
         <item name="android:textStyle">bold</item>
     </style>
     <style name="ArrivalsListNextTimeSched">
@@ -256,7 +252,7 @@
     <!-- Tutorial - ShowcaseView -->
     <style name="CustomShowcaseTheme" parent="ShowcaseView">
         <item name="sv_backgroundColor">@color/tutorial_background</item>
-        <item name="sv_showcaseColor">@color/theme_primary_dark</item>
+        <item name="sv_showcaseColor">@color/theme_primary_variant</item>
         <item name="sv_buttonText">@string/tutorial_button_text</item>
         <item name="sv_titleTextAppearance">@style/CustomTitle2</item>
         <item name="sv_detailTextAppearance">@style/CustomText2</item>

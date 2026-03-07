@@ -191,7 +191,6 @@ public class SimpleArrivalListFragment extends Fragment
             LayoutInflater inflater = LayoutInflater.from(getActivity());
             LinearLayout view = (LinearLayout) inflater.inflate(
                     R.layout.arrivals_list_item, null, false);
-            view.setBackgroundColor(getResources().getColor(R.color.material_background));
             TextView route = (TextView) view.findViewById(R.id.route);
             TextView destination = (TextView) view.findViewById(R.id.destination);
             TextView time = (TextView) view.findViewById(R.id.time);

@@ -16,7 +16,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:background="@color/material_background"
+              android:background="@color/trip_details_background"
               android:orientation="vertical"
               android:configChanges="keyboardHidden|orientation|screenSize">
     <LinearLayout
@@ -82,12 +82,11 @@
                     android:layout_height="wrap_content"
                     android:minHeight="48dp"
                     android:layout_marginLeft="176dp"
-                    android:background="@color/material_background"
+                    android:background="@color/material_gray"
                     android:text="@string/ri_button_image"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="@android:color/black"
                     android:layout_gravity="top"
                     android:id="@+id/ri_attach_image"
             />
@@ -113,8 +112,6 @@
                     android:text="@string/ri_anonymous_checkbox"
                     style="@style/MaterialItem"
                     android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
             />
 
 

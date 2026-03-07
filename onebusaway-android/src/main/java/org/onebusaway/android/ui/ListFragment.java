@@ -19,6 +19,7 @@ package org.onebusaway.android.ui;
 import org.onebusaway.android.R;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Gravity;
@@ -152,6 +153,27 @@ public class ListFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ensureList();
+        updateEmptyViewMargins();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        updateEmptyViewMargins();
+    }
+
+    private void updateEmptyViewMargins() {
+        if (mStandardEmptyView == null) return;
+        // view is guaranteed to exist
+        int margin = (int) (getResources().getDisplayMetrics().widthPixels * 0.1);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER);
+
+        lp.setMargins(margin, 0, margin, 0);
+        mStandardEmptyView.setLayoutParams(lp);
+        mStandardEmptyView.setGravity(Gravity.CENTER);
     }
 
     /**
@@ -240,6 +262,7 @@ public class ListFragment extends Fragment {
         if (mStandardEmptyView == null) {
             throw new IllegalStateException("Can't be used with a custom content view");
         }
+
         mStandardEmptyView.setText(text);
         if (mEmptyText == null) {
             mList.setEmptyView(mStandardEmptyView);

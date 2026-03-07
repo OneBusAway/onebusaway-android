@@ -390,7 +390,6 @@ public class HomeActivity extends AppCompatActivity
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         setContentView(R.layout.main);
-
         mActivityWeakRef = new WeakReference<>(this);
 
         mInitialStartup = Application.getPrefs().getBoolean(INITIAL_STARTUP, true);

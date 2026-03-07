@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:text="@string/feedback_msg"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textColor="@android:color/black"
+            android:textColor="@color/body_text_1"
             android:textSize="16sp" />
     </FrameLayout>
     <FrameLayout
@@ -124,7 +124,7 @@
             android:layout_height="wrap_content"
             android:text="@string/feedback_log_guide"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textColor="@android:color/black"
+            android:textColor="@color/body_text_1"
             android:textSize="14sp" />
     </FrameLayout>
 </LinearLayout>

@@ -216,11 +216,10 @@ dependencies {
     implementation 'com.google.firebase:firebase-storage:21.0.1'
     // Firebase Crashlytics
     implementation 'com.google.firebase:firebase-crashlytics:19.2.0'
-    implementation 'com.google.firebase:firebase-crashlytics-buildtools:3.0.2'
     // Google Play Services Location
     implementation 'com.google.android.gms:play-services-location:21.3.0'
     // OneSignal
-    implementation 'com.onesignal:OneSignal:[5.0.0, 5.99.99]'
+    implementation 'com.onesignal:OneSignal:5.6.2'
     // Support libraries
     implementation 'androidx.activity:activity-ktx:1.9.3'
     implementation 'androidx.fragment:fragment-ktx:1.8.4'

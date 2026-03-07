@@ -67,8 +67,8 @@ That's it! All other branded strings use `%1$s` placeholders that automatically 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="theme_primary">#YOUR_PRIMARY_COLOR</color>
-    <color name="theme_primary_dark">#YOUR_DARK_COLOR</color>
+    <color name="brand_color">#YOUR_PRIMARY_COLOR</color>
+    <color name="brand_color_dark">#YOUR_DARK_COLOR</color>
     <color name="theme_muted">#YOUR_MUTED_COLOR</color>
     <color name="theme_accent">#YOUR_ACCENT_COLOR</color>
     <color name="tutorial_background">#dfYOUR_PRIMARY</color>

@@ -35,7 +35,6 @@
                   android:fadingEdge="horizontal"
                   android:textSize="15sp"
                   android:textAppearance="?android:attr/textAppearanceMedium"
-                  android:textColor="@android:color/black"
                   android:layout_alignParentRight="true"
                   android:layout_alignParentEnd="true"
                   android:layout_alignParentTop="true"

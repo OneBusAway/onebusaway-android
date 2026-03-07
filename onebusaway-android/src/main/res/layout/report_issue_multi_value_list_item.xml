@@ -40,7 +40,6 @@
                     android:text="Medium Text"
                     style="@style/Line3Text"
                     android:textSize="15sp"
-                    android:textColor="@android:color/black"
                     android:textStyle="bold"
                     android:id="@+id/rimvli_textView"
                     android:layout_alignParentLeft="true"

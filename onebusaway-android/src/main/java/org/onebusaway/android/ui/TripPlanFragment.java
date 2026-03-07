@@ -276,7 +276,7 @@ public class TripPlanFragment extends Fragment {
             }
         };
 
-        Context context = new ContextThemeWrapper(getActivity(), R.style.dayNightTimePickerDialogTheme);
+        Context context = view.getContext();
 
         final DatePickerDialog.OnDateSetListener dateCallback = new DatePickerDialog.OnDateSetListener() {
 

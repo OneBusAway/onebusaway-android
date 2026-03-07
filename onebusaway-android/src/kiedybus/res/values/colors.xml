@@ -16,8 +16,8 @@
 -->
 <resources>
     <!-- KiedyBus Theme - Material Blue -->
-    <color name="theme_primary">#2196F3</color>
-    <color name="theme_primary_dark">#1976D2</color>
+    <color name="brand_color">#2196F3</color>
+    <color name="brand_color_dark">#1976D2</color>
     <color name="theme_muted">#BBDEFB</color>
     <color name="theme_accent">#1E88E5</color>
 

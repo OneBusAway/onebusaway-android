@@ -16,7 +16,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:background="@color/material_background"
+              android:background="@color/trip_details_background"
               android:orientation="vertical"
               android:layout_marginLeft="4dp"
               android:layout_marginRight="4dp"
@@ -42,7 +42,6 @@
                 android:textSize="15sp"
                 android:id="@+id/simple_arrival_info_text"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textColor="@android:color/black"
                 />
 
     </FrameLayout>

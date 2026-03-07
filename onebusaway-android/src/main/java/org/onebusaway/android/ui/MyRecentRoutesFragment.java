@@ -34,7 +34,7 @@ import androidx.loader.content.Loader;
 
 public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
 
-    public static final String TAB_NAME = "recent";
+    public static final String TAB_NAME = "recent_routes";
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {

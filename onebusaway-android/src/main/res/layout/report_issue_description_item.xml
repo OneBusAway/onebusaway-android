@@ -36,7 +36,6 @@
                 android:textStyle="bold"
                 android:textSize="15sp"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textColor="@android:color/black"
                 />
 
     </FrameLayout>

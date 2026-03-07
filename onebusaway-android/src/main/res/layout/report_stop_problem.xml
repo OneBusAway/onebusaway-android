@@ -15,7 +15,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:background="@color/material_background"
+            android:background="@color/trip_details_background"
             android:configChanges="keyboardHidden|orientation|screenSize">
 
     <LinearLayout
@@ -83,7 +83,6 @@
                     android:text="@string/report_problem_hint"
                     android:textSize="15sp"
                     android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="@android:color/black"
                     />
 
         </FrameLayout>

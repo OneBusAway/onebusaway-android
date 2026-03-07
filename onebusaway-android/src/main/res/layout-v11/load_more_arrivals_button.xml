@@ -6,8 +6,10 @@
     <Button
             android:id="@+id/load_more_arrivals"
             android:text="@string/stop_info_load_more_arrivals"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/stop_info_scheduled_time"
-            style="?android:attr/borderlessButtonStyle"/>
+            android:textColor="@color/body_text_1"
+            android:backgroundTint="@color/navdrawer_background"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"/>
 </LinearLayout>

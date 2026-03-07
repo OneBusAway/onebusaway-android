@@ -690,7 +690,7 @@ public class PreferencesActivity extends PreferenceActivity
         Toolbar bar = (Toolbar) LayoutInflater.from(this)
                 .inflate(R.layout.settings_toolbar, root, false);
         root.addView(bar, 0); // insert at top
-        UIUtils.setStatusBarColor(PreferencesActivity.this, ContextCompat.getColor(PreferencesActivity.this, R.color.theme_primary_dark), true);
+        UIUtils.setStatusBarColor(PreferencesActivity.this, ContextCompat.getColor(PreferencesActivity.this, R.color.theme_primary_variant), true);
         bar.setNavigationOnClickListener(v -> finish());
     }
 

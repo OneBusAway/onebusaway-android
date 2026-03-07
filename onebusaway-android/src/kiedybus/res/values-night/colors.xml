@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com)
-    and individual contributors.
+<!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com),
+    Benjamin Du (bendu@me.com),
+    Microsoft Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,14 +17,5 @@
     limitations under the License.
 -->
 <resources>
-    <!-- Agency Y Theme -->
-    <color name="brand_color">#2196F3</color>
-    <color name="brand_color_dark">#1976D2</color>
-    <color name="theme_muted">#BBDEFB</color>
-    <color name="theme_accent">#1E88E5</color>
-
-    <!-- Tutorials -->
-    <color name="tutorial_background">#df2196F3</color>
-
-    <!-- See src/main/res/colors.xml for more colors you can override here -->
+    <color name="theme_primary">#1976D2</color>
 </resources>

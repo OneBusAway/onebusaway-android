@@ -48,6 +48,7 @@
                 android:paddingBottom="10dp"
                 android:background="@android:color/transparent"
                 android:src="@drawable/ic_close"
+                app:tint="@color/body_text_1"
                 android:contentDescription="@string/close_donation_card"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />

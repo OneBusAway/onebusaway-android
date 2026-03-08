@@ -73,6 +73,7 @@
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="bad_gateway_error">%1$s\'s servers are overloaded. Please excuse us!</string>
     <string name="map_generic_error">Unable to get stops.</string>
+        <string name="dc_region_data_error">Unable to load stops for the Washington D.C. region. Please check your connection or try again later. If the problem persists, please contact support.</string>
     <string name="no_network_error">You appear to be offline or are not connected to the network.
     </string>
     <string name="airplane_mode_error">You are not connected to the network.\nTurn off Airplane

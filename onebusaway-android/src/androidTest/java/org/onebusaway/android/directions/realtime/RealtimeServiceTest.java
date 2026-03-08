@@ -119,6 +119,14 @@ public class RealtimeServiceTest {
         bundle.putInt(OTPConstants.SELECTED_ITINERARY, 0);
 
         assertEquals("getItinerary should return the selected itinerary", it, mService.getItinerary(bundle));
+
+        // Test with out of bounds index (positive)
+        bundle.putInt(OTPConstants.SELECTED_ITINERARY, 1);
+        assertNull("getItinerary should return null for out of bounds index", mService.getItinerary(bundle));
+
+        // Test with out of bounds index (negative)
+        bundle.putInt(OTPConstants.SELECTED_ITINERARY, -1);
+        assertNull("getItinerary should return null for negative index", mService.getItinerary(bundle));
     }
 
     @Test
@@ -130,5 +138,13 @@ public class RealtimeServiceTest {
             fail("onHandleIntent should not throw NPE on empty bundle: " + e.getMessage());
         }
         // Other exceptions propagate naturally and fail the test visibly
+
+        // Test with null action
+        Intent nullActionIntent = new Intent();
+        try {
+            mService.onHandleIntent(nullActionIntent);
+        } catch (NullPointerException e) {
+            fail("onHandleIntent should not throw NPE on null action: " + e.getMessage());
+        }
     }
 }

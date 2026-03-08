@@ -364,7 +364,7 @@
         <!-- Opt-out of June 2018 Android Maps styling with pin POI icons - see #891 -->
         <meta-data android:name="com.google.android.gms.maps.API_OPTIONS" android:value="B3H9HE845CFHYG"/>
              <activity android:name="org.onebusaway.android.report.ui.CustomerServiceActivity"
-        android:exported="false"
+            android:exported="true"                  
         android:parentActivityName="org.onebusaway.android.report.ui.ReportActivity">
         <meta-data
             android:name="android.support.PARENT_ACTIVITY"

@@ -87,7 +87,7 @@ public class RealtimeService extends IntentService {
             bundle = new Bundle();
         }
 
-        if (intent.getAction().equals(OTPConstants.INTENT_START_CHECKS)) {
+        if (OTPConstants.INTENT_START_CHECKS.equals(intent.getAction())) {
             disableListenForTripUpdates();
             if (!rescheduleRealtimeUpdates(bundle)) {
                 Itinerary itinerary = getItinerary(bundle);
@@ -97,7 +97,7 @@ public class RealtimeService extends IntentService {
                     Log.w(TAG, "Cannot start realtime updates - no itinerary in bundle");
                 }
             }
-        } else if (intent.getAction().equals(OTPConstants.INTENT_CHECK_TRIP_TIME)) {
+        } else if (OTPConstants.INTENT_CHECK_TRIP_TIME.equals(intent.getAction())) {
             checkForItineraryChange(bundle);
         }
 
@@ -329,6 +329,9 @@ public class RealtimeService extends IntentService {
             return null;
         }
         int i = bundle.getInt(OTPConstants.SELECTED_ITINERARY);
+        if (i < 0 || i >= itineraries.size()) {
+            return null;
+        }
         return itineraries.get(i);
     }
 

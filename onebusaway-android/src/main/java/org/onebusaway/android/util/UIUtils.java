@@ -161,11 +161,12 @@ public final class UIUtils {
             });
         }
 
+        setStatusBarColor(activity, ContextCompat.getColor(activity, R.color.theme_primary_variant), true);
+
         View contentView = activity.findViewById(android.R.id.content);
         if (contentView != null) {
             ViewCompat.setOnApplyWindowInsetsListener(contentView, (v, windowInsets) -> {
                 Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-                setStatusBarColor(activity, ContextCompat.getColor(activity, R.color.theme_primary_variant), true);
                 v.setPadding(insets.left, v.getPaddingTop(), insets.right, insets.bottom);
                 return windowInsets;
             });

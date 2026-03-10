@@ -688,8 +688,11 @@ public class PreferencesActivity extends PreferenceActivity
                 .getParent().getParent();
         root.setFitsSystemWindows(true);
         Toolbar bar = (Toolbar) LayoutInflater.from(this)
-                .inflate(R.layout.settings_toolbar, root, false);
+                .inflate(R.layout.include_toolbar, root, false);
         root.addView(bar, 0); // insert at top
+        bar.setTitle(R.string.navdrawer_item_settings);
+        bar.setNavigationIcon(androidx.appcompat.R.drawable.abc_ic_ab_back_material);
+        bar.setNavigationContentDescription(R.string.abc_action_bar_up_description);
         UIUtils.setStatusBarColor(PreferencesActivity.this, ContextCompat.getColor(PreferencesActivity.this, R.color.theme_primary_variant), true);
         bar.setNavigationOnClickListener(v -> finish());
     }

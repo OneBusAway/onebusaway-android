@@ -89,6 +89,8 @@ public class SearchResultsFragment extends ListFragment
 
     private MyAdapter mAdapter;
 
+    private UIUtils.StopUserInfoMap mStopUserMap;
+
     /**
      * GoogleApiClient being used for Location Services
      */
@@ -111,10 +113,19 @@ public class SearchResultsFragment extends ListFragment
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        mAdapter = new MyAdapter(getActivity());
+        mStopUserMap = new UIUtils.StopUserInfoMap(getActivity());
+        mAdapter = new MyAdapter(getActivity(), mStopUserMap);
         setListAdapter(mAdapter);
 
         search();
+    }
+
+    @Override
+    public void onDestroy() {
+        if (mStopUserMap != null) {
+            mStopUserMap.close();
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -246,8 +257,11 @@ public class SearchResultsFragment extends ListFragment
     //
     private static final class MyAdapter extends ArrayAdapter<ObaElement> {
 
-        public MyAdapter(Context context) {
+        private final UIUtils.StopUserInfoMap mStopUserMap;
+
+        public MyAdapter(Context context, UIUtils.StopUserInfoMap stopUserMap) {
             super(context, R.layout.route_list_item);
+            mStopUserMap = stopUserMap;
         }
 
         @Override
@@ -271,9 +285,7 @@ public class SearchResultsFragment extends ListFragment
         }
 
         private void initStop(View view, ObaStop stop) {
-            TextView nameView = (TextView) view.findViewById(R.id.stop_name);
-            nameView.setText(UIUtils.formatDisplayText(stop.getName()));
-
+            mStopUserMap.setView(view, stop.getId(), stop.getName());
             UIUtils.setStopDirection(view.findViewById(R.id.direction),
                     stop.getDirection(),
                     true);

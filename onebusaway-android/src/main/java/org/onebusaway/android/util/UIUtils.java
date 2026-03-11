@@ -98,6 +98,7 @@ import androidx.fragment.app.Fragment;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import org.checkerframework.checker.guieffect.qual.UI;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -406,7 +407,39 @@ public final class UIUtils {
 
         public void setView(View stopRoot, String stopId, String stopName) {
             TextView nameView = (TextView) stopRoot.findViewById(R.id.stop_name);
-            setView2(nameView, stopId, stopName, true);
+            ImageView favoriteView = (ImageView) stopRoot.findViewById(R.id.stop_favorite);
+
+            ContentValues values = mMap.getValues(stopId);
+            boolean favorite = false;
+
+            if (values != null) {
+                Integer i = values.getAsInteger(ObaContract.Stops.FAVORITE);
+                favorite = (i != null) && (i == 1);
+                final String userName = values.getAsString(ObaContract.Stops.USER_NAME);
+
+                nameView.setText(TextUtils.isEmpty(userName)
+                        ? UIUtils.formatDisplayText(stopName)
+                        : userName);
+
+            } else {
+                nameView.setText(UIUtils.formatDisplayText(stopName));
+            }
+            // Clear any old compound drawable so the star doesn't push into text.
+            nameView.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+
+            if (favoriteView != null) {
+                if (favorite) {
+                    favoriteView.setVisibility(View.VISIBLE);
+                    ImageViewCompat.setImageTintList(
+                            favoriteView,
+                            ColorStateList.valueOf(
+                                    ContextCompat.getColor(stopRoot.getContext(),
+                                            R.color.navdrawer_icon_tint)));
+                } else {
+                    favoriteView.setVisibility(View.GONE);
+                    ImageViewCompat.setImageTintList(favoriteView, null);
+                }
+            }
         }
 
         /**

@@ -727,7 +727,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                finishActivityWithResult();
+                onBackPressed();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

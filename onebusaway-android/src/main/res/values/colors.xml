@@ -125,4 +125,10 @@
     <color name="zoom_btn_color_default">#BEFFFFFF</color>
     <color name="zoom_btn_color_pressed">#82CCCCCC</color>
     <color name="zoom_btn_color">#82CCCCCC</color>
+
+    <!-- Previously provided by Google Play Services; defined locally for all flavors -->
+    <color name="quantum_white_100">#FFFFFF</color>
+    <color name="quantum_black_text">#DE000000</color>
+    <color name="quantum_yellow50">#FFFDE7</color>
+    <color name="quantum_googredA700">#D50000</color>
 </resources>

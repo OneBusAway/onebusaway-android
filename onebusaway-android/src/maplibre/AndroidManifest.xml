@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Manifest overlay for the MapLibre build flavor.
+     Removes/overrides Google Maps-specific metadata from the main manifest.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <!-- Override the Google Maps API key (not needed for MapLibre) -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value=""
+            tools:replace="android:value" />
+
+        <!-- Remove Google Maps API options metadata -->
+        <meta-data
+            android:name="com.google.android.gms.maps.API_OPTIONS"
+            tools:node="remove" />
+    </application>
+
+</manifest>

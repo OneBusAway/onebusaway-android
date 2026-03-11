@@ -16,7 +16,7 @@
 package org.onebusaway.android.io.backup;
 
 import android.content.Context;
-import android.preference.Preference;
+import androidx.preference.Preference;
 import android.util.AttributeSet;
 
 public class RestorePreference extends Preference {

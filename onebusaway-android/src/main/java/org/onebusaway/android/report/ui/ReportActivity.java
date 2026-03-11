@@ -34,7 +34,7 @@ import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.report.constants.ReportConstants;
 import org.onebusaway.android.report.ui.dialog.CustomerServiceDialog;
 import org.onebusaway.android.report.ui.dialog.RegionValidateDialog;
-import org.onebusaway.android.ui.PreferencesActivity;
+import org.onebusaway.android.ui.SettingsActivity;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -195,8 +195,8 @@ public class ReportActivity extends BaseReportActivity {
     }
 
     public void createPreferencesActivity() {
-        Intent intent = new Intent(ReportActivity.this, PreferencesActivity.class);
-        intent.putExtra(PreferencesActivity.SHOW_CHECK_REGION_DIALOG, true);
+        Intent intent = new Intent(ReportActivity.this, SettingsActivity.class);
+        intent.putExtra(SettingsActivity.SHOW_CHECK_REGION_DIALOG, true);
         startActivity(intent);
     }
 

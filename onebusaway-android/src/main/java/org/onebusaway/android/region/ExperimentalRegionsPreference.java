@@ -19,15 +19,16 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.PreferenceUtils;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.TypedArray;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.preference.CheckBoxPreference;
-import android.preference.Preference;
 import android.util.AttributeSet;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.preference.CheckBoxPreference;
+import androidx.preference.Preference;
 
 /**
  * Custom preference to handle enabling and disabling experimental
@@ -152,12 +153,10 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
     }
 
     @Override
-    protected void onSetInitialValue(boolean restorePersistedValue, Object defaultValue) {
-        if (restorePersistedValue) {
-            // Restore existing state
-            mCurrentValue = this.getPersistedBoolean(mCurrentValue);
+    protected void onSetInitialValue(Object defaultValue) {
+        if (defaultValue == null) {
+            mCurrentValue = getPersistedBoolean(mCurrentValue);
         } else {
-            // Set default state from the XML attribute
             mCurrentValue = (Boolean) defaultValue;
             persistBoolean(mCurrentValue);
         }

@@ -78,7 +78,7 @@
             android:parentActivityName=".ui.HomeActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.PreferencesActivity" />
+                android:value="org.onebusaway.android.ui.SettingsActivity" />
         </activity>
 
         <activity
@@ -221,12 +221,11 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
-        <!-- ActionBarCompat library doesn't have an ActionBarPreferenceActivity, so define parent here-->
         <activity
-            android:name="org.onebusaway.android.ui.PreferencesActivity"
+            android:name="org.onebusaway.android.ui.SettingsActivity"
             android:parentActivityName="org.onebusaway.android.ui.HomeActivity"
             android:exported="true"
-            tools:ignore="ExportedPreferenceActivity">
+            android:theme="@style/Theme.OneBusAway.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -353,10 +352,11 @@
         <activity
             android:name="org.onebusaway.android.ui.AboutActivity"
             android:label="@string/title_activity_about"
-            android:parentActivityName="org.onebusaway.android.ui.PreferencesActivity">
+            android:parentActivityName="org.onebusaway.android.ui.SettingsActivity"
+            android:theme="@style/Theme.OneBusAway.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.PreferencesActivity"/>
+                android:value="org.onebusaway.android.ui.SettingsActivity"/>
         </activity>
 
         <!-- Opt-out of June 2018 Android Maps styling with pin POI icons - see #891 -->

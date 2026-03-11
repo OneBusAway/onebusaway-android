@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010-2017 Brian Ferris (bdferris@onebusaway.org),
+    Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com),
+    Microsoft Corporation
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:key="@string/preferences_category_advanced"
+        android:title="@string/preferences_category_advanced">
+        <org.onebusaway.android.region.ExperimentalRegionsPreference
+            android:key="@string/preference_key_experimental_regions"
+            android:summary="@string/preferences_experimental_regions_summary"
+            android:title="@string/preferences_experimental_regions_title" />
+        <CheckBoxPreference
+            android:key="@string/preferences_display_test_alerts"
+            android:defaultValue="false"
+            android:summary="@string/display_test_wide_alerts_for_regions"
+            android:title="@string/display_test_alerts" />
+        <EditTextPreference
+            android:hint="@string/preferences_oba_api_servername_hint"
+            android:inputType="text|textNoSuggestions"
+            android:key="@string/preference_key_oba_api_url"
+            android:summary="@string/preferences_oba_api_servername_summary"
+            android:title="@string/preferences_oba_api_servername_title" />
+        <EditTextPreference
+            android:hint="@string/preferences_otp_api_servername_hint"
+            android:inputType="text|textNoSuggestions"
+            android:key="@string/preference_key_otp_api_url"
+            android:summary="@string/preferences_otp_api_servername_summary"
+            android:title="@string/preferences_otp_api_servername_title" />
+        <Preference
+            android:key="@string/preference_key_push_firebase_data"
+            android:title="@string/preferences_push_firebase_data_title"
+            android:summary="@string/preferences_push_firebase_data_summary" />
+        <Preference
+            android:key="@string/preference_key_reset_donation_timestamps"
+            android:title="@string/preferences_reset_donation_timestamps_title"
+            android:summary="@string/preferences_reset_donation_timestamps_summary" />
+    </PreferenceCategory>
+</PreferenceScreen>

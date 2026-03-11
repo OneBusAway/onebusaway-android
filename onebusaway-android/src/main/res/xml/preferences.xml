@@ -16,6 +16,7 @@
     limitations under the License.
 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:key="preferences_root">
     <PreferenceCategory
         android:key="@string/preferences_category_location"
@@ -110,11 +111,8 @@
     <PreferenceCategory
         android:key="@string/preference_key_notifications"
         android:title="@string/preferences_category_notifications">
-        <RingtonePreference
+        <Preference
             android:key="@string/preference_key_notification_sound"
-            android:ringtoneType="notification"
-            android:showDefault="true"
-            android:showSilent="true"
             android:summary="@string/preferences_preferred_sound_summary"
             android:title="@string/preferences_preferred_sound_title" />
         <CheckBoxPreference
@@ -139,43 +137,11 @@
             android:title="@string/preferences_restore_title" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_advanced">
-        <PreferenceScreen
+        <Preference
+            android:key="pref_advanced"
             android:summary="@string/preferences_screen_advanced_summary"
-            android:title="@string/preferences_category_advanced">
-            <PreferenceCategory
-                android:key="@string/preferences_category_advanced"
-                android:title="@string/preferences_category_advanced">
-                <org.onebusaway.android.region.ExperimentalRegionsPreference
-                    android:key="@string/preference_key_experimental_regions"
-                    android:summary="@string/preferences_experimental_regions_summary"
-                    android:title="@string/preferences_experimental_regions_title" />
-                <CheckBoxPreference
-                        android:key="@string/preferences_display_test_alerts"
-                        android:defaultValue="false"
-                        android:summary="@string/display_test_wide_alerts_for_regions"
-                        android:title="@string/display_test_alerts" />
-                <EditTextPreference
-                    android:hint="@string/preferences_oba_api_servername_hint"
-                    android:inputType="text|textNoSuggestions"
-                    android:key="@string/preference_key_oba_api_url"
-                    android:summary="@string/preferences_oba_api_servername_summary"
-                    android:title="@string/preferences_oba_api_servername_title" />
-                <EditTextPreference
-                    android:hint="@string/preferences_otp_api_servername_hint"
-                    android:inputType="text|textNoSuggestions"
-                    android:key="@string/preference_key_otp_api_url"
-                    android:summary="@string/preferences_otp_api_servername_summary"
-                    android:title="@string/preferences_otp_api_servername_title" />
-                <Preference
-                    android:key="@string/preference_key_push_firebase_data"
-                    android:title="@string/preferences_push_firebase_data_title"
-                    android:summary="@string/preferences_push_firebase_data_summary"/>
-                <Preference
-                    android:key="@string/preference_key_reset_donation_timestamps"
-                    android:title="@string/preferences_reset_donation_timestamps_title"
-                    android:summary="@string/preferences_reset_donation_timestamps_summary" />
-            </PreferenceCategory>
-        </PreferenceScreen>
+            android:title="@string/preferences_category_advanced"
+            app:fragment="org.onebusaway.android.ui.SettingsActivity$AdvancedSettingsFragment" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="@string/preferences_category_about"

@@ -151,7 +151,7 @@ public class RealtimeService extends IntentService {
 
                 int flags;
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                    flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE;
+                    flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
                 } else {
                     flags = PendingIntent.FLAG_CANCEL_CURRENT;
                 }
@@ -258,7 +258,7 @@ public class RealtimeService extends IntentService {
         openIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         int flags;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE;
+            flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         } else {
             flags = PendingIntent.FLAG_CANCEL_CURRENT;
         }
@@ -313,7 +313,7 @@ public class RealtimeService extends IntentService {
         }
         int flags;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE;
+            flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         } else {
             flags = PendingIntent.FLAG_UPDATE_CURRENT;
         }

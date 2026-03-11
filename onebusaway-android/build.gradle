@@ -64,6 +64,8 @@ android {
             // Normal Google Play release - see src/google
             dimension "platform"
             isDefault = true
+            buildConfigField "String", "MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.googlemapsv2.BaseMapFragment\""
+            buildConfigField "String", "MAP_HELPER_CLASS", "\"org.onebusaway.android.map.googlemapsv2.GoogleProprietaryMapHelper\""
         }
 
         // Brand flavors are loaded from separate files in flavors/ directory.

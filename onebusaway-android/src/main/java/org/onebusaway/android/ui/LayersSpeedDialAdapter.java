@@ -24,7 +24,7 @@ import android.widget.TextView;
 
 import org.jetbrains.annotations.NotNull;
 import org.onebusaway.android.R;
-import org.onebusaway.android.map.googlemapsv2.LayerInfo;
+import org.onebusaway.android.map.LayerInfo;
 import org.onebusaway.android.util.LayerUtils;
 
 import java.util.ArrayList;

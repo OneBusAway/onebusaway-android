@@ -35,7 +35,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.PlausibleAnalytics;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.ObaMapFragment;
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2;
 import org.onebusaway.android.map.googlemapsv2.MarkerListeners;
 import org.onebusaway.android.util.LayerUtils;
@@ -60,7 +60,7 @@ public class BikeStationOverlay
 
     private BikeStationData mBikeStationData;
 
-    private BaseMapFragment.OnFocusChangedListener mOnFocusChangedListener;
+    private ObaMapFragment.OnFocusChangedListener mOnFocusChangedListener;
 
     private BitmapDescriptor mSmallBikeStationIcon;
 
@@ -102,7 +102,7 @@ public class BikeStationOverlay
     }
 
     public void setOnFocusChangeListener(
-            BaseMapFragment.OnFocusChangedListener onFocusChangedListener) {
+            ObaMapFragment.OnFocusChangedListener onFocusChangedListener) {
         mOnFocusChangedListener = onFocusChangedListener;
     }
 

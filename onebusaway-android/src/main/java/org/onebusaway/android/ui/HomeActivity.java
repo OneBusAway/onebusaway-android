@@ -47,8 +47,8 @@ import org.onebusaway.android.io.request.weather.WeatherRequestListener;
 import org.onebusaway.android.io.request.weather.WeatherRequestTask;
 import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.map.googlemapsv2.LayerInfo;
+import org.onebusaway.android.map.ObaMapFragment;
+import org.onebusaway.android.map.LayerInfo;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
@@ -122,6 +122,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.AccessibilityDelegateCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_ACTIVITY_FEED;
@@ -145,8 +146,8 @@ import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_END;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_START;
 
 public class HomeActivity extends AppCompatActivity
-        implements BaseMapFragment.OnFocusChangedListener,
-        BaseMapFragment.OnProgressBarChangedListener,
+        implements ObaMapFragment.OnFocusChangedListener,
+        ObaMapFragment.OnProgressBarChangedListener,
         ArrivalsListFragment.Listener, NavigationDrawerCallbacks, WeatherRequestListener , RegionCallback,
         ObaRegionsTask.Callback {
 
@@ -243,7 +244,7 @@ public class HomeActivity extends AppCompatActivity
     MyStarredStopsFragment mMyStarredStopsFragment;
     MyStarredRoutesFragment mMyStarredRoutesFragment;
 
-    BaseMapFragment mMapFragment;
+    ObaMapFragment mMapFragment;
 
     MyRemindersFragment mMyRemindersFragment;
 
@@ -424,7 +425,7 @@ public class HomeActivity extends AppCompatActivity
 
         if (!mInitialStartup || PermissionUtils.hasGrantedAtLeastOnePermission(this, LOCATION_PERMISSIONS)) {
             // It's not the first startup or if the user has already granted location permissions (Android L and lower), then check the region status
-            // Otherwise, wait for a permission callback from the BaseMapFragment before checking the region status
+            // Otherwise, wait for a permission callback from the map fragment before checking the region status
             checkRegionStatus();
         }
 
@@ -643,13 +644,13 @@ public class HomeActivity extends AppCompatActivity
          * Show fragment (we use show instead of replace to keep the map state)
          */
         if (mMapFragment == null) {
-            // First check to see if an instance of BaseMapFragment already exists (see #356)
-            mMapFragment = (BaseMapFragment) fm.findFragmentByTag(BaseMapFragment.TAG);
+            // First check to see if an instance of ObaMapFragment already exists (see #356)
+            mMapFragment = (ObaMapFragment) fm.findFragmentByTag(ObaMapFragment.TAG);
 
             if (mMapFragment == null) {
                 // No existing fragment was found, so create a new one
-                Log.d(TAG, "Creating new BaseMapFragment");
-                mMapFragment = BaseMapFragment.newInstance();
+                Log.d(TAG, "Creating new ObaMapFragment");
+                mMapFragment = ObaMapFragment.newInstance();
                 mMapFragment.setOnLocationPermissionResultListener(result -> {
                             if (mInitialStartup) {
                                 // Whether or not the user granted permissions, check region status
@@ -660,7 +661,7 @@ public class HomeActivity extends AppCompatActivity
                             }
                         });
                 fm.beginTransaction()
-                        .add(R.id.main_fragment_container, mMapFragment, BaseMapFragment.TAG)
+                        .add(R.id.main_fragment_container, mMapFragment.asFragment(), ObaMapFragment.TAG)
                         .commit();
             }
         }
@@ -670,7 +671,7 @@ public class HomeActivity extends AppCompatActivity
         mMapFragment.setOnProgressBarChangedListener(this);
         mMapFragment.setRegionCallback(this);
 
-        getSupportFragmentManager().beginTransaction().show(mMapFragment).commit();
+        getSupportFragmentManager().beginTransaction().show(mMapFragment.asFragment()).commit();
 
         showFloatingActionButtons();
         if (mLastMapProgressBarState) {
@@ -792,9 +793,9 @@ public class HomeActivity extends AppCompatActivity
 
     private void hideMapFragment() {
         FragmentManager fm = getSupportFragmentManager();
-        mMapFragment = (BaseMapFragment) fm.findFragmentByTag(BaseMapFragment.TAG);
-        if (mMapFragment != null && !mMapFragment.isHidden()) {
-            fm.beginTransaction().hide(mMapFragment).commit();
+        mMapFragment = (ObaMapFragment) fm.findFragmentByTag(ObaMapFragment.TAG);
+        if (mMapFragment != null && !mMapFragment.asFragment().isHidden()) {
+            fm.beginTransaction().hide(mMapFragment.asFragment()).commit();
         }
     }
 
@@ -1075,7 +1076,7 @@ public class HomeActivity extends AppCompatActivity
     }
 
     /**
-     * Called by the BaseMapFragment when a stop obtains focus, or no stops have focus
+     * Called by the map fragment when a stop obtains focus, or no stops have focus
      *
      * @param stop     the ObaStop that obtained focus, or null if no stop is in focus
      * @param routes   a HashMap of all route display names that serve this stop - key is routeId
@@ -1123,7 +1124,7 @@ public class HomeActivity extends AppCompatActivity
     }
 
     /**
-     * Called from the BaseMapFragment when a BikeRentalStation is clicked.
+     * Called from the map fragment when a BikeRentalStation is clicked.
      *
      * @param bikeRentalStation the bike rental station that was clicked.
      */
@@ -1214,7 +1215,8 @@ public class HomeActivity extends AppCompatActivity
         }
 
         // If we can't see the map or sliding panel, we can't see the arrival info, so return
-        if (mMapFragment.isHidden() || !mMapFragment.isVisible() ||
+        Fragment mapFrag = mMapFragment.asFragment();
+        if (mapFrag.isHidden() || !mapFrag.isVisible() ||
                 mSlidingPanel.getPanelState() == PanelState.HIDDEN) {
             return;
         }
@@ -1291,7 +1293,7 @@ public class HomeActivity extends AppCompatActivity
             // Clear focused stop and close the sliding panel if its collapsed
             if (mSlidingPanel.getPanelState() == PanelState.COLLAPSED) {
                 // Clear the stop focus in map fragment, which will trigger a callback to close the
-                // panel via BaseMapFragment.OnFocusChangedListener in this.onFocusChanged()
+                // panel via ObaMapFragment.OnFocusChangedListener in this.onFocusChanged()
                 mMapFragment.setFocusStop(null, null);
                 return;
             }
@@ -1438,7 +1440,7 @@ public class HomeActivity extends AppCompatActivity
 
         //Check region status, possibly forcing a reload from server and checking proximity to current region
         List<ObaRegionsTask.Callback> callbacks = new ArrayList<>();
-        callbacks.add(mMapFragment);
+        callbacks.add((ObaRegionsTask.Callback) mMapFragment);
         callbacks.add(this);
         ObaRegionsTask task = new ObaRegionsTask(this, callbacks, forceReload, showProgressDialog);
         task.execute();
@@ -1733,8 +1735,8 @@ public class HomeActivity extends AppCompatActivity
         }
 
         LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
-        // Add the BaseMapFragment listener to activate the layer on the map
-        adapter.addLayerActivationListener(mMapFragment);
+        // Add the map fragment listener to activate the layer on the map
+        adapter.addLayerActivationListener((LayersSpeedDialAdapter.LayerActivationListener) mMapFragment);
 
         // Add another listener to rebuild the menu options after selection. This other listener
         // was added here because the call to rebuildSpeedDialMenu exists on the FAB and we have a
@@ -2062,7 +2064,7 @@ public class HomeActivity extends AppCompatActivity
                 .create().show();
     }
 
-    // Getting a callback from BaseMapFragment to check if we are in a valid region or not
+    // Getting a callback from the map fragment to check if we are in a valid region or not
     @Override
     public void onValidRegion(boolean isValid) {
         if(isValid){

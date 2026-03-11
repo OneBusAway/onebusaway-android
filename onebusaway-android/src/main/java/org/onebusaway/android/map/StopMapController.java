@@ -23,7 +23,7 @@ import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
 import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.MapUtils;
 import org.onebusaway.android.util.RegionUtils;
 
 import android.location.Location;
@@ -207,7 +207,7 @@ public class StopMapController extends BaseMapController implements
         }
 
         if (response.getCode() != ObaApi.OBA_OK) {
-            BaseMapFragment.showMapError(response);
+            MapUtils.showMapError(response);
             return;
         }
 

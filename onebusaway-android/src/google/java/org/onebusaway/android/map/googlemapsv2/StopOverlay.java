@@ -325,8 +325,10 @@ public class StopOverlay implements MarkerListeners {
         mArrowPaintStroke.setStrokeWidth(1.0f);
         mArrowPaintStroke.setAntiAlias(true);
 
-        // Load route type glyph icons (ic_train, ic_tram, etc.) following TripDetailsListFragment pattern
-        loadRouteTypeGlyphs(r);
+        // Pre-scale route type glyph icons to the target circle size
+        int px = (int) (mPx * GLYPH_ICON_SCALE);
+        int glyphSizePx = (int) (px * 0.70f);
+        loadRouteTypeGlyphs(r, glyphSizePx);
 
         String[] directions = {NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, EAST,
                 NORTH_EAST, NO_DIRECTION};
@@ -363,7 +365,7 @@ public class StopOverlay implements MarkerListeners {
      */
     private static Bitmap createStopIcon(String direction, boolean selected, int routeType) {
         if (direction == null) {
-            throw new IllegalArgumentException(direction);
+            throw new IllegalArgumentException("direction must not be null");
         }
 
         Resources r = Application.get().getResources();
@@ -589,26 +591,39 @@ public class StopOverlay implements MarkerListeners {
     }
 
     /**
-     * Loads route type glyph bitmaps (ic_train, ic_tram, etc.) into the cache.
+     * Loads and pre-scales route type glyph bitmaps (ic_train, ic_tram, etc.) into the cache.
      * These are the same icons used in TripDetailsListFragment for route type display.
+     * Pre-scaling avoids repeated Bitmap.createScaledBitmap() calls during icon generation.
      *
-     * @param r Resources to load drawables from
+     * @param r           Resources to load drawables from
+     * @param glyphSizePx target glyph size in pixels (already scaled for circle size)
      */
-    private static void loadRouteTypeGlyphs(Resources r) {
+    private static void loadRouteTypeGlyphs(Resources r, int glyphSizePx) {
+        Bitmap raw;
+
+        raw = BitmapFactory.decodeResource(r, R.drawable.ic_bus);
         sRouteTypeGlyphs.put(ObaRoute.TYPE_BUS,
-                BitmapFactory.decodeResource(r, R.drawable.ic_bus));
+                Bitmap.createScaledBitmap(raw, glyphSizePx, glyphSizePx, true));
+
+        raw = BitmapFactory.decodeResource(r, R.drawable.ic_train);
         sRouteTypeGlyphs.put(ObaRoute.TYPE_RAIL,
-                BitmapFactory.decodeResource(r, R.drawable.ic_train));
+                Bitmap.createScaledBitmap(raw, glyphSizePx, glyphSizePx, true));
+
+        raw = BitmapFactory.decodeResource(r, R.drawable.ic_subway);
         sRouteTypeGlyphs.put(ObaRoute.TYPE_SUBWAY,
-                BitmapFactory.decodeResource(r, R.drawable.ic_subway));
+                Bitmap.createScaledBitmap(raw, glyphSizePx, glyphSizePx, true));
+
+        raw = BitmapFactory.decodeResource(r, R.drawable.ic_tram);
         sRouteTypeGlyphs.put(ObaRoute.TYPE_TRAM,
-                BitmapFactory.decodeResource(r, R.drawable.ic_tram));
+                Bitmap.createScaledBitmap(raw, glyphSizePx, glyphSizePx, true));
+
+        raw = BitmapFactory.decodeResource(r, R.drawable.ic_ferry);
         sRouteTypeGlyphs.put(ObaRoute.TYPE_FERRY,
-                BitmapFactory.decodeResource(r, R.drawable.ic_ferry));
+                Bitmap.createScaledBitmap(raw, glyphSizePx, glyphSizePx, true));
     }
 
     /**
-     * Draws the route type glyph icon in the center of the stop icon circle.
+     * Draws the pre-scaled route type glyph icon in the center of the stop icon circle.
      * Uses the existing ic_bus, ic_train, ic_tram, ic_subway, ic_ferry PNG assets — the same
      * icons used in TripDetailsListFragment and matching the iOS/Wayfinder transport glyphs.
      *
@@ -624,18 +639,12 @@ public class StopOverlay implements MarkerListeners {
             return;
         }
 
-        // Scale the glyph to fit inside the circle with padding
-        float size = circleBounds.width();
-        float glyphSize = size * 0.70f;
         float cx = circleBounds.centerX();
         float cy = circleBounds.centerY();
 
-        Bitmap scaledGlyph = Bitmap.createScaledBitmap(glyph,
-                (int) glyphSize, (int) glyphSize, true);
-
-        canvas.drawBitmap(scaledGlyph,
-                cx - scaledGlyph.getWidth() / 2f,
-                cy - scaledGlyph.getHeight() / 2f,
+        canvas.drawBitmap(glyph,
+                cx - glyph.getWidth() / 2f,
+                cy - glyph.getHeight() / 2f,
                 sGlyphPaint);
     }
 
@@ -745,17 +754,21 @@ public class StopOverlay implements MarkerListeners {
     }
 
     /**
-     * Returns the BitmapDescriptor for a stop icon based on direction and route type
+     * Looks up a stop icon from the given cache based on direction and route type.
+     * Falls back to TYPE_BUS if the requested type is not found, then to the default marker.
      *
+     * @param cache     icon cache to look up from (normal or focused)
      * @param direction stop direction string
      * @param routeType one of ObaRoute.TYPE_* constants
      * @return BitmapDescriptor for the stop icon
      */
-    private static BitmapDescriptor getStopBitmapDescriptor(String direction, int routeType) {
+    @NonNull
+    private static BitmapDescriptor lookupStopIcon(SparseArray<Bitmap[]> cache, String direction,
+            int routeType) {
         int normalizedType = normalizeRouteType(routeType);
-        Bitmap[] icons = sStopIcons.get(normalizedType);
+        Bitmap[] icons = cache.get(normalizedType);
         if (icons == null) {
-            icons = sStopIcons.get(ObaRoute.TYPE_BUS);
+            icons = cache.get(ObaRoute.TYPE_BUS);
         }
         if (icons == null) {
             Log.w(TAG, "Stop icons not initialized for type " + routeType);
@@ -764,26 +777,14 @@ public class StopOverlay implements MarkerListeners {
         return BitmapDescriptorFactory.fromBitmap(icons[getDirectionIndex(direction)]);
     }
 
-    /**
-     * Returns the focused BitmapDescriptor for a stop icon based on direction and route type
-     *
-     * @param direction stop direction string
-     * @param routeType one of ObaRoute.TYPE_* constants
-     * @return BitmapDescriptor for the focused stop icon
-     */
+    private static BitmapDescriptor getStopBitmapDescriptor(String direction, int routeType) {
+        return lookupStopIcon(sStopIcons, direction, routeType);
+    }
+
     @NonNull
     private static BitmapDescriptor getFocusedStopBitmapDescriptor(String direction,
             int routeType) {
-        int normalizedType = normalizeRouteType(routeType);
-        Bitmap[] icons = sStopIconsFocused.get(normalizedType);
-        if (icons == null) {
-            icons = sStopIconsFocused.get(ObaRoute.TYPE_BUS);
-        }
-        if (icons == null) {
-            Log.w(TAG, "Focused stop icons not initialized for type " + routeType);
-            return BitmapDescriptorFactory.defaultMarker();
-        }
-        return BitmapDescriptorFactory.fromBitmap(icons[getDirectionIndex(direction)]);
+        return lookupStopIcon(sStopIconsFocused, direction, routeType);
     }
 
     /**
@@ -1086,6 +1087,23 @@ public class StopOverlay implements MarkerListeners {
         }
 
         /**
+         * Restores the unfocused icon for the currently focused stop marker.
+         * Called by setFocus() and removeFocus() to avoid duplicating the restore logic.
+         */
+        private void restoreUnfocusedIcon() {
+            if (mCurrentFocusMarker == null || mCurrentFocusStop == null) {
+                return;
+            }
+            Marker currentMarker = mStopMarkers.get(mCurrentFocusStop.getId());
+            if (currentMarker != null) {
+                Integer prevType = mStopRouteTypes.get(mCurrentFocusStop.getId());
+                int routeType = (prevType != null) ? prevType : ObaRoute.TYPE_BUS;
+                currentMarker.setIcon(getStopBitmapDescriptor(
+                        mCurrentFocusStop.getDirection(), routeType));
+            }
+        }
+
+        /**
          * Sets the current focus to a particular stop
          *
          * @param stop ObaStop that should have focus
@@ -1096,17 +1114,7 @@ public class StopOverlay implements MarkerListeners {
                 return;
             }
 
-            if (mCurrentFocusMarker != null && mCurrentFocusStop != null) {
-                // Get the current marker from cache in case the old reference is stale
-                Marker currentMarker = mStopMarkers.get(mCurrentFocusStop.getId());
-                if (currentMarker != null) {
-                    // Restore previous marker icon with correct route type
-                    Integer prevType = mStopRouteTypes.get(mCurrentFocusStop.getId());
-                    int prevRouteType = (prevType != null) ? prevType : ObaRoute.TYPE_BUS;
-                    currentMarker.setIcon(getStopBitmapDescriptor(
-                            mCurrentFocusStop.getDirection(), prevRouteType));
-                }
-            }
+            restoreUnfocusedIcon();
             mCurrentFocusStop = stop;
             mCurrentFocusMarker = mStopMarkers.get(stop.getId());
 
@@ -1182,16 +1190,8 @@ public class StopOverlay implements MarkerListeners {
          * Remove focus of a stop on the map
          */
         synchronized void removeFocus() {
-            if (mCurrentFocusMarker != null && mCurrentFocusStop != null) {
-                // Get the current marker from cache in case the old reference is stale
-                Marker currentMarker = mStopMarkers.get(mCurrentFocusStop.getId());
-                if (currentMarker != null) {
-                    // Restore icon with correct route type
-                    Integer prevType = mStopRouteTypes.get(mCurrentFocusStop.getId());
-                    int routeType = (prevType != null) ? prevType : ObaRoute.TYPE_BUS;
-                    currentMarker.setIcon(getStopBitmapDescriptor(
-                            mCurrentFocusStop.getDirection(), routeType));
-                }
+            restoreUnfocusedIcon();
+            if (mCurrentFocusMarker != null) {
                 mCurrentFocusMarker = null;
             }
             mFocusedRoutes.clear();

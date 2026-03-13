@@ -35,6 +35,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -42,6 +43,9 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -49,15 +53,18 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
@@ -107,11 +114,47 @@ public class StopOverlay implements MarkerListeners {
 
     private static final int NUM_DIRECTIONS = 9; // 8 directions + undirected mStops
 
-    private static final Bitmap[] bus_stop_icons = new Bitmap[NUM_DIRECTIONS];
+    /**
+     * Icon cache keyed by route type, each containing a Bitmap array of size NUM_DIRECTIONS.
+     * Replaces the old single-type bus_stop_icons array to support distinct icons per stop type.
+     */
+    private static final SparseArray<Bitmap[]> sStopIcons = new SparseArray<>();
 
-    private static final Bitmap[] bus_stop_icons_focused = new Bitmap[NUM_DIRECTIONS];
+    private static final SparseArray<Bitmap[]> sStopIconsFocused = new SparseArray<>();
+
+    /**
+     * Route types that get distinct stop icons on the map.
+     * TYPE_CABLECAR uses TYPE_TRAM icon; TYPE_GONDOLA/TYPE_FUNICULAR fall back to TYPE_BUS.
+     */
+    private static final int[] ICON_ROUTE_TYPES = {
+            ObaRoute.TYPE_BUS,
+            ObaRoute.TYPE_RAIL,
+            ObaRoute.TYPE_SUBWAY,
+            ObaRoute.TYPE_TRAM,
+            ObaRoute.TYPE_FERRY
+    };
+
+    /**
+     * Priority order for determining a stop's primary route type.
+     * Rail/subway/tram/ferry are more visually important than bus at transit hubs.
+     */
+    private static final int[] ROUTE_TYPE_PRIORITY = {
+            ObaRoute.TYPE_RAIL,
+            ObaRoute.TYPE_SUBWAY,
+            ObaRoute.TYPE_TRAM,
+            ObaRoute.TYPE_FERRY,
+            ObaRoute.TYPE_CABLECAR,
+            ObaRoute.TYPE_GONDOLA,
+            ObaRoute.TYPE_FUNICULAR
+    };
 
     private static final float FOCUS_ICON_SCALE = 1.5f;
+
+    /**
+     * Scale factor for stop icons to make the vehicle glyph clearly visible inside the circle.
+     * All stop types (bus, rail, subway, tram, ferry) display a glyph, matching iOS/Wayfinder.
+     */
+    private static final float GLYPH_ICON_SCALE = 1.35f;
 
     private static int mPx; // Bus stop icon size
 
@@ -127,6 +170,21 @@ public class StopOverlay implements MarkerListeners {
 
     private static Paint mArrowPaintStroke;
     // Stroke color used for outline of directional arrows on stops
+
+    /**
+     * Cached route type glyph bitmaps (ic_train, ic_tram, etc.) keyed by ObaRoute.TYPE_* constant.
+     * Loaded once during loadIcons() and drawn inside the stop circle for all stop types.
+     */
+    private static final SparseArray<Bitmap> sRouteTypeGlyphs = new SparseArray<>();
+
+    private static final Paint sGlyphPaint = new Paint();
+
+    static {
+        sGlyphPaint.setAntiAlias(true);
+        sGlyphPaint.setFilterBitmap(true);
+        sGlyphPaint.setColorFilter(
+                new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN));
+    }
 
     OnFocusChangedListener mOnFocusChangedListener;
 
@@ -267,52 +325,56 @@ public class StopOverlay implements MarkerListeners {
         mArrowPaintStroke.setStrokeWidth(1.0f);
         mArrowPaintStroke.setAntiAlias(true);
 
-        String[] directions = {NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, EAST, NORTH_EAST, NO_DIRECTION};
-        for (int i = 0; i < directions.length; i++) {
-            bus_stop_icons[i] = createBusStopIcon(directions[i], false);
-            bus_stop_icons_focused[i] = createBusStopIcon(directions[i], true);
-        }
-        // Scale the focused icons to be larger than the normal icons
-        for (int i = 0; i < NUM_DIRECTIONS; i++) {
-            Bitmap bmp = bus_stop_icons_focused[i];
-            bus_stop_icons_focused[i] = Bitmap.createScaledBitmap(bmp,
-                    (int) (bmp.getWidth() * FOCUS_ICON_SCALE),
-                    (int) (bmp.getHeight() * FOCUS_ICON_SCALE), true);
+        // Load route type glyph icons (ic_train, ic_tram, etc.) following TripDetailsListFragment pattern
+        loadRouteTypeGlyphs(r);
+
+        String[] directions = {NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, EAST,
+                NORTH_EAST, NO_DIRECTION};
+
+        for (int routeType : ICON_ROUTE_TYPES) {
+            Bitmap[] icons = new Bitmap[NUM_DIRECTIONS];
+            Bitmap[] iconsFocused = new Bitmap[NUM_DIRECTIONS];
+            for (int i = 0; i < directions.length; i++) {
+                icons[i] = createStopIcon(directions[i], false, routeType);
+                iconsFocused[i] = createStopIcon(directions[i], true, routeType);
+            }
+            // Scale the focused icons to be larger than the normal icons
+            for (int i = 0; i < NUM_DIRECTIONS; i++) {
+                Bitmap bmp = iconsFocused[i];
+                iconsFocused[i] = Bitmap.createScaledBitmap(bmp,
+                        (int) (bmp.getWidth() * FOCUS_ICON_SCALE),
+                        (int) (bmp.getHeight() * FOCUS_ICON_SCALE), true);
+            }
+            sStopIcons.put(routeType, icons);
+            sStopIconsFocused.put(routeType, iconsFocused);
         }
     }
 
     /**
-     * Creates a bus stop icon with the given direction arrow, or without a direction arrow if
-     * the direction is NO_DIRECTION
-     *
-     * @param direction Bus stop direction, obtained from ObaStop.getDirection() and defined in
-     *                  constants in this class, or NO_DIRECTION if the stop icon shouldn't have a
-     *                  direction arrow
-     * @return a bus stop icon bitmap with the arrow pointing the given direction, or with no arrow
-     * if direction is NO_DIRECTION
-     */
-    private static Bitmap createBusStopIcon(String direction) throws NullPointerException {
-        return createBusStopIcon(direction, false);
-    }
-
-    /**
-     * Creates a bus stop icon with the given direction arrow, or without a direction arrow if
-     * the direction is NO_DIRECTION
+     * Creates a stop icon with the given direction arrow and route type symbol.
      *
      * @param direction Bus stop direction, obtained from ObaStop.getDirection() and defined in
      *                  constants in this class, or NO_DIRECTION if the stop icon shouldn't have a
      *                  direction arrow
      * @param selected  true to use the selected icon style, false for normal icon style
-     * @return a bus stop icon bitmap with the arrow pointing the given direction, or with no arrow
+     * @param routeType one of ObaRoute.TYPE_* constants indicating the stop's primary route type
+     * @return a stop icon bitmap with the arrow pointing the given direction, or with no arrow
      * if direction is NO_DIRECTION
      */
-    private static Bitmap createBusStopIcon(String direction, boolean selected) throws NullPointerException {
+    private static Bitmap createStopIcon(String direction, boolean selected, int routeType) {
         if (direction == null) {
             throw new IllegalArgumentException(direction);
         }
 
         Resources r = Application.get().getResources();
         Context context = Application.get();
+
+        // All stops get a slightly larger circle so the vehicle glyph is clearly visible
+        int px = (int) (mPx * GLYPH_ICON_SCALE);
+        float arrowWidthPx = px / 2f;
+        float arrowHeightPx = px / 3f;
+        float arrowSpacingReductionPx = px / 10f;
+        float buffer = arrowHeightPx - arrowSpacingReductionPx;
 
         Float directionAngle = null;  // 0-360 degrees
         Bitmap bm;
@@ -326,19 +388,19 @@ public class StopOverlay implements MarkerListeners {
 
         if (direction.equals(NO_DIRECTION)) {
             // Don't draw the arrow
-            bm = Bitmap.createBitmap(mPx, mPx, Bitmap.Config.ARGB_8888);
+            bm = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
             shape.setBounds(0, 0, bm.getWidth(), bm.getHeight());
         } else if (direction.equals(NORTH)) {
             directionAngle = 0f;
-            bm = Bitmap.createBitmap(mPx, (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
+            bm = Bitmap.createBitmap(px, (int) (px + buffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
-            shape.setBounds(0, (int) mBuffer, mPx, bm.getHeight());
+            shape.setBounds(0, (int) buffer, px, bm.getHeight());
             // Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
-                    new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
+                    new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, arrowHeightPx,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
             // For NORTH, no rotation occurs - use center of image anyway so we have some value
@@ -346,27 +408,27 @@ public class StopOverlay implements MarkerListeners {
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(NORTH_WEST)) {
             directionAngle = 315f;  // Arrow is drawn N, rotate 315 degrees
-            bm = Bitmap.createBitmap((int) (mPx + mBuffer),
-                    (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
+            bm = Bitmap.createBitmap((int) (px + buffer),
+                    (int) (px + buffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
-            shape.setBounds((int) mBuffer, (int) mBuffer, bm.getWidth(), bm.getHeight());
+            shape.setBounds((int) buffer, (int) buffer, bm.getWidth(), bm.getHeight());
             // Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
-                    new LinearGradient(0, 0, mBuffer, mBuffer,
+                    new LinearGradient(0, 0, buffer, buffer,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
             // Rotate around below coordinates (trial and error)
-            rotationX = mPx / 2f + mBuffer / 2f;
-            rotationY = bm.getHeight() / 2f - mBuffer / 2f;
+            rotationX = px / 2f + buffer / 2f;
+            rotationY = bm.getHeight() / 2f - buffer / 2f;
         } else if (direction.equals(WEST)) {
             directionAngle = 0f;  // Arrow is drawn pointing West, so no rotation
-            bm = Bitmap.createBitmap((int) (mPx + mBuffer), mPx, Bitmap.Config.ARGB_8888);
+            bm = Bitmap.createBitmap((int) (px + buffer), px, Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
-            shape.setBounds((int) mBuffer, 0, bm.getWidth(), bm.getHeight());
+            shape.setBounds((int) buffer, 0, bm.getWidth(), bm.getHeight());
             arrowPaintFill.setShader(
-                    new LinearGradient(0, bm.getHeight() / 2, mArrowHeightPx, bm.getHeight() / 2,
+                    new LinearGradient(0, bm.getHeight() / 2, arrowHeightPx, bm.getHeight() / 2,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
             // For WEST
@@ -374,74 +436,74 @@ public class StopOverlay implements MarkerListeners {
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(SOUTH_WEST)) {
             directionAngle = 225f;  // Arrow is drawn N, rotate 225 degrees
-            bm = Bitmap.createBitmap((int) (mPx + mBuffer),
-                    (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
+            bm = Bitmap.createBitmap((int) (px + buffer),
+                    (int) (px + buffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
-            shape.setBounds((int) mBuffer, 0, bm.getWidth(), mPx);
+            shape.setBounds((int) buffer, 0, bm.getWidth(), px);
             arrowPaintFill.setShader(
-                    new LinearGradient(0, bm.getHeight(), mBuffer, bm.getHeight() - mBuffer,
+                    new LinearGradient(0, bm.getHeight(), buffer, bm.getHeight() - buffer,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
             // Rotate around below coordinates (trial and error)
-            rotationX = bm.getWidth() / 2f - mBuffer / 4f;
-            rotationY = mPx / 2f + mBuffer / 4f;
+            rotationX = bm.getWidth() / 2f - buffer / 4f;
+            rotationY = px / 2f + buffer / 4f;
         } else if (direction.equals(SOUTH)) {
             directionAngle = 180f;  // Arrow is drawn N, rotate 180 degrees
-            bm = Bitmap.createBitmap(mPx, (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
+            bm = Bitmap.createBitmap(px, (int) (px + buffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
-            shape.setBounds(0, 0, bm.getWidth(), (int) (bm.getHeight() - mBuffer));
+            shape.setBounds(0, 0, bm.getWidth(), (int) (bm.getHeight() - buffer));
             arrowPaintFill.setShader(
                     new LinearGradient(bm.getWidth() / 2, bm.getHeight(), bm.getWidth() / 2,
-                            bm.getHeight() - mArrowHeightPx,
+                            bm.getHeight() - arrowHeightPx,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
             rotationX = bm.getWidth() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(SOUTH_EAST)) {
             directionAngle = 135f;  // Arrow is drawn N, rotate 135 degrees
-            bm = Bitmap.createBitmap((int) (mPx + mBuffer),
-                    (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
+            bm = Bitmap.createBitmap((int) (px + buffer),
+                    (int) (px + buffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
-            shape.setBounds(0, 0, mPx, mPx);
+            shape.setBounds(0, 0, px, px);
             arrowPaintFill.setShader(
-                    new LinearGradient(bm.getWidth(), bm.getHeight(), bm.getWidth() - mBuffer,
-                            bm.getHeight() - mBuffer,
+                    new LinearGradient(bm.getWidth(), bm.getHeight(), bm.getWidth() - buffer,
+                            bm.getHeight() - buffer,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
             // Rotate around below coordinates (trial and error)
-            rotationX = (mPx + mBuffer / 2) / 2f;
+            rotationX = (px + buffer / 2) / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(EAST)) {
             directionAngle = 180f;  // Arrow is drawn pointing West, so rotate 180
-            bm = Bitmap.createBitmap((int) (mPx + mBuffer), mPx, Bitmap.Config.ARGB_8888);
+            bm = Bitmap.createBitmap((int) (px + buffer), px, Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
-            shape.setBounds(0, 0, mPx, bm.getHeight());
+            shape.setBounds(0, 0, px, bm.getHeight());
             arrowPaintFill.setShader(
                     new LinearGradient(bm.getWidth(), bm.getHeight() / 2,
-                            bm.getWidth() - mArrowHeightPx, bm.getHeight() / 2,
+                            bm.getWidth() - arrowHeightPx, bm.getHeight() / 2,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
             rotationX = bm.getWidth() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(NORTH_EAST)) {
             directionAngle = 45f;  // Arrow is drawn pointing N, so rotate 45 degrees
-            bm = Bitmap.createBitmap((int) (mPx + mBuffer),
-                    (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
+            bm = Bitmap.createBitmap((int) (px + buffer),
+                    (int) (px + buffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = ContextCompat.getDrawable(context, selected ? R.drawable.selected_map_stop_icon : R.drawable.map_stop_icon);
-            shape.setBounds(0, (int) mBuffer, mPx, bm.getHeight());
+            shape.setBounds(0, (int) buffer, px, bm.getHeight());
             // Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
-                    new LinearGradient(bm.getWidth(), 0, bm.getWidth() - mBuffer, mBuffer,
+                    new LinearGradient(bm.getWidth(), 0, bm.getWidth() - buffer, buffer,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
             // Rotate around middle of circle
-            rotationX = (float) mPx / 2;
-            rotationY = bm.getHeight() - (float) mPx / 2;
+            rotationX = (float) px / 2;
+            rotationY = bm.getHeight() - (float) px / 2;
         } else {
             throw new IllegalArgumentException(direction);
         }
@@ -449,7 +511,8 @@ public class StopOverlay implements MarkerListeners {
         shape.draw(c);
 
         if (direction.equals(NO_DIRECTION)) {
-            // Everything after this point is for drawing the arrow image, so return the bitmap as-is for no arrow
+            // Draw route type symbol on the circle, then return (no arrow for this direction)
+            drawRouteTypeSymbol(c, shape.getBounds(), routeType);
             return bm;
         }
 
@@ -458,7 +521,7 @@ public class StopOverlay implements MarkerListeners {
          * size for all orientations
          */
         // Height of the cutout in the bottom of the triangle that makes it an arrow (0=triangle)
-        final float CUTOUT_HEIGHT = mPx / 12;
+        final float CUTOUT_HEIGHT = px / 12f;
         Path path = new Path();
         float x1 = 0, y1 = 0;  // Tip of arrow
         float x2 = 0, y2 = 0;  // lower left
@@ -470,37 +533,37 @@ public class StopOverlay implements MarkerListeners {
                 direction.equals(NORTH_WEST) || direction.equals(SOUTH_WEST)) {
             // Arrow is drawn pointing NORTH
             // Tip of arrow
-            x1 = mPx / 2;
+            x1 = px / 2f;
             y1 = 0;
 
             // lower left
-            x2 = (mPx / 2) - (mArrowWidthPx / 2);
-            y2 = mArrowHeightPx;
+            x2 = (px / 2f) - (arrowWidthPx / 2);
+            y2 = arrowHeightPx;
 
             // cutout in arrow bottom
-            x3 = mPx / 2;
-            y3 = mArrowHeightPx - CUTOUT_HEIGHT;
+            x3 = px / 2f;
+            y3 = arrowHeightPx - CUTOUT_HEIGHT;
 
             // lower right
-            x4 = (mPx / 2) + (mArrowWidthPx / 2);
-            y4 = mArrowHeightPx;
+            x4 = (px / 2f) + (arrowWidthPx / 2);
+            y4 = arrowHeightPx;
         } else if (direction.equals(EAST) || direction.equals(WEST)) {
             // Arrow is drawn pointing WEST
             // Tip of arrow
             x1 = 0;
-            y1 = mPx / 2;
+            y1 = px / 2f;
 
             // lower left
-            x2 = mArrowHeightPx;
-            y2 = (mPx / 2) - (mArrowWidthPx / 2);
+            x2 = arrowHeightPx;
+            y2 = (px / 2f) - (arrowWidthPx / 2);
 
             // cutout in arrow bottom
-            x3 = mArrowHeightPx - CUTOUT_HEIGHT;
-            y3 = mPx / 2;
+            x3 = arrowHeightPx - CUTOUT_HEIGHT;
+            y3 = px / 2f;
 
             // lower right
-            x4 = mArrowHeightPx;
-            y4 = (mPx / 2) + (mArrowWidthPx / 2);
+            x4 = arrowHeightPx;
+            y4 = (px / 2f) + (arrowWidthPx / 2);
         }
 
         path.setFillType(Path.FillType.EVEN_ODD);
@@ -519,7 +582,61 @@ public class StopOverlay implements MarkerListeners {
         c.drawPath(path, arrowPaintFill);
         c.drawPath(path, mArrowPaintStroke);
 
+        // Draw route type symbol on the circle after the arrow
+        drawRouteTypeSymbol(c, shape.getBounds(), routeType);
+
         return bm;
+    }
+
+    /**
+     * Loads route type glyph bitmaps (ic_train, ic_tram, etc.) into the cache.
+     * These are the same icons used in TripDetailsListFragment for route type display.
+     *
+     * @param r Resources to load drawables from
+     */
+    private static void loadRouteTypeGlyphs(Resources r) {
+        sRouteTypeGlyphs.put(ObaRoute.TYPE_BUS,
+                BitmapFactory.decodeResource(r, R.drawable.ic_bus));
+        sRouteTypeGlyphs.put(ObaRoute.TYPE_RAIL,
+                BitmapFactory.decodeResource(r, R.drawable.ic_train));
+        sRouteTypeGlyphs.put(ObaRoute.TYPE_SUBWAY,
+                BitmapFactory.decodeResource(r, R.drawable.ic_subway));
+        sRouteTypeGlyphs.put(ObaRoute.TYPE_TRAM,
+                BitmapFactory.decodeResource(r, R.drawable.ic_tram));
+        sRouteTypeGlyphs.put(ObaRoute.TYPE_FERRY,
+                BitmapFactory.decodeResource(r, R.drawable.ic_ferry));
+    }
+
+    /**
+     * Draws the route type glyph icon in the center of the stop icon circle.
+     * Uses the existing ic_bus, ic_train, ic_tram, ic_subway, ic_ferry PNG assets — the same
+     * icons used in TripDetailsListFragment and matching the iOS/Wayfinder transport glyphs.
+     *
+     * @param canvas       the canvas to draw on
+     * @param circleBounds the bounds of the circle drawable
+     * @param routeType    one of ObaRoute.TYPE_* constants
+     */
+    private static void drawRouteTypeSymbol(Canvas canvas, Rect circleBounds, int routeType) {
+        int normalizedType = normalizeRouteType(routeType);
+        Bitmap glyph = sRouteTypeGlyphs.get(normalizedType);
+        if (glyph == null) {
+            Log.w(TAG, "No glyph loaded for route type " + routeType);
+            return;
+        }
+
+        // Scale the glyph to fit inside the circle with padding
+        float size = circleBounds.width();
+        float glyphSize = size * 0.70f;
+        float cx = circleBounds.centerX();
+        float cy = circleBounds.centerY();
+
+        Bitmap scaledGlyph = Bitmap.createScaledBitmap(glyph,
+                (int) glyphSize, (int) glyphSize, true);
+
+        canvas.drawBitmap(scaledGlyph,
+                cx - scaledGlyph.getWidth() / 2f,
+                cy - scaledGlyph.getHeight() / 2f,
+                sGlyphPaint);
     }
 
     /**
@@ -593,43 +710,113 @@ public class StopOverlay implements MarkerListeners {
     }
 
     /**
-     * Returns the BitMapDescriptor for a particular bus stop icon, based on the stop direction
+     * Returns the direction index for the given direction string
      *
-     * @param direction Bus stop direction, obtained from ObaStop.getDirection() and defined in
-     *                  constants in this class
-     * @return BitmapDescriptor for the bus stop icon that should be used for that direction
+     * @param direction Bus stop direction string
+     * @return index into the direction arrays (0-8), defaults to 8 (NO_DIRECTION) for unknown
      */
-    private static BitmapDescriptor getBitmapDescriptorForBusStopDirection(String direction) {
-        if (direction.equals(NORTH)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[0]);
-        } else if (direction.equals(NORTH_WEST)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[1]);
-        } else if (direction.equals(WEST)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[2]);
-        } else if (direction.equals(SOUTH_WEST)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[3]);
-        } else if (direction.equals(SOUTH)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[4]);
-        } else if (direction.equals(SOUTH_EAST)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[5]);
-        } else if (direction.equals(EAST)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[6]);
-        } else if (direction.equals(NORTH_EAST)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[7]);
-        } else if (direction.equals(NO_DIRECTION)) {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[8]);
-        } else {
-            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[8]);
-        }
-    }
-
-    @NonNull
-    private static BitmapDescriptor getFocusedBitmapDescriptorForBusStopDirection(String direction) {
+    private static int getDirectionIndex(String direction) {
         Integer index = directionToIndexMap.get(direction);
         if (index == null) {
             index = 8;
         }
-        return BitmapDescriptorFactory.fromBitmap(bus_stop_icons_focused[index]);
+        return index;
+    }
+
+    /**
+     * Normalizes a route type to one that has a distinct icon.
+     * TYPE_CABLECAR maps to TYPE_TRAM; unsupported types fall back to TYPE_BUS.
+     *
+     * @param routeType one of ObaRoute.TYPE_* constants
+     * @return the normalized route type that has a pre-rendered icon set
+     */
+    private static int normalizeRouteType(int routeType) {
+        switch (routeType) {
+            case ObaRoute.TYPE_RAIL:
+            case ObaRoute.TYPE_SUBWAY:
+            case ObaRoute.TYPE_TRAM:
+            case ObaRoute.TYPE_FERRY:
+                return routeType;
+            case ObaRoute.TYPE_CABLECAR:
+                return ObaRoute.TYPE_TRAM;
+            default:
+                return ObaRoute.TYPE_BUS;
+        }
+    }
+
+    /**
+     * Returns the BitmapDescriptor for a stop icon based on direction and route type
+     *
+     * @param direction stop direction string
+     * @param routeType one of ObaRoute.TYPE_* constants
+     * @return BitmapDescriptor for the stop icon
+     */
+    private static BitmapDescriptor getStopBitmapDescriptor(String direction, int routeType) {
+        int normalizedType = normalizeRouteType(routeType);
+        Bitmap[] icons = sStopIcons.get(normalizedType);
+        if (icons == null) {
+            icons = sStopIcons.get(ObaRoute.TYPE_BUS);
+        }
+        if (icons == null) {
+            Log.w(TAG, "Stop icons not initialized for type " + routeType);
+            return BitmapDescriptorFactory.defaultMarker();
+        }
+        return BitmapDescriptorFactory.fromBitmap(icons[getDirectionIndex(direction)]);
+    }
+
+    /**
+     * Returns the focused BitmapDescriptor for a stop icon based on direction and route type
+     *
+     * @param direction stop direction string
+     * @param routeType one of ObaRoute.TYPE_* constants
+     * @return BitmapDescriptor for the focused stop icon
+     */
+    @NonNull
+    private static BitmapDescriptor getFocusedStopBitmapDescriptor(String direction,
+            int routeType) {
+        int normalizedType = normalizeRouteType(routeType);
+        Bitmap[] icons = sStopIconsFocused.get(normalizedType);
+        if (icons == null) {
+            icons = sStopIconsFocused.get(ObaRoute.TYPE_BUS);
+        }
+        if (icons == null) {
+            Log.w(TAG, "Focused stop icons not initialized for type " + routeType);
+            return BitmapDescriptorFactory.defaultMarker();
+        }
+        return BitmapDescriptorFactory.fromBitmap(icons[getDirectionIndex(direction)]);
+    }
+
+    /**
+     * Returns the primary route type for a stop based on its serving routes.
+     * Rail/subway/tram/ferry take priority over bus for visibility at transit hubs.
+     *
+     * @param stop   the stop to determine type for
+     * @param routes map of routeId to ObaRoute from cached stop routes
+     * @return one of the ObaRoute.TYPE_* constants
+     */
+    private static int getPrimaryRouteType(ObaStop stop, HashMap<String, ObaRoute> routes) {
+        if (stop == null || routes == null) {
+            return ObaRoute.TYPE_BUS;
+        }
+        String[] routeIds = stop.getRouteIds();
+        if (routeIds == null || routeIds.length == 0) {
+            return ObaRoute.TYPE_BUS;
+        }
+
+        Set<Integer> stopTypes = new HashSet<>();
+        for (String routeId : routeIds) {
+            ObaRoute route = routes.get(routeId);
+            if (route != null) {
+                stopTypes.add(route.getType());
+            }
+        }
+
+        for (int type : ROUTE_TYPE_PRIORITY) {
+            if (stopTypes.contains(type)) {
+                return type;
+            }
+        }
+        return ObaRoute.TYPE_BUS;
     }
 
     /**
@@ -779,11 +966,18 @@ public class StopOverlay implements MarkerListeners {
          */
         private List<ObaRoute> mFocusedRoutes;
 
+        /**
+         * Tracks the resolved primary route type for each stop, keyed by stopId.
+         * Used by setFocus/removeFocus to restore the correct type-specific icon.
+         */
+        private HashMap<String, Integer> mStopRouteTypes;
+
         MarkerData() {
             mStopMarkers = new HashMap<String, Marker>();
             mStops = new HashMap<Marker, ObaStop>();
             mStopRoutes = new HashMap<String, ObaRoute>();
             mFocusedRoutes = new LinkedList<ObaRoute>();
+            mStopRouteTypes = new HashMap<String, Integer>();
         }
 
         synchronized void populate(List<ObaStop> stops, List<ObaRoute> routes) {
@@ -821,10 +1015,21 @@ public class StopOverlay implements MarkerListeners {
          * @param routes A list of ObaRoutes that serve this stop
          */
         private synchronized void addMarkerToMap(ObaStop stop, List<ObaRoute> routes) {
+            // Cache route data first so getPrimaryRouteType can use mStopRoutes
+            for (ObaRoute route : routes) {
+                if (!mStopRoutes.containsKey(route.getId())) {
+                    mStopRoutes.put(route.getId(), route);
+                }
+            }
+
+            // Resolve and store the primary route type for this stop
+            int routeType = getPrimaryRouteType(stop, mStopRoutes);
+            mStopRouteTypes.put(stop.getId(), routeType);
+
             // Determine icon within synchronized block to prevent race condition with focus changes
-            BitmapDescriptor icon = getBitmapDescriptorForBusStopDirection(stop.getDirection());
+            BitmapDescriptor icon = getStopBitmapDescriptor(stop.getDirection(), routeType);
             if (mCurrentFocusStop != null && stop.getId().equals(mCurrentFocusStop.getId())) {
-                icon = getFocusedBitmapDescriptorForBusStopDirection(stop.getDirection());
+                icon = getFocusedStopBitmapDescriptor(stop.getDirection(), routeType);
             }
 
             Marker m = mMap.addMarker(new MarkerOptions()
@@ -836,12 +1041,6 @@ public class StopOverlay implements MarkerListeners {
             );
             mStopMarkers.put(stop.getId(), m);
             mStops.put(m, stop);
-            for (ObaRoute route : routes) {
-                // ObaRoutes may have already been added for other stops, so check before adding
-                if (!mStopRoutes.containsKey(route.getId())) {
-                    mStopRoutes.put(route.getId(), route);
-                }
-            }
         }
 
         synchronized ObaStop getStopFromMarker(Marker marker) {
@@ -901,9 +1100,11 @@ public class StopOverlay implements MarkerListeners {
                 // Get the current marker from cache in case the old reference is stale
                 Marker currentMarker = mStopMarkers.get(mCurrentFocusStop.getId());
                 if (currentMarker != null) {
-                    // Restore previous marker icon
-                    currentMarker.setIcon(getBitmapDescriptorForBusStopDirection(
-                            mCurrentFocusStop.getDirection()));
+                    // Restore previous marker icon with correct route type
+                    Integer prevType = mStopRouteTypes.get(mCurrentFocusStop.getId());
+                    int prevRouteType = (prevType != null) ? prevType : ObaRoute.TYPE_BUS;
+                    currentMarker.setIcon(getStopBitmapDescriptor(
+                            mCurrentFocusStop.getDirection(), prevRouteType));
                 }
             }
             mCurrentFocusStop = stop;
@@ -925,8 +1126,11 @@ public class StopOverlay implements MarkerListeners {
                 }
             }
 
+            // Set focused icon with correct route type
+            Integer focusType = mStopRouteTypes.get(stop.getId());
+            int focusRouteType = (focusType != null) ? focusType : ObaRoute.TYPE_BUS;
             mCurrentFocusMarker.setIcon(
-                    getFocusedBitmapDescriptorForBusStopDirection(stop.getDirection()));
+                    getFocusedStopBitmapDescriptor(stop.getDirection(), focusRouteType));
         }
 
         /**
@@ -982,8 +1186,11 @@ public class StopOverlay implements MarkerListeners {
                 // Get the current marker from cache in case the old reference is stale
                 Marker currentMarker = mStopMarkers.get(mCurrentFocusStop.getId());
                 if (currentMarker != null) {
-                    currentMarker.setIcon(getBitmapDescriptorForBusStopDirection(
-                            mCurrentFocusStop.getDirection()));
+                    // Restore icon with correct route type
+                    Integer prevType = mStopRouteTypes.get(mCurrentFocusStop.getId());
+                    int routeType = (prevType != null) ? prevType : ObaRoute.TYPE_BUS;
+                    currentMarker.setIcon(getStopBitmapDescriptor(
+                            mCurrentFocusStop.getDirection(), routeType));
                 }
                 mCurrentFocusMarker = null;
             }
@@ -1015,6 +1222,9 @@ public class StopOverlay implements MarkerListeners {
             }
             if (mStopRoutes != null) {
                 mStopRoutes.clear();
+            }
+            if (mStopRouteTypes != null) {
+                mStopRouteTypes.clear();
             }
             if (clearFocusedStop) {
                 removeFocus();

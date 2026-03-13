@@ -96,13 +96,4 @@
                 android:height="@dimen/map_stop_icon_size_fill" />
         </shape>
     </item>
-    <!-- Black dot in the center -->
-    <item android:gravity="center">
-        <shape android:shape="oval">
-            <solid android:color="@android:color/black" />
-            <size
-                android:width="6dp"
-                android:height="6dp" />
-        </shape>
-    </item>
 </layer-list>

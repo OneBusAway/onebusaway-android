@@ -12,20 +12,28 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-
-<androidx.drawerlayout.widget.DrawerLayout
+<LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/nav_drawer_left_pane"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="vertical"
         tools:context=".HomeActivity">
 
-    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <include layout="@layout/include_toolbar" />
+
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/nav_drawer_left_pane"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <RelativeLayout
                     android:id="@+id/mainlayout"
                     android:orientation="vertical"
-                    android:layout_width="fill_parent"
-                    android:layout_height="fill_parent">
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
 
         <com.sothree.slidinguppanel.SlidingUpPanelLayout
                 xmlns:sothree="http://schemas.android.com/apk/res-auto"
@@ -214,4 +222,7 @@
               android:layout_gravity="start"
               android:name="org.onebusaway.android.ui.NavigationDrawerFragment"
               tools:layout="@layout/navigation_drawer"/>
-</androidx.drawerlayout.widget.DrawerLayout>
+
+    </androidx.drawerlayout.widget.DrawerLayout>
+
+</LinearLayout>

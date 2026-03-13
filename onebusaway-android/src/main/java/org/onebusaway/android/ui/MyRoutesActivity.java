@@ -15,48 +15,30 @@
  */
 package org.onebusaway.android.ui;
 
-import android.content.res.Resources;
 import android.os.Bundle;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.util.UIUtils;
-
-import androidx.appcompat.app.ActionBar;
 
 public class MyRoutesActivity extends MyTabActivityBase {
-    //private static final String TAG = "MyRoutesActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTitle(R.string.my_recent_routes);
+    }
 
-        //ensureSupportActionBarAttached();
-        final Resources res = getResources();
-        final ActionBar bar = getSupportActionBar();
-        bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-        bar.setTitle(R.string.my_recent_routes);
-        bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
-
-        bar.addTab(bar.newTab()
-                .setTag(MyRecentRoutesFragment.TAB_NAME)
-                .setText(res.getString(R.string.my_recent_title))
-                .setIcon(res.getDrawable(R.drawable.ic_tab_recent))
-                .setTabListener(new TabListener<MyRecentRoutesFragment>(
-                        this,
-                        MyRecentRoutesFragment.TAB_NAME,
-                        MyRecentRoutesFragment.class)));
-        bar.addTab(bar.newTab()
-                .setTag(MySearchRoutesFragment.TAB_NAME)
-                .setText(res.getString(R.string.my_search_title))
-                .setIcon(res.getDrawable(R.drawable.ic_tab_search))
-                .setTabListener(new TabListener<MySearchRoutesFragment>(
-                        this,
-                        MySearchRoutesFragment.TAB_NAME,
-                        MySearchRoutesFragment.class)));
-
-        restoreDefaultTab();
-
-        UIUtils.setupActionBar(this);
+    @Override
+    protected TabInfo[] getTabInfos() {
+        return new TabInfo[]{
+                new TabInfo(MyRecentRoutesFragment.TAB_NAME,
+                        getString(R.string.my_recent_title),
+                        R.drawable.ic_tab_recent,
+                        MyRecentRoutesFragment.class),
+                new TabInfo(MySearchRoutesFragment.TAB_NAME,
+                        getString(R.string.my_search_title),
+                        R.drawable.ic_tab_search,
+                        MySearchRoutesFragment.class)
+        };
     }
 
     @Override

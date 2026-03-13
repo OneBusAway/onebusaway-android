@@ -21,10 +21,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -94,6 +96,9 @@ public class TripDetailsActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         UIUtils.setupActionBar(this);
 
         FragmentManager fm = getSupportFragmentManager();
@@ -102,7 +107,7 @@ public class TripDetailsActivity extends AppCompatActivity {
             TripDetailsListFragment list = new TripDetailsListFragment();
             list.setArguments(FragmentUtils.getIntentArgs(getIntent()));
 
-            fm.beginTransaction().add(android.R.id.content, list, TripDetailsListFragment.TAG).commit();
+            fm.beginTransaction().add(R.id.content_frame, list, TripDetailsListFragment.TAG).commit();
         }
     }
 
@@ -125,7 +130,7 @@ public class TripDetailsActivity extends AppCompatActivity {
                 // setting arguments if we could
                 tripDetListFrag.setArguments(FragmentUtils.getIntentArgs(getIntent()));
                 getSupportFragmentManager().beginTransaction().
-                        add(android.R.id.content, tripDetListFrag, TripDetailsListFragment.TAG).commit();
+                        add(R.id.content_frame, tripDetListFrag, TripDetailsListFragment.TAG).commit();
             }
             tripDetListFrag.onActivityResult(requestCode, resultCode, data);
         } else {

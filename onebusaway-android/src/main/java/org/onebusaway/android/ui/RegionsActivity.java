@@ -20,9 +20,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.util.UIUtils;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentManager;
 
 public class RegionsActivity extends AppCompatActivity {
@@ -48,16 +50,19 @@ public class RegionsActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         UIUtils.setupActionBar(this);
 
         FragmentManager fm = getSupportFragmentManager();
 
         // Create the list fragment and add it as our sole content.
-        if (fm.findFragmentById(android.R.id.content) == null) {
+        if (fm.findFragmentById(R.id.content_frame) == null) {
             RegionsFragment list = new RegionsFragment();
             //list.setArguments(getIntent().getExtras());
 
-            fm.beginTransaction().add(android.R.id.content, list).commit();
+            fm.beginTransaction().add(R.id.content_frame, list).commit();
         }
     }
 

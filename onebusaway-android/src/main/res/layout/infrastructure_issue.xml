@@ -21,6 +21,8 @@
               android:orientation="vertical"
               android:configChanges="keyboardHidden|orientation|screenSize">
 
+    <include layout="@layout/include_toolbar" />
+
     <!-- Header aligned to top -->
     <RelativeLayout
             android:id="@+id/ri_info_header"
@@ -100,8 +102,9 @@
     </RelativeLayout>
 
     <RelativeLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:id="@+id/ri_contact_info">
 
         <org.onebusaway.android.report.ui.CustomScrollView

@@ -36,8 +36,6 @@ public class MyStarredStopsActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        UIUtils.setupActionBar(this);
-
         Intent myIntent = getIntent();
         if (Intent.ACTION_CREATE_SHORTCUT.equals(myIntent.getAction())) {
             ShortcutInfoCompat shortcut = getShortcut();

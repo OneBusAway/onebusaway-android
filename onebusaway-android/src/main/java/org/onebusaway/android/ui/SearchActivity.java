@@ -19,15 +19,16 @@ import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.view.Window;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.util.UIUtils;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -36,10 +37,13 @@ public class SearchActivity extends AppCompatActivity {
     //private static final String TAG = "SearchActivity";
 
     private FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         UIUtils.setupActionBar(this);
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         handleIntent(getIntent());
@@ -82,7 +86,7 @@ public class SearchActivity extends AppCompatActivity {
         FragmentManager fm = getSupportFragmentManager();
 
         SearchResultsFragment list = (SearchResultsFragment) fm
-                .findFragmentById(android.R.id.content);
+                .findFragmentById(R.id.content_frame);
         FragmentTransaction ft = fm.beginTransaction();
         // Create the list fragment and add it as our sole content.
         if (list != null) {
@@ -96,7 +100,7 @@ public class SearchActivity extends AppCompatActivity {
         args.putString(SearchResultsFragment.QUERY_TEXT, query);
         list.setArguments(args);
 
-        ft.add(android.R.id.content, list);
+        ft.add(R.id.content_frame, list);
         ft.commit();
     }
 }

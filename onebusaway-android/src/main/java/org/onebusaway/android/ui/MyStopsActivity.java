@@ -15,55 +15,34 @@
  */
 package org.onebusaway.android.ui;
 
-import android.content.res.Resources;
 import android.os.Bundle;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.util.UIUtils;
-
-import androidx.appcompat.app.ActionBar;
 
 public class MyStopsActivity extends MyTabActivityBase {
-    //private static final String TAG = "MyStopsActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTitle(R.string.my_recent_stops);
+    }
 
-        final Resources res = getResources();
-        final ActionBar bar = getSupportActionBar();
-        bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-        bar.setTitle(R.string.my_recent_stops);
-        bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
-
-        bar.addTab(bar.newTab()
-                .setTag(MyRecentStopsFragment.TAB_NAME)
-                .setText(res.getString(R.string.my_recent_title))
-                .setIcon(res.getDrawable(R.drawable.ic_tab_recent))
-                .setTabListener(new TabListener<MyRecentStopsFragment>(
-                        this,
-                        MyRecentStopsFragment.TAB_NAME,
-                        MyRecentStopsFragment.class)));
-        bar.addTab(bar.newTab()
-                .setTag(MyStarredStopsFragment.TAB_NAME)
-                .setText(res.getString(R.string.my_starred_title))
-                .setIcon(res.getDrawable(R.drawable.ic_tab_starred))
-                .setTabListener(new TabListener<MyStarredStopsFragment>(
-                        this,
-                        MyStarredStopsFragment.TAB_NAME,
-                        MyStarredStopsFragment.class)));
-        bar.addTab(bar.newTab()
-                .setTag(MySearchStopsFragment.TAB_NAME)
-                .setText(res.getString(R.string.my_search_title))
-                .setIcon(res.getDrawable(R.drawable.ic_tab_search))
-                .setTabListener(new TabListener<MySearchStopsFragment>(
-                        this,
-                        MySearchStopsFragment.TAB_NAME,
-                        MySearchStopsFragment.class)));
-
-        restoreDefaultTab();
-
-        UIUtils.setupActionBar(this);
+    @Override
+    protected TabInfo[] getTabInfos() {
+        return new TabInfo[]{
+                new TabInfo(MyRecentStopsFragment.TAB_NAME,
+                        getString(R.string.my_recent_title),
+                        R.drawable.ic_tab_recent,
+                        MyRecentStopsFragment.class),
+                new TabInfo(MyStarredStopsFragment.TAB_NAME,
+                        getString(R.string.my_starred_title),
+                        R.drawable.ic_tab_starred,
+                        MyStarredStopsFragment.class),
+                new TabInfo(MySearchStopsFragment.TAB_NAME,
+                        getString(R.string.my_search_title),
+                        R.drawable.ic_tab_search,
+                        MySearchStopsFragment.class)
+        };
     }
 
     @Override

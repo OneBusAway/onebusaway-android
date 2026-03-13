@@ -22,8 +22,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.view.Window;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.provider.ObaContract;
@@ -34,6 +34,7 @@ import org.onebusaway.android.util.UIUtils;
 import java.util.HashMap;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -121,18 +122,19 @@ public class ArrivalsListActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         UIUtils.setupActionBar(this);
-
 
         FragmentManager fm = getSupportFragmentManager();
 
         // Create the list fragment and add it as our sole content.
-        if (fm.findFragmentById(android.R.id.content) == null) {
+        if (fm.findFragmentById(R.id.content_frame) == null) {
             ArrivalsListFragment list = new ArrivalsListFragment();
             list.setArguments(FragmentUtils.getIntentArgs(getIntent()));
-            fm.beginTransaction().add(android.R.id.content, list).commit();
+            fm.beginTransaction().add(R.id.content_frame, list).commit();
         }
     }
 
@@ -160,7 +162,7 @@ public class ArrivalsListActivity extends AppCompatActivity {
             list.setArguments(FragmentUtils.getIntentArgs(getIntent()));
 
             FragmentTransaction ft = fm.beginTransaction();
-            ft.replace(android.R.id.content, list);
+            ft.replace(R.id.content_frame, list);
             // This is a bit of a hack, but if there's a backstack
             // it means people navigated away from this activity while
             // in a report problem fragment.
@@ -190,6 +192,6 @@ public class ArrivalsListActivity extends AppCompatActivity {
 
     public ArrivalsListFragment getArrivalsListFragment() {
         FragmentManager fm = getSupportFragmentManager();
-        return (ArrivalsListFragment) fm.findFragmentById(android.R.id.content);
+        return (ArrivalsListFragment) fm.findFragmentById(R.id.content_frame);
     }
 }

@@ -21,7 +21,8 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.view.Window;
+
+import androidx.appcompat.widget.Toolbar;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 
@@ -37,6 +38,7 @@ import org.onebusaway.android.ui.PreferencesActivity;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
 
 /**
  * Fragment Activity for handling all report
@@ -47,17 +49,15 @@ public class ReportActivity extends BaseReportActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        supportRequestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-
         super.onCreate(savedInstanceState);
 
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
+        setContentView(R.layout.report);
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        UIUtils.setupActionBar(this);
 
         setTitle(getString(R.string.navdrawer_item_send_feedback));
-
-        setContentView(R.layout.report);
 
         if (savedInstanceState == null) {
             //Region Validation

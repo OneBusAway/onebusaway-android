@@ -16,12 +16,10 @@
 package org.onebusaway.android.report.ui;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.util.UIUtils;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -41,12 +39,6 @@ import androidx.fragment.app.FragmentTransaction;
  * Created by Cagri Cetin
  */
 public class BaseReportActivity extends AppCompatActivity {
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        UIUtils.setupActionBar(this);
-    }
 
     public static final String CLOSE_REQUEST = "BaseReportActivityClose";
 

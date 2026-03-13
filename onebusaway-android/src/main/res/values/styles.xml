@@ -247,7 +247,7 @@
         <item name="windowNoTitle">true</item>
     </style>
     <style name="Theme.OneBusAway.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
-    <style name="Theme.OneBusAway.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
+    <style name="Theme.OneBusAway.PopupOverlay" parent="ThemeOverlay.AppCompat.DayNight"/>
 
     <!-- Tutorial - ShowcaseView -->
     <style name="CustomShowcaseTheme" parent="ShowcaseView">

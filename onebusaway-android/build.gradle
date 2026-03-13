@@ -241,7 +241,7 @@ dependencies {
     implementation 'org.onebusaway.util:comparators:1.0.0'
     // Tutorial overlay library replacing deprecated ShowcaseView
     
-    implementation 'uk.co.deanwild:material-showcase-view:1.3.7'
+    implementation 'com.github.deano2390:MaterialShowcaseView:1.3.7'
     // POJOs used for full data-binding via Jackson
     implementation 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
     // Pelias for point-of-interest search and geocoding for trip planning origin and destination

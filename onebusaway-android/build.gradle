@@ -239,8 +239,9 @@ dependencies {
     implementation 'com.github.OneBusAway:android-fab:2.4.1'
     // For sorting alphanumeric route names
     implementation 'org.onebusaway.util:comparators:1.0.0'
-    // For tutorial (ShowcaseView) library
-    implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
+    // Tutorial overlay library replacing deprecated ShowcaseView
+    
+    implementation 'uk.co.deanwild:material-showcase-view:1.3.7'
     // POJOs used for full data-binding via Jackson
     implementation 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
     // Pelias for point-of-interest search and geocoding for trip planning origin and destination

@@ -102,6 +102,8 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_PAY_FARE = 13;
 
+    protected static final int NAVDRAWER_ITEM_TRANSIT_CENTERS = 14;
+
     protected static final int NAVDRAWER_ITEM_INVALID = -1;
 
     protected static final int NAVDRAWER_ITEM_SEPARATOR = -2;
@@ -124,7 +126,8 @@ public class NavigationDrawerFragment extends Fragment {
             0, // My profile
             0, // Sign in
             R.string.navdrawer_item_open_source,
-            R.string.navdrawer_item_pay_fare
+            R.string.navdrawer_item_pay_fare,
+            R.string.navdrawer_item_transit_centers
     };
 
     // icons for navdrawer items (indices must correspond to above array)
@@ -142,7 +145,8 @@ public class NavigationDrawerFragment extends Fragment {
             0, // My profile
             0, // Sign in
             R.drawable.ic_drawer_github, // Open-source
-            R.drawable.ic_payment // Pay my fare
+            R.drawable.ic_payment, // Pay my fare
+            R.drawable.ic_drawer_maps_place // Transit centers
     };
 
     // Secondary navdrawer item icons that appear align to right of list item layout
@@ -160,7 +164,8 @@ public class NavigationDrawerFragment extends Fragment {
             0, // My profile
             0, // Sign in
             R.drawable.ic_drawer_link, // Open-source
-            R.drawable.ic_drawer_link // Pay my fare
+            R.drawable.ic_drawer_link, // Pay my fare
+            0 // Transit centers
     };
 
     // list of navdrawer items that were actually added to the navdrawer, in order
@@ -433,6 +438,7 @@ public class NavigationDrawerFragment extends Fragment {
         mNavDrawerItems.add(NAVDRAWER_ITEM_NEARBY);
         mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_STOPS);
         mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_ROUTES);
+        mNavDrawerItems.add(NAVDRAWER_ITEM_TRANSIT_CENTERS);
 
         // Add reminders if they should be shown
         if(ReminderUtils.shouldShowReminders()){

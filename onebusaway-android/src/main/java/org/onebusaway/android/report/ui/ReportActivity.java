@@ -32,7 +32,6 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.report.constants.ReportConstants;
-import org.onebusaway.android.report.ui.dialog.CustomerServiceDialog;
 import org.onebusaway.android.report.ui.dialog.RegionValidateDialog;
 import org.onebusaway.android.ui.PreferencesActivity;
 import org.onebusaway.android.util.BuildFlavorUtils;
@@ -213,7 +212,6 @@ public class ReportActivity extends BaseReportActivity {
     }
 
     public void createCustomerServiceFragment() {
-        CustomerServiceDialog csd = new CustomerServiceDialog();
-        csd.show(getSupportFragmentManager(), ReportConstants.TAG_CUSTOMER_SERVICE_FRAGMENT);
+        CustomerServiceActivity.start(this, getIntent());
     }
 }

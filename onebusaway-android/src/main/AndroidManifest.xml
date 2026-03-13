@@ -245,6 +245,7 @@
         <activity android:name="org.onebusaway.android.ui.AgenciesActivity"/>
 
         <activity android:name="org.onebusaway.android.report.ui.ReportActivity"/>
+        <activity android:name="org.onebusaway.android.report.ui.CustomerServiceActivity"/>
         <activity android:name="org.onebusaway.android.report.ui.InfrastructureIssueActivity"/>
 
         <activity

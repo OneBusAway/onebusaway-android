@@ -13,18 +13,21 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package org.onebusaway.android.report.ui.dialog;
+package org.onebusaway.android.report.ui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.AsyncTaskLoader;
+import androidx.loader.content.Loader;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 
@@ -36,69 +39,94 @@ import org.onebusaway.android.io.elements.ObaAgency;
 import org.onebusaway.android.io.elements.ObaAgencyWithCoverage;
 import org.onebusaway.android.io.request.ObaAgenciesWithCoverageRequest;
 import org.onebusaway.android.io.request.ObaAgenciesWithCoverageResponse;
-import org.onebusaway.android.report.ui.BaseReportActivity;
 import org.onebusaway.android.util.ArrayAdapter;
 import org.onebusaway.android.util.UIUtils;
 
 import java.util.Arrays;
 
-import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.AsyncTaskLoader;
-import androidx.loader.content.Loader;
+/**
+ * Migrated from CustomerServiceDialog to an Activity to be more user-friendly.
+ */
+public class CustomerServiceActivity extends BaseReportActivity
+        implements LoaderManager.LoaderCallbacks<ObaAgenciesWithCoverageResponse> {
 
-public class CustomerServiceDialog extends DialogFragment implements
-        LoaderManager.LoaderCallbacks<ObaAgenciesWithCoverageResponse> {
+    private static final int AGENCIES_LOADER_ID = 0;
 
     private ListView mListView;
-
     private ObaAgenciesWithCoverageResponse mResponse;
-
     private Adapter mAdapter;
-
     private FirebaseAnalytics mFirebaseAnalytics;
 
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    // entry point for starting this activity, optionally with a location string to include in email reports
+    public static void start(Context context, Intent sourceIntent) {
+        Intent intent = new Intent(context, CustomerServiceActivity.class);
 
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
+        if (sourceIntent != null && sourceIntent.hasExtra(LOCATION_STRING)) {
+            intent.putExtra(
+                    LOCATION_STRING,
+                    sourceIntent.getStringExtra(LOCATION_STRING)
+            );
+        }
 
-        getLoaderManager().initLoader(0, null, this);
+        context.startActivity(intent);
     }
 
-    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.report_issue_customer_service, null, false);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.report_issue_customer_service);
 
-        mListView = view.findViewById(R.id.list);
-        getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-        return view;
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
+        setTitle(R.string.rt_customer_service);
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        mListView = findViewById(R.id.list);
+
+        LoaderManager.getInstance(this).initLoader(AGENCIES_LOADER_ID, null, this);
     }
 
     @Override
     public Loader<ObaAgenciesWithCoverageResponse> onCreateLoader(int id, Bundle args) {
-        return new AgenciesLoader(getActivity());
+        return new AgenciesLoader(this);
     }
 
     @Override
-    public void onLoadFinished(Loader<ObaAgenciesWithCoverageResponse> loader, ObaAgenciesWithCoverageResponse data) {
-        // Create our generic adapter
+    public void onLoadFinished(Loader<ObaAgenciesWithCoverageResponse> loader,
+                               ObaAgenciesWithCoverageResponse data) {
+        if (data == null || data.getAgencies() == null) {
+            createToastMessage(getString(R.string.generic_comm_error));
+            return;
+        }
+
         mResponse = data;
-        mAdapter = new Adapter(getActivity());
+        mAdapter = new Adapter(this);
         mListView.setAdapter(mAdapter);
-        //Process the list check phone & email
         mAdapter.setData(Arrays.asList(data.getAgencies()));
     }
 
     @Override
     public void onLoaderReset(Loader<ObaAgenciesWithCoverageResponse> loader) {
-        mListView.setAdapter(null);
+        if (mListView != null) {
+            mListView.setAdapter(null);
+        }
         mAdapter = null;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Adapter for displaying agencies with contact options
+     */
     private class Adapter extends ArrayAdapter<ObaAgencyWithCoverage> {
 
         Adapter(Context context) {
@@ -113,38 +141,45 @@ public class CustomerServiceDialog extends DialogFragment implements
             text1.setText(agency.getName());
 
             ImageButton phoneButton = view.findViewById(R.id.ricsi_phone);
-            phoneButton.setColorFilter(getActivity().getResources().
-                    getColor(R.color.navdrawer_icon_tint_selected));
+            phoneButton.setColorFilter(
+                    getResources().getColor(R.color.navdrawer_icon_tint_selected)
+            );
 
             ImageButton webButton = view.findViewById(R.id.ricsi_web);
-            webButton.setColorFilter(getActivity().getResources().
-                    getColor(R.color.navdrawer_icon_tint_selected));
+            webButton.setColorFilter(
+                    getResources().getColor(R.color.navdrawer_icon_tint_selected)
+            );
 
             ImageButton emailButton = view.findViewById(R.id.ricsi_email);
-            emailButton.setColorFilter(getActivity().getResources().
-                    getColor(R.color.navdrawer_icon_tint_selected));
+            emailButton.setColorFilter(
+                    getResources().getColor(R.color.navdrawer_icon_tint_selected)
+            );
 
             if (TextUtils.isEmpty(agency.getEmail())) {
                 emailButton.setVisibility(View.INVISIBLE);
             } else {
                 emailButton.setVisibility(View.VISIBLE);
-                emailButton.setOnClickListener(view13 -> {
-                    String locationString = getActivity().getIntent().
-                            getStringExtra(BaseReportActivity.LOCATION_STRING);
+                emailButton.setOnClickListener(v -> {
+                    String locationString = getIntent().getStringExtra(LOCATION_STRING);
 
-                    UIUtils.sendEmail(getActivity(), agency.getEmail(), locationString);
+                    UIUtils.sendEmail(CustomerServiceActivity.this, agency.getEmail(), locationString);
 
-                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                    ObaAnalytics.reportUiEvent(
+                            mFirebaseAnalytics,
                             Application.get().getPlausibleInstance(),
                             PlausibleAnalytics.REPORT_MORE_EVENT_URL,
                             agency.getName() + "_" + getString(R.string.analytics_customer_service),
-                            getString(R.string.analytics_label_customer_service_email));
+                            getString(R.string.analytics_label_customer_service_email)
+                    );
+
                     if (locationString == null) {
-                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                        ObaAnalytics.reportUiEvent(
+                                mFirebaseAnalytics,
                                 Application.get().getPlausibleInstance(),
                                 PlausibleAnalytics.REPORT_MORE_EVENT_URL,
                                 agency.getName() + "_" + getString(R.string.analytics_customer_service),
-                                getString(R.string.analytics_label_customer_service_email_without_location));
+                                getString(R.string.analytics_label_customer_service_email_without_location)
+                        );
                     }
                 });
             }
@@ -153,14 +188,15 @@ public class CustomerServiceDialog extends DialogFragment implements
                 webButton.setVisibility(View.INVISIBLE);
             } else {
                 webButton.setVisibility(View.VISIBLE);
-                webButton.setOnClickListener(view1 -> {
-                    UIUtils.goToUrl(getActivity(), agency.getUrl());
-                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                webButton.setOnClickListener(v -> {
+                    UIUtils.goToUrl(CustomerServiceActivity.this, agency.getUrl());
+                    ObaAnalytics.reportUiEvent(
+                            mFirebaseAnalytics,
                             Application.get().getPlausibleInstance(),
                             PlausibleAnalytics.REPORT_MORE_EVENT_URL,
                             agency.getName() + "_" + getString(R.string.analytics_customer_service),
-                            getString(R.string.analytics_label_customer_service_web));
-
+                            getString(R.string.analytics_label_customer_service_web)
+                    );
                 });
             }
 
@@ -168,19 +204,24 @@ public class CustomerServiceDialog extends DialogFragment implements
                 phoneButton.setVisibility(View.INVISIBLE);
             } else {
                 phoneButton.setVisibility(View.VISIBLE);
-                phoneButton.setOnClickListener(view12 -> {
-                    UIUtils.goToPhoneDialer(getActivity(), "tel:" + agency.getPhone());
-                    ObaAnalytics.reportUiEvent(mFirebaseAnalytics,
+                phoneButton.setOnClickListener(v -> {
+                    UIUtils.goToPhoneDialer(CustomerServiceActivity.this, "tel:" + agency.getPhone());
+                    ObaAnalytics.reportUiEvent(
+                            mFirebaseAnalytics,
                             Application.get().getPlausibleInstance(),
                             PlausibleAnalytics.REPORT_MORE_EVENT_URL,
                             agency.getName() + "_" + getString(R.string.analytics_customer_service),
-                            getString(R.string.analytics_label_customer_service_phone));
+                            getString(R.string.analytics_label_customer_service_phone)
+                    );
                 });
             }
         }
     }
 
-    private final static class AgenciesLoader
+    /**
+     * Loader for fetching agencies with coverage in the background
+     */
+    private static final class AgenciesLoader
             extends AsyncTaskLoader<ObaAgenciesWithCoverageResponse> {
 
         AgenciesLoader(Context context) {
@@ -188,7 +229,7 @@ public class CustomerServiceDialog extends DialogFragment implements
         }
 
         @Override
-        public void onStartLoading() {
+        protected void onStartLoading() {
             forceLoad();
         }
 

@@ -242,7 +242,7 @@ dependencies {
     // Tutorial overlay library replacing deprecated ShowcaseView
     
     implementation ('com.github.deano2390:MaterialShowcaseView:1.3.7') {
-    exclude group: 'com.android.support'
+        exclude group: 'com.android.support'
 }
     // POJOs used for full data-binding via Jackson
     implementation 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'

@@ -40,8 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static org.onebusaway.android.ui.PreferencesActivity.REQUEST_CODE_RESTORE_BACKUP;
-import static org.onebusaway.android.ui.PreferencesActivity.REQUEST_CODE_SAVE_BACKUP;
+import static org.onebusaway.android.ui.SettingsActivity.REQUEST_CODE_RESTORE_BACKUP;
+import static org.onebusaway.android.ui.SettingsActivity.REQUEST_CODE_SAVE_BACKUP;
 
 public class BackupUtils {
     private static final String TAG = "BackupUtils";

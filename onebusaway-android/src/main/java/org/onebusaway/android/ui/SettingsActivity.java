@@ -19,7 +19,7 @@ package org.onebusaway.android.ui;
 
 import static org.onebusaway.android.util.UIUtils.setAppTheme;
 
-import android.content.DialogInterface;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.RingtoneManager;
@@ -177,6 +177,7 @@ public class SettingsActivity extends AppCompatActivity
     @Override
     public void onRegionTaskFinished(boolean currentRegionChanged) {
         if (currentRegionChanged) {
+            Application.get().setUseOldOtpApiUrlVersion(false);
             if (Application.getPrefs()
                     .getBoolean(getString(R.string.preference_key_auto_select_region), true)
                     && Application.get().getCurrentRegion() != null) {
@@ -468,7 +469,7 @@ public class SettingsActivity extends AppCompatActivity
         @SuppressWarnings("deprecation")
         @Override
         public void onActivityResult(int requestCode, int resultCode, Intent data) {
-            if (requestCode == REQUEST_CODE_RINGTONE && data != null) {
+            if (requestCode == REQUEST_CODE_RINGTONE && resultCode == Activity.RESULT_OK && data != null) {
                 Uri ringtoneUri = data.getParcelableExtra(
                         RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
                 String value = ringtoneUri != null ? ringtoneUri.toString() : "";

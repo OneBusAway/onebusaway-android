@@ -92,7 +92,7 @@
     <string name="alerts_api_endpoint">/api/v1/regions/regionID/alerts.pb</string>
 
     <!-- Donate URL -->
-    <string name="donate_url">https://onebusaway.org/donate/</string>
+    <string name="donate_url">https://opentransitsoftwarefoundation.org/donate/</string>
 
     <!-- Powered by OBA URL -->
     <string name="powered_by_oba_url">https://onebusaway.org</string>

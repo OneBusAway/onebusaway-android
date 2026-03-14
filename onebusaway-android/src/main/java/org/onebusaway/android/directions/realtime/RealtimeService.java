@@ -111,9 +111,11 @@ public class RealtimeService extends IntentService {
 
         boolean realtimeLegsOnItineraries = false;
 
-        for (Leg leg : itinerary.legs) {
-            if (leg.realTime) {
-                realtimeLegsOnItineraries = true;
+        if (itinerary.legs != null) {
+            for (Leg leg : itinerary.legs) {
+                if (leg.realTime) {
+                    realtimeLegsOnItineraries = true;
+                }
             }
         }
 

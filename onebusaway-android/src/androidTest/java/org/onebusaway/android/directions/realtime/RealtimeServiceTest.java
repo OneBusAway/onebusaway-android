@@ -205,4 +205,26 @@ public class RealtimeServiceTest {
         // gracefully and return null instead of crashing.
         assertNull("getSimplifiedBundle should return null when NOTIFICATION_TARGET is missing", result);
     }
+
+    @Test
+    public void testOnHandleIntentWithNullItineraryLegsDoesNotCrash() {
+        Bundle bundle = new Bundle();
+        // No DATE_TIME in bundle so rescheduleRealtimeUpdates() returns false
+        // and the service proceeds to getItinerary() then startRealtimeUpdates().
+        ArrayList<Itinerary> itineraries = new ArrayList<>();
+        Itinerary it = new Itinerary();
+        it.legs = null;
+        itineraries.add(it);
+        bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
+        bundle.putInt(OTPConstants.SELECTED_ITINERARY, 0);
+
+        Intent intent = new Intent(OTPConstants.INTENT_START_CHECKS);
+        intent.putExtras(bundle);
+
+        try {
+            mService.onHandleIntent(intent);
+        } catch (NullPointerException e) {
+            fail("onHandleIntent should not throw NPE when itinerary.legs is null: " + e.getMessage());
+        }
+    }
 }

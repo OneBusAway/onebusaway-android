@@ -43,7 +43,6 @@ import android.graphics.Path;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
 import android.widget.Toast;
@@ -126,18 +125,13 @@ public class StopOverlay {
      * Called when a marker is clicked. Returns true if this overlay handled the click.
      */
     public boolean markerClicked(Marker marker) {
-        long startTime = Long.MAX_VALUE, endTime = Long.MAX_VALUE;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            startTime = SystemClock.elapsedRealtimeNanos();
-        }
+        long startTime = SystemClock.elapsedRealtimeNanos();
 
         ObaStop stop = mMarkerData.getStopFromMarker(marker);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            endTime = SystemClock.elapsedRealtimeNanos();
-            Log.d(TAG, "Stop HashMap read time: " + TimeUnit.MILLISECONDS
-                    .convert(endTime - startTime, TimeUnit.NANOSECONDS) + "ms");
-        }
+        long endTime = SystemClock.elapsedRealtimeNanos();
+        Log.d(TAG, "Stop HashMap read time: " + TimeUnit.MILLISECONDS
+                .convert(endTime - startTime, TimeUnit.NANOSECONDS) + "ms");
 
         if (stop == null) {
             return false;
@@ -476,20 +470,20 @@ public class StopOverlay {
 
     private void doFocusChange(ObaStop stop) {
         mMarkerData.setFocus(stop);
-        HashMap<String, ObaRoute> routes = mMarkerData.getCachedRoutes();
-        mOnFocusChangedListener.onFocusChanged(stop, routes, stop.getLocation());
+        if (mOnFocusChangedListener != null) {
+            HashMap<String, ObaRoute> routes = mMarkerData.getCachedRoutes();
+            mOnFocusChangedListener.onFocusChanged(stop, routes, stop.getLocation());
+        }
     }
 
     private void removeFocus(LatLng latLng) {
-        if (mMarkerData.getFocus() != null) {
+        if (mMarkerData != null && mMarkerData.getFocus() != null) {
             mMarkerData.removeFocus();
         }
-
-        Location location = null;
-        if (latLng != null) {
-            location = MapHelpMapLibre.makeLocation(latLng);
+        Location location = (latLng != null) ? MapHelpMapLibre.makeLocation(latLng) : null;
+        if (mOnFocusChangedListener != null) {
+            mOnFocusChangedListener.onFocusChanged(null, null, location);
         }
-        mOnFocusChangedListener.onFocusChanged(null, null, location);
     }
 
     private void setupMarkerData() {

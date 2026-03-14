@@ -76,6 +76,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
@@ -302,7 +303,10 @@ public class MapLibreMapFragment extends SupportMapFragment
         if (savedInstanceState != null) {
             initMapState(savedInstanceState);
         } else {
-            Bundle args = getActivity().getIntent().getExtras();
+            Bundle args = null;
+            if (getActivity() != null) {
+                args = getActivity().getIntent().getExtras();
+            }
             if (args == null) {
                 args = new Bundle();
             }
@@ -909,7 +913,7 @@ public class MapLibreMapFragment extends SupportMapFragment
     // StopOverlay.OnFocusChangedListener
     // ============================================================================================
 
-    final Handler mStopChangedHandler = new Handler();
+    final Handler mStopChangedHandler = new Handler(Looper.getMainLooper());
 
     @Override
     public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes,
@@ -933,10 +937,10 @@ public class MapLibreMapFragment extends SupportMapFragment
 
     @Override
     public void onLocationChanged(Location l) {
-        // MapLibre LocationComponent handles rendering automatically when activated;
-        // we still inform controllers about location updates.
         if (mControllers != null) {
-            // LocationHelper fires this; nothing more to do for the map display.
+            for (MapModeController controller : mControllers) {
+                controller.onLocation();
+            }
         }
     }
 
@@ -957,8 +961,8 @@ public class MapLibreMapFragment extends SupportMapFragment
     // ============================================================================================
 
     protected void showDialog(int id) {
-        MapDialogFragment.newInstance(id, this)
-                .show(getFragmentManager(), MapDialogFragment.TAG);
+        MapDialogFragment.newInstance(id)
+                .show(getChildFragmentManager(), MapDialogFragment.TAG);
     }
 
     public void showLocationPermissionDialog() {
@@ -1001,10 +1005,7 @@ public class MapLibreMapFragment extends SupportMapFragment
 
         private static final String DIALOG_TYPE_KEY = "dialog_type";
 
-        private static MapLibreMapFragment mMapFragment;
-
-        static MapDialogFragment newInstance(int dialogType, MapLibreMapFragment fragment) {
-            mMapFragment = fragment;
+        static MapDialogFragment newInstance(int dialogType) {
             MapDialogFragment f = new MapDialogFragment();
             Bundle args = new Bundle();
             args.putInt(DIALOG_TYPE_KEY, dialogType);
@@ -1042,16 +1043,20 @@ public class MapLibreMapFragment extends SupportMapFragment
                     ))
                     .setPositiveButton(R.string.main_outofrange_yes,
                             (dialog, which) -> {
-                                if (mMapFragment != null && mMapFragment.isAdded()) {
-                                    mMapFragment.zoomToRegion();
-                                    mMapFragment.checkRegionWeather(false);
+                                MapLibreMapFragment mapFragment =
+                                        (MapLibreMapFragment) getParentFragment();
+                                if (mapFragment != null && mapFragment.isAdded()) {
+                                    mapFragment.zoomToRegion();
+                                    mapFragment.checkRegionWeather(false);
                                 }
                             }
                     )
                     .setNegativeButton(R.string.main_outofrange_no,
                             (dialog, which) -> {
-                                if (mMapFragment != null && mMapFragment.isAdded()) {
-                                    mMapFragment.mWarnOutOfRange = false;
+                                MapLibreMapFragment mapFragment =
+                                        (MapLibreMapFragment) getParentFragment();
+                                if (mapFragment != null && mapFragment.isAdded()) {
+                                    mapFragment.mWarnOutOfRange = false;
                                 }
                             }
                     );
@@ -1087,8 +1092,12 @@ public class MapLibreMapFragment extends SupportMapFragment
                     )
                     .setNegativeButton(R.string.rt_no,
                             (dialog, which) -> {
-                                for (MapModeController controller : mMapFragment.mControllers) {
-                                    controller.onLocation();
+                                MapLibreMapFragment mapFragment =
+                                        (MapLibreMapFragment) getParentFragment();
+                                if (mapFragment != null && mapFragment.isAdded()) {
+                                    for (MapModeController controller : mapFragment.mControllers) {
+                                        controller.onLocation();
+                                    }
                                 }
                             }
                     );

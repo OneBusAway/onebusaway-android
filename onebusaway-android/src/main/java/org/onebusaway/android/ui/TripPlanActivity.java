@@ -24,10 +24,14 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.text.format.DateFormat;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -35,6 +39,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import com.sothree.slidinguppanel.PanelState;
@@ -43,7 +48,13 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.database.savedtrips.SavedTripsManager;
+import org.onebusaway.android.database.savedtrips.entity.SavedTripEntity;
 import org.onebusaway.android.directions.tasks.TripRequest;
+import org.onebusaway.android.directions.util.ConversionUtils;
+import org.onebusaway.android.directions.util.CustomAddress;
+import org.onebusaway.android.directions.util.DirectionsGenerator;
+import org.onebusaway.android.directions.util.ItineraryJsonConverter;
 import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -55,7 +66,10 @@ import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.TripPlan;
 import org.opentripplanner.api.ws.Message;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 
 public class TripPlanActivity extends AppCompatActivity implements TripRequest.Callback,
@@ -272,6 +286,14 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             onBackPressed();
             return true;
         }
+        if (item.getItemId() == R.id.action_save_trip) {
+            showSaveTripDialog();
+            return true;
+        }
+        if (item.getItemId() == R.id.action_share_trip) {
+            shareTripPlan();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -444,6 +466,148 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         } else {
             return null;
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Itinerary getSelectedItinerary() {
+        if (mBuilder == null) {
+            return null;
+        }
+        Bundle bundle = mBuilder.getBundle();
+        ArrayList<Itinerary> itineraries = (ArrayList<Itinerary>)
+                bundle.getSerializable(OTPConstants.ITINERARIES);
+        if (itineraries == null || itineraries.isEmpty()) {
+            return null;
+        }
+        int rank = bundle.getInt(OTPConstants.SELECTED_ITINERARY);
+        if (rank < 0 || rank >= itineraries.size()) {
+            rank = 0;
+        }
+        return itineraries.get(rank);
+    }
+
+    private void showSaveTripDialog() {
+        Itinerary itinerary = getSelectedItinerary();
+        if (itinerary == null) {
+            Toast.makeText(this, R.string.trip_plan_no_itinerary, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        CustomAddress from = mBuilder.getFrom();
+        CustomAddress to = mBuilder.getTo();
+        final String defaultName;
+        if (from != null && to != null) {
+            defaultName = from.toString() + " \u2192 " + to.toString();
+        } else {
+            defaultName = "";
+        }
+
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_save_trip, null);
+        TextInputEditText nameInput = dialogView.findViewById(R.id.trip_name_input);
+        CheckBox favoriteCheckbox = dialogView.findViewById(R.id.trip_favorite_checkbox);
+
+        nameInput.setText(defaultName);
+        nameInput.selectAll();
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.trip_plan_save_dialog_title)
+                .setView(dialogView)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String inputText = nameInput.getText() != null
+                                ? nameInput.getText().toString().trim() : "";
+                        String tripName = inputText.isEmpty() ? defaultName : inputText;
+                        saveTripToDatabase(tripName, favoriteCheckbox.isChecked(), itinerary,
+                                from, to);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void saveTripToDatabase(String name, boolean favorite, Itinerary itinerary,
+            CustomAddress from, CustomAddress to) {
+        double fromLat = 0, fromLon = 0, toLat = 0, toLon = 0;
+        String fromAddr = "", toAddr = "";
+
+        if (from != null) {
+            fromLat = from.getLatitude();
+            fromLon = from.getLongitude();
+            fromAddr = from.toString();
+        }
+        if (to != null) {
+            toLat = to.getLatitude();
+            toLon = to.getLongitude();
+            toAddr = to.toString();
+        }
+
+        String json = ItineraryJsonConverter.INSTANCE.toJson(itinerary);
+
+        SavedTripEntity trip = new SavedTripEntity(
+                0, name, fromAddr, toAddr,
+                fromLat, fromLon, toLat, toLon,
+                json, favorite, System.currentTimeMillis());
+
+        SavedTripsManager.saveTrip(getApplicationContext(), trip, null);
+        Toast.makeText(this, R.string.trip_plan_saved_toast, Toast.LENGTH_SHORT).show();
+    }
+
+    private void shareTripPlan() {
+        Itinerary itinerary = getSelectedItinerary();
+        if (itinerary == null) {
+            Toast.makeText(this, R.string.trip_plan_no_itinerary, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        CustomAddress from = mBuilder.getFrom();
+        CustomAddress to = mBuilder.getTo();
+
+        StringBuilder sb = new StringBuilder();
+        if (from != null && to != null) {
+            sb.append(from.toString()).append(" \u2192 ").append(to.toString()).append("\n\n");
+        }
+
+        String timePattern = DateFormat.is24HourFormat(this) ? "HH:mm" : "hh:mm a";
+        SimpleDateFormat timeFmt = new SimpleDateFormat(timePattern, Locale.getDefault());
+
+        try {
+            if (itinerary.startTime != null) {
+                long startMs = Long.parseLong(itinerary.startTime);
+                sb.append(getString(R.string.trip_plan_share_depart,
+                        timeFmt.format(new Date(startMs)))).append("\n");
+            }
+            if (itinerary.endTime != null) {
+                long endMs = Long.parseLong(itinerary.endTime);
+                sb.append(getString(R.string.trip_plan_share_arrive,
+                        timeFmt.format(new Date(endMs)))).append("\n");
+            }
+        } catch (NumberFormatException e) {
+            Log.w(TAG, "Could not parse itinerary time", e);
+        }
+
+        String duration = ConversionUtils.getFormattedDurationTextNoSeconds(
+                itinerary.duration, false, this);
+        sb.append(getString(R.string.trip_plan_share_duration, duration)).append("\n\n");
+
+        if (itinerary.legs != null && !itinerary.legs.isEmpty()) {
+            DirectionsGenerator gen = new DirectionsGenerator(itinerary.legs,
+                    getApplicationContext());
+            String title = gen.getItineraryTitle();
+            sb.append(getString(R.string.trip_plan_share_via, title)).append("\n\n");
+        }
+
+        sb.append(getString(R.string.trip_plan_share_planned_with,
+                getString(R.string.app_name)));
+
+        String subject = getString(R.string.trip_plan_share_subject,
+                getString(R.string.app_name));
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, sb.toString());
+        startActivity(Intent.createChooser(shareIntent, getString(R.string.trip_plan_share)));
     }
 
     private void clearBundleErrors() {

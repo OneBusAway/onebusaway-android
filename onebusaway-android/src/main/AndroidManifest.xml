@@ -283,6 +283,14 @@
                 android:value="org.onebusaway.android.ui.HomeActivity"/>
         </activity>
         <activity
+            android:name="org.onebusaway.android.ui.SavedTripsActivity"
+            android:label="@string/saved_trips_title"
+            android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.onebusaway.android.ui.HomeActivity"/>
+        </activity>
+        <activity
             android:name="org.onebusaway.android.ui.FeedbackActivity"
             android:label="@string/feedback_notify_title"
             android:noHistory="true"

@@ -147,4 +147,42 @@ public class RealtimeServiceTest {
             fail("onHandleIntent should not throw NPE on null action: " + e.getMessage());
         }
     }
+
+    @Test
+    public void testGetSimplifiedBundleWithMissingItineraryDoesNotCrash() throws Exception {
+        // Bundle with no itineraries and no selected index
+        Bundle badBundle = new Bundle();
+
+        // Use reflection because getSimplifiedBundle() is private
+        java.lang.reflect.Method m =
+                RealtimeService.class.getDeclaredMethod("getSimplifiedBundle", Bundle.class);
+        m.setAccessible(true);
+
+        Object result = m.invoke(mService, badBundle);
+        // After the fix, getSimplifiedBundle() should handle the null itinerary gracefully
+        // and return null instead of crashing.
+        assertNull("getSimplifiedBundle should return null for missing itinerary", result);
+    }
+
+    @Test
+    public void testGetSimplifiedBundleWithMissingNotificationTargetDoesNotCrash() throws Exception {
+        Bundle bundle = new Bundle();
+
+        // Create a minimal itineraries list with one dummy Itinerary
+        ArrayList<Itinerary> itineraries = new ArrayList<>();
+        Itinerary it = new Itinerary();
+        itineraries.add(it);
+        bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
+        bundle.putInt(OTPConstants.SELECTED_ITINERARY, 0);
+        // Intentionally DO NOT put OTPConstants.NOTIFICATION_TARGET into the bundle
+
+        java.lang.reflect.Method m =
+                RealtimeService.class.getDeclaredMethod("getSimplifiedBundle", Bundle.class);
+        m.setAccessible(true);
+
+        Object result = m.invoke(mService, bundle);
+        // After the fix, getSimplifiedBundle() should handle missing NOTIFICATION_TARGET
+        // gracefully and return null instead of crashing.
+        assertNull("getSimplifiedBundle should return null when NOTIFICATION_TARGET is missing", result);
+    }
 }

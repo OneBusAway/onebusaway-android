@@ -98,7 +98,6 @@ import androidx.fragment.app.Fragment;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
-import org.checkerframework.checker.guieffect.qual.UI;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -430,6 +429,8 @@ public final class UIUtils {
             if (favoriteView != null) {
                 if (favorite) {
                     favoriteView.setVisibility(View.VISIBLE);
+                    // Keep list-row favorite stars gray to match stop list styling
+                    // the arrivals header uses white on its colored background.
                     ImageViewCompat.setImageTintList(
                             favoriteView,
                             ColorStateList.valueOf(
@@ -440,26 +441,6 @@ public final class UIUtils {
                     ImageViewCompat.setImageTintList(favoriteView, null);
                 }
             }
-        }
-
-        /**
-         * This should be used with compound drawables
-         */
-        public void setView2(TextView nameView, String stopId, String stopName, boolean showIcon) {
-            ContentValues values = mMap.getValues(stopId);
-            int icon = 0;
-            if (values != null) {
-                Integer i = values.getAsInteger(ObaContract.Stops.FAVORITE);
-                final boolean favorite = (i != null) && (i == 1);
-                final String userName = values.getAsString(ObaContract.Stops.USER_NAME);
-
-                nameView.setText(TextUtils.isEmpty(userName) ?
-                        UIUtils.formatDisplayText(stopName) : userName);
-                icon = favorite && showIcon ? R.drawable.ic_toggle_star : 0;
-            } else {
-                nameView.setText(UIUtils.formatDisplayText(stopName));
-            }
-            nameView.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
         }
     }
 

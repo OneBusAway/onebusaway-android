@@ -19,6 +19,7 @@ import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -30,8 +31,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cursoradapter.widget.SimpleCursorAdapter;
+import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 
@@ -45,20 +49,44 @@ import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 public class MyStarredStopsFragment extends MyStopListFragmentBase {
 
     public static final String TAG = "MyStarredStopsFragment";
     public static final String TAB_NAME = "starred";
 
+    private static final int LOADER_ARRIVALS = 1;
+
+    private static final long REFRESH_INTERVAL_MS = 60 * 1000;
+
     private static String sortBy;
 
     private FirebaseAnalytics mFirebaseAnalytics;
+
+    private final Handler mRefreshHandler = new Handler();
+
+    private final Runnable mRefreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            refreshArrivals();
+            mRefreshHandler.postDelayed(this, REFRESH_INTERVAL_MS);
+        }
+    };
+
+    private ArrivalsLoaderCallbacks mArrivalsCallbacks;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
         return super.onCreateView(inflater, container, savedInstanceState);
+    }
+
+    @Override
+    protected SimpleCursorAdapter newAdapter() {
+        return new StarredStopsAdapter(getActivity());
     }
 
     @Override
@@ -78,12 +106,32 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     }
 
     @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        super.onLoadFinished(loader, data);
+        if (data != null && data.getCount() > 0) {
+            loadArrivals(data);
+        }
+    }
+
+    @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setHasOptionsMenu(true);
+        mArrivalsCallbacks = new ArrivalsLoaderCallbacks();
         showStarredStopsTutorials();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        mRefreshHandler.postDelayed(mRefreshRunnable, REFRESH_INTERVAL_MS);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mRefreshHandler.removeCallbacks(mRefreshRunnable);
+    }
 
     @Override
     public void onHiddenChanged(boolean hidden) {
@@ -215,8 +263,65 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
         return R.string.my_no_starred_stops;
     }
 
+    private void loadArrivals(Cursor cursor) {
+        ArrayList<String> stopIds = new ArrayList<>();
+        int origPosition = cursor.getPosition();
+        cursor.moveToPosition(-1);
+        while (cursor.moveToNext()) {
+            stopIds.add(cursor.getString(COL_ID));
+        }
+        cursor.moveToPosition(origPosition);
+
+        if (stopIds.isEmpty()) {
+            return;
+        }
+
+        Bundle args = new Bundle();
+        args.putStringArray("stopIds", stopIds.toArray(new String[0]));
+        getLoaderManager().restartLoader(LOADER_ARRIVALS, args, mArrivalsCallbacks);
+    }
+
+    private void refreshArrivals() {
+        if (!isAdded() || mAdapter == null) {
+            return;
+        }
+        Cursor cursor = mAdapter.getCursor();
+        if (cursor != null && cursor.getCount() > 0) {
+            loadArrivals(cursor);
+        }
+    }
+
+    private class ArrivalsLoaderCallbacks implements
+            LoaderManager.LoaderCallbacks<HashMap<String, ArrayList<ArrivalInfo>>> {
+
+        @NonNull
+        @Override
+        public Loader<HashMap<String, ArrayList<ArrivalInfo>>> onCreateLoader(int id,
+                Bundle args) {
+            String[] stopIds = args.getStringArray("stopIds");
+            return new StarredStopsArrivalsLoader(getActivity(), stopIds);
+        }
+
+        @Override
+        public void onLoadFinished(
+                @NonNull Loader<HashMap<String, ArrayList<ArrivalInfo>>> loader,
+                HashMap<String, ArrayList<ArrivalInfo>> data) {
+            if (mAdapter instanceof StarredStopsAdapter) {
+                ((StarredStopsAdapter) mAdapter).setArrivalsData(data);
+            }
+        }
+
+        @Override
+        public void onLoaderReset(
+                @NonNull Loader<HashMap<String, ArrayList<ArrivalInfo>>> loader) {
+            if (mAdapter instanceof StarredStopsAdapter) {
+                ((StarredStopsAdapter) mAdapter).setArrivalsData(null);
+            }
+        }
+    }
+
     public static class ClearDialog extends ClearConfirmDialog {
-        
+
         public ClearDialog() {
             super(R.string.my_option_clear_starred_stops_confirm, R.string.my_option_clear_starred_stops_title);
         }

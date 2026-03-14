@@ -20,6 +20,14 @@
       xmlns:app="http://schemas.android.com/apk/res-auto"
       xmlns:tools="http://schemas.android.com/tools"
       tools:context="org.onebusaway.android.ui.TripPlanActivity">
+    <item android:id="@+id/action_save_trip"
+          android:title="@string/trip_plan_save"
+          android:orderInCategory="90"
+          app:showAsAction="never"/>
+    <item android:id="@+id/action_share_trip"
+          android:title="@string/trip_plan_share"
+          android:orderInCategory="91"
+          app:showAsAction="never"/>
     <item android:id="@+id/action_settings"
           android:title="@string/trip_plan_advanced_settings"
           android:orderInCategory="100"

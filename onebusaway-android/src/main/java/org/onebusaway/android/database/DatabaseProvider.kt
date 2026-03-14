@@ -22,7 +22,7 @@ object DatabaseProvider {
                 context.applicationContext,
                 AppDatabase::class.java,
                 "app_database"
-            ).addMigrations(MIGRATION_1_2).build()
+            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
             INSTANCE = instance
             instance
         }

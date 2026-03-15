@@ -25,7 +25,7 @@ import org.onebusaway.android.io.request.ObaStopsForRouteRequest;
 import org.onebusaway.android.io.request.ObaStopsForRouteResponse;
 import org.onebusaway.android.io.request.ObaTripsForRouteRequest;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.MapUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.UIUtils;
 
@@ -430,7 +430,7 @@ public class RouteMapController implements MapModeController {
             ObaMapView obaMapView = mFragment.getMapView();
 
             if (response == null || response.getCode() != ObaApi.OBA_OK) {
-                BaseMapFragment.showMapError(response);
+                MapUtils.showMapError(response);
                 return;
             }
 
@@ -525,7 +525,7 @@ public class RouteMapController implements MapModeController {
             ObaMapView obaMapView = mFragment.getMapView();
 
             if (response == null || response.getCode() != ObaApi.OBA_OK) {
-                BaseMapFragment.showMapError(response);
+                MapUtils.showMapError(response);
                 return;
             }
 

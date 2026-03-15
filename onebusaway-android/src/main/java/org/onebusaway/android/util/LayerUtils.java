@@ -20,7 +20,7 @@ import android.text.TextUtils;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.map.googlemapsv2.LayerInfo;
+import org.onebusaway.android.map.LayerInfo;
 
 /**
  * Utility methods related to creating layers. Currently only methods related to the bikeshare layer

@@ -47,7 +47,7 @@ import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.elements.ObaStopElement;
 import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.ObaMapFragment;
 import org.onebusaway.android.report.connection.GeocoderTask;
 import org.onebusaway.android.report.connection.ServiceListTask;
 import org.onebusaway.android.report.constants.ReportConstants;
@@ -78,7 +78,7 @@ import edu.usf.cutr.open311client.models.ServiceListRequest;
 import edu.usf.cutr.open311client.models.ServiceListResponse;
 
 public class InfrastructureIssueActivity extends BaseReportActivity implements
-        BaseMapFragment.OnFocusChangedListener, ServiceListTask.Callback,
+        ObaMapFragment.OnFocusChangedListener, ServiceListTask.Callback,
         ReportProblemFragmentCallback, IssueLocationHelper.Callback,
         SimpleArrivalListFragment.Callback, GeocoderTask.Callback {
 
@@ -120,7 +120,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     private RelativeLayout mBusStopHeader;
 
     //Map Fragment
-    private BaseMapFragment mMapFragment;
+    private ObaMapFragment mMapFragment;
 
     // Services spinner container
     private FrameLayout mServicesSpinnerFrameLayout;
@@ -411,27 +411,26 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     }
 
     /**
-     * Setting up the BaseMapFragment
-     * BaseMapFragment was used to implement a map.
+     * Setting up the map fragment.
      */
     private void setupMapFragment(Bundle bundle) {
         FragmentManager fm = getSupportFragmentManager();
-        Fragment fragment = fm.findFragmentByTag(BaseMapFragment.TAG);
+        Fragment fragment = fm.findFragmentByTag(ObaMapFragment.TAG);
         if (fragment != null) {
-            mMapFragment = (BaseMapFragment) fragment;
+            mMapFragment = (ObaMapFragment) fragment;
             mMapFragment.setOnFocusChangeListener(this);
         }
         if (mMapFragment == null) {
 
-            mMapFragment = new BaseMapFragment();
-            mMapFragment.setArguments(bundle);
+            mMapFragment = ObaMapFragment.newInstance();
+            mMapFragment.asFragment().setArguments(bundle);
             // Register listener for map focus callbacks
             mMapFragment.setOnFocusChangeListener(this);
 
-            fm.beginTransaction().add(R.id.ri_frame_map_view, mMapFragment,
-                    BaseMapFragment.TAG).commit();
+            fm.beginTransaction().add(R.id.ri_frame_map_view, mMapFragment.asFragment(),
+                    ObaMapFragment.TAG).commit();
         }
-        fm.beginTransaction().show(mMapFragment).commit();
+        fm.beginTransaction().show(mMapFragment.asFragment()).commit();
     }
 
     /**
@@ -660,7 +659,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     }
 
     /**
-     * Called by the BaseMapFragment when a stop obtains focus, or no stops have focus
+     * Called by the map fragment when a stop obtains focus, or no stops have focus
      *
      * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
      * @param routes a HashMap of all route display names that serve this stop - key is routeId

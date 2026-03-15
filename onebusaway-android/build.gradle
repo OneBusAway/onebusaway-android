@@ -64,6 +64,15 @@ android {
             // Normal Google Play release - see src/google
             dimension "platform"
             isDefault = true
+            buildConfigField "String", "MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.googlemapsv2.BaseMapFragment\""
+            buildConfigField "String", "MAP_HELPER_CLASS", "\"org.onebusaway.android.map.googlemapsv2.GoogleProprietaryMapHelper\""
+        }
+
+        maplibre {
+            // MapLibre-based build using OpenFreeMap tiles - see src/maplibre
+            dimension "platform"
+            buildConfigField "String", "MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.maplibre.MapLibreMapFragment\""
+            buildConfigField "String", "MAP_HELPER_CLASS", "\"org.onebusaway.android.map.maplibre.MapLibreProprietaryMapHelper\""
         }
 
         // Brand flavors are loaded from separate files in flavors/ directory.
@@ -248,6 +257,8 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
     // Google Play Services Maps (only for Google flavor)
     googleImplementation 'com.google.android.gms:play-services-maps:19.0.0'
+    // MapLibre GL Native (only for MapLibre flavor)
+    maplibreImplementation 'org.maplibre.gl:android-sdk:11.5.2'
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)
     googleImplementation 'com.google.android.libraries.places:places-compat:2.6.0'
     // Autocomplete text views with clear button for trip planning

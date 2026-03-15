@@ -53,8 +53,14 @@ import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.map.DirectionsMapController;
 import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.map.MapUtils;
+import org.onebusaway.android.map.ObaMapFragment;
+import org.onebusaway.android.map.ObaMapFragment.OnFocusChangedListener;
+import org.onebusaway.android.map.ObaMapFragment.OnLocationPermissionResultListener;
+import org.onebusaway.android.map.ObaMapFragment.OnProgressBarChangedListener;
 import org.onebusaway.android.map.RouteMapController;
 import org.onebusaway.android.map.StopMapController;
+import org.onebusaway.android.map.LayerInfo;
 import org.onebusaway.android.map.bike.BikeshareMapController;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 import org.onebusaway.android.region.ObaRegionsTask;
@@ -121,14 +127,12 @@ import static org.onebusaway.android.util.UIUtils.canManageDialog;
  * @author paulw, barbeau
  */
 public class BaseMapFragment extends SupportMapFragment
-        implements MapModeController.Callback, ObaRegionsTask.Callback,
+        implements ObaMapFragment, MapModeController.Callback, ObaRegionsTask.Callback,
         MapModeController.ObaMapView,
         LocationSource, LocationHelper.Listener,
         com.google.android.gms.maps.GoogleMap.OnCameraChangeListener,
         StopOverlay.OnFocusChangedListener, OnMapReadyCallback,
         VehicleOverlay.Controller, LayersSpeedDialAdapter.LayerActivationListener {
-
-    public static final String TAG = "BaseMapFragment";
 
     private static final int REQUEST_NO_LOCATION = 41;
 
@@ -239,50 +243,6 @@ public class BaseMapFragment extends SupportMapFragment
                 break;
             }
         }
-    }
-
-    public interface OnFocusChangedListener {
-
-        /**
-         * Called when a stop on the map is clicked (i.e., tapped), which sets focus to a stop,
-         * or when the user taps on an area away from the map for the first time after a stop
-         * is already selected, which removes focus
-         *
-         * @param stop     the ObaStop that obtained focus, or null if no stop is in focus
-         * @param routes   a HashMap of all route display names that serve this stop - key is
-         *                 routeId
-         * @param location the user touch location on the map
-         */
-        void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
-
-        void onFocusChanged(BikeRentalStation bikeRentalStation);
-    }
-
-    public interface OnProgressBarChangedListener {
-
-        /**
-         * Called when the map is loading information.  If showProgressBar is true, then the map is
-         * loading information and the progress bar should be shown, but if it's false, then the
-         * map
-         * is finished loading information and the progress bar should be hidden.
-         *
-         * @param showProgressBar true if the map is loading information and the progress bar
-         *                        should
-         *                        be shown, false if the map is finished loading information and
-         *                        the
-         *                        progress bar should be hidden.
-         */
-        void onProgressBarChanged(boolean showProgressBar);
-    }
-
-    public interface OnLocationPermissionResultListener {
-
-        /**
-         * Called when a result has been obtained after requesting user location permission.
-         *
-         * @param grantResult The grant results for the location permission which is either PackageManager.PERMISSION_GRANTED or PackageManager.PERMISSION_DENIED. Never null.
-         */
-        void onLocationPermissionResult(int grantResult);
     }
 
     public static BaseMapFragment newInstance() {
@@ -963,26 +923,11 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     /**
-     * Shows error messages related to stops, routes, and vehicles on the map, based on the
-     * response
-     * from the server
-     *
-     * @param response the response from the server, or null if the response object was null
+     * @deprecated Use {@link MapUtils#showMapError(ObaResponse)} instead
      */
+    @Deprecated
     public static void showMapError(ObaResponse response) {
-        Context context = Application.get().getApplicationContext();
-        int code;
-        if (response != null) {
-            code = response.getCode();
-        } else {
-            // If we don't even have a response object, something went really wrong
-            code = ObaApi.OBA_INTERNAL_ERROR;
-        }
-        if (canManageDialog(context)) {
-            Toast.makeText(context,
-                    context.getString(UIUtils.getMapErrorString(context, code)),
-                    Toast.LENGTH_LONG).show();
-        }
+        MapUtils.showMapError(response);
     }
 
     //

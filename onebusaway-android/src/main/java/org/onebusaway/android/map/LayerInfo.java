@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.map.googlemapsv2;
+package org.onebusaway.android.map;
 
 /**
  * Interface to hold information about a layer that can be activated on the map.

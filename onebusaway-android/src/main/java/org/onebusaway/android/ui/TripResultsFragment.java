@@ -26,7 +26,7 @@ import org.onebusaway.android.directions.util.DirectionExpandableListAdapter;
 import org.onebusaway.android.directions.util.DirectionsGenerator;
 import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.ObaMapFragment;
 import org.opentripplanner.api.model.Itinerary;
 
 import android.app.NotificationChannel;
@@ -64,7 +64,7 @@ public class TripResultsFragment extends Fragment {
     private static final int MAP_TAB_POSITION = 1;
 
     private View mDirectionsFrame;
-    private BaseMapFragment mMapFragment;
+    private ObaMapFragment mMapFragment;
     private ExpandableListView mDirectionsListView;
     private View mMapFragmentFrame;
     private boolean mShowingMap = false;
@@ -205,15 +205,15 @@ public class TripResultsFragment extends Fragment {
 
         FragmentManager fm = getChildFragmentManager();
         if (mMapFragment == null) {
-            // First check to see if an instance of BaseMapFragment already exists
-            mMapFragment = (BaseMapFragment) fm.findFragmentByTag(BaseMapFragment.TAG);
+            // First check to see if an instance of the map fragment already exists
+            mMapFragment = (ObaMapFragment) fm.findFragmentByTag(ObaMapFragment.TAG);
 
             if (mMapFragment == null) {
                 // No existing fragment was found, so create a new one
-                Log.d(TAG, "Creating new BaseMapFragment");
-                mMapFragment = BaseMapFragment.newInstance();
+                Log.d(TAG, "Creating new ObaMapFragment");
+                mMapFragment = ObaMapFragment.newInstance();
                 fm.beginTransaction()
-                        .add(R.id.mapFragment, mMapFragment, BaseMapFragment.TAG)
+                        .add(R.id.mapFragment, mMapFragment.asFragment(), ObaMapFragment.TAG)
                         .commit();
             }
         }

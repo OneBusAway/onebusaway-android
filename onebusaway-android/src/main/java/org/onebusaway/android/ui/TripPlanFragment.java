@@ -75,7 +75,7 @@ import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.map.googlemapsv2.ProprietaryMapHelpV2;
+import org.onebusaway.android.map.ProprietaryMapHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
@@ -716,7 +716,7 @@ public class TripPlanFragment extends Fragment {
             return;
         }
 
-        CustomAddress address = ProprietaryMapHelpV2.getCustomAddressFromPlacesIntent(Application.get().getApplicationContext(), intent);
+        CustomAddress address = ProprietaryMapHelper.getInstance().getCustomAddressFromPlacesIntent(Application.get().getApplicationContext(), intent);
 
         // Note that onResume will run after this function. We need to put new objects in the bundle.
         if (requestCode == USE_FROM_ADDRESS) {
@@ -739,7 +739,7 @@ public class TripPlanFragment extends Fragment {
         if (!BuildConfig.USE_PELIAS_GEOCODING && GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getContext())
                 == ConnectionResult.SUCCESS) {
             tv.setFocusable(false);
-            tv.setOnClickListener(new ProprietaryMapHelpV2.StartPlacesAutocompleteOnClick(use, this, region));
+            tv.setOnClickListener(ProprietaryMapHelper.getInstance().createPlacesAutocompleteOnClick(use, this, region));
             return;
         }
 

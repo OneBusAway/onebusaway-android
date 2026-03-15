@@ -120,9 +120,15 @@ public class RealtimeService extends IntentService {
         if (realtimeLegsOnItineraries) {
             Log.d(TAG, "Starting realtime updates for itinerary");
 
+            PendingIntent alarmIntent = getAlarmIntent(params);
+            if (alarmIntent == null) {
+                Log.w(TAG, "Not scheduling realtime updates - unable to build alarm PendingIntent");
+                return;
+            }
+
             // init alarm mgr
             getAlarmManager().setInexactRepeating(AlarmManager.RTC, new Date().getTime(),
-                    OTPConstants.DEFAULT_UPDATE_INTERVAL_TRIP_TIME, getAlarmIntent(params));
+                    OTPConstants.DEFAULT_UPDATE_INTERVAL_TRIP_TIME, alarmIntent);
         } else {
             Log.d(TAG, "No realtime legs on itinerary");
         }
@@ -306,9 +312,15 @@ public class RealtimeService extends IntentService {
     }
 
     private PendingIntent getAlarmIntent(Bundle bundle) {
-        Intent intent = new Intent(OTPConstants.INTENT_CHECK_TRIP_TIME);
+        // Use an explicit Intent for Android U+ restrictions on implicit PendingIntents
+        Intent intent = new Intent(getApplicationContext(), RealtimeWakefulReceiver.class);
+        intent.setAction(OTPConstants.INTENT_CHECK_TRIP_TIME);
         if (bundle != null) {
             Bundle extras = getSimplifiedBundle(bundle);
+            if (extras == null) {
+                Log.w(TAG, "getAlarmIntent: simplified bundle is null, returning null PendingIntent");
+                return null;
+            }
             intent.putExtras(extras);
         }
         int flags;
@@ -317,9 +329,7 @@ public class RealtimeService extends IntentService {
         } else {
             flags = PendingIntent.FLAG_UPDATE_CURRENT;
         }
-        PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent,
-                flags);
-        return alarmIntent;
+        return PendingIntent.getBroadcast(getApplicationContext(), 0, intent, flags);
     }
 
     Itinerary getItinerary(Bundle bundle) {
@@ -353,18 +363,46 @@ public class RealtimeService extends IntentService {
 
     private Bundle getSimplifiedBundle(Bundle params) {
         Itinerary itinerary = getItinerary(params);
-        ItineraryDescription desc = new ItineraryDescription(itinerary);
+        if (itinerary == null) {
+            Log.e(TAG, "getSimplifiedBundle: itinerary is null, bundle may be incomplete. "
+                    + "Bundle keys: " + params.keySet());
+            return null;
+        }
+
+        ItineraryDescription desc;
+        try {
+            desc = new ItineraryDescription(itinerary);
+        } catch (NullPointerException | IndexOutOfBoundsException e) {
+            Log.e(TAG, "getSimplifiedBundle: error creating ItineraryDescription", e);
+            return null;
+        }
 
         Bundle extras = new Bundle();
-        new TripRequestBuilder(params).copyIntoBundleSimple(extras);
+        try {
+            new TripRequestBuilder(params).copyIntoBundleSimple(extras);
+        } catch (Exception e) {
+            Log.e(TAG, "getSimplifiedBundle: error copying trip params into bundle", e);
+            return null;
+        }
 
         List<String> idList = desc.getTripIds();
+        if (idList == null || idList.isEmpty() || desc.getEndDate() == null) {
+            Log.e(TAG, "getSimplifiedBundle: itinerary description is incomplete, "
+                    + "not scheduling realtime updates.");
+            return null;
+        }
+
         String[] ids = idList.toArray(new String[idList.size()]);
         extras.putStringArray(ITINERARY_DESC, ids);
         extras.putLong(ITINERARY_END_DATE, desc.getEndDate().getTime());
 
         Class<? extends Activity> source = (Class<? extends Activity>)
                 params.getSerializable(OTPConstants.NOTIFICATION_TARGET);
+        if (source == null) {
+            Log.e(TAG, "getSimplifiedBundle: NOTIFICATION_TARGET is missing from params, "
+                    + "not scheduling realtime updates.");
+            return null;
+        }
 
         extras.putString(OTPConstants.NOTIFICATION_TARGET, source.getName());
 

@@ -23,9 +23,11 @@ import android.os.Bundle;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.onebusaway.android.directions.util.CustomAddress;
 import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -168,9 +170,27 @@ public class RealtimeServiceTest {
     public void testGetSimplifiedBundleWithMissingNotificationTargetDoesNotCrash() throws Exception {
         Bundle bundle = new Bundle();
 
-        // Create a minimal itineraries list with one dummy Itinerary
-        ArrayList<Itinerary> itineraries = new ArrayList<>();
+        // Minimal from/to and date so TripRequestBuilder.copyIntoBundleSimple() does not throw.
+        CustomAddress from = new CustomAddress();
+        from.setLatitude(0);
+        from.setLongitude(0);
+        CustomAddress to = new CustomAddress();
+        to.setLatitude(0);
+        to.setLongitude(0);
+        new TripRequestBuilder(bundle).setFrom(from).setTo(to).setDateTime(new Date());
+
+        // Build a valid itinerary with one transit leg so ItineraryDescription succeeds
+        // and we actually reach the NOTIFICATION_TARGET check (not the catch block).
         Itinerary it = new Itinerary();
+        Leg leg = new Leg();
+        leg.mode = "BUS";
+        leg.realTime = true;
+        leg.tripId = "testTrip";
+        leg.endTime = String.valueOf(System.currentTimeMillis() + 3600000);
+        it.legs = new ArrayList<>();
+        it.legs.add(leg);
+
+        ArrayList<Itinerary> itineraries = new ArrayList<>();
         itineraries.add(it);
         bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
         bundle.putInt(OTPConstants.SELECTED_ITINERARY, 0);

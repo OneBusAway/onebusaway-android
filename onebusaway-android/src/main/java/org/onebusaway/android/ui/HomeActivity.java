@@ -140,6 +140,7 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SIGN_IN;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_ROUTES;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_TRANSIT_CENTERS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
 import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
 import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_BOTTOM;
@@ -248,6 +249,8 @@ public class HomeActivity extends AppCompatActivity
     ObaMapFragment mMapFragment;
 
     MyRemindersFragment mMyRemindersFragment;
+
+    TransitCentersFragment mMyTransitCentersFragment;
 
     /**
      * Control which menu options are shown per fragment menu groups
@@ -562,6 +565,12 @@ public class HomeActivity extends AppCompatActivity
                             null);
                 }
                 break;
+            case NAVDRAWER_ITEM_TRANSIT_CENTERS:
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_TRANSIT_CENTERS) {
+                    showTransitCentersFragment();
+                    mCurrentNavDrawerPosition = item;
+                }
+                break;
             case NAVDRAWER_ITEM_MY_REMINDERS:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_MY_REMINDERS) {
                     showMyRemindersFragment();
@@ -643,6 +652,7 @@ public class HomeActivity extends AppCompatActivity
         hideStarredRoutesFragment();
         hideStarredStopsFragment();
         hideReminderFragment();
+        hideTransitCentersFragment();
         mShowStarredStopsMenu = false;
         /**
          * Show fragment (we use show instead of replace to keep the map state)
@@ -701,6 +711,7 @@ public class HomeActivity extends AppCompatActivity
         hideMapFragment();
         hideReminderFragment();
         hideStarredRoutesFragment();
+        hideTransitCentersFragment();
         hideSlidingPanel();
         mShowArrivalsMenu = false;
         showZoomControls(false);
@@ -737,6 +748,7 @@ public class HomeActivity extends AppCompatActivity
         hideReminderFragment();
         hideSlidingPanel();
         hideStarredStopsFragment();
+        hideTransitCentersFragment();
         mShowArrivalsMenu = false;
         showZoomControls(false);
 
@@ -771,6 +783,7 @@ public class HomeActivity extends AppCompatActivity
         hideStarredRoutesFragment();
         hideStarredStopsFragment();
         hideMapFragment();
+        hideTransitCentersFragment();
         hideSlidingPanel();
         mShowArrivalsMenu = false;
         mShowStarredStopsMenu = false;
@@ -827,6 +840,43 @@ public class HomeActivity extends AppCompatActivity
                 .findFragmentByTag(MyRemindersFragment.TAG);
         if (mMyRemindersFragment != null && !mMyRemindersFragment.isHidden()) {
             fm.beginTransaction().hide(mMyRemindersFragment).commit();
+        }
+    }
+
+    private void showTransitCentersFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        hideFloatingActionButtons();
+        hideMapProgressBar();
+        hideMapFragment();
+        hideStarredStopsFragment();
+        hideStarredRoutesFragment();
+        hideReminderFragment();
+        hideSlidingPanel();
+        mShowArrivalsMenu = false;
+        mShowStarredStopsMenu = false;
+        showZoomControls(false);
+
+        if (mMyTransitCentersFragment == null) {
+            mMyTransitCentersFragment = (TransitCentersFragment) fm
+                    .findFragmentByTag(TransitCentersFragment.TAG);
+
+            if (mMyTransitCentersFragment == null) {
+                Log.d(TAG, "Creating new TransitCentersFragment");
+                mMyTransitCentersFragment = new TransitCentersFragment();
+                fm.beginTransaction().add(R.id.main_fragment_container,
+                        mMyTransitCentersFragment, TransitCentersFragment.TAG).commit();
+            }
+        }
+        fm.beginTransaction().show(mMyTransitCentersFragment).commit();
+        setTitle(R.string.navdrawer_item_transit_centers);
+    }
+
+    private void hideTransitCentersFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        mMyTransitCentersFragment = (TransitCentersFragment) fm
+                .findFragmentByTag(TransitCentersFragment.TAG);
+        if (mMyTransitCentersFragment != null && !mMyTransitCentersFragment.isHidden()) {
+            fm.beginTransaction().hide(mMyTransitCentersFragment).commit();
         }
     }
 

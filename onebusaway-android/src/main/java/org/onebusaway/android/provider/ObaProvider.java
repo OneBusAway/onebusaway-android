@@ -49,7 +49,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 33;
+        private static final int DATABASE_VERSION = 34;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -322,6 +322,23 @@ public class ObaProvider extends ContentProvider {
             if (oldVersion == 32){
                 db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
                         " ADD COLUMN " + ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL + " VARCHAR DEFAULT NULL");
+                ++oldVersion;
+            }
+            if (oldVersion == 33) {
+                db.execSQL(
+                        "CREATE TABLE " +
+                                ObaContract.TransitCenters.PATH + " (" +
+                                ObaContract.TransitCenters._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                                ObaContract.TransitCenters.NAME + " VARCHAR NOT NULL, " +
+                                ObaContract.TransitCenters.REGION_ID + " INTEGER" +
+                                ");");
+                db.execSQL(
+                        "CREATE TABLE " +
+                                ObaContract.TransitCenterStops.PATH + " (" +
+                                ObaContract.TransitCenterStops.TRANSIT_CENTER_ID + " INTEGER NOT NULL, " +
+                                ObaContract.TransitCenterStops.STOP_ID + " VARCHAR NOT NULL" +
+                                ");");
+                ++oldVersion;
             }
         }
 
@@ -393,6 +410,8 @@ public class ObaProvider extends ContentProvider {
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.RegionOpen311Servers.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.RouteHeadsignFavorites.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.NavStops.PATH);
+            db.execSQL("DROP TABLE IF EXISTS " + ObaContract.TransitCenters.PATH);
+            db.execSQL("DROP TABLE IF EXISTS " + ObaContract.TransitCenterStops.PATH);
         }
     }
 
@@ -434,6 +453,12 @@ public class ObaProvider extends ContentProvider {
 
     private static final int NAV_STOPS = 19;
 
+    private static final int TRANSIT_CENTERS = 20;
+
+    private static final int TRANSIT_CENTERS_ID = 21;
+
+    private static final int TRANSIT_CENTER_STOPS = 22;
+
     private static final UriMatcher sUriMatcher;
 
     private static final HashMap<String, String> sStopsProjectionMap;
@@ -451,6 +476,8 @@ public class ObaProvider extends ContentProvider {
     private static final HashMap<String, String> sRegionBoundsProjectionMap;
 
     private static final HashMap<String, String> sRegionOpen311ProjectionMap;
+
+    private static final HashMap<String, String> sTransitCentersProjectionMap;
 
     // Insert helpers are useful.
     private DatabaseUtils.InsertHelper mStopsInserter;
@@ -474,6 +501,10 @@ public class ObaProvider extends ContentProvider {
     private DatabaseUtils.InsertHelper mRouteHeadsignFavoritesInserter;
 
     private DatabaseUtils.InsertHelper mNavStopsInserter;
+
+    private DatabaseUtils.InsertHelper mTransitCentersInserter;
+
+    private DatabaseUtils.InsertHelper mTransitCenterStopsInserter;
 
     static {
         sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -502,6 +533,12 @@ public class ObaProvider extends ContentProvider {
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.RouteHeadsignFavorites.PATH,
                 ROUTE_HEADSIGN_FAVORITES);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.NavStops.PATH, NAV_STOPS);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.TransitCenters.PATH,
+                TRANSIT_CENTERS);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.TransitCenters.PATH + "/#",
+                TRANSIT_CENTERS_ID);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.TransitCenterStops.PATH,
+                TRANSIT_CENTER_STOPS);
 
         sStopsProjectionMap = new HashMap<String, String>();
         sStopsProjectionMap.put(ObaContract.Stops._ID, ObaContract.Stops._ID);
@@ -635,6 +672,14 @@ public class ObaProvider extends ContentProvider {
                 .put(ObaContract.Regions.SIDECAR_BASE_URL, ObaContract.Regions.SIDECAR_BASE_URL);
         sRegionsProjectionMap
                 .put(ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL, ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL);
+
+        sTransitCentersProjectionMap = new HashMap<String, String>();
+        sTransitCentersProjectionMap.put(ObaContract.TransitCenters._ID,
+                ObaContract.TransitCenters._ID);
+        sTransitCentersProjectionMap.put(ObaContract.TransitCenters.NAME,
+                ObaContract.TransitCenters.NAME);
+        sTransitCentersProjectionMap.put(ObaContract.TransitCenters.REGION_ID,
+                ObaContract.TransitCenters.REGION_ID);
     }
 
     private SQLiteDatabase mDb;
@@ -693,6 +738,12 @@ public class ObaProvider extends ContentProvider {
                 return ObaContract.RouteHeadsignFavorites.CONTENT_DIR_TYPE;
             case NAV_STOPS:
                 return ObaContract.NavStops.CONTENT_DIR_TYPE;
+            case TRANSIT_CENTERS:
+                return ObaContract.TransitCenters.CONTENT_DIR_TYPE;
+            case TRANSIT_CENTERS_ID:
+                return ObaContract.TransitCenters.CONTENT_TYPE;
+            case TRANSIT_CENTER_STOPS:
+                return ObaContract.TransitCenterStops.CONTENT_DIR_TYPE;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -850,6 +901,17 @@ public class ObaProvider extends ContentProvider {
                 result = ContentUris.withAppendedId(ObaContract.NavStops.CONTENT_URI, longId);
                 return result;
 
+            case TRANSIT_CENTERS:
+                longId = mTransitCentersInserter.insert(values);
+                result = ContentUris.withAppendedId(ObaContract.TransitCenters.CONTENT_URI, longId);
+                return result;
+
+            case TRANSIT_CENTER_STOPS:
+                longId = mTransitCenterStopsInserter.insert(values);
+                result = ContentUris.withAppendedId(ObaContract.TransitCenterStops.CONTENT_URI,
+                        longId);
+                return result;
+
             // What would these mean, anyway??
             case STOPS_ID:
             case ROUTES_ID:
@@ -1004,6 +1066,27 @@ public class ObaProvider extends ContentProvider {
                 qb.setTables(ObaContract.NavStops.PATH);
                 return qb.query(mDb, projection, selection, selectionArgs,
                         null, null, sortOrder, limit);
+
+            case TRANSIT_CENTERS:
+                qb.setTables(ObaContract.TransitCenters.PATH);
+                qb.setProjectionMap(sTransitCentersProjectionMap);
+                return qb.query(mDb, projection, selection, selectionArgs,
+                        null, null, sortOrder, limit);
+
+            case TRANSIT_CENTERS_ID:
+                qb.setTables(ObaContract.TransitCenters.PATH);
+                qb.setProjectionMap(sTransitCentersProjectionMap);
+                qb.appendWhere(ObaContract.TransitCenters._ID);
+                qb.appendWhere("=");
+                qb.appendWhere(String.valueOf(ContentUris.parseId(uri)));
+                return qb.query(mDb, projection, selection, selectionArgs,
+                        null, null, sortOrder, limit);
+
+            case TRANSIT_CENTER_STOPS:
+                qb.setTables(ObaContract.TransitCenterStops.PATH);
+                return qb.query(mDb, projection, selection, selectionArgs,
+                        null, null, sortOrder, limit);
+
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -1080,6 +1163,18 @@ public class ObaProvider extends ContentProvider {
                 return db.update(ObaContract.NavStops.PATH, values,
                         where(ObaContract.NavStops._ID, uri), selectionArgs);
 
+            case TRANSIT_CENTERS:
+                return db.update(ObaContract.TransitCenters.PATH, values, selection,
+                        selectionArgs);
+
+            case TRANSIT_CENTERS_ID:
+                return db.update(ObaContract.TransitCenters.PATH, values,
+                        whereLong(ObaContract.TransitCenters._ID, uri), selectionArgs);
+
+            case TRANSIT_CENTER_STOPS:
+                return db.update(ObaContract.TransitCenterStops.PATH, values, selection,
+                        selectionArgs);
+
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -1153,6 +1248,16 @@ public class ObaProvider extends ContentProvider {
             case NAV_STOPS:
                 return db.delete(ObaContract.NavStops.PATH, selection, selectionArgs);
 
+            case TRANSIT_CENTERS:
+                return db.delete(ObaContract.TransitCenters.PATH, selection, selectionArgs);
+
+            case TRANSIT_CENTERS_ID:
+                return db.delete(ObaContract.TransitCenters.PATH,
+                        whereLong(ObaContract.TransitCenters._ID, uri), selectionArgs);
+
+            case TRANSIT_CENTER_STOPS:
+                return db.delete(ObaContract.TransitCenterStops.PATH, selection, selectionArgs);
+
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -1209,6 +1314,10 @@ public class ObaProvider extends ContentProvider {
             mRouteHeadsignFavoritesInserter = new DatabaseUtils.InsertHelper(mDb,
                     ObaContract.RouteHeadsignFavorites.PATH);
             mNavStopsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.NavStops.PATH);
+            mTransitCentersInserter = new DatabaseUtils.InsertHelper(mDb,
+                    ObaContract.TransitCenters.PATH);
+            mTransitCenterStopsInserter = new DatabaseUtils.InsertHelper(mDb,
+                    ObaContract.TransitCenterStops.PATH);
         }
         return mDb;
     }

@@ -55,13 +55,15 @@ public class ArrivalInfoUtils {
                                                                boolean includeArrivalDepartureInStatusLabel) {
         final int len = arrivalInfo.length;
         ArrayList<ArrivalInfo> result = new ArrayList<ArrivalInfo>(len);
+        boolean hideScheduled = Application.getPrefs()
+                .getBoolean(context.getString(R.string.preference_key_hide_scheduled_arrivals), false);
         if (filter != null && filter.size() > 0) {
             // Only add routes that haven't been filtered out
             for (ObaArrivalInfo arrival : arrivalInfo) {
                 if (filter.contains(arrival.getRouteId())) {
                     ArrivalInfo info = new ArrivalInfo(context, arrival, ms,
                             includeArrivalDepartureInStatusLabel);
-                    if (shouldAddEta(info)) {
+                    if (shouldAddArrival(info, hideScheduled)) {
                         result.add(info);
                     }
                 }
@@ -71,7 +73,7 @@ public class ArrivalInfoUtils {
             for (ObaArrivalInfo obaArrivalInfo : arrivalInfo) {
                 ArrivalInfo info = new ArrivalInfo(context, obaArrivalInfo, ms,
                         includeArrivalDepartureInStatusLabel);
-                if (shouldAddEta(info)) {
+                if (shouldAddArrival(info, hideScheduled)) {
                     result.add(info);
                 }
             }
@@ -104,6 +106,22 @@ public class ArrivalInfoUtils {
             }
         }
         return false;
+    }
+
+    /**
+     * Returns true if this arrival should be added based on the user preference for hiding
+     * scheduled arrivals, and false if it should not
+     *
+     * @param info          info that includes the predicted/scheduled status to be evaluated
+     * @param hideScheduled whether the user preference for hiding scheduled arrivals is enabled
+     * @return true if this arrival should be added based on the user preference for hiding
+     * scheduled arrivals, and false if it should not
+     */
+    private static boolean shouldAddArrival(ArrivalInfo info, boolean hideScheduled) {
+        if (hideScheduled && !info.getPredicted()) {
+            return false;
+        }
+        return shouldAddEta(info);
     }
 
     /**

@@ -26,6 +26,7 @@ import org.junit.runner.RunWith;
 import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -145,6 +146,59 @@ public class RealtimeServiceTest {
             mService.onHandleIntent(nullActionIntent);
         } catch (NullPointerException e) {
             fail("onHandleIntent should not throw NPE on null action: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testOnHandleIntentWithRealtimeLegsButNoNotificationTargetDoesNotCrash() {
+        Bundle bundle = new Bundle();
+
+        ArrayList<Itinerary> itineraries = new ArrayList<>();
+        Itinerary it = new Itinerary();
+        Leg leg = new Leg();
+        leg.realTime = true;
+        leg.mode = "BUS";
+        leg.tripId = "testTrip";
+        leg.endTime = String.valueOf(System.currentTimeMillis() + 3600000);
+        it.legs = new ArrayList<>();
+        it.legs.add(leg);
+        itineraries.add(it);
+
+        bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
+        bundle.putInt(OTPConstants.SELECTED_ITINERARY, 0);
+        // Intentionally DO NOT put OTPConstants.NOTIFICATION_TARGET into the bundle
+
+        Intent intent = new Intent(OTPConstants.INTENT_START_CHECKS);
+        intent.putExtras(bundle);
+
+        try {
+            mService.onHandleIntent(intent);
+        } catch (NullPointerException e) {
+            fail("Should not crash with realtime legs but missing NOTIFICATION_TARGET: "
+                    + e.getMessage());
+        }
+        // Other exceptions propagate and will fail the test.
+    }
+
+    @Test
+    public void testOnHandleIntentWithNullItineraryLegsDoesNotCrash() {
+        Bundle bundle = new Bundle();
+        // No DATE_TIME in bundle so rescheduleRealtimeUpdates() returns false
+        // and the service proceeds to getItinerary() then startRealtimeUpdates().
+        ArrayList<Itinerary> itineraries = new ArrayList<>();
+        Itinerary it = new Itinerary();
+        it.legs = null;
+        itineraries.add(it);
+        bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
+        bundle.putInt(OTPConstants.SELECTED_ITINERARY, 0);
+
+        Intent intent = new Intent(OTPConstants.INTENT_START_CHECKS);
+        intent.putExtras(bundle);
+
+        try {
+            mService.onHandleIntent(intent);
+        } catch (NullPointerException e) {
+            fail("onHandleIntent should not throw NPE when itinerary.legs is null: " + e.getMessage());
         }
     }
 }

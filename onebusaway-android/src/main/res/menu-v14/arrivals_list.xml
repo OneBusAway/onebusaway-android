@@ -54,5 +54,8 @@
               android:title="@string/stop_info_option_night_light"/>
         <item android:id="@+id/hide_alerts"
               android:title="@string/stop_info_option_hide_alerts"/>
+              android:title="@string/stop_info_option_hide_alerts"/>
+        <item android:id="@+id/toggle_scheduled_arrivals"
+              android:title="@string/stop_info_option_hide_scheduled_arrivals"/>
     </group>
 </menu>

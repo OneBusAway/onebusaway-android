@@ -615,6 +615,15 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
             menuItemHeaderArrivals.setTitleCondensed(title);
         }
 
+        MenuItem menuItemScheduledArrivals = menu.findItem(R.id.toggle_scheduled_arrivals);
+        boolean hideScheduled = Application.getPrefs()
+                .getBoolean(getString(R.string.preference_key_hide_scheduled_arrivals), false);
+        title = hideScheduled ?
+                getString(R.string.stop_info_option_show_scheduled_arrivals) :
+                getString(R.string.stop_info_option_hide_scheduled_arrivals);
+        menuItemScheduledArrivals.setTitle(title);
+        menuItemScheduledArrivals.setTitleCondensed(title);
+
         if (mExternalHeader) {
             // If we're using an external header, it means that this fragment is being shown
             // in the bottom sliding panel, and therefore the map is already visible.
@@ -665,6 +674,9 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
             }
         } else if (id == R.id.night_light) {
             NightLightActivity.start(getActivity());
+        } else if (id == R.id.toggle_scheduled_arrivals) {
+            doShowHideScheduledArrivals();
+            return true;
         } else if (id == R.id.hide_alerts) {
             if (mSituationAlerts == null || mSituationAlerts.isEmpty()) {
                 return false;
@@ -677,6 +689,7 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
             }
             refresh();
         }
+
         return false;
     }
 
@@ -1271,6 +1284,23 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         PreferenceUtils.saveBoolean(getResources()
                 .getString(R.string.preference_key_show_header_arrivals), !showArrivals);
         mHeader.refresh();
+    }
+
+    private void doShowHideScheduledArrivals() {
+        boolean hideScheduled = Application.getPrefs()
+                .getBoolean(getString(R.string.preference_key_hide_scheduled_arrivals), false);
+
+        PreferenceUtils.saveBoolean(
+                getString(R.string.preference_key_hide_scheduled_arrivals),
+                !hideScheduled
+        );
+
+        requireActivity().supportInvalidateOptionsMenu();
+        refreshLocal();
+
+        if (mHeader != null) {
+            mHeader.refresh();
+        }
     }
 
     private void showRoutesFilterDialog() {

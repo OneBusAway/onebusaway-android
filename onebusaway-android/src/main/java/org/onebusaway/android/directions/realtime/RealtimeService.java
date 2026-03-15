@@ -364,7 +364,7 @@ public class RealtimeService extends IntentService {
     private Bundle getSimplifiedBundle(Bundle params) {
         Itinerary itinerary = getItinerary(params);
         if (itinerary == null) {
-            Log.w(TAG, "getSimplifiedBundle: itinerary is null, bundle may be incomplete. "
+            Log.e(TAG, "getSimplifiedBundle: itinerary is null, bundle may be incomplete. "
                     + "Bundle keys: " + params.keySet());
             return null;
         }
@@ -372,17 +372,22 @@ public class RealtimeService extends IntentService {
         ItineraryDescription desc;
         try {
             desc = new ItineraryDescription(itinerary);
-        } catch (Exception e) {
+        } catch (NullPointerException | IndexOutOfBoundsException e) {
             Log.e(TAG, "getSimplifiedBundle: error creating ItineraryDescription", e);
             return null;
         }
 
         Bundle extras = new Bundle();
-        new TripRequestBuilder(params).copyIntoBundleSimple(extras);
+        try {
+            new TripRequestBuilder(params).copyIntoBundleSimple(extras);
+        } catch (Exception e) {
+            Log.e(TAG, "getSimplifiedBundle: error copying trip params into bundle", e);
+            return null;
+        }
 
         List<String> idList = desc.getTripIds();
         if (idList == null || idList.isEmpty() || desc.getEndDate() == null) {
-            Log.w(TAG, "getSimplifiedBundle: itinerary description is incomplete, "
+            Log.e(TAG, "getSimplifiedBundle: itinerary description is incomplete, "
                     + "not scheduling realtime updates.");
             return null;
         }
@@ -394,7 +399,7 @@ public class RealtimeService extends IntentService {
         Class<? extends Activity> source = (Class<? extends Activity>)
                 params.getSerializable(OTPConstants.NOTIFICATION_TARGET);
         if (source == null) {
-            Log.w(TAG, "getSimplifiedBundle: NOTIFICATION_TARGET is missing from params, "
+            Log.e(TAG, "getSimplifiedBundle: NOTIFICATION_TARGET is missing from params, "
                     + "not scheduling realtime updates.");
             return null;
         }

@@ -306,7 +306,10 @@ public class RealtimeService extends IntentService {
 
     public void disableListenForTripUpdates() {
         Log.d(TAG, "Disable trip updates.");
-        getAlarmManager().cancel(getAlarmIntent(null));
+        PendingIntent alarmIntent = getAlarmIntent(null);
+        if (alarmIntent != null) {
+            getAlarmManager().cancel(alarmIntent);
+        }
     }
 
     private AlarmManager getAlarmManager() {
@@ -371,13 +374,12 @@ public class RealtimeService extends IntentService {
             return null;
         }
 
-        ItineraryDescription desc;
-        try {
-            desc = new ItineraryDescription(itinerary);
-        } catch (NullPointerException | IndexOutOfBoundsException e) {
-            Log.e(TAG, "getSimplifiedBundle: error creating ItineraryDescription", e);
+        if (itinerary.legs == null || itinerary.legs.isEmpty()) {
+            Log.w(TAG, "getSimplifiedBundle: itinerary has no legs");
             return null;
         }
+
+        ItineraryDescription desc = new ItineraryDescription(itinerary);
 
         Bundle extras = new Bundle();
         try {

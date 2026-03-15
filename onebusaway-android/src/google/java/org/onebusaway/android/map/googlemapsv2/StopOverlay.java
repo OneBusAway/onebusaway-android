@@ -116,10 +116,10 @@ public class StopOverlay implements MarkerListeners {
 
     /**
      * Icon cache keyed by route type, each containing a Bitmap array of size NUM_DIRECTIONS.
-     * Replaces the old single-type bus_stop_icons array to support distinct icons per stop type.
      */
     private static final SparseArray<Bitmap[]> sStopIcons = new SparseArray<>();
 
+    /** Focused (selected) variant of {@link #sStopIcons}. */
     private static final SparseArray<Bitmap[]> sStopIconsFocused = new SparseArray<>();
 
     /**
@@ -157,11 +157,6 @@ public class StopOverlay implements MarkerListeners {
     private static final float GLYPH_ICON_SCALE = 1.35f;
 
     private static int mPx; // Bus stop icon size
-
-    // Bus icon arrow attributes - by default assume we're not going to add a direction arrow
-    private static float mArrowWidthPx = 0;
-
-    private static float mArrowHeightPx = 0;
 
     private static float mBuffer = 0;  // Add this to the icon size to get the Bitmap size
 
@@ -310,10 +305,9 @@ public class StopOverlay implements MarkerListeners {
         // Initialize variables used for all marker icons
         Resources r = Application.get().getResources();
         mPx = r.getDimensionPixelSize(R.dimen.map_stop_shadow_size_6);
-        mArrowWidthPx = mPx / 2f; // half the stop icon size
-        mArrowHeightPx = mPx / 3f; // 1/3 the stop icon size
+        float arrowHeightPx = mPx / 3f;
         float arrowSpacingReductionPx = mPx / 10f;
-        mBuffer = mArrowHeightPx - arrowSpacingReductionPx;
+        mBuffer = arrowHeightPx - arrowSpacingReductionPx;
 
         // Set offset used to position the image for markers (see getX/YPercentOffsetForDirection())
         // This allows the current selection marker to land on the middle of the stop marker circle
@@ -599,27 +593,18 @@ public class StopOverlay implements MarkerListeners {
      * @param glyphSizePx target glyph size in pixels (already scaled for circle size)
      */
     private static void loadRouteTypeGlyphs(Resources r, int glyphSizePx) {
-        Bitmap raw;
-
-        raw = BitmapFactory.decodeResource(r, R.drawable.ic_bus);
-        sRouteTypeGlyphs.put(ObaRoute.TYPE_BUS,
-                Bitmap.createScaledBitmap(raw, glyphSizePx, glyphSizePx, true));
-
-        raw = BitmapFactory.decodeResource(r, R.drawable.ic_train);
-        sRouteTypeGlyphs.put(ObaRoute.TYPE_RAIL,
-                Bitmap.createScaledBitmap(raw, glyphSizePx, glyphSizePx, true));
-
-        raw = BitmapFactory.decodeResource(r, R.drawable.ic_subway);
-        sRouteTypeGlyphs.put(ObaRoute.TYPE_SUBWAY,
-                Bitmap.createScaledBitmap(raw, glyphSizePx, glyphSizePx, true));
-
-        raw = BitmapFactory.decodeResource(r, R.drawable.ic_tram);
-        sRouteTypeGlyphs.put(ObaRoute.TYPE_TRAM,
-                Bitmap.createScaledBitmap(raw, glyphSizePx, glyphSizePx, true));
-
-        raw = BitmapFactory.decodeResource(r, R.drawable.ic_ferry);
-        sRouteTypeGlyphs.put(ObaRoute.TYPE_FERRY,
-                Bitmap.createScaledBitmap(raw, glyphSizePx, glyphSizePx, true));
+        int[][] glyphMapping = {
+                {ObaRoute.TYPE_BUS, R.drawable.ic_bus},
+                {ObaRoute.TYPE_RAIL, R.drawable.ic_train},
+                {ObaRoute.TYPE_SUBWAY, R.drawable.ic_subway},
+                {ObaRoute.TYPE_TRAM, R.drawable.ic_tram},
+                {ObaRoute.TYPE_FERRY, R.drawable.ic_ferry},
+        };
+        for (int[] entry : glyphMapping) {
+            Bitmap raw = BitmapFactory.decodeResource(r, entry[1]);
+            sRouteTypeGlyphs.put(entry[0],
+                    Bitmap.createScaledBitmap(raw, glyphSizePx, glyphSizePx, true));
+        }
     }
 
     /**
@@ -991,6 +976,7 @@ public class StopOverlay implements MarkerListeners {
                 removeMarkersFromMap();
                 mStopMarkers.clear();
                 mStops.clear();
+                mStopRouteTypes.clear();
 
                 // Make sure the currently focused stop still exists on the map
                 if (mCurrentFocusStop != null && mFocusedRoutes != null) {
@@ -1191,9 +1177,7 @@ public class StopOverlay implements MarkerListeners {
          */
         synchronized void removeFocus() {
             restoreUnfocusedIcon();
-            if (mCurrentFocusMarker != null) {
-                mCurrentFocusMarker = null;
-            }
+            mCurrentFocusMarker = null;
             mFocusedRoutes.clear();
             mCurrentFocusStop = null;
         }

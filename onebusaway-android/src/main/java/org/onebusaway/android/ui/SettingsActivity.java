@@ -46,6 +46,7 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceGroup;
 import androidx.preference.PreferenceScreen;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.BuildConfig;
@@ -88,15 +89,9 @@ public class SettingsActivity extends AppCompatActivity
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        ActionBar bar = getSupportActionBar();
-        if (bar != null) {
-            bar.setDisplayHomeAsUpEnabled(true);
-            bar.setDisplayShowTitleEnabled(true);
-        }
-        setTitle(R.string.navdrawer_item_settings);
-        UIUtils.setStatusBarColor(this,
-                ContextCompat.getColor(this, R.color.theme_primary_variant), true);
+        UIUtils.setupActionBar(this);
 
+        setTitle(R.string.navdrawer_item_settings);
         SharedPreferences settings = Application.getPrefs();
         mAutoSelectInitialValue = settings
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true);
@@ -199,7 +194,7 @@ public class SettingsActivity extends AppCompatActivity
         ObaRegion obaRegion = Application.get().getCurrentRegion();
         if (obaRegion == null) return;
 
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.preference_region_dialog_title))
                 .setMessage(getString(R.string.preference_region_dialog_message,
                         obaRegion.getName()))
@@ -442,6 +437,30 @@ public class SettingsActivity extends AppCompatActivity
                 launchRingtonePicker();
             }
             return true;
+        }
+
+        @Override
+        public void onDisplayPreferenceDialog(@NonNull Preference preference) {
+            if (preference instanceof ListPreference) {
+                // This ensures the popup uses the M3 Alert Dialog Builder
+                // Will be dismissed if device is rotated while open
+                new MaterialAlertDialogBuilder(requireContext())
+                        .setTitle(preference.getTitle())
+                        .setSingleChoiceItems(
+                                ((ListPreference) preference).getEntries(),
+                                ((ListPreference) preference).findIndexOfValue(((ListPreference) preference).getValue()),
+                                (dialog, which) -> {
+                                    String value = ((ListPreference) preference).getEntryValues()[which].toString();
+                                    if (preference.callChangeListener(value)) {
+                                        ((ListPreference) preference).setValue(value);
+                                    }
+                                    dialog.dismiss();
+                                })
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show();
+            } else {
+                super.onDisplayPreferenceDialog(preference);
+            }
         }
 
         @SuppressWarnings("deprecation")

@@ -396,6 +396,7 @@ class ArrivalsListHeader {
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
         mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);
         mExpandCollapse = (ImageView) mView.findViewById(R.id.expand_collapse);
+        mExpandCollapse.setColorFilter(mView.getResources().getColor(R.color.body_text_1));
         mAlertView = (ImageView) mView.findViewById(R.id.alert);
         mAlertView.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
         mAlertView.setVisibility(View.GONE);

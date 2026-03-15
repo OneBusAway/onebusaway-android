@@ -18,12 +18,15 @@
             android:id="@+id/trip_info_save"
             android:title="@string/trip_info_save"
             android:icon="@drawable/ic_action_content_save"
-            onebusaway:showAsAction="ifRoom"/>
+            onebusaway:showAsAction="ifRoom"
+            onebusaway:iconTint="?attr/colorControlNormal"
+            />
     <item
             android:id="@+id/trip_info_delete"
             android:title="@string/trip_info_delete"
             android:icon="@drawable/ic_action_content_discard"
-            onebusaway:showAsAction="ifRoom"/>
+            onebusaway:showAsAction="ifRoom"
+            onebusaway:iconTint="?attr/colorControlNormal"/>
     <item
             android:id="@+id/show_route"
             android:title="@string/trip_info_option_showroute"

@@ -406,27 +406,41 @@ public final class UIUtils {
 
         public void setView(View stopRoot, String stopId, String stopName) {
             TextView nameView = (TextView) stopRoot.findViewById(R.id.stop_name);
-            setView2(nameView, stopId, stopName, true);
-        }
+            ImageView favoriteView = (ImageView) stopRoot.findViewById(R.id.stop_favorite);
 
-        /**
-         * This should be used with compound drawables
-         */
-        public void setView2(TextView nameView, String stopId, String stopName, boolean showIcon) {
             ContentValues values = mMap.getValues(stopId);
-            int icon = 0;
+            boolean favorite = false;
+
             if (values != null) {
                 Integer i = values.getAsInteger(ObaContract.Stops.FAVORITE);
-                final boolean favorite = (i != null) && (i == 1);
+                favorite = (i != null) && (i == 1);
                 final String userName = values.getAsString(ObaContract.Stops.USER_NAME);
 
-                nameView.setText(TextUtils.isEmpty(userName) ?
-                        UIUtils.formatDisplayText(stopName) : userName);
-                icon = favorite && showIcon ? R.drawable.ic_toggle_star : 0;
+                nameView.setText(TextUtils.isEmpty(userName)
+                        ? UIUtils.formatDisplayText(stopName)
+                        : userName);
+
             } else {
                 nameView.setText(UIUtils.formatDisplayText(stopName));
             }
-            nameView.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
+            // Clear any old compound drawable so the star doesn't push into text.
+            nameView.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+
+            if (favoriteView != null) {
+                if (favorite) {
+                    favoriteView.setVisibility(View.VISIBLE);
+                    // Keep list-row favorite stars gray to match stop list styling
+                    // the arrivals header uses white on its colored background.
+                    ImageViewCompat.setImageTintList(
+                            favoriteView,
+                            ColorStateList.valueOf(
+                                    ContextCompat.getColor(stopRoot.getContext(),
+                                            R.color.navdrawer_icon_tint)));
+                } else {
+                    favoriteView.setVisibility(View.GONE);
+                    ImageViewCompat.setImageTintList(favoriteView, null);
+                }
+            }
         }
     }
 

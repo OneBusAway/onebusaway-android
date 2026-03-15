@@ -35,4 +35,6 @@ data class SavedTripEntity(
     val itineraryJson: String,
     val favorite: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
-)
+) {
+    fun withToggledFavorite(): SavedTripEntity = copy(favorite = !favorite)
+}

@@ -1359,8 +1359,10 @@ public class BaseMapFragment extends SupportMapFragment
                             (dialog, which) -> {
                                 // Ok, I suppose we can just try looking from where we
                                 // are.
-                                for (MapModeController controller : mMapFragment.mControllers) {
-                                    controller.onLocation();
+                                if (mMapFragment.mControllers != null) {
+                                    for (MapModeController controller : mMapFragment.mControllers) {
+                                        controller.onLocation();
+                                    }
                                 }
                             }
                     );

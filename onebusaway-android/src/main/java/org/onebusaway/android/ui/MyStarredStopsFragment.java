@@ -20,6 +20,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -65,7 +66,7 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
 
     private FirebaseAnalytics mFirebaseAnalytics;
 
-    private final Handler mRefreshHandler = new Handler();
+    private final Handler mRefreshHandler = new Handler(Looper.getMainLooper());
 
     private final Runnable mRefreshRunnable = new Runnable() {
         @Override
@@ -298,7 +299,10 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
         @Override
         public Loader<HashMap<String, ArrayList<ArrivalInfo>>> onCreateLoader(int id,
                 Bundle args) {
-            String[] stopIds = args.getStringArray("stopIds");
+            String[] stopIds = (args != null) ? args.getStringArray("stopIds") : new String[0];
+            if (stopIds == null) {
+                stopIds = new String[0];
+            }
             return new StarredStopsArrivalsLoader(getActivity(), stopIds);
         }
 

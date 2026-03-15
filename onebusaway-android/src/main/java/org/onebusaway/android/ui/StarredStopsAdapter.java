@@ -51,8 +51,6 @@ class StarredStopsAdapter extends SimpleCursorAdapter {
 
     private HashMap<String, ArrayList<ArrivalInfo>> mArrivalsData;
 
-    private final Context mContext;
-
     StarredStopsAdapter(Context context) {
         super(context,
                 R.layout.starred_stop_list_item,
@@ -68,7 +66,6 @@ class StarredStopsAdapter extends SimpleCursorAdapter {
                         R.id.stop_favorite
                 },
                 0);
-        mContext = context;
 
         setViewBinder(new ViewBinder() {
             @Override

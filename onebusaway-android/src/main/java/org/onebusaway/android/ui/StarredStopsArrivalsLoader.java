@@ -70,6 +70,9 @@ public class StarredStopsArrivalsLoader
                         arrivals = new ArrayList<>(
                                 arrivals.subList(0, MAX_ARRIVALS_PER_STOP));
                     }
+                } else if (response != null) {
+                    Log.w(TAG, "API error for stop " + stopId
+                            + ": code=" + response.getCode());
                 }
             } catch (Exception e) {
                 Log.w(TAG, "Failed to fetch arrivals for stop " + stopId, e);

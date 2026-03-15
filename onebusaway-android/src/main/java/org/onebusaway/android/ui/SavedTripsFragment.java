@@ -35,8 +35,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.onebusaway.android.R;
 import org.onebusaway.android.database.savedtrips.SavedTripsManager;
 import org.onebusaway.android.database.savedtrips.entity.SavedTripEntity;
+import org.onebusaway.android.directions.util.CustomAddress;
 import org.onebusaway.android.directions.util.ItineraryJsonConverter;
 import org.onebusaway.android.directions.util.OTPConstants;
+import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.opentripplanner.api.model.Itinerary;
 
 import java.text.SimpleDateFormat;
@@ -109,22 +111,35 @@ public class SavedTripsFragment extends Fragment {
         ArrayList<Itinerary> itineraries = new ArrayList<>();
         itineraries.add(itinerary);
 
+        Bundle extras = new Bundle();
+        CustomAddress from = new CustomAddress(Locale.getDefault());
+        from.setAddressLine(0, trip.getFromAddress());
+        from.setLatitude(trip.getFromLat());
+        from.setLongitude(trip.getFromLon());
+
+        CustomAddress to = new CustomAddress(Locale.getDefault());
+        to.setAddressLine(0, trip.getToAddress());
+        to.setLatitude(trip.getToLat());
+        to.setLongitude(trip.getToLon());
+
+        TripRequestBuilder builder = new TripRequestBuilder(extras);
+        builder.setFrom(from);
+        builder.setTo(to);
+
         Intent intent = new Intent(requireContext(), TripPlanActivity.class);
+        intent.putExtras(extras);
         intent.putExtra(OTPConstants.ITINERARIES, itineraries);
-        intent.putExtra(OTPConstants.INTENT_SOURCE, OTPConstants.Source.ACTIVITY);
+        intent.putExtra(OTPConstants.INTENT_SOURCE, OTPConstants.Source.NOTIFICATION);
         startActivity(intent);
     }
 
     private void onFavoriteClicked(SavedTripEntity trip, int position) {
         SavedTripsManager.toggleFavorite(requireContext(), trip);
-        mTrips.set(position, new SavedTripEntity(
-                trip.getId(), trip.getName(), trip.getFromAddress(), trip.getToAddress(),
-                trip.getFromLat(), trip.getFromLon(), trip.getToLat(), trip.getToLon(),
-                trip.getItineraryJson(), !trip.getFavorite(), trip.getCreatedAt()));
+        mTrips.set(position, trip.withToggledFavorite());
         mAdapter.notifyItemChanged(position);
     }
 
-    private void confirmDelete(SavedTripEntity trip, int position) {
+    private void confirmDelete(SavedTripEntity trip) {
         if (!isAdded()) {
             return;
         }
@@ -134,8 +149,11 @@ public class SavedTripsFragment extends Fragment {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         SavedTripsManager.deleteTrip(requireContext(), trip);
-                        mTrips.remove(position);
-                        mAdapter.notifyItemRemoved(position);
+                        int currentPos = mTrips.indexOf(trip);
+                        if (currentPos >= 0) {
+                            mTrips.remove(currentPos);
+                            mAdapter.notifyItemRemoved(currentPos);
+                        }
                         updateEmptyState();
                         if (isAdded()) {
                             Toast.makeText(requireContext(), R.string.saved_trips_deleted,
@@ -211,10 +229,7 @@ public class SavedTripsFragment extends Fragment {
                 itemView.setOnLongClickListener(new View.OnLongClickListener() {
                     @Override
                     public boolean onLongClick(View v) {
-                        int pos = getAdapterPosition();
-                        if (pos != RecyclerView.NO_POSITION) {
-                            confirmDelete(trip, pos);
-                        }
+                        confirmDelete(trip);
                         return true;
                     }
                 });

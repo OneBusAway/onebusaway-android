@@ -568,7 +568,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             sb.append(from.toString()).append(" \u2192 ").append(to.toString()).append("\n\n");
         }
 
-        String timePattern = DateFormat.is24HourFormat(this) ? "HH:mm" : "hh:mm a";
+        String timePattern = DateFormat.is24HourFormat(this) ? "MMM d, HH:mm" : "MMM d, hh:mm a";
         SimpleDateFormat timeFmt = new SimpleDateFormat(timePattern, Locale.getDefault());
 
         try {

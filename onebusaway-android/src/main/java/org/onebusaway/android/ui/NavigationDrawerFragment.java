@@ -147,7 +147,7 @@ public class NavigationDrawerFragment extends Fragment {
             0, // Sign in
             R.drawable.ic_drawer_github, // Open-source
             R.drawable.ic_payment, // Pay my fare
-            R.drawable.ic_maps_directions // Saved trips
+            R.drawable.ic_drawer_star // Saved trips
     };
 
     // Secondary navdrawer item icons that appear align to right of list item layout

@@ -970,7 +970,9 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
     public void setRoutesFilter(ArrayList<String> routes) {
         mRoutesFilter = routes;
         ObaContract.StopRouteFilters.set(getActivity(), mStopId, mRoutesFilter);
-        refreshSituations(UIUtils.getAllSituations(getArrivalsLoader().getLastGoodResponse(), mRoutesFilter));
+        ArrivalsListLoader loader = getArrivalsLoader();
+        ObaArrivalInfoResponse lastGood = loader != null ? loader.getLastGoodResponse() : null;
+        refreshSituations(UIUtils.getAllSituations(lastGood, mRoutesFilter));
         refreshLocal();
     }
 

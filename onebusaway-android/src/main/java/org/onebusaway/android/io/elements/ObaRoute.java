@@ -35,6 +35,15 @@ public interface ObaRoute extends ObaElement {
     public static final int NUM_TYPES = 8;  // 8 types of transit supported by GTFS
 
     /**
+     * Returns true if the given route type operates on dedicated right-of-way
+     * with no traffic interference (light rail, subway, commuter rail, ferry).
+     */
+    static boolean isGradeSeparated(int type) {
+        return type == TYPE_TRAM || type == TYPE_SUBWAY
+                || type == TYPE_RAIL || type == TYPE_FERRY;
+    }
+
+    /**
      * Returns the short name of the route (ex. "10", "30").
      *
      * @return The short name of the route.

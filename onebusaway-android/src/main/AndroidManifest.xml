@@ -124,6 +124,10 @@
                 <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </activity>
+        <activity android:name="org.onebusaway.android.ui.RouteDebugActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize" />
+        <activity android:name="org.onebusaway.android.ui.VehicleDebugActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize" />
         <activity android:name="org.onebusaway.android.ui.RouteInfoActivity"
             android:exported="true"
             android:configChanges="orientation|keyboardHidden|screenSize">
@@ -139,6 +143,7 @@
             </intent-filter>
         </activity>
         <activity android:name="org.onebusaway.android.ui.TripInfoActivity"/>
+        <activity android:name="org.onebusaway.android.ui.VehicleLocationDataActivity"/>
         <activity android:name=".ui.MyRemindersActivity"/>
         <activity android:name="org.onebusaway.android.ui.TripDetailsActivity"
             android:exported="true"

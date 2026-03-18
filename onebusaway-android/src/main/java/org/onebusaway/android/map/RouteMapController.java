@@ -26,6 +26,9 @@ import org.onebusaway.android.io.request.ObaStopsForRouteResponse;
 import org.onebusaway.android.io.request.ObaTripsForRouteRequest;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.map.MapUtils;
+import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.extrapolation.data.TripDataManager;
+import org.onebusaway.android.extrapolation.math.speed.VehicleTrajectoryTracker;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.UIUtils;
 
@@ -80,6 +83,9 @@ public class RouteMapController implements MapModeController {
 
     private VehicleLoaderListener mVehicleLoaderListener;
 
+    /** Trip ID to auto-select on first vehicle load, or null. */
+    private String mPendingTripSelection;
+
     private long mLastUpdatedTimeVehicles;
 
     public RouteMapController(Callback callback) {
@@ -110,6 +116,7 @@ public class RouteMapController implements MapModeController {
         mZoomToRoute = args.getBoolean(MapParams.ZOOM_TO_ROUTE, false);
         mZoomIncludeClosestVehicle = args
                 .getBoolean(MapParams.ZOOM_INCLUDE_CLOSEST_VEHICLE, false);
+        mPendingTripSelection = args.getString(MapParams.TRIP_ID);
         if (!routeId.equals(mRouteId)) {
             if (mRouteId != null) {
                 clearCurrentState();
@@ -143,6 +150,10 @@ public class RouteMapController implements MapModeController {
         mVehiclesLoader.stopLoading();
         mVehiclesLoader.reset();
         mVehicleRefreshHandler.removeCallbacks(mVehicleRefresh);
+
+        // Clear trip data and speed estimation state
+        TripDataManager.getInstance().clearAll();
+        VehicleTrajectoryTracker.getInstance().clearAll();
 
         // Clear the existing route and vehicle overlays
         mFragment.getMapView().removeRouteOverlay();
@@ -533,6 +544,11 @@ public class RouteMapController implements MapModeController {
             routes.add(mRouteId);
 
             obaMapView.updateVehicles(routes, response);
+
+            if (mPendingTripSelection != null) {
+                obaMapView.selectVehicle(mPendingTripSelection);
+                mPendingTripSelection = null;
+            }
 
             if (mZoomIncludeClosestVehicle) {
                 obaMapView.zoomIncludeClosestVehicle(routes, response);

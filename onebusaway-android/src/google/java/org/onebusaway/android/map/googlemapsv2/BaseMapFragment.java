@@ -23,18 +23,11 @@ import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.maps.model.StampStyle;
-import com.google.android.gms.maps.model.StrokeStyle;
-import com.google.android.gms.maps.model.StyleSpan;
-import com.google.android.gms.maps.model.TextureStyle;
 import com.google.android.gms.maps.model.VisibleRegion;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
@@ -48,6 +41,8 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaShape;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaTripSchedule;
+import org.onebusaway.android.extrapolation.data.TripDataManager;
 import org.onebusaway.android.io.request.ObaResponse;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.map.DirectionsMapController;
@@ -81,7 +76,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
@@ -103,7 +99,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.fragment.app.DialogFragment;
 
@@ -177,6 +172,12 @@ public class BaseMapFragment extends SupportMapFragment
     private String mMapMode = "";
 
     private ArrayList<Polyline> mLineOverlay = new ArrayList<Polyline>();
+
+    // Saved route overlay state for restoration after vehicle deselection
+    private ObaShape[] mSavedRouteShapes;
+    private int mSavedRouteOverlayColor;
+    private List<ObaStop> mSavedRouteStops;
+    private ObaReferences mSavedRouteRefs;
 
     // Markers that are added to the map by classes external to this map package
     private SimpleMarkerOverlay mSimpleMarkerOverlay;
@@ -299,22 +300,9 @@ public class BaseMapFragment extends SupportMapFragment
         mMap.setOnMarkerClickListener(mapClickListeners);
         mMap.setOnMapClickListener(mapClickListeners);
 
-        if (inDarkMode()) {
-            mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.dark_map));
-        } else {
-            // When in light mode, just remove POIs.
-            String removePOIStyle = "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]";
-            mMap.setMapStyle(new MapStyleOptions(removePOIStyle));
-        }
+        MapHelpV2.applyMapStyle(mMap, getContext());
 
         initMap(mLastSavedInstanceState);
-    }
-
-    private boolean inDarkMode() {
-        return AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES || (
-                AppCompatDelegate.getDefaultNightMode() != AppCompatDelegate.MODE_NIGHT_NO &&
-                        (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-        );
     }
 
     private void initMap(Bundle savedInstanceState) {
@@ -535,11 +523,18 @@ public class BaseMapFragment extends SupportMapFragment
         return true;
     }
 
+    private final ChevronPolylineHelper mChevronHelper = new ChevronPolylineHelper();
+    private TripMapRenderer mTripRenderer;
+
     public void setupVehicleOverlay() {
         Activity a = getActivity();
         if (mVehicleOverlay == null && a != null) {
+            if (mTripRenderer == null) {
+                mTripRenderer = new TripMapRenderer(mMap, a, mChevronHelper);
+            }
             mVehicleOverlay = new VehicleOverlay(a, mMap);
             mVehicleOverlay.setController(this);
+            mVehicleOverlay.setTripRenderer(mTripRenderer);
         }
     }
 
@@ -688,6 +683,9 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void showStops(List<ObaStop> stops, ObaReferences refs) {
+        // Save for restoration after vehicle deselection
+        mSavedRouteStops = stops;
+        mSavedRouteRefs = refs;
         // Make sure that the stop overlay has been successfully initialized
         if (setupStopOverlay() && stops != null) {
             mStopOverlay.populateStops(stops, refs);
@@ -1021,31 +1019,24 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void setRouteOverlay(int lineOverlayColor, ObaShape[] shapes, boolean clear) {
+        // Save for restoration after vehicle deselection
+        mSavedRouteShapes = shapes;
+        mSavedRouteOverlayColor = lineOverlayColor;
         if (mMap != null) {
             if (clear) {
                 mLineOverlay.clear();
             }
-            PolylineOptions lineOptions;
-            StampStyle polylineArrow = TextureStyle.newBuilder(BitmapDescriptorFactory.fromResource(R.drawable.ic_navigation_expand_more)).build();
-            StyleSpan polylineArrowSpan = new StyleSpan(StrokeStyle.colorBuilder(lineOverlayColor).stamp(polylineArrow).build());
-
             int totalPoints = 0;
-
             for (ObaShape s : shapes) {
-                lineOptions = new PolylineOptions();
-                lineOptions.addSpan(polylineArrowSpan);
-
-                for (Location l : s.getPoints()) {
-                    lineOptions.add(MapHelpV2.makeLatLng(l));
-                }
-                // Add the line to the map, and keep a reference in the ArrayList
-                mLineOverlay.add(mMap.addPolyline(lineOptions));
-
-                totalPoints += lineOptions.getPoints().size();
+                totalPoints += addArrowPolyline(s.getPoints(), lineOverlayColor);
             }
-
             Log.d(TAG, "Total points for route polylines = " + totalPoints);
         }
+    }
+
+    private int addArrowPolyline(List<Location> points, int color) {
+        return mChevronHelper.addArrowPolyline(mMap, mLineOverlay, points, color,
+                getResources());
     }
 
     @Override
@@ -1233,6 +1224,13 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     @Override
+    public void selectVehicle(String tripId) {
+        if (mVehicleOverlay != null && tripId != null) {
+            mVehicleOverlay.selectTrip(tripId);
+        }
+    }
+
+    @Override
     public void postInvalidate() {
         // Do nothing - calling `this.postInvalidate()` causes a StackOverflowError
     }
@@ -1243,6 +1241,48 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public String getFocusedStopId() {
         return mFocusStopId;
+    }
+
+    @Override
+    public void onVehicleSelected(String tripId, LatLng vehiclePosition, Integer routeType,
+                                  long scheduleDeviation) {
+        removeRouteOverlay();
+        if (setupStopOverlay()) {
+            mStopOverlay.clear(false);
+        }
+        TripDataManager dm = TripDataManager.getInstance();
+        TripDataManager.ShapeData sd = dm.getShapeWithDistances(tripId);
+        List<Location> shape = sd != null ? sd.points : null;
+        double[] cumDist = sd != null ? sd.cumulativeDistances : null;
+        ObaTripSchedule schedule = dm.getSchedule(tripId);
+        HashMap<String, String> stopNames = buildStopNameMap();
+        mTripRenderer.activate(tripId, shape, cumDist, schedule, mSavedRouteOverlayColor,
+                vehiclePosition, routeType, stopNames, scheduleDeviation, null);
+    }
+
+    private HashMap<String, String> buildStopNameMap() {
+        HashMap<String, String> map = new HashMap<>();
+        if (mSavedRouteStops != null) {
+            for (ObaStop stop : mSavedRouteStops) {
+                map.put(stop.getId(), stop.getName());
+            }
+        }
+        return map;
+    }
+
+    @Override
+    public void onVehicleDeselected() {
+        mTripRenderer.deactivate();
+        // Restore original route polyline
+        if (mSavedRouteShapes != null) {
+            removeRouteOverlay();
+            setRouteOverlay(mSavedRouteOverlayColor, mSavedRouteShapes);
+        }
+        // Restore original stops
+        if (mSavedRouteStops != null && mSavedRouteRefs != null && setupStopOverlay()) {
+            mStopOverlay.clear(false);
+            mStopOverlay.populateStops(mSavedRouteStops, mSavedRouteRefs);
+        }
     }
 
     //
@@ -1439,6 +1479,9 @@ public class BaseMapFragment extends SupportMapFragment
                 if (mBikeStationOverlay.markerClicked(marker)) {
                     return true;
                 }
+            }
+            if (mTripRenderer != null && mTripRenderer.handleStopMarkerClick(marker)) {
+                return true;
             }
             if (mVehicleOverlay != null) {
                 return mVehicleOverlay.markerClicked(marker);

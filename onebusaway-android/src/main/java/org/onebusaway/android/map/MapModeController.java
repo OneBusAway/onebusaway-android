@@ -142,6 +142,11 @@ public interface MapModeController {
          */
         void zoomIncludeClosestVehicle(HashSet<String> routeIds, ObaTripsForRouteResponse response);
 
+        /**
+         * Programmatically selects a vehicle by its trip ID, as if the user tapped it.
+         */
+        void selectVehicle(String tripId);
+
         // Post invalidate
         void postInvalidate();
 

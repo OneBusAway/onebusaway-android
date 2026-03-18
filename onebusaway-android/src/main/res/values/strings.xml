@@ -232,6 +232,7 @@
     <string name="stop_info_eta_now">NOW</string>
     <string name="stop_info_eta_unknown">---\u0020\u0020</string>
     <string name="stop_info_option_showonmap">Show on map</string>
+    <string name="trip_details_option_showlist">Show list</string>
     <string name="menu_option_sort_by">Sort by</string>
     <string name="stop_info_option_refresh">Refresh</string>
     <string name="stop_info_option_filter">Filter routes</string>
@@ -839,6 +840,7 @@
     <string name="trip_details_dest_stop">Destination stop</string>
 
     <!-- Vehicles on Map -->
+    <string name="vehicle_view_location_data">View trip trajectory</string>
     <string name="vehicle_last_updated_sec">Data updated %1$d sec ago</string>
     <string name="vehicle_last_updated_min_and_sec">Data updated %1$d min %2$d sec ago</string>
     <string name="vehicle_last_updated_scheduled">Position calculated from schedule</string>

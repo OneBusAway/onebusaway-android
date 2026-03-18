@@ -265,7 +265,9 @@ dependencies {
     implementation 'com.google.android.material:material:1.12.0'
     // Explicit dependency on Gson is now apparently needed
     implementation 'com.google.code.gson:gson:2.10.1'
-    // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
+    // JVM unit tests
+    testImplementation 'junit:junit:4.13.2'
+    // Instrumented tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
     androidTestImplementation 'androidx.test:runner:1.6.2'
     // WorkManager (Java only)
     implementation 'androidx.work:work-runtime:2.9.1'

@@ -15,19 +15,26 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MapStyleOptions;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaTripDetails;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.location.Location;
 import android.util.Log;
 
+import androidx.appcompat.app.AppCompatDelegate;
+
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * Utilities to help process data for Android Maps API v1
@@ -193,5 +200,37 @@ public class MapHelpV2 {
                 + closestVehicleLocation.getLongitude());
 
         return makeLatLng(closestVehicleLocation);
+    }
+
+    /**
+     * Computes the bounding box of a list of Locations.
+     *
+     * @return LatLngBounds enclosing all points, or null if the list is null/empty.
+     */
+    public static LatLngBounds getBounds(List<Location> points) {
+        if (points == null || points.isEmpty()) return null;
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        for (Location loc : points) {
+            builder.include(makeLatLng(loc));
+        }
+        return builder.build();
+    }
+
+    /**
+     * Applies the app's light/dark map style to the given GoogleMap.
+     * In dark mode, loads R.raw.dark_map; in light mode, hides POIs.
+     */
+    public static void applyMapStyle(GoogleMap map, Context context) {
+        boolean dark = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES
+                || (AppCompatDelegate.getDefaultNightMode() != AppCompatDelegate.MODE_NIGHT_NO
+                && (context.getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES);
+        if (dark) {
+            map.setMapStyle(MapStyleOptions.loadRawResourceStyle(context, R.raw.dark_map));
+        } else {
+            String removePOI = "[{\"featureType\":\"poi\",\"elementType\":\"all\","
+                    + "\"stylers\":[{\"visibility\":\"off\"}]}]";
+            map.setMapStyle(new MapStyleOptions(removePOI));
+        }
     }
 }

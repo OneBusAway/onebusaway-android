@@ -39,6 +39,7 @@ import org.onebusaway.android.io.elements.ObaRegion;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -531,6 +532,46 @@ public class LocationUtils {
     }
 
     /**
+     * Earth radius in meters, matching the OBA server's
+     * SphericalGeometryLibrary.RADIUS_OF_EARTH_IN_KM * 1000.
+     * Use this constant (not Android's WGS84 ellipsoid) when computing distances
+     * that must be consistent with the server's distanceAlongTrip values.
+     */
+    public static final double EARTH_RADIUS_METERS = 6371010.0;
+
+    /**
+     * Haversine great-circle distance matching the OBA server's
+     * SphericalGeometryLibrary.distance() — same formula, same Earth radius
+     * (6371.01 km). Use this instead of {@link Location#distanceTo} when
+     * distances must align with the server's distanceAlongTrip values.
+     *
+     * @return distance in meters
+     */
+    public static double haversineDistance(double lat1, double lon1,
+                                           double lat2, double lon2) {
+        lat1 = Math.toRadians(lat1);
+        lon1 = Math.toRadians(lon1);
+        lat2 = Math.toRadians(lat2);
+        lon2 = Math.toRadians(lon2);
+
+        double deltaLon = lon2 - lon1;
+        double cosLat2 = Math.cos(lat2);
+        double sinDeltaLon = Math.sin(deltaLon);
+        double cosLat1 = Math.cos(lat1);
+        double sinLat2 = Math.sin(lat2);
+        double sinLat1 = Math.sin(lat1);
+        double cosDeltaLon = Math.cos(deltaLon);
+
+        double y = Math.sqrt(
+                (cosLat2 * sinDeltaLon) * (cosLat2 * sinDeltaLon)
+              + (cosLat1 * sinLat2 - sinLat1 * cosLat2 * cosDeltaLon)
+              * (cosLat1 * sinLat2 - sinLat1 * cosLat2 * cosDeltaLon));
+        double x = sinLat1 * sinLat2 + cosLat1 * cosLat2 * cosDeltaLon;
+
+        return EARTH_RADIUS_METERS * Math.atan2(y, x);
+    }
+
+    /**
      * Filters the addresses obtained in geocoding process, removing the
      * results outside server limits.
      *
@@ -552,6 +593,173 @@ public class LocationUtils {
             }
         }
         return addresses;
+    }
+
+    // --- Polyline interpolation utilities ---
+
+    /**
+     * Interpolates a position along a polyline at a given distance from the start.
+     * Uses a precomputed cumulative distance array for O(log n) binary search.
+     *
+     * @param polylinePoints decoded polyline points (lat/lng)
+     * @param cumDist        precomputed cumulative distances
+     * @param distanceMeters target distance along the polyline in meters
+     * @return interpolated Location, or null if the polyline is empty or inputs are invalid
+     */
+    public static Location interpolateAlongPolyline(
+            List<Location> polylinePoints,
+            double[] cumDist,
+            double distanceMeters) {
+        Location result = makeLocation(0.0, 0.0);
+        if (interpolateAlongPolyline(polylinePoints, cumDist, distanceMeters, result)) {
+            return result;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Interpolates a position along a polyline, writing into a reusable Location
+     * to avoid allocation on the hot path. Returns true if successful.
+     *
+     * @param polylinePoints decoded polyline points (lat/lng)
+     * @param cumDist        precomputed cumulative distances
+     * @param distanceMeters target distance along the polyline in meters
+     * @param out            reusable Location to write the result into
+     * @return true if interpolation succeeded, false if inputs were invalid
+     */
+    public static boolean interpolateAlongPolyline(
+            List<Location> polylinePoints,
+            double[] cumDist,
+            double distanceMeters,
+            Location out) {
+        if (polylinePoints == null || polylinePoints.isEmpty() || cumDist == null || out == null) {
+            return false;
+        }
+        if (distanceMeters <= 0) {
+            Location first = polylinePoints.get(0);
+            out.setLatitude(first.getLatitude());
+            out.setLongitude(first.getLongitude());
+            return true;
+        }
+
+        int idx = Arrays.binarySearch(cumDist, distanceMeters);
+        if (idx >= 0) {
+            Location exact = polylinePoints.get(idx);
+            out.setLatitude(exact.getLatitude());
+            out.setLongitude(exact.getLongitude());
+            return true;
+        }
+        // binarySearch returns -(insertion point) - 1
+        int insertionPoint = -idx - 1;
+        if (insertionPoint >= polylinePoints.size()) {
+            Location last = polylinePoints.get(polylinePoints.size() - 1);
+            out.setLatitude(last.getLatitude());
+            out.setLongitude(last.getLongitude());
+            return true;
+        }
+
+        int segStart = insertionPoint - 1;
+        if (segStart < 0) {
+            Location first = polylinePoints.get(0);
+            out.setLatitude(first.getLatitude());
+            out.setLongitude(first.getLongitude());
+            return true;
+        }
+
+        double segLen = cumDist[insertionPoint] - cumDist[segStart];
+        if (segLen <= 0) {
+            Location p = polylinePoints.get(segStart);
+            out.setLatitude(p.getLatitude());
+            out.setLongitude(p.getLongitude());
+            return true;
+        }
+
+        double fraction = (distanceMeters - cumDist[segStart]) / segLen;
+        Location p0 = polylinePoints.get(segStart);
+        Location p1 = polylinePoints.get(insertionPoint);
+        out.setLatitude(p0.getLatitude() + fraction * (p1.getLatitude() - p0.getLatitude()));
+        out.setLongitude(p0.getLongitude() + fraction * (p1.getLongitude() - p0.getLongitude()));
+        return true;
+    }
+
+    /**
+     * Finds the range of polyline vertex indices whose cumulative distances fall
+     * strictly between startDist and endDist. Uses binary search for O(log n).
+     *
+     * @param cumDist   sorted cumulative distance array
+     * @param startDist start distance in meters
+     * @param endDist   end distance in meters
+     * @return int array {startIndex, endIndex} for use with a for loop (exclusive end),
+     *         or null if no vertices fall in range
+     */
+    public static int[] findVertexRange(double[] cumDist, double startDist, double endDist) {
+        if (cumDist == null || cumDist.length == 0 || startDist >= endDist) {
+            return null;
+        }
+
+        // Find first index where cumDist[i] > startDist
+        int rawStart = Arrays.binarySearch(cumDist, startDist);
+        int from = (rawStart >= 0) ? rawStart + 1 : -rawStart - 1;
+
+        // Find first index where cumDist[i] >= endDist
+        int rawEnd = Arrays.binarySearch(cumDist, endDist);
+        int to = (rawEnd >= 0) ? rawEnd : -rawEnd - 1;
+
+        return (from < to) ? new int[]{from, to} : null;
+    }
+
+    /**
+     * Returns the bearing (in degrees clockwise from north) of the polyline segment
+     * at the given distance along the polyline. Returns NaN if inputs are invalid.
+     *
+     * @param polylinePoints decoded polyline points (lat/lng)
+     * @param cumDist        precomputed cumulative distances
+     * @param distanceMeters target distance along the polyline in meters
+     * @return bearing in degrees [0, 360), or NaN
+     */
+    public static double headingAlongPolyline(
+            List<Location> polylinePoints,
+            double[] cumDist,
+            double distanceMeters) {
+        if (polylinePoints == null || polylinePoints.size() < 2 || cumDist == null) {
+            return Double.NaN;
+        }
+
+        // Clamp to valid range
+        if (distanceMeters <= 0) {
+            return bearing(polylinePoints.get(0), polylinePoints.get(1));
+        }
+
+        int idx = Arrays.binarySearch(cumDist, distanceMeters);
+        int insertionPoint = (idx >= 0) ? idx + 1 : -idx - 1;
+
+        if (insertionPoint >= polylinePoints.size()) {
+            int n = polylinePoints.size();
+            return bearing(polylinePoints.get(n - 2), polylinePoints.get(n - 1));
+        }
+
+        int segStart = insertionPoint - 1;
+        if (segStart < 0) {
+            return bearing(polylinePoints.get(0), polylinePoints.get(1));
+        }
+
+        return bearing(polylinePoints.get(segStart), polylinePoints.get(insertionPoint));
+    }
+
+    /**
+     * Computes the initial bearing from point A to point B in degrees [0, 360).
+     */
+    private static double bearing(Location a, Location b) {
+        double lat1 = Math.toRadians(a.getLatitude());
+        double lat2 = Math.toRadians(b.getLatitude());
+        double dLon = Math.toRadians(b.getLongitude() - a.getLongitude());
+
+        double y = Math.sin(dLon) * Math.cos(lat2);
+        double x = Math.cos(lat1) * Math.sin(lat2)
+                - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+        double brng = Math.toDegrees(Math.atan2(y, x));
+        return (brng + 360) % 360;
     }
 
 }

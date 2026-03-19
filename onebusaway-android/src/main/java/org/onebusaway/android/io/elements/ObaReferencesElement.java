@@ -31,14 +31,14 @@ public final class ObaReferencesElement implements ObaReferences {
 
     private final ObaAgencyElement[] agencies;
 
-    private final ObaSituationElement[] situations;
+    private final ObaSituation[] situations;
 
     public ObaReferencesElement() {
         stops = ObaStopElement.EMPTY_ARRAY;
         routes = ObaRouteElement.EMPTY_ARRAY;
         trips = ObaTripElement.EMPTY_ARRAY;
         agencies = ObaAgencyElement.EMPTY_ARRAY;
-        situations = ObaSituationElement.EMPTY_ARRAY;
+        situations = ObaSituation.EMPTY_ARRAY;
     }
 
     @Override

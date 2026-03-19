@@ -116,9 +116,9 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
+        mArrivalsCallbacks = new ArrivalsLoaderCallbacks();
         super.onActivityCreated(savedInstanceState);
         setHasOptionsMenu(true);
-        mArrivalsCallbacks = new ArrivalsLoaderCallbacks();
         showStarredStopsTutorials();
     }
 

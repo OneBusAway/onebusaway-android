@@ -20,6 +20,7 @@ import android.database.Cursor;
 import android.graphics.drawable.GradientDrawable;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -100,12 +101,13 @@ class StarredStopsAdapter extends SimpleCursorAdapter {
         super.bindView(view, context, cursor);
 
         String stopId = cursor.getString(QueryUtils.StopList.Columns.COL_ID);
+        HorizontalScrollView arrivalsScroll = view.findViewById(R.id.arrivals_scroll);
         LinearLayout arrivalsContainer = view.findViewById(R.id.arrivals_container);
         ProgressBar arrivalsLoading = view.findViewById(R.id.arrivals_loading);
 
         if (mArrivalsData == null) {
             // Still loading
-            arrivalsContainer.setVisibility(View.GONE);
+            arrivalsScroll.setVisibility(View.GONE);
             arrivalsLoading.setVisibility(View.VISIBLE);
             return;
         }
@@ -114,11 +116,11 @@ class StarredStopsAdapter extends SimpleCursorAdapter {
         ArrayList<ArrivalInfo> arrivals = mArrivalsData.get(stopId);
 
         if (arrivals == null || arrivals.isEmpty()) {
-            arrivalsContainer.setVisibility(View.GONE);
+            arrivalsScroll.setVisibility(View.GONE);
             return;
         }
 
-        arrivalsContainer.setVisibility(View.VISIBLE);
+        arrivalsScroll.setVisibility(View.VISIBLE);
         arrivalsContainer.removeAllViews();
 
         float density = context.getResources().getDisplayMetrics().density;
@@ -146,7 +148,7 @@ class StarredStopsAdapter extends SimpleCursorAdapter {
             badge.setPadding(paddingH, paddingV, paddingH, paddingV);
 
             GradientDrawable bg = new GradientDrawable();
-            bg.setColor(ContextCompat.getColor(context, arrival.getColor()));
+            bg.setColor(ContextCompat.getColor(context, getBadgeColor(arrival.getColor())));
             bg.setCornerRadius(cornerRadius);
             badge.setBackground(bg);
 
@@ -157,6 +159,18 @@ class StarredStopsAdapter extends SimpleCursorAdapter {
             badge.setLayoutParams(params);
 
             arrivalsContainer.addView(badge);
+        }
+    }
+
+    private static int getBadgeColor(int arrivalColor) {
+        if (arrivalColor == R.color.stop_info_ontime) {
+            return R.color.badge_ontime;
+        } else if (arrivalColor == R.color.stop_info_delayed) {
+            return R.color.badge_delayed;
+        } else if (arrivalColor == R.color.stop_info_early) {
+            return R.color.badge_early;
+        } else {
+            return R.color.badge_scheduled;
         }
     }
 }

@@ -73,6 +73,8 @@ public class StarredStopsArrivalsLoader
                 } else if (response != null) {
                     Log.w(TAG, "API error for stop " + stopId
                             + ": code=" + response.getCode());
+                } else {
+                    Log.w(TAG, "Null response for stop " + stopId);
                 }
             } catch (Exception e) {
                 Log.w(TAG, "Failed to fetch arrivals for stop " + stopId, e);

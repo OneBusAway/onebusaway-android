@@ -55,8 +55,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="2dp"
                 android:text="5"
-                style="@style/ArrivalsListItemRouteName"
-                android:textColor="@color/header_text_color"/>
+                style="@style/ArrivalsListItemRouteName"/>
 
         <TextView
                 android:id="@+id/eta_route_direction"

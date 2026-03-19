@@ -292,10 +292,22 @@ public class TripResultsFragment extends Fragment {
         }
 
         void select() {
+            int defaultTextColor = getResources().getColor(R.color.header_text_color);
+            int selectedTextColor = getResources().getColor(R.color.trip_plan_header_text_selected);
+
             for (RoutingOptionPicker picker : mOptions) {
-                picker.linearLayout.setBackgroundColor(getResources().getColor(R.color.trip_option_background));
+                // reset
+                picker.linearLayout.setBackgroundColor(getResources().getColor(R.color.trip_plan_card_background));
+                picker.titleView.setTextColor(defaultTextColor);
+                picker.durationView.setTextColor(getResources().getColor(R.color.header_text_faded_color));
+                picker.intervalView.setTextColor(getResources().getColor(R.color.header_text_faded_color));
             }
+
+            // select
             linearLayout.setBackgroundResource(R.drawable.trip_option_selected_item);
+            titleView.setTextColor(selectedTextColor);
+            durationView.setTextColor(selectedTextColor);
+            intervalView.setTextColor(selectedTextColor);
 
             getArguments().putInt(OTPConstants.SELECTED_ITINERARY, rank);
 

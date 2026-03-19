@@ -15,14 +15,16 @@
 */
 package org.onebusaway.android.report.ui.dialog;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
 
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import edu.usf.cutr.open311client.constants.Open311Constants;
 
 /**
@@ -38,7 +40,7 @@ public class ReportSuccessDialog extends BaseReportDialogFragment {
     @NonNull
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-        AlertDialog dialog = new AlertDialog.Builder(getActivity())
+        AlertDialog dialog = new MaterialAlertDialogBuilder(getActivity())
                 .setMessage(Open311Constants.M_REPORT_SUCCESS)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {

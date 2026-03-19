@@ -18,16 +18,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="@color/stop_info_arrival_list_background"
     android:orientation="vertical">
 
-    <androidx.cardview.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    <com.google.android.material.card.MaterialCardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        style="@style/Widget.Material3.CardView.Elevated"
         android:id="@+id/arrivals_card_view_eta"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:foreground="?attr/selectableItemBackground"
-        card_view:cardCornerRadius="4dp"
         card_view:cardUseCompatPadding="true">
 
         <ImageView
@@ -193,5 +192,5 @@
             android:paddingRight="9dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_navigation_more_horiz" />
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 </LinearLayout>

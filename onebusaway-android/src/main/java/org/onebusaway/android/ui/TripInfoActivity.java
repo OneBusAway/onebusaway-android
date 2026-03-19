@@ -15,9 +15,9 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -594,7 +594,7 @@ public class TripInfoActivity extends AppCompatActivity {
                 Bundle args = getArguments();
                 final Uri tripUri = args.getParcelable("uri");
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getActivity(), R.style.ThemeOverlay_App_DeleteDialog);
                 builder.setMessage(R.string.trip_info_delete_trip).setTitle(R.string.trip_info_delete).setIcon(R.drawable.baseline_delete_forever_48).setPositiveButton(android.R.string.ok, (dialog, which) -> {
                     if (tripUri != null) {
                         requestDeleteAlarm(getContext(), tripUri);

@@ -18,7 +18,10 @@
         android:id="@+id/arrivals_list_header"
         android:layout_width="match_parent"
         android:layout_height="@dimen/arrival_header_height_two_arrivals"
+        android:background="@drawable/arrivals_header_corners"
+        android:clipToOutline="true"
         android:orientation="vertical">
+
 
     <RelativeLayout
             style="@style/HeaderItem"
@@ -27,6 +30,7 @@
             android:layout_height="@dimen/arrival_header_height_two_arrivals"
             android:layout_alignParentTop="true"
             android:layout_above="@+id/filter_group"
+            android:outlineProvider="background"
             android:orientation="vertical">
 
         <LinearLayout
@@ -324,4 +328,11 @@
                 android:linksClickable="true"
                 android:textColorLink="@color/theme_accent" />
     </LinearLayout>
+    <View
+            android:id="@+id/drag_handle"
+            android:layout_width="32dp"
+            android:layout_height="4dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/drag_handle_shape" />
 </RelativeLayout>

@@ -20,11 +20,13 @@
         <item android:id="@+id/refresh"
               android:title="@string/stop_info_option_refresh"
               android:icon="@drawable/ic_action_navigation_refresh"
+              onebusaway:iconTint="?attr/colorControlNormal"
               onebusaway:showAsAction="ifRoom"/>
         <!-- Legacy version of menu - don't include option to sort arrivals on Gingerbread.
         See #350 and #275. -->
         <item android:id="@+id/show_on_map"
               android:title="@string/stop_info_option_showonmap"
+              onebusaway:iconTint="?attr/colorControlNormal"
               android:icon="@drawable/ic_action_location_map"
               onebusaway:showAsAction="ifRoom"/>
         <item android:id="@+id/show_header_arrivals"

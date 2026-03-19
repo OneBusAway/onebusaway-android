@@ -21,5 +21,6 @@
           onebusaway:showAsAction="always"/>
     <item android:id="@+id/goto_url"
           android:title="@string/route_info_goto_url"
-          android:icon="@drawable/ic_menu_month"/>
+          android:icon="@drawable/ic_menu_month"
+          onebusaway:iconTint="?attr/colorControlNormal"/>
 </menu>

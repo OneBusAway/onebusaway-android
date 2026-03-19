@@ -20,7 +20,7 @@
               android:paddingBottom="2dp"
               android:paddingTop="3dp"
               android:orientation="vertical">
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
             xmlns:card_view="http://schemas.android.com/apk/res-auto"
             xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/load_arrivals_card_view"
@@ -36,5 +36,5 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 layout="@layout/load_more_arrivals_button"/>
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 </LinearLayout>

@@ -97,6 +97,19 @@ Tests are in `onebusaway-android/src/androidTest/java/`. Key test classes:
 
 CI runs on API level 33 emulator via GitHub Actions.
 
+## Kotlin/Java Interop
+
+When a Kotlin data class implements a Java interface (e.g., `ObaElement`), `override val` does not work to satisfy the interface's getter method. Instead, use a `private val` for the backing property and an explicit `override fun`:
+
+```kotlin
+data class ObaSituation(
+    private val id: String = "",
+    // ...
+) : ObaElement {
+    override fun getId(): String = id
+}
+```
+
 ## Key Technical Details
 
 - **Min SDK**: 21 (Android 5.0)

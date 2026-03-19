@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.TreeTraversingParser;
+import com.fasterxml.jackson.module.kotlin.KotlinModule;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -55,6 +56,7 @@ public class JacksonSerializer implements ObaApi.SerializationHandler {
         mMapper.setVisibilityChecker(
                 VisibilityChecker.Std.defaultInstance()
                         .withFieldVisibility(JsonAutoDetect.Visibility.ANY));
+        mMapper.registerModule(new KotlinModule.Builder().build());
     }
 
     private JacksonSerializer() { /* singleton */ }

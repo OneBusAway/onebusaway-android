@@ -240,6 +240,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-core:2.12.4'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.4'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
+    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.12.4'
     // Bottom sliding panel
     implementation 'com.github.hannesa2:AndroidSlidingUpPanel:4.6.1'
     // For floating action button speed dial

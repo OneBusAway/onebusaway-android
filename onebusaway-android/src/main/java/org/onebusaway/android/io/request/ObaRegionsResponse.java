@@ -16,7 +16,6 @@
 package org.onebusaway.android.io.request;
 
 import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRegionElement;
 
 public class ObaRegionsResponse extends ObaResponse {
 
@@ -24,7 +23,7 @@ public class ObaRegionsResponse extends ObaResponse {
 
         private static final Data EMPTY_OBJECT = new Data();
 
-        private final ObaRegionElement[] list = ObaRegionElement.EMPTY_ARRAY;
+        private final ObaRegion[] list = ObaRegion.EMPTY_ARRAY;
 
     }
 

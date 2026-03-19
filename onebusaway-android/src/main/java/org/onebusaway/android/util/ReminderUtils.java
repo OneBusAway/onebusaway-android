@@ -26,6 +26,9 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,6 +102,45 @@ public class ReminderUtils {
         ContentResolver cr = context.getContentResolver();
         try (Cursor c = cr.query(tripURI, new String[]{ObaContract.Trips._ID}, null, null, null)) {
             return (c != null && c.getCount() > 0);
+        }
+    }
+
+    /**
+     * Extracts the stop_id from an FCM arrival_and_departure JSON payload.
+     *
+     * @param arrivalJson the JSON string from the arrival_and_departure FCM data field
+     * @return the stop ID, or null if not present or unparseable
+     */
+    public static String getStopIdFromPayload(String arrivalJson) {
+        if (arrivalJson == null) return null;
+        try {
+            JSONObject arrival = new JSONObject(arrivalJson);
+            String stopId = arrival.optString("stop_id", "");
+            return stopId.isEmpty() ? null : stopId;
+        } catch (JSONException e) {
+            Log.e(TAG, "Error parsing arrival_and_departure JSON", e);
+            return null;
+        }
+    }
+
+    /**
+     * Processes an FCM arrival_and_departure payload: extracts trip/stop IDs and
+     * deletes the corresponding saved reminder.
+     *
+     * @param context the application context
+     * @param arrivalJson the JSON string from the arrival_and_departure FCM data field
+     */
+    public static void handleArrivalPayload(Context context, String arrivalJson) {
+        if (arrivalJson == null) return;
+        try {
+            JSONObject arrival = new JSONObject(arrivalJson);
+            String tripId = arrival.optString("trip_id", "");
+            String stopId = arrival.optString("stop_id", "");
+            if (!stopId.isEmpty()) {
+                deleteSavedReminder(context, tripId, stopId);
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "Error parsing arrival_and_departure JSON", e);
         }
     }
 

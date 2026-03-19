@@ -11,8 +11,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import org.json.JSONException
-import org.json.JSONObject
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.ui.ArrivalsListActivity
@@ -21,6 +19,11 @@ import org.onebusaway.android.util.ReminderUtils
 
 /**
  * Service for handling Firebase Cloud Messaging (FCM) messages used for arrival reminders.
+ *
+ * When the app is in the foreground, onMessageReceived is called and we build the notification
+ * ourselves with a deep-link PendingIntent. When the app is backgrounded, FCM shows the
+ * notification automatically and delivers the data payload to the launcher activity (HomeActivity)
+ * via intent extras on tap.
  */
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
@@ -30,30 +33,20 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        val payloadString = remoteMessage.data["payload"]
-        if (payloadString == null) {
-            Log.w(TAG, "FCM message received without 'payload' key. Data keys: ${remoteMessage.data.keys}")
+        val arrivalJson = remoteMessage.data["arrival_and_departure"]
+        val stopId = ReminderUtils.getStopIdFromPayload(arrivalJson)
+
+        if (stopId == null) {
+            Log.w(TAG, "FCM message received without stop_id. Data keys: ${remoteMessage.data.keys}")
             return
         }
 
-        try {
-            val jsonObject = JSONObject(payloadString)
-            val dataObject = jsonObject.getJSONObject("data")
+        val message = remoteMessage.notification?.body ?: remoteMessage.data["message"] ?: "No message content"
+        Log.d(TAG, "Received reminder for stopId: $stopId")
 
-            val message = dataObject.optString("body", "No message content")
-            val notificationID = dataObject.optInt("notification_id", 0)
-            val arrivalAndDepartureData = dataObject.getJSONObject("arrival_and_departure")
-
-            val tripId = arrivalAndDepartureData.optString("trip_id", "")
-            val stopId = arrivalAndDepartureData.optString("stop_id", "")
-            Log.d(TAG, "Received reminder for stopId: $stopId, tripId: $tripId")
-
-            val context = Application.get().applicationContext
-            ReminderUtils.deleteSavedReminder(context, tripId, stopId)
-            showNotification(context, message, stopId, notificationID)
-        } catch (e: JSONException) {
-            Log.e(TAG, "Error parsing notification JSON: ${e.message}", e)
-        }
+        val context = Application.get().applicationContext
+        ReminderUtils.handleArrivalPayload(context, arrivalJson)
+        showNotification(context, message, stopId)
     }
 
     override fun onNewToken(token: String) {
@@ -62,7 +55,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         Log.d(TAG, "FCM token refreshed")
     }
 
-    private fun showNotification(context: Context, message: String, stopId: String, notificationID: Int) {
+    private fun showNotification(context: Context, message: String, stopId: String) {
         val intent = ArrivalsListActivity.Builder(context, stopId).intent
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         val pendingIntent = PendingIntent.getActivity(
@@ -74,6 +67,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             NotificationCompat.Builder(this, Application.CHANNEL_ARRIVAL_REMINDERS_ID)
                 .setSmallIcon(R.drawable.ic_stat_notification)
                 .setColor(NOTIFICATION_COLOR)
+                .setContentTitle("OneBusAway")
                 .setContentText(message)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
@@ -94,6 +88,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(notificationID, notificationBuilder.build())
+        notificationManager.notify(stopId.hashCode(), notificationBuilder.build())
     }
 }

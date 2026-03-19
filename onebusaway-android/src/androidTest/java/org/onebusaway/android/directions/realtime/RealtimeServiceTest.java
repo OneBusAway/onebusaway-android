@@ -155,12 +155,7 @@ public class RealtimeServiceTest {
         // Bundle with no itineraries and no selected index
         Bundle badBundle = new Bundle();
 
-        // Use reflection because getSimplifiedBundle() is private
-        java.lang.reflect.Method m =
-                RealtimeService.class.getDeclaredMethod("getSimplifiedBundle", Bundle.class);
-        m.setAccessible(true);
-
-        Object result = m.invoke(mService, badBundle);
+        Bundle result = mService.getSimplifiedBundle(badBundle);
         // After the fix, getSimplifiedBundle() should handle the null itinerary gracefully
         // and return null instead of crashing.
         assertNull("getSimplifiedBundle should return null for missing itinerary", result);
@@ -195,12 +190,7 @@ public class RealtimeServiceTest {
         bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
         bundle.putInt(OTPConstants.SELECTED_ITINERARY, 0);
         // Intentionally DO NOT put OTPConstants.NOTIFICATION_TARGET into the bundle
-
-        java.lang.reflect.Method m =
-                RealtimeService.class.getDeclaredMethod("getSimplifiedBundle", Bundle.class);
-        m.setAccessible(true);
-
-        Object result = m.invoke(mService, bundle);
+        Bundle result = mService.getSimplifiedBundle(bundle);
         // After the fix, getSimplifiedBundle() should handle missing NOTIFICATION_TARGET
         // gracefully and return null instead of crashing.
         assertNull("getSimplifiedBundle should return null when NOTIFICATION_TARGET is missing", result);

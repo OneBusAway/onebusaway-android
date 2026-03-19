@@ -60,8 +60,6 @@
         android:theme="@style/Theme.OneBusAway.NoActionBar"
         android:networkSecurityConfig="@xml/network_security_config">
 
-        <meta-data android:name="com.onesignal.NotificationServiceExtension"
-                android:value="org.onebusaway.android.tripservice.ArrivalsRemindersServiceExtension" />
 
         <meta-data
             android:name="android.app.default_searchable"
@@ -358,6 +356,19 @@
 
         <!-- Opt-out of June 2018 Android Maps styling with pin POI icons - see #891 -->
         <meta-data android:name="com.google.android.gms.maps.API_OPTIONS" android:value="B3H9HE845CFHYG"/>
+        <meta-data
+                android:name="com.google.firebase.messaging.default_notification_icon"
+                android:resource="@drawable/ic_stat_notification" />
+        <meta-data
+                android:name="com.google.firebase.messaging.default_notification_color"
+                android:resource="@color/theme_primary" />
+        <service
+                android:name=".tripservice.MyFirebaseMessagingService"
+                android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
     </application>
 
     <uses-feature

@@ -44,7 +44,7 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
         // Retrieve from provider
         ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromProvider(getTargetContext());
         assertNotNull(regions);
-        assertEquals(6, regions.size());  // Number of production regions
+        assertEquals(5, regions.size());  // Number of production regions
 
         // Production regions
         _assertTampa(regions.get(0));
@@ -65,18 +65,18 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
         ObaRegion.Bounds[] bounds = tampa.getBounds();
         assertNotNull(bounds);
         assertEquals(2, bounds.length);
-        // 27.976910500000002:-82.445851:0.5424609999999994:0.576357999999999
+        // 27.9769105:-82.445851:0.542461:0.576358
         assertBounds(bounds[0],
-                27.976910500000002,
+                27.9769105,
                 -82.445851,
-                0.5424609999999994,
-                0.576357999999999);
-        // 27.919249999999998:-82.652145:0.47208000000000183:0.3967700000000036
+                0.542461,
+                0.576358);
+        // 27.91925:-82.652145:0.47208:0.39677
         assertBounds(bounds[1],
-                27.919249999999998,
+                27.91925,
                 -82.652145,
-                0.47208000000000183,
-                0.3967700000000036);
+                0.47208,
+                0.39677);
         assertEquals("https://otp.prod.obahart.org/otp/", tampa.getOtpBaseUrl());
         assertEquals("otp-tampa@onebusaway.org", tampa.getOtpContactEmail());
         assertEquals("co.bytemark.flamingo", tampa.getPaymentAndroidAppId());

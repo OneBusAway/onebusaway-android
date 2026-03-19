@@ -49,14 +49,10 @@ public class RegionUtilTest {
 
     ObaRegion mTampaRegion;
 
-    ObaRegion mAtlantaRegion;
-
     // Locations to use in tests
     Location mSeattleLoc;
 
     Location mTampaLoc;
-
-    Location mAtlantaLoc;
 
     Location mLondonLoc;
 
@@ -66,12 +62,10 @@ public class RegionUtilTest {
     public void before() {
         mPsRegion = MockRegion.getPugetSound(getTargetContext());
         mTampaRegion = MockRegion.getTampa(getTargetContext());
-        mAtlantaRegion = MockRegion.getAtlanta(getTargetContext());
 
         // Region locations
         mSeattleLoc = LocationUtils.makeLocation(47.6097, -122.3331);
         mTampaLoc = LocationUtils.makeLocation(27.9681, -82.4764);
-        mAtlantaLoc = LocationUtils.makeLocation(33.7550, -84.3900);
 
         // Far locations
         mLondonLoc = LocationUtils.makeLocation(51.5072, -0.1275);
@@ -85,9 +79,6 @@ public class RegionUtilTest {
 
         distance = RegionUtils.getDistanceAway(mTampaRegion, mTampaLoc);
         assertApproximateEquals(3160, distance);
-
-        distance = RegionUtils.getDistanceAway(mAtlantaRegion, mAtlantaLoc);
-        assertApproximateEquals(3927, distance);
     }
 
     @Test
@@ -95,7 +86,6 @@ public class RegionUtilTest {
         ArrayList<ObaRegion> list = new ArrayList<>();
         list.add(mPsRegion);
         list.add(mTampaRegion);
-        list.add(mAtlantaRegion);
 
         boolean useLimiter = false;
 
@@ -149,22 +139,15 @@ public class RegionUtilTest {
     public void testIsLocationWithinRegion() {
         assertTrue(RegionUtils.isLocationWithinRegion(mSeattleLoc, mPsRegion));
         assertFalse(RegionUtils.isLocationWithinRegion(mTampaLoc, mPsRegion));
-        assertFalse(RegionUtils.isLocationWithinRegion(mAtlantaLoc, mPsRegion));
 
         assertTrue(RegionUtils.isLocationWithinRegion(mTampaLoc, mTampaRegion));
         assertFalse(RegionUtils.isLocationWithinRegion(mSeattleLoc, mTampaRegion));
-        assertFalse(RegionUtils.isLocationWithinRegion(mAtlantaLoc, mTampaRegion));
-
-        assertTrue(RegionUtils.isLocationWithinRegion(mAtlantaLoc, mAtlantaRegion));
-        assertFalse(RegionUtils.isLocationWithinRegion(mSeattleLoc, mAtlantaRegion));
-        assertFalse(RegionUtils.isLocationWithinRegion(mTampaLoc, mAtlantaRegion));
     }
 
     @Test
     public void testIsRegionUsable() {
         assertTrue(RegionUtils.isRegionUsable(mPsRegion));
         assertTrue(RegionUtils.isRegionUsable(mTampaRegion));
-        assertFalse(RegionUtils.isRegionUsable(mAtlantaRegion));
 
         assertFalse(RegionUtils.isRegionUsable(MockRegion.getRegionWithoutObaApis(getTargetContext())));
         assertFalse(RegionUtils.isRegionUsable(MockRegion.getInactiveRegion(getTargetContext())));

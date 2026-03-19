@@ -94,6 +94,9 @@ public final class ObaReminderRequest extends RequestBase implements Callable<Re
 
         public ObaReminderRequest build() {
             Uri finalUri = uriBuilder.build();
+
+            mPostData.appendQueryParameter("operating_system", "android");
+
             Uri bodyData = mPostData.build();
 
             if (bodyData.getQueryParameter("stop_id") == null ||

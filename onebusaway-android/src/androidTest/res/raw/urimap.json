@@ -3,16 +3,31 @@
     "/regions-v3.json": "regions-v3",
 
     "/api/where/agencies-with-coverage.json": "agencies_with_coverage",
-    "/api/api/where/agencies-with-coverage.json": "agencies_with_coverage_tampa",
 
     "/api/where/agency/1.json": "agency_1",
 
     "/api/where/arrivals-and-departures-for-stop/1_29261.json": "arrivals_and_departures_for_stop_1_29261",
+    "/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_3105.json": "arrivals_and_departures_for_stop_hart_3105",
+    "/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_9997.json": "arrivals_and_departures_for_stop_hart_schedule_data",
+    "/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_9998.json": "arrivals_and_departures_for_stop_hart_bad_data",
+    "/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_9999.json": "arrivals_and_departures_for_stop_hart_3105_canceled",
+    "/api/where/arrivals-and-departures-for-stop/1_75403.json": "arrivals_and_departures_for_stop_1_75403",
+    "/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_1622.json": "arrivals_and_departures_for_stop_hart_1622_one_past_arrival",
+    "/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_6497.json": "arrivals_and_departures_for_stop_hart_6497",
+    "/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_10000.json": "arrivals_and_departurse_for_stop_total_stops_in_trip",
+    "/api/where/arrivals-and-departures-for-stop/PSTA_4077.json": "arrivals_and_departures_for_stop_psta_4077_alerts",
+    "/api/where/arrivals-and-departures-for-stop/DART_4041.json": "arrivals_and_departures_for_stop_dart_4041_alerts",
+    "/api/where/arrivals-and-departures-for-stop/MTS_11670.json": "arrivals_and_departures_for_stop_mts_11670_route_alerts",
+    "/api/where/arrivals-and-departures-for-stop/MTS_13353.json": "arrivals_and_departures_for_stop_mts_13353_route_and_stop_alerts",
+    "/api/where/arrivals-and-departures-for-stop/MTS_11671.json": "arrivals_and_departures_for_stop_mts_11671_filter_route_alerts",
+    "/api/where/arrivals-and-departures-for-stop/MTS_9999.json": "sdmts_arrivals_and_departures_for_stop_no_end_time",
+    "/api/where/arrivals-and-departures-for-stop/1_10020_occupancy.json": "arrivals_and_departures_for_stop_1_10020_occupancy",
+
+    "/api/api/where/agencies-with-coverage.json": "agencies_with_coverage_tampa",
     "/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_3105.json": "arrivals_and_departures_for_stop_hart_3105",
     "/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_9997.json": "arrivals_and_departures_for_stop_hart_schedule_data",
     "/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_9998.json": "arrivals_and_departures_for_stop_hart_bad_data",
     "/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_9999.json": "arrivals_and_departures_for_stop_hart_3105_canceled",
-    "/api/where/arrivals-and-departures-for-stop/1_75403.json": "arrivals_and_departures_for_stop_1_75403",
     "/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_1622.json": "arrivals_and_departures_for_stop_hart_1622_one_past_arrival",
     "/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_6497.json": "arrivals_and_departures_for_stop_hart_6497",
     "/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_10000.json": "arrivals_and_departurse_for_stop_total_stops_in_trip",
@@ -22,11 +37,11 @@
     "/api/api/where/arrivals-and-departures-for-stop/MTS_13353.json": "arrivals_and_departures_for_stop_mts_13353_route_and_stop_alerts",
     "/api/api/where/arrivals-and-departures-for-stop/MTS_11671.json": "arrivals_and_departures_for_stop_mts_11671_filter_route_alerts",
     "/api/api/where/arrivals-and-departures-for-stop/MTS_9999.json": "sdmts_arrivals_and_departures_for_stop_no_end_time",
-    "/api/where/arrivals-and-departures-for-stop/1_10020_occupancy.json": "arrivals_and_departures_for_stop_1_10020_occupancy",
 
     "/api/where/current-time.json": "current_time",
 
     "/api/where/route/1_10.json": "route_1_10",
+    "/api/where/route/Hillsborough%20Area%20Regional%20Transit_5.json": "route_hart_5",
     "/api/api/where/route/Hillsborough%20Area%20Regional%20Transit_5.json": "route_hart_5",
 
     "/api/where/routes-for-location.json?lat=47.61098&lon=-122.33845": "routes_for_location_downtown_seattle1",
@@ -56,6 +71,7 @@
     "/api/where/trip/1_18196913.json": "trip_1_18196913",
 
     "/api/where/trip-details/1_18196913.json": "trip_details_1_18196913",
+    "/api/where/trip-details/Hillsborough%20Area%20Regional%20Transit_1389962.json": "trip_details_hart_1389962",
     "/api/api/where/trip-details/Hillsborough%20Area%20Regional%20Transit_1389962.json": "trip_details_hart_1389962",
     "/api/where/trip-details/1_18196913.json?includeSchedule=false": "trip_details_1_18196913_no_schedule",
     "/api/where/trip-details/1_18196913.json?includeStatus=false": "trip_details_1_18196913_no_status",
@@ -63,6 +79,9 @@
 
     "/api/where/trips-for-location.json?lat=47.653&lon=-122.307": "trips_for_location_test1",
     "/api/where/trips-for-location.json?lat=48.85808&lon=2.29498": "trips_for_location_outofrange",
+    "/api/where/trips-for-route/Hillsborough%20Area%20Regional%20Transit_5.json": "trips_for_route_hart_5_no_status",
+    "/api/where/trips-for-route/Hillsborough%20Area%20Regional%20Transit_5.json?includeStatus=true": "trips_for_route_hart_5",
+    "/api/where/trips-for-route/Hillsborough%20Area%20Regional%20Transit_5_occupancy.json?includeStatus=true": "trips_for_route_hart_5_occupancy",
     "/api/api/where/trips-for-route/Hillsborough%20Area%20Regional%20Transit_5.json": "trips_for_route_hart_5_no_status",
     "/api/api/where/trips-for-route/Hillsborough%20Area%20Regional%20Transit_5.json?includeStatus=true": "trips_for_route_hart_5",
     "/api/api/where/trips-for-route/Hillsborough%20Area%20Regional%20Transit_5_occupancy.json?includeStatus=true": "trips_for_route_hart_5_occupancy",

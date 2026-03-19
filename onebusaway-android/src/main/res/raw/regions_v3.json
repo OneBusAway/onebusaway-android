@@ -5,810 +5,403 @@
   "data": {
     "list": [
       {
-        "siriBaseUrl": "https://tampa.onebusaway.org/onebusaway-api-webapp/siri/",
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "onebusaway@gohart.org",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://api.tampa.onebusaway.org/api/",
-        "sidecarBaseUrl": "https://onebusaway.co",
         "id": 0,
         "regionName": "Tampa Bay",
-        "obaVersionInfo": "1.1.11-SNAPSHOT|1|1|11|SNAPSHOT|6950d86123a7a9e5f12065bcbec0c516f35d86d9",
-        "travelBehaviorDataCollectionEnabled": true,
+        "sidecarBaseUrl": "https://sidecar.onebusaway.org",
+        "plausibleAnalyticsServerUrl": "https://analytics.tampa.onebusawaycloud.com/api",
+        "obaBaseUrl": "https://api.tampa.onebusawaycloud.com/",
+        "siriBaseUrl": null,
+        "bounds": [
+          {
+            "lat": 27.9769105,
+            "lon": -82.445851,
+            "latSpan": 0.542461,
+            "lonSpan": 0.576358
+          },
+          {
+            "lat": 27.91925,
+            "lon": -82.652145,
+            "latSpan": 0.47208,
+            "lonSpan": 0.39677
+          }
+        ],
+        "language": "en_US",
+        "contactEmail": "info@onebusaway.org",
         "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": true,
-        "otpContactEmail": "otp-tampa@onebusaway.org",
-        "otpBaseUrl": "https://otp.prod.obahart.org/otp/",
-        "paymentWarningBody": null,
+        "supportsObaRealtimeApis": true,
         "supportsSiriRealtimeApis": true,
-        "twitterUrl": "https://mobile.twitter.com/OBA_tampa",
-        "paymentAndroidAppId": "co.bytemark.flamingo",
-        "paymentiOSAppStoreIdentifier": "1487465395",
-        "paymentiOSAppUrlScheme": "fb313213768708402HART",
         "active": true,
+        "obaVersionInfo": "2.4.15-cs|2|4|15|cs|d41e1a8978da14e98a2e19d109a23018957db7cf",
+        "twitterUrl": "",
+        "facebookUrl": "",
+        "experimental": false,
+        "stopInfoUrl": null,
         "open311Servers": [
           {
-            "juridisctionId": null,
+            "juridisctionId": "",
             "apiKey": "937033cad3054ec58a1a8156dcdd6ad8a416af2f",
             "baseUrl": "https://seeclickfix.com/open311/v2/"
           }
         ],
+        "otpBaseUrl": "https://otp.prod.obahart.org/otp/",
+        "otpContactEmail": "otp-tampa@onebusaway.org",
+        "supportsEmbeddedSocial": false,
+        "supportsOtpBikeshare": true,
+        "paymentAndroidAppId": "co.bytemark.flamingo",
         "paymentWarningTitle": null,
-        "language": "en_US",
-        "bounds": [
-          {
-            "lat": 27.976910500000002,
-            "latSpan": 0.5424609999999994,
-            "lon": -82.445851,
-            "lonSpan": 0.576357999999999
-          },
-          {
-            "lat": 27.919249999999998,
-            "latSpan": 0.47208000000000183,
-            "lon": -82.652145,
-            "lonSpan": 0.3967700000000036
-          }
-        ],
-        "facebookUrl": "",
-        "stopInfoUrl": null,
-        "experimental": false
+        "paymentWarningBody": null,
+        "paymentiOSAppStoreIdentifier": "1487465395",
+        "paymentiOSAppUrlScheme": "fb313213768708402HART",
+        "travelBehaviorDataCollectionEnabled": false,
+        "enrollParticipantsInStudy": false
       },
       {
-        "siriBaseUrl": "https://pugetsound.onebusaway.org/onebusaway-api-webapp/siri/",
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "onebusaway@soundtransit.org",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://api.pugetsound.onebusaway.org/",
-        "sidecarBaseUrl": "https://onebusaway.co",
         "id": 1,
         "regionName": "Puget Sound",
-        "obaVersionInfo": "1.1.7|1|1|7||c8ee3d4906dd55ecafdd124f31f39c0f54a37b52",
-        "travelBehaviorDataCollectionEnabled": true,
-        "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": false,
-        "otpContactEmail": "otp-pugetsound@onebusaway.org",
-        "otpBaseUrl": "https://otp.prod.sound.obaweb.org/otp/routers/default/",
-        "paymentWarningBody": "The mobile fare payment app for Puget Sound does not support all transit service shown in OneBusAway. Please check that a ticket is eligible for your agency and route before you purchase!",
-        "supportsSiriRealtimeApis": true,
-        "twitterUrl": "https://mobile.twitter.com/oba_pugetsound",
-        "paymentAndroidAppId": "co.bytemark.tgt",
-        "paymentiOSAppStoreIdentifier": "1131345078",
-        "paymentiOSAppUrlScheme": "co.bytemark.tgt",
-        "active": true,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": "Check before you buy!",
-        "language": "en_US",
+        "sidecarBaseUrl": "https://sidecar.onebusaway.org",
+        "plausibleAnalyticsServerUrl": null,
+        "obaBaseUrl": "https://api.pugetsound.onebusaway.org/",
+        "siriBaseUrl": "https://pugetsound.onebusaway.org/onebusaway-api-webapp/siri/",
         "bounds": [
           {
             "lat": 47.221315,
-            "latSpan": 0.33704,
             "lon": -122.4051325,
+            "latSpan": 0.33704,
             "lonSpan": 0.440483
           },
           {
             "lat": 47.5607395,
-            "latSpan": 0.743251,
             "lon": -122.1462785,
+            "latSpan": 0.743251,
             "lonSpan": 0.720901
           },
           {
             "lat": 47.556288,
-            "latSpan": 0.090694,
             "lon": -122.4013255,
+            "latSpan": 0.090694,
             "lonSpan": 0.126793
           },
           {
             "lat": 47.093563,
-            "latSpan": 0.320892,
             "lon": -122.701637,
+            "latSpan": 0.320892,
             "lonSpan": 0.55098
           },
           {
             "lat": 47.5346090123,
-            "latSpan": 0.889378024643,
             "lon": -122.3294835,
+            "latSpan": 0.889378024643,
             "lonSpan": 0.621109
           },
           {
             "lat": 47.9747595,
-            "latSpan": 1.336481,
             "lon": -122.8512,
+            "latSpan": 1.336481,
             "lonSpan": 1.0904
           },
           {
             "lat": 47.6204755,
-            "latSpan": 0.014397,
             "lon": -122.335392,
-            "lonSpan": 0.00635600000001
+            "latSpan": 0.014397,
+            "lonSpan": 0.006356
           },
           {
             "lat": 47.64585,
-            "latSpan": 0.0669,
             "lon": -122.2963,
+            "latSpan": 0.0669,
             "lonSpan": 0.0802
           },
           {
             "lat": 47.9347358907,
-            "latSpan": 0.68796117128,
             "lon": -121.993246104,
+            "latSpan": 0.68796117128,
             "lonSpan": 0.784555996061
           }
         ],
+        "language": "en_US",
+        "contactEmail": "onebusaway@soundtransit.org",
+        "supportsObaDiscoveryApis": true,
+        "supportsObaRealtimeApis": true,
+        "supportsSiriRealtimeApis": true,
+        "active": true,
+        "obaVersionInfo": "2.4.16-cs|2|4|16|cs|955724797b2ff207b04c0c80d32c952c085bf0c7",
+        "twitterUrl": "https://mobile.twitter.com/oba_pugetsound",
         "facebookUrl": "https://www.facebook.com/pages/OneBusAway/216091804930",
+        "experimental": false,
         "stopInfoUrl": null,
-        "experimental": false
+        "open311Servers": [],
+        "otpBaseUrl": "https://otp.prod.sound.obaweb.org/otp/routers/default/",
+        "otpContactEmail": "otp-pugetsound@onebusaway.org",
+        "supportsEmbeddedSocial": false,
+        "supportsOtpBikeshare": false,
+        "paymentAndroidAppId": "co.bytemark.tgt",
+        "paymentWarningTitle": "Check before you buy!",
+        "paymentWarningBody": "The mobile fare payment app for Puget Sound does not support all transit service shown in OneBusAway. Please check that a ticket is eligible for your agency and route before you purchase!",
+        "paymentiOSAppStoreIdentifier": "1131345078",
+        "paymentiOSAppUrlScheme": "co.bytemark.tgt",
+        "travelBehaviorDataCollectionEnabled": false,
+        "enrollParticipantsInStudy": false
       },
       {
-        "siriBaseUrl": "https://bustime.mta.info/api/",
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": false,
-        "contactEmail": "MTABusTime@mtahq.org",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://bustime.mta.info/",
-        "sidecarBaseUrl": "https://onebusaway.co",
         "id": 2,
         "regionName": "MTA New York",
-        "obaVersionInfo": "",
-        "travelBehaviorDataCollectionEnabled": true,
-        "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": false,
-        "otpContactEmail": null,
-        "otpBaseUrl": null,
-        "paymentWarningBody": null,
-        "supportsSiriRealtimeApis": true,
-        "twitterUrl": "https://mobile.twitter.com/nyctbusstop",
-        "paymentAndroidAppId": null,
-        "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "active": true,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": null,
-        "language": "en_US",
+        "sidecarBaseUrl": "https://sidecar.onebusaway.org",
+        "plausibleAnalyticsServerUrl": null,
+        "obaBaseUrl": "https://bustime.mta.info/",
+        "siriBaseUrl": "https://bustime.mta.info/api/",
         "bounds": [
           {
             "lat": 40.707678,
-            "latSpan": 0.4093900000000019,
-            "lon": -74.01768100000001,
-            "lonSpan": 0.4686659999999989
+            "lon": -74.017681,
+            "latSpan": 0.40939,
+            "lonSpan": 0.468666
           },
           {
             "lat": 40.8192825,
+            "lon": -73.899082,
             "latSpan": 0.228707,
-            "lon": -73.89908199999999,
-            "lonSpan": 0.23146799999999246
+            "lonSpan": 0.231468
           }
         ],
-        "facebookUrl": "https://www.facebook.com/pages/MTA-New-York-City-Transit/232635164606",
-        "stopInfoUrl": null,
-        "experimental": false
-      },
-      {
-        "siriBaseUrl": null,
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "onebusaway@atlantaregional.com",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://atlanta.onebusaway.org/api/",
-        "sidecarBaseUrl": "https://onebusaway.co",
-        "id": 3,
-        "regionName": "Atlanta",
-        "obaVersionInfo": "1.1.14-SNAPSHOT|1|1|14|SNAPSHOT|440e5cb692a1ed195de7f0686d69f5ceecbe9a41",
-        "travelBehaviorDataCollectionEnabled": true,
+        "language": "en_US",
+        "contactEmail": "MTABusTime@mtahq.org",
         "supportsObaDiscoveryApis": true,
+        "supportsObaRealtimeApis": false,
+        "supportsSiriRealtimeApis": true,
+        "active": true,
+        "obaVersionInfo": "",
+        "twitterUrl": "https://mobile.twitter.com/nyctbusstop",
+        "facebookUrl": "https://www.facebook.com/pages/MTA-New-York-City-Transit/232635164606",
+        "experimental": false,
+        "stopInfoUrl": null,
+        "open311Servers": [],
+        "otpBaseUrl": null,
+        "otpContactEmail": null,
+        "supportsEmbeddedSocial": false,
         "supportsOtpBikeshare": false,
-        "otpContactEmail": "onebusaway@atlantaregional.com",
-        "otpBaseUrl": "https://opentrip.atlantaregion.com/otp",
-        "paymentWarningBody": null,
-        "supportsSiriRealtimeApis": false,
-        "twitterUrl": "https://mobile.twitter.com/OBA_atlanta",
         "paymentAndroidAppId": null,
+        "paymentWarningTitle": null,
+        "paymentWarningBody": null,
         "paymentiOSAppStoreIdentifier": null,
         "paymentiOSAppUrlScheme": null,
-        "active": false,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": null,
-        "language": "en_US",
-        "bounds": [
-          {
-            "lat": 33.7901797681045,
-            "latSpan": 0.002537628406997783,
-            "lon": -84.39483216212469,
-            "lonSpan": 0.016058977126604645
-          },
-          {
-            "lat": 33.84859251766493,
-            "latSpan": 0.006806584025866869,
-            "lon": -84.36189486914657,
-            "lonSpan": 0.035245473959491846
-          },
-          {
-            "lat": 34.22444908498577,
-            "latSpan": 0.06626826841780087,
-            "lon": -84.48419886031866,
-            "lonSpan": 0.051677923063323306
-          },
-          {
-            "lat": 33.78784752284655,
-            "latSpan": 0.026695928046905237,
-            "lon": -84.31082746240949,
-            "lonSpan": 0.028927748099008
-          },
-          {
-            "lat": 33.8079649176,
-            "latSpan": 0.8443565223999983,
-            "lon": -84.34070523855,
-            "lonSpan": 0.8666740198999889
-          },
-          {
-            "lat": 33.7842061834795,
-            "latSpan": 0.030916824823002287,
-            "lon": -84.36385552465549,
-            "lonSpan": 0.08416295068897739
-          },
-          {
-            "lat": 33.8105225,
-            "latSpan": 0.5874290000000002,
-            "lon": -84.37966800000001,
-            "lonSpan": 0.5820399999999921
-          }
-        ],
-        "facebookUrl": "https://www.facebook.com/pages/ObaAtlanta/136662306506627",
-        "stopInfoUrl": null,
-        "experimental": false
+        "travelBehaviorDataCollectionEnabled": false,
+        "enrollParticipantsInStudy": false
       },
       {
-        "siriBaseUrl": "https://buseta.wmata.com/onebusaway-api-webapp/siri/",
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "feedback@wmata.com",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://buseta.wmata.com/onebusaway-api-webapp/",
-        "sidecarBaseUrl": "https://onebusaway.co",
         "id": 4,
         "regionName": "Washington, D.C.",
-        "obaVersionInfo": "",
-        "travelBehaviorDataCollectionEnabled": true,
-        "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": false,
-        "otpContactEmail": null,
-        "otpBaseUrl": null,
-        "paymentWarningBody": null,
-        "supportsSiriRealtimeApis": true,
-        "twitterUrl": "https://mobile.twitter.com/Metrobusinfo",
-        "paymentAndroidAppId": null,
-        "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "active": true,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": null,
-        "language": "en_US",
+        "sidecarBaseUrl": "https://sidecar.onebusaway.org",
+        "plausibleAnalyticsServerUrl": null,
+        "obaBaseUrl": "https://buseta.wmata.com/onebusaway-api-webapp/",
+        "siriBaseUrl": "https://buseta.wmata.com/onebusaway-api-webapp/siri/",
         "bounds": [
           {
-            "lat": 38.895092500000004,
-            "latSpan": 0.5927969999999974,
+            "lat": 38.8950925,
             "lon": -77.059196,
-            "lonSpan": 0.7805199999999957
+            "latSpan": 0.592797,
+            "lonSpan": 0.78052
           }
         ],
-        "facebookUrl": "",
-        "stopInfoUrl": null,
-        "experimental": false
-      },
-      {
-        "siriBaseUrl": null,
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "transitinfo@york.ca",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://oba.yrt.ca/",
-        "sidecarBaseUrl": "https://onebusaway.co",
-        "id": 5,
-        "regionName": "York",
-        "obaVersionInfo": "1.1.7|1|1|7||c8ee3d4906dd55ecafdd124f31f39c0f54a37b52",
-        "travelBehaviorDataCollectionEnabled": true,
-        "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": false,
-        "otpContactEmail": null,
-        "otpBaseUrl": null,
-        "paymentWarningBody": null,
-        "supportsSiriRealtimeApis": false,
-        "twitterUrl": "https://mobile.twitter.com/YRTViva",
-        "paymentAndroidAppId": null,
-        "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "active": false,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": null,
-        "language": "en_CA",
-        "bounds": [
-          {
-            "lat": 44.0248945,
-            "latSpan": 0.6089630000000028,
-            "lon": -79.43752,
-            "lonSpan": 0.49329600000000084
-          }
-        ],
-        "facebookUrl": "https://www.facebook.com/198178906967045",
-        "stopInfoUrl": null,
-        "experimental": false
-      },
-      {
-        "siriBaseUrl": null,
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "bear-transit@v-a.io",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://bt.v-a.io/onebusaway/",
-        "sidecarBaseUrl": "https://onebusaway.co",
-        "id": 6,
-        "regionName": "Bear Transit (beta)",
-        "obaVersionInfo": "1.1.7|1|1|7|d3bbb9109a652359845bdee516dc2cbd1ba35e49",
-        "travelBehaviorDataCollectionEnabled": true,
-        "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": false,
-        "otpContactEmail": null,
-        "otpBaseUrl": null,
-        "paymentWarningBody": null,
-        "supportsSiriRealtimeApis": false,
-        "twitterUrl": "https://mobile.twitter.com/CalParking",
-        "paymentAndroidAppId": null,
-        "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "active": false,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": null,
         "language": "en_US",
-        "bounds": [
-          {
-            "lat": 37.8917275,
-            "latSpan": 0.0492929999999987,
-            "lon": -122.28957750000001,
-            "lonSpan": 0.10181500000000199
-          }
-        ],
-        "facebookUrl": "https://www.facebook.com/pages/Bear-Transit/109669175726418",
-        "stopInfoUrl": null,
-        "experimental": true
-      },
-      {
-        "siriBaseUrl": null,
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "sbrown@camsys.com",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://app.dev.mbta.obaweb.org/onebusaway-api-webapp/",
-        "sidecarBaseUrl": "https://onebusaway.co",
-        "id": 7,
-        "regionName": "Boston (beta)",
-        "obaVersionInfo": "",
-        "travelBehaviorDataCollectionEnabled": true,
+        "contactEmail": "feedback@wmata.com",
         "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": false,
-        "otpContactEmail": null,
+        "supportsObaRealtimeApis": true,
+        "supportsSiriRealtimeApis": true,
+        "active": true,
+        "obaVersionInfo": "2.4.3.11-cs|2|4|3|11|cs|bc4131416026b12ec676b89cf8c7bf8e92bd41db",
+        "twitterUrl": "https://mobile.twitter.com/Metrobusinfo",
+        "facebookUrl": "",
+        "experimental": false,
+        "stopInfoUrl": null,
+        "open311Servers": [],
         "otpBaseUrl": null,
-        "paymentWarningBody": null,
-        "supportsSiriRealtimeApis": false,
-        "twitterUrl": "",
+        "otpContactEmail": null,
+        "supportsEmbeddedSocial": false,
+        "supportsOtpBikeshare": false,
         "paymentAndroidAppId": null,
+        "paymentWarningTitle": null,
+        "paymentWarningBody": null,
         "paymentiOSAppStoreIdentifier": null,
         "paymentiOSAppUrlScheme": null,
-        "active": false,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": null,
-        "language": "en_US",
-        "bounds": [
-          {
-            "lat": 42.367244,
-            "latSpan": 0.014910000000000423,
-            "lon": -71.023894,
-            "lonSpan": 0.011874000000005935
-          },
-          {
-            "lat": 42.1893185,
-            "latSpan": 1.2170369999999977,
-            "lon": -71.210252,
-            "lonSpan": 1.1692720000000065
-          }
-        ],
-        "facebookUrl": "",
-        "stopInfoUrl": null,
-        "experimental": true
+        "travelBehaviorDataCollectionEnabled": false,
+        "enrollParticipantsInStudy": false
       },
       {
-        "siriBaseUrl": null,
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "obasupport@octo3.fi",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://194.89.230.196:8080/",
-        "sidecarBaseUrl": "https://onebusaway.co",
-        "id": 8,
-        "regionName": "Lappeenranta (beta)",
-        "obaVersionInfo": "1.1.13|1|1|13||ef9f836500eafee955381b17799b3105b525e93b",
-        "travelBehaviorDataCollectionEnabled": true,
-        "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": false,
-        "otpContactEmail": null,
-        "otpBaseUrl": null,
-        "paymentWarningBody": null,
-        "supportsSiriRealtimeApis": false,
-        "twitterUrl": "",
-        "paymentAndroidAppId": null,
-        "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "active": false,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": null,
-        "language": "fi_FI",
-        "bounds": [
-          {
-            "lat": 61.05999415916385,
-            "latSpan": 0.07303466470629871,
-            "lon": 28.197898391353952,
-            "lonSpan": 0.2674852336517013
-          }
-        ],
-        "facebookUrl": "",
-        "stopInfoUrl": null,
-        "experimental": true
-      },
-      {
-        "siriBaseUrl": null,
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "info@rvtd.org",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://oba.rvtd.org/onebusaway-api-webapp/",
-        "sidecarBaseUrl": "https://onebusaway.co",
-        "id": 9,
-        "regionName": "Rogue Valley, Oregon",
-        "obaVersionInfo": "",
-        "travelBehaviorDataCollectionEnabled": true,
-        "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": false,
-        "otpContactEmail": null,
-        "otpBaseUrl": null,
-        "paymentWarningBody": null,
-        "supportsSiriRealtimeApis": false,
-        "twitterUrl": "",
-        "paymentAndroidAppId": null,
-        "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "active": false,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": null,
-        "language": "en_US",
-        "bounds": [
-          {
-            "lat": 42.309802394046,
-            "latSpan": 0.2679752119080021,
-            "lon": -122.82026350000001,
-            "lonSpan": 0.2974530000000044
-          }
-        ],
-        "facebookUrl": "",
-        "stopInfoUrl": null,
-        "experimental": false
-      },
-      {
-        "siriBaseUrl": null,
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "jespejo@sanjoaquinrtd.com",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://www.obartd.com/onebusaway-api-webapp/",
-        "sidecarBaseUrl": "https://onebusaway.co",
-        "id": 10,
-        "regionName": "San Joaquin RTD (beta)",
-        "obaVersionInfo": "1.1.12-SNAPSHOT|1|1|12|SNAPSHOT|",
-        "travelBehaviorDataCollectionEnabled": true,
-        "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": false,
-        "otpContactEmail": null,
-        "otpBaseUrl": null,
-        "paymentWarningBody": null,
-        "supportsSiriRealtimeApis": false,
-        "twitterUrl": "",
-        "paymentAndroidAppId": null,
-        "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "active": false,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": null,
-        "language": "en_US",
-        "bounds": [
-          {
-            "lat": 37.9337345,
-            "latSpan": 0.39840300000000184,
-            "lon": -121.3456095,
-            "lonSpan": 0.4220969999999937
-          }
-        ],
-        "facebookUrl": "",
-        "stopInfoUrl": null,
-        "experimental": true
-      },
-      {
-        "siriBaseUrl": null,
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "customerfeedback@sdmts.com",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://realtime.sdmts.com/api/",
-        "sidecarBaseUrl": "https://onebusaway.co",
         "id": 11,
         "regionName": "San Diego",
-        "obaVersionInfo": "1.1.14|1|1|14|73aea0d ",
-        "travelBehaviorDataCollectionEnabled": true,
-        "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": false,
-        "otpContactEmail": "customerfeedback@sdmts.com",
-        "otpBaseUrl": "https://realtime.sdmts.com:9091/otp",
-        "paymentWarningBody": null,
-        "supportsSiriRealtimeApis": false,
-        "twitterUrl": "",
-        "paymentAndroidAppId": "org.sdmts.pronto",
-        "paymentiOSAppStoreIdentifier": "1577230742",
-        "paymentiOSAppUrlScheme": "org.sdmts.pronto",
-        "active": true,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": null,
-        "language": "en_US",
+        "sidecarBaseUrl": "https://sidecar.onebusaway.org",
+        "plausibleAnalyticsServerUrl": null,
+        "obaBaseUrl": "https://realtime.sdmts.com/api/",
+        "siriBaseUrl": null,
         "bounds": [
           {
             "lat": 32.731591,
-            "latSpan": 0.0011640000000028294,
             "lon": -117.1896335,
-            "lonSpan": 0.027426999999988766
+            "latSpan": 0.001164,
+            "lonSpan": 0.027427
           },
           {
-            "lat": 33.0727675231135,
-            "latSpan": 0.7105120739810005,
-            "lon": -117.2316382462345,
-            "lonSpan": 0.7237252935990028
+            "lat": 33.072767523113,
+            "lon": -117.231638246234,
+            "latSpan": 0.710512073981,
+            "lonSpan": 0.723725293599
           },
           {
-            "lat": 32.8998529712665,
-            "latSpan": 0.7140676589169956,
-            "lon": -116.73142875280399,
-            "lonSpan": 1.093941754416008
+            "lat": 32.899852971266,
+            "lon": -116.731428752804,
+            "latSpan": 0.714067658917,
+            "lonSpan": 1.093941754416
           }
         ],
-        "facebookUrl": "",
-        "stopInfoUrl": null,
-        "experimental": false
-      },
-      {
-        "siriBaseUrl": null,
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "oba4spokanetransit@gmail.com",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://www.oba4spokane.com/api/",
-        "sidecarBaseUrl": "https://onebusaway.co",
-        "id": 12,
-        "regionName": "Spokane",
-        "obaVersionInfo": "2.0.0-SNAPSHOT|2|0|0|SNAPSHOT|",
-        "travelBehaviorDataCollectionEnabled": true,
+        "language": "en_US",
+        "contactEmail": "customerfeedback@sdmts.com",
         "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": false,
-        "otpContactEmail": null,
-        "otpBaseUrl": null,
-        "paymentWarningBody": null,
+        "supportsObaRealtimeApis": true,
         "supportsSiriRealtimeApis": false,
+        "active": true,
+        "obaVersionInfo": "2.0.0-SNAPSHOT|2|0|0|SNAPSHOT|4470690f8ac2b983d758d57e4c66274a861dc014",
         "twitterUrl": "",
-        "paymentAndroidAppId": null,
-        "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "active": true,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": null,
-        "language": "en_US",
-        "bounds": [
-          {
-            "lat": 47.622654,
-            "latSpan": 0.29196599999999506,
-            "lon": -117.397625,
-            "lonSpan": 0.6162599999999969
-          }
-        ],
         "facebookUrl": "",
+        "experimental": false,
         "stopInfoUrl": null,
-        "experimental": false
-      },
-      {
-        "siriBaseUrl": null,
+        "open311Servers": [],
+        "otpBaseUrl": "https://realtime.sdmts.com:9091/otp",
+        "otpContactEmail": "customerfeedback@sdmts.com",
         "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "oba.uprm@gmail.com",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://www.proba.live/",
-        "sidecarBaseUrl": "https://onebusaway.co",
-        "id": 13,
-        "regionName": "Mayaguez (beta)",
-        "obaVersionInfo": "2.1.0",
-        "travelBehaviorDataCollectionEnabled": true,
-        "supportsObaDiscoveryApis": true,
         "supportsOtpBikeshare": false,
-        "otpContactEmail": null,
-        "otpBaseUrl": null,
-        "paymentWarningBody": null,
-        "supportsSiriRealtimeApis": false,
-        "twitterUrl": "",
-        "paymentAndroidAppId": null,
-        "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "active": true,
-        "open311Servers": [
-
-        ],
+        "paymentAndroidAppId": "org.sdmts.pronto",
         "paymentWarningTitle": null,
-        "language": "en_US",
-        "bounds": [
-          {
-            "lat": 18.205351924732334,
-            "latSpan": 0.09467721935961393,
-            "lon": -67.10329278541604,
-            "lonSpan": 0.1421846726844791
-          }
-        ],
-        "facebookUrl": "",
-        "stopInfoUrl": null,
-        "experimental": true
+        "paymentWarningBody": null,
+        "paymentiOSAppStoreIdentifier": "1577230742",
+        "paymentiOSAppUrlScheme": "org.sdmts.pronto",
+        "travelBehaviorDataCollectionEnabled": false,
+        "enrollParticipantsInStudy": false
       },
       {
-        "siriBaseUrl": null,
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "vtxtransit@gcrpc.org",
-        "enrollParticipantsInStudy": true,
-        "obaBaseUrl": "https://oba.gcrpc.org/onebusaway-api-webapp",
-        "sidecarBaseUrl": "https://onebusaway.co",
-        "id": 14,
-        "regionName": "Victoria, Texas (beta)",
-        "obaVersionInfo": "2.0.0-SNAPSHOT|2|0|0|SNAPSHOT|",
-        "travelBehaviorDataCollectionEnabled": true,
-        "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": false,
-        "otpContactEmail": null,
-        "otpBaseUrl": null,
-        "paymentWarningBody": null,
-        "supportsSiriRealtimeApis": false,
-        "twitterUrl": "https://mobile.twitter.com/Vtx_transit",
-        "paymentAndroidAppId": null,
-        "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "active": true,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": null,
-        "language": "en_US",
-        "bounds": [
-          {
-            "lat": 28.822814,
-            "latSpan": 0.10912800000000189,
-            "lon": -96.98610149999999,
-            "lonSpan": 0.07200899999999422
-          }
-        ],
-        "facebookUrl": "https://www.facebook.com/GCRPC",
-        "stopInfoUrl": null,
-        "experimental": true
-      },
-      {
-        "siriBaseUrl": null,
-        "supportsEmbeddedSocial": false,
-        "supportsObaRealtimeApis": true,
-        "contactEmail": "transit@nautilus-tech.com.au",
-        "enrollParticipantsInStudy": false,
-        "obaBaseUrl": "https://transit.nautilus-tech.com.au/onebusaway-api-webapp/",
-        "sidecarBaseUrl": "https://onebusaway.co",
         "id": 15,
         "regionName": "Adelaide Metro",
-        "obaVersionInfo": "2.1.2-SNAPSHOT|2|1|2|SNAPSHOT|c436e52195a905b50441f28788e0d7bd460d7589",
-        "travelBehaviorDataCollectionEnabled": true,
-        "supportsObaDiscoveryApis": true,
-        "supportsOtpBikeshare": false,
-        "otpContactEmail": "transit@nautilus-tech.com.au",
-        "otpBaseUrl": "https://otp.nautilus-tech.com.au/otp/",
-        "paymentWarningBody": null,
-        "supportsSiriRealtimeApis": false,
-        "twitterUrl": "",
-        "paymentAndroidAppId": null,
-        "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "active": true,
-        "open311Servers": [
-
-        ],
-        "paymentWarningTitle": null,
-        "language": "en_AU",
+        "sidecarBaseUrl": "https://sidecar.onebusaway.org",
+        "plausibleAnalyticsServerUrl": null,
+        "obaBaseUrl": "https://transit.nautilus-tech.com.au/onebusaway-api-webapp/",
+        "siriBaseUrl": null,
         "bounds": [
           {
             "lat": -34.89224,
-            "latSpan": 0.5954540000000037,
-            "lon": 138.61566499999998,
-            "lonSpan": 0.2644420000000025
+            "lon": 138.615665,
+            "latSpan": 0.595454,
+            "lonSpan": 0.264442
           },
           {
-            "lat": -34.943813500000005,
-            "latSpan": 0.07320100000000451,
+            "lat": -34.9438135,
             "lon": 138.5605365,
-            "lonSpan": 0.09742500000001542
+            "latSpan": 0.073201,
+            "lonSpan": 0.097425
           },
           {
-            "lat": -35.096154776118254,
-            "latSpan": 0.3999424477635003,
+            "lat": -35.096154776118,
             "lon": 138.8118255,
-            "lonSpan": 0.4485230000000229
+            "latSpan": 0.399942447764,
+            "lonSpan": 0.448523
           },
           {
-            "lat": -34.83309800000001,
-            "latSpan": 0.5241100000000003,
-            "lon": 138.6211112248135,
-            "lonSpan": 0.28507155037300436
+            "lat": -34.833098,
+            "lon": 138.621111224813,
+            "latSpan": 0.52411,
+            "lonSpan": 0.285071550373
           },
           {
-            "lat": -35.128530999999995,
-            "latSpan": 0.4213839999999962,
+            "lat": -35.128531,
             "lon": 138.529113,
-            "lonSpan": 0.16759400000000824
+            "latSpan": 0.421384,
+            "lonSpan": 0.167594
           },
           {
             "lat": -35.1519865,
-            "latSpan": 0.3744729999999947,
             "lon": 138.535168737546,
-            "lonSpan": 0.17908252490798304
+            "latSpan": 0.374473,
+            "lonSpan": 0.179082524908
           },
           {
             "lat": -34.8541185,
-            "latSpan": 0.4444030000000012,
             "lon": 138.6073665,
-            "lonSpan": 0.25774700000002326
+            "latSpan": 0.444403,
+            "lonSpan": 0.257747
           },
           {
             "lat": -34.991378,
-            "latSpan": 0.18545800000000412,
-            "lon": 138.7513752659545,
-            "lonSpan": 0.32939346809101266
+            "lon": 138.751375265954,
+            "latSpan": 0.185458,
+            "lonSpan": 0.329393468091
           },
           {
             "lat": -34.932278,
-            "latSpan": 0.1703159999999997,
             "lon": 138.6044295,
-            "lonSpan": 0.1155210000000011
+            "latSpan": 0.170316,
+            "lonSpan": 0.115521
           }
         ],
+        "language": "en_AU",
+        "contactEmail": "transit@nautilus-tech.com.au",
+        "supportsObaDiscoveryApis": true,
+        "supportsObaRealtimeApis": true,
+        "supportsSiriRealtimeApis": false,
+        "active": true,
+        "obaVersionInfo": "2.1.16|2|1|16|c2155acf754a4dc81ca6c03654dc7409bc5de45f",
+        "twitterUrl": "",
         "facebookUrl": "",
+        "experimental": false,
         "stopInfoUrl": null,
-        "experimental": false
+        "open311Servers": [],
+        "otpBaseUrl": "https://otp.nautilus-tech.com.au/otp/",
+        "otpContactEmail": "transit@nautilus-tech.com.au",
+        "supportsEmbeddedSocial": false,
+        "supportsOtpBikeshare": false,
+        "paymentAndroidAppId": null,
+        "paymentWarningTitle": null,
+        "paymentWarningBody": null,
+        "paymentiOSAppStoreIdentifier": null,
+        "paymentiOSAppUrlScheme": null,
+        "travelBehaviorDataCollectionEnabled": false,
+        "enrollParticipantsInStudy": false
+      },
+      {
+        "id": 16,
+        "regionName": "Davis, CA",
+        "sidecarBaseUrl": "https://sidecar.onebusaway.org",
+        "plausibleAnalyticsServerUrl": "https://analytics.unitrans.onebusawaycloud.com/api",
+        "obaBaseUrl": "https://api.unitrans.onebusawaycloud.com",
+        "siriBaseUrl": null,
+        "bounds": [
+          {
+            "lat": 38.5449155,
+            "lon": -121.7443553,
+            "latSpan": 0.32,
+            "lonSpan": 0.32
+          }
+        ],
+        "language": "en_US",
+        "contactEmail": "unitrans@ucdavis.edu",
+        "supportsObaDiscoveryApis": true,
+        "supportsObaRealtimeApis": true,
+        "supportsSiriRealtimeApis": false,
+        "active": true,
+        "obaVersionInfo": "2.5.13-otsf|2|5|13|otsf|8628b8530d842a2f0414160913ddd0ff11c77005",
+        "twitterUrl": "",
+        "facebookUrl": "",
+        "experimental": true,
+        "stopInfoUrl": null,
+        "open311Servers": [],
+        "otpBaseUrl": null,
+        "otpContactEmail": null,
+        "supportsEmbeddedSocial": false,
+        "supportsOtpBikeshare": false,
+        "paymentAndroidAppId": null,
+        "paymentWarningTitle": null,
+        "paymentWarningBody": null,
+        "paymentiOSAppStoreIdentifier": null,
+        "paymentiOSAppUrlScheme": null,
+        "travelBehaviorDataCollectionEnabled": false,
+        "enrollParticipantsInStudy": false
       }
     ]
   }

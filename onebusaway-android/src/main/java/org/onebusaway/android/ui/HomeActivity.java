@@ -62,6 +62,7 @@ import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PermissionUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
+import org.onebusaway.android.util.ReminderUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.android.widealerts.GtfsAlertsHelper;
@@ -441,8 +442,31 @@ public class HomeActivity extends AppCompatActivity
                 ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_WELCOME, this, null, false);
             }
         }
+
+        // Handle deep link from background FCM notification tap (only on fresh launch, not config change)
+        if (savedInstanceState == null) {
+            handleFcmNotificationIntent(getIntent());
+        }
         initWeatherView();
         setupSurvey();
+    }
+
+    /**
+     * If this activity was launched by tapping an FCM notification (background delivery),
+     * the data payload is in the intent extras. Extract stop_id and deep-link to ArrivalsListActivity.
+     */
+    private void handleFcmNotificationIntent(Intent intent) {
+        if (intent == null || intent.getExtras() == null) {
+            return;
+        }
+        String arrivalJson = intent.getStringExtra("arrival_and_departure");
+        String stopId = ReminderUtils.getStopIdFromPayload(arrivalJson);
+        if (stopId != null) {
+            ReminderUtils.handleArrivalPayload(getApplicationContext(), arrivalJson);
+            Intent arrivalsIntent = new ArrivalsListActivity.Builder(this, stopId).getIntent();
+            arrivalsIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(arrivalsIntent);
+        }
     }
 
     @Override

@@ -46,23 +46,38 @@ public class TripsForRouteRequestTest extends ObaTestCase {
     public void testHARTTripsForRouteRequest() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
-        callHARTTripsForRouteRequest();
+        callHARTTripsForRouteRequestCustomUrl();
         Application.get().setCustomApiUrl(null);
 
         // Test by setting region
         ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
-        callHARTTripsForRouteRequest();
+        callHARTTripsForRouteRequestRegion();
         Application.get().setCurrentRegion(null);
     }
 
-    private void callHARTTripsForRouteRequest() {
+    private void callHARTTripsForRouteRequestCustomUrl() {
         ObaTripsForRouteRequest.Builder builder = new ObaTripsForRouteRequest.Builder(getTargetContext(),
                 TEST_ROUTE_ID);
         ObaTripsForRouteRequest request = builder.build();
         UriAssert.assertUriMatch(
                 "https://api.tampa.onebusaway.org/api/api/where/trips-for-route/" + TEST_ROUTE_ID
+                        + ".json",
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
+                request
+        );
+    }
+
+    private void callHARTTripsForRouteRequestRegion() {
+        ObaTripsForRouteRequest.Builder builder = new ObaTripsForRouteRequest.Builder(getTargetContext(),
+                TEST_ROUTE_ID);
+        ObaTripsForRouteRequest request = builder.build();
+        UriAssert.assertUriMatch(
+                "https://api.tampa.onebusawaycloud.com/api/where/trips-for-route/" + TEST_ROUTE_ID
                         + ".json",
                 new HashMap<String, String>() {{
                     put("key", "*");
@@ -118,23 +133,37 @@ public class TripsForRouteRequestTest extends ObaTestCase {
     public void testNewRequest() {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
-        callNewRequest();
+        callNewRequestCustomUrl();
         Application.get().setCustomApiUrl(null);
 
         // Test by setting region
         ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
-        callNewRequest();
+        callNewRequestRegion();
         Application.get().setCurrentRegion(null);
     }
 
-    private void callNewRequest() {
+    private void callNewRequestCustomUrl() {
         // This is just to make sure we copy and call newRequest() at least once
         ObaTripsForRouteRequest request = ObaTripsForRouteRequest
                 .newRequest(getTargetContext(), TEST_ROUTE_ID);
         UriAssert.assertUriMatch(
                 "https://api.tampa.onebusaway.org/api/api/where/trips-for-route/" + TEST_ROUTE_ID
+                        + ".json",
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
+                request
+        );
+    }
+
+    private void callNewRequestRegion() {
+        ObaTripsForRouteRequest request = ObaTripsForRouteRequest
+                .newRequest(getTargetContext(), TEST_ROUTE_ID);
+        UriAssert.assertUriMatch(
+                "https://api.tampa.onebusawaycloud.com/api/where/trips-for-route/" + TEST_ROUTE_ID
                         + ".json",
                 new HashMap<String, String>() {{
                     put("key", "*");

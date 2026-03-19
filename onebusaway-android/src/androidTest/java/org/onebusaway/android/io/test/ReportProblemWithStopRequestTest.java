@@ -87,7 +87,7 @@ public class ReportProblemWithStopRequestTest extends ObaTestCase {
         ObaReportProblemWithStopRequest request = builder.build();
 
         UriAssert.assertUriMatch(
-                "https://api.tampa.onebusaway.org/api/api/where/report-problem-with-stop.json?" +
+                "https://api.tampa.onebusawaycloud.com/api/where/report-problem-with-stop.json?" +
                         "stopId=Hillsborough%20Area%20Regional%20Transit_4551&code=stop_location_wrong&data=%7B%22code%22%3A%22stop_location_wrong%22%7D" +
                         "&userComment=test&userLat=28.0586583&userLon=-82.416445&userLocationAccuracy=22&app_ver=58&" +
                         "app_uid=fc35c268f18c0929249cdad89e8d5fcc&version=2&" +

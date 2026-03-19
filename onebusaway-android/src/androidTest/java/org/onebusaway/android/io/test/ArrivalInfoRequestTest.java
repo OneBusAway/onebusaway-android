@@ -92,7 +92,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         ObaRegion tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
         Application.get().setCurrentRegion(tampa);
-        _assertHARTStopRequest();
+        _assertHARTStopRequestUsingRegion();
     }
 
     private void _assertHARTStopRequest() {
@@ -102,6 +102,21 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
                 "https://api.tampa.onebusaway.org/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_3105.json",
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
+                request
+        );
+    }
+
+    private void _assertHARTStopRequestUsingRegion() {
+        ObaArrivalInfoRequest.Builder builder =
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
+                        "Hillsborough Area Regional Transit_3105");
+        ObaArrivalInfoRequest request = builder.build();
+        UriAssert.assertUriMatch(
+                "https://api.tampa.onebusawaycloud.com/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_3105.json",
                 new HashMap<String, String>() {{
                     put("key", "*");
                     put("version", "2");

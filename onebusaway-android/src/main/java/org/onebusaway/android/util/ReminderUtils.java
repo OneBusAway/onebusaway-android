@@ -15,21 +15,19 @@
  */
 package org.onebusaway.android.util;
 
-import com.onesignal.notifications.INotification;
-
-import org.json.JSONObject;
-import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.ui.ArrivalsListActivity;
 
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Log;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +36,8 @@ import java.util.List;
  * Utilities to assist in the registering of reminder alarms for arriving/departing buses
  */
 public class ReminderUtils {
+
+    private static final String TAG = "ReminderUtils";
 
     /**
      * Retrieves the short name of a bus route based on the provided route ID.
@@ -48,27 +48,6 @@ public class ReminderUtils {
      */
     public static String getRouteShortName(Context context, String id) {
         return UIUtils.stringForQuery(context, Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, id), ObaContract.Routes.SHORTNAME);
-    }
-
-    /**
-     * Opens the stop information activity when a notification is received.
-     *
-     * @param context the application context
-     * @param notification the notification containing additional data
-     */
-    public static void openStopInfo(Context context, INotification notification) {
-        JSONObject data = notification.getAdditionalData();
-        if (data != null) {
-            try {
-                JSONObject arrivalAndDeparture = data.getJSONObject("arrival_and_departure");
-                String stopId = arrivalAndDeparture.optString("stop_id");
-                Intent intent = new ArrivalsListActivity.Builder(context, stopId).getIntent();
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                context.startActivity(intent);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     /**
@@ -87,7 +66,7 @@ public class ReminderUtils {
         try {
             context.getContentResolver().delete(uri, selection, selectionArgs);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to delete reminder for trip=" + tripId + " stop=" + stopId, e);
         }
     }
 
@@ -107,7 +86,7 @@ public class ReminderUtils {
                 alarmDeletePath = cursor.getString(cursor.getColumnIndexOrThrow(ObaContract.Trips.ALARM_DELETE_PATH));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to get alarm delete path", e);
         }
         return alarmDeletePath;
     }
@@ -121,18 +100,57 @@ public class ReminderUtils {
      */
     public static boolean isAlarmExist(Context context, Uri tripURI) {
         ContentResolver cr = context.getContentResolver();
-        Cursor c = cr.query(tripURI, new String[]{ObaContract.Trips._ID}, null, null, null);
-        return (c != null && c.getCount() > 0);
+        try (Cursor c = cr.query(tripURI, new String[]{ObaContract.Trips._ID}, null, null, null)) {
+            return (c != null && c.getCount() > 0);
+        }
     }
 
     /**
-     * This is not useless it's checking if the app is configured to show reminders
-     * Checks if reminders should be shown to the user
-     * @return true if reminders should be shown, false otherwise
+     * Extracts the stop_id from an FCM arrival_and_departure JSON payload.
+     *
+     * @param arrivalJson the JSON string from the arrival_and_departure FCM data field
+     * @return the stop ID, or null if not present or unparseable
      */
+    public static String getStopIdFromPayload(String arrivalJson) {
+        if (arrivalJson == null) return null;
+        try {
+            JSONObject arrival = new JSONObject(arrivalJson);
+            String stopId = arrival.optString("stop_id", "");
+            return stopId.isEmpty() ? null : stopId;
+        } catch (JSONException e) {
+            Log.e(TAG, "Error parsing arrival_and_departure JSON", e);
+            return null;
+        }
+    }
 
+    /**
+     * Processes an FCM arrival_and_departure payload: extracts trip/stop IDs and
+     * deletes the corresponding saved reminder.
+     *
+     * @param context the application context
+     * @param arrivalJson the JSON string from the arrival_and_departure FCM data field
+     */
+    public static void handleArrivalPayload(Context context, String arrivalJson) {
+        if (arrivalJson == null) return;
+        try {
+            JSONObject arrival = new JSONObject(arrivalJson);
+            String tripId = arrival.optString("trip_id", "");
+            String stopId = arrival.optString("stop_id", "");
+            if (!stopId.isEmpty()) {
+                deleteSavedReminder(context, tripId, stopId);
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "Error parsing arrival_and_departure JSON", e);
+        }
+    }
+
+    /**
+     * Checks if reminders should be available by verifying an FCM push token has been obtained.
+     * Returns false if the token has not yet been fetched or registration failed.
+     */
     public static boolean shouldShowReminders(){
-        return BuildConfig.ONESIGNAL_APP_ID != null && !BuildConfig.ONESIGNAL_APP_ID.isEmpty();
+        String pushId = Application.getUserPushID();
+        return pushId != null && !pushId.isEmpty();
     }
 
     /**

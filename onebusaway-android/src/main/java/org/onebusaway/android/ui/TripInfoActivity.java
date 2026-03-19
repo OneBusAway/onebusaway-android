@@ -547,7 +547,9 @@ public class TripInfoActivity extends AppCompatActivity {
                     finish();
                     Log.d(TAG, "Reminder set successfully");
                 } else {
-                    Log.d(TAG, "Response or url is null");
+                    progressView.setVisibility(View.GONE);
+                    Toast.makeText(getActivity(), R.string.failed_to_set_reminder, Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Reminder response was null or missing URL");
                 }
             });
         }

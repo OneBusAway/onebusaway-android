@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.util;
 
-import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
@@ -25,6 +24,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +61,7 @@ public class ReminderUtils {
         try {
             context.getContentResolver().delete(uri, selection, selectionArgs);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e("ReminderUtils", "Failed to delete reminder for trip=" + tripId + " stop=" + stopId, e);
         }
     }
 
@@ -81,7 +81,7 @@ public class ReminderUtils {
                 alarmDeletePath = cursor.getString(cursor.getColumnIndexOrThrow(ObaContract.Trips.ALARM_DELETE_PATH));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e("ReminderUtils", "Failed to get alarm delete path", e);
         }
         return alarmDeletePath;
     }
@@ -95,18 +95,18 @@ public class ReminderUtils {
      */
     public static boolean isAlarmExist(Context context, Uri tripURI) {
         ContentResolver cr = context.getContentResolver();
-        Cursor c = cr.query(tripURI, new String[]{ObaContract.Trips._ID}, null, null, null);
-        return (c != null && c.getCount() > 0);
+        try (Cursor c = cr.query(tripURI, new String[]{ObaContract.Trips._ID}, null, null, null)) {
+            return (c != null && c.getCount() > 0);
+        }
     }
 
     /**
-     * This is not useless it's checking if the app is configured to show reminders
-     * Checks if reminders should be shown to the user
-     * @return true if reminders should be shown, false otherwise
+     * Checks if reminders should be available by verifying an FCM push token has been obtained.
+     * Returns false if the token has not yet been fetched or registration failed.
      */
-
     public static boolean shouldShowReminders(){
-        return Application.getUserPushID() != null && !Application.getUserPushID().isEmpty();
+        String pushId = Application.getUserPushID();
+        return pushId != null && !pushId.isEmpty();
     }
 
     /**

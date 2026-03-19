@@ -685,7 +685,7 @@ public class Application extends android.app.Application {
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
                     if (!task.isSuccessful()) {
-                        Log.w(TAG, "Fetching FCM registration token failed", task.getException());
+                        Log.e(TAG, "Fetching FCM registration token failed", task.getException());
                         return;
                     }
                     String token = task.getResult();
@@ -695,8 +695,8 @@ public class Application extends android.app.Application {
 
     public static String getUserPushID() {
         SharedPreferences preferences = getPrefs();
-        return preferences.getString(get().
-                getApplicationContext().getString(R.string.firebase_messaging_token), "");
+        String key = get().getApplicationContext().getString(R.string.firebase_messaging_token);
+        return preferences.getString(key, "");
     }
 
 }

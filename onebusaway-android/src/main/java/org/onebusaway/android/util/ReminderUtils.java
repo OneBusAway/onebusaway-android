@@ -34,6 +34,8 @@ import java.util.List;
  */
 public class ReminderUtils {
 
+    private static final String TAG = "ReminderUtils";
+
     /**
      * Retrieves the short name of a bus route based on the provided route ID.
      *
@@ -61,7 +63,7 @@ public class ReminderUtils {
         try {
             context.getContentResolver().delete(uri, selection, selectionArgs);
         } catch (Exception e) {
-            Log.e("ReminderUtils", "Failed to delete reminder for trip=" + tripId + " stop=" + stopId, e);
+            Log.e(TAG, "Failed to delete reminder for trip=" + tripId + " stop=" + stopId, e);
         }
     }
 
@@ -81,7 +83,7 @@ public class ReminderUtils {
                 alarmDeletePath = cursor.getString(cursor.getColumnIndexOrThrow(ObaContract.Trips.ALARM_DELETE_PATH));
             }
         } catch (Exception e) {
-            Log.e("ReminderUtils", "Failed to get alarm delete path", e);
+            Log.e(TAG, "Failed to get alarm delete path", e);
         }
         return alarmDeletePath;
     }

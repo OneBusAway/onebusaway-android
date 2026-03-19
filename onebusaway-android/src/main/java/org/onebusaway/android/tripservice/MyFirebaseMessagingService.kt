@@ -1,14 +1,11 @@
 package org.onebusaway.android.tripservice
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -29,6 +26,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     companion object {
         private const val TAG = "FirebaseMsgService"
+        private const val NOTIFICATION_COLOR = 0xFF4CAF50.toInt()
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -50,11 +48,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             val stopId = arrivalAndDepartureData.optString("stop_id", "")
             Log.d(TAG, "Received reminder for stopId: $stopId, tripId: $tripId")
 
-            ReminderUtils.deleteSavedReminder(
-                Application.get().applicationContext, tripId, stopId
-            )
-
-            showNotification(message, stopId, notificationID)
+            val context = Application.get().applicationContext
+            ReminderUtils.deleteSavedReminder(context, tripId, stopId)
+            showNotification(context, message, stopId, notificationID)
         } catch (e: JSONException) {
             Log.e(TAG, "Error parsing notification JSON: ${e.message}", e)
         }
@@ -66,9 +62,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         Log.d(TAG, "FCM token refreshed")
     }
 
-    private fun showNotification(message: String, stopId: String, notificationID: Int = 0) {
-        val context = Application.get().applicationContext
-
+    private fun showNotification(context: Context, message: String, stopId: String, notificationID: Int) {
         val intent = ArrivalsListActivity.Builder(context, stopId).intent
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         val pendingIntent = PendingIntent.getActivity(
@@ -79,7 +73,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val notificationBuilder =
             NotificationCompat.Builder(this, Application.CHANNEL_ARRIVAL_REMINDERS_ID)
                 .setSmallIcon(R.drawable.ic_stat_notification)
-                .setColor(Color.parseColor("#4CAF50"))
+                .setColor(NOTIFICATION_COLOR)
                 .setContentText(message)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
@@ -87,12 +81,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         val appPrefs = Application.getPrefs()
 
-        val vibratePreference = appPrefs.getBoolean("preference_vibrate_allowed", true)
-        if (vibratePreference) {
+        if (appPrefs.getBoolean(getString(R.string.preference_key_preference_vibrate_allowed), true)) {
             notificationBuilder.setDefaults(Notification.DEFAULT_VIBRATE)
         }
 
-        val soundPreference = appPrefs.getString("preference_notification_sound", "")
+        val soundPreference = appPrefs.getString(getString(R.string.preference_key_notification_sound), "")
         if (soundPreference.isNullOrEmpty()) {
             notificationBuilder.setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
         } else {
@@ -101,19 +94,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                Application.CHANNEL_ARRIVAL_REMINDERS_ID,
-                "Reminders",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notification for arrival reminders"
-                setShowBadge(true)
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
-
         notificationManager.notify(notificationID, notificationBuilder.build())
     }
 }

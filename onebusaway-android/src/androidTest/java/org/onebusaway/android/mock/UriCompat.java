@@ -36,7 +36,7 @@ public class UriCompat {
     }
 
     //
-    // Copied from newer Uri sources, useable with < 11 APIs.
+    // Copied from newer Uri sources, usable with < 11 APIs.
     //
     private static Set<String> getQueryParameterNames_10(Uri uri) {
         String query = uri.getEncodedQuery();

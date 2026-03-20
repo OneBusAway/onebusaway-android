@@ -31,6 +31,8 @@ import org.maplibre.android.maps.OnMapReadyCallback;
 import org.maplibre.android.maps.Style;
 import org.maplibre.android.maps.SupportMapFragment;
 import org.maplibre.android.maps.UiSettings;
+import org.maplibre.android.annotations.Polyline;
+import org.maplibre.android.annotations.PolylineOptions;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -136,6 +138,8 @@ public class MapLibreMapFragment extends SupportMapFragment
     private String mFocusStopId;
 
     private StopOverlay mStopOverlay;
+    private VehicleOverlay mVehicleOverlay;
+    private BikeStationOverlay mBikeStationOverlay;
 
     private boolean mWarnOutOfRange = true;
     private boolean mRunning = false;
@@ -144,6 +148,8 @@ public class MapLibreMapFragment extends SupportMapFragment
     private String mMapMode = "";
 
     private SimpleMarkerOverlay mSimpleMarkerOverlay;
+
+    private final ArrayList<Polyline> mLineOverlay = new ArrayList<>();
 
     private LatLng mCenter;
     private Location mCenterLocation;
@@ -292,6 +298,9 @@ public class MapLibreMapFragment extends SupportMapFragment
 
         // Listen for map/marker clicks
         mMap.addOnMapClickListener(point -> {
+            if (mBikeStationOverlay != null) {
+                mBikeStationOverlay.removeMarkerClicked(point);
+            }
             if (mStopOverlay != null) {
                 mStopOverlay.removeMarkerClicked(point);
             }
@@ -299,10 +308,30 @@ public class MapLibreMapFragment extends SupportMapFragment
         });
 
         mMap.setOnMarkerClickListener(marker -> {
+            if (mVehicleOverlay != null) {
+                if (mVehicleOverlay.markerClicked(marker)) {
+                    return true;
+                }
+            }
+            if (mBikeStationOverlay != null) {
+                if (mBikeStationOverlay.markerClicked(marker)) {
+                    return true;
+                }
+            }
             if (mStopOverlay != null) {
                 if (mStopOverlay.markerClicked(marker)) {
                     return true;
                 }
+            }
+            return false;
+        });
+
+        mMap.setOnInfoWindowClickListener(marker -> {
+            if (mVehicleOverlay != null && mVehicleOverlay.onInfoWindowClick(marker)) {
+                return true;
+            }
+            if (mBikeStationOverlay != null && mBikeStationOverlay.onInfoWindowClick(marker)) {
+                return true;
             }
             return false;
         });
@@ -545,6 +574,7 @@ public class MapLibreMapFragment extends SupportMapFragment
             mStopOverlay.clear(false);
         }
         BikeshareMapController bikeshareMapController = new BikeshareMapController(this);
+        setupBikeStationOverlay();
         if (MapParams.MODE_ROUTE.equals(mode)) {
             RouteMapController controller = new RouteMapController(this);
             mControllers.add(controller);
@@ -587,13 +617,26 @@ public class MapLibreMapFragment extends SupportMapFragment
 
     @Override
     public void showBikeStations(List<BikeRentalStation> bikeStations) {
-        // Stub for milestone 1 — BikeStationOverlay not yet ported
-        Log.w(TAG, "showBikeStations() is not yet implemented for MapLibre");
+        setupBikeStationOverlay();
+        if (mBikeStationOverlay != null) {
+            mBikeStationOverlay.addBikeStations(bikeStations);
+        }
     }
 
     @Override
     public void clearBikeStations() {
-        // Stub for milestone 1
+        if (mBikeStationOverlay != null) {
+            mBikeStationOverlay.clearBikeStations();
+        }
+    }
+
+    private void setupBikeStationOverlay() {
+        Activity a = getActivity();
+        if (mBikeStationOverlay == null && a != null && mMap != null) {
+            boolean isDirectionsMode = MapParams.MODE_DIRECTIONS.equals(mMapMode);
+            mBikeStationOverlay = new BikeStationOverlay(a, mMap, isDirectionsMode);
+            mBikeStationOverlay.setOnFocusChangeListener(mOnFocusChangedListener);
+        }
     }
 
     @Override
@@ -810,8 +853,29 @@ public class MapLibreMapFragment extends SupportMapFragment
 
     @Override
     public void setRouteOverlay(int lineOverlayColor, ObaShape[] shapes, boolean clear) {
-        // Stub for milestone 1 — route polyline rendering not yet ported
-        Log.w(TAG, "setRouteOverlay() is not yet implemented for MapLibre");
+        if (mMap == null) {
+            return;
+        }
+        if (clear) {
+            removeRouteOverlay();
+        }
+
+        int totalPoints = 0;
+
+        for (ObaShape s : shapes) {
+            PolylineOptions lineOptions = new PolylineOptions()
+                    .color(lineOverlayColor)
+                    .width(5.0f);
+
+            for (Location l : s.getPoints()) {
+                lineOptions.add(MapHelpMapLibre.makeLatLng(l));
+            }
+
+            mLineOverlay.add(mMap.addPolyline(lineOptions));
+            totalPoints += lineOptions.getPoints().size();
+        }
+
+        Log.d(TAG, "Total points for route polylines = " + totalPoints);
     }
 
     @Override
@@ -821,37 +885,110 @@ public class MapLibreMapFragment extends SupportMapFragment
 
     @Override
     public void updateVehicles(HashSet<String> routeIds, ObaTripsForRouteResponse response) {
-        // Stub for milestone 1 — VehicleOverlay not yet ported
-        Log.w(TAG, "updateVehicles() is not yet implemented for MapLibre");
+        setupVehicleOverlay();
+        if (mVehicleOverlay != null) {
+            mVehicleOverlay.updateVehicles(routeIds, response);
+        }
     }
 
     @Override
     public void removeVehicleOverlay() {
-        // Stub for milestone 1
+        if (mVehicleOverlay != null) {
+            mVehicleOverlay.clear();
+        }
+    }
+
+    private void setupVehicleOverlay() {
+        Activity a = getActivity();
+        if (mVehicleOverlay == null && a != null && mMap != null) {
+            mVehicleOverlay = new VehicleOverlay(a, mMap);
+            mVehicleOverlay.setController(this::getFocusedStopId);
+        }
+    }
+
+    private String getFocusedStopId() {
+        return mFocusStopId;
     }
 
     @Override
     public void zoomToRoute() {
-        // Stub for milestone 1
-        Log.w(TAG, "zoomToRoute() is not yet implemented for MapLibre");
+        if (mMap == null) {
+            return;
+        }
+        if (!mLineOverlay.isEmpty()) {
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            for (Polyline p : mLineOverlay) {
+                for (LatLng l : p.getPoints()) {
+                    builder.include(l);
+                }
+            }
+            Activity a = getActivity();
+            if (a != null) {
+                int padding = UIUtils.dpToPixels(a, DEFAULT_MAP_PADDING_DP);
+                mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), padding));
+            }
+        } else {
+            Toast.makeText(getActivity(), getString(R.string.route_info_no_shape_data),
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
     public void zoomToItinerary() {
-        // Stub for milestone 1
-        Log.w(TAG, "zoomToItinerary() is not yet implemented for MapLibre");
+        if (mMap == null) {
+            return;
+        }
+        if (!mLineOverlay.isEmpty()) {
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            for (Polyline p : mLineOverlay) {
+                for (LatLng l : p.getPoints()) {
+                    builder.include(l);
+                }
+            }
+            Activity a = getActivity();
+            if (a != null) {
+                int padding = UIUtils.dpToPixels(a, DEFAULT_MAP_PADDING_DP);
+                mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(),
+                        getResources().getDisplayMetrics().widthPixels,
+                        getResources().getDisplayMetrics().heightPixels,
+                        padding));
+            }
+        }
     }
 
     @Override
     public void zoomIncludeClosestVehicle(HashSet<String> routeIds,
                                           ObaTripsForRouteResponse response) {
-        // Stub for milestone 1
-        Log.w(TAG, "zoomIncludeClosestVehicle() is not yet implemented for MapLibre");
+        if (mMap == null) {
+            return;
+        }
+        LatLng closestVehicleLocation = MapHelpMapLibre
+                .getClosestVehicle(response, routeIds, getMapCenterAsLocation());
+
+        LatLngBounds visibleBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
+
+        if (closestVehicleLocation == null || visibleBounds.contains(closestVehicleLocation)) {
+            return;
+        }
+
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        builder.include(new LatLng(visibleBounds.getLatNorth(), visibleBounds.getLonEast()));
+        builder.include(new LatLng(visibleBounds.getLatSouth(), visibleBounds.getLonWest()));
+        builder.include(closestVehicleLocation);
+
+        Activity a = getActivity();
+        if (a != null) {
+            int padding = UIUtils.dpToPixels(a, DEFAULT_MAP_PADDING_DP);
+            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), padding));
+        }
     }
 
     @Override
     public void removeRouteOverlay() {
-        // Stub for milestone 1
+        for (Polyline p : mLineOverlay) {
+            mMap.removeAnnotation(p);
+        }
+        mLineOverlay.clear();
     }
 
     @Override

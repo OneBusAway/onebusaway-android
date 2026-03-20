@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2025 Rob Godfrey (rob_godfrey@outlook.com)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/widget_config_background">
+
+    <LinearLayout
+            android:id="@+id/config_root"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="16dp">
+
+        <!-- Title -->
+        <TextView
+                android:id="@+id/config_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_config_add_stop_widget"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:layout_marginBottom="20dp" />
+
+        <!-- Stop selector -->
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_config_selected_stop"
+                android:textAppearance="?attr/textAppearanceLabelMedium"
+                android:layout_marginBottom="6dp" />
+
+        <com.google.android.material.button.MaterialButton
+                android:id="@+id/select_stop"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:text="@string/widget_config_select_a_stop"
+                android:textColor="@color/widget_config_button_text"
+                android:gravity="start|center_vertical"
+                app:icon="@drawable/ic_btn_search"
+                app:iconTint="@color/widget_config_button_text"
+                app:iconGravity="start" />
+
+        <!-- Widget name -->
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_config_widget_name"
+                android:textAppearance="?attr/textAppearanceLabelMedium"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="6dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/widget_name_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:inputType="textCapWords"
+                    android:maxLines="1" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Routes -->
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_config_selected_routes"
+                android:textAppearance="?attr/textAppearanceLabelMedium"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="2dp" />
+
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_config_chip_selection_instructions"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?android:textColorSecondary"
+                android:layout_marginBottom="6dp" />
+
+        <TextView
+                android:id="@+id/routes_loading"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_config_loading_routes"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?android:textColorSecondary"
+                android:visibility="gone" />
+
+        <com.google.android.material.chip.ChipGroup
+                android:id="@+id/route_chips"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleSelection="false"
+                app:chipSpacingHorizontal="4dp"
+                app:chipSpacingVertical="6dp" />
+
+        <!-- Save button -->
+        <com.google.android.material.button.MaterialButton
+                android:id="@+id/save_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:textColor="@color/widget_config_button_text"
+                android:text="@string/widget_config_save_widget" />
+
+    </LinearLayout>
+
+</ScrollView>

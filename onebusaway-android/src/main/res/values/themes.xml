@@ -83,4 +83,13 @@
         <item name="android:textColor">@color/theme_primary</item>
     </style>
 
+    <style name="Theme.OneBusAway.AppWidgetContainerParent" parent="@android:style/Theme.DeviceDefault">
+        <item name="appWidgetRadius">16dp</item>
+        <item name="appWidgetInnerRadius">8dp</item>
+    </style>
+
+    <style name="Theme.OneBusAway.AppWidgetContainer" parent="Theme.OneBusAway.AppWidgetContainerParent">
+        <item name="appWidgetPadding">16dp</item>
+    </style>
+
 </resources>

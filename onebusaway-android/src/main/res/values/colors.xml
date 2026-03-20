@@ -114,6 +114,17 @@
     <color name="trip_plan_card_background_selected">@color/md_theme_secondaryContainer</color>
     <color name="trip_plan_header_text_selected">@color/md_theme_onSecondaryContainer</color>
 
+    <!-- Widget -->
+    <color name="widget_background">@color/md_theme_surfaceContainer</color>
+    <color name="widget_header_text">@android:color/white</color>
+    <color name="widget_eta_text">@android:color/white</color>
+    <color name="widget_refresh_spinner">@color/theme_muted</color>
+    <color name="widget_refresh_icon">@color/theme_muted</color>
+    <color name="widget_route_name_text">@color/body_text_1</color>
+    <color name="widget_footer_text">@color/body_text_3</color>
+    <color name="widget_config_background">@color/md_theme_surfaceContainer</color>
+    <color name="widget_config_button_text">@android:color/white</color>
+
     <!-- Layers -->
     <color name="layer_disabled">#FF777777</color>
     <color name="layer_bikeshare_color">#3a4677</color>

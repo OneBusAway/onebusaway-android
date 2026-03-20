@@ -47,7 +47,9 @@
     <!--To enable checkBatteryOptimizations feature, also uncomment checkBatteryOptimizations() in
     the HomeActivity's onCreate() method-->
     <!--<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>-->
-    <!-- For reminders - SCHEDULE_EXACT_ALARM is required when targeting Android 12 or higher-->
+    <!-- Exact alarms for widget refresh timers. USE_EXACT_ALARM (API 33+) is auto-granted;
+         SCHEDULE_EXACT_ALARM (API 31-32) requires user approval but is needed for reminders too. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" android:minSdkVersion="33"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <!-- For notifications, POST_NOTIFICATIONS is required when targeting Android 12 or higher-->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
@@ -289,6 +291,14 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.onebusaway.android.ui.HomeActivity"/>
         </activity>
+        <activity
+            android:name=".ui.widget.StopTimesWidgetConfigActivity"
+            android:exported="true"
+            android:theme="@style/WidgetConfigDialogTheme"/>
+        <activity
+            android:name=".ui.widget.StopPickerActivity"
+            android:exported="false"
+            android:label="@string/widget_config_select_a_stop" />
 
 
         <!-- Provider is defined in build.gradle flavors -->
@@ -334,6 +344,17 @@
         </receiver>
         <receiver
             android:enabled="true" android:name=".travelbehavior.receiver.LocationBroadcastReceiver">
+        </receiver>
+        <receiver
+            android:name=".ui.widget.StopTimesWidget"
+            android:label="@string/widget_label"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/stop_times_widget_info" />
         </receiver>
 
         <meta-data

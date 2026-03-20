@@ -1557,6 +1557,11 @@ public final class UIUtils {
      */
     public static List<ObaSituation> getAllSituations(final ObaArrivalInfoResponse response, List<String> filter) {
         List<ObaSituation> allSituations = new ArrayList<>();
+
+        if (response == null) {
+            return allSituations;
+        }
+
         // Add agency-wide and stop-specific alerts
         allSituations.addAll(response.getSituations());
 
@@ -1578,9 +1583,16 @@ public final class UIUtils {
         // If a filter list exists and a route_id is not included in the filter list, don't included
         // it's situations in the returned list.
         ObaArrivalInfo[] info = response.getArrivalInfo();
+        if (info == null) {
+            return allSituations;
+        }
         for (ObaArrivalInfo i : info) {
+            String[] situationIds = i.getSituationIds();
+            if (situationIds == null) {
+                continue;
+            }
             if (filterIds.isEmpty() || filterIds.contains(i.getRouteId())) {
-                for (String situationId : i.getSituationIds()) {
+                for (String situationId : situationIds) {
                     if (!allIds.contains(situationId)) {
                         allIds.add(situationId);
                         allSituations.add(response.getSituation(situationId));

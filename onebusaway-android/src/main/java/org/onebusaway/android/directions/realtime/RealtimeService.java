@@ -374,13 +374,11 @@ public class RealtimeService extends IntentService {
             return null;
         }
 
-        ItineraryDescription desc;
-        try {
-            desc = new ItineraryDescription(itinerary);
-        } catch (NullPointerException | IndexOutOfBoundsException e) {
-            Log.e(TAG, "getSimplifiedBundle: error creating ItineraryDescription", e);
+        if (itinerary.legs == null || itinerary.legs.isEmpty()) {
+            Log.w(TAG, "getSimplifiedBundle: itinerary has no legs");
             return null;
         }
+        ItineraryDescription desc = new ItineraryDescription(itinerary);
 
         Bundle extras = new Bundle();
         try {

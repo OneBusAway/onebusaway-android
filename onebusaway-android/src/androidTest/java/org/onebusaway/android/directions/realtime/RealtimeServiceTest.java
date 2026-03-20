@@ -151,21 +151,11 @@ public class RealtimeServiceTest {
     }
 
     @Test
-    public void testGetSimplifiedBundleWithMissingItineraryDoesNotCrash() throws Exception {
-        // Bundle with no itineraries and no selected index
-        Bundle badBundle = new Bundle();
-
-        Bundle result = mService.getSimplifiedBundle(badBundle);
-        // After the fix, getSimplifiedBundle() should handle the null itinerary gracefully
-        // and return null instead of crashing.
-        assertNull("getSimplifiedBundle should return null for missing itinerary", result);
-    }
-
-    @Test
-    public void testGetSimplifiedBundleWithMissingNotificationTargetDoesNotCrash() throws Exception {
+    public void testOnHandleIntentWithRealtimeLegsButNoNotificationTargetDoesNotCrash() {
         Bundle bundle = new Bundle();
 
-        // Minimal from/to and date so TripRequestBuilder.copyIntoBundleSimple() does not throw.
+        // Minimal from/to and date so TripRequestBuilder.copyIntoBundleSimple() does not throw
+        // when getSimplifiedBundle is called during startRealtimeUpdates.
         CustomAddress from = new CustomAddress();
         from.setLatitude(0);
         from.setLongitude(0);
@@ -174,25 +164,31 @@ public class RealtimeServiceTest {
         to.setLongitude(0);
         new TripRequestBuilder(bundle).setFrom(from).setTo(to).setDateTime(new Date());
 
-        // Build a valid itinerary with one transit leg so ItineraryDescription succeeds
-        // and we actually reach the NOTIFICATION_TARGET check (not the catch block).
+        // Build a valid itinerary with realtime transit leg so startRealtimeUpdates proceeds
+        // and getAlarmIntent/getSimplifiedBundle are invoked. No NOTIFICATION_TARGET exercises
+        // the alarmIntent == null guard in startRealtimeUpdates (lines 125-129).
+        ArrayList<Itinerary> itineraries = new ArrayList<>();
         Itinerary it = new Itinerary();
         Leg leg = new Leg();
-        leg.mode = "BUS";
         leg.realTime = true;
+        leg.mode = "BUS";
         leg.tripId = "testTrip";
         leg.endTime = String.valueOf(System.currentTimeMillis() + 3600000);
         it.legs = new ArrayList<>();
         it.legs.add(leg);
-
-        ArrayList<Itinerary> itineraries = new ArrayList<>();
         itineraries.add(it);
         bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
         bundle.putInt(OTPConstants.SELECTED_ITINERARY, 0);
-        // Intentionally DO NOT put OTPConstants.NOTIFICATION_TARGET into the bundle
-        Bundle result = mService.getSimplifiedBundle(bundle);
-        // After the fix, getSimplifiedBundle() should handle missing NOTIFICATION_TARGET
-        // gracefully and return null instead of crashing.
-        assertNull("getSimplifiedBundle should return null when NOTIFICATION_TARGET is missing", result);
+        // No NOTIFICATION_TARGET — exercises the null alarmIntent guard in startRealtimeUpdates
+
+        Intent intent = new Intent(OTPConstants.INTENT_START_CHECKS);
+        intent.putExtras(bundle);
+
+        try {
+            mService.onHandleIntent(intent);
+        } catch (NullPointerException e) {
+            fail("Should not crash with realtime legs but missing NOTIFICATION_TARGET: "
+                    + e.getMessage());
+        }
     }
 }

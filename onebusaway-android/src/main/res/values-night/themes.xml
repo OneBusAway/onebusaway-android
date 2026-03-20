@@ -51,8 +51,8 @@
         <item name="colorSecondary">@color/theme_primary_brand</item>
     </style>
 
-    <style name="customAlertDialogButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">@color/theme_primary_brand</item>
+    <style name="customAlertDialogButton" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/theme_primary</item>
     </style>
 
 </resources>

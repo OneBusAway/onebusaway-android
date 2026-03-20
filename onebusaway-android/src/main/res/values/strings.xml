@@ -371,6 +371,8 @@
     </string>
     <string name="starred_stop_arrival_now">NOW</string>
     <string name="starred_stop_arrival_min">%1$d min</string>
+    <string name="arrival_badge_content_description_now">Route %1$s, arriving now</string>
+    <string name="arrival_badge_content_description_min">Route %1$s, arriving in %2$d minutes</string>
     <string name="starred_stop_arrival_badge">%1$s - %2$s</string>
     <string name="my_no_starred_routes">You have no starred routes.\n\nYou can add a star to a route
         on the arrivals screen by tapping on the star next to the route number.

@@ -124,7 +124,7 @@ public class RealtimeService extends IntentService {
 
             PendingIntent alarmIntent = getAlarmIntent(params);
             if (alarmIntent == null) {
-                Log.w(TAG, "Not scheduling realtime updates - unable to build alarm PendingIntent");
+                Log.e(TAG, "Not scheduling realtime updates - unable to build alarm PendingIntent");
                 return;
             }
 
@@ -323,7 +323,7 @@ public class RealtimeService extends IntentService {
         if (bundle != null) {
             Bundle extras = getSimplifiedBundle(bundle);
             if (extras == null) {
-                Log.w(TAG, "getAlarmIntent: simplified bundle is null, returning null PendingIntent");
+                Log.e(TAG, "getAlarmIntent: simplified bundle is null, returning null PendingIntent");
                 return null;
             }
             intent.putExtras(extras);
@@ -384,7 +384,7 @@ public class RealtimeService extends IntentService {
         Bundle extras = new Bundle();
         try {
             new TripRequestBuilder(params).copyIntoBundleSimple(extras);
-        } catch (Exception e) {
+        } catch (NullPointerException e) {
             Log.e(TAG, "getSimplifiedBundle: error copying trip params into bundle", e);
             return null;
         }

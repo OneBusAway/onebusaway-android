@@ -1106,7 +1106,8 @@ public class MapLibreMapFragment extends SupportMapFragment
                             (dialog, which) -> {
                                 MapLibreMapFragment mapFragment =
                                         (MapLibreMapFragment) getParentFragment();
-                                if (mapFragment != null && mapFragment.isAdded()) {
+                                if (mapFragment != null && mapFragment.isAdded()
+                                        && mapFragment.mControllers != null) {
                                     for (MapModeController controller : mapFragment.mControllers) {
                                         controller.onLocation();
                                     }

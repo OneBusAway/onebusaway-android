@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2025 Rob Godfrey (rob_godfrey@outlook.com)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/widget_root"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/widget_background">
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+        <!-- Header row: title + refresh -->
+        <LinearLayout
+                android:id="@+id/stop_times_widget_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="18dp"
+                android:background="@drawable/widget_header_bg"
+                android:paddingVertical="6dp"
+                android:layout_marginBottom="4dp">
+
+            <TextView
+                    android:id="@+id/stop_times_widget_title"
+                    android:layout_width="0dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="@color/widget_header_text" />
+
+            <ImageView
+                    android:id="@+id/refresh_header"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_action_navigation_refresh"
+                    android:tint="@color/widget_refresh_icon" />
+        </LinearLayout>
+
+        <!-- Spacer between header and first route row -->
+        <TextView
+                android:id="@+id/header_spacer"
+                android:layout_width="match_parent"
+                android:layout_height="4dp" />
+
+        <!-- Arrival row 1 -->
+        <LinearLayout
+                android:id="@+id/widget_route_1_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:visibility="gone"
+                android:paddingHorizontal="18dp">
+
+            <TextView
+                    android:id="@+id/widget_route_1_title"
+                    android:layout_width="68dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/widget_route_name_text" />
+
+            <TextView
+                    android:id="@+id/widget_route_1_eta_1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:background="@drawable/widget_eta_bg_scheduled"
+                    android:maxLines="1"
+                    android:minWidth="50dp"
+                    android:textSize="15sp"
+                    android:textColor="@color/widget_eta_text" />
+
+            <TextView
+                    android:id="@+id/widget_route_1_eta_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:layout_marginStart="5dp"
+                    android:background="@drawable/widget_eta_bg_scheduled"
+                    android:maxLines="1"
+                    android:minWidth="50dp"
+                    android:textSize="15sp"
+                    android:textColor="@color/widget_eta_text" />
+
+            <TextView
+                    android:id="@+id/widget_route_1_eta_3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:layout_marginStart="5dp"
+                    android:background="@drawable/widget_eta_bg_scheduled"
+                    android:maxLines="1"
+                    android:minWidth="50dp"
+                    android:textSize="15sp"
+                    android:textColor="@color/widget_eta_text" />
+        </LinearLayout>
+
+        <!-- Arrival row 2 -->
+        <LinearLayout
+                android:id="@+id/widget_route_2_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                android:paddingHorizontal="18dp">
+
+            <TextView
+                    android:id="@+id/widget_route_2_title"
+                    android:layout_width="68dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/widget_route_name_text" />
+
+            <TextView
+                    android:id="@+id/widget_route_2_eta_1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:background="@drawable/widget_eta_bg_scheduled"
+                    android:maxLines="1"
+                    android:minWidth="50dp"
+                    android:textSize="15sp"
+                    android:textColor="@color/widget_eta_text" />
+
+            <TextView
+                    android:id="@+id/widget_route_2_eta_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:layout_marginStart="5dp"
+                    android:background="@drawable/widget_eta_bg_scheduled"
+                    android:maxLines="1"
+                    android:minWidth="50dp"
+                    android:textSize="15sp"
+                    android:textColor="@color/widget_eta_text" />
+
+            <TextView
+                    android:id="@+id/widget_route_2_eta_3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:layout_marginStart="5dp"
+                    android:background="@drawable/widget_eta_bg_scheduled"
+                    android:maxLines="1"
+                    android:minWidth="50dp"
+                    android:textSize="15sp"
+                    android:textColor="@color/widget_eta_text" />
+        </LinearLayout>
+
+        <!-- Arrival row 3 -->
+        <LinearLayout
+                android:id="@+id/widget_route_3_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:visibility="gone"
+                android:paddingHorizontal="18dp">
+
+            <TextView
+                    android:id="@+id/widget_route_3_title"
+                    android:layout_width="68dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/widget_route_name_text" />
+
+            <TextView
+                    android:id="@+id/widget_route_3_eta_1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:background="@drawable/widget_eta_bg_scheduled"
+                    android:maxLines="1"
+                    android:minWidth="50dp"
+                    android:textSize="15sp"
+                    android:textColor="@color/widget_eta_text" />
+
+            <TextView
+                    android:id="@+id/widget_route_3_eta_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:layout_marginStart="5dp"
+                    android:background="@drawable/widget_eta_bg_scheduled"
+                    android:maxLines="1"
+                    android:minWidth="50dp"
+                    android:textSize="15sp"
+                    android:textColor="@color/widget_eta_text" />
+
+            <TextView
+                    android:id="@+id/widget_route_3_eta_3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:layout_marginStart="5dp"
+                    android:background="@drawable/widget_eta_bg_scheduled"
+                    android:maxLines="1"
+                    android:minWidth="50dp"
+                    android:textSize="15sp"
+                    android:textColor="@color/widget_eta_text" />
+        </LinearLayout>
+
+        <!-- Loading spinner, shown while fetching arrivals -->
+        <ProgressBar
+                android:id="@+id/widget_loading_spinner"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:indeterminateTint="@color/widget_refresh_spinner" />
+
+    </LinearLayout>
+
+    <!-- Footer -->
+    <LinearLayout
+            android:id="@+id/widget_footer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="20dp">
+
+        <TextView
+                android:id="@+id/widget_updated_at"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="10sp"
+                android:paddingBottom="4dp"
+                android:textColor="@color/widget_footer_text" />
+    </LinearLayout>
+
+</LinearLayout>

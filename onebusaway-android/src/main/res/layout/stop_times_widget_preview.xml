@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2025 Rob Godfrey (rob_godfrey@outlook.com)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/widget_root"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/widget_background">
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+        <!-- Header row: title + refresh -->
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:background="@color/theme_primary"
+                android:paddingVertical="4dp"
+                android:layout_marginBottom="4dp">
+
+            <TextView
+                    android:id="@+id/preview_stop_name"
+                    android:layout_width="0dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:maxLines="1"
+                    android:text="3rd &amp; Pike"
+                    android:ellipsize="end"
+                    android:textColor="@color/widget_header_text" />
+
+            <ImageView
+                    android:id="@+id/refresh_header"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_action_navigation_refresh"
+                    android:tint="@color/widget_refresh_icon" />
+        </LinearLayout>
+
+        <!-- Arrival row 1 -->
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp">
+
+            <TextView
+                    android:id="@+id/widget_route_1_title"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/widget_preview_route_name"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/widget_route_name_text" />
+
+            <TextView
+                    android:id="@+id/widget_route_1_eta_1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="2dp"
+                    android:background="@drawable/widget_eta_bg_on_time"
+                    android:maxLines="1"
+                    android:minWidth="50dp"
+                    android:text="@string/stop_info_eta_now"
+                    android:textSize="13sp"
+                    android:textColor="@color/widget_eta_text" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Footer -->
+    <LinearLayout
+            android:id="@+id/widget_footer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="18dp">
+
+        <TextView
+                android:id="@+id/widget_updated_at"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/widget_preview_updated_at"
+                android:textSize="8sp"
+                android:paddingBottom="4dp"
+                android:textColor="@color/widget_footer_text" />
+    </LinearLayout>
+
+</LinearLayout>

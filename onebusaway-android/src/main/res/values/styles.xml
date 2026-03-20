@@ -269,4 +269,17 @@
     <style name="CustomText2" parent="TextAppearance.ShowcaseView.Detail.Light">
         <item name="android:textColor">@color/tutorial_text</item>
     </style>
+
+    <style name="Widget.Onebusawayandroid.AppWidget.Container" parent="android:Widget">
+        <item name="android:id">@android:id/background</item>
+        <item name="android:background">?android:attr/colorBackground</item>
+    </style>
+
+    <style name="WidgetConfigDialogTheme" parent="Theme.Material3.DayNight.Dialog">
+        <item name="colorPrimary">@color/theme_primary</item>
+        <item name="colorPrimaryVariant">@color/theme_primary_variant</item>
+        <item name="dialogCornerRadius">24dp</item>
+        <item name="android:windowMinWidthMajor">90%</item>
+        <item name="android:windowMinWidthMinor">90%</item>
+    </style>
 </resources>

@@ -30,7 +30,7 @@ import java.util.Comparator;
 
 public class ArrivalInfoUtils {
 
-    final static class InfoComparator implements Comparator<ArrivalInfo> {
+    public final static class InfoComparator implements Comparator<ArrivalInfo> {
 
         public int compare(ArrivalInfo lhs, ArrivalInfo rhs) {
             return (int) (lhs.getEta() - rhs.getEta());

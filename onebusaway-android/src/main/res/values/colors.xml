@@ -63,6 +63,12 @@
     <color name="stop_info_occupancy_background">#ededed</color>
     <color name="stop_info_occupancy">@color/stop_info_scheduled_time</color>
 
+    <!-- Darker badge background colors for white text accessibility (WCAG AA 4.5:1) -->
+    <color name="badge_ontime">@color/theme_primary_variant</color>
+    <color name="badge_delayed">#3A37A1</color>
+    <color name="badge_early">#8B3A37</color>
+    <color name="badge_scheduled">#555555</color>
+
     <color name="stop_info_arrival_list_background">#eaeaea</color>
 
     <color name="realtime_indicator_fill">@android:color/transparent</color>

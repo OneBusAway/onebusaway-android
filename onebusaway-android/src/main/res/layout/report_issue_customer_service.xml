@@ -6,6 +6,7 @@
         android:minWidth="350dp"
         android:orientation="vertical">
 
+    <include layout="@layout/include_toolbar" />
 
     <ListView
             android:id="@+id/list"

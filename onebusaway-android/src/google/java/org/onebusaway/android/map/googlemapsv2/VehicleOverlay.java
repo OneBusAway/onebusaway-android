@@ -868,107 +868,100 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
 
         @Override
         public View getInfoWindow(Marker marker) {
-            return null;
-        }
-
-        @Override
-        public View getInfoContents(Marker marker) {
             if (mMarkerData == null) {
-                // Markers haven't been initialized yet - use default rendering
+                // Use default rendering if data isn't ready
                 return null;
             }
+
             ObaTripStatus status = mMarkerData.getStatusFromMarker(marker);
             if (status == null) {
-                // Marker that the user tapped on wasn't a vehicle - use default rendering
                 mCurrentFocusVehicleMarker = null;
                 return null;
             }
+
             mCurrentFocusVehicleMarker = marker;
+
+            // 1. Inflate the view
+            // Note: Since this is now the FULL window, ensure R.layout.vehicle_info_window
+            // has a background drawable (like a 9-patch) to look like a speech bubble.
             View view = mInflater.inflate(R.layout.vehicle_info_window, null);
+
             Resources r = mContext.getResources();
-            TextView routeView = (TextView) view.findViewById(R.id.route_and_destination);
-            TextView statusView = (TextView) view.findViewById(R.id.status);
-            TextView lastUpdatedView = (TextView) view.findViewById(R.id.last_updated);
-            ImageView moreView = (ImageView) view.findViewById(R.id.trip_more_info);
-            moreView.setColorFilter(r.getColor(R.color.switch_thumb_normal_material_dark));
+            TextView routeView = view.findViewById(R.id.route_and_destination);
+            TextView statusView = view.findViewById(R.id.status);
+            TextView lastUpdatedView = view.findViewById(R.id.last_updated);
+            ImageView moreView = view.findViewById(R.id.trip_more_info);
             ViewGroup occupancyView = view.findViewById(R.id.occupancy);
 
-            // Get route/trip details
+            moreView.setColorFilter(r.getColor(R.color.switch_thumb_normal_material_dark));
+
+            // 2. Data Processing (Keeping your existing logic)
             ObaTrip trip = mLastResponse.getTrip(status.getActiveTripId());
             ObaRoute route = mLastResponse.getRoute(trip.getRouteId());
 
             routeView.setText(UIUtils.getRouteDisplayName(route) + " " +
-                    mContext.getString(R.string.trip_info_separator) + " " + UIUtils
-                    .formatDisplayText(trip.getHeadsign()));
+                    mContext.getString(R.string.trip_info_separator) + " " +
+                    UIUtils.formatDisplayText(trip.getHeadsign()));
 
             boolean isRealtime = isLocationRealtime(status);
-
             statusView.setBackgroundResource(R.drawable.round_corners_style_b_status);
             GradientDrawable d = (GradientDrawable) statusView.getBackground();
 
-            // Set padding on status view
             int pSides = UIUtils.dpToPixels(mContext, 5);
             int pTopBottom = UIUtils.dpToPixels(mContext, 2);
 
-            int statusColor;
-
             if (isRealtime) {
                 long deviationMin = TimeUnit.SECONDS.toMinutes(status.getScheduleDeviation());
-                String statusString = ArrivalInfoUtils.computeArrivalLabelFromDelay(r, deviationMin);
-                statusView.setText(statusString);
-                statusColor = ArrivalInfoUtils.computeColorFromDeviation(deviationMin);
-                d.setColor(r.getColor(statusColor));
+                statusView.setText(ArrivalInfoUtils.computeArrivalLabelFromDelay(r, deviationMin));
+                d.setColor(r.getColor(ArrivalInfoUtils.computeColorFromDeviation(deviationMin)));
                 statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
+
+                // Update last updated time
+                updateLastUpdatedText(status, lastUpdatedView, r);
+
+                // Occupancy
+                if (status.getOccupancyStatus() != null) {
+                    // Real-time occupancy data
+                    UIUtils.setOccupancyVisibilityAndColor(occupancyView, status.getOccupancyStatus(), OccupancyState.REALTIME);
+                    UIUtils.setOccupancyContentDescription(occupancyView, status.getOccupancyStatus(), OccupancyState.REALTIME);
+                } else {
+                    // Hide occupancy by setting null value
+                    UIUtils.setOccupancyVisibilityAndColor(occupancyView, null, OccupancyState.REALTIME);
+                    UIUtils.setOccupancyContentDescription(occupancyView, null, OccupancyState.REALTIME);
+                }
             } else {
-                // Scheduled info
+                // Scheduled info path
                 statusView.setText(r.getString(R.string.stop_info_scheduled));
-                statusColor = R.color.stop_info_scheduled_time;
-                d.setColor(r.getColor(statusColor));
+                d.setColor(r.getColor(R.color.stop_info_scheduled_time));
                 lastUpdatedView.setText(r.getString(R.string.vehicle_last_updated_scheduled));
                 statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
-
-                // Hide occupancy by setting null value
                 UIUtils.setOccupancyVisibilityAndColor(occupancyView, null, OccupancyState.HISTORICAL);
-                UIUtils.setOccupancyContentDescription(occupancyView, null, OccupancyState.HISTORICAL);
-
-                return view;
-            }
-
-            // Update last updated time (only shown for real-time info)
-            long now = System.currentTimeMillis();
-            long lastUpdateTime;
-            // Use the last updated time for the position itself, if its available
-            if (status.getLastLocationUpdateTime() != 0) {
-                lastUpdateTime = status.getLastLocationUpdateTime();
-            } else {
-                // Use the status timestamp for last updated time
-                lastUpdateTime = status.getLastUpdateTime();
-            }
-            long elapsedSec = TimeUnit.MILLISECONDS.toSeconds(now - lastUpdateTime);
-            long elapsedMin = TimeUnit.SECONDS.toMinutes(elapsedSec);
-            long secMod60 = elapsedSec % 60;
-
-            String lastUpdated;
-            if (elapsedSec < 60) {
-                lastUpdated = r.getString(R.string.vehicle_last_updated_sec,
-                        elapsedSec);
-            } else {
-                lastUpdated = r.getString(R.string.vehicle_last_updated_min_and_sec,
-                        elapsedMin, secMod60);
-            }
-            lastUpdatedView.setText(lastUpdated);
-
-            if (status.getOccupancyStatus() != null) {
-                // Real-time occupancy data
-                UIUtils.setOccupancyVisibilityAndColor(occupancyView, status.getOccupancyStatus(), OccupancyState.REALTIME);
-                UIUtils.setOccupancyContentDescription(occupancyView, status.getOccupancyStatus(), OccupancyState.REALTIME);
-            } else {
-                // Hide occupancy by setting null value
-                UIUtils.setOccupancyVisibilityAndColor(occupancyView, null, OccupancyState.REALTIME);
                 UIUtils.setOccupancyContentDescription(occupancyView, null, OccupancyState.REALTIME);
             }
 
             return view;
+        }
+
+        @Override
+        public View getInfoContents(Marker marker) {
+            // Return null so the SDK knows we are handling the full window in getInfoWindow
+            return null;
+        }
+
+        // Helper to keep getInfoWindow clean
+        private void updateLastUpdatedText(ObaTripStatus status, TextView lastUpdatedView, Resources r) {
+            long now = System.currentTimeMillis();
+            long lastUpdateTime = (status.getLastLocationUpdateTime() != 0)
+                    ? status.getLastLocationUpdateTime()
+                    : status.getLastUpdateTime();
+
+            long elapsedSec = TimeUnit.MILLISECONDS.toSeconds(now - lastUpdateTime);
+            if (elapsedSec < 60) {
+                lastUpdatedView.setText(r.getString(R.string.vehicle_last_updated_sec, elapsedSec));
+            } else {
+                lastUpdatedView.setText(r.getString(R.string.vehicle_last_updated_min_and_sec,
+                        TimeUnit.SECONDS.toMinutes(elapsedSec), elapsedSec % 60));
+            }
         }
 
 

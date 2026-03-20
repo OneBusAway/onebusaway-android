@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com),
+    Benjamin Du (bendu@me.com),
+    Microsoft Corporation
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<resources>
+    <color name="md_theme_primary">#FFB4A9</color>
+    <color name="md_theme_onPrimary">#561E18</color>
+    <color name="md_theme_primaryContainer">#73342C</color>
+    <color name="md_theme_onPrimaryContainer">#FFDAD5</color>
+
+    <color name="md_theme_secondary">#FFB3AC</color>
+    <color name="md_theme_onSecondary">#571E1A</color>
+    <color name="md_theme_secondaryContainer">#73332F</color>
+    <color name="md_theme_onSecondaryContainer">#FFDAD6</color>
+
+    <color name="md_theme_background">#1A1110</color>
+    <color name="md_theme_onBackground">#F1DEDC</color>
+    <color name="md_theme_surface">#1A1110</color>
+    <color name="md_theme_onSurface">#F1DEDC</color>
+
+    <!-- Error Colors are inherited from base app  -->
+
+    <color name="md_theme_surfaceContainerLowest">#140C0B</color>
+    <color name="md_theme_surfaceContainerLow">#231918</color>
+    <color name="md_theme_surfaceContainer">#271D1C</color>
+    <color name="md_theme_surfaceContainerHigh">#322826</color>
+    <color name="md_theme_surfaceContainerHighest">#3D3231</color>
+</resources>

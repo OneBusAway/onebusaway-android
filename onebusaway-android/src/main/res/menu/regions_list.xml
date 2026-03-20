@@ -18,5 +18,6 @@
     <item android:id="@+id/refresh"
           android:title="@string/region_option_refresh"
           android:icon="@drawable/ic_action_navigation_refresh"
-          onebusaway:showAsAction="ifRoom"/>
+          onebusaway:showAsAction="ifRoom"
+          onebusaway:iconTint="?attr/colorControlNormal"/>
 </menu>

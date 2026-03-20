@@ -15,10 +15,12 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.onebusaway.android.R;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
@@ -137,7 +139,7 @@ abstract class MyListFragmentBase extends ListFragment
         @NonNull
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
-            return new AlertDialog.Builder(requireActivity())
+            return new MaterialAlertDialogBuilder(requireActivity(), R.style.ThemeOverlay_App_DeleteDialog)
                     .setMessage(dialogMessageResId)
                     .setTitle(dialogTitleResId)
                     .setIcon(android.R.drawable.ic_dialog_alert)

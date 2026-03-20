@@ -366,7 +366,7 @@ public class RealtimeService extends IntentService {
         return null;
     }
 
-    private Bundle getSimplifiedBundle(Bundle params) {
+    Bundle getSimplifiedBundle(Bundle params) {
         Itinerary itinerary = getItinerary(params);
         if (itinerary == null) {
             Log.e(TAG, "getSimplifiedBundle: itinerary is null, bundle may be incomplete. "
@@ -374,12 +374,13 @@ public class RealtimeService extends IntentService {
             return null;
         }
 
-        if (itinerary.legs == null || itinerary.legs.isEmpty()) {
-            Log.w(TAG, "getSimplifiedBundle: itinerary has no legs");
+        ItineraryDescription desc;
+        try {
+            desc = new ItineraryDescription(itinerary);
+        } catch (NullPointerException | IndexOutOfBoundsException e) {
+            Log.e(TAG, "getSimplifiedBundle: error creating ItineraryDescription", e);
             return null;
         }
-
-        ItineraryDescription desc = new ItineraryDescription(itinerary);
 
         Bundle extras = new Bundle();
         try {

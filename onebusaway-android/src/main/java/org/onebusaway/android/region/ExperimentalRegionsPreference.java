@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.region;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -84,7 +86,7 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
             Warn the user before enabling, since experimental regions
             may not have real-time info or may be unavailable.
             */
-            AlertDialog dialog = new AlertDialog.Builder(getContext())
+            AlertDialog dialog = new MaterialAlertDialogBuilder(getContext())
                     .setMessage(R.string.preferences_experimental_regions_enable_warning)
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override
@@ -107,7 +109,7 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
             if (Application.get().getCurrentRegion() != null &&
                     Application.get().getCurrentRegion().getExperimental()) {
                 // If the user is currently using an experimental region, warn that it won't be available
-                AlertDialog dialog = new AlertDialog.Builder(getContext())
+                AlertDialog dialog = new MaterialAlertDialogBuilder(getContext())
                         .setMessage(R.string.preferences_experimental_regions_disable_warning)
                         .setPositiveButton(android.R.string.ok,
                                 new DialogInterface.OnClickListener() {

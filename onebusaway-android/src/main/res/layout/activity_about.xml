@@ -5,32 +5,14 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fitsSystemWindows="true"
         tools:context="org.onebusaway.android.ui.AboutActivity">
 
     <com.google.android.material.appbar.AppBarLayout
-            android:id="@+id/app_bar"
-            android:fitsSystemWindows="true"
-            android:layout_height="@dimen/app_bar_height"
             android:layout_width="match_parent"
-            android:theme="@style/Theme.OneBusAway.AppBarOverlay">
+            android:layout_height="wrap_content">
 
-        <com.google.android.material.appbar.CollapsingToolbarLayout
-                android:id="@+id/toolbar_layout"
-                android:fitsSystemWindows="true"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:layout_scrollFlags="scroll|exitUntilCollapsed"
-                app:contentScrim="?attr/colorPrimary">
+        <include layout="@layout/include_toolbar" />
 
-            <com.google.android.material.appbar.MaterialToolbar
-                    android:id="@+id/toolbar"
-                    android:layout_height="?attr/actionBarSize"
-                    android:layout_width="match_parent"
-                    app:layout_collapseMode="pin"
-                    app:popupTheme="@style/Theme.OneBusAway.PopupOverlay"/>
-
-        </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
     <include layout="@layout/content_about"/>

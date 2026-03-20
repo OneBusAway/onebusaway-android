@@ -19,6 +19,7 @@ import org.apache.tools.ant.filters.ConcatFilter
 
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'com.github.triplet.play'
 
 repositories {
     maven {
@@ -40,7 +41,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 36
         versionCode 153
-        versionName "2.14.9"
+        versionName "26.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -286,6 +287,21 @@ dependencies {
 
 apply plugin:'com.google.gms.google-services'
 apply plugin: 'com.google.firebase.crashlytics'
+
+play {
+    // Path to the Google Play service account JSON key file.
+    // Set via gradle.properties: PLAY_STORE_JSON_KEY=/path/to/service-account-key.json
+    if (project.hasProperty('PLAY_STORE_JSON_KEY')) {
+        serviceAccountCredentials = file(project.property('PLAY_STORE_JSON_KEY'))
+    }
+
+    // Auto-increment versionCode based on the highest code currently on the Play Store
+    resolutionStrategy = com.github.triplet.gradle.androidpublisher.ResolutionStrategy.AUTO
+
+    // Upload to the open testing (beta) track, matching the existing release workflow
+    defaultToAppBundles = true
+    track = "beta"
+}
 
 /**
  * Validates that strings with %1$s placeholders in the base English strings.xml

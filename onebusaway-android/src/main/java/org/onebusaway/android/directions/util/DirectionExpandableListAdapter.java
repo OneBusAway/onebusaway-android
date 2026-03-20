@@ -35,6 +35,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import androidx.core.content.ContextCompat;
+
 
 /**
  * @author Khoa Tran
@@ -153,6 +155,8 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
         }
 
         Direction dir = mData[groupPosition];
+        int textColor = mContext.getResources().getColor(R.color.body_text_1);
+        holder.txtDirection.setTextColor(textColor);
 
         if (!dir.isTransit()) {
             holder.txtDirection.setText(dir.getDirectionIndex() + ". " + dir.getDirectionText());

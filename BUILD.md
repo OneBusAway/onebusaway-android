@@ -50,16 +50,6 @@ Add the following to `onebusaway-android/gradle.properties`:
 
 ...where `XXXXXX` is your API key. Note that the suffix of `_oba` can be changed to configure API keys for other build flavors.
 
-### Configuration for OneSignal App ID
-
-If push arrivals notifications are active, you'll need to provide an App ID for [OneSignal](https://onesignal.com/).
-
-Add the following to `onebusaway-android/gradle.properties`:
-
-`ONESIGNAL_APP_ID=YOUR_APP_ID`
-
-...where `YOUR_APP_ID` is the unique identifier for your OneSignal application.
-
 ### Release builds
 
 To set up a release build, you need to create a `gradle.properties` file that points to a `secure.properties` file, and a `secure.properties` file that points to your keystore and alias.
@@ -80,16 +70,52 @@ key.keypassword=<your_key_password>
 Note that the paths in these files always use the Unix path separator `/`, even on Windows. If you use the Windows path separator `\` you will get the error `No value has been specified for property 'signingConfig.keyAlias'.`
 
 Before doing each release build, you'll need to:
-1. Bump `onebusaway-android/build.gradle` `versionCode` by 1 and set `versionName` to the appropriate next semantic version name. 
+1. Set `versionName` in `onebusaway-android/build.gradle` to the appropriate next semantic version name. If you are using the automated publishing workflow (see below), `versionCode` is auto-incremented. Otherwise, bump `versionCode` by 1 manually.
 2. Check `onebusaway-android/src/main/res/values/strings.xml` element `main_help_whatsnew` to make sure that the latest changes we want to highlight for the user are entered there. After update, users see this in a dialog.
 
 Then, to build all flavors run:
 
 `gradlew assembleRelease`
 
-(If you want to assemble just the Google variant, use `gradlew assembleObaGoogleRelease`
+(If you want to assemble just the Google variant, use `gradlew assembleObaGoogleRelease`)
 
 The APK files will show up in the `onebusaway-android/build/outputs/apk` folder. `obaGoogleRelease-vx.y.z.apk` is the file that's uploaded to Google Play for release.
+
+### Automated publishing with gradle-play-publisher
+
+We use [gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher) (GPP) to automate building, versioning, and uploading releases to Google Play.
+
+#### Setup
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), create a service account under IAM & Admin → Service Accounts and download the JSON key file.
+2. Enable the [Google Play Android Developer API](https://console.cloud.google.com/apis/library/androidpublisher.googleapis.com) in Google Cloud Console.
+3. In [Google Play Console](https://play.google.com/console), go to Users & permissions, invite the service account email, and grant "Release manager" permissions. Note: it can take up to 36 hours for credentials to become active.
+4. Add the path to `gradle.properties`:
+   ```
+   PLAY_STORE_JSON_KEY=/path/to/service-account-key.json
+   ```
+
+#### Publishing commands
+
+| Command | Description |
+|---|---|
+| `./gradlew publishObaGoogleReleaseBundle` | Build release AAB, auto-increment `versionCode`, and upload to the open testing (beta) track |
+| `./gradlew publishObaGoogleReleaseApps` | Same as above, plus upload all Play Store metadata (listing, screenshots, etc.) |
+| `./gradlew promoteObaGoogleReleaseArtifact` | Promote the current beta release to production (e.g., alpha → beta → production) |
+
+#### Managing Play Store metadata
+
+You can download your existing Play Store listing into the repo for version control:
+
+```
+./gradlew bootstrapObaGoogleReleaseListing
+```
+
+This creates a `src/obaGoogleRelease/play/` directory with your listing text, graphics, and release notes. Edits to these files will be uploaded on the next `publishObaGoogleReleaseApps` run.
+
+#### Configuration
+
+The default configuration (in `onebusaway-android/build.gradle`) publishes App Bundles to the **beta** (open testing) track with auto-incrementing `versionCode`. To change the target track, update the `track` property in the `play {}` block to `"internal"`, `"alpha"`, or `"production"`.
 
 ### Release testing protocol
 

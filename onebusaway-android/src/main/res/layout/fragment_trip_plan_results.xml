@@ -17,8 +17,7 @@
               android:orientation="vertical"
               android:layout_width="fill_parent"
               android:layout_height="fill_parent"
-              android:weightSum="1"
-              android:background="#eeeeee">
+              android:weightSum="1">
 
     <LinearLayout
             android:orientation="horizontal"
@@ -26,107 +25,136 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp">
 
-        <LinearLayout
-                android:orientation="vertical"
+        <com.google.android.material.card.MaterialCardView
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/option1Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginRight="1dp"
-                android:background="@color/theme_primary"
-                android:gravity="center_vertical"
-                android:id="@+id/option1LinearLayout"
-                android:padding="4dp">
+                app:cardBackgroundColor="@color/trip_plan_card_background"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp">
 
-            <TextView
-                    android:layout_width="wrap_content"
+            <LinearLayout
+                    android:id="@+id/option1LinearLayout"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:id="@+id/option1Title"
-                    android:textColor="@color/header_text_color"
-                    android:singleLine="true"
-                    android:ellipsize="end"/>
+                    android:gravity="center_vertical"
+                    android:padding="4dp">
 
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/option1Duration"
-                    android:textColor="@color/header_text_faded_color" />
+                <TextView
+                        android:id="@+id/option1Title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:textColor="@color/trip_plan_header_text"
+                        android:singleLine="true"
+                        android:ellipsize="end"/>
 
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/option1Interval"
-                    android:textColor="@color/header_text_faded_color" />
+                <TextView
+                        android:id="@+id/option1Duration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/trip_plan_header_text" />
 
-        </LinearLayout>
+                <TextView
+                        android:id="@+id/option1Interval"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/trip_plan_header_text" />
 
-        <LinearLayout
-                android:orientation="vertical"
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/option2Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginRight="1dp"
-                android:background="@color/theme_primary"
-                android:gravity="center_vertical"
-                android:id="@+id/option2LinearLayout"
-                android:padding="4dp">
+                app:cardBackgroundColor="@color/trip_plan_card_background"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp">
 
-            <TextView
-                    android:layout_width="wrap_content"
+            <LinearLayout
+                    android:id="@+id/option2LinearLayout"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:id="@+id/option2Title"
-                    android:textColor="@color/header_text_color"
-                    android:singleLine="true"
-                    android:ellipsize="end"/>
+                    android:gravity="center_vertical"
+                    android:padding="4dp">
 
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/option2Duration"
-                    android:textColor="@color/header_text_faded_color" />
+                <TextView
+                        android:id="@+id/option2Title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:textColor="@color/trip_plan_header_text"
+                        android:singleLine="true"
+                        android:ellipsize="end"/>
 
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/option2Interval"
-                    android:textColor="@color/header_text_faded_color" />
+                <TextView
+                        android:id="@+id/option2Duration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/trip_plan_header_text" />
 
-        </LinearLayout>
+                <TextView
+                        android:id="@+id/option2Interval"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/trip_plan_header_text" />
 
-        <LinearLayout
-                android:orientation="vertical"
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/option3Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="@color/theme_primary"
-                android:gravity="center_vertical"
-                android:id="@+id/option3LinearLayout"
-                android:padding="4dp"
-                >
+                app:cardBackgroundColor="@color/trip_plan_card_background"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp">
 
-            <TextView
-                    android:layout_width="wrap_content"
+            <LinearLayout
+                    android:id="@+id/option3LinearLayout"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:id="@+id/option3Title"
-                    android:textColor="@color/header_text_color"
-                    android:singleLine="true"
-                    android:ellipsize="end" />
+                    android:gravity="center_vertical"
+                    android:padding="4dp">
 
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/option3Duration"
-                    android:textColor="@color/header_text_faded_color" />
+                <TextView
+                        android:id="@+id/option3Title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:textColor="@color/trip_plan_header_text"
+                        android:singleLine="true"
+                        android:ellipsize="end" />
 
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/option3Interval"
-                    android:textColor="@color/header_text_faded_color" />
+                <TextView
+                        android:id="@+id/option3Duration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/trip_plan_header_text" />
 
-        </LinearLayout>
+                <TextView
+                        android:id="@+id/option3Interval"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/trip_plan_header_text" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
 
@@ -168,7 +196,7 @@
         <ExpandableListView
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
-                android:background="@android:color/white"
+                android:background="@color/md_theme_surfaceContainer"
             android:id="@+id/directionsListView"
             android:isScrollContainer="false" />
 

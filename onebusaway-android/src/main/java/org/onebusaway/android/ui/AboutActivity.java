@@ -25,7 +25,6 @@ import android.text.Html;
 import android.text.Spannable;
 import android.widget.TextView;
 
-import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.textview.MaterialTextView;
 
 import org.onebusaway.android.R;
@@ -51,11 +50,7 @@ public class AboutActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         UIUtils.setupActionBar(this);
-        CollapsingToolbarLayout toolBarLayout = (CollapsingToolbarLayout) findViewById(
-                R.id.toolbar_layout);
-        toolBarLayout.setTitle(getTitle());
-
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        setTitle(getTitle());
 
         TextView tv = (TextView) findViewById(R.id.about_text);
         MaterialTextView version = findViewById(R.id.version);

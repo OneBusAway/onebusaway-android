@@ -18,12 +18,11 @@
     <!-- Navigation Drawer -->
     <style name="NavDrawerListItem" parent="Widget.AppCompat.ListView.Menu">
         <item name="android:background">@drawable/navdrawer_item_selectable</item>
-        <item name="android:shape">oval</item>
     </style>
 
     <!-- General styles -->
     <style name="HeaderItem">
-        <item name="android:background">@color/theme_primary</item>
+        <item name="android:background">@color/md_theme_surfaceContainer</item>
         <item name="android:padding">4dp</item>
     </style>
     <style name="HeaderList">
@@ -33,12 +32,11 @@
         <item name="android:padding">10sp</item>
     </style>
     <style name="HeaderText">
-        <item name="android:textColor">@android:color/white</item>
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">bold</item>
     </style>
     <style name="Header2Text">
-        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textColor">@color/md_theme_onSurface</item>
     </style>
     <style name="Header3Text">
         <item name="android:textSize">12sp</item>
@@ -111,19 +109,19 @@
     <!--  RouteInfo -->
     <style name="RouteInfoShortName">
         <item name="android:textSize">45sp</item>
-        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textColor">@color/md_theme_onSurface</item>
         <item name="android:paddingLeft">10dp</item>
         <item name="android:paddingRight">10dp</item>
     </style>
     <style name="RouteInfoLongName">
-        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textColor">@color/md_theme_onSurface</item>
         <item name="android:textSize">16sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:maxLines">2</item>
         <item name="android:ellipsize">end</item>
     </style>
     <style name="RouteInfoAgency">
-        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textColor">@color/md_theme_onSurface</item>
     </style>
 
     <style name="FindSearchBox">
@@ -183,7 +181,7 @@
     </style>
     <style name="ArrivalsListStatusSmall">
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">@color/header_text_faded_color</item>
+        <item name="android:textColor">@color/header_text_color</item>
         <item name="android:paddingTop">2dp</item>
         <item name="android:paddingBottom">2dp</item>
         <item name="android:paddingLeft">5dp</item>
@@ -191,7 +189,7 @@
     </style>
     <style name="ArrivalsListStatusSmallStyleA">
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">@color/header_text_color</item>
+        <item name="android:textColor">@android:color/white</item>
         <item name="android:paddingTop">2dp</item>
         <item name="android:paddingBottom">2dp</item>
         <item name="android:paddingLeft">5dp</item>
@@ -210,7 +208,7 @@
     </style>
     <style name="TripDetailsStatus">
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">@color/header_text_color</item>
+        <item name="android:textColor">@android:color/white</item>
     </style>
 
     <style name="MaterialLayout">
@@ -246,7 +244,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    <style name="Theme.OneBusAway.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
+    <style name="Theme.OneBusAway.AppBarOverlay" parent="ThemeOverlay.Material3"/>
     <style name="Theme.OneBusAway.PopupOverlay" parent="ThemeOverlay.AppCompat.DayNight"/>
 
     <!-- Tutorial - ShowcaseView -->
@@ -256,6 +254,12 @@
         <item name="sv_buttonText">@string/tutorial_button_text</item>
         <item name="sv_titleTextAppearance">@style/CustomTitle2</item>
         <item name="sv_detailTextAppearance">@style/CustomText2</item>
+        <item name="sv_buttonBackgroundColor">@color/md_theme_surface</item>
+    </style>
+
+    <style name="ShowcaseButton">
+        <item name="android:textColor">@color/body_text_1_inverse</item>
+        <item name="android:background">@color/md_theme_surface</item>
     </style>
 
     <style name="CustomTitle2" parent="TextAppearance.ShowcaseView.Title.Light">

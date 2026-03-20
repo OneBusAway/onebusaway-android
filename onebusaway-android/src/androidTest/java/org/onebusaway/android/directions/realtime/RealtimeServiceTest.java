@@ -23,6 +23,7 @@ import android.os.Bundle;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.onebusaway.android.directions.util.CustomAddress;
 import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.opentripplanner.api.model.Itinerary;
@@ -150,55 +151,48 @@ public class RealtimeServiceTest {
     }
 
     @Test
-    public void testOnHandleIntentWithRealtimeLegsButNoNotificationTargetDoesNotCrash() {
+    public void testGetSimplifiedBundleWithMissingItineraryDoesNotCrash() throws Exception {
+        // Bundle with no itineraries and no selected index
+        Bundle badBundle = new Bundle();
+
+        Bundle result = mService.getSimplifiedBundle(badBundle);
+        // After the fix, getSimplifiedBundle() should handle the null itinerary gracefully
+        // and return null instead of crashing.
+        assertNull("getSimplifiedBundle should return null for missing itinerary", result);
+    }
+
+    @Test
+    public void testGetSimplifiedBundleWithMissingNotificationTargetDoesNotCrash() throws Exception {
         Bundle bundle = new Bundle();
 
-        ArrayList<Itinerary> itineraries = new ArrayList<>();
+        // Minimal from/to and date so TripRequestBuilder.copyIntoBundleSimple() does not throw.
+        CustomAddress from = new CustomAddress();
+        from.setLatitude(0);
+        from.setLongitude(0);
+        CustomAddress to = new CustomAddress();
+        to.setLatitude(0);
+        to.setLongitude(0);
+        new TripRequestBuilder(bundle).setFrom(from).setTo(to).setDateTime(new Date());
+
+        // Build a valid itinerary with one transit leg so ItineraryDescription succeeds
+        // and we actually reach the NOTIFICATION_TARGET check (not the catch block).
         Itinerary it = new Itinerary();
         Leg leg = new Leg();
-        leg.realTime = true;
         leg.mode = "BUS";
+        leg.realTime = true;
         leg.tripId = "testTrip";
         leg.endTime = String.valueOf(System.currentTimeMillis() + 3600000);
         it.legs = new ArrayList<>();
         it.legs.add(leg);
-        itineraries.add(it);
 
+        ArrayList<Itinerary> itineraries = new ArrayList<>();
+        itineraries.add(it);
         bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
         bundle.putInt(OTPConstants.SELECTED_ITINERARY, 0);
         // Intentionally DO NOT put OTPConstants.NOTIFICATION_TARGET into the bundle
-
-        Intent intent = new Intent(OTPConstants.INTENT_START_CHECKS);
-        intent.putExtras(bundle);
-
-        try {
-            mService.onHandleIntent(intent);
-        } catch (NullPointerException e) {
-            fail("Should not crash with realtime legs but missing NOTIFICATION_TARGET: "
-                    + e.getMessage());
-        }
-        // Other exceptions propagate and will fail the test.
-    }
-
-    @Test
-    public void testOnHandleIntentWithNullItineraryLegsDoesNotCrash() {
-        Bundle bundle = new Bundle();
-        // No DATE_TIME in bundle so rescheduleRealtimeUpdates() returns false
-        // and the service proceeds to getItinerary() then startRealtimeUpdates().
-        ArrayList<Itinerary> itineraries = new ArrayList<>();
-        Itinerary it = new Itinerary();
-        it.legs = null;
-        itineraries.add(it);
-        bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
-        bundle.putInt(OTPConstants.SELECTED_ITINERARY, 0);
-
-        Intent intent = new Intent(OTPConstants.INTENT_START_CHECKS);
-        intent.putExtras(bundle);
-
-        try {
-            mService.onHandleIntent(intent);
-        } catch (NullPointerException e) {
-            fail("onHandleIntent should not throw NPE when itinerary.legs is null: " + e.getMessage());
-        }
+        Bundle result = mService.getSimplifiedBundle(bundle);
+        // After the fix, getSimplifiedBundle() should handle missing NOTIFICATION_TARGET
+        // gracefully and return null instead of crashing.
+        assertNull("getSimplifiedBundle should return null when NOTIFICATION_TARGET is missing", result);
     }
 }

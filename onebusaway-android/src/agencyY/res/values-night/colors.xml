@@ -32,7 +32,7 @@
     <color name="md_theme_surface">#111418</color>
     <color name="md_theme_onSurface">#E1E2E8</color>
 
-    <!-- Error Colors are inherited from base app -->
+    <!-- Error Colors are inherited from base app  -->
 
     <color name="md_theme_surfaceContainerLowest">#0B0E13</color>
     <color name="md_theme_surfaceContainerLow">#191C20</color>

@@ -25,6 +25,33 @@ OneBusAway for Android is a real-time transit information app providing bus arri
 adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.ui.HomeActivity
 ```
 
+## Automated Publishing (gradle-play-publisher)
+
+Uses [gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher) to auto-increment `versionCode`, build, and upload to Google Play.
+
+### Setup
+1. In [Google Cloud Console](https://console.cloud.google.com/), create a service account (IAM & Admin → Service Accounts) and download the JSON key
+2. Enable the Google Play Android Developer API in Google Cloud Console
+3. In [Google Play Console](https://play.google.com/console), invite the service account email under Users & permissions and grant "Release manager" permissions
+4. Add to `gradle.properties`: `PLAY_STORE_JSON_KEY=/path/to/service-account-key.json`
+
+### Commands
+```bash
+# Build AAB, auto-increment versionCode, upload to open testing (beta) track
+./gradlew publishObaGoogleReleaseBundle
+
+# Same as above + upload all Play Store metadata
+./gradlew publishObaGoogleReleaseApps
+
+# Promote beta release to production
+./gradlew promoteObaGoogleReleaseArtifact
+
+# Download existing Play Store listing metadata into repo
+./gradlew bootstrapObaGoogleReleaseListing
+```
+
+Configuration is in the `play {}` block of `onebusaway-android/build.gradle`. Default: App Bundles to the **beta** (open testing) track with auto-incrementing `versionCode`.
+
 ## Build Variants
 
 The project uses two flavor dimensions:

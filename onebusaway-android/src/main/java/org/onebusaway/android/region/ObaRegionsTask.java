@@ -16,7 +16,6 @@
  */
 package org.onebusaway.android.region;
 
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -29,6 +28,7 @@ import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -42,6 +42,8 @@ import org.onebusaway.android.util.UIUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import androidx.appcompat.app.AlertDialog;
 
 /**
  * AsyncTask used to refresh region info from the Regions REST API.
@@ -216,7 +218,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         final CharSequence[] items = serverNames
                 .toArray(new CharSequence[serverNames.size()]);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(mContext);
         builder.setTitle(mContext.getString(R.string.region_choose_region));
         builder.setCancelable(false);
         builder.setItems(items, new DialogInterface.OnClickListener() {

@@ -14,37 +14,54 @@
     limitations under the License.
 -->
 <resources>
-        <style name="Theme.OneBusAway" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
-            <!--   App branding color for the app bar -->
-            <item name="colorPrimary">@color/theme_primary</item>
-
-            <item name="colorOnSurface">@color/body_text_1</item>
-            <item name="colorSurface">@android:color/black</item>
-
-            <!--   Darker variant for the status bar and contextual app bars -->
-            <item name="colorPrimaryVariant">@color/theme_primary_variant</item>
-
-            <!--   Theme UI controls like checkboxes and text fields -->
-            <item name="colorSecondary">@color/theme_primary_variant</item>
-            <item name="colorOnSecondary">@android:color/white</item>
-
+        <style name="Theme.OneBusAway" parent="Theme.Material3.Dark.NoActionBar">
+            <!--   Make sure status bar has proper color     -->
+            <item name="android:windowLightStatusBar">false</item>
             <!-- Change the default cursor color so its visible in the action bar -->
             <item name="autoCompleteTextViewStyle">@style/cursorColor</item>
             <!-- Allows us to force AlertDialog Theme across the app -->
             <item name="alertDialogTheme">@style/customAlertDialogTheme</item>
 
-            <item name="actionBarStyle">@style/Widget.MyApp.Toolbar</item>
-
             <!-- Old Version of Text Layout -->
             <item name="textInputStyle">@style/Widget.Design.TextInputLayout</item>
+
+            <!-- Material 3 Styles -->
+            <!--  Main Styles  -->
+            <item name="colorPrimary">@color/md_theme_primary</item>
+            <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
+            <item name="colorPrimaryContainer">@color/md_theme_primaryContainer</item>
+            <item name="colorOnPrimaryContainer">@color/md_theme_onPrimaryContainer</item>
+
+            <!--  Secondary Styles (Checkboxes / Forms)   -->
+            <item name="colorSecondary">@color/md_theme_secondary</item>
+            <item name="colorOnSecondary">@color/md_theme_onSecondary</item>
+            <item name="colorSecondaryContainer">@color/md_theme_secondaryContainer</item>
+            <item name="colorOnSecondaryContainer">@color/md_theme_onSecondaryContainer</item>
+
+            <!--  Errors -->
+            <item name="colorError">@color/md_theme_error</item>
+            <item name="colorOnError">@color/md_theme_onError</item>
+            <item name="colorErrorContainer">@color/md_theme_errorContainer</item>
+            <item name="colorOnErrorContainer">@color/md_theme_onErrorContainer</item>
+
+            <!--  Backgrounds / Surfaces  -->
+            <item name="android:colorBackground">@color/md_theme_background</item>
+            <item name="colorOnBackground">@color/md_theme_onBackground</item>
+            <item name="colorSurface">@color/md_theme_surface</item>
+            <item name="colorOnSurface">@color/md_theme_onSurface</item>
+
+            <!--  App Bar and Material Dialog  -->
+            <item name="colorSurfaceContainerLowest">@color/md_theme_surfaceContainerLowest</item>
+            <item name="colorSurfaceContainerLow">@color/md_theme_surfaceContainerLow</item>
+            <item name="colorSurfaceContainer">@color/md_theme_surfaceContainer</item>
+            <item name="colorSurfaceContainerHigh">@color/md_theme_surfaceContainerHigh</item>
+            <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest</item>
         </style>
 
-    <style name="Widget.MyApp.Toolbar" parent="Widget.MaterialComponents.Toolbar">
-        <item name="background">@color/theme_primary</item>
-    </style>
-
+    <!-- Time Picker Style inherited from base theme -->
+    <!-- Clear Dialog Theming inherited from base theme -->
     <!-- Custom Theme For Alert Dialog -->
-    <style name="customAlertDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+    <style name="customAlertDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="buttonBarPositiveButtonStyle">@style/customAlertDialogButton</item>
         <item name="buttonBarNegativeButtonStyle">@style/customAlertDialogButton</item>
         <item name="buttonBarNeutralButtonStyle">@style/customAlertDialogButton</item>

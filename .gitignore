@@ -5,3 +5,6 @@
 .DS_Store
 /build/
 settings.local.json
+.kotlin/
+play-store-upload-key.json
+*.keystore

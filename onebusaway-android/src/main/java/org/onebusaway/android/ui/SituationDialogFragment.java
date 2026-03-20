@@ -32,8 +32,10 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.onebusaway.android.R;
@@ -101,7 +103,8 @@ public class SituationDialogFragment extends DialogFragment {
         Bundle args = getArguments();
         final String situationId = args.getString(ID);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
+        MaterialAlertDialogBuilder builder = new
+                MaterialAlertDialogBuilder(getActivity())
                 .setView(R.layout.situation)
                 .setPositiveButton(R.string.hide, new DialogInterface.OnClickListener() {
                     @Override
@@ -192,16 +195,12 @@ public class SituationDialogFragment extends DialogFragment {
                 & Configuration.UI_MODE_NIGHT_MASK;
 
         // 2. Define the colors based on the mode
-        int textColor;
         int linkColor;
-
         if (currentNightMode == Configuration.UI_MODE_NIGHT_YES) {
             // Dark Mode: Use light colors
-            textColor = Color.WHITE;
             linkColor = Color.CYAN; // A light blue for links
         } else {
             // Light Mode: Use dark colors
-            textColor = Color.BLACK;
             linkColor = Color.BLUE; // Standard dark blue for links
         }
         // --- END MANUAL DARK MODE CHECK ---
@@ -210,14 +209,10 @@ public class SituationDialogFragment extends DialogFragment {
         TextView title = (TextView) dialog.findViewById(R.id.alert_title);
         if (title != null) {
             title.setText(args.getString(TITLE));
-            // The title's background (@color/theme_primary) is dark, so title text should
-            // always be light.
-            title.setTextColor(Color.WHITE);
         }
 
         TextView descTxtView = (TextView) dialog.findViewById(R.id.alert_description);
         if (descTxtView != null) {
-            descTxtView.setTextColor(textColor);
             descTxtView.setLinkTextColor(linkColor);
 
             String desc = args.getString(DESCRIPTION);

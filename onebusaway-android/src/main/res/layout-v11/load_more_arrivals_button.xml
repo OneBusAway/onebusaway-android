@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content">
-    <Button
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              xmlns:app="http://schemas.android.com/apk/res-auto">
+    <com.google.android.material.button.MaterialButton
             android:id="@+id/load_more_arrivals"
             android:text="@string/stop_info_load_more_arrivals"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/body_text_1"
-            android:backgroundTint="@color/navdrawer_background"
             android:insetTop="0dp"
-            android:insetBottom="0dp"/>
+            android:insetBottom="0dp"
+            app:cornerRadius="4dp"/>
 </LinearLayout>

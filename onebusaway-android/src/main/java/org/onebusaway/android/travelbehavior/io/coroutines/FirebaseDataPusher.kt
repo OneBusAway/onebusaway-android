@@ -20,6 +20,7 @@ import android.content.Context
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.firestore.FirebaseFirestore
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
@@ -99,7 +100,7 @@ class FirebaseDataPusher {
     }
 
     private fun showAlertDialog(context: Context, @StringRes title: Int, @StringRes summary: Int) {
-        val dialog = AlertDialog.Builder(context)
+        val dialog = MaterialAlertDialogBuilder(context)
         dialog.apply {
             setTitle(title)
             setMessage(

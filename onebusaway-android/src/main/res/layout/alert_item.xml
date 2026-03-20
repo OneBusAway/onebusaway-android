@@ -56,6 +56,6 @@
                 android:gravity="center_vertical"
                 android:bufferType="spannable"
                 android:linksClickable="true"
-                android:textColorLink="@color/theme_accent"/>
+                android:textColorLink="@android:color/white"/>
     </LinearLayout>
 </LinearLayout>

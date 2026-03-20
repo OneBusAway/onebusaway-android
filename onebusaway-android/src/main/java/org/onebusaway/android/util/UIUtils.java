@@ -96,6 +96,7 @@ import androidx.core.widget.ImageViewCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -161,7 +162,7 @@ public final class UIUtils {
             });
         }
 
-        setStatusBarColor(activity, ContextCompat.getColor(activity, R.color.theme_primary_variant), true);
+        setStatusBarColor(activity, ContextCompat.getColor(activity, R.color.md_theme_surfaceContainer), true);
 
         View contentView = activity.findViewById(android.R.id.content);
         if (contentView != null) {
@@ -586,7 +587,7 @@ public final class UIUtils {
      * @return an AlertDialog with the given title and message
      */
     public static AlertDialog buildAlertDialog(Context context, String title, String message) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
         builder.setTitle(title);
         builder.setMessage(message);
         return builder.create();
@@ -1556,6 +1557,11 @@ public final class UIUtils {
      */
     public static List<ObaSituation> getAllSituations(final ObaArrivalInfoResponse response, List<String> filter) {
         List<ObaSituation> allSituations = new ArrayList<>();
+
+        if (response == null) {
+            return allSituations;
+        }
+
         // Add agency-wide and stop-specific alerts
         allSituations.addAll(response.getSituations());
 
@@ -1577,9 +1583,16 @@ public final class UIUtils {
         // If a filter list exists and a route_id is not included in the filter list, don't included
         // it's situations in the returned list.
         ObaArrivalInfo[] info = response.getArrivalInfo();
+        if (info == null) {
+            return allSituations;
+        }
         for (ObaArrivalInfo i : info) {
+            String[] situationIds = i.getSituationIds();
+            if (situationIds == null) {
+                continue;
+            }
             if (filterIds.isEmpty() || filterIds.contains(i.getRouteId())) {
-                for (String situationId : i.getSituationIds()) {
+                for (String situationId : situationIds) {
                     if (!allIds.contains(situationId)) {
                         allIds.add(situationId);
                         allSituations.add(response.getSituation(situationId));
@@ -1939,7 +1952,7 @@ public final class UIUtils {
         Drawable icon = activity.getResources().getDrawable(android.R.drawable.ic_dialog_alert);
         DrawableCompat.setTint(icon, activity.getResources().getColor(R.color.alert_icon_error));
 
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(activity)
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity)
                 .setTitle(region.getPaymentWarningTitle())
                 .setIcon(icon)
                 .setCancelable(false)

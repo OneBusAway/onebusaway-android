@@ -31,6 +31,7 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -139,6 +140,18 @@ public final class UIUtils {
 
     private static final String TAG = "UIHelp";
     private static final String TAG_STATUS_BAR = "STATUS_BAR";
+
+    /**
+     * Returns true if the device is currently in dark mode, considering both
+     * the AppCompat night mode setting and the system UI mode configuration.
+     */
+    public static boolean inDarkMode(Resources resources) {
+        return AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES || (
+                AppCompatDelegate.getDefaultNightMode() != AppCompatDelegate.MODE_NIGHT_NO &&
+                        (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                                == Configuration.UI_MODE_NIGHT_YES
+        );
+    }
 
     public static void setupActionBar(AppCompatActivity activity) {
         ActionBar bar = activity.getSupportActionBar();

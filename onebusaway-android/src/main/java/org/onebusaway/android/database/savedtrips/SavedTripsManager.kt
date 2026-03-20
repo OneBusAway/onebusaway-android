@@ -16,6 +16,8 @@
 package org.onebusaway.android.database.savedtrips
 
 import android.content.Context
+import android.util.Log
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,6 +32,12 @@ import org.onebusaway.android.database.savedtrips.entity.SavedTripEntity
  */
 object SavedTripsManager {
 
+    private const val TAG = "SavedTripsManager"
+
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e(TAG, "Database operation failed", throwable)
+    }
+
     /**
      * Saves a trip to the database on a background thread.
      */
@@ -38,7 +46,7 @@ object SavedTripsManager {
         val db = DatabaseProvider.getDatabase(context)
         val dao = db.savedTripDao()
 
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.IO + exceptionHandler).launch {
             val id = dao.insert(trip)
             callback?.invoke(id)
         }
@@ -94,7 +102,7 @@ object SavedTripsManager {
         val db = DatabaseProvider.getDatabase(context)
         val dao = db.savedTripDao()
 
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.IO + exceptionHandler).launch {
             dao.update(trip.copy(favorite = !trip.favorite))
         }
     }
@@ -107,7 +115,7 @@ object SavedTripsManager {
         val db = DatabaseProvider.getDatabase(context)
         val dao = db.savedTripDao()
 
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.IO + exceptionHandler).launch {
             dao.delete(trip)
         }
     }

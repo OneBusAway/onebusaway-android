@@ -431,6 +431,10 @@
     </plurals>
     <string name="alert_filter_showall">(show all)</string>
 
+    <!-- Hide/Show scheduled arrivals/departures  -->
+    <string name="stop_info_option_hide_scheduled_arrivals">Hide scheduled arrivals/departures</string>
+    <string name="stop_info_option_show_scheduled_arrivals">Show scheduled arrivals/departures</string>
+
     <!-- Find -->
     <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search
         box.\n\nThe stop number is 3 to 5 digits and can be found on the stop signpost or shelter.

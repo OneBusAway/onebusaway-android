@@ -616,13 +616,15 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         }
 
         MenuItem menuItemScheduledArrivals = menu.findItem(R.id.toggle_scheduled_arrivals);
-        boolean hideScheduled = Application.getPrefs()
-                .getBoolean(getString(R.string.preference_key_hide_scheduled_arrivals), false);
-        title = hideScheduled ?
-                getString(R.string.stop_info_option_show_scheduled_arrivals) :
-                getString(R.string.stop_info_option_hide_scheduled_arrivals);
-        menuItemScheduledArrivals.setTitle(title);
-        menuItemScheduledArrivals.setTitleCondensed(title);
+        if (menuItemScheduledArrivals != null) {
+            boolean hideScheduled = Application.getPrefs()
+                    .getBoolean(getString(R.string.preference_key_hide_scheduled_arrivals), false);
+            title = hideScheduled ?
+                    getString(R.string.stop_info_option_show_scheduled_arrivals) :
+                    getString(R.string.stop_info_option_hide_scheduled_arrivals);
+            menuItemScheduledArrivals.setTitle(title);
+            menuItemScheduledArrivals.setTitleCondensed(title);
+        }
 
         if (mExternalHeader) {
             // If we're using an external header, it means that this fragment is being shown

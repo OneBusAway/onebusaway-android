@@ -63,7 +63,7 @@ public class ArrivalInfoUtilsTest {
      * @throws Exception
      */
     @Test
-    public void TestShowAllByDefault() throws Exception {
+    public void testShowAllByDefault() throws Exception {
         long now = System.currentTimeMillis();
 
         ObaArrivalInfo scheduledOnly = createArrival(
@@ -96,7 +96,7 @@ public class ArrivalInfoUtilsTest {
      * @throws Exception
      */
     @Test
-    public void TestHideScheduledWithBothKinds() throws Exception {
+    public void testHideScheduledWithBothKinds() throws Exception {
         prefs.edit().putBoolean(hideScheduledKey, true).commit();
 
         long now = System.currentTimeMillis();
@@ -133,7 +133,7 @@ public class ArrivalInfoUtilsTest {
      * @throws Exception
      */
     @Test
-    public void TestHideScheduleWithAllSchedule() throws Exception {
+    public void testHideScheduledWithAllScheduled() throws Exception {
         prefs.edit().putBoolean(hideScheduledKey, true).commit();
 
         long now = System.currentTimeMillis();
@@ -159,6 +159,47 @@ public class ArrivalInfoUtilsTest {
         );
 
         assertTrue(result.isEmpty());
+    }
+
+
+    /**
+     * Verifies that when a route filter is applied and the "hide scheduled arrivals"
+     * preference is enabled, scheduled-only arrivals within the filtered set are
+     * excluded from the result.
+     */
+    @Test
+    public void testHideScheduledWithRouteFilter() throws Exception {
+        prefs.edit().putBoolean(hideScheduledKey, true).commit();
+
+        long now = System.currentTimeMillis();
+
+        ObaArrivalInfo scheduledRoute8 = createArrival(
+                "1_100", "8", "Downtown", "STOP_1",
+                now + 10 * 60_000L, 0L,
+                now + 10 * 60_000L, 0L,
+                false
+        );
+
+        ObaArrivalInfo realtimeRoute49 = createArrival(
+                "1_200", "49", "Uptown", "STOP_1",
+                now + 12 * 60_000L, now + 13 * 60_000L,
+                now + 12 * 60_000L, now + 13 * 60_000L,
+                true
+        );
+
+        ObaArrivalInfo[] arrivals = new ObaArrivalInfo[]{scheduledRoute8, realtimeRoute49};
+
+        ArrayList<String> filter = new ArrayList<>();
+        filter.add("1_100");
+        filter.add("1_200");
+
+        ArrayList<ArrivalInfo> result = ArrivalInfoUtils.convertObaArrivalInfo(
+                context, arrivals, filter, now, false
+        );
+
+        assertEquals(1, result.size());
+        assertEquals("49", result.get(0).getInfo().getShortName());
+        assertTrue(result.get(0).getPredicted());
     }
 
 

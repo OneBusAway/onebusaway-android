@@ -28,7 +28,7 @@
     <string name="navdrawer_item_help">Aiuto</string>
     <string name="navdrawer_item_send_feedback">Invia feedback</string>
     <string name="navdrawer_item_open_source">Scoprici su GitHub!</string>
-    <string name="navdrawer_item_plan_trip">Pianifica un viaggio (beta)</string>
+    <string name="navdrawer_item_plan_trip">Pianifica un viaggio</string>
     <string name="navdrawer_item_pay_fare">Compra biglietto</string>
 
     <!-- Permissions -->
@@ -511,7 +511,7 @@
     <string name="preferences_show_header_arrivals_title">Mostra arrivi sopra nome fermata</string>
     <string name="preferences_show_header_arrivals_summary">Quando visualizzi i preferiti, mostra informazioni sugli arrivi nell\'intestazione (la visuale della mappa resta invariata)</string>
 
-    <string name="preferences_trip_plan_notifications_title">Notifiche sul piano di viaggio (beta)</string>
+    <string name="preferences_trip_plan_notifications_title">Notifiche sul piano di viaggio</string>
     <string name="preferences_trip_plan_notifications_summary">Dopo aver pianificato un viaggio, invia notifiche se ci sono ritardi o se il viaggio non è più consigliato.</string>
 
     <string name="preferences_show_tutorial_screens_title">Mostra schermate tutorial</string>
@@ -787,7 +787,7 @@
     <string name="title_activity_about">Informazioni</string>
     <!-- Trip Planner strings -->
 
-    <string name="title_activity_trip_plan">Pianificatore di viaggio (beta)</string>
+    <string name="title_activity_trip_plan">Pianificatore di viaggio</string>
     <string name="trip_plan_from">Da:</string>
     <string name="trip_plan_to">A:</string>
     <string name="trip_plan_leaving">Partenza</string>

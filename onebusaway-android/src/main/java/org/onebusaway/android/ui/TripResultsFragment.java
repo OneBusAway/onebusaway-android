@@ -15,25 +15,12 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.material.tabs.TabLayout;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.directions.model.Direction;
-import org.onebusaway.android.directions.realtime.RealtimeService;
-import org.onebusaway.android.directions.util.ConversionUtils;
-import org.onebusaway.android.directions.util.DirectionExpandableListAdapter;
-import org.onebusaway.android.directions.util.DirectionsGenerator;
-import org.onebusaway.android.directions.util.OTPConstants;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.map.ObaMapFragment;
-import org.opentripplanner.api.model.Itinerary;
-
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PorterDuff;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -43,18 +30,38 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ExpandableListView;
+import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import androidx.annotation.DrawableRes;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+
+import java.util.LinkedHashSet;
+
+import com.google.android.material.tabs.TabLayout;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.directions.model.Direction;
+import org.onebusaway.android.directions.realtime.RealtimeService;
+import org.onebusaway.android.directions.util.DirectionExpandableListAdapter;
+import org.onebusaway.android.directions.util.DirectionsGenerator;
+import org.onebusaway.android.directions.util.OTPConstants;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.map.ObaMapFragment;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
+import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.core.TraverseModeSet;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-
-import androidx.annotation.DrawableRes;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 
 public class TripResultsFragment extends Fragment {
 
@@ -69,7 +76,9 @@ public class TripResultsFragment extends Fragment {
     private View mMapFragmentFrame;
     private boolean mShowingMap = false;
 
-    private RoutingOptionPicker[] mOptions = new RoutingOptionPicker[3];
+    private HorizontalScrollView mOptionsScrollView;
+    private LinearLayout mOptionsContainer;
+    private int mSelectedIndex = 0;
 
     private Listener mListener;
 
@@ -101,9 +110,8 @@ public class TripResultsFragment extends Fragment {
         mDirectionsListView = (ExpandableListView) view.findViewById(R.id.directionsListView);
         mMapFragmentFrame = view.findViewById(R.id.mapFragment);
 
-        mOptions[0] = new RoutingOptionPicker(view, R.id.option1LinearLayout, R.id.option1Title, R.id.option1Duration, R.id.option1Interval);
-        mOptions[1] = new RoutingOptionPicker(view, R.id.option2LinearLayout, R.id.option2Title, R.id.option2Duration, R.id.option2Interval);
-        mOptions[2] = new RoutingOptionPicker(view, R.id.option3LinearLayout, R.id.option3Title, R.id.option3Duration, R.id.option3Interval);
+        mOptionsScrollView = view.findViewById(R.id.tripOptionsScrollView);
+        mOptionsContainer = view.findViewById(R.id.tripOptionsContainer);
 
         int rank = getArguments().getInt(OTPConstants.SELECTED_ITINERARY); // defaults to 0
         mShowingMap = getArguments().getBoolean(OTPConstants.SHOW_MAP);
@@ -224,7 +232,9 @@ public class TripResultsFragment extends Fragment {
         mShowingMap = show;
         if (show) {
             mMapFragmentFrame.bringToFront();
-            mMapFragment.setMapMode(MapParams.MODE_DIRECTIONS, mMapBundle);
+            if (mMapFragment != null) {
+                mMapFragment.setMapMode(MapParams.MODE_DIRECTIONS, mMapBundle);
+            }
         } else {
             mDirectionsListView.bringToFront();
         }
@@ -233,14 +243,21 @@ public class TripResultsFragment extends Fragment {
     }
 
     private void initInfoAndMap(int trip) {
+        List<Itinerary> itineraries = getItineraries();
+        if (itineraries == null || itineraries.isEmpty()) {
+            return;
+        }
+
+        if (trip >= itineraries.size()) {
+            trip = 0;
+        }
 
         initMap(trip);
 
-        for (int i = 0; i < mOptions.length; i++) {
-            mOptions[i].setItinerary(i);
-        }
+        mSelectedIndex = trip;
+        populateTripOptions(itineraries);
 
-        mOptions[trip].select();
+        selectOption(trip);
 
         showMap(mShowingMap);
     }
@@ -257,6 +274,20 @@ public class TripResultsFragment extends Fragment {
         return s.substring(0, 6).toLowerCase();
     }
 
+    private String toCompactTime(long ms) {
+        return new SimpleDateFormat("h:mm a", Locale.getDefault()).format(new Date(ms));
+    }
+
+    private String toCompactDuration(double durationSec) {
+        long totalMin = (long) (durationSec / 60);
+        long h = totalMin / 60;
+        long m = totalMin % 60;
+        if (h > 0) {
+            return h + "h " + m + "m";
+        }
+        return m + "m";
+    }
+
     private String formatTimeString(String ms, double durationSec) {
         long start = Long.parseLong(ms);
         String fromString = toDateFmt(start);
@@ -268,106 +299,185 @@ public class TripResultsFragment extends Fragment {
         return (List<Itinerary>) getArguments().getSerializable(OTPConstants.ITINERARIES);
     }
 
-    private class RoutingOptionPicker {
-        LinearLayout linearLayout;
-        TextView titleView;
-        TextView durationView;
-        TextView intervalView;
-
-        Itinerary itinerary;
-        int rank;
-
-        RoutingOptionPicker(View view, int linearLayout, int titleView, int durationView, int intervalView) {
-            this.linearLayout = (LinearLayout) view.findViewById(linearLayout);
-            this.titleView = (TextView) view.findViewById(titleView);
-            this.durationView = (TextView) view.findViewById(durationView);
-            this.intervalView = (TextView) view.findViewById(intervalView);
-
-            this.linearLayout.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    RoutingOptionPicker.this.select();
-                }
-            });
+    private void selectOption(int position) {
+        if (position < 0) {
+            return;
         }
 
-        void select() {
-            int defaultTextColor = getResources().getColor(R.color.header_text_color);
-            int selectedTextColor = getResources().getColor(R.color.trip_plan_header_text_selected);
+        List<Itinerary> itineraries = getItineraries();
+        if (itineraries == null || position >= itineraries.size()) {
+            return;
+        }
 
-            for (RoutingOptionPicker picker : mOptions) {
-                // reset
-                picker.linearLayout.setBackgroundColor(getResources().getColor(R.color.trip_plan_card_background));
-                picker.titleView.setTextColor(defaultTextColor);
-                picker.durationView.setTextColor(getResources().getColor(R.color.header_text_faded_color));
-                picker.intervalView.setTextColor(getResources().getColor(R.color.header_text_faded_color));
+        mSelectedIndex = position;
+        getArguments().putInt(OTPConstants.SELECTED_ITINERARY, position);
+
+        updateOptionStyles(itineraries);
+        scrollToSelectedCard(position);
+
+        Itinerary itinerary = itineraries.get(position);
+        updateInfo(itinerary);
+        updateMap(itinerary);
+    }
+
+    private void scrollToSelectedCard(int position) {
+        if (mOptionsScrollView == null || mOptionsContainer == null) {
+            return;
+        }
+        if (position < 0 || position >= mOptionsContainer.getChildCount()) {
+            return;
+        }
+        View card = mOptionsContainer.getChildAt(position);
+        card.post(() -> mOptionsScrollView.smoothScrollTo(card.getLeft(), 0));
+    }
+
+    private void updateInfo(Itinerary itinerary) {
+        DirectionsGenerator gen = new DirectionsGenerator(itinerary.legs, getActivity().getApplicationContext());
+        List<Direction> directions = gen.getDirections();
+        Direction[] directionData = directions.toArray(new Direction[0]);
+
+        DirectionExpandableListAdapter adapter = new DirectionExpandableListAdapter(
+                getActivity(),
+                R.layout.list_direction_item, R.layout.list_subdirection_item, directionData);
+
+        mDirectionsListView.setAdapter(adapter);
+        mDirectionsListView.setGroupIndicator(null);
+
+        Context context = Application.get().getApplicationContext();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationChannel channel = manager.getNotificationChannel(Application.CHANNEL_TRIP_PLAN_UPDATES_ID);
+            if (channel.getImportance() != NotificationManager.IMPORTANCE_NONE) {
+                RealtimeService.start(getActivity(), getArguments());
             }
+        } else {
+            if (Application.getPrefs()
+                    .getBoolean(getString(R.string.preference_key_trip_plan_notifications), true)) {
+                RealtimeService.start(getActivity(), getArguments());
+            }
+        }
+    }
 
-            // select
+    private void updateMap(Itinerary itinerary) {
+        mMapBundle.putSerializable(MapParams.ITINERARY, itinerary);
+        if (mMapFragment != null) {
+            mMapFragment.setMapMode(MapParams.MODE_DIRECTIONS, mMapBundle);
+        }
+    }
+
+    private void populateTripOptions(List<Itinerary> itineraries) {
+        mOptionsContainer.removeAllViews();
+        Context ctx = getActivity();
+        if (ctx == null) return;
+
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int cardWidth = (int) (screenWidth * 0.72);
+        float density = getResources().getDisplayMetrics().density;
+        int iconSize = (int) (18 * density);
+
+        for (int i = 0; i < itineraries.size(); i++) {
+            Itinerary itinerary = itineraries.get(i);
+            View card = LayoutInflater.from(ctx).inflate(R.layout.item_trip_option, mOptionsContainer, false);
+
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    cardWidth, LinearLayout.LayoutParams.MATCH_PARENT);
+            lp.setMarginEnd((int) (4 * density));
+            card.setLayoutParams(lp);
+
+            bindOptionCard(card, itinerary, i, ctx, iconSize);
+            mOptionsContainer.addView(card);
+        }
+    }
+
+    private void bindOptionCard(View card, Itinerary itinerary, int position,
+                                Context ctx, int iconSize) {
+        LinearLayout linearLayout = card.findViewById(R.id.tripOptionLinearLayout);
+        LinearLayout modeChainLayout = card.findViewById(R.id.tripOptionModeChain);
+        TextView titleView = card.findViewById(R.id.tripOptionTitle);
+        View dividerView = card.findViewById(R.id.tripOptionDivider);
+        TextView etaView = card.findViewById(R.id.tripOptionEta);
+        TextView durationView = card.findViewById(R.id.tripOptionDuration);
+
+        DirectionsGenerator gen = new DirectionsGenerator(itinerary.legs, ctx);
+        String title = gen.getItineraryTitle();
+        String duration = toCompactDuration(itinerary.duration);
+
+        long startMs = Long.parseLong(itinerary.startTime);
+        long endMs = startMs + (long) (itinerary.duration * 1000);
+        String eta = "ETA " + toCompactTime(endMs);
+
+        boolean isSelected = (position == mSelectedIndex);
+        int selectedTextColor = getResources().getColor(R.color.trip_plan_header_text_selected);
+        int defaultTextColor = getResources().getColor(R.color.header_text_color);
+        int fadedTextColor = getResources().getColor(R.color.header_text_faded_color);
+        int textColor = isSelected ? selectedTextColor : defaultTextColor;
+        int iconColor = isSelected ? selectedTextColor
+                : getResources().getColor(R.color.trip_option_icon_tint);
+
+        modeChainLayout.removeAllViews();
+        LinkedHashSet<String> seenModes = new LinkedHashSet<>();
+        for (Leg leg : itinerary.legs) {
+            if (seenModes.contains(leg.mode)) continue;
+            seenModes.add(leg.mode);
+
+            TraverseMode mode = TraverseMode.valueOf(leg.mode);
+            int modeRes = DirectionsGenerator.getModeIcon(new TraverseModeSet(mode));
+            if (modeRes == -1) continue;
+
+            if (modeChainLayout.getChildCount() > 0) {
+                TextView sep = new TextView(ctx);
+                sep.setText(" > ");
+                sep.setTextSize(14);
+                sep.setTextColor(iconColor);
+                modeChainLayout.addView(sep);
+            }
+            ImageView iv = new ImageView(ctx);
+            iv.setImageResource(modeRes);
+            iv.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
+            iv.setColorFilter(iconColor);
+            modeChainLayout.addView(iv);
+        }
+
+        // Duration bold and large, right after icons
+        TextView durationInChain = new TextView(ctx);
+        durationInChain.setText("   " + duration);
+        durationInChain.setTextSize(16);
+        durationInChain.setTypeface(null, Typeface.BOLD);
+        durationInChain.setTextColor(textColor);
+        modeChainLayout.addView(durationInChain);
+
+        titleView.setText(title);
+        etaView.setText(eta);
+        durationView.setText(duration + " travel");
+
+        int dividerColor = 0x40808080;
+        if (isSelected) {
             linearLayout.setBackgroundResource(R.drawable.trip_option_selected_item);
             titleView.setTextColor(selectedTextColor);
+            etaView.setTextColor(selectedTextColor);
             durationView.setTextColor(selectedTextColor);
-            intervalView.setTextColor(selectedTextColor);
-
-            getArguments().putInt(OTPConstants.SELECTED_ITINERARY, rank);
-
-            updateInfo();
-            updateMap();
+        } else {
+            linearLayout.setBackgroundColor(getResources().getColor(R.color.trip_plan_card_background));
+            titleView.setTextColor(fadedTextColor);
+            etaView.setTextColor(fadedTextColor);
+            durationView.setTextColor(fadedTextColor);
         }
+        dividerView.setBackgroundColor(dividerColor);
 
+        card.setOnClickListener(v -> selectOption(position));
+    }
 
-        void setItinerary(int rank) {
-            List<Itinerary> trips = getItineraries();
-            if (rank >= trips.size()) {
-                this.itinerary = null;
-                linearLayout.setVisibility(View.GONE);
-                return;
-            }
+    private void updateOptionStyles(List<Itinerary> itineraries) {
+        if (mOptionsContainer == null || itineraries == null) return;
+        Context ctx = getActivity();
+        if (ctx == null) return;
 
-            this.itinerary = trips.get(rank);
-            this.rank = rank;
+        float density = getResources().getDisplayMetrics().density;
+        int iconSize = (int) (18 * density);
 
-            String title = new DirectionsGenerator(itinerary.legs, getContext()).getItineraryTitle();
-            String duration = ConversionUtils.getFormattedDurationTextNoSeconds(itinerary.duration, false, getContext());
-            String interval = formatTimeString(itinerary.startTime, itinerary.duration * 1000);
-
-            titleView.setText(title);
-            durationView.setText(duration);
-            intervalView.setText(interval);
-        }
-
-        void updateInfo() {
-            DirectionsGenerator gen = new DirectionsGenerator(itinerary.legs, getActivity().getApplicationContext());
-            List<Direction> directions = gen.getDirections();
-            Direction direction_data[] = directions.toArray(new Direction[directions.size()]);
-
-            DirectionExpandableListAdapter adapter = new DirectionExpandableListAdapter(
-                    getActivity(),
-                    R.layout.list_direction_item, R.layout.list_subdirection_item, direction_data);
-
-            mDirectionsListView.setAdapter(adapter);
-
-            mDirectionsListView.setGroupIndicator(null);
-
-            Context context = Application.get().getApplicationContext();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-                NotificationChannel channel = manager.getNotificationChannel(Application.CHANNEL_TRIP_PLAN_UPDATES_ID);
-                if(channel.getImportance() != NotificationManager.IMPORTANCE_NONE){
-                    RealtimeService.start(getActivity(), getArguments());
-                }
-            } else {
-                if (Application.getPrefs()
-                        .getBoolean(getString(R.string.preference_key_trip_plan_notifications), true)) {
-
-                    RealtimeService.start(getActivity(), getArguments());
-                }
-            }
-        }
-
-        void updateMap() {
-            mMapBundle.putSerializable(MapParams.ITINERARY, itinerary);
-            mMapFragment.setMapMode(MapParams.MODE_DIRECTIONS, mMapBundle);
+        for (int i = 0; i < mOptionsContainer.getChildCount() && i < itineraries.size(); i++) {
+            View card = mOptionsContainer.getChildAt(i);
+            bindOptionCard(card, itineraries.get(i), i, ctx, iconSize);
         }
     }
 }

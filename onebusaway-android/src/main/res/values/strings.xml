@@ -28,7 +28,7 @@
     <string name="navdrawer_item_help">Help</string>
     <string name="navdrawer_item_send_feedback">Send feedback</string>
     <string name="navdrawer_item_open_source">Visit us on GitHub</string>
-    <string name="navdrawer_item_plan_trip">Plan a trip (beta)</string>
+    <string name="navdrawer_item_plan_trip">Plan a trip</string>
     <string name="navdrawer_item_pay_fare">Pay my fare</string>
 
     <!-- Permissions -->
@@ -669,7 +669,7 @@
         show arrival info in the header at the top of the screen (doesn\'t affect map view)
     </string>
 
-    <string name="preferences_trip_plan_notifications_title">Trip plan notifications (beta)</string>
+    <string name="preferences_trip_plan_notifications_title">Trip plan notifications</string>
     <string name="preferences_trip_plan_notifications_summary">After planning a trip, send
         notifications if the trip is delayed or no longer recommended.
     </string>
@@ -1006,7 +1006,7 @@
 
     <!-- Trip Planner strings -->
 
-    <string name="title_activity_trip_plan">Trip Planner (beta)</string>
+    <string name="title_activity_trip_plan">Trip Planner</string>
     <string name="trip_plan_from">From: </string>
     <string name="trip_plan_to">To: </string>
     <string name="trip_plan_leaving">Leaving</string>
@@ -1069,8 +1069,8 @@
     <!-- Transit -->
 
     <!-- Transit instruction start -->
-    <string name="step_by_step_transit_get_on">Get on</string>
-    <string name="step_by_step_transit_get_off">Get off</string>
+    <string name="step_by_step_transit_get_on">Board</string>
+    <string name="step_by_step_transit_get_off">Alight</string>
     <!--                This is exactly the formula that should be used, because the app won't include
                     the destination stop under this text, so would be best to avoid expressions like
                      "stops to destination". For example in the trip Barcelona/Paris/London/New York,
@@ -1089,14 +1089,14 @@
     <!-- Modes -->
 
     <!-- Modes -->
-    <string name="step_by_step_transit_mode_tram">tram</string>
-    <string name="step_by_step_transit_mode_subway">subway</string>
-    <string name="step_by_step_transit_mode_rail">rail</string>
-    <string name="step_by_step_transit_mode_bus">bus</string>
-    <string name="step_by_step_transit_mode_ferry">ferry</string>
-    <string name="step_by_step_transit_mode_cable_car">cable car</string>
-    <string name="step_by_step_transit_mode_gondola">gondola</string>
-    <string name="step_by_step_transit_mode_funicular">funicular</string>
+    <string name="step_by_step_transit_mode_tram">Tram</string>
+    <string name="step_by_step_transit_mode_subway">Subway</string>
+    <string name="step_by_step_transit_mode_rail">Rail</string>
+    <string name="step_by_step_transit_mode_bus">Bus</string>
+    <string name="step_by_step_transit_mode_ferry">Ferry</string>
+    <string name="step_by_step_transit_mode_cable_car">Cable Car</string>
+    <string name="step_by_step_transit_mode_gondola">Gondola</string>
+    <string name="step_by_step_transit_mode_funicular">Funicular</string>
 
     <!-- Non-transit -->
 
@@ -1255,6 +1255,8 @@
     <string name="reset_time">Reset time</string>
     <string name="set_destination_to_my_location">Set destination to my location</string>
     <string name="set_origin_to_my_location">Set origin to my location</string>
+    <string name="swap_origin_and_destination">Swap origin and destination</string>
+    <string name="trip_plan_get_directions">Get Directions</string>
     <string name="travel_behavior_dialog_opt_out_title">Opt out of study?</string>
     <string name="travel_behavior_dialog_opt_out_message">If you opt out of the research study, we won\'t receive any more information about your travel behavior to help improve public transit.</string>
     <string name="cancel">Cancel</string>

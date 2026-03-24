@@ -1,16 +1,16 @@
 /*
  * Copyright 2012 University of South Florida
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and 
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
@@ -25,18 +25,17 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-
-import androidx.core.content.ContextCompat;
-
 
 /**
  * @author Khoa Tran
@@ -148,6 +147,13 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
             holder.imgIcon = (ImageView) row.findViewById(R.id.imgIcon);
             holder.noIconText = (TextView) row.findViewById(R.id.noIconText);
             holder.txtDirection = (TextView) row.findViewById(R.id.directionText);
+            holder.transitLeftBlock = (LinearLayout) row.findViewById(R.id.transitLeftBlock);
+            holder.txtTime = (TextView) row.findViewById(R.id.timeText);
+            holder.timelineColumn = (LinearLayout) row.findViewById(R.id.timelineColumn);
+            holder.timelineLineTop = row.findViewById(R.id.timelineLineTop);
+            holder.timelineLineBottom = row.findViewById(R.id.timelineLineBottom);
+            holder.timelineDot = row.findViewById(R.id.timelineDot);
+            holder.rightIcon = (ImageView) row.findViewById(R.id.rightIcon);
 
             row.setTag(holder);
         } else {
@@ -159,47 +165,104 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
         holder.txtDirection.setTextColor(textColor);
 
         if (!dir.isTransit()) {
+            // Non-transit (walk/bike) step
+            if (holder.transitLeftBlock != null) {
+                holder.transitLeftBlock.setVisibility(View.GONE);
+            }
+            if (holder.txtTime != null) {
+                holder.txtTime.setVisibility(View.GONE);
+            }
+            if (holder.timelineColumn != null) {
+                holder.timelineColumn.setVisibility(View.GONE);
+            }
+            if (holder.rightIcon != null) {
+                holder.rightIcon.setVisibility(View.GONE);
+            }
+
             holder.txtDirection.setText(dir.getDirectionIndex() + ". " + dir.getDirectionText());
             holder.imgIcon.setVisibility(View.VISIBLE);
             if (dir.getIcon() != -1) {
                 holder.imgIcon.setImageResource(dir.getIcon());
                 holder.imgIcon.setColorFilter(Color.GRAY);
-            }
-            else {
+            } else {
                 holder.imgIcon.setVisibility(View.INVISIBLE);
             }
+            if (holder.noIconText != null) {
+                holder.noIconText.setVisibility(View.GONE);
+            }
         } else {
-            CharSequence textBeforeTime = dir.getDirectionIndex() + ". " + dir.getService();
-            CharSequence text;
-            CharSequence time = dir.getOldTime();
-            text = new SpannableString(textBeforeTime);
-            if (dir.isRealTimeInfo()) {
-                if (dir.getNewTime() != null) {
-                    time = dir.getNewTime();
+            // Transit step — show time, timeline, right icon
+            if (holder.transitLeftBlock != null) {
+                holder.transitLeftBlock.setVisibility(View.VISIBLE);
+            }
+            holder.imgIcon.setVisibility(View.GONE);
+            if (holder.noIconText != null) {
+                holder.noIconText.setVisibility(View.GONE);
+            }
+
+            // Short time on the left (e.g., "12:22 AM")
+            CharSequence shortTime = dir.getShortTime();
+            if (holder.txtTime != null && !TextUtils.isEmpty(shortTime)) {
+                holder.txtTime.setVisibility(View.VISIBLE);
+                holder.txtTime.setText(shortTime);
+            } else if (holder.txtTime != null) {
+                holder.txtTime.setVisibility(View.GONE);
+            }
+
+            // Timeline dot and connecting lines
+            if (holder.timelineColumn != null) {
+                holder.timelineColumn.setVisibility(View.VISIBLE);
+
+                boolean prevIsTransit = groupPosition > 0
+                        && mData[groupPosition - 1].isTransit();
+                boolean nextIsTransit = groupPosition < mData.length - 1
+                        && mData[groupPosition + 1].isTransit();
+
+                holder.timelineLineTop.setVisibility(
+                        prevIsTransit ? View.VISIBLE : View.INVISIBLE);
+                holder.timelineLineBottom.setVisibility(
+                        nextIsTransit ? View.VISIBLE : View.INVISIBLE);
+            }
+
+            // Transit mode icon on the right — for "Alight" steps (icon == -1),
+            // inherit the icon from the preceding "Board" step
+            int transitIcon = dir.getIcon();
+            if (transitIcon == -1 && groupPosition > 0
+                    && mData[groupPosition - 1].isTransit()) {
+                transitIcon = mData[groupPosition - 1].getIcon();
+            }
+            if (holder.rightIcon != null) {
+                if (transitIcon != -1) {
+                    holder.rightIcon.setVisibility(View.VISIBLE);
+                    holder.rightIcon.setImageResource(transitIcon);
+                    holder.rightIcon.setColorFilter(Color.GRAY);
+                } else {
+                    holder.rightIcon.setVisibility(View.GONE);
                 }
             }
-            text = TextUtils.concat(text, " ", time, "\n", dir.getPlaceAndHeadsign());
+
+            // Bold service label
+            SpannableString serviceSpan = new SpannableString(dir.getService());
+            serviceSpan.setSpan(new StyleSpan(Typeface.BOLD), 0, serviceSpan.length(), 0);
+
+            CharSequence text = serviceSpan;
+            text = TextUtils.concat(text, "\n", dir.getPlaceAndHeadsign());
 
             if (!TextUtils.isEmpty(dir.getAgency())) {
                 text = TextUtils.concat(text, "\n", dir.getAgency());
             }
             if (!TextUtils.isEmpty(dir.getExtra())) {
-                SpannableString extraSpannableString = new SpannableString(dir.getExtra());
-                extraSpannableString.setSpan(new StyleSpan(Typeface.ITALIC), 0,
-                        extraSpannableString.length(), 0);
-                text = TextUtils.concat(text, "\n", extraSpannableString);
+                SpannableString extraSpan = new SpannableString(dir.getExtra());
+                extraSpan.setSpan(new StyleSpan(Typeface.ITALIC), 0,
+                        extraSpan.length(), 0);
+                extraSpan.setSpan(
+                        new ForegroundColorSpan(
+                                mContext.getResources().getColor(R.color.header_stop_info_ontime)),
+                        0, extraSpan.length(), 0);
+                text = TextUtils.concat(text, "\n", extraSpan);
             }
 
             holder.txtDirection.setText(text);
-            if (dir.getIcon() == -1) {
-                holder.imgIcon.setVisibility(View.INVISIBLE);
-                holder.noIconText.setVisibility(View.VISIBLE);
-            } else {
-                holder.imgIcon.setVisibility(View.VISIBLE);
-                holder.imgIcon.setImageResource(dir.getIcon());
-                holder.imgIcon.setColorFilter(Color.GRAY);
-                holder.noIconText.setVisibility(View.INVISIBLE);
-            }
         }
         return row;
     }
@@ -218,5 +281,12 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
         ImageView imgIcon;
         TextView noIconText;
         TextView txtDirection;
+        LinearLayout transitLeftBlock;
+        TextView txtTime;
+        LinearLayout timelineColumn;
+        View timelineLineTop;
+        View timelineDot;
+        View timelineLineBottom;
+        ImageView rightIcon;
     }
 }

@@ -11,7 +11,7 @@
     <string name="navdrawer_item_send_feedback">Wyślij opinię</string>
     <string name="navdrawer_item_starred_routes">Ulubione linie</string>
     <string name="navdrawer_item_open_source">Odwiedź nas na GitHubie</string>
-    <string name="navdrawer_item_plan_trip">Zaplanuj podróż (beta)</string>
+    <string name="navdrawer_item_plan_trip">Zaplanuj podróż</string>
     <string name="navdrawer_item_pay_fare">Zapłać za bilet</string>
 
     <!-- Permissions -->
@@ -640,7 +640,7 @@
         pokaż przyjazdy w nagłówku u góry ekranu (nie wpływa na widok mapy)
     </string>
 
-    <string name="preferences_trip_plan_notifications_title">Powiadomienia o planowaniu podróży (beta)</string>
+    <string name="preferences_trip_plan_notifications_title">Powiadomienia o planowaniu podróży</string>
     <string name="preferences_trip_plan_notifications_summary">Po zaplanowaniu podróży wysyłaj powiadomienia, jeśli podróż jest opóźniona lub nie jest już zalecana.
     </string>
 
@@ -1038,7 +1038,7 @@
     <string name="browse_the_web">Przeglądaj sieć</string>
 
     <!-- Trip Planner strings -->
-    <string name="title_activity_trip_plan">Planer podróży (beta)</string>
+    <string name="title_activity_trip_plan">Planer podróży</string>
     <string name="trip_plan_from">Skąd: </string>
     <string name="trip_plan_to">Dokąd: </string>
     <string name="trip_plan_leaving">Wyjazd</string>

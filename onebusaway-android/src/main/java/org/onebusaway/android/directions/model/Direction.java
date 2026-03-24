@@ -42,6 +42,8 @@ public class Direction {
 
     private CharSequence newTime = null;
 
+    private CharSequence shortTime;
+
     private boolean isTransit = false;
 
     private ArrayList<Direction> subDirections = null;
@@ -175,5 +177,13 @@ public class Direction {
 
     public void setExtra(CharSequence extra) {
         this.extra = extra;
+    }
+
+    public CharSequence getShortTime() {
+        return shortTime;
+    }
+
+    public void setShortTime(CharSequence shortTime) {
+        this.shortTime = shortTime;
     }
 }

@@ -246,6 +246,9 @@ public class TripRequestBuilder {
             request.getParameters().put("mode", modeString);
         }
 
+        // Request more itineraries than the OTP default of 3
+        request.getParameters().put("numItineraries", "5");
+
         // Our default. This could be configurable.
         request.setShowIntermediateStops(true);
 

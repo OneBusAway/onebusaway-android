@@ -28,13 +28,15 @@
         <RelativeLayout
                 android:id="@+id/trip_plan_from_layout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@id/swapImageButton"
+                android:layout_toStartOf="@id/swapImageButton">
 
             <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_toLeftOf="@id/fromContactsImageButton"
-                    android:layout_toStartOf="@id/fromContactsImageButton"
+                    android:layout_toLeftOf="@id/fromCurrentLocationImageButton"
+                    android:layout_toStartOf="@id/fromCurrentLocationImageButton"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
                     android:layout_centerVertical="true"
@@ -54,26 +56,10 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <ImageButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="5dp"
-                    android:layout_marginStart="5dp"
-                    android:padding="12dp"
-                    android:id="@+id/fromContactsImageButton"
-                    android:background="#00000000"
-                    android:src="@drawable/baseline_import_contacts_24"
-                    app:tint="@color/material_gray"
-                    android:layout_gravity="center_vertical"
-                    android:layout_toLeftOf="@id/fromCurrentLocationImageButton"
-                    android:layout_centerVertical="true"
-                    android:contentDescription="@string/select_origin_from_contacts" />
-
-
-            <ImageButton
                     android:id="@+id/fromCurrentLocationImageButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="#00000000"
+                    android:background="@android:color/transparent"
                     android:src="@drawable/ic_my_location"
                     android:layout_marginLeft="5dp"
                     android:layout_marginStart="5dp"
@@ -85,19 +71,32 @@
                     app:tint="@color/material_gray" />
         </RelativeLayout>
 
+        <ImageButton
+                android:id="@+id/swapImageButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_swap_vert"
+                android:padding="12dp"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:contentDescription="@string/swap_origin_and_destination"
+                app:tint="@color/material_gray" />
+
         <RelativeLayout
                 android:id="@+id/trip_plan_to_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/trip_plan_from_layout">
+                android:layout_below="@id/trip_plan_from_layout"
+                android:layout_toLeftOf="@id/swapImageButton"
+                android:layout_toStartOf="@id/swapImageButton">
 
             <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
-                    android:layout_toLeftOf="@id/toContactsImageButton"
-                    android:layout_toStartOf="@id/toContactsImageButton"
                     android:layout_centerVertical="true"
                     app:endIconMode="clear_text">
 
@@ -111,37 +110,6 @@
                         android:singleLine="true"
                         android:requiresFadingEdge="horizontal" />
             </com.google.android.material.textfield.TextInputLayout>
-
-            <ImageButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="5dp"
-                    android:layout_marginStart="5dp"
-                    android:padding="12dp"
-                    android:id="@+id/toContactsImageButton"
-                    android:background="#00000000"
-                    android:src="@drawable/baseline_import_contacts_24"
-                    app:tint="@color/material_gray"
-                    android:layout_gravity="center_vertical"
-                    android:layout_toLeftOf="@id/toCurrentLocationImageButton"
-                    android:layout_centerVertical="true"
-                    android:contentDescription="@string/select_destination_from_contacts" />
-
-            <ImageButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="5dp"
-                    android:layout_marginStart="5dp"
-                    android:padding="12dp"
-                    android:id="@+id/toCurrentLocationImageButton"
-                    android:background="#00000000"
-                    android:src="@drawable/ic_my_location"
-                    android:layout_gravity="center_vertical"
-                    android:layout_alignParentRight="true"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:contentDescription="@string/set_destination_to_my_location"
-                    app:tint="@color/material_gray" />
         </RelativeLayout>
     </RelativeLayout>
 
@@ -233,13 +201,21 @@
                         android:padding="2dp"
                         android:scaleType="fitXY"
                         android:id="@+id/resetTimeImageButton"
-                        android:src="@drawable/ic_arrival_time"
-                        android:background="#00000000"
+                        android:src="@drawable/ic_reset_time"
+                        android:background="@android:color/transparent"
                         android:layout_gravity="center_vertical"
                         android:contentDescription="@string/reset_time"
                         app:tint="@color/material_gray" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+            android:id="@+id/tripPlanSearchButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/time_layout"
+            android:layout_marginTop="12dp"
+            android:text="@string/trip_plan_get_directions" />
 
 </RelativeLayout>

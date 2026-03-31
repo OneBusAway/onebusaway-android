@@ -96,6 +96,16 @@ public class RealtimeIndicatorView extends View {
         ensureInit();
     }
 
+    @Override
+    protected void onVisibilityChanged(View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        if (visibility == VISIBLE) {
+            initAnimation();
+        } else {
+            clearAnimation();
+        }
+    }
+
     private void setOnMeasureCallback() {
         getViewTreeObserver().addOnGlobalLayoutListener(
                 new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -136,6 +146,9 @@ public class RealtimeIndicatorView extends View {
      * Setup the animation
      */
     private synchronized void initAnimation() {
+        // Cancel any existing animation before starting a new one
+        clearAnimation();
+
         // Animate circle expand/contract
         mAnimation1 = new Animation() {
             @Override

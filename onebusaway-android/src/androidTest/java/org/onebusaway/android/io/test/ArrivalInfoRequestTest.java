@@ -710,4 +710,87 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertTrue(arrivals[1].getPredicted());
         assertFalse(arrivals[2].getPredicted());
     }
+
+    @Test
+    public void testFrequencyBasedTrips() {
+        // Test frequency-based trips using USF Bull Runner data (see issue #430)
+        Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
+
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
+                        "USF Bull Runner_203").build().call();
+        assertOK(response);
+
+        ObaStop stop = response.getStop();
+        assertNotNull(stop);
+        assertEquals("USF Bull Runner_203", stop.getId());
+        assertEquals("Center for Transportation Research", stop.getName());
+
+        final List<ObaRoute> routes = response.getRoutes(stop.getRouteIds());
+        assertEquals(2, routes.size());
+
+        final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+        assertNotNull(arrivals);
+        assertEquals(2, arrivals.length);
+
+        // First arrival - Route E (Gold Campus Loop) - frequency-based
+        ObaArrivalInfo arrival0 = arrivals[0];
+        assertEquals("USF Bull Runner_E", arrival0.getRouteId());
+        assertEquals("E", arrival0.getShortName());
+        assertEquals("Gold Campus Loop", arrival0.getHeadsign());
+        assertNotNull(arrival0.getFrequency());
+        assertEquals(600, arrival0.getFrequency().getHeadway());
+        assertEquals(1456747200000L, arrival0.getFrequency().getStartTime());
+        assertEquals(1456808400000L, arrival0.getFrequency().getEndTime());
+        assertFalse(arrival0.getPredicted());
+
+        // Second arrival - Route D (Red Off-Campus West) - frequency-based
+        ObaArrivalInfo arrival1 = arrivals[1];
+        assertEquals("USF Bull Runner_D", arrival1.getRouteId());
+        assertEquals("D", arrival1.getShortName());
+        assertEquals("Red Off-Campus West", arrival1.getHeadsign());
+        assertNotNull(arrival1.getFrequency());
+        assertEquals(600, arrival1.getFrequency().getHeadway());
+        assertEquals(1456747200000L, arrival1.getFrequency().getStartTime());
+        assertEquals(1456808400000L, arrival1.getFrequency().getEndTime());
+        assertFalse(arrival1.getPredicted());
+
+        // Verify nearby stops
+        final List<ObaStop> nearbyStops = response.getNearbyStops();
+        assertTrue(nearbyStops.size() > 0);
+    }
+
+    @Test
+    public void testFrequencyHeadwayAsMinutes() {
+        // Verify headway conversion to minutes for display (600 seconds = 10 minutes)
+        Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
+
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
+                        "USF Bull Runner_203").build().call();
+        assertOK(response);
+
+        final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+        assertNotNull(arrivals);
+
+        ObaArrivalInfo.Frequency freq = arrivals[0].getFrequency();
+        assertNotNull(freq);
+        int headwayAsMinutes = (int) (freq.getHeadway() / 60);
+        assertEquals(10, headwayAsMinutes);
+    }
+
+    @Test
+    public void testScheduleBasedTripHasNullFrequency() {
+        // Verify that a schedule-based trip (HART) has a null frequency
+        Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
+
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
+                        "Hillsborough Area Regional Transit_3105").build().call();
+        assertOK(response);
+
+        final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+        assertNotNull(arrivals);
+        assertNull(arrivals[0].getFrequency());
+    }
 }

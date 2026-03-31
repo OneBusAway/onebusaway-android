@@ -181,4 +181,32 @@ public class ObaArrivalInfoTest extends ObaTestCase {
         assertNull(info.getHistoricalOccupancy());
         assertNull(info.getOccupancyStatus());
     }
+
+    @Test
+    public void testFrequency_Present() {
+        String json = "{\"frequency\":{\"startTime\":1456747200000," +
+                "\"headway\":600,\"endTime\":1456808400000}}";
+        ObaArrivalInfo info = JacksonSerializer.getInstance()
+                .deserializeFromResponse(json, ObaArrivalInfo.class);
+        assertNotNull(info.getFrequency());
+        assertEquals(1456747200000L, info.getFrequency().getStartTime());
+        assertEquals(1456808400000L, info.getFrequency().getEndTime());
+        assertEquals(600, info.getFrequency().getHeadway());
+    }
+
+    @Test
+    public void testFrequency_Null() {
+        String json = "{\"frequency\":null}";
+        ObaArrivalInfo info = JacksonSerializer.getInstance()
+                .deserializeFromResponse(json, ObaArrivalInfo.class);
+        assertNull(info.getFrequency());
+    }
+
+    @Test
+    public void testFrequency_Missing() {
+        String json = "{}";
+        ObaArrivalInfo info = JacksonSerializer.getInstance()
+                .deserializeFromResponse(json, ObaArrivalInfo.class);
+        assertNull(info.getFrequency());
+    }
 }

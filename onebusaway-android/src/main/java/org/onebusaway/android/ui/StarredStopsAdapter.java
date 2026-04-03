@@ -19,8 +19,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.GradientDrawable;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -37,6 +37,8 @@ import androidx.cursoradapter.widget.SimpleCursorAdapter;
 
 /**
  * Adapter for starred stops list that displays arrival badges inline.
+ * A null value in the arrivals map indicates a fetch error for that stop,
+ * while an empty list means no upcoming arrivals.
  */
 class StarredStopsAdapter extends SimpleCursorAdapter {
 
@@ -104,22 +106,42 @@ class StarredStopsAdapter extends SimpleCursorAdapter {
         HorizontalScrollView arrivalsScroll = view.findViewById(R.id.arrivals_scroll);
         LinearLayout arrivalsContainer = view.findViewById(R.id.arrivals_container);
         ProgressBar arrivalsLoading = view.findViewById(R.id.arrivals_loading);
+        TextView arrivalsError = view.findViewById(R.id.arrivals_error);
 
         if (mArrivalsData == null) {
             // Still loading
             arrivalsScroll.setVisibility(View.GONE);
+            arrivalsError.setVisibility(View.GONE);
             arrivalsLoading.setVisibility(View.VISIBLE);
             return;
         }
 
         arrivalsLoading.setVisibility(View.GONE);
-        ArrayList<ArrivalInfo> arrivals = mArrivalsData.get(stopId);
 
-        if (arrivals == null || arrivals.isEmpty()) {
+        if (!mArrivalsData.containsKey(stopId)) {
             arrivalsScroll.setVisibility(View.GONE);
+            arrivalsError.setVisibility(View.GONE);
             return;
         }
 
+        ArrayList<ArrivalInfo> arrivals = mArrivalsData.get(stopId);
+
+        // Null value means fetch error
+        if (arrivals == null) {
+            arrivalsScroll.setVisibility(View.GONE);
+            arrivalsError.setVisibility(View.VISIBLE);
+            arrivalsError.setText(R.string.starred_stop_arrivals_error);
+            return;
+        }
+
+        // Empty list means no upcoming arrivals
+        if (arrivals.isEmpty()) {
+            arrivalsScroll.setVisibility(View.GONE);
+            arrivalsError.setVisibility(View.GONE);
+            return;
+        }
+
+        arrivalsError.setVisibility(View.GONE);
         arrivalsScroll.setVisibility(View.VISIBLE);
         arrivalsContainer.removeAllViews();
 

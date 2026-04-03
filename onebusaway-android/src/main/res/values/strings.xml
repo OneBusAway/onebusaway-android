@@ -1207,6 +1207,29 @@
     <string name="trip_plan_delay">Your trip is delayed.</string>
     <string name="trip_plan_early">Your trip is early.</string>
 
+    <!-- Saved trips -->
+    <string name="trip_plan_save">Save trip</string>
+    <string name="trip_plan_share">Share trip</string>
+    <string name="trip_plan_save_dialog_title">Save trip</string>
+    <string name="trip_plan_save_name_hint">Trip name</string>
+    <string name="trip_plan_save_favorite">Add to favorites</string>
+    <string name="trip_plan_saved_toast">Trip saved</string>
+    <string name="trip_plan_no_itinerary">No trip to save</string>
+    <string name="trip_plan_share_subject">Trip plan from %1$s</string>
+    <string name="trip_plan_share_via">Via: %1$s</string>
+    <string name="trip_plan_share_depart">Depart: %1$s</string>
+    <string name="trip_plan_share_arrive">Arrive: %1$s</string>
+    <string name="trip_plan_share_duration">Duration: %1$s</string>
+    <string name="trip_plan_share_planned_with">Planned with %1$s</string>
+    <string name="saved_trips_title">Saved Trips</string>
+    <string name="saved_trips_empty">No saved trips</string>
+    <string name="saved_trips_delete_confirm">Delete this saved trip?</string>
+    <string name="saved_trips_deleted">Trip deleted</string>
+    <string name="saved_trips_from_address">From: %1$s</string>
+    <string name="saved_trips_to_address">To: %1$s</string>
+    <string name="saved_trips_data_error">Could not load trip data</string>
+    <string name="navdrawer_item_saved_trips">Saved Trips</string>
+
     <!-- Trip plan advanced settings -->
     <string name="trip_plan_advanced_settings">Additional Trip Preferences</string>
     <string name="minimize_transfers">Minimize transfers</string>

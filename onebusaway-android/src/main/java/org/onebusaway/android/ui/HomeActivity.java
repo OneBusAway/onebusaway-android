@@ -137,6 +137,7 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PINS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PLAN_TRIP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PROFILE;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SAVED_TRIPS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEND_FEEDBACK;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SETTINGS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SIGN_IN;
@@ -606,6 +607,10 @@ public class HomeActivity extends AppCompatActivity
                         PlausibleAnalytics.REPORT_MENU_EVENT_URL,
                         getString(R.string.analytics_label_button_press_trip_plan),
                         null);
+                break;
+            case NAVDRAWER_ITEM_SAVED_TRIPS:
+                Intent savedTrips = new Intent(HomeActivity.this, SavedTripsActivity.class);
+                startActivity(savedTrips);
                 break;
             case NAVDRAWER_ITEM_PAY_FARE:
                 UIUtils.launchPayMyFareApp(this);

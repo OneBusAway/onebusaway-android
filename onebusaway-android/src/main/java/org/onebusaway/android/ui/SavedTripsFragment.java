@@ -237,7 +237,7 @@ public class SavedTripsFragment extends Fragment {
                 favoriteIcon.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        int pos = getAdapterPosition();
+                        int pos = getBindingAdapterPosition();
                         if (pos != RecyclerView.NO_POSITION) {
                             onFavoriteClicked(trip, pos);
                         }

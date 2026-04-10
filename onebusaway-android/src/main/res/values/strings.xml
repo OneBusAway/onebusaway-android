@@ -422,14 +422,15 @@
     <string name="all_alert_hidden_snackbar_text">All alerts are now hidden</string>
     <string name="alert_hidden_snackbar_action">UNDO</string>
     <plurals name="alert_filter_text">
-        <item quantity="one">%1$d active alert is hidden</item>
+        <item quantity="one">%1$d active alert shown</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%1$d</xliff:g>
-            active alerts are hidden
+            active alerts shown
         </item>
     </plurals>
     <string name="alert_filter_showall">(show all)</string>
+    <string name="alert_hide_all">(hide all)</string>
 
     <!-- Find -->
     <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search

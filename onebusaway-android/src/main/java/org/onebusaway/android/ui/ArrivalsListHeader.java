@@ -659,6 +659,7 @@ class ArrivalsListHeader {
         refreshStopFavorite();
         refreshFilter();
         refreshError();
+        refreshHideAllAlerts();
         refreshHiddenAlerts();
         refreshArrivalInfoVisibilityAndListeners();
         refreshHeaderSize();
@@ -1385,6 +1386,91 @@ class ArrivalsListHeader {
             }
             ShowHiddenAlert other = (ShowHiddenAlert) obj;
             return getId().equals(other.getId());
+        }
+    }
+
+    private HideAllAlert mHideAllAlert = null;
+
+    private static class HideAllAlert implements AlertList.Alert {
+        private final CharSequence mString;
+        private final Controller mController;
+
+        HideAllAlert(CharSequence seq, Controller controller) {
+            mString = seq;
+            mController = controller;
+        }
+
+        @Override
+        public String getId() {
+            return "STATIC: HIDE ALL ALERT";
+        }
+
+        @Override
+        public int getType() {
+
+            return TYPE_SHOW_HIDDEN_ALERTS;
+        }
+
+        @Override
+        public int getFlags() {
+            return FLAG_HASMORE;
+        }
+
+        @Override
+        public CharSequence getString() {
+            return mString;
+        }
+
+        @Override
+        public void onClick() {
+            ObaContract.ServiceAlerts.hideAllAlerts();
+            mController.refresh();
+        }
+
+        @Override
+        public int hashCode() {
+            return getId().hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+            HideAllAlert other = (HideAllAlert) obj;
+            return getId().equals(other.getId());
+        }
+    }
+
+    private void refreshHideAllAlerts() {
+        if (mController == null) {
+            return;
+        }
+        AlertList alerts = mController.getAlertList();
+        
+        if (mHideAllAlert != null) {
+            alerts.remove(mHideAllAlert);
+        }
+
+        // Count visible alerts (excluding response errors and special alerts)
+        int visibleAlertCount = 0;
+        for (int i = 0; i < alerts.getCount(); i++) {
+            AlertList.Alert alert = alerts.getItem(i);
+            int type = alert.getType();
+            if (type == AlertList.Alert.TYPE_ERROR || type == AlertList.Alert.TYPE_WARNING || 
+                type == AlertList.Alert.TYPE_INFO) {
+                visibleAlertCount++;
+            }
+        }
+
+        // Show hide all button if there are visible alerts
+        if (visibleAlertCount > 0) {
+            CharSequence activeAlertsText = mContext.getResources().getQuantityString(
+                    R.plurals.alert_filter_text, visibleAlertCount, visibleAlertCount);
+            CharSequence hideAllText = mContext.getResources().getString(R.string.alert_hide_all);
+            CharSequence combinedText = activeAlertsText + " " + hideAllText;
+            
+            mHideAllAlert = new HideAllAlert(combinedText, mController);
+            alerts.insert(mHideAllAlert, 0);
         }
     }
 

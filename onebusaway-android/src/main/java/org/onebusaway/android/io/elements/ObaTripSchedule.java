@@ -36,6 +36,8 @@ public final class ObaTripSchedule {
 
         private final String predictedOccupancy;
 
+        private final double distanceAlongTrip;
+
         StopTime() {
             stopId = "";
             stopHeadsign = "";
@@ -43,6 +45,7 @@ public final class ObaTripSchedule {
             departureTime = 0;
             historicalOccupancy = "";
             predictedOccupancy = "";
+            distanceAlongTrip = 0;
         }
 
         /**
@@ -87,6 +90,13 @@ public final class ObaTripSchedule {
          */
         public Occupancy getPredictedOccupancy() {
             return Occupancy.fromString(predictedOccupancy);
+        }
+
+        /**
+         * @return The distance along the trip in meters when the vehicle arrives at this stop.
+         */
+        public double getDistanceAlongTrip() {
+            return distanceAlongTrip;
         }
     }
 
@@ -135,5 +145,70 @@ public final class ObaTripSchedule {
      */
     public String getNextTripId() {
         return nextTripId;
+    }
+
+    /**
+     * Finds the index of the next stop the vehicle has not yet reached, based on
+     * distance along the trip.
+     *
+     * @param distanceAlongTrip current distance along the trip in meters
+     * @return index of the next stop, or stopTimes.length if past the last stop,
+     *         or null if stopTimes is null or empty
+     */
+    public Integer findNextStopIndex(double distanceAlongTrip) {
+        if (stopTimes == null || stopTimes.length == 0) {
+            return null;
+        }
+        for (int i = 0; i < stopTimes.length; i++) {
+            if (stopTimes[i].distanceAlongTrip > distanceAlongTrip) {
+                return i;
+            }
+        }
+        return stopTimes.length;
+    }
+
+    /**
+     * Returns the scheduled start time of the trip in seconds since the service start date.
+     *
+     * @return the trip start time in seconds, or null if no stop times exist
+     */
+    public Long getStartTime() {
+        if (stopTimes == null || stopTimes.length == 0) {
+            return null;
+        }
+        return stopTimes[0].getDepartureTime();
+    }
+
+    /**
+     * Finds the index of the first stop in the segment that brackets the given distance.
+     * The segment spans from stopTimes[result] to stopTimes[result + 1].
+     *
+     * @param distanceAlongTrip the distance along the trip in meters
+     * @return the index of the first stop in the segment
+     * @throws IndexOutOfBoundsException if distanceAlongTrip is before the first stop,
+     *         after the last stop, or if there are fewer than 2 stops
+     */
+    public int findSegmentStartIndex(double distanceAlongTrip) {
+        if (stopTimes == null || stopTimes.length < 2) {
+            throw new IndexOutOfBoundsException("Fewer than 2 stop times");
+        }
+
+        if (distanceAlongTrip < stopTimes[0].distanceAlongTrip) {
+            throw new IndexOutOfBoundsException("Distance is before first stop");
+        }
+
+        if (distanceAlongTrip > stopTimes[stopTimes.length - 1].distanceAlongTrip) {
+            throw new IndexOutOfBoundsException("Distance is after last stop");
+        }
+
+        for (int i = 0; i < stopTimes.length - 1; i++) {
+            if (stopTimes[i].distanceAlongTrip <= distanceAlongTrip &&
+                    distanceAlongTrip < stopTimes[i + 1].distanceAlongTrip) {
+                return i;
+            }
+        }
+
+        // At exactly the last stop's distance
+        return stopTimes.length - 2;
     }
 }

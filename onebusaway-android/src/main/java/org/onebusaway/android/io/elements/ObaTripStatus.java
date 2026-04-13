@@ -161,6 +161,13 @@ public interface ObaTripStatus {
     public long getLastLocationUpdateTime();
 
     /**
+     * @return The last known distance along trip value received in real-time from the
+     * transit vehicle, in meters. Unlike distanceAlongTrip, this is not extrapolated.
+     * Can be null.
+     */
+    public Double getLastKnownDistanceAlongTrip();
+
+    /**
      * @return The last known orientation value received in real-time from the transit vehicle.
      * Can be null.
      */

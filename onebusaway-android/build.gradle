@@ -281,6 +281,9 @@ dependencies {
     implementation "androidx.room:room-runtime:2.7.0"
     ksp "androidx.room:room-compiler:2.7.0"
     implementation "androidx.room:room-ktx:2.7.0"
+    // Coroutines
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
     // GTFS Realtime bindings for parsing GTFS-realtime data
     implementation "org.mobilitydata:gtfs-realtime-bindings:0.0.8"
     implementation 'com.google.api.grpc:proto-google-common-protos:2.9.0'

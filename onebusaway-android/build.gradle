@@ -67,6 +67,7 @@ android {
             isDefault = true
             buildConfigField "String", "MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.googlemapsv2.BaseMapFragment\""
             buildConfigField "String", "MAP_HELPER_CLASS", "\"org.onebusaway.android.map.googlemapsv2.GoogleProprietaryMapHelper\""
+            buildConfigField "String", "TRIP_MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.googlemapsv2.tripmap.TripMapFragment\""
         }
 
         maplibre {
@@ -74,6 +75,7 @@ android {
             dimension "platform"
             buildConfigField "String", "MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.maplibre.MapLibreMapFragment\""
             buildConfigField "String", "MAP_HELPER_CLASS", "\"org.onebusaway.android.map.maplibre.MapLibreProprietaryMapHelper\""
+            buildConfigField "String", "TRIP_MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.maplibre.tripmap.TripMapFragment\""
         }
 
         // Brand flavors are loaded from separate files in flavors/ directory.

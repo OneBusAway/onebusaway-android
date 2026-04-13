@@ -1231,6 +1231,13 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     @Override
+    public void selectVehicle(String tripId) {
+        if (mVehicleOverlay != null && tripId != null) {
+            mVehicleOverlay.selectTrip(tripId);
+        }
+    }
+
+    @Override
     public void postInvalidate() {
         // Do nothing - calling `this.postInvalidate()` causes a StackOverflowError
     }

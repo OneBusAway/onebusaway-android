@@ -844,6 +844,8 @@
     <!-- Vehicles on Map -->
     <string name="vehicle_last_updated_sec">Data updated %1$d sec ago</string>
     <string name="vehicle_last_updated_min_and_sec">Data updated %1$d min %2$d sec ago</string>
+    <string name="vehicle_estimate_from_update_sec">Estimate from data updated %1$d sec ago</string>
+    <string name="vehicle_estimate_from_update_min_and_sec">Estimate from data updated %1$d min %2$d sec ago</string>
     <string name="vehicle_last_updated_scheduled">Position calculated from schedule</string>
 
     <!-- Night Light -->

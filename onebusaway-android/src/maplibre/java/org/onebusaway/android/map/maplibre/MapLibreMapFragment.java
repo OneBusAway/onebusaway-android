@@ -901,6 +901,11 @@ public class MapLibreMapFragment extends SupportMapFragment
     }
 
     @Override
+    public void selectVehicle(String tripId) {
+        Log.w(TAG, "selectVehicle() is not yet implemented for MapLibre");
+    }
+
+    @Override
     public void postInvalidate() {
         // No-op for MapLibre
     }

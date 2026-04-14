@@ -642,7 +642,7 @@ public class SettingsActivity extends AppCompatActivity
         private Preference mCustomOtpApiUrlPref;
         private Preference mPushFirebaseData;
         private Preference mResetDonationTimestamps;
-        private FirebaseAnalytics mFirebaseAnalytics;
+private FirebaseAnalytics mFirebaseAnalytics;
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -674,7 +674,7 @@ public class SettingsActivity extends AppCompatActivity
                 mResetDonationTimestamps.setOnPreferenceClickListener(this);
             }
 
-            if (BuildConfig.USE_FIXED_REGION) {
+if (BuildConfig.USE_FIXED_REGION) {
                 Preference experimentalRegion = findPreference(
                         getString(R.string.preference_key_experimental_regions));
                 PreferenceCategory advancedCategory = findPreference(

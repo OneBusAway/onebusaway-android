@@ -289,4 +289,9 @@
     <string name="eta_scheduled_departed">%1$s (scheduled, departed)</string>
     <string name="eta_scheduled_less_than_one_min">%1$s (scheduled, &lt; 1 min)</string>
     <string name="eta_scheduled_minutes">%1$s (scheduled, %2$d min)</string>
+
+    <!-- Debug data views -->
+    <string name="debug_trip_data_title">Trip Data</string>
+    <string name="debug_tab_graph">Graph</string>
+    <string name="debug_tab_table">Table</string>
 </resources>

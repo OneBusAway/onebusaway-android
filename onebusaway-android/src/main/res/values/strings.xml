@@ -41,6 +41,7 @@
     <string name="generic_comm_error">Sorry, there was a communication error and we can\'t show this
         information. Try again and it might work.
     </string>
+    <string name="trip_details_error">Error %1$d: %2$s\nTrip: %3$s\nVersion: %4$s</string>
     <string name="generic_comm_error_toast">Failed to update. We\'ll try again in a minute.</string>
     <string name="route_not_found_error_no_region">Sorry, that particular route can\'t be found. If
         this was a
@@ -73,6 +74,7 @@
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="bad_gateway_error">%1$s\'s servers are overloaded. Please excuse us!</string>
     <string name="map_generic_error">Unable to get stops.</string>
+    <string name="trip_map_data_unavailable">Trip map data is not available yet.</string>
     <string name="no_network_error">You appear to be offline or are not connected to the network.
     </string>
     <string name="airplane_mode_error">You are not connected to the network.\nTurn off Airplane
@@ -232,6 +234,7 @@
     <string name="stop_info_eta_now">NOW</string>
     <string name="stop_info_eta_unknown">---\u0020\u0020</string>
     <string name="stop_info_option_showonmap">Show on map</string>
+    <string name="trip_details_option_showlist">Show list</string>
     <string name="menu_option_sort_by">Sort by</string>
     <string name="stop_info_option_refresh">Refresh</string>
     <string name="stop_info_option_filter">Filter routes</string>
@@ -842,6 +845,7 @@
     <string name="trip_details_dest_stop">Destination stop</string>
 
     <!-- Vehicles on Map -->
+    <string name="vehicle_view_location_data">Show trip data</string>
     <string name="vehicle_last_updated_sec">Data updated %1$d sec ago</string>
     <string name="vehicle_last_updated_min_and_sec">Data updated %1$d min %2$d sec ago</string>
     <string name="vehicle_estimate_from_update_sec">Estimate from data updated %1$d sec ago</string>

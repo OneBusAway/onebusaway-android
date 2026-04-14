@@ -2163,7 +2163,15 @@ public final class UIUtils {
         }
     }
 
-// In some utility class, e.g., UIUtils.java
-
-
+    /**
+     * Formats an elapsed time in milliseconds as a human-readable string like
+     * "5 sec ago" or "2 min 30 sec ago".
+     */
+    public static String formatElapsedTime(long elapsedMs) {
+        long sec = Math.max(0, elapsedMs / 1000);
+        if (sec < 60) return sec + " sec ago";
+        long min = sec / 60;
+        long secMod = sec % 60;
+        return min + " min " + secMod + " sec ago";
+    }
 }

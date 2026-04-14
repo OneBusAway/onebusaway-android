@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com), Benjamin Du (bendu@me.com)
+<!-- Copyright (C) 2024 Open Transit Software Foundation
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
 -->
 <menu xmlns:onebusaway="http://schemas.android.com/apk/res-auto"
       xmlns:android="http://schemas.android.com/apk/res/android">
-    <group
-            android:id="@+id/trip_details_menu_group">
-        <item android:id="@+id/refresh"
-              android:title="@string/stop_info_option_refresh"
-              android:icon="@drawable/ic_action_navigation_refresh"
-              onebusaway:showAsAction="ifRoom"
-              onebusaway:iconTint="?attr/colorControlNormal"/>
-        <item android:id="@+id/show_on_map"
-              android:title="@string/stop_info_option_showonmap"
-              android:icon="@drawable/ic_action_location_map"
-              onebusaway:showAsAction="ifRoom"
-              onebusaway:iconTint="?attr/colorControlNormal"/>
-    </group>
+    <item android:id="@+id/refresh"
+          android:title="@string/stop_info_option_refresh"
+          android:icon="@drawable/ic_action_navigation_refresh"
+          onebusaway:showAsAction="ifRoom"/>
+    <item android:id="@+id/toggle_map_list"
+          android:title="@string/stop_info_option_showonmap"
+          android:icon="@drawable/ic_action_location_map"
+          onebusaway:showAsAction="ifRoom"/>
+    <item android:id="@+id/view_location_data"
+          android:title="@string/vehicle_view_location_data"
+          android:visible="false"
+          onebusaway:showAsAction="never"/>
 </menu>

@@ -67,6 +67,7 @@ android {
             isDefault = true
             buildConfigField "String", "MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.googlemapsv2.BaseMapFragment\""
             buildConfigField "String", "MAP_HELPER_CLASS", "\"org.onebusaway.android.map.googlemapsv2.GoogleProprietaryMapHelper\""
+            buildConfigField "String", "TRIP_MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.googlemapsv2.tripmap.TripMapFragment\""
         }
 
         maplibre {
@@ -74,6 +75,7 @@ android {
             dimension "platform"
             buildConfigField "String", "MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.maplibre.MapLibreMapFragment\""
             buildConfigField "String", "MAP_HELPER_CLASS", "\"org.onebusaway.android.map.maplibre.MapLibreProprietaryMapHelper\""
+            buildConfigField "String", "TRIP_MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.maplibre.tripmap.TripMapFragment\""
         }
 
         // Brand flavors are loaded from separate files in flavors/ directory.
@@ -265,7 +267,9 @@ dependencies {
     implementation 'com.google.android.material:material:1.12.0'
     // Explicit dependency on Gson is now apparently needed
     implementation 'com.google.code.gson:gson:2.10.1'
-    // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
+    // JVM unit tests
+    testImplementation 'junit:junit:4.13.2'
+    // Instrumented tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
     androidTestImplementation 'androidx.test:runner:1.6.2'
     // WorkManager (Java only)
     implementation 'androidx.work:work-runtime:2.9.1'
@@ -279,6 +283,9 @@ dependencies {
     implementation "androidx.room:room-runtime:2.7.0"
     ksp "androidx.room:room-compiler:2.7.0"
     implementation "androidx.room:room-ktx:2.7.0"
+    // Coroutines
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
     // GTFS Realtime bindings for parsing GTFS-realtime data
     implementation "org.mobilitydata:gtfs-realtime-bindings:0.0.8"
     implementation 'com.google.api.grpc:proto-google-common-protos:2.9.0'

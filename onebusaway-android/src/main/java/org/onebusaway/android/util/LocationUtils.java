@@ -531,6 +531,46 @@ public class LocationUtils {
     }
 
     /**
+     * Earth radius in meters, matching the OBA server's
+     * SphericalGeometryLibrary.RADIUS_OF_EARTH_IN_KM * 1000.
+     * Use this constant (not Android's WGS84 ellipsoid) when computing distances
+     * that must be consistent with the server's distanceAlongTrip values.
+     */
+    public static final double EARTH_RADIUS_METERS = 6371010.0;
+
+    /**
+     * Haversine great-circle distance matching the OBA server's
+     * SphericalGeometryLibrary.distance() — same formula, same Earth radius
+     * (6371.01 km). Use this instead of {@link Location#distanceTo} when
+     * distances must align with the server's distanceAlongTrip values.
+     *
+     * @return distance in meters
+     */
+    public static double haversineDistance(double lat1, double lon1,
+                                           double lat2, double lon2) {
+        lat1 = Math.toRadians(lat1);
+        lon1 = Math.toRadians(lon1);
+        lat2 = Math.toRadians(lat2);
+        lon2 = Math.toRadians(lon2);
+
+        double deltaLon = lon2 - lon1;
+        double cosLat2 = Math.cos(lat2);
+        double sinDeltaLon = Math.sin(deltaLon);
+        double cosLat1 = Math.cos(lat1);
+        double sinLat2 = Math.sin(lat2);
+        double sinLat1 = Math.sin(lat1);
+        double cosDeltaLon = Math.cos(deltaLon);
+
+        double y = Math.sqrt(
+                (cosLat2 * sinDeltaLon) * (cosLat2 * sinDeltaLon)
+              + (cosLat1 * sinLat2 - sinLat1 * cosLat2 * cosDeltaLon)
+              * (cosLat1 * sinLat2 - sinLat1 * cosLat2 * cosDeltaLon));
+        double x = sinLat1 * sinLat2 + cosLat1 * cosLat2 * cosDeltaLon;
+
+        return EARTH_RADIUS_METERS * Math.atan2(y, x);
+    }
+
+    /**
      * Filters the addresses obtained in geocoding process, removing the
      * results outside server limits.
      *

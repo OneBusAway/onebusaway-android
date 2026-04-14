@@ -61,6 +61,8 @@ public final class ObaTripStatusElement implements ObaTripStatus, Serializable {
 
     private final Long lastLocationUpdateTime;
 
+    private final Double lastKnownDistanceAlongTrip;
+
     private final Double lastKnownOrientation;
 
     private final int blockTripSequence;
@@ -87,6 +89,7 @@ public final class ObaTripStatusElement implements ObaTripStatus, Serializable {
         lastUpdateTime = null;
         lastKnownLocation = null;
         lastLocationUpdateTime = null;
+        lastKnownDistanceAlongTrip = null;
         lastKnownOrientation = null;
         blockTripSequence = 0;
         occupancyStatus = "";
@@ -188,6 +191,11 @@ public final class ObaTripStatusElement implements ObaTripStatus, Serializable {
     @Override
     public long getLastLocationUpdateTime() {
         return lastLocationUpdateTime;
+    }
+
+    @Override
+    public Double getLastKnownDistanceAlongTrip() {
+        return lastKnownDistanceAlongTrip;
     }
 
     @Override

@@ -622,6 +622,8 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
             menu.findItem(R.id.show_on_map).setVisible(false);
             // We want to hide the "show/hide arrivals in header" setting if we are in the sliding panel
             menuItemHeaderArrivals.setVisible(false);
+            // Hide the "Sort arrivals" option from the menu, as it's now in the header
+            menu.findItem(R.id.sort_arrivals).setVisible(false);
         }
     }
 
@@ -1193,7 +1195,8 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         setListAdapter(mAdapter);
     }
 
-    private void showSortByDialog() {
+    @Override
+    public void showSortByDialog() {
         // Do callback when user taps on button, so they can see result of dialog selection
         if (mListener != null) {
             mListener.onSortBySelected();

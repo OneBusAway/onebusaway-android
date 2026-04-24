@@ -135,6 +135,11 @@ class ArrivalsListHeader {
          * Triggers a full refresh of arrivals from the OBA server
          */
         void refresh();
+
+        /**
+         * Shows the "Sort by" dialog
+         */
+        void showSortByDialog();
     }
 
     private static final String TAG = "ArrivalsListHeader";
@@ -182,6 +187,8 @@ class ArrivalsListHeader {
     private ProgressBar mProgressBar;
 
     private ImageButton mStopInfo;
+
+    private ImageButton mSortArrivals;
 
     private ImageView mExpandCollapse;
 
@@ -395,6 +402,14 @@ class ArrivalsListHeader {
 
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
         mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);
+        mSortArrivals = (ImageButton) mView.findViewById(R.id.sort_arrivals_button);
+        mSortArrivals.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mSortArrivals.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mController.showSortByDialog();
+            }
+        });
         mExpandCollapse = (ImageView) mView.findViewById(R.id.expand_collapse);
         mExpandCollapse.setColorFilter(mView.getResources().getColor(R.color.body_text_1));
         mAlertView = (ImageView) mView.findViewById(R.id.alert);

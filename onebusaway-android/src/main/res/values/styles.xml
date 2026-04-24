@@ -40,7 +40,7 @@
     </style>
     <style name="Header3Text">
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textColor">@color/body_text_1_inverse</item>
     </style>
     <style name="Line1Text">
         <item name="android:textSize">16sp</item>

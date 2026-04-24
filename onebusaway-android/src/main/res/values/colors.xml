@@ -25,11 +25,11 @@
     <color name="theme_primary_brand">@color/theme_primary</color>
     <color name="theme_primary_variant">@color/brand_color_dark</color>
     <color name="theme_muted">#94CF96</color>
-    <color name="theme_accent">#5db53b</color>
+    <color name="theme_accent">#407B28</color>
 
     <color name="body_text_1">#de000000</color>
     <color name="body_text_2">#8a000000</color>
-    <color name="body_text_3">#60000000</color>
+    <color name="body_text_3">#727272</color>
     <color name="body_text_disabled">#44000000</color>
 
     <color name="body_text_1_inverse">#deffffff</color>
@@ -39,8 +39,8 @@
     <color name="navdrawer_background">@color/md_theme_surfaceContainer</color>
     <color name="navdrawer_text_color">@color/body_text_1</color>
     <color name="navdrawer_text_color_selected">@color/theme_primary_brand</color>
-    <color name="navdrawer_background_color_selected">#11000000</color>
-    <color name="navdrawer_icon_tint">#888</color>
+    <color name="navdrawer_background_color_selected">#33000000</color>
+    <color name="navdrawer_icon_tint">#727272</color>
     <color name="navdrawer_icon_tint_selected">@color/theme_primary_brand</color>
 
     <!-- Default route line color on map -->
@@ -49,12 +49,12 @@
 
     <!-- Arrival times header -->
     <color name="header_text_color">@color/body_text_1</color>
-    <color name="header_eta_text_color">@android:color/white</color>
-    <color name="header_text_faded_color">@color/body_text_1</color>
+    <color name="header_eta_text_color">@color/md_theme_onPrimary</color>
+    <color name="header_text_faded_color">#727272</color>
     <color name="header_stop_info_ontime">@color/theme_primary_brand</color>
 
     <!-- Arrival time colors -->
-    <color name="stop_info_scheduled_time">#777777</color>
+    <color name="stop_info_scheduled_time">#727272</color>
     <color name="stop_info_ontime">@color/theme_primary_brand</color>
     <color name="stop_info_delayed">#504caf</color>
     <color name="stop_info_early">#af504c</color>
@@ -108,7 +108,7 @@
     <!-- Trip Planning -->
     <color name="trip_plan_label">@android:color/black</color>
     <color name="trip_option_selected">@color/md_theme_primary</color>
-    <color name="trip_option_icon_tint">#888</color>
+    <color name="trip_option_icon_tint">#727272</color>
     <color name="trip_plan_card_background">@color/md_theme_surfaceContainer</color>
     <color name="trip_plan_header_text">@color/md_theme_onSurface</color>
     <color name="trip_plan_card_background_selected">@color/md_theme_secondaryContainer</color>

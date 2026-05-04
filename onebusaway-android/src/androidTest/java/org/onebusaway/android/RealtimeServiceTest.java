@@ -35,7 +35,7 @@ public class RealtimeServiceTest {
         InstrumentationRegistry
                 .getInstrumentation()
                 .getTargetContext()
-                .startService(intent);
+                .startService(intent);//
 
         // Assert
         assertNotNull(intent.getExtras());

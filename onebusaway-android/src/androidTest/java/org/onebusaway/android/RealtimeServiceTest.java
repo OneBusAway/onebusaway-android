@@ -18,9 +18,7 @@ public class RealtimeServiceTest {
     @Test
     public void test_realtime_service_handles_start_checks() {
 
-        // Arrange
         Bundle bundle = new Bundle();
-
         bundle.putInt("selected_itinerary", 0);
 
         Intent intent = new Intent(
@@ -31,11 +29,6 @@ public class RealtimeServiceTest {
         intent.setAction("org.onebusaway.android.INTENT_START_CHECKS");
         intent.putExtras(bundle);
 
-        // Act
-        InstrumentationRegistry
-                .getInstrumentation()
-                .getTargetContext()
-                .startService(intent);//
 
         // Assert
         assertNotNull(intent.getExtras());

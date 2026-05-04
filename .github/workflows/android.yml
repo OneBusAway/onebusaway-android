@@ -66,3 +66,13 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: ./gradlew test check connectedObaGoogleDebugAndroidTest -x lint --stacktrace
+      - name: Run specific RealtimeServiceTest
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          force-avd-creation: false
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: ./gradlew connectedObaGoogleDebugAndroidTest --tests "org.onebusaway.android.RealtimeServiceTest" --stacktrace

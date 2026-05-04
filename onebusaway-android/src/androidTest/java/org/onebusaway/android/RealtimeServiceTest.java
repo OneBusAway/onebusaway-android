@@ -32,8 +32,10 @@ public class RealtimeServiceTest {
         intent.putExtras(bundle);
 
         // Act
-        RealtimeService service = new RealtimeService();
-        service.onHandleIntent(intent);
+        InstrumentationRegistry
+                .getInstrumentation()
+                .getTargetContext()
+                .startService(intent);
 
         // Assert
         assertNotNull(intent.getExtras());

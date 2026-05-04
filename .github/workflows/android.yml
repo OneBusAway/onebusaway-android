@@ -67,4 +67,7 @@ jobs:
           target: google_apis
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: ./gradlew connectedObaGoogleDebugAndroidTest --tests "org.onebusaway.android.RealtimeServiceTest" --stacktrace
+          script: >
+            ./gradlew connectedObaGoogleDebugAndroidTest
+            -Pandroid.testInstrumentationRunnerArguments.class=org.onebusaway.android.RealtimeServiceTest
+            --stacktrace

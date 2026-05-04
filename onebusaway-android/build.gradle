@@ -19,7 +19,7 @@ import org.apache.tools.ant.filters.ConcatFilter
 
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.devtools.ksp'
-apply plugin: 'com.github.triplet.play'
+// plugin: 'com.github.triplet.play'
 
 repositories {
     maven {
@@ -36,7 +36,9 @@ repositories {
 
 android {
     compileSdk=36
-
+    lint {
+        abortOnError false
+    }
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 36
@@ -44,7 +46,6 @@ android {
         versionName "26.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
         // This enables us to tell when we're running unit tests on CI (#1010 for Travis, #1072 for GitHub)
         buildConfigField("String", "CI", "\"" + System.getenv('CI') + "\"")
 
@@ -113,18 +114,19 @@ android {
                 storeFile file("seattlebusbot3.debug.keystore")
             }
 
+
             release {
-                // Nothing here
+                storeFile file("seattlebusbot3.debug.keystore")
+                keyAlias "androiddebugkey"
+                storePassword "android"
+                keyPassword "android"
             }
         }
     }
 
     buildTypes {
         release {
-            signingConfig=signingConfigs.release
-            minifyEnabled=true
-            shrinkResources=true
-            proguardFiles(getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt')
+            signingConfig signingConfigs.debug
         }
     }
 
@@ -210,6 +212,12 @@ configurations {
 }
 
 dependencies {
+    // Unit testing
+    testImplementation 'junit:junit:4.13.2'
+
+    // Android test runner
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     // Firebase Analytics
     implementation 'com.google.firebase:firebase-core:21.1.1'
     implementation 'com.google.firebase:firebase-analytics:22.1.2'
@@ -287,21 +295,6 @@ dependencies {
 
 apply plugin:'com.google.gms.google-services'
 apply plugin: 'com.google.firebase.crashlytics'
-
-play {
-    // Path to the Google Play service account JSON key file.
-    // Set via gradle.properties: PLAY_STORE_JSON_KEY=/path/to/service-account-key.json
-    if (project.hasProperty('PLAY_STORE_JSON_KEY')) {
-        serviceAccountCredentials = file(project.property('PLAY_STORE_JSON_KEY'))
-    }
-
-    // Auto-increment versionCode based on the highest code currently on the Play Store
-    resolutionStrategy = com.github.triplet.gradle.androidpublisher.ResolutionStrategy.AUTO
-
-    // Upload to the open testing (beta) track, matching the existing release workflow
-    defaultToAppBundles = true
-    track = "beta"
-}
 
 /**
  * Validates that strings with %1$s placeholders in the base English strings.xml

@@ -358,5 +358,13 @@ tasks.register('validateStringPlaceholders') {
             println "✓ All translations have consistent placeholders"
         }
     }
+    tasks.matching { task ->
+        task.name.contains("connected") && task.name.contains("AndroidTest")
+    }.configureEach {
+        onlyIf {
+            !project.file("src/androidTest/java").exists() ||
+                    !fileTree("src/androidTest/java").isEmpty
+        }
+    }
 }
 

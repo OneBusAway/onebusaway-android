@@ -70,12 +70,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
     public View onCreateView(LayoutInflater inflater,
             ViewGroup root,
             Bundle savedInstanceState) {
-        if (root == null) {
-            // Currently in a layout without a container, so no
-            // reason to create our view.
-            return null;
-        }
-        return inflater.inflate(R.layout.my_search_route_list, null);
+        return inflater.inflate(R.layout.my_search_route_list, root, false);
     }
 
     @Override

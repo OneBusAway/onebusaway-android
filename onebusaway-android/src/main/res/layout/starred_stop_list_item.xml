@@ -21,7 +21,8 @@
                 android:layout_height="wrap_content"
                 android:layout_width="fill_parent"
                 android:minHeight="77dp"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:descendantFocusability="blocksDescendants">
     <ImageView
             android:id="@+id/stop_favorite"
             android:src="@drawable/ic_toggle_star"

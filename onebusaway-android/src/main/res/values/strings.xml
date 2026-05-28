@@ -241,6 +241,7 @@
     <string name="stop_info_option_addstar">Add star to stop</string>
     <string name="stop_info_option_show_details">Show stop details</string>
     <string name="stop_info_option_removestar">Remove star from stop</string>
+    <string name="stop_info_option_add_widget">Add widget for stop</string> <!-- TODO add translations -->
     <string name="stop_info_option_report_problem">Report stop problem</string>
     <string name="stop_info_option_night_light">Night light</string>
     <string name="stop_info_option_hide_alerts">Hide active alerts</string>
@@ -1220,6 +1221,28 @@
     <string name="transit_mode_rail">Rail only</string>
     <string name="transit_mode_bikeshare">Bikeshare only</string>
     <string name="transit_directions_bikeshare_label">Bikeshare</string>
+
+    <!-- Stop times widget -->
+    <!-- TODO add translations -->
+    <string name="widget_label">Stop Times</string>
+    <string name="widget_description">Real-time bus times for your favorite stop</string>
+    <string name="widget_config_add_stop_widget">Add stop widget</string>
+    <string name="widget_config_selected_stop">Selected stop</string>
+    <string name="widget_config_select_a_stop">Select a stop</string>
+    <string name="widget_config_widget_name">Widget name</string>
+    <string name="widget_config_selected_routes">Selected routes</string>
+    <string name="widget_config_chip_selection_instructions">Select 1–3 routes to display</string>
+    <string name="widget_config_loading_routes">Loading routes…</string>
+    <string name="widget_config_save_widget">Save widget</string>
+    <string name="widget_config_select_at_least_one_route">Select at least 1 route</string>
+    <string name="widget_config_select_no_more_than_three_routes">Select no more than 3 routes</string>
+    <string name="widget_config_add_manually">Please add the widget manually from the home screen</string>
+    <string name="widget_not_configured">Not configured</string>
+    <string name="widget_no_times">N/A</string>
+    <string name="widget_updated_just_now">Updated just now</string>
+    <string name="widget_updated_minutes_ago">Updated %d min. ago</string>
+    <string name="widget_preview_updated_at">Updated 2 min. ago</string>
+    <string name="widget_preview_route_name">D Line</string>
 
     <!-- Bikeshare info window -->
     <string name="bike_info_window_bikes_title">Bikes</string>

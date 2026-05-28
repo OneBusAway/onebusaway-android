@@ -115,6 +115,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -404,6 +405,30 @@ public class HomeActivity extends AppCompatActivity
         setupNavigationDrawer();
 
         setupSlidingPanel();
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Collapse the panel when the user presses the back button
+                if (mSlidingPanel != null) {
+                    // Collapse the sliding panel if its anchored or expanded
+                    if (mSlidingPanel.getPanelState() == PanelState.EXPANDED
+                            || mSlidingPanel.getPanelState() == PanelState.ANCHORED) {
+                        mSlidingPanel.setPanelState(PanelState.COLLAPSED);
+                        return;
+                    }
+                    // Clear focused stop and close the sliding panel if its collapsed
+                    if (mSlidingPanel.getPanelState() == PanelState.COLLAPSED) {
+                        // Clear the stop focus in map fragment, which will trigger a callback to
+                        // close the panel via ObaMapFragment.OnFocusChangedListener in onFocusChanged()
+                        mMapFragment.setFocusStop(null, null);
+                        return;
+                    }
+                }
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+        });
 
         setupMapState(savedInstanceState);
 
@@ -1307,27 +1332,6 @@ public class HomeActivity extends AppCompatActivity
                 mSlidingPanel.setPanelState(PanelState.ANCHORED);
             }
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        // Collapse the panel when the user presses the back button
-        if (mSlidingPanel != null) {
-            // Collapse the sliding panel if its anchored or expanded
-            if (mSlidingPanel.getPanelState() == PanelState.EXPANDED
-                    || mSlidingPanel.getPanelState() == PanelState.ANCHORED) {
-                mSlidingPanel.setPanelState(PanelState.COLLAPSED);
-                return;
-            }
-            // Clear focused stop and close the sliding panel if its collapsed
-            if (mSlidingPanel.getPanelState() == PanelState.COLLAPSED) {
-                // Clear the stop focus in map fragment, which will trigger a callback to close the
-                // panel via ObaMapFragment.OnFocusChangedListener in this.onFocusChanged()
-                mMapFragment.setFocusStop(null, null);
-                return;
-            }
-        }
-        super.onBackPressed();
     }
 
     /**

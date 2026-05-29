@@ -239,6 +239,18 @@ public class ConversionUtils {
         }
     }
 
+    public static String getShortFormattedTime(Context context, int offsetGMT, long time) {
+        DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(context);
+        timeFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        cal.setTimeInMillis(time);
+        cal.add(Calendar.MILLISECOND, offsetGMT);
+        if (cal.get(Calendar.SECOND) >= 30) {
+            cal.add(Calendar.MINUTE, 1);
+        }
+        return timeFormat.format(cal.getTime());
+    }
+
     public static CharSequence getTimeWithContext(Context applicationContext, int offsetGMT, long time,
                                                   boolean inLine) {
         return getTimeWithContext(applicationContext, offsetGMT, time, inLine, -1);

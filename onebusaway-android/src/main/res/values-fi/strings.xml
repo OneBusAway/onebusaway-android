@@ -26,7 +26,7 @@
     <string name="navdrawer_item_help">Ohjeet</string>
     <string name="navdrawer_item_send_feedback">Lähetä palautetta</string>
     <string name="navdrawer_item_open_source">Vieraile GitHubissa</string>
-    <string name="navdrawer_item_plan_trip">Suunnittele matka (beta)</string>
+    <string name="navdrawer_item_plan_trip">Suunnittele matka</string>
     <string name="navdrawer_item_pay_fare">Maksa matkalippu</string>
     <string name="navdrawer_item_starred_routes">Tähdellä merkityt linjat</string>
 
@@ -599,7 +599,7 @@
     <string name="preferences_preferred_vibration_summary">Salli %1$s-ilmoitusten värinä</string>
     <string name="preferences_preferred_sound_title">Muistutusääni</string>
     <string name="preferences_preferred_sound_summary">Valitse %1$s-ilmoitusääni</string>
-    <string name="preferences_trip_plan_notifications_title">Matkasuunnitelmailmoitukset (beta)</string>
+    <string name="preferences_trip_plan_notifications_title">Matkasuunnitelmailmoitukset</string>
     <string name="preferences_trip_plan_notifications_summary">Matkan suunnittelun jälkeen lähetä ilmoitukset, jos matka on myöhässä tai sitä ei enää suositella.</string>
     <string name="preferences_travel_behavior_title">Lähetä anonyymit matkakäyttäytymistiedot</string>
     <string name="preferences_travel_behavior_summary">Auta meitä parantamaan julkista liikennettä</string>
@@ -962,7 +962,7 @@
     <string name="rt_no">EI</string>
 
     <!-- Trip planner -->
-    <string name="title_activity_trip_plan">Matkasuunnittelu (beta)</string>
+    <string name="title_activity_trip_plan">Matkasuunnittelu</string>
     <string name="trip_plan_from">Mistä: </string>
     <string name="trip_plan_to">Minne: </string>
     <string name="trip_plan_leaving">Lähtö</string>

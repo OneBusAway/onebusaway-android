@@ -29,7 +29,7 @@
     <string name="navdrawer_item_help">Ayuda</string>
     <string name="navdrawer_item_send_feedback">Enviar comentarios</string>
     <string name="navdrawer_item_open_source">Visitanos en GitHub</string>
-    <string name="navdrawer_item_plan_trip">Planea un Viaje (beta)</string>
+    <string name="navdrawer_item_plan_trip">Planea un Viaje</string>
     <string name="navdrawer_item_pay_fare">Pagar mi pasaje</string>
 
     <!-- Permissions -->
@@ -612,7 +612,7 @@
         muestra la información de llegadas en el encabezado en la parte superior de la pantalla (esto no afecta en la vista del mapa)
     </string>
 
-    <string name="preferences_trip_plan_notifications_title">Notificaciones del Planeador de Viajes (beta)</string>
+    <string name="preferences_trip_plan_notifications_title">Notificaciones del Planeador de Viajes</string>
     <string name="preferences_trip_plan_notifications_summary">Después de que planeas un viaje, enviar
         notificaciones sobre si el viaje esta atrasado o ya no es recomendado.
     </string>
@@ -932,7 +932,7 @@
     <string name="title_activity_about">Acerca de</string>
     <!-- Trip Planner strings -->
 
-    <string name="title_activity_trip_plan">Planeador de Viajes (beta)</string>
+    <string name="title_activity_trip_plan">Planeador de Viajes</string>
     <string name="trip_plan_from">Origen: </string>
     <string name="trip_plan_to">Destino: </string>
     <string name="trip_plan_leaving">Saliendo</string>

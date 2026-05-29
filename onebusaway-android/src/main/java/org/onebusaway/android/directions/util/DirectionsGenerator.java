@@ -550,6 +550,11 @@ public class DirectionsGenerator {
                         oldTime.getTimeInMillis(), true));
         direction.setOldTime(oldTimeString);
 
+        long displayTimeMs = leg.realTime ? newTime.getTimeInMillis()
+                : oldTime.getTimeInMillis();
+        direction.setShortTime(ConversionUtils.getShortFormattedTime(
+                applicationContext, leg.agencyTimeZoneOffset, displayTimeMs));
+
         return direction;
     }
 

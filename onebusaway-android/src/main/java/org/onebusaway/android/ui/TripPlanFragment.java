@@ -20,11 +20,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.TypedArray;
-import android.database.Cursor;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.util.Log;
@@ -45,11 +42,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContract;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -58,6 +50,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.timepicker.MaterialTimePicker;
@@ -116,9 +109,8 @@ public class TripPlanFragment extends Fragment {
     private AutoCompleteTextView mFromAddressTextArea;
     private AutoCompleteTextView mToAddressTextArea;
     private ImageButton mFromCurrentLocationImageButton;
-    private ImageButton mToCurrentLocationImageButton;
-    private ImageButton mfromContactsImageButton;
-    private ImageButton mToContactsImageButton;
+    private ImageButton mSwapButton;
+    private MaterialButton mSearchButton;
     private Spinner mDate;
     private ArrayAdapter mDateAdapter;
     private Spinner mTime;
@@ -141,87 +133,6 @@ public class TripPlanFragment extends Fragment {
     private String mPlanRequestUrl;
 
     private FirebaseAnalytics mFirebaseAnalytics;
-
-    // Updates the Address Input field with the formatted address selected by the user from their contacts.
-    private final String ADDRESS_INPUT_ID_KEY = "addressInputId";
-    private final ActivityResultContract<TextView, Intent> selectAddressFromContactContract = new ActivityResultContract<TextView, Intent>() {
-        private int addressInputId;
-
-        @NonNull
-        @Override
-        public Intent createIntent(@NonNull Context context, TextView addressInput) {
-            Intent pickContactIntent = new Intent(Intent.ACTION_PICK);
-            pickContactIntent.setType(ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_TYPE);
-            addressInputId = addressInput.getId();
-            return pickContactIntent;
-        }
-
-        @Override
-        public Intent parseResult(int i, @Nullable Intent addressIntent) {
-            if (addressIntent != null) {
-                return addressIntent.putExtra(ADDRESS_INPUT_ID_KEY, addressInputId);
-            }
-            return null;
-        }
-    };
-
-    private final ActivityResultCallback<Intent> addressIntentActivityResultCallback = addressIntent -> {
-        if (addressIntent == null) {
-            return;
-        }
-
-        Uri addressUri = addressIntent.getData();
-        if (addressUri == null) {
-            return;
-        }
-
-        String[] projection = {ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS};
-
-        try (Cursor cursor = getContext().getContentResolver().query(addressUri, projection, null, null, null)) {
-            if (cursor == null || !cursor.moveToFirst()) {
-                return;
-            }
-
-            String address = extractAddress(cursor);
-            int addressInputId = addressIntent.getIntExtra(ADDRESS_INPUT_ID_KEY, -1);
-            if (addressInputId == -1) {
-                return;
-            }
-
-            updateAddressInput(address, addressInputId);
-            updateAddressData(address, addressInputId);
-        }
-    };
-
-    private String extractAddress(Cursor cursor) {
-        int addressIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS);
-        return cursor.getString(addressIndex).replace("\n", ", ");
-    }
-
-    private void updateAddressInput(String address, int addressInputId) {
-        TextView addressInput = getActivity().findViewById(addressInputId);
-        addressInput.post(() -> addressInput.setText(address));
-        addressInput.requestFocus();
-    }
-
-    private void updateAddressData(String address, int addressInputId) {
-        CustomAddress customAddress = CustomAddress.getEmptyAddress();
-        customAddress.setAddressLine(0, address);
-
-        if (addressInputId == mFromAddressTextArea.getId()) {
-            mFromAddress = customAddress;
-            mBuilder.setFrom(mFromAddress);
-        } else if (addressInputId == mToAddressTextArea.getId()) {
-            mToAddress = customAddress;
-            mBuilder.setTo(mToAddress);
-        }
-    }
-
-
-    private final ActivityResultLauncher<TextView> mSelectAddressFromContactLauncher = registerForActivityResult(
-            selectAddressFromContactContract,
-            addressIntentActivityResultCallback
-    );
 
     // Create view, initialize state
     @Override
@@ -247,9 +158,8 @@ public class TripPlanFragment extends Fragment {
         mFromAddressTextArea = (AutoCompleteTextView) view.findViewById(R.id.fromAddressTextArea);
         mToAddressTextArea = (AutoCompleteTextView) view.findViewById(R.id.toAddressTextArea);
         mFromCurrentLocationImageButton = (ImageButton) view.findViewById(R.id.fromCurrentLocationImageButton);
-        mToCurrentLocationImageButton = (ImageButton) view.findViewById(R.id.toCurrentLocationImageButton);
-        mfromContactsImageButton = view.findViewById(R.id.fromContactsImageButton);
-        mToContactsImageButton = view.findViewById(R.id.toContactsImageButton);
+        mSwapButton = (ImageButton) view.findViewById(R.id.swapImageButton);
+        mSearchButton = (MaterialButton) view.findViewById(R.id.tripPlanSearchButton);
         mDate = (Spinner) view.findViewById(R.id.date);
         mDateAdapter = new ArrayAdapter(getActivity(), R.layout.simple_list_item);
         mDate.setAdapter(mDateAdapter);
@@ -291,7 +201,6 @@ public class TripPlanFragment extends Fragment {
 
                         resetDateTimeLabels();
                         mBuilder.setDateTime(mMyCalendar);
-                        checkRequestAndSubmit();
                     });
 
                     materialDatePicker.show(getChildFragmentManager(), "DATE_PICKER");
@@ -322,7 +231,6 @@ public class TripPlanFragment extends Fragment {
 
                         resetDateTimeLabels();
                         mBuilder.setDateTime(mMyCalendar);
-                        checkRequestAndSubmit();
                     });
                     materialTimePicker.show(getChildFragmentManager(), "MATERIAL_TIME_PICKER");
                     return true;
@@ -339,22 +247,11 @@ public class TripPlanFragment extends Fragment {
                 mMyCalendar = Calendar.getInstance();
                 mBuilder.setDateTime(mMyCalendar);
                 resetDateTimeLabels();
-                checkRequestAndSubmit();
             }
         });
 
         setUpAutocomplete(mFromAddressTextArea, USE_FROM_ADDRESS);
         setUpAutocomplete(mToAddressTextArea, USE_TO_ADDRESS);
-
-        mToCurrentLocationImageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mToAddressTextArea.setText(getString(R.string.tripplanner_current_location));
-                mToAddress = makeAddressFromLocation();
-                mBuilder.setTo(mToAddress);
-                checkRequestAndSubmit();
-            }
-        });
 
         mFromCurrentLocationImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -362,13 +259,22 @@ public class TripPlanFragment extends Fragment {
                 mFromAddressTextArea.setText(getString(R.string.tripplanner_current_location));
                 mFromAddress = makeAddressFromLocation();
                 mBuilder.setFrom(mFromAddress);
-                checkRequestAndSubmit();
             }
         });
 
-        mToContactsImageButton.setOnClickListener(v -> mSelectAddressFromContactLauncher.launch(mToAddressTextArea));
+        mSwapButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                swapOriginAndDestination();
+            }
+        });
 
-        mfromContactsImageButton.setOnClickListener(v -> mSelectAddressFromContactLauncher.launch(mFromAddressTextArea));
+        mSearchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkRequestAndSubmit();
+            }
+        });
 
         // Start: default from address is Current Location, to address is unset
         return view;
@@ -477,7 +383,6 @@ public class TripPlanFragment extends Fragment {
                 } else {
                     mBuilder.setDepartureTime(mMyCalendar);
                 }
-                checkRequestAndSubmit();
             }
 
             @Override
@@ -525,7 +430,7 @@ public class TripPlanFragment extends Fragment {
             advancedSettings();
             return true;
         } else if (id == R.id.action_reverse) {
-            reverseTrip();
+            swapOriginAndDestination();
             return true;
         } else if (id == R.id.action_report_trip_problem) {
             reportTripPlanProblem();
@@ -600,8 +505,6 @@ public class TripPlanFragment extends Fragment {
                 PreferenceUtils.saveDouble(getString(R.string.preference_key_trip_plan_maximum_walking_distance), maxWalkDistance);
                 PreferenceUtils.saveBoolean(getString(R.string.preference_key_trip_plan_minimize_transfers), optimizeTransfers);
                 PreferenceUtils.saveBoolean(getString(R.string.preference_key_trip_plan_avoid_stairs), wheelchair);
-
-                checkRequestAndSubmit();
             }
         });
 
@@ -652,18 +555,17 @@ public class TripPlanFragment extends Fragment {
         }
     }
 
-    private void reverseTrip() {
-        mFromAddress = mBuilder.getTo();
-        mToAddress = mBuilder.getFrom();
+    private void swapOriginAndDestination() {
+        CustomAddress tempFrom = mBuilder.getTo();
+        CustomAddress tempTo = mBuilder.getFrom();
+
+        mFromAddress = tempFrom;
+        mToAddress = tempTo;
 
         mBuilder.setFrom(mFromAddress).setTo(mToAddress);
 
         setAddressText(mFromAddressTextArea, mFromAddress);
         setAddressText(mToAddressTextArea, mToAddress);
-
-        if (mBuilder.ready() && mListener != null) {
-            mListener.onTripRequestReady();
-        }
     }
 
     private void reportTripPlanProblem() {
@@ -741,8 +643,6 @@ public class TripPlanFragment extends Fragment {
             mBuilder.setTo(mToAddress);
             mToAddressTextArea.setText(mToAddress.toString());
         }
-
-        checkRequestAndSubmit();
     }
 
     private void setUpAutocomplete(AutoCompleteTextView tv, final int use) {
@@ -768,10 +668,7 @@ public class TripPlanFragment extends Fragment {
                 mToAddress = addr;
                 mBuilder.setTo(mToAddress);
             }
-
-            checkRequestAndSubmit();
         });
         tv.dismissDropDown();
     }
 }
-

@@ -15,65 +15,12 @@
  */
 package org.onebusaway.android.travelbehavior;
 
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
-import android.text.Html;
-import android.text.TextUtils;
-import android.util.Log;
-import android.util.Patterns;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.work.Constraints;
-import androidx.work.Data;
-import androidx.work.NetworkType;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkInfo;
-import androidx.work.WorkManager;
-
-import com.google.android.gms.location.ActivityRecognition;
-import com.google.android.gms.location.ActivityTransition;
-import com.google.android.gms.location.ActivityTransitionRequest;
-import com.google.android.gms.location.DetectedActivity;
-import com.google.android.gms.tasks.Task;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
-import org.onebusaway.android.travelbehavior.io.TravelBehaviorFileSaverExecutorManager;
-import org.onebusaway.android.travelbehavior.io.task.ArrivalAndDepartureDataSaverTask;
-import org.onebusaway.android.travelbehavior.io.task.DestinationReminderDataSaverTask;
-import org.onebusaway.android.travelbehavior.io.task.TripPlanDataSaverTask;
-import org.onebusaway.android.travelbehavior.io.worker.OptOutTravelBehaviorParticipantWorker;
-import org.onebusaway.android.travelbehavior.io.worker.RegisterTravelBehaviorParticipantWorker;
-import org.onebusaway.android.travelbehavior.io.worker.UpdateDeviceInfoWorker;
-import org.onebusaway.android.travelbehavior.receiver.TransitionBroadcastReceiver;
-import org.onebusaway.android.travelbehavior.utils.TravelBehaviorFirebaseIOUtils;
-import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils;
-import org.onebusaway.android.ui.HomeActivity;
-import org.onebusaway.android.util.PermissionUtils;
-import org.onebusaway.android.util.PreferenceUtils;
 import org.opentripplanner.api.model.TripPlan;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This feature has been disabled due to issues related to ticket #1240.

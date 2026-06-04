@@ -26,7 +26,7 @@ private const val TAG = "TripExtrapolationCtl"
  * Owns the per-frame extrapolation loop for a single trip on the trip map view. Computes positions
  * and distributions each frame, then delegates all rendering to [TripVehicleOverlay].
  *
- * Runs entirely on the main thread: the choreographer drives the frame loop, and TripDataManager
+ * Runs entirely on the main thread: the choreographer drives the frame loop, and TripStore
  * mutations are also main-thread, so [trip] fields are read directly without synchronization.
  */
 class TripExtrapolationController

@@ -27,7 +27,6 @@ import org.onebusaway.android.io.request.ObaTripsForRouteRequest;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.map.MapUtils;
 import org.onebusaway.android.extrapolation.data.RoutePoller;
-import org.onebusaway.android.extrapolation.data.TripDataManager;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.UIUtils;
 
@@ -146,8 +145,9 @@ public class RouteMapController implements MapModeController {
             mPoller = null;
         }
 
-        // Clear trip data and speed estimation state
-        TripDataManager.INSTANCE.clearAll();
+        // Note: we intentionally do NOT clear TripStore here. Trip identity is permanent and
+        // shared with other screens (trip details, trip map, location data); payload retention
+        // is bounded by TripStore's own LRU eviction.
 
         // Clear the existing route and vehicle overlays
         mFragment.getMapView().removeRouteOverlay();

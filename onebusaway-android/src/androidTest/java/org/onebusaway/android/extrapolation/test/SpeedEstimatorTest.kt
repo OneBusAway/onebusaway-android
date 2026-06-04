@@ -26,7 +26,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onebusaway.android.extrapolation.ExtrapolationResult
-import org.onebusaway.android.extrapolation.data.TripDataManager
+import org.onebusaway.android.extrapolation.data.TripStore
 import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.io.elements.ObaTripStatus
 import org.onebusaway.android.io.elements.Occupancy
@@ -36,14 +36,14 @@ import org.onebusaway.android.io.elements.Status
 @RunWith(AndroidJUnit4::class)
 class SpeedEstimatorTest {
 
-    private val dm = TripDataManager
+    private val dm = TripStore
 
     @Before
     fun setUp() {
         dm.clearAll()
     }
 
-    // --- TripDataManager tests ---
+    // --- TripStore tests ---
 
     @Test
     fun testTrackerEmptyHistory() {
@@ -198,7 +198,7 @@ class SpeedEstimatorTest {
         assertEquals(2, dm.getHistorySize("trip0"))
     }
 
-    // --- TripDataManager schedule cache tests ---
+    // --- TripStore schedule cache tests ---
 
     @Test
     fun testTrackerScheduleCacheEmpty() {

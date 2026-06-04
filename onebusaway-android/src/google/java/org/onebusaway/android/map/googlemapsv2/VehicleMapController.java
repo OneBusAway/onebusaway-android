@@ -28,7 +28,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.extrapolation.ExtrapolationResult;
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution;
 import org.onebusaway.android.extrapolation.data.Trip;
-import org.onebusaway.android.extrapolation.data.TripDataManager;
+import org.onebusaway.android.extrapolation.data.TripStore;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.elements.ObaTripDetails;
@@ -60,7 +60,7 @@ class VehicleMapController {
     private final GoogleMap mMap;
     private final Context mContext;
     private final VehicleIconFactory mIconFactory;
-    private final TripDataManager mDataManager;
+    private final TripStore mTripStore;
     private final int mAnimateDurationMs;
 
     private final HashMap<String, VehicleMarkerState> mStates = new HashMap<>();
@@ -72,7 +72,7 @@ class VehicleMapController {
         mMap = map;
         mContext = context.getApplicationContext();
         mIconFactory = iconFactory;
-        mDataManager = TripDataManager.INSTANCE;
+        mTripStore = TripStore.INSTANCE;
         mAnimateDurationMs = animateDurationMs;
     }
 
@@ -139,7 +139,7 @@ class VehicleMapController {
                 .icon(mIconFactory.getIcon(params))
                 .zIndex(VEHICLE_MARKER_Z_INDEX));
         VehicleMarkerState vehicle = new VehicleMarkerState(
-                mDataManager.getOrCreateTrip(tripId), status);
+                mTripStore.getOrCreateTrip(tripId), status);
         vehicle.vehicleMarker = m;
         vehicle.iconParams = params;
         m.setTag(vehicle);

@@ -89,7 +89,7 @@ import org.onebusaway.android.nav.NavigationService;
 import org.onebusaway.android.extrapolation.ExtrapolationResult;
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution;
 import org.onebusaway.android.extrapolation.data.Trip;
-import org.onebusaway.android.extrapolation.data.TripDataManager;
+import org.onebusaway.android.extrapolation.data.TripStore;
 import org.onebusaway.android.extrapolation.data.TripDetailsPoller;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.util.ArrivalInfoUtils;
@@ -136,7 +136,7 @@ public class TripDetailsListFragment extends ListFragment {
 
     public static final int REQUEST_ENABLE_LOCATION = 1;
 
-    private final TripDataManager mDataManager = TripDataManager.INSTANCE;
+    private final TripStore mTripStore = TripStore.INSTANCE;
 
     private String mTripId;
     private TripDetailsPoller mPoller;
@@ -276,7 +276,7 @@ public class TripDetailsListFragment extends ListFragment {
     @Override
     public void onResume() {
         // Show cached data if available
-        ObaTripDetailsResponse cached = mDataManager.getTripDetails(mTripId);
+        ObaTripDetailsResponse cached = mTripStore.getTripDetails(mTripId);
         if (cached != null) {
             setTripDetails(cached);
             setListShown(true);
@@ -301,7 +301,7 @@ public class TripDetailsListFragment extends ListFragment {
             return;
         }
 
-        mDataManager.recordTripDetailsResponse(mTripId, data, System.currentTimeMillis());
+        mTripStore.recordTripDetailsResponse(mTripId, data, System.currentTimeMillis());
 
         setUpHeader();
         final ListView listView = getListView();
@@ -514,7 +514,7 @@ public class TripDetailsListFragment extends ListFragment {
     private void updateVehiclePosition() {
         try {
             // Pick up fresh data from poller
-            ObaTripDetailsResponse fresh = mDataManager.getTripDetails(mTripId);
+            ObaTripDetailsResponse fresh = mTripStore.getTripDetails(mTripId);
             if (fresh != null && fresh != mTripInfo) {
                 setTripDetails(fresh);
                 if (mTripDataCallback != null) {
@@ -530,7 +530,7 @@ public class TripDetailsListFragment extends ListFragment {
             if (status == null) return;
 
             // Determine the active trip ID
-            String activeTripId = mDataManager.getLastActiveTripId(mTripId);
+            String activeTripId = mTripStore.getVehicleActiveTripId(mTripId);
             if (activeTripId == null) {
                 activeTripId = status.getActiveTripId();
             }
@@ -539,7 +539,7 @@ public class TripDetailsListFragment extends ListFragment {
             if (activeTripId == null || !activeTripId.equals(mTripId)) return;
 
             if (mTrip == null) {
-                mTrip = mDataManager.getOrCreateTrip(activeTripId);
+                mTrip = mTripStore.getOrCreateTrip(activeTripId);
             }
             ExtrapolationResult result = mTrip.extrapolate(System.currentTimeMillis());
             if (!(result instanceof ExtrapolationResult.Success)) return;
@@ -570,13 +570,13 @@ public class TripDetailsListFragment extends ListFragment {
         // Cache schedule and service date so the trajectory graph can use them
         ObaTripSchedule schedule = mTripInfo.getSchedule();
         if (schedule != null) {
-            mDataManager.putSchedule(activeTripId, schedule);
+            mTripStore.putSchedule(activeTripId, schedule);
         }
         if (status.getServiceDate() > 0) {
-            mDataManager.putServiceDate(activeTripId, status.getServiceDate());
+            mTripStore.putServiceDate(activeTripId, status.getServiceDate());
         }
 
-        boolean newHasData = mDataManager.getHistorySize(activeTripId) > 0;
+        boolean newHasData = mTripStore.getHistorySize(activeTripId) > 0;
         String newVehicleId = status.getVehicleId();
         if (newHasData != mHasLocationData || !TextUtils.equals(newVehicleId, mActiveVehicleId)) {
             mHasLocationData = newHasData;

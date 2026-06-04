@@ -40,7 +40,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.MPS_TO_MPH
 import org.onebusaway.android.extrapolation.data.Trip
-import org.onebusaway.android.extrapolation.data.TripDataManager
+import org.onebusaway.android.extrapolation.data.TripStore
 import org.onebusaway.android.extrapolation.data.TripDetailsPoller
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.io.elements.ObaTripStatus
@@ -182,10 +182,10 @@ class VehicleLocationDataActivity : AppCompatActivity() {
     // --- Data refresh ---
 
     private fun refreshData() {
-        val snapshot = TripDataManager.getHistorySnapshot(tripId)
-        val activeTripId = TripDataManager.getLastActiveTripId(tripId)
+        val snapshot = TripStore.getHistorySnapshot(tripId)
+        val activeTripId = TripStore.getVehicleActiveTripId(tripId)
         val tripEnded = activeTripId != null && tripId != activeTripId
-        if (trip == null) trip = TripDataManager.getOrCreateTrip(tripId)
+        if (trip == null) trip = TripStore.getOrCreateTrip(tripId)
 
         updateHeader(snapshot.history.size, tripEnded)
 
@@ -212,8 +212,8 @@ class VehicleLocationDataActivity : AppCompatActivity() {
     }
 
     private fun refreshGraph(history: List<ObaTripStatus>, tripEnded: Boolean) {
-        val schedule = TripDataManager.getSchedule(tripId)
-        val serviceDate = TripDataManager.getServiceDate(tripId) ?: 0L
+        val schedule = TripStore.getSchedule(tripId)
+        val serviceDate = TripStore.getServiceDate(tripId) ?: 0L
         val distribution: ProbDistribution? =
                 if (!tripEnded) {
                     (trip?.extrapolate(System.currentTimeMillis()) as? ExtrapolationResult.Success)
@@ -284,7 +284,7 @@ class VehicleLocationDataActivity : AppCompatActivity() {
 
     private fun buildTable(
             table: TableLayout,
-            snapshot: TripDataManager.HistorySnapshot,
+            snapshot: TripStore.HistorySnapshot,
             anchor: ObaTripStatus?
     ) {
         currentHistory = snapshot.history

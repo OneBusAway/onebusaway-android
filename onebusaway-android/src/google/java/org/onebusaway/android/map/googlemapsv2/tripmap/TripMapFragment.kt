@@ -27,7 +27,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.Marker
-import org.onebusaway.android.extrapolation.data.TripDataManager
+import org.onebusaway.android.extrapolation.data.TripStore
 import org.onebusaway.android.extrapolation.data.TripDetailsPoller
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
 import org.onebusaway.android.ui.TripMapCallback
@@ -54,7 +54,7 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
         @JvmStatic
         fun newInstance(tripId: String, stopId: String? = null): TripMapFragment {
             val options = GoogleMapOptions()
-            MapHelpV2.getBounds(TripDataManager.getShape(tripId))?.let { bounds ->
+            MapHelpV2.getBounds(TripStore.getShape(tripId))?.let { bounds ->
                 options.camera(CameraPosition(bounds.center, DEFAULT_INITIAL_ZOOM, 0f, 0f))
             }
             return TripMapFragment().apply {
@@ -145,7 +145,7 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
     private fun activate() {
         val m = map ?: return
         val response =
-                TripDataManager.getTripDetails(tripId)
+                TripStore.getTripDetails(tripId)
                         ?: run {
                             Log.w(TAG, "No cached trip details for $tripId")
                             mapCallback?.onTripMapActivationFailed()
@@ -172,7 +172,7 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
     private fun onOverlaysReady(overlays: TripMapOverlays) {
         routeOverlay = overlays.route
         vehicleOverlay = overlays.vehicle
-        val trip = TripDataManager.getOrCreateTrip(tripId)
+        val trip = TripStore.getOrCreateTrip(tripId)
         extrapolationController =
                 TripExtrapolationController(overlays.vehicle, trip).also { it.start() }
         poller?.stop()

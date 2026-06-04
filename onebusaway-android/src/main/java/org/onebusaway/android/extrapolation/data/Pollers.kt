@@ -35,7 +35,7 @@ private const val DEFAULT_POLL_INTERVAL_MS = 10_000L
 private const val TAG = "Pollers"
 
 /**
- * Polls trip details every [intervalMs] and records responses into [TripDataManager]. Lifecycle is
+ * Polls trip details every [intervalMs] and records responses into [TripStore]. Lifecycle is
  * owned by the caller: call [start] in onResume, [stop] in onPause.
  */
 class TripDetailsPoller
@@ -56,11 +56,7 @@ constructor(private val tripId: String, private val intervalMs: Long = DEFAULT_P
                                         ObaTripDetailsRequest.newRequest(ctx, tripId).call()
                                     }
                             if (response.code == ObaApi.OBA_OK) {
-                                TripDataManager.recordTripDetailsResponse(
-                                        tripId,
-                                        response,
-                                        localTimeMs
-                                )
+                                TripStore.recordTripDetailsResponse(tripId, response, localTimeMs)
                             }
                         } catch (e: Exception) {
                             Log.e(TAG, "Failed to fetch trip details for $tripId", e)
@@ -77,8 +73,9 @@ constructor(private val tripId: String, private val intervalMs: Long = DEFAULT_P
 }
 
 /**
- * Polls trips-for-route every [intervalMs], records responses into [TripDataManager], and delivers
- * each response to an optional callback on the main thread. Lifecycle is owned by the caller.
+ * Polls trips-for-route every [intervalMs], records responses into [TripStore], triggers schedule
+ * and shape backfills via [TripFetcher], and delivers each response to an optional callback on the
+ * main thread. Lifecycle is owned by the caller.
  */
 class RoutePoller
 @JvmOverloads
@@ -109,7 +106,8 @@ constructor(
                                                 .call()
                                     }
                             if (response.code == ObaApi.OBA_OK) {
-                                TripDataManager.recordTripsForRouteResponse(response, localTimeMs)
+                                TripStore.recordTripsForRouteResponse(response, localTimeMs)
+                                TripFetcher.ensureSchedulesAndShapes(response)
                                 callback?.onResponse(response)
                             }
                         } catch (e: Exception) {
@@ -128,7 +126,7 @@ constructor(
 
 /**
  * Fire-and-forget one-shot trip details fetch for UI refresh actions. Records the result into
- * [TripDataManager]; does not notify callers on success or failure.
+ * [TripStore]; does not notify callers on success or failure.
  */
 fun fetchTripDetailsOnce(tripId: String) {
     val ctx = Application.get().applicationContext
@@ -140,7 +138,7 @@ fun fetchTripDetailsOnce(tripId: String) {
                         ObaTripDetailsRequest.newRequest(ctx, tripId).call()
                     }
             if (response.code == ObaApi.OBA_OK) {
-                TripDataManager.recordTripDetailsResponse(tripId, response, localTimeMs)
+                TripStore.recordTripDetailsResponse(tripId, response, localTimeMs)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed one-shot trip details fetch for $tripId", e)

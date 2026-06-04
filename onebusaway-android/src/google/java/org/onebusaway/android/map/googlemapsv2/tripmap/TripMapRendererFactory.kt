@@ -19,7 +19,8 @@ import android.content.Context
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.GoogleMap
 import org.onebusaway.android.R
-import org.onebusaway.android.extrapolation.data.TripDataManager
+import org.onebusaway.android.extrapolation.data.TripFetcher
+import org.onebusaway.android.extrapolation.data.TripStore
 import org.onebusaway.android.io.elements.ObaReferences
 import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.io.elements.ObaTripStatus
@@ -110,7 +111,7 @@ internal object TripMapOverlayFactory {
             val vehicleOverlay = TripVehicleOverlay(map, context, sd, routeColor, route?.type)
 
             routeOverlay.activate()
-            TripDataManager.getAnchor(tripId)?.let {
+            TripStore.getAnchor(tripId)?.let {
                 vehicleOverlay.showOrUpdateDataReceivedMarker(it, System.currentTimeMillis())
             }
             vehicleOverlay.activate(vehiclePosition)
@@ -120,7 +121,7 @@ internal object TripMapOverlayFactory {
 
         val shapeId = trip.shapeId
         if (shapeId != null) {
-            TripDataManager.ensureShape(tripId, shapeId, ::build) {
+            TripFetcher.ensureShape(tripId, shapeId, ::build) {
                 onError(TripMapOverlayFailure.SHAPE_FETCH_FAILED)
             }
         } else {
@@ -133,9 +134,9 @@ internal object TripMapOverlayFactory {
             schedule: ObaTripSchedule,
             status: ObaTripStatus?
     ) {
-        TripDataManager.putSchedule(tripId, schedule)
+        TripStore.putSchedule(tripId, schedule)
         if (status != null && status.serviceDate > 0) {
-            TripDataManager.putServiceDate(tripId, status.serviceDate)
+            TripStore.putServiceDate(tripId, status.serviceDate)
         }
     }
 

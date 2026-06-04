@@ -36,7 +36,11 @@ private const val TRIP_END_DISTANCE_THRESHOLD = 50.0
  * and route metadata. Provides [extrapolate] which selects the appropriate strategy (gamma,
  * schedule replay, or schedule-only fallback) based on the data available.
  *
- * Thread safety: all mutable state is accessed under TripDataManager's @Synchronized lock.
+ * Instances are permanent: [TripStore] guarantees one instance per tripId for the life of the
+ * process, so references may be held freely. Payload may be cleared ([clearData]) when the trip
+ * goes cold, after which the instance simply reports no data until it is recorded again.
+ *
+ * Thread safety: main thread only — see [TripStore]'s threading contract.
  */
 class Trip(val tripId: String) {
 
@@ -68,7 +72,12 @@ class Trip(val tripId: String) {
     var serviceDate: Long = 0
     var polyline: Polyline? = null
     var routeType: Int? = null
-    var lastActiveTripId: String? = null
+    /**
+     * The trip the vehicle serving this trip most recently reported as active — equal to [tripId]
+     * while the vehicle is still on this run, and the successor run's trip ID once the vehicle
+     * rolls onto its next trip. Null until a trip details response is recorded.
+     */
+    var vehicleActiveTripId: String? = null
     var tripDetailsResponse: ObaTripDetailsResponse? = null
 
     // --- Extrapolation ---
@@ -137,6 +146,29 @@ class Trip(val tripId: String) {
         }
 
         return getOrCreateExtrapolator().doExtrapolate(lastDist, anchorLocalTimeMs, queryTimeMs)
+    }
+
+    // --- Eviction ---
+
+    /**
+     * Drops all payload, returning this trip to a fresh-shell state. Called by [TripStore] when
+     * the trip is evicted from the warm set. The instance itself is permanent, so holders simply
+     * observe empty data until the trip is recorded again.
+     */
+    fun clearData() {
+        history.clear()
+        fetchTimes.clear()
+        localFetchTimes.clear()
+        anchor = null
+        anchorTimeMs = 0L
+        anchorLocalTimeMs = 0L
+        schedule = null
+        serviceDate = 0
+        polyline = null
+        routeType = null
+        vehicleActiveTripId = null
+        tripDetailsResponse = null
+        extrapolator = null
     }
 
     private fun getOrCreateExtrapolator(): Extrapolator {

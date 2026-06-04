@@ -20,8 +20,11 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.GoogleMap
 import org.onebusaway.android.R
-import org.onebusaway.android.extrapolation.data.TripStore
 import org.onebusaway.android.extrapolation.data.fetchShape
+import org.onebusaway.android.extrapolation.data.lookupTrip
+import org.onebusaway.android.extrapolation.data.putPolyline
+import org.onebusaway.android.extrapolation.data.putSchedule
+import org.onebusaway.android.extrapolation.data.putServiceDate
 import org.onebusaway.android.io.elements.ObaReferences
 import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.io.elements.ObaTripStatus
@@ -77,8 +80,8 @@ internal object TripMapOverlayFactory {
         cacheResponseData(tripId, schedule, status)
 
         val sd =
-                TripStore.getTrip(tripId)?.polyline
-                        ?: fetchShape(shapeId)?.also { TripStore.putPolyline(tripId, it) }
+                lookupTrip(tripId)?.polyline
+                        ?: fetchShape(shapeId)?.also { putPolyline(tripId, it) }
                         ?: return fail(tripId, TripMapOverlayFailure.SHAPE_FETCH_FAILED)
 
         val routeColor =
@@ -105,7 +108,7 @@ internal object TripMapOverlayFactory {
         val vehicleOverlay = TripVehicleOverlay(map, context, sd, routeColor, route?.type)
 
         routeOverlay.activate()
-        TripStore.getTrip(tripId)?.anchor?.let {
+        lookupTrip(tripId)?.anchor?.let {
             vehicleOverlay.showOrUpdateDataReceivedMarker(it, System.currentTimeMillis())
         }
         vehicleOverlay.activate(vehiclePosition)
@@ -123,9 +126,9 @@ internal object TripMapOverlayFactory {
             schedule: ObaTripSchedule,
             status: ObaTripStatus?
     ) {
-        TripStore.putSchedule(tripId, schedule)
+        putSchedule(tripId, schedule)
         if (status != null && status.serviceDate > 0) {
-            TripStore.putServiceDate(tripId, status.serviceDate)
+            putServiceDate(tripId, status.serviceDate)
         }
     }
 

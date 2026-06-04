@@ -60,7 +60,6 @@ class VehicleMapController {
     private final GoogleMap mMap;
     private final Context mContext;
     private final VehicleIconFactory mIconFactory;
-    private final TripStore mTripStore;
     private final int mAnimateDurationMs;
 
     private final HashMap<String, VehicleMarkerState> mStates = new HashMap<>();
@@ -72,7 +71,6 @@ class VehicleMapController {
         mMap = map;
         mContext = context.getApplicationContext();
         mIconFactory = iconFactory;
-        mTripStore = TripStore.INSTANCE;
         mAnimateDurationMs = animateDurationMs;
     }
 
@@ -139,7 +137,7 @@ class VehicleMapController {
                 .icon(mIconFactory.getIcon(params))
                 .zIndex(VEHICLE_MARKER_Z_INDEX));
         VehicleMarkerState vehicle = new VehicleMarkerState(
-                mTripStore.getOrCreateTrip(tripId), status);
+                TripStore.getOrCreateTrip(tripId), status);
         vehicle.vehicleMarker = m;
         vehicle.iconParams = params;
         m.setTag(vehicle);

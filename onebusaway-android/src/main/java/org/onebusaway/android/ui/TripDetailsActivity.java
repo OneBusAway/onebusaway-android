@@ -205,7 +205,7 @@ public class TripDetailsActivity extends AppCompatActivity
     private void updateLocationDataVisibility() {
         if (mLocationDataItem == null) return;
         // Show if the fragment reported location data, or if there's history in the trip store
-        Trip trip = TripStore.INSTANCE.getTrip(mTripId);
+        Trip trip = TripStore.lookupTrip(mTripId);
         boolean visible = mHasLocationData
                 || (trip != null && !trip.getHistory().isEmpty());
         mLocationDataItem.setVisible(visible);

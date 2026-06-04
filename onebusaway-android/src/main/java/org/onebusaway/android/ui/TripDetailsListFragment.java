@@ -136,8 +136,6 @@ public class TripDetailsListFragment extends ListFragment {
 
     public static final int REQUEST_ENABLE_LOCATION = 1;
 
-    private final TripStore mTripStore = TripStore.INSTANCE;
-
     private String mTripId;
     private TripDetailsPoller mPoller;
     private Trip mTrip;
@@ -239,7 +237,7 @@ public class TripDetailsListFragment extends ListFragment {
             Log.e(TAG, "TripId is null");
             throw new RuntimeException("TripId should not be null");
         }
-        mPolledTrip = mTripStore.getOrCreateTrip(mTripId);
+        mPolledTrip = TripStore.getOrCreateTrip(mTripId);
 
         mStopId = args.getString(STOP_ID);
 
@@ -309,7 +307,7 @@ public class TripDetailsListFragment extends ListFragment {
             return;
         }
 
-        mTripStore.recordTripDetailsResponse(mTripId, data, System.currentTimeMillis());
+        TripStore.recordTripDetailsResponse(mTripId, data, System.currentTimeMillis());
 
         setUpHeader();
         final ListView listView = getListView();
@@ -547,7 +545,7 @@ public class TripDetailsListFragment extends ListFragment {
             if (activeTripId == null || !activeTripId.equals(mTripId)) return;
 
             if (mTrip == null) {
-                mTrip = mTripStore.getOrCreateTrip(activeTripId);
+                mTrip = TripStore.getOrCreateTrip(activeTripId);
             }
             ExtrapolationResult result = mTrip.extrapolate(System.currentTimeMillis());
             if (!(result instanceof ExtrapolationResult.Success)) return;
@@ -578,13 +576,13 @@ public class TripDetailsListFragment extends ListFragment {
         // Cache schedule and service date so the trajectory graph can use them
         ObaTripSchedule schedule = mTripInfo.getSchedule();
         if (schedule != null) {
-            mTripStore.putSchedule(activeTripId, schedule);
+            TripStore.putSchedule(activeTripId, schedule);
         }
         if (status.getServiceDate() > 0) {
-            mTripStore.putServiceDate(activeTripId, status.getServiceDate());
+            TripStore.putServiceDate(activeTripId, status.getServiceDate());
         }
 
-        Trip activeTrip = mTripStore.getTrip(activeTripId);
+        Trip activeTrip = TripStore.lookupTrip(activeTripId);
         boolean newHasData = activeTrip != null && !activeTrip.getHistory().isEmpty();
         String newVehicleId = status.getVehicleId();
         if (newHasData != mHasLocationData || !TextUtils.equals(newVehicleId, mActiveVehicleId)) {

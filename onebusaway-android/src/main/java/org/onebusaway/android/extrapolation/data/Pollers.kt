@@ -48,7 +48,7 @@ private const val TAG = "Pollers"
 private val oneShotScope = MainScope()
 
 /**
- * Polls trip details every [intervalMs] and records responses into [TripStore]. Lifecycle is
+ * Polls trip details every [intervalMs] and records responses into the trip store. Lifecycle is
  * owned by the caller: call [start] in onResume, [stop] in onPause.
  */
 class TripDetailsPoller
@@ -69,7 +69,7 @@ constructor(private val tripId: String, private val intervalMs: Long = DEFAULT_P
                                         ObaTripDetailsRequest.newRequest(ctx, tripId).call()
                                     }
                             if (response.code == ObaApi.OBA_OK) {
-                                TripStore.recordTripDetailsResponse(tripId, response, localTimeMs)
+                                recordTripDetailsResponse(tripId, response, localTimeMs)
                             }
                         } catch (e: Exception) {
                             Log.e(TAG, "Failed to fetch trip details for $tripId", e)
@@ -86,7 +86,7 @@ constructor(private val tripId: String, private val intervalMs: Long = DEFAULT_P
 }
 
 /**
- * Polls trips-for-route every [intervalMs], records responses into [TripStore], backfills
+ * Polls trips-for-route every [intervalMs], records responses into the trip store, backfills
  * schedules and shapes for the observed trips, and delivers each response to an optional callback
  * on the main thread. Lifecycle is owned by the caller; stopping the poller also cancels its
  * in-progress backfills.
@@ -120,7 +120,7 @@ constructor(
                                                 .call()
                                     }
                             if (response.code == ObaApi.OBA_OK) {
-                                TripStore.recordTripsForRouteResponse(response, localTimeMs)
+                                recordTripsForRouteResponse(response, localTimeMs)
                                 prefetchSchedulesAndShapes(response)
                                 callback?.onResponse(response)
                             }
@@ -140,25 +140,25 @@ constructor(
 
 /**
  * Backfills schedules and shapes for every active trip in a trips-for-route response that doesn't
- * already have them, fetching via Fetchers.kt and hydrating [TripStore]. Launched into the
+ * already have them, fetching via Fetchers.kt and hydrating the trip store. Launched into the
  * route poller's scope, so backfills are cancelled with the poller.
  */
 private fun CoroutineScope.prefetchSchedulesAndShapes(response: ObaTripsForRouteResponse) {
     response.forEachActiveTrip { tripId, _, activeTrip ->
-        val trip = TripStore.getTrip(tripId)
+        val trip = lookupTrip(tripId)
         if (trip?.schedule == null) {
-            launch { fetchTripSchedule(tripId)?.let { TripStore.putSchedule(tripId, it) } }
+            launch { fetchTripSchedule(tripId)?.let { putSchedule(tripId, it) } }
         }
         val shapeId = activeTrip.shapeId
         if (shapeId != null && trip?.polyline == null) {
-            launch { fetchShape(shapeId)?.let { TripStore.putPolyline(tripId, it) } }
+            launch { fetchShape(shapeId)?.let { putPolyline(tripId, it) } }
         }
     }
 }
 
 /**
  * Fire-and-forget one-shot trip details fetch for UI refresh actions. Records the result into
- * [TripStore]; does not notify callers on success or failure. The one-shot sibling of
+ * the trip store; does not notify callers on success or failure. The one-shot sibling of
  * [TripDetailsPoller], for when the user explicitly asks for fresh status.
  */
 fun fetchTripDetailsOnce(tripId: String) {
@@ -171,7 +171,7 @@ fun fetchTripDetailsOnce(tripId: String) {
                         ObaTripDetailsRequest.newRequest(ctx, tripId).call()
                     }
             if (response.code == ObaApi.OBA_OK) {
-                TripStore.recordTripDetailsResponse(tripId, response, localTimeMs)
+                recordTripDetailsResponse(tripId, response, localTimeMs)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed one-shot trip details fetch for $tripId", e)

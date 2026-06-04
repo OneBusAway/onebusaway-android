@@ -36,11 +36,12 @@ private const val TRIP_END_DISTANCE_THRESHOLD = 50.0
  * and route metadata. Provides [extrapolate] which selects the appropriate strategy (gamma,
  * schedule replay, or schedule-only fallback) based on the data available.
  *
- * Instances are permanent: [TripStore] guarantees one instance per tripId for the life of the
- * process, so references may be held freely. Payload may be cleared ([clearData]) when the trip
- * goes cold, after which the instance simply reports no data until it is recorded again.
+ * Instances are permanent: the trip store (TripStore.kt) guarantees one instance per tripId for
+ * the life of the process, so references may be held freely. Payload may be cleared ([clearData])
+ * when the trip goes cold, after which the instance simply reports no data until it is recorded
+ * again.
  *
- * Thread safety: main thread only — see [TripStore]'s threading contract.
+ * Thread safety: main thread only — see TripStore.kt's threading contract.
  */
 class Trip(val tripId: String) {
 
@@ -152,9 +153,9 @@ class Trip(val tripId: String) {
     // --- Eviction ---
 
     /**
-     * Drops all payload, returning this trip to a fresh-shell state. Called by [TripStore] when
-     * the trip is evicted from the warm set. The instance itself is permanent, so holders simply
-     * observe empty data until the trip is recorded again.
+     * Drops all payload, returning this trip to a fresh-shell state. Called by the trip store
+     * when the trip is evicted from the warm set. The instance itself is permanent, so holders
+     * simply observe empty data until the trip is recorded again.
      */
     fun clearData() {
         history.clear()

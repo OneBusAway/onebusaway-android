@@ -29,8 +29,9 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.Marker
 import kotlinx.coroutines.launch
-import org.onebusaway.android.extrapolation.data.TripStore
 import org.onebusaway.android.extrapolation.data.TripDetailsPoller
+import org.onebusaway.android.extrapolation.data.getOrCreateTrip
+import org.onebusaway.android.extrapolation.data.lookupTrip
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
 import org.onebusaway.android.ui.TripMapCallback
 
@@ -56,7 +57,7 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
         @JvmStatic
         fun newInstance(tripId: String, stopId: String? = null): TripMapFragment {
             val options = GoogleMapOptions()
-            MapHelpV2.getBounds(TripStore.getTrip(tripId)?.polyline?.points)?.let { bounds ->
+            MapHelpV2.getBounds(lookupTrip(tripId)?.polyline?.points)?.let { bounds ->
                 options.camera(CameraPosition(bounds.center, DEFAULT_INITIAL_ZOOM, 0f, 0f))
             }
             return TripMapFragment().apply {
@@ -147,7 +148,7 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
     private fun activate() {
         val m = map ?: return
         val response =
-                TripStore.getTrip(tripId)?.tripDetailsResponse
+                lookupTrip(tripId)?.tripDetailsResponse
                         ?: run {
                             Log.w(TAG, "No cached trip details for $tripId")
                             mapCallback?.onTripMapActivationFailed()
@@ -174,7 +175,7 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
     private fun onOverlaysReady(overlays: TripMapOverlays) {
         routeOverlay = overlays.route
         vehicleOverlay = overlays.vehicle
-        val trip = TripStore.getOrCreateTrip(tripId)
+        val trip = getOrCreateTrip(tripId)
         extrapolationController =
                 TripExtrapolationController(overlays.vehicle, trip).also { it.start() }
         poller?.stop()

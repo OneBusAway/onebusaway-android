@@ -27,7 +27,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.ui.dataview.VehicleLocationDataActivity;
 import org.onebusaway.android.extrapolation.data.Trip;
 import org.onebusaway.android.extrapolation.data.TripStore;
-import org.onebusaway.android.extrapolation.data.TripFetcher;
+import org.onebusaway.android.extrapolation.data.Pollers;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
 import org.onebusaway.android.map.TripMapFragmentFactory;
 import org.onebusaway.android.util.FragmentUtils;
@@ -164,7 +164,7 @@ public class TripDetailsActivity extends AppCompatActivity
             if (mShowingMap) {
                 showMap();
             } else {
-                TripFetcher.INSTANCE.fetchTripDetailsOnce(mTripId);
+                Pollers.fetchTripDetailsOnce(mTripId);
             }
             return true;
         }

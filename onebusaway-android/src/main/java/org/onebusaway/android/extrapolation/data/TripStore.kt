@@ -27,8 +27,8 @@ import org.onebusaway.android.util.Polyline
 /**
  * Registry of [Trip] objects. This object owns trip identity, payload retention, recording, and
  * fetch-writeback — and nothing else. All trip data is read directly off a [Trip]: acquire one via
- * [getOrCreateTrip]/[getTrip] and read its fields. Network fetches live in [TripFetcher] and the
- * pollers, which write their results back in here.
+ * [getOrCreateTrip]/[getTrip] and read its fields. Network I/O lives in the pollers (Pollers.kt)
+ * and the pure fetchers (Fetchers.kt); hydrating call sites write results back in here.
  *
  * Identity vs retention are deliberately separate. A [Trip] instance is **permanent**: the same
  * tripId always resolves to the same object, so holding a Trip reference (in a fragment, a marker
@@ -44,7 +44,7 @@ import org.onebusaway.android.util.Polyline
  * still safe: the instance simply reports empty payload until it is recorded again.
  *
  * Thread safety: **main thread only.** All public methods must be called from the main thread.
- * Background work (network fetches) lives in the pollers and [TripFetcher]; results are posted
+ * Background work (network fetches) lives in Pollers.kt and Fetchers.kt; results are posted
  * back to the main thread before they touch any state here. This invariant lets [Trip] hold plain
  * (non-volatile, non-locked) mutable fields and lets the per-frame extrapolation loop read them
  * directly.
@@ -197,8 +197,8 @@ object TripStore {
 
 /**
  * Iterates the active trips in a trips-for-route response, skipping entries without a status, an
- * active trip ID, or a matching trip reference. Shared by [TripStore] recording and [TripFetcher]
- * backfills so both walk the response identically.
+ * active trip ID, or a matching trip reference. Shared by [TripStore] recording and the route
+ * poller's backfill so both walk the response identically.
  */
 internal inline fun ObaTripsForRouteResponse.forEachActiveTrip(
         block: (tripId: String, status: ObaTripStatus, activeTrip: ObaTrip) -> Unit

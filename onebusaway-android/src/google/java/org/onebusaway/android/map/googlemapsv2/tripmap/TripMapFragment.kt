@@ -21,12 +21,14 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMapOptions
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.Marker
+import kotlinx.coroutines.launch
 import org.onebusaway.android.extrapolation.data.TripStore
 import org.onebusaway.android.extrapolation.data.TripDetailsPoller
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
@@ -156,16 +158,16 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
         vehicleOverlay?.deactivate()
         extrapolationController?.stop()
 
-        TripMapOverlayFactory.create(
-                m,
-                requireContext(),
-                tripId,
-                selectedStopId,
-                response,
-                ::onOverlaysReady
-        ) { reason ->
-            Log.w(TAG, "Overlay creation failed for $tripId: $reason")
-            mapCallback?.onTripMapActivationFailed()
+        // Scoped to the view lifecycle: destroying the view cancels the await (no overlays
+        // added to a dead map), while any shared shape fetch completes and hydrates the store.
+        viewLifecycleOwner.lifecycleScope.launch {
+            val overlays =
+                    TripMapOverlayFactory.create(m, requireContext(), tripId, selectedStopId, response)
+            if (overlays == null) {
+                mapCallback?.onTripMapActivationFailed()
+            } else {
+                onOverlaysReady(overlays)
+            }
         }
     }
 

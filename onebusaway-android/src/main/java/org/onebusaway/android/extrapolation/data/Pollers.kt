@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:JvmName("Pollers")
+
 package org.onebusaway.android.extrapolation.data
 
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
@@ -30,15 +33,19 @@ import org.onebusaway.android.io.request.ObaTripsForRouteRequest
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse
 
 /*
- * The time-driven half of the trip data layer's network sources. Pollers re-fetch VOLATILE data —
- * vehicle status ages in seconds, so it is always re-requested — on a recurring interval, with
- * lifecycles bound to the screen that is watching (start in onResume, stop in onPause).
- * Demand-driven one-shot fetches (immutable schedules/shapes, explicit user refreshes) live in
- * TripFetcher.
+ * The store-hydrating side of the trip data layer: everything in this file fetches from the
+ * network and records the result into TripStore. Recurring pollers re-fetch volatile vehicle
+ * status — it ages in seconds — on an interval, with lifecycles bound to the screen that is
+ * watching (start in onResume, stop in onPause); fetchTripDetailsOnce is the one-shot variant
+ * for explicit user refreshes; and the route poller's backfill hydrates immutable resources by
+ * composing the pure fetchers in Fetchers.kt with TripStore.
  */
 
 private const val DEFAULT_POLL_INTERVAL_MS = 10_000L
 private const val TAG = "Pollers"
+
+/** Process-lifetime scope for fire-and-forget one-shot fetches; never cancelled. */
+private val oneShotScope = MainScope()
 
 /**
  * Polls trip details every [intervalMs] and records responses into [TripStore]. Lifecycle is
@@ -79,9 +86,10 @@ constructor(private val tripId: String, private val intervalMs: Long = DEFAULT_P
 }
 
 /**
- * Polls trips-for-route every [intervalMs], records responses into [TripStore], triggers schedule
- * and shape backfills via [TripFetcher], and delivers each response to an optional callback on the
- * main thread. Lifecycle is owned by the caller.
+ * Polls trips-for-route every [intervalMs], records responses into [TripStore], backfills
+ * schedules and shapes for the observed trips, and delivers each response to an optional callback
+ * on the main thread. Lifecycle is owned by the caller; stopping the poller also cancels its
+ * in-progress backfills.
  */
 class RoutePoller
 @JvmOverloads
@@ -113,7 +121,7 @@ constructor(
                                     }
                             if (response.code == ObaApi.OBA_OK) {
                                 TripStore.recordTripsForRouteResponse(response, localTimeMs)
-                                TripFetcher.ensureSchedulesAndShapes(response)
+                                prefetchSchedulesAndShapes(response)
                                 callback?.onResponse(response)
                             }
                         } catch (e: Exception) {
@@ -127,5 +135,46 @@ constructor(
     fun stop() {
         job?.cancel()
         job = null
+    }
+}
+
+/**
+ * Backfills schedules and shapes for every active trip in a trips-for-route response that doesn't
+ * already have them, fetching via Fetchers.kt and hydrating [TripStore]. Launched into the
+ * route poller's scope, so backfills are cancelled with the poller.
+ */
+private fun CoroutineScope.prefetchSchedulesAndShapes(response: ObaTripsForRouteResponse) {
+    response.forEachActiveTrip { tripId, _, activeTrip ->
+        val trip = TripStore.getTrip(tripId)
+        if (trip?.schedule == null) {
+            launch { fetchTripSchedule(tripId)?.let { TripStore.putSchedule(tripId, it) } }
+        }
+        val shapeId = activeTrip.shapeId
+        if (shapeId != null && trip?.polyline == null) {
+            launch { fetchShape(shapeId)?.let { TripStore.putPolyline(tripId, it) } }
+        }
+    }
+}
+
+/**
+ * Fire-and-forget one-shot trip details fetch for UI refresh actions. Records the result into
+ * [TripStore]; does not notify callers on success or failure. The one-shot sibling of
+ * [TripDetailsPoller], for when the user explicitly asks for fresh status.
+ */
+fun fetchTripDetailsOnce(tripId: String) {
+    val ctx = Application.get().applicationContext
+    oneShotScope.launch {
+        try {
+            val localTimeMs = System.currentTimeMillis()
+            val response =
+                    withContext(Dispatchers.IO) {
+                        ObaTripDetailsRequest.newRequest(ctx, tripId).call()
+                    }
+            if (response.code == ObaApi.OBA_OK) {
+                TripStore.recordTripDetailsResponse(tripId, response, localTimeMs)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed one-shot trip details fetch for $tripId", e)
+        }
     }
 }

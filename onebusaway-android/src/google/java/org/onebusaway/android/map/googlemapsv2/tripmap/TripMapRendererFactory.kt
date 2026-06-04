@@ -16,11 +16,12 @@
 package org.onebusaway.android.map.googlemapsv2.tripmap
 
 import android.content.Context
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.GoogleMap
 import org.onebusaway.android.R
-import org.onebusaway.android.extrapolation.data.TripFetcher
 import org.onebusaway.android.extrapolation.data.TripStore
+import org.onebusaway.android.extrapolation.data.fetchShape
 import org.onebusaway.android.io.elements.ObaReferences
 import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.io.elements.ObaTripStatus
@@ -49,42 +50,36 @@ internal enum class TripMapOverlayFailure {
 /**
  * Creates and activates trip map overlays from an API response.
  *
- * Calls [onReady] on the main thread once overlays are created, or [onError] with a
- * [TripMapOverlayFailure] describing which required data was missing or failed to load.
+ * [create] suspends while the trip shape is fetched (sharing any in-flight fetch via
+ * [fetchShape]) and returns the overlays, or null — after logging a [TripMapOverlayFailure] —
+ * when required data is missing or failed to load.
  */
 internal object TripMapOverlayFactory {
 
-    fun create(
+    private const val TAG = "TripMapOverlayFactory"
+
+    suspend fun create(
             map: GoogleMap,
             context: Context,
             tripId: String,
             selectedStopId: String?,
-            response: ObaTripDetailsResponse,
-            onReady: (TripMapOverlays) -> Unit,
-            onError: (TripMapOverlayFailure) -> Unit
-    ) {
-        val schedule =
-                response.schedule
-                        ?: run {
-                            onError(TripMapOverlayFailure.MISSING_SCHEDULE)
-                            return
-                        }
+            response: ObaTripDetailsResponse
+    ): TripMapOverlays? {
+        val schedule = response.schedule ?: return fail(tripId, TripMapOverlayFailure.MISSING_SCHEDULE)
         val status = response.status
-        val refs =
-                response.refs
-                        ?: run {
-                            onError(TripMapOverlayFailure.MISSING_REFERENCES)
-                            return
-                        }
+        val refs = response.refs ?: return fail(tripId, TripMapOverlayFailure.MISSING_REFERENCES)
         val trip =
                 refs.getTrip(tripId)
-                        ?: run {
-                            onError(TripMapOverlayFailure.TRIP_NOT_IN_REFERENCES)
-                            return
-                        }
+                        ?: return fail(tripId, TripMapOverlayFailure.TRIP_NOT_IN_REFERENCES)
         val route = refs.getRoute(trip.routeId)
+        val shapeId = trip.shapeId ?: return fail(tripId, TripMapOverlayFailure.MISSING_SHAPE_ID)
 
         cacheResponseData(tripId, schedule, status)
+
+        val sd =
+                TripStore.getTrip(tripId)?.polyline
+                        ?: fetchShape(shapeId)?.also { TripStore.putPolyline(tripId, it) }
+                        ?: return fail(tripId, TripMapOverlayFailure.SHAPE_FETCH_FAILED)
 
         val routeColor =
                 route?.color ?: ContextCompat.getColor(context, R.color.route_line_color_default)
@@ -95,38 +90,32 @@ internal object TripMapOverlayFactory {
         val scheduleDeviation = status?.takeIf { it.activeTripId == tripId }?.scheduleDeviation
         val stopNames = buildStopNameMap(schedule, refs)
 
-        fun build(sd: Polyline) {
-            val routeOverlay =
-                    TripRouteOverlay(
-                            map,
-                            context,
-                            tripId,
-                            sd,
-                            schedule,
-                            routeColor,
-                            stopNames,
-                            selectedStopId,
-                            scheduleDeviation
-                    )
-            val vehicleOverlay = TripVehicleOverlay(map, context, sd, routeColor, route?.type)
+        val routeOverlay =
+                TripRouteOverlay(
+                        map,
+                        context,
+                        tripId,
+                        sd,
+                        schedule,
+                        routeColor,
+                        stopNames,
+                        selectedStopId,
+                        scheduleDeviation
+                )
+        val vehicleOverlay = TripVehicleOverlay(map, context, sd, routeColor, route?.type)
 
-            routeOverlay.activate()
-            TripStore.getTrip(tripId)?.anchor?.let {
-                vehicleOverlay.showOrUpdateDataReceivedMarker(it, System.currentTimeMillis())
-            }
-            vehicleOverlay.activate(vehiclePosition)
-
-            onReady(TripMapOverlays(routeOverlay, vehicleOverlay, sd, tripId))
+        routeOverlay.activate()
+        TripStore.getTrip(tripId)?.anchor?.let {
+            vehicleOverlay.showOrUpdateDataReceivedMarker(it, System.currentTimeMillis())
         }
+        vehicleOverlay.activate(vehiclePosition)
 
-        val shapeId = trip.shapeId
-        if (shapeId != null) {
-            TripFetcher.ensureShape(tripId, shapeId, ::build) {
-                onError(TripMapOverlayFailure.SHAPE_FETCH_FAILED)
-            }
-        } else {
-            onError(TripMapOverlayFailure.MISSING_SHAPE_ID)
-        }
+        return TripMapOverlays(routeOverlay, vehicleOverlay, sd, tripId)
+    }
+
+    private fun fail(tripId: String, reason: TripMapOverlayFailure): TripMapOverlays? {
+        Log.w(TAG, "Overlay creation failed for $tripId: $reason")
+        return null
     }
 
     private fun cacheResponseData(

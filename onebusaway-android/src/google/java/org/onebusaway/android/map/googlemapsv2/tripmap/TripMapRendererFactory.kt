@@ -111,7 +111,7 @@ internal object TripMapOverlayFactory {
             val vehicleOverlay = TripVehicleOverlay(map, context, sd, routeColor, route?.type)
 
             routeOverlay.activate()
-            TripStore.getAnchor(tripId)?.let {
+            TripStore.getTrip(tripId)?.anchor?.let {
                 vehicleOverlay.showOrUpdateDataReceivedMarker(it, System.currentTimeMillis())
             }
             vehicleOverlay.activate(vehiclePosition)

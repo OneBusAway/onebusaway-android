@@ -54,7 +54,7 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
         @JvmStatic
         fun newInstance(tripId: String, stopId: String? = null): TripMapFragment {
             val options = GoogleMapOptions()
-            MapHelpV2.getBounds(TripStore.getShape(tripId))?.let { bounds ->
+            MapHelpV2.getBounds(TripStore.getTrip(tripId)?.polyline?.points)?.let { bounds ->
                 options.camera(CameraPosition(bounds.center, DEFAULT_INITIAL_ZOOM, 0f, 0f))
             }
             return TripMapFragment().apply {
@@ -145,7 +145,7 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
     private fun activate() {
         val m = map ?: return
         val response =
-                TripStore.getTripDetails(tripId)
+                TripStore.getTrip(tripId)?.tripDetailsResponse
                         ?: run {
                             Log.w(TAG, "No cached trip details for $tripId")
                             mapCallback?.onTripMapActivationFailed()

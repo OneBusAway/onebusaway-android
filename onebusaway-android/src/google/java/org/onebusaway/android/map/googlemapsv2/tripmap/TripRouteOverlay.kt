@@ -125,7 +125,8 @@ class TripRouteOverlay(
     }
 
     private fun computeEtaSnippet(arrivalTimeSec: Long, now: Long): String? {
-        val serviceDate = TripStore.getServiceDate(tripId) ?: return null
+        val serviceDate =
+                TripStore.getTrip(tripId)?.serviceDate?.takeIf { it > 0 } ?: return null
         val scheduledMs = serviceDate + arrivalTimeSec * 1000
         return if (scheduleDeviation == null) {
             formatEta(

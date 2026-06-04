@@ -25,6 +25,7 @@ import android.widget.Toast;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.ui.dataview.VehicleLocationDataActivity;
+import org.onebusaway.android.extrapolation.data.Trip;
 import org.onebusaway.android.extrapolation.data.TripStore;
 import org.onebusaway.android.extrapolation.data.Pollers;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
@@ -204,8 +205,9 @@ public class TripDetailsActivity extends AppCompatActivity
     private void updateLocationDataVisibility() {
         if (mLocationDataItem == null) return;
         // Show if the fragment reported location data, or if there's history in the trip store
+        Trip trip = TripStore.INSTANCE.getTrip(mTripId);
         boolean visible = mHasLocationData
-                || (mTripId != null && TripStore.INSTANCE.getHistorySize(mTripId) > 0);
+                || (trip != null && !trip.getHistory().isEmpty());
         mLocationDataItem.setVisible(visible);
     }
 

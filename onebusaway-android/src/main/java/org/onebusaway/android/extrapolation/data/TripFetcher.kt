@@ -60,7 +60,7 @@ object TripFetcher {
         ensureFetched(
                 tripId = tripId,
                 pending = pendingScheduleFetches,
-                isCached = { TripStore.isScheduleCached(tripId) },
+                isCached = { TripStore.getTrip(tripId)?.schedule != null },
                 fetch = {
                     val ctx = Application.get().applicationContext
                     ObaTripDetailsRequest.Builder(ctx, tripId)
@@ -84,7 +84,7 @@ object TripFetcher {
     ) {
         // Cached-hit fast path: still hops through mainHandler.post so callers always
         // observe the callback asynchronously, regardless of cache state.
-        val cached = TripStore.getPolyline(tripId)
+        val cached = TripStore.getTrip(tripId)?.polyline
         if (cached != null) {
             if (onReady != null) mainHandler.post { onReady(cached) }
             return
@@ -92,7 +92,7 @@ object TripFetcher {
         ensureFetched(
                 tripId = tripId,
                 pending = pendingShapeFetches,
-                isCached = { TripStore.getPolyline(tripId) != null },
+                isCached = { TripStore.getTrip(tripId)?.polyline != null },
                 fetch = {
                     val ctx = Application.get().applicationContext
                     val response = ObaShapeRequest.newRequest(ctx, shapeId).call()

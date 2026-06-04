@@ -69,6 +69,7 @@ class Trip(val tripId: String) {
 
     // --- Caches ---
     var schedule: ObaTripSchedule? = null
+    /** Service date in ms since the epoch, or 0 when not yet known. */
     var serviceDate: Long = 0
     var polyline: Polyline? = null
     var routeType: Int? = null

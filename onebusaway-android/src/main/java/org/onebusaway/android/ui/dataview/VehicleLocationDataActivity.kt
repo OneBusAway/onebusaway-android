@@ -83,7 +83,7 @@ class VehicleLocationDataActivity : AppCompatActivity() {
     private lateinit var tripId: String
     private var vehicleId: String? = null
     private var stopId: String? = null
-    private var trip: Trip? = null
+    private lateinit var trip: Trip
     private var poller: TripDetailsPoller? = null
 
     private val refreshHandler = Handler(Looper.getMainLooper())
@@ -121,6 +121,9 @@ class VehicleLocationDataActivity : AppCompatActivity() {
                         }
         vehicleId = intent.getStringExtra(EXTRA_VEHICLE_ID)
         stopId = intent.getStringExtra(EXTRA_STOP_ID)
+        // Acquired once: Trip identity is permanent, so this reference stays valid for the
+        // activity's lifetime while the poller feeds it data.
+        trip = TripStore.getOrCreateTrip(tripId)
 
         tableContainer = findViewById(R.id.location_data_table_container)
         graphView = findViewById(R.id.location_data_graph)
@@ -182,22 +185,20 @@ class VehicleLocationDataActivity : AppCompatActivity() {
     // --- Data refresh ---
 
     private fun refreshData() {
-        val snapshot = TripStore.getHistorySnapshot(tripId)
-        val activeTripId = TripStore.getVehicleActiveTripId(tripId)
+        val activeTripId = trip.vehicleActiveTripId
         val tripEnded = activeTripId != null && tripId != activeTripId
-        if (trip == null) trip = TripStore.getOrCreateTrip(tripId)
 
-        updateHeader(snapshot.history.size, tripEnded)
+        updateHeader(trip.history.size, tripEnded)
 
-        if (snapshot.history.size != lastRowCount) {
-            lastRowCount = snapshot.history.size
+        if (trip.history.size != lastRowCount) {
+            lastRowCount = trip.history.size
             val table: TableLayout = findViewById(R.id.location_data_table)
             table.removeAllViews()
-            buildTable(table, snapshot, trip?.anchor)
+            buildTable(table, trip)
         }
 
         if (graphView.visibility == View.VISIBLE) {
-            refreshGraph(snapshot.history, tripEnded)
+            refreshGraph(trip, tripEnded)
         }
     }
 
@@ -211,21 +212,19 @@ class VehicleLocationDataActivity : AppCompatActivity() {
         }
     }
 
-    private fun refreshGraph(history: List<ObaTripStatus>, tripEnded: Boolean) {
-        val schedule = TripStore.getSchedule(tripId)
-        val serviceDate = TripStore.getServiceDate(tripId) ?: 0L
+    private fun refreshGraph(trip: Trip, tripEnded: Boolean) {
         val distribution: ProbDistribution? =
                 if (!tripEnded) {
-                    (trip?.extrapolate(System.currentTimeMillis()) as? ExtrapolationResult.Success)
+                    (trip.extrapolate(System.currentTimeMillis()) as? ExtrapolationResult.Success)
                             ?.distribution
                 } else null
         graphView.setData(
-                history,
-                schedule,
-                serviceDate,
+                trip.history,
+                trip.schedule,
+                trip.serviceDate,
                 distribution,
-                trip?.anchor,
-                trip?.anchorTimeMs ?: 0L
+                trip.anchor,
+                trip.anchorTimeMs
         )
     }
 
@@ -282,26 +281,26 @@ class VehicleLocationDataActivity : AppCompatActivity() {
             )
     private val timeFmt = SimpleDateFormat("HH:mm:ss", Locale.US)
 
-    private fun buildTable(
-            table: TableLayout,
-            snapshot: TripStore.HistorySnapshot,
-            anchor: ObaTripStatus?
-    ) {
-        currentHistory = snapshot.history
+    private fun buildTable(table: TableLayout, trip: Trip) {
+        // Copy so row indexes stay aligned with table rows even after the live
+        // history is appended to or trimmed; showStatusJson indexes into this.
+        val history = trip.history.toList()
+        val anchor = trip.anchor
+        currentHistory = history
         dataRows.clear()
         selectedIndex = null
         addHeaderRow(table)
         addDivider(table)
 
-        if (snapshot.history.isEmpty()) {
+        if (history.isEmpty()) {
             addEmptyRow(table)
             return
         }
 
         var prev: ObaTripStatus? = null
-        for ((i, entry) in snapshot.history.withIndex()) {
-            val fetchTime = snapshot.fetchTimes.getOrElse(i) { 0L }
-            val localFetchTime = snapshot.localFetchTimes.getOrElse(i) { 0L }
+        for ((i, entry) in history.withIndex()) {
+            val fetchTime = trip.fetchTimes.getOrElse(i) { 0L }
+            val localFetchTime = trip.localFetchTimes.getOrElse(i) { 0L }
             val isAnchor = anchor != null && entry === anchor
             addDataRow(table, i, entry, prev, fetchTime, localFetchTime, isAnchor)
             prev = entry

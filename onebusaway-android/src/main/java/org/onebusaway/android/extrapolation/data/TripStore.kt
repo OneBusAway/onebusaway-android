@@ -15,13 +15,8 @@
  */
 package org.onebusaway.android.extrapolation.data
 
-import android.location.Location
 import android.util.LruCache
 import androidx.annotation.VisibleForTesting
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import org.onebusaway.android.io.elements.ObaTrip
 import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.io.elements.ObaTripStatus
@@ -30,18 +25,23 @@ import org.onebusaway.android.io.request.ObaTripsForRouteResponse
 import org.onebusaway.android.util.Polyline
 
 /**
- * Registry of [Trip] objects. All per-trip data lives on Trip; this object owns trip identity,
- * payload retention, and change notifications. It is pure synchronous state — network fetches live
- * in [TripFetcher] and the pollers, which write their results back in here.
+ * Registry of [Trip] objects. This object owns trip identity, payload retention, recording, and
+ * fetch-writeback — and nothing else. All trip data is read directly off a [Trip]: acquire one via
+ * [getOrCreateTrip]/[getTrip] and read its fields. Network fetches live in [TripFetcher] and the
+ * pollers, which write their results back in here.
  *
  * Identity vs retention are deliberately separate. A [Trip] instance is **permanent**: the same
  * tripId always resolves to the same object, so holding a Trip reference (in a fragment, a marker
  * state, a frame loop) is always safe — new data recorded for that tripId lands in the instance
  * the holder is reading. What is bounded is the *payload*: once more than [MAX_TRACKED_TRIPS]
  * trips hold data, the least-recently-used trip's data is cleared ([Trip.clearData]), leaving a
- * shell of a few dozen bytes that refills if the trip is ever recorded again. Reads promote a warm
- * trip in the retention order, so a trip whose data is actively read or recorded is never the
- * eviction victim.
+ * shell of a few dozen bytes that refills if the trip is ever recorded again.
+ *
+ * Retention contract: LRU promotion happens at acquisition ([getOrCreateTrip]/[getTrip]) and on
+ * every `record*`/`put*`. Direct field reads on a held Trip don't promote, but every screen that
+ * reads a trip also runs a poller that records into it every few seconds, re-warming it — so a
+ * trip being actively displayed is never the eviction victim. Holding a Trip past eviction is
+ * still safe: the instance simply reports empty payload until it is recorded again.
  *
  * Thread safety: **main thread only.** All public methods must be called from the main thread.
  * Background work (network fetches) lives in the pollers and [TripFetcher]; results are posted
@@ -76,28 +76,22 @@ object TripStore {
                 }
             }
 
-    // --- Change notifications ---
-
-    private val _changes =
-            MutableSharedFlow<Unit>(
-                    extraBufferCapacity = 1,
-                    onBufferOverflow = BufferOverflow.DROP_OLDEST
-            )
-
-    /** Emits Unit whenever any mutation method runs. Coalesces bursts via DROP_OLDEST. */
-    val changes: SharedFlow<Unit> = _changes.asSharedFlow()
-
-    private fun notifyChanged() {
-        _changes.tryEmit(Unit)
-    }
-
     // --- Trip registry ---
 
+    /**
+     * Acquires the permanent [Trip] for [tripId], creating it if needed, and promotes it in the
+     * retention order. Use this when acquiring a reference to hold or write to; for transient
+     * reads prefer [getTrip], which doesn't create a shell as a side effect.
+     */
     fun getOrCreateTrip(tripId: String): Trip {
         promote(tripId)
         return registry.getOrPut(tripId) { Trip(tripId) }
     }
 
+    /**
+     * Transient-read lookup: returns the [Trip] if it has ever been observed (promoting it in the
+     * retention order), or null without creating a shell.
+     */
     fun getTrip(tripId: String?): Trip? {
         if (tripId == null) return null
         promote(tripId)
@@ -126,8 +120,7 @@ object TripStore {
     fun recordStatus(status: ObaTripStatus?, serverTimeMs: Long, localTimeMs: Long) {
         if (status == null) return
         val tripId = status.activeTripId ?: return
-        val changed = warmTrip(tripId).recordStatus(status, serverTimeMs, localTimeMs)
-        if (changed) notifyChanged()
+        warmTrip(tripId).recordStatus(status, serverTimeMs, localTimeMs)
     }
 
     fun recordTripDetailsResponse(
@@ -137,161 +130,59 @@ object TripStore {
     ) {
         if (response == null) return
         val status = response.status ?: return
-        var changed = false
         if (polledTripId != null) {
             val polledTrip = warmTrip(polledTripId)
-            if (polledTrip.vehicleActiveTripId != status.activeTripId) {
-                polledTrip.vehicleActiveTripId = status.activeTripId
-                changed = true
-            }
+            polledTrip.vehicleActiveTripId = status.activeTripId
             polledTrip.tripDetailsResponse = response
         }
         val activeTripId = status.activeTripId ?: return
         val trip = warmTrip(activeTripId)
-        if (trip.recordStatus(status, response.currentTime, localTimeMs)) changed = true
-        if (status.serviceDate > 0 && trip.serviceDate != status.serviceDate) {
+        trip.recordStatus(status, response.currentTime, localTimeMs)
+        if (status.serviceDate > 0) {
             trip.serviceDate = status.serviceDate
-            changed = true
         }
-        if (changed) notifyChanged()
     }
 
     fun recordTripsForRouteResponse(response: ObaTripsForRouteResponse, localTimeMs: Long) {
         val serverTime = response.currentTime
-        var changed = false
         response.forEachActiveTrip { tripId, status, activeTrip ->
             val trip = warmTrip(tripId)
-            if (trip.recordStatus(status, serverTime, localTimeMs)) changed = true
-            if (status.serviceDate > 0 && trip.serviceDate != status.serviceDate) {
+            trip.recordStatus(status, serverTime, localTimeMs)
+            if (status.serviceDate > 0) {
                 trip.serviceDate = status.serviceDate
-                changed = true
             }
             if (trip.routeType == null) {
                 val routeId = activeTrip.routeId
                 val route = if (routeId != null) response.getRoute(routeId) else null
                 if (route != null) {
                     trip.routeType = route.type
-                    changed = true
                 }
             }
         }
-        if (changed) notifyChanged()
     }
 
-    // --- Delegating accessors (for callers not yet using Trip directly) ---
-
-    data class HistorySnapshot(
-            val history: List<ObaTripStatus>,
-            val fetchTimes: List<Long>,
-            val localFetchTimes: List<Long>
-    ) {
-        companion object {
-            val EMPTY = HistorySnapshot(emptyList(), emptyList(), emptyList())
-        }
-    }
-
-    fun getHistorySnapshot(activeTripId: String?): HistorySnapshot {
-        val trip = getTrip(activeTripId) ?: return HistorySnapshot.EMPTY
-        return HistorySnapshot(
-                trip.history.toList(),
-                trip.fetchTimes.toList(),
-                trip.localFetchTimes.toList()
-        )
-    }
-
-    fun getHistory(activeTripId: String?): List<ObaTripStatus> =
-            getTrip(activeTripId)?.history?.toList().orEmpty()
-
-    fun getHistorySize(activeTripId: String?): Int = getTrip(activeTripId)?.history?.size ?: 0
-
-    fun getFetchTimes(activeTripId: String?): List<Long> =
-            getTrip(activeTripId)?.fetchTimes?.toList().orEmpty()
-
-    fun getLocalFetchTimes(activeTripId: String?): List<Long> =
-            getTrip(activeTripId)?.localFetchTimes?.toList().orEmpty()
-
-    fun getLastState(activeTripId: String?): ObaTripStatus? =
-            getTrip(activeTripId)?.history?.lastOrNull()
-
-    /**
-     * Returns the filtered extrapolation anchor — the newest-by-timestamp status with GPS winning
-     * ties. Use this (not [getLastState]) when surfacing "the data the prediction is based on" to
-     * the user; [getLastState] is for raw debug views.
-     */
-    fun getAnchor(activeTripId: String?): ObaTripStatus? = getTrip(activeTripId)?.anchor
-
-    /** IDs of trips currently retaining payload (the eviction working set). */
-    fun getTrackedTripIds(): Set<String> = warm.snapshot().keys
-
-    // --- Trip details response cache ---
-
-    fun getTripDetails(tripId: String): ObaTripDetailsResponse? =
-            getTrip(tripId)?.tripDetailsResponse
-
-    // --- Schedule ---
+    // --- Fetch-writeback ---
 
     fun putSchedule(tripId: String?, schedule: ObaTripSchedule?) {
         if (tripId != null && schedule != null) {
             warmTrip(tripId).schedule = schedule
-            notifyChanged()
         }
     }
-
-    fun getSchedule(tripId: String): ObaTripSchedule? = getTrip(tripId)?.schedule
-
-    fun isScheduleCached(tripId: String?): Boolean =
-            tripId != null && getTrip(tripId)?.schedule != null
-
-    // --- Service date ---
 
     fun putServiceDate(tripId: String?, serviceDate: Long) {
         if (tripId != null && serviceDate > 0) {
             warmTrip(tripId).serviceDate = serviceDate
-            notifyChanged()
-        }
-    }
-
-    fun getServiceDate(tripId: String?): Long? =
-            getTrip(tripId)?.serviceDate?.let { if (it > 0) it else null }
-
-    // --- Shape ---
-
-    fun putShape(tripId: String?, points: List<Location>?) {
-        if (tripId != null && points != null && points.isNotEmpty()) {
-            putPolyline(tripId, Polyline(points))
         }
     }
 
     fun putPolyline(tripId: String, polyline: Polyline) {
         warmTrip(tripId).polyline = polyline
-        notifyChanged()
     }
 
-    fun getShape(tripId: String?): List<Location>? = getTrip(tripId)?.polyline?.points
+    // --- Introspection and cleanup ---
 
-    fun getPolyline(tripId: String): Polyline? = getTrip(tripId)?.polyline
-
-    // --- Route type ---
-
-    fun putRouteType(tripId: String, type: Int) {
-        warmTrip(tripId).routeType = type
-        notifyChanged()
-    }
-
-    fun getRouteType(tripId: String): Int? = getTrip(tripId)?.routeType
-
-    // --- Vehicle active trip tracking ---
-
-    /**
-     * Returns the trip that the vehicle serving [watchedTripId] most recently reported as its
-     * active trip — equal to [watchedTripId] while the vehicle is still on that run, and the
-     * successor run's trip ID once the vehicle rolls onto its next trip. Null until a trip
-     * details response has been recorded for [watchedTripId].
-     */
-    fun getVehicleActiveTripId(watchedTripId: String): String? =
-            getTrip(watchedTripId)?.vehicleActiveTripId
-
-    // --- Cleanup ---
+    /** IDs of trips currently retaining payload (the eviction working set). */
+    fun getTrackedTripIds(): Set<String> = warm.snapshot().keys
 
     /**
      * Full reset, including identity — any Trip references held by callers are orphaned. For tests
@@ -301,7 +192,6 @@ object TripStore {
     fun clearAll() {
         registry.clear()
         warm.evictAll()
-        notifyChanged()
     }
 }
 

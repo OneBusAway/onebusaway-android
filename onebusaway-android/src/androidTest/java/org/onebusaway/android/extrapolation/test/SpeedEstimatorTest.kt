@@ -31,6 +31,7 @@ import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.io.elements.ObaTripStatus
 import org.onebusaway.android.io.elements.Occupancy
 import org.onebusaway.android.io.elements.Status
+import org.onebusaway.android.util.Polyline
 
 /** Tests for the speed estimation framework classes. */
 @RunWith(AndroidJUnit4::class)
@@ -47,7 +48,7 @@ class SpeedEstimatorTest {
 
     @Test
     fun testTrackerEmptyHistory() {
-        val history = dm.getHistory("trip1")
+        val history = dm.getOrCreateTrip("trip1").history
         assertEquals(0, history.size)
     }
 
@@ -57,7 +58,7 @@ class SpeedEstimatorTest {
 
         dm.recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
 
-        val history = dm.getHistory("trip1")
+        val history = dm.getOrCreateTrip("trip1").history
         assertEquals(1, history.size)
         assertEquals(100.0, history[0].distanceAlongTrip!!, 1e-12)
     }
@@ -79,7 +80,7 @@ class SpeedEstimatorTest {
             dm.recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
         }
 
-        val history = dm.getHistory("trip1")
+        val history = dm.getOrCreateTrip("trip1").history
         assertEquals(50, history.size)
     }
 
@@ -91,18 +92,18 @@ class SpeedEstimatorTest {
         dm.recordStatus(status1, System.currentTimeMillis(), System.currentTimeMillis())
         dm.recordStatus(status2, System.currentTimeMillis(), System.currentTimeMillis())
 
-        assertEquals(1, dm.getHistory("trip1").size)
-        assertEquals(1, dm.getHistory("trip2").size)
+        assertEquals(1, dm.getOrCreateTrip("trip1").history.size)
+        assertEquals(1, dm.getOrCreateTrip("trip2").history.size)
     }
 
     @Test
     fun testTrackerClearAll() {
         val status = createStatus("v1", "trip1", 47.0, -122.0, 100.0, 100.0, 5000.0, 1000L)
         dm.recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
-        assertEquals(1, dm.getHistory("trip1").size)
+        assertEquals(1, dm.getOrCreateTrip("trip1").history.size)
 
         dm.clearAll()
-        assertEquals(0, dm.getHistory("trip1").size)
+        assertEquals(0, dm.getOrCreateTrip("trip1").history.size)
     }
 
     @Test
@@ -110,11 +111,11 @@ class SpeedEstimatorTest {
         val status = createStatus("v1", "trip1", 47.0, -122.0, 100.0, 100.0, 5000.0, 1000L)
         dm.recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
 
-        val history = dm.getHistory("trip1")
+        val history = dm.getOrCreateTrip("trip1").history.toList()
         history.toMutableList().clear() // Modifying a copy
 
         // Internal history should be unaffected
-        assertEquals(1, dm.getHistory("trip1").size)
+        assertEquals(1, dm.getOrCreateTrip("trip1").history.size)
     }
 
     @Test
@@ -143,7 +144,7 @@ class SpeedEstimatorTest {
     @Test
     fun testTrackerNullStatusIgnored() {
         dm.recordStatus(null, System.currentTimeMillis(), System.currentTimeMillis())
-        assertEquals(0, dm.getHistory("trip1").size)
+        assertEquals(0, dm.getOrCreateTrip("trip1").history.size)
     }
 
     // --- Eviction tests ---
@@ -161,8 +162,8 @@ class SpeedEstimatorTest {
         assertEquals(cap, dm.getTrackedTripIds().size)
 
         // Touch trip0 (the insertion-oldest) to promote it to most-recently-accessed.
-        // Any read goes through getTrip(); getLastState exercises that path.
-        assertNotNull(dm.getLastState("trip0"))
+        // getTrip() promotes the LRU entry.
+        assertNotNull(dm.getTrip("trip0")?.history?.lastOrNull())
 
         // Now insert one more trip. With access ordering, the LRU is trip1, not trip0.
         val pushOver = createStatus("vNew", "tripNew", 47.0, -122.0, 100.0, 100.0, 5000.0, 9999L)
@@ -195,40 +196,37 @@ class SpeedEstimatorTest {
         val tracked = dm.getTrackedTripIds()
         assertEquals(cap, tracked.size)
         assertTrue("trip0 should still be present after self-update", "trip0" in tracked)
-        assertEquals(2, dm.getHistorySize("trip0"))
+        assertEquals(2, dm.getOrCreateTrip("trip0").history.size)
     }
 
     // --- TripStore schedule cache tests ---
 
     @Test
     fun testTrackerScheduleCacheEmpty() {
-        assertNull(dm.getSchedule("trip1"))
-        assertFalse(dm.isScheduleCached("trip1"))
+        assertNull(dm.getOrCreateTrip("trip1").schedule)
     }
 
     @Test
     fun testTrackerPutAndGetSchedule() {
         val schedule = ObaTripSchedule.EMPTY_OBJECT
         dm.putSchedule("trip1", schedule)
-        assertNotNull(dm.getSchedule("trip1"))
-        assertTrue(dm.isScheduleCached("trip1"))
+        assertNotNull(dm.getOrCreateTrip("trip1").schedule)
     }
 
     @Test
     fun testTrackerPutScheduleNullIgnored() {
         dm.putSchedule(null, ObaTripSchedule.EMPTY_OBJECT)
         dm.putSchedule("trip1", null)
-        assertNull(dm.getSchedule("trip1"))
+        assertNull(dm.getOrCreateTrip("trip1").schedule)
     }
 
     @Test
     fun testTrackerClearAllClearsScheduleCache() {
         dm.putSchedule("trip1", ObaTripSchedule.EMPTY_OBJECT)
-        assertTrue(dm.isScheduleCached("trip1"))
+        assertNotNull(dm.getOrCreateTrip("trip1").schedule)
 
         dm.clearAll()
-        assertFalse(dm.isScheduleCached("trip1"))
-        assertNull(dm.getSchedule("trip1"))
+        assertNull(dm.getOrCreateTrip("trip1").schedule)
     }
 
     // --- Polyline interpolation tests ---
@@ -236,8 +234,8 @@ class SpeedEstimatorTest {
     @Test
     fun testPolylineSinglePoint() {
         val points = listOf(createLocation(47.0, -122.0))
-        dm.putShape("trip1", points)
-        val poly = dm.getPolyline("trip1")!!
+        dm.putPolyline("trip1", Polyline(points))
+        val poly = dm.getOrCreateTrip("trip1").polyline!!
         val result = poly.interpolate(50.0)!!
         assertEquals(47.0, result.latitude, 1e-12)
         assertEquals(-122.0, result.longitude, 1e-12)
@@ -250,8 +248,8 @@ class SpeedEstimatorTest {
                         createLocation(47.0, -122.0),
                         createLocation(47.001, -122.0) // ~111 meters north
                 )
-        dm.putShape("trip1", points)
-        val poly = dm.getPolyline("trip1")!!
+        dm.putPolyline("trip1", Polyline(points))
+        val poly = dm.getOrCreateTrip("trip1").polyline!!
         // Interpolate at 0 — should return first point
         val start = poly.interpolate(0.0)!!
         assertEquals(47.0, start.latitude, 1e-12)
@@ -269,8 +267,8 @@ class SpeedEstimatorTest {
                         createLocation(47.002, -122.0), // ~222m total
                         createLocation(47.003, -122.0) // ~333m total
                 )
-        dm.putShape("trip1", points)
-        val poly = dm.getPolyline("trip1")!!
+        dm.putPolyline("trip1", Polyline(points))
+        val poly = dm.getOrCreateTrip("trip1").polyline!!
         // Interpolate at ~166m — should be between second and third point
         val mid = poly.interpolate(166.0)!!
         assertTrue(

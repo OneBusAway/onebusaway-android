@@ -142,6 +142,13 @@ public class TripDetailsListFragment extends ListFragment {
     private TripDetailsPoller mPoller;
     private Trip mTrip;
 
+    /**
+     * The trip this fragment polls, acquired once — Trip identity is permanent, so the reference
+     * stays valid for the fragment's lifetime. Distinct from {@link #mTrip}, which is the trip the
+     * vehicle is actively running (they diverge across block transitions).
+     */
+    private Trip mPolledTrip;
+
     private String mRouteId;
 
     private String mStopId;
@@ -232,6 +239,7 @@ public class TripDetailsListFragment extends ListFragment {
             Log.e(TAG, "TripId is null");
             throw new RuntimeException("TripId should not be null");
         }
+        mPolledTrip = mTripStore.getOrCreateTrip(mTripId);
 
         mStopId = args.getString(STOP_ID);
 
@@ -276,7 +284,7 @@ public class TripDetailsListFragment extends ListFragment {
     @Override
     public void onResume() {
         // Show cached data if available
-        ObaTripDetailsResponse cached = mTripStore.getTripDetails(mTripId);
+        ObaTripDetailsResponse cached = mPolledTrip.getTripDetailsResponse();
         if (cached != null) {
             setTripDetails(cached);
             setListShown(true);
@@ -514,7 +522,7 @@ public class TripDetailsListFragment extends ListFragment {
     private void updateVehiclePosition() {
         try {
             // Pick up fresh data from poller
-            ObaTripDetailsResponse fresh = mTripStore.getTripDetails(mTripId);
+            ObaTripDetailsResponse fresh = mPolledTrip.getTripDetailsResponse();
             if (fresh != null && fresh != mTripInfo) {
                 setTripDetails(fresh);
                 if (mTripDataCallback != null) {
@@ -530,7 +538,7 @@ public class TripDetailsListFragment extends ListFragment {
             if (status == null) return;
 
             // Determine the active trip ID
-            String activeTripId = mTripStore.getVehicleActiveTripId(mTripId);
+            String activeTripId = mPolledTrip.getVehicleActiveTripId();
             if (activeTripId == null) {
                 activeTripId = status.getActiveTripId();
             }
@@ -576,7 +584,8 @@ public class TripDetailsListFragment extends ListFragment {
             mTripStore.putServiceDate(activeTripId, status.getServiceDate());
         }
 
-        boolean newHasData = mTripStore.getHistorySize(activeTripId) > 0;
+        Trip activeTrip = mTripStore.getTrip(activeTripId);
+        boolean newHasData = activeTrip != null && !activeTrip.getHistory().isEmpty();
         String newVehicleId = status.getVehicleId();
         if (newHasData != mHasLocationData || !TextUtils.equals(newVehicleId, mActiveVehicleId)) {
             mHasLocationData = newHasData;

@@ -15,30 +15,49 @@
  */
 package org.onebusaway.android.extrapolation.data
 
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
-import java.util.concurrent.Executors
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.io.ObaApi
 import org.onebusaway.android.io.request.ObaShapeRequest
 import org.onebusaway.android.io.request.ObaTripDetailsRequest
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse
 import org.onebusaway.android.util.Polyline
 
 /**
- * One-shot background fetches for per-trip resources (schedules and shapes) that the polling
- * responses don't carry. Pure fetch orchestration: results are written into [TripStore] on the
- * main thread, and the only state held here is in-flight request deduplication.
+ * The demand-driven half of the trip data layer's network sources, counterpart to the time-driven
+ * pollers in Pollers.kt. The split is by trigger and by how the data ages:
+ * - Pollers re-fetch **volatile** data (vehicle status ages in seconds) on a recurring interval
+ *   while a screen is watching.
+ * - TripFetcher performs **one-shot** fetches on demand: [ensureSchedule]/[ensureShape] memoize
+ *   immutable per-trip resources (skip when cached, dedup in-flight, fetch once), and
+ *   [fetchTripDetailsOnce] serves explicit user-triggered refreshes.
  *
- * Thread safety: all public methods must be called from the main thread. Fetches run on a private
- * executor and post their results back to the main thread.
+ * Results are written into [TripStore] on the main thread; the only state held here is in-flight
+ * request deduplication.
+ *
+ * Threading: all public methods must be called from the main thread. Fetches run on
+ * [Dispatchers.IO], bounded by [fetchSemaphore]; results are applied back on the main thread.
  */
 object TripFetcher {
 
     private const val TAG = "TripFetcher"
+    private const val MAX_CONCURRENT_FETCHES = 2
 
-    private val fetchExecutor = Executors.newFixedThreadPool(2)
-    private val mainHandler = Handler(Looper.getMainLooper())
+    /** Singleton-lifetime scope on the main dispatcher; one-shot jobs need no cancellation. */
+    private val scope = MainScope()
+
+    /**
+     * Bounds concurrent backfill fetches so a route poll observing dozens of trips doesn't fan
+     * out into dozens of simultaneous API requests.
+     */
+    private val fetchSemaphore = Semaphore(MAX_CONCURRENT_FETCHES)
+
     private val pendingScheduleFetches: MutableSet<String> = HashSet()
     private val pendingShapeFetches: MutableSet<String> = HashSet()
 
@@ -82,11 +101,11 @@ object TripFetcher {
             onReady: ((Polyline) -> Unit)? = null,
             onError: (() -> Unit)? = null
     ) {
-        // Cached-hit fast path: still hops through mainHandler.post so callers always
-        // observe the callback asynchronously, regardless of cache state.
+        // Cached-hit fast path: still hops through a launch so callers always observe the
+        // callback asynchronously, regardless of cache state.
         val cached = TripStore.getTrip(tripId)?.polyline
         if (cached != null) {
-            if (onReady != null) mainHandler.post { onReady(cached) }
+            if (onReady != null) scope.launch { onReady(cached) }
             return
         }
         ensureFetched(
@@ -108,12 +127,36 @@ object TripFetcher {
     }
 
     /**
+     * Fire-and-forget one-shot trip details fetch for UI refresh actions. Records the result into
+     * [TripStore]; does not notify callers on success or failure. Unlike the ensure* methods this
+     * always fetches — status is volatile, so there is no cache to consult.
+     */
+    fun fetchTripDetailsOnce(tripId: String) {
+        val ctx = Application.get().applicationContext
+        scope.launch {
+            try {
+                val localTimeMs = System.currentTimeMillis()
+                val response =
+                        withContext(Dispatchers.IO) {
+                            ObaTripDetailsRequest.newRequest(ctx, tripId).call()
+                        }
+                if (response.code == ObaApi.OBA_OK) {
+                    TripStore.recordTripDetailsResponse(tripId, response, localTimeMs)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed one-shot trip details fetch for $tripId", e)
+            }
+        }
+    }
+
+    /**
      * Fetches a value off the main thread and applies the result on the main thread, with
      * pending-fetch deduplication. Failed fetches are retried naturally on the next call (typically
      * the next poll tick), which is already rate-limited by the polling interval — no extra
      * failure-cap or backoff logic is needed.
      *
-     * [fetch] runs on the fetch executor; [onSuccess] and [onError] run on the main thread.
+     * [fetch] runs on [Dispatchers.IO] under [fetchSemaphore]; [onSuccess] and [onError] run on
+     * the main thread.
      */
     private fun <T : Any> ensureFetched(
             tripId: String,
@@ -125,22 +168,20 @@ object TripFetcher {
     ) {
         if (isCached()) return
         if (!pending.add(tripId)) return
-        fetchExecutor.execute {
+        scope.launch {
             val result: T? =
                     try {
-                        fetch()
+                        fetchSemaphore.withPermit { withContext(Dispatchers.IO) { fetch() } }
                     } catch (e: Exception) {
                         Log.e(TAG, "Fetch failed for $tripId", e)
                         null
                     }
-            mainHandler.post {
-                pending.remove(tripId)
-                if (result != null) {
-                    onSuccess(result)
-                } else {
-                    Log.d(TAG, "Fetch for $tripId yielded no data")
-                    if (onError != null) onError()
-                }
+            pending.remove(tripId)
+            if (result != null) {
+                onSuccess(result)
+            } else {
+                Log.d(TAG, "Fetch for $tripId yielded no data")
+                onError?.invoke()
             }
         }
     }

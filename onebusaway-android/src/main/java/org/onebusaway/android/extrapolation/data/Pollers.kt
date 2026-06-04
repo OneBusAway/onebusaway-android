@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:JvmName("Pollers")
-
 package org.onebusaway.android.extrapolation.data
 
 import android.util.Log
@@ -30,6 +28,14 @@ import org.onebusaway.android.io.ObaApi
 import org.onebusaway.android.io.request.ObaTripDetailsRequest
 import org.onebusaway.android.io.request.ObaTripsForRouteRequest
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse
+
+/*
+ * The time-driven half of the trip data layer's network sources. Pollers re-fetch VOLATILE data —
+ * vehicle status ages in seconds, so it is always re-requested — on a recurring interval, with
+ * lifecycles bound to the screen that is watching (start in onResume, stop in onPause).
+ * Demand-driven one-shot fetches (immutable schedules/shapes, explicit user refreshes) live in
+ * TripFetcher.
+ */
 
 private const val DEFAULT_POLL_INTERVAL_MS = 10_000L
 private const val TAG = "Pollers"
@@ -121,27 +127,5 @@ constructor(
     fun stop() {
         job?.cancel()
         job = null
-    }
-}
-
-/**
- * Fire-and-forget one-shot trip details fetch for UI refresh actions. Records the result into
- * [TripStore]; does not notify callers on success or failure.
- */
-fun fetchTripDetailsOnce(tripId: String) {
-    val ctx = Application.get().applicationContext
-    MainScope().launch {
-        try {
-            val localTimeMs = System.currentTimeMillis()
-            val response =
-                    withContext(Dispatchers.IO) {
-                        ObaTripDetailsRequest.newRequest(ctx, tripId).call()
-                    }
-            if (response.code == ObaApi.OBA_OK) {
-                TripStore.recordTripDetailsResponse(tripId, response, localTimeMs)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed one-shot trip details fetch for $tripId", e)
-        }
     }
 }

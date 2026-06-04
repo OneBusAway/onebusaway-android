@@ -639,8 +639,10 @@ public final class UIUtils {
      */
     public static ShortcutInfoCompat makeShortcutInfo(Context context, String name,
             Intent destIntent, @DrawableRes int icon) {
-        // Make sure the shortcut Activity always launches on top (#626)
-        destIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        // Launcher shortcuts must open a fresh task rooted at the destination; without
+        // CLEAR_TASK, tapping a shortcut while the app is in the background just resumes
+        // the app's last screen (#1564 — supersedes the CLEAR_TOP-only flag from #626).
+        destIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         destIntent.setAction(Intent.ACTION_VIEW);
 
         Drawable drawableIcon = ResourcesCompat

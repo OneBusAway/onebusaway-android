@@ -156,7 +156,9 @@ class TripMapFragment : SupportMapFragment(), GoogleMap.OnMarkerClickListener {
                 lookupTripState(tripId)?.tripDetailsResponse
                         ?: run {
                             Log.w(TAG, "No cached trip details for $tripId")
-                            mapCallback?.onTripMapActivationFailed()
+                            // A timing problem, not a data problem: the poller just hasn't
+                            // delivered yet, so a later attempt may succeed
+                            mapCallback?.onTripMapActivationFailed(true)
                             return
                         }
 
@@ -167,13 +169,13 @@ class TripMapFragment : SupportMapFragment(), GoogleMap.OnMarkerClickListener {
         // Scoped to the view lifecycle: destroying the view cancels the await (no overlays
         // added to a dead map), while any shared shape fetch completes and hydrates the store.
         viewLifecycleOwner.lifecycleScope.launch {
-            val overlays =
+            val result =
                     TripMapOverlayFactory.create(
                             map, requireContext(), tripId, selectedStopId, response)
-            if (overlays == null) {
-                mapCallback?.onTripMapActivationFailed()
-            } else {
-                onOverlaysReady(overlays)
+            when (result) {
+                is TripMapOverlayResult.Ready -> onOverlaysReady(result.overlays)
+                is TripMapOverlayResult.Failed ->
+                        mapCallback?.onTripMapActivationFailed(result.reason.retryable)
             }
         }
     }

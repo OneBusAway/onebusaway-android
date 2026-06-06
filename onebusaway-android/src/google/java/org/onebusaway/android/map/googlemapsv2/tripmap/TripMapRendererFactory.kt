@@ -37,21 +37,31 @@ data class TripMapOverlays(
 )
 
 /** Reasons [TripMapOverlayFactory.create] may fail to produce overlays. */
-internal enum class TripMapOverlayFailure {
-    MISSING_SCHEDULE,
-    MISSING_REFERENCES,
-    TRIP_NOT_IN_REFERENCES,
-    MISSING_SHAPE_ID,
-    /** Async shape fetch failed (e.g. network or API error). */
-    SHAPE_FETCH_FAILED
+internal enum class TripMapOverlayFailure(
+        /** Whether a later attempt may succeed, or the trip's data can never support the map. */
+        val retryable: Boolean
+) {
+    MISSING_SCHEDULE(false),
+    MISSING_REFERENCES(false),
+    TRIP_NOT_IN_REFERENCES(false),
+    MISSING_SHAPE_ID(false),
+    /** Async shape fetch failed (e.g. network or API error) — worth retrying. */
+    SHAPE_FETCH_FAILED(retryable = true)
+}
+
+/** Result of [TripMapOverlayFactory.create]. */
+internal sealed interface TripMapOverlayResult {
+    class Ready(val overlays: TripMapOverlays) : TripMapOverlayResult
+
+    class Failed(val reason: TripMapOverlayFailure) : TripMapOverlayResult
 }
 
 /**
  * Creates and activates trip map overlays from an API response.
  *
  * [create] suspends while the trip shape is fetched via [ensureShape] (the underlying fetcher
- * dedupes in-flight requests) and returns the overlays, or null — after logging a
- * [TripMapOverlayFailure] — when required data is missing or failed to load.
+ * dedupes in-flight requests) and returns the overlays, or the logged [TripMapOverlayFailure]
+ * when required data is missing or failed to load.
  */
 internal object TripMapOverlayFactory {
 
@@ -63,7 +73,7 @@ internal object TripMapOverlayFactory {
             tripId: String,
             selectedStopId: String?,
             response: ObaTripDetailsResponse
-    ): TripMapOverlays? {
+    ): TripMapOverlayResult {
         val schedule = response.schedule ?: return fail(tripId, TripMapOverlayFailure.MISSING_SCHEDULE)
         val status = response.status
         val refs = response.refs ?: return fail(tripId, TripMapOverlayFailure.MISSING_REFERENCES)
@@ -106,12 +116,12 @@ internal object TripMapOverlayFactory {
         }
         vehicleOverlay.activate(vehiclePosition)
 
-        return TripMapOverlays(routeOverlay, vehicleOverlay, sd, tripId)
+        return TripMapOverlayResult.Ready(TripMapOverlays(routeOverlay, vehicleOverlay, sd, tripId))
     }
 
-    private fun fail(tripId: String, reason: TripMapOverlayFailure): TripMapOverlays? {
+    private fun fail(tripId: String, reason: TripMapOverlayFailure): TripMapOverlayResult.Failed {
         Log.w(TAG, "Overlay creation failed for $tripId: $reason")
-        return null
+        return TripMapOverlayResult.Failed(reason)
     }
 
     private fun buildStopNameMap(

@@ -21,5 +21,12 @@ package org.onebusaway.android.ui;
  * fragments can reference it.
  */
 public interface TripMapCallback {
-    void onTripMapActivationFailed();
+    /**
+     * Called when the trip map cannot be activated.
+     *
+     * @param retryable true when the failure is transient (a shape fetch failed, or trip
+     *                  details haven't arrived yet) and a later attempt may succeed; false
+     *                  when the trip's data can never support the map view
+     */
+    void onTripMapActivationFailed(boolean retryable);
 }

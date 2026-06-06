@@ -246,9 +246,12 @@ public class TripDetailsActivity extends AppCompatActivity
     // --- TripMapCallback ---
 
     @Override
-    public void onTripMapActivationFailed() {
+    public void onTripMapActivationFailed(boolean retryable) {
+        // Transient failures get the "try again" wording (re-toggling the map retries the
+        // fetch); data that can never support the map keeps the permanent message. Both fall
+        // back to the list view.
         Toast.makeText(this,
-                R.string.trip_map_data_unavailable,
+                retryable ? R.string.generic_comm_error : R.string.trip_map_data_unavailable,
                 Toast.LENGTH_SHORT).show();
         showList();
     }

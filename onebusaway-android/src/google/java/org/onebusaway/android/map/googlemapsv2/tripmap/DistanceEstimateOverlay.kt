@@ -104,9 +104,9 @@ class DistanceEstimateOverlay(
 
         val distLo = distribution.quantile(PDF_LOW_QUANTILE)
         val distHi = distribution.quantile(PDF_HIGH_QUANTILE)
-        // Guard against non-finite quantiles (bisect returning NaN on a pathological
-        // CDF, or the caller passing an unbounded range). Hide stale segments so we
-        // don't render the previous frame's geometry indefinitely.
+        // Guard against non-finite quantiles (a degenerate distribution, or an
+        // unbounded range). Hide stale segments so we don't render the previous
+        // frame's geometry indefinitely.
         if (!distLo.isFinite() || !distHi.isFinite() || distHi <= distLo) {
             segs.forEach { it.isVisible = false }
             return

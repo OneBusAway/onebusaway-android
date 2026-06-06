@@ -351,7 +351,7 @@ class VehicleMapController {
         }
 
         double medianDist = dist.median();
-        // Bisect can return NaN on pathological CDFs; fall back to the raw position
+        // A degenerate distribution has no finite median; fall back to the raw position
         // rather than propagating NaN into Polyline.segmentIndex/interpolate.
         if (!Double.isFinite(medianDist)) {
             animateToRawPosition(vehicle);

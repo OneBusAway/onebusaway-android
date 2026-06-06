@@ -18,9 +18,21 @@ package org.onebusaway.android.extrapolation.math.prob
 /** A continuous probability distribution. */
 interface ProbDistribution {
     val mean: Double
+
+    /** The 0.5 [quantile]; shares its contract, including the [Double.NaN] degenerate case. */
     fun median(): Double = quantile(0.5)
+
     fun pdf(x: Double): Double
+
     fun cdf(x: Double): Double
+
+    /**
+     * Returns x such that cdf(x) = [p].
+     *
+     * May return [Double.NaN] when the distribution is degenerate (e.g. built from non-finite
+     * parameters) and no finite quantile exists. Callers must check the result for finiteness
+     * before using it.
+     */
     fun quantile(p: Double): Double
 }
 

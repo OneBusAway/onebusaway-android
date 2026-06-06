@@ -18,12 +18,20 @@ package org.onebusaway.android.extrapolation.math.prob
 /**
  * Wraps a base distribution with an affine transform: Y = offset + scale * X. Used to convert a
  * speed distribution (m/s) into a distance distribution (m) via offset = lastDist, scale = dt.
+ *
+ * A zero [scale] is a point mass at [offset] — the cdf steps there and the pdf is zero
+ * everywhere (dt = 0 is a legitimate query at exactly the anchor time). Negative scales would
+ * flip the distribution and break quantile monotonicity, so they are rejected.
  */
 class AffineTransformDistribution(
         private val base: ProbDistribution,
         private val offset: Double,
         private val scale: Double
 ) : ProbDistribution {
+
+    init {
+        require(scale >= 0) { "scale must be non-negative, was $scale" }
+    }
 
     override val mean: Double
         get() = offset + base.mean * scale

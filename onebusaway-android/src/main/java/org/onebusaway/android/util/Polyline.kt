@@ -20,10 +20,13 @@ import java.util.Arrays
 
 /**
  * An ordered sequence of geographic points with fast distance-based interpolation. Cumulative
- * distances are precomputed at construction so that [interpolate] and [subPolyline] are O(log n)
- * via binary search.
+ * distances are precomputed at construction so that [interpolate] and [bearingAt] are O(log n)
+ * via binary search; [subPolyline] is O(log n + k) in the number of vertices it returns.
  */
-class Polyline(val points: List<Location>) {
+class Polyline(points: List<Location>) {
+
+    /** Owned copy, so a caller mutating its list can't desync it from [cumulativeDistances]. */
+    val points: List<Location> = points.toList()
 
     private val cumulativeDistances: DoubleArray =
             points

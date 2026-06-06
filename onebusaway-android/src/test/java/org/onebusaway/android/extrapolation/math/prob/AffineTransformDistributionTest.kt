@@ -24,6 +24,13 @@ class AffineTransformDistributionTest {
     // Gamma(3, 2) has mean = 6
     private val base = GammaDistribution(3.0, 2.0)
 
+    // --- Construction ---
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `negative scale is rejected`() {
+        AffineTransformDistribution(base, offset = 0.0, scale = -1.0)
+    }
+
     // --- Mean ---
 
     @Test

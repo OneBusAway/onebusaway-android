@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.extrapolation.data
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
@@ -43,6 +44,7 @@ import org.onebusaway.android.util.SingleFlight
  */
 
 private const val MAX_CONCURRENT_FETCHES = 2
+private const val TAG = "Fetchers"
 
 /** Process-lifetime scope on the main dispatcher; fetches are never cancelled centrally. */
 private val fetchScope = MainScope()
@@ -70,6 +72,9 @@ suspend fun fetchTripSchedule(tripId: String): ObaTripSchedule? =
                         .build()
                         .call()
                         ?.schedule
+            }.also {
+                // Error-coded responses resolve to null without throwing; make that visible
+                if (it == null) Log.w(TAG, "Schedule fetch for $tripId yielded no schedule")
             }
         }
 
@@ -83,5 +88,8 @@ suspend fun fetchShape(shapeId: String): Polyline? =
                 val ctx = Application.get().applicationContext
                 val points = ObaShapeRequest.newRequest(ctx, shapeId).call()?.points
                 if (points != null && points.isNotEmpty()) Polyline(points) else null
+            }.also {
+                // Error-coded responses resolve to null without throwing; make that visible
+                if (it == null) Log.w(TAG, "Shape fetch for $shapeId yielded no polyline")
             }
         }

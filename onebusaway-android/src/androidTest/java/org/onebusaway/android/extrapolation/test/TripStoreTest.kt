@@ -40,9 +40,9 @@ import org.onebusaway.android.io.elements.Occupancy
 import org.onebusaway.android.io.elements.Status
 import org.onebusaway.android.util.Polyline
 
-/** Tests for the speed estimation framework classes. */
+/** Instrumented tests for TripStore recording, retention/eviction, and polyline hydration. */
 @RunWith(AndroidJUnit4::class)
-class SpeedEstimatorTest {
+class TripStoreTest {
 
     @Before
     fun setUp() {
@@ -111,15 +111,18 @@ class SpeedEstimatorTest {
     }
 
     @Test
-    fun testTrackerDefensiveCopy() {
+    fun testSnapshotIsolation() {
         val status = createStatus("v1", "trip1", 47.0, -122.0, 100.0, 100.0, 5000.0, 1000L)
         recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
+        val before = lookupTripState("trip1")!!
 
-        val history = lookupTripState("trip1")!!.history.toList()
-        history.toMutableList().clear() // Modifying a copy
+        val later = createStatus("v1", "trip1", 47.1, -122.0, 200.0, 200.0, 5000.0, 2000L)
+        recordStatus(later, System.currentTimeMillis(), System.currentTimeMillis())
 
-        // Internal history should be unaffected
-        assertEquals(1, lookupTripState("trip1")!!.history.size)
+        // Writes produce new snapshots; a previously looked-up state never changes underneath
+        // its holder
+        assertEquals(1, before.history.size)
+        assertEquals(2, lookupTripState("trip1")!!.history.size)
     }
 
     // --- Eviction tests ---

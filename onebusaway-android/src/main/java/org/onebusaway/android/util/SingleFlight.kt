@@ -16,6 +16,7 @@
 package org.onebusaway.android.util
 
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -44,6 +45,8 @@ class SingleFlight<K : Any, V : Any>(private val scope: CoroutineScope) {
                         scope.async {
                             try {
                                 block()
+                            } catch (e: CancellationException) {
+                                throw e // scope cancelled — propagate, don't mask as a null result
                             } catch (e: Exception) {
                                 Log.e(TAG, "Single-flight block failed for $key", e)
                                 null

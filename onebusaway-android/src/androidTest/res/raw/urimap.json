@@ -74,6 +74,7 @@
     "/api/where/trip-details/Hillsborough%20Area%20Regional%20Transit_1389962.json": "trip_details_hart_1389962",
     "/api/api/where/trip-details/Hillsborough%20Area%20Regional%20Transit_1389962.json": "trip_details_hart_1389962",
     "/api/where/trip-details/Hillsborough%20Area%20Regional%20Transit_1389962_no_active_trip.json": "trip_details_hart_1389962_no_active_trip",
+    "/api/api/where/trip-details/Hillsborough%20Area%20Regional%20Transit_1389962_no_active_trip.json": "trip_details_hart_1389962_no_active_trip",
     "/api/where/trip-details/1_18196913.json?includeSchedule=false": "trip_details_1_18196913_no_schedule",
     "/api/where/trip-details/1_18196913.json?includeStatus=false": "trip_details_1_18196913_no_status",
     "/api/where/trip-details/1_18196913.json?includeTrip=false": "trip_details_1_18196913_no_trip",

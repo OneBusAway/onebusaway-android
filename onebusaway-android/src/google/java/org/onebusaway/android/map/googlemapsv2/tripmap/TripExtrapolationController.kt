@@ -41,8 +41,14 @@ internal constructor(
     fun stop() = frameLoop.stop()
 
     private fun doFrame(now: Long) {
-        val state = lookupTripState(tripId) ?: return
-        val shapeData = state.polyline ?: return
+        val state = lookupTripState(tripId)
+        val shapeData = state?.polyline
+        if (state == null || shapeData == null) {
+            // Nothing to render this frame (trip evicted or shape not hydrated) — don't
+            // leave a previous frame's marker on screen
+            hideFrameOverlays()
+            return
+        }
         val result =
                 try {
                     state.extrapolate(now)
@@ -51,6 +57,7 @@ internal constructor(
                     // surfaces, then skip this frame; the next frame retries. Anything else
                     // propagates rather than degrading silently at 20fps.
                     Log.w(TAG, "Extrapolation failed for $tripId", e)
+                    hideFrameOverlays()
                     return
                 }
 
@@ -58,30 +65,26 @@ internal constructor(
             is ExtrapolationResult.Success -> {
                 val distribution = result.distribution
                 val medianDist = distribution.median()
-                if (medianDist.isFinite()) {
-                    val loc = shapeData.interpolate(medianDist)
-                    if (loc != null) {
-                        vehicleOverlay.updateVehiclePosition(loc, state.anchor, now)
-                        vehicleOverlay.updateEstimateOverlays(distribution)
-                    } else {
-                        // Interpolation failed (degenerate polyline) — treat the frame as
-                        // failed rather than leaving a stale marker on screen
-                        vehicleOverlay.hideVehicleMarker()
-                        vehicleOverlay.hideEstimateOverlays()
-                    }
+                val loc = if (medianDist.isFinite()) shapeData.interpolate(medianDist) else null
+                if (loc != null) {
+                    vehicleOverlay.updateVehiclePosition(loc, state.anchor, now)
+                    vehicleOverlay.updateEstimateOverlays(distribution)
                 } else {
-                    // Bisect could not converge on a quantile — treat as a failed
-                    // extrapolation frame rather than propagating NaN into rendering.
-                    vehicleOverlay.hideVehicleMarker()
-                    vehicleOverlay.hideEstimateOverlays()
+                    // Bisect could not converge on a quantile, or interpolation failed on a
+                    // degenerate polyline — treat the frame as failed rather than leaving a
+                    // stale marker or propagating NaN into rendering.
+                    hideFrameOverlays()
                 }
             }
-            else -> {
-                vehicleOverlay.hideVehicleMarker()
-                vehicleOverlay.hideEstimateOverlays()
-            }
+            else -> hideFrameOverlays()
         }
 
         state.anchor?.let { vehicleOverlay.showOrUpdateDataReceivedMarker(it, now) }
+    }
+
+    /** Every failed frame renders the same way: no vehicle marker, no estimate overlays. */
+    private fun hideFrameOverlays() {
+        vehicleOverlay.hideVehicleMarker()
+        vehicleOverlay.hideEstimateOverlays()
     }
 }

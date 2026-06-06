@@ -107,7 +107,8 @@ data class TripState(
      * keeps the snapshot — and with it the lazily fitted extrapolator and the anchor
      * instance — intact.
      *
-     * @param serverTimeMs the server's currentTime from the API response, or 0 to use local clock
+     * @param serverTimeMs the server's currentTime from the API response; entries without one
+     *   (zero or negative) are skipped, since the anchor clocks couldn't be derived
      * @param localTimeMs local device clock time when the response was received
      */
     fun withStatus(status: ObaTripStatus, serverTimeMs: Long, localTimeMs: Long): TripState {

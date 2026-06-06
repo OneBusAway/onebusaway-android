@@ -102,7 +102,7 @@ class TripStateTest {
     }
 
     @Test
-    fun `extrapolate returns Stale at exactly max horizon`() {
+    fun `extrapolate allows a query at exactly max horizon`() {
         val serverTime = 100_000L
         val localTime = 100_000L
         val state =
@@ -112,9 +112,11 @@ class TripStateTest {
                                 serverTimeMs = serverTime,
                                 localTimeMs = localTime
                         )
-        // dtMs == MAX_HORIZON_MS should still be stale (> comparison)
-        val result = state.extrapolate(localTime + 900_001L)
-        assertTrue(result is ExtrapolationResult.Stale)
+        // The stale check is strict (dtMs > MAX_HORIZON_MS), so dtMs == MAX_HORIZON_MS is
+        // still allowed and reaches the extrapolator — which reports MissingSchedule here
+        // because this state has no schedule
+        val result = state.extrapolate(localTime + 900_000L)
+        assertTrue(result is ExtrapolationResult.MissingSchedule)
     }
 
     @Test

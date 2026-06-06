@@ -70,6 +70,7 @@ class TripVehicleOverlay(
     private var dataReceivedMarker: Marker? = null
     private var dataReceivedInfoShown = false
     private var lastDataReceivedUpdateTime = 0L
+    private var lastAgeLabelSec = -1L
 
     private val dataReceivedIcon by lazy { MapIconUtils.createDataReceivedIcon(context) }
 
@@ -78,12 +79,18 @@ class TripVehicleOverlay(
 
     fun activate(vehiclePosition: LatLng?) {
         if (routeType == null || !ObaRoute.isGradeSeparated(routeType)) {
-            if (vehiclePosition != null) {
-                estimateOverlay =
-                        DistanceEstimateOverlay(shapeData, overlayColor).also {
-                            it.create(map, context, POLYLINE_WIDTH_PX, vehiclePosition)
-                        }
-            }
+            // Create the overlay even without an initial vehicle position (e.g. the trip
+            // hasn't started yet) — otherwise later updateEstimateOverlays calls would be
+            // permanent no-ops. Anchor at the shape start until the first update; the frame
+            // loop hides or repositions it within one frame.
+            val initial =
+                    vehiclePosition
+                            ?: shapeData.points.firstOrNull()?.let { MapHelpV2.makeLatLng(it) }
+                            ?: return
+            estimateOverlay =
+                    DistanceEstimateOverlay(shapeData, overlayColor).also {
+                        it.create(map, context, POLYLINE_WIDTH_PX, initial)
+                    }
         }
     }
 
@@ -159,8 +166,23 @@ class TripVehicleOverlay(
     fun showOrUpdateDataReceivedMarker(latest: ObaTripStatus, now: Long) {
         val updateTime = latest.lastUpdateTime
         val newData = updateTime != lastDataReceivedUpdateTime
-        if (!newData && dataReceivedMarker != null) return
+        val existing = dataReceivedMarker
+        if (!newData && existing != null) {
+            // No new fix, but the age label still has to track the clock. Gated on the
+            // elapsed seconds (a long compare) so the label string is only built — and an
+            // open info window only refreshed — once per second despite running every frame.
+            if (updateTime > 0) {
+                val ageSec = (now - updateTime) / 1000
+                if (ageSec != lastAgeLabelSec) {
+                    lastAgeLabelSec = ageSec
+                    existing.snippet = UIUtils.formatElapsedTime(now - updateTime)
+                    if (dataReceivedInfoShown) existing.showInfoWindow()
+                }
+            }
+            return
+        }
         lastDataReceivedUpdateTime = updateTime
+        lastAgeLabelSec = if (updateTime > 0) (now - updateTime) / 1000 else -1L
 
         val label = if (updateTime > 0) UIUtils.formatElapsedTime(now - updateTime) else ""
 

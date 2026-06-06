@@ -62,8 +62,13 @@ internal constructor(
                     val loc = shapeData.interpolate(medianDist)
                     if (loc != null) {
                         vehicleOverlay.updateVehiclePosition(loc, state.anchor, now)
+                        vehicleOverlay.updateEstimateOverlays(distribution)
+                    } else {
+                        // Interpolation failed (degenerate polyline) — treat the frame as
+                        // failed rather than leaving a stale marker on screen
+                        vehicleOverlay.hideVehicleMarker()
+                        vehicleOverlay.hideEstimateOverlays()
                     }
-                    vehicleOverlay.updateEstimateOverlays(distribution)
                 } else {
                     // Bisect could not converge on a quantile — treat as a failed
                     // extrapolation frame rather than propagating NaN into rendering.

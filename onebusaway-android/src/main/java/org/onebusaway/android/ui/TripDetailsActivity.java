@@ -224,8 +224,10 @@ public class TripDetailsActivity extends AppCompatActivity
                     getSupportFragmentManager().findFragmentByTag(TripDetailsListFragment.TAG);
             if(tripDetListFrag == null) {
                 tripDetListFrag = newListFragment();
+                // replace, not add: the container may hold the map fragment
                 getSupportFragmentManager().beginTransaction()
-                        .add(R.id.fragment_container, tripDetListFrag, TripDetailsListFragment.TAG)
+                        .replace(R.id.fragment_container, tripDetListFrag,
+                                TripDetailsListFragment.TAG)
                         .commit();
             }
             tripDetListFrag.onActivityResult(requestCode, resultCode, data);

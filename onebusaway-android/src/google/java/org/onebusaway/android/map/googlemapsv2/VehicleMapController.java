@@ -136,6 +136,11 @@ class VehicleMapController {
                 .title(status.getVehicleId())
                 .icon(mIconFactory.getIcon(params))
                 .zIndex(VEHICLE_MARKER_Z_INDEX));
+        if (m == null) {
+            // addMarker() is @Nullable; don't register a marker-less state. The vehicle is
+            // retried on the next poll response.
+            return;
+        }
         TripState tripState = TripStore.lookupTripState(tripId);
         VehicleMarkerState vehicle = new VehicleMarkerState(tripId, status,
                 tripState != null ? tripState.getAnchor() : null);

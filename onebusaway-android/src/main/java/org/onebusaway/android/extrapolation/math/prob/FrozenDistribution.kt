@@ -43,7 +43,7 @@ class FrozenDistribution(private val source: ProbDistribution, resolution: Int =
     }
 
     override fun quantile(p: Double): Double {
-        if (p <= 0.0) return 0.0
+        if (p <= 0.0) return table.first()
         if (p >= 1.0) return table.last()
 
         val idx = p / step

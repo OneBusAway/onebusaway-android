@@ -274,13 +274,13 @@ public class TripDetailsListFragment extends ListFragment {
 
     @Override
     public void onResume() {
-        // Show cached data if available
+        // Show cached data if available — through the same apply path as fresh data, so the
+        // activity's TripDataCallback also learns about cached loads (map toggle state)
         TripState polledState = TripStore.lookupTripState(mTripId);
         ObaTripDetailsResponse cached =
                 polledState != null ? polledState.getTripDetailsResponse() : null;
         if (cached != null) {
-            setTripDetails(cached);
-            setListShown(true);
+            applyTripDetails(cached);
         }
 
         // Returning to the screen starts a fresh failure streak for notification purposes
@@ -439,6 +439,10 @@ public class TripDetailsListFragment extends ListFragment {
         Activity activity = getActivity();
         if (activity == null) return;
 
+        // Before the early returns below (no status, inactive trip, schedule-only), so the
+        // location-data menu state can't go stale on those paths
+        updateLocationDataMenuState(status);
+
         String tripId = mTripInfo.getId();
 
         ObaTrip trip = refs.getTrip(tripId);
@@ -580,8 +584,6 @@ public class TripDetailsListFragment extends ListFragment {
             UIUtils.setOccupancyVisibilityAndColor(occupancyView, null, OccupancyState.REALTIME);
             UIUtils.setOccupancyContentDescription(occupancyView, null, OccupancyState.REALTIME);
         }
-
-        updateLocationDataMenuState(status);
     }
 
     private void updateVehiclePosition() {
@@ -629,7 +631,9 @@ public class TripDetailsListFragment extends ListFragment {
     }
 
     private void updateLocationDataMenuState(ObaTripStatus status) {
-        String activeTripId = status.getActiveTripId();
+        // A null status (schedule-only trip) means no active vehicle: fall into the
+        // clear-and-notify branch below
+        String activeTripId = status != null ? status.getActiveTripId() : null;
         if (activeTripId == null || !activeTripId.equals(mTripId)) {
             if (mHasLocationData) {
                 mHasLocationData = false;

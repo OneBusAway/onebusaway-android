@@ -22,6 +22,16 @@ import org.junit.Test
 class FrozenDistributionTest {
 
     @Test
+    fun `quantile at or below zero returns the support minimum, not literal zero`() {
+        // A shifted source makes the difference observable: support starts at 10, not 0
+        val source = AffineTransformDistribution(GammaDistribution(3.0, 2.0), 10.0, 1.0)
+        val frozen = FrozenDistribution(source)
+
+        assertTrue(frozen.quantile(0.0) >= 10.0)
+        assertEquals(frozen.quantile(0.0), frozen.quantile(-0.5), 1e-12)
+    }
+
+    @Test
     fun `frozen quantile matches source within interpolation error`() {
         val source = GammaDistribution(alpha = 3.0, scale = 2.5)
         val frozen = FrozenDistribution(source)

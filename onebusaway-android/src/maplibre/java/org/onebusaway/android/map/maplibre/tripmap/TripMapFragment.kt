@@ -21,6 +21,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import org.onebusaway.android.R
 
 /**
  * Stub MapLibre-based trip map fragment. Displays a placeholder message until the full MapLibre
@@ -51,7 +52,7 @@ class TripMapFragment : Fragment() {
             savedInstanceState: Bundle?
     ): View {
         return TextView(requireContext()).apply {
-            text = "Trip map is not yet available for MapLibre builds."
+            text = getString(R.string.trip_map_not_supported)
             setPadding(32, 32, 32, 32)
         }
     }

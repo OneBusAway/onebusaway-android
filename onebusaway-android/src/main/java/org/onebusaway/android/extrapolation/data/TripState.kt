@@ -44,7 +44,7 @@ data class HistoryEntry(
  * Immutable snapshot of everything known about a single tracked trip: vehicle history,
  * extrapolation anchor, schedule, polyline, and route metadata. Stored keyed by [tripId] in the
  * trip store (TripStore.kt); consumers look up the current snapshot per frame/tick — data
- * updates produce new instances via [recorded] and `copy`.
+ * updates produce new instances via [withObservation], the other `with*` folds, and `copy`.
  *
  * Provides [extrapolate], which selects the appropriate strategy (gamma or schedule replay) based
  * on [routeType] and the data available. The strategy and its fitted model are lazily derived per
@@ -101,7 +101,7 @@ data class TripState(
             }
 
     /**
-     * Pure fold: returns the state with [status] recorded, or `this` when the entry is skipped
+     * Returns the state with [status] recorded, or `this` when the entry is skipped
      * (missing distance data or an exact duplicate of the previous entry). Returning `this`
      * keeps the snapshot — and with it the lazily fitted extrapolator and the anchor
      * instance — intact.
@@ -109,7 +109,7 @@ data class TripState(
      * @param serverTimeMs the server's currentTime from the API response, or 0 to use local clock
      * @param localTimeMs local device clock time when the response was received
      */
-    fun recorded(status: ObaTripStatus, serverTimeMs: Long, localTimeMs: Long): TripState {
+    fun withStatus(status: ObaTripStatus, serverTimeMs: Long, localTimeMs: Long): TripState {
         if (status.distanceAlongTrip == null || serverTimeMs <= 0) return this
 
         // Skip true duplicates (same distance and time as previous entry)
@@ -143,11 +143,11 @@ data class TripState(
     }
 
     /**
-     * Pure fold: returns the state with everything [observation] carries applied — the status
+     * Returns the state with everything [observation] carries applied — the status
      * recorded, plus serviceDate and routeType when the observation has them.
      */
-    fun observed(observation: TripObservation, localTimeMs: Long): TripState =
-            recorded(observation.status, observation.serverTimeMs, localTimeMs)
+    fun withObservation(observation: TripObservation, localTimeMs: Long): TripState =
+            withStatus(observation.status, observation.serverTimeMs, localTimeMs)
                     .withServiceDate(observation.serviceDate)
                     .withRouteType(observation.routeType)
 

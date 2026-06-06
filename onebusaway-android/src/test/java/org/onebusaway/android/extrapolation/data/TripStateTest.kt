@@ -43,22 +43,22 @@ class TripStateTest {
     fun `extrapolate returns NoData when anchor has null distance`() {
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = null, lastUpdateTime = 1000L),
                                 serverTimeMs = 1000L,
                                 localTimeMs = 1000L
                         )
-        // recorded() skips entries with null distance, so anchor stays null
+        // withStatus() skips entries with null distance, so anchor stays null
         val result = state.extrapolate(1000L)
         assertTrue(result is ExtrapolationResult.NoData)
     }
 
     @Test
     fun `extrapolate returns NoData when anchorLocalTimeMs is 0`() {
-        // serverTimeMs = 0 → recorded() skips the entry
+        // serverTimeMs = 0 → withStatus() skips the entry
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 0L),
                                 serverTimeMs = 0L,
                                 localTimeMs = 0L
@@ -73,7 +73,7 @@ class TripStateTest {
         val localTime = 100_000L
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = serverTime),
                                 serverTimeMs = serverTime,
                                 localTimeMs = localTime
@@ -89,7 +89,7 @@ class TripStateTest {
         val localTime = 100_000L
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = serverTime),
                                 serverTimeMs = serverTime,
                                 localTimeMs = localTime
@@ -105,7 +105,7 @@ class TripStateTest {
         val localTime = 100_000L
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = serverTime),
                                 serverTimeMs = serverTime,
                                 localTimeMs = localTime
@@ -122,7 +122,7 @@ class TripStateTest {
         // PRE_DEPARTURE_DISTANCE_THRESHOLD = 50.0
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 49.0, lastUpdateTime = serverTime),
                                 serverTimeMs = serverTime,
                                 localTimeMs = localTime
@@ -137,7 +137,7 @@ class TripStateTest {
         val localTime = 100_000L
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 50.0, lastUpdateTime = serverTime),
                                 serverTimeMs = serverTime,
                                 localTimeMs = localTime
@@ -155,7 +155,7 @@ class TripStateTest {
         // totalDist - lastDist < 50 → TripEnded
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(
                                         distanceAlongTrip = 9970.0,
                                         totalDistanceAlongTrip = 10000.0,
@@ -174,7 +174,7 @@ class TripStateTest {
         val localTime = 100_000L
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(
                                         distanceAlongTrip = 500.0,
                                         totalDistanceAlongTrip = null,
@@ -194,7 +194,7 @@ class TripStateTest {
         val localTime = 100_000L
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(
                                         distanceAlongTrip = 500.0,
                                         totalDistanceAlongTrip = 0.0,
@@ -208,16 +208,16 @@ class TripStateTest {
     }
 
     // ================================================================
-    // recorded — dedup and anchor logic — items #28/#29
+    // withStatus — dedup and anchor logic — items #28/#29
     // ================================================================
-    // Skip cases assert assertSame(before, after): recorded() returning `this`
+    // Skip cases assert assertSame(before, after): withStatus() returning `this`
     // is the contract that lets the store's StateFlow skip the emission.
 
     @Test
-    fun `recorded skips null distance`() {
+    fun `withStatus skips null distance`() {
         val before = TripState.empty("trip1")
         val after =
-                before.recorded(
+                before.withStatus(
                         status(distanceAlongTrip = null, lastUpdateTime = 1000L),
                         serverTimeMs = 1000L,
                         localTimeMs = 1000L
@@ -227,10 +227,10 @@ class TripStateTest {
     }
 
     @Test
-    fun `recorded skips zero serverTimeMs`() {
+    fun `withStatus skips zero serverTimeMs`() {
         val before = TripState.empty("trip1")
         val after =
-                before.recorded(
+                before.withStatus(
                         status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L),
                         serverTimeMs = 0L,
                         localTimeMs = 1000L
@@ -240,10 +240,10 @@ class TripStateTest {
     }
 
     @Test
-    fun `recorded skips negative serverTimeMs`() {
+    fun `withStatus skips negative serverTimeMs`() {
         val before = TripState.empty("trip1")
         val after =
-                before.recorded(
+                before.withStatus(
                         status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L),
                         serverTimeMs = -1L,
                         localTimeMs = 1000L
@@ -252,10 +252,10 @@ class TripStateTest {
     }
 
     @Test
-    fun `recorded records valid entry`() {
+    fun `withStatus records valid entry`() {
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L),
                                 serverTimeMs = 2000L,
                                 localTimeMs = 2000L
@@ -264,25 +264,25 @@ class TripStateTest {
     }
 
     @Test
-    fun `recorded skips duplicate distance and time`() {
+    fun `withStatus skips duplicate distance and time`() {
         val s = status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L)
         val before =
-                TripState.empty("trip1").recorded(s, serverTimeMs = 2000L, localTimeMs = 2000L)
-        val after = before.recorded(s, serverTimeMs = 3000L, localTimeMs = 3000L)
+                TripState.empty("trip1").withStatus(s, serverTimeMs = 2000L, localTimeMs = 2000L)
+        val after = before.withStatus(s, serverTimeMs = 3000L, localTimeMs = 3000L)
         assertSame(before, after)
         assertEquals(1, after.history.size)
     }
 
     @Test
-    fun `recorded records entry with different distance`() {
+    fun `withStatus records entry with different distance`() {
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L),
                                 serverTimeMs = 2000L,
                                 localTimeMs = 2000L
                         )
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 600.0, lastUpdateTime = 1000L),
                                 serverTimeMs = 3000L,
                                 localTimeMs = 3000L
@@ -291,15 +291,15 @@ class TripStateTest {
     }
 
     @Test
-    fun `recorded records entry with different time`() {
+    fun `withStatus records entry with different time`() {
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L),
                                 serverTimeMs = 2000L,
                                 localTimeMs = 2000L
                         )
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 2000L),
                                 serverTimeMs = 3000L,
                                 localTimeMs = 3000L
@@ -308,15 +308,15 @@ class TripStateTest {
     }
 
     @Test
-    fun `recorded updates anchor to newest timestamp`() {
+    fun `withStatus updates anchor to newest timestamp`() {
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L),
                                 serverTimeMs = 2000L,
                                 localTimeMs = 2000L
                         )
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 600.0, lastUpdateTime = 3000L),
                                 serverTimeMs = 4000L,
                                 localTimeMs = 4000L
@@ -326,11 +326,11 @@ class TripStateTest {
     }
 
     @Test
-    fun `recorded GPS wins ties`() {
+    fun `withStatus GPS wins ties`() {
         val state =
                 TripState.empty("trip1")
                         // First: non-realtime (predicted=false)
-                        .recorded(
+                        .withStatus(
                                 status(
                                         distanceAlongTrip = 500.0,
                                         lastUpdateTime = 1000L,
@@ -340,7 +340,7 @@ class TripStateTest {
                                 localTimeMs = 2000L
                         )
                         // Second: realtime, same lastUpdateTime
-                        .recorded(
+                        .withStatus(
                                 status(
                                         distanceAlongTrip = 600.0,
                                         lastUpdateTime = 1000L,
@@ -355,10 +355,10 @@ class TripStateTest {
     }
 
     @Test
-    fun `recorded uses lastUpdateTime as effectiveTime`() {
+    fun `withStatus uses lastUpdateTime as effectiveTime`() {
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 5000L),
                                 serverTimeMs = 10_000L,
                                 localTimeMs = 10_000L
@@ -368,10 +368,10 @@ class TripStateTest {
     }
 
     @Test
-    fun `recorded falls back to serverTimeMs when lastUpdateTime is 0`() {
+    fun `withStatus falls back to serverTimeMs when lastUpdateTime is 0`() {
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 0L),
                                 serverTimeMs = 10_000L,
                                 localTimeMs = 10_000L
@@ -381,11 +381,11 @@ class TripStateTest {
     }
 
     @Test
-    fun `recorded computes anchorLocalTimeMs from server-local offset`() {
+    fun `withStatus computes anchorLocalTimeMs from server-local offset`() {
         // Server clock is 2 seconds ahead of local clock
         val state =
                 TripState.empty("trip1")
-                        .recorded(
+                        .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 5000L),
                                 serverTimeMs = 12_000L,
                                 localTimeMs = 10_000L
@@ -396,11 +396,11 @@ class TripStateTest {
     }
 
     @Test
-    fun `recorded caps history at 100 entries`() {
+    fun `withStatus caps history at 100 entries`() {
         var state = TripState.empty("trip1")
         for (i in 1..120) {
             state =
-                    state.recorded(
+                    state.withStatus(
                             status(distanceAlongTrip = i.toDouble(), lastUpdateTime = i.toLong()),
                             serverTimeMs = i.toLong() + 1000,
                             localTimeMs = i.toLong() + 1000

@@ -164,7 +164,7 @@ class SpeedEstimatorTest {
         assertEquals(cap, getTrackedTripIds().size)
 
         // Re-record trip0 with a fresh status — same tripId, different distance and timestamp
-        // so the dedup in TripState.recorded actually appends.
+        // so the dedup in TripState.withStatus actually appends.
         val update = createStatus("v0", "trip0", 47.001, -122.0, 200.0, 200.0, 5000.0, 2000L)
         recordStatus(update, System.currentTimeMillis(), System.currentTimeMillis())
 

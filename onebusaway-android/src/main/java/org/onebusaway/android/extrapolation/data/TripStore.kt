@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:JvmName("TripStore")
-
 package org.onebusaway.android.extrapolation.data
 
 import android.util.LruCache
@@ -23,79 +21,89 @@ import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.io.request.ObaTripDetailsResponse
 import org.onebusaway.android.util.Polyline
 
-/*
+private const val MAX_TRACKED_TRIPS = 100
+
+/**
  * An LRU cache of immutable TripState snapshots keyed by tripId. Data flows one way: the
  * adapters (Adapters.kt) distill API responses into data-shaped writes, the pollers (Pollers.kt)
- * record them; UI code only reads, via lookupTripState — a synchronized map get, cheap enough
+ * record them; UI code only reads, via [lookupTripState] — a synchronized map get, cheap enough
  * for per-frame loops. Lookups and writes both promote, so actively watched trips are never the
  * eviction victims.
  *
  * Threading: main thread only — writes are get-transform-put, not atomic.
  */
+object TripStore {
 
-private const val MAX_TRACKED_TRIPS = 100
+    private val trips = LruCache<String, TripState>(MAX_TRACKED_TRIPS)
 
-private val trips = LruCache<String, TripState>(MAX_TRACKED_TRIPS)
+    /**
+     * The current snapshot for [tripId], or null if the trip has never been recorded (or has
+     * been evicted). Promotes the trip in the retention order.
+     */
+    @JvmStatic
+    fun lookupTripState(tripId: String?): TripState? = tripId?.let { trips.get(it) }
 
-/**
- * The current snapshot for [tripId], or null if the trip has never been recorded (or has been
- * evicted). Promotes the trip in the retention order.
- */
-fun lookupTripState(tripId: String?): TripState? = tripId?.let { trips.get(it) }
-
-/**
- * Applies [transform] to the current snapshot for [tripId] (or a fresh empty one) and stores the
- * result — the `compute` that LruCache doesn't provide.
- */
-private inline fun update(tripId: String, transform: (TripState) -> TripState) {
-    trips.put(tripId, transform(trips.get(tripId) ?: TripState.empty(tripId)))
-}
-
-// --- Writes ---
-
-/** Records [observation] into its trip's snapshot. */
-fun record(observation: TripObservation, localTimeMs: Long) {
-    update(observation.tripId) { it.withObservation(observation, localTimeMs) }
-}
-
-fun putSchedule(tripId: String?, schedule: ObaTripSchedule?) {
-    if (tripId != null && schedule != null) {
-        update(tripId) { it.withSchedule(schedule) }
+    /**
+     * Applies [transform] to the current snapshot for [tripId] (or a fresh empty one) and stores
+     * the result — the `compute` that LruCache doesn't provide.
+     */
+    private inline fun update(tripId: String, transform: (TripState) -> TripState) {
+        trips.put(tripId, transform(trips.get(tripId) ?: TripState.empty(tripId)))
     }
-}
 
-fun putServiceDate(tripId: String?, serviceDate: Long) {
-    if (tripId != null && serviceDate > 0) {
-        update(tripId) { it.withServiceDate(serviceDate) }
+    // --- Writes ---
+
+    /** Records [observation] into its trip's snapshot. */
+    @JvmStatic
+    fun record(observation: TripObservation, localTimeMs: Long) {
+        update(observation.tripId) { it.withObservation(observation, localTimeMs) }
     }
-}
 
-fun putPolyline(tripId: String, polyline: Polyline) {
-    update(tripId) { it.copy(polyline = polyline) }
-}
-
-/**
- * Caches a polled trip details response on [polledTripId], along with the trip the vehicle
- * reported as active (which differs from [polledTripId] once the vehicle rolls onto its next
- * run). [vehicleActiveTripId] is null when the response carried no vehicle status.
- */
-fun putTripDetailsResponse(
-        polledTripId: String,
-        vehicleActiveTripId: String?,
-        response: ObaTripDetailsResponse
-) {
-    update(polledTripId) {
-        it.copy(vehicleActiveTripId = vehicleActiveTripId, tripDetailsResponse = response)
+    @JvmStatic
+    fun putSchedule(tripId: String?, schedule: ObaTripSchedule?) {
+        if (tripId != null && schedule != null) {
+            update(tripId) { it.withSchedule(schedule) }
+        }
     }
-}
 
-// --- Introspection and cleanup ---
+    @JvmStatic
+    fun putServiceDate(tripId: String?, serviceDate: Long) {
+        if (tripId != null && serviceDate > 0) {
+            update(tripId) { it.withServiceDate(serviceDate) }
+        }
+    }
 
-/** IDs of the trips currently tracked (the eviction working set). */
-fun getTrackedTripIds(): Set<String> = trips.snapshot().keys
+    @JvmStatic
+    fun putPolyline(tripId: String, polyline: Polyline) {
+        update(tripId) { it.copy(polyline = polyline) }
+    }
 
-/** Drops all tracked trips. For tests only. */
-@VisibleForTesting
-fun clearAllTrips() {
-    trips.evictAll()
+    /**
+     * Caches a polled trip details response on [polledTripId], along with the trip the vehicle
+     * reported as active (which differs from [polledTripId] once the vehicle rolls onto its next
+     * run). [vehicleActiveTripId] is null when the response carried no vehicle status.
+     */
+    @JvmStatic
+    fun putTripDetailsResponse(
+            polledTripId: String,
+            vehicleActiveTripId: String?,
+            response: ObaTripDetailsResponse
+    ) {
+        update(polledTripId) {
+            it.copy(vehicleActiveTripId = vehicleActiveTripId, tripDetailsResponse = response)
+        }
+    }
+
+    // --- Introspection and cleanup ---
+
+    /** IDs of the trips currently tracked (the eviction working set). */
+    @JvmStatic
+    fun getTrackedTripIds(): Set<String> = trips.snapshot().keys
+
+    /** Drops all tracked trips. For tests only. */
+    @JvmStatic
+    @VisibleForTesting
+    fun clearAllTrips() {
+        trips.evictAll()
+    }
 }

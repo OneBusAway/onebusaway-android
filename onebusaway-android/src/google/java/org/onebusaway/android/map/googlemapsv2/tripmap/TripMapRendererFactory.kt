@@ -21,7 +21,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.GoogleMap
 import org.onebusaway.android.R
 import org.onebusaway.android.extrapolation.data.ensureShape
-import org.onebusaway.android.extrapolation.data.lookupTripState
+import org.onebusaway.android.extrapolation.data.TripStore.lookupTripState
 import org.onebusaway.android.io.elements.ObaReferences
 import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.io.request.ObaTripDetailsResponse

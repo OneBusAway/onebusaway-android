@@ -41,7 +41,7 @@ import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.MPS_TO_MPH
 import org.onebusaway.android.extrapolation.data.TripDetailsPoller
 import org.onebusaway.android.extrapolation.data.TripState
-import org.onebusaway.android.extrapolation.data.lookupTripState
+import org.onebusaway.android.extrapolation.data.TripStore.lookupTripState
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.io.elements.ObaTripStatus
 import org.onebusaway.android.util.UIUtils

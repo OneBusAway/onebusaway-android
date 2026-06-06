@@ -29,6 +29,12 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.extrapolation.data.TripStore.lookupTripState
+import org.onebusaway.android.extrapolation.data.TripStore.putPolyline
+import org.onebusaway.android.extrapolation.data.TripStore.putSchedule
+import org.onebusaway.android.extrapolation.data.TripStore.putServiceDate
+import org.onebusaway.android.extrapolation.data.TripStore.putTripDetailsResponse
+import org.onebusaway.android.extrapolation.data.TripStore.record
 import org.onebusaway.android.io.ObaApi
 import org.onebusaway.android.io.request.ObaTripDetailsRequest
 import org.onebusaway.android.io.request.ObaTripsForRouteRequest

@@ -17,7 +17,7 @@ package org.onebusaway.android.map.googlemapsv2.tripmap
 
 import android.util.Log
 import org.onebusaway.android.extrapolation.ExtrapolationResult
-import org.onebusaway.android.extrapolation.data.lookupTripState
+import org.onebusaway.android.extrapolation.data.TripStore.lookupTripState
 import org.onebusaway.android.map.googlemapsv2.ThrottledFrameLoop
 
 private const val TAG = "TripExtrapolationCtl"

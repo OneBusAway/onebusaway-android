@@ -30,7 +30,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.Marker
 import kotlinx.coroutines.launch
 import org.onebusaway.android.extrapolation.data.TripDetailsPoller
-import org.onebusaway.android.extrapolation.data.lookupTripState
+import org.onebusaway.android.extrapolation.data.TripStore.lookupTripState
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
 import org.onebusaway.android.ui.TripMapCallback
 

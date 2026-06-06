@@ -358,7 +358,7 @@ class VehicleMapController {
             return;
         }
         int seg = polyline.segmentIndex(medianDist);
-        updateDirectionIcon(vehicle, polyline, seg);
+        updateDirectionIcon(vehicle, polyline.bearingAt(seg));
 
         Location loc = polyline.interpolate(medianDist, seg);
         if (loc == null) {
@@ -384,9 +384,12 @@ class VehicleMapController {
         }
     }
 
-    private void updateDirectionIcon(VehicleMarkerState vehicle, Polyline polyline, int seg) {
-        int hw = halfWindAt(polyline, seg);
-        if (hw >= 0 && hw != vehicle.iconParams.halfWind) {
+    private void updateDirectionIcon(VehicleMarkerState vehicle, float directionBearing) {
+        if (Float.isNaN(directionBearing))
+            return;
+        int hw = MathUtils.getHalfWindIndex(directionBearing,
+                VehicleIconFactory.NUM_DIRECTIONS - 1);
+        if (hw != vehicle.iconParams.halfWind) {
             vehicle.iconParams.halfWind = hw;
             vehicle.vehicleMarker.setIcon(mIconFactory.getIcon(vehicle.iconParams));
         }
@@ -403,17 +406,6 @@ class VehicleMapController {
     }
 
     // --- Extrapolation helpers ---
-
-    /**
-     * Returns the half-wind direction index for the given segment, or -1 if
-     * unavailable.
-     */
-    private static int halfWindAt(Polyline polyline, int seg) {
-        float bearing = polyline.bearingAt(seg);
-        if (Float.isNaN(bearing))
-            return -1;
-        return MathUtils.getHalfWindIndex(bearing, VehicleIconFactory.NUM_DIRECTIONS - 1);
-    }
 
     private void startTransitionAnimation(VehicleMarkerState vehicle, LatLng target) {
         vehicle.animating = true;

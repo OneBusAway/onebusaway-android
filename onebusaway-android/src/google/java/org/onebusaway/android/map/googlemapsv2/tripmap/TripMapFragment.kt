@@ -24,11 +24,12 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMapOptions
-import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.Marker
+import kotlin.coroutines.resume
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.onebusaway.android.extrapolation.data.TripDetailsPoller
 import org.onebusaway.android.extrapolation.data.TripStore.lookupTripState
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
@@ -45,7 +46,7 @@ import org.onebusaway.android.ui.TripMapCallback
  * If the fragment cannot activate (missing trip data), it notifies the host activity via
  * [TripMapCallback] so it can fall back to the list view.
  */
-class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
+class TripMapFragment : SupportMapFragment(), GoogleMap.OnMarkerClickListener {
 
     companion object {
         const val TAG = "TripMapFragment"
@@ -75,12 +76,10 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
     private val selectedStopId: String?
         get() = arguments?.getString(ARG_STOP_ID)
 
-    private var map: GoogleMap? = null
     private var routeOverlay: TripRouteOverlay? = null
     private var vehicleOverlay: TripVehicleOverlay? = null
     private var extrapolationController: TripExtrapolationController? = null
     private var poller: TripDetailsPoller? = null
-    private var activated = false
     private var mapCallback: TripMapCallback? = null
 
     // --- Lifecycle ---
@@ -99,12 +98,17 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        getMapAsync(this)
+        // The map arrives as a value awaited inside the view scope: destroying the view cancels
+        // the await, so the configuration below can never run against a dead fragment.
+        viewLifecycleOwner.lifecycleScope.launch { configureMap(awaitMap()) }
     }
 
+    /** Suspends until the map is ready; cancelled with the view lifecycle. */
+    private suspend fun awaitMap(): GoogleMap =
+            suspendCancellableCoroutine { cont -> getMapAsync { cont.resume(it) } }
+
     @SuppressLint("MissingPermission")
-    override fun onMapReady(googleMap: GoogleMap) {
-        map = googleMap
+    private fun configureMap(googleMap: GoogleMap) {
         googleMap.setOnMarkerClickListener(this)
         googleMap.uiSettings.isZoomControlsEnabled = true
         MapHelpV2.applyMapStyle(googleMap, requireContext())
@@ -112,15 +116,20 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
             googleMap.isMyLocationEnabled = true
         }
 
-        activate()
+        activate(googleMap)
     }
 
     override fun onResume() {
         super.onResume()
-        if (activated && poller == null) {
-            extrapolationController?.start()
-            poller = TripDetailsPoller(tripId).also { it.start() }
+        if (extrapolationController != null && poller == null) {
+            startMovingParts()
         }
+    }
+
+    /** Starts the frame loop and API poller. Stopped in [onPause]. */
+    private fun startMovingParts() {
+        extrapolationController?.start()
+        poller = TripDetailsPoller(tripId).also { it.start() }
     }
 
     override fun onPause() {
@@ -137,15 +146,12 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
         routeOverlay = null
         vehicleOverlay?.deactivate()
         vehicleOverlay = null
-        map = null
-        activated = false
         super.onDestroyView()
     }
 
     // --- Activation ---
 
-    private fun activate() {
-        val m = map ?: return
+    private fun activate(map: GoogleMap) {
         val response =
                 lookupTripState(tripId)?.tripDetailsResponse
                         ?: run {
@@ -162,7 +168,8 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
         // added to a dead map), while any shared shape fetch completes and hydrates the store.
         viewLifecycleOwner.lifecycleScope.launch {
             val overlays =
-                    TripMapOverlayFactory.create(m, requireContext(), tripId, selectedStopId, response)
+                    TripMapOverlayFactory.create(
+                            map, requireContext(), tripId, selectedStopId, response)
             if (overlays == null) {
                 mapCallback?.onTripMapActivationFailed()
             } else {
@@ -174,11 +181,12 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
     private fun onOverlaysReady(overlays: TripMapOverlays) {
         routeOverlay = overlays.route
         vehicleOverlay = overlays.vehicle
-        extrapolationController =
-                TripExtrapolationController(overlays.vehicle, tripId).also { it.start() }
-        poller?.stop()
-        poller = TripDetailsPoller(tripId).also { it.start() }
-        activated = true
+        extrapolationController = TripExtrapolationController(overlays.vehicle, tripId)
+        // The overlay factory can resolve while we're paused (backgrounded mid-fetch); only
+        // start the moving parts when resumed, otherwise onResume() starts them on return.
+        if (isResumed) {
+            startMovingParts()
+        }
         overlays.route.fitCameraToShape()
     }
 

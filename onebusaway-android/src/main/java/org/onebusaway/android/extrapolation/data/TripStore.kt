@@ -24,25 +24,13 @@ import org.onebusaway.android.io.request.ObaTripDetailsResponse
 import org.onebusaway.android.util.Polyline
 
 /*
- * The store of per-trip state: an LRU cache of immutable TripState snapshots keyed by tripId —
- * and nothing else. Identity is the key: consumers hold a tripId and call lookupTripState per
- * frame/tick (an uncontended synchronized map get; cheap enough for per-frame loops), getting a
- * consistent immutable snapshot or null. Writes are data-shaped — record takes the standard
- * TripObservation, the put functions take single resources — and never read into API response
- * shapes; distilling responses into observations is the adapters' job (Adapters.kt).
- * (putTripDetailsResponse does accept a whole response, but stores it as an opaque value for UI
- * consumers — the store never looks inside it.) Network I/O lives in the pollers (Pollers.kt)
- * and the pure fetchers (Fetchers.kt). Every production writer lives in this package —
- * hydration is Pollers.kt's job; UI code only reads, via lookupTripState.
+ * An LRU cache of immutable TripState snapshots keyed by tripId. Data flows one way: the
+ * adapters (Adapters.kt) distill API responses into data-shaped writes, the pollers (Pollers.kt)
+ * record them; UI code only reads, via lookupTripState — a synchronized map get, cheap enough
+ * for per-frame loops. Lookups and writes both promote, so actively watched trips are never the
+ * eviction victims.
  *
- * Retention: lookups and writes both promote, so a trip being actively displayed or polled is
- * never the eviction victim; once more than MAX_TRACKED_TRIPS trips are tracked, the
- * least-recently-used trip is dropped and refills if it is ever recorded again.
- *
- * Threading: main thread only. The cache is internally synchronized, but writes are
- * get-transform-put — not atomic — so all public functions must be called from the main thread.
- * Background work (network fetches) lives in Pollers.kt and Fetchers.kt; results are posted
- * back to the main thread before they touch any state here.
+ * Threading: main thread only — writes are get-transform-put, not atomic.
  */
 
 private const val MAX_TRACKED_TRIPS = 100
@@ -72,7 +60,7 @@ fun record(observation: TripObservation, localTimeMs: Long) {
 
 fun putSchedule(tripId: String?, schedule: ObaTripSchedule?) {
     if (tripId != null && schedule != null) {
-        update(tripId) { it.copy(schedule = schedule) }
+        update(tripId) { it.withSchedule(schedule) }
     }
 }
 

@@ -49,9 +49,9 @@ internal enum class TripMapOverlayFailure {
 /**
  * Creates and activates trip map overlays from an API response.
  *
- * [create] suspends while the trip shape is fetched (sharing any in-flight fetch via
- * [ensureShape]) and returns the overlays, or null — after logging a [TripMapOverlayFailure] —
- * when required data is missing or failed to load.
+ * [create] suspends while the trip shape is fetched via [ensureShape] (the underlying fetcher
+ * dedupes in-flight requests) and returns the overlays, or null — after logging a
+ * [TripMapOverlayFailure] — when required data is missing or failed to load.
  */
 internal object TripMapOverlayFactory {
 

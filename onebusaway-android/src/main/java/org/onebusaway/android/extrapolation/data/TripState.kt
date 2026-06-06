@@ -164,6 +164,14 @@ data class TripState(
     fun withRouteType(routeType: Int?): TripState =
             if (this.routeType == null && routeType != null) copy(routeType = routeType) else this
 
+    /**
+     * Returns the state with [schedule] filled in, or `this` when it is already known — the
+     * schedule is an immutable resource (Fetchers.kt), so the first writer wins and repeated
+     * poll-tick writes don't churn the snapshot.
+     */
+    fun withSchedule(schedule: ObaTripSchedule): TripState =
+            if (this.schedule == null) copy(schedule = schedule) else this
+
     fun extrapolate(queryTimeMs: Long): ExtrapolationResult {
         val currentAnchor = anchor ?: return ExtrapolationResult.NoData
         val lastDist = currentAnchor.distanceAlongTrip ?: return ExtrapolationResult.NoData

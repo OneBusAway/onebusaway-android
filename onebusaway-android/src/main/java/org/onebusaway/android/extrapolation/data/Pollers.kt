@@ -173,8 +173,8 @@ private fun CoroutineScope.prefetchSchedulesAndShapes(response: ObaTripsForRoute
             launch { fetchTripSchedule(tripId)?.let { putSchedule(tripId, it) } }
         }
         val shapeId = activeTrip.shapeId
-        if (shapeId != null && state?.polyline == null) {
-            launch { ensureShape(tripId, shapeId) }
+        if (shapeId != null) {
+            launch { ensureShape(tripId, shapeId) } // no-op when the polyline is already cached
         }
     }
 }

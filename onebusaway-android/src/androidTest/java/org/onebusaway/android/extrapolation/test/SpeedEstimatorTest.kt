@@ -352,7 +352,16 @@ class SpeedEstimatorTest {
 
     /** Records [status] as an observation of its active trip, as the response adapters would. */
     private fun recordStatus(status: ObaTripStatus, serverTimeMs: Long, localTimeMs: Long) =
-            record(TripObservation(status.activeTripId!!, status, serverTimeMs), localTimeMs)
+            record(
+                    TripObservation(
+                            status.activeTripId!!,
+                            status,
+                            serverTimeMs,
+                            serviceDate = 0,
+                            routeType = null
+                    ),
+                    localTimeMs
+            )
 
     private fun createStatus(
             vehicleId: String,

@@ -19,6 +19,7 @@ package org.onebusaway.android.extrapolation.data
 
 import org.onebusaway.android.io.elements.ObaTrip
 import org.onebusaway.android.io.elements.ObaTripStatus
+import org.onebusaway.android.io.request.ObaResponseWithRefs
 import org.onebusaway.android.io.request.ObaTripDetailsResponse
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse
 
@@ -39,25 +40,29 @@ data class TripObservation(
         val status: ObaTripStatus,
         /** The server's currentTime when the status was fetched. */
         val serverTimeMs: Long,
-        val serviceDate: Long = 0,
-        val routeType: Int? = null
+        val serviceDate: Long,
+        val routeType: Int?
 )
 
 /** The observation of the vehicle's active trip, or empty when the response carries no status. */
 fun ObaTripDetailsResponse.toObservations(): List<TripObservation> {
     val status = status ?: return emptyList()
     val tripId = status.activeTripId ?: return emptyList()
-    val route = getTrip(tripId)?.routeId?.let { getRoute(it) }
-    return listOf(TripObservation(tripId, status, currentTime, status.serviceDate, route?.type))
+    return listOf(
+            TripObservation(tripId, status, currentTime, status.serviceDate, routeTypeForTrip(tripId))
+    )
 }
 
 /** One observation per active trip in the response. */
 fun ObaTripsForRouteResponse.toObservations(): List<TripObservation> = buildList {
-    forEachActiveTrip { tripId, status, activeTrip ->
-        val route = activeTrip.routeId?.let { getRoute(it) }
-        add(TripObservation(tripId, status, currentTime, status.serviceDate, route?.type))
+    forEachActiveTrip { tripId, status, _ ->
+        add(TripObservation(tripId, status, currentTime, status.serviceDate, routeTypeForTrip(tripId)))
     }
 }
+
+/** Resolves [tripId]'s route type from the response refs, or null when they don't include it. */
+private fun ObaResponseWithRefs.routeTypeForTrip(tripId: String): Int? =
+        getTrip(tripId)?.routeId?.let { getRoute(it) }?.type
 
 /**
  * Iterates the active trips in a trips-for-route response, skipping entries without a status, an

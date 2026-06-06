@@ -222,8 +222,7 @@ public class MapLibreMapFragment extends SupportMapFragment
         getMapAsync(this);
 
         // If we have a recent location, show this while we're waiting on the LocationHelper
-        Location l = Application
-                .getLastKnownLocation(getActivity(), mLocationHelper.getGoogleApiClient());
+        Location l = Application.getLastKnownLocation(getActivity());
         if (l != null) {
             final long TIME_THRESHOLD = TimeUnit.MINUTES.toMillis(5);
             if (System.currentTimeMillis() - l.getTime() < TIME_THRESHOLD) {
@@ -620,8 +619,7 @@ public class MapLibreMapFragment extends SupportMapFragment
             return false;
         }
 
-        Location lastLocation = Application.getLastKnownLocation(getActivity(),
-                mLocationHelper != null ? mLocationHelper.getGoogleApiClient() : null);
+        Location lastLocation = Application.getLastKnownLocation(getActivity());
         if (lastLocation == null) {
             if (!PermissionUtils.hasGrantedAtLeastOnePermission(Application.get(), LOCATION_PERMISSIONS)) {
                 if (!PreferenceUtils.userDeniedLocationPermission()) {
@@ -713,9 +711,7 @@ public class MapLibreMapFragment extends SupportMapFragment
             return;
         }
 
-        Location l = Application
-                .getLastKnownLocation(getActivity(),
-                        mLocationHelper != null ? mLocationHelper.getGoogleApiClient() : null);
+        Location l = Application.getLastKnownLocation(getActivity());
         Location mapCenter = getMapCenterAsLocation();
         if (currentRegionChanged &&
                 (l == null ||

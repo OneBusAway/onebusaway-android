@@ -181,7 +181,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         }
 
         // Location / Location accuracy
-        Location location = Application.getLastKnownLocation(getActivity(), mGoogleApiClient);
+        Location location = Application.getLastKnownLocation(getActivity());
         if (location != null) {
             builder.setUserLocation(location.getLatitude(), location.getLongitude());
             if (location.hasAccuracy()) {

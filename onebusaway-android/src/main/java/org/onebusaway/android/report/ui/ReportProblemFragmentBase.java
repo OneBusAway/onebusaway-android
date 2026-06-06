@@ -27,15 +27,11 @@ import android.view.ViewGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.request.ObaResponse;
-import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import java.util.concurrent.Callable;
@@ -54,11 +50,6 @@ public abstract class ReportProblemFragmentBase extends Fragment
     private ReportProblemFragmentCallback mCallback;
 
     /**
-     * GoogleApiClient being used for Location Services
-     */
-    GoogleApiClient mGoogleApiClient;
-
-    /**
      * Displays the problem categories
      */
     Spinner mCodeView;
@@ -73,14 +64,6 @@ public abstract class ReportProblemFragmentBase extends Fragment
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
-
-        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (api.isGooglePlayServicesAvailable(getActivity())
-                == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getActivity());
-            mGoogleApiClient.connect();
-        }
 
         try {
             mCallback = (ReportProblemFragmentCallback) activity;
@@ -108,24 +91,6 @@ public abstract class ReportProblemFragmentBase extends Fragment
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
 
         return inflater.inflate(getLayoutId(), null);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        // Make sure GoogleApiClient is connected, if available
-        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    @Override
-    public void onStop() {
-        // Tear down GoogleApiClient
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
-        }
-        super.onStop();
     }
 
     @Override

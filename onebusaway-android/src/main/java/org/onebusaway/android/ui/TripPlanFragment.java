@@ -56,8 +56,6 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.timepicker.MaterialTimePicker;
@@ -127,8 +125,6 @@ public class TripPlanFragment extends Fragment {
     ArrayAdapter<CharSequence> mLeavingChoiceAdapter;
 
     Calendar mMyCalendar;
-
-    protected GoogleApiClient mGoogleApiClient;
 
     private CustomAddress mFromAddress, mToAddress;
 
@@ -229,13 +225,6 @@ public class TripPlanFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(getContext());
-
-        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
-                == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getContext());
-            mGoogleApiClient.connect();
-        }
 
         Bundle bundle = getArguments();
         mBuilder = new TripRequestBuilder(bundle);
@@ -669,8 +658,7 @@ public class TripPlanFragment extends Fragment {
     private void reportTripPlanProblem() {
         String email = Application.get().getCurrentRegion().getOtpContactEmail();
         if (!TextUtils.isEmpty(email)) {
-            Location loc = Application.getLastKnownLocation(getActivity().getApplicationContext(),
-                    null);
+            Location loc = Application.getLastKnownLocation(getActivity().getApplicationContext());
             String locString = null;
             if (loc != null) {
                 locString = LocationUtils.printLocationDetails(loc);
@@ -701,7 +689,7 @@ public class TripPlanFragment extends Fragment {
     private CustomAddress makeAddressFromLocation() {
         CustomAddress address = CustomAddress.getEmptyAddress();
 
-        Location loc = Application.getLastKnownLocation(getContext(), mGoogleApiClient);
+        Location loc = Application.getLastKnownLocation(getContext());
         if (loc == null) {
             if (getContext() != null) {
                 Toast.makeText(getContext(), getString(R.string.no_location_permission), Toast.LENGTH_SHORT).show();

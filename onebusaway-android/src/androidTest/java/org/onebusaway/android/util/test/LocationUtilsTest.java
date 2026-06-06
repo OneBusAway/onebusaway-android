@@ -18,10 +18,7 @@ package org.onebusaway.android.util.test;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.app.Application;
@@ -53,34 +50,6 @@ public class LocationUtilsTest extends ObaTestCase {
 
     public static final long FRESH_LOCATION_THRESHOLD_MS = 1000 * 60 * 60 * 24;
             // Within last 24 hours - see #737
-
-    /**
-     * GoogleApiClient being used for Location Services
-     */
-    GoogleApiClient mGoogleApiClient;
-
-    @Before
-    public void before() {
-        super.before();
-
-        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
-        if (api.isGooglePlayServicesAvailable(getTargetContext())
-                == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getTargetContext());
-            mGoogleApiClient.connect();
-        }
-    }
-
-    @After
-    public void after() {
-        super.after();
-
-        // Tear down GoogleApiClient
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
-        }
-    }
 
     @Test
     public void testLocationComparisonByTime() {
@@ -201,12 +170,13 @@ public class LocationUtilsTest extends ObaTestCase {
         // Make sure we're not running on an emulator, since we'll get a null location there
         if (!TestUtils.isRunningOnEmulator() && PermissionUtils.hasGrantedAllPermissions(getTargetContext(), LOCATION_PERMISSIONS)) {
             /**
-             * Test without Google Play Services - should be a Location API v1 location.
-             * Typically this is "gps" or "network", but some devices (e.g., HTC EVO LTE)
-             * have custom Android framework providers such as "hybrid" that might should up here.
-             * So, we can't test for "gps" or "network" specifically.
+             * Retrieves the last known location from any available source - the fused provider
+             * when Google Play Services is present, otherwise the framework Location API v1
+             * providers. For API v1 this is typically "gps" or "network", but some devices
+             * (e.g., HTC EVO LTE) have custom framework providers such as "hybrid" that might
+             * show up here. So, we can't test for a specific provider.
              */
-            loc = Application.getLastKnownLocation(getTargetContext(), null);
+            loc = Application.getLastKnownLocation(getTargetContext());
             /**
              * On devices that behave correctly the following non-null test should pass.  However, it's
              * possible that it can fail on some devices (e.g., on a fresh reboot on a device without
@@ -231,7 +201,7 @@ public class LocationUtilsTest extends ObaTestCase {
             /**
              * Could return either a fused or Location API v1 location
              */
-            loc = Application.getLastKnownLocation(getTargetContext(), mGoogleApiClient);
+            loc = Application.getLastKnownLocation(getTargetContext());
             assertNotNull(loc);
             Log.d(TAG,
                     "Location Provider for Location Services test is '" + loc.getProvider() + "'");

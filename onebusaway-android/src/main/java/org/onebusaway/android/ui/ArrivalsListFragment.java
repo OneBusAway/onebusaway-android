@@ -447,7 +447,7 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
 
             // Report Stop distance metric
             Location stopLocation = mStop.getLocation();
-            Location myLocation = Application.getLastKnownLocation(getActivity(), null);
+            Location myLocation = Application.getLastKnownLocation(getActivity());
             ObaAnalytics.reportViewStopEvent(Application.get().getPlausibleInstance(), mFirebaseAnalytics, mStop.getId(), mStop.getName(), myLocation, stopLocation);
         } else {
             // If there was a last good response, then this is a refresh

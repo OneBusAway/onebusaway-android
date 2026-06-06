@@ -33,9 +33,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
@@ -45,7 +42,6 @@ import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.region.ObaRegionsLoader;
 import org.onebusaway.android.util.ArrayAdapter;
-import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
 
@@ -83,11 +79,6 @@ public class RegionsFragment extends ListFragment
     // Current region
     private ObaRegion mCurrentRegion;
 
-    /**
-     * GoogleApiClient being used for Location Services
-     */
-    GoogleApiClient mGoogleApiClient;
-
     private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
@@ -101,14 +92,6 @@ public class RegionsFragment extends ListFragment
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
-        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
-        if (api.isGooglePlayServicesAvailable(getActivity())
-                == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getActivity());
-            mGoogleApiClient.connect();
-        }
-
         mLocale = Locale.getDefault();
         IMPERIAL = getString(R.string.preferences_preferred_units_option_imperial);
         METRIC = getString(R.string.preferences_preferred_units_option_metric);
@@ -121,7 +104,7 @@ public class RegionsFragment extends ListFragment
 
         setHasOptionsMenu(true);
 
-        mLocation = Application.getLastKnownLocation(getActivity(), mGoogleApiClient);
+        mLocation = Application.getLastKnownLocation(getActivity());
         mCurrentRegion = Application.get().getCurrentRegion();
 
         Bundle args = new Bundle();
@@ -169,24 +152,6 @@ public class RegionsFragment extends ListFragment
             return true;
         }
         return false;
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        // Make sure GoogleApiClient is connected, if available
-        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    @Override
-    public void onStop() {
-        // Tear down GoogleApiClient
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
-        }
-        super.onStop();
     }
 
     private void refresh() {

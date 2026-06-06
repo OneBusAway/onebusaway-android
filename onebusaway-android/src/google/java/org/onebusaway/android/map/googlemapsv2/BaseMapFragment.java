@@ -16,7 +16,6 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
@@ -271,8 +270,7 @@ public class BaseMapFragment extends SupportMapFragment
         }
 
         // If we have a recent location, show this while we're waiting on the LocationHelper
-        Location l = Application
-                .getLastKnownLocation(getActivity(), mLocationHelper.getGoogleApiClient());
+        Location l = Application.getLastKnownLocation(getActivity());
         if (l != null) {
             final long TIME_THRESHOLD = TimeUnit.MINUTES.toMillis(5);
             if (System.currentTimeMillis() - l.getTime() < TIME_THRESHOLD) {
@@ -736,8 +734,7 @@ public class BaseMapFragment extends SupportMapFragment
             return;
         }
 
-        Location l = Application
-                .getLastKnownLocation(getActivity(), mLocationHelper.getGoogleApiClient());
+        Location l = Application.getLastKnownLocation(getActivity());
         // If the region changed, and we don't have a location or the map center is still (0,0),
         // then zoom to the region (or location if we have it)
         Location mapCenter = getMapCenterAsLocation();
@@ -816,12 +813,7 @@ public class BaseMapFragment extends SupportMapFragment
             return false;
         }
 
-        GoogleApiClient apiClient = null;
-        if (mLocationHelper != null) {
-            apiClient = mLocationHelper.getGoogleApiClient();
-        }
-
-        Location lastLocation = Application.getLastKnownLocation(getActivity(), apiClient);
+        Location lastLocation = Application.getLastKnownLocation(getActivity());
         if (lastLocation == null) {
             if (!PermissionUtils.hasGrantedAtLeastOnePermission(Application.get(), LOCATION_PERMISSIONS)) {
                 if (!PreferenceUtils.userDeniedLocationPermission()) {

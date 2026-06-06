@@ -371,7 +371,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                                     .getOtpContactEmail();
                             if (!TextUtils.isEmpty(email)) {
                                 Location loc = Application
-                                        .getLastKnownLocation(getApplicationContext(), null);
+                                        .getLastKnownLocation(getApplicationContext());
                                 String locString = null;
                                 if (loc != null) {
                                     locString = LocationUtils.printLocationDetails(loc);

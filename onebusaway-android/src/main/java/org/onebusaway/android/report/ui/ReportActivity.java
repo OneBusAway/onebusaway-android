@@ -24,7 +24,6 @@ import android.view.MenuItem;
 
 import androidx.appcompat.widget.Toolbar;
 
-import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
@@ -106,17 +105,14 @@ public class ReportActivity extends BaseReportActivity {
      * @param stopCode        The stop code of the focus.
      * @param lat             The latitude of the map center.
      * @param lon             The longitude of the map center.
-     * @param googleApiClient The GoogleApiClient being used to obtain fused provider updates, or
-     *                        null if one isn't available
      */
     public static void start(Context context,
                              String focusId,
                              String stopName,
                              String stopCode,
                              double lat,
-                             double lon,
-                             GoogleApiClient googleApiClient) {
-        context.startActivity(makeIntent(context, focusId, stopName, stopCode, lat, lon, googleApiClient));
+                             double lon) {
+        context.startActivity(makeIntent(context, focusId, stopName, stopCode, lat, lon));
     }
 
     /**
@@ -125,26 +121,20 @@ public class ReportActivity extends BaseReportActivity {
      * @param context         The context of the activity.
      * @param lat             The latitude of the map center.
      * @param lon             The longitude of the map center.
-     * @param googleApiClient The GoogleApiClient being used to obtain fused provider updates, or
-     *                        null if one isn't available
      */
     public static void start(Context context,
                              double lat,
-                             double lon,
-                             GoogleApiClient googleApiClient) {
-        context.startActivity(makeIntent(context, null, null, null, lat, lon, googleApiClient));
+                             double lon) {
+        context.startActivity(makeIntent(context, null, null, null, lat, lon));
     }
 
     /**
      * Starts the MapActivity with the center of 0 lat and 0 lon to reflect the lack of location.
      *
      * @param context         The context of the activity.
-     * @param googleApiClient The GoogleApiClient being used to obtain fused provider updates, or
-     *                        null if one isn't available
      */
-    public static void start(Context context,
-                             GoogleApiClient googleApiClient) {
-        context.startActivity(makeIntent(context, null, null, null, 0d, 0d, googleApiClient));
+    public static void start(Context context) {
+        context.startActivity(makeIntent(context, null, null, null, 0d, 0d));
     }
 
     /**
@@ -156,16 +146,13 @@ public class ReportActivity extends BaseReportActivity {
      * @param stopName        The stop name of the focus.
      * @param lat             The latitude of the map center.
      * @param lon             The longitude of the map center.
-     * @param googleApiClient The GoogleApiClient being used to obtain fused provider updates, or
-     *                        null if one isn't available
      */
     private static Intent makeIntent(Context context,
                                      String focusId,
                                      String stopName,
                                      String stopCode,
                                      double lat,
-                                     double lon,
-                                     GoogleApiClient googleApiClient) {
+                                     double lon) {
 
         Intent myIntent = new Intent(context, ReportActivity.class);
         myIntent.putExtra(MapParams.STOP_ID, focusId);
@@ -174,7 +161,7 @@ public class ReportActivity extends BaseReportActivity {
         myIntent.putExtra(MapParams.CENTER_LAT, lat);
         myIntent.putExtra(MapParams.CENTER_LON, lon);
 
-        Location loc = Application.getLastKnownLocation(context, googleApiClient);
+        Location loc = Application.getLastKnownLocation(context);
         if (loc != null) {
             myIntent.putExtra(LOCATION_STRING, LocationUtils.printLocationDetails(loc));
         }

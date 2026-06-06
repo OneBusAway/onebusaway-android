@@ -47,7 +47,8 @@ data class TripObservation(
 fun ObaTripDetailsResponse.toObservations(): List<TripObservation> {
     val status = status ?: return emptyList()
     val tripId = status.activeTripId ?: return emptyList()
-    return listOf(TripObservation(tripId, status, currentTime, status.serviceDate))
+    val route = getTrip(tripId)?.routeId?.let { getRoute(it) }
+    return listOf(TripObservation(tripId, status, currentTime, status.serviceDate, route?.type))
 }
 
 /** One observation per active trip in the response. */

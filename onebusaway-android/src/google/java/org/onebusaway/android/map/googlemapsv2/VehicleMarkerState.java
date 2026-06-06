@@ -44,8 +44,9 @@ class VehicleMarkerState {
     Marker dataReceivedMarker;
     long dataReceivedFixTime;
 
-    VehicleMarkerState(String tripId, ObaTripStatus status) {
+    VehicleMarkerState(String tripId, ObaTripStatus status, ObaTripStatus initialAnchor) {
         this.tripId = tripId;
         this.status = status;
+        this.lastAnimatedAnchor = initialAnchor;
     }
 }

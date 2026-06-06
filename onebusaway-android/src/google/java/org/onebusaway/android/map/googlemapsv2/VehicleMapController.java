@@ -136,9 +136,9 @@ class VehicleMapController {
                 .title(status.getVehicleId())
                 .icon(mIconFactory.getIcon(params))
                 .zIndex(VEHICLE_MARKER_Z_INDEX));
-        VehicleMarkerState vehicle = new VehicleMarkerState(tripId, status);
         TripState tripState = TripStore.lookupTripState(tripId);
-        vehicle.lastAnimatedAnchor = tripState != null ? tripState.getAnchor() : null;
+        VehicleMarkerState vehicle = new VehicleMarkerState(tripId, status,
+                tripState != null ? tripState.getAnchor() : null);
         vehicle.vehicleMarker = m;
         vehicle.iconParams = params;
         m.setTag(vehicle);

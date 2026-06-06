@@ -103,7 +103,6 @@ import java.util.List;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 
-
 import static org.onebusaway.android.util.PermissionUtils.NOTIFICATION_PERMISSION_REQUEST;
 
 public class TripDetailsListFragment extends ListFragment {
@@ -540,10 +539,10 @@ public class TripDetailsListFragment extends ListFragment {
             // Only extrapolate if this is the active trip
             if (activeTripId == null || !activeTripId.equals(mTripId)) return;
 
-            TripState activeState = TripStore.lookupTripState(activeTripId);
-            if (activeState == null) return;
+            // Past the guard activeTripId equals mTripId, so polledState is its snapshot
+            if (polledState == null) return;
             ExtrapolationResult result =
-                    activeState.extrapolate(System.currentTimeMillis());
+                    polledState.extrapolate(System.currentTimeMillis());
             if (!(result instanceof ExtrapolationResult.Success)) return;
 
             Double extrapolatedDist = ((ExtrapolationResult.Success) result).getDistribution().median();

@@ -76,30 +76,29 @@ internal fun nextPollDelayMs(previousDelayMs: Long, succeeded: Boolean, interval
  * Returns the response (whatever its code) so [TripDetailsPoller] can deliver it and pace its
  * retries, or null when the fetch threw.
  */
-private suspend fun fetchAndRecordTripDetails(ctx: Context, tripId: String): ObaTripDetailsResponse? {
-    return try {
-        val localTimeMs = System.currentTimeMillis()
-        val response =
-                withContext(Dispatchers.IO) {
-                    ObaTripDetailsRequest.newRequest(ctx, tripId).call()
-                }
-        if (response.code == ObaApi.OBA_OK) {
-            putTripDetailsResponse(tripId, response.status?.activeTripId, response)
-            putSchedule(tripId, response.schedule)
-            putServiceDate(tripId, response.status?.serviceDate ?: 0)
-            response.toObservations().forEach { record(it, localTimeMs) }
-        } else {
-            Log.w(TAG, "Trip details fetch for $tripId returned code ${response.code}:" +
-                    " ${response.text}")
+private suspend fun fetchAndRecordTripDetails(ctx: Context, tripId: String): ObaTripDetailsResponse? =
+        try {
+            val localTimeMs = System.currentTimeMillis()
+            val response =
+                    withContext(Dispatchers.IO) {
+                        ObaTripDetailsRequest.newRequest(ctx, tripId).call()
+                    }
+            if (response.code == ObaApi.OBA_OK) {
+                putTripDetailsResponse(tripId, response.status?.activeTripId, response)
+                putSchedule(tripId, response.schedule)
+                putServiceDate(tripId, response.status?.serviceDate ?: 0)
+                response.toObservations().forEach { record(it, localTimeMs) }
+            } else {
+                Log.w(TAG, "Trip details fetch for $tripId returned code ${response.code}:" +
+                        " ${response.text}")
+            }
+            response
+        } catch (e: CancellationException) {
+            throw e // poller stopped mid-fetch — not a failure
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to fetch trip details for $tripId", e)
+            null
         }
-        response
-    } catch (e: CancellationException) {
-        throw e // poller stopped mid-fetch — not a failure
-    } catch (e: Exception) {
-        Log.e(TAG, "Failed to fetch trip details for $tripId", e)
-        null
-    }
-}
 
 /**
  * Polls trip details every [intervalMs], records responses into the trip store, and delivers
@@ -198,31 +197,30 @@ constructor(
 private suspend fun CoroutineScope.fetchAndRecordTripsForRoute(
         ctx: Context,
         routeId: String
-): ObaTripsForRouteResponse? {
-    return try {
-        val localTimeMs = System.currentTimeMillis()
-        val response =
-                withContext(Dispatchers.IO) {
-                    ObaTripsForRouteRequest.Builder(ctx, routeId)
-                            .setIncludeStatus(true)
-                            .build()
-                            .call()
-                }
-        if (response.code == ObaApi.OBA_OK) {
-            response.toObservations().forEach { record(it, localTimeMs) }
-            prefetchSchedulesAndShapes(response)
-        } else {
-            Log.w(TAG, "Trips-for-route fetch for $routeId returned code ${response.code}:" +
-                    " ${response.text}")
+): ObaTripsForRouteResponse? =
+        try {
+            val localTimeMs = System.currentTimeMillis()
+            val response =
+                    withContext(Dispatchers.IO) {
+                        ObaTripsForRouteRequest.Builder(ctx, routeId)
+                                .setIncludeStatus(true)
+                                .build()
+                                .call()
+                    }
+            if (response.code == ObaApi.OBA_OK) {
+                response.toObservations().forEach { record(it, localTimeMs) }
+                prefetchSchedulesAndShapes(response)
+            } else {
+                Log.w(TAG, "Trips-for-route fetch for $routeId returned code" +
+                        " ${response.code}: ${response.text}")
+            }
+            response
+        } catch (e: CancellationException) {
+            throw e // poller stopped mid-fetch — not a failure
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to fetch trips for route $routeId", e)
+            null
         }
-        response
-    } catch (e: CancellationException) {
-        throw e // poller stopped mid-fetch — not a failure
-    } catch (e: Exception) {
-        Log.e(TAG, "Failed to fetch trips for route $routeId", e)
-        null
-    }
-}
 
 /**
  * Backfills schedules and shapes for every active trip in a trips-for-route response that doesn't

@@ -42,9 +42,9 @@ data class HistoryEntry(
 
 /**
  * Immutable snapshot of everything known about a single tracked trip: vehicle history,
- * extrapolation anchor, schedule, polyline, and route metadata. Published through a
- * per-trip `StateFlow` by the trip store (TripStore.kt); consumers read `flow.value` and get a
- * consistent snapshot — data updates produce new instances via [recorded] and `copy`.
+ * extrapolation anchor, schedule, polyline, and route metadata. Stored keyed by [tripId] in the
+ * trip store (TripStore.kt); consumers look up the current snapshot per frame/tick — data
+ * updates produce new instances via [recorded] and `copy`.
  *
  * Provides [extrapolate], which selects the appropriate strategy (gamma or schedule replay) based
  * on [routeType] and the data available. The strategy and its fitted model are lazily derived per
@@ -103,7 +103,8 @@ data class TripState(
     /**
      * Pure fold: returns the state with [status] recorded, or `this` when the entry is skipped
      * (missing distance data or an exact duplicate of the previous entry). Returning `this`
-     * lets the store's StateFlow skip the emission entirely.
+     * keeps the snapshot — and with it the lazily fitted extrapolator and the anchor
+     * instance — intact.
      *
      * @param serverTimeMs the server's currentTime from the API response, or 0 to use local clock
      * @param localTimeMs local device clock time when the response was received
@@ -171,7 +172,7 @@ data class TripState(
     }
 
     companion object {
-        /** A fresh shell for [tripId]: no payload, [extrapolate] reports [ExtrapolationResult.NoData]. */
+        /** A fresh state for [tripId]: no data yet, [extrapolate] reports [ExtrapolationResult.NoData]. */
         fun empty(tripId: String) = TripState(tripId)
     }
 }

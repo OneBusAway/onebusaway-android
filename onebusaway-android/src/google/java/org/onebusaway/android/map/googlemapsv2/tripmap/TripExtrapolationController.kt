@@ -16,9 +16,8 @@
 package org.onebusaway.android.map.googlemapsv2.tripmap
 
 import android.util.Log
-import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.extrapolation.ExtrapolationResult
-import org.onebusaway.android.extrapolation.data.TripState
+import org.onebusaway.android.extrapolation.data.lookupTripState
 import org.onebusaway.android.map.googlemapsv2.ThrottledFrameLoop
 
 private const val TAG = "TripExtrapolationCtl"
@@ -27,13 +26,13 @@ private const val TAG = "TripExtrapolationCtl"
  * Owns the per-frame extrapolation loop for a single trip on the trip map view. Computes positions
  * and distributions each frame, then delegates all rendering to [TripVehicleOverlay].
  *
- * Each frame reads one consistent [TripState] snapshot from [tripFlow] (a single volatile read)
+ * Each frame reads one consistent TripState snapshot from the trip store (a single map lookup)
  * and computes everything from it; data updates land as new snapshots between frames.
  */
 class TripExtrapolationController
 internal constructor(
         private val vehicleOverlay: TripVehicleOverlay,
-        private val tripFlow: StateFlow<TripState>
+        private val tripId: String
 ) {
     private val frameLoop = ThrottledFrameLoop(::doFrame)
 
@@ -42,7 +41,7 @@ internal constructor(
     fun stop() = frameLoop.stop()
 
     private fun doFrame(now: Long) {
-        val state = tripFlow.value
+        val state = lookupTripState(tripId) ?: return
         val shapeData = state.polyline ?: return
         val result =
                 try {
@@ -52,7 +51,7 @@ internal constructor(
                     // degenerate
                     // schedule). Log so it surfaces, then skip this frame; the next frame will
                     // retry.
-                    Log.w(TAG, "Extrapolation failed for ${state.tripId}", e)
+                    Log.w(TAG, "Extrapolation failed for $tripId", e)
                     return
                 }
 

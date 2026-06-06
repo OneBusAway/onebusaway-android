@@ -39,10 +39,9 @@ import org.json.JSONObject
 import org.onebusaway.android.R
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.MPS_TO_MPH
-import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.extrapolation.data.TripDetailsPoller
 import org.onebusaway.android.extrapolation.data.TripState
-import org.onebusaway.android.extrapolation.data.tripFlow
+import org.onebusaway.android.extrapolation.data.lookupTripState
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.io.elements.ObaTripStatus
 import org.onebusaway.android.util.UIUtils
@@ -84,7 +83,6 @@ class VehicleLocationDataActivity : AppCompatActivity() {
     private lateinit var tripId: String
     private var vehicleId: String? = null
     private var stopId: String? = null
-    private lateinit var tripFlow: StateFlow<TripState>
     private var poller: TripDetailsPoller? = null
 
     private val refreshHandler = Handler(Looper.getMainLooper())
@@ -122,9 +120,6 @@ class VehicleLocationDataActivity : AppCompatActivity() {
                         }
         vehicleId = intent.getStringExtra(EXTRA_VEHICLE_ID)
         stopId = intent.getStringExtra(EXTRA_STOP_ID)
-        // Acquired once: the flow for a tripId is permanent, so this reference stays valid
-        // for the activity's lifetime while the poller publishes new snapshots into it.
-        tripFlow = tripFlow(tripId)
 
         tableContainer = findViewById(R.id.location_data_table_container)
         graphView = findViewById(R.id.location_data_graph)
@@ -186,7 +181,7 @@ class VehicleLocationDataActivity : AppCompatActivity() {
     // --- Data refresh ---
 
     private fun refreshData() {
-        val state = tripFlow.value
+        val state = lookupTripState(tripId) ?: TripState.empty(tripId)
         val activeTripId = state.vehicleActiveTripId
         val tripEnded = activeTripId != null && tripId != activeTripId
 

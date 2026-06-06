@@ -33,7 +33,6 @@ import org.onebusaway.android.extrapolation.data.putPolyline
 import org.onebusaway.android.extrapolation.data.putSchedule
 import org.onebusaway.android.extrapolation.data.putServiceDate
 import org.onebusaway.android.extrapolation.data.recordStatus
-import org.onebusaway.android.extrapolation.data.tripFlow
 import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.io.elements.ObaTripStatus
 import org.onebusaway.android.io.elements.Occupancy
@@ -53,8 +52,7 @@ class SpeedEstimatorTest {
 
     @Test
     fun testTrackerEmptyHistory() {
-        val history = tripFlow("trip1").value.history
-        assertEquals(0, history.size)
+        assertNull(lookupTripState("trip1"))
     }
 
     @Test
@@ -63,7 +61,7 @@ class SpeedEstimatorTest {
 
         recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
 
-        val history = tripFlow("trip1").value.history
+        val history = lookupTripState("trip1")!!.history
         assertEquals(1, history.size)
         assertEquals(100.0, history[0].status.distanceAlongTrip!!, 1e-12)
     }
@@ -85,7 +83,7 @@ class SpeedEstimatorTest {
             recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
         }
 
-        val history = tripFlow("trip1").value.history
+        val history = lookupTripState("trip1")!!.history
         assertEquals(50, history.size)
     }
 
@@ -97,18 +95,18 @@ class SpeedEstimatorTest {
         recordStatus(status1, System.currentTimeMillis(), System.currentTimeMillis())
         recordStatus(status2, System.currentTimeMillis(), System.currentTimeMillis())
 
-        assertEquals(1, tripFlow("trip1").value.history.size)
-        assertEquals(1, tripFlow("trip2").value.history.size)
+        assertEquals(1, lookupTripState("trip1")!!.history.size)
+        assertEquals(1, lookupTripState("trip2")!!.history.size)
     }
 
     @Test
     fun testTrackerClearAll() {
         val status = createStatus("v1", "trip1", 47.0, -122.0, 100.0, 100.0, 5000.0, 1000L)
         recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
-        assertEquals(1, tripFlow("trip1").value.history.size)
+        assertEquals(1, lookupTripState("trip1")!!.history.size)
 
         clearAllTrips()
-        assertEquals(0, tripFlow("trip1").value.history.size)
+        assertNull(lookupTripState("trip1"))
     }
 
     @Test
@@ -116,11 +114,11 @@ class SpeedEstimatorTest {
         val status = createStatus("v1", "trip1", 47.0, -122.0, 100.0, 100.0, 5000.0, 1000L)
         recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
 
-        val history = tripFlow("trip1").value.history.toList()
+        val history = lookupTripState("trip1")!!.history.toList()
         history.toMutableList().clear() // Modifying a copy
 
         // Internal history should be unaffected
-        assertEquals(1, tripFlow("trip1").value.history.size)
+        assertEquals(1, lookupTripState("trip1")!!.history.size)
     }
 
     @Test
@@ -149,14 +147,14 @@ class SpeedEstimatorTest {
     @Test
     fun testTrackerNullStatusIgnored() {
         recordStatus(null, System.currentTimeMillis(), System.currentTimeMillis())
-        assertEquals(0, tripFlow("trip1").value.history.size)
+        assertNull(lookupTripState("trip1"))
     }
 
     // --- Eviction tests ---
 
     @Test
     fun testEvictionUsesAccessOrder() {
-        // Insert MAX_TRACKED_TRIPS distinct trips so we're sitting at the cap with the registry
+        // Insert MAX_TRACKED_TRIPS distinct trips so we're sitting at the cap with the cache
         // ordered by insertion. trip0 is the oldest by insertion order.
         val cap = 100
         for (i in 0 until cap) {
@@ -194,44 +192,44 @@ class SpeedEstimatorTest {
         assertEquals(cap, getTrackedTripIds().size)
 
         // Re-record trip0 with a fresh status — same tripId, different distance and timestamp
-        // so the dedup in Trip.recordStatus actually appends.
+        // so the dedup in TripState.recorded actually appends.
         val update = createStatus("v0", "trip0", 47.001, -122.0, 200.0, 200.0, 5000.0, 2000L)
         recordStatus(update, System.currentTimeMillis(), System.currentTimeMillis())
 
         val tracked = getTrackedTripIds()
         assertEquals(cap, tracked.size)
         assertTrue("trip0 should still be present after self-update", "trip0" in tracked)
-        assertEquals(2, tripFlow("trip0").value.history.size)
+        assertEquals(2, lookupTripState("trip0")!!.history.size)
     }
 
     // --- TripStore schedule cache tests ---
 
     @Test
     fun testTrackerScheduleCacheEmpty() {
-        assertNull(tripFlow("trip1").value.schedule)
+        assertNull(lookupTripState("trip1")?.schedule)
     }
 
     @Test
     fun testTrackerPutAndGetSchedule() {
         val schedule = ObaTripSchedule.EMPTY_OBJECT
         putSchedule("trip1", schedule)
-        assertNotNull(tripFlow("trip1").value.schedule)
+        assertNotNull(lookupTripState("trip1")?.schedule)
     }
 
     @Test
     fun testTrackerPutScheduleNullIgnored() {
         putSchedule(null, ObaTripSchedule.EMPTY_OBJECT)
         putSchedule("trip1", null)
-        assertNull(tripFlow("trip1").value.schedule)
+        assertNull(lookupTripState("trip1")?.schedule)
     }
 
     @Test
     fun testTrackerClearAllClearsScheduleCache() {
         putSchedule("trip1", ObaTripSchedule.EMPTY_OBJECT)
-        assertNotNull(tripFlow("trip1").value.schedule)
+        assertNotNull(lookupTripState("trip1")?.schedule)
 
         clearAllTrips()
-        assertNull(tripFlow("trip1").value.schedule)
+        assertNull(lookupTripState("trip1")?.schedule)
     }
 
     // --- Polyline interpolation tests ---
@@ -240,7 +238,7 @@ class SpeedEstimatorTest {
     fun testPolylineSinglePoint() {
         val points = listOf(createLocation(47.0, -122.0))
         putPolyline("trip1", Polyline(points))
-        val poly = tripFlow("trip1").value.polyline!!
+        val poly = lookupTripState("trip1")!!.polyline!!
         val result = poly.interpolate(50.0)!!
         assertEquals(47.0, result.latitude, 1e-12)
         assertEquals(-122.0, result.longitude, 1e-12)
@@ -254,7 +252,7 @@ class SpeedEstimatorTest {
                         createLocation(47.001, -122.0) // ~111 meters north
                 )
         putPolyline("trip1", Polyline(points))
-        val poly = tripFlow("trip1").value.polyline!!
+        val poly = lookupTripState("trip1")!!.polyline!!
         // Interpolate at 0 — should return first point
         val start = poly.interpolate(0.0)!!
         assertEquals(47.0, start.latitude, 1e-12)
@@ -273,7 +271,7 @@ class SpeedEstimatorTest {
                         createLocation(47.003, -122.0) // ~333m total
                 )
         putPolyline("trip1", Polyline(points))
-        val poly = tripFlow("trip1").value.polyline!!
+        val poly = lookupTripState("trip1")!!.polyline!!
         // Interpolate at ~166m — should be between second and third point
         val mid = poly.interpolate(166.0)!!
         assertTrue(
@@ -306,7 +304,7 @@ class SpeedEstimatorTest {
         recordStatus(status1, System.currentTimeMillis(), System.currentTimeMillis())
         recordStatus(status2, System.currentTimeMillis(), System.currentTimeMillis())
 
-        val result = tripFlow("trip1").value.extrapolate(queryTime + 5000)
+        val result = lookupTripState("trip1")!!.extrapolate(queryTime + 5000)
         assertTrue("Should succeed", result is ExtrapolationResult.Success)
         val dist = (result as ExtrapolationResult.Success).distribution
         assertTrue("Median distance should be > last distance", dist.median() > 400.0)
@@ -319,7 +317,7 @@ class SpeedEstimatorTest {
         val status = createStatus("v1", "trip1", 47.0, -122.0, 100.0, null, 5000.0, timestamp)
         recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
 
-        val result = tripFlow("trip1").value.extrapolate(timestamp)
+        val result = lookupTripState("trip1")!!.extrapolate(timestamp)
         assertTrue("Should be MissingSchedule", result is ExtrapolationResult.MissingSchedule)
     }
 
@@ -372,7 +370,7 @@ class SpeedEstimatorTest {
                 )
 
         recordStatus(latestStatus, System.currentTimeMillis(), System.currentTimeMillis())
-        val result = tripFlow("trip1").value.extrapolate(latestTimestamp)
+        val result = lookupTripState("trip1")!!.extrapolate(latestTimestamp)
         assertTrue("Should succeed", result is ExtrapolationResult.Success)
         val dist = (result as ExtrapolationResult.Success).distribution
         assertTrue("Extrapolated distance should be positive", dist.median() > 0)

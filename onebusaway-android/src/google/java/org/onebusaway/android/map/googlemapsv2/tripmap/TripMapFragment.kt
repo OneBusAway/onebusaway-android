@@ -31,7 +31,6 @@ import com.google.android.gms.maps.model.Marker
 import kotlinx.coroutines.launch
 import org.onebusaway.android.extrapolation.data.TripDetailsPoller
 import org.onebusaway.android.extrapolation.data.lookupTripState
-import org.onebusaway.android.extrapolation.data.tripFlow
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
 import org.onebusaway.android.ui.TripMapCallback
 
@@ -176,7 +175,7 @@ class TripMapFragment : SupportMapFragment(), OnMapReadyCallback, GoogleMap.OnMa
         routeOverlay = overlays.route
         vehicleOverlay = overlays.vehicle
         extrapolationController =
-                TripExtrapolationController(overlays.vehicle, tripFlow(tripId)).also { it.start() }
+                TripExtrapolationController(overlays.vehicle, tripId).also { it.start() }
         poller?.stop()
         poller = TripDetailsPoller(tripId).also { it.start() }
         activated = true

@@ -45,8 +45,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
-import kotlinx.coroutines.flow.StateFlow;
-
 /**
  * Manages all vehicle markers on the Google Map: creation, position updates
  * (including extrapolation), selection, data-received markers, and cleanup.
@@ -138,8 +136,9 @@ class VehicleMapController {
                 .title(status.getVehicleId())
                 .icon(mIconFactory.getIcon(params))
                 .zIndex(VEHICLE_MARKER_Z_INDEX));
-        VehicleMarkerState vehicle = new VehicleMarkerState(
-                TripStore.tripFlow(tripId), status);
+        VehicleMarkerState vehicle = new VehicleMarkerState(tripId, status);
+        TripState tripState = TripStore.lookupTripState(tripId);
+        vehicle.lastAnimatedAnchor = tripState != null ? tripState.getAnchor() : null;
         vehicle.vehicleMarker = m;
         vehicle.iconParams = params;
         m.setTag(vehicle);
@@ -175,7 +174,7 @@ class VehicleMapController {
         Iterator<Map.Entry<String, VehicleMarkerState>> iterator = mStates.entrySet().iterator();
         while (iterator.hasNext()) {
             VehicleMarkerState vehicle = iterator.next().getValue();
-            if (!activeTripIds.contains(vehicle.tripFlow.getValue().getTripId())) {
+            if (!activeTripIds.contains(vehicle.tripId)) {
                 destroyVehicleMarker(vehicle);
                 iterator.remove();
             }
@@ -293,7 +292,10 @@ class VehicleMapController {
 
     boolean isExtrapolating(Marker marker) {
         VehicleMarkerState vs = stateOf(marker);
-        return vs != null && vs.tripFlow.getValue().getAnchor() != null;
+        if (vs == null)
+            return false;
+        TripState state = TripStore.lookupTripState(vs.tripId);
+        return state != null && state.getAnchor() != null;
     }
 
     boolean isDataReceivedMarker(Marker marker) {
@@ -304,7 +306,7 @@ class VehicleMapController {
     String getTripIdForDataReceivedMarker(Marker marker) {
         VehicleMarkerState vs = stateOf(marker);
         if (vs != null && marker.equals(vs.dataReceivedMarker))
-            return vs.tripFlow.getValue().getTripId();
+            return vs.tripId;
         return null;
     }
 
@@ -314,15 +316,20 @@ class VehicleMapController {
         if (mStates.isEmpty())
             return;
         for (VehicleMarkerState vehicle : mStates.values()) {
-            // One consistent snapshot per vehicle per frame: a single volatile read,
+            // One consistent snapshot per vehicle per frame: a single store lookup,
             // then plain field reads.
-            TripState state = vehicle.tripFlow.getValue();
+            TripState state = TripStore.lookupTripState(vehicle.tripId);
+            if (state == null) {
+                animateToRawPosition(vehicle);
+                updateSelectedMarker(vehicle, null);
+                continue;
+            }
             try {
                 updatePosition(vehicle, state, now);
             } catch (RuntimeException e) {
                 // Programming-error path (e.g. require() failure in the gamma model on a
                 // degenerate schedule). Log so it surfaces, then degrade to the raw position.
-                Log.w(TAG, "updatePosition failed for trip " + state.getTripId(), e);
+                Log.w(TAG, "updatePosition failed for trip " + vehicle.tripId, e);
                 animateToRawPosition(vehicle);
             }
             updateSelectedMarker(vehicle, state.getAnchor());

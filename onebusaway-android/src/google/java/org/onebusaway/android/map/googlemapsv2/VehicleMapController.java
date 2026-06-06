@@ -326,9 +326,10 @@ class VehicleMapController {
             }
             try {
                 updateVehicleMarker(vehicle, state, now);
-            } catch (RuntimeException e) {
-                // Programming-error path (e.g. require() failure in the gamma model on a
-                // degenerate schedule). Log so it surfaces, then degrade to the raw position.
+            } catch (IllegalArgumentException e) {
+                // require() failure in the gamma model on a degenerate schedule. Log so it
+                // surfaces, then degrade to the raw position. Anything else propagates —
+                // swallowed at 20fps, a structural bug would be invisible in production.
                 Log.w(TAG, "updateVehicleMarker failed for trip " + vehicle.tripId, e);
                 animateToRawPosition(vehicle);
             }

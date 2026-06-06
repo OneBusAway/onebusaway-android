@@ -46,11 +46,10 @@ internal constructor(
         val result =
                 try {
                     state.extrapolate(now)
-                } catch (e: RuntimeException) {
-                    // Programming-error path (e.g. require() failure in the gamma model on a
-                    // degenerate
-                    // schedule). Log so it surfaces, then skip this frame; the next frame will
-                    // retry.
+                } catch (e: IllegalArgumentException) {
+                    // require() failure in the gamma model on a degenerate schedule. Log so it
+                    // surfaces, then skip this frame; the next frame retries. Anything else
+                    // propagates rather than degrading silently at 20fps.
                     Log.w(TAG, "Extrapolation failed for $tripId", e)
                     return
                 }

@@ -19,6 +19,7 @@ package org.onebusaway.android.extrapolation.data
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -67,6 +68,8 @@ private suspend fun fetchAndRecordTripDetails(ctx: Context, tripId: String) {
             putTripDetailsResponse(tripId, response.status?.activeTripId, response)
             response.toObservations().forEach { record(it, localTimeMs) }
         }
+    } catch (e: CancellationException) {
+        throw e // poller stopped mid-fetch — not a failure
     } catch (e: Exception) {
         Log.e(TAG, "Failed to fetch trip details for $tripId", e)
     }
@@ -138,6 +141,8 @@ constructor(
                                 prefetchSchedulesAndShapes(response)
                                 callback?.onResponse(response)
                             }
+                        } catch (e: CancellationException) {
+                            throw e // poller stopped mid-fetch — not a failure
                         } catch (e: Exception) {
                             Log.e(TAG, "Failed to fetch trips for route $routeId", e)
                         }

@@ -280,11 +280,65 @@ public class TripDetailsListFragment extends ListFragment {
             setListShown(true);
         }
 
-        mPoller = new TripDetailsPoller(mTripId);
+        mPoller = new TripDetailsPoller(mTripId, this::onTripDetailsResponse);
         mPoller.start();
         mPositionTickHandler.postDelayed(mPositionTick, POSITION_TICK_MS);
 
         super.onResume();
+    }
+
+    /**
+     * Restarts the poller for an explicit user refresh: an immediate fetch whose result flows
+     * through {@link #onTripDetailsResponse}, with the failure backoff reset. No-op while
+     * paused (the poller only exists between onResume and onPause).
+     */
+    public void refreshTripDetails() {
+        if (mPoller == null) return;
+        mPoller.stop();
+        mPoller = new TripDetailsPoller(mTripId, this::onTripDetailsResponse);
+        mPoller.start();
+    }
+
+    /**
+     * Receives every completed poll response, error-coded ones included. OK responses flow
+     * into the normal display path; failures resolve the initial loading spinner with an
+     * error message, or toast non-intrusively when data is already showing (the same pattern
+     * as ArrivalsListFragment).
+     */
+    private void onTripDetailsResponse(ObaTripDetailsResponse response) {
+        // The poller can deliver one response after stop() if the fetch had already completed
+        if (!isAdded() || getActivity() == null) {
+            return;
+        }
+
+        if (response.getCode() == ObaApi.OBA_OK) {
+            // The position tick also applies fresh store data; same reference-compare here so
+            // whichever path sees the response first applies it and the other no-ops.
+            if (response != mTripInfo) {
+                setTripDetails(response);
+                if (mTripDataCallback != null) {
+                    mTripDataCallback.onTripDataLoaded(response);
+                }
+            }
+            if (isResumed()) {
+                setListShown(true);
+            }
+            return;
+        }
+
+        // Error responses never go through setTripDetails: it would set mTripInfo before
+        // checking the code, corrupting the "do we have data" signal below.
+        if (mTripInfo == null) {
+            // First load failed: replace the loading spinner with a network-aware message
+            setEmptyText(UIUtils.getStopErrorString(getActivity(), response.getCode()));
+            if (isResumed()) {
+                setListShown(true);
+            }
+        } else {
+            // Data already showing: stale-but-present beats an intrusive error
+            Toast.makeText(getActivity(), R.string.generic_comm_error_toast,
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
     private void setTripDetails(ObaTripDetailsResponse data) {
@@ -294,6 +348,8 @@ public class TripDetailsListFragment extends ListFragment {
         if (code == ObaApi.OBA_OK) {
             setEmptyText("");
         } else {
+            // Defensive only: error responses are filtered upstream (the store records only
+            // OK responses, and onTripDetailsResponse never passes errors here).
             setEmptyText(getString(R.string.trip_details_error,
                     code, mTripInfo.getText(), mTripId, mTripInfo.getVersion()));
             return;

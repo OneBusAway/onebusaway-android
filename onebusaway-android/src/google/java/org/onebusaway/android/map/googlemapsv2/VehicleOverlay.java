@@ -37,6 +37,9 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
 
     interface Controller {
         String getFocusedStopId();
+
+        /** Whether the map UI hosting this overlay is currently shown to the user. */
+        boolean isShown();
     }
 
     private static final int ANIMATE_DURATION_MS = 600;
@@ -87,7 +90,26 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
     public void updateVehicles(HashSet<String> routeIds, ObaTripsForRouteResponse response) {
         mLastResponse = response;
         mController.populate(routeIds, response, System.currentTimeMillis());
-        mFrameLoop.start();
+        syncFrameLoop();
+    }
+
+    /** The host answers visibility through {@link Controller}; no host wired up means not shown. */
+    private boolean isHostShown() {
+        return mAppController != null && mAppController.isShown();
+    }
+
+    /**
+     * Reconciles the frame loop with reality: it runs exactly while the host is shown and there
+     * are markers to animate. Both inputs are derived on the spot, so this is safe to call from
+     * any lifecycle edge or data update; each tick also re-derives them, so a missed call can
+     * only delay a restart (until the next poll), never leak a running loop.
+     */
+    public void syncFrameLoop() {
+        if (mController != null && mController.size() > 0 && isHostShown()) {
+            mFrameLoop.start();
+        } else {
+            mFrameLoop.stop();
+        }
     }
 
     public int size() {
@@ -147,7 +169,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
     }
 
     private void onExtrapolationTick(long nowMs) {
-        if (mController == null || mActivity.isDestroyed()) {
+        if (mController == null || !isHostShown()) {
             mFrameLoop.stop();
             return;
         }

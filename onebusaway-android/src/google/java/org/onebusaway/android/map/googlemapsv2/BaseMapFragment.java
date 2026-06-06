@@ -444,6 +444,7 @@ public class BaseMapFragment extends SupportMapFragment
                 controller.onPause();
             }
         }
+        // No vehicle overlay nudge needed here: its frame loop stops itself (see syncFrameLoop).
 
         Location center = getMapCenterAsLocation();
         if (center != null) {
@@ -467,6 +468,9 @@ public class BaseMapFragment extends SupportMapFragment
                 controller.onHidden(hidden);
             }
         }
+        if (mVehicleOverlay != null) {
+            mVehicleOverlay.syncFrameLoop();
+        }
         super.onHiddenChanged(hidden);
     }
 
@@ -483,6 +487,9 @@ public class BaseMapFragment extends SupportMapFragment
                 controller.onResume();
                 controller.notifyMapChanged();
             }
+        }
+        if (mVehicleOverlay != null) {
+            mVehicleOverlay.syncFrameLoop();
         }
         updateMapModeSettings();
         super.onResume();
@@ -1248,6 +1255,15 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public String getFocusedStopId() {
         return mFocusStopId;
+    }
+
+    /**
+     * On screen means resumed and not FragmentManager.hide()-hidden; this also covers a
+     * destroyed activity, whose fragments leave the resumed state first.
+     */
+    @Override
+    public boolean isShown() {
+        return isResumed() && !isHidden();
     }
 
     //

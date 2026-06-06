@@ -199,7 +199,7 @@ public class JacksonConfig {
              *
              * Instantiate the object like normal.
              */
-            reader = initObjectMapper().reader(Response.class);
+            reader = initObjectMapper().readerFor(Response.class);
         }
         return reader;
     }

@@ -52,7 +52,7 @@ public class JacksonSerializer implements ObaApi.SerializationHandler {
 
     static {
         mMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mMapper.setVisibilityChecker(
+        mMapper.setVisibility(
                 VisibilityChecker.Std.defaultInstance()
                         .withFieldVisibility(JsonAutoDetect.Visibility.ANY));
     }
@@ -151,7 +151,7 @@ public class JacksonSerializer implements ObaApi.SerializationHandler {
         JsonGenerator jsonGenerator;
 
         try {
-            jsonGenerator = new MappingJsonFactory().createJsonGenerator(writer);
+            jsonGenerator = new MappingJsonFactory().createGenerator(writer);
             mMapper.writeValue(jsonGenerator, obj);
 
             return writer.toString();

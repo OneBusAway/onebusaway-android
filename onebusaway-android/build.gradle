@@ -240,9 +240,11 @@ dependencies {
     // Open311 client library
     implementation 'com.github.OneBusAway:open311-client:1.0.10'
     // JSON data binding for OBA REST API responses
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.4'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.4'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
+    // NOTE: 2.13.x is the last Jackson line supporting Android SDK 21+ (2.14+ requires SDK 26,
+    // and core library desugaring does not help) - do not bump further while minSdk is 21
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.13.5'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.13.5'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.5'
     // Bottom sliding panel
     implementation 'com.github.hannesa2:AndroidSlidingUpPanel:4.6.1'
     // For floating action button speed dial

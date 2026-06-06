@@ -310,9 +310,9 @@ class VehicleMapController {
         return null;
     }
 
-    // --- Per-frame position updates ---
+    // --- Per-frame marker updates ---
 
-    void updatePositions(long now) {
+    void updateVehicleMarkers(long now) {
         if (mStates.isEmpty())
             return;
         for (VehicleMarkerState vehicle : mStates.values()) {
@@ -325,18 +325,18 @@ class VehicleMapController {
                 continue;
             }
             try {
-                updatePosition(vehicle, state, now);
+                updateVehicleMarker(vehicle, state, now);
             } catch (RuntimeException e) {
                 // Programming-error path (e.g. require() failure in the gamma model on a
                 // degenerate schedule). Log so it surfaces, then degrade to the raw position.
-                Log.w(TAG, "updatePosition failed for trip " + vehicle.tripId, e);
+                Log.w(TAG, "updateVehicleMarker failed for trip " + vehicle.tripId, e);
                 animateToRawPosition(vehicle);
             }
             updateSelectedMarker(vehicle, state.getAnchor());
         }
     }
 
-    private void updatePosition(VehicleMarkerState vehicle, TripState state, long now) {
+    private void updateVehicleMarker(VehicleMarkerState vehicle, TripState state, long now) {
         ExtrapolationResult result = state.extrapolate(now);
         if (!(result instanceof ExtrapolationResult.Success)) {
             animateToRawPosition(vehicle);

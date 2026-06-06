@@ -151,6 +151,6 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener, Mark
             mFrameLoop.stop();
             return;
         }
-        mController.updatePositions(nowMs);
+        mController.updateVehicleMarkers(nowMs);
     }
 }

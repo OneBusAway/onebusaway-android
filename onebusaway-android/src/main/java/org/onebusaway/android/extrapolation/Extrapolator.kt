@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.extrapolation
 
-import org.onebusaway.android.extrapolation.data.Trip
+import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 
 /** Result of an extrapolation attempt. */
@@ -35,13 +35,15 @@ sealed class ExtrapolationResult {
 }
 
 /**
- * Pure extrapolation strategy. Subclasses implement model-specific logic in [doExtrapolate]. The
- * [Trip] class handles strategy selection and common validation; this is just the model.
+ * Pure extrapolation strategy over a single immutable [TripState] snapshot. Subclasses implement
+ * model-specific logic in [doExtrapolate]; [TripState.extrapolate] handles strategy selection and
+ * common validation. Instances are created per snapshot, so any model fitting may be cached in
+ * plain fields — snapshot identity is the invalidation.
  */
-abstract class Extrapolator(protected val trip: Trip) {
+abstract class Extrapolator(protected val state: TripState) {
     /**
-     * [lastTimeMs] and [queryTimeMs] must be in the same clock domain; [Trip.extrapolate] passes
-     * device-local clock values so the interval is unaffected by server/device clock skew.
+     * [lastTimeMs] and [queryTimeMs] must be in the same clock domain; [TripState.extrapolate]
+     * passes device-local clock values so the interval is unaffected by server/device clock skew.
      */
     abstract fun doExtrapolate(
             lastDist: Double,

@@ -16,8 +16,9 @@
 package org.onebusaway.android.map.googlemapsv2.tripmap
 
 import android.util.Log
+import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.extrapolation.ExtrapolationResult
-import org.onebusaway.android.extrapolation.data.Trip
+import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.map.googlemapsv2.ThrottledFrameLoop
 
 private const val TAG = "TripExtrapolationCtl"
@@ -26,11 +27,14 @@ private const val TAG = "TripExtrapolationCtl"
  * Owns the per-frame extrapolation loop for a single trip on the trip map view. Computes positions
  * and distributions each frame, then delegates all rendering to [TripVehicleOverlay].
  *
- * Runs entirely on the main thread: the choreographer drives the frame loop, and TripStore
- * mutations are also main-thread, so [trip] fields are read directly without synchronization.
+ * Each frame reads one consistent [TripState] snapshot from [tripFlow] (a single volatile read)
+ * and computes everything from it; data updates land as new snapshots between frames.
  */
 class TripExtrapolationController
-internal constructor(private val vehicleOverlay: TripVehicleOverlay, private val trip: Trip) {
+internal constructor(
+        private val vehicleOverlay: TripVehicleOverlay,
+        private val tripFlow: StateFlow<TripState>
+) {
     private val frameLoop = ThrottledFrameLoop(::doFrame)
 
     fun start() = frameLoop.start()
@@ -38,16 +42,17 @@ internal constructor(private val vehicleOverlay: TripVehicleOverlay, private val
     fun stop() = frameLoop.stop()
 
     private fun doFrame(now: Long) {
-        val shapeData = trip.polyline ?: return
+        val state = tripFlow.value
+        val shapeData = state.polyline ?: return
         val result =
                 try {
-                    trip.extrapolate(now)
+                    state.extrapolate(now)
                 } catch (e: RuntimeException) {
                     // Programming-error path (e.g. require() failure in the gamma model on a
                     // degenerate
                     // schedule). Log so it surfaces, then skip this frame; the next frame will
                     // retry.
-                    Log.w(TAG, "Extrapolation failed for ${trip.tripId}", e)
+                    Log.w(TAG, "Extrapolation failed for ${state.tripId}", e)
                     return
                 }
 
@@ -58,7 +63,7 @@ internal constructor(private val vehicleOverlay: TripVehicleOverlay, private val
                 if (medianDist.isFinite()) {
                     val loc = shapeData.interpolate(medianDist)
                     if (loc != null) {
-                        vehicleOverlay.updateVehiclePosition(loc, trip.anchor, now)
+                        vehicleOverlay.updateVehiclePosition(loc, state.anchor, now)
                     }
                     vehicleOverlay.updateEstimateOverlays(distribution)
                 } else {
@@ -74,6 +79,6 @@ internal constructor(private val vehicleOverlay: TripVehicleOverlay, private val
             }
         }
 
-        trip.anchor?.let { vehicleOverlay.showOrUpdateDataReceivedMarker(it, now) }
+        state.anchor?.let { vehicleOverlay.showOrUpdateDataReceivedMarker(it, now) }
     }
 }

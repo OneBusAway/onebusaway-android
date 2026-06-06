@@ -63,7 +63,7 @@ constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
     //  but the time axis is laid out against server-clock values — history[].lastUpdateTime
     //  and serviceDate + stopTime*1000. Any client/server clock skew shifts the red "now"
     //  line away from the latest trajectory dot. Fix by translating currentTime into server
-    //  clock via Trip's fetchTimes/localFetchTimes offset.
+    //  clock via HistoryEntry's serverTimeMs/localTimeMs offset.
     private var currentTime = System.currentTimeMillis()
     private var distribution: ProbDistribution? = null
     private var cachedCiLoDist = 0.0

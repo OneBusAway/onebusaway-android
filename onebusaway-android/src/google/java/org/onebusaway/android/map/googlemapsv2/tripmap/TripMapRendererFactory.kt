@@ -21,7 +21,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.GoogleMap
 import org.onebusaway.android.R
 import org.onebusaway.android.extrapolation.data.fetchShape
-import org.onebusaway.android.extrapolation.data.lookupTrip
+import org.onebusaway.android.extrapolation.data.lookupTripState
 import org.onebusaway.android.extrapolation.data.putPolyline
 import org.onebusaway.android.extrapolation.data.putSchedule
 import org.onebusaway.android.extrapolation.data.putServiceDate
@@ -80,7 +80,7 @@ internal object TripMapOverlayFactory {
         cacheResponseData(tripId, schedule, status)
 
         val sd =
-                lookupTrip(tripId)?.polyline
+                lookupTripState(tripId)?.polyline
                         ?: fetchShape(shapeId)?.also { putPolyline(tripId, it) }
                         ?: return fail(tripId, TripMapOverlayFailure.SHAPE_FETCH_FAILED)
 
@@ -108,7 +108,7 @@ internal object TripMapOverlayFactory {
         val vehicleOverlay = TripVehicleOverlay(map, context, sd, routeColor, route?.type)
 
         routeOverlay.activate()
-        lookupTrip(tripId)?.anchor?.let {
+        lookupTripState(tripId)?.anchor?.let {
             vehicleOverlay.showOrUpdateDataReceivedMarker(it, System.currentTimeMillis())
         }
         vehicleOverlay.activate(vehiclePosition)

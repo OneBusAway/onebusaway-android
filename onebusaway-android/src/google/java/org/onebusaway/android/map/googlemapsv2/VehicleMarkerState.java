@@ -17,18 +17,20 @@ package org.onebusaway.android.map.googlemapsv2;
 
 import com.google.android.gms.maps.model.Marker;
 
-import org.onebusaway.android.extrapolation.data.Trip;
+import org.onebusaway.android.extrapolation.data.TripState;
 import org.onebusaway.android.io.elements.ObaTripStatus;
+
+import kotlinx.coroutines.flow.StateFlow;
 
 /**
  * Per-vehicle display state on the main map view. One instance per tracked
  * trip.
- * Trip-level data (history, schedule, extrapolation) lives on {@link Trip};
- * this holds only display/animation state.
+ * Trip-level data (history, schedule, extrapolation) lives on {@link TripState}
+ * snapshots read from {@link #tripFlow}; this holds only display/animation state.
  */
 class VehicleMarkerState {
 
-    final Trip trip;
+    final StateFlow<TripState> tripFlow;
     ObaTripStatus status;
     boolean animating;
     boolean selected;
@@ -43,9 +45,9 @@ class VehicleMarkerState {
     Marker dataReceivedMarker;
     long dataReceivedFixTime;
 
-    VehicleMarkerState(Trip trip, ObaTripStatus status) {
-        this.trip = trip;
+    VehicleMarkerState(StateFlow<TripState> tripFlow, ObaTripStatus status) {
+        this.tripFlow = tripFlow;
         this.status = status;
-        this.lastAnimatedAnchor = trip.getAnchor();
+        this.lastAnimatedAnchor = tripFlow.getValue().getAnchor();
     }
 }

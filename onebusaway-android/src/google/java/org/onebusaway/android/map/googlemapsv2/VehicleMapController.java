@@ -27,7 +27,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import org.onebusaway.android.R;
 import org.onebusaway.android.extrapolation.ExtrapolationResult;
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution;
-import org.onebusaway.android.extrapolation.data.Trip;
+import org.onebusaway.android.extrapolation.data.TripState;
 import org.onebusaway.android.extrapolation.data.TripStore;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaTrip;
@@ -44,6 +44,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+
+import kotlinx.coroutines.flow.StateFlow;
 
 /**
  * Manages all vehicle markers on the Google Map: creation, position updates
@@ -137,7 +139,7 @@ class VehicleMapController {
                 .icon(mIconFactory.getIcon(params))
                 .zIndex(VEHICLE_MARKER_Z_INDEX));
         VehicleMarkerState vehicle = new VehicleMarkerState(
-                TripStore.getOrCreateTrip(tripId), status);
+                TripStore.tripFlow(tripId), status);
         vehicle.vehicleMarker = m;
         vehicle.iconParams = params;
         m.setTag(vehicle);
@@ -173,7 +175,7 @@ class VehicleMapController {
         Iterator<Map.Entry<String, VehicleMarkerState>> iterator = mStates.entrySet().iterator();
         while (iterator.hasNext()) {
             VehicleMarkerState vehicle = iterator.next().getValue();
-            if (!activeTripIds.contains(vehicle.trip.getTripId())) {
+            if (!activeTripIds.contains(vehicle.tripFlow.getValue().getTripId())) {
                 destroyVehicleMarker(vehicle);
                 iterator.remove();
             }
@@ -291,7 +293,7 @@ class VehicleMapController {
 
     boolean isExtrapolating(Marker marker) {
         VehicleMarkerState vs = stateOf(marker);
-        return vs != null && vs.trip.getAnchor() != null;
+        return vs != null && vs.tripFlow.getValue().getAnchor() != null;
     }
 
     boolean isDataReceivedMarker(Marker marker) {
@@ -302,7 +304,7 @@ class VehicleMapController {
     String getTripIdForDataReceivedMarker(Marker marker) {
         VehicleMarkerState vs = stateOf(marker);
         if (vs != null && marker.equals(vs.dataReceivedMarker))
-            return vs.trip.getTripId();
+            return vs.tripFlow.getValue().getTripId();
         return null;
     }
 
@@ -312,29 +314,30 @@ class VehicleMapController {
         if (mStates.isEmpty())
             return;
         for (VehicleMarkerState vehicle : mStates.values()) {
+            // One consistent snapshot per vehicle per frame: a single volatile read,
+            // then plain field reads.
+            TripState state = vehicle.tripFlow.getValue();
             try {
-                updatePosition(vehicle, now);
+                updatePosition(vehicle, state, now);
             } catch (RuntimeException e) {
                 // Programming-error path (e.g. require() failure in the gamma model on a
                 // degenerate schedule). Log so it surfaces, then degrade to the raw position.
-                Log.w(TAG, "updatePosition failed for trip " + vehicle.trip.getTripId(), e);
+                Log.w(TAG, "updatePosition failed for trip " + state.getTripId(), e);
                 animateToRawPosition(vehicle);
             }
-            Trip trip = vehicle.trip;
-            updateSelectedMarker(vehicle, trip.getAnchor());
+            updateSelectedMarker(vehicle, state.getAnchor());
         }
     }
 
-    private void updatePosition(VehicleMarkerState vehicle, long now) {
-        Trip trip = vehicle.trip;
-        ExtrapolationResult result = trip.extrapolate(now);
+    private void updatePosition(VehicleMarkerState vehicle, TripState state, long now) {
+        ExtrapolationResult result = state.extrapolate(now);
         if (!(result instanceof ExtrapolationResult.Success)) {
             animateToRawPosition(vehicle);
             return;
         }
 
         ProbDistribution dist = ((ExtrapolationResult.Success) result).getDistribution();
-        Polyline polyline = trip.getPolyline();
+        Polyline polyline = state.getPolyline();
         if (polyline == null) {
             animateToRawPosition(vehicle);
             return;
@@ -357,10 +360,11 @@ class VehicleMapController {
         }
 
         LatLng target = MapHelpV2.makeLatLng(loc);
-        // "Fresh data arrived" iff Trip.anchor has been reassigned since the previous
-        // frame. Reference equality on the anchor itself is the natural signal — it
-        // changes exactly when recordStatus accepts a non-duplicate, newer status.
-        ObaTripStatus currentAnchor = trip.getAnchor();
+        // "Fresh data arrived" iff the anchor has been superseded since the previous
+        // frame. Reference equality on the anchor itself is the natural signal — the
+        // instance is carried across snapshots until a non-duplicate, newer status
+        // replaces it.
+        ObaTripStatus currentAnchor = state.getAnchor();
         boolean freshData = currentAnchor != vehicle.lastAnimatedAnchor;
         vehicle.lastAnimatedAnchor = currentAnchor;
 

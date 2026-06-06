@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.extrapolation
 
-import org.onebusaway.android.extrapolation.data.Trip
+import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.DiracDistribution
 import org.onebusaway.android.io.elements.ObaTripSchedule
 
@@ -23,14 +23,14 @@ import org.onebusaway.android.io.elements.ObaTripSchedule
  * Per-trip extrapolator for grade-separated transit (rail, subway) that replays the schedule
  * trajectory forward from the vehicle's current position, including dwell times at stops.
  */
-class ScheduleReplayExtrapolator(trip: Trip) : Extrapolator(trip) {
+class ScheduleReplayExtrapolator(state: TripState) : Extrapolator(state) {
 
     override fun doExtrapolate(
             lastDist: Double,
             lastTimeMs: Long,
             queryTimeMs: Long
     ): ExtrapolationResult {
-        val schedule = trip.schedule ?: return ExtrapolationResult.MissingSchedule
+        val schedule = state.schedule ?: return ExtrapolationResult.MissingSchedule
         val distance =
                 replaySchedule(schedule, lastDist, lastTimeMs, queryTimeMs)
                         ?: return ExtrapolationResult.MissingSchedule

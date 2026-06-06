@@ -16,7 +16,7 @@
 package org.onebusaway.android.extrapolation
 
 import kotlin.math.exp
-import org.onebusaway.android.extrapolation.data.Trip
+import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.AffineTransformDistribution
 import org.onebusaway.android.extrapolation.math.prob.FrozenDistribution
 import org.onebusaway.android.extrapolation.math.prob.GammaDistribution
@@ -41,9 +41,11 @@ internal const val MPS_TO_MPH = 2.23694
  * model. Conditioned on scheduled speed only; the slow component (constant shape) captures
  * delayed/stopped vehicles while the fast component is ensemble-mean-locked to the schedule speed.
  */
-class GammaExtrapolator(trip: Trip) : Extrapolator(trip) {
+class GammaExtrapolator(state: TripState) : Extrapolator(state) {
 
-    private var cachedDistribution: Pair<Long, ProbDistribution>? = null
+    // One extrapolator exists per immutable TripState, so the fitted distribution needs no
+    // cache key — instance identity is the invalidation.
+    private var cachedDistribution: ProbDistribution? = null
 
     override fun doExtrapolate(
             lastDist: Double,
@@ -51,25 +53,24 @@ class GammaExtrapolator(trip: Trip) : Extrapolator(trip) {
             queryTimeMs: Long
     ): ExtrapolationResult {
         val dtSec = (queryTimeMs - lastTimeMs) / 1000.0
-        val speedDist =
-                resolveDistribution(lastTimeMs) ?: return ExtrapolationResult.MissingSchedule
+        val speedDist = resolveDistribution() ?: return ExtrapolationResult.MissingSchedule
         return ExtrapolationResult.Success(
                 AffineTransformDistribution(speedDist, lastDist, dtSec / MPS_TO_MPH)
         )
     }
 
-    private fun resolveDistribution(lastFixTime: Long): ProbDistribution? {
-        cachedDistribution?.let { (cachedTime, dist) -> if (cachedTime == lastFixTime) return dist }
+    private fun resolveDistribution(): ProbDistribution? {
+        cachedDistribution?.let {
+            return it
+        }
 
-        val lastState = trip.history.lastOrNull() ?: return null
-        val schedule = trip.schedule
+        val lastStatus = state.history.lastOrNull()?.status ?: return null
+        val schedule = state.schedule
         val scheduleSpeed =
-                schedule?.speedAtDistance(lastState.scheduledDistanceAlongTrip ?: return null)
+                schedule?.speedAtDistance(lastStatus.scheduledDistanceAlongTrip ?: return null)
                         ?: return null
 
-        return buildH34SpeedDistribution(scheduleSpeed).also {
-            cachedDistribution = lastFixTime to it
-        }
+        return buildH34SpeedDistribution(scheduleSpeed).also { cachedDistribution = it }
     }
 }
 

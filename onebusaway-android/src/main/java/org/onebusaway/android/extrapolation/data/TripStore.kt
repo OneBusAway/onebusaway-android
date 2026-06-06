@@ -18,6 +18,8 @@
 package org.onebusaway.android.extrapolation.data
 
 import androidx.annotation.VisibleForTesting
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.io.elements.ObaTrip
 import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.io.elements.ObaTripStatus
@@ -27,51 +29,51 @@ import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.util.ShellRegistry
 
 /*
- * The registry of Trip objects: trip identity, payload retention, recording, and fetch-writeback —
- * and nothing else. All trip data is read directly off a Trip: acquire one via
- * getOrCreateTrip/lookupTrip and read its fields. Network I/O lives in the pollers (Pollers.kt)
- * and the pure fetchers (Fetchers.kt); hydrating call sites write results back in here.
+ * The store of per-trip state: one StateFlow<TripState> per tripId, plus recording and
+ * fetch-writeback — and nothing else. Consumers acquire a flow via tripFlow and read
+ * `.value` (a single volatile read; cheap enough for per-frame loops), getting a consistent
+ * immutable snapshot; transient readers use lookupTripState. Network I/O lives in the pollers
+ * (Pollers.kt) and the pure fetchers (Fetchers.kt); hydrating call sites write results back in
+ * here, where every record/put is a pure fold producing a new snapshot.
  *
- * Identity vs retention are deliberately separate (see ShellRegistry). A Trip instance is
- * permanent: the same tripId always resolves to the same object, so holding a Trip reference (in
- * a fragment, a marker state, a frame loop) is always safe — new data recorded for that tripId
- * lands in the instance the holder is reading. What is bounded is the payload: once more than
- * MAX_TRACKED_TRIPS trips hold data, the least-recently-used trip's data is cleared
- * (Trip.clearData), leaving a shell of a few dozen bytes that refills if the trip is ever
- * recorded again.
+ * Identity vs retention (see ShellRegistry): the StateFlow for a tripId is permanent — holding it
+ * is always safe, and stale data is unrepresentable because readers see whatever snapshot is
+ * current. What is bounded is the payload: once more than MAX_TRACKED_TRIPS trips hold data, the
+ * least-recently-used trip's flow is reset to an empty TripState, which refills if the trip is
+ * ever recorded again.
  *
- * Retention contract: LRU promotion happens at acquisition (getOrCreateTrip/lookupTrip) and on
- * every record and put call. Direct field reads on a held Trip don't promote, but every screen
- * that
- * reads a trip also runs a poller that records into it every few seconds, re-warming it — so a
- * trip being actively displayed is never the eviction victim. Holding a Trip past eviction is
- * still safe: the instance simply reports empty payload until it is recorded again.
+ * Retention contract: LRU promotion happens at acquisition (tripFlow/lookupTripState) and on
+ * every record and put call. Reads of a held flow don't promote, but every screen that reads a
+ * trip also runs a poller that records into it every few seconds, re-warming it — so a trip being
+ * actively displayed is never the eviction victim.
  *
  * Threading: main thread only. All public functions must be called from the main thread.
  * Background work (network fetches) lives in Pollers.kt and Fetchers.kt; results are posted back
- * to the main thread before they touch any state here. This invariant lets Trip hold plain
- * (non-volatile, non-locked) mutable fields and lets the per-frame extrapolation loop read them
- * directly.
+ * to the main thread before they touch any state here.
  */
 
 private const val MAX_TRACKED_TRIPS = 100
 
-private val tripRegistry = ShellRegistry(MAX_TRACKED_TRIPS, ::Trip, Trip::clearData)
+private val tripRegistry =
+        ShellRegistry<String, MutableStateFlow<TripState>>(
+                MAX_TRACKED_TRIPS,
+                { tripId -> MutableStateFlow(TripState.empty(tripId)) },
+                { it.value = TripState.empty(it.value.tripId) }
+        )
 
 // --- Trip registry ---
 
 /**
- * Acquires the permanent [Trip] for [tripId], creating it if needed, and promotes it in the
- * retention order. Use this when acquiring a reference to hold or write to; for transient reads
- * prefer [lookupTrip], which doesn't create a shell as a side effect.
+ * The permanent state flow for [tripId], created on first use and promoted in the retention
+ * order. Holding the returned flow is always safe; read `.value` for the current snapshot.
  */
-fun getOrCreateTrip(tripId: String): Trip = tripRegistry.acquire(tripId)
+fun tripFlow(tripId: String): StateFlow<TripState> = tripRegistry.acquire(tripId)
 
 /**
- * Transient-read lookup: returns the [Trip] if it has ever been observed (promoting it in the
- * retention order), or null without creating a shell.
+ * Transient-read lookup: the current snapshot if [tripId] has ever been observed (promoting it in
+ * the retention order), or null without creating a flow.
  */
-fun lookupTrip(tripId: String?): Trip? = tripRegistry.lookup(tripId)
+fun lookupTripState(tripId: String?): TripState? = tripRegistry.lookup(tripId)?.value
 
 // --- Recording ---
 
@@ -82,7 +84,8 @@ fun lookupTrip(tripId: String?): Trip? = tripRegistry.lookup(tripId)
 fun recordStatus(status: ObaTripStatus?, serverTimeMs: Long, localTimeMs: Long) {
     if (status == null) return
     val tripId = status.activeTripId ?: return
-    tripRegistry.retain(tripId).recordStatus(status, serverTimeMs, localTimeMs)
+    val flow = tripRegistry.retain(tripId)
+    flow.value = flow.value.recorded(status, serverTimeMs, localTimeMs)
 }
 
 fun recordTripDetailsResponse(
@@ -93,33 +96,31 @@ fun recordTripDetailsResponse(
     if (response == null) return
     val status = response.status ?: return
     if (polledTripId != null) {
-        val polledTrip = tripRegistry.retain(polledTripId)
-        polledTrip.vehicleActiveTripId = status.activeTripId
-        polledTrip.tripDetailsResponse = response
+        val polled = tripRegistry.retain(polledTripId)
+        polled.value =
+                polled.value.copy(
+                        vehicleActiveTripId = status.activeTripId,
+                        tripDetailsResponse = response
+                )
     }
     val activeTripId = status.activeTripId ?: return
-    val trip = tripRegistry.retain(activeTripId)
-    trip.recordStatus(status, response.currentTime, localTimeMs)
-    if (status.serviceDate > 0) {
-        trip.serviceDate = status.serviceDate
-    }
+    val flow = tripRegistry.retain(activeTripId)
+    flow.value =
+            flow.value
+                    .recorded(status, response.currentTime, localTimeMs)
+                    .withServiceDate(status.serviceDate)
 }
 
 fun recordTripsForRouteResponse(response: ObaTripsForRouteResponse, localTimeMs: Long) {
     val serverTime = response.currentTime
     response.forEachActiveTrip { tripId, status, activeTrip ->
-        val trip = tripRegistry.retain(tripId)
-        trip.recordStatus(status, serverTime, localTimeMs)
-        if (status.serviceDate > 0) {
-            trip.serviceDate = status.serviceDate
-        }
-        if (trip.routeType == null) {
-            val routeId = activeTrip.routeId
-            val route = if (routeId != null) response.getRoute(routeId) else null
-            if (route != null) {
-                trip.routeType = route.type
-            }
-        }
+        val flow = tripRegistry.retain(tripId)
+        val route = activeTrip.routeId?.let { response.getRoute(it) }
+        flow.value =
+                flow.value
+                        .recorded(status, serverTime, localTimeMs)
+                        .withServiceDate(status.serviceDate)
+                        .withRouteType(route?.type)
     }
 }
 
@@ -127,18 +128,21 @@ fun recordTripsForRouteResponse(response: ObaTripsForRouteResponse, localTimeMs:
 
 fun putSchedule(tripId: String?, schedule: ObaTripSchedule?) {
     if (tripId != null && schedule != null) {
-        tripRegistry.retain(tripId).schedule = schedule
+        val flow = tripRegistry.retain(tripId)
+        flow.value = flow.value.copy(schedule = schedule)
     }
 }
 
 fun putServiceDate(tripId: String?, serviceDate: Long) {
     if (tripId != null && serviceDate > 0) {
-        tripRegistry.retain(tripId).serviceDate = serviceDate
+        val flow = tripRegistry.retain(tripId)
+        flow.value = flow.value.withServiceDate(serviceDate)
     }
 }
 
 fun putPolyline(tripId: String, polyline: Polyline) {
-    tripRegistry.retain(tripId).polyline = polyline
+    val flow = tripRegistry.retain(tripId)
+    flow.value = flow.value.copy(polyline = polyline)
 }
 
 // --- Introspection and cleanup ---
@@ -147,8 +151,8 @@ fun putPolyline(tripId: String, polyline: Polyline) {
 fun getTrackedTripIds(): Set<String> = tripRegistry.warmKeys()
 
 /**
- * Full reset, including identity — any Trip references held by callers are orphaned. For tests
- * only; production code relies on Trip identity being permanent.
+ * Full reset, including the flows themselves — any flow held by callers is orphaned. For tests
+ * only; production code relies on flow identity being permanent.
  */
 @VisibleForTesting
 fun clearAllTrips() {

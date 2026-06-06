@@ -88,7 +88,7 @@ import org.onebusaway.android.io.request.ObaTripDetailsResponse;
 import org.onebusaway.android.nav.NavigationService;
 import org.onebusaway.android.extrapolation.ExtrapolationResult;
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution;
-import org.onebusaway.android.extrapolation.data.Trip;
+import org.onebusaway.android.extrapolation.data.TripState;
 import org.onebusaway.android.extrapolation.data.TripStore;
 import org.onebusaway.android.extrapolation.data.TripDetailsPoller;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
@@ -102,6 +102,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
+
+import kotlinx.coroutines.flow.StateFlow;
 
 import static org.onebusaway.android.util.PermissionUtils.NOTIFICATION_PERMISSION_REQUEST;
 
@@ -138,14 +140,15 @@ public class TripDetailsListFragment extends ListFragment {
 
     private String mTripId;
     private TripDetailsPoller mPoller;
-    private Trip mTrip;
+    private StateFlow<TripState> mTripFlow;
 
     /**
-     * The trip this fragment polls, acquired once — Trip identity is permanent, so the reference
-     * stays valid for the fragment's lifetime. Distinct from {@link #mTrip}, which is the trip the
-     * vehicle is actively running (they diverge across block transitions).
+     * The state flow for the trip this fragment polls, acquired once — flow identity is
+     * permanent, so the reference stays valid for the fragment's lifetime. Distinct from
+     * {@link #mTripFlow}, which tracks the trip the vehicle is actively running (they diverge
+     * across block transitions).
      */
-    private Trip mPolledTrip;
+    private StateFlow<TripState> mPolledTripFlow;
 
     private String mRouteId;
 
@@ -237,7 +240,7 @@ public class TripDetailsListFragment extends ListFragment {
             Log.e(TAG, "TripId is null");
             throw new RuntimeException("TripId should not be null");
         }
-        mPolledTrip = TripStore.getOrCreateTrip(mTripId);
+        mPolledTripFlow = TripStore.tripFlow(mTripId);
 
         mStopId = args.getString(STOP_ID);
 
@@ -282,7 +285,7 @@ public class TripDetailsListFragment extends ListFragment {
     @Override
     public void onResume() {
         // Show cached data if available
-        ObaTripDetailsResponse cached = mPolledTrip.getTripDetailsResponse();
+        ObaTripDetailsResponse cached = mPolledTripFlow.getValue().getTripDetailsResponse();
         if (cached != null) {
             setTripDetails(cached);
             setListShown(true);
@@ -520,7 +523,7 @@ public class TripDetailsListFragment extends ListFragment {
     private void updateVehiclePosition() {
         try {
             // Pick up fresh data from poller
-            ObaTripDetailsResponse fresh = mPolledTrip.getTripDetailsResponse();
+            ObaTripDetailsResponse fresh = mPolledTripFlow.getValue().getTripDetailsResponse();
             if (fresh != null && fresh != mTripInfo) {
                 setTripDetails(fresh);
                 if (mTripDataCallback != null) {
@@ -536,7 +539,7 @@ public class TripDetailsListFragment extends ListFragment {
             if (status == null) return;
 
             // Determine the active trip ID
-            String activeTripId = mPolledTrip.getVehicleActiveTripId();
+            String activeTripId = mPolledTripFlow.getValue().getVehicleActiveTripId();
             if (activeTripId == null) {
                 activeTripId = status.getActiveTripId();
             }
@@ -544,10 +547,11 @@ public class TripDetailsListFragment extends ListFragment {
             // Only extrapolate if this is the active trip
             if (activeTripId == null || !activeTripId.equals(mTripId)) return;
 
-            if (mTrip == null) {
-                mTrip = TripStore.getOrCreateTrip(activeTripId);
+            if (mTripFlow == null) {
+                mTripFlow = TripStore.tripFlow(activeTripId);
             }
-            ExtrapolationResult result = mTrip.extrapolate(System.currentTimeMillis());
+            ExtrapolationResult result =
+                    mTripFlow.getValue().extrapolate(System.currentTimeMillis());
             if (!(result instanceof ExtrapolationResult.Success)) return;
 
             Double extrapolatedDist = ((ExtrapolationResult.Success) result).getDistribution().median();
@@ -582,8 +586,8 @@ public class TripDetailsListFragment extends ListFragment {
             TripStore.putServiceDate(activeTripId, status.getServiceDate());
         }
 
-        Trip activeTrip = TripStore.lookupTrip(activeTripId);
-        boolean newHasData = activeTrip != null && !activeTrip.getHistory().isEmpty();
+        TripState activeState = TripStore.lookupTripState(activeTripId);
+        boolean newHasData = activeState != null && !activeState.getHistory().isEmpty();
         String newVehicleId = status.getVehicleId();
         if (newHasData != mHasLocationData || !TextUtils.equals(newVehicleId, mActiveVehicleId)) {
             mHasLocationData = newHasData;

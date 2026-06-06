@@ -145,12 +145,12 @@ constructor(
  */
 private fun CoroutineScope.prefetchSchedulesAndShapes(response: ObaTripsForRouteResponse) {
     response.forEachActiveTrip { tripId, _, activeTrip ->
-        val trip = lookupTrip(tripId)
-        if (trip?.schedule == null) {
+        val state = lookupTripState(tripId)
+        if (state?.schedule == null) {
             launch { fetchTripSchedule(tripId)?.let { putSchedule(tripId, it) } }
         }
         val shapeId = activeTrip.shapeId
-        if (shapeId != null && trip?.polyline == null) {
+        if (shapeId != null && state?.polyline == null) {
             launch { fetchShape(shapeId)?.let { putPolyline(tripId, it) } }
         }
     }

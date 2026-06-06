@@ -39,9 +39,10 @@ import org.json.JSONObject
 import org.onebusaway.android.R
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.MPS_TO_MPH
-import org.onebusaway.android.extrapolation.data.Trip
-import org.onebusaway.android.extrapolation.data.getOrCreateTrip
+import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.extrapolation.data.TripDetailsPoller
+import org.onebusaway.android.extrapolation.data.TripState
+import org.onebusaway.android.extrapolation.data.tripFlow
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.io.elements.ObaTripStatus
 import org.onebusaway.android.util.UIUtils
@@ -83,7 +84,7 @@ class VehicleLocationDataActivity : AppCompatActivity() {
     private lateinit var tripId: String
     private var vehicleId: String? = null
     private var stopId: String? = null
-    private lateinit var trip: Trip
+    private lateinit var tripFlow: StateFlow<TripState>
     private var poller: TripDetailsPoller? = null
 
     private val refreshHandler = Handler(Looper.getMainLooper())
@@ -121,9 +122,9 @@ class VehicleLocationDataActivity : AppCompatActivity() {
                         }
         vehicleId = intent.getStringExtra(EXTRA_VEHICLE_ID)
         stopId = intent.getStringExtra(EXTRA_STOP_ID)
-        // Acquired once: Trip identity is permanent, so this reference stays valid for the
-        // activity's lifetime while the poller feeds it data.
-        trip = getOrCreateTrip(tripId)
+        // Acquired once: the flow for a tripId is permanent, so this reference stays valid
+        // for the activity's lifetime while the poller publishes new snapshots into it.
+        tripFlow = tripFlow(tripId)
 
         tableContainer = findViewById(R.id.location_data_table_container)
         graphView = findViewById(R.id.location_data_graph)
@@ -185,20 +186,21 @@ class VehicleLocationDataActivity : AppCompatActivity() {
     // --- Data refresh ---
 
     private fun refreshData() {
-        val activeTripId = trip.vehicleActiveTripId
+        val state = tripFlow.value
+        val activeTripId = state.vehicleActiveTripId
         val tripEnded = activeTripId != null && tripId != activeTripId
 
-        updateHeader(trip.history.size, tripEnded)
+        updateHeader(state.history.size, tripEnded)
 
-        if (trip.history.size != lastRowCount) {
-            lastRowCount = trip.history.size
+        if (state.history.size != lastRowCount) {
+            lastRowCount = state.history.size
             val table: TableLayout = findViewById(R.id.location_data_table)
             table.removeAllViews()
-            buildTable(table, trip)
+            buildTable(table, state)
         }
 
         if (graphView.visibility == View.VISIBLE) {
-            refreshGraph(trip, tripEnded)
+            refreshGraph(state, tripEnded)
         }
     }
 
@@ -212,19 +214,19 @@ class VehicleLocationDataActivity : AppCompatActivity() {
         }
     }
 
-    private fun refreshGraph(trip: Trip, tripEnded: Boolean) {
+    private fun refreshGraph(state: TripState, tripEnded: Boolean) {
         val distribution: ProbDistribution? =
                 if (!tripEnded) {
-                    (trip.extrapolate(System.currentTimeMillis()) as? ExtrapolationResult.Success)
+                    (state.extrapolate(System.currentTimeMillis()) as? ExtrapolationResult.Success)
                             ?.distribution
                 } else null
         graphView.setData(
-                trip.history,
-                trip.schedule,
-                trip.serviceDate,
+                state.statuses,
+                state.schedule,
+                state.serviceDate,
                 distribution,
-                trip.anchor,
-                trip.anchorTimeMs
+                state.anchor,
+                state.anchorTimeMs
         )
     }
 
@@ -281,12 +283,12 @@ class VehicleLocationDataActivity : AppCompatActivity() {
             )
     private val timeFmt = SimpleDateFormat("HH:mm:ss", Locale.US)
 
-    private fun buildTable(table: TableLayout, trip: Trip) {
-        // Copy so row indexes stay aligned with table rows even after the live
-        // history is appended to or trimmed; showStatusJson indexes into this.
-        val history = trip.history.toList()
-        val anchor = trip.anchor
-        currentHistory = history
+    private fun buildTable(table: TableLayout, state: TripState) {
+        // The snapshot's history never mutates, so the rows stay aligned with it;
+        // showStatusJson indexes into this projection.
+        val history = state.history
+        val anchor = state.anchor
+        currentHistory = state.statuses
         dataRows.clear()
         selectedIndex = null
         addHeaderRow(table)
@@ -299,11 +301,9 @@ class VehicleLocationDataActivity : AppCompatActivity() {
 
         var prev: ObaTripStatus? = null
         for ((i, entry) in history.withIndex()) {
-            val fetchTime = trip.fetchTimes.getOrElse(i) { 0L }
-            val localFetchTime = trip.localFetchTimes.getOrElse(i) { 0L }
-            val isAnchor = anchor != null && entry === anchor
-            addDataRow(table, i, entry, prev, fetchTime, localFetchTime, isAnchor)
-            prev = entry
+            val isAnchor = anchor != null && entry.status === anchor
+            addDataRow(table, i, entry.status, prev, entry.serverTimeMs, entry.localTimeMs, isAnchor)
+            prev = entry.status
         }
     }
 

@@ -30,7 +30,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.Polyline as MapPolyline
 import java.util.concurrent.TimeUnit
 import org.onebusaway.android.R
-import org.onebusaway.android.extrapolation.data.lookupTrip
+import org.onebusaway.android.extrapolation.data.lookupTripState
 import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
 import org.onebusaway.android.map.googlemapsv2.StampedPolylineFactory
@@ -126,7 +126,7 @@ class TripRouteOverlay(
 
     private fun computeEtaSnippet(arrivalTimeSec: Long, now: Long): String? {
         val serviceDate =
-                lookupTrip(tripId)?.serviceDate?.takeIf { it > 0 } ?: return null
+                lookupTripState(tripId)?.serviceDate?.takeIf { it > 0 } ?: return null
         val scheduledMs = serviceDate + arrivalTimeSec * 1000
         return if (scheduleDeviation == null) {
             formatEta(

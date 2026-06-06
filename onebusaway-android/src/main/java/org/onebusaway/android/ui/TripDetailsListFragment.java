@@ -299,8 +299,6 @@ public class TripDetailsListFragment extends ListFragment {
             return;
         }
 
-        TripStore.recordTripDetailsResponse(mTripId, data, System.currentTimeMillis());
-
         setUpHeader();
         final ListView listView = getListView();
 

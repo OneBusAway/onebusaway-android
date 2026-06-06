@@ -142,6 +142,15 @@ data class TripState(
         )
     }
 
+    /**
+     * Pure fold: returns the state with everything [observation] carries applied — the status
+     * recorded, plus serviceDate and routeType when the observation has them.
+     */
+    fun observed(observation: TripObservation, localTimeMs: Long): TripState =
+            recorded(observation.status, observation.serverTimeMs, localTimeMs)
+                    .withServiceDate(observation.serviceDate)
+                    .withRouteType(observation.routeType)
+
     /** Returns the state with [serviceDate] applied, or `this` when it is unknown or unchanged. */
     fun withServiceDate(serviceDate: Long): TripState =
             if (serviceDate > 0 && serviceDate != this.serviceDate) copy(serviceDate = serviceDate)

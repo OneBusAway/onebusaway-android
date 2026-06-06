@@ -31,8 +31,9 @@ import org.onebusaway.android.extrapolation.data.getTrackedTripIds
 import org.onebusaway.android.extrapolation.data.lookupTripState
 import org.onebusaway.android.extrapolation.data.putPolyline
 import org.onebusaway.android.extrapolation.data.putSchedule
+import org.onebusaway.android.extrapolation.data.TripObservation
 import org.onebusaway.android.extrapolation.data.putServiceDate
-import org.onebusaway.android.extrapolation.data.recordStatus
+import org.onebusaway.android.extrapolation.data.record
 import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.io.elements.ObaTripStatus
 import org.onebusaway.android.io.elements.Occupancy
@@ -119,35 +120,6 @@ class SpeedEstimatorTest {
 
         // Internal history should be unaffected
         assertEquals(1, lookupTripState("trip1")!!.history.size)
-    }
-
-    @Test
-    fun testTrackerNullActiveTripIdIgnored() {
-        // Create a status with null activeTripId
-        val pos = createLocation(47.0, -122.0)
-        val statusWithNullTrip =
-                TestTripStatus(
-                        vehicleId = "v1",
-                        activeTripId = null,
-                        position = pos,
-                        lastKnownLocation = pos,
-                        distanceAlongTrip = 100.0,
-                        lastKnownDistanceAlongTrip = null,
-                        scheduledDistanceAlongTrip = 100.0,
-                        totalDistanceAlongTrip = 5000.0,
-                        lastUpdateTime = 1000L,
-                        lastLocationUpdateTime = 1000L,
-                        scheduleDeviation = 0L,
-                        predicted = true
-                )
-        recordStatus(statusWithNullTrip, System.currentTimeMillis(), System.currentTimeMillis())
-        // Should not throw, just silently ignore
-    }
-
-    @Test
-    fun testTrackerNullStatusIgnored() {
-        recordStatus(null, System.currentTimeMillis(), System.currentTimeMillis())
-        assertNull(lookupTripState("trip1"))
     }
 
     // --- Eviction tests ---
@@ -377,6 +349,10 @@ class SpeedEstimatorTest {
     }
 
     // --- Helper methods ---
+
+    /** Records [status] as an observation of its active trip, as the response adapters would. */
+    private fun recordStatus(status: ObaTripStatus, serverTimeMs: Long, localTimeMs: Long) =
+            record(TripObservation(status.activeTripId!!, status, serverTimeMs), localTimeMs)
 
     private fun createStatus(
             vehicleId: String,

@@ -17,6 +17,7 @@
 
 package org.onebusaway.android.extrapolation.data
 
+import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +35,8 @@ import org.onebusaway.android.io.request.ObaTripsForRouteResponse
 
 /*
  * The store-hydrating side of the trip data layer: everything in this file fetches from the
- * network and records the result into TripStore. Recurring pollers re-fetch volatile vehicle
+ * network and records the result into the trip store, translated through the response adapters
+ * in Adapters.kt. Recurring pollers re-fetch volatile vehicle
  * status — it ages in seconds — on an interval, with lifecycles bound to the screen that is
  * watching (start in onResume, stop in onPause); fetchTripDetailsOnce is the one-shot variant
  * for explicit user refreshes; and the route poller's backfill hydrates immutable resources by
@@ -46,6 +48,27 @@ private const val TAG = "Pollers"
 
 /** Process-lifetime scope for fire-and-forget one-shot fetches; never cancelled. */
 private val oneShotScope = MainScope()
+
+/**
+ * Fetches trip details for [tripId] once and records the result: the response writeback on the
+ * polled trip plus the observation of the vehicle's active trip. Shared by [TripDetailsPoller]
+ * and [fetchTripDetailsOnce]. Failures are logged and swallowed; the next attempt retries.
+ */
+private suspend fun fetchAndRecordTripDetails(ctx: Context, tripId: String) {
+    try {
+        val localTimeMs = System.currentTimeMillis()
+        val response =
+                withContext(Dispatchers.IO) {
+                    ObaTripDetailsRequest.newRequest(ctx, tripId).call()
+                }
+        if (response.code == ObaApi.OBA_OK) {
+            response.status?.let { putTripDetailsResponse(tripId, it.activeTripId, response) }
+            response.toObservations().forEach { record(it, localTimeMs) }
+        }
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to fetch trip details for $tripId", e)
+    }
+}
 
 /**
  * Polls trip details every [intervalMs] and records responses into the trip store. Lifecycle is
@@ -62,18 +85,7 @@ constructor(private val tripId: String, private val intervalMs: Long = DEFAULT_P
         job =
                 MainScope().launch {
                     while (isActive) {
-                        try {
-                            val localTimeMs = System.currentTimeMillis()
-                            val response =
-                                    withContext(Dispatchers.IO) {
-                                        ObaTripDetailsRequest.newRequest(ctx, tripId).call()
-                                    }
-                            if (response.code == ObaApi.OBA_OK) {
-                                recordTripDetailsResponse(tripId, response, localTimeMs)
-                            }
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Failed to fetch trip details for $tripId", e)
-                        }
+                        fetchAndRecordTripDetails(ctx, tripId)
                         delay(intervalMs)
                     }
                 }
@@ -120,7 +132,7 @@ constructor(
                                                 .call()
                                     }
                             if (response.code == ObaApi.OBA_OK) {
-                                recordTripsForRouteResponse(response, localTimeMs)
+                                response.toObservations().forEach { record(it, localTimeMs) }
                                 prefetchSchedulesAndShapes(response)
                                 callback?.onResponse(response)
                             }
@@ -163,18 +175,5 @@ private fun CoroutineScope.prefetchSchedulesAndShapes(response: ObaTripsForRoute
  */
 fun fetchTripDetailsOnce(tripId: String) {
     val ctx = Application.get().applicationContext
-    oneShotScope.launch {
-        try {
-            val localTimeMs = System.currentTimeMillis()
-            val response =
-                    withContext(Dispatchers.IO) {
-                        ObaTripDetailsRequest.newRequest(ctx, tripId).call()
-                    }
-            if (response.code == ObaApi.OBA_OK) {
-                recordTripDetailsResponse(tripId, response, localTimeMs)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed one-shot trip details fetch for $tripId", e)
-        }
-    }
+    oneShotScope.launch { fetchAndRecordTripDetails(ctx, tripId) }
 }

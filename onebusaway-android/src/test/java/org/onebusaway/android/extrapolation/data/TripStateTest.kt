@@ -22,6 +22,8 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.extrapolation.ExtrapolationResult
+import org.onebusaway.android.io.elements.ObaRoute
+import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.io.elements.ObaTripStatus
 import org.onebusaway.android.io.elements.Occupancy
 import org.onebusaway.android.io.elements.Status
@@ -412,6 +414,62 @@ class TripStateTest {
     }
 
     // ================================================================
+    // Strategy selection — late-arriving routeType
+    // ================================================================
+
+    // The strategy choice is observable from outside: the test status carries no
+    // scheduledDistanceAlongTrip, so the gamma (bus) model cannot resolve a speed distribution
+    // and reports MissingSchedule even when a schedule is present, while schedule replay needs
+    // only the schedule itself and succeeds on the same data.
+
+    @Test
+    fun `routeType arriving late re-selects the strategy on the new snapshot`() {
+        val localTime = 100_000L
+        val unknownType =
+                TripState.empty("trip1")
+                        .withStatus(
+                                status(distanceAlongTrip = 500.0, lastUpdateTime = localTime),
+                                serverTimeMs = localTime,
+                                localTimeMs = localTime
+                        )
+                        .withSchedule(schedule)
+
+        // No routeType yet → gamma model
+        assertTrue(
+                unknownType.extrapolate(localTime + 10_000L)
+                        is ExtrapolationResult.MissingSchedule
+        )
+
+        // routeType arrives on a later poll: the copy re-derives the extrapolator, so a
+        // grade-separated trip switches to schedule replay instead of staying locked to gamma
+        val rail = unknownType.withRouteType(ObaRoute.TYPE_SUBWAY)
+        assertTrue(rail.extrapolate(localTime + 10_000L) is ExtrapolationResult.Success)
+    }
+
+    @Test
+    fun `non grade-separated routeType keeps the gamma strategy`() {
+        val localTime = 100_000L
+        val bus =
+                TripState.empty("trip1")
+                        .withStatus(
+                                status(distanceAlongTrip = 500.0, lastUpdateTime = localTime),
+                                serverTimeMs = localTime,
+                                localTimeMs = localTime
+                        )
+                        .withSchedule(schedule)
+                        .withRouteType(ObaRoute.TYPE_BUS)
+        assertTrue(bus.extrapolate(localTime + 10_000L) is ExtrapolationResult.MissingSchedule)
+    }
+
+    @Test
+    fun `withRouteType is first-writer-wins`() {
+        val state = TripState.empty("trip1").withRouteType(ObaRoute.TYPE_SUBWAY)
+        assertSame(state, state.withRouteType(ObaRoute.TYPE_BUS))
+        assertSame(state, state.withRouteType(null))
+        assertEquals(ObaRoute.TYPE_SUBWAY, state.routeType)
+    }
+
+    // ================================================================
     // Test fixture
     // ================================================================
 
@@ -431,6 +489,45 @@ class TripStateTest {
             hasLocation = hasLocation,
             activeTripId = activeTripId
     )
+
+    /** Three stops at 0/1000/3000 m — enough for schedule replay to succeed mid-route. */
+    private val schedule =
+            makeSchedule(
+                    Triple(0.0, 0L, 0L),
+                    Triple(1000.0, 100L, 130L),
+                    Triple(3000.0, 330L, 330L)
+            )
+
+    // Builds an ObaTripSchedule via reflection (the Jackson-bound type has no public
+    // constructor). Mirrors the helper in ScheduleReplayExtrapolatorTest.
+    private fun makeSchedule(vararg stops: Triple<Double, Long, Long>): ObaTripSchedule {
+        val stClass = ObaTripSchedule.StopTime::class.java
+        val ctor = stClass.getDeclaredConstructor()
+        ctor.isAccessible = true
+
+        val stopTimesArray = java.lang.reflect.Array.newInstance(stClass, stops.size)
+        for (i in stops.indices) {
+            val (dist, arrive, depart) = stops[i]
+            val st = ctor.newInstance()
+            setField(st, "distanceAlongTrip", dist)
+            setField(st, "arrivalTime", arrive)
+            setField(st, "departureTime", depart)
+            setField(st, "stopId", "stop_$i")
+            java.lang.reflect.Array.set(stopTimesArray, i, st)
+        }
+
+        val schedCtor = ObaTripSchedule::class.java.getDeclaredConstructor()
+        schedCtor.isAccessible = true
+        val sched = schedCtor.newInstance()
+        setField(sched, "stopTimes", stopTimesArray)
+        return sched
+    }
+
+    private fun setField(obj: Any, fieldName: String, value: Any?) {
+        val field = obj.javaClass.getDeclaredField(fieldName)
+        field.isAccessible = true
+        field.set(obj, value)
+    }
 }
 
 /**

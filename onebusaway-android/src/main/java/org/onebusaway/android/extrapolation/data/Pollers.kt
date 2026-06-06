@@ -33,6 +33,7 @@ import org.onebusaway.android.io.ObaApi
 import org.onebusaway.android.io.request.ObaTripDetailsRequest
 import org.onebusaway.android.io.request.ObaTripsForRouteRequest
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse
+import org.onebusaway.android.util.Polyline
 
 /*
  * The store-hydrating side of the trip data layer: everything in this file fetches from the
@@ -51,11 +52,12 @@ private const val TAG = "Pollers"
 private val oneShotScope = MainScope()
 
 /**
- * Fetches trip details for [tripId] once and records the result: the response writeback on the
- * polled trip plus the observation of the vehicle's active trip. The writeback happens even for
- * status-less responses — a schedule-only trip still renders its schedule from the cached
- * response. Shared by [TripDetailsPoller] and [fetchTripDetailsOnce]. Failures are logged and
- * swallowed; the next attempt retries.
+ * Fetches trip details for [tripId] once and records everything the response carries: the
+ * response writeback, schedule, and service date on the polled trip, plus the observation of
+ * the vehicle's active trip. The writebacks happen even for status-less responses — a
+ * schedule-only trip still renders its schedule from the cached response. This is the single
+ * hydration point for details responses; UI code only reads. Shared by [TripDetailsPoller] and
+ * [fetchTripDetailsOnce]. Failures are logged and swallowed; the next attempt retries.
  */
 private suspend fun fetchAndRecordTripDetails(ctx: Context, tripId: String) {
     try {
@@ -66,6 +68,8 @@ private suspend fun fetchAndRecordTripDetails(ctx: Context, tripId: String) {
                 }
         if (response.code == ObaApi.OBA_OK) {
             putTripDetailsResponse(tripId, response.status?.activeTripId, response)
+            putSchedule(tripId, response.schedule)
+            putServiceDate(tripId, response.status?.serviceDate ?: 0)
             response.toObservations().forEach { record(it, localTimeMs) }
         }
     } catch (e: CancellationException) {
@@ -170,10 +174,18 @@ private fun CoroutineScope.prefetchSchedulesAndShapes(response: ObaTripsForRoute
         }
         val shapeId = activeTrip.shapeId
         if (shapeId != null && state?.polyline == null) {
-            launch { fetchShape(shapeId)?.let { putPolyline(tripId, it) } }
+            launch { ensureShape(tripId, shapeId) }
         }
     }
 }
+
+/**
+ * Returns the trip's polyline, fetching it via [fetchShape] and recording it when absent.
+ * Shared by the route poller's backfill and the trip map's on-demand activation.
+ */
+suspend fun ensureShape(tripId: String, shapeId: String): Polyline? =
+        lookupTripState(tripId)?.polyline
+                ?: fetchShape(shapeId)?.also { putPolyline(tripId, it) }
 
 /**
  * Fire-and-forget one-shot trip details fetch for UI refresh actions. Records the result into

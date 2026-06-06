@@ -32,7 +32,8 @@ import org.onebusaway.android.util.Polyline
  * shapes; distilling responses into observations is the adapters' job (Adapters.kt).
  * (putTripDetailsResponse does accept a whole response, but stores it as an opaque value for UI
  * consumers — the store never looks inside it.) Network I/O lives in the pollers (Pollers.kt)
- * and the pure fetchers (Fetchers.kt).
+ * and the pure fetchers (Fetchers.kt). Every production writer lives in this package —
+ * hydration is Pollers.kt's job; UI code only reads, via lookupTripState.
  *
  * Retention: lookups and writes both promote, so a trip being actively displayed or polled is
  * never the eviction victim; once more than MAX_TRACKED_TRIPS trips are tracked, the

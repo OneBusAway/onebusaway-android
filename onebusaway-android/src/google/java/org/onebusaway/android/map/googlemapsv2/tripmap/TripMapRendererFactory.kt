@@ -20,14 +20,10 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.GoogleMap
 import org.onebusaway.android.R
-import org.onebusaway.android.extrapolation.data.fetchShape
+import org.onebusaway.android.extrapolation.data.ensureShape
 import org.onebusaway.android.extrapolation.data.lookupTripState
-import org.onebusaway.android.extrapolation.data.putPolyline
-import org.onebusaway.android.extrapolation.data.putSchedule
-import org.onebusaway.android.extrapolation.data.putServiceDate
 import org.onebusaway.android.io.elements.ObaReferences
 import org.onebusaway.android.io.elements.ObaTripSchedule
-import org.onebusaway.android.io.elements.ObaTripStatus
 import org.onebusaway.android.io.request.ObaTripDetailsResponse
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
 import org.onebusaway.android.util.Polyline
@@ -54,7 +50,7 @@ internal enum class TripMapOverlayFailure {
  * Creates and activates trip map overlays from an API response.
  *
  * [create] suspends while the trip shape is fetched (sharing any in-flight fetch via
- * [fetchShape]) and returns the overlays, or null — after logging a [TripMapOverlayFailure] —
+ * [ensureShape]) and returns the overlays, or null — after logging a [TripMapOverlayFailure] —
  * when required data is missing or failed to load.
  */
 internal object TripMapOverlayFactory {
@@ -77,11 +73,8 @@ internal object TripMapOverlayFactory {
         val route = refs.getRoute(trip.routeId)
         val shapeId = trip.shapeId ?: return fail(tripId, TripMapOverlayFailure.MISSING_SHAPE_ID)
 
-        cacheResponseData(tripId, schedule, status)
-
         val sd =
-                lookupTripState(tripId)?.polyline
-                        ?: fetchShape(shapeId)?.also { putPolyline(tripId, it) }
+                ensureShape(tripId, shapeId)
                         ?: return fail(tripId, TripMapOverlayFailure.SHAPE_FETCH_FAILED)
 
         val routeColor =
@@ -119,17 +112,6 @@ internal object TripMapOverlayFactory {
     private fun fail(tripId: String, reason: TripMapOverlayFailure): TripMapOverlays? {
         Log.w(TAG, "Overlay creation failed for $tripId: $reason")
         return null
-    }
-
-    private fun cacheResponseData(
-            tripId: String,
-            schedule: ObaTripSchedule,
-            status: ObaTripStatus?
-    ) {
-        putSchedule(tripId, schedule)
-        if (status != null && status.serviceDate > 0) {
-            putServiceDate(tripId, status.serviceDate)
-        }
     }
 
     private fun buildStopNameMap(

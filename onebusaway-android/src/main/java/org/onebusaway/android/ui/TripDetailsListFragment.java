@@ -566,15 +566,6 @@ public class TripDetailsListFragment extends ListFragment {
             return;
         }
 
-        // Cache schedule and service date so the trajectory graph can use them
-        ObaTripSchedule schedule = mTripInfo.getSchedule();
-        if (schedule != null) {
-            TripStore.putSchedule(activeTripId, schedule);
-        }
-        if (status.getServiceDate() > 0) {
-            TripStore.putServiceDate(activeTripId, status.getServiceDate());
-        }
-
         TripState activeState = TripStore.lookupTripState(activeTripId);
         boolean newHasData = activeState != null && !activeState.getHistory().isEmpty();
         String newVehicleId = status.getVehicleId();

@@ -79,7 +79,8 @@ data class TripState(
         /**
          * The trip the vehicle serving this trip most recently reported as active — equal to
          * [tripId] while the vehicle is still on this run, and the successor run's trip ID once
-         * the vehicle rolls onto its next trip. Null until a trip details response is recorded.
+         * the vehicle rolls onto its next trip. Null until a trip details response is recorded,
+         * or when the latest one carried no vehicle status.
          */
         val vehicleActiveTripId: String? = null,
         val tripDetailsResponse: ObaTripDetailsResponse? = null

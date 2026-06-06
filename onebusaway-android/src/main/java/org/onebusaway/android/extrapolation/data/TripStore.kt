@@ -88,7 +88,7 @@ fun putPolyline(tripId: String, polyline: Polyline) {
 /**
  * Caches a polled trip details response on [polledTripId], along with the trip the vehicle
  * reported as active (which differs from [polledTripId] once the vehicle rolls onto its next
- * run).
+ * run). [vehicleActiveTripId] is null when the response carried no vehicle status.
  */
 fun putTripDetailsResponse(
         polledTripId: String,

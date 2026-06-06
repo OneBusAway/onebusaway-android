@@ -51,8 +51,10 @@ private val oneShotScope = MainScope()
 
 /**
  * Fetches trip details for [tripId] once and records the result: the response writeback on the
- * polled trip plus the observation of the vehicle's active trip. Shared by [TripDetailsPoller]
- * and [fetchTripDetailsOnce]. Failures are logged and swallowed; the next attempt retries.
+ * polled trip plus the observation of the vehicle's active trip. The writeback happens even for
+ * status-less responses — a schedule-only trip still renders its schedule from the cached
+ * response. Shared by [TripDetailsPoller] and [fetchTripDetailsOnce]. Failures are logged and
+ * swallowed; the next attempt retries.
  */
 private suspend fun fetchAndRecordTripDetails(ctx: Context, tripId: String) {
     try {
@@ -62,7 +64,7 @@ private suspend fun fetchAndRecordTripDetails(ctx: Context, tripId: String) {
                     ObaTripDetailsRequest.newRequest(ctx, tripId).call()
                 }
         if (response.code == ObaApi.OBA_OK) {
-            response.status?.let { putTripDetailsResponse(tripId, it.activeTripId, response) }
+            putTripDetailsResponse(tripId, response.status?.activeTripId, response)
             response.toObservations().forEach { record(it, localTimeMs) }
         }
     } catch (e: Exception) {

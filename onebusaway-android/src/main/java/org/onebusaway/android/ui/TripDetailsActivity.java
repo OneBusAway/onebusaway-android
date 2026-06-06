@@ -163,9 +163,11 @@ public class TripDetailsActivity extends AppCompatActivity
             if (mShowingMap) {
                 showMap();
             } else {
+                FragmentManager fm = getSupportFragmentManager();
+                // Flush any in-flight list/map swap so the lookup can't miss the fragment
+                fm.executePendingTransactions();
                 TripDetailsListFragment list = (TripDetailsListFragment)
-                        getSupportFragmentManager()
-                                .findFragmentByTag(TripDetailsListFragment.TAG);
+                        fm.findFragmentByTag(TripDetailsListFragment.TAG);
                 if (list != null) {
                     list.refreshTripDetails();
                 }

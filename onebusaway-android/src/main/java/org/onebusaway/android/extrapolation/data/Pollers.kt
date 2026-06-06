@@ -132,8 +132,8 @@ constructor(
                         // Delivered outside the fetch's try/catch: a bug in the callback's UI
                         // code propagates loudly instead of being swallowed every poll tick.
                         if (response != null) callback?.onResponse(response)
-                        val succeeded = response != null && response.code == ObaApi.OBA_OK
-                        delayMs = nextPollDelayMs(delayMs, succeeded, intervalMs)
+                        delayMs = nextPollDelayMs(delayMs,
+                                response?.code == ObaApi.OBA_OK, intervalMs)
                         delay(delayMs)
                     }
                 }
@@ -171,34 +171,12 @@ constructor(
                 MainScope().launch {
                     var delayMs = intervalMs
                     while (isActive) {
-                        var response: ObaTripsForRouteResponse? = null
-                        try {
-                            val localTimeMs = System.currentTimeMillis()
-                            response =
-                                    withContext(Dispatchers.IO) {
-                                        ObaTripsForRouteRequest.Builder(ctx, routeId)
-                                                .setIncludeStatus(true)
-                                                .build()
-                                                .call()
-                                    }
-                            if (response.code == ObaApi.OBA_OK) {
-                                response.toObservations().forEach { record(it, localTimeMs) }
-                                prefetchSchedulesAndShapes(response)
-                            } else {
-                                Log.w(TAG, "Trips-for-route fetch for $routeId returned code" +
-                                        " ${response.code}: ${response.text}")
-                            }
-                        } catch (e: CancellationException) {
-                            throw e // poller stopped mid-fetch — not a failure
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Failed to fetch trips for route $routeId", e)
-                            response = null
-                        }
-                        val succeeded = response != null && response.code == ObaApi.OBA_OK
-                        // Delivered outside the try, so a bug in the map-overlay callback
-                        // propagates loudly. OK-only — unlike TripDetailsPoller, this caller
-                        // renders vehicles, not errors.
-                        if (succeeded) callback?.onResponse(response!!)
+                        val response = fetchAndRecordTripsForRoute(ctx, routeId)
+                        val succeeded = response?.code == ObaApi.OBA_OK
+                        // Delivered outside the fetch's try/catch, so a bug in the map-overlay
+                        // callback propagates loudly. OK-only — unlike TripDetailsPoller, this
+                        // caller renders vehicles, not errors.
+                        if (response != null && succeeded) callback?.onResponse(response)
                         delayMs = nextPollDelayMs(delayMs, succeeded, intervalMs)
                         delay(delayMs)
                     }
@@ -208,6 +186,41 @@ constructor(
     fun stop() {
         job?.cancel()
         job = null
+    }
+}
+
+/**
+ * Fetches trips-for-route once, recording the observations and launching schedule/shape
+ * backfills into the receiver scope. The trips-for-route sibling of
+ * [fetchAndRecordTripDetails]: returns the response (whatever its code), or null when the
+ * fetch threw.
+ */
+private suspend fun CoroutineScope.fetchAndRecordTripsForRoute(
+        ctx: Context,
+        routeId: String
+): ObaTripsForRouteResponse? {
+    return try {
+        val localTimeMs = System.currentTimeMillis()
+        val response =
+                withContext(Dispatchers.IO) {
+                    ObaTripsForRouteRequest.Builder(ctx, routeId)
+                            .setIncludeStatus(true)
+                            .build()
+                            .call()
+                }
+        if (response.code == ObaApi.OBA_OK) {
+            response.toObservations().forEach { record(it, localTimeMs) }
+            prefetchSchedulesAndShapes(response)
+        } else {
+            Log.w(TAG, "Trips-for-route fetch for $routeId returned code ${response.code}:" +
+                    " ${response.text}")
+        }
+        response
+    } catch (e: CancellationException) {
+        throw e // poller stopped mid-fetch — not a failure
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to fetch trips for route $routeId", e)
+        null
     }
 }
 

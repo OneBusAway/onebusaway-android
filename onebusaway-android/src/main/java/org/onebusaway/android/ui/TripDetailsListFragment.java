@@ -139,6 +139,9 @@ public class TripDetailsListFragment extends ListFragment {
     private String mTripId;
     private TripDetailsPoller mPoller;
 
+    /** True while we're in a poll-failure streak the user has already been told about. */
+    private boolean mPollFailureNotified;
+
     private String mRouteId;
 
     private String mStopId;
@@ -280,6 +283,8 @@ public class TripDetailsListFragment extends ListFragment {
             setListShown(true);
         }
 
+        // Returning to the screen starts a fresh failure streak for notification purposes
+        mPollFailureNotified = false;
         mPoller = new TripDetailsPoller(mTripId, this::onTripDetailsResponse);
         mPoller.start();
         mPositionTickHandler.postDelayed(mPositionTick, POSITION_TICK_MS);
@@ -294,6 +299,8 @@ public class TripDetailsListFragment extends ListFragment {
      */
     public void refreshTripDetails() {
         if (mPoller == null) return;
+        // An explicit refresh deserves explicit feedback, even mid-failure-streak
+        mPollFailureNotified = false;
         mPoller.stop();
         mPoller = new TripDetailsPoller(mTripId, this::onTripDetailsResponse);
         mPoller.start();
@@ -306,23 +313,15 @@ public class TripDetailsListFragment extends ListFragment {
      * as ArrivalsListFragment).
      */
     private void onTripDetailsResponse(ObaTripDetailsResponse response) {
-        // The poller can deliver one response after stop() if the fetch had already completed
+        // Defensive only: stop()'s cancellation already prevents post-stop delivery (there is
+        // no suspension point between the fetch completing and this callback).
         if (!isAdded() || getActivity() == null) {
             return;
         }
 
         if (response.getCode() == ObaApi.OBA_OK) {
-            // The position tick also applies fresh store data; same reference-compare here so
-            // whichever path sees the response first applies it and the other no-ops.
-            if (response != mTripInfo) {
-                setTripDetails(response);
-                if (mTripDataCallback != null) {
-                    mTripDataCallback.onTripDataLoaded(response);
-                }
-            }
-            if (isResumed()) {
-                setListShown(true);
-            }
+            mPollFailureNotified = false;
+            applyTripDetails(response);
             return;
         }
 
@@ -334,10 +333,32 @@ public class TripDetailsListFragment extends ListFragment {
             if (isResumed()) {
                 setListShown(true);
             }
-        } else {
-            // Data already showing: stale-but-present beats an intrusive error
+            mPollFailureNotified = true;
+        } else if (!mPollFailureNotified) {
+            // Data already showing: stale-but-present beats an intrusive error. Toast once
+            // per failure streak — with backoff, repeating it would nag indefinitely on a
+            // flaky connection.
             Toast.makeText(getActivity(), R.string.generic_comm_error_toast,
                     Toast.LENGTH_LONG).show();
+            mPollFailureNotified = true;
+        }
+    }
+
+    /**
+     * Applies an OK response unless it is the one already showing, and resolves the loading
+     * spinner. Shared by the poller callback and the position tick — the tick must keep
+     * applying store data too, because other screens' pollers (the trip map, the location
+     * data view) hydrate the store for this same trip without a callback here.
+     */
+    private void applyTripDetails(ObaTripDetailsResponse response) {
+        if (response != mTripInfo) {
+            setTripDetails(response);
+            if (mTripDataCallback != null) {
+                mTripDataCallback.onTripDataLoaded(response);
+            }
+        }
+        if (isResumed()) {
+            setListShown(true);
         }
     }
 
@@ -565,16 +586,12 @@ public class TripDetailsListFragment extends ListFragment {
 
     private void updateVehiclePosition() {
         try {
-            // Pick up fresh data from poller
+            // Pick up fresh store data — written by our own poller or another screen's
             TripState polledState = TripStore.lookupTripState(mTripId);
             ObaTripDetailsResponse fresh =
                     polledState != null ? polledState.getTripDetailsResponse() : null;
-            if (fresh != null && fresh != mTripInfo) {
-                setTripDetails(fresh);
-                if (mTripDataCallback != null) {
-                    mTripDataCallback.onTripDataLoaded(fresh);
-                }
-                if (isResumed()) setListShown(true);
+            if (fresh != null) {
+                applyTripDetails(fresh);
             }
             if (mAdapter == null || mTripInfo == null) return;
             ObaTripSchedule schedule = mTripInfo.getSchedule();

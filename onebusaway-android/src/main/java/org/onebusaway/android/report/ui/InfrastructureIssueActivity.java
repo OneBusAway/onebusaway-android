@@ -36,6 +36,7 @@ import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -295,6 +296,20 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         initLocation();
 
         setActionBarTitle(savedInstanceState);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Temporarily disable this callback so the back press reaches the default
+                // behavior (popping the fragment back stack or finishing the activity), then
+                // re-enable it for subsequent back presses
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+                setEnabled(true);
+                // If a fragment closes via back button, show 'Choose a Problem' category
+                mServicesSpinner.setSelection(0);
+            }
+        });
     }
 
     /**
@@ -716,13 +731,6 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     @Override
     public void onReportSent() {
         (new ReportSuccessDialog()).show(getSupportFragmentManager(), ReportSuccessDialog.TAG);
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        // If a fragment closes via back button, show 'Choose a Problem' category
-        mServicesSpinner.setSelection(0);
     }
 
     @Override

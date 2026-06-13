@@ -22,6 +22,7 @@
     "/api/where/arrivals-and-departures-for-stop/MTS_11671.json": "arrivals_and_departures_for_stop_mts_11671_filter_route_alerts",
     "/api/where/arrivals-and-departures-for-stop/MTS_9999.json": "sdmts_arrivals_and_departures_for_stop_no_end_time",
     "/api/where/arrivals-and-departures-for-stop/1_10020_occupancy.json": "arrivals_and_departures_for_stop_1_10020_occupancy",
+    "/api/where/arrivals-and-departures-for-stop/USF%20Bull%20Runner_203.json": "arrivals_and_departures_for_stop_usf_frequency",
 
     "/api/api/where/agencies-with-coverage.json": "agencies_with_coverage_tampa",
     "/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_3105.json": "arrivals_and_departures_for_stop_hart_3105",

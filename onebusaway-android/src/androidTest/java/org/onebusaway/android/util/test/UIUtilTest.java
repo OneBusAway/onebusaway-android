@@ -49,7 +49,9 @@ import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -946,6 +948,50 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(g, newG);
         assertEquals(b, newB);
         assertEquals(alpha, newAlpha);
+    }
+
+    /**
+     * Verifies the user-visible status label for frequency-based ("Every N mins") arrivals,
+     * which is the rendering path that issue #430 is about. Uses the USF Bull Runner fixture
+     * and exercises both branches of {@link ArrivalInfo#getStatusText()} - the "until" label
+     * (now inside the frequency window) and the "from" label (now before the window starts).
+     */
+    @Test
+    public void testFrequencyStatusLabels() {
+        // ObaTestCase.before() sets the Puget Sound API URL; the URI map resolves the USF
+        // request by path, so no setCustomApiUrl / region override is needed here.
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getTargetContext(),
+                        "USF Bull Runner_203").build().call();
+        assertOK(response);
+
+        ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+        assertNotNull(arrivals);
+        assertTrue(arrivals.length > 0);
+
+        ObaArrivalInfo arrival = arrivals[0];
+        ObaArrivalInfo.Frequency frequency = arrival.getFrequency();
+        assertNotNull(frequency);
+
+        // headway of 600 seconds renders as 10 minutes; the time is formatted exactly as
+        // ArrivalInfo formats it, so the assertion is locale/timezone-independent.
+        int headwayAsMinutes = (int) (frequency.getHeadway() / 60);
+        DateFormat formatter = DateFormat.getTimeInstance(DateFormat.SHORT);
+
+        // "until" branch - the fixture's currentTime falls inside the frequency window
+        long nowDuring = response.getCurrentTime();
+        assertTrue(nowDuring >= frequency.getStartTime() && nowDuring < frequency.getEndTime());
+        ArrivalInfo during = new ArrivalInfo(getTargetContext(), arrival, nowDuring, true);
+        String expectedUntil = getTargetContext().getString(R.string.stop_info_frequency_until,
+                headwayAsMinutes, formatter.format(new Date(frequency.getEndTime())));
+        assertEquals(expectedUntil, during.getStatusText());
+
+        // "from" branch - now is before the frequency window starts
+        long nowBefore = frequency.getStartTime() - 60 * 1000;
+        ArrivalInfo before = new ArrivalInfo(getTargetContext(), arrival, nowBefore, true);
+        String expectedFrom = getTargetContext().getString(R.string.stop_info_frequency_from,
+                headwayAsMinutes, formatter.format(new Date(frequency.getStartTime())));
+        assertEquals(expectedFrom, before.getStatusText());
     }
 
     private String formatTime(long time) {

@@ -30,6 +30,7 @@ import android.view.ViewTreeObserver;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -106,6 +107,19 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
         Bundle bundle = (savedInstanceState == null) ? new Bundle() : savedInstanceState;
         mBuilder = new TripRequestBuilder(bundle);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Collapse the sliding panel when the user presses the back button
+                if (mPanel != null && mPanel.getPanelState() == PanelState.EXPANDED) {
+                    mPanel.setPanelState(PanelState.COLLAPSED);
+                    return;
+                }
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+        });
     }
 
     @Override
@@ -258,19 +272,10 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
     }
 
     @Override
-    public void onBackPressed() {
-        if (mPanel != null && mPanel.getPanelState() == PanelState.EXPANDED) {
-            mPanel.setPanelState(PanelState.COLLAPSED);
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             // Ensure the software and hardware back buttons have the same behavior
-            onBackPressed();
+            getOnBackPressedDispatcher().onBackPressed();
             return true;
         }
         return super.onOptionsItemSelected(item);

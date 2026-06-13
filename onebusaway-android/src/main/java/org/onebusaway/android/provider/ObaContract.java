@@ -149,6 +149,44 @@ public final class ObaContract {
         public static final String REGION_ID = "region_id";
     }
 
+    protected interface TransitCenterColumns {
+
+        /**
+         * The user-chosen name of the transit center.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        String NAME = "name";
+
+        /**
+         * The region ID for filtering.
+         * <P>
+         * Type: INTEGER
+         * </P>
+         */
+        String REGION_ID = "region_id";
+    }
+
+    protected interface TransitCenterStopColumns {
+
+        /**
+         * The transit center ID.
+         * <P>
+         * Type: INTEGER
+         * </P>
+         */
+        String TRANSIT_CENTER_ID = "transit_center_id";
+
+        /**
+         * The stop ID.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        String STOP_ID = "stop_id";
+    }
+
     protected interface StopRouteKeyColumns {
 
         /**
@@ -1974,6 +2012,106 @@ public final class ObaContract {
                 }
             }
             return null;
+        }
+    }
+
+    public static class TransitCenters implements BaseColumns, TransitCenterColumns {
+
+        // Cannot be instantiated
+        private TransitCenters() {
+        }
+
+        /** The URI path portion for this table */
+        public static final String PATH = "transit_centers";
+
+        /** The content:// style URI for this table */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(
+                AUTHORITY_URI, PATH);
+
+        public static final String CONTENT_TYPE
+                = "vnd.android.cursor.item/" + BuildConfig.DATABASE_AUTHORITY + ".transitcenter";
+
+        public static final String CONTENT_DIR_TYPE
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".transitcenter";
+
+        public static Uri buildUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static Uri insert(Context context, String name, long regionId) {
+            ContentResolver cr = context.getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(NAME, name);
+            values.put(REGION_ID, regionId);
+            return cr.insert(CONTENT_URI, values);
+        }
+
+        public static void delete(Context context, long id) {
+            ContentResolver cr = context.getContentResolver();
+            cr.delete(buildUri(id), null, null);
+            // Also delete associated stops
+            cr.delete(TransitCenterStops.CONTENT_URI,
+                    TransitCenterStops.TRANSIT_CENTER_ID + "=?",
+                    new String[]{String.valueOf(id)});
+        }
+
+        public static void rename(Context context, long id, String newName) {
+            ContentResolver cr = context.getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(NAME, newName);
+            cr.update(buildUri(id), values, null, null);
+        }
+    }
+
+    public static class TransitCenterStops implements TransitCenterStopColumns {
+
+        // Cannot be instantiated
+        private TransitCenterStops() {
+        }
+
+        /** The URI path portion for this table */
+        public static final String PATH = "transit_center_stops";
+
+        /** The content:// style URI for this table */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(
+                AUTHORITY_URI, PATH);
+
+        public static final String CONTENT_DIR_TYPE
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".transitcenterstop";
+
+        public static void addStop(Context context, long transitCenterId, String stopId) {
+            ContentResolver cr = context.getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(TRANSIT_CENTER_ID, transitCenterId);
+            values.put(STOP_ID, stopId);
+            cr.insert(CONTENT_URI, values);
+        }
+
+        public static void removeStop(Context context, long transitCenterId, String stopId) {
+            ContentResolver cr = context.getContentResolver();
+            cr.delete(CONTENT_URI,
+                    TRANSIT_CENTER_ID + "=? AND " + STOP_ID + "=?",
+                    new String[]{String.valueOf(transitCenterId), stopId});
+        }
+
+        public static ArrayList<String> getStopIds(Context context, long transitCenterId) {
+            ContentResolver cr = context.getContentResolver();
+            Cursor c = cr.query(CONTENT_URI,
+                    new String[]{STOP_ID},
+                    TRANSIT_CENTER_ID + "=?",
+                    new String[]{String.valueOf(transitCenterId)},
+                    null);
+            ArrayList<String> result = new ArrayList<String>();
+            if (c != null) {
+                try {
+                    while (c.moveToNext()) {
+                        result.add(c.getString(0));
+                    }
+                } finally {
+                    c.close();
+                }
+            }
+            return result;
         }
     }
 }

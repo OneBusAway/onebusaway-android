@@ -30,6 +30,23 @@
     <string name="navdrawer_item_open_source">Visit us on GitHub</string>
     <string name="navdrawer_item_plan_trip">Plan a trip (beta)</string>
     <string name="navdrawer_item_pay_fare">Pay my fare</string>
+    <string name="navdrawer_item_transit_centers">Transit centers</string>
+
+    <!-- Transit Centers -->
+    <string name="transit_center_add">Add transit center</string>
+    <string name="transit_center_name_hint">Transit center name</string>
+    <string name="transit_center_rename">Rename</string>
+    <string name="transit_center_delete">Delete</string>
+    <string name="transit_center_delete_confirm">Delete this transit center?</string>
+    <string name="transit_center_empty">No transit centers</string>
+    <string name="transit_center_add_stops">Add stops</string>
+    <string name="transit_center_remove_stop">Remove from transit center</string>
+    <string name="transit_center_starred_only">Starred only</string>
+    <string name="transit_center_all_stops">All stops</string>
+    <plurals name="transit_center_stop_count">
+        <item quantity="one">%d stop</item>
+        <item quantity="other">%d stops</item>
+    </plurals>
 
     <!-- Permissions -->
     <string name="trip_service_perm_label">start the trip service</string>

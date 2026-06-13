@@ -6,6 +6,8 @@ import org.onebusaway.android.database.recentStops.dao.RegionDao
 import org.onebusaway.android.database.recentStops.dao.StopDao
 import org.onebusaway.android.database.recentStops.entity.RegionEntity
 import org.onebusaway.android.database.recentStops.entity.StopEntity
+import org.onebusaway.android.database.savedtrips.dao.SavedTripDao
+import org.onebusaway.android.database.savedtrips.entity.SavedTripEntity
 import org.onebusaway.android.database.widealerts.dao.AlertDao
 import org.onebusaway.android.database.widealerts.entity.AlertEntity
 import org.onebusaway.android.ui.survey.dao.StudiesDao
@@ -21,8 +23,8 @@ import org.onebusaway.android.ui.survey.entity.Survey
 
 // Beginning from version 2 we should support auto migration
 @Database(
-    entities = [Study::class, Survey::class, RegionEntity::class, StopEntity::class, AlertEntity::class],
-    version = 2,
+    entities = [Study::class, Survey::class, RegionEntity::class, StopEntity::class, AlertEntity::class, SavedTripEntity::class],
+    version = 3,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -36,4 +38,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     // Region wide alerts
     abstract fun alertsDao(): AlertDao
+
+    // Saved trips
+    abstract fun savedTripDao(): SavedTripDao
 }

@@ -142,6 +142,16 @@ class StarredStopsAdapter extends SimpleCursorAdapter {
             }
             badge.setText(context.getString(R.string.starred_stop_arrival_badge,
                     routeName, etaText));
+            String contentDesc;
+            if (eta <= 0) {
+                contentDesc = context.getString(
+                        R.string.arrival_badge_content_description_now, routeName);
+            } else {
+                contentDesc = context.getString(
+                        R.string.arrival_badge_content_description_min, routeName, (int) eta);
+            }
+            badge.setContentDescription(contentDesc);
+            badge.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
 
             badge.setTextSize(BADGE_TEXT_SIZE_SP);
             badge.setTextColor(ContextCompat.getColor(context, android.R.color.white));

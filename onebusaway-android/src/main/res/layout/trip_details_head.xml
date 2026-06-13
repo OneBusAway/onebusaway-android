@@ -67,6 +67,14 @@
                 tools:text="Vehicle: Hillsborough Area Regional Transit_1720" />
 
             <TextView
+                android:id="@+id/trip_id_debug"
+                style="@style/TripDetailsVehicle"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                tools:text="Trip: 1_12345" />
+
+            <TextView
                 android:id="@+id/trip_short_name"
                 style="@style/TripDetailsVehicle"
                 android:layout_width="fill_parent"
@@ -108,6 +116,7 @@
                 layout="@layout/occupancy"
                 android:layout_marginTop="2dp"
                 android:visibility="gone" />
+
         </LinearLayout>
     </TableRow>
 </TableLayout>

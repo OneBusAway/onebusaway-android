@@ -8,3 +8,7 @@ settings.local.json
 .kotlin/
 play-store-upload-key.json
 *.keystore
+.vscode/
+.project
+.classpath
+bin/

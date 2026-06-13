@@ -35,6 +35,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -56,9 +57,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.AsyncTaskLoader;
-import androidx.loader.content.Loader;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -86,9 +84,13 @@ import org.onebusaway.android.io.elements.ObaTripSchedule;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.io.elements.Status;
-import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
 import org.onebusaway.android.nav.NavigationService;
+import org.onebusaway.android.extrapolation.ExtrapolationResult;
+import org.onebusaway.android.extrapolation.math.prob.ProbDistribution;
+import org.onebusaway.android.extrapolation.data.TripState;
+import org.onebusaway.android.extrapolation.data.TripStore;
+import org.onebusaway.android.extrapolation.data.TripDetailsPoller;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.DBUtil;
@@ -97,6 +99,7 @@ import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import java.util.Calendar;
+import java.util.List;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 
@@ -105,6 +108,11 @@ import static org.onebusaway.android.util.PermissionUtils.NOTIFICATION_PERMISSIO
 public class TripDetailsListFragment extends ListFragment {
 
     public static final String TAG = "TripDetailsListFragment";
+
+    public interface TripDataCallback {
+        void onTripDataLoaded(ObaTripDetailsResponse response);
+        void onLocationDataAvailabilityChanged(boolean hasLocationData);
+    }
 
     public static final String TRIP_ID = ".TripId";
 
@@ -124,13 +132,15 @@ public class TripDetailsListFragment extends ListFragment {
 
     public static final String ACTION_SERVICE_DESTROYED = "NavigationServiceDestroyed";
 
-    private static final long REFRESH_PERIOD = 60 * 1000;
-
-    private static final int TRIP_DETAILS_LOADER = 0;
+    private static final long POSITION_TICK_MS = 1000;
 
     public static final int REQUEST_ENABLE_LOCATION = 1;
 
     private String mTripId;
+    private TripDetailsPoller mPoller;
+
+    /** True while we're in a poll-failure streak the user has already been told about. */
+    private boolean mPollFailureNotified;
 
     private String mRouteId;
 
@@ -150,12 +160,32 @@ public class TripDetailsListFragment extends ListFragment {
 
     private TripDetailsAdapter mAdapter;
 
-    private final TripDetailsLoaderCallback mTripDetailsCallback = new TripDetailsLoaderCallback();
-
     private LocationRequest mLocationRequest;
     private Task<LocationSettingsResponse> mResult;
 
     private FirebaseAnalytics mFirebaseAnalytics;
+
+    private final Handler mPositionTickHandler = new Handler(Looper.getMainLooper());
+    private final Runnable mPositionTick = this::updateVehiclePosition;
+
+    private TripDataCallback mTripDataCallback;
+
+    private boolean mHasLocationData = false;
+    private String mActiveVehicleId;
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof TripDataCallback) {
+            mTripDataCallback = (TripDataCallback) context;
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mTripDataCallback = null;
+    }
 
     /**
      * Builds an intent used to set the trip and stop for the TripDetailsListFragment directly
@@ -188,12 +218,10 @@ public class TripDetailsListFragment extends ListFragment {
         setListShown(false);
 
         // We have a menu item to show in action bar.
-        setHasOptionsMenu(true);
-
         getListView().setOnItemClickListener(mClickListener);
         getListView().setOnItemLongClickListener(mLongClickListener);
 
-        // Get saved routeId if it exists - avoids potential NPE in onOptionsItemSelected() (#515)
+        // Get saved routeId if it exists (#515)
         if (savedInstanceState != null) {
             mRouteId = savedInstanceState.getString(ROUTE_ID);
         }
@@ -204,7 +232,6 @@ public class TripDetailsListFragment extends ListFragment {
             Log.e(TAG, "TripId is null");
             throw new RuntimeException("TripId should not be null");
         }
-
         mStopId = args.getString(STOP_ID);
 
         mScrollMode = args.getString(SCROLL_MODE);
@@ -213,7 +240,6 @@ public class TripDetailsListFragment extends ListFragment {
 
         mDestinationId = args.getString(DEST_ID);
 
-        getLoaderManager().initLoader(TRIP_DETAILS_LOADER, null, mTripDetailsCallback);
     }
 
     @Override
@@ -238,57 +264,102 @@ public class TripDetailsListFragment extends ListFragment {
 
     @Override
     public void onPause() {
-        mRefreshHandler.removeCallbacks(mRefresh);
+        if (mPoller != null) {
+            mPoller.stop();
+            mPoller = null;
+        }
+        mPositionTickHandler.removeCallbacks(mPositionTick);
         super.onPause();
     }
 
     @Override
     public void onResume() {
-        // Try to show any old data just in case we're coming out of sleep
-        TripDetailsLoader loader = getTripDetailsLoader();
-        if (loader != null) {
-            ObaTripDetailsResponse lastGood = loader.getLastGoodResponse();
-            if (lastGood != null) {
-                setTripDetails(lastGood);
-            }
+        // Show cached data if available — through the same apply path as fresh data, so the
+        // activity's TripDataCallback also learns about cached loads (map toggle state)
+        TripState polledState = TripStore.lookupTripState(mTripId);
+        ObaTripDetailsResponse cached =
+                polledState != null ? polledState.getTripDetailsResponse() : null;
+        if (cached != null) {
+            applyTripDetails(cached);
         }
 
-        getLoaderManager().restartLoader(TRIP_DETAILS_LOADER, null, mTripDetailsCallback);
-
-        // If our timer would have gone off, then refresh.
-        long lastResponseTime = getTripDetailsLoader().getLastResponseTime();
-        long newPeriod = Math.min(REFRESH_PERIOD, (lastResponseTime + REFRESH_PERIOD)
-                - System.currentTimeMillis());
-        // Wait at least one second at least, and the full minute at most.
-        //Log.d(TAG, "Refresh period:" + newPeriod);
-        if (newPeriod <= 0) {
-            refresh();
-        } else {
-            mRefreshHandler.postDelayed(mRefresh, newPeriod);
-        }
+        // Returning to the screen starts a fresh failure streak for notification purposes
+        mPollFailureNotified = false;
+        mPoller = new TripDetailsPoller(mTripId, this::onTripDetailsResponse);
+        mPoller.start();
+        mPositionTickHandler.postDelayed(mPositionTick, POSITION_TICK_MS);
 
         super.onResume();
     }
 
-    //
-    // Action Bar / Options Menu
-    //
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.trip_details, menu);
+    /**
+     * Restarts the poller for an explicit user refresh: an immediate fetch whose result flows
+     * through {@link #onTripDetailsResponse}, with the failure backoff reset. No-op while
+     * paused (the poller only exists between onResume and onPause).
+     */
+    public void refreshTripDetails() {
+        if (mPoller == null) return;
+        // An explicit refresh deserves explicit feedback, even mid-failure-streak
+        mPollFailureNotified = false;
+        mPoller.stop();
+        mPoller = new TripDetailsPoller(mTripId, this::onTripDetailsResponse);
+        mPoller.start();
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        final int id = item.getItemId();
-        if (id == R.id.refresh) {
-            refresh();
-            return true;
-        } else if (id == R.id.show_on_map) {
-            HomeActivity.start(getActivity(), mRouteId);
-            return true;
+    /**
+     * Receives every completed poll response, error-coded ones included. OK responses flow
+     * into the normal display path; failures resolve the initial loading spinner with an
+     * error message, or toast non-intrusively when data is already showing (the same pattern
+     * as ArrivalsListFragment).
+     */
+    private void onTripDetailsResponse(ObaTripDetailsResponse response) {
+        // Defensive only: stop()'s cancellation already prevents post-stop delivery (there is
+        // no suspension point between the fetch completing and this callback).
+        if (!isAdded() || getActivity() == null) {
+            return;
         }
-        return false;
+
+        if (response.getCode() == ObaApi.OBA_OK) {
+            mPollFailureNotified = false;
+            applyTripDetails(response);
+            return;
+        }
+
+        // Error responses never go through setTripDetails: it would set mTripInfo before
+        // checking the code, corrupting the "do we have data" signal below.
+        if (mTripInfo == null) {
+            // First load failed: replace the loading spinner with a network-aware message
+            setEmptyText(UIUtils.getStopErrorString(getActivity(), response.getCode()));
+            if (isResumed()) {
+                setListShown(true);
+            }
+            mPollFailureNotified = true;
+        } else if (!mPollFailureNotified) {
+            // Data already showing: stale-but-present beats an intrusive error. Toast once
+            // per failure streak — with backoff, repeating it would nag indefinitely on a
+            // flaky connection.
+            Toast.makeText(getActivity(), R.string.generic_comm_error_toast,
+                    Toast.LENGTH_LONG).show();
+            mPollFailureNotified = true;
+        }
+    }
+
+    /**
+     * Applies an OK response unless it is the one already showing, and resolves the loading
+     * spinner. Shared by the poller callback and the position tick — the tick must keep
+     * applying store data too, because other screens' pollers (the trip map, the location
+     * data view) hydrate the store for this same trip without a callback here.
+     */
+    private void applyTripDetails(ObaTripDetailsResponse response) {
+        if (response != mTripInfo) {
+            setTripDetails(response);
+            if (mTripDataCallback != null) {
+                mTripDataCallback.onTripDataLoaded(response);
+            }
+        }
+        if (isResumed()) {
+            setListShown(true);
+        }
     }
 
     private void setTripDetails(ObaTripDetailsResponse data) {
@@ -298,7 +369,10 @@ public class TripDetailsListFragment extends ListFragment {
         if (code == ObaApi.OBA_OK) {
             setEmptyText("");
         } else {
-            setEmptyText(UIUtils.getRouteErrorString(getActivity(), code));
+            // Defensive only: error responses are filtered upstream (the store records only
+            // OK responses, and onTripDetailsResponse never passes errors here).
+            setEmptyText(getString(R.string.trip_details_error,
+                    code, mTripInfo.getText(), mTripId, mTripInfo.getVersion()));
             return;
         }
 
@@ -362,20 +436,26 @@ public class TripDetailsListFragment extends ListFragment {
         ObaTripStatus status = mTripInfo.getStatus();
         ObaReferences refs = mTripInfo.getRefs();
 
-        Context context = getActivity();
+        Activity activity = getActivity();
+        if (activity == null) return;
+
+        // Before the early returns below (no status, inactive trip, schedule-only), so the
+        // location-data menu state can't go stale on those paths
+        updateLocationDataMenuState(status);
 
         String tripId = mTripInfo.getId();
 
         ObaTrip trip = refs.getTrip(tripId);
         mRouteId = trip.getRouteId();
         ObaRoute route = refs.getRoute(mRouteId);
-        TextView routeShortName = (TextView) getView().findViewById(R.id.short_name);
+        // Header views live in the activity layout, not the fragment layout
+        TextView routeShortName = (TextView) activity.findViewById(R.id.short_name);
         routeShortName.setText(route.getShortName());
 
-        TextView headsign = (TextView) getView().findViewById(R.id.long_name);
+        TextView headsign = (TextView) activity.findViewById(R.id.long_name);
         headsign.setText(trip.getHeadsign());
 
-        TextView tripShortName = (TextView) getView().findViewById(R.id.trip_short_name);
+        TextView tripShortName = (TextView) activity.findViewById(R.id.trip_short_name);
         if (!StringUtils.isBlank(trip.getShortName())) {
             tripShortName.setVisibility(View.VISIBLE);
             tripShortName.setText(trip.getShortName());
@@ -383,34 +463,47 @@ public class TripDetailsListFragment extends ListFragment {
             tripShortName.setVisibility(View.GONE);
         }
 
-        TextView agency = (TextView) getView().findViewById(R.id.agency);
+        TextView agency = (TextView) activity.findViewById(R.id.agency);
         agency.setText(refs.getAgency(route.getAgencyId()).getName());
 
-        TextView vehicleView = (TextView) getView().findViewById(R.id.vehicle);
-        TextView vehicleDeviation = (TextView) getView().findViewById(R.id.status);
-        ViewGroup realtime = (ViewGroup) getView().findViewById(
+        TextView tripIdDebug = (TextView) activity.findViewById(R.id.trip_id_debug);
+        tripIdDebug.setText("Trip: " + tripId);
+        tripIdDebug.setVisibility(View.VISIBLE);
+
+        TextView vehicleView = (TextView) activity.findViewById(R.id.vehicle);
+        TextView vehicleDeviation = (TextView) activity.findViewById(R.id.status);
+        ViewGroup realtime = (ViewGroup) activity.findViewById(
                 R.id.eta_realtime_indicator);
         realtime.setVisibility(View.GONE);
-        ViewGroup statusLayout = (ViewGroup) getView().findViewById(
+        ViewGroup statusLayout = (ViewGroup) activity.findViewById(
                 R.id.status_layout);
-        ViewGroup occupancyView = getView().findViewById(R.id.occupancy);
+        ViewGroup occupancyView = activity.findViewById(R.id.occupancy);
 
         if (status == null) {
             // Show schedule info only
             vehicleView.setText(null);
             vehicleView.setVisibility(View.GONE);
-            vehicleDeviation.setText(context.getString(R.string.trip_details_scheduled_data));
+            vehicleDeviation.setText(activity.getString(R.string.trip_details_scheduled_data));
             return;
         }
 
         if (!TextUtils.isEmpty(status.getVehicleId())) {
             // Show vehicle info
             vehicleView
-                    .setText(context.getString(R.string.trip_details_vehicle,
+                    .setText(activity.getString(R.string.trip_details_vehicle,
                             status.getVehicleId()));
             vehicleView.setVisibility(View.VISIBLE);
         } else {
             vehicleView.setVisibility(View.GONE);
+        }
+
+        // The API returns deviation/position relative to the active trip.
+        // If viewing a different trip in the same block, show schedule only.
+        if (!TextUtils.equals(status.getActiveTripId(), tripId)) {
+            vehicleDeviation.setText(activity.getString(R.string.trip_details_scheduled_data));
+            UIUtils.setOccupancyVisibilityAndColor(occupancyView, null, OccupancyState.REALTIME);
+            UIUtils.setOccupancyContentDescription(occupancyView, null, OccupancyState.REALTIME);
+            return;
         }
 
         // Set status color in header
@@ -427,10 +520,10 @@ public class TripDetailsListFragment extends ListFragment {
 
             if (Status.CANCELED.equals(status.getStatus())) {
                 // Canceled trip
-                vehicleDeviation.setText(context.getString(R.string.stop_info_canceled));
+                vehicleDeviation.setText(activity.getString(R.string.stop_info_canceled));
             } else {
                 // Scheduled trip
-                vehicleDeviation.setText(context.getString(R.string.trip_details_scheduled_data));
+                vehicleDeviation.setText(activity.getString(R.string.trip_details_scheduled_data));
             }
             return;
         }
@@ -463,21 +556,21 @@ public class TripDetailsListFragment extends ListFragment {
         if (deviation >= 0) {
             if (deviation < 60) {
                 vehicleDeviation.setText(
-                        context.getString(R.string.trip_details_real_time_sec_late, seconds,
+                        activity.getString(R.string.trip_details_real_time_sec_late, seconds,
                                 lastUpdate));
             } else {
                 vehicleDeviation.setText(
-                        context.getString(R.string.trip_details_real_time_min_sec_late,
+                        activity.getString(R.string.trip_details_real_time_min_sec_late,
                                 minutes, seconds, lastUpdate));
             }
         } else {
             if (deviation > -60) {
                 vehicleDeviation.setText(
-                        context.getString(R.string.trip_details_real_time_sec_early, seconds,
+                        activity.getString(R.string.trip_details_real_time_sec_early, seconds,
                                 lastUpdate));
             } else {
                 vehicleDeviation.setText(
-                        context.getString(R.string.trip_details_real_time_min_sec_early, minutes,
+                        activity.getString(R.string.trip_details_real_time_min_sec_early, minutes,
                                 seconds, lastUpdate));
             }
         }
@@ -490,6 +583,79 @@ public class TripDetailsListFragment extends ListFragment {
             // Hide occupancy by setting null value
             UIUtils.setOccupancyVisibilityAndColor(occupancyView, null, OccupancyState.REALTIME);
             UIUtils.setOccupancyContentDescription(occupancyView, null, OccupancyState.REALTIME);
+        }
+    }
+
+    private void updateVehiclePosition() {
+        try {
+            // Pick up fresh store data — written by our own poller or another screen's
+            TripState polledState = TripStore.lookupTripState(mTripId);
+            ObaTripDetailsResponse fresh =
+                    polledState != null ? polledState.getTripDetailsResponse() : null;
+            if (fresh != null) {
+                applyTripDetails(fresh);
+            }
+            if (mAdapter == null || mTripInfo == null) return;
+            ObaTripSchedule schedule = mTripInfo.getSchedule();
+            if (schedule == null || schedule.getStopTimes() == null) return;
+
+            ObaTripStatus status = mTripInfo.getStatus();
+            if (status == null) return;
+
+            // Determine the active trip ID
+            String activeTripId =
+                    polledState != null ? polledState.getVehicleActiveTripId() : null;
+            if (activeTripId == null) {
+                activeTripId = status.getActiveTripId();
+            }
+
+            // Only extrapolate if this is the active trip
+            if (activeTripId == null || !activeTripId.equals(mTripId)) return;
+
+            // Past the guard activeTripId equals mTripId, so polledState is its snapshot
+            if (polledState == null) return;
+            ExtrapolationResult result =
+                    polledState.extrapolate(System.currentTimeMillis());
+            if (!(result instanceof ExtrapolationResult.Success)) return;
+
+            Double extrapolatedDist = ((ExtrapolationResult.Success) result).getDistribution().median();
+            if (extrapolatedDist == null) return;
+
+            Integer newNextStopIndex = schedule.findNextStopIndex(extrapolatedDist);
+            if (newNextStopIndex != null && !newNextStopIndex.equals(mAdapter.mNextStopIndex)) {
+                mAdapter.updateExtrapolatedPosition(newNextStopIndex);
+            }
+        } finally {
+            mPositionTickHandler.postDelayed(mPositionTick, POSITION_TICK_MS);
+        }
+    }
+
+    private void updateLocationDataMenuState(ObaTripStatus status) {
+        // A null status (schedule-only trip) means no active vehicle: fall into the
+        // clear-and-notify branch below
+        String activeTripId = status != null ? status.getActiveTripId() : null;
+        if (activeTripId == null || !activeTripId.equals(mTripId)) {
+            if (mHasLocationData) {
+                mHasLocationData = false;
+                mActiveVehicleId = null;
+                notifyLocationDataChanged();
+            }
+            return;
+        }
+
+        TripState activeState = TripStore.lookupTripState(activeTripId);
+        boolean newHasData = activeState != null && !activeState.getHistory().isEmpty();
+        String newVehicleId = status.getVehicleId();
+        if (newHasData != mHasLocationData || !TextUtils.equals(newVehicleId, mActiveVehicleId)) {
+            mHasLocationData = newHasData;
+            mActiveVehicleId = newVehicleId;
+            notifyLocationDataChanged();
+        }
+    }
+
+    private void notifyLocationDataChanged() {
+        if (mTripDataCallback != null) {
+            mTripDataCallback.onLocationDataAvailabilityChanged(mHasLocationData);
         }
     }
 
@@ -734,107 +900,7 @@ public class TripDetailsListFragment extends ListFragment {
         return builder.create();
     }
 
-    private final Handler mRefreshHandler = new Handler();
 
-    private final Runnable mRefresh = new Runnable() {
-        public void run() {
-            refresh();
-        }
-    };
-
-    private TripDetailsLoader getTripDetailsLoader() {
-        // If the Fragment hasn't been attached to an Activity yet, return null
-        if (!isAdded()) {
-            return null;
-        }
-
-        Loader<ObaTripDetailsResponse> l =
-                getLoaderManager().getLoader(TRIP_DETAILS_LOADER);
-        return (TripDetailsLoader) l;
-    }
-
-    private void refresh() {
-        if (isAdded()) {
-            UIUtils.showProgress(this, true);
-            getTripDetailsLoader().onContentChanged();
-        }
-    }
-
-    private final class TripDetailsLoaderCallback
-            implements LoaderManager.LoaderCallbacks<ObaTripDetailsResponse> {
-
-        @Override
-        public Loader<ObaTripDetailsResponse> onCreateLoader(int id, Bundle args) {
-            return new TripDetailsLoader(getActivity(), mTripId);
-        }
-
-        @Override
-        public void onLoadFinished(Loader<ObaTripDetailsResponse> loader,
-                                   ObaTripDetailsResponse data) {
-            setTripDetails(data);
-
-            // The list should now be shown.
-            if (isResumed()) {
-                setListShown(true);
-            } else {
-                setListShownNoAnimation(true);
-            }
-
-            // Clear any pending refreshes
-            mRefreshHandler.removeCallbacks(mRefresh);
-
-            // Post an update
-            mRefreshHandler.postDelayed(mRefresh, REFRESH_PERIOD);
-        }
-
-        @Override
-        public void onLoaderReset(Loader<ObaTripDetailsResponse> loader) {
-            // Nothing to do right here...
-        }
-    }
-
-    private final static class TripDetailsLoader extends AsyncTaskLoader<ObaTripDetailsResponse> {
-
-        private final String mTripId;
-
-        private ObaTripDetailsResponse mLastGoodResponse;
-
-        private long mLastResponseTime = 0;
-
-        private long mLastGoodResponseTime = 0;
-
-        TripDetailsLoader(Context context, String tripId) {
-            super(context);
-            mTripId = tripId;
-        }
-
-        @Override
-        public ObaTripDetailsResponse loadInBackground() {
-            return ObaTripDetailsRequest.newRequest(getContext(), mTripId).call();
-        }
-
-        @Override
-        public void deliverResult(ObaTripDetailsResponse data) {
-            mLastResponseTime = System.currentTimeMillis();
-            if (data.getCode() == ObaApi.OBA_OK) {
-                mLastGoodResponse = data;
-                mLastGoodResponseTime = mLastResponseTime;
-            }
-            super.deliverResult(data);
-        }
-
-        public long getLastResponseTime() {
-            return mLastResponseTime;
-        }
-
-        public ObaTripDetailsResponse getLastGoodResponse() {
-            return mLastGoodResponse;
-        }
-
-        public long getLastGoodResponseTime() {
-            return mLastGoodResponseTime;
-        }
-    }
 
     private final class TripDetailsAdapter extends BaseAdapter {
 
@@ -845,6 +911,7 @@ public class TripDetailsListFragment extends ListFragment {
         ObaTripStatus mStatus;
 
         Integer mNextStopIndex;
+        boolean mIsActiveTrip;
 
         public TripDetailsAdapter() {
             this.mInflater = LayoutInflater.from(TripDetailsListFragment.this.getActivity());
@@ -858,8 +925,9 @@ public class TripDetailsListFragment extends ListFragment {
             this.mStatus = mTripInfo.getStatus();
 
             mNextStopIndex = null;
-            if (mStatus == null) {
-                // We don't have real-time data - clear next stop index
+            mIsActiveTrip = mStatus != null
+                    && TextUtils.equals(mStatus.getActiveTripId(), mTripId);
+            if (!mIsActiveTrip) {
                 return;
             }
 
@@ -878,6 +946,11 @@ public class TripDetailsListFragment extends ListFragment {
         @Override
         public void notifyDataSetChanged() {
             updateData();
+            super.notifyDataSetChanged();
+        }
+
+        void updateExtrapolatedPosition(Integer nextStopIndex) {
+            mNextStopIndex = nextStopIndex;
             super.notifyDataSetChanged();
         }
 
@@ -920,11 +993,13 @@ public class TripDetailsListFragment extends ListFragment {
             long deviation = 0;
             int statusColor;
             if (mStatus != null) {
-                // If we have real-time info, use that
+                // Use service date from status for correct time offset
                 date = mStatus.getServiceDate();
-                deviation = mStatus.getScheduleDeviation();
-                long deviationMin = TimeUnit.SECONDS.toMinutes(mStatus.getScheduleDeviation());
-                if (mStatus.isPredicted()) {
+                if (mIsActiveTrip) {
+                    deviation = mStatus.getScheduleDeviation();
+                }
+                long deviationMin = TimeUnit.SECONDS.toMinutes(deviation);
+                if (mIsActiveTrip && mStatus.isPredicted()) {
                     statusColor = ArrivalInfoUtils.computeColorFromDeviation(deviationMin);
                 } else {
                     statusColor = R.color.stop_info_scheduled_time;

@@ -273,4 +273,25 @@
 
     <!-- Firebase Messaging User Token -->
     <string name="firebase_messaging_token">firebase_messaging_token</string>
+
+    <!-- Speed estimation map markers -->
+    <string name="marker_most_recent_data">Most recent data</string>
+    <string name="marker_best_estimate">Best estimate</string>
+    <string name="marker_best_estimate_snippet">50th percentile</string>
+    <string name="marker_last_api_position">Last reported position</string>
+    <string name="marker_fast_estimate">Fast estimate</string>
+    <string name="marker_fast_estimate_snippet">90th percentile speed</string>
+
+    <!-- Stop ETA snippets -->
+    <string name="eta_departed">%1$s (departed)</string>
+    <string name="eta_less_than_one_min">%1$s (&lt; 1 min)</string>
+    <string name="eta_minutes">%1$s (%2$d min)</string>
+    <string name="eta_scheduled_departed">%1$s (scheduled, departed)</string>
+    <string name="eta_scheduled_less_than_one_min">%1$s (scheduled, &lt; 1 min)</string>
+    <string name="eta_scheduled_minutes">%1$s (scheduled, %2$d min)</string>
+
+    <!-- Debug data views -->
+    <string name="debug_trip_data_title">Trip Data</string>
+    <string name="debug_tab_graph">Graph</string>
+    <string name="debug_tab_table">Table</string>
 </resources>

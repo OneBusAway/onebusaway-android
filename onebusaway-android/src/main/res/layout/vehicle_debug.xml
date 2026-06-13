@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/vehicle_debug_vehicle_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:id="@+id/vehicle_debug_show_on_map"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Show on map"
+            android:textSize="14sp"
+            android:textColor="?android:attr/colorAccent"
+            android:paddingBottom="12dp"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/vehicle_debug_loading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Loading..."
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary" />
+
+        <LinearLayout
+            android:id="@+id/vehicle_debug_content"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/VehicleDebugSectionHeader"
+                android:text="Trip Info" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_trip_id"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_active_trip_id"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_service_date"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_phase"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_status"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                style="@style/VehicleDebugSectionHeader"
+                android:text="Real-Time" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_predicted"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_deviation"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_last_update"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_last_location_update"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_occupancy"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                style="@style/VehicleDebugSectionHeader"
+                android:text="Position" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_position"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_last_known_location"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_orientation"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_last_known_orientation"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                style="@style/VehicleDebugSectionHeader"
+                android:text="Block" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_block_id"
+                style="@style/VehicleDebugRow" />
+
+            <TextView
+                android:id="@+id/vehicle_debug_block_trip_seq"
+                style="@style/VehicleDebugRow" />
+
+            <LinearLayout
+                android:id="@+id/vehicle_debug_block_trips"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="4dp" />
+
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

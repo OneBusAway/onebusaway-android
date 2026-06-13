@@ -1,0 +1,450 @@
+/*
+ * Copyright (C) 2014-2026 University of South Florida, Open Transit Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.onebusaway.android.map.googlemapsv2;
+
+import android.content.Context;
+import android.location.Location;
+import android.util.Log;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.extrapolation.ExtrapolationResult;
+import org.onebusaway.android.extrapolation.math.prob.ProbDistribution;
+import org.onebusaway.android.extrapolation.data.TripState;
+import org.onebusaway.android.extrapolation.data.TripStore;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaTrip;
+import org.onebusaway.android.io.elements.ObaTripDetails;
+import org.onebusaway.android.io.elements.ObaTripStatus;
+import org.onebusaway.android.io.elements.ObaElementExtensionsKt;
+import org.onebusaway.android.io.elements.Status;
+import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
+import org.onebusaway.android.util.MathUtils;
+import org.onebusaway.android.util.Polyline;
+import org.onebusaway.android.util.UIUtils;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+
+/**
+ * Manages all vehicle markers on the Google Map: creation, position updates
+ * (including extrapolation), selection, data-received markers, and cleanup.
+ * Reads/writes {@link VehicleMarkerState} as pure data; all map API calls live
+ * here.
+ */
+class VehicleMapController {
+
+    private static final String TAG = "VehicleMapController";
+    private static final float VEHICLE_MARKER_Z_INDEX = 1;
+    private static final float DATA_RECEIVED_MARKER_Z_INDEX = 3.1f;
+
+    private final GoogleMap mMap;
+    private final Context mContext;
+    private final VehicleIconFactory mIconFactory;
+    private final int mAnimateDurationMs;
+
+    private final HashMap<String, VehicleMarkerState> mStates = new HashMap<>();
+
+    private BitmapDescriptor mDataReceivedIcon;
+
+    VehicleMapController(GoogleMap map, Context context, VehicleIconFactory iconFactory,
+            int animateDurationMs) {
+        mMap = map;
+        mContext = context.getApplicationContext();
+        mIconFactory = iconFactory;
+        mAnimateDurationMs = animateDurationMs;
+    }
+
+    // --- Populate from API response ---
+
+    void populate(HashSet<String> routeIds, ObaTripsForRouteResponse response, long now) {
+        HashSet<String> activeTripIds = new HashSet<>();
+        HashMap<String, String> vehicleToTrip = new HashMap<>();
+
+        for (ObaTripDetails trip : response.getTrips()) {
+            ObaTripStatus status = trip.getStatus();
+            if (status == null)
+                continue;
+
+            ObaTrip activeTrip = response.getTrip(status.getActiveTripId());
+            if (activeTrip == null)
+                continue;
+            String activeRoute = activeTrip.getRouteId();
+            if (!routeIds.contains(activeRoute) || Status.CANCELED.equals(status.getStatus()))
+                continue;
+
+            if (status.getPosition() == null)
+                continue;
+
+            boolean isRealtime = ObaElementExtensionsKt.isLocationRealtime(status);
+
+            String tripId = status.getActiveTripId();
+            String vehicleId = status.getVehicleId();
+
+            // A vehicle that switches trips (e.g. finishing one run and starting
+            // the next) keeps the same vehicleId but gets a new tripId. Remove
+            // the stale marker for the old trip so it doesn't linger on the map.
+            if (vehicleId != null) {
+                String prevTrip = vehicleToTrip.put(vehicleId, tripId);
+                if (prevTrip != null && !prevTrip.equals(tripId)) {
+                    removeVehicleMarker(prevTrip);
+                    activeTripIds.remove(prevTrip);
+                }
+            }
+
+            VehicleMarkerState existing = mStates.get(tripId);
+            if (existing == null) {
+                addVehicle(tripId, isRealtime, status, response);
+            } else {
+                updateVehicle(existing, isRealtime, status, response);
+            }
+            activeTripIds.add(tripId);
+        }
+
+        removeInactiveMarkers(activeTripIds);
+    }
+
+    // --- Vehicle marker lifecycle ---
+
+    private void addVehicle(String tripId, boolean isRealtime,
+            ObaTripStatus status, ObaTripsForRouteResponse response) {
+        Location location = status.getPosition();
+        if (location == null)
+            return;
+        VehicleIconParams params = buildIconParams(isRealtime, status, response);
+        Marker m = mMap.addMarker(new MarkerOptions()
+                .position(MapHelpV2.makeLatLng(location))
+                .title(status.getVehicleId())
+                .icon(mIconFactory.getIcon(params))
+                .zIndex(VEHICLE_MARKER_Z_INDEX));
+        if (m == null) {
+            // addMarker() is @Nullable; don't register a marker-less state. The vehicle is
+            // retried on the next poll response.
+            return;
+        }
+        TripState tripState = TripStore.lookupTripState(tripId);
+        VehicleMarkerState vehicle = new VehicleMarkerState(tripId, status,
+                tripState != null ? tripState.getAnchor() : null);
+        vehicle.vehicleMarker = m;
+        vehicle.iconParams = params;
+        m.setTag(vehicle);
+        mStates.put(tripId, vehicle);
+    }
+
+    private void updateVehicle(VehicleMarkerState vehicle, boolean isRealtime,
+            ObaTripStatus status, ObaTripsForRouteResponse response) {
+        Marker m = vehicle.vehicleMarker;
+        boolean showInfo = m.isInfoWindowShown();
+        VehicleIconParams params = buildIconParams(isRealtime, status, response);
+        m.setIcon(mIconFactory.getIcon(params));
+        vehicle.status = status;
+        vehicle.iconParams = params;
+        if (showInfo) {
+            m.showInfoWindow();
+        }
+    }
+
+    private static VehicleIconParams buildIconParams(boolean isRealtime, ObaTripStatus status,
+            ObaTripsForRouteResponse response) {
+        ObaTrip trip = response.getTrip(status.getActiveTripId());
+        ObaRoute route = trip != null ? response.getRoute(trip.getRouteId()) : null;
+        int vehicleType = route != null ? route.getType() : ObaRoute.TYPE_BUS;
+        int colorResource = VehicleIconFactory.getDeviationColorResource(isRealtime, status);
+        int halfWind = MathUtils.getHalfWindIndex(
+                (float) MathUtils.toDirection(status.getOrientation()),
+                VehicleIconFactory.NUM_DIRECTIONS - 1);
+        return new VehicleIconParams(vehicleType, colorResource, halfWind);
+    }
+
+    private void removeInactiveMarkers(HashSet<String> activeTripIds) {
+        Iterator<Map.Entry<String, VehicleMarkerState>> iterator = mStates.entrySet().iterator();
+        while (iterator.hasNext()) {
+            VehicleMarkerState vehicle = iterator.next().getValue();
+            if (!activeTripIds.contains(vehicle.tripId)) {
+                destroyVehicleMarker(vehicle);
+                iterator.remove();
+            }
+        }
+    }
+
+    private void removeVehicleMarker(String tripId) {
+        VehicleMarkerState vehicle = mStates.remove(tripId);
+        if (vehicle != null) {
+            destroyVehicleMarker(vehicle);
+        }
+    }
+
+    private void destroyVehicleMarker(VehicleMarkerState vehicle) {
+        vehicle.vehicleMarker.remove();
+        removeDataReceivedMarker(vehicle);
+    }
+
+    // --- Data-received marker lifecycle ---
+
+    private void showDataReceivedMarker(VehicleMarkerState vehicle, ObaTripStatus anchor) {
+        removeDataReceivedMarker(vehicle);
+        Location loc = anchor.getPosition();
+        if (loc == null)
+            return;
+        Marker m = mMap.addMarker(new MarkerOptions()
+                .position(MapHelpV2.makeLatLng(loc))
+                .icon(getOrCreateDataReceivedIcon())
+                .title(mContext.getString(R.string.marker_most_recent_data))
+                .anchor(0.5f, 0.5f)
+                .flat(true)
+                .zIndex(DATA_RECEIVED_MARKER_Z_INDEX));
+        vehicle.dataReceivedMarker = m;
+        vehicle.dataReceivedFixTime = anchor.getLastUpdateTime();
+        m.setTag(vehicle);
+    }
+
+    private void updateDataReceivedMarker(VehicleMarkerState vehicle, ObaTripStatus anchor) {
+        if (anchor == null)
+            return;
+        if (vehicle.dataReceivedMarker == null) {
+            showDataReceivedMarker(vehicle, anchor);
+            return;
+        }
+        long fixTime = anchor.getLastUpdateTime();
+        if (fixTime != vehicle.dataReceivedFixTime) {
+            vehicle.dataReceivedFixTime = fixTime;
+            Location loc = anchor.getPosition();
+            if (loc != null) {
+                AnimationUtil.animateMarkerTo(vehicle.dataReceivedMarker,
+                        MapHelpV2.makeLatLng(loc), mAnimateDurationMs);
+            }
+        }
+    }
+
+    private void removeDataReceivedMarker(VehicleMarkerState vehicle) {
+        if (vehicle.dataReceivedMarker != null) {
+            vehicle.dataReceivedMarker.remove();
+            vehicle.dataReceivedMarker = null;
+        }
+        vehicle.dataReceivedFixTime = 0;
+    }
+
+    private BitmapDescriptor getOrCreateDataReceivedIcon() {
+        if (mDataReceivedIcon == null) {
+            mDataReceivedIcon = MapIconUtils.createDataReceivedIcon(mContext);
+        }
+        return mDataReceivedIcon;
+    }
+
+    private static VehicleMarkerState stateOf(Marker marker) {
+        Object tag = marker.getTag();
+        return tag instanceof VehicleMarkerState ? (VehicleMarkerState) tag : null;
+    }
+
+    // --- Selection ---
+
+    boolean handleMarkerClick(Marker marker) {
+        VehicleMarkerState vehicle = stateOf(marker);
+        if (vehicle == null)
+            return false;
+        if (marker.equals(vehicle.dataReceivedMarker)) {
+            marker.showInfoWindow();
+        } else {
+            selectVehicleMarker(vehicle);
+        }
+        return true;
+    }
+
+    void selectVehicle(String tripId) {
+        VehicleMarkerState vehicle = mStates.get(tripId);
+        if (vehicle != null)
+            selectVehicleMarker(vehicle);
+    }
+
+    private void selectVehicleMarker(VehicleMarkerState vehicle) {
+        deselectAll();
+        vehicle.selected = true;
+        vehicle.vehicleMarker.showInfoWindow();
+    }
+
+    void deselectAll() {
+        for (VehicleMarkerState vehicle : mStates.values()) {
+            vehicle.selected = false;
+            removeDataReceivedMarker(vehicle);
+        }
+    }
+
+    // --- Queries ---
+
+    ObaTripStatus getStatusFromMarker(Marker marker) {
+        VehicleMarkerState vs = stateOf(marker);
+        return vs != null ? vs.status : null;
+    }
+
+    boolean isExtrapolating(Marker marker) {
+        VehicleMarkerState vs = stateOf(marker);
+        if (vs == null)
+            return false;
+        TripState state = TripStore.lookupTripState(vs.tripId);
+        return state != null && state.getAnchor() != null;
+    }
+
+    boolean isDataReceivedMarker(Marker marker) {
+        VehicleMarkerState vs = stateOf(marker);
+        return vs != null && marker.equals(vs.dataReceivedMarker);
+    }
+
+    String getTripIdForDataReceivedMarker(Marker marker) {
+        VehicleMarkerState vs = stateOf(marker);
+        if (vs != null && marker.equals(vs.dataReceivedMarker))
+            return vs.tripId;
+        return null;
+    }
+
+    // --- Per-frame marker updates ---
+
+    void updateVehicleMarkers(long now) {
+        if (mStates.isEmpty())
+            return;
+        for (VehicleMarkerState vehicle : mStates.values()) {
+            // One consistent snapshot per vehicle per frame: a single store lookup,
+            // then plain field reads.
+            TripState state = TripStore.lookupTripState(vehicle.tripId);
+            if (state == null) {
+                animateToRawPosition(vehicle);
+                updateSelectedMarker(vehicle, null);
+                continue;
+            }
+            try {
+                updateVehicleMarker(vehicle, state, now);
+            } catch (IllegalArgumentException e) {
+                // require() failure in the gamma model on a degenerate schedule. Log so it
+                // surfaces, then degrade to the raw position. Anything else propagates —
+                // swallowed at 20fps, a structural bug would be invisible in production.
+                Log.w(TAG, "updateVehicleMarker failed for trip " + vehicle.tripId, e);
+                animateToRawPosition(vehicle);
+            }
+            updateSelectedMarker(vehicle, state.getAnchor());
+        }
+    }
+
+    private void updateVehicleMarker(VehicleMarkerState vehicle, TripState state, long now) {
+        ExtrapolationResult result = state.extrapolate(now);
+        if (!(result instanceof ExtrapolationResult.Success)) {
+            animateToRawPosition(vehicle);
+            return;
+        }
+
+        ProbDistribution dist = ((ExtrapolationResult.Success) result).getDistribution();
+        Polyline polyline = state.getPolyline();
+        if (polyline == null) {
+            animateToRawPosition(vehicle);
+            return;
+        }
+
+        double medianDist = dist.median();
+        // A degenerate distribution has no finite median; fall back to the raw position
+        // rather than propagating NaN into Polyline.segmentIndex/interpolate.
+        if (!Double.isFinite(medianDist)) {
+            animateToRawPosition(vehicle);
+            return;
+        }
+        int seg = polyline.segmentIndex(medianDist);
+        updateDirectionIcon(vehicle, polyline.bearingAt(seg));
+
+        Location loc = polyline.interpolate(medianDist, seg);
+        if (loc == null) {
+            animateToRawPosition(vehicle);
+            return;
+        }
+
+        LatLng target = MapHelpV2.makeLatLng(loc);
+        // "Fresh data arrived" iff the anchor has been superseded since the previous
+        // frame. Reference equality on the anchor itself is the natural signal — the
+        // instance is carried across snapshots until a non-duplicate, newer status
+        // replaces it.
+        ObaTripStatus currentAnchor = state.getAnchor();
+        boolean freshData = currentAnchor != vehicle.lastAnimatedAnchor;
+        vehicle.lastAnimatedAnchor = currentAnchor;
+
+        if (!vehicle.animating && positionChanged(vehicle, target)) {
+            if (freshData) {
+                startTransitionAnimation(vehicle, target);
+            } else {
+                vehicle.vehicleMarker.setPosition(target);
+            }
+        }
+    }
+
+    private void updateDirectionIcon(VehicleMarkerState vehicle, float directionBearing) {
+        if (Float.isNaN(directionBearing))
+            return;
+        int hw = MathUtils.getHalfWindIndex(directionBearing,
+                VehicleIconFactory.NUM_DIRECTIONS - 1);
+        if (hw != vehicle.iconParams.halfWind) {
+            vehicle.iconParams.halfWind = hw;
+            vehicle.vehicleMarker.setIcon(mIconFactory.getIcon(vehicle.iconParams));
+        }
+    }
+
+    private void updateSelectedMarker(VehicleMarkerState vehicle, ObaTripStatus anchor) {
+        if (!vehicle.selected)
+            return;
+        if (anchor != null) {
+            updateDataReceivedMarker(vehicle, anchor);
+        } else {
+            removeDataReceivedMarker(vehicle);
+        }
+    }
+
+    // --- Extrapolation helpers ---
+
+    private void startTransitionAnimation(VehicleMarkerState vehicle, LatLng target) {
+        vehicle.animating = true;
+        AnimationUtil.animateMarkerTo(vehicle.vehicleMarker, target, mAnimateDurationMs,
+                () -> vehicle.animating = false);
+    }
+
+    private void animateToRawPosition(VehicleMarkerState vehicle) {
+        Location loc = vehicle.status.getPosition();
+        if (loc == null || vehicle.animating)
+            return;
+        LatLng target = MapHelpV2.makeLatLng(loc);
+        if (positionChanged(vehicle, target)) {
+            startTransitionAnimation(vehicle, target);
+        }
+    }
+
+    private static boolean positionChanged(VehicleMarkerState vehicle, LatLng target) {
+        LatLng current = vehicle.vehicleMarker.getPosition();
+        return current.latitude != target.latitude || current.longitude != target.longitude;
+    }
+
+    // --- Lifecycle ---
+
+    void clear() {
+        for (VehicleMarkerState vehicle : mStates.values()) {
+            destroyVehicleMarker(vehicle);
+        }
+        mStates.clear();
+        mDataReceivedIcon = null;
+    }
+
+    int size() {
+        return mStates.size();
+    }
+}

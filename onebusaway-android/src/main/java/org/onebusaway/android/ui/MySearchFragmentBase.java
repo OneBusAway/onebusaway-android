@@ -26,9 +26,6 @@ import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -48,24 +45,6 @@ abstract class MySearchFragmentBase extends ListFragment
     private SearchViewV1 mSearchViewV1;
 
     private static final int DELAYED_SEARCH_TIMEOUT = 1000;
-
-    /**
-     * GoogleApiClient being used for Location Services
-     */
-    GoogleApiClient mGoogleApiClient;
-
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-
-        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
-        if (api.isGooglePlayServicesAvailable(getActivity())
-                == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getActivity());
-            mGoogleApiClient.connect();
-        }
-    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -90,20 +69,7 @@ abstract class MySearchFragmentBase extends ListFragment
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        // Make sure GoogleApiClient is connected, if available
-        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    @Override
     public void onStop() {
-        // Tear down GoogleApiClient
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
-        }
         UIUtils.closeKeyboard(getActivity(), mSearchViewV1);
         super.onStop();
     }
@@ -196,7 +162,7 @@ abstract class MySearchFragmentBase extends ListFragment
 
     protected final Location getSearchCenter() {
         Activity act = getActivity();
-        Location location = Application.getLastKnownLocation(act, mGoogleApiClient);
+        Location location = Application.getLastKnownLocation(act);
         if (location == null) {
             location = LocationUtils.getDefaultSearchCenter();
         }

@@ -34,7 +34,6 @@ import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -177,17 +176,14 @@ public class Application extends android.app.Application {
      * always be called.
      *
      * @param cxt    The Context being used, or null if one isn't available
-     * @param client The GoogleApiClient being used to obtain fused provider updates, or null if
-     *               one
-     *               isn't available
      * @return the last known location that the application has seen, or null if we haven't seen a
      * location yet
      */
-    public static synchronized Location getLastKnownLocation(Context cxt, GoogleApiClient client) {
+    public static synchronized Location getLastKnownLocation(Context cxt) {
         if (mLastKnownLocation == null) {
             // Try to get a last known location from the location providers
             try {
-                mLastKnownLocation = getLocation2(cxt, client);
+                mLastKnownLocation = getLocation2(cxt);
             } catch (SecurityException e) {
                 Log.e(TAG, "User may have denied location permission - " + e);
             }
@@ -235,59 +231,25 @@ public class Application extends android.app.Application {
     }
 
     /**
-     * We need to provide the API for a location used to disambiguate stop IDs in case of
-     * collision,
-     * or to provide multiple results in the case multiple agencies. But we really don't need it to
-     * be very accurate.
-     * <p/>
-     * Note that the GoogleApiClient must already have been initialized and connected prior to
-     * calling
-     * this method, since GoogleApiClient.connect() is asynchronous and doesn't connect before it
-     * returns,
-     * which requires additional initialization time (prior to calling this method)
-     *
-     * @param client an initialized and connected GoogleApiClient, or null if Google Play Services
-     *               isn't available
-     * @return a recent location, considering both Google Play Services (if available) and the
-     * Android Location API
-     */
-    private static Location getLocation(Context cxt, GoogleApiClient client) {
-        Location last = getLocation2(cxt, client);
-        if (last != null) {
-            return last;
-        } else {
-            return LocationUtils.getDefaultSearchCenter();
-        }
-    }
-
-    /**
      * Returns a location, considering both Google Play Services (if available) and the Android
      * Location API
-     * <p/>
-     * Note that the GoogleApiClient must already have been initialized and connected prior to
-     * calling
-     * this method, since GoogleApiClient.connect() is asynchronous and doesn't connect before it
-     * returns,
-     * which requires additional initialization time (prior to calling this method)
      *
-     * @param client an initialized and connected GoogleApiClient, or null if Google Play Services
-     *               isn't available
      * @return a recent location, considering both Google Play Services (if available) and the
      * Android Location API
      * @throws SecurityException if the user has remove location permissions
      */
-    private static Location getLocation2(Context cxt, GoogleApiClient client)
+    private static Location getLocation2(Context cxt)
             throws SecurityException {
         GoogleApiAvailability api = GoogleApiAvailability.getInstance();
         Location playServices = null;
-        if (client != null &&
-                cxt != null &&
+        if (cxt != null &&
                 api.isGooglePlayServicesAvailable(cxt)
-                        == ConnectionResult.SUCCESS
-                && client.isConnected()) {
+                        == ConnectionResult.SUCCESS) {
             FusedLocationProviderClient fusedClient = getFusedLocationProviderClient(cxt);
             Task<Location> task = fusedClient.getLastLocation();
-            if (task.isComplete()) {
+            // isSuccessful() (not isComplete()) - a task that completed with a failure would
+            // throw RuntimeExecutionException from getResult()
+            if (task.isSuccessful()) {
                 playServices = task.getResult();
                 Log.d(TAG, "Got location from Google Play Services, testing against API v1...");
             }

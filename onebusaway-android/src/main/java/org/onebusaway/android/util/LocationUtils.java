@@ -21,15 +21,10 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
@@ -253,43 +248,6 @@ public class LocationUtils {
         sb.append(String.format("%.0f", timeDiffSec) + " second(s) ago");
 
         return sb.toString();
-    }
-
-    /**
-     * Returns a new GoogleApiClient which includes LocationServicesCallbacks
-     */
-    public static GoogleApiClient getGoogleApiClientWithCallbacks(Context context) {
-        LocationServicesCallback locCallback = new LocationServicesCallback();
-        return new GoogleApiClient.Builder(context)
-                .addApi(LocationServices.API)
-                .addConnectionCallbacks(locCallback)
-                .addOnConnectionFailedListener(locCallback)
-                .build();
-    }
-
-    /**
-     * Class to handle Google Play Location Services callbacks
-     */
-    public static class LocationServicesCallback
-            implements GoogleApiClient.ConnectionCallbacks,
-            GoogleApiClient.OnConnectionFailedListener {
-
-        private static final String TAG = "LocationServicesCallbck";
-
-        @Override
-        public void onConnected(Bundle bundle) {
-            Log.d(TAG, "GoogleApiClient.onConnected");
-        }
-
-        @Override
-        public void onConnectionSuspended(int i) {
-            Log.d(TAG, "GoogleApiClient.onConnectionSuspended");
-        }
-
-        @Override
-        public void onConnectionFailed(ConnectionResult connectionResult) {
-            Log.d(TAG, "GoogleApiClient.onConnectionFailed");
-        }
     }
 
     public static List<CustomAddress> processGooglePlacesGeocoding(Context context, ObaRegion region,

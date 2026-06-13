@@ -16,7 +16,6 @@
  */
 package org.onebusaway.android.map;
 
-import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
@@ -145,11 +144,6 @@ public class StopMapController extends BaseMapController implements
 
     private MapWatcher mMapWatcher;
 
-    /**
-     * GoogleApiClient being used for Location Services
-     */
-    GoogleApiClient mGoogleApiClient;
-
     public StopMapController(Callback callback) {
         super(callback);
     }
@@ -221,8 +215,7 @@ public class StopMapController extends BaseMapController implements
         //We need to also make sure the list of stops is empty, otherwise we screen out valid responses
         //TODO - After above issue #59 is resolved, we should also only do this check on OBA server
         //versions below the version number in which this is fixed.
-        Location myLocation = Application.getLastKnownLocation(mCallback.getActivity(),
-                mGoogleApiClient);
+        Location myLocation = Application.getLastKnownLocation(mCallback.getActivity());
         if (myLocation != null && Application.get().getCurrentRegion() != null) {
             boolean inRegion = true;  // Assume user is in region unless we detect otherwise
             try {

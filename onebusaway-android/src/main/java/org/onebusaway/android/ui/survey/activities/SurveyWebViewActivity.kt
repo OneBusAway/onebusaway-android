@@ -12,15 +12,11 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.GoogleApiAvailability
-import com.google.android.gms.common.api.GoogleApiClient
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.database.recentStops.RecentStopsManager
 import org.onebusaway.android.ui.survey.SurveyPreferences
 import org.onebusaway.android.ui.survey.utils.SurveyUtils
-import org.onebusaway.android.util.LocationUtils
 
 /**
  Activity that hosts a WebView for launching and displaying external surveys
@@ -29,14 +25,12 @@ class SurveyWebViewActivity : AppCompatActivity() {
     private lateinit var webView: WebView
     private lateinit var progressBar: ProgressBar
     private lateinit var toolbar: androidx.appcompat.widget.Toolbar
-    private lateinit var mGoogleApiClient: GoogleApiClient
     private var mStopID: String? = null
     private var mRouteIDList: ArrayList<String>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_survey_web_view)
-        initLocationService()
         initWebView()
     }
 
@@ -80,11 +74,6 @@ class SurveyWebViewActivity : AppCompatActivity() {
         }
 
         webView.loadUrl(url)
-    }
-
-    override fun onStop() {
-        super.onStop()
-        mGoogleApiClient.disconnect();
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -151,18 +140,9 @@ class SurveyWebViewActivity : AppCompatActivity() {
         }
     }
 
-    private fun initLocationService() {
-        val api = GoogleApiAvailability.getInstance()
-        if (api.isGooglePlayServicesAvailable(this@SurveyWebViewActivity) == ConnectionResult.SUCCESS) {
-            mGoogleApiClient =
-                LocationUtils.getGoogleApiClientWithCallbacks(this@SurveyWebViewActivity)
-            mGoogleApiClient.connect()
-        }
-    }
-
     private fun getCurrentLocation(): String {
         val location =
-            Application.getLastKnownLocation(this@SurveyWebViewActivity, mGoogleApiClient)
+            Application.getLastKnownLocation(this@SurveyWebViewActivity)
         return if (location != null) {
             "${location.latitude},${location.longitude}"
         } else {

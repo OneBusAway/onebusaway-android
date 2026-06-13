@@ -16,15 +16,9 @@
  */
 package org.onebusaway.android.map;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
-
-import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
-import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,26 +34,12 @@ public abstract class BaseMapController implements MapModeController,
 
     private MapWatcher mMapWatcher;
 
-    /**
-     * GoogleApiClient being used for Location Services
-     */
-    private GoogleApiClient mGoogleApiClient;
-
     public BaseMapController() {
 
     }
 
     public BaseMapController(Callback callback) {
         mCallback = callback;
-        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
-
-        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (api.isGooglePlayServicesAvailable(mCallback.getActivity())
-                == ConnectionResult.SUCCESS) {
-            Context context = mCallback.getActivity();
-            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(context);
-            mGoogleApiClient.connect();
-        }
         createLoader();
     }
 
@@ -130,21 +110,11 @@ public abstract class BaseMapController implements MapModeController,
     @Override
     public void onPause() {
         watchMap(false);
-
-        // Tear down GoogleApiClient
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
-        }
     }
 
     @Override
     public void onResume() {
         watchMap(true);
-
-        // Make sure GoogleApiClient is connected, if available
-        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.connect();
-        }
     }
 
     @Override

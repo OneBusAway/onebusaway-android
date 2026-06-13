@@ -17,9 +17,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -59,7 +56,6 @@ import org.onebusaway.android.ui.survey.utils.SurveyViewUtils;
 import org.onebusaway.android.ui.weather.RegionCallback;
 import org.onebusaway.android.ui.weather.WeatherUtils;
 import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PermissionUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
@@ -219,11 +215,6 @@ public class HomeActivity extends AppCompatActivity
     private static final int MY_LOC_BTN_ANIM_DURATION = 100;  // ms
 
     Animation mMyLocationAnimation;
-
-    /**
-     * GoogleApiClient being used for Location Services
-     */
-    protected GoogleApiClient mGoogleApiClient;
 
     // Bottom Sliding panel
     SlidingUpPanelLayout mSlidingPanel;
@@ -438,8 +429,6 @@ public class HomeActivity extends AppCompatActivity
 
         setupZoomButtons();
 
-        setupGooglePlayServices();
-
         //setupPermissions(this);
 
         UIUtils.setupActionBar(this);
@@ -498,10 +487,6 @@ public class HomeActivity extends AppCompatActivity
     @Override
     public void onStart() {
         super.onStart();
-        // Make sure GoogleApiClient is connected, if available
-        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.connect();
-        }
         AccessibilityManager am = (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
         Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
         ObaAnalytics.setAccessibility(mFirebaseAnalytics, isTalkBackEnabled);
@@ -542,10 +527,6 @@ public class HomeActivity extends AppCompatActivity
 
     @Override
     public void onStop() {
-        // Tear down GoogleApiClient
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
-        }
         mLayersFab.closeSpeedDialMenu();
         super.onStop();
     }
@@ -1405,13 +1386,13 @@ public class HomeActivity extends AppCompatActivity
     private void goToSendFeedBack() {
         if (mFocusedStop != null) {
             ReportActivity.start(this, mFocusedStopId, mFocusedStop.getName(), mFocusedStop.getStopCode(),
-                    mFocusedStop.getLatitude(), mFocusedStop.getLongitude(), mGoogleApiClient);
+                    mFocusedStop.getLatitude(), mFocusedStop.getLongitude());
         } else {
-            Location loc = Application.getLastKnownLocation(this, mGoogleApiClient);
+            Location loc = Application.getLastKnownLocation(this);
             if (loc != null) {
-                ReportActivity.start(this, loc.getLatitude(), loc.getLongitude(), mGoogleApiClient);
+                ReportActivity.start(this, loc.getLatitude(), loc.getLongitude());
             } else {
-                ReportActivity.start(this, mGoogleApiClient);
+                ReportActivity.start(this);
             }
         }
     }
@@ -1736,16 +1717,6 @@ public class HomeActivity extends AppCompatActivity
             if (routeId != null || stopId != null) {
                 mNavigationDrawerFragment.selectItem(NAVDRAWER_ITEM_NEARBY, false);
             }
-        }
-    }
-
-    private void setupGooglePlayServices() {
-        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
-        if (api.isGooglePlayServicesAvailable(this)
-                == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(this);
-            mGoogleApiClient.connect();
         }
     }
 

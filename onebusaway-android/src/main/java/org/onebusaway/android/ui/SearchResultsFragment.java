@@ -16,7 +16,6 @@
  */
 package org.onebusaway.android.ui;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.location.Location;
@@ -28,9 +27,6 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.onebusaway.android.R;
@@ -92,24 +88,6 @@ public class SearchResultsFragment extends ListFragment
 
     private UIUtils.StopUserInfoMap mStopUserMap;
 
-    /**
-     * GoogleApiClient being used for Location Services
-     */
-    GoogleApiClient mGoogleApiClient;
-
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-
-        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
-        if (api.isGooglePlayServicesAvailable(getActivity())
-                == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getActivity());
-            mGoogleApiClient.connect();
-        }
-    }
-
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -129,24 +107,6 @@ public class SearchResultsFragment extends ListFragment
         super.onDestroy();
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        // Make sure GoogleApiClient is connected, if available
-        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    @Override
-    public void onStop() {
-        // Tear down GoogleApiClient
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
-        }
-        super.onStop();
-    }
-
     private void search() {
         UIUtils.showProgress(this, true);
         Loader<?> loader = getLoaderManager().restartLoader(0, getArguments(), this);
@@ -157,7 +117,7 @@ public class SearchResultsFragment extends ListFragment
     @Override
     public Loader<SearchResponse> onCreateLoader(int id, Bundle args) {
         String query = args.getString(QUERY_TEXT);
-        Location location = Application.getLastKnownLocation(getActivity(), mGoogleApiClient);
+        Location location = Application.getLastKnownLocation(getActivity());
         if (location == null) {
             location = LocationUtils.getDefaultSearchCenter();
         }

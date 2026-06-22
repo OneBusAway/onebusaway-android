@@ -49,7 +49,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 33;
+        private static final int DATABASE_VERSION = 34;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -322,6 +322,14 @@ public class ObaProvider extends ContentProvider {
             if (oldVersion == 32){
                 db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
                         " ADD COLUMN " + ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL + " VARCHAR DEFAULT NULL");
+                ++oldVersion;
+            }
+            if (oldVersion == 33){
+                db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
+                        " ADD COLUMN " + ObaContract.Regions.UMAMI_ANALYTICS_URL + " VARCHAR DEFAULT NULL");
+                db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
+                        " ADD COLUMN " + ObaContract.Regions.UMAMI_ANALYTICS_ID + " VARCHAR DEFAULT NULL");
+                ++oldVersion;
             }
         }
 
@@ -635,6 +643,10 @@ public class ObaProvider extends ContentProvider {
                 .put(ObaContract.Regions.SIDECAR_BASE_URL, ObaContract.Regions.SIDECAR_BASE_URL);
         sRegionsProjectionMap
                 .put(ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL, ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL);
+        sRegionsProjectionMap
+                .put(ObaContract.Regions.UMAMI_ANALYTICS_URL, ObaContract.Regions.UMAMI_ANALYTICS_URL);
+        sRegionsProjectionMap
+                .put(ObaContract.Regions.UMAMI_ANALYTICS_ID, ObaContract.Regions.UMAMI_ANALYTICS_ID);
     }
 
     private SQLiteDatabase mDb;

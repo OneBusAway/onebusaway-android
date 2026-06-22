@@ -79,6 +79,16 @@ public interface ObaRegion {
     public String getPlausibleAnalyticsServerUrl();
 
     /**
+     * @return The Umami analytics server URL for this region, or null if not configured.
+     */
+    public String getUmamiAnalyticsUrl();
+
+    /**
+     * @return The Umami analytics website ID for this region, or null if not configured.
+     */
+    public String getUmamiAnalyticsId();
+
+    /**
      * @return The base SIRI URL for this region, or null if it doesn't use SIRI.
      */
     public String getSiriBaseUrl();

@@ -85,6 +85,31 @@ public class ObaRegionElement implements ObaRegion {
         }
     }
 
+    public static class UmamiAnalyticsConfig {
+
+        private final String url;
+
+        private final String id;
+
+        UmamiAnalyticsConfig() {
+            url = null;
+            id = null;
+        }
+
+        public UmamiAnalyticsConfig(String url, String id) {
+            this.url = url;
+            this.id = id;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public String getId() {
+            return id;
+        }
+    }
+
     public static class Open311Server implements ObaRegion.Open311Server {
 
         public static final Open311Server[] EMPTY_ARRAY = new Open311Server[]{};
@@ -146,6 +171,8 @@ public class ObaRegionElement implements ObaRegion {
     private final String sidecarBaseUrl;
 
     private final String plausibleAnalyticsServerUrl;
+
+    private final UmamiAnalyticsConfig umamiAnalytics;
 
     private final String siriBaseUrl;
 
@@ -216,6 +243,7 @@ public class ObaRegionElement implements ObaRegion {
         enrollParticipantsInStudy = false;
         sidecarBaseUrl = "";
         plausibleAnalyticsServerUrl = "";
+        umamiAnalytics = null;
     }
 
     public ObaRegionElement(long id,
@@ -243,7 +271,8 @@ public class ObaRegionElement implements ObaRegion {
                             boolean travelBehaviorDataCollectionEnabled,
                             boolean enrollParticipantsInStudy,
                             String sidecarBaseUrl,
-                            String plausibleAnalyticsServerUrl) {
+                            String plausibleAnalyticsServerUrl,
+                            UmamiAnalyticsConfig umamiAnalytics) {
         this.id = id;
         this.regionName = name;
         this.active = active;
@@ -270,6 +299,7 @@ public class ObaRegionElement implements ObaRegion {
         this.enrollParticipantsInStudy = enrollParticipantsInStudy;
         this.sidecarBaseUrl = sidecarBaseUrl;
         this.plausibleAnalyticsServerUrl = plausibleAnalyticsServerUrl;
+        this.umamiAnalytics = umamiAnalytics;
     }
 
     @Override
@@ -300,6 +330,16 @@ public class ObaRegionElement implements ObaRegion {
     @Override
     public String getPlausibleAnalyticsServerUrl() {
         return plausibleAnalyticsServerUrl;
+    }
+
+    @Override
+    public String getUmamiAnalyticsUrl() {
+        return umamiAnalytics != null ? umamiAnalytics.getUrl() : null;
+    }
+
+    @Override
+    public String getUmamiAnalyticsId() {
+        return umamiAnalytics != null ? umamiAnalytics.getId() : null;
     }
 
     @Override

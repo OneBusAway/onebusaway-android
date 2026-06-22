@@ -97,7 +97,8 @@ public class MockRegion {
                 false,
                 false,
                 "https://onebusaway.co",
-                null);
+                null,
+                null);   // UmamiAnalyticsConfig — disabled in test regions
     }
 
     /**
@@ -139,7 +140,8 @@ public class MockRegion {
                 false,
                 false,
                 "https://onebusaway.co",
-                null);
+                null,
+                null);   // UmamiAnalyticsConfig — disabled in test regions
     }
 
     /**
@@ -181,7 +183,8 @@ public class MockRegion {
                 false,
                 false,
                 "https://onebusaway.co",
-                null);
+                null,
+                null);   // UmamiAnalyticsConfig — disabled in test regions
     }
 
     /**
@@ -223,7 +226,8 @@ public class MockRegion {
                 false,
                 false,
                 "https://onebusaway.co",
-                null);
+                null,
+                null);   // UmamiAnalyticsConfig — disabled in test regions
     }
 
     /**
@@ -265,7 +269,8 @@ public class MockRegion {
                 false,
                 false,
                 "https://onebusaway.co",
-                null);
+                null,
+                null);   // UmamiAnalyticsConfig — disabled in test regions
     }
 
     /**
@@ -307,7 +312,8 @@ public class MockRegion {
                 false,
                 false,
                 "https://onebusaway.co",
-                null);
+                null,
+                null);   // UmamiAnalyticsConfig — disabled in test regions
     }
 
     /**
@@ -347,7 +353,8 @@ public class MockRegion {
                 false,
                 false,
                 "https://onebusaway.co",
-                null);
+                null,
+                null);   // UmamiAnalyticsConfig — disabled in test regions
     }
 
     /**
@@ -387,6 +394,7 @@ public class MockRegion {
                 false,
                 false,
                 "https://onebusaway.co",
-                null);
+                null,
+                null);   // UmamiAnalyticsConfig — disabled in test regions
     }
 }

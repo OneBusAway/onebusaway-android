@@ -31,10 +31,13 @@ differences: it needs **two** region fields (`url` + `id`) nested under a
 - **Umami's role:** additive. Firebase and Plausible are untouched; Umami
   becomes a third sink wired into the same `ObaAnalytics` methods. Plausible is
   **not** removed as part of this work.
-- **Client:** hand-rolled OkHttp client, not an SDK. The issue mandates API-only
-  POSTs to `/api/send`, fire-and-forget, fast timeouts, and a custom
-  `User-Agent`. No well-maintained Umami Android SDK exists, and the existing
-  Plausible integration is itself a custom fork.
+- **Client:** hand-rolled client over `HttpURLConnection` (the app's existing
+  `ObaApi` networking primitive) on a background executor — **no new
+  dependency.** OkHttp is not a declared dependency or imported anywhere in the
+  app, and adding one for fire-and-forget telemetry isn't warranted. The issue
+  mandates API-only POSTs to `/api/send`, fire-and-forget, fast timeouts, and a
+  custom `User-Agent`. No well-maintained Umami Android SDK exists, and the
+  existing Plausible integration is itself a custom fork.
 - **Event scope:** mirror Plausible exactly. Wherever `ObaAnalytics` already
   receives a `Plausible` instance, it also receives the Umami client and emits
   the same events. No new event taxonomy.
@@ -93,7 +96,7 @@ The feed nests the config:
 ## 2. The Umami client
 
 New class `org.onebusaway.android.io.UmamiAnalytics`, sibling to `ObaAnalytics`,
-wrapping OkHttp.
+wrapping `HttpURLConnection` calls dispatched on a background executor.
 
 - **Construction:** built from the current region's `url` + `id`, plus mutable
   default data (region name). A factory helper returns `null` (or a no-op
@@ -133,23 +136,28 @@ wrapping OkHttp.
   bot-like User-Agent or bad config. Inspect the 200 body and treat such a
   response as a (logged, swallowed) failure, mirroring iOS `isSuccessfulIngest`.
   Without this, a broken User-Agent fails silently with no signal.
-- **Fail-safe:** asynchronous fire-and-forget (`enqueue`), short connect/read/
-  write timeouts (~3–5s), all exceptions and rejection responses swallowed (at
-  most logged). Serialize props safely: drop or stringify any non-JSON value in
-  the `Map<String,Object>` so a stray prop can't throw on the analytics path.
-  Never throws into callers.
+- **User-Agent:** must override `HttpURLConnection`'s default agent string,
+  which is `Dalvik/...` / `Java/...`-style and would otherwise risk Umami's
+  `isbot` rejection.
+- **Fail-safe:** fire-and-forget on a background `Executor`, short connect/read
+  timeouts (~3–5s), all exceptions and rejection responses swallowed (at most
+  logged). Serialize props safely: drop or stringify any non-JSON value in the
+  `Map<String,Object>` so a stray prop can't throw on the analytics path. Never
+  throws into callers.
 
 ## 3. `ObaAnalytics` integration & privacy
 
-- Each `ObaAnalytics` method that currently takes a `Plausible plausible`
-  parameter gains a parallel nullable `UmamiAnalytics umami` parameter. Right
-  after the existing Plausible call, it makes the equivalent Umami call. Methods
-  affected: `reportUiEvent` (`io/ObaAnalytics.java:83`), `reportSearchEvent`
-  (`:119`), `reportViewStopEvent` (`:142,180`), `setRegion` (`:198`). Their call
-  sites pass the Umami instance alongside the Plausible one they already pass.
-- **`setRegion` behavior:** in addition to the Firebase/Plausible region
-  property, it sets the Umami client's persistent default data to the region
-  name, so every subsequent Umami event carries it (iOS parity).
+- **No call-site changes.** Rather than threading a new parameter through all
+  ~79 `ObaAnalytics` call sites, each affected `ObaAnalytics` method fetches the
+  Umami instance internally via `Application.get().getUmamiInstance()` (the class
+  already calls `Application.get()` for prefs/strings). Right after the existing
+  Plausible call, it makes the equivalent Umami call through a
+  `UmamiAnalyticsReporter` helper. Methods affected: `reportUiEvent`
+  (`io/ObaAnalytics.java:83`), `reportSearchEvent` (`:119`),
+  `reportViewStopEvent` (`:180`), `setRegion` (`:198`).
+- **`setRegion` behavior:** in addition to the Firebase region property, it sets
+  the Umami client's persistent default data to the region name, so every
+  subsequent Umami event carries it (iOS parity).
 - **Instance source:** add `getUmamiInstance()` / `buildUmamiInstance()` to
   `app/Application.java`, parallel to the existing `getPlausibleInstance()` /
   `buildPlausibleInstance()` (`~:367,379-388`) — the single construction seam.

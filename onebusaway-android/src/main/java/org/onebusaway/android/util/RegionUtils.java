@@ -452,6 +452,13 @@ public class RegionUtils {
                         open311Servers.toArray(new ObaRegionElement.Open311Server[]{}) :
                         null;
 
+                String umamiUrl = c.getString(23);
+                String umamiId = c.getString(24);
+                ObaRegionElement.UmamiAnalyticsConfig umamiConfig =
+                        (umamiUrl != null || umamiId != null)
+                                ? new ObaRegionElement.UmamiAnalyticsConfig(umamiUrl, umamiId)
+                                : null;
+
                 results.add(new ObaRegionElement(id,   // id
                         c.getString(1),             // Name
                         true,                       // Active
@@ -478,9 +485,7 @@ public class RegionUtils {
                         c.getInt(20) > 0, // enrolling participants for travel behavior data collection
                         c.getString(21), //Sidecar base URL
                         c.getString(22), // Plausible analytics server url
-                        new ObaRegionElement.UmamiAnalyticsConfig(
-                                c.getString(23),  // Umami analytics URL
-                                c.getString(24))  // Umami analytics website ID
+                        umamiConfig      // Umami analytics config (null when unconfigured)
                 ));
 
             } while (c.moveToNext());

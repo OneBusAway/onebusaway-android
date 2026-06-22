@@ -1451,6 +1451,12 @@ public final class ObaContract {
                         return null;
                     }
                     c.moveToFirst();
+                    String umamiUrl = c.getString(23);
+                    String umamiId = c.getString(24);
+                    ObaRegionElement.UmamiAnalyticsConfig umamiConfig =
+                            (umamiUrl != null || umamiId != null)
+                                    ? new ObaRegionElement.UmamiAnalyticsConfig(umamiUrl, umamiId)
+                                    : null;
                     return new ObaRegionElement(id,   // id
                             c.getString(1),             // Name
                             true,                       // Active
@@ -1477,9 +1483,7 @@ public final class ObaContract {
                             c.getInt(20) > 0, // Enroll participants in travel behavior study
                             c.getString(21), // Sidecar Base URL
                             c.getString(22), // Plausible analytics server url
-                            new ObaRegionElement.UmamiAnalyticsConfig(
-                                    c.getString(23),  // Umami analytics URL
-                                    c.getString(24))  // Umami analytics website ID
+                            umamiConfig      // Umami analytics config (null when unconfigured)
                     );
                 } finally {
                     c.close();

@@ -82,4 +82,12 @@ public class UmamiAnalyticsTest {
         assertFalse(out.containsKey("b"));
         assertEquals("obj", out.get("c"));
     }
+
+    @Test
+    public void testReporterNullEmitterIsNoOp() {
+        // Must not throw when Umami is unconfigured (null emitter).
+        org.onebusaway.android.io.UmamiAnalyticsReporter.reportUiEvent(null, "app://localhost/map", "id", "state");
+        org.onebusaway.android.io.UmamiAnalyticsReporter.reportSearchEvent(null, "bus");
+        org.onebusaway.android.io.UmamiAnalyticsReporter.reportViewStopEvent(null, "stop-1", "DISTANCE_1");
+    }
 }

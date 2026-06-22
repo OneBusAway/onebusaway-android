@@ -3,6 +3,12 @@
 **Issue:** [#1575](https://github.com/OneBusAway/onebusaway-android/issues/1575)
 **Date:** 2026-06-22
 **Status:** Approved design, pending implementation plan
+**Reference implementation:** iOS shipped this on its `umami` branch — see
+`~/repos/onebusaway/ios` (`Apps/Shared/Analytics/UmamiAnalytics.swift`,
+`Apps/Shared/Analytics/AnalyticsOrchestrator.swift`,
+`OBAKitCore/Models/Region.swift`, `OBAKit/Analytics/Analytics.swift`,
+`docs/superpowers/specs/2026-06-21-umami-analytics-design.md`). This design
+aims for wire-level and behavioral parity with iOS.
 
 ## Overview
 
@@ -25,13 +31,15 @@ differences: it needs **two** region fields (`url` + `id`) nested under a
 - **Umami's role:** additive. Firebase and Plausible are untouched; Umami
   becomes a third sink wired into the same `ObaAnalytics` methods. Plausible is
   **not** removed as part of this work.
-- **Client:** hand-rolled OkHttp client (`UmamiAnalytics`), not an SDK. The
-  issue mandates API-only POSTs to `/api/send`, fire-and-forget, fast timeouts,
-  and a custom `User-Agent`. No well-maintained Umami Android SDK exists, and the
-  existing Plausible integration is itself a custom fork.
+- **Client:** hand-rolled OkHttp client, not an SDK. The issue mandates API-only
+  POSTs to `/api/send`, fire-and-forget, fast timeouts, and a custom
+  `User-Agent`. No well-maintained Umami Android SDK exists, and the existing
+  Plausible integration is itself a custom fork.
 - **Event scope:** mirror Plausible exactly. Wherever `ObaAnalytics` already
   receives a `Plausible` instance, it also receives the Umami client and emits
   the same events. No new event taxonomy.
+- **Region name on every event:** match iOS — the client holds persistent
+  "default data" (region name) that is merged into every event's `data`.
 
 ## 1. Region model & persistence
 
@@ -41,73 +49,116 @@ The feed nests the config:
 "umamiAnalytics": { "url": "https://...", "id": "<website-uuid>" }
 ```
 
-- Add a nested `UmamiAnalytics` element class (Jackson-bound `url`, `id`) inside
-  `ObaRegionElement`, parallel to the existing `Bounds` / `Open311Server` nested
-  elements.
+- Add a nested Jackson-bound element class to `ObaRegionElement` named
+  **`UmamiAnalyticsConfig`** (`url`, `id`) — deliberately *not* `UmamiAnalytics`,
+  to avoid colliding with the OkHttp client class (iOS hit and renamed around
+  this exact collision). It binds by field name like the existing `Bounds` /
+  `Open311Server` nested elements (`JacksonSerializer` uses `ANY` field
+  visibility and `FAIL_ON_UNKNOWN_PROPERTIES=false`).
 - Add `getUmamiAnalyticsUrl()` and `getUmamiAnalyticsId()` to the `ObaRegion`
-  interface, returning the nested object's values (or `null` when the object is
-  absent). `ObaRegionElement` implements them by reading the nested object.
+  interface, returning the config's values (or `null` when absent).
 - Persist as two flat `TEXT` columns — `UMAMI_ANALYTICS_URL` and
-  `UMAMI_ANALYTICS_ID` — in `ObaContract.RegionsColumns`, wired through
-  `RegionUtils.toContentValues()` and the cursor-read path, exactly as
+  `UMAMI_ANALYTICS_ID` — in `ObaContract.RegionsColumns`, exactly as
   `PLAUSIBLE_ANALYTICS_SERVER_URL` is handled today.
-- Bump the content-provider database version and add a migration that adds the
-  two columns on upgrade.
-- **Disabled semantics:** if either field (or the `umamiAnalytics` object) is
+- Bump the content-provider database version (currently 33 → 34) and add an
+  `if (oldVersion == 33)` migration block with two `ALTER TABLE ... ADD COLUMN`
+  statements, mirroring the Plausible migration at `oldVersion == 32`.
+- **Flat-vs-nested round-trip (important):** JSON parsing produces a nested
+  `UmamiAnalyticsConfig` object, but the content provider **rebuilds**
+  `ObaRegionElement` from the two flat `TEXT` columns — it does not reconstruct
+  the nested object. The getters must therefore return correct values whether
+  the element was JSON-parsed (nested object present) or DB-rebuilt (flat values
+  only). Concretely: `ObaRegionElement` carries the two flat string fields, the
+  getters read those, and the JSON path also populates them from the nested
+  object. (Plausible sidesteps this by being flat end-to-end; Umami cannot,
+  because the feed is nested.)
+- **Disabled semantics:** if the `umamiAnalytics` object or either field is
   null/missing, Umami is disabled for that region.
 
-**Files touched:** `io/elements/ObaRegion.java`,
-`io/elements/ObaRegionElement.java`, `provider/ObaContract.java`,
-`provider/ObaProvider.java` (DB version + migration),
-`util/RegionUtils.java`.
+**Files touched:**
 
-## 2. The Umami client (`UmamiAnalytics`)
+- `io/elements/ObaRegion.java` — two new getters.
+- `io/elements/ObaRegionElement.java` — nested `UmamiAnalyticsConfig`, two flat
+  fields, getters, **and both constructors** (the no-arg default and the full
+  positional constructor — every caller of the positional constructor updates).
+- `provider/ObaContract.java` — column constants **and** the second, positional
+  cursor reader at `~:1438-1462` (`new ObaRegionElement(... c.getString(22))`):
+  append the two columns at indices 23/24. *This reader is independent of
+  `RegionUtils` and silently drops columns if missed.*
+- `provider/ObaProvider.java` — DB version bump + migration.
+- `util/RegionUtils.java` — `toContentValues()` writes the two columns, and the
+  positional cursor reader at `~:401-479` (projection currently ends at index 22)
+  reads them at indices 23/24.
+
+## 2. The Umami client
 
 New class `org.onebusaway.android.io.UmamiAnalytics`, sibling to `ObaAnalytics`,
 wrapping OkHttp.
 
-- **Construction:** built from the current region's `url` + `id`. A factory
-  helper returns `null` (or a no-op instance) when the region has no Umami
-  config, so callers stay clean.
+- **Construction:** built from the current region's `url` + `id`, plus mutable
+  default data (region name). A factory helper returns `null` (or a no-op
+  instance) when the region has no Umami config, so callers stay clean.
 - **Public API:** mirrors how Plausible is used — `event(String name,
   Map<String,Object> props)` for custom events and `pageview(String path)`
-  (no `name` field). `ObaAnalytics` calls these.
-- **Payload** — JSON POST to `<url>/api/send`:
+  (no `name` field) — plus a `setDefaultData`/`setRegionName` setter for the
+  persistent region-name property. `ObaAnalytics` calls these.
+- **Payload** — JSON POST to `<url>/api/send` (identical to iOS):
 
   ```json
   { "type": "event",
     "payload": { "website": "<id>", "hostname": "<host>", "url": "<path>",
-                 "name": "<eventName>", "data": { ...props } } }
+                 "name": "<eventName>", "data": { ...defaultData, ...props } } }
   ```
 
   Omitting `name` records a pageview; including it records a custom event.
+  `data` is omitted when empty. Default data (region name) is merged into every
+  event.
 - **Hostname / url path:** native apps have no real URL.
-  - `hostname` = the host of the region's OBA base URL (stable per region;
-    groups data correctly per website in the dashboard).
-  - `url` = the screen/element path already passed into `reportUiEvent`
-    (existing `pageURl` / `id` arguments).
+  - `hostname` = the host of the region's OBA base URL. Derive it **without
+    throwing** — swallow a malformed-URI error and skip the send, rather than
+    rethrowing as `RuntimeException` the way the existing Plausible path does
+    (`Application.buildPlausibleInstance`). This is fire-and-forget telemetry.
+  - `url` = a **reduced path**, matching iOS. Reduce the existing `pageURl`/`id`
+    argument (e.g. `app://localhost/map`) to its path (`/map`) via
+    `new URI(pageUrl).getPath()`; pathless → `/`; drop any query. Without this,
+    Android would report `app://localhost/...` while iOS reports `/...`, so the
+    same screen would appear as different pages in the dashboard.
 - **User-Agent:** `OneBusAway/<versionName> (Android <Build.VERSION.RELEASE>;
   <Build.MODEL>)`, set explicitly on every request, overriding OkHttp's default
-  so Umami's `isbot` check does not silently reject it.
+  (`okhttp/<version>`). Must be non-empty and device-like so Umami's `isbot`
+  filter does not reject it. (`Build.MODEL` is acceptable — it is device-like.)
+- **Success / "beep-boop" detection (critical):** a dropped event returns
+  **HTTP 200**, not an error. Umami replies `{"beep":"boop"}` (or a body lacking
+  `cache`/`sessionId`/`visitId`) when it rejects the request — typically a
+  bot-like User-Agent or bad config. Inspect the 200 body and treat such a
+  response as a (logged, swallowed) failure, mirroring iOS `isSuccessfulIngest`.
+  Without this, a broken User-Agent fails silently with no signal.
 - **Fail-safe:** asynchronous fire-and-forget (`enqueue`), short connect/read/
-  write timeouts (~3–5s), all exceptions and non-2xx responses swallowed (at
-  most logged). Never throws into callers.
+  write timeouts (~3–5s), all exceptions and rejection responses swallowed (at
+  most logged). Serialize props safely: drop or stringify any non-JSON value in
+  the `Map<String,Object>` so a stray prop can't throw on the analytics path.
+  Never throws into callers.
 
 ## 3. `ObaAnalytics` integration & privacy
 
 - Each `ObaAnalytics` method that currently takes a `Plausible plausible`
   parameter gains a parallel nullable `UmamiAnalytics umami` parameter. Right
   after the existing Plausible call, it makes the equivalent Umami call. Methods
-  affected: `reportUiEvent`, `reportSearchEvent`, `reportViewStopEvent`,
-  `setRegion`. Their call sites pass the Umami instance alongside the Plausible
-  one they already pass.
-- **Instance source:** the same places that build the `Plausible` object from
-  the current region also build the `UmamiAnalytics` instance from the region's
-  `url`/`id`, or leave it null when unconfigured.
+  affected: `reportUiEvent` (`io/ObaAnalytics.java:83`), `reportSearchEvent`
+  (`:119`), `reportViewStopEvent` (`:142,180`), `setRegion` (`:198`). Their call
+  sites pass the Umami instance alongside the Plausible one they already pass.
+- **`setRegion` behavior:** in addition to the Firebase/Plausible region
+  property, it sets the Umami client's persistent default data to the region
+  name, so every subsequent Umami event carries it (iOS parity).
+- **Instance source:** add `getUmamiInstance()` / `buildUmamiInstance()` to
+  `app/Application.java`, parallel to the existing `getPlausibleInstance()` /
+  `buildPlausibleInstance()` (`~:367,379-388`) — the single construction seam.
+  It returns null when the region has no Umami config.
 - **Privacy opt-out:** reuse the existing gate. `ObaAnalytics` already consults
-  the user's "send anonymous data" preference (`isAnalyticsActive()`); the Umami
-  calls sit behind that same check. Opt-out suppresses Umami exactly as it does
-  Firebase/Plausible. No new preference UI.
+  the user's "send anonymous data" preference (`isAnalyticsActive()`,
+  `preferences_key_analytics`, default true); the Umami calls sit behind that
+  same check. Opt-out suppresses Umami exactly as it does Firebase/Plausible. No
+  new preference UI.
 - **Null-safety:** every Umami call is guarded — a null client (unconfigured
   region) or an opted-out user is a no-op.
 
@@ -117,11 +168,16 @@ wrapping OkHttp.
   fixture with `umamiAnalytics` present → getters populated; object absent/null
   → both getters null; only one of the two fields present → treated as disabled.
 - **Persistence round-trip:** save a region via `RegionUtils.toContentValues()`,
-  read it back through the provider, assert both new columns survive; verify the
-  DB migration adds the columns on upgrade.
-- **Payload construction:** unit-test the JSON body and the `User-Agent` header
-  (pageview vs. named event; props serialization). Because the network call is
-  fire-and-forget, assert on the request that *would* be sent, not on delivery.
+  read it back through the provider, assert both new columns survive **and that
+  the DB-rebuilt `ObaRegionElement` (not just a JSON-parsed one) yields populated
+  Umami getters**; verify the migration adds the columns on upgrade.
+- **Payload construction:** unit-test the JSON body, the reduced `url` path
+  (`app://localhost/map` → `/map`, pathless → `/`), the merged default data, and
+  the `User-Agent` header (pageview vs. named event; props serialization;
+  non-JSON props dropped). Because the network call is fire-and-forget, assert on
+  the request that *would* be sent, not on delivery.
+- **Success detection:** test that a `{"beep":"boop"}` 200 body is treated as a
+  failure (logged, swallowed) and a valid ingest body as success.
 - **Manual verification** (issue's real acceptance test): a debug build pointed
   at a region with live Umami config produces events in the dashboard under the
   correct website; an unconfigured region produces none.
@@ -131,7 +187,7 @@ wrapping OkHttp.
 
 - App parses `umamiAnalytics` per region and disables analytics when null. ✅ §1
 - Real device events appear in the Umami dashboard under the correct website.
-  ✅ §2 / manual test §4
+  ✅ §2 (incl. beep-boop detection) / manual test §4
 - No events emit for unconfigured regions. ✅ §1 disabled semantics, §3
   null-safety
 - Analytics failures don't impact user-facing functionality. ✅ §2 fail-safe

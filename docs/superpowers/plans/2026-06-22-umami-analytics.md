@@ -18,6 +18,17 @@
 - **AOSP code style** (`AndroidStyle.xml`). Min SDK 21, Java 1.8, target SDK 36.
 - **PR is a single squashed commit** (project rule); the per-step commits below are squashed at PR time.
 
+## Constructor-caller inventory (critical)
+
+`new ObaRegionElement(...)` has **ten** positional callers. Task 1 adds a 27th constructor parameter, so ALL ten must be updated in the same commit or the build (including androidTest) will not compile:
+
+| Caller | File:line | New 27th arg |
+|--------|-----------|--------------|
+| `ObaContract.Regions.get` | `provider/ObaContract.java:1436` | `new ObaRegionElement.UmamiAnalyticsConfig(c.getString(23), c.getString(24))` |
+| `RegionUtils.getRegionsFromProvider` | `util/RegionUtils.java:453` | `new ObaRegionElement.UmamiAnalyticsConfig(c.getString(23), c.getString(24))` |
+| `RegionUtils.getRegionFromBuildFlavor` | `util/RegionUtils.java:649` | `null` (fixed-region build flavor — no Umami) |
+| `MockRegion` ×8 | `androidTest/.../mock/MockRegion.java:74,116,158,200,242,284,324,364` | `null` (test regions — Umami disabled) |
+
 ## File Structure
 
 | File | Responsibility | Action |
@@ -26,7 +37,8 @@
 | `io/elements/ObaRegionElement.java` | Region impl — nested `UmamiAnalyticsConfig`, field, getters, constructors | Modify |
 | `provider/ObaContract.java` | Column constants + single-region cursor reader (`Regions.get`) | Modify |
 | `provider/ObaProvider.java` | DB version bump + migration | Modify |
-| `util/RegionUtils.java` | `toContentValues` write + bulk cursor reader | Modify |
+| `util/RegionUtils.java` | `toContentValues` write, bulk cursor reader, fixed-region caller | Modify |
+| `androidTest/.../mock/MockRegion.java` | 8 constructor callers (pass null) | Modify |
 | `io/UmamiAnalytics.java` | The emitter: payload build, UA, path reduction, ingest check, send | Create |
 | `io/UmamiAnalyticsReporter.kt` | Maps OBA events → emitter calls (mirror of `PlausibleAnalytics`) | Create |
 | `app/Application.java` | Build/cache the emitter per region | Modify |
@@ -35,20 +47,26 @@
 | `androidTest/.../io/test/RegionsTest.java` | Parse + persistence round-trip tests | Modify |
 | `androidTest/.../io/test/UmamiAnalyticsTest.java` | Emitter unit tests | Create |
 
-Task order is dependency-driven: model getters (1) → persistence (2) → emitter (3) → reporter (4) → Application wiring (5) → ObaAnalytics integration (6) → build/verify (7).
+Task order is dependency-driven: region model + persistence (1) → emitter (2) → reporter (3) → Application wiring (4) → ObaAnalytics integration (5) → build/verify (6).
 
 ---
 
-### Task 1: Region model — parse the nested `umamiAnalytics` object
+### Task 1: Region model & persistence
+
+Adds the 27th constructor parameter and everything that must move with it — all ten callers, the content-provider columns, the migration, and both the parse and round-trip tests — as one atomic, compiling commit.
 
 **Files:**
 - Modify: `onebusaway-android/src/main/java/org/onebusaway/android/io/elements/ObaRegion.java`
 - Modify: `onebusaway-android/src/main/java/org/onebusaway/android/io/elements/ObaRegionElement.java`
+- Modify: `onebusaway-android/src/main/java/org/onebusaway/android/provider/ObaContract.java`
+- Modify: `onebusaway-android/src/main/java/org/onebusaway/android/provider/ObaProvider.java`
+- Modify: `onebusaway-android/src/main/java/org/onebusaway/android/util/RegionUtils.java`
+- Modify: `onebusaway-android/src/androidTest/java/org/onebusaway/android/mock/MockRegion.java`
 - Create: `onebusaway-android/src/androidTest/res/raw/regions_umami_test.json`
 - Test: `onebusaway-android/src/androidTest/java/org/onebusaway/android/io/test/RegionsTest.java`
 
 **Interfaces:**
-- Produces: `ObaRegion.getUmamiAnalyticsUrl(): String` (nullable) and `ObaRegion.getUmamiAnalyticsId(): String` (nullable); nested type `ObaRegionElement.UmamiAnalyticsConfig` with `getUrl()`/`getId()`.
+- Produces: `ObaRegion.getUmamiAnalyticsUrl(): String` (nullable), `ObaRegion.getUmamiAnalyticsId(): String` (nullable); nested type `ObaRegionElement.UmamiAnalyticsConfig` with `getUrl()`/`getId()`; content-provider columns `ObaContract.Regions.UMAMI_ANALYTICS_URL` / `UMAMI_ANALYTICS_ID`.
 
 - [ ] **Step 1: Write the test fixture**
 
@@ -96,9 +114,9 @@ Create `onebusaway-android/src/androidTest/res/raw/regions_umami_test.json`:
 }
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [ ] **Step 2: Write the failing tests**
 
-Add to `RegionsTest.java` (the class already extends `ObaTestCase`; ensure imports for `org.onebusaway.android.mock.Resources` and static `org.junit.Assert.assertNull`/`assertEquals` are present):
+Add to `RegionsTest.java` (ensure imports: `android.content.ContentResolver`, `android.content.ContentValues`, `org.onebusaway.android.mock.Resources`, `org.onebusaway.android.provider.ObaContract`, and static `org.junit.Assert.assertNull`/`assertEquals`/`assertNotNull`):
 
 ```java
 @Test
@@ -115,12 +133,39 @@ public void testUmamiAnalyticsParsing() throws Exception {
     assertNull(withoutUmami.getUmamiAnalyticsUrl());
     assertNull(withoutUmami.getUmamiAnalyticsId());
 }
+
+@Test
+public void testUmamiAnalyticsPersistenceRoundTrip() {
+    ContentResolver cr = getTargetContext().getContentResolver();
+    int id = 987654;
+
+    ContentValues values = new ContentValues();
+    values.put(ObaContract.Regions._ID, id);
+    values.put(ObaContract.Regions.NAME, "Umami Persist Region");
+    values.put(ObaContract.Regions.OBA_BASE_URL, "https://api.example.com/");
+    values.put(ObaContract.Regions.SIRI_BASE_URL, "");
+    values.put(ObaContract.Regions.LANGUAGE, "en_US");
+    values.put(ObaContract.Regions.CONTACT_EMAIL, "test@example.com");
+    values.put(ObaContract.Regions.SUPPORTS_OBA_DISCOVERY, 1);
+    values.put(ObaContract.Regions.SUPPORTS_OBA_REALTIME, 1);
+    values.put(ObaContract.Regions.SUPPORTS_SIRI_REALTIME, 0);
+    values.put(ObaContract.Regions.UMAMI_ANALYTICS_URL, "https://umami.example.com");
+    values.put(ObaContract.Regions.UMAMI_ANALYTICS_ID, "uuid-persist-1");
+    ObaContract.Regions.insertOrUpdate(getTargetContext(), id, values);
+
+    ObaRegion region = ObaContract.Regions.get(cr, id);
+    assertNotNull(region);
+    assertEquals("https://umami.example.com", region.getUmamiAnalyticsUrl());
+    assertEquals("uuid-persist-1", region.getUmamiAnalyticsId());
+
+    cr.delete(ObaContract.Regions.buildUri(id), null, null);
+}
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [ ] **Step 3: Run the tests to verify they fail**
 
-Run: `./gradlew connectedObaGoogleDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=org.onebusaway.android.io.test.RegionsTest#testUmamiAnalyticsParsing`
-Expected: FAIL to compile — `getUmamiAnalyticsUrl()` is undefined on `ObaRegion`.
+Run: `./gradlew connectedObaGoogleDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=org.onebusaway.android.io.test.RegionsTest`
+Expected: FAIL to compile — `getUmamiAnalyticsUrl()` / `UMAMI_ANALYTICS_URL` undefined.
 
 - [ ] **Step 4: Add the interface getters**
 
@@ -140,7 +185,7 @@ In `ObaRegion.java`, immediately after the `getPlausibleAnalyticsServerUrl()` de
 
 - [ ] **Step 5: Add the nested config class to `ObaRegionElement.java`**
 
-Add this nested class directly after the existing `Bounds` class (after line 86):
+Add directly after the existing `Bounds` class (after line 86):
 
 ```java
     public static class UmamiAnalyticsConfig {
@@ -183,14 +228,14 @@ In the no-arg constructor, after `plausibleAnalyticsServerUrl = "";` (line 218):
         umamiAnalytics = null;
 ```
 
-In the all-args constructor, add a parameter at the END of the parameter list (after `String plausibleAnalyticsServerUrl`):
+In the all-args constructor, change the final parameter line (line 246) to add the 27th param:
 
 ```java
                             String plausibleAnalyticsServerUrl,
                             UmamiAnalyticsConfig umamiAnalytics) {
 ```
 
-and the matching assignment after `this.plausibleAnalyticsServerUrl = plausibleAnalyticsServerUrl;`:
+and add the assignment after `this.plausibleAnalyticsServerUrl = plausibleAnalyticsServerUrl;`:
 
 ```java
         this.umamiAnalytics = umamiAnalytics;
@@ -210,81 +255,9 @@ Add the getters after `getPlausibleAnalyticsServerUrl()` (after line 303):
     }
 ```
 
-> Note: the all-args constructor now takes 27 args. The two existing positional callers (`ObaContract.Regions.get` and `RegionUtils.getRegionsFromProvider`) are updated in Task 2 — the code will not compile until then. That is expected; this task's test is the parse path, which uses Jackson, not the constructor.
+- [ ] **Step 7: Add the content-provider column constants**
 
-- [ ] **Step 7: Run the test to verify it passes**
-
-Run: `./gradlew connectedObaGoogleDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=org.onebusaway.android.io.test.RegionsTest#testUmamiAnalyticsParsing`
-
-> If the build fails to compile because the two positional `ObaRegionElement(...)` callers now lack the new argument, complete Task 2 first, then re-run. Both tasks land in one commit pair if implemented back-to-back.
-
-Expected (after Task 2 wiring): PASS.
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add onebusaway-android/src/main/java/org/onebusaway/android/io/elements/ObaRegion.java \
-        onebusaway-android/src/main/java/org/onebusaway/android/io/elements/ObaRegionElement.java \
-        onebusaway-android/src/androidTest/res/raw/regions_umami_test.json \
-        onebusaway-android/src/androidTest/java/org/onebusaway/android/io/test/RegionsTest.java
-git commit -m "Parse umamiAnalytics config from region feed"
-```
-
----
-
-### Task 2: Persistence — columns, migration, both cursor readers
-
-**Files:**
-- Modify: `onebusaway-android/src/main/java/org/onebusaway/android/provider/ObaContract.java`
-- Modify: `onebusaway-android/src/main/java/org/onebusaway/android/provider/ObaProvider.java`
-- Modify: `onebusaway-android/src/main/java/org/onebusaway/android/util/RegionUtils.java`
-- Test: `onebusaway-android/src/androidTest/java/org/onebusaway/android/io/test/RegionsTest.java`
-
-**Interfaces:**
-- Consumes: `ObaRegionElement.UmamiAnalyticsConfig` and the 27-arg constructor from Task 1.
-- Produces: content-provider columns `ObaContract.Regions.UMAMI_ANALYTICS_URL`, `ObaContract.Regions.UMAMI_ANALYTICS_ID`; a DB-rebuilt `ObaRegionElement` whose Umami getters are populated from those columns.
-
-- [ ] **Step 1: Write the failing round-trip test**
-
-Add to `RegionsTest.java` (ensure imports: `android.content.ContentResolver`, `android.content.ContentValues`, `org.onebusaway.android.provider.ObaContract`, and static `org.junit.Assert.assertNotNull`):
-
-```java
-@Test
-public void testUmamiAnalyticsPersistenceRoundTrip() {
-    ContentResolver cr = getTargetContext().getContentResolver();
-    int id = 987654;
-
-    ContentValues values = new ContentValues();
-    values.put(ObaContract.Regions._ID, id);
-    values.put(ObaContract.Regions.NAME, "Umami Persist Region");
-    values.put(ObaContract.Regions.OBA_BASE_URL, "https://api.example.com/");
-    values.put(ObaContract.Regions.SIRI_BASE_URL, "");
-    values.put(ObaContract.Regions.LANGUAGE, "en_US");
-    values.put(ObaContract.Regions.CONTACT_EMAIL, "test@example.com");
-    values.put(ObaContract.Regions.SUPPORTS_OBA_DISCOVERY, 1);
-    values.put(ObaContract.Regions.SUPPORTS_OBA_REALTIME, 1);
-    values.put(ObaContract.Regions.SUPPORTS_SIRI_REALTIME, 0);
-    values.put(ObaContract.Regions.UMAMI_ANALYTICS_URL, "https://umami.example.com");
-    values.put(ObaContract.Regions.UMAMI_ANALYTICS_ID, "uuid-persist-1");
-    ObaContract.Regions.insertOrUpdate(getTargetContext(), id, values);
-
-    ObaRegion region = ObaContract.Regions.get(cr, id);
-    assertNotNull(region);
-    assertEquals("https://umami.example.com", region.getUmamiAnalyticsUrl());
-    assertEquals("uuid-persist-1", region.getUmamiAnalyticsId());
-
-    cr.delete(ObaContract.Regions.buildUri(id), null, null);
-}
-```
-
-- [ ] **Step 2: Run the test to verify it fails**
-
-Run: `./gradlew connectedObaGoogleDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=org.onebusaway.android.io.test.RegionsTest#testUmamiAnalyticsPersistenceRoundTrip`
-Expected: FAIL to compile — `ObaContract.Regions.UMAMI_ANALYTICS_URL` is undefined.
-
-- [ ] **Step 3: Add the column constants**
-
-In `ObaContract.java` `RegionsColumns`, immediately after `PLAUSIBLE_ANALYTICS_SERVER_URL` (line 385):
+In `ObaContract.java` `RegionsColumns`, immediately after `PLAUSIBLE_ANALYTICS_SERVER_URL` (line 385, before `SIRI_BASE_URL`):
 
 ```java
         /**
@@ -304,9 +277,9 @@ In `ObaContract.java` `RegionsColumns`, immediately after `PLAUSIBLE_ANALYTICS_S
         public static final String UMAMI_ANALYTICS_ID = "umami_analytics_id";
 ```
 
-- [ ] **Step 4: Update the single-region cursor reader (`ObaContract.Regions.get`)**
+- [ ] **Step 8: Update the single-region cursor reader (`ObaContract.Regions.get`)**
 
-In `ObaContract.java` `Regions.get(...)`, append the two columns to the end of the `PROJECTION` array (after `PLAUSIBLE_ANALYTICS_SERVER_URL`):
+Append the two columns to the end of the `PROJECTION` array (after `PLAUSIBLE_ANALYTICS_SERVER_URL`, line 1426):
 
 ```java
                 PLAUSIBLE_ANALYTICS_SERVER_URL,
@@ -314,7 +287,7 @@ In `ObaContract.java` `Regions.get(...)`, append the two columns to the end of t
                 UMAMI_ANALYTICS_ID
 ```
 
-and append the matching argument to the `new ObaRegionElement(...)` call, replacing the final `c.getString(22)` line:
+and replace the final `c.getString(22)` argument (line 1461) of the `new ObaRegionElement(...)` call:
 
 ```java
                         c.getString(22), // Plausible analytics server url
@@ -324,9 +297,9 @@ and append the matching argument to the `new ObaRegionElement(...)` call, replac
                 );
 ```
 
-- [ ] **Step 5: Update the bulk cursor reader (`RegionUtils.getRegionsFromProvider`)**
+- [ ] **Step 9: Update the bulk cursor reader (`RegionUtils.getRegionsFromProvider`)**
 
-In `RegionUtils.java`, append the two columns to the `PROJECTION` array (after `PLAUSIBLE_ANALYTICS_SERVER_URL`):
+Append the two columns to the `PROJECTION` array (after `PLAUSIBLE_ANALYTICS_SERVER_URL`, line 424):
 
 ```java
                     ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL,
@@ -334,7 +307,7 @@ In `RegionUtils.java`, append the two columns to the `PROJECTION` array (after `
                     ObaContract.Regions.UMAMI_ANALYTICS_ID
 ```
 
-and replace the final `c.getString(22)` argument in the `new ObaRegionElement(...)` call:
+and replace the final `c.getString(22)` argument (line 478) of the `new ObaRegionElement(...)` call:
 
 ```java
                         c.getString(22), // Plausible analytics server url
@@ -344,16 +317,44 @@ and replace the final `c.getString(22)` argument in the `new ObaRegionElement(..
                 ));
 ```
 
-- [ ] **Step 6: Write the two columns in `RegionUtils.toContentValues`**
+- [ ] **Step 10: Update the fixed-region caller (`RegionUtils.getRegionFromBuildFlavor`)**
 
-In `RegionUtils.java` `toContentValues`, after the `PLAUSIBLE_ANALYTICS_SERVER_URL` put (line 749):
+Replace the final argument (line 669) `BuildConfig.FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL);`:
+
+```java
+                BuildConfig.FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL,
+                null);   // No Umami config for the fixed-region build flavor
+```
+
+- [ ] **Step 11: Update the 8 `MockRegion` callers**
+
+In `MockRegion.java`, each of the eight `new ObaRegionElement(...)` calls (lines 74, 116, 158, 200, 242, 284, 324, 364) currently ends with:
+
+```java
+                "https://onebusaway.co",
+                null);
+```
+
+Change every one of the eight to:
+
+```java
+                "https://onebusaway.co",
+                null,
+                null);   // UmamiAnalyticsConfig — disabled in test regions
+```
+
+(The trailing `null` is the new 27th `UmamiAnalyticsConfig` argument. The `"https://onebusaway.co"` line is the sidecar URL and the preceding `null` is the Plausible URL — both unchanged.)
+
+- [ ] **Step 12: Write the two columns in `RegionUtils.toContentValues`**
+
+After the `PLAUSIBLE_ANALYTICS_SERVER_URL` put (line 749):
 
 ```java
         values.put(ObaContract.Regions.UMAMI_ANALYTICS_URL, region.getUmamiAnalyticsUrl());
         values.put(ObaContract.Regions.UMAMI_ANALYTICS_ID, region.getUmamiAnalyticsId());
 ```
 
-- [ ] **Step 7: Bump the DB version and add the migration**
+- [ ] **Step 13: Bump the DB version and add the migration**
 
 In `ObaProvider.java`, change the version constant (line 52):
 
@@ -380,24 +381,28 @@ Then in `onUpgrade`, add `++oldVersion;` to the end of the existing `if (oldVers
 
 > `onCreate` calls `onUpgrade(db, 12, DATABASE_VERSION)`, so fresh installs replay this chain and get the columns. The round-trip test runs against a fresh DB, so it also verifies the migration produced the columns. The `++oldVersion;` added to the v32 block is required so the v33 block executes.
 
-- [ ] **Step 8: Run the test to verify it passes**
+- [ ] **Step 14: Run the tests to verify they pass**
 
 Run: `./gradlew connectedObaGoogleDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=org.onebusaway.android.io.test.RegionsTest`
 Expected: PASS for both `testUmamiAnalyticsParsing` and `testUmamiAnalyticsPersistenceRoundTrip`.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 15: Commit**
 
 ```bash
-git add onebusaway-android/src/main/java/org/onebusaway/android/provider/ObaContract.java \
+git add onebusaway-android/src/main/java/org/onebusaway/android/io/elements/ObaRegion.java \
+        onebusaway-android/src/main/java/org/onebusaway/android/io/elements/ObaRegionElement.java \
+        onebusaway-android/src/main/java/org/onebusaway/android/provider/ObaContract.java \
         onebusaway-android/src/main/java/org/onebusaway/android/provider/ObaProvider.java \
         onebusaway-android/src/main/java/org/onebusaway/android/util/RegionUtils.java \
+        onebusaway-android/src/androidTest/java/org/onebusaway/android/mock/MockRegion.java \
+        onebusaway-android/src/androidTest/res/raw/regions_umami_test.json \
         onebusaway-android/src/androidTest/java/org/onebusaway/android/io/test/RegionsTest.java
-git commit -m "Persist umamiAnalytics fields in regions content provider"
+git commit -m "Parse and persist umamiAnalytics config from region feed"
 ```
 
 ---
 
-### Task 3: The `UmamiAnalytics` emitter
+### Task 2: The `UmamiAnalytics` emitter
 
 **Files:**
 - Create: `onebusaway-android/src/main/java/org/onebusaway/android/io/UmamiAnalytics.java`
@@ -746,14 +751,14 @@ git commit -m "Add fire-and-forget Umami analytics emitter"
 
 ---
 
-### Task 4: `UmamiAnalyticsReporter` — map OBA events to emitter calls
+### Task 3: `UmamiAnalyticsReporter` — map OBA events to emitter calls
 
 **Files:**
 - Create: `onebusaway-android/src/main/java/org/onebusaway/android/io/UmamiAnalyticsReporter.kt`
 - Test: `onebusaway-android/src/androidTest/java/org/onebusaway/android/io/test/UmamiAnalyticsTest.java`
 
 **Interfaces:**
-- Consumes: `UmamiAnalytics` from Task 3; `PlausibleAnalytics.REPORT_SEARCH_EVENT_URL`.
+- Consumes: `UmamiAnalytics` from Task 2; `PlausibleAnalytics.REPORT_SEARCH_EVENT_URL`.
 - Produces: `UmamiAnalyticsReporter.reportUiEvent(UmamiAnalytics?, String, String, String?)`, `reportSearchEvent(UmamiAnalytics?, String)`, `reportViewStopEvent(UmamiAnalytics?, String, String)` — each a no-op when the emitter is null. Mirrors `PlausibleAnalytics`.
 
 - [ ] **Step 1: Write the failing null-safety test**
@@ -826,13 +831,13 @@ git commit -m "Add UmamiAnalyticsReporter mirroring PlausibleAnalytics"
 
 ---
 
-### Task 5: Build and cache the emitter per region in `Application`
+### Task 4: Build and cache the emitter per region in `Application`
 
 **Files:**
 - Modify: `onebusaway-android/src/main/java/org/onebusaway/android/app/Application.java`
 
 **Interfaces:**
-- Consumes: `UmamiAnalytics` (Task 3); `ObaRegion.getUmamiAnalyticsUrl()/getUmamiAnalyticsId()` (Task 1).
+- Consumes: `UmamiAnalytics` (Task 2); `ObaRegion.getUmamiAnalyticsUrl()/getUmamiAnalyticsId()` (Task 1).
 - Produces: `Application.getUmamiInstance(): UmamiAnalytics` (nullable; null when the current region has no Umami config). Rebuilt whenever the region changes, alongside the Plausible instance.
 
 - [ ] **Step 1: Add the field**
@@ -880,16 +885,16 @@ After the `buildPlausibleInstance` method (after line 389), add:
 
 - [ ] **Step 3: Rebuild the emitter on region change**
 
-In `Application.java` there are two places that call `buildPlausibleInstance(...)` to refresh on region change. Add a `buildUmamiInstance(...)` call immediately after each:
+Add a `buildUmamiInstance(...)` call immediately after each existing `buildPlausibleInstance(...)` call.
 
-After the `buildPlausibleInstance(region);` call inside `setCurrentRegion` (line 352):
+After `buildPlausibleInstance(region);` inside `setCurrentRegion` (line 352):
 
 ```java
                 buildPlausibleInstance(region);
                 buildUmamiInstance(region);
 ```
 
-After the `buildPlausibleInstance(getCurrentRegion());` call near line 608 (the region-init path that precedes `ObaAnalytics.setRegion(...)`):
+After `buildPlausibleInstance(getCurrentRegion());` near line 608 (the region-init path that precedes `ObaAnalytics.setRegion(...)`):
 
 ```java
             buildPlausibleInstance(getCurrentRegion());
@@ -897,7 +902,7 @@ After the `buildPlausibleInstance(getCurrentRegion());` call near line 608 (the 
             ObaAnalytics.setRegion(mPlausible, mFirebaseAnalytics, getCurrentRegion().getName());
 ```
 
-> `URI` / `URISyntaxException` are already imported in this file (used by `buildPlausibleInstance`).
+> `URI` / `URISyntaxException` are already imported in this file (used by `buildPlausibleInstance`). The line-352 call is nested inside an `if (regionChanged && region.getOtpBaseUrl() != null)` block — this mirrors the existing Plausible behavior exactly, and `getUmamiInstance()` lazily rebuilds from `getCurrentRegion()` on first use, so the emitter self-heals for regions reached by other paths.
 
 - [ ] **Step 4: Verify it compiles**
 
@@ -913,13 +918,13 @@ git commit -m "Build and cache Umami emitter per region in Application"
 
 ---
 
-### Task 6: Emit Umami events from `ObaAnalytics`
+### Task 5: Emit Umami events from `ObaAnalytics`
 
 **Files:**
 - Modify: `onebusaway-android/src/main/java/org/onebusaway/android/io/ObaAnalytics.java`
 
 **Interfaces:**
-- Consumes: `Application.getUmamiInstance()` (Task 5); `UmamiAnalyticsReporter` (Task 4); `UmamiAnalytics.setRegionName` (Task 3).
+- Consumes: `Application.getUmamiInstance()` (Task 4); `UmamiAnalyticsReporter` (Task 3); `UmamiAnalytics.setRegionName` (Task 2).
 - Produces: no signature changes — Umami is fetched internally, so the ~79 existing call sites are untouched.
 
 - [ ] **Step 1: Emit on UI events**
@@ -961,14 +966,14 @@ In `setRegion`, after `analytics.setUserProperty(...)` (line 202):
         }
 ```
 
-> `Application`, `UmamiAnalytics`, and `UmamiAnalyticsReporter` are all reachable: `Application` is already imported and used here; the two Umami types share the `org.onebusaway.android.io` package with `ObaAnalytics`, so no import is needed.
+> `Application` is already imported and used here; `UmamiAnalytics`/`UmamiAnalyticsReporter` share the `org.onebusaway.android.io` package with `ObaAnalytics`, so no imports are needed. The custom-URL `setRegion` path (region null) reaches `getUmamiInstance()`, which returns null and is guarded by the `if (umami != null)` check — no NPE.
 
-- [ ] **Step 5: Verify it compiles and the full suite passes**
+- [ ] **Step 5: Verify it compiles**
 
 Run: `./gradlew assembleObaGoogleDebug`
 Expected: BUILD SUCCESSFUL.
 
-> No new unit test is added here: `ObaAnalytics` depends on static `FirebaseAnalytics` and `Application` singletons that the existing instrumented suite does not mock (there is no `ObaAnalyticsTest` today). This task is verified by compilation, by the emitter/reporter tests from Tasks 3–4, and by the manual dashboard verification in Task 7.
+> No new unit test is added here: `ObaAnalytics` depends on static `FirebaseAnalytics` and `Application` singletons that the existing instrumented suite does not mock (there is no `ObaAnalyticsTest` today). This task is verified by compilation, by the emitter/reporter tests from Tasks 2–3, and by the manual dashboard verification in Task 6.
 
 - [ ] **Step 6: Commit**
 
@@ -979,7 +984,7 @@ git commit -m "Emit Umami events alongside Plausible from ObaAnalytics"
 
 ---
 
-### Task 7: Full build, test suite, and manual verification
+### Task 6: Full build, test suite, and manual verification
 
 **Files:** none (verification only).
 

@@ -105,6 +105,8 @@ public class Application extends android.app.Application {
 
     private Plausible mPlausible;
 
+    private org.onebusaway.android.io.UmamiAnalytics mUmami;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -350,6 +352,7 @@ public class Application extends android.app.Application {
                 setCustomOtpApiUrl(null);
                 setUseOldOtpApiUrlVersion(false);
                 buildPlausibleInstance(region);
+                buildUmamiInstance(region);
             }
         } else {
             //User must have just entered a custom API URL via Preferences, so clear the region info
@@ -386,6 +389,35 @@ public class Application extends android.app.Application {
             throw new RuntimeException(e);
         }
         mPlausible = new Plausible(this, domain, region.getPlausibleAnalyticsServerUrl());
+    }
+
+    public org.onebusaway.android.io.UmamiAnalytics getUmamiInstance() {
+        if (mUmami == null) {
+            buildUmamiInstance(getCurrentRegion());
+        }
+        return mUmami;
+    }
+
+    private void buildUmamiInstance(ObaRegion region) {
+        mUmami = null;
+        if (region == null
+                || region.getObaBaseUrl() == null
+                || region.getUmamiAnalyticsUrl() == null
+                || region.getUmamiAnalyticsId() == null) {
+            return;
+        }
+        String host;
+        try {
+            host = new URI(region.getObaBaseUrl()).getHost();
+        } catch (URISyntaxException e) {
+            // Fire-and-forget telemetry must never throw on a malformed URL.
+            return;
+        }
+        if (host == null) {
+            return;
+        }
+        mUmami = new org.onebusaway.android.io.UmamiAnalytics(
+                region.getUmamiAnalyticsUrl(), region.getUmamiAnalyticsId(), host);
     }
 
 
@@ -606,6 +638,7 @@ public class Application extends android.app.Application {
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         if (getCustomApiUrl() == null && getCurrentRegion() != null) {
             buildPlausibleInstance(getCurrentRegion());
+            buildUmamiInstance(getCurrentRegion());
             ObaAnalytics.setRegion(mPlausible, mFirebaseAnalytics, getCurrentRegion().getName());
         } else if (Application.get().getCustomApiUrl() != null) {
             String customUrl = null;

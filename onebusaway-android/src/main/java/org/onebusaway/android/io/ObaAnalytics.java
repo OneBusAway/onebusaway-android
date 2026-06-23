@@ -91,6 +91,7 @@ public class ObaAnalytics {
         }
         analytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
         PlausibleAnalytics.reportUiEvent(plausible, pageURl, id, state);
+        UmamiAnalyticsReporter.reportUiEvent(Application.get().getUmamiInstance(), pageURl, id, state);
     }
 
     /**
@@ -127,6 +128,7 @@ public class ObaAnalytics {
         }
         analytics.logEvent(FirebaseAnalytics.Event.SEARCH, bundle);
         PlausibleAnalytics.reportSearchEvent(plausible, searchTerm);
+        UmamiAnalyticsReporter.reportSearchEvent(Application.get().getUmamiInstance(), searchTerm);
     }
 
     /**
@@ -188,6 +190,7 @@ public class ObaAnalytics {
         bundle.putString(FirebaseAnalytics.Param.LOCATION_ID, proximityToStopCategory);
         analytics.logEvent(FirebaseAnalytics.Event.VIEW_ITEM, bundle);
         PlausibleAnalytics.reportViewStopEvent(plausible, stopId, proximityToStopCategory);
+        UmamiAnalyticsReporter.reportViewStopEvent(Application.get().getUmamiInstance(), stopId, proximityToStopCategory);
     }
 
     /**
@@ -200,6 +203,10 @@ public class ObaAnalytics {
             return;
         }
         analytics.setUserProperty(Application.get().getString(R.string.analytics_label_region_name), regionName);
+        UmamiAnalytics umami = Application.get().getUmamiInstance();
+        if (umami != null) {
+            umami.setRegionName(regionName);
+        }
     }
 
     /**

@@ -1,0 +1,39 @@
+{
+  "code": 200,
+  "text": "OK",
+  "version": 3,
+  "data": {
+    "limitExceeded": false,
+    "list": [
+      {
+        "id": 0,
+        "regionName": "Umami Region",
+        "active": true,
+        "obaBaseUrl": "https://api.umami.example.com/",
+        "siriBaseUrl": null,
+        "umamiAnalytics": { "url": "https://umami.example.com", "id": "abc-123-uuid" },
+        "bounds": [ { "lat": 27.9, "lon": -82.4, "latSpan": 0.5, "lonSpan": 0.5 } ],
+        "language": "en_US",
+        "contactEmail": "test@example.com",
+        "supportsObaDiscoveryApis": true,
+        "supportsObaRealtimeApis": true,
+        "supportsSiriRealtimeApis": false,
+        "experimental": false
+      },
+      {
+        "id": 1,
+        "regionName": "No Umami Region",
+        "active": true,
+        "obaBaseUrl": "https://api.noumami.example.com/",
+        "siriBaseUrl": null,
+        "bounds": [ { "lat": 47.6, "lon": -122.3, "latSpan": 0.5, "lonSpan": 0.5 } ],
+        "language": "en_US",
+        "contactEmail": "test@example.com",
+        "supportsObaDiscoveryApis": true,
+        "supportsObaRealtimeApis": true,
+        "supportsSiriRealtimeApis": false,
+        "experimental": false
+      }
+    ]
+  }
+}

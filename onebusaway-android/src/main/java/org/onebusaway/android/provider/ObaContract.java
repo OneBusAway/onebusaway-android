@@ -385,6 +385,22 @@ public final class ObaContract {
         public static final String PLAUSIBLE_ANALYTICS_SERVER_URL = "plausible_analytics_server_url";
 
         /**
+         * The Umami analytics server URL for the region.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String UMAMI_ANALYTICS_URL = "umami_analytics_url";
+
+        /**
+         * The Umami analytics website ID for the region.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String UMAMI_ANALYTICS_ID = "umami_analytics_id";
+
+        /**
          * The base SIRI URL.
          * <P>
          * Type: TEXT
@@ -1423,7 +1439,9 @@ public final class ObaContract {
                     TRAVEL_BEHAVIOR_DATA_COLLECTION,
                     ENROLL_PARTICIPANTS_IN_STUDY,
                     SIDECAR_BASE_URL,
-                    PLAUSIBLE_ANALYTICS_SERVER_URL
+                    PLAUSIBLE_ANALYTICS_SERVER_URL,
+                    UMAMI_ANALYTICS_URL,
+                    UMAMI_ANALYTICS_ID
             };
 
             Cursor c = cr.query(buildUri((int) id), PROJECTION, null, null, null);
@@ -1433,6 +1451,12 @@ public final class ObaContract {
                         return null;
                     }
                     c.moveToFirst();
+                    String umamiUrl = c.getString(23);
+                    String umamiId = c.getString(24);
+                    ObaRegionElement.UmamiAnalyticsConfig umamiConfig =
+                            (umamiUrl != null || umamiId != null)
+                                    ? new ObaRegionElement.UmamiAnalyticsConfig(umamiUrl, umamiId)
+                                    : null;
                     return new ObaRegionElement(id,   // id
                             c.getString(1),             // Name
                             true,                       // Active
@@ -1458,7 +1482,8 @@ public final class ObaContract {
                             c.getInt(19) > 0, // Travel behavior data collection
                             c.getInt(20) > 0, // Enroll participants in travel behavior study
                             c.getString(21), // Sidecar Base URL
-                            c.getString(22) // Plausible analytics server url
+                            c.getString(22), // Plausible analytics server url
+                            umamiConfig      // Umami analytics config (null when unconfigured)
                     );
                 } finally {
                     c.close();

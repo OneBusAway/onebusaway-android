@@ -421,7 +421,9 @@ public class RegionUtils {
                     ObaContract.Regions.TRAVEL_BEHAVIOR_DATA_COLLECTION,
                     ObaContract.Regions.ENROLL_PARTICIPANTS_IN_STUDY,
                     ObaContract.Regions.SIDECAR_BASE_URL,
-                    ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL
+                    ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL,
+                    ObaContract.Regions.UMAMI_ANALYTICS_URL,
+                    ObaContract.Regions.UMAMI_ANALYTICS_ID
             };
 
             ContentResolver cr = context.getContentResolver();
@@ -450,6 +452,13 @@ public class RegionUtils {
                         open311Servers.toArray(new ObaRegionElement.Open311Server[]{}) :
                         null;
 
+                String umamiUrl = c.getString(23);
+                String umamiId = c.getString(24);
+                ObaRegionElement.UmamiAnalyticsConfig umamiConfig =
+                        (umamiUrl != null || umamiId != null)
+                                ? new ObaRegionElement.UmamiAnalyticsConfig(umamiUrl, umamiId)
+                                : null;
+
                 results.add(new ObaRegionElement(id,   // id
                         c.getString(1),             // Name
                         true,                       // Active
@@ -475,7 +484,8 @@ public class RegionUtils {
                         c.getInt(19) > 0, // travel behavior data collection enabled for region
                         c.getInt(20) > 0, // enrolling participants for travel behavior data collection
                         c.getString(21), //Sidecar base URL
-                        c.getString(22) // Plausible analytics server url
+                        c.getString(22), // Plausible analytics server url
+                        umamiConfig      // Umami analytics config (null when unconfigured)
                 ));
 
             } while (c.moveToNext());
@@ -666,7 +676,8 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION,
                 BuildConfig.FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY,
                 BuildConfig.FIXED_REGION_SIDECAR_BASE_URL,
-                BuildConfig.FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL);
+                BuildConfig.FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL,
+                null);   // No Umami config for the fixed-region build flavor
         return region;
     }
 
@@ -747,6 +758,8 @@ public class RegionUtils {
                 region.isEnrollParticipantsInStudy() ? 1 : 0);
         values.put(ObaContract.Regions.SIDECAR_BASE_URL, region.getSidecarBaseUrl());
         values.put(ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL, region.getPlausibleAnalyticsServerUrl());
+        values.put(ObaContract.Regions.UMAMI_ANALYTICS_URL, region.getUmamiAnalyticsUrl());
+        values.put(ObaContract.Regions.UMAMI_ANALYTICS_ID, region.getUmamiAnalyticsId());
         return values;
     }
 

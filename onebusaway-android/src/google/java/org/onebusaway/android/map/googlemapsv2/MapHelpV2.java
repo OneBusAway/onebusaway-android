@@ -15,29 +15,18 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.MapStyleOptions;
 
-import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaTripDetails;
-import org.onebusaway.android.io.elements.ObaTripStatus;
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.location.Location;
 import android.util.Log;
 
-import androidx.appcompat.app.AppCompatDelegate;
-
-import java.util.HashSet;
-import java.util.List;
 
 /**
- * Utilities for Google Maps API v2 map operations.
+ * Utilities to help process data for Android Maps API v1
  */
 public class MapHelpV2 {
 
@@ -138,94 +127,4 @@ public class MapHelpV2 {
         ProprietaryMapHelpV2.promptUserInstallMaps(context);
     }
 
-    /**
-     * Gets the location of the vehicle closest to the provided location running the provided
-     * routes
-     *
-     * @param response response containing list of trips with vehicle locations
-     * @param routeIds markers representing real-time positions for the provided routeIds will be
-     *                 checked for proximity to the location (all other routes are ignored)
-     * @param loc      location
-     * @return the closest vehicle location to the given location, or null if a closest vehicle
-     * couldn't be found
-     */
-    public static LatLng getClosestVehicle(ObaTripsForRouteResponse response,
-            HashSet<String> routeIds, Location loc) {
-        if (loc == null) {
-            return null;
-        }
-        float minDist = Float.MAX_VALUE;
-        ObaTripStatus closestVehicle = null;
-        Location closestVehicleLocation = null;
-        Float distToVehicle;
-
-        for (ObaTripDetails detail : response.getTrips()) {
-            Location vehicleLocation;
-            ObaTripStatus status = detail.getStatus();
-            if (status == null) {
-                continue;
-            }
-            // Check if this vehicle is running a route we're interested in
-            String activeRoute = response.getTrip(status.getActiveTripId()).getRouteId();
-            if (!routeIds.contains(activeRoute)) {
-                continue;
-            }
-            if (status.getLastKnownLocation() != null) {
-                // Use last actual position
-                vehicleLocation = status.getLastKnownLocation();
-            } else if (status.getPosition() != null) {
-                // Use last interpolated position
-                vehicleLocation = status.getPosition();
-            } else {
-                // No vehicle location - continue to next trip
-                continue;
-            }
-            distToVehicle = vehicleLocation.distanceTo(loc);
-
-            if (distToVehicle < minDist) {
-                closestVehicleLocation = vehicleLocation;
-                closestVehicle = status;
-                minDist = distToVehicle;
-            }
-        }
-
-        if (closestVehicleLocation == null) {
-            return null;
-        }
-
-        Log.d(TAG, "Closest vehicle is vehicleId=" + closestVehicle.getVehicleId() + ", routeId="
-                + ", tripId=" +
-                closestVehicle.getActiveTripId() + " at " + closestVehicleLocation.getLatitude()
-                + ","
-                + closestVehicleLocation.getLongitude());
-
-        return makeLatLng(closestVehicleLocation);
-    }
-
-    /**
-     * Computes the bounding box of a list of Locations.
-     *
-     * @return LatLngBounds enclosing all points, or null if the list is null/empty.
-     */
-    public static LatLngBounds getBounds(List<Location> points) {
-        if (points == null || points.isEmpty()) return null;
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        for (Location loc : points) {
-            builder.include(makeLatLng(loc));
-        }
-        return builder.build();
-    }
-
-    /**
-     * Applies the app's light/dark map style to the given GoogleMap.
-     * In dark mode, loads R.raw.dark_map; in light mode, hides POIs.
-     */
-    public static void applyMapStyle(GoogleMap map, Context context) {
-        boolean dark = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES
-                || (AppCompatDelegate.getDefaultNightMode() != AppCompatDelegate.MODE_NIGHT_NO
-                && (context.getResources().getConfiguration().uiMode
-                & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES);
-        int styleRes = dark ? R.raw.dark_map : R.raw.light_map;
-        map.setMapStyle(MapStyleOptions.loadRawResourceStyle(context, styleRes));
-    }
 }

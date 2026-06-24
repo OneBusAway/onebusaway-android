@@ -23,14 +23,15 @@ import kotlin.math.min
 import kotlin.math.pow
 
 /**
- * Distance-time coordinate system for the trajectory graph. Manages data bounds, zoom/pan state,
- * and pixel coordinate mapping.
+ * Distance-time coordinate system for the trajectory graph: data bounds, zoom/pan state, and the
+ * data <-> pixel mapping. Pure (no Android), so the trajectory screen's Compose Canvas drives it and
+ * it stays unit-testable. Ported from the feature's custom-View GraphViewport.
  */
 class GraphViewport(
-        val marginLeft: Float,
-        val marginTop: Float,
-        val marginRight: Float,
-        val marginBottom: Float
+    val marginLeft: Float,
+    val marginTop: Float,
+    val marginRight: Float,
+    val marginBottom: Float,
 ) {
     // Full data bounds (set by setDataBounds)
     var fullMinDist = 0.0
@@ -62,12 +63,9 @@ class GraphViewport(
     var visTimeRange = 0L
         private set
 
-    val graphRight
-        get() = marginLeft + graphW
-    val graphBottom
-        get() = marginTop + graphH
-    val isZoomed
-        get() = scaleX > 1f || scaleY > 1f
+    val graphRight get() = marginLeft + graphW
+    val graphBottom get() = marginTop + graphH
+    val isZoomed get() = scaleX > 1f || scaleY > 1f
 
     fun setDataBounds(minDist: Double, maxDist: Double, minTime: Long, maxTime: Long) {
         fullMinDist = minDist
@@ -112,16 +110,10 @@ class GraphViewport(
     }
 
     /**
-     * Applies a focal-point-preserving pinch zoom. The data-space point under [focusX],[focusY]
-     * stays fixed on screen.
+     * Applies a focal-point-preserving pinch zoom. The data-space point under [focusX],[focusY] stays
+     * fixed on screen.
      */
-    fun applyScale(
-            factor: Float,
-            focusX: Float,
-            focusY: Float,
-            viewWidth: Float,
-            viewHeight: Float
-    ) {
+    fun applyScale(factor: Float, focusX: Float, focusY: Float, viewWidth: Float, viewHeight: Float) {
         val gw = viewWidth - marginLeft - marginRight
         val gh = viewHeight - marginTop - marginBottom
         if (gw <= 0 || gh <= 0) return
@@ -135,8 +127,8 @@ class GraphViewport(
         val visTimeRange = (fullTimeRange / scaleY).toLong()
         val focalDist = fullMinDist + offsetDist + visDistRange * ((focusX - marginLeft) / gw)
         val focalTime =
-                fullMinTime + offsetTime + visTimeRange -
-                        (visTimeRange * ((focusY - marginTop) / gh)).toLong()
+            fullMinTime + offsetTime + visTimeRange -
+                (visTimeRange * ((focusY - marginTop) / gh)).toLong()
 
         scaleX = max(1f, min(20f, scaleX * factor))
         scaleY = max(1f, min(20f, scaleY * factor))
@@ -146,8 +138,8 @@ class GraphViewport(
         val newVisTimeRange = (fullTimeRange / scaleY).toLong()
         offsetDist = focalDist - fullMinDist - newVisDistRange * ((focusX - marginLeft) / gw)
         offsetTime =
-                focalTime - fullMinTime - newVisTimeRange +
-                        (newVisTimeRange * ((focusY - marginTop) / gh)).toLong()
+            focalTime - fullMinTime - newVisTimeRange +
+                (newVisTimeRange * ((focusY - marginTop) / gh)).toLong()
 
         clampOffsets()
     }
@@ -170,10 +162,10 @@ class GraphViewport(
     }
 
     fun toPixelX(dist: Double): Float =
-            marginLeft + graphW * ((dist - visMinDist) / visDistRange).toFloat()
+        marginLeft + graphW * ((dist - visMinDist) / visDistRange).toFloat()
 
     fun toPixelY(time: Long): Float =
-            marginTop + graphH * (1f - (time - visMinTime).toFloat() / visTimeRange)
+        marginTop + graphH * (1f - (time - visMinTime).toFloat() / visTimeRange)
 
     inline fun forEachTimeTick(action: (y: Float, time: Long) -> Unit) {
         val visMaxTime = visMinTime + visTimeRange

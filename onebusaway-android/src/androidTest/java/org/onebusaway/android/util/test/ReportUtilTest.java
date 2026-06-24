@@ -47,12 +47,12 @@ public class ReportUtilTest extends AndroidTestCase {
 
         // Match sure all stop-related service names match
         for (String serviceName : stopServiceNamesMatch) {
-            assertTrue(ServiceUtils.isTransitStopServiceByText(serviceName));
+            assertTrue(ServiceUtils.isTransitStopServiceByText(getContext(), serviceName));
         }
 
         // Match sure all trip/arrival time-related service names match
         for (String serviceName : tripServiceNamesMatch) {
-            assertTrue(ServiceUtils.isTransitTripServiceByText(serviceName));
+            assertTrue(ServiceUtils.isTransitTripServiceByText(getContext(), serviceName));
         }
 
         String[] serviceNamesNoMatch = {
@@ -62,12 +62,12 @@ public class ReportUtilTest extends AndroidTestCase {
 
         // Match sure we don't get false positives for stop matching
         for (String serviceName : serviceNamesNoMatch) {
-            assertFalse(ServiceUtils.isTransitStopServiceByText(serviceName));
+            assertFalse(ServiceUtils.isTransitStopServiceByText(getContext(), serviceName));
         }
 
         // Match sure we don't get false positives for trip matching
         for (String serviceName : serviceNamesNoMatch) {
-            assertFalse(ServiceUtils.isTransitStopServiceByText(serviceName));
+            assertFalse(ServiceUtils.isTransitStopServiceByText(getContext(), serviceName));
         }
     }
 }

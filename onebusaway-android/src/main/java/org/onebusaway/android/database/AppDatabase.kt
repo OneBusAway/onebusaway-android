@@ -6,12 +6,12 @@ import org.onebusaway.android.database.recentStops.dao.RegionDao
 import org.onebusaway.android.database.recentStops.dao.StopDao
 import org.onebusaway.android.database.recentStops.entity.RegionEntity
 import org.onebusaway.android.database.recentStops.entity.StopEntity
+import org.onebusaway.android.database.survey.dao.StudiesDao
+import org.onebusaway.android.database.survey.dao.SurveysDao
+import org.onebusaway.android.database.survey.entity.Study
+import org.onebusaway.android.database.survey.entity.Survey
 import org.onebusaway.android.database.widealerts.dao.AlertDao
 import org.onebusaway.android.database.widealerts.entity.AlertEntity
-import org.onebusaway.android.ui.survey.dao.StudiesDao
-import org.onebusaway.android.ui.survey.dao.SurveysDao
-import org.onebusaway.android.ui.survey.entity.Study
-import org.onebusaway.android.ui.survey.entity.Survey
 
 /**
  * Main database class for the app, containing `Study` and `Survey` entities.

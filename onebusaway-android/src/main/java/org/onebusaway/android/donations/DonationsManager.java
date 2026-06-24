@@ -10,23 +10,19 @@ import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.net.Uri;
 
 import java.util.Date;
 
 public class DonationsManager {
-    private SharedPreferences mPreferences;
     private Resources mResources;
     private int mAppLaunchCount;
 
     public DonationsManager(
-            SharedPreferences preferences,
             FirebaseAnalytics firebaseAnalytics,
             Resources resources,
             int appLaunchCount) {
-        this.mPreferences = preferences;
         this.mAnalytics = firebaseAnalytics;
         this.mResources = resources;
         this.mAppLaunchCount = appLaunchCount;
@@ -58,7 +54,7 @@ public class DonationsManager {
      * or because they tapped the 'dismiss' button, or null if the date has not been set.
      */
     public Date getDonationRequestDismissedDate() {
-        Long timestamp = mPreferences.getLong(donationRequestDismissedDateKey, -1);
+        long timestamp = PreferenceUtils.getLong(donationRequestDismissedDateKey, -1);
         if (timestamp < 1) {
             return null;
         }
@@ -72,7 +68,6 @@ public class DonationsManager {
      */
     public void setDonationRequestDismissedDate(Date date) {
         PreferenceUtils.saveLong(
-                mPreferences,
                 donationRequestDismissedDateKey,
                 date == null ? -1 : date.getTime()
         );
@@ -93,7 +88,7 @@ public class DonationsManager {
      * @return Optional date at which the app should remind the user to donate.
      */
     public Date getDonationRequestReminderDate() {
-        Long timestamp = mPreferences.getLong(donationRequestReminderDateKey, -1);
+        long timestamp = PreferenceUtils.getLong(donationRequestReminderDateKey, -1);
         if (timestamp < 1) {
             return null;
         }
@@ -103,7 +98,6 @@ public class DonationsManager {
 
     public void setDonationRequestReminderDate(Date date) {
         PreferenceUtils.saveLong(
-                mPreferences,
                 donationRequestReminderDateKey,
                 date == null ? -1 : date.getTime()
         );

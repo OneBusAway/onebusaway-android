@@ -19,7 +19,6 @@ import com.google.android.gms.location.ActivityTransition;
 import com.google.android.gms.location.DetectedActivity;
 
 import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.travelbehavior.constants.TravelBehaviorConstants;
 import org.onebusaway.android.travelbehavior.model.TravelBehaviorInfo;
@@ -83,18 +82,16 @@ public class TravelBehaviorUtils {
         return m;
     }
 
-    public static boolean isTravelBehaviorActiveInRegion() {
-        ObaRegion currentRegion = Application.get().getCurrentRegion();
+    public static boolean isTravelBehaviorActiveInRegion(ObaRegion currentRegion) {
         return currentRegion != null && currentRegion.isTravelBehaviorDataCollectionEnabled();
     }
 
-    public static boolean allowEnrollMoreParticipantsInStudy() {
-        ObaRegion currentRegion = Application.get().getCurrentRegion();
+    public static boolean allowEnrollMoreParticipantsInStudy(ObaRegion currentRegion) {
         return currentRegion != null && currentRegion.isEnrollParticipantsInStudy();
     }
 
-    public static boolean isUserParticipatingInStudy() {
-        return isTravelBehaviorActiveInRegion() &&
+    public static boolean isUserParticipatingInStudy(ObaRegion currentRegion) {
+        return isTravelBehaviorActiveInRegion(currentRegion) &&
                 !PreferenceUtils.getBoolean(TravelBehaviorConstants.USER_OPT_OUT,
                 false) && PreferenceUtils.getBoolean(TravelBehaviorConstants.USER_OPT_IN,
                 false);

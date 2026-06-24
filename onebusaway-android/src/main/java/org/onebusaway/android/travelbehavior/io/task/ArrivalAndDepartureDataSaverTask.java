@@ -89,7 +89,7 @@ public class ArrivalAndDepartureDataSaverTask implements Runnable {
     private void saveArrivalAndDepartureData(Location location) {
         try {
             // Get the counter that's incremented for each test
-            int counter = Application.getPrefs().getInt(TravelBehaviorConstants.ARRIVAL_LIST_COUNTER, 0);
+            int counter = PreferenceUtils.getInt(TravelBehaviorConstants.ARRIVAL_LIST_COUNTER, 0);
             PreferenceUtils.saveInt(TravelBehaviorConstants.ARRIVAL_LIST_COUNTER, ++counter);
 
             SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM d yyyy, hh:mm aaa");

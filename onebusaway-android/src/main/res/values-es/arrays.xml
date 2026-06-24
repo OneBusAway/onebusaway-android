@@ -64,15 +64,6 @@
         <item>25 minutos</item>
         <item>30 minutos</item>
     </string-array>
-    <string-array name="reminder_days">
-        <item>Lunes</item>
-        <item>Martes</item>
-        <item>Miércoles</item>
-        <item>Jueves</item>
-        <item>Viernes</item>
-        <item>Sábado</item>
-        <item>Domingo</item>
-    </string-array>
     <string-array name="report_stop_problem_code">
         <item>Elige uno</item>
         <item>El nombre de la Parada está mal</item>
@@ -95,10 +86,6 @@
         <item>@string/preferences_preferred_units_option_metric</item>
         <item>@string/preferences_preferred_units_option_imperial</item>
     </string-array>
-    <string-array name="arrival_info_style_options">
-        <item>@string/preferences_arrival_info_style_options_a</item>
-        <item>@string/preferences_arrival_info_style_options_b</item>
-    </string-array>
     <string-array name="preferred_map_options">
         <item>@string/preferences_preferred_map_option_normal2d</item>
         <item>@string/preferences_preferred_map_option_normal3d</item>
@@ -107,40 +94,6 @@
 
     <!-- Spoken directions based on 16 compass points, but pointing from the user's current location
          towards the selected bus stop instead of N/S/E/W. -->
-    <string-array name="spoken_compass_directions">
-        <item>hacia adelante</item>
-        <!-- North -->
-        <item>un poco a la izquierda</item>
-        <!-- NNE -->
-        <item>un poco a la izquierda</item>
-        <!-- NE -->
-        <item>izquierda</item>
-        <!-- ENE -->
-        <item>izquierda</item>
-        <!-- East -->
-        <item>detrás de ti a la izquierda</item>
-        <!-- ESE -->
-        <item>detrás de ti a la izquierda</item>
-        <!-- SE -->
-        <item>detrás de ti a la izquierda</item>
-        <!-- SSE -->
-        <item>derecho detrás de ti</item>
-        <!-- South -->
-        <item>detrás de ti a la derecha</item>
-        <!-- SSW -->
-        <item>detrás de ti a la derecha</item>
-        <!-- SW -->
-        <item>detrás de ti a la derecha</item>
-        <!-- WSW -->
-        <item>derecha</item>
-        <!-- West -->
-        <item>derecha</item>
-        <!-- WNW -->
-        <item>un poco a la derecha</item>
-        <!-- NW -->
-        <item>un poco a la derecha</item>
-        <!-- NNW -->
-    </string-array>
     <!-- Issue reporting -->
     <string-array name="report_types">
         <item>@string/rt_customer_service</item>
@@ -183,11 +136,6 @@
         <item>@drawable/ic_app_feedback</item>
     </array>
 
-    <string-array name="report_stop_issue_tutorial_desc">
-        <item>Clic en la parada del bus, que quieres reportar.</item>
-        <item>Entonces selecciona un problema a reportar en la sección de opciones.</item>
-        <item>Envía tu parada de bus relacionada al problema.</item>
-    </string-array>
 
     <string-array name="report_stop_transit_category_keywords">
         <item>tránsito</item>
@@ -217,9 +165,5 @@
         <item>@string/transit_mode_bikeshare</item>
     </string-array>
 
-    <string-array name="trip_plan_leaving_arriving_array">
-        <item>@string/trip_plan_leaving</item>
-        <item>@string/trip_plan_arriving</item>
-    </string-array>
 
 </resources>

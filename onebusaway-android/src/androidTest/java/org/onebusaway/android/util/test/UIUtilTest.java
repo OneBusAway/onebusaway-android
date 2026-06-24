@@ -17,12 +17,6 @@
 
 package org.onebusaway.android.util.test;
 
-import android.graphics.Color;
-import android.location.Location;
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.widget.TextView;
-
 import androidx.core.util.Pair;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -36,21 +30,20 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.Occupancy;
-import org.onebusaway.android.io.elements.OccupancyState;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.io.test.ObaTestCase;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.mock.MockObaStop;
 import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.ui.ArrivalInfo;
+import org.onebusaway.android.ui.arrivals.ArrivalInfo;
+import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsDialog;
 import org.onebusaway.android.util.ArrivalInfoUtils;
-import org.onebusaway.android.util.UIUtils;
+import org.onebusaway.android.util.DisplayFormat;
+import org.onebusaway.android.util.MyTextUtils;
+import org.onebusaway.android.util.RouteDisplay;
+import org.onebusaway.android.util.SituationUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -69,23 +62,6 @@ import static junit.framework.Assert.assertTrue;
 public class UIUtilTest extends ObaTestCase {
 
     @Test
-    public void testSerializeRouteDisplayNames() {
-        ObaStop stop = MockObaStop.getMockStop();
-        HashMap<String, ObaRoute> routes = MockObaStop.getMockRoutes();
-
-        String serializedRoutes = UIUtils.serializeRouteDisplayNames(stop, routes);
-        assertEquals("1,5", serializedRoutes);
-    }
-
-    @Test
-    public void testDeserializeRouteDisplayNames() {
-        String serializedRoutes = "1,5";
-        List<String> routeList = UIUtils.deserializeRouteDisplayNames(serializedRoutes);
-        assertEquals("1", routeList.get(0));
-        assertEquals("5", routeList.get(1));
-    }
-
-    @Test
     public void testFormatRouteDisplayNames() {
         String formattedString;
         ArrayList<String> routes = new ArrayList<String>();
@@ -93,13 +69,13 @@ public class UIUtilTest extends ObaTestCase {
 
         routes.add("1");
         routes.add("5");
-        formattedString = UIUtils.formatRouteDisplayNames(routes, highlightedRoutes);
+        formattedString = RouteDisplay.formatRouteDisplayNames(routes, highlightedRoutes);
         assertEquals("1, 5", formattedString);
 
         routes.clear();
         routes.add("5");
         routes.add("1");
-        formattedString = UIUtils.formatRouteDisplayNames(routes, highlightedRoutes);
+        formattedString = RouteDisplay.formatRouteDisplayNames(routes, highlightedRoutes);
         assertEquals("1, 5", formattedString);
 
         routes.clear();
@@ -108,7 +84,7 @@ public class UIUtilTest extends ObaTestCase {
         routes.add("15");
         routes.add("8b");
         routes.add("8a");
-        formattedString = UIUtils.formatRouteDisplayNames(routes, highlightedRoutes);
+        formattedString = RouteDisplay.formatRouteDisplayNames(routes, highlightedRoutes);
         assertEquals("1, 5, 8a, 8b, 15", formattedString);
 
         // Test highlighting one URL
@@ -119,7 +95,7 @@ public class UIUtilTest extends ObaTestCase {
         routes.add("8b");
         routes.add("8a");
         highlightedRoutes.add("1");
-        formattedString = UIUtils.formatRouteDisplayNames(routes, highlightedRoutes);
+        formattedString = RouteDisplay.formatRouteDisplayNames(routes, highlightedRoutes);
         assertEquals("1*, 5, 8a, 8b, 15", formattedString);
 
         // Test highlighting several URLs
@@ -133,7 +109,7 @@ public class UIUtilTest extends ObaTestCase {
         highlightedRoutes.add("1");
         highlightedRoutes.add("8b");
         highlightedRoutes.add("15");
-        formattedString = UIUtils.formatRouteDisplayNames(routes, highlightedRoutes);
+        formattedString = RouteDisplay.formatRouteDisplayNames(routes, highlightedRoutes);
         assertEquals("1*, 5, 8a, 8b*, 15*", formattedString);
     }
 
@@ -143,271 +119,28 @@ public class UIUtilTest extends ObaTestCase {
     @Test
     public void testFormatDisplayText() {
         // Stop names
-        assertEquals("SDSU Transit Center", UIUtils.formatDisplayText("SDSU Transit Center"));
-        assertEquals("VA Hospital", UIUtils.formatDisplayText("VA Hospital"));
-        assertEquals("SDSU", UIUtils.formatDisplayText("SDSU"));
-        assertEquals("UTC Transit Center", UIUtils.formatDisplayText("UTC Transit Center"));
+        assertEquals("SDSU Transit Center", MyTextUtils.formatDisplayText("SDSU Transit Center"));
+        assertEquals("VA Hospital", MyTextUtils.formatDisplayText("VA Hospital"));
+        assertEquals("SDSU", MyTextUtils.formatDisplayText("SDSU"));
+        assertEquals("UTC Transit Center", MyTextUtils.formatDisplayText("UTC Transit Center"));
         // See #883
-        assertEquals("SPLC / SR 513", UIUtils.formatDisplayText("SPLC / SR 513"));
+        assertEquals("SPLC / SR 513", MyTextUtils.formatDisplayText("SPLC / SR 513"));
 
         // Trip headsigns
         assertEquals("North to University Area TC",
-                UIUtils.formatDisplayText("North to University Area TC"));
+                MyTextUtils.formatDisplayText("North to University Area TC"));
         assertEquals("North To University Area Tc",
-                UIUtils.formatDisplayText("NORTH TO UNIVERSITY AREA TC"));
-        assertEquals("SDSU", UIUtils.formatDisplayText("SDSU"));
+                MyTextUtils.formatDisplayText("NORTH TO UNIVERSITY AREA TC"));
+        assertEquals("SDSU", MyTextUtils.formatDisplayText("SDSU"));
         // See #883
-        assertEquals("Hospital via SPLC Parking", UIUtils.formatDisplayText("Hospital via SPLC Parking"));
-        assertEquals("SPLC Parking via 70th", UIUtils.formatDisplayText("SPLC Parking via 70th"));
+        assertEquals("Hospital via SPLC Parking", MyTextUtils.formatDisplayText("Hospital via SPLC Parking"));
+        assertEquals("SPLC Parking via 70th", MyTextUtils.formatDisplayText("SPLC Parking via 70th"));
 
         // Route names
         assertEquals("Downtown San Diego - UTC via Old Town",
-                UIUtils.formatDisplayText("Downtown San Diego - UTC via Old Town"));
+                MyTextUtils.formatDisplayText("Downtown San Diego - UTC via Old Town"));
         assertEquals("UTC/VA Med CTR Express",
-                UIUtils.formatDisplayText("UTC/VA Med CTR Express"));
-    }
-
-    /**
-     * Tests building the trip options menu, based on various route/trip parameters
-     */
-    @Test
-    public void testBuildTripOptions() {
-        // Initial setup to get an ObaArrivalInfo object from a test response
-        ObaRegion tampa = MockRegion.getTampa(getTargetContext());
-        assertNotNull(tampa);
-        Application.get().setCurrentRegion(tampa);
-
-        ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getTargetContext(),
-                        "Hillsborough Area Regional Transit_3105").build().call();
-        assertOK(response);
-        ObaStop stop = response.getStop();
-        assertNotNull(stop);
-        assertEquals("Hillsborough Area Regional Transit_3105", stop.getId());
-        List<ObaRoute> routes = response.getRoutes(stop.getRouteIds());
-        assertTrue(routes.size() > 0);
-        ObaAgency agency = response.getAgency(routes.get(0).getAgencyId());
-        assertEquals("Hillsborough Area Regional Transit", agency.getId());
-
-        ObaArrivalInfo[] arrivals = response.getArrivalInfo();
-        assertNotNull(arrivals);
-        ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getTargetContext(),
-                arrivals, null, response.getCurrentTime(), true);
-
-        ObaRoute route = response.getRoute(arrivalInfo.get(0).getInfo().getRouteId());
-        String url = route != null ? route.getUrl() : null;
-        boolean hasUrl = !TextUtils.isEmpty(url);
-        boolean isReminderVisible = false;  // We don't have views here, so just fake it
-        boolean isRouteFavorite = false;  // We'll fake this too, for our purposes
-        boolean hasRouteFilter = false;
-
-        Occupancy occupancy = null;
-        OccupancyState occupancyState = null;
-        if (arrivalInfo.get(0).getInfo().getOccupancyStatus() != null) {
-            occupancy = arrivalInfo.get(0).getInfo().getOccupancyStatus();
-            occupancyState = OccupancyState.PREDICTED;
-        } else if (arrivalInfo.get(0).getInfo().getHistoricalOccupancy() != null) {
-            occupancy = arrivalInfo.get(0).getInfo().getHistoricalOccupancy();
-            occupancyState = OccupancyState.HISTORICAL;
-        }
-
-        // HART has route schedule URLs in test data, so below options should allow the user to set
-        // a reminder and view the route schedule
-        List<String> options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
-
-        assertEquals(7, options.size());
-        assertEquals(options.get(0), "Add star to route");
-        assertEquals(options.get(1), "Show vehicles on map");
-        assertEquals(options.get(2), "Show trip status");
-        assertEquals(options.get(3), "Set a reminder");
-        assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Show route schedule");
-        assertEquals(options.get(6), "Report arrival time problem");
-
-        // "Show only this route" should toggle to "Show all routes" when hasRouteFilter is true
-        hasRouteFilter = true;
-        options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
-        assertEquals(7, options.size());
-        assertEquals(options.get(0), "Add star to route");
-        assertEquals(options.get(1), "Show vehicles on map");
-        assertEquals(options.get(2), "Show trip status");
-        assertEquals(options.get(3), "Set a reminder");
-        assertEquals(options.get(4), "Show all routes");
-        assertEquals(options.get(5), "Show route schedule");
-        assertEquals(options.get(6), "Report arrival time problem");
-        // "Reset hasRouteFilter to false to remaining tests
-        hasRouteFilter = false;
-
-        isReminderVisible = true;
-
-        // Now we should see route schedules and *edit* the reminder
-        options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
-        assertEquals(7, options.size());
-        assertEquals(options.get(0), "Add star to route");
-        assertEquals(options.get(1), "Show vehicles on map");
-        assertEquals(options.get(2), "Show trip status");
-        assertEquals(options.get(3), "Edit this reminder");
-        assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Show route schedule");
-        assertEquals(options.get(6), "Report arrival time problem");
-
-        // Get a PSTA response - PSTA test data doesn't include route schedule URLs
-        ObaArrivalInfoResponse response2 =
-                new ObaArrivalInfoRequest.Builder(getTargetContext(), "PSTA_4077").build().call();
-        assertOK(response2);
-
-        stop = response2.getStop();
-        assertNotNull(stop);
-        assertEquals("PSTA_4077", stop.getId());
-        routes = response2.getRoutes(stop.getRouteIds());
-        assertTrue(routes.size() > 0);
-        agency = response2.getAgency(routes.get(0).getAgencyId());
-        assertEquals("PSTA", agency.getId());
-
-        arrivals = response2.getArrivalInfo();
-        assertNotNull(arrivals);
-        arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getTargetContext(),
-                arrivals, null, response2.getCurrentTime(), true);
-
-        route = response2.getRoute(arrivalInfo.get(0).getInfo().getRouteId());
-        url = route != null ? route.getUrl() : null;
-        boolean hasUrl2 = !TextUtils.isEmpty(url);
-        isReminderVisible = false;  // We don't have views here, so just fake it
-
-        // PSTA does not have route schedule URLs in test data, so below options should allow the
-        // user to set a reminder but NOT view the route schedule
-        options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
-        assertEquals(6, options.size());
-        assertEquals(options.get(0), "Add star to route");
-        assertEquals(options.get(1), "Show vehicles on map");
-        assertEquals(options.get(2), "Show trip status");
-        assertEquals(options.get(3), "Set a reminder");
-        assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Report arrival time problem");
-
-        isReminderVisible = true;
-
-        // Now we should see *edit* the reminder, and still no route schedule
-        options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
-        assertEquals(6, options.size());
-        assertEquals(options.get(0), "Add star to route");
-        assertEquals(options.get(1), "Show vehicles on map");
-        assertEquals(options.get(2), "Show trip status");
-        assertEquals(options.get(3), "Edit this reminder");
-        assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Report arrival time problem");
-
-        // Now change route to favorite, and do all the above over again
-        isRouteFavorite = true;
-
-        // HART
-        isReminderVisible = false;  // We don't have views here, so just fake it
-
-        // HART has route schedule URLs in test data, so below options should allow the user to set
-        // a reminder and view the route schedule
-        options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
-        assertEquals(7, options.size());
-        assertEquals(options.get(0), "Remove star from route");
-        assertEquals(options.get(1), "Show vehicles on map");
-        assertEquals(options.get(2), "Show trip status");
-        assertEquals(options.get(3), "Set a reminder");
-        assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Show route schedule");
-        assertEquals(options.get(6), "Report arrival time problem");
-
-        isReminderVisible = true;
-
-        // Now we should see route schedules and *edit* the reminder
-        options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
-        assertEquals(7, options.size());
-        assertEquals(options.get(0), "Remove star from route");
-        assertEquals(options.get(1), "Show vehicles on map");
-        assertEquals(options.get(2), "Show trip status");
-        assertEquals(options.get(3), "Edit this reminder");
-        assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Show route schedule");
-        assertEquals(options.get(6), "Report arrival time problem");
-
-        // PSTA
-        isReminderVisible = false;  // We don't have views here, so just fake it
-
-        // PSTA does not have route schedule URLs in test data, so below options should allow the
-        // user to set a reminder but NOT view the route schedule
-        options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
-        assertEquals(6, options.size());
-        assertEquals(options.get(0), "Remove star from route");
-        assertEquals(options.get(1), "Show vehicles on map");
-        assertEquals(options.get(2), "Show trip status");
-        assertEquals(options.get(3), "Set a reminder");
-        assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Report arrival time problem");
-
-        isReminderVisible = true;
-
-        // Now we should see *edit* the reminder, and still no route schedule
-        options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
-        assertEquals(6, options.size());
-        assertEquals(options.get(0), "Remove star from route");
-        assertEquals(options.get(1), "Show vehicles on map");
-        assertEquals(options.get(2), "Show trip status");
-        assertEquals(options.get(3), "Edit this reminder");
-        assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Report arrival time problem");
-
-        //
-        // Test occupancy in the menu
-        //
-
-        // HISTORICAL
-        occupancy = Occupancy.EMPTY;
-        occupancyState = OccupancyState.HISTORICAL;
-        options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
-        assertEquals(7, options.size());
-        assertEquals(options.get(0), "Remove star from route");
-        assertEquals(options.get(1), "Show vehicles on map");
-        assertEquals(options.get(2), "Show trip status");
-        assertEquals(options.get(3), "Edit this reminder");
-        assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Report arrival time problem");
-        assertEquals(options.get(6), "About historical occupancy");
-
-        // PREDICTED
-        occupancy = Occupancy.EMPTY;
-        occupancyState = OccupancyState.PREDICTED;
-        options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
-        assertEquals(7, options.size());
-        assertEquals(options.get(0), "Remove star from route");
-        assertEquals(options.get(1), "Show vehicles on map");
-        assertEquals(options.get(2), "Show trip status");
-        assertEquals(options.get(3), "Edit this reminder");
-        assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Report arrival time problem");
-        assertEquals(options.get(6), "About occupancy");
-
-        // REALTIME (should be same as PREDICTED)
-        occupancy = Occupancy.EMPTY;
-        occupancyState = OccupancyState.REALTIME;
-        options = UIUtils
-                .buildTripOptions(getTargetContext(), isRouteFavorite, hasUrl2, isReminderVisible, hasRouteFilter, occupancy, occupancyState);
-        assertEquals(7, options.size());
-        assertEquals(options.get(0), "Remove star from route");
-        assertEquals(options.get(1), "Show vehicles on map");
-        assertEquals(options.get(2), "Show trip status");
-        assertEquals(options.get(3), "Edit this reminder");
-        assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Report arrival time problem");
-        assertEquals(options.get(6), "About occupancy");
+                MyTextUtils.formatDisplayText("UTC/VA Med CTR Express"));
     }
 
     @Test
@@ -425,7 +158,7 @@ public class UIUtilTest extends ObaTestCase {
         routeDisplayNames.add("5");
 
         // Test without stop nickname or direction
-        stopDetails = UIUtils.createStopDetailsDialogText(getTargetContext(),
+        stopDetails = StopDetailsDialog.createStopDetailsDialogText(getTargetContext(),
                 stopName,
                 stopUserName,
                 stopCode,
@@ -440,7 +173,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // Test with stop nickname and without direction
         stopUserName = "My stop nickname";
-        stopDetails = UIUtils.createStopDetailsDialogText(getTargetContext(),
+        stopDetails = StopDetailsDialog.createStopDetailsDialogText(getTargetContext(),
                 stopName,
                 stopUserName,
                 stopCode,
@@ -458,7 +191,7 @@ public class UIUtilTest extends ObaTestCase {
         // Test without stop nickname and with direction
         stopUserName = null;
         stopDirection = "S";
-        stopDetails = UIUtils.createStopDetailsDialogText(getTargetContext(),
+        stopDetails = StopDetailsDialog.createStopDetailsDialogText(getTargetContext(),
                 stopName,
                 stopUserName,
                 stopCode,
@@ -470,13 +203,13 @@ public class UIUtilTest extends ObaTestCase {
         expectedMessage.append(newLine);
         expectedMessage.append("Routes: " + routeDisplayNames.get(0));
         expectedMessage.append(newLine);
-        expectedMessage.append(getTargetContext().getString(UIUtils.getStopDirectionText(stopDirection)));
+        expectedMessage.append(getTargetContext().getString(DisplayFormat.getStopDirectionText(stopDirection)));
         assertEquals(expectedMessage.toString(), (String) stopDetails.second);
 
         // Test with stop nickname and direction
         stopUserName = "My stop nickname";
         stopDirection = "S";
-        stopDetails = UIUtils.createStopDetailsDialogText(getTargetContext(),
+        stopDetails = StopDetailsDialog.createStopDetailsDialogText(getTargetContext(),
                 stopName,
                 stopUserName,
                 stopCode,
@@ -490,7 +223,7 @@ public class UIUtilTest extends ObaTestCase {
         expectedMessage.append(newLine);
         expectedMessage.append("Routes: " + routeDisplayNames.get(0));
         expectedMessage.append(newLine);
-        expectedMessage.append(getTargetContext().getString(UIUtils.getStopDirectionText(stopDirection)));
+        expectedMessage.append(getTargetContext().getString(DisplayFormat.getStopDirectionText(stopDirection)));
         assertEquals(expectedMessage.toString(), (String) stopDetails.second);
     }
 
@@ -799,90 +532,70 @@ public class UIUtilTest extends ObaTestCase {
          * Test notification texts
          */
 
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(0).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(0).getInfo())
                 + " has arrived.", arrivalInfo.get(0).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(1).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(1).getInfo())
                 + " has departed.", arrivalInfo.get(1).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(2).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(2).getInfo())
                 + " has departed.", arrivalInfo.get(2).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(3).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(3).getInfo())
                 + " has arrived.", arrivalInfo.get(3).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(4).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(4).getInfo())
                 + " has departed.", arrivalInfo.get(4).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(5).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(5).getInfo())
                 + " is departing now!", arrivalInfo.get(5).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(6).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(6).getInfo())
                 + " is arriving now!", arrivalInfo.get(6).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(7).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(7).getInfo())
                 + " is arriving in 3 min!", arrivalInfo.get(7).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(8).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(8).getInfo())
                 + " is departing in 5 min!", arrivalInfo.get(8).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(9).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(9).getInfo())
                 + " is departing in 5 min!", arrivalInfo.get(9).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(10).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(10).getInfo())
                 + " is arriving in 6 min!", arrivalInfo.get(10).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(11).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(11).getInfo())
                 + " is arriving in 7 min!", arrivalInfo.get(11).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(12).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(12).getInfo())
                 + " is arriving in 10 min!", arrivalInfo.get(12).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(13).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(13).getInfo())
                 + " is departing in 14 min!", arrivalInfo.get(13).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(14).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(14).getInfo())
                 + " is arriving in 17 min!", arrivalInfo.get(14).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(15).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(15).getInfo())
                 + " is arriving in 20 min!", arrivalInfo.get(15).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(16).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(16).getInfo())
                 + " is departing in 20 min!", arrivalInfo.get(16).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(17).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(17).getInfo())
                 + " is arriving in 23 min!", arrivalInfo.get(17).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(18).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(18).getInfo())
                 + " is departing in 25 min!", arrivalInfo.get(18).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(19).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(19).getInfo())
                 + " is arriving in 26 min!", arrivalInfo.get(19).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(20).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(20).getInfo())
                 + " is departing in 27 min!", arrivalInfo.get(20).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(21).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(21).getInfo())
                 + " is arriving in 28 min!", arrivalInfo.get(21).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(22).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(22).getInfo())
                 + " is arriving in 30 min!", arrivalInfo.get(22).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(23).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(23).getInfo())
                 + " is departing in 30 min!", arrivalInfo.get(23).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(24).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(24).getInfo())
                 + " is arriving in 32 min!", arrivalInfo.get(24).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(25).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(25).getInfo())
                 + " is arriving in 32 min!", arrivalInfo.get(25).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(26).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(26).getInfo())
                 + " is arriving in 34 min!", arrivalInfo.get(26).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(27).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(27).getInfo())
                 + " is arriving in 34 min!", arrivalInfo.get(27).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(28).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(28).getInfo())
                 + " is departing in 35 min!", arrivalInfo.get(28).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(29).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(29).getInfo())
                 + " is departing in 35 min!", arrivalInfo.get(29).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(30).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(30).getInfo())
                 + " is arriving in 35 min!", arrivalInfo.get(30).getNotifyText());
-        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(31).getInfo())
+        assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(31).getInfo())
                 + " is departing in 35 min!", arrivalInfo.get(31).getNotifyText());
-    }
-
-    @Test
-    public void testMaybeShrinkRouteName() {
-        TextView tv = new TextView(getTargetContext());
-
-        String routeShortName = "TST";
-        float textSize = tv.getTextSize();
-        UIUtils.maybeShrinkRouteName(getTargetContext(), tv, routeShortName);
-        assertEquals(textSize, tv.getTextSize());
-
-        routeShortName = "Test";
-        UIUtils.maybeShrinkRouteName(getTargetContext(), tv, routeShortName);
-        assertEquals(getTargetContext().getResources().getDimension(R.dimen.route_name_text_size_medium),
-                tv.getTextSize());
-
-        routeShortName = "Test2";
-        UIUtils.maybeShrinkRouteName(getTargetContext(), tv, routeShortName);
-        assertEquals(getTargetContext().getResources().getDimension(R.dimen.route_name_text_size_small),
-                tv.getTextSize());
     }
 
     /**
@@ -926,70 +639,8 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(35, arrivalInfo.get(31).getEta());
     }
 
-    @Test
-    public void testGetTransparentColor() {
-        String colorString = "#777777";
-        int alpha = 127;
-        int color = Color.parseColor(colorString);
-        int newColor = UIUtils.getTransparentColor(color, alpha);
-
-        int r = Color.red(color);
-        int g = Color.green(color);
-        int b = Color.blue(color);
-
-        int newR = Color.red(newColor);
-        int newG = Color.green(newColor);
-        int newB = Color.blue(newColor);
-        int newAlpha = Color.alpha(newColor);
-
-        assertEquals(r, newR);
-        assertEquals(g, newG);
-        assertEquals(b, newB);
-        assertEquals(alpha, newAlpha);
-    }
-
     private String formatTime(long time) {
-        return UIUtils.formatTime(getTargetContext(), time);
-    }
-
-    /**
-     * Tests getting map view center information from a bundle
-     */
-    @Test
-    public void testGetMapCenter() {
-        // Check null and empty bundles
-        Bundle b = null;
-        assertNull(UIUtils.getMapCenter(b));
-
-        b = new Bundle();
-        assertNull(UIUtils.getMapCenter(b));
-
-        // Check single params
-        b.putDouble(MapParams.CENTER_LAT, 0.0);
-        assertNull(UIUtils.getMapCenter(b));
-
-        b = new Bundle();
-        b.putDouble(MapParams.CENTER_LON, 0.0);
-        assertNull(UIUtils.getMapCenter(b));
-
-        // Check invalid lat/long
-        b = new Bundle();
-        b.putDouble(MapParams.CENTER_LAT, 0.0);
-        b.putDouble(MapParams.CENTER_LON, 0.0);
-        assertNull(UIUtils.getMapCenter(b));
-
-        // Check valid lat/long
-        final double lat = 28.343243;
-        final double lon = -87.234234;
-
-        b = new Bundle();
-        b.putDouble(MapParams.CENTER_LAT, lat);
-        b.putDouble(MapParams.CENTER_LON, lon);
-        Location l = UIUtils.getMapCenter(b);
-        assertNotNull(l);
-
-        assertEquals(lat, l.getLatitude());
-        assertEquals(lon, l.getLongitude());
+        return DisplayFormat.formatTime(getTargetContext(), time);
     }
 
     /**
@@ -1013,7 +664,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // They do appear, however, in the references list and are referenced by each arrival info
         // Make sure we build a list of all situations
-        List<ObaSituation> allSituations = UIUtils.getAllSituations(response, null);
+        List<ObaSituation> allSituations = SituationUtils.getAllSituations(response, null);
 
         // Build a set of all IDs returned
         HashSet<String> situationIds = new HashSet<>();
@@ -1056,7 +707,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // They do appear, however, in the references list and are referenced by each arrival info
         // Make sure we build a list of all situations
-        allSituations = UIUtils.getAllSituations(response, null);
+        allSituations = SituationUtils.getAllSituations(response, null);
 
         // Build a set of all IDs returned
         situationIds = new HashSet<>();
@@ -1095,10 +746,10 @@ public class UIUtilTest extends ObaTestCase {
         List<String> routeFilters = new ArrayList<>();
         routeFilters.add("MTS_1");
 
-        List<ObaSituation> filteredSituations = UIUtils.getAllSituations(response, routeFilters);
+        List<ObaSituation> filteredSituations = SituationUtils.getAllSituations(response, routeFilters);
 
         List<String> allIds = new ArrayList<>();
-        allSituations = UIUtils.getAllSituations(response, null);
+        allSituations = SituationUtils.getAllSituations(response, null);
         for (ObaSituation situation : allSituations) {
             allIds.add(situation.getId());
         }

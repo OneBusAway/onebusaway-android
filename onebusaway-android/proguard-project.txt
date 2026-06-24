@@ -66,6 +66,13 @@
 -dontwarn com.sothree.**
 -keep class com.sothree.**
 -keep interface com.sothree.**
+# Flavor-specific Compose map adapters are instantiated by reflection on
+# BuildConfig.MAP_COMPOSE_ADAPTER_CLASS (see ObaComposeMapAdapter.newInstance()), so keep each
+# adapter + its no-arg constructor from being stripped/renamed in release builds.
+-keep class * implements org.onebusaway.android.map.compose.ObaComposeMapAdapter {
+    public <init>();
+}
+
 # for plausible analytics library com.github.OneBusAway:plausible-android-sdk:3.3
 -dontwarn org.bouncycastle.jsse.BCSSLParameters
 -dontwarn org.bouncycastle.jsse.BCSSLSocket

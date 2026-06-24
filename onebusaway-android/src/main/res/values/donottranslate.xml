@@ -14,7 +14,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- DO NOT TRANSLATE ANY STRINGS IN THIS FILE. -->
 
     <!-- Android Maps API v2 -->
@@ -30,9 +30,6 @@
     <string name="preference_key_auto_select_region">preference_auto_select_region</string>
     <string name="preference_key_experimental_regions">preference_experimental_regions</string>
     <string name="preferences_key_analytics">preference_google_analytics</string>
-    <string name="preferences_key_donate">preference_donate</string>
-    <string name="preferences_key_powered_by_oba">preference_powered_by_oba</string>
-    <string name="preferences_key_about">preference_about</string>
     <string name="preference_key_preferred_units">preference_preferred_units</string>
     <string name="preference_key_preferred_temperature_units">preference_preferred_temperature_units</string>
     <string name="preference_key_display_weather_view">preference_key_display_weather_view</string>
@@ -46,15 +43,10 @@
     <string name="preference_key_default_stop_sort">preference_default_stop_sort</string>
     <string name="preference_key_default_reminder_time">preference_default_reminder_time</string>
     <string name="preference_key_default_reminder_sort">preference_default_reminder_sort</string>
-    <string name="preference_key_tutorial">preference_key_tutorial</string>
     <string name="preference_key_show_header_arrivals">preference_key_show_header_arrivals</string>
-    <string name="preference_key_tutorial_counter">preference_key_tutorial_counter</string>
     <string name="preference_key_show_tutorial_screens">preference_key_show_tutorial_screens</string>
-    <string name="preference_key_notifications">preference_key_notifications</string>
     <string name="preference_key_trip_plan_notifications">preference_key_trip_plan_notifications</string>
     <string name="preference_key_left_hand_mode">preference_key_left_hand_mode</string>
-    <string name="preference_key_save_backup">preference_key_save_backup</string>
-    <string name="preference_key_restore_backup">preference_key_restore_backup</string>
     <string name="preference_key_never_show_location_dialog">never_show_location_dialog</string>
     <string name="preference_key_layer_bikeshare_visible">layer_bike_selected</string>
     <string name="preference_key_trip_plan_travel_by">preference_trip_plan_travel_by</string>
@@ -66,12 +58,9 @@
     <string name="preference_key_nav_test_id">preference_key_nav_test_id</string>
     <string name="preference_key_never_show_change_location_mode_dialog">preference_never_show_change_location_mode_dialog</string>
     <string name="preference_key_never_show_payment_warning_dialog">never_show_payment_warning_dialog</string>
-    <string name="preferences_key_user_debugging_logs_category">preferences_key_user_debugging_logs_category</string>
     <string name="preferences_key_user_share_destination_logs">preferences_user_share_logs</string>
     <string name="preference_key_never_show_destination_reminder_beta_dialog">preference_never_show_destination_reminder_beta_dialog</string>
-    <string name="preferences_key_travel_behavior">preference_travel_behavior</string>
     <string name="preferences_key_user_denied_location_permissions">preferences_key_user_denied_location_permissions</string>
-    <string name="preference_key_push_firebase_data">preference_key_push_firebase_data</string>
     <string name="preferences_display_test_alerts">preferences_display_test_alerts</string>
     <!-- Regions API URL -->
     <string name="regions_api_url">https://regions.onebusaway.org/regions-v3.json</string>
@@ -106,7 +95,6 @@
     <string name="open_source_github">https://github.com/OneBusAway/onebusaway-android</string>
 
     <!-- StopInfo project (see #103) -->
-    <string name="stop_info_url_path">busstops</string>
 
     <!-- Google Play Store Listing prefix -->
     <string name="google_play_listing_prefix">https://play.google.com/store/apps/details?id=%1s</string>
@@ -118,37 +106,12 @@
     <string name="analytics_problem">report_problem</string>
     <string name="analytics_accessibility">accessibility</string>
     <string name="analytics_customer_service">customer_service</string>
-    <string name="analytics_service_alerts">service_alerts</string>
     <string name="analytics_layer_bikeshare">layer_bikeshare</string>
 
     <!-- The below region name value needs to match existing iOS Firebase User Property -->
     <string name="analytics_label_region_name">RegionName</string>
-    <string name="analytics_label_load_more_arrivals">Clicked load more arrivals button</string>
-    <string name="analytics_label_sort_by_eta_arrival">Clicked sort by ETA from
-        ArrivalsListFragment
-    </string>
-    <string name="analytics_label_sort_by_route_arrival">Clicked sort by route from
-        ArrivalsListFragment
-    </string>
-    <string name="analytics_label_sort_by_name_stops">Clicked sort by name from
-        MyStarredStopsFragment
-    </string>
-    <string name="analytics_label_sort_by_mfu_stops">Clicked sort by most frequently used from
-        MyStarredStopsFragment
-    </string>
-    <string name="analytics_label_sort_by_name_reminder">Clicked sort by name from
-        MyRemindersFragment
-    </string>
-    <string name="analytics_label_sort_by_departure_time_reminder">Clicked sort by departure time from
-        MyRemindersFragment
-    </string>
-    <string name="analytics_label_show_arrivals_in_header">Clicked show arrivals in header
-    </string>
-    <string name="analytics_label_hide_arrivals_in_header">Clicked hide arrivals in header
-    </string>
     <string name="analytics_label_trip_plan">Planned a Trip</string>
     <string name="analytics_label_button_press_star">starred_stops</string>
-    <string name="analytics_label_button_press_nearby">nearby</string>
     <string name="analytics_label_button_press_reminders">my_reminders</string>
     <string name="analytics_label_button_press_trip_plan">trip_plan</string>
     <string name="analytics_label_button_press_settings">settings</string>
@@ -159,10 +122,7 @@
     <string name="analytics_label_button_press_donate">preference_donate</string>
     <string name="analytics_label_button_press_powered_by_oba">preference_power_by_oba</string>
     <string name="analytics_label_button_press_about">preference_about</string>
-    <string name="analytics_label_button_press_stopinfo">Loaded StopInfo from\u0020</string>
-    <string name="analytics_label_button_press_stop_details">Clicked Stop Details</string>
     <string name="analytics_label_button_press_map_icon">Clicked MapStopIcon</string>
-    <string name="analytics_label_button_press_search_box">Search box selected</string>
     <string name="analytics_label_button_press_location">Clicked My Location Button</string>
     <string name="analytics_label_button_press_experimental_on">Turned on Experimental Regions
     </string>
@@ -172,8 +132,6 @@
     <string name="analytics_label_button_press_manual">Set region manually</string>
     <string name="analytics_label_button_press_save_preference">Clicked Save to Storage</string>
     <string name="analytics_label_button_press_restore_preference">Clicked Restore from Storage</string>
-    <string name="analytics_label_edit_field_bookmark">Edited Bookmark</string>
-    <string name="analytics_label_edit_field_bookmark_delete">Edited Bookmark Group Deleted</string>
     <string name="analytics_label_twitter">Loaded Twitter via Web</string>
     <string name="analytics_label_report_stop_problem">Reported Stop Problem</string>
     <string name="analytics_label_report_trip_problem">Reported Trip Problem</string>
@@ -193,7 +151,6 @@
     <string name="analytics_label_left_hand_property">left_handed</string>
     <string name="analytics_label_analytics_property">send_anonymous_data</string>
     <string name="analytics_label_show_departed_vehicles_property">show_departed_vehicles</string>
-    <string name="analytics_label_service_alerts">Clicked Service Alerts from:\u0020</string>
     <string name="analytics_label_bikeshare_activated">Bikeshare layer activated</string>
     <string name="analytics_label_bikeshare_deactivated">Bikeshare layer deactivated</string>
     <string name="analytics_label_bike_station_marker_clicked">Pressed bike station marker</string>
@@ -208,7 +165,6 @@
     <string name="analytics_label_destination_reminder_variant_ended">destination_reminder_ended</string>
 
     <!-- Analytics for occupancy -->
-    <string name="analytics_label_button_press_about_occupancy">Clicked About Occupancy</string>
 
     <!-- Analytics for payment -->
     <string name="analytics_label_button_fare_payment">fare_payment</string>
@@ -217,12 +173,6 @@
     <string name="analytics_label_open_app">open_app</string>
 
     <!-- Analytics for travel behavior data collection -->
-    <string name="analytics_label_button_travel_behavior_enroll_not_now">travel_behavior_enroll_not_now</string>
-    <string name="analytics_label_button_travel_behavior_opt_out_at_first_dialog">travel_behavior_opt_out_first_dialog</string>
-    <string name="analytics_label_button_travel_behavior_opt_in_over_18">travel_behavior_opt_in_over_18</string>
-    <string name="analytics_label_button_travel_behavior_opt_out_under_18">travel_behavior_opt_out_under_18</string>
-    <string name="analytics_label_button_travel_behavior_opt_in_informed_consent">travel_behavior_opt_in_informed_consent</string>
-    <string name="analytics_label_button_travel_behavior_opt_out_informed_consent">travel_behavior_opt_out_informed_consent</string>
 
 
     <!-- General strings -->
@@ -255,7 +205,6 @@
     <string name="ri_selected_service_trip">trip</string>
     <string name="ri_app_feedback_email">android-app@onebusaway.org</string>
 
-    <string name="arrival_list_stop_directions">\u0020(%1$s)</string>
 
     <!-- Bikeshare -->
     <string name="hopr_android_app_id">hopr.com.hopr</string>
@@ -268,30 +217,16 @@
     <string name="analytics_label_custom_metadata_response">Response</string>
     <string name="analytics_label_custom_metadata_feedback">FeedbackText</string>
 
-    <string name="not_request_battery_optimizations_key">request_battery_optimizations_key</string>
-    <string name="preference_key_reset_donation_timestamps">preference_key_reset_donation_timestamps</string>
 
     <!-- Firebase Messaging User Token -->
     <string name="firebase_messaging_token">firebase_messaging_token</string>
 
     <!-- Speed estimation map markers -->
-    <string name="marker_most_recent_data">Most recent data</string>
-    <string name="marker_best_estimate">Best estimate</string>
-    <string name="marker_best_estimate_snippet">50th percentile</string>
-    <string name="marker_last_api_position">Last reported position</string>
-    <string name="marker_fast_estimate">Fast estimate</string>
-    <string name="marker_fast_estimate_snippet">90th percentile speed</string>
+    <!-- Used by the MapLibre renderer's most-recent-data marker (the Google flavor hardcodes the title),
+         so it reads as unused to the Google-variant lint. -->
+    <string name="marker_most_recent_data" tools:ignore="UnusedResources">Most recent data</string>
 
     <!-- Stop ETA snippets -->
-    <string name="eta_departed">%1$s (departed)</string>
-    <string name="eta_less_than_one_min">%1$s (&lt; 1 min)</string>
-    <string name="eta_minutes">%1$s (%2$d min)</string>
-    <string name="eta_scheduled_departed">%1$s (scheduled, departed)</string>
-    <string name="eta_scheduled_less_than_one_min">%1$s (scheduled, &lt; 1 min)</string>
-    <string name="eta_scheduled_minutes">%1$s (scheduled, %2$d min)</string>
 
     <!-- Debug data views -->
-    <string name="debug_trip_data_title">Trip Data</string>
-    <string name="debug_tab_graph">Graph</string>
-    <string name="debug_tab_table">Table</string>
 </resources>

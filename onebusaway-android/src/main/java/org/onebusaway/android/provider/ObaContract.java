@@ -28,6 +28,7 @@ import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
 import org.onebusaway.android.nav.model.PathLink;
+import org.onebusaway.android.util.PreferenceUtils;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -1286,7 +1287,7 @@ public final class ObaContract {
                 }
                 if (hidden == null) {
                     // If the user has selected to hide all alerts by default, mark this one as hidden when inserting
-                    boolean hideAllAlerts = Application.getPrefs()
+                    boolean hideAllAlerts = PreferenceUtils
                             .getBoolean(Application.get().getResources()
                                     .getString(R.string.preference_key_hide_alerts), false);
                     if (hideAllAlerts) {

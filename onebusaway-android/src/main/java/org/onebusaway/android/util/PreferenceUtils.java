@@ -15,103 +15,72 @@
  */
 package org.onebusaway.android.util;
 
-import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.PreferencesEntryPoint;
 import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.preferences.PreferencesRepository;
 
 import java.util.Locale;
 
 /**
- * A class containing utility methods related to preferences
+ * A class containing utility methods related to preferences.
+ *
+ * <p>This is a thin synchronous facade over the {@link PreferencesRepository} seam — every read/write
+ * routes through the repository (resolved via {@link PreferencesEntryPoint}) rather than touching
+ * {@code SharedPreferences} directly. That keeps these static helpers (and their many call sites)
+ * working unchanged while the underlying store is free to move (e.g. to DataStore) behind the seam.
  */
 public class PreferenceUtils {
 
-    @TargetApi(9)
-    public static void saveString(SharedPreferences prefs, String key, String value) {
-        SharedPreferences.Editor edit = prefs.edit();
-        edit.putString(key, value);
-        edit.apply();
+    /** The single point of contact with persisted prefs (same app-singleton every consumer shares). */
+    private static PreferencesRepository repo() {
+        return PreferencesEntryPoint.get(Application.get());
     }
 
     public static void saveString(String key, String value) {
-        saveString(Application.getPrefs(), key, value);
-    }
-
-    @TargetApi(9)
-    public static void saveInt(SharedPreferences prefs, String key, int value) {
-        SharedPreferences.Editor edit = prefs.edit();
-        edit.putInt(key, value);
-        edit.apply();
+        repo().setString(key, value);
     }
 
     public static void saveInt(String key, int value) {
-        saveInt(Application.getPrefs(), key, value);
-    }
-
-    @TargetApi(9)
-    public static void saveLong(SharedPreferences prefs, String key, long value) {
-        SharedPreferences.Editor edit = prefs.edit();
-        edit.putLong(key, value);
-        edit.apply();
+        repo().setInt(key, value);
     }
 
     public static void saveLong(String key, long value) {
-        saveLong(Application.getPrefs(), key, value);
-    }
-
-    @TargetApi(9)
-    public static void saveBoolean(SharedPreferences prefs, String key, boolean value) {
-        SharedPreferences.Editor edit = prefs.edit();
-        edit.putBoolean(key, value);
-        edit.apply();
+        repo().setLong(key, value);
     }
 
     public static void saveBoolean(String key, boolean value) {
-        saveBoolean(Application.getPrefs(), key, value);
-    }
-
-    @TargetApi(9)
-    public static void saveFloat(SharedPreferences prefs, String key, float value) {
-        SharedPreferences.Editor edit = prefs.edit();
-        edit.putFloat(key, value);
-        edit.apply();
+        repo().setBoolean(key, value);
     }
 
     public static void saveFloat(String key, float value) {
-        saveFloat(Application.getPrefs(), key, value);
+        repo().setFloat(key, value);
     }
 
-    @TargetApi(9)
-    public static void saveDouble(SharedPreferences prefs, String key, double value) {
-        SharedPreferences.Editor edit = prefs.edit();
-        edit.putLong(key, Double.doubleToRawLongBits(value));
-        edit.apply();
-    }
-
-    @TargetApi(9)
     public static void saveDouble(String key, double value) {
-        saveDouble(Application.getPrefs(), key, value);
+        repo().setLong(key, Double.doubleToRawLongBits(value));
     }
 
     /**
      * Gets a double for the provided key from preferences, or the default value if the preference
-     * doesn't currently have a value
+     * doesn't currently have a value.
+     *
+     * <p>Doubles are stored as the raw long bits of the value; passing the default's bits as the
+     * long default makes an absent key round-trip back to {@code defaultValue} without a separate
+     * {@code contains()} probe.
      *
      * @param key          key for the preference
      * @param defaultValue the default value to return if the key doesn't have a value
      * @return a double from preferences, or the default value if it doesn't exist
      */
     public static Double getDouble(String key, double defaultValue) {
-        if (!Application.getPrefs().contains(key)) {
-            return defaultValue;
-        }
-        return Double.longBitsToDouble(Application.getPrefs().getLong(key, 0));
+        long bits = repo().getLong(key, Double.doubleToRawLongBits(defaultValue));
+        return Double.longBitsToDouble(bits);
     }
 
     /**
@@ -121,9 +90,8 @@ public class PreferenceUtils {
      */
     public static int getStopSortOrderFromPreferences() {
         Resources r = Application.get().getResources();
-        SharedPreferences settings = Application.getPrefs();
         String[] sortOptions = r.getStringArray(R.array.sort_stops);
-        String sortPref = settings.getString(r.getString(
+        String sortPref = repo().getString(r.getString(
                 R.string.preference_key_default_stop_sort), sortOptions[0]);
         if (sortPref.equalsIgnoreCase(sortOptions[0])) {
             return 0;
@@ -140,9 +108,8 @@ public class PreferenceUtils {
      */
     public static int getReminderSortOrderFromPreferences(){
         Resources resources = Application.get().getResources();
-        SharedPreferences preferences = Application.getPrefs();
         String[] sortOptions = resources.getStringArray(R.array.sort_reminders);
-        String sortPref = preferences.getString(resources.getString(
+        String sortPref = repo().getString(resources.getString(
                 R.string.preference_key_default_reminder_sort), sortOptions[0]);
         if (sortPref.equalsIgnoreCase(sortOptions[0])){
             return 0;
@@ -183,23 +150,27 @@ public class PreferenceUtils {
     }
 
     public static String getString(String key) {
-        return Application.getPrefs().getString(key, null);
+        return repo().getString(key, null);
+    }
+
+    public static String getString(String key, String defaultValue) {
+        return repo().getString(key, defaultValue);
     }
 
     public static long getLong(String key, long defaultValue) {
-        return Application.getPrefs().getLong(key, defaultValue);
+        return repo().getLong(key, defaultValue);
     }
 
     public static float getFloat(String key, float defaultValue) {
-        return Application.getPrefs().getFloat(key, defaultValue);
+        return repo().getFloat(key, defaultValue);
     }
 
     public static int getInt(String key, int defaultValue) {
-        return Application.getPrefs().getInt(key, defaultValue);
+        return repo().getInt(key, defaultValue);
     }
 
     public static boolean getBoolean(String key, boolean defaultValue) {
-        return Application.getPrefs().getBoolean(key, defaultValue);
+        return repo().getBoolean(key, defaultValue);
     }
 
     /**
@@ -237,9 +208,7 @@ public class PreferenceUtils {
         String METRIC = context.getString(R.string.preferences_preferred_units_option_metric);
         String AUTOMATIC = context.getString(R.string.preferences_preferred_units_option_automatic);
 
-        SharedPreferences mSettings = Application.getPrefs();
-
-        String preferredUnits = mSettings
+        String preferredUnits = repo()
                 .getString(context.getString(R.string.preference_key_preferred_units),
                         AUTOMATIC);
 

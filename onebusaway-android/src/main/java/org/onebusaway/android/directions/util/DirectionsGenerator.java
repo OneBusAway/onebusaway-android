@@ -18,6 +18,7 @@ package org.onebusaway.android.directions.util;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.directions.model.Direction;
+import org.onebusaway.android.util.PreferenceUtils;
 import org.opentripplanner.api.model.AbsoluteDirection;
 import org.opentripplanner.api.model.Leg;
 import org.opentripplanner.api.model.Place;
@@ -28,9 +29,7 @@ import org.opentripplanner.routing.core.TraverseModeSet;
 import org.opentripplanner.routing.patch.Alerts;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.preference.PreferenceManager;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.util.Log;
@@ -161,8 +160,7 @@ public class DirectionsGenerator {
                 + getLocalizedStreetName(toPlace.name, applicationContext.getResources());
         String extraStopInformation = toPlace.stopCode;
         long legDuration;
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext);
-        if (prefs.getInt(OTPConstants.PREFERENCE_KEY_API_VERSION, OTPConstants.API_VERSION_V1)
+        if (PreferenceUtils.getInt(OTPConstants.PREFERENCE_KEY_API_VERSION, OTPConstants.API_VERSION_V1)
                 == OTPConstants.API_VERSION_V1) {
             legDuration = leg.duration;
         } else {

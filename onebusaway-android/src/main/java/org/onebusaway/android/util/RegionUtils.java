@@ -305,7 +305,7 @@ public class RegionUtils {
             Log.d(TAG, "Region '" + region.getName() + "' does not support OBA Realtime APIs.");
             return false;
         }
-        if (region.getExperimental() && !Application.getPrefs().getBoolean(
+        if (region.getExperimental() && !PreferenceUtils.getBoolean(
                 Application.get().getString(R.string.preference_key_experimental_regions), false)) {
             Log.d(TAG,
                     "Region '" + region.getName() + "' is experimental and user hasn't opted in.");

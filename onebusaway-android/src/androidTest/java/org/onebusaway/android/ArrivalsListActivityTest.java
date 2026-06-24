@@ -17,7 +17,7 @@ package org.onebusaway.android;
 
 /*
 import ObaMock;
-import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
+import com.joulespersecond.seattlebusbot.ArrivalsListLauncher;
 import com.joulespersecond.seattlebusbot.util.TestHelp;
 
 import android.app.Instrumentation;
@@ -34,14 +34,14 @@ public class ArrivalsListActivityTest extends
 
     @SuppressWarnings("deprecation")
     public ArrivalsListActivityTest() {
-        super("com.joulespersecond.seattlebusbot", ArrivalsListActivity.class);
+        super("com.joulespersecond.seattlebusbot", ArrivalsListLauncher.class);
     }
 
     @Override
     protected void setUp() throws InterruptedException {
         Instrumentation instr = getInstrumentation();
         mMock = new ObaMock(instr.getTargetContext());
-        setActivityIntent(ArrivalsListActivity.makeIntent(instr.getTargetContext(), "1_29261"));
+        setActivityIntent(ArrivalsListLauncher.makeIntent(instr.getTargetContext(), "1_29261"));
         mActivity = getActivity();
     }
 

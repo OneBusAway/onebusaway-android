@@ -1,0 +1,545 @@
+/*
+ * Copyright (C) 2026 Open Transit Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.onebusaway.android.ui.home
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.launch
+import org.onebusaway.android.R
+import org.onebusaway.android.io.elements.ObaRegion
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse
+import org.onebusaway.android.map.RouteHeader
+import org.onebusaway.android.map.MapViewModel
+import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
+import org.onebusaway.android.ui.compose.navigationBarBottomPadding
+import org.onebusaway.android.ui.compose.rememberSheetExpandProgress
+import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
+import org.onebusaway.android.ui.home.chrome.HomeTopBar
+import org.onebusaway.android.ui.home.drawer.HomeNavDrawerSheet
+import org.onebusaway.android.ui.home.drawer.NavDrawerViewModel
+import org.onebusaway.android.ui.home.donation.DonationFeature
+import org.onebusaway.android.ui.home.donation.DonationViewModel
+import org.onebusaway.android.ui.home.help.HelpAction
+import org.onebusaway.android.ui.home.help.HelpFeature
+import org.onebusaway.android.ui.home.help.HelpViewModel
+import org.onebusaway.android.ui.home.map.MapChrome
+import org.onebusaway.android.ui.home.map.MapFeature
+import org.onebusaway.android.ui.home.map.RouteHeaderOverlay
+import org.onebusaway.android.ui.survey.SurveyFeature
+import org.onebusaway.android.ui.tutorial.ArrivalTutorial
+import org.onebusaway.android.ui.tutorial.LocalTutorialState
+import org.onebusaway.android.ui.tutorial.TutorialOverlay
+import org.onebusaway.android.ui.tutorial.WelcomeTutorial
+import org.onebusaway.android.ui.tutorial.tutorialAnchor
+import org.onebusaway.android.ui.tutorial.rememberTutorialState
+import org.onebusaway.android.ui.home.weather.WeatherFeature
+import org.onebusaway.android.ui.home.weather.WeatherViewModel
+import org.onebusaway.android.ui.home.widealert.WideAlertDialog
+import org.onebusaway.android.ui.home.widealert.WideAlertViewModel
+import org.onebusaway.android.ui.survey.SurveyViewModel
+
+/**
+ * The home screen's tap/UI callbacks, bundled into one holder (mirrors [org.onebusaway.android.ui.survey.SurveyCallbacks]) so
+ * [HomeScreen]'s signature stays a handful of parameters — state + the map/survey plumbing + this —
+ * instead of ~30 individual lambdas. Each is dispatched up to HomeActivity or a view model.
+ */
+class HomeCallbacks(
+    // One onClick per drawer row — the content rows (starred/reminders) navigate to their
+    // destinations, the action rows navigate/launch. None are "selections": the NavHost's current
+    // destination is the source of truth for what's shown.
+    val onStarredStops: () -> Unit,
+    val onStarredRoutes: () -> Unit,
+    val onReminders: () -> Unit,
+    val onPlanTrip: () -> Unit,
+    val onPayFare: () -> Unit,
+    val onSettings: () -> Unit,
+    val onHelp: () -> Unit,
+    val onSendFeedback: () -> Unit,
+    val onOpenSource: () -> Unit,
+    val onSearch: (String) -> Unit,
+    val onRecentStopsRoutes: () -> Unit,
+    val onHelpAction: (HelpAction) -> Unit,
+    val onShowWelcomeTutorial: () -> Unit,
+    val onRegionChosen: (ObaRegion) -> Unit,
+    val onSheetSettled: (ArrivalsSheetState, Int) -> Unit,
+    val onClearFocus: () -> Unit,
+    val onArrivalsLoaded: (ObaArrivalInfoResponse) -> Unit,
+    val onShowRouteOnMap: (String) -> Unit,
+    val onToggleSheet: () -> Unit,
+    val onCancelRouteMode: () -> Unit,
+)
+
+/**
+ * The declarative home screen: a Compose `ModalNavigationDrawer` + [HomeTopBar] + Material3
+ * `BottomSheetScaffold`, rendered from [HomeUiState] (state down) with taps dispatched through plain
+ * lambda callbacks + [HomeViewModel] events (up). Replaces the imperative `HomeShellHost` bridge.
+ *
+ * The arrivals sheet inverts to declarative: **visibility is business state** — the sheet peeks iff
+ * a stop is focused on NEARBY — driven by a [LaunchedEffect] keyed on that derived flag, so it never
+ * fights a user drag. **Expansion (peek<->full)** is the live `SheetState`, nudged by one-shot
+ * [SheetCommand.ToggleSheet]/[SheetCommand.CollapseSheet] commands (the screen alone knows the live state),
+ * plus [BackHandler]. The arrivals panel is hosted directly per focused stop (see [ArrivalsSheetHost]);
+ * the map ([MapFeature]), the route-mode header ([RouteHeaderOverlay]), and the survey ([org.onebusaway.android.ui.survey.SurveyOverlay])
+ * are all composables now — no map-related `AndroidView` / View seam remains.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(
+    state: HomeUiState,
+    sheetCommands: SharedFlow<SheetCommand>,
+    // The map is a self-wiring [MapFeature]; it composes only while HOME is the current destination, so
+    // SDK init is already lazy. The route-mode header and survey are Compose overlays over it.
+    homeViewModel: HomeViewModel,
+    mapViewModel: MapViewModel,
+    routeHeader: RouteHeader?,
+    surveyViewModel: SurveyViewModel,
+    donationViewModel: DonationViewModel,
+    weatherViewModel: WeatherViewModel,
+    helpViewModel: HelpViewModel,
+    // Builds the per-focused-stop ArrivalsViewModel for the bottom-sheet host (assisted-injected;
+    // the sheet's stop id is runtime-dynamic, so it can't be a plain hiltViewModel). Injected into
+    // HomeActivity and threaded down.
+    arrivalsViewModelFactory: ArrivalsViewModel.Factory,
+    // All the screen's tap/UI lambdas, bundled (see [HomeCallbacks]); brought into scope below via
+    // `with` so the body references them unqualified.
+    callbacks: HomeCallbacks,
+) {
+    with(callbacks) {
+    ObaTheme {
+        val scope = rememberCoroutineScope()
+        val density = LocalDensity.current
+        val resources = LocalResources.current
+        val snackbarHostState = remember { SnackbarHostState() }
+        // Drives the arrivals-panel onboarding spotlight; provided to the sheet content (so the panel's
+        // anchors can register) and read by [TutorialOverlay] below, which draws over the whole screen.
+        val tutorialState = rememberTutorialState()
+        val drawerState = rememberDrawerState(DrawerValue.Closed)
+        val sheetState = rememberStandardBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            skipHiddenState = false
+        )
+        val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
+
+        // The arrivals sheet's measurement state, reported by the panel via onPreferredHeight — local to
+        // the screen, since the panel and the sheet both live here (no need to round-trip the VM). Seeded
+        // at the two-arrivals height so the first reveal doesn't flash undersized (legacy default), and
+        // arrivalsReady gates the peek open until the focused stop's arrivals load (reset on focus change).
+        var peekArrivalCount by remember { mutableStateOf(2) }
+        var routeFiltering by remember { mutableStateOf(false) }
+        var arrivalsReady by remember { mutableStateOf(false) }
+        LaunchedEffect(state.focusedStop?.id) { arrivalsReady = false }
+
+        // The arrivals header height for the current preview count + filter offset (no drag handle).
+        val peekHeaderDp = arrivalsPeekHeight(peekArrivalCount, routeFiltering)
+        val peekHeaderPx = with(density) { peekHeaderDp.roundToPx() }
+
+        // Grow the sheet peek by the system navigation-bar inset (height varies by handset) so the
+        // collapsed peek's pinned header clears the bottom chrome. The panel matches this with its own
+        // content inset (see ArrivalsPanel), so the revealed gap is empty rather than clipped content.
+        val peekBottomPadding = navigationBarBottomPadding()
+
+        // The full collapsed-sheet peek: the reported header, plus room for the drag handle above it and
+        // the navigation-bar inset below. Both the scaffold's peek height and the FAB lift use this, so the
+        // FABs clear the whole collapsed sheet (handle included), not just the header.
+        val collapsedPeekDp = peekHeaderDp + DRAG_HANDLE_ALLOWANCE + peekBottomPadding
+
+        // The drawer's live open fraction (0 = collapsed peek, 1 = fully expanded), read each frame by
+        // the arrivals panel to morph the peek rows in lockstep with the drag. measureModifier feeds it
+        // the sheet's container height (attached to the scaffold below).
+        val sheetProgress = rememberSheetExpandProgress(sheetState, collapsedPeekDp)
+
+        // Visibility is business state. The key is the focused stop id while shown (else null), so the
+        // effect reacts to focus/tab changes but NOT to a user drag (same stop -> same key); the
+        // reconcile decision (hide / peek-open-if-hidden / leave) is the pure sheetReconcile().
+        val showSheet = shouldShowSheet(state.focusedStop)
+        val sheetKey = if (showSheet) state.focusedStop?.id else null
+        // Re-keyed on arrivalsReady so the peek opens once the focused stop's arrivals load.
+        LaunchedEffect(sheetKey, arrivalsReady) {
+            runCatching {
+                when (sheetReconcile(sheetKey != null, sheetState.currentValue.toArrivalsSheetState())) {
+                    SheetReconcile.HIDE -> sheetState.hide()
+                    SheetReconcile.PEEK_OPEN -> {
+                        // Open only once the focused stop's arrivals have loaded, so the sheet animates
+                        // straight to its final peek height. Opening to a stale height and then resizing
+                        // when the count resolves moves the sheet's anchor mid-animation, which strands
+                        // BottomSheetScaffold's AnchoredDraggable (the sheet sticks partway up). The
+                        // effect re-runs when arrivalsReady flips true (cancelling this wait); the
+                        // timeout is a fallback so a stop whose arrivals are slow or fail still opens.
+                        if (!arrivalsReady) delay(SHEET_OPEN_LOAD_TIMEOUT_MS)
+                        sheetState.partialExpand()
+                    }
+                    SheetReconcile.LEAVE -> {}
+                }
+            }
+        }
+
+        // Report the resting position back to the activity (map padding / recenter / arrivals preview).
+        LaunchedEffect(sheetState) {
+            snapshotFlow { sheetState.currentValue }.collect { value ->
+                onSheetSettled(value.toArrivalsSheetState(), peekHeaderPx)
+            }
+        }
+
+        // One-shot sheet commands from the ViewModel (the screen holds the live SheetState).
+        LaunchedEffect(Unit) {
+            sheetCommands.collect { command ->
+                when (command) {
+                    SheetCommand.ToggleSheet -> runCatching {
+                        when (toggleSheetTarget(sheetState.currentValue.toArrivalsSheetState())) {
+                            ArrivalsSheetState.Expanded -> sheetState.expand()
+                            else -> sheetState.partialExpand()
+                        }
+                    }
+                    SheetCommand.CollapseSheet -> runCatching { sheetState.partialExpand() }
+                }
+            }
+        }
+
+        // The "Found X region" snackbar (replaces the legacy toast): a one-shot VM event, shown once per
+        // auto-select resolve. showSnackbar suspends until dismissed; Long ~ the old Toast.LENGTH_LONG.
+        LaunchedEffect(Unit) {
+            homeViewModel.regionFound.collect { name ->
+                snackbarHostState.showSnackbar(
+                    resources.getString(R.string.region_region_found, name),
+                    duration = SnackbarDuration.Long,
+                )
+            }
+        }
+
+        // Welcome onboarding: the host stages a request (help "Show tutorials" / what's-new opt-out /
+        // first-run launch extra) on the VM latch; start the green welcome + map-stop spotlight sequence
+        // here (replacing the legacy ShowcaseView welcome), then clear the latch.
+        LaunchedEffect(Unit) {
+            homeViewModel.showWelcomeTutorial.collect { requested ->
+                if (requested) {
+                    tutorialState.start(WelcomeTutorial.steps)
+                    homeViewModel.onWelcomeTutorialConsumed()
+                }
+            }
+        }
+
+        // Back collapses an expanded sheet first, then (from peek) clears the focus, which hides it.
+        // A hidden sheet leaves back to the system (mirrors the legacy !isSheetHidden() gate).
+        BackHandler(enabled = sheetState.currentValue != SheetValue.Hidden) {
+            when (sheetBackAction(sheetState.currentValue.toArrivalsSheetState())) {
+                SheetBackAction.COLLAPSE -> scope.launch { runCatching { sheetState.partialExpand() } }
+                SheetBackAction.CLEAR_FOCUS -> onClearFocus()
+                SheetBackAction.NONE -> {}
+            }
+        }
+
+        HomeDrawer(
+            drawerState = drawerState,
+            onStarredStops = onStarredStops,
+            onStarredRoutes = onStarredRoutes,
+            onReminders = onReminders,
+            onPlanTrip = onPlanTrip,
+            onPayFare = onPayFare,
+            onSettings = onSettings,
+            onHelp = onHelp,
+            onSendFeedback = onSendFeedback,
+            onOpenSource = onOpenSource,
+        ) {
+            // Provide the tutorial state to the whole screen (top bar, map, and sheet) so their spotlight
+            // anchors register; [TutorialOverlay] below draws from the same state.
+            CompositionLocalProvider(LocalTutorialState provides tutorialState) {
+            // The TopAppBar applies its own top window inset (status bar), so the Column doesn't.
+            Column(Modifier.fillMaxSize()) {
+                HomeTopBar(
+                    // HOME is always the map now; the list tabs are their own destinations with their
+                    // own top bars, so the home bar shows no list sort/clear.
+                    title = stringResource(R.string.navdrawer_item_nearby),
+                    showSort = false,
+                    showClear = false,
+                    clearLabel = R.string.my_option_clear_starred_stops,
+                    onOpenDrawer = { scope.launch { drawerState.open() } },
+                    onSearch = onSearch,
+                    onSort = {},
+                    onClear = {},
+                    onRecentStopsRoutes = onRecentStopsRoutes,
+                    // Wire the top bar's overflow anchor slot to the "recent stops/routes" spotlight target.
+                    overflowModifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_MORE_MENU),
+                )
+                BottomSheetScaffold(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .then(sheetProgress.measureModifier),
+                    scaffoldState = scaffoldState,
+                    snackbarHost = { SnackbarHost(snackbarHostState) },
+                    sheetPeekHeight = collapsedPeekDp,
+                    sheetContent = {
+                        ArrivalsSheetHost(
+                            focusedStop = state.focusedStop,
+                            collapsed = sheetState.currentValue != SheetValue.Expanded,
+                            sheetVisible = sheetState.currentValue != SheetValue.Hidden,
+                            expandProgress = sheetProgress.fraction,
+                            arrivalsViewModelFactory = arrivalsViewModelFactory,
+                            onArrivalsLoaded = onArrivalsLoaded,
+                            onShowRouteOnMap = onShowRouteOnMap,
+                            onToggleSheet = onToggleSheet,
+                            onPreferredHeight = { count, filtering ->
+                                peekArrivalCount = count
+                                routeFiltering = filtering
+                                arrivalsReady = true
+                            },
+                            showUndoSnackbar = { messageRes, actionRes, onAction ->
+                                scope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = resources.getString(messageRes),
+                                        actionLabel = actionRes?.let { resources.getString(it) },
+                                        duration = SnackbarDuration.Short
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) onAction?.invoke()
+                                }
+                            },
+                        )
+                    }
+                ) {
+                    // Lift the FABs above the whole collapsed sheet peek; the target changes only on settle
+                    // and MapChrome animates it. Local here since the screen holds the live SheetState.
+                    val fabInsetTarget =
+                        if (sheetState.currentValue == SheetValue.PartiallyExpanded) collapsedPeekDp else 0.dp
+                    Box(Modifier.fillMaxSize()) {
+                        // The map, with the chrome drawn over it: weather/donation/route-header/survey. The
+                        // list "tabs" are now their own NavHost destinations, so HOME is always the map.
+                        MapFeature(
+                            mapViewModel = mapViewModel,
+                            homeViewModel = homeViewModel,
+                            fabBottomInset = fabInsetTarget,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        HomeMapOverlays(
+                            weatherViewModel = weatherViewModel,
+                            donationViewModel = donationViewModel,
+                            surveyViewModel = surveyViewModel,
+                            routeHeader = routeHeader,
+                            onCancelRouteMode = onCancelRouteMode,
+                            // The route header reports its height straight to the map VM (which owns the
+                            // padding derivation), so the host isn't a relay between the two features.
+                            onRouteHeaderHeight = mapViewModel::setRouteHeaderHeight,
+                        )
+                    }
+                }
+            }
+            }
+        }
+
+        HomeDialogs(dialog = state.dialog, onRegionChosen = onRegionChosen)
+
+        // The region-wide GTFS alert dialog — a self-wired feature module (WideAlertViewModel streams the
+        // current region's alerts), replacing the activity's GtfsAlertsHelper.showWideAlertDialog path.
+        val wideAlertViewModel = hiltViewModel<WideAlertViewModel>()
+        val wideAlert by wideAlertViewModel.wideAlert.collectAsStateWithLifecycle()
+        wideAlert?.let { WideAlertDialog(it) { wideAlertViewModel.dismiss() } }
+
+        // The help / what's-new / legend dialogs feature module (self-rendering from its ViewModel;
+        // self-shows what's-new once a region resolves; the genuinely-Activity actions + the what's-new
+        // opt-out are forwarded to the host).
+        HelpFeature(
+            viewModel = helpViewModel,
+            onHelpAction = onHelpAction,
+            onShowWelcomeTutorial = onShowWelcomeTutorial,
+        )
+
+        // The arrivals-panel onboarding spotlight, drawn over the whole screen (incl. the bottom sheet)
+        // as the last sibling so it sits on top; renders nothing while no tutorial is active.
+        TutorialOverlay(tutorialState)
+    }
+    }
+}
+
+/**
+ * The home screen's `ModalNavigationDrawer`: the nav-drawer sheet ([HomeNavDrawerSheet]) wrapping the
+ * screen [content]. A tap closes the drawer and dispatches the selection up. The drawer is opened from
+ * the toolbar hamburger (via the host-owned [drawerState]), so gestures are enabled only while it's
+ * already open — a left-edge drag on the map must pan the map, not peel the drawer open.
+ */
+@Composable
+private fun HomeDrawer(
+    drawerState: DrawerState,
+    onStarredStops: () -> Unit,
+    onStarredRoutes: () -> Unit,
+    onReminders: () -> Unit,
+    onPlanTrip: () -> Unit,
+    onPayFare: () -> Unit,
+    onSettings: () -> Unit,
+    onHelp: () -> Unit,
+    onSendFeedback: () -> Unit,
+    onOpenSource: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    // The drawer's region/feature gating is a self-wired feature module (NavDrawerViewModel), collected
+    // here so the screen doesn't thread the booleans through HomeUiState.
+    val availability by hiltViewModel<NavDrawerViewModel>().availability.collectAsStateWithLifecycle()
+    // Every row closes the drawer before dispatching, matching the legacy single onSelect path.
+    fun close() { scope.launch { drawerState.close() } }
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        // Material3 gates both the open-swipe and the scrim tap-to-close on this one flag, so tie it
+        // to the open state (see the KDoc above).
+        gesturesEnabled = drawerState.isOpen,
+        drawerContent = {
+            HomeNavDrawerSheet(
+                showReminders = availability.showReminders,
+                planTripAvailable = availability.planTripAvailable,
+                payFareAvailable = availability.payFareAvailable,
+                onStarredStops = { close(); onStarredStops() },
+                onStarredRoutes = { close(); onStarredRoutes() },
+                onReminders = { close(); onReminders() },
+                onPlanTrip = { close(); onPlanTrip() },
+                onPayFare = { close(); onPayFare() },
+                onSettings = { close(); onSettings() },
+                onHelp = { close(); onHelp() },
+                onSendFeedback = { close(); onSendFeedback() },
+                onOpenSource = { close(); onOpenSource() },
+            )
+        },
+        content = content,
+    )
+}
+
+/**
+ * The chrome drawn over the map inside the home scaffold's content [Box]: the weather chip, donation
+ * card, route-mode header, and survey hero. A [BoxScope] extension so the overlays keep their
+ * `align`/fill modifiers. HOME is always the map now, so these are unconditional — the former list
+ * tabs are their own NavHost destinations.
+ */
+@Composable
+private fun BoxScope.HomeMapOverlays(
+    weatherViewModel: WeatherViewModel,
+    donationViewModel: DonationViewModel,
+    surveyViewModel: SurveyViewModel,
+    routeHeader: RouteHeader?,
+    onCancelRouteMode: () -> Unit,
+    onRouteHeaderHeight: (Int) -> Unit,
+) {
+    // The weather chip feature module: self-wiring from its ViewModel.
+    WeatherFeature(
+        viewModel = weatherViewModel,
+        onNearby = true,
+        modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+    )
+    // The donation feature module: the card (DonationsManager-gated) plus its dismiss dialog.
+    DonationFeature(
+        viewModel = donationViewModel,
+        onNearby = true,
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 62.dp)
+    )
+    // The route-mode header (Compose), top-aligned over the map — drawn above the weather/donation
+    // cards so its opaque bar + cancel button own the top in route mode. Reports its height for the
+    // map's top padding; clears it when dismissed.
+    if (routeHeader != null) {
+        RouteHeaderOverlay(
+            header = routeHeader,
+            onCancel = onCancelRouteMode,
+            onHeight = onRouteHeaderHeight,
+            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(),
+        )
+    } else {
+        LaunchedEffect(Unit) { onRouteHeaderHeight(0) }
+    }
+    // The map survey (Compose): hero card over the map + remaining-questions sheet. Self-wiring from
+    // its ViewModel; self-triggers its request once a region has resolved.
+    SurveyFeature(
+        viewModel = surveyViewModel,
+        onNearby = true,
+        modifier = Modifier.align(Alignment.TopCenter),
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+private fun SheetValue.toArrivalsSheetState() = when (this) {
+    SheetValue.Hidden -> ArrivalsSheetState.Hidden
+    SheetValue.PartiallyExpanded -> ArrivalsSheetState.Collapsed
+    SheetValue.Expanded -> ArrivalsSheetState.Expanded
+}
+
+/** Maps the arrivals preview count + route-filter flag to the collapsed peek header height. */
+@Composable
+private fun arrivalsPeekHeight(arrivalCount: Int, filtering: Boolean): Dp {
+    val base = dimensionResource(
+        when (arrivalsPeekTier(arrivalCount)) {
+            ArrivalsPeekTier.TWO_OR_MORE -> R.dimen.arrival_header_height_two_arrivals
+            ArrivalsPeekTier.ONE -> R.dimen.arrival_header_height_one_arrival
+            ArrivalsPeekTier.NONE -> R.dimen.arrival_header_height_no_arrivals
+        }
+    )
+    val offset = if (filtering) {
+        dimensionResource(R.dimen.arrival_header_height_offset_filter_routes)
+    } else {
+        0.dp
+    }
+    return base + offset
+}
+
+/**
+ * Extra peek height for the scaffold drag handle above the arrivals content. The handle is ~48dp,
+ * but the reported header dimens already budgeted ~20dp for the old in-panel handle the
+ * BottomSheetScaffold handle now replaces, so only the net difference is added.
+ */
+private val DRAG_HANDLE_ALLOWANCE = 28.dp
+
+/**
+ * How long the sheet waits for a freshly-focused stop's arrivals to load before peeking open anyway.
+ * The common path opens sooner — the open effect re-runs the instant arrivals load (arrivalsReady) —
+ * so this only bounds the wait when a stop's arrivals are slow or fail, ensuring its sheet still shows.
+ */
+private const val SHEET_OPEN_LOAD_TIMEOUT_MS = 800L

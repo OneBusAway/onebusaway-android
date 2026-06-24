@@ -41,8 +41,6 @@
     <string name="generic_comm_error">Sorry, there was a communication error and we can\'t show this
         information. Try again and it might work.
     </string>
-    <string name="trip_details_error">Error %1$d: %2$s\nTrip: %3$s\nVersion: %4$s</string>
-    <string name="generic_comm_error_toast">Failed to update. We\'ll try again in a minute.</string>
     <string name="route_not_found_error_no_region">Sorry, that particular route can\'t be found. If
         this was a
         shortcut, it\'s possible your link is out of date, or a region hasn\'t been selected yet
@@ -74,8 +72,6 @@
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="bad_gateway_error">%1$s\'s servers are overloaded. Please excuse us!</string>
     <string name="map_generic_error">Unable to get stops.</string>
-    <string name="trip_map_data_unavailable">Trip map data is not available yet.</string>
-    <string name="trip_map_not_supported">Trip map is not yet available for this map provider.</string>
     <string name="no_network_error">You appear to be offline or are not connected to the network.
     </string>
     <string name="airplane_mode_error">You are not connected to the network.\nTurn off Airplane
@@ -94,10 +90,8 @@
     <string name="direction_w">Westbound</string>
     <string name="direction_nw">Northwest bound</string>
     <string name="direction_none"></string>
-    <string name="loading">Loading&#8230;</string>
     <string name="browser_error">Unable to launch browser.</string>
     <string name="search_hint">Search stop or route IDs</string>
-    <string name="search">Search</string>
     <string name="checkmark_description">Selection checkmark</string>
 
     <!--  Option strings -->
@@ -137,7 +131,6 @@
     <string name="bus_options_menu_show_vehicles_on_map">Show vehicles on map</string>
     <string name="bus_options_menu_show_trip_details">Show trip status</string>
     <string name="bus_options_menu_set_reminder">Set a reminder</string>
-    <string name="bus_options_menu_edit_reminder">Edit this reminder</string>
     <string name="bus_options_menu_show_only_this_route">Show only this route</string>
     <string name="bus_options_menu_show_all_routes">"Show all routes"</string>
     <string name="bus_options_menu_show_route_schedule">Show route schedule</string>
@@ -233,18 +226,11 @@
     <string name="stop_info_frequency_from">Every %1$d mins from %2$s</string>
     <string name="stop_info_frequency_until">Every %1$d mins until %2$s</string>
     <string name="stop_info_eta_now">NOW</string>
-    <string name="stop_info_eta_unknown">---\u0020\u0020</string>
     <string name="stop_info_option_showonmap">Show on map</string>
-    <string name="trip_details_option_showlist">Show list</string>
     <string name="menu_option_sort_by">Sort by</string>
     <string name="stop_info_option_refresh">Refresh</string>
     <string name="stop_info_option_filter">Filter routes</string>
-    <string name="stop_info_option_hide_header_arrivals">Hide arrivals in header</string>
-    <string name="stop_info_option_show_header_arrivals">Show arrivals in header</string>
-    <string name="stop_info_option_editname">Edit stop name</string>
-    <string name="stop_info_option_addstar">Add star to stop</string>
     <string name="stop_info_option_show_details">Show stop details</string>
-    <string name="stop_info_option_removestar">Remove star from stop</string>
     <string name="stop_info_option_report_problem">Report stop problem</string>
     <string name="stop_info_option_night_light">Night light</string>
     <string name="stop_info_option_hide_alerts">Hide active alerts</string>
@@ -286,19 +272,12 @@
     <string name="stop_info_item_options_title">Bus options</string>
     <string name="stop_info_filter_title">Show only these routes</string>
     <string name="stop_info_filter_header">Showing %1$d of %2$d routes</string>
-    <string name="stop_info_filter_showall">(show all)</string>
     <string name="stop_info_save">Save</string>
     <string name="stop_info_cancel">Cancel</string>
     <string name="stop_info_clear">Clear</string>
-    <string name="stop_info_old_data">Data updated %s</string>
     <string name="stop_info_favorite">Favorite stop</string>
     <string name="stop_info_official_stop_name_label">Official name: %1$s</string>
     <string name="stop_info_route_ids_label">Routes:</string>
-    <string name="stop_info_button_content_description">About this stop</string>
-    <string name="stop_info_frequency_approximate">~</string>
-    <string name="stop_header_sliding_panel_open">Sliding panel expanded. Tap or press Back button
-        to collapse.
-    </string>
     <string name="stop_header_sliding_panel_collapsed">Sliding panel collapsed. Tap to expand and
         show detailed arrivals list, or press Back button to hide.
     </string>
@@ -352,13 +331,10 @@
     <string name="stop_details_code">Stop # %1$s</string>
 
     <!-- Arrival Time Style B -->
-    <string name="arrival_estimated">Real-time Estimate</string>
-    <string name="arrival_scheduled">Scheduled</string>
 
     <!-- Route Info  -->
     <string name="route_info_context_get_stop_info">Show arrival information</string>
     <string name="route_info_context_showonmap">Show on map</string>
-    <string name="route_info_goto_url">View schedule</string>
     <string name="route_info_no_shape_data">Sorry, map information isn\'t available for this route
     </string>
 
@@ -388,8 +364,6 @@
     <string name="my_option_clear_recent_routes">Clear recent routes</string>
     <string name="my_option_clear_starred_stops">Remove all starred stops</string>
     <!-- <string name="my_option_clear_starred_routes">Remove all starred routes</string>-->
-    <string name="my_option_clear_confirm">There\'s no going back! Go ahead?</string>
-    <string name="my_option_clear_confirm_title">Sure about this?</string>
 
     <string name="my_context_get_stop_info">Show arrival information</string>
     <string name="my_context_get_route_info">Show route information</string>
@@ -412,12 +386,6 @@
     <string name="my_option_clear_starred_routes_confirm">This will permanently remove all starred routes.</string>
 
     <!-- Service Alerts  -->
-    <string name="alert_content_description_warning">Service alert warning - tap to slide up panel
-        and reveal more info.
-    </string>
-    <string name="alert_content_description_error">Severe service alert - tap to slide up panel and
-        reveal more info.
-    </string>
     <string name="situation_more_details">More details</string>
     <string name="hide">Hide</string>
     <string name="hide_all">Hide all</string>
@@ -433,7 +401,6 @@
             active alerts are hidden
         </item>
     </plurals>
-    <string name="alert_filter_showall">(show all)</string>
 
     <!-- Find -->
     <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search
@@ -455,53 +422,22 @@
     <string name="route_name">Route %s</string>
 
     <!--  Trip info -->
-    <string name="trip_info_name">Reminder name</string>
-    <string name="trip_info_reminder_content_description">Reminder</string>
     <string name="trip_info_name_hint">Add a reminder name</string>
     <string name="trip_info_route">Route %s</string>
     <string name="trip_info_depart">Departs at %s</string>
     <string name="trip_info_reminder_header">Reminder Time</string>
-    <string name="trip_info_reminder_repeat">Repeats</string>
     <string name="trip_info_save">Save</string>
     <string name="trip_info_delete">Delete</string>
     <string name="trip_info_saved">Trip saved.</string>
-    <string name="trip_info_dismiss">Cancel</string>
     <string name="trip_info_delete_trip">This reminder will be deleted.</string>
-    <string name="trip_info_repeat_every">Every %s</string>
-    <string name="trip_info_repeat_everyday">Everyday</string>
-    <string name="trip_info_repeat_weekdays">Weekdays (Mon-Fri)</string>
-    <string name="trip_info_repeat_norepeat">One-time</string>
     <string name="trip_info_noname">(no name)</string>
     <string name="trip_info_option_showroute">Show Route</string>
     <string name="trip_info_option_showstop">Show Stop</string>
     <string name="trip_info_separator">-</string>
-    <string name="trip_info_grant_exact_alarms_permission_title">Permission Needed</string>
-    <string name="trip_info_grant_exact_alarms_permission_message">You must grant the app permission to schedule a reminder.</string>
-    <string name="trip_info_grant_exact_alarms_permission_positive_button">Grant Permission</string>
-    <string name="trip_info_grant_exact_alarms_permission_negative_button">Cancel</string>
 
     <!-- Occupancy -->
-    <string name="historically_full">Historically full</string>
-    <string name="historically_standing_room">Historically standing room</string>
-    <string name="historically_many_seats_available">Historically many seats available</string>
-    <string name="historically_few_seats_available">Historically few seats available</string>
-    <string name="historically_empty">Historically empty</string>
-    <string name="menu_title_about_historical_occupancy">About historical occupancy</string>
-    <string name="menu_title_about_occupancy">About occupancy</string>
-    <string name="menu_text_about_historical_occupancy">Historical occupancy (faded icon) is an average of trip ridership at this stop over the last 6 months.</string>
-    <string name="menu_text_about_realtime_occupancy">Real-time occupancy is shown as one or two person icons when there are many seats available or few seats available, and is shown as three person icons when the vehicle is full.</string>
 
-    <string name="realtime_full">Full</string>
-    <string name="realtime_standing_room">Standing room</string>
-    <string name="realtime_many_seats_available">Many seats available</string>
-    <string name="realtime_few_seats_available">Few seats available</string>
-    <string name="realtime_empty">Empty</string>
 
-    <string name="predicted_full">Predicted full</string>
-    <string name="predicted_standing_room">Predicted standing room</string>
-    <string name="predicted_many_seats_available">Predicted many seats available</string>
-    <string name="predicted_few_seats_available">Predicted few seats available</string>
-    <string name="predicted_empty">Predicted empty</string>
 
 
     <!--  Trip list -->
@@ -522,11 +458,6 @@
     <string name="trip_stat_departing">Route %1$s is departing in %2$d min!</string>
 
     <!--  Foreground Service notifications -->
-    <string name="foreground_all_intent_title">Updating your reminders</string>
-    <string name="foreground_action_schedule_text">Setting up your reminders&#8230;</string>
-    <string name="foreground_action_poll_text">Checking predictions for your reminders&#8230;</string>
-    <string name="foreground_action_notify_text">Triggering a notification for your reminder&#8230;</string>
-    <string name="foreground_action_cancel_text">Dismissing your reminder&#8230;</string>
 
     <!-- Report problem -->
     <string name="report_problem_comment_hint">Problem description (optional)</string>
@@ -576,7 +507,6 @@
 
     <string name="region_unavailable">unavailable</string>
     <string name="region_option_refresh">Refresh</string>
-    <string name="region_detecting_server">Finding your transit services&#8230;</string>
     <string name="region_choose_region">Choose region</string>
     <string name="region_disabled_auto_selection">Disabled automatic region selection. You can
         enable in Preferences.
@@ -710,7 +640,6 @@
     <string name="preferences_db_save_error">Unable to save: %1$s</string>
     <string name="preferences_db_restore_warning">This will wipe out any existing data! Go ahead?
     </string>
-    <string name="preferences_restore_loading">Restoring from storage&#8230;</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="preferences_db_restored">Restore successful! Please restart %1$s.</string>
     <string name="preferences_db_restore_error">Unable to restore: %1$s</string>
@@ -726,8 +655,6 @@
     </string>
     <string name="preferences_analytics_title">Send anonymous usage data</string>
     <string name="preferences_analytics_summary">Help us improve the app</string>
-    <string name="preferences_travel_behavior_title">Send anonymous travel behavior data</string>
-    <string name="preferences_travel_behavior_summary">Help us improve public transit</string>
     <string name="preferences_tutorial_title">Show tutorial</string>
     <string name="preferences_tutorial_summary">Show instructions for using this app</string>
     <string name="preferences_donate_title">Donate</string>
@@ -775,7 +702,6 @@
 
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <!-- Issue reporting implementation-->
     <string name="region_dialog_message">Are you in the %1$s region?</string>
@@ -783,16 +709,15 @@
     If we got this wrong, please tap on \'Your Region\' to change it!</string>
     <string name="preference_region_dialog_title">Please check region</string>
     <string name="report_dialog_stop_header">Please tap on stop on map</string>
-    <string name="report_dialog_trip"> Please select an arrival time.</string>
 
     <!-- report issue screen-->
     <string name="ri_others">Others</string>
     <string name="ri_desc_hint">Issue description</string>
+    <!-- %1$s is a dynamic Open311 field label; appends a required marker -->
+    <string name="ri_field_required_label">%1$s (required)</string>
     <string name="ri_button_camera">Camera</string>
-    <string name="ri_button_image">ADD IMAGE</string>
     <string name="ri_button_gallery">Gallery</string>
     <string name="ri_address_not_found">Address not found. Please check your address.</string>
-    <string name="ri_service_description_problem">Service description could not be found.</string>
     <string name="ri_open_camera_problem">Camera couldn\'t be opened.</string>
     <string name="ri_resize_image_problem">Image couldn\'t be resized - using full size.</string>
     <string name="ri_service_default">Choose a Problem</string>
@@ -804,7 +729,6 @@
     <string name="ri_user_phone_hint">Phone number</string>
     <string name="ri_no_trip">No arrival times, please check back later.</string>
     <string name="ri_anonymous_checkbox">Keep it anonymous</string>
-    <string name="ri_submitting_message">Submitting your report…</string>
     <string name="ri_unsuccessful_submit">An error occurred during submission, please try again later.</string>
 
     <!-- report issue types screen-->
@@ -814,8 +738,6 @@
     <string name="rt_stop_problem">Report a Stop Problem</string>
     <string name="rt_arrival_problem">Report an Arrival Time Problem</string>
     <string name="rt_infrastructure_problem_title">Report a Problem</string>
-    <string name="rt_stop_problem_title">Stop Problem</string>
-    <string name="rt_arrival_problem_title">Arrival Time Problem</string>
     <string name="rt_app_feedback">Send App Feedback</string>
     <string name="rt_message_infrastructure_problem">Missing route, broken bench, etc.</string>
     <string name="rt_message_customer_service">Driver compliments and complaints, lost &amp; found, etc.</string>
@@ -827,11 +749,10 @@
     <string name="rt_no">NO</string>
 
     <!-- Tutorial Fragment -->
-    <string name="pager_button_prev">Previous</string>
     <string name="pager_button_next">Next</string>
-    <string name="pager_button_done">Done</string>
 
     <!-- Trip Details -->
+    <string name="trip_status">Trip status</string>
     <string name="trip_details_vehicle">Vehicle: %1$s</string>
     <string name="trip_details_scheduled_data">Schedule data</string>
     <string name="trip_details_real_time_sec_late">%1$d sec late (Last update: %2$s)</string>
@@ -846,7 +767,6 @@
     <string name="trip_details_dest_stop">Destination stop</string>
 
     <!-- Vehicles on Map -->
-    <string name="vehicle_view_location_data">Show trip data</string>
     <string name="vehicle_last_updated_sec">Data updated %1$d sec ago</string>
     <string name="vehicle_last_updated_min_and_sec">Data updated %1$d min %2$d sec ago</string>
     <string name="vehicle_estimate_from_update_sec">Estimate from data updated %1$d sec ago</string>
@@ -864,7 +784,6 @@
     <string name="night_light_cancel">Cancel</string>
 
     <!-- Tutorials -->
-    <string name="tutorial_button_text">Got it!</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="tutorial_welcome_title">Welcome to %1$s!</string>
     <string name="tutorial_welcome_text">Tap on a stop (green dot on the map) to see arrival
@@ -885,10 +804,6 @@
     <string name="tutorial_arrival_header_sliding_panel_text">Tap on the arrow or drag the panel up
         to see more arrivals for this stop.
     </string>
-    <string name="tutorial_arrival_sort_title">Sort by ETA or route</string>
-    <string name="tutorial_arrival_sort_text">Arrivals can be sorted by estimated arrival time, or
-        sorted/grouped by route using the \"Sort\" button at the top of the screen.
-    </string>
     <string name="tutorial_arrival_header_star_route_title">Star your favorite routes</string>
     <string name="tutorial_arrival_header_star_route_text">Tap on the star to pin your favorite
         routes to the top of the sliding panel.
@@ -897,20 +812,13 @@
     <string name="tutorial_recent_stops_routes_text">Find the stops and routes that you\'ve recently
         looked at via the \"More\" button at the top right of the screen.
     </string>
-    <string name="tutorial_starred_stops_sort_title">Sort your starred stops</string>
-    <string name="tutorial_starred_stops_sort_text">Organize your favorite stops by name or
-        frequency of use with the \"Sort\" button at the top of the screen.
-    </string>
-    <string name="tutorial_starred_stops_shortcut_title">Save time with shortcuts</string>
-    <string name="tutorial_starred_stops_shortcut_text">Long-press on a stop to create a shortcut on
-        your home screen. Tap on the shortcut to instantly see arrivals!
-    </string>
-    <string name="tutorial_send_feedback_transit_service_title">More than just transit</string>
-    <string name="tutorial_send_feedback_transit_service_text">You can report a variety of issue
-        types to your local government near this stop. Tap on the drop-down box to see a full list.
-    </string>
-    <string name="tutorial_trip_plan_geocoder_title">Enter the address or location name</string>
-    <string name="tutorial_trip_plan_geocoder_text">You can use addresses or location names for origins and destinations when planning a trip. Stop IDs and cross streets are not currently supported in trip plans.
+    <!-- Onboarding spotlight card: the corner close button's accessibility label + the final-step action -->
+    <string name="tutorial_button_close">End tutorial</string>
+    <string name="tutorial_button_finish">Finish</string>
+    <!-- The welcome onboarding step that spotlights a real stop on the map -->
+    <string name="tutorial_welcome_map_stop_title">Here\'s a stop</string>
+    <string name="tutorial_welcome_map_stop_text">Tap a green dot like this one on the map to see its
+        arrival times.
     </string>
 
     <!-- Permissions -->
@@ -918,120 +826,73 @@
     <string name="location_permissions_message">To enhance your experience, enable location use to:\n- Display your real-time position on the map.\n- Automatically set your local transit agency.\n\nYour location data is not collected by us. Alternatively, you may manually select your region without enabling location permissions.</string>
     <string name="no_thanks">No thanks</string>
 
-    <string name="storage_permissions_title">Access to device storage is required</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="storage_permissions_message">To backup or restore your data, %1$s needs permission to access your local device storage.</string>
 
     <!-- About -->
-    <string name="application_version">Version</string>
     <string name="title_activity_about">About</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="about_content"><![CDATA[
-    <html>
-  <body>
-    <h1 style="color: #4caf50"><b>Welcome to %1$s!</b></h1>
-
-    <p>
-        %1$s is made by a team of volunteers and relies upon
-        the dedication, passion, and talents of its open source contributors.
-    </p>
-    <h2><b>Code Contributors:</b></h2>
-    <p>
-      Our dedicated contributors improve the app\'s functionality and user
-      experience:
-    </p>
-
-    <ul>
-      <li><b>Paul Watts</b></li>
-      <li><b>Brian Ferris</b></li>
-      <li><b>Daniel Welsh</b></li>
-      <li><b>Arno Hart</b></li>
-      <li><b>Sean Barbeau</b></li>
-      <li><b>York Region Transit</b></li>
-      <li><b>Ben Du</b></li>
-      <li><b>Cagri Cetin</b></li>
-      <li><b>Mike Karabushin</b></li>
-      <li><b>Aziz Batihk</b></li>
-      <li><b>Charles Bond</b></li>
-      <li>
-        <b
-          >Hillsborough Area Regional Transit (via Simon Jacobs at Cambridge
-          Systematics)</b
-        >
-      </li>
-      <li><b>Bridgette Eichelberger</b></li>
-      <li><b>Rodrigo Carvalho (Google Summer of Code 2017)</b></li>
-      <li><b>Steve Moritani</b></li>
-      <li><b>Ellen Conley</b></li>
-    </ul>
-    <h2><b>Translations:</b></h2>
-    <p>
-      Thanks to our translators, %1$s is
-      accessible worldwide:
-    </p>
-    <ul>
-      <li><b>Ari Rusakko</b></li>
-      <li><b>Eleonora Fabbri</b></li>
-      <li><b>Edgar Andrés Moncada Taborda</b></li>
-    </ul>
-    <h2><b>Image Credits:</b></h2>
-    <p>
-      Thanks to the designers who created images used
-      in the vehicle icons, which were uploaded to the Noun Project under CC BY
-      3.0 (https://creativecommons.org/licenses/by/3.0/us/):
-    </p>
-    <ul>
-      <li>Arrow by <b>Zlatko Najdenovski</b>, MK</li>
-      <li>Map Marker by <b>Housin Aziz</b>, SE</li>
-      <li>Incognito by <b>Christopher Schreiner</b></li>
-      <li>Flag Triangle by <b>Austin Andrews</b></li>
-    </ul>
-    <h2>
-      <b>Join the Journey: Contribute to Our App!</b>
-      </h2>
-    <p>
-      Check out our project on GitHub at https://github.com/OneBusAway/onebusaway-android.
-      <p>
-        Find out more about the OneBusAway open-source project at https://onebusaway.org .</p>
-        <p>
-        Special thanks to Google for the visually stunning material design icons(https://github.com/google/material-design-icons),
-        which add a touch of elegance to our app. Their generosity in licensing
-        these icons under Apache v2.0(https://www.apache.org/licenses/LICENSE-2.0) has greatly enriched our user experience.
-      </p>
-        <p>
-        Special thanks to amcharts for free SVG weather icons(https://www.amcharts.com/free-animated-svg-weather-icons/),
-        these icons under Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/).
-      </p>
-      <p>
-
-    <p>
-      Explore our app and embark on a seamless transit journey with %1$s!
-    </p>
-  </body>
-</html>
-  ]]></string>
+    <!-- About screen: structured prose; the name lists are in the string-arrays below -->
+    <string name="about_welcome_title">Welcome to %1$s!</string>
+    <string name="about_intro">%1$s is made by a team of volunteers and relies upon the dedication, passion, and talents of its open source contributors.</string>
+    <string name="about_contributors_header">Code Contributors:</string>
+    <string name="about_contributors_intro">Our dedicated contributors improve the app\'s functionality and user experience:</string>
+    <string name="about_translations_header">Translations:</string>
+    <string name="about_translations_intro">Thanks to our translators, %1$s is accessible worldwide:</string>
+    <string name="about_image_credits_header">Image Credits:</string>
+    <string name="about_image_credits_intro">Thanks to the designers who created images used in the vehicle icons, which were uploaded to the Noun Project under CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/us/):</string>
+    <string name="about_join_header">Join the Journey: Contribute to Our App!</string>
+    <string name="about_join_github">Check out our project on GitHub at https://github.com/OneBusAway/onebusaway-android.</string>
+    <string name="about_join_oba">Find out more about the %1$s open-source project at https://onebusaway.org.</string>
+    <string name="about_thanks_material_icons">Special thanks to Google for the visually stunning material design icons (https://github.com/google/material-design-icons), which add a touch of elegance to our app. Their generosity in licensing these icons under Apache v2.0 (https://www.apache.org/licenses/LICENSE-2.0) has greatly enriched our user experience.</string>
+    <string name="about_thanks_amcharts">Special thanks to amcharts for free SVG weather icons (https://www.amcharts.com/free-animated-svg-weather-icons/), these icons under Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/).</string>
+    <string name="about_outro">Explore our app and embark on a seamless transit journey with %1$s!</string>
+    <string-array name="about_code_contributors">
+        <item>Paul Watts</item>
+        <item>Brian Ferris</item>
+        <item>Daniel Welsh</item>
+        <item>Arno Hart</item>
+        <item>Sean Barbeau</item>
+        <item>York Region Transit</item>
+        <item>Ben Du</item>
+        <item>Cagri Cetin</item>
+        <item>Mike Karabushin</item>
+        <item>Aziz Batihk</item>
+        <item>Charles Bond</item>
+        <item>Hillsborough Area Regional Transit (via Simon Jacobs at Cambridge Systematics)</item>
+        <item>Bridgette Eichelberger</item>
+        <item>Rodrigo Carvalho (Google Summer of Code 2017)</item>
+        <item>Steve Moritani</item>
+        <item>Ellen Conley</item>
+    </string-array>
+    <string-array name="about_translators">
+        <item>Ari Rusakko</item>
+        <item>Eleonora Fabbri</item>
+        <item>Edgar Andrés Moncada Taborda</item>
+    </string-array>
+    <string-array name="about_image_credits">
+        <item>Arrow by Zlatko Najdenovski, MK</item>
+        <item>Map Marker by Housin Aziz, SE</item>
+        <item>Incognito by Christopher Schreiner</item>
+        <item>Flag Triangle by Austin Andrews</item>
+    </string-array>
 
     <!-- Trip Planner strings -->
 
-    <string name="title_activity_trip_plan">Trip Planner (beta)</string>
+    <string name="trip_plan_title">Plan a trip</string>
     <string name="trip_plan_from">From: </string>
     <string name="trip_plan_to">To: </string>
     <string name="trip_plan_leaving">Leaving</string>
     <string name="trip_plan_arriving">Arriving</string>
-    <string name="trip_plan_stop_connector">at</string>
-    <string name="trip_plan_departure_status">Status</string>
     <string name="trip_plan_date">Date</string>
     <string name="trip_plan_time">Time</string>
+    <string name="trip_plan_pick_on_map">Pick location on map</string>
+    <string name="trip_plan_use_this_location">Use this location</string>
+    <string name="trip_plan_map_location">Selected location</string>
 
-    <string name="trip_plan_start_location_hint">Starting address or location name</string>
-    <string name="trip_plan_end_location_hint">Ending address or location name</string>
-    <string name="select_origin_from_contacts">Select origin from contacts</string>
-    <string name="select_destination_from_contacts">Select destination from contacts</string>
 
     <string name="trip_plan_list_view">List View</string>
     <string name="trip_plan_map_view">Map View</string>
 
-    <string name="task_progress_tripplanner_progress">Planning trip. Please wait&#8230;</string>
     <string name="tripplanner_no_server_selected_error">No region selected</string>
     <string name="tripplanner_error_dialog_title">Planning not possible</string>
     <!-- Errors -->
@@ -1063,9 +924,7 @@
     <string name="tripplanner_reverse">Reverse</string>
     <string name="tripplanner_report_trip_problem">Report Trip Plan Problem</string>
 
-    <string name="no_trip_planner_title">Google cost increase</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="no_trip_planner_message">Google is now charging %1$s for all trip plans (about $1,000 per month)! OBA is an open source project and can\'t pay for these costs. We\'ve created a non-profit and applied to Google for Nonprofits, but are still waiting for approval. In the mean-time, we\'ve had to shut down the trip planner. If you\'d like to express your support for %1$s to Google for Nonprofits, please reach out to them on Twitter at https://twitter.com/googlenonprofit?s=17!</string>
 
     <!-- Instructions generation -->
 
@@ -1189,12 +1048,8 @@
 
     <!-- Units -->
     <string name="hours_abbreviation">h</string>
-    <string name="hours_full">hours</string>
-    <string name="hour_singular">hour</string>
 
     <string name="seconds_abbrevation">s</string>
-    <string name="seconds_full">seconds</string>
-    <string name="seconds_singular">second</string>
 
     <string name="minute_singular">minute</string>
 
@@ -1237,33 +1092,9 @@
     <string name="bike_station_title">Tap to reserve a bike</string>
     <string name="floating_bike_title">Tap to reserve this bike</string>
 
-    <string name="application_ignoring_battery_opt_title">Performance Alert!</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="application_ignoring_battery_opt_message">Battery optimizations are enabled for this application which may decrease the performance of the application. To get the best experience from this application, please go to settings and disable performance optimizations for %1$s.</string>
 
     <!--Travel Behaviour data collection-->
-    <string name="travel_behavior_opt_in_message">We\'d like your help with research to improve transit service.</string>
-    <string name="travel_behavior_opt_in_title">Help us improve transit!</string>
-    <string name="travel_behavior_age_message">Are you over the age of 18?</string>
-    <string name="travel_behavior_age_invalid_message">Thanks for your interest, but you need to be over the age of 18 to participate.</string>
-    <string name="travel_behavior_email_message">Please provide your email address for the online surveys</string>
-    <string name="travel_behavior_email_invalid">Please re-enter your email</string>
-    <string name="travel_behavior_enroll_success">You successfully enrolled in the study.</string>
-    <string name="travel_behavior_enroll_fail">Failed to enroll in the study. Please try again later.</string>
-    <string name="travel_behavior_email_hint">Email</string>
-    <string name="travel_behavior_confirm_email_hint">Confirm email</string>
-    <string name="travel_behavior_dialog_yes">Yes</string>
-    <string name="travel_behavior_dialog_no">No</string>
-    <string name="travel_behavior_dialog_learn_more">Learn more</string>
-    <string name="travel_behavior_dialog_not_now">Not now</string>
-    <string name="travel_behavior_dialog_consent_agree">Agree</string>
-    <string name="travel_behavior_dialog_consent_disagree">Decline</string>
-    <string name="travel_behavior_dialog_email_save">Save</string>
-    <string name="reset_time">Reset time</string>
-    <string name="set_destination_to_my_location">Set destination to my location</string>
-    <string name="set_origin_to_my_location">Set origin to my location</string>
-    <string name="travel_behavior_dialog_opt_out_title">Opt out of study?</string>
-    <string name="travel_behavior_dialog_opt_out_message">If you opt out of the research study, we won\'t receive any more information about your travel behavior to help improve public transit.</string>
     <string name="cancel">Cancel</string>
     <string name="my_option_clear_starred_routes">Remove all starred routes</string>
     <string name="preferred_temperature_unit">Preferred temperature unit</string>
@@ -1286,7 +1117,6 @@
     <string name="preferences_reset_donation_timestamps_title">Reset Donation Timestamps</string>
     <string name="preferences_reset_donation_timestamps_summary">Tapping this option will clear both the \'Remind Me Later\' and \'Don\'t Bother Me\' timestamps associated with donation requests.</string>
     <string name="preferences_show_weather_view">Show weather view</string>
-    <string name="show">Show</string>
     <string name="preferences_preferred_maps_title">Preferred Map Type</string>
     <string name="preferences_preferred_map_option_normal2d">Default Map</string>
     <string name="preferences_preferred_map_option_normal3d">Default Map with 3D Buildings</string>
@@ -1302,10 +1132,8 @@
     <string name="write_your_answer_here">Write your answer here</string>
     <string name="submit">Submit</string>
     <string name="go">GO!</string>
-    <string name="submitted_successfully">Submission Successful</string>
     <string name="please_complete_required_questions">Please answer all required questions.</string>
     <string name="sharing_survey_info_message">"This survey will share your "</string>
-    <string name="are_you_sure_you_want_to_dismiss_the_survey">Are you sure you want to dismiss this survey?</string>
     <string name="dismiss_survey_dialog_title">Confirm Survey Dismissal</string>
     <string name="remind_me_latter">Remind Me Later</string>
     <string name="survey_dismiss_dialog_skip_this_survey">Skip This Survey</string>
@@ -1313,31 +1141,22 @@
     <string name="preferences_show_weather_view_on_map">Display the weather view on the map</string>
     <string name="failed_to_set_reminder">Failed to set reminder</string>
     <string name="reminder_not_enabled">Reminder not enabled</string>
-    <string name="stop_added_to_favorites">Stop added to favorites</string>
-    <string name="stop_removed_from_favorites">Stop removed from favorites</string>
-    <string name="route_added_to_favorites">Route added to favorites</string>
-    <string name="route_removed_from_favorites">Route removed from favorites</string>
     <string name="dismiss">Dismiss</string>
     <string name="more_info">More Info</string>
     <string name="display_test_alerts">Display test alerts</string>
     <string name="display_test_wide_alerts_for_regions">Display test-wide alerts for regions</string>
-    <string name="do_you_want_to_plan_the_trip_now">Do you want to plan the trip now?</string>
-    <string name="plan_trip">Plan Trip?</string>
     <string name="no_description_available">No description available</string>
     <string name="close_donation_card">Close donation card</string>
-    <string name="send_email">Send email</string>
-    <string name="make_a_phone_call">Make a phone call</string>
-    <string name="browse_the_web">Browse the web</string>
     <string name="map_option_zoom_out">Zoom out</string>
     <string name="map_option_zoom_in">Zoom in</string>
     <string name="map_option_layers_close">Close Map Layers Button</string>
 
     <!-- Accessibility content descriptions for ETA rows -->
-    <string name="arrival_favorite_first_description">Save first route as favorite</string>
-    <string name="arrival_favorite_second_description">Save second route as favorite</string>
-    <string name="arrival_reminder_first_description">Set reminder for first arrival</string>
-    <string name="arrival_reminder_second_description">Set reminder for second arrival</string>
-    <string name="arrival_options_first_description">Options for first arrival</string>
-    <string name="arrival_options_second_description">Options for second arrival</string>
     <string name="map_option_layers">Maps Layers Button</string>
+
+    <!-- Supported agencies screen -->
+    <string name="agencies_title">Supported Agencies</string>
+    <string name="agencies_empty">No agencies found for the current region.</string>
+    <string name="retry">Retry</string>
+    <string name="navigate_up">Navigate up</string>
 </resources>

@@ -16,7 +16,7 @@
 package org.onebusaway.android.io;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.PreferencesEntryPoint;
 import org.onebusaway.android.io.elements.ObaRegion;
 
 import android.content.Context;
@@ -89,8 +89,10 @@ public class ObaContext {
     }
 
     public void setBaseUrl(Context context, Uri.Builder builder) {
-        // If there is a custom preference, then use that.
-        String serverName = Application.get().getCustomApiUrl();
+        // If there is a custom preference, then use that. Read it from the prefs seam (not the
+        // Application god-object) at build time so it stays current when the user enters/clears one.
+        String serverName = PreferencesEntryPoint.get(context)
+                .getString(R.string.preference_key_oba_api_url, null);
 
         if (!TextUtils.isEmpty(serverName) || mRegion != null) {
             setUrl(context, builder, serverName);
@@ -104,11 +106,12 @@ public class ObaContext {
     }
 
     public void setBaseOtpUrl(Context context, Uri.Builder builder) {
-        // Use the custom OTP url if vailable
-        String otpBaseUrl = Application.get().getCustomOtpApiUrl();
+        // Use the custom OTP url if available (read from the prefs seam, not the Application god-object).
+        String otpBaseUrl = PreferencesEntryPoint.get(context)
+                .getString(R.string.preference_key_otp_api_url, null);
         if (TextUtils.isEmpty(otpBaseUrl)) {
-            // Use the current region OTP base URL
-            otpBaseUrl = Application.get().getCurrentRegion().getOtpBaseUrl();
+            // Use this context's region OTP base URL (the region the RegionRepository wrote here).
+            otpBaseUrl = mRegion.getOtpBaseUrl();
             Log.d(TAG, "Using default region OTP API URL '" + otpBaseUrl + "'.");
         } else {
             Log.d(TAG, "Using custom OTP API URL set by user '" + otpBaseUrl + "'.");

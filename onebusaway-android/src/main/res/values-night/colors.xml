@@ -22,19 +22,14 @@
 
     <color name="body_text_1">#deffffff</color>
     <color name="body_text_2">#8affffff</color>
-    <color name="body_text_3">#6fffffff</color>
     <color name="body_text_disabled">#44ffffff</color>
 
-    <color name="body_text_1_inverse">#de000000</color>
-    <color name="body_text_2_inverse">#8a000000</color>
 
     <color name="stop_info_arrival_list_background">@android:color/black</color>
 
     <!-- Arrival times header -->
-    <color name="header_text_color">@color/body_text_1</color>
 
     <!-- Trip Planning -->
-    <color name="trip_plan_label">@android:color/white</color>
 
     <color name="md_theme_primary">#A1D39A</color>
     <color name="md_theme_onPrimary">#0A390F</color>

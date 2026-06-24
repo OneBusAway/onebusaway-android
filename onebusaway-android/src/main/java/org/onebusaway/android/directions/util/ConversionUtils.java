@@ -17,7 +17,6 @@
 package org.onebusaway.android.directions.util;
 
 import android.content.Context;
-import android.preference.PreferenceManager;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
@@ -85,8 +84,7 @@ public class ConversionUtils {
         Date endTime = parseOtpDate(endTimeText);
 
         if (startTime != null && endTime != null) {
-            if (PreferenceManager.getDefaultSharedPreferences(applicationContext)
-                    .getInt(OTPConstants.PREFERENCE_KEY_API_VERSION, OTPConstants.API_VERSION_V1)
+            if (PreferenceUtils.getInt(OTPConstants.PREFERENCE_KEY_API_VERSION, OTPConstants.API_VERSION_V1)
                     == OTPConstants.API_VERSION_V1){
                 duration = (endTime.getTime() - startTime.getTime());
             } else {

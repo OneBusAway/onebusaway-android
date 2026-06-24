@@ -4,9 +4,9 @@ import com.google.transit.realtime.GtfsRealtime;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.util.PreferenceUtils;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import java.net.URL;
@@ -89,10 +89,9 @@ public class GtfsAlerts {
      */
     public String getGtfsAlertsUrl(String regionId) {
         Application app = Application.get();
-        SharedPreferences sharedPreferences = Application.getPrefs();
         String baseUrl = app.getCurrentRegion().getSidecarBaseUrl();
         if (baseUrl == null) return null;
-        boolean isTestAlert = sharedPreferences.getBoolean(app.getString(R.string.preferences_display_test_alerts), false);
+        boolean isTestAlert = PreferenceUtils.getBoolean(app.getString(R.string.preferences_display_test_alerts), false);
         String alertAPIURL = baseUrl + app.getString(R.string.alerts_api_endpoint);
         alertAPIURL = alertAPIURL.replace("regionID", regionId);
         if (isTestAlert) alertAPIURL += "?test=1";

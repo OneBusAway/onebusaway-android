@@ -15,7 +15,5 @@
   -->
 
 <resources>
-    <integer name="font_textStyle_medium">0</integer>
     <!-- normal -->
-    <string name="font_fontFamily_medium">sans-serif-medium</string>
 </resources>

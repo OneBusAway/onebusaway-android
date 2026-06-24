@@ -23,10 +23,14 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:9.1.0'
+        classpath 'com.android.tools.build:gradle:9.2.0'
         classpath 'com.google.gms:google-services:4.4.4'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // Compose compiler plugin; version == Kotlin version. The Kotlin 2.x compiler is
+        // backward-compatible with the Compose 1.11.x runtime used in the app module.
+        classpath "org.jetbrains.kotlin:compose-compiler-gradle-plugin:$kotlin_version"
         classpath "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:2.3.4"
+        classpath 'com.google.dagger:hilt-android-gradle-plugin:2.59.2'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.6'
         classpath 'com.github.triplet.gradle:play-publisher:4.0.0'
     }

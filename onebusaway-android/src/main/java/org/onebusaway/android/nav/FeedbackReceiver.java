@@ -29,6 +29,7 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.util.PreferenceUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -115,7 +116,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
             Log.d(TAG, "cancelling notification");
             mNotificationManager.cancel(notifyId);
 
-            Boolean pref = Application.getPrefs().getBoolean(Application.get().getResources()
+            Boolean pref = PreferenceUtils.getBoolean(Application.get().getResources()
                     .getString(R.string.preferences_key_user_share_destination_logs), true);
 
             if (pref) {

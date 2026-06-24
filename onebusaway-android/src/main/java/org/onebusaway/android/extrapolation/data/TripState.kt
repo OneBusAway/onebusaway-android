@@ -43,7 +43,7 @@ data class HistoryEntry(
 /**
  * Immutable snapshot of everything known about a single tracked trip: vehicle history,
  * extrapolation anchor, schedule, polyline, and route metadata. Stored keyed by [tripId] in the
- * trip store (TripStore.kt); consumers look up the current snapshot per frame/tick — data
+ * trip store (TripStateCache.kt); consumers look up the current snapshot per frame/tick — data
  * updates produce new instances via [withObservation], the other `with*` folds, and `copy`.
  *
  * Provides [extrapolate], which selects the appropriate strategy (gamma or schedule replay) based
@@ -167,8 +167,8 @@ data class TripState(
 
     /**
      * Returns the state with [schedule] filled in, or `this` when it is already known — the
-     * schedule is an immutable resource (Fetchers.kt), so the first writer wins and repeated
-     * poll-tick writes don't churn the snapshot.
+     * schedule is an immutable resource (TripObservationFetcher.kt), so the first writer wins and
+     * repeated poll-tick writes don't churn the snapshot.
      */
     fun withSchedule(schedule: ObaTripSchedule): TripState =
             if (this.schedule == null) copy(schedule = schedule) else this

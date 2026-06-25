@@ -24,7 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
 import org.onebusaway.android.ui.HomeActivity;
-import org.onebusaway.android.util.UIUtils;
+import org.onebusaway.android.ui.common.Shortcuts;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -55,7 +55,7 @@ public class ShortcutIntentFlagsTest {
         final AtomicReference<ShortcutInfoCompat> shortcutRef = new AtomicReference<>();
 
         instr.runOnMainSync(() -> shortcutRef.set(
-                UIUtils.makeShortcutInfo(themed, "test", destIntent, R.drawable.ic_drawer_star)));
+                Shortcuts.makeShortcutInfo(themed, "test", destIntent, R.drawable.ic_drawer_star)));
 
         Intent shortcutIntent = shortcutRef.get().getIntent();
         int flags = shortcutIntent.getFlags();

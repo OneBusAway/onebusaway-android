@@ -11,10 +11,12 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.ui.ArrivalsListActivity
-import org.onebusaway.android.util.PreferenceUtils
+import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.ui.arrivals.ArrivalsListLauncher
 import org.onebusaway.android.util.ReminderUtils
 
 /**
@@ -25,7 +27,11 @@ import org.onebusaway.android.util.ReminderUtils
  * notification automatically and delivers the data payload to the launcher activity (HomeActivity)
  * via intent extras on tap.
  */
+@AndroidEntryPoint
 class MyFirebaseMessagingService : FirebaseMessagingService() {
+
+    @Inject
+    lateinit var prefsRepository: PreferencesRepository
 
     companion object {
         private const val TAG = "FirebaseMsgService"
@@ -33,7 +39,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        val arrivalJson = remoteMessage.data["arrival_and_departure"]
+        val arrivalJson = remoteMessage.data[ReminderUtils.ARRIVAL_PAYLOAD_KEY]
         val stopId = ReminderUtils.getStopIdFromPayload(arrivalJson)
 
         if (stopId == null) {
@@ -44,19 +50,19 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val message = remoteMessage.notification?.body ?: remoteMessage.data["message"] ?: "No message content"
         Log.d(TAG, "Received reminder for stopId: $stopId")
 
-        val context = Application.get().applicationContext
+        val context = applicationContext
         ReminderUtils.handleArrivalPayload(context, arrivalJson)
         showNotification(context, message, stopId)
     }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        PreferenceUtils.saveString(getString(R.string.firebase_messaging_token), token)
+        prefsRepository.setString(R.string.firebase_messaging_token, token)
         Log.d(TAG, "FCM token refreshed")
     }
 
     private fun showNotification(context: Context, message: String, stopId: String) {
-        val intent = ArrivalsListActivity.Builder(context, stopId).intent
+        val intent = ArrivalsListLauncher.Builder(context, stopId).intent
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         val pendingIntent = PendingIntent.getActivity(
             context, 0, intent,
@@ -73,13 +79,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
 
-        val appPrefs = Application.getPrefs()
-
-        if (appPrefs.getBoolean(getString(R.string.preference_key_preference_vibrate_allowed), true)) {
+        if (prefsRepository.getBoolean(R.string.preference_key_preference_vibrate_allowed, true)) {
             notificationBuilder.setDefaults(Notification.DEFAULT_VIBRATE)
         }
 
-        val soundPreference = appPrefs.getString(getString(R.string.preference_key_notification_sound), "")
+        val soundPreference = prefsRepository.getString(R.string.preference_key_notification_sound, "")
         if (soundPreference.isNullOrEmpty()) {
             notificationBuilder.setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
         } else {

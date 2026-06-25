@@ -18,7 +18,9 @@
 import org.apache.tools.ant.filters.ConcatFilter
 
 apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'com.google.dagger.hilt.android'
 apply plugin: 'com.github.triplet.play'
 
 repositories {
@@ -35,10 +37,10 @@ repositories {
 }
 
 android {
-    compileSdk=36
+    compileSdk=37
 
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 36
         versionCode 153
         versionName "26.1.0"
@@ -65,17 +67,15 @@ android {
             // Normal Google Play release - see src/google
             dimension "platform"
             isDefault = true
-            buildConfigField "String", "MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.googlemapsv2.BaseMapFragment\""
+            buildConfigField "String", "MAP_COMPOSE_ADAPTER_CLASS", "\"org.onebusaway.android.map.googlemapsv2.compose.GoogleComposeAdapter\""
             buildConfigField "String", "MAP_HELPER_CLASS", "\"org.onebusaway.android.map.googlemapsv2.GoogleProprietaryMapHelper\""
-            buildConfigField "String", "TRIP_MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.googlemapsv2.tripmap.TripMapFragment\""
         }
 
         maplibre {
             // MapLibre-based build using OpenFreeMap tiles - see src/maplibre
             dimension "platform"
-            buildConfigField "String", "MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.maplibre.MapLibreMapFragment\""
+            buildConfigField "String", "MAP_COMPOSE_ADAPTER_CLASS", "\"org.onebusaway.android.map.maplibre.compose.MapLibreComposeAdapter\""
             buildConfigField "String", "MAP_HELPER_CLASS", "\"org.onebusaway.android.map.maplibre.MapLibreProprietaryMapHelper\""
-            buildConfigField "String", "TRIP_MAP_FRAGMENT_CLASS", "\"org.onebusaway.android.map.maplibre.tripmap.TripMapFragment\""
         }
 
         // Brand flavors are loaded from separate files in flavors/ directory.
@@ -131,12 +131,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlin {
         compilerOptions {
-            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
         }
     }
     testOptions {
@@ -153,6 +153,9 @@ android {
 
     buildFeatures {
         buildConfig = true
+        // Compose runtime is pinned to the 1.10.x line (BOM 2026.03.01); see the Compose dependency
+        // block below before changing any Compose-related version.
+        compose = true
     }
 
 }
@@ -231,10 +234,11 @@ dependencies {
     // Google Play Services Location
     implementation 'com.google.android.gms:play-services-location:21.3.0'
     // Support libraries
-    implementation 'androidx.activity:activity-ktx:1.9.3'
+    implementation 'androidx.activity:activity-ktx:1.13.0'
     implementation 'androidx.fragment:fragment-ktx:1.8.4'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.exifinterface:exifinterface:1.3.7'
     implementation 'commons-io:commons-io:2.4'
     implementation 'org.apache.commons:commons-lang3:3.0'
     // Open311 client library
@@ -245,22 +249,18 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-core:2.13.5'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.13.5'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.5'
-    // Bottom sliding panel
-    implementation 'com.github.hannesa2:AndroidSlidingUpPanel:4.6.1'
-    // For floating action button speed dial
-    implementation 'com.github.OneBusAway:android-fab:2.4.1'
     // For sorting alphanumeric route names
     implementation 'org.onebusaway.util:comparators:1.0.0'
-    // For tutorial (ShowcaseView) library
-    implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
     // POJOs used for full data-binding via Jackson
     implementation 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
     // Pelias for point-of-interest search and geocoding for trip planning origin and destination
     implementation 'com.github.OneBusAway:pelias-client-library:v1.1.0'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.firebase:firebase-messaging:24.1.0'
-    // Google Play Services Maps (only for Google flavor)
-    googleImplementation 'com.google.android.gms:play-services-maps:19.0.0'
+    // Google Play Services Maps (only for Google flavor). The Google flavor renders the map
+    // imperatively — a MapView in an AndroidView driven by GoogleComposeAdapter/GoogleMapRenderer —
+    // so there is no android-maps-compose dependency.
+    googleImplementation 'com.google.android.gms:play-services-maps:20.0.0'
     // MapLibre GL Native (only for MapLibre flavor)
     maplibreImplementation 'org.maplibre.gl:android-sdk:11.5.2'
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)
@@ -269,10 +269,9 @@ dependencies {
     implementation 'com.google.android.material:material:1.12.0'
     // Explicit dependency on Gson is now apparently needed
     implementation 'com.google.code.gson:gson:2.10.1'
-    // JVM unit tests
-    testImplementation 'junit:junit:4.13.2'
-    // Instrumented tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
+    // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
     androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1'
     // WorkManager (Java only)
     implementation 'androidx.work:work-runtime:2.9.1'
     implementation "androidx.concurrent:concurrent-futures:1.2.0"
@@ -280,18 +279,49 @@ dependencies {
     implementation "androidx.concurrent:concurrent-listenablefuture-callback:1.0.0-beta01"
     implementation "androidx.core:core-ktx:1.13.1"
     implementation "androidx.preference:preference:1.2.1"
+    // Preferences DataStore — the backing store behind PreferencesRepository. 1.0.0 was the minSdk-21
+    // pin; now that minSdk is 23 a newer DataStore is eligible to be adopted as a follow-up.
+    implementation "androidx.datastore:datastore-preferences:1.0.0"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     // RoomDB
     implementation "androidx.room:room-runtime:2.7.0"
     ksp "androidx.room:room-compiler:2.7.0"
     implementation "androidx.room:room-ktx:2.7.0"
-    // Coroutines
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
+    // Hilt
+    implementation "com.google.dagger:hilt-android:2.59.2"
+    ksp "com.google.dagger:hilt-android-compiler:2.59.2"
     // GTFS Realtime bindings for parsing GTFS-realtime data
     implementation "org.mobilitydata:gtfs-realtime-bindings:0.0.8"
     implementation 'com.google.api.grpc:proto-google-common-protos:2.9.0'
 
+    // Jetpack Compose on the 1.11.x line (BOM 2026.05.00 -> compose-ui/foundation 1.11.2, material3
+    // 1.4.0). This required the coordinated toolchain bump to compileSdk 37 + AGP 9.2.0 + Gradle 9.4.1.
+    // The BOM manages compose-ui + material3 (no explicit versions).
+    def composeBom = platform('androidx.compose:compose-bom:2026.05.00')
+    implementation composeBom
+    androidTestImplementation composeBom
+    implementation 'androidx.compose.ui:ui'                     // 1.11.2 via BOM
+    implementation 'androidx.compose.ui:ui-tooling-preview'     // @Preview support
+    debugImplementation 'androidx.compose.ui:ui-tooling'        // preview renderer (debug only)
+    implementation 'androidx.compose.material3:material3'      // 1.4.0 via BOM
+    // Material icons (Icons.Filled.*, AutoMirrored ArrowBack). Deprecated and frozen at 1.7.8, and
+    // no longer pulled transitively by material3 1.4.0, so pin explicitly. 1.7.8 runs fine on the
+    // 1.11.x Compose runtime; not managed by the BOM, hence the literal version.
+    implementation 'androidx.compose.material:material-icons-core:1.7.8'
+    implementation 'androidx.activity:activity-compose:1.13.0'  // matches activity-ktx 1.13.0
+    // ViewModel + StateFlow for Compose screens (lifecycle 2.10.0; minSdk 23)
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.10.0'
+    // Navigation-Compose backbone, on the 2.9.x line (minSdk 23).
+    // hilt-navigation-compose bridges hiltViewModel() to @HiltViewModel + SavedStateHandle nav-args.
+    implementation 'androidx.navigation:navigation-compose:2.9.8'
+    implementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
+    // Make the (previously transitive) coroutines dependency explicit; matches lifecycle 2.8.x
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+    // JVM unit tests (src/test)
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1'
 }
 
 apply plugin:'com.google.gms.google-services'

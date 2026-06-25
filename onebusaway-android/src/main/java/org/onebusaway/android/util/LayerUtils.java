@@ -15,12 +15,11 @@
  */
 package org.onebusaway.android.util;
 
-import android.os.Build;
-import android.text.TextUtils;
+import android.content.Context;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.map.LayerInfo;
+import org.onebusaway.android.app.di.PreferencesEntryPoint;
 
 /**
  * Utility methods related to creating layers. Currently only methods related to the bikeshare layer
@@ -31,49 +30,13 @@ import org.onebusaway.android.map.LayerInfo;
 
 public class LayerUtils {
 
-
-    /**
-     * Information necessary to create Speed Dial menu on the Layers FAB.
-     * @return LayerInfo instance for bikeshare layer
-     */
-    public static final LayerInfo bikeshareLayerInfo = new LayerInfo() {
-        @Override
-        public String getLayerlabel() {
-            return Application.get().getString(R.string.layers_speedial_bikeshare_label);
-        }
-
-        @Override
-        public int getLabelBackgroundDrawableId() {
-            return R.drawable.speed_dial_bikeshare_item_label;
-        }
-
-        @Override
-        public int getIconDrawableId() {
-            return R.drawable.ic_directions_bike_white;
-        }
-
-
-        @Override
-        public int getLayerColor() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                return Application.get().getColor(R.color.layer_bikeshare_color);
-            } else {
-                //noinspection deprecation
-                return Application.get().getResources().getColor(R.color.layer_bikeshare_color);
-            }
-        }
-
-        @Override
-        public String getSharedPreferenceKey() {
-            return Application.get().getString(R.string.preference_key_layer_bikeshare_visible);
-        }
-    };
-
     /**
     * @return true if the bikeshare layer is active and visible
      */
-    public static boolean isBikeshareLayerVisible() {
-        return Application.isBikeshareEnabled() && Application.getPrefs().getBoolean(
-                Application.get().getString(R.string.preference_key_layer_bikeshare_visible), true);
+    public static boolean isBikeshareLayerVisible(Context context) {
+        // TODO: Application.isBikeshareEnabled() is a separate app-global static still reaching
+        // Application; left as-is for now.
+        return Application.isBikeshareEnabled() && PreferencesEntryPoint.get(context).getBoolean(
+                R.string.preference_key_layer_bikeshare_visible, true);
     }
 }

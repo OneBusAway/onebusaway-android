@@ -1,0 +1,155 @@
+/*
+ * Copyright (C) 2024-2026 Open Transit Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.onebusaway.android.ui.dataview
+
+import kotlin.math.sqrt
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.onebusaway.android.extrapolation.data.TripState
+import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
+import org.junit.Test
+
+class TripTrajectoryTest {
+
+    private class UniformDist(private val width: Double) : ProbDistribution {
+        override val mean = width / 2
+        override fun pdf(x: Double) = if (x in 0.0..width) 1.0 / width else 0.0
+        override fun cdf(x: Double) = (x / width).coerceIn(0.0, 1.0)
+        override fun quantile(p: Double) = p * width
+    }
+
+    private class TriangularDist(private val c: Double) : ProbDistribution {
+        override val mean = c
+        override fun pdf(x: Double) = when {
+            x < 0 || x > 2 * c -> 0.0
+            x <= c -> x / (c * c)
+            else -> (2 * c - x) / (c * c)
+        }
+        override fun cdf(x: Double) = when {
+            x <= 0 -> 0.0
+            x <= c -> x * x / (2 * c * c)
+            x < 2 * c -> 1 - (2 * c - x) * (2 * c - x) / (2 * c * c)
+            else -> 1.0
+        }
+        override fun quantile(p: Double) =
+            if (p <= 0.5) c * sqrt(2 * p) else 2 * c - c * sqrt(2 * (1 - p))
+    }
+
+    private object NaNQuantileDist : ProbDistribution {
+        override val mean = Double.NaN
+        override fun pdf(x: Double) = 0.0
+        override fun cdf(x: Double) = Double.NaN
+        override fun quantile(p: Double) = Double.NaN
+    }
+
+    // --- pdfBins ---
+
+    @Test
+    fun `pdf bins span the quantile window and normalize to the peak`() {
+        val bins = pdfBins(UniformDist(1500.0))
+        assertEquals(PDF_BIN_COUNT, bins.size)
+        bins.forEach { assertEquals("constant PDF -> all bins at the peak", 1.0, it.normalizedHeight, 1e-9) }
+        assertTrue("first bin center is just inside the low quantile", bins.first().distanceMeters > 0.0)
+        assertTrue("last bin center is below the 95th pct (1425)", bins.last().distanceMeters < 1425.0)
+    }
+
+    @Test
+    fun `pdf bin heights peak at one for a non-uniform distribution`() {
+        val bins = pdfBins(TriangularDist(500.0))
+        assertEquals(PDF_BIN_COUNT, bins.size)
+        assertEquals(1.0, bins.maxOf { it.normalizedHeight }, 1e-9)
+        assertTrue(bins.all { it.normalizedHeight in 0.0..1.0 })
+    }
+
+    @Test
+    fun `pdf bin count is configurable`() {
+        assertEquals(20, pdfBins(UniformDist(1000.0), binCount = 20).size)
+    }
+
+    @Test
+    fun `a degenerate distribution yields no pdf bins`() {
+        assertTrue(pdfBins(NaNQuantileDist).isEmpty())
+    }
+
+    // --- dataBounds ---
+
+    @Test
+    fun `data bounds pad the extent of the points`() {
+        val bounds = dataBounds(distances = listOf(100.0, 500.0, 300.0), times = listOf(1_000L, 5_000L))
+        assertEquals(80.0, bounds.minDist, 1e-9) // 100 - 5% of 400
+        assertEquals(520.0, bounds.maxDist, 1e-9) // 500 + 5% of 400
+        assertEquals(0L, bounds.minTime) // 1000 - max(5% of 4000, 1000) = 1000 - 1000
+        assertEquals(6_000L, bounds.maxTime) // 5000 + 1000
+    }
+
+    @Test
+    fun `empty data bounds are a non-degenerate unit box`() {
+        val bounds = dataBounds(emptyList(), emptyList())
+        assertTrue("distance extent is non-zero", bounds.maxDist > bounds.minDist)
+        assertTrue("time extent is non-zero", bounds.maxTime > bounds.minTime)
+    }
+
+    // --- buildTrajectory ---
+
+    @Test
+    fun `an empty snapshot yields an empty trajectory with a drawable viewport`() {
+        val trajectory = buildTrajectory(TripState("trip1"), nowMs = 10_000L)
+        assertTrue(trajectory.observations.isEmpty())
+        assertTrue(trajectory.schedule.isEmpty())
+        assertNull("no anchor -> no extrapolation", trajectory.extrapolation)
+        assertTrue(trajectory.bounds.maxDist > trajectory.bounds.minDist)
+        assertTrue(trajectory.bounds.maxTime > trajectory.bounds.minTime)
+    }
+
+    // --- interpolateScheduleTime ---
+
+    private fun stop(dist: Double, arriveMs: Long, departMs: Long = arriveMs) =
+        ScheduleStop(distanceMeters = dist, arrivalMs = arriveMs, departureMs = departMs, stopId = null)
+
+    @Test
+    fun `schedule time interpolates linearly within the bracketing stops`() {
+        val schedule = listOf(stop(0.0, 1_000L), stop(100.0, 3_000L))
+        // 75% of the way to the next stop -> 75% of the way through the time span.
+        assertEquals(2_500L, interpolateScheduleTime(schedule, 75.0))
+    }
+
+    @Test
+    fun `schedule time interpolates from the prior departure across a dwell`() {
+        val schedule = listOf(stop(0.0, 1_000L, departMs = 2_000L), stop(100.0, 6_000L))
+        // Segment runs from stop0's departure (2000) to stop1's arrival (6000).
+        assertEquals(4_000L, interpolateScheduleTime(schedule, 50.0))
+    }
+
+    @Test
+    fun `schedule time is zero outside the interpolatable span or with too few stops`() {
+        val schedule = listOf(stop(0.0, 1_000L), stop(100.0, 3_000L))
+        assertEquals(0L, interpolateScheduleTime(schedule, 150.0))
+        assertEquals(0L, interpolateScheduleTime(listOf(stop(0.0, 1_000L)), 0.0))
+        assertEquals(0L, interpolateScheduleTime(emptyList(), 0.0))
+    }
+
+    // --- formatDeviationLabel ---
+
+    @Test
+    fun `deviation label reads late, early, or on time`() {
+        assertEquals("on time", formatDeviationLabel(0))
+        assertEquals("30s late", formatDeviationLabel(30))
+        assertEquals("30s early", formatDeviationLabel(-30))
+        assertEquals("2m late", formatDeviationLabel(120))
+        assertEquals("1m30s early", formatDeviationLabel(-90))
+    }
+}

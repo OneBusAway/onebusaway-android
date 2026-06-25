@@ -24,14 +24,13 @@ import android.util.Log;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.directions.tasks.TripRequest;
-import org.onebusaway.android.ui.TripModes;
+import org.onebusaway.android.ui.tripplan.TripModes;
 import org.onebusaway.android.util.RegionUtils;
 import org.opentripplanner.api.ws.Request;
 import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.TraverseMode;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -214,6 +213,25 @@ public class TripRequestBuilder {
     }
 
     public TripRequest execute(Activity activity) {
+        Request request = buildRequest();
+        // TripRequest will accept a null value and give a user-friendly error
+        String fmtOtpBaseUrl = getFormattedOtpBaseUrl();
+        TripRequest tripRequest = new TripRequest(fmtOtpBaseUrl, mListener);
+        tripRequest.execute(request);
+        return tripRequest;
+    }
+
+    public void execute() {
+        execute(null);
+    }
+
+    /**
+     * Builds the OTP {@link Request} from the current bundle state. Shared by the legacy AsyncTask
+     * path ({@link #execute(Activity)}) and the coroutine trip-plan repository.
+     *
+     * @throws IllegalArgumentException if the origin or destination is missing
+     */
+    public Request buildRequest() {
         String from = getAddressString(getFrom());
         String to = getAddressString(getTo());
 
@@ -249,7 +267,14 @@ public class TripRequestBuilder {
         // Our default. This could be configurable.
         request.setShowIntermediateStops(true);
 
-        // TripRequest will accept a null value and give a user-friendly error
+        return request;
+    }
+
+    /**
+     * Resolves and formats the OTP base URL (the user's custom URL if set, otherwise the current
+     * region's), or null if neither is available.
+     */
+    public String getFormattedOtpBaseUrl() {
         String otpBaseUrl;
         Application app = Application.get();
         if (!TextUtils.isEmpty(app.getCustomOtpApiUrl())) {
@@ -263,25 +288,9 @@ public class TripRequestBuilder {
             URL url = new URL(otpBaseUrl);
         } catch (MalformedURLException e) {
             // Assume HTTPS scheme, since without a scheme the Uri won't parse the authority
-            otpBaseUrl = activity.getString(R.string.https_prefix) + otpBaseUrl;
+            otpBaseUrl = app.getString(R.string.https_prefix) + otpBaseUrl;
         }
-        String fmtOtpBaseUrl = otpBaseUrl != null ? RegionUtils.formatOtpBaseUrl(otpBaseUrl) : null;
-
-        TripRequest tripRequest;
-
-        if (activity == null) {
-            tripRequest = new TripRequest(fmtOtpBaseUrl, mListener);
-        } else {
-            WeakReference<Activity> ref = new WeakReference<Activity>(activity);
-            tripRequest = new TripRequest(fmtOtpBaseUrl, mListener);
-        }
-
-        tripRequest.execute(request);
-        return tripRequest;
-    }
-
-    public void execute() {
-        execute(null);
+        return otpBaseUrl != null ? RegionUtils.formatOtpBaseUrl(otpBaseUrl) : null;
     }
 
     private String getAddressString(CustomAddress address) {

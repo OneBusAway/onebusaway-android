@@ -16,7 +16,6 @@
 
 package org.onebusaway.android.util;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -33,17 +32,11 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.io.backup.Backup;
-import org.onebusaway.android.region.ObaRegionsTask;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import androidx.appcompat.app.AlertDialog;
-
-import static org.onebusaway.android.ui.SettingsActivity.REQUEST_CODE_RESTORE_BACKUP;
-import static org.onebusaway.android.ui.SettingsActivity.REQUEST_CODE_SAVE_BACKUP;
 
 public class BackupUtils {
     private static final String TAG = "BackupUtils";
@@ -54,7 +47,7 @@ public class BackupUtils {
      * @param uri URI to the backup file, as returned by the system UI picker. Following targeting
      *      Android 11 we can't access this directory and need to rely on the system UI picker.
      */
-    public static void restore(Context activityContext, Uri uri) {
+    public static void restore(Context activityContext, Uri uri, Runnable onRestored) {
         //
         // Because this is a destructive operation, we should warn the user.
         //
@@ -62,7 +55,7 @@ public class BackupUtils {
                 .setMessage(R.string.preferences_db_restore_warning)
                 .setPositiveButton(android.R.string.ok, (dialog12, which) -> {
                     dialog12.dismiss();
-                    doRestore(activityContext, uri);
+                    doRestore(activityContext, uri, onRestored);
                 })
                 .setNegativeButton(android.R.string.cancel, (dialog1, which) -> dialog1.dismiss())
                 .create();
@@ -75,24 +68,25 @@ public class BackupUtils {
      * @param uri URI to the backup file, as returned by the system UI picker. Following targeting
      *      Android 11 we can't access this directory and need to rely on the system UI picker.
      */
-    static private void doRestore(Context activityContext, Uri uri) {
-        final Context context = Application.get().getApplicationContext();
+    static private void doRestore(Context activityContext, Uri uri, Runnable onRestored) {
+        final Context context = activityContext.getApplicationContext();
         ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
+                // TODO(D4): plausible is region-mutable; inject a Provider
                 Application.get().getPlausibleInstance(),
                 PlausibleAnalytics.REPORT_BACKUP_EVENT_URL,
                 context.getString(R.string.analytics_label_button_press_restore_preference),
                 null);
         try {
             Backup.restore(context, uri);
+            Toast.makeText(context,
+                    context.getString(R.string.preferences_db_restored,
+                            context.getString(R.string.app_name)),
+                    Toast.LENGTH_LONG).show();
 
-            if (activityContext != null) {
-                List<ObaRegionsTask.Callback> callbacks = new ArrayList<>();
-                callbacks.add(currentRegionChanged -> Toast.makeText(context,
-                        context.getString(R.string.preferences_db_restored, context.getString(R.string.app_name)),
-                        Toast.LENGTH_LONG).show());
-                ObaRegionsTask task = new ObaRegionsTask(activityContext, callbacks, true, true);
-                task.setProgressDialogMessage(context.getString(R.string.preferences_restore_loading));
-                task.execute();
+            // Re-resolve the region on the Compose home surface (raises the picker if it's ambiguous),
+            // in case the restored data implies a different region.
+            if (onRestored != null) {
+                onRestored.run();
             }
         } catch (IOException e) {
             Toast.makeText(context,
@@ -108,8 +102,9 @@ public class BackupUtils {
      * @param activityContext context of the calling activity (used to check permissions)
      */
     public static void save(Context activityContext,Uri uri) {
-        Context context = Application.get().getApplicationContext();
+        Context context = activityContext.getApplicationContext();
         ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
+                // TODO(D4): plausible is region-mutable; inject a Provider
                 Application.get().getPlausibleInstance(),
                 PlausibleAnalytics.REPORT_BACKUP_EVENT_URL,
                 context.getString(R.string.analytics_label_button_press_save_preference),
@@ -122,12 +117,11 @@ public class BackupUtils {
     }
 
     /**
-     * Launches an intent to create a backup file with the specified file name.
-     * The user will be prompted to choose a location to save the backup file.
-     *
-     * @param activity The activity that triggers the file creation process.
+     * Builds the intent that prompts the user to choose a location to save a backup file (with the
+     * default file name). Launched via an {@code ActivityResultLauncher}; the picked save URI is
+     * passed back to {@link #save(Context, Uri)}.
      */
-    public static void createBackupFile(Activity activity) {
+    public static Intent buildCreateBackupFileIntent() {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
 
@@ -139,16 +133,14 @@ public class BackupUtils {
             Uri initialUri = Uri.parse("content://com.android.externalstorage.documents/document/primary:Documents");
             intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initialUri);
         }
-        activity.startActivityForResult(intent, REQUEST_CODE_SAVE_BACKUP);
+        return intent;
     }
 
     /**
-     * Launches an intent to allow the user to select a backup file for restoration.
-     * Only binary files (with the .bin extension) can be selected.
-     *
-     * @param activity The activity that triggers the file selection process.
+     * Builds the intent that lets the user select a backup file to restore. Launched via an
+     * {@code ActivityResultLauncher}; the picked URI is passed back to {@link #restore(Context, Uri)}.
      */
-    public static void selectBackupFile(Activity activity) {
+    public static Intent buildSelectBackupFileIntent() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         // Restricts file type to binary files
@@ -159,7 +151,7 @@ public class BackupUtils {
             Uri initialUri = Uri.parse("content://com.android.externalstorage.documents/document/primary:Documents");
             intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initialUri);
         }
-        activity.startActivityForResult(intent, REQUEST_CODE_RESTORE_BACKUP);
+        return intent;
     }
 
 

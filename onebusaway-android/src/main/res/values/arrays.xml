@@ -19,7 +19,7 @@
         <item>Show Tutorial</item>
         <item>Legend</item>
         <item>What\'s New?</item>
-        <item>Supported Agencies</item>
+        <item>@string/agencies_title</item>
         <item>Twitter Feed</item>
         <item>Contact Us</item>
     </string-array>
@@ -27,7 +27,7 @@
         <item>Show Tutorial</item>
         <item>Legend</item>
         <item>What\'s New?</item>
-        <item>Supported Agencies</item>
+        <item>@string/agencies_title</item>
         <item>Twitter Feed</item>
     </string-array>
     <string-array name="route_favorite_options">
@@ -63,15 +63,6 @@
         <item>20 minutes</item>
         <item>25 minutes</item>
         <item>30 minutes</item>
-    </string-array>
-    <string-array name="reminder_days">
-        <item>Monday</item>
-        <item>Tuesday</item>
-        <item>Wednesday</item>
-        <item>Thursday</item>
-        <item>Friday</item>
-        <item>Saturday</item>
-        <item>Sunday</item>
     </string-array>
     <string-array name="report_stop_problem_code">
         <item>Choose a problem</item>
@@ -110,47 +101,9 @@
         <item>@string/preferences_app_theme_option_light</item>
         <item>@string/preferences_app_theme_option_dark</item>
     </string-array>
-    <string-array name="arrival_info_style_options">
-        <item>@string/preferences_arrival_info_style_options_a</item>
-        <item>@string/preferences_arrival_info_style_options_b</item>
-    </string-array>
 
     <!-- Spoken directions based on 16 compass points, but pointing from the user's current location
          towards the selected bus stop instead of N/S/E/W. -->
-    <string-array name="spoken_compass_directions">
-        <item>straight ahead</item>
-        <!-- North -->
-        <item>slight left</item>
-        <!-- NNE -->
-        <item>slight left</item>
-        <!-- NE -->
-        <item>left</item>
-        <!-- ENE -->
-        <item>left</item>
-        <!-- East -->
-        <item>behind you to left</item>
-        <!-- ESE -->
-        <item>behind you to left</item>
-        <!-- SE -->
-        <item>behind you to left</item>
-        <!-- SSE -->
-        <item>straight behind you</item>
-        <!-- South -->
-        <item>behind you to right</item>
-        <!-- SSW -->
-        <item>behind you to right</item>
-        <!-- SW -->
-        <item>behind you to right</item>
-        <!-- WSW -->
-        <item>right</item>
-        <!-- West -->
-        <item>right</item>
-        <!-- WNW -->
-        <item>slight right</item>
-        <!-- NW -->
-        <item>slight right</item>
-        <!-- NNW -->
-    </string-array>
     <!-- Issue reporting -->
     <string-array name="report_types">
         <item>@string/rt_customer_service</item>
@@ -193,11 +146,6 @@
         <item>@drawable/ic_app_feedback</item>
     </array>
 
-    <string-array name="report_stop_issue_tutorial_desc">
-        <item>Click on the bus stop, that you want to report.</item>
-        <item>Then select report problem section from options.</item>
-        <item>Submit your bus stop related problem.</item>
-    </string-array>
 
     <string-array name="report_stop_transit_category_keywords">
         <item>transit</item>
@@ -227,9 +175,5 @@
         <item>@string/transit_mode_bikeshare</item>
     </string-array>
 
-    <string-array name="trip_plan_leaving_arriving_array">
-        <item>@string/trip_plan_leaving</item>
-        <item>@string/trip_plan_arriving</item>
-    </string-array>
 
 </resources>

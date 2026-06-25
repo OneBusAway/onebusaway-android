@@ -91,7 +91,7 @@ public class DestinationReminderDataSaverTask implements Runnable {
     private void saveDestinationReminders(Location location) {
         try {
             // Get the counter that's incremented for each test
-            int counter = Application.getPrefs().getInt(TravelBehaviorConstants.DESTINATION_REMINDER_COUNTER, 0);
+            int counter = PreferenceUtils.getInt(TravelBehaviorConstants.DESTINATION_REMINDER_COUNTER, 0);
             PreferenceUtils.saveInt(TravelBehaviorConstants.DESTINATION_REMINDER_COUNTER, ++counter);
 
             SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM d yyyy, hh:mm aaa");

@@ -63,164 +63,25 @@
 
         <meta-data
             android:name="android.app.default_searchable"
-            android:value="org.onebusaway.android.ui.SearchActivity" />
+            android:value="org.onebusaway.android.ui.HomeActivity" />
 
-        <activity
-            android:name=".ui.survey.activities.SurveyWebViewActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ui.DonationLearnMoreActivity"
-            android:exported="false"
-            android:label="@string/title_activity_donation_learn_more"
-            android:parentActivityName=".ui.SettingsActivity" />
-
-        <activity
-            android:name="org.onebusaway.android.ui.SearchActivity"
-            android:launchMode="singleTop"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.SEARCH" />
-            </intent-filter>
-            <meta-data
-                android:name="android.app.searchable"
-                android:resource="@xml/searchable"/>
-        </activity>
-
+        <!-- Single-activity: HomeActivity is the launcher AND the system-search target
+             (ACTION_SEARCH); its translator routes the query to the search NavHost destination. -->
         <activity
             android:name="org.onebusaway.android.ui.HomeActivity"
+            android:launchMode="singleTop"
             android:exported="true"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
-        <activity
-            android:name="org.onebusaway.android.ui.ArrivalsListActivity"
-            android:launchMode="singleTop"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name="com.joulespersecond.seattlebusbot.ArrivalsListActivity"
-            android:launchMode="singleTop"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-            </intent-filter>
-        </activity>
-        <activity android:name="org.onebusaway.android.ui.StopInfoActivity"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-            </intent-filter>
-        </activity>
-        <activity android:name="org.onebusaway.android.ui.RouteInfoActivity"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-            </intent-filter>
-        </activity>
-        <activity android:name="com.joulespersecond.seattlebusbot.RouteInfoActivity"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-            </intent-filter>
-        </activity>
-        <activity android:name="org.onebusaway.android.ui.TripInfoActivity"/>
-        <activity android:name="org.onebusaway.android.ui.dataview.VehicleLocationDataActivity"/>
-        <activity android:name=".ui.MyRemindersActivity"/>
-        <activity android:name="org.onebusaway.android.ui.TripDetailsActivity"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name="org.onebusaway.android.ui.MyStopsActivity"
-            android:label="@string/stop_shortcut"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name="com.joulespersecond.seattlebusbot.MyStopsActivity"
-            android:label="@string/stop_shortcut"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
-            </intent-filter>
-        </activity>
-        <activity
-            android:name="org.onebusaway.android.ui.MyRecentStopsActivity"
-            android:label="@string/recent_stops_shortcut"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
-        <activity
-            android:name="org.onebusaway.android.ui.MyStarredStopsActivity"
-            android:label="@string/starred_stops_shortcut"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
-        <activity
-            android:name="org.onebusaway.android.ui.MyRoutesActivity"
-            android:label="@string/route_shortcut"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
-        <activity
-            android:name="com.joulespersecond.seattlebusbot.MyRoutesActivity"
-            android:label="@string/route_shortcut"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
-            </intent-filter>
-        </activity>
-        <activity
-            android:name="org.onebusaway.android.ui.MyRecentRoutesActivity"
-            android:label="@string/recent_routes_shortcut"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
-        <activity
-            android:name="org.onebusaway.android.ui.SettingsActivity"
-            android:parentActivityName="org.onebusaway.android.ui.HomeActivity"
-            android:exported="true"
-            android:theme="@style/Theme.OneBusAway.NoActionBar">
+            <!-- The `onebusaway://add-region` deep link (former SettingsActivity VIEW
+                 filter). HomeActivity.applyIntentSideEffects reads the oba-url/otp-url query params,
+                 applies the custom API URL(s), and stays on the home/map path (IntentRouteMapper). -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -232,70 +93,194 @@
                     android:scheme="onebusaway" />
             </intent-filter>
             <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.HomeActivity"/>
+                android:name="android.app.searchable"
+                android:resource="@xml/searchable"/>
+            <!-- Static app shortcuts (long-press the launcher icon) for the My* list
+                 screens, replacing the legacy launcher CREATE_SHORTCUT picker. Each opens HomeActivity
+                 with a NAV_ROUTE extra the translator navigates to. -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
-        <activity android:name="org.onebusaway.android.ui.RegionsActivity"/>
-        <activity android:name="org.onebusaway.android.ui.AgenciesActivity"/>
+        <!-- Arrivals is a HomeActivity NavHost destination. These frozen component names
+             (old pinned launcher shortcuts) keep resolving via aliases → HomeActivity, which reads the
+             stop data URI and navigates. Aliases inherit launchMode/configChanges from HomeActivity. -->
+        <activity-alias
+            android:name="org.onebusaway.android.ui.ArrivalsListActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="com.joulespersecond.seattlebusbot.ArrivalsListActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="org.onebusaway.android.ui.StopInfoActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity-alias>
+        <!-- Route info is a HomeActivity NavHost destination; frozen route-shortcut
+             component names resolve via aliases → HomeActivity (reads the route data URI, navigates). -->
+        <activity-alias
+            android:name="org.onebusaway.android.ui.RouteInfoActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="com.joulespersecond.seattlebusbot.RouteInfoActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity-alias>
+        <!-- Trip details is a HomeActivity NavHost destination; the frozen name resolves
+             via an alias → HomeActivity (cheap insurance for an in-flight NavigationService PendingIntent). -->
+        <activity-alias
+            android:name="org.onebusaway.android.ui.TripDetailsActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity-alias>
 
-        <activity android:name="org.onebusaway.android.report.ui.ReportActivity"/>
-        <activity android:name="org.onebusaway.android.report.ui.CustomerServiceActivity"/>
-        <activity android:name="org.onebusaway.android.report.ui.InfrastructureIssueActivity"/>
-
-        <activity
-            android:name="org.onebusaway.android.ui.MyRecentStopsAndRoutesActivity"
-            android:label="@string/my_recent_title"
-            android:parentActivityName="org.onebusaway.android.ui.HomeActivity"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
+        <!-- The My* list screens are HomeActivity NavHost destinations now. These frozen
+             component names (old pinned launcher shortcuts / CREATE_SHORTCUT pickers) keep resolving via
+             aliases → HomeActivity, whose translator reads the tab:// data URI and navigates to the
+             matching My* destination. The legacy in-Activity CREATE_SHORTCUT *picker* is dropped (it's
+             replaced by static app shortcuts + the in-app pin actions), so a fresh CREATE_SHORTCUT
+             request now lands on the list screen rather than a row-picker. -->
+        <activity-alias
+            android:name="org.onebusaway.android.ui.MyStopsActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:label="@string/stop_shortcut"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
-            <!-- Parent activity meta-data to support 4.0 and lower -->
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.HomeActivity"/>
-        </activity>
-        <activity
+        </activity-alias>
+        <activity-alias
+            android:name="com.joulespersecond.seattlebusbot.MyStopsActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:label="@string/stop_shortcut"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="org.onebusaway.android.ui.MyRecentStopsActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:label="@string/recent_stops_shortcut"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="org.onebusaway.android.ui.MyStarredStopsActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:label="@string/starred_stops_shortcut"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="org.onebusaway.android.ui.MyRoutesActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:label="@string/route_shortcut"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="com.joulespersecond.seattlebusbot.MyRoutesActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:label="@string/route_shortcut"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="org.onebusaway.android.ui.MyRecentRoutesActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:label="@string/recent_routes_shortcut"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity-alias>
+        <!-- The report flow (ReportActivity / CustomerServiceActivity /
+             InfrastructureIssueActivity) is now HomeActivity NavHost destinations (REPORT /
+             CUSTOMER_SERVICE / INFRASTRUCTURE_ISSUE). The former classes are launcher facade objects
+             that build HomeActivity nav intents; no <activity> entries are needed (all were
+             non-exported with no intent-filters / aliases). -->
+
+        <!-- The "Recent" screen is a HomeActivity NavHost destination (MY_RECENT). This
+             frozen name resolves via an alias → HomeActivity. A legacy self-shortcut pinned with no
+             data URI (the dropped CREATE_SHORTCUT self-pin branch) carries no tab://, so it falls
+             through the translator to the home/map path — an accepted rare legacy case. -->
+        <activity-alias
+            android:name="org.onebusaway.android.ui.MyRecentStopsAndRoutesActivity"
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:label="@string/my_recent_title"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity-alias>
+        <!-- Night light is a HomeActivity NavHost destination. The frozen component name
+             (old pinned launcher shortcuts) resolves via this alias → HomeActivity, which routes to
+             the night-light destination by component name (the intent carries no data URI). -->
+        <activity-alias
             android:name="org.onebusaway.android.ui.NightLightActivity"
             android:label="@string/stop_info_option_night_light"
-            android:parentActivityName="org.onebusaway.android.ui.HomeActivity"
-            android:screenOrientation="portrait"
-            android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize">
+            android:targetActivity="org.onebusaway.android.ui.HomeActivity"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
-            <!-- Parent activity meta-data to support 4.0 and lower -->
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.HomeActivity"/>
-        </activity>
-        <activity
-            android:name="org.onebusaway.android.ui.TripPlanActivity"
-            android:label="@string/title_activity_trip_plan"
-            android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.HomeActivity"/>
-        </activity>
-        <activity
-            android:name="org.onebusaway.android.ui.FeedbackActivity"
-            android:label="@string/feedback_notify_title"
-            android:noHistory="true"
-            android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.HomeActivity"/>
-        </activity>
+        </activity-alias>
 
 
         <!-- Provider is defined in build.gradle flavors -->
         <provider
             android:name="org.onebusaway.android.provider.ObaProvider"
             android:authorities="${databaseAuthority}"/>
+
+        <!-- Shares captured/picked report photos with the camera and Open311 endpoints -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"/>
+        </provider>
 
         <service
             android:name=".directions.realtime.RealtimeService">
@@ -345,15 +330,6 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/apiv2_key"/>
 
-        <activity
-            android:name="org.onebusaway.android.ui.AboutActivity"
-            android:label="@string/title_activity_about"
-            android:parentActivityName="org.onebusaway.android.ui.SettingsActivity"
-            android:theme="@style/Theme.OneBusAway.NoActionBar">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.onebusaway.android.ui.SettingsActivity"/>
-        </activity>
 
         <!-- Opt-out of June 2018 Android Maps styling with pin POI icons - see #891 -->
         <meta-data android:name="com.google.android.gms.maps.API_OPTIONS" android:value="B3H9HE845CFHYG"/>

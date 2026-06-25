@@ -37,7 +37,7 @@ import org.onebusaway.android.io.elements.Status;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.mock.MockRegion;
-import org.onebusaway.android.util.UIUtils;
+import org.onebusaway.android.util.SituationUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -304,7 +304,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertEquals(0, windows.length);
 
         // No active window is included, so this should return true to assume the alert is active
-        boolean result = UIUtils.isActiveWindowForSituation(situation, response.getCurrentTime());
+        boolean result = SituationUtils.isActiveWindowForSituation(situation, response.getCurrentTime());
         assertEquals(true, result);
 
         // TODO - we need valid test responses that include the below situation data
@@ -369,27 +369,27 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertEquals(1436073000, windows[1].getTo());
 
         long timeBeforeWindow0 = 0;
-        boolean result = UIUtils.isActiveWindowForSituation(situation, timeBeforeWindow0);
+        boolean result = SituationUtils.isActiveWindowForSituation(situation, timeBeforeWindow0);
         assertEquals(false, result);
 
         long timeWithinWindow0 = 1435005046000L;
-        result = UIUtils.isActiveWindowForSituation(situation, timeWithinWindow0);
+        result = SituationUtils.isActiveWindowForSituation(situation, timeWithinWindow0);
         assertEquals(true, result);
 
         long timeAfterWindow0 = 1436072373000L;
-        result = UIUtils.isActiveWindowForSituation(situation, timeAfterWindow0);
+        result = SituationUtils.isActiveWindowForSituation(situation, timeAfterWindow0);
         assertEquals(false, result);
 
         long timeBeforeWindow1 = 1436072373000L;
-        result = UIUtils.isActiveWindowForSituation(situation, timeBeforeWindow1);
+        result = SituationUtils.isActiveWindowForSituation(situation, timeBeforeWindow1);
         assertEquals(false, result);
 
         long timeWithinWindow1 = 1436072375000L;
-        result = UIUtils.isActiveWindowForSituation(situation, timeWithinWindow1);
+        result = SituationUtils.isActiveWindowForSituation(situation, timeWithinWindow1);
         assertEquals(true, result);
 
         long timeAfterWindow1 = 1436073001000L;
-        result = UIUtils.isActiveWindowForSituation(situation, timeAfterWindow1);
+        result = SituationUtils.isActiveWindowForSituation(situation, timeAfterWindow1);
         assertEquals(false, result);
     }
 
@@ -489,11 +489,11 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertEquals(0, windows[0].getTo());
 
         long timeBeforeWindow0 = 0;
-        boolean result = UIUtils.isActiveWindowForSituation(situation, timeBeforeWindow0);
+        boolean result = SituationUtils.isActiveWindowForSituation(situation, timeBeforeWindow0);
         assertEquals(false, result);
 
         long timeWithinWindow0 = 1561494000000L;
-        result = UIUtils.isActiveWindowForSituation(situation, timeWithinWindow0);
+        result = SituationUtils.isActiveWindowForSituation(situation, timeWithinWindow0);
         assertEquals(true, result);
     }
 

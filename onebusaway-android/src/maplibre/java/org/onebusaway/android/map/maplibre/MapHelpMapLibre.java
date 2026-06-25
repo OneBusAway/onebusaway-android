@@ -19,14 +19,10 @@ import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.geometry.LatLngBounds;
 
 import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaTripDetails;
-import org.onebusaway.android.io.elements.ObaTripStatus;
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 
 import android.location.Location;
 import android.util.Log;
 
-import java.util.HashSet;
 
 /**
  * Utilities to help process data for MapLibre maps
@@ -96,54 +92,4 @@ public class MapHelpMapLibre {
         return true;
     }
 
-    /**
-     * Gets the location of the vehicle closest to the provided location running the provided
-     * routes.
-     */
-    public static LatLng getClosestVehicle(ObaTripsForRouteResponse response,
-            HashSet<String> routeIds, Location loc) {
-        if (loc == null) {
-            return null;
-        }
-        float minDist = Float.MAX_VALUE;
-        ObaTripStatus closestVehicle = null;
-        Location closestVehicleLocation = null;
-
-        for (ObaTripDetails detail : response.getTrips()) {
-            Location vehicleLocation;
-            ObaTripStatus status = detail.getStatus();
-            if (status == null) {
-                continue;
-            }
-            String activeRoute = response.getTrip(status.getActiveTripId()).getRouteId();
-            if (!routeIds.contains(activeRoute)) {
-                continue;
-            }
-            if (status.getLastKnownLocation() != null) {
-                vehicleLocation = status.getLastKnownLocation();
-            } else if (status.getPosition() != null) {
-                vehicleLocation = status.getPosition();
-            } else {
-                continue;
-            }
-            float distToVehicle = vehicleLocation.distanceTo(loc);
-
-            if (distToVehicle < minDist) {
-                closestVehicleLocation = vehicleLocation;
-                closestVehicle = status;
-                minDist = distToVehicle;
-            }
-        }
-
-        if (closestVehicleLocation == null) {
-            return null;
-        }
-
-        Log.d(TAG, "Closest vehicle is vehicleId=" + closestVehicle.getVehicleId()
-                + ", tripId=" + closestVehicle.getActiveTripId()
-                + " at " + closestVehicleLocation.getLatitude()
-                + "," + closestVehicleLocation.getLongitude());
-
-        return makeLatLng(closestVehicleLocation);
-    }
 }

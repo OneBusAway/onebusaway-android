@@ -82,7 +82,7 @@ public class TripPlanDataSaverTask implements Runnable {
     private void saveTripPlan(Location location) {
         try {
             // Get the counter that's incremented for each test
-            int counter = Application.getPrefs().getInt(TravelBehaviorConstants.TRIP_PLAN_COUNTER, 0);
+            int counter = PreferenceUtils.getInt(TravelBehaviorConstants.TRIP_PLAN_COUNTER, 0);
             PreferenceUtils.saveInt(TravelBehaviorConstants.TRIP_PLAN_COUNTER, ++counter);
 
             SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM d yyyy, hh:mm aaa");

@@ -16,7 +16,6 @@
 package org.onebusaway.android.report.ui.util;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
 import org.onebusaway.android.report.constants.ReportConstants;
 
 import android.content.Context;
@@ -42,11 +41,12 @@ public class ServiceUtils {
 
         // Search transit services by groups (this is the "right" way to group transit services)
         for (Service s : serviceList) {
-            if (ServiceUtils.isTransitStopServiceByText(s.getGroup()) && !stopProblemFound) {
+            if (ServiceUtils.isTransitStopServiceByText(context, s.getGroup()) && !stopProblemFound) {
                 s.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
                 s.setType(ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP);
                 stopProblemFound = true;
-            } else if (ServiceUtils.isTransitTripServiceByText(s.getGroup()) && !tripProblemFound) {
+            } else if (ServiceUtils.isTransitTripServiceByText(context, s.getGroup())
+                    && !tripProblemFound) {
                 s.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
                 s.setType(ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP);
                 tripProblemFound = true;
@@ -56,11 +56,12 @@ public class ServiceUtils {
         // Search transit services by keywords
         if (!stopProblemFound || !tripProblemFound) {
             for (Service s : serviceList) {
-                if (ServiceUtils.isTransitStopServiceByText(s.getKeywords()) && !stopProblemFound) {
+                if (ServiceUtils.isTransitStopServiceByText(context, s.getKeywords())
+                        && !stopProblemFound) {
                     s.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
                     s.setType(ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP);
                     stopProblemFound = true;
-                } else if (ServiceUtils.isTransitTripServiceByText(s.getKeywords())
+                } else if (ServiceUtils.isTransitTripServiceByText(context, s.getKeywords())
                         && !tripProblemFound) {
                     s.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
                     s.setType(ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP);
@@ -78,12 +79,12 @@ public class ServiceUtils {
         int transitServiceCounter = 0;
 
         for (Service s : serviceList) {
-            if (ServiceUtils.isTransitStopServiceByText(s.getService_name())) {
+            if (ServiceUtils.isTransitStopServiceByText(context, s.getService_name())) {
                 s.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
                 s.setType(ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP);
                 stopProblemFound = true;
                 transitServiceCounter++;
-            } else if (ServiceUtils.isTransitTripServiceByText(s.getService_name())) {
+            } else if (ServiceUtils.isTransitTripServiceByText(context, s.getService_name())) {
                 s.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
                 s.setType(ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP);
                 tripProblemFound = true;
@@ -127,11 +128,12 @@ public class ServiceUtils {
      * and service name), and tries to determine if the this is a transit stop service (i.e., stop
      * problem)
      *
-     * @param text text to search for transit stop service match
+     * @param context context used to load the transit keyword resources
+     * @param text    text to search for transit stop service match
      * @return true if the text is "transit stop-related"
      */
-    public static boolean isTransitStopServiceByText(String text) {
-        String[] transitKeywords = Application.get().getResources().
+    public static boolean isTransitStopServiceByText(Context context, String text) {
+        String[] transitKeywords = context.getResources().
                 getStringArray(R.array.report_stop_transit_category_keywords);
         for (String keyword : transitKeywords) {
             if (text != null && text.toLowerCase().contains(keyword)) {
@@ -146,11 +148,12 @@ public class ServiceUtils {
      * and service name), and tries to determine if the this is a transit trip service (i.e., trip
      * problem)
      *
-     * @param text text to search for transit trip service match
+     * @param context context used to load the transit keyword resources
+     * @param text    text to search for transit trip service match
      * @return true if the text is "transit trip-related"
      */
-    public static boolean isTransitTripServiceByText(String text) {
-        String[] transitKeywords = Application.get().getResources().
+    public static boolean isTransitTripServiceByText(Context context, String text) {
+        String[] transitKeywords = context.getResources().
                 getStringArray(R.array.report_trip_transit_category_keywords);
 
         for (String keyword : transitKeywords) {
@@ -200,11 +203,12 @@ public class ServiceUtils {
     /**
      * This method determines if the given dynamic open311 field is for stop id.
      *
-     * @param desc field description
+     * @param context context used to load the stop id field keyword resources
+     * @param desc    field description
      * @return true if the field description matches at least two keywords
      */
-    public static boolean isStopIdField(String desc) {
-        String[] stopIdKeywords = Application.get().getResources().
+    public static boolean isStopIdField(Context context, String desc) {
+        String[] stopIdKeywords = context.getResources().
                 getStringArray(R.array.report_stop_id_field_keywords);
 
         boolean didMatch = false;

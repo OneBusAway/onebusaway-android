@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.io;
 
-import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,6 +26,7 @@ import com.onebusaway.plausible.android.Plausible;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.util.PreferenceUtils;
 
 import static android.text.TextUtils.isEmpty;
 
@@ -259,8 +259,7 @@ public class ObaAnalytics {
      * @return is GA enabled or disabled from settings
      */
     private static Boolean isAnalyticsActive() {
-        SharedPreferences settings = Application.getPrefs();
-        return settings.getBoolean(Application.get().getString(R.string.preferences_key_analytics), Boolean.TRUE);
+        return PreferenceUtils.getBoolean(Application.get().getString(R.string.preferences_key_analytics), true);
     }
 
     /**

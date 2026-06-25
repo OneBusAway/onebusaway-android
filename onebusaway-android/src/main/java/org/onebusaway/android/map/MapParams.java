@@ -18,21 +18,13 @@ package org.onebusaway.android.map;
 public class MapParams {
 
     // These specify the initial state of the map, or the frozen state.
-    public static final String MODE = ".MapMode";
-
     public static final String STOP_ID = ".StopId";
 
     public static final String STOP_NAME = ".StopName";
 
     public static final String STOP_CODE = ".StopCode";
 
-    public static final String BIKE_STATION_ID = ".BikeStationId";
-
     public static final String ROUTE_ID = ".RouteId";
-
-    public static final String TRIP_ID = ".TripId";
-
-    public static final String DO_N0T_CENTER_ON_LOCATION = ".DoNotCenterOnLocation";
 
     public static final String CENTER_LAT = ".MapCenterLat";
 
@@ -42,27 +34,5 @@ public class MapParams {
 
     public static final String ZOOM_TO_ROUTE = ".ZoomToRoute";
 
-    public static final String ZOOM_INCLUDE_CLOSEST_VEHICLE = ".ZoomIncludesClosestVehicle";
-
-    public static final String MAP_PADDING_LEFT = ".MapPaddingLeft";
-
-    public static final String MAP_PADDING_TOP = ".MapPaddingTop";
-
-    public static final String MAP_PADDING_RIGHT = ".MapPaddingRight";
-
-    public static final String MAP_PADDING_BOTTOM = ".MapPaddingBottom";
-
-    public static final String SHOW_BIKE = ".ShowBike";
-
-    public static final String MODE_ROUTE = "RouteMode";
-
-    public static final String MODE_STOP = "StopMode";
-
-    public static final String MODE_DIRECTIONS = "DirectionsMode";
-
-    public static final String ITINERARY = ".Itinerary";
-
     public static final int DEFAULT_ZOOM = 18;
-
-    public static final int DEFAULT_MAP_PADDING = 0;
 }

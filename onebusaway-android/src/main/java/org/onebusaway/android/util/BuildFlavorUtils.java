@@ -15,12 +15,12 @@
  */
 package org.onebusaway.android.util;
 
-import android.content.SharedPreferences;
+import android.content.Context;
 import android.content.res.Resources;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.PreferencesEntryPoint;
 
 /**
  * Constants and utilities used in the build.gradle build flavors to define certain features per
@@ -49,8 +49,8 @@ public class BuildFlavorUtils {
      *                         ARRIVAL_INFO_STYLE_* contants defined in this class
      * @return preference options string for the provided arrival info style build flavor integer
      */
-    public static String getPreferenceOptionForArrivalInfoBuildFlavorStyle(int buildFlavorStyle) {
-        Resources r = Application.get().getResources();
+    public static String getPreferenceOptionForArrivalInfoBuildFlavorStyle(Context context, int buildFlavorStyle) {
+        Resources r = context.getResources();
         String appName = r.getString(R.string.app_name);
         switch (buildFlavorStyle) {
             case ARRIVAL_INFO_STYLE_A:
@@ -70,12 +70,11 @@ public class BuildFlavorUtils {
      * @return the current Arrival Info Style saved in the preferences, which will be one of the
      * ARRIVAL_INFO_STYLE_* constants in this class
      */
-    public static int getArrivalInfoStyleFromPreferences() {
-        Resources r = Application.get().getResources();
+    public static int getArrivalInfoStyleFromPreferences(Context context) {
+        Resources r = context.getResources();
 
-        SharedPreferences settings = Application.getPrefs();
-        String arrivalInfoStylePref = settings.getString(r.getString(
-                R.string.preference_key_arrival_info_style), null);
+        String arrivalInfoStylePref = PreferencesEntryPoint.get(context)
+                .getString(R.string.preference_key_arrival_info_style, null);
 
         String appName = r.getString(R.string.app_name);
         String arrivalInfoStyleOptionA = r.getString(
@@ -91,6 +90,19 @@ public class BuildFlavorUtils {
         }
         // Return style A by default
         return ARRIVAL_INFO_STYLE_A;
+    }
+
+    /**
+     * Persists the user's arrival info style selection (the legacy "sort by" view-mode toggle),
+     * stored as the same preference option string that {@link #getArrivalInfoStyleFromPreferences()}
+     * reads back — keeping the option-string format in a single place.
+     *
+     * @param style one of the ARRIVAL_INFO_STYLE_* constants in this class
+     */
+    public static void setArrivalInfoStyle(Context context, int style) {
+        PreferencesEntryPoint.get(context).setString(
+                R.string.preference_key_arrival_info_style,
+                getPreferenceOptionForArrivalInfoBuildFlavorStyle(context, style));
     }
 
     /**

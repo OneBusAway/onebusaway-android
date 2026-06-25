@@ -64,15 +64,6 @@
         <item>25 minut</item>
         <item>30 minut</item>
     </string-array>
-    <string-array name="reminder_days">
-        <item>Poniedziałek</item>
-        <item>Wtorek</item>
-        <item>Środa</item>
-        <item>Czwartek</item>
-        <item>Piątek</item>
-        <item>Sobota</item>
-        <item>Niedziela</item>
-    </string-array>
     <string-array name="report_stop_problem_code">
         <item>Wybierz</item>
         <item>Nieprawidłowa nazwa przystanku</item>
@@ -100,47 +91,9 @@
         <item>@string/preferences_preferred_map_option_normal3d</item>
         <item>@string/preferences_preferred_map_option_satellite</item>
     </string-array>
-    <string-array name="arrival_info_style_options">
-        <item>@string/preferences_arrival_info_style_options_a</item>
-        <item>@string/preferences_arrival_info_style_options_b</item>
-    </string-array>
 
     <!-- Spoken directions based on 16 compass points, but pointing from the user's current location
          towards the selected bus stop instead of N/S/E/W. -->
-    <string-array name="spoken_compass_directions">
-        <item>prosto</item>
-        <!-- North -->
-        <item>lekko w lewo</item>
-        <!-- NNE -->
-        <item>lekko w lewo</item>
-        <!-- NE -->
-        <item>w lewo</item>
-        <!-- ENE -->
-        <item>w lewo</item>
-        <!-- East -->
-        <item>za Tobą w lewo</item>
-        <!-- ESE -->
-        <item>za Tobą w lewo</item>
-        <!-- SE -->
-        <item>za Tobą w lewo</item>
-        <!-- SSE -->
-        <item>za Tobą prosto</item>
-        <!-- South -->
-        <item>za Tobą w prawo</item>
-        <!-- SSW -->
-        <item>za Tobą w prawo</item>
-        <!-- SW -->
-        <item>za Tobą w prawo</item>
-        <!-- WSW -->
-        <item>w prawo</item>
-        <!-- West -->
-        <item>w prawo</item>
-        <!-- WNW -->
-        <item>lekko w prawo</item>
-        <!-- NW -->
-        <item>lekko w prawo</item>
-        <!-- NNW -->
-    </string-array>
     <!-- Issue reporting -->
     <string-array name="report_types">
         <item>@string/rt_customer_service</item>
@@ -183,11 +136,6 @@
         <item>@drawable/ic_app_feedback</item>
     </array>
 
-    <string-array name="report_stop_issue_tutorial_desc">
-        <item>Kliknij na przystanku, wobec którego chcesz wysłać raport.</item>
-        <item>Następnie wybierz rodzaj raportu.</item>
-        <item>Wyślij zgłoszenie związane z przystankiem.</item>
-    </string-array>
 
     <string-array name="report_stop_transit_category_keywords">
         <item>komunikacja</item>
@@ -217,8 +165,4 @@
         <item>@string/transit_mode_bikeshare</item>
     </string-array>
 
-    <string-array name="trip_plan_leaving_arriving_array">
-        <item>@string/trip_plan_leaving</item>
-        <item>@string/trip_plan_arriving</item>
-    </string-array>
 </resources>

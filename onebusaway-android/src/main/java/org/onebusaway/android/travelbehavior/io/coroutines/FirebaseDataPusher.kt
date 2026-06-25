@@ -23,7 +23,7 @@ import androidx.appcompat.app.AlertDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.firestore.FirebaseFirestore
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.travelbehavior.utils.TravelBehaviorUtils
 
 const val TAG = "FirebaseDataPusher"
@@ -35,7 +35,7 @@ class FirebaseDataPusher {
      * is being pushed. A dialog using [context] with the result is shown after the attempt finishes.
      */
     fun push(context: Context) {
-        if (!TravelBehaviorUtils.isUserParticipatingInStudy()) {
+        if (!TravelBehaviorUtils.isUserParticipatingInStudy(RegionEntryPoint.get(context).region.value)) {
             showUserNotEnrolledDialog(context)
             Log.d(TAG, "User not enrolled in study - do nothing")
             return
@@ -43,7 +43,7 @@ class FirebaseDataPusher {
         val waitDialog = ProgressDialog(context)
         waitDialog.apply {
             setTitle(R.string.push_firebase_data_dialog_title)
-            setMessage(Application.get().getString(R.string.push_firebase_data_dialog_summary))
+            setMessage(context.getString(R.string.push_firebase_data_dialog_summary))
             setCancelable(false)
             setCanceledOnTouchOutside(false)
             setIndeterminate(true)
@@ -103,10 +103,7 @@ class FirebaseDataPusher {
         val dialog = MaterialAlertDialogBuilder(context)
         dialog.apply {
             setTitle(title)
-            setMessage(
-                Application.get()
-                    .getString(summary)
-            )
+            setMessage(context.getString(summary))
             setPositiveButton(R.string.ok) { _, _ -> }
         }
         dialog.show()

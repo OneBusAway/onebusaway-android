@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2026 Open Transit Software Foundation
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<!--
+  Static app shortcuts (long-press the launcher icon) for the My* list screens. Each
+  opens HomeActivity with a NAV_ROUTE extra (org.onebusaway.android.ui.HomeActivity.NAV_ROUTE) that
+  HomeActivity's translator navigates to. Replaces the legacy launcher CREATE_SHORTCUT picker.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="starred_stops"
+        android:enabled="true"
+        android:icon="@drawable/ic_drawer_star"
+        android:shortcutShortLabel="@string/starred_stops_shortcut"
+        android:shortcutLongLabel="@string/starred_stops_shortcut">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="${applicationId}"
+            android:targetClass="org.onebusaway.android.ui.HomeActivity">
+            <extra
+                android:name="org.onebusaway.android.ui.HomeActivity.NAV_ROUTE"
+                android:value="myStops?tab=starred" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="recent_stops"
+        android:enabled="true"
+        android:icon="@drawable/ic_history"
+        android:shortcutShortLabel="@string/recent_stops_shortcut"
+        android:shortcutLongLabel="@string/recent_stops_shortcut">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="${applicationId}"
+            android:targetClass="org.onebusaway.android.ui.HomeActivity">
+            <extra
+                android:name="org.onebusaway.android.ui.HomeActivity.NAV_ROUTE"
+                android:value="myStops?tab=recent_stops" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="recent_routes"
+        android:enabled="true"
+        android:icon="@drawable/ic_bus"
+        android:shortcutShortLabel="@string/recent_routes_shortcut"
+        android:shortcutLongLabel="@string/recent_routes_shortcut">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="${applicationId}"
+            android:targetClass="org.onebusaway.android.ui.HomeActivity">
+            <extra
+                android:name="org.onebusaway.android.ui.HomeActivity.NAV_ROUTE"
+                android:value="myRoutes?tab=recent_routes" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="recent"
+        android:enabled="true"
+        android:icon="@drawable/ic_history"
+        android:shortcutShortLabel="@string/my_recent_title"
+        android:shortcutLongLabel="@string/my_recent_title">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="${applicationId}"
+            android:targetClass="org.onebusaway.android.ui.HomeActivity">
+            <extra
+                android:name="org.onebusaway.android.ui.HomeActivity.NAV_ROUTE"
+                android:value="myRecent" />
+        </intent>
+    </shortcut>
+</shortcuts>

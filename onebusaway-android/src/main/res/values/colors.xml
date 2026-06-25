@@ -24,34 +24,21 @@
     <color name="theme_primary">@color/brand_color</color>
     <color name="theme_primary_brand">@color/theme_primary</color>
     <color name="theme_primary_variant">@color/brand_color_dark</color>
-    <color name="theme_muted">#94CF96</color>
     <color name="theme_accent">#5db53b</color>
 
     <color name="body_text_1">#de000000</color>
     <color name="body_text_2">#8a000000</color>
-    <color name="body_text_3">#60000000</color>
     <color name="body_text_disabled">#44000000</color>
 
-    <color name="body_text_1_inverse">#deffffff</color>
-    <color name="body_text_2_inverse">#8affffff</color>
 
     <!-- Navigation Drawer -->
-    <color name="navdrawer_background">@color/md_theme_surfaceContainer</color>
-    <color name="navdrawer_text_color">@color/body_text_1</color>
-    <color name="navdrawer_text_color_selected">@color/theme_primary_brand</color>
-    <color name="navdrawer_background_color_selected">#11000000</color>
     <color name="navdrawer_icon_tint">#888</color>
-    <color name="navdrawer_icon_tint_selected">@color/theme_primary_brand</color>
 
     <!-- Default route line color on map -->
     <color name="route_line_color_default">#00F</color>
     <color name="route_text_color_default">@android:color/black</color>
 
     <!-- Arrival times header -->
-    <color name="header_text_color">@color/body_text_1</color>
-    <color name="header_eta_text_color">@android:color/white</color>
-    <color name="header_text_faded_color">@color/body_text_1</color>
-    <color name="header_stop_info_ontime">@color/theme_primary_brand</color>
 
     <!-- Arrival time colors -->
     <color name="stop_info_scheduled_time">#777777</color>
@@ -60,7 +47,6 @@
     <color name="stop_info_early">#af504c</color>
 
     <!-- stop_info_occupancy_background is same as navdrawer_background_color_selected, but without transparency so it works on non-white backgrounds -->
-    <color name="stop_info_occupancy_background">#ededed</color>
     <color name="stop_info_occupancy">@color/stop_info_scheduled_time</color>
 
     <!-- Darker badge background colors for white text accessibility (WCAG AA 4.5:1) -->
@@ -71,28 +57,12 @@
 
     <color name="stop_info_arrival_list_background">#eaeaea</color>
 
-    <color name="realtime_indicator_fill">@android:color/transparent</color>
-    <color name="realtime_indicator_line">@android:color/white</color>
-
     <!--Reporting-->
-    <color name="light_gray">#CCCCCC</color>
     <color name="material_gray">#6A6A6A</color>
-    <color name="material_background">#F9F9F9</color>
-    <color name="focus">#ff8e00</color>
-    <color name="alert_info">@color/theme_primary_variant</color>
-    <color name="alert_text_background_error">@color/md_theme_errorContainer</color>
-    <color name="alert_text_background_warning">#999900</color>
-    <color name="alert_text_background_info">@color/theme_primary_variant</color>
 
-    <color name="alert_text_color_error">@color/md_theme_onErrorContainer</color>
-    <color name="alert_text_color_warning">@android:color/white</color>
-    <color name="alert_text_color_info">@android:color/white</color>
 
     <color name="alert_icon_error">@color/md_theme_error</color>
-    <color name="alert_icon_warning">#fbfb00</color>
-    <color name="alert_icon_info">@color/header_text_color</color>
 
-    <color name="tutorial_navigation">#e0dcdc</color>
 
     <!-- Trip details colors -->
     <color name="trip_details_passed">@color/body_text_disabled</color>
@@ -102,12 +72,8 @@
 
     <!-- Tutorials -->
     <color name="tutorial_background">#df4CAF50</color>
-    <color name="tutorial_title">#deffffff</color>
-    <color name="tutorial_text">#bfffffff</color>
 
     <!-- Trip Planning -->
-    <color name="trip_plan_label">@android:color/black</color>
-    <color name="trip_option_selected">@color/md_theme_primary</color>
     <color name="trip_option_icon_tint">#888</color>
     <color name="trip_plan_card_background">@color/md_theme_surfaceContainer</color>
     <color name="trip_plan_header_text">@color/md_theme_onSurface</color>
@@ -127,21 +93,11 @@
     <color name="bikeshare_small_marker_light">#46558f</color>
 
     <!-- Custom Zoom Button -->
-    <color name="zoom_btn_drop_shadow_layer1">#20C9C9C9</color>
 
-    <color name="zoom_btn_drop_shadow_layer2">#30BCBCBC</color>
 
-    <color name="zoom_btn_drop_shadow_layer3">#40BCBCBC</color>
 
-    <color name="zoom_btn_color_default">#BEFFFFFF</color>
-    <color name="zoom_btn_color_pressed">#82CCCCCC</color>
-    <color name="zoom_btn_color">#82CCCCCC</color>
 
     <!-- Previously provided by Google Play Services; defined locally for all flavors -->
-    <color name="quantum_white_100">#FFFFFF</color>
-    <color name="quantum_black_text">#DE000000</color>
-    <color name="quantum_yellow50">#FFFDE7</color>
-    <color name="quantum_googredA700">#D50000</color>
 
     <!-- Material 3 Styles   -->
     <color name="md_theme_primary">#3B6939</color>

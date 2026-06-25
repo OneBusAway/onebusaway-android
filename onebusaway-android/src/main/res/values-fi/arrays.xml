@@ -55,15 +55,6 @@
         <item>25 minuuttia</item>
         <item>30 minuuttia</item>
     </string-array>
-    <string-array name="reminder_days">
-        <item>Maanantai</item>
-        <item>Tiistai</item>
-        <item>Keskiviikko</item>
-        <item>Torstai</item>
-        <item>Perjantai</item>
-        <item>Lauantai</item>
-        <item>Sunnuntai</item>
-    </string-array>
     <string-array name="report_stop_problem_code">
         <item>Valitse yksi</item>
         <item>Pysäkin nimi on väärä</item>
@@ -86,10 +77,6 @@
         <item>@string/preferences_preferred_units_option_metric</item>
         <item>@string/preferences_preferred_units_option_imperial</item>
     </string-array>
-    <string-array name="arrival_info_style_options">
-        <item>@string/preferences_arrival_info_style_options_a</item>
-        <item>@string/preferences_arrival_info_style_options_b</item>
-    </string-array>
     <string-array name="preferred_map_options">
         <item>@string/preferences_preferred_map_option_normal2d</item>
         <item>@string/preferences_preferred_map_option_normal3d</item>
@@ -98,38 +85,4 @@
 
     <!-- Spoken directions based on 16 compass points, but pointing from the user's current location
          towards the selected bus stop instead of N/S/E/W. -->
-    <string-array name="spoken_compass_directions">
-        <item>suoraan edessä</item>
-        <!-- North -->
-        <item>hieman vasemmalla</item>
-        <!-- NNE -->
-        <item>hieman vasemmalla</item>
-        <!-- NE -->
-        <item>vasemmalla</item>
-        <!-- ENE -->
-        <item>vasemmalla</item>
-        <!-- East -->
-        <item>takana vasemmalla</item>
-        <!-- ESE -->
-        <item>takana vasemmalla</item>
-        <!-- SE -->
-        <item>takana vasemalla</item>
-        <!-- SSE -->
-        <item>suoraan takana</item>
-        <!-- South -->
-        <item>takana oikealla</item>
-        <!-- SSW -->
-        <item>takana oikealla</item>
-        <!-- SW -->
-        <item>takana oikealla</item>
-        <!-- WSW -->
-        <item>oikealla</item>
-        <!-- West -->
-        <item>oikealla</item>
-        <!-- WNW -->
-        <item>hieman oikealla</item>
-        <!-- NW -->
-        <item>hieman oikealla</item>
-        <!-- NNW -->
-    </string-array>
 </resources>

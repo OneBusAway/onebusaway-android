@@ -19,23 +19,16 @@ package org.onebusaway.android.app;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.hardware.GeomagneticField;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Build;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.messaging.FirebaseMessaging;
 
@@ -48,26 +41,30 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.app.di.LocationEntryPoint;
+import org.onebusaway.android.app.di.RegionEntryPoint;
+import org.onebusaway.android.region.RegionSubsystems;
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.ThemeUtils;
 import org.onebusaway.android.widealerts.GtfsAlerts;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.MessageDigest;
-import java.util.Iterator;
-import java.util.List;
 import java.util.UUID;
 
 import edu.usf.cutr.open311client.Open311Manager;
 import edu.usf.cutr.open311client.models.Open311Option;
 
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
-import static org.onebusaway.android.util.UIUtils.setAppTheme;
 import java.nio.charset.StandardCharsets;
 
+import dagger.hilt.android.HiltAndroidApp;
+
+@HiltAndroidApp
 public class Application extends android.app.Application {
 
     public static final String APP_UID = "app_uid";
@@ -79,25 +76,14 @@ public class Application extends android.app.Application {
     public static final String CHANNEL_ARRIVAL_REMINDERS_ID = "arrival_reminders";
     public static final String CHANNEL_DESTINATION_ALERT_ID = "destination_alerts";
 
-    private SharedPreferences mPrefs;
-
     private DonationsManager mDonationsManager;
 
     private GtfsAlerts mGtfsAlerts;
 
     private static Application mApp;
 
-    /**
-     * We centralize location tracking in the Application class to allow all objects to make
-     * use of the last known location that we've seen.  This is more reliable than using the
-     * getLastKnownLocation() method of the location providers, and allows us to track both
-     * Location
-     * API v1 and fused provider.  It allows us to avoid strange behavior like animating a map view
-     * change when opening a new Activity, even when the previous Activity had a current location.
-     */
-    private static Location mLastKnownLocation = null;
-
-    // Magnetic declination is based on location, so track this centrally too.
+    // Magnetic declination is based on location, so track this centrally too. (The last-known location
+    // itself lives in the reactive LocationRepository singleton.)
     static GeomagneticField mGeomagneticField = null;
 
     private FirebaseAnalytics mFirebaseAnalytics;
@@ -111,11 +97,20 @@ public class Application extends android.app.Application {
         super.onCreate();
 
         mApp = this;
-        mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         initOba();
         initObaRegion();
-        initOpen311(getCurrentRegion());
+        // The region and location repositories (which own region/location state) are now Hilt
+        // @Singletons, constructed lazily on first injection after onCreate. The
+        // region repo seeds itself from the region initObaRegion just loaded; the location repo starts
+        // empty and fills from setLastKnownLocation (listener updates) / its lazy provider poll. The
+        // legacy setCurrentRegion / setLastKnownLocation writers reach them via their EntryPoints. So
+        // nothing to construct here.
+        // The region-derived subsystems (Plausible, Open311) now observe the region flow (A7) — this
+        // performs their initial init (the StateFlow replays its seeded region) and re-inits on change,
+        // replacing the former explicit initOpen311(getCurrentRegion()) call. Started after initObaRegion
+        // so the repo seeds from the region just loaded.
+        RegionSubsystems.observe(this);
 
         reportAnalytics();
 
@@ -127,7 +122,7 @@ public class Application extends android.app.Application {
 
         initFirebaseMessaging();
 
-        mDonationsManager = new DonationsManager(mPrefs, mFirebaseAnalytics, getResources(), getAppLaunchCount());
+        mDonationsManager = new DonationsManager(mFirebaseAnalytics, getResources(), getAppLaunchCount());
 
         mGtfsAlerts = new GtfsAlerts(getApplicationContext());
     }
@@ -150,15 +145,12 @@ public class Application extends android.app.Application {
         return mApp;
     }
 
-    public static SharedPreferences getPrefs() {
-        return get().mPrefs;
-    }
-
     public static DonationsManager getDonationsManager() { return get().mDonationsManager; }
 
     public static GtfsAlerts getGtfsAlerts() {
         return get().mGtfsAlerts;
     }
+
 
     private static String appLaunchCountPreferencesKey = "appLaunchCountPreferencesKey";
 
@@ -177,41 +169,42 @@ public class Application extends android.app.Application {
      * location yet.  When trying to get a most recent location in one shot, this method should
      * always be called.
      *
+     * <p>The location lives in the reactive {@code LocationRepository}; this is a thin delegate kept for
+     * the {@code LocationHelper} listener read-back and the io/* instrumented tests. Injectable
+     * production readers inject {@code LocationRepository} directly. The {@code cxt} is used only to
+     * resolve the singleton graph (any context's application works), so a null one falls back to the
+     * Application itself.
+     *
      * @param cxt    The Context being used, or null if one isn't available
      * @return the last known location that the application has seen, or null if we haven't seen a
      * location yet
      */
     public static synchronized Location getLastKnownLocation(Context cxt) {
-        if (mLastKnownLocation == null) {
-            // Try to get a last known location from the location providers
-            try {
-                mLastKnownLocation = getLocation2(cxt);
-            } catch (SecurityException e) {
-                Log.e(TAG, "User may have denied location permission - " + e);
-            }
+        Context ctx = cxt != null ? cxt : mApp;
+        if (ctx == null) {
+            return null;
         }
-        // Pass back last known saved location, hopefully from past location listener updates
-        return mLastKnownLocation;
+        return LocationEntryPoint.get(ctx).lastKnownLocation();
     }
 
     /**
-     * Sets the last known location observed by the application via an instance of LocationHelper
+     * Sets the last known location observed by the application via an instance of LocationHelper. The
+     * location itself is stored in the {@code LocationRepository} (which applies the "is it better?"
+     * gate); when it accepts the update we refresh the location-derived magnetic declination here.
      *
      * @param l a location received by a LocationHelper instance
      */
     public static synchronized void setLastKnownLocation(Location l) {
-        // If the new location is better than the old one, save it
-        if (LocationUtils.compareLocations(l, mLastKnownLocation)) {
-            if (mLastKnownLocation == null) {
-                mLastKnownLocation = new Location("Last known location");
-            }
-            mLastKnownLocation.set(l);
+        Application app = mApp;
+        if (app == null) {
+            return;
+        }
+        if (LocationEntryPoint.getSink(app).update(l)) {
             mGeomagneticField = new GeomagneticField(
                     (float) l.getLatitude(),
                     (float) l.getLongitude(),
                     (float) l.getAltitude(),
                     System.currentTimeMillis());
-            // Log.d(TAG, "Newest best location: " + mLastKnownLocation.toString());
         }
     }
 
@@ -232,65 +225,6 @@ public class Application extends android.app.Application {
         }
     }
 
-    /**
-     * Returns a location, considering both Google Play Services (if available) and the Android
-     * Location API
-     *
-     * @return a recent location, considering both Google Play Services (if available) and the
-     * Android Location API
-     * @throws SecurityException if the user has remove location permissions
-     */
-    private static Location getLocation2(Context cxt)
-            throws SecurityException {
-        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
-        Location playServices = null;
-        if (cxt != null &&
-                api.isGooglePlayServicesAvailable(cxt)
-                        == ConnectionResult.SUCCESS) {
-            FusedLocationProviderClient fusedClient = getFusedLocationProviderClient(cxt);
-            Task<Location> task = fusedClient.getLastLocation();
-            // isSuccessful() (not isComplete()) - a task that completed with a failure would
-            // throw RuntimeExecutionException from getResult()
-            if (task.isSuccessful()) {
-                playServices = task.getResult();
-                Log.d(TAG, "Got location from Google Play Services, testing against API v1...");
-            }
-        }
-        Location apiV1 = getLocationApiV1(cxt);
-
-        if (LocationUtils.compareLocationsByTime(playServices, apiV1)) {
-            Log.d(TAG, "Using location from Google Play Services");
-            return playServices;
-        } else {
-            Log.d(TAG, "Using location from Location API v1");
-            return apiV1;
-        }
-    }
-
-    private static Location getLocationApiV1(Context cxt) {
-        if (cxt == null) {
-            return null;
-        }
-        LocationManager mgr = (LocationManager) cxt.getSystemService(Context.LOCATION_SERVICE);
-        List<String> providers = mgr.getProviders(true);
-        Location last = null;
-        for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
-            Location loc = null;
-            try {
-                loc = mgr.getLastKnownLocation(i.next());
-            }  catch (SecurityException e) {
-                Log.w(TAG, "User may have denied location permission - " + e);
-            }
-            // If this provider has a last location, and either:
-            // 1. We don't have a last location,
-            // 2. Our last location is older than this location.
-            if (LocationUtils.compareLocationsByTime(loc, last)) {
-                last = loc;
-            }
-        }
-        return last;
-    }
-
     //
     // Helper to get/set the regions
     //
@@ -298,30 +232,31 @@ public class Application extends android.app.Application {
         return ObaApi.getDefaultContext().getRegion();
     }
 
+    /**
+     * Sets the current region directly. The production region writers all route
+     * through {@code RegionRepository} ({@code refresh}/{@code choose}/{@code clear}); this remains only
+     * as the instrumented-test seam (the io/* request tests that pin a known region synchronously). It
+     * delegates the canonical region write to {@code RegionRepository.applyRegion}.
+     */
     public synchronized void setCurrentRegion(ObaRegion region) {
         setCurrentRegion(region, true);
     }
 
     public synchronized void setCurrentRegion(ObaRegion region, boolean regionChanged) {
-        if (region != null) {
-            // First set it in preferences, then set it in OBA.
-            ObaApi.getDefaultContext().setRegion(region);
-            PreferenceUtils
-                    .saveLong(mPrefs, getString(R.string.preference_key_region), region.getId());
-            //We're using a region, so clear the custom API URL preference
-            setCustomApiUrl(null);
-            if (regionChanged && region.getOtpBaseUrl() != null) {
-                setCustomOtpApiUrl(null);
-                setUseOldOtpApiUrlVersion(false);
-                buildPlausibleInstance(region);
-                buildUmamiInstance(region);
-            }
-        } else {
-            //User must have just entered a custom API URL via Preferences, so clear the region info
-            ObaApi.getDefaultContext().setRegion(null);
-            PreferenceUtils.saveLong(mPrefs, getString(R.string.preference_key_region), -1);
-        }
-        // Init the reporting with the new endpoints
+        // The canonical region write lives in RegionRepository as of A7; the region-derived subsystems
+        // (Plausible, Umami, Open311) re-init reactively via RegionSubsystems observing the published flow.
+        RegionEntryPoint.get(this).applyRegion(region, regionChanged);
+    }
+
+    /**
+     * Re-initializes the region-*derived* subsystems — the Plausible/Umami analytics instances and the
+     * Open311 reporting endpoints — for [region]. Driven reactively by
+     * {@link org.onebusaway.android.region.RegionSubsystems}, which observes the region flow (A7), rather
+     * than poked imperatively by a region write transaction.
+     */
+    public void onRegionChanged(ObaRegion region) {
+        buildPlausibleInstance(region);
+        buildUmamiInstance(region);
         initOpen311(region);
     }
 
@@ -394,8 +329,7 @@ public class Application extends android.app.Application {
      * never been updated.
      */
     public long getLastRegionUpdateDate() {
-        SharedPreferences preferences = getPrefs();
-        return preferences.getLong(getString(R.string.preference_key_last_region_update), 0);
+        return PreferenceUtils.getLong(getString(R.string.preference_key_last_region_update), 0);
     }
 
     /**
@@ -405,8 +339,7 @@ public class Application extends android.app.Application {
      *             milliseconds since January 1, 1970, 00:00:00 GMT
      */
     public void setLastRegionUpdateDate(long date) {
-        PreferenceUtils
-                .saveLong(mPrefs, getString(R.string.preference_key_last_region_update), date);
+        PreferenceUtils.saveLong(getString(R.string.preference_key_last_region_update), date);
     }
 
     /**
@@ -418,8 +351,7 @@ public class Application extends android.app.Application {
      * if it has not been set
      */
     public String getCustomApiUrl() {
-        SharedPreferences preferences = getPrefs();
-        return preferences.getString(getString(R.string.preference_key_oba_api_url), null);
+        return PreferenceUtils.getString(getString(R.string.preference_key_oba_api_url));
     }
 
     /**
@@ -442,8 +374,7 @@ public class Application extends android.app.Application {
      * if it has not been set
      */
     public String getCustomOtpApiUrl() {
-        SharedPreferences preferences = getPrefs();
-        return preferences.getString(getString(R.string.preference_key_otp_api_url), null);
+        return PreferenceUtils.getString(getString(R.string.preference_key_otp_api_url));
     }
 
     /**
@@ -461,8 +392,7 @@ public class Application extends android.app.Application {
      * @return true if the OTP url version is old, or false  if it has not been set
      */
     public boolean getUseOldOtpApiUrlVersion() {
-        SharedPreferences preferences = getPrefs();
-        return preferences.getBoolean(getString(R.string.preference_key_otp_api_url_version), false);
+        return PreferenceUtils.getBoolean(getString(R.string.preference_key_otp_api_url_version), false);
     }
 
     /**
@@ -491,7 +421,7 @@ public class Application extends android.app.Application {
     }
 
     private void initOba() {
-        String uuid = mPrefs.getString(APP_UID, null);
+        String uuid = PreferenceUtils.getString(APP_UID);
         if (uuid == null) {
             // Generate one and save that.
             uuid = getAppUid();
@@ -516,28 +446,28 @@ public class Application extends android.app.Application {
     private void checkArrivalStylePreferenceDefault() {
         String arrivalInfoStylePrefKey = getResources()
                 .getString(R.string.preference_key_arrival_info_style);
-        String arrivalInfoStylePref = mPrefs.getString(arrivalInfoStylePrefKey, null);
+        String arrivalInfoStylePref = PreferenceUtils.getString(arrivalInfoStylePrefKey);
         if (arrivalInfoStylePref == null) {
             // First execution of app - set the default arrival info style based on the BuildConfig value
             switch (BuildConfig.ARRIVAL_INFO_STYLE) {
                 case BuildFlavorUtils.ARRIVAL_INFO_STYLE_A:
                     // Use OBA classic style for default
                     PreferenceUtils.saveString(arrivalInfoStylePrefKey, BuildFlavorUtils
-                            .getPreferenceOptionForArrivalInfoBuildFlavorStyle(
+                            .getPreferenceOptionForArrivalInfoBuildFlavorStyle(this,
                                     BuildFlavorUtils.ARRIVAL_INFO_STYLE_A));
                     Log.d(TAG, "Using arrival info style A (OBA Classic) as default preference");
                     break;
                 case BuildFlavorUtils.ARRIVAL_INFO_STYLE_B:
                     // Use a card-styled footer for default
                     PreferenceUtils.saveString(arrivalInfoStylePrefKey, BuildFlavorUtils
-                            .getPreferenceOptionForArrivalInfoBuildFlavorStyle(
+                            .getPreferenceOptionForArrivalInfoBuildFlavorStyle(this,
                                     BuildFlavorUtils.ARRIVAL_INFO_STYLE_B));
                     Log.d(TAG, "Using arrival info style B (Cards) as default preference");
                     break;
                 default:
                     // Use a card-styled footer for default
                     PreferenceUtils.saveString(arrivalInfoStylePrefKey, BuildFlavorUtils
-                            .getPreferenceOptionForArrivalInfoBuildFlavorStyle(
+                            .getPreferenceOptionForArrivalInfoBuildFlavorStyle(this,
                                     BuildFlavorUtils.ARRIVAL_INFO_STYLE_B));
                     Log.d(TAG, "Using arrival info style B (Cards) as default preference");
                     break;
@@ -548,15 +478,15 @@ public class Application extends android.app.Application {
     private void checkDarkMode() {
         String appThemePrefKey = getResources()
                 .getString(R.string.preference_key_app_theme);
-        String appThemePref = mPrefs.getString(appThemePrefKey, null);
+        String appThemePref = PreferenceUtils.getString(appThemePrefKey);
         if (appThemePref != null) {
-            setAppTheme(appThemePref);
+            ThemeUtils.setAppTheme(appThemePref);
         }
     }
 
     private void initObaRegion() {
         // Read the region preference, look it up in the DB, then set the region.
-        long id = mPrefs.getLong(getString(R.string.preference_key_region), -1);
+        long id = PreferenceUtils.getLong(getString(R.string.preference_key_region), -1);
         if (id < 0) {
             Log.d(TAG, "Regions preference ID is less than 0, returning...");
             return;
@@ -615,10 +545,6 @@ public class Application extends android.app.Application {
             }
             ObaAnalytics.setRegion(mPlausible, mFirebaseAnalytics, customUrl);
         }
-        Boolean experimentalRegions = getPrefs().getBoolean(getString(R.string.preference_key_experimental_regions),
-                Boolean.FALSE);
-        Boolean autoRegion = getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region),
-                true);
     }
 
     /**
@@ -689,9 +615,9 @@ public class Application extends android.app.Application {
     }
 
     public static String getUserPushID() {
-        SharedPreferences preferences = getPrefs();
         String key = get().getApplicationContext().getString(R.string.firebase_messaging_token);
-        return preferences.getString(key, "");
+        String token = PreferenceUtils.getString(key);
+        return token != null ? token : "";
     }
 
 }

@@ -25,7 +25,8 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.PlausibleAnalytics;
 import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
-import org.onebusaway.android.ui.TripDetailsActivity;
+import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher;
+import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
 
 import android.app.Notification;
@@ -33,7 +34,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
@@ -94,8 +94,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     public float mSectoCurDistance = -1;
 
     public static TextToSpeech mTTS;          // TextToSpeech for speaking commands.
-
-    SharedPreferences mSettings = Application.getPrefs();  // Shared Prefs
 
     private String mTripId;             // Trip ID
     private String mStopId;             // Stop ID
@@ -573,7 +571,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      */
     private Notification updateUi(int eventType) {
         Application app = Application.get();
-        TripDetailsActivity.Builder bldr = new TripDetailsActivity.Builder(
+        TripDetailsLauncher.Builder bldr = new TripDetailsLauncher.Builder(
                 app.getApplicationContext(), mTripId);
 
         bldr = bldr.setDestinationId(mStopId);
@@ -621,7 +619,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             String IMPERIAL = app.getString(R.string.preferences_preferred_units_option_imperial);
             String METRIC = app.getString(R.string.preferences_preferred_units_option_metric);
             String AUTOMATIC = app.getString(R.string.preferences_preferred_units_option_automatic);
-            String preferredUnits = mSettings
+            String preferredUnits = PreferenceUtils
                     .getString(app.getString(R.string.preference_key_preferred_units), AUTOMATIC);
             double distance = mProxCalculator.endDistance;
             double miles = distance * RegionUtils.METERS_TO_MILES;  // Get miles.

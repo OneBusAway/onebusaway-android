@@ -26,9 +26,9 @@ import org.onebusaway.android.io.request.ObaTripsForRouteResponse
 /*
  * The adapters between OBA API response shapes and the trip store's standard vocabulary. Each
  * response type gets a pure toObservations extension that distills what the response says about
- * each trip's vehicle into TripObservations — the store (TripStore.kt) never sees response
+ * each trip's vehicle into TripObservations — the store (TripStateCache.kt) never sees response
  * shapes, and the adapters never touch the cache. The hydrating call sites that compose the two
- * live in Pollers.kt.
+ * live in TripObservationRepository.kt.
  */
 
 /**

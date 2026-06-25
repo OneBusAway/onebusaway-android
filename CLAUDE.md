@@ -126,11 +126,11 @@ CI runs on API level 33 emulator via GitHub Actions.
 
 ## Key Technical Details
 
-- **Min SDK**: 21 (Android 5.0)
+- **Min SDK**: 23 (Android 6.0)
 - **Target SDK**: 36 (Android 15)
 - **Application ID**: `com.joulespersecond.seattlebusbot` (historical, must keep for Google Play)
 - **Namespace**: `org.onebusaway.android`
-- **Java compatibility**: 1.8
+- **Java compatibility**: 17
 - **Kotlin version**: 1.9.21
 
 ## Multi-Region Support

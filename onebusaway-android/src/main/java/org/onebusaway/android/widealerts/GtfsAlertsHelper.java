@@ -1,19 +1,13 @@
 package org.onebusaway.android.widealerts;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.transit.realtime.GtfsRealtime;
 
-import org.onebusaway.android.R;
 import org.onebusaway.android.database.widealerts.AlertsRepository;
 import org.onebusaway.android.database.widealerts.entity.AlertEntity;
 
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 
 import java.util.Locale;
-
-import androidx.appcompat.app.AlertDialog;
 
 /**
  * Helper class for GTFS alerts.
@@ -159,20 +153,5 @@ public class GtfsAlertsHelper {
 
     public static String getCurrentAppLanguageCode() {
         return Locale.getDefault().getLanguage();
-    }
-
-    public static void showWideAlertDialog(Context context, String title, String message, String url) {
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
-        builder.setTitle(title)
-                .setMessage(message)
-                .setIcon(R.drawable.baseline_warning_24)
-                .setCancelable(false)
-                .setPositiveButton(context.getString(R.string.more_info), (dialog, which) -> {
-                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    context.startActivity(browserIntent);
-                })
-                .setNegativeButton(R.string.dismiss, (dialog, which) -> dialog.dismiss())
-                .create()
-                .show();
     }
 }

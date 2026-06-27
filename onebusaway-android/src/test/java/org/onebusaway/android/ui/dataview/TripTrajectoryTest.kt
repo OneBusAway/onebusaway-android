@@ -200,6 +200,44 @@ class TripTrajectoryTest {
         assertEquals(10_000L, interpolateScheduleTime(schedule, 150.0))
     }
 
+    // --- scheduleSegments ---
+
+    @Test
+    fun `segments span each stop pair from the prior departure to the next arrival`() {
+        val schedule = listOf(stop(0.0, 1_000L, departMs = 2_000L), stop(100.0, 6_000L))
+        assertEquals(listOf(ScheduleSegment(0.0, 100.0, 2_000L, 6_000L)), scheduleSegments(schedule))
+    }
+
+    @Test
+    fun `fewer than two stops yields no segments`() {
+        assertTrue(scheduleSegments(emptyList()).isEmpty())
+        assertTrue(scheduleSegments(listOf(stop(0.0, 1_000L))).isEmpty())
+    }
+
+    @Test
+    fun `a trailing zero-length stop pair is dropped`() {
+        val schedule = listOf(stop(0.0, 1_000L), stop(100.0, 6_000L), stop(100.0, 10_000L))
+        // The degenerate 100 -> 100 pair produces no segment; the real 0 -> 100 segment remains the last.
+        assertEquals(listOf(ScheduleSegment(0.0, 100.0, 1_000L, 6_000L)), scheduleSegments(schedule))
+    }
+
+    @Test
+    fun `a run of equal-distance stops collapses to first-arrival-in, last-departure-out`() {
+        val schedule = listOf(
+            stop(0.0, 1_000L),
+            stop(100.0, 6_000L, departMs = 7_000L), // first at 100: its arrival (6000) ends the entering segment
+            stop(100.0, 8_000L), // last at 100: its departure (8000) starts the leaving segment
+            stop(200.0, 12_000L),
+        )
+        assertEquals(
+            listOf(
+                ScheduleSegment(0.0, 100.0, 1_000L, 6_000L),
+                ScheduleSegment(100.0, 200.0, 8_000L, 12_000L),
+            ),
+            scheduleSegments(schedule),
+        )
+    }
+
     // --- formatDeviationLabel ---
 
     @Test

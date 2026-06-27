@@ -180,36 +180,49 @@ private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, 
     )
 }
 
+/** A strictly-increasing distance span `[d0, d1)` mapping to the server-clock time span `[t0, t1]`. */
+internal data class ScheduleSegment(val d0: Double, val d1: Double, val t0: Long, val t1: Long)
+
+/**
+ * The interpolatable segments of [schedule], in trip order, with strictly increasing distance.
+ *
+ * Stops sharing a distance (GTFS shape_dist_traveled ties, or backward data) collapse rather than
+ * forming zero-length segments: the segment *entering* a distance ends at the first such stop's
+ * arrival, and the segment *leaving* it starts at the last such stop's departure — which the pairwise
+ * construction yields for free, since a degenerate pair is dropped and the next real pair's lower
+ * bound is the last stop of the run. The result has no degenerate segment, so the caller never has to
+ * guard against one (no divide-by-zero, no ambiguous boundary ownership).
+ */
+internal fun scheduleSegments(schedule: List<ScheduleStop>): List<ScheduleSegment> =
+    (1 until schedule.size).mapNotNull { i ->
+        val prev = schedule[i - 1]
+        val next = schedule[i]
+        if (next.distanceMeters > prev.distanceMeters) {
+            ScheduleSegment(prev.distanceMeters, next.distanceMeters, prev.departureMs, next.arrivalMs)
+        } else {
+            null
+        }
+    }
+
 /**
  * The server-clock time the [schedule] says the vehicle reaches [distanceMeters], linearly
  * interpolated within the bracketing stop pair (previous stop's departure to next stop's arrival).
  * Pure, so it is unit-testable. Returns 0 when fewer than two stops exist or the distance falls
  * outside every interpolatable segment.
+ *
+ * Each segment owns the half-open span `[d0, d1)`, so a distance exactly on a stop boundary lands in
+ * a single segment (the next one) instead of being ambiguously claimed by both. The terminal segment
+ * is closed `[d0, d1]` so the trip's end distance still interpolates rather than dropping to the 0
+ * sentinel. Operating on [scheduleSegments] (strictly increasing by construction) means there is no
+ * degenerate case left to handle here.
  */
 fun interpolateScheduleTime(schedule: List<ScheduleStop>, distanceMeters: Double): Long {
-    if (schedule.size < 2) return 0L
-    // The terminal segment is the last *interpolatable* pair, not the literal last index: degenerate
-    // (zero-length) stop pairs can trail the trip end when GTFS stops share shape_dist_traveled, and
-    // those get skipped below, so keying the closed bound on schedule.lastIndex would let the trip's
-    // max distance fall through to the 0 sentinel.
-    val lastInterpolatable = (1 until schedule.size).lastOrNull { i ->
-        schedule[i].distanceMeters > schedule[i - 1].distanceMeters
-    }
-    for (i in 1 until schedule.size) {
-        val d0 = schedule[i - 1].distanceMeters
-        val d1 = schedule[i].distanceMeters
-        if (d1 <= d0) continue
-        // Each segment owns the half-open span [d0, d1), so a distance exactly on a stop boundary
-        // lands in a single segment (the next one) instead of being ambiguously claimed by both — the
-        // old inclusive bound silently handed it to the earlier segment by iteration order. The
-        // terminal segment is closed [d0, d1] so the trip's end distance still interpolates rather
-        // than dropping to the 0 sentinel.
-        val withinUpper = if (i == lastInterpolatable) distanceMeters <= d1 else distanceMeters < d1
-        if (distanceMeters >= d0 && withinUpper) {
-            val fraction = (distanceMeters - d0) / (d1 - d0)
-            val t0 = schedule[i - 1].departureMs
-            val t1 = schedule[i].arrivalMs
-            return t0 + (fraction * (t1 - t0)).toLong()
+    val segments = scheduleSegments(schedule)
+    for ((index, s) in segments.withIndex()) {
+        val withinUpper = if (index == segments.lastIndex) distanceMeters <= s.d1 else distanceMeters < s.d1
+        if (distanceMeters >= s.d0 && withinUpper) {
+            val fraction = (distanceMeters - s.d0) / (s.d1 - s.d0)
+            return s.t0 + (fraction * (s.t1 - s.t0)).toLong()
         }
     }
     return 0L

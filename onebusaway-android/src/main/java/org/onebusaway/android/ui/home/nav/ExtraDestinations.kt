@@ -66,9 +66,10 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
             )
         }
     }
-    // Survey web view destination: the external-survey WebView. Reached in-app
-    // from the home survey overlay (SurveyWebViewLauncher facade → HomeActivity → translator).
-    // The survey URL is the nav-arg. Non-exported; no alias.
+    // Survey web view destination: the external-survey WebView. Reached in-app when the home survey
+    // overlay's onOpenSurvey fires (HomeNavHost: navController.navigateFromHome(NavRoutes.surveyWebView(url)))
+    // — a direct in-process navigation, no facade/translator. The survey URL is the nav-arg.
+    // Non-exported; no alias.
     composable(
         NavRoutes.SURVEY_WEB_VIEW,
         arguments = listOf(

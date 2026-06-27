@@ -173,6 +173,15 @@ data class TripState(
     fun withSchedule(schedule: ObaTripSchedule): TripState =
             if (this.schedule == null) copy(schedule = schedule) else this
 
+    /**
+     * Converts a local-device-clock instant to the server clock, using the skew measured at the
+     * anchor (its paired [anchorTimeMs]/[anchorLocalTimeMs]). Returns [localTimeMs] unchanged when
+     * no anchor data exists yet, since no skew can be measured. Lets consumers plot a local "now"
+     * against server-clock data (schedule, observations) without it drifting under clock skew.
+     */
+    fun toServerClock(localTimeMs: Long): Long =
+            if (anchorLocalTimeMs > 0) localTimeMs + (anchorTimeMs - anchorLocalTimeMs) else localTimeMs
+
     fun extrapolate(queryTimeMs: Long): ExtrapolationResult {
         val currentAnchor = anchor ?: return ExtrapolationResult.NoData
         val lastDist = currentAnchor.distanceAlongTrip ?: return ExtrapolationResult.NoData

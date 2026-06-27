@@ -42,6 +42,25 @@ class TripStateTest {
     }
 
     @Test
+    fun `toServerClock leaves the time unchanged when there is no anchor`() {
+        // No skew can be measured without an anchor, so the local clock passes through.
+        assertEquals(12_345L, TripState.empty("trip1").toServerClock(12_345L))
+    }
+
+    @Test
+    fun `toServerClock lifts a local instant by the anchor skew`() {
+        // Anchor seen at server 105_000 / local 100_000 → server runs 5s ahead.
+        val state =
+                TripState.empty("trip1")
+                        .withStatus(
+                                status(distanceAlongTrip = 500.0, lastUpdateTime = 105_000L),
+                                serverTimeMs = 105_000L,
+                                localTimeMs = 100_000L
+                        )
+        assertEquals(107_000L, state.toServerClock(102_000L))
+    }
+
+    @Test
     fun `extrapolate returns NoData when anchor has null distance`() {
         val state =
                 TripState.empty("trip1")

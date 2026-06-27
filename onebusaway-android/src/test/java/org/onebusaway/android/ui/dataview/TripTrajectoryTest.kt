@@ -115,6 +115,22 @@ class TripTrajectoryTest {
         assertTrue(trajectory.bounds.maxTime > trajectory.bounds.minTime)
     }
 
+    @Test
+    fun `the now line is left on the local clock when no anchor skew is known`() {
+        // No anchor yet (anchorLocalTimeMs == 0) -> no measurable skew -> nowMs unshifted.
+        val trajectory = buildTrajectory(TripState("trip1"), nowMs = 10_000L)
+        assertEquals(10_000L, trajectory.nowMs)
+    }
+
+    @Test
+    fun `the now line is lifted onto the server clock by the anchor skew`() {
+        // Anchor seen at server-clock 1_005_000 / local-clock 1_000_000 -> server runs 5s ahead.
+        val state = TripState("trip1").copy(anchorTimeMs = 1_005_000L, anchorLocalTimeMs = 1_000_000L)
+        val trajectory = buildTrajectory(state, nowMs = 1_002_000L)
+        // The local "now" (1_002_000) is plotted at its server-clock equivalent (+5s skew).
+        assertEquals(1_007_000L, trajectory.nowMs)
+    }
+
     // --- interpolateScheduleTime ---
 
     private fun stop(dist: Double, arriveMs: Long, departMs: Long = arriveMs) =

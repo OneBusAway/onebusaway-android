@@ -142,6 +142,31 @@ class TripTrajectoryTest {
         assertEquals(0L, interpolateScheduleTime(emptyList(), 0.0))
     }
 
+    @Test
+    fun `a distance exactly on an interior stop maps to a single segment, not both`() {
+        val schedule = listOf(
+            stop(0.0, 1_000L, departMs = 2_000L),
+            stop(100.0, 6_000L, departMs = 7_000L), // dwell: arrives 6000, departs 7000
+            stop(200.0, 10_000L),
+        )
+        // Exactly at the middle stop, the half-open [d0, d1) segments give it to the *next* segment,
+        // so it reads the departure (7000) deterministically rather than ambiguously matching the
+        // prior segment's arrival (6000).
+        assertEquals(7_000L, interpolateScheduleTime(schedule, 100.0))
+    }
+
+    @Test
+    fun `a distance exactly at the final stop interpolates to its arrival`() {
+        val schedule = listOf(
+            stop(0.0, 1_000L),
+            stop(100.0, 6_000L),
+            stop(200.0, 10_000L),
+        )
+        // The closed final segment keeps the trip's end distance interpolatable (arrival at the last
+        // stop), rather than falling through to the 0 sentinel.
+        assertEquals(10_000L, interpolateScheduleTime(schedule, 200.0))
+    }
+
     // --- formatDeviationLabel ---
 
     @Test

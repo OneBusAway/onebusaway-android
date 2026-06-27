@@ -191,7 +191,13 @@ fun interpolateScheduleTime(schedule: List<ScheduleStop>, distanceMeters: Double
     for (i in 1 until schedule.size) {
         val d0 = schedule[i - 1].distanceMeters
         val d1 = schedule[i].distanceMeters
-        if (distanceMeters in d0..d1 && d1 > d0) {
+        if (d1 <= d0) continue
+        // Each segment owns the half-open span [d0, d1), so a distance exactly on a stop boundary
+        // lands in a single segment (the next one) instead of double-counting into both. The final
+        // segment is closed [d0, d1] so the trip's end distance still interpolates rather than
+        // dropping to the 0 sentinel.
+        val withinUpper = if (i == schedule.lastIndex) distanceMeters <= d1 else distanceMeters < d1
+        if (distanceMeters >= d0 && withinUpper) {
             val fraction = (distanceMeters - d0) / (d1 - d0)
             val t0 = schedule[i - 1].departureMs
             val t1 = schedule[i].arrivalMs

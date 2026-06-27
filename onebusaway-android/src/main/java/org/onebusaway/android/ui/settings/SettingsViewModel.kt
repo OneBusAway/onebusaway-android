@@ -144,6 +144,14 @@ class SettingsViewModel @Inject constructor(
         if (value) viewModelScope.launch(Dispatchers.IO) { ObaContract.ServiceAlerts.hideAllAlerts() }
     }
 
+    /**
+     * Re-resolve the region after a backup restore: the restored data may imply a different region. The
+     * repository raises the forced picker (driven reactively off its state) if the choice is ambiguous.
+     */
+    fun refreshRegionAfterRestore() {
+        viewModelScope.launch { regionRepository.refresh() }
+    }
+
     fun onShowZoomControlsChanged(value: Boolean) =
         prefs.setBoolean(R.string.preference_key_show_zoom_controls, value)
 

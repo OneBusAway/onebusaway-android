@@ -21,12 +21,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import org.onebusaway.android.R
 import org.onebusaway.android.io.elements.ObaRegion
 import org.onebusaway.android.io.elements.ObaRoute
 import org.onebusaway.android.io.elements.ObaStop
 import org.onebusaway.android.location.LocationRepository
-import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionStatus
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -40,8 +38,8 @@ import kotlinx.coroutines.launch
 
 /**
  * Owns the home screen's genuine coordination state — the focused stop/bike-station (persisted via
- * [SavedStateHandle]) and the region-picker dialog — as a single [HomeUiState], mutated via
- * `_uiState.update { it.copy(...) }`, and drives the region-resolve action through [viewModelScope]. The
+ * [SavedStateHandle]) — as a single [HomeUiState], mutated via
+ * `_uiState.update { it.copy(...) }`, and drives the startup region-resolve action through [viewModelScope]. The
  * chrome gates, drawer gating, weather, donation, wide alert, regionReady, and the arrivals-sheet
  * measurement are each owned elsewhere now (a feature VM / a HomeScreen-local remember), not here.
  *
@@ -59,9 +57,6 @@ class HomeViewModel @Inject constructor(
     // (alerts, regionReady) moved to WideAlertViewModel / SurveyViewModel; this VM only drives the resolve
     // action via [refresh]/[choose] (resolution lives in the repository).
     private val regionRepo: RegionRepository,
-    // The reactive preference seam — used here for the experimental-regions OTP-version reset; the
-    // chrome-gate prefs now live in MapChromeViewModel.
-    private val prefsRepo: PreferencesRepository,
     // The last-known device location: the report-target fallback reads it here, so the
     // focused-stop-vs-location decision lives with the focused stop instead of in the activity.
     private val locationRepository: LocationRepository,
@@ -107,22 +102,12 @@ class HomeViewModel @Inject constructor(
     private val _paymentWarning = MutableStateFlow<ObaRegion?>(null)
     val paymentWarning: StateFlow<ObaRegion?> = _paymentWarning.asStateFlow()
 
-    // A NavHost route staged from a non-composable entry point (an incoming intent, or the nav-drawer /
-    // search / recent-stops actions) for the host's DeepLinkEffect to navigate to once the NavHost is
-    // composed. A retained StateFlow (not a replay-0 event) so a route staged in onCreate before
-    // composition isn't lost; set via [stageDeepLinkRoute], cleared by [onDeepLinkRouteConsumed].
-    private val _deepLinkRoute = MutableStateFlow<String?>(null)
-    val deepLinkRoute: StateFlow<String?> = _deepLinkRoute.asStateFlow()
-
     // One-shot welcome-tutorial request (the TUTORIAL_WELCOME launch extra, the help "Show tutorials"
     // action, or the what's-new opt-out's "yes"); HomeScreen starts the Compose welcome + map-stop
-    // spotlight sequence off this latch once composed. Mirrors [deepLinkRoute].
+    // spotlight sequence off this latch once composed.
     private val _showWelcomeTutorial = MutableStateFlow(false)
     val showWelcomeTutorial: StateFlow<Boolean> = _showWelcomeTutorial.asStateFlow()
 
-    /** True while a refresh kicked off by the experimental-regions toggle is in flight, so its
-     *  completion (and only its completion) raises the OTP-reset host effect. */
-    private var settingsTogglePending = false
     // The sheet's last resting position, reported up from the screen; drives the map padding/recenter
     // side-effects + the tutorial gate. Pure coordination state (no Compose reads it), so it's a plain
     // property rather than a HomeUiState field — see [lastSettledSheet].
@@ -174,16 +159,6 @@ class HomeViewModel @Inject constructor(
     /** The fare-payment warning dialog was confirmed or dismissed; clear the dialog state. */
     fun dismissPaymentWarning() {
         _paymentWarning.value = null
-    }
-
-    /** Stage [route] for the NavHost to open once composed (null stages nothing / stays on the map). */
-    fun stageDeepLinkRoute(route: String?) {
-        _deepLinkRoute.value = route
-    }
-
-    /** DeepLinkEffect navigated to the staged route; clear the latch so it isn't re-navigated. */
-    fun onDeepLinkRouteConsumed() {
-        _deepLinkRoute.value = null
     }
 
     /** Stage the welcome tutorial for the host to show once composed (the launching intent requested it). */
@@ -303,55 +278,23 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Refreshes/resolves the current region (replaces HomeActivity.checkRegionStatus + ObaRegionsTask).
-     * The repository performs the region model writes on Dispatchers.IO; this maps the outcome to the
-     * activity's side effects (map re-zoom, toast, analytics) via a one-shot event, or raises the
-     * forced-choice picker when no region can be auto-selected. No 100ms callback delay is needed — the
-     * region is already set inside the suspend call before we emit.
+     * Resolves the current region at startup (replaces HomeActivity.checkRegionStatus + ObaRegionsTask) and
+     * announces an auto-selected change via the one-shot [regionFound] event + analytics. The repository
+     * performs the writes on Dispatchers.IO; the map re-zoom and region-derived state are driven reactively
+     * by their own region collectors, and the forced-choice picker is driven reactively off the repository
+     * state ([org.onebusaway.android.ui.home.RegionPickerViewModel]) — so only the auto-select announcement
+     * remains here.
      */
     fun refreshRegions() {
         viewModelScope.launch {
-            when (val status = regionRepo.refresh()) {
-                is RegionStatus.Changed -> {
-                    resolvedRegion(true, status.region.name)
-                    resetOtpVersionIfToggled()
-                }
-                RegionStatus.Unchanged -> {
-                    resolvedRegion(false, null)
-                    settingsTogglePending = false
-                }
-                is RegionStatus.NeedsManualSelection -> {
-                    _uiState.update { it.copy(dialog = HomeDialog.ChooseRegion(status.regions)) }
-                    // Leave settingsTogglePending set; onRegionChosen fires the effect after the pick.
-                }
-                // No region change: just clear the toggle flag (the legacy callback did nothing more on
-                // Skipped/Fixed, and nothing at all on a catastrophic Failed load).
-                RegionStatus.Skipped, is RegionStatus.Fixed, RegionStatus.Failed ->
-                    settingsTogglePending = false
+            val status = regionRepo.refresh()
+            // A manual-pick / NeedsManualSelection outcome announces nothing (matching the legacy behavior);
+            // only an auto-select change raises the "Found X region" snackbar + analytics.
+            if (status is RegionStatus.Changed) {
+                _regionFound.tryEmit(status.region.name)
+                _analyticsEvents.tryEmit(HomeAnalyticsEvent.RegionSelected(status.region.name))
             }
         }
-    }
-
-    /**
-     * The Advanced-settings "experimental regions" toggle: re-resolve, then on a real change reset the
-     * OTP API version (see [resetOtpVersionIfToggled]). The region-found announcement is the one-shot
-     * [regionFound] event.
-     */
-    fun onExperimentalRegionsToggled() {
-        settingsTogglePending = true
-        refreshRegions()
-    }
-
-    /**
-     * When a toggle-initiated refresh actually changed the region, apply the domain rule that an
-     * experimental-region change resets the OTP API version to the current default; then clear the flag.
-     * (Formerly raised a RegionToggleChanged effect the host applied — the rule now fires here directly.)
-     */
-    private fun resetOtpVersionIfToggled() {
-        if (settingsTogglePending) {
-            prefsRepo.setBoolean(R.string.preference_key_otp_api_url_version, false)
-        }
-        settingsTogglePending = false
     }
 
     /**
@@ -378,32 +321,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** The user picked a region in the forced-choice dialog (old haveUserChooseRegion onClick). */
-    fun onRegionChosen(region: ObaRegion) {
-        viewModelScope.launch {
-            regionRepo.choose(region)
-            _uiState.update { it.copy(dialog = HomeDialog.None) }
-            // regionName null: the legacy manual-pick path logged no analytics.
-            resolvedRegion(true, null)
-            resetOtpVersionIfToggled()
-        }
-    }
-
-    /**
-     * A region *resolve action* completed. The region-derived *state* (alerts → WideAlertViewModel,
-     * regionReady → SurveyViewModel) and the map re-zoom are driven reactively by their own region
-     * collectors; this handles only the remaining resolve-action outcomes: announce an auto-selected
-     * region via the [regionFound] event ([name] is non-null only for an auto-select change), and emit
-     * the region analytics event (consumed by the host's HomeAnalyticsEffect).
-     */
-    private fun resolvedRegion(changed: Boolean, name: String?) {
-        // A manual pick passes a null name -> no snackbar, no analytics (matching the legacy behavior).
-        if (changed && name != null) {
-            _regionFound.tryEmit(name)
-            _analyticsEvents.tryEmit(HomeAnalyticsEvent.RegionSelected(name))
-        }
-    }
-
     private companion object {
         const val KEY_STOP_ID = "home.focusedStop.id"
         const val KEY_STOP_NAME = "home.focusedStop.name"
@@ -427,17 +344,14 @@ class HomeViewModel @Inject constructor(
 
 /**
  * The home screen's genuine coordination state: the focused stop/bike-station (the only retained domain
- * state, persisted via [SavedStateHandle]) plus the region-picker [dialog] (the output of an async VM
- * region-resolve). Deliberately small — everything else the home screen renders is owned by a feature
- * VM, a HomeScreen-local `remember`, or a one-shot event (see [HomeViewModel]'s KDoc for what moved).
+ * state, persisted via [SavedStateHandle]). Deliberately small — everything else the home screen renders is
+ * owned by a feature VM, a HomeScreen-local `remember`, or a one-shot event (see [HomeViewModel]'s KDoc for
+ * what moved).
  */
 data class HomeUiState(
     // Map focus — survives config change + process death via SavedStateHandle.
     val focusedStop: FocusedStop? = null,
     val focusedBikeStationId: String? = null,
-    // The forced-choice region picker (HomeDialog lives in HomeDialogs.kt), raised when region resolution
-    // needs a manual selection.
-    val dialog: HomeDialog = HomeDialog.None,
 )
 
 /**

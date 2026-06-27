@@ -30,7 +30,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import org.onebusaway.android.R
 import org.onebusaway.android.provider.ObaContract
-import org.onebusaway.android.ui.HomeActivity
+import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.dataview.TripTrajectoryRoute
@@ -70,7 +70,7 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
             },
         ),
     ) { backStackEntry ->
-        val activity = LocalContext.current.findActivity() as HomeActivity
+        val context = LocalContext.current
         val tripId =
             backStackEntry.arguments?.getString(NavRoutes.ARG_TRIP_ID).orEmpty()
         val tripStopId = backStackEntry.arguments?.getString(NavRoutes.ARG_STOP_ID)
@@ -88,7 +88,7 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
                 },
                 onSetDestinationReminder = rememberDestinationReminderAction(
                     viewModel = tripVm,
-                    prefsRepository = activity.prefsRepository,
+                    prefsRepository = PreferencesEntryPoint.get(context),
                     tripId = tripId,
                     stopId = tripStopId,
                 ),

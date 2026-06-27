@@ -33,8 +33,11 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import kotlinx.coroutines.launch
-import org.onebusaway.android.ui.HomeActivity
+import org.onebusaway.android.app.di.ArrivalsViewModelFactoryEntryPoint
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.nav.navigateFromHome
+import org.onebusaway.android.ui.nav.revealRouteOnMap
+import org.onebusaway.android.ui.nav.revealStopOnMap
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.routeinfo.RouteInfoRoute
@@ -56,19 +59,18 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
             navArgument(NavRoutes.ARG_ROUTE_ID) { type = NavType.StringType }
         ),
     ) { backStackEntry ->
-        val activity = LocalContext.current.findActivity() as HomeActivity
         val routeId =
             backStackEntry.arguments?.getString(NavRoutes.ARG_ROUTE_ID).orEmpty()
         ObaTheme {
             RouteInfoRoute(
                 viewModel = hiltViewModel(),
                 onBack = { navController.popBackStack() },
-                onShowRouteOnMap = { activity.showRouteOnMap(routeId) },
+                onShowRouteOnMap = { navController.revealRouteOnMap(routeId) },
                 onStopClick = { stop ->
                     navController.navigate(NavRoutes.arrivals(stop.id, stop.name))
                 },
                 onStopShowOnMap = { stop ->
-                    activity.focusStopOnMap(stop.id, stop.latitude, stop.longitude)
+                    navController.revealStopOnMap(stop.id, stop.latitude, stop.longitude)
                 },
             )
         }
@@ -89,7 +91,8 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
             },
         ),
     ) { backStackEntry ->
-        val activity = LocalContext.current.findActivity() as HomeActivity
+        val context = LocalContext.current
+        val activity = context.findActivity()
         val stopId =
             backStackEntry.arguments?.getString(NavRoutes.ARG_STOP_ID).orEmpty()
         val stopName =
@@ -97,7 +100,8 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
         val arrivalsVm: ArrivalsViewModel = viewModel(
             factory = viewModelFactory {
                 initializer {
-                    activity.arrivalsViewModelFactory.create(stopId, ignorePersistedFilter = false)
+                    ArrivalsViewModelFactoryEntryPoint.get(context)
+                        .create(stopId, ignorePersistedFilter = false)
                 }
             }
         )
@@ -109,7 +113,7 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
                 viewModel = arrivalsVm,
                 currentContent = { arrivalsVm.state.value as? ArrivalsUiState.Content },
                 onShowRouteOnMap = { routeId ->
-                    activity.showRouteOnMap(routeId)
+                    navController.revealRouteOnMap(routeId)
                 },
                 showUndoSnackbar = { messageRes, actionRes, onAction ->
                     scope.launch {
@@ -126,6 +130,7 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
                         NavRoutes.tripDetails(tripId, sid, TripDetailsLauncher.SCROLL_MODE_STOP)
                     )
                 },
+                onEditReminder = { args -> navController.navigateFromHome(NavRoutes.tripInfo(args)) },
             )
         }
         ObaTheme {
@@ -135,6 +140,7 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
                 handler = handler,
                 onBack = { navController.popBackStack() },
                 snackbarHostState = snackbarHostState,
+                onNightLight = { navController.navigateFromHome(NavRoutes.NIGHT_LIGHT) },
             )
         }
     }

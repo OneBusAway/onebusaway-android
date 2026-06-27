@@ -22,17 +22,14 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import org.onebusaway.android.R
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse
-import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.map.MapViewModel
-import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.report.ui.ReportLauncher
 import org.onebusaway.android.travelbehavior.TravelBehaviorManager
@@ -44,20 +41,21 @@ import org.onebusaway.android.ui.home.AccessibilityAnalyticsEffect
 import org.onebusaway.android.ui.home.HomeAnalyticsEffect
 import org.onebusaway.android.ui.home.help.HelpAction
 import org.onebusaway.android.ui.home.help.HelpViewModel
-import org.onebusaway.android.ui.home.HomeCallbacks
+import org.onebusaway.android.ui.home.HomeActivityActions
 import org.onebusaway.android.ui.home.ReportTarget
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.HomeScreen
 import org.onebusaway.android.ui.home.HomeViewModel
 import org.onebusaway.android.ui.home.HomeNavHost
 import org.onebusaway.android.ui.home.HomeDestinationDeps
-import org.onebusaway.android.ui.home.DeepLinkEffect
+import org.onebusaway.android.ui.home.LaunchIntentEffect
 import org.onebusaway.android.ui.home.SettingsRehomeEffect
 import org.onebusaway.android.ui.home.PaymentWarningDialog
+import org.onebusaway.android.ui.home.RegionPickerHost
 import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavRoutes
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.onebusaway.android.ui.survey.SurveyViewModel
-import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.ReminderUtils
@@ -65,10 +63,6 @@ import org.onebusaway.android.ui.tutorial.TutorialPrefs
 
 @AndroidEntryPoint
 class HomeActivity : AppCompatActivity() {
-
-    // Shared with the NavHost destinations (My* / report / trip-details) that read preferences off the host.
-    @Inject
-    lateinit var prefsRepository: PreferencesRepository
 
     // Builds the per-stop ArrivalsViewModel for the home bottom-sheet host. Assisted because the sheet's
     // stop id is runtime-dynamic.
@@ -79,9 +73,12 @@ class HomeActivity : AppCompatActivity() {
     @Inject
     lateinit var regionRepository: RegionRepository
 
-    // The last-known location, read off the host by the infrastructure-issue report screen to submit.
-    @Inject
-    lateinit var locationRepository: LocationRepository
+    // The launch-intent channel: the OS delivers external entry points (deep links, FCM, launcher
+    // shortcuts) to this Activity before/around the composition, so they're surfaced here for the NavHost's
+    // [LaunchIntentEffect] to translate (via IntentRouteMapper) and open once composed. Seeded on a fresh
+    // launch only (onCreate), fed warm relaunches via onNewIntent — the in-app navigation no longer flows
+    // through here (it uses the NavController directly).
+    private val launchIntents = MutableStateFlow<Intent?>(null)
 
     private val viewModel: HomeViewModel by viewModels()
 
@@ -108,20 +105,22 @@ class HomeActivity : AppCompatActivity() {
         // The whole screen is Compose: a ModalNavigationDrawer + HomeTopBar + BottomSheetScaffold whose
         // bottom sheet is the per-stop arrivals panel (ArrivalsSheetHost). No map-related View seam remains.
 
-        val homeCallbacks = buildHomeCallbacks()
+        val activityActions = buildActivityActions()
 
-        // Stage any external "open this screen" intent and run its side effects, before setContent so
-        // [DeepLinkEffect] observes it once the NavHost composes. Fresh launch only, so a rotation doesn't
-        // re-fire reminder deletes / URL applies.
+        // Surface the launch intent for the NavHost's [LaunchIntentEffect] (it runs the side effects then
+        // opens the translated route once composed). Fresh launch only, so a rotation doesn't re-fire
+        // reminder deletes / URL applies.
         if (savedInstanceState == null) {
-            handleIncomingIntent(intent)
+            launchIntents.value = intent
         }
 
         setContent {
             val navController = rememberNavController()
             AccessibilityAnalyticsEffect()
             HomeAnalyticsEffect(viewModel.analyticsEvents)
-            DeepLinkEffect(navController, viewModel.deepLinkRoute, viewModel::onDeepLinkRouteConsumed)
+            LaunchIntentEffect(navController, launchIntents, ::applyLaunchIntentSideEffects) {
+                launchIntents.value = null
+            }
             // The welcome tutorial (now the Compose green welcome + map-stop spotlight sequence) is
             // started by HomeScreen off the same showWelcomeTutorial latch — no host effect needed.
             SettingsRehomeEffect(navController)
@@ -135,10 +134,13 @@ class HomeActivity : AppCompatActivity() {
                     weatherViewModel = weatherViewModel,
                     helpViewModel = helpViewModel,
                     arrivalsViewModelFactory = arrivalsViewModelFactory,
-                    callbacks = homeCallbacks,
+                    activityActions = activityActions,
                 ),
             )
             PaymentWarningDialog(viewModel.paymentWarning, viewModel::dismissPaymentWarning)
+            // The forced region picker, driven reactively off the repository (RegionPickerViewModel). At the
+            // setContent root so its window overlays whatever screen triggered the re-resolve.
+            RegionPickerHost()
         }
 
         setupMapState()
@@ -153,33 +155,20 @@ class HomeActivity : AppCompatActivity() {
     }
 
     /**
-     * Bundles the home screen's tap/UI lambdas ([HomeCallbacks]) — a mix of activity-method references
-     * and [HomeViewModel] method references — passed down to [HomeScreen] via the HOME destination.
+     * Bundles the home screen's *Activity-bound* tap/UI lambdas ([HomeActivityActions]) — the ones that
+     * need `ExternalIntents`/`ReportLauncher`/`startActivity` or forward to an Activity-owned ViewModel.
+     * The navigation lambdas (which need the NavController) are built in the HOME composable and combined
+     * with these into the full [HomeCallbacks]. `onHelpActionExternal` handles every [HelpAction] branch
+     * except `AGENCIES`, which is a navigation supplied by the composable.
      */
-    private fun buildHomeCallbacks(): HomeCallbacks = HomeCallbacks(
-        // The content rows navigate to their destinations (the map / the list screens). Each reports
-        // its menu analytics, as the tab selections did.
-        onStarredStops = {
-            navigateToHomeRow(NavRoutes.HOME_STARRED_STOPS, R.string.analytics_label_button_press_star)
-        },
-        onStarredRoutes = {
-            navigateToHomeRow(NavRoutes.HOME_STARRED_ROUTES, R.string.analytics_label_button_press_star)
-        },
-        onReminders = {
-            navigateToHomeRow(NavRoutes.MY_REMINDERS, R.string.analytics_label_button_press_reminders)
-        },
-        onPlanTrip = ::onPlanTripSelected,
+    private fun buildActivityActions(): HomeActivityActions = HomeActivityActions(
         onPayFare = ::onPayFareSelected,
-        onSettings = ::onSettingsSelected,
         onHelp = ::onHelpSelected,
         onSendFeedback = ::onSendFeedbackSelected,
         onOpenSource = ::onOpenSourceSelected,
-        onSearch = ::onSearch,
-        onRecentStopsRoutes = ::onRecentStopsRoutes,
-        onHelpAction = ::onHelpAction,
+        onHelpActionExternal = ::onHelpAction,
         // Stage the welcome sequence on the VM latch; HomeScreen starts it when the latch fires.
         onShowWelcomeTutorial = viewModel::requestWelcomeTutorial,
-        onRegionChosen = viewModel::onRegionChosen,
         onSheetSettled = viewModel::onSheetSettled,
         onClearFocus = viewModel::requestClearMapFocus,
         onArrivalsLoaded = ::onArrivalsLoaded,
@@ -190,71 +179,23 @@ class HomeActivity : AppCompatActivity() {
 
     /**
      * A warm re-launch (singleTop) carrying an external screen intent — FCM CLEAR_TOP, the
-     * NavigationService reminder PendingIntent, a pinned shortcut. Stage its route; the NavHost's
-     * LaunchedEffect navigates. (Cold launches are handled in onCreate.)
+     * NavigationService reminder PendingIntent, a pinned shortcut. Surface it for [LaunchIntentEffect]
+     * (cold launches are seeded in onCreate).
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleIncomingIntent(intent)
+        launchIntents.value = intent
     }
 
     /**
-     * In-app "show route on map": surface the map and enter route mode. The single-Activity replacement
-     * for the old `HomeActivity.start(routeId)` intent round-trip — every in-app caller reaches this
-     * directly instead of building a MapParams intent. [revealMap] navigates to the HOME (map) destination.
+     * The domain mutations a launch intent implies, run by [LaunchIntentEffect] before it opens the
+     * translated route: the `add-region`/FCM side effects (see [applyIntentSideEffects]) and the
+     * "show tutorials again" welcome re-request. Kept off [IntentRouteMapper] so it stays a pure translator.
      */
-    fun showRouteOnMap(routeId: String) {
-        mapViewModel.toRoute(routeId)
-        revealMap()
-    }
-
-    /**
-     * In-app "show stop on map": surface the map and focus [stopId], recentering on it and peeking its
-     * arrivals once they load. Replaces `HomeActivity.start(stopId, lat, lon)`. Unlike the cold-launch
-     * [setupMapState]/applyInitialFocus (which only adopts a stop when none is focused), an explicit
-     * "show on map" focuses this stop even if another is already up.
-     */
-    fun focusStopOnMap(stopId: String, lat: Double, lon: Double) {
-        viewModel.onStopFocused(FocusedStop(stopId, null, null, lat, lon))
-        viewModel.markPendingMapFocus()
-        revealMap()
-    }
-
-    /**
-     * Pops the NavHost back to HOME so the map is actually on screen. The "show on map" actions fire from
-     * pushed destinations (trip details, route info, the My* lists, search, full-screen arrivals); without
-     * this the map enters route/focus mode underneath but stays hidden behind that screen. Routes to HOME
-     * through the same staged-deep-link path (which pops up to HOME), so it's a no-op when HOME is already
-     * current. Restores the reveal the old `HomeActivity.start(MapParams…)` intent round-trip provided.
-     */
-    private fun revealMap() = viewModel.stageDeepLinkRoute(NavRoutes.HOME)
-
-    /**
-     * Navigate the NavHost to an in-app [route] (a [NavRoutes] string) — the single-Activity replacement
-     * for `startActivity(launcher intent)` from in-app code that has no `navController` in scope (the
-     * arrivals sheet, the My* helpers, the Compose overlays). Goes through the same staged-route path
-     * the old intent round-trip resolved to, so the back-stack behavior is unchanged.
-     */
-    fun navigateTo(route: String) = viewModel.stageDeepLinkRoute(route)
-
-    /** A drawer content row was tapped: navigate to its [route] (popping to HOME) and report analytics. */
-    private fun navigateToHomeRow(route: String, @StringRes analyticsLabel: Int) {
-        navigateTo(route)
-        viewModel.reportMenuAnalytics(analyticsLabel)
-    }
-
-    /**
-     * Handles an incoming external intent: runs any domain side effects it implies, then stages the
-     * NavHost route it should open. Both entry points (cold launch in [onCreate], warm re-launch in
-     * [onNewIntent]) funnel through here so the side-effect-then-route sequence stays in one place.
-     */
-    private fun handleIncomingIntent(intent: Intent?) {
+    private fun applyLaunchIntentSideEffects(intent: Intent) {
         applyIntentSideEffects(intent)
-        viewModel.stageDeepLinkRoute(IntentRouteMapper.routeForIntent(intent))
-        // "Show tutorials again" re-launches with this extra. Staging in this shared funnel (not just
-        // onCreate) makes both the cold first-run and the singleTop warm re-launch (onNewIntent) honor it.
-        if (intent?.extras?.getBoolean(TutorialPrefs.TUTORIAL_WELCOME) == true) {
+        if (intent.extras?.getBoolean(TutorialPrefs.TUTORIAL_WELCOME) == true) {
             viewModel.requestWelcomeTutorial()
         }
     }
@@ -283,38 +224,14 @@ class HomeActivity : AppCompatActivity() {
     }
 
 
-    // --- Settings preference-screen host glue (re-homed from the former SettingsActivity) ------------
-
-    /** Re-resolves the region after a backup restore (called from SettingsScreen's restore launcher),
-     *  in case the restored data implies a different region — raising the picker if it's ambiguous. */
-    fun refreshRegionsAfterRestore() {
-        viewModel.refreshRegions()
-    }
-
-    /** The advanced-settings "refresh regions" (experimental-regions toggle) action, forwarded to the
-     *  VM. Public so the (extracted) SETTINGS_ADVANCED destination can reach it off the host. */
-    fun onExperimentalRegionsToggled() {
-        viewModel.onExperimentalRegionsToggled()
-    }
-
     // --- Nav-drawer one-shot actions (each navigates/launches + reports its own analytics) -----------
     // These were the launcher branches of the old goToNavDrawerItem when-switch; as plain per-row
     // callbacks they no longer route through the tab-selection path. The survey / donation / weather /
     // layers overlays gate themselves off the VM state, so there's no imperative show/hide here.
 
-    private fun onPlanTripSelected() {
-        viewModel.stageDeepLinkRoute(NavRoutes.TRIP_PLAN)
-        viewModel.reportMenuAnalytics(R.string.analytics_label_button_press_trip_plan)
-    }
-
     /** PAY_FARE shows a fare-payment warning (or launches the payment app) and reports no analytics. */
     private fun onPayFareSelected() {
         ExternalIntents.payFareOrWarningRegion(this)?.let { viewModel.showPaymentWarning(it) }
-    }
-
-    private fun onSettingsSelected() {
-        viewModel.stageDeepLinkRoute(NavRoutes.SETTINGS)
-        viewModel.reportMenuAnalytics(R.string.analytics_label_button_press_settings)
     }
 
     private fun onHelpSelected() {
@@ -337,22 +254,6 @@ class HomeActivity : AppCompatActivity() {
         mapViewModel.exitRouteMode()
     }
 
-    /**
-     * Runs the global search for [query] (from [HomeTopBar]'s search field) by navigating to the
-     * search destination (staged through the VM's deep-link route since the navController lives in the
-     * NavHost composition, not here).
-     */
-    private fun onSearch(query: String) {
-        viewModel.stageDeepLinkRoute(NavRoutes.search(query))
-    }
-
-    /** Opens the recent stops/routes screen (the toolbar overflow item) — the MY_RECENT destination. */
-    private fun onRecentStopsRoutes() {
-        // The user found the overflow on their own — don't later spotlight it in the onboarding tutorial.
-        prefsRepository.setBoolean(ArrivalTutorial.KEY_MORE_MENU, true)
-        viewModel.stageDeepLinkRoute(NavRoutes.myRecent())
-    }
-
     // --- Help-menu actions that are Activity operations (the dialog-opening ones live in HelpFeature) ---
 
     private fun onHelpAction(action: HelpAction) {
@@ -361,7 +262,8 @@ class HomeActivity : AppCompatActivity() {
                 TutorialPrefs.resetAllTutorials(this)
                 NavHelp.goHome(this, true)
             }
-            HelpAction.AGENCIES -> viewModel.stageDeepLinkRoute(NavRoutes.AGENCIES)
+            // AGENCIES is a navigation — handled by the composable-supplied wrapper, not here.
+            HelpAction.AGENCIES -> Unit
             HelpAction.TWITTER -> {
                 // The VM derives which URL fits the current region; the host just fires the ACTION_VIEW.
                 // Analytics rides the VM's event so the ObaAnalytics call lives in HomeAnalyticsEffect.

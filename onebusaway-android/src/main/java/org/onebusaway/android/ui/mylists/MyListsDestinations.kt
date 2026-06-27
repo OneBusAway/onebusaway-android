@@ -33,17 +33,20 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import org.onebusaway.android.R
-import org.onebusaway.android.ui.HomeActivity
+import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.nav.navigateFromHome
+import org.onebusaway.android.ui.nav.revealRouteOnMap
+import org.onebusaway.android.ui.nav.revealStopOnMap
 import org.onebusaway.android.util.PreferenceUtils
 
 /**
  * The "My*" navigation cluster: the three tabbed list destinations (starred stops / routes / recent)
- * and the standalone saved-trip-reminders list. The tabbed destinations read [HomeActivity.prefsRepository]
- * off the recovered host; the reminders list hosts its own entry-scoped VM and a sort action.
+ * and the standalone saved-trip-reminders list. The tabbed destinations resolve the preferences
+ * repository via [PreferencesEntryPoint]; the reminders list hosts its own entry-scoped VM and a sort action.
  */
 fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
     // The three "My*" tabbed list destinations. Reached from static app
@@ -56,32 +59,36 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
         },
     )
     composable(NavRoutes.MY_STOPS, arguments = tabArg) { entry ->
-        val activity = LocalContext.current.findActivity() as HomeActivity
         ObaTheme {
             MyStopsDestination(
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
-                prefsRepository = activity.prefsRepository,
+                prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
                 onBack = { navController.popBackStack() },
+                onShowStopOnMap = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
+                onOpenStop = { id, name -> navController.navigateFromHome(NavRoutes.arrivals(id, name)) },
             )
         }
     }
     composable(NavRoutes.MY_ROUTES, arguments = tabArg) { entry ->
-        val activity = LocalContext.current.findActivity() as HomeActivity
         ObaTheme {
             MyRoutesDestination(
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
-                prefsRepository = activity.prefsRepository,
+                prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
                 onBack = { navController.popBackStack() },
+                onShowRouteOnMap = { navController.revealRouteOnMap(it) },
+                onOpenRoute = { navController.navigateFromHome(NavRoutes.routeInfo(it)) },
             )
         }
     }
     composable(NavRoutes.MY_RECENT, arguments = tabArg) { entry ->
-        val activity = LocalContext.current.findActivity() as HomeActivity
         ObaTheme {
             MyRecentDestination(
                 initialTag = entry.arguments?.getString(NavRoutes.ARG_TAB),
-                prefsRepository = activity.prefsRepository,
+                prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
                 onBack = { navController.popBackStack() },
+                onShowStopOnMap = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
+                onShowRouteOnMap = { navController.revealRouteOnMap(it) },
+                onOpenStop = { id, name -> navController.navigateFromHome(NavRoutes.arrivals(id, name)) },
             )
         }
     }
@@ -115,13 +122,17 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                 }
             ) { padding ->
                 Box(Modifier.fillMaxSize().padding(padding)) {
+                    val onEditReminder: (String, String) -> Unit = { tripId, stopId ->
+                        navController.navigateFromHome(NavRoutes.tripInfo(tripId, stopId))
+                    }
                     ReminderListDestination(
                         reminders,
                         emptyText = R.string.trip_list_notrips,
-                        onClick = { activity.editReminder(it) },
+                        onClick = { editReminder(it, onEditReminder) },
                         actions = {
                             activity.reminderActions(
                                 it,
+                                onEdit = onEditReminder,
                                 onShowRoute = { navController.navigate(NavRoutes.routeInfo(it)) },
                                 onShowStop = { navController.navigate(NavRoutes.arrivals(it)) },
                             )

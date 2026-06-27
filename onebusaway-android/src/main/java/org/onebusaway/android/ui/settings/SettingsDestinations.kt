@@ -27,7 +27,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.about.AboutScreen
 import org.onebusaway.android.ui.about.buildVersionText
 import org.onebusaway.android.ui.agencies.AgenciesRoute
@@ -122,11 +121,10 @@ fun NavGraphBuilder.settingsGraph(navController: NavHostController) {
         }
     }
     composable(NavRoutes.SETTINGS_ADVANCED) {
-        val activity = LocalContext.current.findActivity() as HomeActivity
+        val activity = LocalContext.current.findActivity()
         ObaTheme {
             AdvancedSettingsRoute(
                 onBack = { navController.popBackStack() },
-                onRefreshRegions = { activity.onExperimentalRegionsToggled() },
                 onGoHome = { NavHelp.goHome(activity, false) },
             )
         }

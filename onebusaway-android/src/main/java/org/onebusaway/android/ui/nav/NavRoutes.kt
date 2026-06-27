@@ -18,6 +18,26 @@ package org.onebusaway.android.ui.nav
 import android.net.Uri
 
 /**
+ * The trip context carried into the reminder editor ([NavRoutes.TRIP_INFO]) when creating a reminder
+ * from an arrival, so a brand-new reminder needs no DB round-trip. Only [tripId]/[stopId] are required;
+ * the rest mirror the optional [NavRoutes.tripInfo] nav-args (the edit-an-existing path omits them and
+ * the editor reads them from the Trips table). Built once at the arrival action site and consumed either
+ * by a NavController ([NavRoutes.tripInfo]) or the standalone launcher facade.
+ */
+data class ReminderEditorArgs(
+    val tripId: String,
+    val stopId: String,
+    val routeId: String? = null,
+    val routeName: String? = null,
+    val stopName: String? = null,
+    val headsign: String? = null,
+    val departTime: Long = 0L,
+    val stopSequence: Int = 0,
+    val serviceDate: Long = 0L,
+    val vehicleId: String? = null,
+)
+
+/**
  * Central registry of Navigation-Compose route ids and nav-arg keys. The single
  * NavHost backbone lives in [org.onebusaway.android.ui.HomeActivity]; each screen converted from an
  * Activity to a destination adds its route here.
@@ -249,6 +269,20 @@ object NavRoutes {
         return "tripInfo/${Uri.encode(tripId)}/${Uri.encode(stopId)}" +
             if (query.isNotEmpty()) "?$query" else ""
     }
+
+    /** Builds a navigable [TRIP_INFO] route from a [ReminderEditorArgs] trip-context bundle. */
+    fun tripInfo(args: ReminderEditorArgs): String = tripInfo(
+        tripId = args.tripId,
+        stopId = args.stopId,
+        routeId = args.routeId,
+        routeName = args.routeName,
+        stopName = args.stopName,
+        headsign = args.headsign,
+        departTime = args.departTime,
+        stopSequence = args.stopSequence,
+        serviceDate = args.serviceDate,
+        vehicleId = args.vehicleId,
+    )
 
     // --- Feedback ---
     // The post-trip destination-reminder feedback screen. Reached only from the post-trip notification's

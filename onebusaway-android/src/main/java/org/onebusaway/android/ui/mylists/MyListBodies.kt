@@ -21,7 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.search.RouteSearchContent
 import org.onebusaway.android.ui.search.RouteSearchResult
@@ -35,8 +34,8 @@ import org.onebusaway.android.util.ExternalIntents
  * The shared list/search "destinations": body composables hosted by both the Compose [MyTabsScreen]
  * (the `My*` tab activities) and the Compose home overlays ([org.onebusaway.android.ui.home]). The
  * three list destinations are stateless — callers supply the per-row `onClick` and `actions` (each
- * caller wires them to the `AppCompatActivity` nav/action helpers with its own strings). The two
- * search destinations still resolve the host via [findActivity] for now.
+ * caller wires them to the `AppCompatActivity` nav/action helpers with its own strings). The route
+ * search destination still resolves the host via [findActivity] for its schedule/shortcut actions.
  */
 
 @Composable
@@ -83,22 +82,29 @@ fun ReminderListDestination(
 }
 
 @Composable
-fun StopSearchDestination(viewModel: SearchViewModel<StopSearchResult>) {
-    val host = LocalContext.current.findActivity() as HomeActivity
+fun StopSearchDestination(
+    viewModel: SearchViewModel<StopSearchResult>,
+    onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
+    onOpenStop: (stopId: String, stopName: String?) -> Unit,
+) {
     StopSearchContent(
         viewModel = viewModel,
-        onStopClick = { host.openStopSearchResult(it) },
-        onShowOnMap = { host.focusStopOnMap(it.id, it.latitude, it.longitude) }
+        onStopClick = { openStopSearchResult(it, onOpenStop) },
+        onShowOnMap = { onShowOnMap(it.id, it.latitude, it.longitude) }
     )
 }
 
 @Composable
-fun RouteSearchDestination(viewModel: SearchViewModel<RouteSearchResult>) {
-    val host = LocalContext.current.findActivity() as HomeActivity
+fun RouteSearchDestination(
+    viewModel: SearchViewModel<RouteSearchResult>,
+    onShowOnMap: (routeId: String) -> Unit,
+    onOpenRoute: (routeId: String) -> Unit,
+) {
+    val host = LocalContext.current.findActivity()
     RouteSearchContent(
         viewModel = viewModel,
-        onRouteClick = { host.openRouteSearchResult(it) },
-        onShowOnMap = { host.showRouteOnMap(it.id) },
+        onRouteClick = { openRouteSearchResult(it, onOpenRoute) },
+        onShowOnMap = { onShowOnMap(it.id) },
         onShowSchedule = { route -> route.url?.let { ExternalIntents.goToUrl(host, it) } },
         onCreateShortcut = { Shortcuts.createRouteShortcut(host, it.id, it.shortName) }
     )

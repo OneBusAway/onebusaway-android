@@ -17,6 +17,7 @@
 package org.onebusaway.android.report.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -83,12 +84,13 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.ArrivalsViewModelFactoryEntryPoint
+import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.io.ObaAnalytics
 import org.onebusaway.android.io.PlausibleAnalytics
 import org.onebusaway.android.report.ReportContext
 import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.report.toTripReportContext
-import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
@@ -135,7 +137,7 @@ fun InfrastructureIssueDestination(
     selectedService: String?,
     reportContext: ReportContext,
 ) {
-    val activity = LocalContext.current.findActivity() as HomeActivity
+    val activity = LocalContext.current.findActivity()
 
     // Entry-scoped map view model (distinct from HomeActivity's own; this is a separate back-stack
     // entry). A StopsMapViewModel: just the nearby-stops map surface (no route/vehicle/directions
@@ -357,7 +359,7 @@ private fun reconcileMarker(
  * the scalar trip context, and the agency/block ids all ride on the nav-arg now.
  */
 private fun createInfrastructureIssueViewModel(
-    activity: HomeActivity,
+    activity: AppCompatActivity,
     selectedService: String?,
     reportContext: ReportContext,
 ): InfrastructureIssueViewModel {
@@ -402,7 +404,6 @@ private fun StopTripProblemForm(
     onSubmit: ((() -> Unit)?) -> Unit,
 ) {
     val context = LocalContext.current
-    val activity = context.findActivity() as HomeActivity
     val vm: ProblemReportViewModel = viewModel(
         key = "problem:${arrival?.tripId ?: stop.id}",
         factory = viewModelFactory {
@@ -438,7 +439,7 @@ private fun StopTripProblemForm(
                 ).show()
             } else {
                 reportProblemAnalytics(context, form.kind)
-                vm.submit(activity.locationRepository.lastKnownLocation())
+                vm.submit(LocationEntryPoint.get(context).lastKnownLocation())
             }
         }
         onDispose { onSubmit(null) }
@@ -451,14 +452,14 @@ private fun StopTripProblemForm(
 @Composable
 private fun ArrivalsPickerInline(
     stop: ObaStop,
-    activity: HomeActivity,
+    activity: AppCompatActivity,
     issueViewModel: InfrastructureIssueViewModel,
 ) {
     val arrivalsViewModel: ArrivalsViewModel = viewModel(
         key = "picker:${stop.id}",
         factory = viewModelFactory {
             initializer {
-                activity.arrivalsViewModelFactory.create(stop.id, ignorePersistedFilter = true)
+                ArrivalsViewModelFactoryEntryPoint.get(activity).create(stop.id, ignorePersistedFilter = true)
             }
         },
     )

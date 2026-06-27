@@ -50,9 +50,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.ui.HomeActivity
-import org.onebusaway.android.ui.compose.findActivity
-import org.onebusaway.android.ui.nav.NavRoutes
 
 /**
  * Self-wiring donation feature module: collects [DonationViewModel] state, builds its callbacks, runs
@@ -61,7 +58,12 @@ import org.onebusaway.android.ui.nav.NavRoutes
  * places this with its ViewModel + whether the map's NEARBY tab is showing.
  */
 @Composable
-fun DonationFeature(viewModel: DonationViewModel, onNearby: Boolean, modifier: Modifier = Modifier) {
+fun DonationFeature(
+    viewModel: DonationViewModel,
+    onNearby: Boolean,
+    onLearnMore: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -76,8 +78,7 @@ fun DonationFeature(viewModel: DonationViewModel, onNearby: Boolean, modifier: M
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collect { effect ->
                 when (effect) {
-                    DonationEffect.OpenLearnMore ->
-                        (context.findActivity() as HomeActivity).navigateTo(NavRoutes.DONATION_LEARN_MORE)
+                    DonationEffect.OpenLearnMore -> onLearnMore()
                     DonationEffect.OpenDonatePage ->
                         context.startActivity(Application.getDonationsManager().buildOpenDonationsPageIntent())
                 }

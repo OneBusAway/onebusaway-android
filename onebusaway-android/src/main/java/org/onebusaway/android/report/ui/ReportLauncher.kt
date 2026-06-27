@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
+import androidx.appcompat.app.AppCompatActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -37,6 +38,7 @@ import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.app.di.LocationEntryPoint
+import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.io.ObaAnalytics
 import org.onebusaway.android.io.PlausibleAnalytics
 import org.onebusaway.android.io.elements.ObaRegion
@@ -113,7 +115,7 @@ object ReportLauncher {
  */
 @Composable
 fun ReportDestination(navController: NavController, reportContext: ReportContext) {
-    val activity = LocalContext.current.findActivity() as HomeActivity
+    val activity = LocalContext.current.findActivity()
     val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(activity) }
 
     // Whether the region needs validating: false → show the type list straight away. Computed once.
@@ -127,7 +129,7 @@ fun ReportDestination(navController: NavController, reportContext: ReportContext
     // "Is this your region?" gate (Tier 1: was RegionValidateDialog, a DialogFragment). Not cancelable
     // on outside touch; back leaves the report flow.
     if (needsValidation && !regionValidated) {
-        val region = remember { activity.regionRepository.region.value }
+        val region = remember { RegionEntryPoint.get(activity).region.value }
         AlertDialog(
             onDismissRequest = { navController.popBackStack() },
             properties = DialogProperties(dismissOnClickOutside = false),
@@ -165,7 +167,7 @@ fun ReportDestination(navController: NavController, reportContext: ReportContext
 }
 
 private fun onReportActionSelected(
-    activity: HomeActivity,
+    activity: AppCompatActivity,
     firebaseAnalytics: FirebaseAnalytics,
     navController: NavController,
     action: ReportAction,
@@ -212,7 +214,7 @@ private fun onReportActionSelected(
 }
 
 private fun sendAppFeedback(
-    activity: HomeActivity,
+    activity: AppCompatActivity,
     firebaseAnalytics: FirebaseAnalytics,
     locationString: String?
 ) {
@@ -231,7 +233,7 @@ private fun sendAppFeedback(
 }
 
 private fun reportEvent(
-    activity: HomeActivity,
+    activity: AppCompatActivity,
     firebaseAnalytics: FirebaseAnalytics,
     eventUrl: String,
     labelRes: Int
@@ -246,8 +248,8 @@ private fun reportEvent(
 }
 
 /** Don't re-validate a region the user already confirmed (skipped for the single-region brand). */
-private fun showValidateRegionDialog(activity: HomeActivity): Boolean {
-    val currentRegion: ObaRegion = activity.regionRepository.region.value ?: return false
+private fun showValidateRegionDialog(activity: AppCompatActivity): Boolean {
+    val currentRegion: ObaRegion = RegionEntryPoint.get(activity).region.value ?: return false
     val validatedRegionId = PreferenceUtils.getLong(ReportConstants.PREF_VALIDATED_REGION_ID, -1)
     val needsValidation = validatedRegionId == -1L || currentRegion.id != validatedRegionId
     if (!needsValidation) return false

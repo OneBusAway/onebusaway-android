@@ -93,10 +93,10 @@ fun SettingsRoute(
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
-                // BackupUtils restores the DB + toasts; then re-resolve the region on the home surface
-                // (raising the forced picker if it's ambiguous).
+                // BackupUtils restores the DB + toasts; then re-resolve the region (the restored data may
+                // imply a different one); the forced picker is raised reactively if it's ambiguous.
                 BackupUtils.restore(activity, uri) {
-                    (activity as? HomeActivity)?.refreshRegionsAfterRestore()
+                    viewModel.refreshRegionAfterRestore()
                 }
             }
         }

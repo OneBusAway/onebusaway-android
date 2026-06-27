@@ -23,39 +23,34 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.io.elements.ObaRegion
 
 /**
- * Which shared Home dialog is showing. The help / what's-new / legend dialogs are their own feature
- * module now (see [org.onebusaway.android.ui.home.help.HelpViewModel] / [org.onebusaway.android.ui.home.help.HelpFeature]); only the forced-choice region picker remains here.
+ * Renders the forced-choice region picker when [RegionPickerViewModel] reports the repository needs a manual
+ * selection. Hosted at the activity's setContent root (a sibling of the NavHost) so the dialog — which is in
+ * its own window — overlays whatever screen triggered the refresh (Home on cold launch, or the Advanced
+ * settings screen when the experimental-regions toggle forces a re-resolve).
  */
-sealed interface HomeDialog {
-    object None : HomeDialog
-
-    /** The forced-choice region picker (old ObaRegionsTask.haveUserChooseRegion), keyed by [regions]. */
-    data class ChooseRegion(val regions: List<ObaRegion>) : HomeDialog
-}
-
-/** Renders the shared Home dialogs, keyed by [HomeUiState.dialog] — just the region picker. */
 @Composable
-fun HomeDialogs(dialog: HomeDialog, onRegionChosen: (ObaRegion) -> Unit) {
-    when (dialog) {
-        is HomeDialog.ChooseRegion -> RegionChooserDialog(dialog.regions, onRegionChosen)
-        HomeDialog.None -> Unit
-    }
+fun RegionPickerHost() {
+    val viewModel: RegionPickerViewModel = hiltViewModel()
+    val regions by viewModel.picker.collectAsStateWithLifecycle()
+    regions?.let { RegionChooserDialog(it, viewModel::choose) }
 }
 
 /**
- * The forced-choice region picker (old ObaRegionsTask.haveUserChooseRegion): a non-dismissible
- * dialog of usable regions (pre-filtered + sorted by the repository). The user must pick one — there
- * is no cancel, and back/scrim do nothing, since the app can't function without a region.
+ * The forced-choice region picker (old ObaRegionsTask.haveUserChooseRegion): a non-dismissible dialog of
+ * usable regions (pre-filtered + sorted by the repository). The user must pick one — there is no cancel, and
+ * back/scrim do nothing, since the app can't function without a region.
  */
 @Composable
 private fun RegionChooserDialog(regions: List<ObaRegion>, onRegionChosen: (ObaRegion) -> Unit) {

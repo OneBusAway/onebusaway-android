@@ -111,9 +111,9 @@ class GoogleMapRenderer(
     // Distinct z-indexes are load-bearing: these markers overlap and extrapolate every frame, so a shared
     // z-index lets gms re-order them by latitude per frame — the overlapping icons' alpha then flickers.
     // The data-age dot also carries a live "N ago" body. Icons resolve lazily on first show.
-    private val vehicleEstimate = TripEstimateMarker({ vehicleEstimateIcon }, "Best estimate", VEHICLE_ESTIMATE_Z_INDEX)
-    private val fastEstimate = TripEstimateMarker({ fastEstimateIcon }, "Fast estimate", FAST_ESTIMATE_Z_INDEX)
-    private val dataAgeEstimate = TripEstimateMarker({ dataAgeIcon }, MOST_RECENT_DATA_TITLE, DATA_AGE_Z_INDEX)
+    private val vehicleEstimate = TripEstimateMarker({ vehicleEstimateIcon() }, "Best estimate", VEHICLE_ESTIMATE_Z_INDEX)
+    private val fastEstimate = TripEstimateMarker({ fastEstimateIcon() }, "Fast estimate", FAST_ESTIMATE_Z_INDEX)
+    private val dataAgeEstimate = TripEstimateMarker({ dataAgeIcon() }, MOST_RECENT_DATA_TITLE, DATA_AGE_Z_INDEX)
     // Smooths the most-recent-data dot to a fresh fix (it's static between fixes). Tracks the dot's current
     // selection + fix so we only move / refresh on an actual change or while settling — never while its
     // bubble is open longer than the settle.
@@ -139,6 +139,13 @@ class GoogleMapRenderer(
             BitmapDescriptorFactory.fromResource(R.drawable.ic_navigation_expand_more)
         ).build()
     }
+
+    // Wraps each distinct marker icon in a BitmapDescriptor exactly once, keyed by a stable logical id, so
+    // the reconcile path reuses descriptors (and skips the bitmap decode/tint entirely) instead of minting
+    // a fresh native texture on each heading-octant change at ~20Hz. Released in [dispose]. See
+    // [BitmapDescriptorCache] for the logical-key/bounding rationale.
+    private val descriptorCache =
+        BitmapDescriptorCache(DESCRIPTOR_CACHE_SIZE) { BitmapDescriptorFactory.fromBitmap(it) }
 
     // Remove only our own static annotations (not map.clear(), which would also wipe the per-frame
     // dynamic layer) and clear their tap-routing maps. Shared by [renderStatic] (before it redraws) and
@@ -174,7 +181,7 @@ class GoogleMapRenderer(
                 map.addMarker(
                     MarkerOptions()
                         .position(stop.point.toLatLng())
-                        .icon(if (stop.selected) tripStopSelectedIcon else tripStopIcon)
+                        .icon(tripStopIcon(stop.selected))
                         .anchor(0.5f, 0.5f)
                         .flat(true)
                         .zIndex(1f)
@@ -254,6 +261,11 @@ class GoogleMapRenderer(
         vehicleEstimate.dispose()
         fastEstimate.dispose()
         dataAgeEstimate.dispose()
+
+        // Drop our wrapped descriptors so their native textures are released once the markers using them
+        // are gone. (The source bitmaps are owned by the shared static caches and are deliberately not
+        // recycled here — other renderer instances / the maplibre flavor reuse them.)
+        descriptorCache.clear()
     }
 
     /**
@@ -326,7 +338,7 @@ class GoogleMapRenderer(
             val marker = map.addMarker(
                 MarkerOptions()
                     .position(target.toLatLng())
-                    .icon(dataAgeIcon)
+                    .icon(dataAgeIcon())
                     .anchor(0.5f, 0.5f)
                     .zIndex(0.5f)
                     .title(MOST_RECENT_DATA_TITLE)
@@ -396,7 +408,9 @@ class GoogleMapRenderer(
     }
 
     private fun vehicleIcon(vehicle: VehicleMarker, response: ObaTripsForRouteResponse): BitmapDescriptor =
-        BitmapDescriptorFactory.fromBitmap(VehicleBitmaps.vehicleBitmap(context, vehicle, response))
+        descriptorCache.get(VehicleBitmaps.iconKey(vehicle, response)) {
+            VehicleBitmaps.vehicleBitmap(context, vehicle, response)
+        }
 
     private fun vehicleTitle(vehicle: VehicleMarker, response: ObaTripsForRouteResponse): String {
         val trip = response.getTrip(vehicle.status.activeTripId)
@@ -489,24 +503,23 @@ class GoogleMapRenderer(
         fun dispose() = update(null, 0L, 0L)
     }
 
-    private val vehicleEstimateIcon: BitmapDescriptor by lazy {
-        BitmapDescriptorFactory.fromBitmap(TripMarkerBitmaps.circle(context, R.drawable.ic_vehicle_position))
-    }
-    private val fastEstimateIcon: BitmapDescriptor by lazy {
-        BitmapDescriptorFactory.fromBitmap(TripMarkerBitmaps.circle(context, R.drawable.ic_fast_estimate))
-    }
+    // The trip-focus icons, cached through [descriptorCache] by a stable per-icon key so each resolves
+    // lazily on first show and reuses one descriptor thereafter (released, with the rest, in [dispose]).
+    private fun vehicleEstimateIcon() = tripCircleIcon(R.drawable.ic_vehicle_position)
+
+    private fun fastEstimateIcon() = tripCircleIcon(R.drawable.ic_fast_estimate)
+
     // The signal glyph is light, so tint it gray to read on the white disc.
-    private val dataAgeIcon: BitmapDescriptor by lazy {
-        BitmapDescriptorFactory.fromBitmap(
-            TripMarkerBitmaps.circle(context, R.drawable.ic_signal_indicator, TripMarkerBitmaps.STROKE_COLOR)
-        )
-    }
-    private val tripStopIcon: BitmapDescriptor by lazy {
-        BitmapDescriptorFactory.fromBitmap(TripStopBitmaps.dot(selected = false))
-    }
-    private val tripStopSelectedIcon: BitmapDescriptor by lazy {
-        BitmapDescriptorFactory.fromBitmap(TripStopBitmaps.dot(selected = true))
-    }
+    private fun dataAgeIcon() =
+        tripCircleIcon(R.drawable.ic_signal_indicator, TripMarkerBitmaps.STROKE_COLOR)
+
+    private fun tripCircleIcon(drawableRes: Int, tintColor: Int = 0): BitmapDescriptor =
+        descriptorCache.get("circle:$drawableRes:$tintColor") {
+            TripMarkerBitmaps.circle(context, drawableRes, tintColor)
+        }
+
+    private fun tripStopIcon(selected: Boolean) =
+        descriptorCache.get("stop:$selected") { TripStopBitmaps.dot(selected) }
 
     fun stopForMarker(marker: Marker): StopMarker? = stopByMarker[marker]
 
@@ -537,6 +550,12 @@ class GoogleMapRenderer(
         private const val ESTIMATE_EASE_KEY = "estimate"
 
         private const val MOST_RECENT_DATA_TITLE = "Most recent data"
+
+        // Comfortably covers a busy route's live working set — a vehicle type's 8 heading octants across a
+        // handful of schedule-deviation colors, times a few route types, plus the 5 fixed trip-focus icons
+        // — so descriptors are reused as vehicles turn, not thrashed. Bounded so a long, varied session
+        // can't grow it without limit (evicting a still-shown icon just re-wraps it on next request).
+        private const val DESCRIPTOR_CACHE_SIZE = 256
     }
 }
 

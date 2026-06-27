@@ -299,10 +299,8 @@
     <string name="all_alert_hidden_snackbar_text">Tutti gli avvisi sono ora nascosti</string>
     <string name="alert_hidden_snackbar_action">ANNULLA</string>
     <plurals name="alert_filter_text">
-        <item quantity="one">Hai %1$d avviso attivo nascosto</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">
-            Hai <xliff:g id="count">%1$d</xliff:g> avvisi attivi nascosti</item>
+        <item quantity="one">%1$d avviso nascosto</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g> avvisi nascosti</item>
     </plurals>
 
     <!-- Find -->

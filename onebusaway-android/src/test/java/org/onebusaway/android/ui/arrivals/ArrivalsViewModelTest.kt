@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.arrivals
 
 import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -110,8 +111,10 @@ private class FakeArrivalsRepository(
 @OptIn(ExperimentalCoroutinesApi::class)
 class ArrivalsViewModelTest {
 
+    // Unconfined so the derived `state` (a stateIn combine) recomputes eagerly — tests read
+    // `state.value` synchronously right after an action, with no advanceUntilIdle in between.
     @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    val mainDispatcherRule = MainDispatcherRule(UnconfinedTestDispatcher())
 
     private fun header(favorite: Boolean = false) =
         StopHeader("1_100", "Pine St & 3rd Ave", "S", favorite, routeCount = 4)
@@ -125,8 +128,8 @@ class ArrivalsViewModelTest {
             isStale = isStale,
             effectiveRouteFilter = emptySet(),
             actions = emptyMap(),
-            alerts = emptyList(),
-            hiddenAlertCount = 0,
+            activeAlerts = emptyList(),
+            dbHiddenIds = emptySet(),
             routeFilterOptions = emptyList(),
             filteredRouteCount = 0,
             stopCode = null,
@@ -317,7 +320,7 @@ class ArrivalsViewModelTest {
     @Test
     fun `hideAllAlerts hides the currently shown alerts`() = runTest {
         val withAlerts = data().copy(
-            alerts = listOf(AlertItem("a1", "Reduced service", AlertSeverity.WARNING))
+            activeAlerts = listOf(AlertItem("a1", "Reduced service", AlertSeverity.WARNING))
         )
         val repository = FakeArrivalsRepository(Result.success(withAlerts))
         val viewModel = ArrivalsViewModel("1_100", false, repository)
@@ -327,6 +330,49 @@ class ArrivalsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(listOf("a1"), repository.hiddenAlertIds)
+    }
+
+    @Test
+    fun `hideAlert removes it from the shown list reactively, without re-fetching`() = runTest {
+        val withAlerts = data().copy(
+            activeAlerts = listOf(
+                AlertItem("a1", "Reduced service", AlertSeverity.WARNING),
+                AlertItem("a2", "Detour", AlertSeverity.INFO)
+            )
+        )
+        val repository = FakeArrivalsRepository(Result.success(withAlerts))
+        val viewModel = ArrivalsViewModel("1_100", false, repository)
+        viewModel.refresh()
+        assertEquals(2, (viewModel.state.value as ArrivalsUiState.Content).alerts.size)
+
+        viewModel.hideAlert("a1")
+
+        // The shown list and hidden count update from the hidden-id source — no second load.
+        val content = viewModel.state.value as ArrivalsUiState.Content
+        assertEquals(listOf("a2"), content.alerts.map { it.id })
+        assertEquals(1, content.hiddenAlertCount)
+        assertEquals(1, repository.requestedMinutesAfter.size)
+    }
+
+    @Test
+    fun `showHiddenAlerts reveals hidden alerts reactively, without re-fetching`() = runTest {
+        val withHidden = data().copy(
+            activeAlerts = listOf(AlertItem("a1", "Reduced service", AlertSeverity.WARNING)),
+            dbHiddenIds = setOf("a1")
+        )
+        val repository = FakeArrivalsRepository(Result.success(withHidden))
+        val viewModel = ArrivalsViewModel("1_100", false, repository)
+        viewModel.refresh()
+        // Seeded as hidden from the DB: shown empty, counted hidden.
+        assertEquals(0, (viewModel.state.value as ArrivalsUiState.Content).alerts.size)
+        assertEquals(1, (viewModel.state.value as ArrivalsUiState.Content).hiddenAlertCount)
+
+        viewModel.showHiddenAlerts()
+
+        val content = viewModel.state.value as ArrivalsUiState.Content
+        assertEquals(listOf("a1"), content.alerts.map { it.id })
+        assertEquals(0, content.hiddenAlertCount)
+        assertEquals(1, repository.requestedMinutesAfter.size)
     }
 
     @Test

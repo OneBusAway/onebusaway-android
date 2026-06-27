@@ -26,6 +26,7 @@ import kotlinx.coroutines.withContext
 import org.onebusaway.android.io.ObaApi
 import org.onebusaway.android.io.elements.ObaSituation
 import org.onebusaway.android.io.elements.ObaStop
+import org.onebusaway.android.io.elements.contentKey
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse
 import org.onebusaway.android.io.request.ObaRouteRequest
@@ -40,6 +41,12 @@ import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.SituationUtils
 import org.onebusaway.android.util.getRouteDisplayName
 
+/**
+ * Collapses situations that present identically to the rider (by [contentKey]), keeping the first
+ * occurrence — how republished-duplicate alerts are folded into one row (see #1593).
+ */
+private fun List<ObaSituation>.dedupeByContent(): List<ObaSituation> = distinctBy { it.contentKey }
+
 /** A loaded snapshot of a stop's arrivals plus the header, actions, alerts, and filter data. */
 data class ArrivalsData(
     val arrivals: List<ArrivalInfo>,
@@ -51,8 +58,13 @@ data class ArrivalsData(
     /** The route filter actually applied (loaded from the provider when the caller passed null). */
     val effectiveRouteFilter: Set<String>,
     val actions: Map<String, ArrivalActions>,
-    val alerts: List<AlertItem>,
-    val hiddenAlertCount: Int,
+    /** Every active, de-duplicated alert for the stop — *including* hidden ones. The ViewModel
+     *  derives the shown list and hidden count by combining this with the reactive hidden-id set,
+     *  so hiding/un-hiding updates the UI without a re-fetch. */
+    val activeAlerts: List<AlertItem>,
+    /** The subset of [activeAlerts] ids currently hidden in the DB (incl. the "hide all alerts"
+     *  preference's auto-hide), used to seed the ViewModel's hidden-id source on each load. */
+    val dbHiddenIds: Set<String>,
     val routeFilterOptions: List<RouteFilterOption>,
     val filteredRouteCount: Int,
     val stopCode: String?,
@@ -205,7 +217,7 @@ class DefaultArrivalsRepository @Inject constructor(
             routeCount = stop?.routeIds?.size ?: 0
         )
         val routeOptions = buildRouteFilterOptions(response, stop, routeFilter)
-        val (alerts, hiddenAlertCount) = buildAlerts(response, routeFilter, now)
+        val (activeAlerts, dbHiddenIds) = buildActiveAlerts(response, routeFilter, now)
         return ArrivalsData(
             arrivals = arrivals,
             header = header,
@@ -214,8 +226,8 @@ class DefaultArrivalsRepository @Inject constructor(
             isStale = isStale,
             effectiveRouteFilter = routeFilter,
             actions = buildActions(response, arrivals),
-            alerts = alerts,
-            hiddenAlertCount = hiddenAlertCount,
+            activeAlerts = activeAlerts,
+            dbHiddenIds = dbHiddenIds,
             routeFilterOptions = routeOptions,
             filteredRouteCount = routeFilter.size,
             stopCode = stop?.stopCode,
@@ -246,26 +258,31 @@ class DefaultArrivalsRepository @Inject constructor(
         )
     }
 
-    /** Ports ArrivalsListFragment.refreshSituations: persist, then keep active + non-hidden. */
-    private fun buildAlerts(
+    /**
+     * Builds the stop's active alerts (the deduped, in-window representatives — see #1593) and the
+     * subset currently hidden in the DB. The hidden subset is returned rather than filtered out so
+     * the ViewModel owns the shown/hidden split reactively; this just records and reports DB state.
+     */
+    private fun buildActiveAlerts(
         response: ObaArrivalInfoResponse,
         routeFilter: Set<String>,
         now: Long
-    ): Pair<List<AlertItem>, Int> {
-        val situations = SituationUtils.getAllSituations(response, ArrayList(routeFilter))
-        if (situations.isEmpty()) return emptyList<AlertItem>() to 0
-        val active = mutableListOf<AlertItem>()
-        var hiddenCount = 0
-        for (situation in situations) {
-            // Make sure this situation is recorded so read/hidden state can be tracked
-            ObaContract.ServiceAlerts.insertOrUpdate(situation.id, ContentValues(), false, null)
-            val isHidden = ObaContract.ServiceAlerts.isHidden(situation.id)
-            if (SituationUtils.isActiveWindowForSituation(situation, now) && !isHidden) {
-                active.add(AlertItem(situation.id, situation.summary.orEmpty(), severityOf(situation.severity)))
-            }
-            if (isHidden) hiddenCount++
+    ): Pair<List<AlertItem>, Set<String>> {
+        // Some feeds republish the same alert under new ids/active windows; collapse the duplicates
+        // to one representative first, then record + classify only those. Recording a duplicate id
+        // that's immediately collapsed would just be a wasted DB write.
+        val active = SituationUtils.getAllSituations(response, ArrayList(routeFilter))
+            .dedupeByContent()
+            .filter { SituationUtils.isActiveWindowForSituation(it, now) }
+        active.forEach {
+            // Record so read/hidden state is tracked (and auto-hidden when the "hide all alerts"
+            // preference is on).
+            ObaContract.ServiceAlerts.insertOrUpdate(it.id, ContentValues(), false, null)
         }
-        return active to hiddenCount
+        val alerts = active.map { AlertItem(it.id, it.summary.orEmpty(), severityOf(it.severity)) }
+        val hiddenIds = active.filter { ObaContract.ServiceAlerts.isHidden(it.id) }
+            .mapTo(mutableSetOf()) { it.id }
+        return alerts to hiddenIds
     }
 
     private fun buildRouteFilterOptions(

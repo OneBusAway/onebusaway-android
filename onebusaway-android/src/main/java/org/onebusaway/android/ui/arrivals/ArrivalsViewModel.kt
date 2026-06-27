@@ -25,9 +25,13 @@ import org.onebusaway.android.io.request.ObaArrivalInfoResponse
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -63,8 +67,31 @@ class ArrivalsViewModel @AssistedInject constructor(
         fun create(stopId: String, ignorePersistedFilter: Boolean): ArrivalsViewModel
     }
 
-    private val _state = MutableStateFlow<ArrivalsUiState>(ArrivalsUiState.Loading)
-    val state: StateFlow<ArrivalsUiState> = _state.asStateFlow()
+    // --- Reactive state sources. The UI [state] is derived from these, so a user action updates the
+    // screen by mutating a source rather than imperatively recomputing and assigning the state. -----
+
+    /** The latest fetched snapshot (null until the first load). */
+    private val loaded = MutableStateFlow<ArrivalsData?>(null)
+
+    /** Which alert ids are hidden — seeded from the DB on each load and mutated optimistically by the
+     *  hide/show actions (which persist to the DB as a side effect). The shown/hidden alert split is
+     *  derived from this, so hiding or un-hiding an alert needs no re-fetch. It must be a separate
+     *  source (not folded into [loaded]) because session hides have to survive across loads; the
+     *  optimistic favorite, which doesn't, is just edited into [loaded] in place. */
+    private val hiddenIds = MutableStateFlow<Set<String>>(emptySet())
+
+    /** Set only when a load fails with nothing to show; cleared by any successful load. */
+    private val fatalError = MutableStateFlow<String?>(null)
+
+    /** The UI state: the fetched [loaded] snapshot projected through the [hiddenIds] override. */
+    val state: StateFlow<ArrivalsUiState> =
+        combine(loaded, hiddenIds, fatalError) { data, hidden, error ->
+            when {
+                data != null -> data.toContent(hidden)
+                error != null -> ArrivalsUiState.Error(error)
+                else -> ArrivalsUiState.Loading
+            }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, ArrivalsUiState.Loading)
 
     /**
      * Emits the raw response after each successful load. The map panel uses this to recenter the
@@ -110,13 +137,21 @@ class ArrivalsViewModel @AssistedInject constructor(
                 minutesAfter = data.minutesAfter
                 routeFilter = data.effectiveRouteFilter
                 filterLoaded = true
-                _state.value = data.toContent()
+                // Hidden-alert state lives in two places: the service_alerts DB (the persisted truth,
+                // incl. the "hide all alerts" preference auto-hide) and [hiddenIds] (the reactive
+                // source). We reconcile on each load: union in the DB's hides, keep any session hides
+                // whose write-through hasn't landed yet, and prune ids that are gone. (A deeper design
+                // would observe the provider URI as a flow and drop this in-memory mirror entirely.)
+                // Update before publishing [loaded] so the derived state never flashes the new alerts
+                // against a stale hidden set.
+                val activeIds = data.activeAlerts.mapTo(mutableSetOf()) { it.id }
+                hiddenIds.update { (it + data.dbHiddenIds) intersect activeIds }
+                fatalError.value = null
+                loaded.value = data
                 repository.lastResponse()?.let { _responses.tryEmit(it) }
             },
             onFailure = { error ->
-                if (_state.value !is ArrivalsUiState.Content) {
-                    _state.value = ArrivalsUiState.Error(error.message.orEmpty())
-                }
+                if (loaded.value == null) fatalError.value = error.message.orEmpty()
             }
         )
     }
@@ -132,12 +167,14 @@ class ArrivalsViewModel @AssistedInject constructor(
         viewModelScope.launch { refresh() }
     }
 
-    /** Toggles the stop favorite, updating the header optimistically and persisting. */
+    /** Toggles the stop favorite, updating the header optimistically and persisting. The optimistic
+     *  flag is edited straight into [loaded] (the next load overwrites it with the persisted value),
+     *  so unlike [hiddenIds] it needs no separate override source. */
     fun toggleFavorite() {
-        val content = _state.value as? ArrivalsUiState.Content ?: return
-        val newValue = !content.header.isFavorite
-        _state.value = content.copy(header = content.header.copy(isFavorite = newValue))
-        viewModelScope.launch { repository.setStopFavorite(content.header.stopId, newValue) }
+        val data = loaded.value ?: return
+        val newValue = !data.header.isFavorite
+        loaded.value = data.copy(header = data.header.copy(isFavorite = newValue))
+        viewModelScope.launch { repository.setStopFavorite(data.header.stopId, newValue) }
     }
 
     /** Opens the route-favorite dialog for [actions] (the per-arrival "favorite route" tap). */
@@ -209,22 +246,29 @@ class ArrivalsViewModel @AssistedInject constructor(
         setRouteFilter(emptySet())
     }
 
+    /** Hides a single alert (the row's swipe-to-hide gesture). */
+    fun hideAlert(id: String) {
+        hiddenIds.update { it + id }
+        persistHidden(listOf(id))
+    }
+
     /** Hides every currently shown alert (the toolbar "hide alerts" action). */
     fun hideAllAlerts() {
-        val ids = (_state.value as? ArrivalsUiState.Content)?.alerts?.map { it.id } ?: return
+        val ids = loaded.value?.activeAlerts?.map { it.id }.orEmpty()
         if (ids.isEmpty()) return
-        viewModelScope.launch {
-            repository.hideAlerts(ids)
-            refresh()
-        }
+        hiddenIds.update { it + ids }
+        persistHidden(ids)
     }
 
     /** Un-hides every alert (the "show hidden alerts" affordance). */
     fun showHiddenAlerts() {
-        viewModelScope.launch {
-            repository.showAllAlerts()
-            refresh()
-        }
+        hiddenIds.value = emptySet()
+        viewModelScope.launch { repository.showAllAlerts() }
+    }
+
+    /** Persists the hidden flag for [ids] off the UI path — the screen already reacted to [hiddenIds]. */
+    private fun persistHidden(ids: List<String>) {
+        viewModelScope.launch { repository.hideAlerts(ids) }
     }
 
     /** The full situation for an alert id, for the alert dialog (read from the last good response). */
@@ -233,20 +277,25 @@ class ArrivalsViewModel @AssistedInject constructor(
     /** The last good response, for the report-flow picker to resolve agency/block from refs. */
     fun lastResponse(): ObaArrivalInfoResponse? = repository.lastResponse()
 
-    private fun ArrivalsData.toContent() = ArrivalsUiState.Content(
-        header = header,
-        arrivals = arrivals,
-        minutesAfter = minutesAfter,
-        style = style,
-        isStale = isStale,
-        actions = actions,
-        alerts = alerts,
-        hiddenAlertCount = hiddenAlertCount,
-        routeFilterOptions = routeFilterOptions,
-        filteredRouteCount = filteredRouteCount,
-        stopCode = stopCode,
-        stopLat = stopLat,
-        stopLon = stopLon,
-        stopUserName = stopUserName
-    )
+    /** Projects a fetched snapshot through the [hidden] set, which splits [activeAlerts] into the
+     *  shown list and the hidden count. */
+    private fun ArrivalsData.toContent(hidden: Set<String>): ArrivalsUiState.Content {
+        val shown = activeAlerts.filterNot { it.id in hidden }
+        return ArrivalsUiState.Content(
+            header = header,
+            arrivals = arrivals,
+            minutesAfter = minutesAfter,
+            style = style,
+            isStale = isStale,
+            actions = actions,
+            alerts = shown,
+            hiddenAlertCount = activeAlerts.size - shown.size,
+            routeFilterOptions = routeFilterOptions,
+            filteredRouteCount = filteredRouteCount,
+            stopCode = stopCode,
+            stopLat = stopLat,
+            stopLon = stopLon,
+            stopUserName = stopUserName
+        )
+    }
 }

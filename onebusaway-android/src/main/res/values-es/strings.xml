@@ -343,12 +343,8 @@
     <string name="alert_hidden_snackbar_action">DESHACER</string>
     <string name="all_alert_hidden_snackbar_text">Todas las alertas están ahora ocultas</string>
     <plurals name="alert_filter_text">
-        <item quantity="one">%1$d alerta activa está oculta</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">
-            <xliff:g id="count">%1$d</xliff:g>
-            alertas activas están ocultas
-        </item>
+        <item quantity="one">%1$d alerta oculta</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g> alertas ocultas</item>
     </plurals>
 
     <!-- Find -->

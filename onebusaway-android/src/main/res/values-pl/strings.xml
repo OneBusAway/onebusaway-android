@@ -351,12 +351,11 @@
     <string name="alert_hidden_snackbar_text">Alert jest teraz ukryty</string>
     <string name="all_alert_hidden_snackbar_text">Wszystkie alerty są teraz ukryte</string>
     <string name="alert_hidden_snackbar_action">COFNIJ</string>
-    <plurals name="alert_filter_text" tools:ignore="MissingQuantity">
-        <item quantity="one">%1$d aktywny alert jest ukryty</item>
-        <item quantity="other">
-            <xliff:g id="count">%1$d</xliff:g>
-            aktywnych alertów jest ukrytych
-        </item>
+    <plurals name="alert_filter_text">
+        <item quantity="one">%1$d ukryty alert</item>
+        <item quantity="few"><xliff:g id="count">%1$d</xliff:g> ukryte alerty</item>
+        <item quantity="many"><xliff:g id="count">%1$d</xliff:g> ukrytych alertów</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g> ukrytych alertów</item>
     </plurals>
 
     <!-- Find -->

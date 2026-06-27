@@ -15,6 +15,10 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +27,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -34,6 +40,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
@@ -46,15 +53,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,6 +98,10 @@ import org.onebusaway.android.ui.compose.components.LoadingContent
 
 /** Refresh interval matching the legacy ArrivalsListFragment (fixed 60s, not the server value). */
 private const val REFRESH_PERIOD_MS = 60_000L
+
+/** How many service alerts the alert list shows before the "show more" link, and the page size each
+ *  tap reveals — keeps a busy alert feed from crowding out the arrivals. */
+private const val ALERT_PAGE_SIZE = 3
 
 /**
  * The lifecycle-scoped 60s polling loop, shared by the standalone screen and the map panel.
@@ -137,6 +153,7 @@ interface ArrivalActionHandler {
     fun onShowRouteSchedule(scheduleUrl: String)
     fun onReportArrivalProblem(actions: ArrivalActions)
     fun onShowAlert(alertId: String)
+    fun onHideAlert(alertId: String)
     fun onShowStopDetails()
     fun onReportStopProblem()
 }
@@ -425,23 +442,42 @@ internal fun ArrivalsList(
         // Until the drawer leaves its peek, emit only the leading peek rows; the rest stays out of
         // composition so it can't peek through the collapsed sheet fold, then reveals with the drag.
         if (showFullList) {
-            items(content.alerts, key = { "alert:${it.id}" }) { alert ->
-                AlertRow(alert) { handler.onShowAlert(alert.id) }
+            if (content.alerts.isNotEmpty()) {
+                item(key = "alerts") {
+                    AlertList(
+                        alerts = content.alerts,
+                        onShowAlert = handler::onShowAlert,
+                        onHideAlert = handler::onHideAlert
+                    )
+                }
             }
             if (content.hiddenAlertCount > 0) {
                 item(key = "hidden_alerts") {
-                    TextButton(
-                        onClick = onShowHiddenAlerts,
+                    // A muted, secondary footnote (not a peer to the alert list's "more" button):
+                    // the eye-off icon conveys "hidden", tapping reveals them again.
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp)
+                            .heightIn(min = 48.dp)
+                            .clickable(onClick = onShowHiddenAlerts)
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_visibility_off),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
                         Text(
-                            pluralStringResource(
+                            text = pluralStringResource(
                                 R.plurals.alert_filter_text,
                                 content.hiddenAlertCount,
                                 content.hiddenAlertCount
-                            )
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -493,6 +529,84 @@ internal fun ArrivalsList(
                     Text(stringResource(R.string.stop_info_load_more_arrivals))
                 }
             }
+        }
+    }
+}
+
+/**
+ * The stop's service alerts, capped at [ALERT_PAGE_SIZE] rows with a paged "show more" link that
+ * reveals the next page each tap — mirrors the arrivals list's "load more" so a busy alert feed
+ * can't crowd out the arrivals. Each row is right-swipe-to-hide. Paging state is local and persists
+ * across the 60s refresh; it resets only when the list leaves composition.
+ */
+@Composable
+private fun AlertList(
+    alerts: List<AlertItem>,
+    onShowAlert: (String) -> Unit,
+    onHideAlert: (String) -> Unit
+) {
+    var visibleCount by rememberSaveable { mutableStateOf(ALERT_PAGE_SIZE) }
+    val visible = alerts.take(visibleCount)
+    Column {
+        for (alert in visible) {
+            // Key the swipe state to the alert so it tracks the row (not the slot) across refreshes.
+            key(alert.id) {
+                SwipeToHide(onHide = { onHideAlert(alert.id) }) {
+                    AlertRow(alert) { onShowAlert(alert.id) }
+                }
+            }
+        }
+        if (visible.size < alerts.size) {
+            val remaining = alerts.size - visible.size
+            TextButton(
+                onClick = { visibleCount += ALERT_PAGE_SIZE },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+            ) {
+                Text(pluralStringResource(R.plurals.alert_show_more, remaining, remaining))
+                Spacer(Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Filled.KeyboardArrowDown,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Wraps [content] so a right-swipe (start-to-end) slides it fully off, then collapses the empty
+ * space, invoking [onHide] once the collapse finishes (so the list below glides up instead of
+ * jumping). Left-swipe is disabled, and there's no swipe-behind affordance — a hidden alert is
+ * recovered from the "show hidden alerts" link below the list.
+ */
+@Composable
+private fun SwipeToHide(onHide: () -> Unit, content: @Composable () -> Unit) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { it == SwipeToDismissBoxValue.StartToEnd }
+    )
+    val rowVisible = remember { MutableTransitionState(true) }
+    // Once the row settles in the dismissed position, start the collapse.
+    LaunchedEffect(dismissState.currentValue) {
+        if (dismissState.currentValue == SwipeToDismissBoxValue.StartToEnd) {
+            rowVisible.targetState = false
+        }
+    }
+    // Commit the hide only after the collapse animation has fully finished.
+    LaunchedEffect(rowVisible.isIdle) {
+        if (rowVisible.isIdle && !rowVisible.currentState) onHide()
+    }
+    AnimatedVisibility(visibleState = rowVisible, exit = fadeOut() + shrinkVertically()) {
+        SwipeToDismissBox(
+            state = dismissState,
+            enableDismissFromStartToEnd = true,
+            enableDismissFromEndToStart = false,
+            // No swipe-behind content: the row slides off into empty space.
+            backgroundContent = {}
+        ) {
+            content()
         }
     }
 }

@@ -121,6 +121,10 @@ fun createArrivalActionHandler(
         )
     }
 
+    override fun onHideAlert(alertId: String) {
+        viewModel.hideAlert(alertId)
+    }
+
     override fun onShowStopDetails() {
         // Pure ViewModel operation now: the dialog is Compose ([StopDetailsHost]).
         viewModel.requestStopDetails()

@@ -91,7 +91,11 @@ sealed interface ArrivalsUiState {
         val stopLat: Double = 0.0,
         val stopLon: Double = 0.0,
         val stopUserName: String? = null
-    ) : ArrivalsUiState
+    ) : ArrivalsUiState {
+        /** True when the stop has any service alert at all — shown *or* hidden — so the header keeps
+         *  its alert icon even after the rider hides every alert. */
+        val hasAlerts: Boolean get() = alerts.isNotEmpty() || hiddenAlertCount > 0
+    }
 
     data class Error(val message: String) : ArrivalsUiState
 }

@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.onebusaway.android.io.elements.ObaTripSchedule
 import org.onebusaway.android.io.request.ObaTripDetailsResponse
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse
@@ -39,9 +40,13 @@ class TripObservationRepositoryTest {
 
     /** A fetcher whose trip-details call counts invocations and returns whatever [details] yields. */
     private class FakeFetcher(
-            private val details: () -> ObaTripDetailsResponse? = { null }
+            private val details: () -> ObaTripDetailsResponse? = { null },
+            /** Resolves a shapeId to its polyline; null (the default) means "no shape". */
+            private val shapeFor: (String) -> Polyline? = { null }
     ) : TripObservationFetcher {
         var tripDetailsCalls = 0
+            private set
+        var shapeCalls = 0
             private set
 
         override suspend fun tripDetails(tripId: String): ObaTripDetailsResponse? {
@@ -53,7 +58,10 @@ class TripObservationRepositoryTest {
 
         override suspend fun tripSchedule(tripId: String): ObaTripSchedule? = null
 
-        override suspend fun shape(shapeId: String): Polyline? = null
+        override suspend fun shape(shapeId: String): Polyline? {
+            shapeCalls++
+            return shapeFor(shapeId)
+        }
     }
 
     @Test
@@ -89,6 +97,31 @@ class TripObservationRepositoryTest {
         advanceTimeBy(100_000)
         assertEquals("no polling after the collector is cancelled", 1, fetcher.tripDetailsCalls)
     }
+
+    @Test
+    fun `ensureShape fetches a shape once and shares the instance across trips on the same route`() =
+            runTest {
+                val shape = Polyline(emptyList())
+                val fetcher = FakeFetcher(shapeFor = { shape })
+                val repo = DefaultTripObservationRepository(fetcher)
+
+                val first = repo.ensureShape("tripA", "shape1")
+                val second = repo.ensureShape("tripB", "shape1")
+
+                assertEquals("the shared shape is fetched only once", 1, fetcher.shapeCalls)
+                assertSame("both trips resolve to the same instance", shape, first)
+                assertSame("the second trip reuses the cached instance", shape, second)
+                assertSame(
+                        "the shared instance is recorded on the first trip",
+                        shape,
+                        repo.lookupTripState("tripA")?.polyline
+                )
+                assertSame(
+                        "the shared instance is recorded on the second trip",
+                        shape,
+                        repo.lookupTripState("tripB")?.polyline
+                )
+            }
 
     @Test
     fun `failed fetches are never emitted`() = runTest {

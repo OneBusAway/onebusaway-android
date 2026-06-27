@@ -80,7 +80,9 @@ interface TripObservationRepository {
 
     /**
      * Returns the trip's polyline, fetching and recording it when absent. Shared by the route
-     * backfill and the trip map's on-demand activation.
+     * backfill and the trip map's on-demand activation. Trips on the same route share one shapeId,
+     * so the resolved [Polyline] is deduplicated by shape: every such trip records the same instance
+     * rather than its own copy.
      */
     suspend fun ensureShape(tripId: String, shapeId: String): Polyline?
 }
@@ -91,6 +93,7 @@ class DefaultTripObservationRepository @Inject constructor(
 ) : TripObservationRepository {
 
     private val cache = TripStateCache()
+    private val shapeCache = ShapeCache()
 
     override fun lookupTripState(tripId: String?): TripState? = cache.lookupTripState(tripId)
 
@@ -125,9 +128,16 @@ class DefaultTripObservationRepository @Inject constructor(
                 }
             }
 
-    override suspend fun ensureShape(tripId: String, shapeId: String): Polyline? =
-            cache.lookupTripState(tripId)?.polyline
-                    ?: fetcher.shape(shapeId)?.also { cache.putPolyline(tripId, it) }
+    override suspend fun ensureShape(tripId: String, shapeId: String): Polyline? {
+        // The trip already carries its shape — nothing to fetch or hydrate.
+        cache.lookupTripState(tripId)?.polyline?.let { return it }
+        // Reuse the shape shared by every trip on this route, fetching it once on the first miss.
+        // Concurrent first-misses coalesce in the fetcher's SingleFlight and resolve to the same
+        // instance, so they store the same Polyline here too.
+        val polyline = shapeCache.get(shapeId)
+                ?: fetcher.shape(shapeId)?.also { shapeCache.put(shapeId, it) }
+        return polyline?.also { cache.putPolyline(tripId, it) }
+    }
 
     /** Records everything a trip details response carries: response, schedule, service date, status. */
     private fun recordTripDetails(tripId: String, response: ObaTripDetailsResponse) {

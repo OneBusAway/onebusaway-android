@@ -54,7 +54,8 @@ import org.onebusaway.android.ui.home.PaymentWarningDialog
 import org.onebusaway.android.ui.home.RegionPickerHost
 import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavRoutes
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.PermissionUtils
@@ -77,8 +78,10 @@ class HomeActivity : AppCompatActivity() {
     // shortcuts) to this Activity before/around the composition, so they're surfaced here for the NavHost's
     // [LaunchIntentEffect] to translate (via IntentRouteMapper) and open once composed. Seeded on a fresh
     // launch only (onCreate), fed warm relaunches via onNewIntent — the in-app navigation no longer flows
-    // through here (it uses the NavController directly).
-    private val launchIntents = MutableStateFlow<Intent?>(null)
+    // through here (it uses the NavController directly). An UNLIMITED queue (not a latch) so a fresh-launch
+    // intent staged before the NavHost composes isn't lost, and so rapid, distinct back-to-back intents are
+    // each delivered exactly once rather than overwriting one another before they're consumed (#1582).
+    private val launchIntents = Channel<Intent>(Channel.UNLIMITED)
 
     private val viewModel: HomeViewModel by viewModels()
 
@@ -111,16 +114,14 @@ class HomeActivity : AppCompatActivity() {
         // opens the translated route once composed). Fresh launch only, so a rotation doesn't re-fire
         // reminder deletes / URL applies.
         if (savedInstanceState == null) {
-            launchIntents.value = intent
+            launchIntents.trySend(intent)
         }
 
         setContent {
             val navController = rememberNavController()
             AccessibilityAnalyticsEffect()
             HomeAnalyticsEffect(viewModel.analyticsEvents)
-            LaunchIntentEffect(navController, launchIntents, ::applyLaunchIntentSideEffects) {
-                launchIntents.value = null
-            }
+            LaunchIntentEffect(navController, launchIntents.receiveAsFlow(), ::applyLaunchIntentSideEffects)
             // The welcome tutorial (now the Compose green welcome + map-stop spotlight sequence) is
             // started by HomeScreen off the same showWelcomeTutorial latch — no host effect needed.
             SettingsRehomeEffect(navController)
@@ -185,7 +186,7 @@ class HomeActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        launchIntents.value = intent
+        launchIntents.trySend(intent)
     }
 
     /**

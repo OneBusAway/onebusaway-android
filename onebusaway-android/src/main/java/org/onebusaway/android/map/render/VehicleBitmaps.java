@@ -81,19 +81,35 @@ public final class VehicleBitmaps {
      */
     public static Bitmap vehicleBitmap(Context context, VehicleMarker vehicle,
                                        ObaTripsForRouteResponse response) {
-        ObaTripStatus status = vehicle.getStatus();
-        String routeId = response.getTrip(status.getActiveTripId()).getRouteId();
-        ObaRoute route = response.getRoute(routeId);
-        int vehicleType = route.getType();
+        return getBitmap(context, vehicleType(vehicle, response), colorResource(vehicle),
+                directionIndex(vehicle));
+    }
 
-        int colorResource;
+    /**
+     * A stable key identifying the icon {@link #vehicleBitmap} returns for this vehicle — its type,
+     * heading octant, and schedule-deviation color, the only inputs that change the bitmap. A renderer
+     * caches one wrapper (a Google {@code BitmapDescriptor}) per key so it reuses it across frames even
+     * when the bounded bitmap LRU evicts and recreates the underlying {@link Bitmap} on a busy route.
+     */
+    public static String iconKey(VehicleMarker vehicle, ObaTripsForRouteResponse response) {
+        return "veh:" + createBitmapCacheKey(vehicleType(vehicle, response), directionIndex(vehicle),
+                colorResource(vehicle));
+    }
+
+    /** The vehicle's route type, normalizing cablecar to tram so both the bitmap and key paths agree. */
+    private static int vehicleType(VehicleMarker vehicle, ObaTripsForRouteResponse response) {
+        ObaTripStatus status = vehicle.getStatus();
+        int type = response.getRoute(response.getTrip(status.getActiveTripId()).getRouteId()).getType();
+        return type == ObaRoute.TYPE_CABLECAR ? ObaRoute.TYPE_TRAM : type;
+    }
+
+    /** The schedule-deviation color (realtime) or the scheduled color — constant between polls. */
+    private static int colorResource(VehicleMarker vehicle) {
         if (vehicle.isRealtime()) {
-            long deviationMin = TimeUnit.SECONDS.toMinutes(status.getScheduleDeviation());
-            colorResource = ArrivalInfoUtils.computeColorFromDeviation(deviationMin);
-        } else {
-            colorResource = R.color.stop_info_scheduled_time;
+            long deviationMin = TimeUnit.SECONDS.toMinutes(vehicle.getStatus().getScheduleDeviation());
+            return ArrivalInfoUtils.computeColorFromDeviation(deviationMin);
         }
-        return getBitmap(context, vehicleType, colorResource, directionIndex(vehicle));
+        return R.color.stop_info_scheduled_time;
     }
 
     /**
@@ -121,11 +137,6 @@ public final class VehicleBitmaps {
 
     private static Bitmap getBitmap(Context context, int vehicleType, int colorResource, int halfWind) {
         int color = ContextCompat.getColor(context, colorResource);
-
-        // Use tram icon for cablecar
-        if (vehicleType == ObaRoute.TYPE_CABLECAR) {
-            vehicleType = ObaRoute.TYPE_TRAM;
-        }
 
         String key = createBitmapCacheKey(vehicleType, halfWind, colorResource);
         Bitmap b = sColoredIconCache.get(key);

@@ -41,6 +41,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import org.onebusaway.android.map.compose.TripMapScreen
 import com.google.firebase.analytics.FirebaseAnalytics
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.R
@@ -226,25 +227,24 @@ fun HomeNavHost(
 }
 
 /**
- * Opens an external launch intent ([HomeActivity]'s `launchIntents` channel) once the NavHost is composed
- * (cold launch) and on each `onNewIntent` (warm relaunch): runs the intent's domain side effects, translates
- * it to a route via [IntentRouteMapper] (null = stay on the map), navigates there popping up to HOME, then
- * consumes the channel. This is the only navigation that can't hold the NavController itself — the OS hands
- * intents to the Activity, which exists before/around the composition.
+ * Drains [HomeActivity]'s `launchIntents` channel once the NavHost is composed (cold launch) and as each
+ * `onNewIntent` enqueues more (warm relaunch): for each external intent it runs the intent's domain side
+ * effects, translates it to a route via [IntentRouteMapper] (null = stay on the map), then navigates there
+ * popping up to HOME. This is the only navigation that can't hold the NavController itself — the OS hands
+ * intents to the Activity, which exists before/around the composition. The channel is an UNLIMITED queue
+ * (not a latch) so rapid, distinct back-to-back intents are each delivered exactly once rather than
+ * overwriting one another before the collector consumes them (#1582).
  */
 @Composable
 internal fun LaunchIntentEffect(
     navController: NavHostController,
-    launchIntents: StateFlow<Intent?>,
+    launchIntents: Flow<Intent>,
     onSideEffects: (Intent) -> Unit,
-    onConsumed: () -> Unit,
 ) {
-    val intent by launchIntents.collectAsStateWithLifecycle()
-    LaunchedEffect(intent) {
-        intent?.let { i ->
+    LaunchedEffect(navController) {
+        launchIntents.collect { i ->
             onSideEffects(i)
             IntentRouteMapper.routeForIntent(i)?.let { navController.navigateFromHome(it) }
-            onConsumed()
         }
     }
 }

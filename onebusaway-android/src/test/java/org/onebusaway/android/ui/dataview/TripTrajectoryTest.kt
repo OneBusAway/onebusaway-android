@@ -167,6 +167,39 @@ class TripTrajectoryTest {
         assertEquals(10_000L, interpolateScheduleTime(schedule, 200.0))
     }
 
+    @Test
+    fun `the trip-end distance stays interpolatable when degenerate stops trail the end`() {
+        val schedule = listOf(
+            stop(0.0, 1_000L),
+            stop(100.0, 6_000L),
+            stop(100.0, 10_000L), // trailing zero-length pair (shared shape_dist_traveled)
+        )
+        // The terminal segment is the last *interpolatable* pair (0 -> 100), which stays closed, so
+        // the max distance reads that segment's arrival (6000) instead of falling through to 0.
+        assertEquals(6_000L, interpolateScheduleTime(schedule, 100.0))
+    }
+
+    @Test
+    fun `a distance exactly at the first stop interpolates to the start time`() {
+        val schedule = listOf(stop(0.0, 1_000L, departMs = 2_000L), stop(100.0, 6_000L))
+        // The span is lower-inclusive, so the trip origin resolves to the first segment's start
+        // (stop0's departure, 2000) rather than the sentinel.
+        assertEquals(2_000L, interpolateScheduleTime(schedule, 0.0))
+    }
+
+    @Test
+    fun `an interior degenerate segment is skipped and a later segment interpolates`() {
+        val schedule = listOf(
+            stop(0.0, 1_000L),
+            stop(100.0, 6_000L, departMs = 7_000L),
+            stop(100.0, 8_000L), // degenerate middle pair: skipped
+            stop(200.0, 12_000L),
+        )
+        // 150 lands in the 100 -> 200 segment (departure 8000 to arrival 12000), proving the loop
+        // advances past the degenerate middle pair.
+        assertEquals(10_000L, interpolateScheduleTime(schedule, 150.0))
+    }
+
     // --- formatDeviationLabel ---
 
     @Test

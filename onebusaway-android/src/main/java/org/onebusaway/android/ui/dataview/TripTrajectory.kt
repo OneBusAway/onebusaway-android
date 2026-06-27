@@ -188,15 +188,23 @@ private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, 
  */
 fun interpolateScheduleTime(schedule: List<ScheduleStop>, distanceMeters: Double): Long {
     if (schedule.size < 2) return 0L
+    // The terminal segment is the last *interpolatable* pair, not the literal last index: degenerate
+    // (zero-length) stop pairs can trail the trip end when GTFS stops share shape_dist_traveled, and
+    // those get skipped below, so keying the closed bound on schedule.lastIndex would let the trip's
+    // max distance fall through to the 0 sentinel.
+    val lastInterpolatable = (1 until schedule.size).lastOrNull { i ->
+        schedule[i].distanceMeters > schedule[i - 1].distanceMeters
+    }
     for (i in 1 until schedule.size) {
         val d0 = schedule[i - 1].distanceMeters
         val d1 = schedule[i].distanceMeters
         if (d1 <= d0) continue
         // Each segment owns the half-open span [d0, d1), so a distance exactly on a stop boundary
-        // lands in a single segment (the next one) instead of double-counting into both. The final
-        // segment is closed [d0, d1] so the trip's end distance still interpolates rather than
-        // dropping to the 0 sentinel.
-        val withinUpper = if (i == schedule.lastIndex) distanceMeters <= d1 else distanceMeters < d1
+        // lands in a single segment (the next one) instead of being ambiguously claimed by both — the
+        // old inclusive bound silently handed it to the earlier segment by iteration order. The
+        // terminal segment is closed [d0, d1] so the trip's end distance still interpolates rather
+        // than dropping to the 0 sentinel.
+        val withinUpper = if (i == lastInterpolatable) distanceMeters <= d1 else distanceMeters < d1
         if (distanceMeters >= d0 && withinUpper) {
             val fraction = (distanceMeters - d0) / (d1 - d0)
             val t0 = schedule[i - 1].departureMs

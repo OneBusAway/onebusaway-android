@@ -31,7 +31,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.di.LocationEntryPoint;
 import org.onebusaway.android.app.di.RegionEntryPoint;
 import org.onebusaway.android.directions.util.CustomAddress;
-import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.region.Region;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -66,7 +66,7 @@ public class LocationUtils {
 
 
     public static Location getDefaultSearchCenter(Context context) {
-        ObaRegion region = RegionEntryPoint.get(context).getRegion().getValue();
+        Region region = RegionEntryPoint.get(context).getRegion().getValue();
         if (region != null) {
             double[] results = new double[4];
             RegionUtils.getRegionSpan(region, results);
@@ -263,12 +263,12 @@ public class LocationUtils {
         return sb.toString();
     }
 
-    public static List<CustomAddress> processGooglePlacesGeocoding(Context context, ObaRegion region,
+    public static List<CustomAddress> processGooglePlacesGeocoding(Context context, Region region,
                                                                    String... reqs) {
         return processGeocoding(context, region, false, reqs);
     }
 
-    public static List<CustomAddress> processGeocoding(Context context, ObaRegion region, boolean geocodingForMarker, String... reqs) {
+    public static List<CustomAddress> processGeocoding(Context context, Region region, boolean geocodingForMarker, String... reqs) {
         ArrayList<CustomAddress> addressesReturn = new ArrayList<CustomAddress>();
 
         String address = reqs[0];
@@ -383,12 +383,12 @@ public class LocationUtils {
         return addressesReturn;
     }
 
-    public static List<CustomAddress> processPeliasGeocoding(Context context, ObaRegion region,
+    public static List<CustomAddress> processPeliasGeocoding(Context context, Region region,
             String... reqs) {
         return processPeliasGeocoding(context, region, false, reqs);
     }
 
-    public static List<CustomAddress> processPeliasGeocoding(Context context, ObaRegion region, boolean geocodingForMarker, String... reqs) {
+    public static List<CustomAddress> processPeliasGeocoding(Context context, Region region, boolean geocodingForMarker, String... reqs) {
         ArrayList<CustomAddress> addressesReturn = new ArrayList<CustomAddress>();
 
         String address = reqs[0];
@@ -548,7 +548,7 @@ public class LocationUtils {
      * @param addresses list of addresses to filter
      * @return a new list filtered
      */
-    private static List<CustomAddress> filterAddressesBBox(ObaRegion region, List<CustomAddress> addresses) {
+    private static List<CustomAddress> filterAddressesBBox(Region region, List<CustomAddress> addresses) {
         if ((!(addresses == null || addresses.isEmpty())) && region != null) {
             for (Iterator<CustomAddress> it = addresses.iterator(); it.hasNext(); ) {
                 CustomAddress address = it.next();

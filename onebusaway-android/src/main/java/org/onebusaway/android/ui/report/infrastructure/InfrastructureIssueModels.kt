@@ -16,7 +16,7 @@
 package org.onebusaway.android.ui.report.infrastructure
 
 import org.onebusaway.android.report.TripReportContext
-import org.onebusaway.android.io.elements.ObaStop
+import org.onebusaway.android.models.ObaStop
 
 /**
  * The issue's current map position, replacing the mutable IssueLocationHelper. [latitude]/

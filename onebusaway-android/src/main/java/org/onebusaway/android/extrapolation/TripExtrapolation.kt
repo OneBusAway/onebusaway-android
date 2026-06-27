@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.extrapolation
 
-import org.onebusaway.android.io.elements.ObaTripStatus
+import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.render.DataAgeMarker
 import org.onebusaway.android.map.render.GeoPoint
 

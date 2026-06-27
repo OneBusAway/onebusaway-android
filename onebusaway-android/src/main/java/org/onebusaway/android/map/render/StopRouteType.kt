@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.map.render
 
-import org.onebusaway.android.io.elements.ObaRoute
+import org.onebusaway.android.models.ObaRoute
 
 // Rail/subway/tram/ferry (and the cablecar/gondola/funicular family) are more visually important
 // than bus at transit hubs, so a stop served by any of them takes that icon. Ported from the legacy

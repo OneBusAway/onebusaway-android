@@ -15,22 +15,17 @@
  */
 package org.onebusaway.android.ui.searchresults
 
+import org.onebusaway.android.api.data.LocationSearchDataSource
+
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import android.location.Location
 import java.io.IOException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
-import org.onebusaway.android.io.ObaApi
-import org.onebusaway.android.io.elements.ObaRoute
-import org.onebusaway.android.io.elements.ObaStop
-import org.onebusaway.android.io.request.ObaRoutesForLocationRequest
-import org.onebusaway.android.io.request.ObaRoutesForLocationResponse
-import org.onebusaway.android.io.request.ObaStopsForLocationRequest
-import org.onebusaway.android.io.request.ObaStopsForLocationResponse
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.provider.StopUserInfo
 import org.onebusaway.android.provider.loadStopUserInfo
 import org.onebusaway.android.provider.stopDisplayName
@@ -44,65 +39,58 @@ interface SearchResultsRepository {
 }
 
 /**
- * Default implementation. Runs the routes-for-location and stops-for-location requests in
- * parallel (matching the legacy screen's single combined loader) and merges them routes-first.
- * All Android statics are quarantined here so [SearchResultsViewModel] stays JVM-testable.
+ * Default implementation over the io.client [LocationSearchDataSource]. Runs the routes-for-location
+ * and stops-for-location requests in parallel (matching the legacy screen's single combined loader)
+ * and merges them routes-first. All Android statics are quarantined here so [SearchResultsViewModel]
+ * stays JVM-testable.
  */
-class DefaultSearchResultsRepository @Inject constructor(@ApplicationContext private val context: Context) : SearchResultsRepository {
+class DefaultSearchResultsRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val search: LocationSearchDataSource,
+) : SearchResultsRepository {
 
-    override suspend fun search(query: String): Result<List<SearchResultItem>> =
-        withContext(Dispatchers.IO) {
-            val center = LocationUtils.getSearchCenter(context)
-            // RequestBase.call() returns an error-coded (or null) response rather than throwing,
-            // so neither async cancels the scope.
-            val (routes, stops) = coroutineScope {
-                val routesDeferred = async { searchRoutes(query, center) }
-                val stopsDeferred = async { searchStops(query, center) }
-                routesDeferred.await() to stopsDeferred.await()
-            }
+    override suspend fun search(query: String): Result<List<SearchResultItem>> = coroutineScope {
+        val center = LocationUtils.getSearchCenter(context)
+            ?: return@coroutineScope Result.failure(IOException("No search location available"))
 
-            val routeCode = routes?.code ?: ObaApi.OBA_IO_EXCEPTION
-            val stopCode = stops?.code ?: ObaApi.OBA_IO_EXCEPTION
-            // Legacy: a true communication error only when both failed and the route code is the
-            // empty-body sentinel (0). Any other combination shows whatever results came back.
-            if (routeCode != ObaApi.OBA_OK && stopCode != ObaApi.OBA_OK && routeCode == 0) {
-                return@withContext Result.failure(IOException("Search failed"))
-            }
+        // Each search resolves a non-OK code / transport failure to Result.failure (requireData).
+        val routes = async { runCatching { searchRoutes(query, center) } }
+        val stops = async { runCatching { searchStops(query, center) } }
+        val routeResult = routes.await()
+        val stopResult = stops.await()
 
-            val userInfo = loadStopUserInfo(context)
-            val items = buildList {
-                routes?.routesForLocation?.forEach { add(toRoute(it)) }
-                stops?.stops?.forEach { add(toStop(it, userInfo[it.id])) }
-            }
-            Result.success(items)
+        // A true failure only when BOTH searches failed; otherwise show whatever came back.
+        if (routeResult.isFailure && stopResult.isFailure) {
+            return@coroutineScope Result.failure(
+                routeResult.exceptionOrNull() ?: stopResult.exceptionOrNull()
+                    ?: IOException("Search failed")
+            )
         }
 
-    /** Searches around the user, widening to the region's default center when nothing matches. */
-    private fun searchRoutes(query: String, center: Location?): ObaRoutesForLocationResponse? {
-        val response = ObaRoutesForLocationRequest.Builder(context, center)
-            .setRadius(LocationUtils.DEFAULT_SEARCH_RADIUS)
-            .setQuery(query)
-            .build()
-            .call()
-        if (response != null && response.code == ObaApi.OBA_OK
-            && response.routesForLocation.isNotEmpty()
-        ) {
-            return response
+        val userInfo = loadStopUserInfo(context)
+        val items = buildList {
+            routeResult.getOrNull()?.forEach { add(toRoute(it)) }
+            stopResult.getOrNull()?.forEach { add(toStop(it, userInfo[it.id])) }
         }
-        val defaultCenter = LocationUtils.getDefaultSearchCenter(context) ?: return response
-        return ObaRoutesForLocationRequest.Builder(context, defaultCenter)
-            .setRadius(LocationUtils.DEFAULT_SEARCH_RADIUS)
-            .setQuery(query)
-            .build()
-            .call()
+        Result.success(items)
     }
 
-    private fun searchStops(query: String, center: Location?): ObaStopsForLocationResponse? =
-        ObaStopsForLocationRequest.Builder(context, center)
-            .setRadius(LocationUtils.DEFAULT_SEARCH_RADIUS)
-            .setQuery(query)
-            .build()
-            .call()
+    /** Searches around the user, widening to the region's default center when nothing matches. */
+    private suspend fun searchRoutes(query: String, center: Location): List<ObaRoute> {
+        val near = search
+            .routesNear(center.latitude, center.longitude, query, LocationUtils.DEFAULT_SEARCH_RADIUS)
+            .getOrThrow()
+        if (near.isNotEmpty()) return near
+        val default = LocationUtils.getDefaultSearchCenter(context) ?: return near
+        return search
+            .routesNear(default.latitude, default.longitude, query, LocationUtils.DEFAULT_SEARCH_RADIUS)
+            .getOrThrow()
+    }
+
+    private suspend fun searchStops(query: String, center: Location): List<ObaStop> =
+        search
+            .stopsNear(center.latitude, center.longitude, query, LocationUtils.DEFAULT_SEARCH_RADIUS)
+            .getOrThrow()
 
     private fun toRoute(route: ObaRoute): SearchResultItem.Route {
         val names = routeDisplayNames(route)

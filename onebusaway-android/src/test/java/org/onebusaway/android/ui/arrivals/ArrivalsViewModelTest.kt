@@ -23,8 +23,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import org.onebusaway.android.io.elements.ObaSituation
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse
 import org.onebusaway.android.testing.MainDispatcherRule
 
 /** The arguments of a single [ArrivalsRepository.favoriteRoute] call, for assertions. */
@@ -102,9 +100,9 @@ private class FakeArrivalsRepository(
         showAllAlertsCalled = true
     }
 
-    override fun situation(id: String): ObaSituation? = null
+    override fun alertDetails(id: String): AlertDetails? = null
 
-    override fun lastResponse(): ObaArrivalInfoResponse? = null
+    override fun lastLoaded(): ArrivalsLoaded? = null
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

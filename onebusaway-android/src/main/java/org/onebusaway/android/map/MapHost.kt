@@ -67,7 +67,7 @@ class MapHost(
         // region at construction — rather than dropping the first emission — so it's race-free: even if
         // the auto-select resolves before this collector starts (making the first value the new region),
         // id != seed still frames it. The startup region of a cached restart matches the seed, so the
-        // persisted camera isn't yanked. (The StateFlow already dedups same-id republishes via ObaRegion's
+        // persisted camera isn't yanked. (The StateFlow already dedups same-id republishes via Region's
         // id-based equals, so the unchanged-refresh doesn't emit.)
         var lastRegionId = regionRepo.region.value?.id
         scope.launch {

@@ -20,10 +20,9 @@ package org.onebusaway.android.util;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRegionElement;
-import org.onebusaway.android.io.request.ObaRegionsRequest;
-import org.onebusaway.android.io.request.ObaRegionsResponse;
+import org.onebusaway.android.api.bridge.RegionsClient;
+import org.onebusaway.android.region.Region;
+import org.onebusaway.android.region.RegionCursor;
 import org.onebusaway.android.provider.ObaContract;
 
 import android.content.ContentResolver;
@@ -31,14 +30,12 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.location.Location;
-import android.net.Uri;
 import android.util.Log;
 
 import java.security.MessageDigest;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -76,13 +73,13 @@ public class RegionUtils {
      * enforceThreshold is true and the closest region exceeded DISTANCE_LIMITER threshold or a
      * region couldn't be found
      */
-    public static ObaRegion getClosestRegion(ArrayList<ObaRegion> regions, Location loc,
+    public static Region getClosestRegion(ArrayList<Region> regions, Location loc,
             boolean enforceThreshold) {
         if (loc == null) {
             return null;
         }
         float minDist = Float.MAX_VALUE;
-        ObaRegion closestRegion = null;
+        Region closestRegion = null;
         Float distToRegion;
 
         NumberFormat fmt = NumberFormat.getInstance();
@@ -93,7 +90,7 @@ public class RegionUtils {
 
         Log.d(TAG, "Finding region closest to " + loc.getLatitude() + "," + loc.getLongitude());
 
-        for (ObaRegion region : regions) {
+        for (Region region : regions) {
             if (!isRegionUsable(region)) {
                 Log.d(TAG,
                         "Excluding '" + region.getName() + "' from 'closest region' consideration");
@@ -131,7 +128,7 @@ public class RegionUtils {
      */
     public static String getObaRegionName() {
         String regionName = null;
-        ObaRegion region = Application.get().getCurrentRegion();
+        Region region = Application.get().getCurrentRegion();
         if (region != null && region.getName() != null) {
             regionName = region.getName();
         } else if (Application.get().getCustomApiUrl() != null) {
@@ -159,14 +156,14 @@ public class RegionUtils {
      * @return distance from the specified location to the center of the closest bound in this
      * region, in meters
      */
-    public static Float getDistanceAway(ObaRegion region, double lat, double lon) {
-        ObaRegion.Bounds[] bounds = region.getBounds();
+    public static Float getDistanceAway(Region region, double lat, double lon) {
+        Region.Bounds[] bounds = region.getBounds();
         if (bounds == null) {
             return null;
         }
         float[] results = new float[1];
         float minDistance = Float.MAX_VALUE;
-        for (ObaRegion.Bounds bound : bounds) {
+        for (Region.Bounds bound : bounds) {
             Location.distanceBetween(lat, lon, bound.getLat(), bound.getLon(), results);
             if (results[0] < minDistance) {
                 minDistance = results[0];
@@ -175,7 +172,7 @@ public class RegionUtils {
         return minDistance;
     }
 
-    public static Float getDistanceAway(ObaRegion region, Location loc) {
+    public static Float getDistanceAway(Region region, Location loc) {
         return getDistanceAway(region, loc.getLatitude(), loc.getLongitude());
     }
 
@@ -188,7 +185,7 @@ public class RegionUtils {
      *                results[2] == lat center of region
      *                results[3] == lon center of region
      */
-    public static void getRegionSpan(ObaRegion region, double[] results) {
+    public static void getRegionSpan(Region region, double[] results) {
         if (results.length < 4) {
             throw new IllegalArgumentException("Results array is < 4");
         }
@@ -201,7 +198,7 @@ public class RegionUtils {
         double lonMax = -180;
 
         // This is fairly simplistic
-        for (ObaRegion.Bounds bound : region.getBounds()) {
+        for (Region.Bounds bound : region.getBounds()) {
             // Get the top bound
             double lat = bound.getLat();
             double latSpanHalf = bound.getLatSpan() / 2.0;
@@ -276,7 +273,7 @@ public class RegionUtils {
      * @param region   provided region
      * @return true if the location is within the region, false if it is not
      */
-    public static boolean isLocationWithinRegion(Location location, ObaRegion region) {
+    public static boolean isLocationWithinRegion(Location location, Region region) {
         double[] regionSpan = new double[4];
         getRegionSpan(region, regionSpan);
         return isLocationWithinRegion(location, regionSpan);
@@ -292,7 +289,7 @@ public class RegionUtils {
      * @param region region to be checked
      * @return true if the region is usable by this application, false if it is not
      */
-    public static boolean isRegionUsable(ObaRegion region) {
+    public static boolean isRegionUsable(Region region) {
         if (!region.getActive()) {
             Log.d(TAG, "Region '" + region.getName() + "' is not active.");
             return false;
@@ -335,9 +332,9 @@ public class RegionUtils {
      * @return a list of regions from either the server, the local provider, or the packaged
      * resource file
      */
-    public synchronized static ArrayList<ObaRegion> getRegions(Context context,
+    public synchronized static ArrayList<Region> getRegions(Context context,
             boolean forceReload) {
-        ArrayList<ObaRegion> results;
+        ArrayList<Region> results;
         if (!forceReload) {
             //
             // Check the DB
@@ -388,12 +385,12 @@ public class RegionUtils {
         return results;
     }
 
-    public static ArrayList<ObaRegion> getRegionsFromProvider(Context context) {
+    public static ArrayList<Region> getRegionsFromProvider(Context context) {
         // Prefetch the bounds to limit the number of DB calls.
-        HashMap<Long, ArrayList<ObaRegionElement.Bounds>> allBounds = getBoundsFromProvider(
+        HashMap<Long, ArrayList<Region.Bounds>> allBounds = getBoundsFromProvider(
                 context);
 
-        HashMap<Long, ArrayList<ObaRegionElement.Open311Server>> allOpen311Servers =
+        HashMap<Long, ArrayList<Region.Open311Server>> allOpen311Servers =
                 getOpen311ServersFromProvider(context);
 
         Cursor c = null;
@@ -437,56 +434,22 @@ public class RegionUtils {
                 c.close();
                 return null;
             }
-            ArrayList<ObaRegion> results = new ArrayList<ObaRegion>();
+            ArrayList<Region> results = new ArrayList<Region>();
 
             c.moveToFirst();
             do {
                 long id = c.getLong(0);
-                ArrayList<ObaRegionElement.Bounds> bounds = allBounds.get(id);
-                ObaRegionElement.Bounds[] bounds2 = (bounds != null) ?
-                        bounds.toArray(new ObaRegionElement.Bounds[]{}) :
+                ArrayList<Region.Bounds> bounds = allBounds.get(id);
+                Region.Bounds[] bounds2 = (bounds != null) ?
+                        bounds.toArray(new Region.Bounds[]{}) :
                         null;
 
-                ArrayList<ObaRegionElement.Open311Server> open311Servers = allOpen311Servers.get(id);
-                ObaRegionElement.Open311Server[] open311Servers2 = (open311Servers != null) ?
-                        open311Servers.toArray(new ObaRegionElement.Open311Server[]{}) :
+                ArrayList<Region.Open311Server> open311Servers = allOpen311Servers.get(id);
+                Region.Open311Server[] open311Servers2 = (open311Servers != null) ?
+                        open311Servers.toArray(new Region.Open311Server[]{}) :
                         null;
 
-                String umamiUrl = c.getString(23);
-                String umamiId = c.getString(24);
-                ObaRegionElement.UmamiAnalyticsConfig umamiConfig =
-                        (umamiUrl != null || umamiId != null)
-                                ? new ObaRegionElement.UmamiAnalyticsConfig(umamiUrl, umamiId)
-                                : null;
-
-                results.add(new ObaRegionElement(id,   // id
-                        c.getString(1),             // Name
-                        true,                       // Active
-                        c.getString(2),             // OBA Base URL
-                        c.getString(3),             // SIRI Base URL
-                        bounds2,                    // Bounds
-                        open311Servers2,            // Open311 servers
-                        c.getString(4),             // Lang
-                        c.getString(5),             // Contact Email
-                        c.getInt(6) > 0,            // Supports Oba Discovery
-                        c.getInt(7) > 0,            // Supports Oba Realtime
-                        c.getInt(8) > 0,            // Supports Siri Realtime
-                        c.getString(9),              // Twitter URL
-                        c.getInt(10) > 0,            // Experimental
-                        c.getString(11),             // StopInfoUrl
-                        c.getString(12),             // OTP Base URL
-                        c.getString(13),              // OTP Contact Email
-                        c.getInt(14) > 0,           // Supports Otp Bikeshare
-                        c.getInt(15) > 0,            // Supports Embedded Social
-                        c.getString(16),              // Android App ID for mobile fare payment app of region
-                        c.getString(17),               // Payment Warning Title
-                        c.getString(18),    // Payment Warning Body
-                        c.getInt(19) > 0, // travel behavior data collection enabled for region
-                        c.getInt(20) > 0, // enrolling participants for travel behavior data collection
-                        c.getString(21), //Sidecar base URL
-                        c.getString(22), // Plausible analytics server url
-                        umamiConfig      // Umami analytics config (null when unconfigured)
-                ));
+                results.add(RegionCursor.fromCursor(c, bounds2, open311Servers2));
 
             } while (c.moveToNext());
 
@@ -499,7 +462,7 @@ public class RegionUtils {
         }
     }
 
-    private static HashMap<Long, ArrayList<ObaRegionElement.Bounds>> getBoundsFromProvider(
+    private static HashMap<Long, ArrayList<Region.Bounds>> getBoundsFromProvider(
             Context context) {
         // Prefetch the bounds to limit the number of DB calls.
         Cursor c = null;
@@ -511,8 +474,8 @@ public class RegionUtils {
                     ObaContract.RegionBounds.LAT_SPAN,
                     ObaContract.RegionBounds.LON_SPAN
             };
-            HashMap<Long, ArrayList<ObaRegionElement.Bounds>> results
-                    = new HashMap<Long, ArrayList<ObaRegionElement.Bounds>>();
+            HashMap<Long, ArrayList<Region.Bounds>> results
+                    = new HashMap<Long, ArrayList<Region.Bounds>>();
 
             ContentResolver cr = context.getContentResolver();
             c = cr.query(ObaContract.RegionBounds.CONTENT_URI, PROJECTION, null, null, null);
@@ -526,8 +489,8 @@ public class RegionUtils {
             c.moveToFirst();
             do {
                 long regionId = c.getLong(0);
-                ArrayList<ObaRegionElement.Bounds> bounds = results.get(regionId);
-                ObaRegionElement.Bounds b = new ObaRegionElement.Bounds(
+                ArrayList<Region.Bounds> bounds = results.get(regionId);
+                Region.Bounds b = new Region.Bounds(
                         c.getDouble(1),
                         c.getDouble(2),
                         c.getDouble(3),
@@ -535,7 +498,7 @@ public class RegionUtils {
                 if (bounds != null) {
                     bounds.add(b);
                 } else {
-                    bounds = new ArrayList<ObaRegionElement.Bounds>();
+                    bounds = new ArrayList<Region.Bounds>();
                     bounds.add(b);
                     results.put(regionId, bounds);
                 }
@@ -551,7 +514,7 @@ public class RegionUtils {
         }
     }
 
-    private static HashMap<Long, ArrayList<ObaRegionElement.Open311Server>> getOpen311ServersFromProvider(
+    private static HashMap<Long, ArrayList<Region.Open311Server>> getOpen311ServersFromProvider(
             Context context) {
         // Prefetch the bounds to limit the number of DB calls.
         Cursor c = null;
@@ -562,8 +525,8 @@ public class RegionUtils {
                     ObaContract.RegionOpen311Servers.API_KEY,
                     ObaContract.RegionOpen311Servers.BASE_URL
             };
-            HashMap<Long, ArrayList<ObaRegionElement.Open311Server>> results
-                    = new HashMap<Long, ArrayList<ObaRegionElement.Open311Server>>();
+            HashMap<Long, ArrayList<Region.Open311Server>> results
+                    = new HashMap<Long, ArrayList<Region.Open311Server>>();
 
             ContentResolver cr = context.getContentResolver();
             c = cr.query(ObaContract.RegionOpen311Servers.CONTENT_URI, PROJECTION, null, null, null);
@@ -577,15 +540,15 @@ public class RegionUtils {
             c.moveToFirst();
             do {
                 long regionId = c.getLong(0);
-                ArrayList<ObaRegionElement.Open311Server> open311Servers = results.get(regionId);
-                ObaRegionElement.Open311Server b = new ObaRegionElement.Open311Server(
+                ArrayList<Region.Open311Server> open311Servers = results.get(regionId);
+                Region.Open311Server b = new Region.Open311Server(
                         c.getString(1),
                         c.getString(2),
                         c.getString(3));
                 if (open311Servers != null) {
                     open311Servers.add(b);
                 } else {
-                    open311Servers = new ArrayList<ObaRegionElement.Open311Server>();
+                    open311Servers = new ArrayList<Region.Open311Server>();
                     open311Servers.add(b);
                     results.put(regionId, open311Servers);
                 }
@@ -601,9 +564,8 @@ public class RegionUtils {
         }
     }
 
-    private synchronized static ArrayList<ObaRegion> getRegionsFromServer(Context context) {
-        ObaRegionsResponse response = ObaRegionsRequest.newRequest(context).call();
-        return new ArrayList<ObaRegion>(Arrays.asList(response.getRegions()));
+    private synchronized static ArrayList<Region> getRegionsFromServer(Context context) {
+        return new ArrayList<Region>(RegionsClient.fetchRegionsFromServer(context));
     }
 
     /**
@@ -620,13 +582,8 @@ public class RegionUtils {
      *
      * @return list of regions retrieved from the regions file in app resources
      */
-    public static ArrayList<ObaRegion> getRegionsFromResources(Context context) {
-        final Uri.Builder builder = new Uri.Builder();
-        builder.scheme(ContentResolver.SCHEME_ANDROID_RESOURCE);
-        builder.authority(context.getPackageName());
-        builder.path(Integer.toString(R.raw.regions_v3));
-        ObaRegionsResponse response = ObaRegionsRequest.newRequest(context, builder.build()).call();
-        return new ArrayList<ObaRegion>(Arrays.asList(response.getRegions()));
+    public static ArrayList<Region> getRegionsFromResources(Context context) {
+        return new ArrayList<Region>(RegionsClient.parseBundledRegions(context));
     }
 
     /**
@@ -635,19 +592,19 @@ public class RegionUtils {
      *
      * @return hard-coded region information from the build flavor defined in build.gradle
      */
-    public static ObaRegion getRegionFromBuildFlavor() {
+    public static Region getRegionFromBuildFlavor() {
         final int regionId = Integer.MAX_VALUE; // This doesn't get used, but needs to be positive
-        ObaRegionElement.Bounds[] boundsArray = new ObaRegionElement.Bounds[1];
-        ObaRegionElement.Bounds bounds = new ObaRegionElement.Bounds(
+        Region.Bounds[] boundsArray = new Region.Bounds[1];
+        Region.Bounds bounds = new Region.Bounds(
                 BuildConfig.FIXED_REGION_BOUNDS_LAT, BuildConfig.FIXED_REGION_BOUNDS_LON,
                 BuildConfig.FIXED_REGION_BOUNDS_LAT_SPAN, BuildConfig.FIXED_REGION_BOUNDS_LON_SPAN);
         boundsArray[0] = bounds;
 
-        ObaRegionElement.Open311Server[] open311Array = new ObaRegionElement.Open311Server[1];
-        ObaRegionElement.Open311Server open311Server;
+        Region.Open311Server[] open311Array = new Region.Open311Server[1];
+        Region.Open311Server open311Server;
 
         if (BuildConfig.FIXED_REGION_OPEN311_BASE_URL != null) {
-            open311Server = new ObaRegionElement.Open311Server (
+            open311Server = new Region.Open311Server (
                     BuildConfig.FIXED_REGION_OPEN311_JURISDICTION_ID,
                     BuildConfig.FIXED_REGION_OPEN311_API_KEY,
                     BuildConfig.FIXED_REGION_OPEN311_BASE_URL);
@@ -656,7 +613,7 @@ public class RegionUtils {
             open311Array = null;
         }
 
-        ObaRegionElement region = new ObaRegionElement(regionId,
+        Region region = new Region(regionId,
                 BuildConfig.FIXED_REGION_NAME, true,
                 BuildConfig.FIXED_REGION_OBA_BASE_URL, BuildConfig.FIXED_REGION_SIRI_BASE_URL,
                 boundsArray, open311Array, BuildConfig.FIXED_REGION_LANG,
@@ -684,7 +641,7 @@ public class RegionUtils {
     //
     // Saving
     //
-    public synchronized static void saveToProvider(Context context, List<ObaRegion> regions) {
+    public synchronized static void saveToProvider(Context context, List<Region> regions) {
         // Delete all the existing regions
         ContentResolver cr = context.getContentResolver();
         cr.delete(ObaContract.Regions.CONTENT_URI, null, null);
@@ -693,7 +650,7 @@ public class RegionUtils {
         // Delete all existing open311 endpoints
         cr.delete(ObaContract.RegionOpen311Servers.CONTENT_URI, null, null);
 
-        for (ObaRegion region : regions) {
+        for (Region region : regions) {
             if (!isRegionUsable(region)) {
                 Log.d(TAG, "Skipping insert of '" + region.getName() + "' to provider...");
                 continue;
@@ -703,7 +660,7 @@ public class RegionUtils {
             Log.d(TAG, "Saved region '" + region.getName() + "' to provider");
             long regionId = region.getId();
             // Bulk insert the bounds
-            ObaRegion.Bounds[] bounds = region.getBounds();
+            Region.Bounds[] bounds = region.getBounds();
             if (bounds != null) {
                 ContentValues[] values = new ContentValues[bounds.length];
                 for (int i = 0; i < bounds.length; ++i) {
@@ -712,7 +669,7 @@ public class RegionUtils {
                 cr.bulkInsert(ObaContract.RegionBounds.CONTENT_URI, values);
             }
 
-            ObaRegion.Open311Server[] open311Servers = region.getOpen311Servers();
+            Region.Open311Server[] open311Servers = region.getOpen311Servers();
 
             if (open311Servers != null) {
                 ContentValues[] values = new ContentValues[open311Servers.length];
@@ -724,7 +681,7 @@ public class RegionUtils {
         }
     }
 
-    private static ContentValues toContentValues(ObaRegion region) {
+    private static ContentValues toContentValues(Region region) {
         ContentValues values = new ContentValues();
         values.put(ObaContract.Regions._ID, region.getId());
             values.put(ObaContract.Regions.NAME, region.getName());
@@ -763,7 +720,7 @@ public class RegionUtils {
         return values;
     }
 
-    private static ContentValues toContentValues(long region, ObaRegion.Bounds bounds) {
+    private static ContentValues toContentValues(long region, Region.Bounds bounds) {
         ContentValues values = new ContentValues();
         values.put(ObaContract.RegionBounds.REGION_ID, region);
         values.put(ObaContract.RegionBounds.LATITUDE, bounds.getLat());
@@ -773,7 +730,7 @@ public class RegionUtils {
         return values;
     }
 
-    private static ContentValues toContentValues(long region, ObaRegion.Open311Server open311Server) {
+    private static ContentValues toContentValues(long region, Region.Open311Server open311Server) {
         ContentValues values = new ContentValues();
         values.put(ObaContract.RegionOpen311Servers.REGION_ID, region);
         values.put(ObaContract.RegionOpen311Servers.BASE_URL, open311Server.getBaseUrl());

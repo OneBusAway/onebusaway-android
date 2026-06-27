@@ -28,7 +28,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.google.firebase.analytics.FirebaseAnalytics
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.io.ObaAnalytics
+import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.nav.revealRouteOnMap
 import org.onebusaway.android.ui.nav.revealStopOnMap

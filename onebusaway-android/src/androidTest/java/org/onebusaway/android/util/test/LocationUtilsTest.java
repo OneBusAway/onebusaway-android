@@ -22,7 +22,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.test.ObaTestCase;
+import org.onebusaway.android.api.test.ObaTestCase;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PermissionUtils;
 import org.onebusaway.android.util.TestUtils;

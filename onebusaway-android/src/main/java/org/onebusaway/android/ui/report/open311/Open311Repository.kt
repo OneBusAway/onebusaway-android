@@ -35,9 +35,9 @@ import edu.usf.cutr.open311client.models.ServiceDescriptionRequest
 import edu.usf.cutr.open311client.models.ServiceRequest
 import edu.usf.cutr.open311client.utils.Open311Validator
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.report.TripReportContext
-import org.onebusaway.android.io.elements.ObaStop
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.report.constants.ReportConstants
 import org.onebusaway.android.report.ui.util.ServiceUtils
 import org.onebusaway.android.util.BitmapUtils
@@ -137,7 +137,7 @@ class DefaultOpen311Repository(
                 .setLast_name(user.lastName)
                 .setPhone(user.phone)
                 .setAddress_string(issue.address?.takeIf { it.isNotEmpty() })
-                .setDevice_id(PreferenceUtils.getString(Application.APP_UID))
+                .setDevice_id(PreferenceUtils.getString(ObaApi.APP_UID))
             form.imagePath?.let { builder.setMedia(downsampleImage(it)) }
 
             val serviceRequest = builder.createServiceRequest()

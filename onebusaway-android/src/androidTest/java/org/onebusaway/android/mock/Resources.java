@@ -16,7 +16,6 @@
 package org.onebusaway.android.mock;
 
 import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.io.ObaApi;
 
 import android.content.Context;
 import android.net.Uri;
@@ -46,12 +45,5 @@ public class Resources {
         InputStream stream = context.getContentResolver().openInputStream(uri);
         InputStreamReader reader = new InputStreamReader(stream, "UTF-8");
         return reader;
-    }
-
-    public static <T> T readAs(Context context, Uri uri, Class<T> cls) throws IOException {
-        Reader reader = read(context, uri);
-        ObaApi.SerializationHandler serializer = ObaApi.getSerializer(cls);
-        T response = serializer.deserialize(reader, cls);
-        return response;
     }
 }

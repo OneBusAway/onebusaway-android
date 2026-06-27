@@ -32,7 +32,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
-import org.onebusaway.android.io.elements.ObaRegion
+import org.onebusaway.android.region.Region
 
 /**
  * Renders the forced-choice region picker when [RegionPickerViewModel] reports the repository needs a manual
@@ -53,7 +53,7 @@ fun RegionPickerHost() {
  * back/scrim do nothing, since the app can't function without a region.
  */
 @Composable
-private fun RegionChooserDialog(regions: List<ObaRegion>, onRegionChosen: (ObaRegion) -> Unit) {
+private fun RegionChooserDialog(regions: List<Region>, onRegionChosen: (Region) -> Unit) {
     AlertDialog(
         onDismissRequest = { },
         properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),

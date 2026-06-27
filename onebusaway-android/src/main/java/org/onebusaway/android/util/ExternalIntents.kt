@@ -33,9 +33,9 @@ import com.google.firebase.analytics.FirebaseAnalytics
 
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.io.ObaAnalytics
-import org.onebusaway.android.io.PlausibleAnalytics
-import org.onebusaway.android.io.elements.ObaRegion
+import org.onebusaway.android.analytics.ObaAnalytics
+import org.onebusaway.android.analytics.PlausibleAnalytics
+import org.onebusaway.android.region.Region
 
 /**
  * Utility object containing launchers for external Intents (browser, dialer, email, payment apps).
@@ -251,7 +251,7 @@ object ExternalIntents {
      * @param activity activity to launch the fare payment app or Google Play store from
      * @return the region whose payment warning must be shown first, or null if already handled
      */
-    fun payFareOrWarningRegion(activity: Activity): ObaRegion? {
+    fun payFareOrWarningRegion(activity: Activity): Region? {
         val region = Application.get().currentRegion
         if (region == null) {
             // If a custom API URL is set (i.e., no region), then no op
@@ -278,9 +278,10 @@ object ExternalIntents {
      * @param activity Activity to use to launch the Intent
      * @param region region to launch a payment Intent for
      */
-    fun startPaymentIntent(activity: Activity, region: ObaRegion) {
+    fun startPaymentIntent(activity: Activity, region: Region) {
         val manager = activity.packageManager
-        var intent = manager.getLaunchIntentForPackage(region.paymentAndroidAppId)
+        val paymentAndroidAppId = region.paymentAndroidAppId.orEmpty()
+        var intent = manager.getLaunchIntentForPackage(paymentAndroidAppId)
         if (intent != null) {
             // Launch installed app
             intent.addCategory(Intent.CATEGORY_LAUNCHER)
@@ -295,7 +296,7 @@ object ExternalIntents {
         } else {
             // Go to Play Store listing to download app
             intent = Intent(Intent.ACTION_VIEW)
-            intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, region.paymentAndroidAppId)))
+            intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, paymentAndroidAppId)))
             activity.startActivity(intent)
             ObaAnalytics.reportUiEvent(
                 FirebaseAnalytics.getInstance(activity),

@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.ui.report.problem
 
-import org.onebusaway.android.io.request.ObaReportProblemWithStopRequest
-import org.onebusaway.android.io.request.ObaReportProblemWithTripRequest
 
 /** Whether the form reports a problem about a stop or about a trip/vehicle. */
 enum class ProblemKind { STOP, TRIP }
@@ -71,23 +69,24 @@ object ProblemCodes {
 
     fun trip(labels: List<String>): List<ProblemCode> = zip(labels, TRIP_CODES)
 
+    // The OBA REST `code` values, in the order the legacy spinners used (the first row is the hint).
     private val STOP_CODES = listOf(
         null,
-        ObaReportProblemWithStopRequest.NAME_WRONG,
-        ObaReportProblemWithStopRequest.NUMBER_WRONG,
-        ObaReportProblemWithStopRequest.LOCATION_WRONG,
-        ObaReportProblemWithStopRequest.ROUTE_OR_TRIP_MISSING,
-        ObaReportProblemWithStopRequest.OTHER
+        "stop_name_wrong",
+        "stop_number_wrong",
+        "stop_location_wrong",
+        "route_or_trip_missing",
+        "other",
     )
 
     private val TRIP_CODES = listOf(
         null,
-        ObaReportProblemWithTripRequest.VEHICLE_NEVER_CAME,
-        ObaReportProblemWithTripRequest.VEHICLE_CAME_EARLY,
-        ObaReportProblemWithTripRequest.VEHICLE_CAME_LATE,
-        ObaReportProblemWithTripRequest.WRONG_HEADSIGN,
-        ObaReportProblemWithTripRequest.VEHICLE_DOES_NOT_STOP_HERE,
-        ObaReportProblemWithTripRequest.OTHER
+        "vehicle_never_came",
+        "vehicle_came_early",
+        "vehicle_came_late",
+        "wrong_headsign",
+        "vehicle_does_not_stop_here",
+        "other",
     )
 
     private fun zip(labels: List<String>, codes: List<String?>): List<ProblemCode> =

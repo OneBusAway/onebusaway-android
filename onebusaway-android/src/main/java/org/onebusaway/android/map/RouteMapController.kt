@@ -26,12 +26,12 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.onebusaway.android.extrapolation.ExtrapolatedVehicle
 import org.onebusaway.android.extrapolation.extrapolatedVehicles
+import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
-import org.onebusaway.android.io.ObaApi
-import org.onebusaway.android.io.elements.ObaRoute
-import org.onebusaway.android.io.elements.isLocationRealtime
-import org.onebusaway.android.io.request.ObaStopsForRouteResponse
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse
+import java.net.HttpURLConnection
+import org.onebusaway.android.api.ObaApi
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.RoutePolyline
@@ -148,29 +148,32 @@ class RouteMapController(
         val id = routeId ?: return
         routeJob?.cancel()
         routeJob = scope.launch {
-            val response = routeRepository.getRoute(id).getOrNull()
+            val result = routeRepository.getRoute(id)
             // Clear the spinner once the load resolves — before dispatching, so it's cleared on the
             // error path too (mirrors StopsMapController). A cancelled load never reaches here; the
             // view transition that cancelled it clears progress via leaveCurrentView().
             host.setProgress(false)
-            onRouteLoaded(response, zoomToRoute)
+            onRouteLoaded(result, zoomToRoute)
         }
     }
 
-    private fun onRouteLoaded(response: ObaStopsForRouteResponse?, zoomToRoute: Boolean) {
-        if (response == null || response.code != ObaApi.OBA_OK) {
-            MapUtils.showMapError(response)
+    private fun onRouteLoaded(result: Result<RouteMap?>, zoomToRoute: Boolean) {
+        val routeMap = result.getOrElse {
+            MapUtils.showMapError((it as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION)
             return
         }
-        val route = response.getRoute(response.routeId)
-        _loadedRoute.value = LoadedRoute.Loaded(route, response.getAgency(route.agencyId).name)
+        // A null result (no endpoint) or an unresolved route reads as an error, like the legacy
+        // null-response path.
+        val route = routeMap?.route ?: run {
+            MapUtils.showMapError(HttpURLConnection.HTTP_INTERNAL_ERROR)
+            return
+        }
+        _loadedRoute.value = LoadedRoute.Loaded(route, routeMap.agencyName)
         // Pass the route's raw GTFS color through; the render layer picks the fallback when it's absent.
         renderState.setRoutePolylines(
-            response.shapes.map { shape ->
-                RoutePolyline(route.color, shape.points.map { it.toGeoPoint() })
-            }
+            routeMap.polylines.map { points -> RoutePolyline(route.color, points) }
         )
-        stopsController.showStops(response.stops, response)
+        stopsController.showStops(routeMap.stops, routeMap.routes)
         if (zoomToRoute) {
             host.frameRoute()
         }
@@ -206,7 +209,8 @@ class RouteMapController(
      */
     private fun ExtrapolatedVehicle.toMarker(): VehicleMarker =
         VehicleMarker(
-            activeTripId = status.activeTripId,
+            // Vehicles are only built for trips with a resolvable active id, so this is non-null here.
+            activeTripId = status.activeTripId.orEmpty(),
             point = point,
             isRealtime = status.isLocationRealtime,
             status = status,
@@ -216,7 +220,7 @@ class RouteMapController(
 }
 
 /** The latest trips-for-route [response] and the device clock ([loadNanos]) when it landed. */
-private data class VehiclePoll(val response: ObaTripsForRouteResponse, val loadNanos: Long)
+private data class VehiclePoll(val response: RouteTrips, val loadNanos: Long)
 
 /**
  * The raw route-load state [RouteMapController] publishes (null when not in route mode); [MapViewModel]

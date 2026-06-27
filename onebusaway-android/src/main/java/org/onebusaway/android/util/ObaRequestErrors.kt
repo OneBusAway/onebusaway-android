@@ -21,9 +21,10 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.provider.Settings
 
+import java.net.HttpURLConnection
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.io.ObaApi
+import org.onebusaway.android.api.ObaApi
 
 /**
  * Maps OBA REST API response codes and device connectivity state to user-friendly error messages.
@@ -40,9 +41,9 @@ object ObaRequestErrors {
             }
         }
         return when (code) {
-            ObaApi.OBA_INTERNAL_ERROR ->
+            HttpURLConnection.HTTP_INTERNAL_ERROR ->
                 context.getString(R.string.internal_error)
-            ObaApi.OBA_NOT_FOUND -> {
+            HttpURLConnection.HTTP_NOT_FOUND -> {
                 val r = Application.get().currentRegion
                 if (r != null) {
                     context.getString(R.string.route_not_found_error_with_region_name, r.name)
@@ -50,7 +51,7 @@ object ObaRequestErrors {
                     context.getString(R.string.route_not_found_error_no_region)
                 }
             }
-            ObaApi.OBA_BAD_GATEWAY ->
+            HttpURLConnection.HTTP_BAD_GATEWAY ->
                 context.getString(R.string.bad_gateway_error, context.getString(R.string.app_name))
             ObaApi.OBA_OUT_OF_MEMORY ->
                 context.getString(R.string.out_of_memory_error)
@@ -69,9 +70,9 @@ object ObaRequestErrors {
             }
         }
         return when (code) {
-            ObaApi.OBA_INTERNAL_ERROR ->
+            HttpURLConnection.HTTP_INTERNAL_ERROR ->
                 context.getString(R.string.internal_error)
-            ObaApi.OBA_NOT_FOUND -> {
+            HttpURLConnection.HTTP_NOT_FOUND -> {
                 val r = Application.get().currentRegion
                 if (r != null) {
                     context.getString(R.string.stop_not_found_error_with_region_name, r.name)
@@ -79,7 +80,7 @@ object ObaRequestErrors {
                     context.getString(R.string.stop_not_found_error_no_region)
                 }
             }
-            ObaApi.OBA_BAD_GATEWAY ->
+            HttpURLConnection.HTTP_BAD_GATEWAY ->
                 context.getString(R.string.bad_gateway_error, context.getString(R.string.app_name))
             ObaApi.OBA_OUT_OF_MEMORY ->
                 context.getString(R.string.out_of_memory_error)
@@ -92,7 +93,7 @@ object ObaRequestErrors {
      * Returns a user-friendly error message based on device state (whether a network connection is
      * available or airplane mode is on) or an OBA REST API response code.
      *
-     * @param code The status code (one of the ObaApi.OBA_* constants)
+     * @param code The status code (an HTTP status, or an ObaApi.OBA_* sentinel)
      */
     @JvmStatic
     fun getMapErrorString(context: Context, code: Int): String {
@@ -104,9 +105,9 @@ object ObaRequestErrors {
             }
         }
         return when (code) {
-            ObaApi.OBA_INTERNAL_ERROR ->
+            HttpURLConnection.HTTP_INTERNAL_ERROR ->
                 context.getString(R.string.internal_error)
-            ObaApi.OBA_BAD_GATEWAY ->
+            HttpURLConnection.HTTP_BAD_GATEWAY ->
                 context.getString(R.string.bad_gateway_error)
             ObaApi.OBA_OUT_OF_MEMORY ->
                 context.getString(R.string.out_of_memory_error)

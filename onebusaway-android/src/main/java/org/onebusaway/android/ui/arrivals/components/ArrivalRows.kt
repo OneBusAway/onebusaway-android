@@ -62,7 +62,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.onebusaway.android.R
-import org.onebusaway.android.io.elements.Status
+import org.onebusaway.android.models.Status
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.compose.components.LineBadge
@@ -91,15 +91,15 @@ class ArrivalRowCallbacks(
 fun groupForStyleB(arrivals: List<ArrivalInfo>): List<List<ArrivalInfo>> {
     val comparator = AlphanumComparator()
     val sorted = arrivals.sortedWith { a, b ->
-        val byRoute = comparator.compare(a.info.routeId, b.info.routeId)
-        if (byRoute != 0) byRoute else comparator.compare(a.info.headsign.orEmpty(), b.info.headsign.orEmpty())
+        val byRoute = comparator.compare(a.routeId, b.routeId)
+        if (byRoute != 0) byRoute else comparator.compare(a.headsign.orEmpty(), b.headsign.orEmpty())
     }
     val groups = mutableListOf<MutableList<ArrivalInfo>>()
     for (arrival in sorted) {
         val current = groups.lastOrNull()
         if (current != null &&
-            current[0].info.routeId == arrival.info.routeId &&
-            current[0].info.headsign.orEmpty() == arrival.info.headsign.orEmpty()
+            current[0].routeId == arrival.routeId &&
+            current[0].headsign.orEmpty() == arrival.headsign.orEmpty()
         ) {
             current.add(arrival)
         } else {
@@ -188,8 +188,8 @@ private fun ArrivalRowVisual(
 @Composable
 internal fun ArrivalRowContent(arrival: ArrivalInfo, modifier: Modifier = Modifier) {
     ArrivalRowVisual(
-        shortName = arrival.info.shortName.orEmpty(),
-        headsign = arrival.info.headsign.orEmpty(),
+        shortName = arrival.shortName.orEmpty(),
+        headsign = arrival.headsign.orEmpty(),
         statusText = arrival.statusText.orEmpty(),
         statusColor = colorResource(arrival.color),
         timeText = arrival.timeText.orEmpty(),
@@ -324,11 +324,11 @@ fun ArrivalCardStyleB(
             Row(verticalAlignment = Alignment.Top) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        text = first.info.shortName.orEmpty(),
+                        text = first.shortName.orEmpty(),
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = first.info.headsign.orEmpty(),
+                        text = first.headsign.orEmpty(),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textDecoration = canceledDecoration(first)
@@ -396,7 +396,7 @@ internal fun ArrivalActionsMenu(
         } else {
             R.string.bus_options_menu_show_only_this_route
         }
-        MenuRow(filterLabel) { onDismiss(); callbacks.onShowOnlyRoute(arrival.info.routeId) }
+        MenuRow(filterLabel) { onDismiss(); callbacks.onShowOnlyRoute(arrival.routeId) }
         val url = actions?.scheduleUrl
         if (!url.isNullOrBlank()) {
             MenuRow(R.string.bus_options_menu_show_route_schedule) {

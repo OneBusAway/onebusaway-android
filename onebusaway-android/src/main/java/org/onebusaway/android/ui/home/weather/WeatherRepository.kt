@@ -15,11 +15,13 @@
  */
 package org.onebusaway.android.ui.home.weather
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.onebusaway.android.io.request.weather.ObaWeatherRequest
+import org.onebusaway.android.R
+import org.onebusaway.android.api.contract.WeatherWebService
+import org.onebusaway.android.region.RegionRepository
 
 /**
  * The current weather forecast, decoupled from the io/elements response. The raw icon string and
@@ -35,20 +37,24 @@ interface WeatherRepository {
 }
 
 /**
- * Default implementation wrapping the blocking weather REST call (replaces WeatherRequestTask) and
- * mapping the io/elements response to the decoupled [WeatherData] at the IO boundary, so consumers
- * never touch the Jackson model. The legacy AsyncTask treated a null response or any thrown
- * exception as a failure and only surfaced a response whose current forecast was present, so the
- * same is mapped to [Result.failure] here.
+ * Default implementation fetching the weather forecast from the region's sidecar host via
+ * [WeatherWebService] and mapping the response to the decoupled [WeatherData] at the IO boundary, so
+ * consumers never touch the wire model. A missing region/sidecar URL, a thrown exception, or a
+ * response without a current forecast all map to [Result.failure] (matching the legacy AsyncTask).
  */
-class DefaultWeatherRepository @Inject constructor() : WeatherRepository {
+class DefaultWeatherRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val regionRepository: RegionRepository,
+    private val weatherService: WeatherWebService,
+) : WeatherRepository {
 
-    override suspend fun currentForecast(regionId: Long): Result<WeatherData> =
-        withContext(Dispatchers.IO) {
-            runCatching {
-                val forecast = ObaWeatherRequest.newRequest(regionId).call()?.current_forecast
-                    ?: throw IOException("No weather forecast for region $regionId")
-                WeatherData(forecast.icon ?: "", forecast.temperature, forecast.summary)
-            }
-        }
+    override suspend fun currentForecast(regionId: Long): Result<WeatherData> = runCatching {
+        val base = regionRepository.region.value?.sidecarBaseUrl
+            ?: throw IOException("No sidecar base URL for region $regionId")
+        val url = base + context.getString(R.string.weather_api_endpoint)
+            .replace("regionID", regionId.toString())
+        val forecast = weatherService.getWeather(url).current_forecast
+            ?: throw IOException("No weather forecast for region $regionId")
+        WeatherData(forecast.icon ?: "", forecast.temperature, forecast.summary)
+    }
 }

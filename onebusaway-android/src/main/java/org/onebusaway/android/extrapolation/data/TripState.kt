@@ -19,11 +19,9 @@ import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.Extrapolator
 import org.onebusaway.android.extrapolation.GammaExtrapolator
 import org.onebusaway.android.extrapolation.ScheduleReplayExtrapolator
-import org.onebusaway.android.io.elements.ObaRoute
-import org.onebusaway.android.io.elements.ObaTripSchedule
-import org.onebusaway.android.io.elements.ObaTripStatus
-import org.onebusaway.android.io.elements.isLocationRealtime
-import org.onebusaway.android.io.request.ObaTripDetailsResponse
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.util.Polyline
 
 private const val MAX_ENTRIES = 100
@@ -83,7 +81,8 @@ data class TripState(
          * or when the latest one carried no vehicle status.
          */
         val vehicleActiveTripId: String? = null,
-        val tripDetailsResponse: ObaTripDetailsResponse? = null
+        /** The polled trip's shape id (from the trip details references), for on-demand shape activation. */
+        val shapeId: String? = null
 ) {
 
     /** [history]'s raw statuses, projected once per snapshot. */

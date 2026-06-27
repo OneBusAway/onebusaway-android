@@ -19,16 +19,21 @@ import android.content.Context
 import android.util.Log
 import androidx.test.InstrumentationRegistry.getTargetContext
 import androidx.test.runner.AndroidJUnit4
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onebusaway.android.api.contract.ListWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
+import org.onebusaway.android.api.contract.TripDetailsEntry
+import org.onebusaway.android.api.data.asRouteTrips
 import org.onebusaway.android.extrapolation.extrapolatedVehicles
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse
 import org.onebusaway.android.map.googlemapsv2.BitmapDescriptorCache
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.mock.Resources
+import org.onebusaway.android.models.RouteTrips
 
 /**
  * The before/after allocation guard for #1580. `GoogleMapRenderer` re-stamps a gliding vehicle's icon on
@@ -46,27 +51,30 @@ class VehicleIconAllocationTest {
 
     private val context: Context get() = getTargetContext()
 
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+
     // A real, busy trips-for-route snapshot (38 vehicles across many HART routes, with full route refs so
-    // icon type/color resolve) — the "busy route" the issue calls out.
-    private fun response(): ObaTripsForRouteResponse =
-        Resources.readAs(
-            context,
-            Resources.getTestUri("trips_for_route_hart_5"),
-            ObaTripsForRouteResponse::class.java,
-        )
+    // icon type/color resolve) — the "busy route" the issue calls out. Decoded through the io/client DTO
+    // path the production fetch now uses, then adapted to the [RouteTrips] model.
+    private fun response(): RouteTrips {
+        val envelope: ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
+            Resources.read(context, Resources.getTestUri("trips_for_route_hart_5"))
+                .use { json.decodeFromString(it.readText()) }
+        return envelope.asRouteTrips()
+    }
 
     /** The live vehicles for every route the snapshot serves, mapped to render markers as RouteMapController does. */
-    private fun vehicles(response: ObaTripsForRouteResponse): List<VehicleMarker> {
+    private fun vehicles(response: RouteTrips): List<VehicleMarker> {
         val routeIds = response.trips
             .mapNotNull { it.status?.activeTripId }
-            .mapNotNull { response.getTrip(it)?.routeId }
+            .mapNotNull { response.trip(it)?.routeId }
             .toSet()
         return extrapolatedVehicles(response, routeIds, nowMs = 1_000_000L) { null }
             .map { v ->
                 VehicleMarker(
-                    activeTripId = v.status.activeTripId,
+                    activeTripId = v.status.activeTripId.orEmpty(),
                     point = v.point,
-                    isRealtime = VehicleBitmaps.isLocationRealtime(v.status),
+                    isRealtime = v.status.isLocationRealtime,
                     status = v.status,
                     fixTimeMs = v.fixTimeMs,
                     bearing = v.bearing,
@@ -89,7 +97,7 @@ class VehicleIconAllocationTest {
      */
     private fun replay(
         vehicles: List<VehicleMarker>,
-        response: ObaTripsForRouteResponse,
+        response: RouteTrips,
         frames: Int,
     ): Counts {
         val counts = Counts()

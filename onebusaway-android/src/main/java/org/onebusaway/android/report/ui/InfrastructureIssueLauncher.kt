@@ -17,9 +17,8 @@
 package org.onebusaway.android.report.ui
 
 import android.app.Activity
-import org.onebusaway.android.io.elements.ObaArrivalInfo
 import org.onebusaway.android.report.ReportContext
-import org.onebusaway.android.report.toTripReportContext
+import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.nav.NavRoutes
 
@@ -27,10 +26,9 @@ import org.onebusaway.android.ui.nav.NavRoutes
  * Launcher facade for the infrastructure-issue (stop/trip problem) screen (former
  * Activity). The screen is now the [NavRoutes.INFRASTRUCTURE_ISSUE] NavHost destination
  * ([InfrastructureIssueDestination]); [startWithService] encodes the stop/location context plus the
- * live [ObaArrivalInfo] (flattened to a scalar [org.onebusaway.android.report.TripReportContext]) and
- * agency/block ids into a single [ReportContext] nav-arg on the route, so the destination reads its
- * own (process-death-safe) back-stack args. Reached from the arrivals "report problem" actions (this
- * facade → HomeActivity → translator).
+ * scalar [TripReportContext] and agency/block ids into a single [ReportContext] nav-arg on the
+ * route, so the destination reads its own (process-death-safe) back-stack args. Reached from the
+ * arrivals "report problem" actions (this facade → HomeActivity → translator).
  */
 object InfrastructureIssueLauncher {
 
@@ -44,7 +42,7 @@ object InfrastructureIssueLauncher {
         stopCode: String?,
         latitude: Double,
         longitude: Double,
-        arrivalInfo: ObaArrivalInfo? = null,
+        trip: TripReportContext? = null,
         agencyName: String? = null,
         blockId: String? = null
     ) {
@@ -56,7 +54,7 @@ object InfrastructureIssueLauncher {
             lon = longitude,
             agencyName = agencyName,
             blockId = blockId,
-            trip = arrivalInfo?.toTripReportContext(),
+            trip = trip,
         )
         activity.startActivity(
             HomeActivity.navIntent(

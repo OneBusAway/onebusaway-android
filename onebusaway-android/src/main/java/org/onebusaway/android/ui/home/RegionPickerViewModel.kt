@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import org.onebusaway.android.io.elements.ObaRegion
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionState
 
@@ -45,8 +45,8 @@ class RegionPickerViewModel @Inject constructor(
     // collect-into-MutableStateFlow idiom used by the other home feature VMs (WeatherViewModel /
     // SurveyViewModel) rather than a SharingStarted.Eagerly stateIn, whose never-completing collector
     // leaks across JVM unit tests.
-    private val _picker = MutableStateFlow<List<ObaRegion>?>(null)
-    val picker: StateFlow<List<ObaRegion>?> = _picker.asStateFlow()
+    private val _picker = MutableStateFlow<List<Region>?>(null)
+    val picker: StateFlow<List<Region>?> = _picker.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -57,7 +57,7 @@ class RegionPickerViewModel @Inject constructor(
     }
 
     /** The user picked [region]: the repository applies it, which drives [picker] back to null. */
-    fun choose(region: ObaRegion) {
+    fun choose(region: Region) {
         viewModelScope.launch { regionRepo.choose(region) }
     }
 }

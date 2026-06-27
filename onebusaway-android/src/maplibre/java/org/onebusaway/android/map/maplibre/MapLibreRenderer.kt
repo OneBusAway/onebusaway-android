@@ -29,7 +29,7 @@ import org.maplibre.android.annotations.PolylineOptions
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.onebusaway.android.R
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse
+import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.map.compose.formatDataAge
 import org.onebusaway.android.map.render.BikeBand
 import org.onebusaway.android.map.render.BikeBitmaps
@@ -88,7 +88,7 @@ class MapLibreRenderer(
     private val vehicleMarkersByTripId = HashMap<String, Marker>()
     private val tripMarkersByRole = HashMap<String, Marker>()
     private val bandPolylines = mutableListOf<Polyline>()
-    private var lastVehicleResponse: ObaTripsForRouteResponse? = null
+    private var lastVehicleResponse: RouteTrips? = null
 
     // The 8-way heading slot last stamped on each vehicle's icon, keyed by trip id, so the hot path can
     // re-stamp the direction arrow as a vehicle glides — only when its heading octant flips, not every frame.
@@ -283,7 +283,7 @@ class MapLibreRenderer(
     }
 
     /** Add/remove vehicle markers to match [markers], (re)setting their icons, titles, and tap data. */
-    private fun reconcileVehicleMarkers(markers: List<VehicleMarker>, response: ObaTripsForRouteResponse?) {
+    private fun reconcileVehicleMarkers(markers: List<VehicleMarker>, response: RouteTrips?) {
         val liveIds = markers.mapTo(HashSet()) { it.activeTripId }
         vehicleSmoother.retainOnly(liveIds)
         vehicleIconDirection.keys.retainAll(liveIds)
@@ -318,7 +318,7 @@ class MapLibreRenderer(
         }
     }
 
-    private fun vehicleIcon(vehicle: VehicleMarker, response: ObaTripsForRouteResponse): Icon =
+    private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): Icon =
         iconFactory.fromBitmap(
             bottomAnchored(VehicleBitmaps.vehicleBitmap(context, vehicle, response))
         )
@@ -344,9 +344,9 @@ class MapLibreRenderer(
         return out
     }
 
-    private fun vehicleTitle(vehicle: VehicleMarker, response: ObaTripsForRouteResponse): String {
-        val trip = response.getTrip(vehicle.status.activeTripId)
-        val route = response.getRoute(trip.routeId)
+    private fun vehicleTitle(vehicle: VehicleMarker, response: RouteTrips): String {
+        val trip = response.trip(vehicle.status.activeTripId) ?: return ""
+        val route = response.route(trip.routeId) ?: return ""
         return getRouteDisplayName(route) + " - " + MyTextUtils.formatDisplayText(trip.headsign)
     }
 
@@ -438,7 +438,7 @@ class MapLibreRenderer(
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 
     /** The current trips-for-route response, needed to render a vehicle's info window. */
-    fun vehicleResponse(): ObaTripsForRouteResponse? = lastVehicleResponse
+    fun vehicleResponse(): RouteTrips? = lastVehicleResponse
 
     companion object {
         private const val ROUTE_WIDTH_DP = 3f

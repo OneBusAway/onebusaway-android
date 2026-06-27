@@ -26,11 +26,12 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import org.onebusaway.android.io.ObaApi
-import org.onebusaway.android.io.elements.ObaReferences
-import org.onebusaway.android.io.elements.ObaRoute
-import org.onebusaway.android.io.elements.ObaStop
-import org.onebusaway.android.io.request.ObaStopsForLocationResponse
+import org.onebusaway.android.api.ObaApi
+import org.onebusaway.android.api.ObaApiException
+import org.onebusaway.android.api.data.MapDataSource
+import org.onebusaway.android.models.NearbyStops
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
@@ -54,7 +55,7 @@ import org.onebusaway.android.util.RegionUtils
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class StopsMapController(
     private val host: MapHost,
-    private val stopsRepository: StopsRepository,
+    private val mapDataSource: MapDataSource,
     private val regionRepo: RegionRepository,
     private val locationRepository: LocationRepository,
     private val scope: CoroutineScope,
@@ -103,38 +104,37 @@ class StopsMapController(
                 // controller's `loadJob?.cancel()`; a cancelled load leaves lastLoad untouched.
                 flow {
                     host.setProgress(true)
-                    val response = stopsRepository
-                        .getStops(snapshot.center.toLocation(), snapshot.latSpan, snapshot.lonSpan)
-                        .getOrNull()
-                    // Only a usable load updates the fulfillment gate: a real OBA_OK response, or a null
-                    // no-op response (e.g. no stops endpoint, which intentionally fulfills future
-                    // same-center viewports). An error response (code != OBA_OK) showed no stops, so leave
-                    // the gate untouched — like a cancelled load — otherwise stopRequestFulfilled would
-                    // treat this viewport as already satisfied and short-circuit the retry.
-                    if (response == null || response.code == ObaApi.OBA_OK) {
+                    val result = mapDataSource
+                        .nearbyStops(snapshot.center.latitude, snapshot.center.longitude, snapshot.latSpan, snapshot.lonSpan)
+                    // Only a usable load updates the fulfillment gate: a success — OK stops, or a null
+                    // no-op (e.g. no stops endpoint, which intentionally fulfills future same-center
+                    // viewports). A failure (error code / transport) showed no stops, so leave the gate
+                    // untouched — like a cancelled load — otherwise stopRequestFulfilled would treat this
+                    // viewport as already satisfied and short-circuit the retry.
+                    result.onSuccess { nearby ->
                         lastLoad = snapshot
-                        lastHadResponse = response != null
-                        lastLimitExceeded = response?.limitExceeded ?: false
+                        lastHadResponse = nearby != null
+                        lastLimitExceeded = nearby?.limitExceeded ?: false
                     }
-                    emit(response)
+                    emit(result)
                 }
             }
-            .collect { response ->
+            .collect { result ->
                 host.setProgress(false)
-                onStopsLoaded(response)
+                onStopsLoaded(result)
             }
     }
 
-    private fun onStopsLoaded(response: ObaStopsForLocationResponse?) {
-        if (response == null) {
-            // Initial install can generate a null response if all is still ok, so do nothing (#615).
+    private fun onStopsLoaded(result: Result<NearbyStops?>) {
+        val nearby = result.getOrElse {
+            MapUtils.showMapError((it as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION)
             return
         }
-        if (response.code != ObaApi.OBA_OK) {
-            MapUtils.showMapError(response)
+        if (nearby == null) {
+            // No endpoint yet (or a null no-op); do nothing (#615).
             return
         }
-        if (response.outOfRange) {
+        if (nearby.outOfRange) {
             notifyOutOfRange()
             return
         }
@@ -155,14 +155,14 @@ class StopsMapController(
                             ", long = " + myLocation.longitude
                 )
             }
-            if (!inRegion && response.stops.isEmpty()) {
+            if (!inRegion && nearby.stops.isEmpty()) {
                 Log.d(TAG, "Device location is outside region range, notifying...")
                 notifyOutOfRange()
                 return
             }
         }
 
-        showStops(response.stops.toList(), response)
+        showStops(nearby.stops, nearby.routes)
     }
 
     private fun notifyOutOfRange() {
@@ -210,8 +210,8 @@ class StopsMapController(
 
     // ----- Stops -----
 
-    fun showStops(stops: List<ObaStop>, refs: ObaReferences) {
-        cacheRoutes(refs.routes)
+    fun showStops(stops: List<ObaStop>, routes: List<ObaRoute>) {
+        cacheRoutes(routes)
         capStopAccumulation(stopAccum, renderState.snapshot.value.focusedStopId, FUZZY_MAX_STOP_COUNT)
         for (stop in stops) {
             if (!stopAccum.containsKey(stop.id)) {

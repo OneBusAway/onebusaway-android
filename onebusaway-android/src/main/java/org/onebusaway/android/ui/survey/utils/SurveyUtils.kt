@@ -7,8 +7,9 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.database.survey.SurveyDbHelper
-import org.onebusaway.android.io.elements.ObaStop
-import org.onebusaway.android.io.request.survey.model.StudyResponse
+import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.Survey
+import org.onebusaway.android.models.SurveyQuestion
 import org.onebusaway.android.ui.survey.SurveyPreferences
 import java.util.Date
 
@@ -46,26 +47,24 @@ object SurveyUtils {
      * @return The zero-based index of the current survey, or -1 if all surveys are completed or filtered out.
      */
     fun getCurrentSurveyIndex(
-        studyResponse: StudyResponse,
+        surveys: List<Survey>,
         context: Context,
         isVisibleOnStop: Boolean,
         currentStop: ObaStop?
     ): Int {
-        val surveys = studyResponse.surveys ?: return -1
-
         var alwaysVisibleIndex = -1
         var oneTimeSurveyIndex = -1
 
         for (index in surveys.indices) {
             val survey = surveys[index]
 
-            val showQuestionOnStops = survey.show_on_stops
-            val showQuestionOnMaps = survey.show_on_map
-            val alwaysVisible = survey.always_visible
-            val allowMultipleResponses = survey.allows_multiple_responses
+            val showQuestionOnStops = survey.showOnStops
+            val showQuestionOnMaps = survey.showOnMap
+            val alwaysVisible = survey.alwaysVisible
+            val allowMultipleResponses = survey.allowsMultipleResponses
 
-            val visibleStopsList = survey.visible_stop_list
-            val visibleRouteList = survey.visible_route_list
+            val visibleStopsList = survey.visibleStopList
+            val visibleRouteList = survey.visibleRouteList
 
             if (survey.questions.isEmpty()) continue
 
@@ -151,7 +150,7 @@ object SurveyUtils {
      * @return A JSONArray containing the answers for the survey questions.
      */
     fun getSurveyAnswersRequestBody(
-        questionsList: List<StudyResponse.Surveys.Questions>
+        questionsList: List<SurveyQuestion>
     ): JSONArray? {
         return getAllSurveyQuestionAnswers(questionsList)
     }
@@ -163,7 +162,7 @@ object SurveyUtils {
      * @return A JSON array representing the request body, or null if not all questions are answered.
      */
     fun getAllSurveyQuestionAnswers(
-        questionsList: List<StudyResponse.Surveys.Questions>
+        questionsList: List<SurveyQuestion>
     ): JSONArray? {
         // Ensure all questions are answered before processing
         if (!checkAllQuestionsAnswered(questionsList)) {
@@ -175,7 +174,7 @@ object SurveyUtils {
         for (question in questionsList) {
             try {
                 val questionType = question.content.type
-                var questionAnswer = question.questionAnswer
+                var questionAnswer = question.answer
 
                 // Skip "label" and "extern survey" type questions as they don't require an answer
                 if (questionType == LABEL || questionType == EXTERNAL_SURVEY) {
@@ -186,7 +185,7 @@ object SurveyUtils {
                 val data = JSONObject()
                 data.put("question_id", question.id)
                 data.put("question_type", questionType)
-                data.put("question_label", question.content.label_text)
+                data.put("question_label", question.content.labelText)
 
                 // Handle multiple answers for "checkbox" type questions
                 if (questionType == "checkbox") {
@@ -212,7 +211,7 @@ object SurveyUtils {
      * @return true if all questions are answered, false otherwise.
      */
     fun checkAllQuestionsAnswered(
-        questionsList: List<StudyResponse.Surveys.Questions>
+        questionsList: List<SurveyQuestion>
     ): Boolean {
         for (question in questionsList) {
             val isAnswerRequired = question.isRequired
@@ -229,7 +228,7 @@ object SurveyUtils {
                 }
 
                 TEXT_QUESTION, RADIO_BUTTON_QUESTION -> {
-                    val answer = question.questionAnswer
+                    val answer = question.answer
                     if (answer.isNullOrEmpty()) {
                         return false
                     }
@@ -246,7 +245,7 @@ object SurveyUtils {
      * 1 if there is an external survey without a hero question.
      * 2 if there is an external survey with a hero question.
      */
-    fun checkExternalSurvey(questionsList: List<StudyResponse.Surveys.Questions>): Int {
+    fun checkExternalSurvey(questionsList: List<SurveyQuestion>): Int {
         if (questionsList.size == 1) {
             if (questionsList[0].content.type == EXTERNAL_SURVEY) return 1
         } else if (questionsList.size >= 2) {
@@ -299,14 +298,6 @@ object SurveyUtils {
         }
 
         return Date(timestamp)
-    }
-
-    fun checkValidResponse(studyResponse: StudyResponse?): Boolean {
-        return studyResponse?.surveys?.isNotEmpty() == true
-    }
-
-    fun isSurveyValid(survey: StudyResponse.Surveys?): Boolean {
-        return survey?.study != null
     }
 
     fun isValidEmbeddedDataList(embeddedDataList: ArrayList<String>?): Boolean {

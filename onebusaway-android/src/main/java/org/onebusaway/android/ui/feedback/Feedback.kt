@@ -57,7 +57,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import org.apache.commons.io.FileUtils
 import org.onebusaway.android.R
-import org.onebusaway.android.io.ObaAnalytics
+import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.nav.NavigationService
 import org.onebusaway.android.nav.NavigationUploadWorker
 import org.onebusaway.android.preferences.PreferencesRepository

@@ -18,10 +18,11 @@ package org.onebusaway.android.ui.arrivals
 
 import android.content.Context
 import org.onebusaway.android.R
-import org.onebusaway.android.io.elements.ObaArrivalInfo
-import org.onebusaway.android.io.elements.Occupancy
-import org.onebusaway.android.io.elements.Status
+import org.onebusaway.android.models.ArrivalData
+import org.onebusaway.android.models.Occupancy
+import org.onebusaway.android.models.Status
 import org.onebusaway.android.provider.ObaContract
+import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.getRouteDisplayName
@@ -34,7 +35,7 @@ import java.util.Date
  */
 class ArrivalInfo(
     context: Context?,
-    val info: ObaArrivalInfo,
+    private val data: ArrivalData,
     now: Long,
     includeArrivalDepartureInStatusLabel: Boolean
 ) {
@@ -86,27 +87,66 @@ class ArrivalInfo(
      */
     val status: Status?
 
+    // Identity/display fields the UI and repository read directly, delegating to the [ArrivalData]
+    // abstraction — so the same display model serves both the legacy fetch (My Lists) and the
+    // modernized arrivals fetch, depending on which adapter produced the [data].
+    val routeId: String get() = data.routeId
+    val tripId: String get() = data.tripId
+    val stopId: String get() = data.stopId
+    val headsign: String? get() = data.headsign
+    val shortName: String? get() = data.shortName
+    val routeLongName: String? get() = data.routeLongName
+    val stopSequence: Int get() = data.stopSequence
+    val serviceDate: Long get() = data.serviceDate
+    val vehicleId: String? get() = data.vehicleId
+
+    /** The departure time to set a reminder for: the predicted time if known, else the scheduled. */
+    val reminderDepartureTime: Long
+        get() = if (data.predictedDepartureTime != 0L) data.predictedDepartureTime
+        else data.scheduledDepartureTime
+
+    /** Flattens this arrival into the report flow's scalar context (was ObaArrivalInfo-based). */
+    fun toTripReportContext(): TripReportContext = TripReportContext(
+        tripId = data.tripId,
+        routeId = data.routeId,
+        shortName = data.shortName,
+        routeLongName = data.routeLongName,
+        headsign = data.headsign,
+        vehicleId = data.vehicleId,
+        stopId = data.stopId,
+        serviceDate = data.serviceDate,
+        predicted = data.predicted,
+        predictedArrivalTime = data.predictedArrivalTime,
+        predictedDepartureTime = data.predictedDepartureTime,
+        scheduledArrivalTime = data.scheduledArrivalTime,
+        scheduledDepartureTime = data.scheduledDepartureTime,
+        hasTripStatus = data.hasTripStatus,
+        scheduleDeviation = data.scheduleDeviation,
+        lastKnownLat = data.lastKnownLat,
+        lastKnownLon = data.lastKnownLon,
+    )
+
     init {
         // First, all times have to be converted to 'minutes'
         val nowMins = now / MS_IN_MINS
         val scheduled: Long
         val predictedTime: Long
         // If this is the first stop in the sequence, show the departure time.
-        if (info.stopSequence != 0) {
-            scheduled = info.scheduledArrivalTime
-            predictedTime = info.predictedArrivalTime
+        if (data.stopSequence != 0) {
+            scheduled = data.scheduledArrivalTime
+            predictedTime = data.predictedArrivalTime
             isArrival = true
         } else {
             // Show departure time
-            scheduled = info.scheduledDepartureTime
-            predictedTime = info.predictedDepartureTime
+            scheduled = data.scheduledDepartureTime
+            predictedTime = data.predictedDepartureTime
             isArrival = false
         }
 
         val scheduledMins = scheduled / MS_IN_MINS
         val predictedMins = predictedTime / MS_IN_MINS
 
-        if (info.predicted) {
+        if (data.predicted) {
             predicted = true
             eta = predictedMins - nowMins
             displayTime = predictedTime
@@ -119,20 +159,20 @@ class ArrivalInfo(
         color = ArrivalInfoUtils.computeColor(scheduledMins, predictedMins)
 
         statusText = computeStatusLabel(
-            context, info, now, predictedTime, scheduledMins, predictedMins,
+            context, now, predictedTime, scheduledMins, predictedMins,
             includeArrivalDepartureInStatusLabel
         )
         timeText = computeTimeLabel(context)
 
         // Check if the user has marked this routeId/headsign/stopId as a favorite
         isRouteAndHeadsignFavorite = ObaContract.RouteHeadsignFavorites
-            .isFavorite(info.routeId, info.headsign, info.stopId)
+            .isFavorite(data.routeId, data.headsign, data.stopId)
 
         notifyText = computeNotifyText(context)
 
-        historicalOccupancy = info.historicalOccupancy
-        predictedOccupancy = info.occupancyStatus
-        status = info.tripStatus?.status
+        historicalOccupancy = data.historicalOccupancy
+        predictedOccupancy = data.predictedOccupancy
+        status = data.status
     }
 
     /**
@@ -141,7 +181,6 @@ class ArrivalInfo(
      */
     private fun computeStatusLabel(
         context: Context?,
-        info: ObaArrivalInfo,
         now: Long,
         predictedTime: Long,
         scheduledMins: Long,
@@ -156,8 +195,7 @@ class ArrivalInfo(
         val res = context.resources
 
         // CANCELED trips
-        val tripStatus = info.tripStatus
-        if (tripStatus != null && Status.CANCELED == tripStatus.status) {
+        if (Status.CANCELED == data.status) {
             if (!includeArrivalDeparture) {
                 return context.getString(R.string.stop_info_canceled)
             }
@@ -169,7 +207,7 @@ class ArrivalInfo(
         }
 
         // Frequency (exact_times=0) trips
-        val frequency = info.frequency
+        val frequency = data.frequency
         if (frequency != null) {
             val headwayAsMinutes = (frequency.headway / 60).toInt()
             val formatter = DateFormat.getTimeInstance(DateFormat.SHORT)
@@ -289,7 +327,7 @@ class ArrivalInfo(
             return ""
         }
 
-        val routeDisplayName = getRouteDisplayName(info)
+        val routeDisplayName = getRouteDisplayName(data.shortName, data.routeLongName)
 
         return if (eta > 0) {
             // Bus hasn't yet arrived/departed

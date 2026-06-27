@@ -19,9 +19,6 @@ package org.onebusaway.android.app;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.os.Build;
@@ -37,14 +34,12 @@ import com.onebusaway.plausible.android.Plausible;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.donations.DonationsManager;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.analytics.ObaAnalytics;
+import org.onebusaway.android.api.ObaApi;
+import org.onebusaway.android.region.Region;
 import org.onebusaway.android.app.di.LocationEntryPoint;
 import org.onebusaway.android.app.di.RegionEntryPoint;
 import org.onebusaway.android.region.RegionSubsystems;
-import org.onebusaway.android.travelbehavior.TravelBehaviorManager;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -67,8 +62,6 @@ import dagger.hilt.android.HiltAndroidApp;
 @HiltAndroidApp
 public class Application extends android.app.Application {
 
-    public static final String APP_UID = "app_uid";
-
     // Region preference (long id)
     private static final String TAG = "Application";
 
@@ -90,7 +83,7 @@ public class Application extends android.app.Application {
 
     private Plausible mPlausible;
 
-    private org.onebusaway.android.io.UmamiAnalytics mUmami;
+    private org.onebusaway.android.analytics.UmamiAnalytics mUmami;
 
     @Override
     public void onCreate() {
@@ -99,24 +92,20 @@ public class Application extends android.app.Application {
         mApp = this;
 
         initOba();
-        initObaRegion();
         // The region and location repositories (which own region/location state) are now Hilt
-        // @Singletons, constructed lazily on first injection after onCreate. The
-        // region repo seeds itself from the region initObaRegion just loaded; the location repo starts
-        // empty and fills from setLastKnownLocation (listener updates) / its lazy provider poll. The
-        // legacy setCurrentRegion / setLastKnownLocation writers reach them via their EntryPoints. So
-        // nothing to construct here.
-        // The region-derived subsystems (Plausible, Open311) now observe the region flow (A7) — this
-        // performs their initial init (the StateFlow replays its seeded region) and re-inits on change,
-        // replacing the former explicit initOpen311(getCurrentRegion()) call. Started after initObaRegion
-        // so the repo seeds from the region just loaded.
+        // @Singletons, constructed lazily on first injection after onCreate. The region repo seeds
+        // itself from persistence (the saved region-id → ContentProvider lookup); the location repo
+        // starts empty and fills from setLastKnownLocation (listener updates) / its lazy provider poll.
+        // The legacy setCurrentRegion / setLastKnownLocation writers reach them via their EntryPoints.
+        // So nothing to construct here.
+        // The region-derived subsystems (Plausible, Open311) observe the region flow (A7) — this
+        // performs their initial init (the StateFlow replays the repo's seeded region) and re-inits on
+        // change, replacing the former explicit initOpen311(getCurrentRegion()) call.
         RegionSubsystems.observe(this);
 
         reportAnalytics();
 
         createNotificationChannels();
-
-        TravelBehaviorManager.startCollectingData(getApplicationContext());
 
         incrementAppLaunchCount();
 
@@ -228,8 +217,10 @@ public class Application extends android.app.Application {
     //
     // Helper to get/set the regions
     //
-    public synchronized ObaRegion getCurrentRegion() {
-        return ObaApi.getDefaultContext().getRegion();
+    public synchronized Region getCurrentRegion() {
+        // RegionRepository is the sole owner of the current region; read its current value. (This stays
+        // as a convenience for the remaining non-injectable Java readers that go through Application.)
+        return RegionEntryPoint.get(this).currentRegion();
     }
 
     /**
@@ -238,11 +229,11 @@ public class Application extends android.app.Application {
      * as the instrumented-test seam (the io/* request tests that pin a known region synchronously). It
      * delegates the canonical region write to {@code RegionRepository.applyRegion}.
      */
-    public synchronized void setCurrentRegion(ObaRegion region) {
+    public synchronized void setCurrentRegion(Region region) {
         setCurrentRegion(region, true);
     }
 
-    public synchronized void setCurrentRegion(ObaRegion region, boolean regionChanged) {
+    public synchronized void setCurrentRegion(Region region, boolean regionChanged) {
         // The canonical region write lives in RegionRepository as of A7; the region-derived subsystems
         // (Plausible, Umami, Open311) re-init reactively via RegionSubsystems observing the published flow.
         RegionEntryPoint.get(this).applyRegion(region, regionChanged);
@@ -254,7 +245,7 @@ public class Application extends android.app.Application {
      * {@link org.onebusaway.android.region.RegionSubsystems}, which observes the region flow (A7), rather
      * than poked imperatively by a region write transaction.
      */
-    public void onRegionChanged(ObaRegion region) {
+    public void onRegionChanged(Region region) {
         buildPlausibleInstance(region);
         buildUmamiInstance(region);
         initOpen311(region);
@@ -276,7 +267,7 @@ public class Application extends android.app.Application {
      * Include the domain and the plausible server url for the current region
      * @param region
      */
-    private void buildPlausibleInstance(ObaRegion region) {
+    private void buildPlausibleInstance(Region region) {
         mPlausible = null;
         if (region == null || region.getObaBaseUrl() == null || region.getPlausibleAnalyticsServerUrl() == null) return;
         String domain;
@@ -288,14 +279,14 @@ public class Application extends android.app.Application {
         mPlausible = new Plausible(this, domain, region.getPlausibleAnalyticsServerUrl());
     }
 
-    public org.onebusaway.android.io.UmamiAnalytics getUmamiInstance() {
+    public org.onebusaway.android.analytics.UmamiAnalytics getUmamiInstance() {
         if (mUmami == null) {
             buildUmamiInstance(getCurrentRegion());
         }
         return mUmami;
     }
 
-    private void buildUmamiInstance(ObaRegion region) {
+    private void buildUmamiInstance(Region region) {
         mUmami = null;
         if (region == null
                 || region.getObaBaseUrl() == null
@@ -313,7 +304,7 @@ public class Application extends android.app.Application {
         if (host == null) {
             return;
         }
-        mUmami = new org.onebusaway.android.io.UmamiAnalytics(
+        mUmami = new org.onebusaway.android.analytics.UmamiAnalytics(
                 region.getUmamiAnalyticsUrl(), region.getUmamiAnalyticsId(), host);
     }
 
@@ -421,26 +412,13 @@ public class Application extends android.app.Application {
     }
 
     private void initOba() {
-        String uuid = PreferenceUtils.getString(APP_UID);
-        if (uuid == null) {
-            // Generate one and save that.
-            uuid = getAppUid();
-            PreferenceUtils.saveString(APP_UID, uuid);
+        // Ensure a per-install app UID is persisted; ObaEndpointResolver reads it as app_uid.
+        if (PreferenceUtils.getString(ObaApi.APP_UID) == null) {
+            PreferenceUtils.saveString(ObaApi.APP_UID, getAppUid());
         }
 
         checkArrivalStylePreferenceDefault();
         checkDarkMode();
-
-        // Get the current app version.
-        PackageManager pm = getPackageManager();
-        PackageInfo appInfo = null;
-        try {
-            appInfo = pm.getPackageInfo(getPackageName(), PackageManager.GET_META_DATA);
-        } catch (NameNotFoundException e) {
-            // Do nothing, perhaps we'll get to show it again? Or never.
-            return;
-        }
-        ObaApi.getDefaultContext().setAppInfo(appInfo.versionCode, uuid);
     }
 
     private void checkArrivalStylePreferenceDefault() {
@@ -484,25 +462,7 @@ public class Application extends android.app.Application {
         }
     }
 
-    private void initObaRegion() {
-        // Read the region preference, look it up in the DB, then set the region.
-        long id = PreferenceUtils.getLong(getString(R.string.preference_key_region), -1);
-        if (id < 0) {
-            Log.d(TAG, "Regions preference ID is less than 0, returning...");
-            return;
-        }
-
-        ObaRegion region = ObaContract.Regions.get(this, (int) id);
-        if (region == null) {
-            Log.d(TAG, "Regions preference is null, returning...");
-            return;
-        }
-
-
-        ObaApi.getDefaultContext().setRegion(region);
-    }
-
-    private void initOpen311(ObaRegion region) {
+    private void initOpen311(Region region) {
         if (BuildConfig.DEBUG) {
             Open311Manager.getSettings().setDebugMode(true);
             Open311Manager.getSettings().setDryRun(true);
@@ -515,7 +475,7 @@ public class Application extends android.app.Application {
 
         // Read the open311 preferences from the region and set
         if (region != null && region.getOpen311Servers() != null) {
-            for (ObaRegion.Open311Server open311Server : region.getOpen311Servers()) {
+            for (Region.Open311Server open311Server : region.getOpen311Servers()) {
                 String jurisdictionId = open311Server.getJuridisctionId();
 
                 Open311Option option = new Open311Option(open311Server.getBaseUrl(),

@@ -16,7 +16,7 @@
 package org.onebusaway.android.provider
 
 import android.content.Context
-import org.onebusaway.android.io.elements.ObaStop
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.util.MyTextUtils
 
 /** A user's customization of a stop: whether it's a favorite, and any custom name. */
@@ -27,7 +27,11 @@ data class StopUserInfo(val isFavorite: Boolean, val userName: String?)
  * formatted server name.
  */
 fun stopDisplayName(stop: ObaStop, userInfo: StopUserInfo?): String =
-    userInfo?.userName?.takeIf { it.isNotEmpty() } ?: MyTextUtils.formatDisplayText(stop.name).orEmpty()
+    stopDisplayName(stop.name, userInfo)
+
+/** Field-based overload, for callers (e.g. the modernized io/client DTOs) without an [ObaStop]. */
+fun stopDisplayName(serverName: String?, userInfo: StopUserInfo?): String =
+    userInfo?.userName?.takeIf { it.isNotEmpty() } ?: MyTextUtils.formatDisplayText(serverName).orEmpty()
 
 /**
  * Loads a single stop's favorite/custom-name customization with a targeted query, for screens

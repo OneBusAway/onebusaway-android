@@ -200,7 +200,7 @@ fun ArrivalsPanel(
                     leadingContent = {
                         itemsIndexed(
                             previewArrivals,
-                            key = { index, arrival -> "peek:${arrival.info.tripId}#$index" }
+                            key = { index, arrival -> "peek:${arrival.tripId}#$index" }
                         ) { index, arrival ->
                             // The host's anchors apply to the first peek row only.
                             val etaModifier = if (index == 0) etaAnchor else Modifier
@@ -208,7 +208,7 @@ fun ArrivalsPanel(
                             if (styleA) {
                                 MorphingArrivalRow(
                                     arrival = arrival,
-                                    actions = content.actions[arrival.info.tripId],
+                                    actions = content.actions[arrival.tripId],
                                     filterActive = filtering,
                                     callbacks = rowCallbacks,
                                     progress = expandProgress,
@@ -218,7 +218,7 @@ fun ArrivalsPanel(
                             } else {
                                 PeekRow(
                                     arrival = arrival,
-                                    actions = content.actions[arrival.info.tripId],
+                                    actions = content.actions[arrival.tripId],
                                     filterActive = filtering,
                                     callbacks = rowCallbacks,
                                     etaModifier = etaModifier,
@@ -257,8 +257,8 @@ private fun PeekRow(
 ) {
     var expanded by remember { mutableStateOf(false) }
     PeekRowVisual(
-        shortName = arrival.info.shortName.orEmpty(),
-        headsign = arrival.info.headsign.orEmpty(),
+        shortName = arrival.shortName.orEmpty(),
+        headsign = arrival.headsign.orEmpty(),
         eta = arrival.eta,
         etaColor = colorResource(arrival.color),
         predicted = arrival.predicted,

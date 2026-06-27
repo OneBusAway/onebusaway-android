@@ -31,7 +31,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.onebusaway.android.R
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse
+import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.map.compose.formatDataAge
 import org.onebusaway.android.map.googlemapsv2.compose.BikeIcons
 import org.onebusaway.android.map.render.BikeBand
@@ -83,8 +83,8 @@ class GoogleMapRenderer(
     // The latest trips-for-route poll, published as it changes (after the markers are reconciled). The
     // change-detector for the vehicle reconcile, the source a vehicle info window reads its content from,
     // and the signal a collector (the adapter) uses to re-render an open bubble from the fresh data.
-    private val _vehicleResponse = MutableStateFlow<ObaTripsForRouteResponse?>(null)
-    val vehicleResponse: StateFlow<ObaTripsForRouteResponse?> = _vehicleResponse.asStateFlow()
+    private val _vehicleResponse = MutableStateFlow<RouteTrips?>(null)
+    val vehicleResponse: StateFlow<RouteTrips?> = _vehicleResponse.asStateFlow()
 
     // The static annotations added by the last [renderStatic], removed (not map.clear()) on the next so
     // the per-frame dynamic layer below survives a static redraw.
@@ -370,7 +370,7 @@ class GoogleMapRenderer(
     }
 
     /** Add/remove vehicle markers to match [markers], (re)setting their icons, titles, and tap data. */
-    private fun reconcileVehicleMarkers(markers: List<VehicleMarker>, response: ObaTripsForRouteResponse?) {
+    private fun reconcileVehicleMarkers(markers: List<VehicleMarker>, response: RouteTrips?) {
         val liveIds = markers.mapTo(HashSet()) { it.activeTripId }
         vehicleSmoother.retainOnly(liveIds)
         vehicleIconDirection.keys.retainAll(liveIds)
@@ -407,14 +407,14 @@ class GoogleMapRenderer(
         }
     }
 
-    private fun vehicleIcon(vehicle: VehicleMarker, response: ObaTripsForRouteResponse): BitmapDescriptor =
+    private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): BitmapDescriptor =
         descriptorCache.get(VehicleBitmaps.iconKey(vehicle, response)) {
             VehicleBitmaps.vehicleBitmap(context, vehicle, response)
         }
 
-    private fun vehicleTitle(vehicle: VehicleMarker, response: ObaTripsForRouteResponse): String {
-        val trip = response.getTrip(vehicle.status.activeTripId)
-        val route = response.getRoute(trip.routeId)
+    private fun vehicleTitle(vehicle: VehicleMarker, response: RouteTrips): String {
+        val trip = response.trip(vehicle.status.activeTripId) ?: return ""
+        val route = response.route(trip.routeId) ?: return ""
         return getRouteDisplayName(route) + " - " + MyTextUtils.formatDisplayText(trip.headsign)
     }
 

@@ -26,6 +26,9 @@ buildscript {
         classpath 'com.android.tools.build:gradle:9.2.0'
         classpath 'com.google.gms:google-services:4.4.4'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // kotlinx.serialization compiler plugin; version tracks the Kotlin version. Backs the
+        // modernized io/client REST stack (Retrofit + kotlinx.serialization).
+        classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
         // Compose compiler plugin; version == Kotlin version. The Kotlin 2.x compiler is
         // backward-compatible with the Compose 1.11.x runtime used in the app module.
         classpath "org.jetbrains.kotlin:compose-compiler-gradle-plugin:$kotlin_version"

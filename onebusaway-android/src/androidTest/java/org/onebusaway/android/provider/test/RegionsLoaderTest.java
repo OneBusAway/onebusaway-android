@@ -16,9 +16,11 @@
 package org.onebusaway.android.provider.test;
 
 import org.junit.Test;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.test.ObaLoaderTestCase;
+import org.junit.runner.RunWith;
+import org.onebusaway.android.region.Region;
 import org.onebusaway.android.util.RegionUtils;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import java.util.ArrayList;
 
@@ -28,21 +30,23 @@ import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 
 /**
- * Tests loading regions
+ * Tests loading regions from the bundled resources and round-tripping them through the
+ * ContentProvider (no network — exercises {@link RegionUtils} + the provider directly).
  */
-public class RegionsLoaderTest extends ObaLoaderTestCase {
+@RunWith(AndroidJUnit4.class)
+public class RegionsLoaderTest {
 
     @Test
     public void testLoader() {
         // Load regions from resources
-        ArrayList<ObaRegion> regionsFromResources = RegionUtils
+        ArrayList<Region> regionsFromResources = RegionUtils
                 .getRegionsFromResources(getTargetContext());
 
         // Save to provider
         RegionUtils.saveToProvider(getTargetContext(), regionsFromResources);
 
         // Retrieve from provider
-        ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromProvider(getTargetContext());
+        ArrayList<Region> regions = RegionUtils.getRegionsFromProvider(getTargetContext());
         assertNotNull(regions);
         assertEquals(5, regions.size());  // Number of production regions
 
@@ -51,7 +55,7 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
         _assertPugetSound(regions.get(1));
     }
 
-    private void assertBounds(ObaRegion.Bounds bound,
+    private void assertBounds(Region.Bounds bound,
                               double lat, double lon, double latSpan, double lonSpan) {
         assertEquals(lat, bound.getLat());
         assertEquals(lon, bound.getLon());
@@ -59,10 +63,10 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
         assertEquals(lonSpan, bound.getLonSpan());
     }
 
-    private void _assertTampa(ObaRegion tampa) {
+    private void _assertTampa(Region tampa) {
         assertEquals(0, tampa.getId());
         assertEquals("Tampa Bay", tampa.getName());
-        ObaRegion.Bounds[] bounds = tampa.getBounds();
+        Region.Bounds[] bounds = tampa.getBounds();
         assertNotNull(bounds);
         assertEquals(2, bounds.length);
         // 27.9769105:-82.445851:0.542461:0.576358
@@ -84,10 +88,10 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
         assertNull(tampa.getPaymentWarningBody());
     }
 
-    private void _assertPugetSound(ObaRegion ps) {
+    private void _assertPugetSound(Region ps) {
         assertEquals(1, ps.getId());
         assertEquals("Puget Sound", ps.getName());
-        ObaRegion.Bounds[] bounds = ps.getBounds();
+        Region.Bounds[] bounds = ps.getBounds();
         assertNotNull(bounds);
         assertEquals(9, bounds.length);
         // 47.221315:-122.4051325:0.33704:0.440483

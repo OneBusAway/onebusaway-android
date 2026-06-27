@@ -95,8 +95,11 @@ class TripDetailsViewModel @Inject constructor(
     /** The resolved transit-line color, for tinting the trip-map uncertainty band (0 until loaded). */
     fun lineColorArgb(): Int = (_state.value as? TripDetailsUiState.Content)?.lineColorArgb ?: 0
 
-    /** The last good response, for the host to resolve stops when setting a destination reminder. */
-    fun lastResponse() = repository.lastResponse()
+    /** Resolves (and persists) the before/destination stops for [position], for the reminder flow. */
+    fun destinationStops(position: Int) = repository.destinationStops(position)
+
+    /** The server time of the last loaded response, or null if none has loaded. */
+    fun lastLoadedTime(): Long? = repository.lastLoadedTime()
 
     /**
      * Sets (or clears with null) the destination-reminder stop and reloads so the flag updates. The

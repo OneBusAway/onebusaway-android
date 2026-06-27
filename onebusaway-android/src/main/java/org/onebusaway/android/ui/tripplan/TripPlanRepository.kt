@@ -32,7 +32,6 @@ import org.onebusaway.android.app.Application
 import org.onebusaway.android.directions.util.CustomAddress
 import org.onebusaway.android.directions.util.JacksonConfig
 import org.onebusaway.android.directions.util.TripRequestBuilder
-import org.onebusaway.android.travelbehavior.TravelBehaviorManager
 import org.opentripplanner.api.model.Itinerary
 import org.opentripplanner.api.ws.Message
 import org.opentripplanner.api.ws.Request
@@ -71,13 +70,11 @@ class DefaultTripPlanRepository @Inject constructor(
                 val baseUrl = builder.formattedOtpBaseUrl
                     ?: throw IOException(context.getString(R.string.tripplanner_no_server_selected_error))
 
-                val (response, requestUrl) = requestPlan(request, baseUrl, Application.get().useOldOtpApiUrlVersion)
+                val response = requestPlan(request, baseUrl, Application.get().useOldOtpApiUrlVersion)
                 val itineraries = response.plan?.itinerary
                 if (itineraries.isNullOrEmpty()) {
                     throw IOException(errorMessage(response.error?.id ?: -1))
                 }
-                // Record the plan for travel-behavior research (as the legacy onTripRequestComplete did).
-                TravelBehaviorManager.saveTripPlan(response.plan, requestUrl, context.applicationContext)
                 itineraries
             }
         }
@@ -90,7 +87,7 @@ class DefaultTripPlanRepository @Inject constructor(
         request: Request,
         baseUrl: String,
         useOldUrlStructure: Boolean
-    ): Pair<Response, String> {
+    ): Response {
         val query = buildString {
             var first = true
             for (entry in request.parameters.entries) {
@@ -131,7 +128,7 @@ class DefaultTripPlanRepository @Inject constructor(
             if (useOldUrlStructure) {
                 Application.get().useOldOtpApiUrlVersion = true
             }
-            return response to url
+            return response
         } catch (e: SocketTimeoutException) {
             throw IOException(errorMessage(Message.REQUEST_TIMEOUT.id), e)
         } catch (e: FileNotFoundException) {

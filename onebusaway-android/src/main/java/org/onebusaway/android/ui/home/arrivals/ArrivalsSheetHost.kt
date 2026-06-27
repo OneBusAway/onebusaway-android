@@ -35,7 +35,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.first
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse
+import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
@@ -72,7 +72,7 @@ internal fun ArrivalsSheetHost(
     // drive the peek→card row morph in lockstep with the drag.
     expandProgress: () -> Float,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
-    onArrivalsLoaded: (ObaArrivalInfoResponse) -> Unit,
+    onArrivalsLoaded: (ArrivalsLoaded) -> Unit,
     onShowRouteOnMap: (String) -> Unit,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (args: ReminderEditorArgs) -> Unit,
@@ -136,10 +136,10 @@ internal fun ArrivalsSheetHost(
             // and — the first time arrivals show — kick off the arrivals-panel onboarding spotlight.
             val sheetVisibleState = rememberUpdatedState(sheetVisible)
             LaunchedEffect(viewModel) {
-                viewModel.responses.collect { response ->
-                    onArrivalsLoaded(response)
+                viewModel.arrivalsLoaded.collect { loaded ->
+                    onArrivalsLoaded(loaded)
                     if (tutorialState != null) {
-                        maybeStartArrivalTutorial(context, tutorialState, response) {
+                        maybeStartArrivalTutorial(context, tutorialState, loaded.hasArrivals) {
                             // Suspend until the sheet is actually on screen (see the helper KDoc).
                             snapshotFlow { sheetVisibleState.value }.first { it }
                         }
@@ -165,12 +165,11 @@ internal fun ArrivalsSheetHost(
 private suspend fun maybeStartArrivalTutorial(
     context: Context,
     tutorialState: TutorialState,
-    response: ObaArrivalInfoResponse,
+    hasArrivals: Boolean,
     awaitSheetVisible: suspend () -> Unit,
 ) {
     if (tutorialState.active) return
-    val arrivals = response.arrivalInfo
-    if (arrivals == null || arrivals.isEmpty()) return
+    if (!hasArrivals) return
     val prefs = PreferencesEntryPoint.get(context)
     val pending = ArrivalTutorial.pendingSteps(prefs)
     if (pending.isEmpty()) return

@@ -18,7 +18,7 @@ package org.onebusaway.android.region
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.onebusaway.android.io.elements.ObaRegion
+import org.onebusaway.android.region.Region
 
 /**
  * The observable region state ([region] + [state]) that [DefaultRegionRepository] exposes. Extracted
@@ -32,16 +32,16 @@ import org.onebusaway.android.io.elements.ObaRegion
  * [region] is left untouched by [resolving]/[needsChoice]/[failed] (the last region still applies while
  * a refresh is in flight or after a failure); only [activated] moves it.
  */
-class RegionStateHolder(seed: ObaRegion?) {
+class RegionStateHolder(seed: Region?) {
 
     private val _region = MutableStateFlow(seed)
-    val region: StateFlow<ObaRegion?> = _region.asStateFlow()
+    val region: StateFlow<Region?> = _region.asStateFlow()
 
     private val _state = MutableStateFlow<RegionState>(RegionState.Active(seed))
     val state: StateFlow<RegionState> = _state.asStateFlow()
 
     /** A region (or null for a custom API URL) became active: moves both [region] and [state]. */
-    fun activated(region: ObaRegion?) {
+    fun activated(region: Region?) {
         _region.value = region
         _state.value = RegionState.Active(region)
     }
@@ -52,7 +52,7 @@ class RegionStateHolder(seed: ObaRegion?) {
     }
 
     /** No region could be auto-selected; the user must pick from [regions]. [region] keeps its value. */
-    fun needsChoice(regions: List<ObaRegion>) {
+    fun needsChoice(regions: List<Region>) {
         _state.value = RegionState.NeedsManualChoice(regions)
     }
 

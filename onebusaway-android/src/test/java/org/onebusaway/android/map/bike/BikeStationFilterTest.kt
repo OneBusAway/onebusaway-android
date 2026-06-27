@@ -92,4 +92,29 @@ class BikeStationFilterTest {
             bikeAction(isDirections = true, selectedIds = emptyList(), layerVisible = false)
         )
     }
+
+    // --- bikeRentalUrl: the OTP url-structure selection (the doubled-path fix) ---
+
+    @Test
+    fun `new structure inserts routers default for a server-rooted base`() {
+        // Tampa/HART form: otpBaseUrl is the OTP server root.
+        assertEquals(
+            "https://otp.prod.obahart.org/otp/routers/default/bike_rental" +
+                "?lowerLeft=27.9,-82.5&upperRight=28.1,-82.4",
+            bikeRentalUrl("https://otp.prod.obahart.org/otp", useOldUrlStructure = false,
+                27.9, -82.5, 28.1, -82.4)
+        )
+    }
+
+    @Test
+    fun `old structure appends bike_rental directly to a router-rooted base`() {
+        // Puget Sound form: otpBaseUrl already ends in routers/default — the new structure would
+        // double it (the bug being fixed), so the old structure appends bike_rental directly.
+        assertEquals(
+            "https://otp.prod.sound.obaweb.org/otp/routers/default/bike_rental" +
+                "?lowerLeft=47.5,-122.4&upperRight=47.7,-122.2",
+            bikeRentalUrl("https://otp.prod.sound.obaweb.org/otp/routers/default",
+                useOldUrlStructure = true, 47.5, -122.4, 47.7, -122.2)
+        )
+    }
 }

@@ -18,7 +18,7 @@ package org.onebusaway.android.map.googlemapsv2;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 
-import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.region.Region;
 
 import android.content.Context;
 import android.location.Location;
@@ -71,7 +71,7 @@ public class MapHelpV2 {
      *
      * @return LatLngBounds for the region
      */
-    public static LatLngBounds getRegionBounds(ObaRegion region) {
+    public static LatLngBounds getRegionBounds(Region region) {
         if (region == null) {
             throw new IllegalArgumentException("Region is null");
         }
@@ -81,7 +81,7 @@ public class MapHelpV2 {
         double lonMax = -180;
 
         // This is fairly simplistic
-        for (ObaRegion.Bounds bound : region.getBounds()) {
+        for (Region.Bounds bound : region.getBounds()) {
             // Get the top bound
             double lat = bound.getLat();
             double latSpanHalf = bound.getLatSpan() / 2.0;

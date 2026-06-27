@@ -24,7 +24,7 @@ class RegionStateHolderTest {
 
     @Test
     fun `the seed region is the initial value and Active`() {
-        // ObaRegion equality is id-based, so region(1) matches the seeded region(1).
+        // Region equality is id-based, so region(1) matches the seeded region(1).
         val holder = RegionStateHolder(region(1))
         assertEquals(region(1), holder.region.value)
         assertEquals(RegionState.Active(region(1)), holder.state.value)

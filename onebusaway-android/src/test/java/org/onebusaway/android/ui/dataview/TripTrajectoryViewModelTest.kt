@@ -26,10 +26,9 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
+import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.extrapolation.data.TripState
-import org.onebusaway.android.io.request.ObaTripDetailsResponse
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.util.Polyline
@@ -47,13 +46,13 @@ class TripTrajectoryViewModelTest {
 
         override fun lookupTripState(tripId: String?): TripState? = state
 
-        override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<ObaTripDetailsResponse> =
+        override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> =
             flow {
                 detailsCollections++
                 awaitCancellation()
             }
 
-        override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<ObaTripsForRouteResponse> =
+        override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> =
             emptyFlow()
 
         override suspend fun ensureShape(tripId: String, shapeId: String): Polyline? = null

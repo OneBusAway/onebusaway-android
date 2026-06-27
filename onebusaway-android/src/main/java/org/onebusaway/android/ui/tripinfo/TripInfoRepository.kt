@@ -23,19 +23,16 @@ import android.text.format.DateUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.io.request.reminders.ObaReminderRequest
-import org.onebusaway.android.io.request.reminders.ReminderRequestListener
-import org.onebusaway.android.io.request.reminders.model.ReminderResponse
+import org.onebusaway.android.api.contract.ReminderWebService
 import org.onebusaway.android.provider.ObaContract
 import org.onebusaway.android.provider.ProviderQueries
+import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ReminderUtils
-import kotlin.coroutines.resume
 
 /** The reminder lead times (minutes) backing each spinner position, as stored in the Trips table. */
 internal val REMINDER_MINUTES = listOf(1, 3, 5, 10, 15, 20, 25, 30)
@@ -97,7 +94,9 @@ interface TripInfoRepository {
 }
 
 class DefaultTripInfoRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val regionRepository: RegionRepository,
+    private val reminderService: ReminderWebService,
 ) : TripInfoRepository {
 
     override suspend fun load(args: TripInfoArgs): TripInfoData = withContext(Dispatchers.IO) {
@@ -215,31 +214,27 @@ class DefaultTripInfoRepository @Inject constructor(
         args: TripInfoArgs,
         data: TripInfoData,
         reminderSeconds: Int
-    ): String? = suspendCancellableCoroutine { continuation ->
-        val request = ObaReminderRequest.Builder(context)
-            .setStopID(args.stopId)
-            .setServiceDate(data.serviceDate)
-            .setStopSequence(data.stopSequence)
-            .setTripID(args.tripId)
-            .setUserPushId(Application.getUserPushID())
-            .setSecondsBefore(reminderSeconds)
-            .setVehicleID(data.vehicleId)
-            .setListener(object : ReminderRequestListener {
-                override fun onReminderResponseReceived(response: ReminderResponse?) {
-                    if (continuation.isActive) continuation.resume(response?.url)
-                }
-
-                override fun onReminderResponseFailed() {
-                    if (continuation.isActive) continuation.resume(null)
-                }
-            })
-            .build()
-        if (request == null) {
-            // Builder validation failed (e.g. no push id) — it logs the specifics.
-            continuation.resume(null)
-        } else {
-            request.call()
-        }
+    ): String? {
+        val region = regionRepository.region.value ?: return null
+        val base = region.sidecarBaseUrl ?: return null
+        // The push id is the one required field not guaranteed by the typed args (it's absent until
+        // push registration completes); the legacy builder returned null in that case.
+        val userPushId = Application.getUserPushID()
+        if (userPushId.isNullOrEmpty()) return null
+        val url = base + context.getString(R.string.arrivals_reminders_api_endpoint) +
+            region.id + "/alarms"
+        return runCatching {
+            reminderService.createAlarm(
+                url = url,
+                stopId = args.stopId,
+                serviceDate = data.serviceDate,
+                stopSequence = data.stopSequence,
+                tripId = args.tripId,
+                userPushId = userPushId,
+                secondsBefore = reminderSeconds,
+                vehicleId = data.vehicleId,
+            ).url
+        }.getOrNull()
     }
 
     private fun saveTrip(

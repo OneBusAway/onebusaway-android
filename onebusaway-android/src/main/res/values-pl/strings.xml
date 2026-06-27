@@ -600,23 +600,11 @@
     <string name="preferences_powered_by_oba_summary">Dowiedz się więcej o tym projekcie
     </string>
 
-    <string name="preferences_push_firebase_data_title">Wyślij dane Firebase na serwer</string>
-    <string name="preferences_push_firebase_data_summary">Jeśli dołączyłeś do badania zachowań podróżnych, dotknięcie tej opcji spowoduje wysłanie zebranych danych o zachowaniach podróżnych na serwer Firebase. Jest to przydatne podczas testowania aplikacji i przeznaczone dla deweloperów. Dla najlepszych wyników upewnij się, że masz silne połączenie z internetem.</string>
 
-    <string name="push_firebase_data_dialog_title">Wysyłanie danych Firebase…</string>
-    <string name="push_firebase_data_dialog_summary">Oczekiwanie na potwierdzenie przez backend wszystkich oczekujących zapisów dla aktywnego użytkownika…</string>
 
-    <string name="push_firebase_data_dialog_user_not_enrolled_title">Użytkownik nie jest zapisany</string>
-    <string name="push_firebase_data_dialog_user_not_enrolled_summary">Wysyłanie do Firebase nie zostało podjęte, ponieważ użytkownik nie jest zapisany do zbierania danych o zachowaniach podróżnych. Możesz się zapisać, włączając ustawienie \"Wysyłaj anonimowe dane o zachowaniach podróżnych\".</string>
 
-    <string name="push_firebase_data_dialog_success_title">Wysyłanie udane</string>
-    <string name="push_firebase_data_dialog_success_summary">Wszystkie oczekujące zapisy dla aktywnego użytkownika zostały potwierdzone przez backend Firebase.</string>
 
-    <string name="push_firebase_data_dialog_failed_title">Wysyłanie nie powiodło się</string>
-    <string name="push_firebase_data_dialog_failed_summary">Coś poszło nie tak. Upewnij się, że masz silne połączenie z internetem i spróbuj ponownie.</string>
 
-    <string name="push_firebase_data_dialog_canceled_title">Wysyłanie anulowane</string>
-    <string name="push_firebase_data_dialog_canceled_summary">Coś poszło nie tak. Upewnij się, że masz silne połączenie z internetem i spróbuj ponownie.</string>
     <string name="preferences_about_title">O programie</string>
     <string name="preferences_about_summary">Wersja, producent, informacje o licencji</string>
     <!-- Units -->

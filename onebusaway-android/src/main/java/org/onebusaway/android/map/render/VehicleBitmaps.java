@@ -25,9 +25,9 @@ import androidx.core.content.ContextCompat;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaTripStatus;
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
+import org.onebusaway.android.models.ObaRoute;
+import org.onebusaway.android.models.ObaTripStatus;
+import org.onebusaway.android.models.RouteTrips;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.BitmapUtils;
 import org.onebusaway.android.util.MathUtils;
@@ -80,7 +80,7 @@ public final class VehicleBitmaps {
      * the extrapolation glide — and falls back to the status's reported orientation off-shape (NaN bearing).
      */
     public static Bitmap vehicleBitmap(Context context, VehicleMarker vehicle,
-                                       ObaTripsForRouteResponse response) {
+                                       RouteTrips response) {
         return getBitmap(context, vehicleType(vehicle, response), colorResource(vehicle),
                 directionIndex(vehicle));
     }
@@ -91,15 +91,15 @@ public final class VehicleBitmaps {
      * caches one wrapper (a Google {@code BitmapDescriptor}) per key so it reuses it across frames even
      * when the bounded bitmap LRU evicts and recreates the underlying {@link Bitmap} on a busy route.
      */
-    public static String iconKey(VehicleMarker vehicle, ObaTripsForRouteResponse response) {
+    public static String iconKey(VehicleMarker vehicle, RouteTrips response) {
         return "veh:" + createBitmapCacheKey(vehicleType(vehicle, response), directionIndex(vehicle),
                 colorResource(vehicle));
     }
 
     /** The vehicle's route type, normalizing cablecar to tram so both the bitmap and key paths agree. */
-    private static int vehicleType(VehicleMarker vehicle, ObaTripsForRouteResponse response) {
+    private static int vehicleType(VehicleMarker vehicle, RouteTrips response) {
         ObaTripStatus status = vehicle.getStatus();
-        int type = response.getRoute(response.getTrip(status.getActiveTripId()).getRouteId()).getType();
+        int type = response.route(response.trip(status.getActiveTripId()).getRouteId()).getType();
         return type == ObaRoute.TYPE_CABLECAR ? ObaRoute.TYPE_TRAM : type;
     }
 
@@ -124,15 +124,6 @@ public final class VehicleBitmaps {
                 ? MathUtils.toDirection(vehicle.getStatus().getOrientation())
                 : pathBearing;
         return MathUtils.getHalfWindIndex((float) direction, NUM_DIRECTIONS - 1);
-    }
-
-    /** True if there is real-time location info for the status (last-known location + predicted). */
-    public static boolean isLocationRealtime(ObaTripStatus status) {
-        boolean isRealtime = status.getLastKnownLocation() != null;
-        if (!status.isPredicted()) {
-            isRealtime = false;
-        }
-        return isRealtime;
     }
 
     private static Bitmap getBitmap(Context context, int vehicleType, int colorResource, int halfWind) {

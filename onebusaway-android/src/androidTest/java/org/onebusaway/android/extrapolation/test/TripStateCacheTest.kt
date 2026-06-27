@@ -15,6 +15,9 @@
  */
 package org.onebusaway.android.extrapolation.test
 
+import org.onebusaway.android.api.adapters.StopTimeData
+import org.onebusaway.android.api.adapters.TripScheduleData
+
 import android.location.Location
 import androidx.test.runner.AndroidJUnit4
 import org.junit.Assert.assertEquals
@@ -28,10 +31,10 @@ import org.junit.runner.RunWith
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.data.TripObservation
 import org.onebusaway.android.extrapolation.data.TripStateCache
-import org.onebusaway.android.io.elements.ObaTripSchedule
-import org.onebusaway.android.io.elements.ObaTripStatus
-import org.onebusaway.android.io.elements.Occupancy
-import org.onebusaway.android.io.elements.Status
+import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.models.Occupancy
+import org.onebusaway.android.models.Status
 import org.onebusaway.android.util.Polyline
 
 /** Instrumented tests for the trip-state cache: recording, retention/eviction, and hydration. */
@@ -182,21 +185,21 @@ class TripStateCacheTest {
 
     @Test
     fun testTrackerPutAndGetSchedule() {
-        val schedule = ObaTripSchedule.EMPTY_OBJECT
+        val schedule = TripScheduleData.EMPTY
         cache.putSchedule("trip1", schedule)
         assertNotNull(cache.lookupTripState("trip1")?.schedule)
     }
 
     @Test
     fun testTrackerPutScheduleNullIgnored() {
-        cache.putSchedule(null, ObaTripSchedule.EMPTY_OBJECT)
+        cache.putSchedule(null, TripScheduleData.EMPTY)
         cache.putSchedule("trip1", null)
         assertNull(cache.lookupTripState("trip1")?.schedule)
     }
 
     @Test
     fun testTrackerClearAllClearsScheduleCache() {
-        cache.putSchedule("trip1", ObaTripSchedule.EMPTY_OBJECT)
+        cache.putSchedule("trip1", TripScheduleData.EMPTY)
         assertNotNull(cache.lookupTripState("trip1")?.schedule)
 
         cache.clearAllTrips()
@@ -395,93 +398,59 @@ class TripStateCacheTest {
         return loc
     }
 
-    /**
-     * Creates an ObaTripSchedule using reflection, since the constructor is package-private and
-     * Jackson normally handles population.
-     */
+    /** Builds an ObaTripSchedule from the given per-stop distances/times via the public constructor. */
     private fun createSchedule(
             distances: DoubleArray,
             arrivalTimes: LongArray,
             departureTimes: LongArray
-    ): ObaTripSchedule {
-        try {
-            val stopTimeClass = ObaTripSchedule.StopTime::class.java
-            val stCtor = stopTimeClass.getDeclaredConstructor()
-            stCtor.isAccessible = true
-
-            val stopTimesArray = java.lang.reflect.Array.newInstance(stopTimeClass, distances.size)
-            for (i in distances.indices) {
-                val st = stCtor.newInstance()
-                setField(st, "distanceAlongTrip", distances[i])
-                setField(st, "arrivalTime", arrivalTimes[i])
-                setField(st, "departureTime", departureTimes[i])
-                setField(st, "stopId", "stop_$i")
-                java.lang.reflect.Array.set(stopTimesArray, i, st)
-            }
-
-            val schedCtor = ObaTripSchedule::class.java.getDeclaredConstructor()
-            schedCtor.isAccessible = true
-            val schedule = schedCtor.newInstance()
-            setField(schedule, "stopTimes", stopTimesArray)
-
-            return schedule
-        } catch (e: Exception) {
-            throw RuntimeException("Failed to create test schedule", e)
-        }
-    }
-
-    private fun setField(obj: Any, fieldName: String, value: Any?) {
-        val field = obj.javaClass.getDeclaredField(fieldName)
-        field.isAccessible = true
-
-        try {
-            val modifiersField = java.lang.reflect.Field::class.java.getDeclaredField("modifiers")
-            modifiersField.isAccessible = true
-            modifiersField.setInt(field, field.modifiers and java.lang.reflect.Modifier.FINAL.inv())
-        } catch (e: NoSuchFieldException) {
-            // On newer JVMs, modifiers field may not be accessible; use Unsafe instead
-        }
-
-        field.set(obj, value)
-    }
+    ): ObaTripSchedule = TripScheduleData(
+            Array<ObaTripSchedule.StopTime>(distances.size) { i ->
+                StopTimeData(
+                    stopId = "stop_$i",
+                    arrivalTime = arrivalTimes[i],
+                    departureTime = departureTimes[i],
+                    distanceAlongTrip = distances[i],
+                )
+            },
+        )
 }
 
 /** Test-only implementation of ObaTripStatus for creating test fixtures without reflection. */
 private class TestTripStatus(
-        private val vehicleId: String?,
-        private val activeTripId: String?,
-        private val position: Location?,
-        private val lastKnownLocation: Location?,
-        private val distanceAlongTrip: Double?,
-        private val lastKnownDistanceAlongTrip: Double?,
-        private val scheduledDistanceAlongTrip: Double?,
-        private val totalDistanceAlongTrip: Double?,
-        private val lastUpdateTime: Long,
-        private val lastLocationUpdateTime: Long,
-        private val scheduleDeviation: Long,
-        private val predicted: Boolean
+        vehicleId: String?,
+        activeTripId: String?,
+        position: Location?,
+        lastKnownLocation: Location?,
+        distanceAlongTrip: Double?,
+        lastKnownDistanceAlongTrip: Double?,
+        scheduledDistanceAlongTrip: Double?,
+        totalDistanceAlongTrip: Double?,
+        lastUpdateTime: Long,
+        lastLocationUpdateTime: Long,
+        scheduleDeviation: Long,
+        predicted: Boolean
 ) : ObaTripStatus {
-    override fun getServiceDate(): Long = 0L
-    override fun isPredicted(): Boolean = predicted
-    override fun getScheduleDeviation(): Long = scheduleDeviation
-    override fun getVehicleId(): String? = vehicleId
-    override fun getClosestStop(): String? = null
-    override fun getClosestStopTimeOffset(): Long = 0L
-    override fun getPosition(): Location? = position
-    override fun getActiveTripId(): String? = activeTripId
-    override fun getDistanceAlongTrip(): Double? = distanceAlongTrip
-    override fun getScheduledDistanceAlongTrip(): Double? = scheduledDistanceAlongTrip
-    override fun getTotalDistanceAlongTrip(): Double? = totalDistanceAlongTrip
-    override fun getOrientation(): Double? = null
-    override fun getNextStop(): String? = null
-    override fun getNextStopTimeOffset(): Long? = null
-    override fun getPhase(): String? = null
-    override fun getStatus(): Status? = null
-    override fun getLastUpdateTime(): Long = lastUpdateTime
-    override fun getLastKnownLocation(): Location? = lastKnownLocation
-    override fun getLastLocationUpdateTime(): Long = lastLocationUpdateTime
-    override fun getLastKnownDistanceAlongTrip(): Double? = lastKnownDistanceAlongTrip
-    override fun getLastKnownOrientation(): Double? = null
-    override fun getBlockTripSequence(): Int = 0
-    override fun getOccupancyStatus(): Occupancy? = null
+    override val serviceDate: Long = 0L
+    override val isPredicted: Boolean = predicted
+    override val scheduleDeviation: Long = scheduleDeviation
+    override val vehicleId: String? = vehicleId
+    override val closestStop: String? = null
+    override val closestStopTimeOffset: Long = 0L
+    override val position: Location? = position
+    override val activeTripId: String? = activeTripId
+    override val distanceAlongTrip: Double? = distanceAlongTrip
+    override val scheduledDistanceAlongTrip: Double? = scheduledDistanceAlongTrip
+    override val totalDistanceAlongTrip: Double? = totalDistanceAlongTrip
+    override val orientation: Double? = null
+    override val nextStop: String? = null
+    override val nextStopTimeOffset: Long? = null
+    override val phase: String? = null
+    override val status: Status? = null
+    override val lastUpdateTime: Long = lastUpdateTime
+    override val lastKnownLocation: Location? = lastKnownLocation
+    override val lastLocationUpdateTime: Long = lastLocationUpdateTime
+    override val lastKnownDistanceAlongTrip: Double? = lastKnownDistanceAlongTrip
+    override val lastKnownOrientation: Double? = null
+    override val blockTripSequence: Int = 0
+    override val occupancyStatus: Occupancy? = null
 }

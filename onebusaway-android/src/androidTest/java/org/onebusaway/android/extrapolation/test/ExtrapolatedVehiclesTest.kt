@@ -15,15 +15,20 @@
  */
 package org.onebusaway.android.extrapolation.test
 
+import org.onebusaway.android.api.data.asRouteTrips
+
 import androidx.test.InstrumentationRegistry.getTargetContext
 import androidx.test.runner.AndroidJUnit4
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.extrapolatedVehicles
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse
+import org.onebusaway.android.api.contract.ListWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
+import org.onebusaway.android.api.contract.TripDetailsEntry
 import org.onebusaway.android.mock.Resources
 
 /**
@@ -46,25 +51,25 @@ class ExtrapolatedVehiclesTest {
 
     private val noState: (String?) -> TripState? = { null }
 
-    private fun response(): ObaTripsForRouteResponse =
-        Resources.readAs(
-            getTargetContext(),
-            Resources.getTestUri("trips_for_route_extrapolation"),
-            ObaTripsForRouteResponse::class.java,
-        )
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+
+    // Decode the same fixture through the io/client DTO path the production fetch now uses.
+    private fun response(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
+        Resources.read(getTargetContext(), Resources.getTestUri("trips_for_route_extrapolation"))
+            .use { json.decodeFromString(it.readText()) }
 
     @Test
     fun skipsCanceledMissingRefAndPositionlessVehiclesWithoutCrashing() {
         // route_1 + route_2 requested: only trip_A and trip_B survive; the canceled, ref-less, and
         // positionless trips are dropped rather than throwing.
-        val vehicles = extrapolatedVehicles(response(), setOf("route_1", "route_2"), nowMs = 1_000_000L, noState)
+        val vehicles = extrapolatedVehicles(response().asRouteTrips(),setOf("route_1", "route_2"), nowMs = 1_000_000L, noState)
 
         assertEquals(listOf("trip_A", "trip_B"), vehicles.map { it.status.activeTripId })
     }
 
     @Test
     fun placesVehicleAtLastKnownLocationAndReportsFixTimeWhenNoState() {
-        val vehicles = extrapolatedVehicles(response(), setOf("route_1"), nowMs = 1_000_000L, noState)
+        val vehicles = extrapolatedVehicles(response().asRouteTrips(),setOf("route_1"), nowMs = 1_000_000L, noState)
 
         assertEquals(1, vehicles.size)
         val vehicle = vehicles[0]
@@ -80,7 +85,7 @@ class ExtrapolatedVehiclesTest {
 
     @Test
     fun fallsBackToPositionWhenNoLastKnownLocation() {
-        val vehicles = extrapolatedVehicles(response(), setOf("route_2"), nowMs = 1_000_000L, noState)
+        val vehicles = extrapolatedVehicles(response().asRouteTrips(),setOf("route_2"), nowMs = 1_000_000L, noState)
 
         assertEquals(1, vehicles.size)
         val vehicle = vehicles[0]
@@ -92,9 +97,9 @@ class ExtrapolatedVehiclesTest {
     @Test
     fun filtersToRequestedRoutesOnly() {
         // route_3 serves none of the trips.
-        assertTrue(extrapolatedVehicles(response(), setOf("route_3"), nowMs = 1_000_000L, noState).isEmpty())
+        assertTrue(extrapolatedVehicles(response().asRouteTrips(),setOf("route_3"), nowMs = 1_000_000L, noState).isEmpty())
         // Empty request -> nothing.
-        assertTrue(extrapolatedVehicles(response(), emptySet(), nowMs = 1_000_000L, noState).isEmpty())
+        assertTrue(extrapolatedVehicles(response().asRouteTrips(),emptySet(), nowMs = 1_000_000L, noState).isEmpty())
     }
 
     @Test
@@ -105,7 +110,7 @@ class ExtrapolatedVehiclesTest {
             if (tripId == "trip_A") TripState("trip_A", anchorLocalTimeMs = 999_000L) else null
         }
 
-        val vehicle = extrapolatedVehicles(response(), setOf("route_1"), nowMs = 1_000_000L, anchored).single()
+        val vehicle = extrapolatedVehicles(response().asRouteTrips(),setOf("route_1"), nowMs = 1_000_000L, anchored).single()
 
         assertEquals(999_000L, vehicle.fixTimeMs)
         assertEquals(47.20, vehicle.point.latitude, 1e-6)

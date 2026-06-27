@@ -34,13 +34,12 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.io.elements.ObaRegion
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.ApiUrlValidator
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionState
 import org.onebusaway.android.region.RegionStatus
-import org.onebusaway.android.travelbehavior.io.coroutines.FirebaseDataPusher
 
 /** One-shot actions the advanced settings screen routes back to its host. */
 sealed interface AdvancedSettingsEffect {
@@ -77,7 +76,7 @@ class AdvancedSettingsViewModel @Inject constructor(
     private val _effects = Channel<AdvancedSettingsEffect>(Channel.BUFFERED)
     val effects: Flow<AdvancedSettingsEffect> = _effects.receiveAsFlow()
 
-    private fun compute(region: ObaRegion?): AdvancedSettingsUiState = buildAdvancedSettingsUiState(
+    private fun compute(region: Region?): AdvancedSettingsUiState = buildAdvancedSettingsUiState(
         prefs = AdvancedPrefSnapshot(
             experimentalRegionsEnabled = prefs.getBoolean(R.string.preference_key_experimental_regions, false),
             displayTestAlerts = prefs.getBoolean(R.string.preferences_display_test_alerts, false),
@@ -147,8 +146,6 @@ class AdvancedSettingsViewModel @Inject constructor(
         prefs.setString(R.string.preference_key_otp_api_url, trimmed)
         return UrlChangeResult.Accepted
     }
-
-    fun onPushFirebaseData() = FirebaseDataPusher().push(context)
 
     fun onResetDonationTimestamps() {
         Application.getDonationsManager().setDonationRequestReminderDate(null)

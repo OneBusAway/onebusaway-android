@@ -23,7 +23,7 @@ import androidx.fragment.app.Fragment;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.directions.util.CustomAddress;
-import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.region.Region;
 
 /**
  * Provider-agnostic interface for proprietary map helpers (e.g., Places autocomplete).
@@ -40,7 +40,7 @@ public interface ProprietaryMapHelper {
     /**
      * Creates an OnClickListener that starts the places autocomplete flow.
      */
-    View.OnClickListener createPlacesAutocompleteOnClick(int requestCode, Fragment fragment, ObaRegion region);
+    View.OnClickListener createPlacesAutocompleteOnClick(int requestCode, Fragment fragment, Region region);
 
     /**
      * Returns a cached singleton instance for the current build flavor.

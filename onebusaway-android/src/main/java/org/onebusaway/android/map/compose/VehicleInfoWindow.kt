@@ -49,11 +49,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.theme.ObaTheme
-import org.onebusaway.android.io.elements.Occupancy
-import org.onebusaway.android.io.elements.ObaTripStatus
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse
+import org.onebusaway.android.models.Occupancy
+import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.models.RouteTrips
 import kotlinx.coroutines.delay
-import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.getRouteDisplayName
@@ -66,12 +65,14 @@ import java.util.concurrent.TimeUnit
  * `ComposeView`.
  */
 @Composable
-fun VehicleInfoWindow(status: ObaTripStatus, response: ObaTripsForRouteResponse) {
+fun VehicleInfoWindow(status: ObaTripStatus, response: RouteTrips) {
     val res = LocalContext.current.resources
     val nowMs = rememberNowMs()
-    val trip = response.getTrip(status.activeTripId)
-    val route = response.getRoute(trip.routeId)
-    val realtime = VehicleBitmaps.isLocationRealtime(status)
+    // The window only opens for an already-rendered vehicle, so its trip/route are in the refs;
+    // guard the unreachable null instead of dereferencing (the legacy getTrip/getRoute would NPE).
+    val trip = response.trip(status.activeTripId) ?: return
+    val route = response.route(trip.routeId) ?: return
+    val realtime = status.isLocationRealtime
     val deviationMin = TimeUnit.SECONDS.toMinutes(status.scheduleDeviation)
 
     VehicleInfoWindowContent(

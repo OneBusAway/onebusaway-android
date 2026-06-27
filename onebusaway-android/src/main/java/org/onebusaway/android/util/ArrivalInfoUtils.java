@@ -20,13 +20,11 @@ import android.content.Context;
 import android.content.res.Resources;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.di.PreferencesEntryPoint;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.ui.arrivals.ArrivalInfo;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 public class ArrivalInfoUtils {
 
@@ -35,77 +33,6 @@ public class ArrivalInfoUtils {
         public int compare(ArrivalInfo lhs, ArrivalInfo rhs) {
             return (int) (lhs.getEta() - rhs.getEta());
         }
-    }
-
-    /**
-     * Converts the ObaArrivalInfo array received from the server to an ArrayList for the adapter
-     *
-     * @param context
-     * @param arrivalInfo
-     * @param filter                               routeIds to filter for
-     * @param ms                                   current time in milliseconds
-     * @param includeArrivalDepartureInStatusLabel true if the arrival/departure label should be
-     *                                             included in the status label, false if it should
-     *                                             not
-     * @return ArrayList of arrival info to be used with the adapter
-     */
-    public static ArrayList<ArrivalInfo> convertObaArrivalInfo(Context context,
-                                                               ObaArrivalInfo[] arrivalInfo,
-                                                               ArrayList<String> filter, long ms,
-                                                               boolean includeArrivalDepartureInStatusLabel) {
-        final int len = arrivalInfo.length;
-        ArrayList<ArrivalInfo> result = new ArrayList<ArrivalInfo>(len);
-        // Read the user pref once at this Context boundary, then pass it to the pure shouldAddEta().
-        boolean showNegativeArrivals = PreferencesEntryPoint.get(context)
-                .getBoolean(R.string.preference_key_show_negative_arrivals, true);
-        if (filter != null && filter.size() > 0) {
-            // Only add routes that haven't been filtered out
-            for (ObaArrivalInfo arrival : arrivalInfo) {
-                if (filter.contains(arrival.getRouteId())) {
-                    ArrivalInfo info = new ArrivalInfo(context, arrival, ms,
-                            includeArrivalDepartureInStatusLabel);
-                    if (shouldAddEta(info, showNegativeArrivals)) {
-                        result.add(info);
-                    }
-                }
-            }
-        } else {
-            // Add arrivals for all routes
-            for (ObaArrivalInfo obaArrivalInfo : arrivalInfo) {
-                ArrivalInfo info = new ArrivalInfo(context, obaArrivalInfo, ms,
-                        includeArrivalDepartureInStatusLabel);
-                if (shouldAddEta(info, showNegativeArrivals)) {
-                    result.add(info);
-                }
-            }
-        }
-
-        // Sort by ETA
-        Collections.sort(result, new InfoComparator());
-        return result;
-    }
-
-    /**
-     * Returns true if this ETA should be added based on the user preference for adding negative
-     * arrival times, and false if it should not
-     *
-     * @param info                info that includes the ETA to be evaluated
-     * @param showNegativeArrivals the user's "show negative arrival times" preference, read by the
-     *                             caller (keeps this a pure, JVM-testable decision)
-     * @return true if this ETA should be added based on the user preference for adding negative
-     * arrival times, and false if it should not
-     */
-    private static boolean shouldAddEta(ArrivalInfo info, boolean showNegativeArrivals) {
-        if (info.getEta() >= 0) {
-            // Always add positive ETAs
-            return true;
-        } else {
-            // Only add negative ETAs based on setting
-            if (showNegativeArrivals) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

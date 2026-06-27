@@ -34,7 +34,7 @@ import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
-import org.onebusaway.android.io.test.ObaTestCase;
+import org.onebusaway.android.api.test.ObaTestCase;
 import org.onebusaway.android.mock.Resources;
 import org.onebusaway.android.nav.NavigationServiceProvider;
 import org.onebusaway.android.nav.model.Path;

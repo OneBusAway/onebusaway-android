@@ -15,6 +15,10 @@
  */
 package org.onebusaway.android.ui.report.customerservice
 
+import org.onebusaway.android.api.data.AgenciesDataSource
+
+import org.onebusaway.android.models.AgencyContact
+
 import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -27,7 +31,7 @@ import org.onebusaway.android.ui.compose.ListUiState
 
 private class FakeCustomerServiceRepository(
     var result: Result<List<AgencyContact>>
-) : CustomerServiceRepository {
+) : AgenciesDataSource {
 
     override suspend fun getAgencies(): Result<List<AgencyContact>> = result
 }

@@ -18,7 +18,7 @@ package org.onebusaway.android.map.maplibre;
 import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.geometry.LatLngBounds;
 
-import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.region.Region;
 
 import android.location.Location;
 import android.util.Log;
@@ -46,7 +46,7 @@ public class MapHelpMapLibre {
         return l;
     }
 
-    public static LatLngBounds getRegionBounds(ObaRegion region) {
+    public static LatLngBounds getRegionBounds(Region region) {
         if (region == null) {
             throw new IllegalArgumentException("Region is null");
         }
@@ -55,7 +55,7 @@ public class MapHelpMapLibre {
         double lonMin = 180;
         double lonMax = -180;
 
-        for (ObaRegion.Bounds bound : region.getBounds()) {
+        for (Region.Bounds bound : region.getBounds()) {
             double lat = bound.getLat();
             double latSpanHalf = bound.getLatSpan() / 2.0;
             double lat1 = lat - latSpanHalf;

@@ -39,6 +39,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import org.onebusaway.android.map.compose.TripMapScreen
 import com.google.firebase.analytics.FirebaseAnalytics
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.R
@@ -148,24 +149,21 @@ fun HomeNavHost(
 }
 
 /**
- * Consumes a staged deep-link route (the [HomeViewModel.deepLinkRoute] latch) once the NavHost is ready
- * (and on each `onNewIntent`): navigates to it, popping up to HOME, then clears the latch via
- * [onConsumed]. Lifted verbatim from the former inline `onCreate` effect.
+ * Drains the queue of staged deep-link routes ([HomeViewModel.deepLinkRoutes]) once the NavHost is ready
+ * (and as each `onNewIntent` enqueues more): navigates to each, popping up to HOME. The queue (vs. the
+ * former single-value latch) delivers rapid, distinct back-to-back intents exactly once each (#1582).
  */
 @Composable
 internal fun DeepLinkEffect(
     navController: NavHostController,
-    deepLinkRoute: StateFlow<String?>,
-    onConsumed: () -> Unit,
+    deepLinkRoutes: Flow<String>,
 ) {
-    val pending by deepLinkRoute.collectAsStateWithLifecycle()
-    LaunchedEffect(pending) {
-        pending?.let { route ->
+    LaunchedEffect(navController) {
+        deepLinkRoutes.collect { route ->
             navController.navigate(route) {
                 popUpTo(NavRoutes.HOME) { inclusive = false }
                 launchSingleTop = true
             }
-            onConsumed()
         }
     }
 }

@@ -328,6 +328,51 @@ class HomeViewModelTest {
         assertEquals(stop, viewModel(savedState = handle).uiState.value.focusedStop)
     }
 
+    // --- staged deep-link routes (queued, not latched: #1582) ---
+
+    @Test
+    fun `rapid distinct staged routes are each delivered exactly once`() = runTest {
+        val vm = viewModel()
+        val routes = mutableListOf<String>()
+        val job = launch { vm.deepLinkRoutes.collect { routes.add(it) } }
+
+        // Burst three distinct routes before the collector has drained any (e.g. FCM A -> B -> A).
+        vm.stageDeepLinkRoute("a")
+        vm.stageDeepLinkRoute("b")
+        vm.stageDeepLinkRoute("a")
+        advanceUntilIdle()
+
+        // A latch would have dropped "a" and "b"; the queue delivers all three in order.
+        assertEquals(listOf("a", "b", "a"), routes)
+        job.cancel()
+    }
+
+    @Test
+    fun `a route staged before the collector subscribes is not lost`() = runTest {
+        val vm = viewModel()
+        vm.stageDeepLinkRoute("home") // staged in onCreate, before the NavHost composes
+
+        val routes = mutableListOf<String>()
+        val job = launch { vm.deepLinkRoutes.collect { routes.add(it) } }
+        advanceUntilIdle()
+
+        assertEquals(listOf("home"), routes)
+        job.cancel()
+    }
+
+    @Test
+    fun `a null staged route enqueues nothing`() = runTest {
+        val vm = viewModel()
+        val routes = mutableListOf<String>()
+        val job = launch { vm.deepLinkRoutes.collect { routes.add(it) } }
+
+        vm.stageDeepLinkRoute(null) // an intent with no mapped destination
+        advanceUntilIdle()
+
+        assertTrue(routes.isEmpty())
+        job.cancel()
+    }
+
     // --- region refresh (events + manual-picker dialog) ---
 
     @Test

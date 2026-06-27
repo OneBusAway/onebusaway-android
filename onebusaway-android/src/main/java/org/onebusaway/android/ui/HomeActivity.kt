@@ -121,7 +121,7 @@ class HomeActivity : AppCompatActivity() {
             val navController = rememberNavController()
             AccessibilityAnalyticsEffect()
             HomeAnalyticsEffect(viewModel.analyticsEvents)
-            DeepLinkEffect(navController, viewModel.deepLinkRoute, viewModel::onDeepLinkRouteConsumed)
+            DeepLinkEffect(navController, viewModel.deepLinkRoutes)
             // The welcome tutorial (now the Compose green welcome + map-stop spotlight sequence) is
             // started by HomeScreen off the same showWelcomeTutorial latch — no host effect needed.
             SettingsRehomeEffect(navController)

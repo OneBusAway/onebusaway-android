@@ -29,12 +29,15 @@ import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionStatus
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -107,16 +110,19 @@ class HomeViewModel @Inject constructor(
     private val _paymentWarning = MutableStateFlow<ObaRegion?>(null)
     val paymentWarning: StateFlow<ObaRegion?> = _paymentWarning.asStateFlow()
 
-    // A NavHost route staged from a non-composable entry point (an incoming intent, or the nav-drawer /
+    // NavHost routes staged from non-composable entry points (an incoming intent, or the nav-drawer /
     // search / recent-stops actions) for the host's DeepLinkEffect to navigate to once the NavHost is
-    // composed. A retained StateFlow (not a replay-0 event) so a route staged in onCreate before
-    // composition isn't lost; set via [stageDeepLinkRoute], cleared by [onDeepLinkRouteConsumed].
-    private val _deepLinkRoute = MutableStateFlow<String?>(null)
-    val deepLinkRoute: StateFlow<String?> = _deepLinkRoute.asStateFlow()
+    // composed. A queued Channel (not a latched StateFlow) so rapid, distinct back-to-back intents are
+    // each delivered exactly once rather than overwriting one another before the collector consumes them
+    // (#1582). UNLIMITED-buffered so a route staged in onCreate before composition isn't lost, and so
+    // [stageDeepLinkRoute]'s trySend never has to drop. Sent via [stageDeepLinkRoute].
+    private val _deepLinkRoutes = Channel<String>(Channel.UNLIMITED)
+    val deepLinkRoutes: Flow<String> = _deepLinkRoutes.receiveAsFlow()
 
     // One-shot welcome-tutorial request (the TUTORIAL_WELCOME launch extra, the help "Show tutorials"
     // action, or the what's-new opt-out's "yes"); HomeScreen starts the Compose welcome + map-stop
-    // spotlight sequence off this latch once composed. Mirrors [deepLinkRoute].
+    // spotlight sequence off this latch once composed. A latch (not a queue like [deepLinkRoutes])
+    // because the request is idempotent — a repeat just re-shows the same one-shot tutorial.
     private val _showWelcomeTutorial = MutableStateFlow(false)
     val showWelcomeTutorial: StateFlow<Boolean> = _showWelcomeTutorial.asStateFlow()
 
@@ -178,12 +184,9 @@ class HomeViewModel @Inject constructor(
 
     /** Stage [route] for the NavHost to open once composed (null stages nothing / stays on the map). */
     fun stageDeepLinkRoute(route: String?) {
-        _deepLinkRoute.value = route
-    }
-
-    /** DeepLinkEffect navigated to the staged route; clear the latch so it isn't re-navigated. */
-    fun onDeepLinkRouteConsumed() {
-        _deepLinkRoute.value = null
+        // trySend always succeeds on an UNLIMITED channel; null routes (e.g. an intent with no mapped
+        // destination) simply enqueue nothing, leaving the map on screen.
+        if (route != null) _deepLinkRoutes.trySend(route)
     }
 
     /** Stage the welcome tutorial for the host to show once composed (the launching intent requested it). */

@@ -18,11 +18,12 @@
 package org.onebusaway.android.ui.home
 
 import android.content.Context
+import android.content.Intent
 import android.view.accessibility.AccessibilityManager
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -39,17 +40,18 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import org.onebusaway.android.map.compose.TripMapScreen
 import com.google.firebase.analytics.FirebaseAnalytics
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.io.ObaAnalytics
 import org.onebusaway.android.io.PlausibleAnalytics
 import org.onebusaway.android.io.elements.ObaRegion
 import org.onebusaway.android.map.MapViewModel
+import org.onebusaway.android.map.compose.TripMapScreen
 import org.onebusaway.android.report.ui.reportGraph
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
@@ -58,27 +60,25 @@ import org.onebusaway.android.ui.compose.components.OptOutInfoDialog
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.donation.DonationViewModel
+import org.onebusaway.android.ui.home.help.HelpAction
 import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.nav.extraDestinations
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.mylists.myListsGraph
-import android.content.Intent
-import org.onebusaway.android.app.di.PreferencesEntryPoint
-import org.onebusaway.android.ui.home.help.HelpAction
 import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
-import org.onebusaway.android.ui.nav.navigateFromHome
-import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
-import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.nav.RESULT_MAP_ROUTE_ID
 import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_ID
 import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_LAT
 import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_LON
+import org.onebusaway.android.ui.nav.navigateFromHome
 import org.onebusaway.android.ui.settings.settingsGraph
 import org.onebusaway.android.ui.survey.SurveyViewModel
+import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.ui.tripdetails.tripGraph
 import org.onebusaway.android.ui.tripplan.tripPlanGraph
+import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.PreferenceUtils
 
@@ -137,7 +137,11 @@ fun HomeNavHost(
                         home.homeViewModel.onStopFocused(FocusedStop(stopId, null, null, lat, lon))
                         home.homeViewModel.markPendingMapFocus()
                     }
+                    // Consume all three keys together (STOP_ID gates application; lat/lon are nulled for
+                    // symmetry so a stale pair can't linger past the reveal).
                     handle[RESULT_MAP_STOP_ID] = null
+                    handle[RESULT_MAP_STOP_LAT] = null
+                    handle[RESULT_MAP_STOP_LON] = null
                 }
             }
             val state by home.homeViewModel.uiState.collectAsStateWithLifecycle()

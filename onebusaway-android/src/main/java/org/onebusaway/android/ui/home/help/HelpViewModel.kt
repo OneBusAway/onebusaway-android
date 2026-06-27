@@ -30,7 +30,7 @@ import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
 
-/** Which help dialog is showing. Split out of the shared HomeDialog when help became a feature module. */
+/** Which help dialog is showing — the dialog state this help feature module owns. */
 sealed interface HelpDialog {
     object None : HelpDialog
     object Menu : HelpDialog

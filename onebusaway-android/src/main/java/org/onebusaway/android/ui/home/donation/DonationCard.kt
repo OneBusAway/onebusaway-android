@@ -35,6 +35,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -67,6 +68,9 @@ fun DonationFeature(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    // The effects collector outlives a recomposition, so read onLearnMore through the latest snapshot
+    // rather than capturing the lambda from first composition.
+    val currentOnLearnMore by rememberUpdatedState(onLearnMore)
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh()
@@ -78,7 +82,7 @@ fun DonationFeature(
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collect { effect ->
                 when (effect) {
-                    DonationEffect.OpenLearnMore -> onLearnMore()
+                    DonationEffect.OpenLearnMore -> currentOnLearnMore()
                     DonationEffect.OpenDonatePage ->
                         context.startActivity(Application.getDonationsManager().buildOpenDonationsPageIntent())
                 }
@@ -198,8 +202,7 @@ fun DonationCard(
 
 /**
  * Confirmation when the user closes the donation card. Three stacked actions (the Compose idiom for
- * >2 dialog buttons): keep asking later, stop asking, or cancel. (Moved here from HomeDialogs as part
- * of the donation feature module.)
+ * >2 dialog buttons): keep asking later, stop asking, or cancel.
  */
 @Composable
 private fun DonationDismissDialog(

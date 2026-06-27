@@ -20,9 +20,9 @@ import androidx.navigation.NavController
 /**
  * Navigate to an in-app [route], popping up to HOME and de-duping the top — the single navigation
  * idiom every in-app caller uses (drawer/top-bar actions, the arrivals sheet, the My* lists, the home
- * overlays), replacing the former `Navigator` route-latch. Matches the options the latch's consumer
- * applied, so the back-stack behavior is unchanged: a pushed destination collapses back to HOME, and an
- * already-open destination isn't re-created.
+ * overlays), replacing the former `HomeViewModel.stageDeepLinkRoute` route latch and its `DeepLinkEffect`
+ * consumer. Matches the options that consumer applied, so the back-stack behavior is unchanged: a pushed
+ * destination collapses back to HOME, and an already-open destination isn't re-created.
  */
 fun NavController.navigateFromHome(route: String) =
     navigate(route) {

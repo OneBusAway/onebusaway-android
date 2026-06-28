@@ -61,10 +61,10 @@ data class TripTrajectory(
     val extrapolation: ExtrapolationSeries? = null,
     val bounds: DataBounds = DataBounds(0.0, 0.0, 0L, 0L),
     /**
-     * "Now" the graph was built at — the horizontal now line, rising over time. NOTE: the caller
-     * passes a local clock (System.currentTimeMillis), but the time axis is laid out in server-clock
-     * values, so client/server skew shifts the now line off the latest observation. (Carried over
-     * from the upstream view's TODO; fix by offsetting via a history entry's server/local time pair.)
+     * "Now" the graph was built at — the horizontal now line, rising over time. Already in the
+     * server-clock domain the time axis is laid out in: [buildTrajectory] converts the caller's
+     * local clock using the anchor's server/local skew, so the now line tracks the latest
+     * observation even when the device clock drifts from the server's.
      */
     val nowMs: Long = 0L,
 )
@@ -128,8 +128,15 @@ fun dataBounds(distances: List<Double>, times: List<Long>, padFraction: Double =
  * observations, the schedule (with dwell), and — when [TripState.extrapolate] succeeds with a finite
  * estimate — the extrapolation overlay. Pure distance/time arithmetic (no geometry), so the screen
  * just draws it and the projection is testable.
+ *
+ * [nowMs] is the caller's **local** clock; the time axis is server-clock. They're reconciled via
+ * [TripState.toServerClock], so the plotted "now" sits on the server-clock axis while
+ * [TripState.extrapolate] still receives the local time it expects (it compares against the anchor's
+ * local clock).
  */
 fun buildTrajectory(state: TripState, nowMs: Long): TripTrajectory {
+    val serverNowMs = state.toServerClock(nowMs)
+
     val observations = state.history.mapNotNull { entry ->
         val dist = entry.status.distanceAlongTrip ?: return@mapNotNull null
         val time = entry.status.lastUpdateTime.takeIf { it > 0 } ?: entry.serverTimeMs
@@ -153,13 +160,13 @@ fun buildTrajectory(state: TripState, nowMs: Long): TripTrajectory {
         extrapolation?.let { add(it.anchor.distanceMeters); add(it.medianMeters); add(it.highMeters) }
     }
     val times = buildList {
-        add(nowMs) // keep the now line in-bounds even before any extrapolation exists
+        add(serverNowMs) // keep the now line in-bounds even before any extrapolation exists
         observations.forEach { add(it.timeMs) }
         schedule.forEach { add(it.arrivalMs); add(it.departureMs) }
         extrapolation?.let { add(it.anchor.timeMs); add(it.nowMs) }
     }
 
-    return TripTrajectory(observations, schedule, extrapolation, dataBounds(distances, times), nowMs)
+    return TripTrajectory(observations, schedule, extrapolation, dataBounds(distances, times), serverNowMs)
 }
 
 private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, nowMs: Long): ExtrapolationSeries? {
@@ -171,7 +178,7 @@ private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, 
     if (!median.isFinite() || !low.isFinite() || !high.isFinite()) return null
     return ExtrapolationSeries(
         anchor = TrajectoryPoint(anchorDist, state.anchorTimeMs),
-        nowMs = nowMs,
+        nowMs = state.toServerClock(nowMs),
         medianMeters = median,
         lowMeters = low,
         highMeters = high,

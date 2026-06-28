@@ -16,8 +16,10 @@
 package org.onebusaway.android.util
 
 import android.util.Log
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 
@@ -30,19 +32,23 @@ import kotlinx.coroutines.async
  * Failures resolve to null for every joined caller (logged once); retry policy is left to
  * callers.
  *
- * Confinement: not thread-safe. All [run] calls and [scope]'s dispatcher must be confined to a
- * single thread (in practice the main thread) — that confinement is what makes the unlocked map
- * safe.
+ * Concurrency-safe: the in-flight map is a [ConcurrentHashMap], whose atomic `computeIfAbsent`
+ * coalesces racing callers, so [run] may be invoked concurrently from any context. The coalesced
+ * block always runs on [scope]'s dispatcher, not the caller's.
  */
 class SingleFlight<K : Any, V : Any>(private val scope: CoroutineScope) {
 
-    private val inFlight = HashMap<K, Deferred<V?>>()
+    private val inFlight = ConcurrentHashMap<K, Deferred<V?>>()
 
     /** Runs [block] for [key] in [scope], or joins the in-flight execution for the same key. */
     suspend fun run(key: K, block: suspend () -> V?): V? =
             inFlight
-                    .getOrPut(key) {
-                        scope.async {
+                    // computeIfAbsent is atomic, so concurrent callers for one key share a Deferred.
+                    // The coroutine is LAZY: await() (below) starts it only after computeIfAbsent has
+                    // returned and stored the Deferred, so the finally/remove can never run
+                    // re-entrantly — even for an eager dispatcher and a non-suspending block.
+                    .computeIfAbsent(key) {
+                        scope.async(start = CoroutineStart.LAZY) {
                             try {
                                 block()
                             } catch (e: CancellationException) {
@@ -51,7 +57,6 @@ class SingleFlight<K : Any, V : Any>(private val scope: CoroutineScope) {
                                 Log.e(TAG, "Single-flight block failed for $key", e)
                                 null
                             } finally {
-                                // Runs on the scope's thread before any awaiter resumes.
                                 inFlight.remove(key)
                             }
                         }

@@ -18,11 +18,15 @@ package org.onebusaway.android.extrapolation.data
 import org.onebusaway.android.util.Polyline
 
 /**
- * Bound matches the trip LRU's [MAX_TRACKED_TRIPS]: distinct shapes can't outnumber the trips that
- * reference them, so a cache this size never evicts a shape a live trip still holds — that
- * guarantee is what keeps the dedup complete (a smaller bound could evict a still-referenced shape
- * and force a sibling trip to re-fetch a second copy). Orphaned shapes are likewise retained no
- * longer than the same ceiling.
+ * Bound matches the trip LRU's [MAX_TRACKED_TRIPS]. This makes dedup best-effort rather than
+ * complete: the dedup is a memory optimization (sibling trips on a route share one [Polyline]
+ * instead of holding their own copies), not a correctness requirement, and the access-order LRU
+ * tracks fetch recency, not trip liveness. Two things keep it from being a guarantee — orphaned
+ * shapes (whose trips were evicted from [TripStateCache]) still occupy slots, and a live trip's
+ * shape is never re-promoted after its first fetch, so it can age to eldest and be evicted while a
+ * sibling still references it. The cost of a miss is bounded: a second copy of the shape is
+ * re-fetched. Matching the ceiling keeps that re-fetch rare while bounding cache memory by the same
+ * 100-trip ceiling that already bounds the store.
  */
 internal const val MAX_CACHED_SHAPES = MAX_TRACKED_TRIPS
 

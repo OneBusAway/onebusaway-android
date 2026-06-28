@@ -124,6 +124,51 @@ class TripObservationRepositoryTest {
             }
 
     @Test
+    fun `ensureShape short-circuits once the trip carries its polyline`() = runTest {
+        val shape = Polyline(emptyList())
+        val fetcher = FakeFetcher(shapeFor = { shape })
+        val repo = DefaultTripObservationRepository(fetcher)
+
+        val first = repo.ensureShape("tripA", "shape1")
+        val second = repo.ensureShape("tripA", "shape1")
+
+        assertEquals("the second call is served from the trip's recorded polyline", 1, fetcher.shapeCalls)
+        assertSame("both calls resolve to the same instance", first, second)
+    }
+
+    @Test
+    fun `ensureShape fetches each distinct shapeId independently`() = runTest {
+        val shapeA = Polyline(emptyList())
+        val shapeB = Polyline(emptyList())
+        val fetcher = FakeFetcher(shapeFor = { if (it == "shapeA") shapeA else shapeB })
+        val repo = DefaultTripObservationRepository(fetcher)
+
+        val first = repo.ensureShape("tripA", "shapeA")
+        val second = repo.ensureShape("tripB", "shapeB")
+
+        assertEquals("distinct shapeIds each fetch", 2, fetcher.shapeCalls)
+        assertSame("tripA resolves to its own shape", shapeA, first)
+        assertSame("tripB resolves to its own shape", shapeB, second)
+    }
+
+    @Test
+    fun `ensureShape caches nothing on a null fetch and refetches later`() = runTest {
+        val shape = Polyline(emptyList())
+        var next: Polyline? = null // first fetch yields null, then a real polyline
+        val fetcher = FakeFetcher(shapeFor = { next })
+        val repo = DefaultTripObservationRepository(fetcher)
+
+        val first = repo.ensureShape("tripA", "shape1")
+        assertEquals("first call attempts the fetch", 1, fetcher.shapeCalls)
+        assertEquals("a null fetch resolves to null", null, first)
+
+        next = shape
+        val second = repo.ensureShape("tripA", "shape1")
+        assertEquals("the null result poisoned nothing, so the second call refetches", 2, fetcher.shapeCalls)
+        assertSame("the second call resolves to the real polyline", shape, second)
+    }
+
+    @Test
     fun `failed fetches are never emitted`() = runTest {
         val fetcher = FakeFetcher() // null -> failure -> nothing to emit
         val repo = DefaultTripObservationRepository(fetcher)

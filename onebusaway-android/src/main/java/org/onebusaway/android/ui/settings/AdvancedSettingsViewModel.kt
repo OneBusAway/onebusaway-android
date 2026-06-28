@@ -34,8 +34,9 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.region.Region
+import org.onebusaway.android.map.StopsMapController
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.ApiUrlValidator
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionState
@@ -82,6 +83,10 @@ class AdvancedSettingsViewModel @Inject constructor(
             displayTestAlerts = prefs.getBoolean(R.string.preferences_display_test_alerts, false),
             customObaApiUrl = prefs.getString(R.string.preference_key_oba_api_url, null),
             customOtpApiUrl = prefs.getString(R.string.preference_key_otp_api_url, null),
+            mapStopCacheSize = prefs.getInt(
+                R.string.preference_key_map_stop_cache_size,
+                StopsMapController.DEFAULT_STOP_CACHE_SIZE,
+            ),
         ),
         region = region?.let { AdvancedRegionInfo(it.experimental) },
         useFixedRegion = BuildConfig.USE_FIXED_REGION,
@@ -94,6 +99,12 @@ class AdvancedSettingsViewModel @Inject constructor(
 
     fun onDisplayTestAlertsChanged(value: Boolean) =
         prefs.setBoolean(R.string.preferences_display_test_alerts, value)
+
+    /**
+     * Apply an edit to the map stop LRU cache size. Returns true if the input was a valid in-range
+     * number (and was persisted); false otherwise so the dialog stays open (reject-on-invalid).
+     */
+    fun onMapStopCacheSizeChanged(text: String): Boolean = applyMapStopCacheSize(text, prefs)
 
     /**
      * Apply an experimental-regions toggle (the screen owns the enable/disable confirmation dialogs).
@@ -172,6 +183,18 @@ internal suspend fun applyExperimentalRegionsToggle(
     resetOtpVersionOnRegionChange(regionRepository.refresh(), regionRepository.state) {
         prefs.setBoolean(R.string.preference_key_otp_api_url_version, false)
     }
+}
+
+/**
+ * The map-stop-cache-size edit's domain effect, split from [AdvancedSettingsViewModel.onMapStopCacheSizeChanged]
+ * so it's free of Android dependencies and unit-tested directly (see AdvancedSettingsViewModelTest): on a
+ * valid in-range [text] (see [parseStopCacheSize]) persist the size and return true; on an invalid entry
+ * persist nothing and return false so the screen keeps the field open with the range error.
+ */
+internal fun applyMapStopCacheSize(text: String, prefs: PreferencesRepository): Boolean {
+    val size = parseStopCacheSize(text) ?: return false
+    prefs.setInt(R.string.preference_key_map_stop_cache_size, size)
+    return true
 }
 
 /**

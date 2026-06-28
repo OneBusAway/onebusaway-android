@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.settings
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -128,6 +129,7 @@ class SettingsUiStateTest {
         displayTestAlerts = false,
         customObaApiUrl = null,
         customOtpApiUrl = null,
+        mapStopCacheSize = 200,
     )
 
     private fun buildAdv(
@@ -182,5 +184,28 @@ class SettingsUiStateTest {
         assertTrue(buildAdv(region = AdvancedRegionInfo(isExperimental = true)).currentRegionIsExperimental)
         assertFalse(buildAdv(region = AdvancedRegionInfo(isExperimental = false)).currentRegionIsExperimental)
         assertFalse(buildAdv(region = null).currentRegionIsExperimental)
+    }
+
+    @Test
+    fun `map stop cache size carries through to the ui state`() {
+        assertEquals(500, buildAdv(prefs = advPrefs.copy(mapStopCacheSize = 500)).mapStopCacheSize)
+    }
+
+    // --- parseStopCacheSize ---
+
+    @Test
+    fun `parseStopCacheSize accepts an in-range number`() {
+        assertEquals(200, parseStopCacheSize("200"))
+        assertEquals(MAP_STOP_CACHE_SIZE_MIN, parseStopCacheSize("  $MAP_STOP_CACHE_SIZE_MIN  "))
+        assertEquals(MAP_STOP_CACHE_SIZE_MAX, parseStopCacheSize(MAP_STOP_CACHE_SIZE_MAX.toString()))
+    }
+
+    @Test
+    fun `parseStopCacheSize rejects non-numbers and out-of-range values`() {
+        assertNull(parseStopCacheSize(""))
+        assertNull(parseStopCacheSize("abc"))
+        assertNull(parseStopCacheSize("12.5"))
+        assertNull(parseStopCacheSize((MAP_STOP_CACHE_SIZE_MIN - 1).toString()))
+        assertNull(parseStopCacheSize((MAP_STOP_CACHE_SIZE_MAX + 1).toString()))
     }
 }

@@ -137,7 +137,20 @@ data class AdvancedPrefSnapshot(
     val displayTestAlerts: Boolean,
     val customObaApiUrl: String?,
     val customOtpApiUrl: String?,
+    val mapStopCacheSize: Int,
 )
+
+/** Bounds for the map stop LRU cache size advanced option (see [parseStopCacheSize]). */
+const val MAP_STOP_CACHE_SIZE_MIN = 10
+const val MAP_STOP_CACHE_SIZE_MAX = 2000
+
+/**
+ * Parses the advanced map-stop-cache-size input: the trimmed [text] as an integer within
+ * [[MAP_STOP_CACHE_SIZE_MIN], [MAP_STOP_CACHE_SIZE_MAX]], or null if it's not a number or out of
+ * range (the screen keeps its dialog open on null). Pure, so the validation is JVM-unit-testable.
+ */
+fun parseStopCacheSize(text: String): Int? =
+    text.trim().toIntOrNull()?.takeIf { it in MAP_STOP_CACHE_SIZE_MIN..MAP_STOP_CACHE_SIZE_MAX }
 
 /** Region info the advanced screen needs; null means no region (custom API in use). */
 data class AdvancedRegionInfo(val isExperimental: Boolean)
@@ -151,6 +164,7 @@ data class AdvancedSettingsUiState(
     val customObaApiUrlSummary: String,
     val customOtpApiUrlSummary: String,
     val currentRegionIsExperimental: Boolean,
+    val mapStopCacheSize: Int,
 )
 
 /**
@@ -180,6 +194,7 @@ fun buildAdvancedSettingsUiState(
         customObaApiUrlSummary = obaSummary,
         customOtpApiUrlSummary = otpSummary,
         currentRegionIsExperimental = region?.isExperimental == true,
+        mapStopCacheSize = prefs.mapStopCacheSize,
     )
 }
 

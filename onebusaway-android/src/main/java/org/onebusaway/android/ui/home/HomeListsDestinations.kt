@@ -45,6 +45,8 @@ import org.onebusaway.android.ui.mylists.rememberListVm
 import org.onebusaway.android.ui.mylists.routeActions
 import org.onebusaway.android.ui.mylists.stopActions
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.nav.revealRouteOnMap
+import org.onebusaway.android.ui.nav.revealStopOnMap
 import org.onebusaway.android.util.PreferenceUtils
 
 /**
@@ -77,7 +79,12 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
                 vm,
                 emptyText = R.string.my_no_starred_stops,
                 onClick = { navController.navigate(NavRoutes.arrivals(it.id, it.name)) },
-                actions = { host.stopActions(it, R.string.my_context_remove_star) { vm.remove(it.id) } },
+                actions = {
+                    host.stopActions(
+                        it, R.string.my_context_remove_star,
+                        onShowOnMap = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
+                    ) { vm.remove(it.id) }
+                },
             )
         }
     }
@@ -103,8 +110,13 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
             RouteListDestination(
                 vm,
                 emptyText = R.string.my_no_starred_routes,
-                onClick = { host.openRoute(it) },
-                actions = { host.routeActions(it, R.string.my_context_remove_star) { vm.remove(it.id) } },
+                onClick = { route -> openRoute(route) { routeId -> navController.revealRouteOnMap(routeId) } },
+                actions = {
+                    host.routeActions(
+                        it, R.string.my_context_remove_star,
+                        onShowOnMap = { routeId -> navController.revealRouteOnMap(routeId) },
+                    ) { vm.remove(it.id) }
+                },
             )
         }
     }

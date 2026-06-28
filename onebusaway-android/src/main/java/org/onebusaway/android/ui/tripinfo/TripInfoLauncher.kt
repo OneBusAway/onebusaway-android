@@ -16,59 +16,28 @@
  */
 package org.onebusaway.android.ui.tripinfo
 
-import org.onebusaway.android.ui.HomeActivity
 import android.content.Context
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.nav.ReminderEditorArgs
 
 /**
  * Launches the trip-reminder editor (create or edit a trip arrival reminder).
  *
- * The editor is a NavHost destination hosted by [HomeActivity]; this is no longer an
- * Activity but a launcher facade. The edit path carries only the trip/stop ids (in the
- * [ObaContract.Trips] data URI); the arrivals "set reminder" path also passes the full trip context
- * as extras so a brand-new reminder needs no DB round-trip. Both build an explicit [HomeActivity]
- * intent that HomeActivity's translator turns into the [NavRoutes.TRIP_INFO] route. (Non-exported,
- * launched only in-app, so no activity-alias is needed.) Navigates in-app via [HomeActivity.navigateTo]
- * rather than round-tripping through `startActivity` — the route carries the same context the old
- * intent did.
+ * The editor is a NavHost destination hosted by HomeActivity; this is no longer an Activity but a launcher
+ * facade. The edit path carries only the trip/stop ids; the arrivals "set reminder" path also passes the
+ * full trip context so a brand-new reminder needs no DB round-trip. This [start] is the standalone-host
+ * fallback (it re-enters HomeActivity with the route via [HomeActivity.navIntent], which the translator
+ * turns into the [NavRoutes.TRIP_INFO] route); in-app callers that already hold a NavController navigate the
+ * route directly instead.
  */
 object TripInfoLauncher {
 
-    /** Opens an existing reminder for editing — the editor reads the rest from the Trips table. */
-    fun start(context: Context, tripId: String, stopId: String) {
-        (context as HomeActivity).navigateTo(NavRoutes.tripInfo(tripId, stopId))
-    }
-
-    /** Creates a reminder for an upcoming arrival, with the trip context carried on the route. */
-    fun start(
-        context: Context,
-        tripId: String,
-        stopId: String,
-        routeId: String?,
-        routeName: String?,
-        stopName: String?,
-        departureTime: Long,
-        headsign: String?,
-        stopSequence: Int,
-        serviceDate: Long,
-        vehicleId: String?
-    ) {
-        (context as HomeActivity).navigateTo(
-            NavRoutes.tripInfo(
-                tripId = tripId,
-                stopId = stopId,
-                routeId = routeId,
-                routeName = routeName,
-                stopName = stopName,
-                headsign = headsign,
-                departTime = departureTime,
-                stopSequence = stopSequence,
-                serviceDate = serviceDate,
-                vehicleId = vehicleId,
-            )
-        )
+    /** Re-enters HomeActivity at the [NavRoutes.TRIP_INFO] reminder editor for [args]. */
+    fun start(context: Context, args: ReminderEditorArgs) {
+        context.startActivity(HomeActivity.navIntent(context, NavRoutes.tripInfo(args)))
     }
 }
 

@@ -25,9 +25,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
@@ -35,13 +38,12 @@ import org.onebusaway.android.io.elements.ObaRegion
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.ApiUrlValidator
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.region.RegionState
+import org.onebusaway.android.region.RegionStatus
 import org.onebusaway.android.travelbehavior.io.coroutines.FirebaseDataPusher
 
 /** One-shot actions the advanced settings screen routes back to its host. */
 sealed interface AdvancedSettingsEffect {
-    /** An experimental-regions toggle was applied: kick off a region refresh via the host. */
-    object RefreshRegions : AdvancedSettingsEffect
-
     /** The custom OBA URL was cleared: re-initialize regions by returning home. */
     object GoHome : AdvancedSettingsEffect
 }
@@ -97,17 +99,18 @@ class AdvancedSettingsViewModel @Inject constructor(
     /**
      * Apply an experimental-regions toggle (the screen owns the enable/disable confirmation dialogs).
      * Mirrors the legacy flow: clear the region first when turning off an experimental region, persist,
-     * log analytics, then ask the host to refresh regions.
+     * log analytics, then re-resolve the region directly (the forced picker, if needed, is driven reactively
+     * off the repository — [org.onebusaway.android.ui.home.RegionPickerViewModel] — and shows over this screen).
      */
     fun setExperimentalRegions(enabled: Boolean, regionWasExperimental: Boolean) {
-        if (!enabled && regionWasExperimental) regionRepository.clear()
-        prefs.setBoolean(R.string.preference_key_experimental_regions, enabled)
         reportPreferencesEvent(
             context,
             if (enabled) R.string.analytics_label_button_press_experimental_on
             else R.string.analytics_label_button_press_experimental_off
         )
-        _effects.trySend(AdvancedSettingsEffect.RefreshRegions)
+        viewModelScope.launch {
+            applyExperimentalRegionsToggle(enabled, regionWasExperimental, prefs, regionRepository)
+        }
     }
 
     /**
@@ -150,5 +153,48 @@ class AdvancedSettingsViewModel @Inject constructor(
     fun onResetDonationTimestamps() {
         Application.getDonationsManager().setDonationRequestReminderDate(null)
         Application.getDonationsManager().setDonationRequestDismissedDate(null)
+    }
+}
+
+/**
+ * The experimental-regions toggle's domain effect — everything but the analytics report (which needs a
+ * Context, so it stays in [AdvancedSettingsViewModel.setExperimentalRegions]): clear the now-invalid region
+ * when turning an experimental region off, persist the toggle, then re-resolve and apply the OTP-version
+ * reset on a real region change ([resetOtpVersionOnRegionChange]). Free of Android dependencies so the
+ * wiring is unit-tested directly (see AdvancedSettingsViewModelTest); the clear + persist run eagerly on
+ * the caller's [viewModelScope] dispatcher (Main.immediate) before [RegionRepository.refresh] suspends.
+ */
+internal suspend fun applyExperimentalRegionsToggle(
+    enabled: Boolean,
+    regionWasExperimental: Boolean,
+    prefs: PreferencesRepository,
+    regionRepository: RegionRepository,
+) {
+    if (!enabled && regionWasExperimental) regionRepository.clear()
+    prefs.setBoolean(R.string.preference_key_experimental_regions, enabled)
+    resetOtpVersionOnRegionChange(regionRepository.refresh(), regionRepository.state) {
+        prefs.setBoolean(R.string.preference_key_otp_api_url_version, false)
+    }
+}
+
+/**
+ * The domain rule that a toggle-initiated experimental-region *change* resets the OTP API version to the
+ * current default ([resetOtpVersion]). The repository's own [RegionRepository.applyRegion] reset covers
+ * regions that carry an `otpBaseUrl`; this covers the toggle case uniformly (incl. `otpBaseUrl == null`).
+ * On a forced manual choice the region hasn't changed yet — await the user's pick (the next
+ * [RegionState.Active] on [state]) first. Pure (no Context/Application), so it's unit-tested directly.
+ */
+internal suspend fun resetOtpVersionOnRegionChange(
+    status: RegionStatus,
+    state: StateFlow<RegionState>,
+    resetOtpVersion: () -> Unit,
+) {
+    when (status) {
+        is RegionStatus.Changed -> resetOtpVersion()
+        is RegionStatus.NeedsManualSelection -> {
+            state.filterIsInstance<RegionState.Active>().first()
+            resetOtpVersion()
+        }
+        RegionStatus.Unchanged, RegionStatus.Skipped, RegionStatus.Failed, is RegionStatus.Fixed -> Unit
     }
 }

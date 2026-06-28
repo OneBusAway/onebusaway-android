@@ -16,22 +16,22 @@
  */
 package org.onebusaway.android.ui.nightlight
 
-import org.onebusaway.android.ui.HomeActivity
 import android.content.Context
+import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.nav.NavRoutes
 
 /**
  * Launches the night-light flashing screen.
  *
- * The screen is a NavHost destination ([NightLightRoute]) hosted by [HomeActivity]; this
- * is no longer an Activity but a launcher facade. The frozen `NightLightActivity` component name is
- * kept alive as an activity-alias → HomeActivity (for old pinned launcher shortcuts, which HomeActivity's
- * translator maps to the [NavRoutes.NIGHT_LIGHT] route by component name); in-app callers navigate the
- * NavHost directly via [HomeActivity.navigateTo].
+ * The screen is a NavHost destination ([NightLightRoute]) hosted by HomeActivity; this is no longer an
+ * Activity but a launcher facade. The frozen `NightLightActivity` component name is kept alive as an
+ * activity-alias → HomeActivity (for old pinned launcher shortcuts). This [start] is the standalone-host
+ * fallback (it re-enters HomeActivity with the route via [HomeActivity.navIntent]); in-app callers that
+ * already hold a NavController navigate it directly instead.
  */
 object NightLightLauncher {
 
     fun start(context: Context) {
-        (context as HomeActivity).navigateTo(NavRoutes.NIGHT_LIGHT)
+        context.startActivity(HomeActivity.navIntent(context, NavRoutes.NIGHT_LIGHT))
     }
 }

@@ -46,6 +46,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -58,7 +59,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.io.request.survey.model.StudyResponse
-import org.onebusaway.android.ui.survey.SurveyWebViewLauncher
 import org.onebusaway.android.ui.survey.utils.SurveyUtils
 
 /**
@@ -76,12 +76,16 @@ import org.onebusaway.android.ui.survey.utils.SurveyUtils
 fun SurveyFeature(
     viewModel: SurveyViewModel,
     onNearby: Boolean,
+    onOpenSurvey: (url: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val regionReady by viewModel.regionReady.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    // The effects collector outlives a recomposition, so read onOpenSurvey through the latest snapshot
+    // rather than capturing the lambda from first composition.
+    val currentOnOpenSurvey by rememberUpdatedState(onOpenSurvey)
     LaunchedEffect(onNearby, regionReady) {
         if (onNearby && regionReady) {
             viewModel.maybeRequestSurvey()
@@ -91,8 +95,7 @@ fun SurveyFeature(
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collect { effect ->
                 when (effect) {
-                    is SurveyEffect.OpenExternalSurvey ->
-                        SurveyWebViewLauncher.start(context, effect.url)
+                    is SurveyEffect.OpenExternalSurvey -> currentOnOpenSurvey(effect.url)
                     is SurveyEffect.ShowToast ->
                         Toast.makeText(context, effect.resId, Toast.LENGTH_SHORT).show()
                 }

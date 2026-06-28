@@ -156,7 +156,10 @@ fun ArrivalsRoute(
     onBack: () -> Unit,
     // Provided by the NavHost destination so its alert-hide undo Snackbar has a Compose host (the
     // standalone activity anchors its own Snackbar to a View instead, leaving this null).
-    snackbarHostState: SnackbarHostState? = null
+    snackbarHostState: SnackbarHostState? = null,
+    // How the overflow "night light" item navigates — the in-NavHost destination supplies a
+    // NavController lambda; null falls back to the standalone launcher facade.
+    onNightLight: (() -> Unit)? = null
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     ArrivalsPolling(viewModel)
@@ -177,7 +180,8 @@ fun ArrivalsRoute(
         onShowAllRoutes = viewModel::showAllRoutes,
         onHideAllAlerts = viewModel::hideAllAlerts,
         onShowHiddenAlerts = viewModel::showHiddenAlerts,
-        snackbarHostState = snackbarHostState
+        snackbarHostState = snackbarHostState,
+        onNightLight = onNightLight
     )
 }
 
@@ -197,7 +201,8 @@ fun ArrivalsScreen(
     onShowAllRoutes: () -> Unit,
     onHideAllAlerts: () -> Unit,
     onShowHiddenAlerts: () -> Unit,
-    snackbarHostState: SnackbarHostState? = null
+    snackbarHostState: SnackbarHostState? = null,
+    onNightLight: (() -> Unit)? = null
 ) {
     val content = state as? ArrivalsUiState.Content
     var showFilterDialog by remember { mutableStateOf(false) }
@@ -250,7 +255,8 @@ fun ArrivalsScreen(
                             onFilter = { showFilterDialog = true },
                             onStopDetails = handler::onShowStopDetails,
                             onReportStopProblem = handler::onReportStopProblem,
-                            onHideAlerts = onHideAllAlerts
+                            onHideAlerts = onHideAllAlerts,
+                            onNightLight = onNightLight
                         )
                     }
                 }
@@ -358,7 +364,9 @@ internal fun OverflowMenu(
     onFilter: () -> Unit,
     onStopDetails: () -> Unit,
     onReportStopProblem: () -> Unit,
-    onHideAlerts: () -> Unit
+    onHideAlerts: () -> Unit,
+    // In-NavHost hosts supply a NavController lambda; null falls back to the standalone launcher facade.
+    onNightLight: (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -376,7 +384,8 @@ internal fun OverflowMenu(
             MenuRow(R.string.stop_info_option_report_problem) { expanded = false; onReportStopProblem() }
             MenuRow(R.string.stop_info_option_hide_alerts) { expanded = false; onHideAlerts() }
             MenuRow(R.string.stop_info_option_night_light) {
-                expanded = false; NightLightLauncher.start(context)
+                expanded = false
+                onNightLight?.invoke() ?: NightLightLauncher.start(context)
             }
         }
     }

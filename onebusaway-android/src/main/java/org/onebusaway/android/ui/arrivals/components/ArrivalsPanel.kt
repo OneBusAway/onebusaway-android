@@ -360,9 +360,8 @@ private fun PeekRowVisual(
 
 /**
  * The prominent white-on-lateness ETA pill shown in each drawer peek row (the "above-the-peek" ETA
- * style — white text on the deviation color). Also reused by the Home legend dialog
- * ([org.onebusaway.android.ui.home.HomeDialogs]) so its samples match the real peek; [canceled] strikes
- * the text through for the legend's canceled row.
+ * style — white text on the deviation color). Also reused by the Home legend dialog so its samples match
+ * the real peek; [canceled] strikes the text through for the legend's canceled row.
  */
 @Composable
 internal fun EtaPill(

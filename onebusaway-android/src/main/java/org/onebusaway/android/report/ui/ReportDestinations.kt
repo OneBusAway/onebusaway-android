@@ -25,9 +25,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.report.ReportContext
-import org.onebusaway.android.ui.HomeActivity
-import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.feedback.FeedbackLauncher
 import org.onebusaway.android.ui.feedback.FeedbackScreen
@@ -36,7 +35,8 @@ import org.onebusaway.android.ui.nav.NavRoutes
 
 /**
  * The report / feedback navigation cluster: the report chooser ([NavRoutes.REPORT]) and its customer
- * service + infrastructure-issue sub-screens (all already self-wiring via [findActivity]), plus the
+ * service + infrastructure-issue sub-screens (all already self-wiring via
+ * [org.onebusaway.android.ui.compose.findActivity]), plus the
  * post-trip destination-reminder feedback screen ([NavRoutes.FEEDBACK]).
  */
 fun NavGraphBuilder.reportGraph(navController: NavHostController) {
@@ -109,12 +109,12 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
             },
         ),
     ) { backStackEntry ->
-        val activity = LocalContext.current.findActivity() as HomeActivity
+        val context = LocalContext.current
         val response =
             backStackEntry.arguments?.getInt(NavRoutes.ARG_FEEDBACK_RESPONSE) ?: 0
         val logFile = backStackEntry.arguments?.getString(NavRoutes.ARG_LOG_FILE)
         val submitter = remember(logFile) {
-            FeedbackSubmitter(activity.applicationContext, activity.prefsRepository, logFile)
+            FeedbackSubmitter(context.applicationContext, PreferencesEntryPoint.get(context), logFile)
         }
         ObaTheme {
             FeedbackScreen(

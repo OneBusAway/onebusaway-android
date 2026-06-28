@@ -23,6 +23,7 @@ import org.onebusaway.android.ui.arrivals.dialogs.showSituationDialog
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.report.ui.InfrastructureIssueLauncher
 import org.onebusaway.android.util.DBUtil
 import org.onebusaway.android.util.ExternalIntents
@@ -49,6 +50,12 @@ fun createArrivalActionHandler(
             .setStopId(stopId)
             .setScrollMode(TripDetailsLauncher.SCROLL_MODE_STOP)
             .start()
+    },
+    // How to open the reminder editor for an arrival's trip context — defaults to re-entering
+    // HomeActivity via the launcher facade (standalone hosts); the in-NavHost arrivals sites
+    // override it to navigate the TRIP_INFO destination directly.
+    onEditReminder: (args: ReminderEditorArgs) -> Unit = { args ->
+        TripInfoLauncher.start(activity, args)
     }
 ): ArrivalActionHandler = object : ArrivalActionHandler {
 
@@ -74,18 +81,19 @@ fun createArrivalActionHandler(
             return
         }
         val info = arrival.info
-        TripInfoLauncher.start(
-            activity,
-            info.tripId,
-            info.stopId,
-            info.routeId,
-            info.shortName,
-            currentContent()?.header?.name.orEmpty(),
-            ReminderUtils.getReminderDepartureTime(info),
-            info.headsign,
-            info.stopSequence,
-            info.serviceDate,
-            info.vehicleId
+        onEditReminder(
+            ReminderEditorArgs(
+                tripId = info.tripId,
+                stopId = info.stopId,
+                routeId = info.routeId,
+                routeName = info.shortName,
+                stopName = currentContent()?.header?.name.orEmpty(),
+                headsign = info.headsign,
+                departTime = ReminderUtils.getReminderDepartureTime(info),
+                stopSequence = info.stopSequence,
+                serviceDate = info.serviceDate,
+                vehicleId = info.vehicleId,
+            )
         )
     }
 

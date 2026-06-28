@@ -58,8 +58,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
-import org.onebusaway.android.io.elements.ObaRegion
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse
+import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
@@ -95,8 +95,14 @@ import org.onebusaway.android.ui.survey.SurveyViewModel
  * The home screen's tap/UI callbacks, bundled into one holder (mirrors [org.onebusaway.android.ui.survey.SurveyCallbacks]) so
  * [HomeScreen]'s signature stays a handful of parameters — state + the map/survey plumbing + this —
  * instead of ~30 individual lambdas. Each is dispatched up to HomeActivity or a view model.
+ *
+ * Composed in two halves at the HOME composable: the Activity-bound actions arrive whole as
+ * [activityActions] (held, not re-flattened, so adding one there can't be silently dropped here), and
+ * the navigation lambdas below are built where the NavController is in scope. [HomeScreen] brings both
+ * into scope via nested `with`, so the body references every callback unqualified.
  */
 class HomeCallbacks(
+    val activityActions: HomeActivityActions,
     // One onClick per drawer row — the content rows (starred/reminders) navigate to their
     // destinations, the action rows navigate/launch. None are "selections": the NavHost's current
     // destination is the source of truth for what's shown.
@@ -104,16 +110,31 @@ class HomeCallbacks(
     val onStarredRoutes: () -> Unit,
     val onReminders: () -> Unit,
     val onPlanTrip: () -> Unit,
-    val onPayFare: () -> Unit,
     val onSettings: () -> Unit,
+    val onSearch: (String) -> Unit,
+    val onRecentStopsRoutes: () -> Unit,
+    // Wraps [HomeActivityActions.onHelpActionExternal] with the one branch that's a navigation (AGENCIES).
+    val onHelpAction: (HelpAction) -> Unit,
+    val onShowTrip: (tripId: String, stopId: String) -> Unit,
+    val onEditReminder: (args: ReminderEditorArgs) -> Unit,
+    val onLearnMore: () -> Unit,
+    val onOpenSurvey: (url: String) -> Unit,
+)
+
+/**
+ * The home callbacks that are genuinely Activity operations — the ones that need `ExternalIntents` /
+ * `ReportLauncher` / `startActivity` or are thin forwards to an Activity-owned ViewModel. Built once by
+ * [org.onebusaway.android.ui.HomeActivity] and combined, in the HOME composable, with the navigation
+ * lambdas (which need the NavController) to form the full [HomeCallbacks]. [onHelpActionExternal] handles
+ * every [HelpAction] branch except `AGENCIES` (a navigation, supplied by the composable).
+ */
+class HomeActivityActions(
+    val onPayFare: () -> Unit,
     val onHelp: () -> Unit,
     val onSendFeedback: () -> Unit,
     val onOpenSource: () -> Unit,
-    val onSearch: (String) -> Unit,
-    val onRecentStopsRoutes: () -> Unit,
-    val onHelpAction: (HelpAction) -> Unit,
+    val onHelpActionExternal: (HelpAction) -> Unit,
     val onShowWelcomeTutorial: () -> Unit,
-    val onRegionChosen: (ObaRegion) -> Unit,
     val onSheetSettled: (ArrivalsSheetState, Int) -> Unit,
     val onClearFocus: () -> Unit,
     val onArrivalsLoaded: (ObaArrivalInfoResponse) -> Unit,
@@ -158,6 +179,7 @@ fun HomeScreen(
     callbacks: HomeCallbacks,
 ) {
     with(callbacks) {
+    with(activityActions) {
     ObaTheme {
         val scope = rememberCoroutineScope()
         val density = LocalDensity.current
@@ -330,6 +352,8 @@ fun HomeScreen(
                             arrivalsViewModelFactory = arrivalsViewModelFactory,
                             onArrivalsLoaded = onArrivalsLoaded,
                             onShowRouteOnMap = onShowRouteOnMap,
+                            onShowTrip = onShowTrip,
+                            onEditReminder = onEditReminder,
                             onToggleSheet = onToggleSheet,
                             onPreferredHeight = { count, filtering ->
                                 peekArrivalCount = count
@@ -368,6 +392,8 @@ fun HomeScreen(
                             surveyViewModel = surveyViewModel,
                             routeHeader = routeHeader,
                             onCancelRouteMode = onCancelRouteMode,
+                            onLearnMore = onLearnMore,
+                            onOpenSurvey = onOpenSurvey,
                             // The route header reports its height straight to the map VM (which owns the
                             // padding derivation), so the host isn't a relay between the two features.
                             onRouteHeaderHeight = mapViewModel::setRouteHeaderHeight,
@@ -377,8 +403,6 @@ fun HomeScreen(
             }
             }
         }
-
-        HomeDialogs(dialog = state.dialog, onRegionChosen = onRegionChosen)
 
         // The region-wide GTFS alert dialog — a self-wired feature module (WideAlertViewModel streams the
         // current region's alerts), replacing the activity's GtfsAlertsHelper.showWideAlertDialog path.
@@ -398,6 +422,7 @@ fun HomeScreen(
         // The arrivals-panel onboarding spotlight, drawn over the whole screen (incl. the bottom sheet)
         // as the last sibling so it sits on top; renders nothing while no tutorial is active.
         TutorialOverlay(tutorialState)
+    }
     }
     }
 }
@@ -466,6 +491,8 @@ private fun BoxScope.HomeMapOverlays(
     surveyViewModel: SurveyViewModel,
     routeHeader: RouteHeader?,
     onCancelRouteMode: () -> Unit,
+    onLearnMore: () -> Unit,
+    onOpenSurvey: (url: String) -> Unit,
     onRouteHeaderHeight: (Int) -> Unit,
 ) {
     // The weather chip feature module: self-wiring from its ViewModel.
@@ -478,6 +505,7 @@ private fun BoxScope.HomeMapOverlays(
     DonationFeature(
         viewModel = donationViewModel,
         onNearby = true,
+        onLearnMore = onLearnMore,
         modifier = Modifier
             .align(Alignment.TopCenter)
             .fillMaxWidth()
@@ -501,6 +529,7 @@ private fun BoxScope.HomeMapOverlays(
     SurveyFeature(
         viewModel = surveyViewModel,
         onNearby = true,
+        onOpenSurvey = onOpenSurvey,
         modifier = Modifier.align(Alignment.TopCenter),
     )
 }

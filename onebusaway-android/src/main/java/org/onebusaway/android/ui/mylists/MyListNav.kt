@@ -16,10 +16,7 @@
 package org.onebusaway.android.ui.mylists
 
 import org.onebusaway.android.ui.tripinfo.confirmDeleteReminder
-import org.onebusaway.android.ui.tripinfo.TripInfoLauncher
-import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.arrivals.ArrivalsListLauncher
-import org.onebusaway.android.ui.HomeActivity
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import org.onebusaway.android.R
@@ -42,19 +39,19 @@ private fun AppCompatActivity.stopArrivalsBuilder(stop: StopListItem) =
     ArrivalsListLauncher.Builder(this, stop.id)
         .setStopName(stop.name)
 
-/** Opens a stop's arrivals. */
-internal fun AppCompatActivity.openStop(stop: StopListItem) {
-    (this as HomeActivity).navigateTo(NavRoutes.arrivals(stop.id, stop.name))
-}
+/** Opens a stop's arrivals via [onOpen] (the host supplies a NavController-backed navigation). */
+internal fun openStop(stop: StopListItem, onOpen: (stopId: String, stopName: String?) -> Unit) =
+    onOpen(stop.id, stop.name)
 
 /** A stop row's long-press actions; [removeLabel] is the only per-list delta. */
 internal fun AppCompatActivity.stopActions(
     stop: StopListItem,
     @StringRes removeLabel: Int,
+    onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
     onRemove: () -> Unit
 ): List<RowAction> = listOf(
     RowAction(getString(R.string.my_context_showonmap)) {
-        (this as HomeActivity).focusStopOnMap(stop.id, stop.lat, stop.lon)
+        onShowOnMap(stop.id, stop.lat, stop.lon)
     },
     RowAction(getString(R.string.my_context_create_shortcut)) {
         Shortcuts.createStopShortcut(this, stop.name, stopArrivalsBuilder(stop))
@@ -63,18 +60,19 @@ internal fun AppCompatActivity.stopActions(
 )
 
 /** Opens a route on the map. */
-internal fun AppCompatActivity.openRoute(route: RouteListItem) {
-    (this as HomeActivity).showRouteOnMap(route.id)
+internal fun openRoute(route: RouteListItem, onShowOnMap: (routeId: String) -> Unit) {
+    onShowOnMap(route.id)
 }
 
 /** A route row's long-press actions; [removeLabel] is the only per-list delta. */
 internal fun AppCompatActivity.routeActions(
     route: RouteListItem,
     @StringRes removeLabel: Int,
+    onShowOnMap: (routeId: String) -> Unit,
     onRemove: () -> Unit
 ): List<RowAction> = buildList {
     add(RowAction(getString(R.string.my_context_showonmap)) {
-        (this@routeActions as HomeActivity).showRouteOnMap(route.id)
+        onShowOnMap(route.id)
     })
     route.url?.let { url ->
         add(RowAction(getString(R.string.my_context_show_schedule)) {
@@ -87,22 +85,22 @@ internal fun AppCompatActivity.routeActions(
     add(RowAction(getString(removeLabel), onRemove))
 }
 
-/** Opens the reminder editor for [reminder]. */
-internal fun AppCompatActivity.editReminder(reminder: ReminderItem) {
-    TripInfoLauncher.start(this, reminder.tripId, reminder.stopId)
-}
+/** Opens the reminder editor for [reminder] via [onEdit] (a NavController-backed navigation). */
+internal fun editReminder(reminder: ReminderItem, onEdit: (tripId: String, stopId: String) -> Unit) =
+    onEdit(reminder.tripId, reminder.stopId)
 
 /**
  * A reminder row's long-press actions: edit / delete (cancels the alarm) / show stop / show route.
- * The host supplies [onShowRoute]/[onShowStop] to navigate to the in-app RouteInfo / Arrivals
- * destinations.
+ * The host supplies [onEdit]/[onShowRoute]/[onShowStop] to navigate to the in-app TripInfo / RouteInfo /
+ * Arrivals destinations.
  */
 internal fun AppCompatActivity.reminderActions(
     reminder: ReminderItem,
+    onEdit: (tripId: String, stopId: String) -> Unit,
     onShowRoute: (routeId: String) -> Unit,
     onShowStop: (stopId: String) -> Unit,
 ): List<RowAction> = listOf(
-    RowAction(getString(R.string.trip_list_context_edit)) { editReminder(reminder) },
+    RowAction(getString(R.string.trip_list_context_edit)) { editReminder(reminder, onEdit) },
     RowAction(getString(R.string.trip_list_context_delete)) {
         confirmDeleteReminder(this) {
             ReminderUtils.requestDeleteAlarm(
@@ -118,12 +116,10 @@ internal fun AppCompatActivity.reminderActions(
     }
 )
 
-/** Opens a search-result stop's arrivals. */
-internal fun AppCompatActivity.openStopSearchResult(stop: StopSearchResult) {
-    (this as HomeActivity).navigateTo(NavRoutes.arrivals(stop.id, stop.serverName))
-}
+/** Opens a search-result stop's arrivals via [onOpen] (a NavController-backed navigation). */
+internal fun openStopSearchResult(stop: StopSearchResult, onOpen: (stopId: String, stopName: String?) -> Unit) =
+    onOpen(stop.id, stop.serverName)
 
-/** Opens a search-result route. */
-internal fun AppCompatActivity.openRouteSearchResult(route: RouteSearchResult) {
-    (this as HomeActivity).navigateTo(NavRoutes.routeInfo(route.id))
-}
+/** Opens a search-result route via [onOpen] (a NavController-backed navigation). */
+internal fun openRouteSearchResult(route: RouteSearchResult, onOpen: (routeId: String) -> Unit) =
+    onOpen(route.id)

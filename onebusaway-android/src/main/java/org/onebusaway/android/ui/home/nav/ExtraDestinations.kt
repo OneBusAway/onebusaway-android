@@ -29,8 +29,9 @@ import androidx.navigation.navArgument
 import com.google.firebase.analytics.FirebaseAnalytics
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.io.ObaAnalytics
-import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.nav.revealRouteOnMap
+import org.onebusaway.android.ui.nav.revealStopOnMap
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.donation.DonationLearnMoreScreen
 import org.onebusaway.android.ui.nav.NavRoutes
@@ -65,9 +66,10 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
             )
         }
     }
-    // Survey web view destination: the external-survey WebView. Reached in-app
-    // from the home survey overlay (SurveyWebViewLauncher facade → HomeActivity → translator).
-    // The survey URL is the nav-arg. Non-exported; no alias.
+    // Survey web view destination: the external-survey WebView. Reached in-app when the home survey
+    // overlay's onOpenSurvey fires (HomeNavHost: navController.navigateFromHome(NavRoutes.surveyWebView(url)))
+    // — a direct in-process navigation, no facade/translator. The survey URL is the nav-arg.
+    // Non-exported; no alias.
     composable(
         NavRoutes.SURVEY_WEB_VIEW,
         arguments = listOf(
@@ -103,7 +105,7 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
             },
         ),
     ) { backStackEntry ->
-        val activity = LocalContext.current.findActivity() as HomeActivity
+        val activity = LocalContext.current.findActivity()
         // The Firebase analytics process-singleton, fetched from the Context like everywhere else
         // (MapFeature/TripPlanScreen) rather than reaching into the host for it.
         val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(activity) }
@@ -129,13 +131,13 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
                     DBUtil.addRouteToDB(
                         activity, route.id, route.shortName, route.longName, route.url
                     )
-                    activity.showRouteOnMap(route.id)
+                    navController.revealRouteOnMap(route.id)
                 },
                 onStopArrivals = { stop ->
                     navController.navigate(NavRoutes.arrivals(stop.id))
                 },
                 onStopShowOnMap = { stop ->
-                    activity.focusStopOnMap(stop.id, stop.latitude, stop.longitude)
+                    navController.revealStopOnMap(stop.id, stop.latitude, stop.longitude)
                 },
             )
         }

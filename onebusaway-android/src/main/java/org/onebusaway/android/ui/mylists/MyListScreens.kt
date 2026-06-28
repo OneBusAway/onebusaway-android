@@ -43,6 +43,8 @@ internal fun AppCompatActivity.recentStopsTab(
     viewModel: MyListViewModel<StopListItem>,
     @StringRes titleRes: Int,
     @DrawableRes iconRes: Int,
+    onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
+    onOpenStop: (stopId: String, stopName: String?) -> Unit,
 ): MyTab = MyTab(
     tag = MyTabs.RECENT_STOPS,
     titleRes = titleRes,
@@ -57,16 +59,20 @@ internal fun AppCompatActivity.recentStopsTab(
     StopListDestination(
         viewModel,
         emptyText = R.string.my_no_recent_stops,
-        onClick = { openStop(it) },
+        onClick = { openStop(it, onOpenStop) },
         actions = {
-            stopActions(it, R.string.my_context_remove_recent) {
+            stopActions(it, R.string.my_context_remove_recent, onShowOnMap) {
                 viewModel.remove(it.id)
             }
         },
     )
 }
 
-internal fun AppCompatActivity.starredStopsTab(viewModel: MyListViewModel<StopListItem>): MyTab = MyTab(
+internal fun AppCompatActivity.starredStopsTab(
+    viewModel: MyListViewModel<StopListItem>,
+    onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
+    onOpenStop: (stopId: String, stopName: String?) -> Unit,
+): MyTab = MyTab(
     tag = MyTabs.STARRED_STOPS,
     titleRes = R.string.my_starred_title,
     iconRes = R.drawable.ic_tab_starred_unselected,
@@ -86,9 +92,9 @@ internal fun AppCompatActivity.starredStopsTab(viewModel: MyListViewModel<StopLi
     StopListDestination(
         viewModel,
         emptyText = R.string.my_no_starred_stops,
-        onClick = { openStop(it) },
+        onClick = { openStop(it, onOpenStop) },
         actions = {
-            stopActions(it, R.string.my_context_remove_star) {
+            stopActions(it, R.string.my_context_remove_star, onShowOnMap) {
                 viewModel.remove(it.id)
             }
         },
@@ -99,6 +105,7 @@ internal fun AppCompatActivity.recentRoutesTab(
     viewModel: MyListViewModel<RouteListItem>,
     @StringRes titleRes: Int,
     @DrawableRes iconRes: Int,
+    onShowOnMap: (routeId: String) -> Unit,
 ): MyTab = MyTab(
     tag = MyTabs.RECENT_ROUTES,
     titleRes = titleRes,
@@ -113,29 +120,37 @@ internal fun AppCompatActivity.recentRoutesTab(
     RouteListDestination(
         viewModel,
         emptyText = R.string.my_no_recent_routes,
-        onClick = { openRoute(it) },
+        onClick = { openRoute(it, onShowOnMap) },
         actions = {
-            routeActions(it, R.string.my_context_remove_recent) {
+            routeActions(it, R.string.my_context_remove_recent, onShowOnMap) {
                 viewModel.remove(it.id)
             }
         },
     )
 }
 
-internal fun stopSearchTab(viewModel: SearchViewModel<StopSearchResult>): MyTab = MyTab(
+internal fun stopSearchTab(
+    viewModel: SearchViewModel<StopSearchResult>,
+    onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
+    onOpenStop: (stopId: String, stopName: String?) -> Unit,
+): MyTab = MyTab(
     tag = MyTabs.SEARCH,
     titleRes = R.string.my_search_title,
     iconRes = R.drawable.ic_tab_search_unselected,
 ) {
-    StopSearchDestination(viewModel)
+    StopSearchDestination(viewModel, onShowOnMap, onOpenStop)
 }
 
-internal fun routeSearchTab(viewModel: SearchViewModel<RouteSearchResult>): MyTab = MyTab(
+internal fun routeSearchTab(
+    viewModel: SearchViewModel<RouteSearchResult>,
+    onShowOnMap: (routeId: String) -> Unit,
+    onOpenRoute: (routeId: String) -> Unit,
+): MyTab = MyTab(
     tag = MyTabs.SEARCH,
     titleRes = R.string.my_search_title,
     iconRes = R.drawable.ic_tab_search_unselected,
 ) {
-    RouteSearchDestination(viewModel)
+    RouteSearchDestination(viewModel, onShowOnMap, onOpenRoute)
 }
 
 /** [MyTabsScreen] with the last-viewed-tab persistence seam wired to [prefsRepository]. */
@@ -164,6 +179,8 @@ fun MyStopsDestination(
     initialTag: String?,
     prefsRepository: PreferencesRepository,
     onBack: () -> Unit,
+    onShowStopOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
+    onOpenStop: (stopId: String, stopName: String?) -> Unit,
 ) {
     val activity = LocalContext.current.findActivity()
     val app = activity.applicationContext
@@ -177,9 +194,12 @@ fun MyStopsDestination(
         prefsRepository = prefsRepository,
         onBack = onBack,
         tabs = listOf(
-            activity.recentStopsTab(recent, R.string.my_recent_title, R.drawable.ic_tab_recent_unselected),
-            activity.starredStopsTab(starred),
-            stopSearchTab(search),
+            activity.recentStopsTab(
+                recent, R.string.my_recent_title, R.drawable.ic_tab_recent_unselected,
+                onShowStopOnMap, onOpenStop,
+            ),
+            activity.starredStopsTab(starred, onShowStopOnMap, onOpenStop),
+            stopSearchTab(search, onShowStopOnMap, onOpenStop),
         ),
     )
 }
@@ -190,6 +210,8 @@ fun MyRoutesDestination(
     initialTag: String?,
     prefsRepository: PreferencesRepository,
     onBack: () -> Unit,
+    onShowRouteOnMap: (routeId: String) -> Unit,
+    onOpenRoute: (routeId: String) -> Unit,
 ) {
     val activity = LocalContext.current.findActivity()
     val app = activity.applicationContext
@@ -202,8 +224,10 @@ fun MyRoutesDestination(
         prefsRepository = prefsRepository,
         onBack = onBack,
         tabs = listOf(
-            activity.recentRoutesTab(recent, R.string.my_recent_title, R.drawable.ic_tab_recent_unselected),
-            routeSearchTab(search),
+            activity.recentRoutesTab(
+                recent, R.string.my_recent_title, R.drawable.ic_tab_recent_unselected, onShowRouteOnMap,
+            ),
+            routeSearchTab(search, onShowRouteOnMap, onOpenRoute),
         ),
     )
 }
@@ -214,6 +238,9 @@ fun MyRecentDestination(
     initialTag: String?,
     prefsRepository: PreferencesRepository,
     onBack: () -> Unit,
+    onShowStopOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
+    onShowRouteOnMap: (routeId: String) -> Unit,
+    onOpenStop: (stopId: String, stopName: String?) -> Unit,
 ) {
     val activity = LocalContext.current.findActivity()
     val app = activity.applicationContext
@@ -226,8 +253,13 @@ fun MyRecentDestination(
         prefsRepository = prefsRepository,
         onBack = onBack,
         tabs = listOf(
-            activity.recentStopsTab(recentStops, R.string.my_recent_stops, R.drawable.ic_menu_stop),
-            activity.recentRoutesTab(recentRoutes, R.string.my_recent_routes, R.drawable.ic_bus),
+            activity.recentStopsTab(
+                recentStops, R.string.my_recent_stops, R.drawable.ic_menu_stop,
+                onShowStopOnMap, onOpenStop,
+            ),
+            activity.recentRoutesTab(
+                recentRoutes, R.string.my_recent_routes, R.drawable.ic_bus, onShowRouteOnMap,
+            ),
         ),
     )
 }

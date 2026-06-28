@@ -36,13 +36,11 @@ import kotlinx.coroutines.flow.first
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse
-import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.findActivity
-import org.onebusaway.android.ui.nav.NavRoutes
-import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
+import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.compose.rememberClearedViewModelStoreOwner
 import org.onebusaway.android.ui.arrivals.createArrivalActionHandler
 import org.onebusaway.android.ui.home.FocusedStop
@@ -76,6 +74,8 @@ internal fun ArrivalsSheetHost(
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     onArrivalsLoaded: (ObaArrivalInfoResponse) -> Unit,
     onShowRouteOnMap: (String) -> Unit,
+    onShowTrip: (tripId: String, stopId: String) -> Unit,
+    onEditReminder: (args: ReminderEditorArgs) -> Unit,
     onToggleSheet: () -> Unit,
     onPreferredHeight: (previewCount: Int, filtering: Boolean) -> Unit,
     showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit,
@@ -103,13 +103,10 @@ internal fun ArrivalsSheetHost(
                     currentContent = { viewModel.state.value as? ArrivalsUiState.Content },
                     onShowRouteOnMap = onShowRouteOnMap,
                     showUndoSnackbar = showUndoSnackbar,
-                    // The home host navigates the NavHost in-app (the default launcher path is for the
-                    // standalone/external callers); keeps the shared handler ignorant of HomeActivity.
-                    onShowTrip = { tripId, stopId ->
-                        (activity as HomeActivity).navigateTo(
-                            NavRoutes.tripDetails(tripId, stopId, TripDetailsLauncher.SCROLL_MODE_STOP)
-                        )
-                    },
+                    // The home host navigates the NavHost in-app (the handler's default launcher path is for
+                    // the standalone/external callers); keeps the shared handler ignorant of the concrete host.
+                    onShowTrip = onShowTrip,
+                    onEditReminder = onEditReminder,
                 )
             }
             val listState = remember { LazyListState() }

@@ -21,19 +21,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import org.onebusaway.android.R
 import org.onebusaway.android.io.elements.ObaRegion
 import org.onebusaway.android.io.elements.ObaStopElement
 import org.onebusaway.android.location.FakeLocationRepository
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.RegionStatus
 import org.onebusaway.android.region.region
-import org.onebusaway.android.testing.FakePreferencesRepository
 import org.onebusaway.android.testing.MainDispatcherRule
 
 private class FakeStartupPreferencesRepository(
@@ -77,11 +74,10 @@ class HomeViewModelTest {
         regionStatus: RegionStatus = RegionStatus.Unchanged,
         startupRepo: FakeStartupPreferencesRepository = FakeStartupPreferencesRepository(),
         regionRepo: FakeRegionRepository = FakeRegionRepository().apply { refreshResult = regionStatus },
-        prefsRepo: FakePreferencesRepository = FakePreferencesRepository(),
         savedState: SavedStateHandle = SavedStateHandle(),
         locationRepo: FakeLocationRepository = FakeLocationRepository(),
     ) = HomeViewModel(
-        savedState, startupRepo, regionRepo, prefsRepo, locationRepo
+        savedState, startupRepo, regionRepo, locationRepo
     )
 
     // The raw stop payload onArrivalsLoaded forwards to the map; its identity is irrelevant to the
@@ -328,51 +324,6 @@ class HomeViewModelTest {
         assertEquals(stop, viewModel(savedState = handle).uiState.value.focusedStop)
     }
 
-    // --- staged deep-link routes (queued, not latched: #1582) ---
-
-    @Test
-    fun `rapid distinct staged routes are each delivered exactly once`() = runTest {
-        val vm = viewModel()
-        val routes = mutableListOf<String>()
-        val job = launch { vm.deepLinkRoutes.collect { routes.add(it) } }
-
-        // Burst three distinct routes before the collector has drained any (e.g. FCM A -> B -> A).
-        vm.stageDeepLinkRoute("a")
-        vm.stageDeepLinkRoute("b")
-        vm.stageDeepLinkRoute("a")
-        advanceUntilIdle()
-
-        // A latch would have dropped "a" and "b"; the queue delivers all three in order.
-        assertEquals(listOf("a", "b", "a"), routes)
-        job.cancel()
-    }
-
-    @Test
-    fun `a route staged before the collector subscribes is not lost`() = runTest {
-        val vm = viewModel()
-        vm.stageDeepLinkRoute("home") // staged in onCreate, before the NavHost composes
-
-        val routes = mutableListOf<String>()
-        val job = launch { vm.deepLinkRoutes.collect { routes.add(it) } }
-        advanceUntilIdle()
-
-        assertEquals(listOf("home"), routes)
-        job.cancel()
-    }
-
-    @Test
-    fun `a null staged route enqueues nothing`() = runTest {
-        val vm = viewModel()
-        val routes = mutableListOf<String>()
-        val job = launch { vm.deepLinkRoutes.collect { routes.add(it) } }
-
-        vm.stageDeepLinkRoute(null) // an intent with no mapped destination
-        advanceUntilIdle()
-
-        assertTrue(routes.isEmpty())
-        job.cancel()
-    }
-
     // --- region refresh (events + manual-picker dialog) ---
 
     @Test
@@ -434,7 +385,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `needing manual selection raises the chooser dialog and reports no analytics`() = runTest {
+    fun `needing manual selection reports no analytics (the picker is driven off the repository)`() = runTest {
         val regions = listOf(region(1), region(2))
         val vm = viewModel(regionStatus = RegionStatus.NeedsManualSelection(regions))
         val events = mutableListOf<HomeAnalyticsEvent>()
@@ -444,7 +395,6 @@ class HomeViewModelTest {
         vm.refreshRegions()
         advanceUntilIdle()
 
-        assertEquals(HomeDialog.ChooseRegion(regions), vm.uiState.value.dialog)
         assertTrue(events.isEmpty())
         job.cancel()
     }
@@ -466,59 +416,8 @@ class HomeViewModelTest {
         }
     }
 
-    @Test
-    fun `onRegionChosen selects the region and dismisses the dialog (no analytics)`() = runTest {
-        val regions = listOf(region(1), region(2))
-        val repo = FakeRegionRepository().apply {
-            refreshResult = RegionStatus.NeedsManualSelection(regions)
-        }
-        val vm = viewModel(regionRepo = repo)
-        val events = mutableListOf<HomeAnalyticsEvent>()
-        val job = launch { vm.analyticsEvents.collect { events.add(it) } }
-        advanceUntilIdle()
-
-        vm.refreshRegions()
-        advanceUntilIdle()
-        val chosen = regions[1]
-        vm.onRegionChosen(chosen)
-        advanceUntilIdle()
-
-        assertEquals(listOf(chosen), repo.chosen)
-        assertEquals(HomeDialog.None, vm.uiState.value.dialog)
-        // A manual pick passes a null region name, so it reports no analytics (matching legacy).
-        assertTrue(events.isEmpty())
-        job.cancel()
-    }
-
-    // --- experimental-regions toggle + restore completion effects ---
-
-    @Test
-    fun `the experimental-regions toggle resets the OTP API version on a real change`() = runTest {
-        val prefs = FakePreferencesRepository().apply {
-            setBoolean(R.string.preference_key_otp_api_url_version, true)
-        }
-        val vm = viewModel(regionStatus = RegionStatus.Changed(region(1)), prefsRepo = prefs)
-        advanceUntilIdle()
-
-        vm.onExperimentalRegionsToggled()
-        advanceUntilIdle()
-
-        assertFalse(prefs.getBoolean(R.string.preference_key_otp_api_url_version, true))
-    }
-
-    @Test
-    fun `the experimental-regions toggle leaves the OTP API version untouched when unchanged`() = runTest {
-        val prefs = FakePreferencesRepository().apply {
-            setBoolean(R.string.preference_key_otp_api_url_version, true)
-        }
-        val vm = viewModel(regionStatus = RegionStatus.Unchanged, prefsRepo = prefs)
-        advanceUntilIdle()
-
-        vm.onExperimentalRegionsToggled()
-        advanceUntilIdle()
-
-        assertTrue(prefs.getBoolean(R.string.preference_key_otp_api_url_version, false))
-    }
+    // (The forced-choice picker + the experimental-regions OTP-reset rule moved off HomeViewModel — see
+    // RegionPickerViewModelTest and AdvancedSettingsViewModelTest.)
 
     // --- report-target derivation (send feedback / contact us) ---
     // The "no stop, but a location is known" branch isn't unit-tested: android.location.Location can't be

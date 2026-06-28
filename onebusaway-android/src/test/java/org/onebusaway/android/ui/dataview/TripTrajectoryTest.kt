@@ -213,6 +213,33 @@ class TripTrajectoryTest {
         assertEquals(10_000L, interpolateScheduleTime(schedule, 150.0))
     }
 
+    @Test
+    fun `backward distance data yields overlapping segments resolved by first match`() {
+        // Non-monotonic shape_dist_traveled: stop2 sits behind stop1, so the segments overlap --
+        // (0 -> 100) and (50 -> 150) both claim the [50, 100) range.
+        val schedule = listOf(
+            stop(0.0, 1_000L, departMs = 2_000L),
+            stop(100.0, 6_000L),
+            stop(50.0, 8_000L, departMs = 9_000L),
+            stop(150.0, 12_000L),
+        )
+        // 75 lies in both segments; first-match gives it to (0 -> 100): 2000 + 0.75 * (6000 - 2000).
+        assertEquals(5_000L, interpolateScheduleTime(schedule, 75.0))
+        // 120 lies only in (50 -> 150), so the later overlapping segment is still reachable:
+        // 9000 + 0.7 * (12000 - 9000).
+        assertEquals(11_100L, interpolateScheduleTime(schedule, 120.0))
+    }
+
+    @Test
+    fun `a non-finite distance degrades to the sentinel rather than the divide`() {
+        // The production caller guards finiteness, but the function itself must not feed NaN/Infinity
+        // into the fraction: each fails every half-open comparison and the endpoint check, so 0L.
+        val schedule = listOf(stop(0.0, 1_000L), stop(100.0, 3_000L))
+        assertEquals(0L, interpolateScheduleTime(schedule, Double.NaN))
+        assertEquals(0L, interpolateScheduleTime(schedule, Double.POSITIVE_INFINITY))
+        assertEquals(0L, interpolateScheduleTime(schedule, Double.NEGATIVE_INFINITY))
+    }
+
     // --- scheduleSegments ---
 
     @Test
@@ -249,6 +276,18 @@ class TripTrajectoryTest {
             ),
             scheduleSegments(schedule),
         )
+    }
+
+    @Test
+    fun `a leading equal-distance run collapses to last-departure-out at the origin`() {
+        // Symmetric to the mid-trip run: a degenerate pair at the very start drops, so the origin
+        // segment starts at the *second* stop's departure (4000), not the first stop's (2000).
+        val schedule = listOf(
+            stop(0.0, 1_000L, departMs = 2_000L),
+            stop(0.0, 3_000L, departMs = 4_000L),
+            stop(100.0, 8_000L),
+        )
+        assertEquals(listOf(ScheduleSegment(0.0, 100.0, 4_000L, 8_000L)), scheduleSegments(schedule))
     }
 
     @Test

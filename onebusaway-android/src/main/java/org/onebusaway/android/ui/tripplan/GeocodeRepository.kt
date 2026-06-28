@@ -22,36 +22,47 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.directions.util.CustomAddress
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.LocationUtils
 
 /** Address-autocomplete suggestions for the trip-plan endpoints. */
 interface GeocodeRepository {
-    suspend fun suggest(query: String): Result<List<PlaceItem>>
+    suspend fun suggest(query: String): Result<List<TripEndpoint.Geocoded>>
 }
 
 /**
- * Pelias-backed geocoding. All four product flavors set `USE_PELIAS_GEOCODING = true`, so the
- * legacy Google-Places intent path is not carried over. Wraps the blocking
- * [LocationUtils.processPeliasGeocoding] on the IO thread and projects [CustomAddress] onto the
- * JVM-pure [PlaceItem] so the ViewModel stays testable.
+ * Address suggestions for the trip-plan endpoints. Prefers Pelias (real autocomplete, with
+ * `transport:public` results flagged as transit), but falls back to the on-device
+ * [android.location.Geocoder] when no Pelias API key is configured — so key-free dev builds still
+ * geocode. Both paths reuse the existing [LocationUtils] geocoders (which handle the region bbox
+ * biasing/filtering); the Geocoder fallback has no typeahead/transit categories, so it's degraded only.
+ * Runs the blocking work on the IO thread and projects onto the JVM-pure [TripEndpoint.Geocoded].
  */
 class DefaultGeocodeRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
 ) : GeocodeRepository {
 
-    override suspend fun suggest(query: String): Result<List<PlaceItem>> =
+    override suspend fun suggest(query: String): Result<List<TripEndpoint.Geocoded>> =
         withContext(Dispatchers.IO) {
             runCatching {
                 val region = regionRepository.region.value
-                LocationUtils.processPeliasGeocoding(context, region, query).map { it.toPlaceItem() }
+                val addresses = if (BuildFlavorUtils.isPeliasApiKeyDefined()) {
+                    LocationUtils.processPeliasGeocoding(context, region, query)
+                } else {
+                    // No-key fallback: the platform Geocoder, region-biased + filtered — the same helper
+                    // the legacy trip planner already geocodes its endpoint addresses with.
+                    LocationUtils.processGeocoding(context, region, false, query)
+                }
+                addresses.orEmpty().map { it.toGeocoded() }
             }
         }
-
-    private fun CustomAddress.toPlaceItem(): PlaceItem = PlaceItem(
-        displayName = toString(),
-        lat = if (isSet) latitude else null,
-        lon = if (isSet) longitude else null,
-        isTransit = isTransitCategory
-    )
 }
+
+/** Mints the domain [TripEndpoint.Geocoded] from a geocoder [CustomAddress] result (the wire boundary). */
+internal fun CustomAddress.toGeocoded(): TripEndpoint.Geocoded = TripEndpoint.Geocoded(
+    displayName = toString(),
+    lat = if (isSet) latitude else null,
+    lon = if (isSet) longitude else null,
+    isTransit = isTransitCategory
+)

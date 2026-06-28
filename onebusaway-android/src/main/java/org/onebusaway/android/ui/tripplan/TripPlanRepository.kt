@@ -178,14 +178,23 @@ class DefaultTripPlanRepository @Inject constructor(
         return parsed
     }
 
-    private fun PlaceItem.toCustomAddress(): CustomAddress {
+    private fun TripEndpoint.toCustomAddress(): CustomAddress {
         val address = CustomAddress.getEmptyAddress()
+        val lat = lat
+        val lon = lon
         if (lat != null && lon != null) {
             address.latitude = lat
             address.longitude = lon
         }
-        address.setAddressLine(0, displayName)
+        address.setAddressLine(0, addressLine())
         return address
+    }
+
+    /** The string the OTP server geocodes (or just labels the request); fixed kinds resolve a resource. */
+    private fun TripEndpoint.addressLine(): String = displayText ?: when (this) {
+        is TripEndpoint.MapPoint -> context.getString(R.string.trip_plan_map_location)
+        // Only the fixed-label kinds (CurrentLocation/MapPoint) have a null displayText.
+        else -> context.getString(R.string.tripplanner_current_location)
     }
 
     private fun errorMessage(errorCode: Int): String = when (errorCode) {

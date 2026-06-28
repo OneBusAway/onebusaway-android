@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.util
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -69,11 +71,13 @@ class SingleFlightTest {
     }
 
     @Test
-    fun `an eager dispatcher with a non-suspending block clears the completed entry`() = runTest {
-        // Dispatchers.Unconfined runs the block synchronously to completion before async() returns.
-        // The block never suspends, so this exercises the path where the finally/remove could fire
-        // re-entrantly inside computeIfAbsent — which the LAZY start guards against. A stale entry
-        // would make the second call join the first's completed Deferred instead of running fresh.
+    fun `an inline dispatcher with a non-suspending block clears the completed entry`() = runTest {
+        // Dispatchers.Unconfined runs continuations inline on the current thread. Were the async
+        // start eager rather than LAZY, the block would run inside async() — which is called inside
+        // computeIfAbsent's mapping function — so the finally/remove would fire re-entrantly there.
+        // The LAZY start defers execution to await() (below), which runs after computeIfAbsent has
+        // returned and stored the Deferred. A stale entry would make the second call join the
+        // first's completed Deferred instead of running fresh.
         val singleFlight = SingleFlight<String, Int>(CoroutineScope(Dispatchers.Unconfined))
         var executions = 0
 
@@ -82,7 +86,34 @@ class SingleFlightTest {
         assertEquals(2, executions)
     }
 
-    // The failure path (a throwing block resolves to null and clears its entry) is left to
-    // instrumented coverage: SingleFlight logs via android.util.Log.e, which is unmocked in plain
-    // JVM tests here, and this module deliberately avoids Robolectric/mocking for unit tests.
+    @Test
+    fun `a cancelled block propagates instead of resolving to null`() = runTest {
+        val singleFlight = SingleFlight<String, Int>(backgroundScope)
+
+        // CancellationException is rethrown ahead of the catch-to-null, so a stopped flight surfaces
+        // as cancellation to the caller rather than masquerading as a null (no-result) success.
+        val thrown = runCatching {
+            singleFlight.run("k") { throw CancellationException("stop") }
+        }.exceptionOrNull()
+
+        assertTrue(thrown is CancellationException)
+    }
+
+    @Test
+    fun `the entry clears after a cancelled flight so a later call runs fresh`() = runTest {
+        val singleFlight = SingleFlight<String, Int>(backgroundScope)
+        var executions = 0
+
+        // The finally/remove runs even when the block is cancelled, so the entry does not linger.
+        runCatching { singleFlight.run("k") { executions++; throw CancellationException("stop") } }
+
+        assertEquals(7, singleFlight.run("k") { executions++; 7 })
+        assertEquals(2, executions) // the second call ran fresh rather than joining a dead flight
+    }
+
+    // One failure branch stays uncovered: a *non-cancellation* exception resolves to null for every
+    // joined caller. That path logs via android.util.Log.e, which is unmocked in plain JVM tests
+    // (this module avoids Robolectric/mocking for unit tests), so it is currently untested — a
+    // candidate for an instrumented test. The cancellation-propagation and entry-cleared-on-
+    // cancellation branches above never reach Log, so they are exercised here.
 }

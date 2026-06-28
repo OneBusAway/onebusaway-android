@@ -180,8 +180,16 @@ private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, 
     )
 }
 
-/** A strictly-increasing distance span `[d0, d1)` mapping to the server-clock time span `[t0, t1]`. */
-internal data class ScheduleSegment(val d0: Double, val d1: Double, val t0: Long, val t1: Long)
+/**
+ * A segment with strictly increasing distance (`d0 < d1`), spanning departure time [t0] at [d0] to
+ * arrival time [t1] at [d1]. Boundary ownership (which segment claims a distance exactly on [d0]/[d1])
+ * is not a property of the segment — it lives in [interpolateScheduleTime].
+ */
+internal data class ScheduleSegment(val d0: Double, val d1: Double, val t0: Long, val t1: Long) {
+    init {
+        require(d1 > d0) { "ScheduleSegment requires strictly increasing distance, got d0=$d0 d1=$d1" }
+    }
+}
 
 /**
  * The interpolatable segments of [schedule], in trip order, with strictly increasing distance.
@@ -210,22 +218,24 @@ internal fun scheduleSegments(schedule: List<ScheduleStop>): List<ScheduleSegmen
  * Pure, so it is unit-testable. Returns 0 when fewer than two stops exist or the distance falls
  * outside every interpolatable segment.
  *
- * Each segment owns the half-open span `[d0, d1)`, so a distance exactly on a stop boundary lands in
- * a single segment (the next one) instead of being ambiguously claimed by both. The terminal segment
- * is closed `[d0, d1]` so the trip's end distance still interpolates rather than dropping to the 0
- * sentinel. Operating on [scheduleSegments] (strictly increasing by construction) means there is no
- * degenerate case left to handle here.
+ * Each segment is half-open `[d0, d1)`, so a distance exactly on a stop boundary lands in a single
+ * segment (the next one) instead of being ambiguously claimed by both. The trip's final distance,
+ * which every half-open span excludes, is mapped after the scan to the last segment's arrival so the
+ * end of the trip still resolves rather than dropping to the 0 sentinel. Operating on
+ * [scheduleSegments] (strictly increasing by construction) means there is no degenerate case left to
+ * handle here.
  */
 fun interpolateScheduleTime(schedule: List<ScheduleStop>, distanceMeters: Double): Long {
     val segments = scheduleSegments(schedule)
-    for ((index, s) in segments.withIndex()) {
-        val withinUpper = if (index == segments.lastIndex) distanceMeters <= s.d1 else distanceMeters < s.d1
-        if (distanceMeters >= s.d0 && withinUpper) {
+    for (s in segments) {
+        if (distanceMeters >= s.d0 && distanceMeters < s.d1) {
             val fraction = (distanceMeters - s.d0) / (s.d1 - s.d0)
             return s.t0 + (fraction * (s.t1 - s.t0)).toLong()
         }
     }
-    return 0L
+    // Half-open spans exclude the trip's final distance; map that exact endpoint to the last arrival.
+    val last = segments.lastOrNull() ?: return 0L
+    return if (distanceMeters == last.d1) last.t1 else 0L
 }
 
 /**

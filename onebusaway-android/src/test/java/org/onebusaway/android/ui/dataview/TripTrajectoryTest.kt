@@ -143,6 +143,18 @@ class TripTrajectoryTest {
     }
 
     @Test
+    fun `a distance below the first stop returns the sentinel, not a negative-fraction time`() {
+        // Guards the lower-bound check: without it, -10 on a [0,100] schedule would compute a negative
+        // fraction and return a time before the first departure instead of the 0 sentinel.
+        val schedule = listOf(stop(0.0, 1_000L), stop(100.0, 3_000L))
+        assertEquals(0L, interpolateScheduleTime(schedule, -10.0))
+
+        // Same below-origin case when the first stop is not at distance 0.
+        val offsetSchedule = listOf(stop(50.0, 1_000L), stop(150.0, 3_000L))
+        assertEquals(0L, interpolateScheduleTime(offsetSchedule, 40.0))
+    }
+
+    @Test
     fun `a distance exactly on an interior stop maps to a single segment, not both`() {
         val schedule = listOf(
             stop(0.0, 1_000L, departMs = 2_000L),
@@ -162,8 +174,8 @@ class TripTrajectoryTest {
             stop(100.0, 6_000L),
             stop(200.0, 10_000L),
         )
-        // The closed final segment keeps the trip's end distance interpolatable (arrival at the last
-        // stop), rather than falling through to the 0 sentinel.
+        // The trip's end distance is excluded by the half-open segments, so it's mapped to the last
+        // segment's arrival (the final stop, 10000) rather than falling through to the 0 sentinel.
         assertEquals(10_000L, interpolateScheduleTime(schedule, 200.0))
     }
 
@@ -174,8 +186,8 @@ class TripTrajectoryTest {
             stop(100.0, 6_000L),
             stop(100.0, 10_000L), // trailing zero-length pair (shared shape_dist_traveled)
         )
-        // The terminal segment is the last *interpolatable* pair (0 -> 100), which stays closed, so
-        // the max distance reads that segment's arrival (6000) instead of falling through to 0.
+        // The last *interpolatable* pair is 0 -> 100 (the trailing 100 -> 100 pair forms no segment),
+        // so the max distance maps to that segment's arrival (6000) instead of falling through to 0.
         assertEquals(6_000L, interpolateScheduleTime(schedule, 100.0))
     }
 

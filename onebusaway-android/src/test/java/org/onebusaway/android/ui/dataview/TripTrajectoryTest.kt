@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.dataview
 import kotlin.math.sqrt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
@@ -248,6 +249,14 @@ class TripTrajectoryTest {
             ),
             scheduleSegments(schedule),
         )
+    }
+
+    @Test
+    fun `a ScheduleSegment rejects non-increasing distance`() {
+        // The factory never emits a degenerate segment, but the guard catches any future
+        // out-of-factory construction with d1 <= d0 loudly instead of dividing by zero downstream.
+        assertThrows(IllegalArgumentException::class.java) { ScheduleSegment(100.0, 100.0, 0L, 1L) }
+        assertThrows(IllegalArgumentException::class.java) { ScheduleSegment(100.0, 50.0, 0L, 1L) }
     }
 
     // --- formatDeviationLabel ---

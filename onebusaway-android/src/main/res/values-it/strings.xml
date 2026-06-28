@@ -302,6 +302,10 @@
         <item quantity="one">%1$d avviso nascosto</item>
         <item quantity="other"><xliff:g id="count">%1$d</xliff:g> avvisi nascosti</item>
     </plurals>
+    <plurals name="alert_show_more">
+        <item quantity="one">%1$d altro avviso</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g> altri avvisi</item>
+    </plurals>
 
     <!-- Find -->
     <string name="find_hint_nofavoritestops">Trova una fermata inserendo il numero di fermata nella casella di ricerca.\n\nIl numero contiene da 1 a 6 cifre e si trova sul cartello o sulla pensilina della fermata.</string>

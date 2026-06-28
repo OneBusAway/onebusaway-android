@@ -153,7 +153,7 @@ interface ArrivalActionHandler {
     fun onShowRouteSchedule(scheduleUrl: String)
     fun onReportArrivalProblem(actions: ArrivalActions)
     fun onShowAlert(alertId: String)
-    fun onHideAlert(alertId: String)
+    fun onHideAlert(alert: AlertItem)
     fun onShowStopDetails()
     fun onReportStopProblem()
 }
@@ -543,16 +543,17 @@ internal fun ArrivalsList(
 private fun AlertList(
     alerts: List<AlertItem>,
     onShowAlert: (String) -> Unit,
-    onHideAlert: (String) -> Unit
+    onHideAlert: (AlertItem) -> Unit
 ) {
     var visibleCount by rememberSaveable { mutableStateOf(ALERT_PAGE_SIZE) }
     val visible = alerts.take(visibleCount)
     Column {
         for (alert in visible) {
-            // Key the swipe state to the alert so it tracks the row (not the slot) across refreshes.
-            key(alert.id) {
-                SwipeToHide(onHide = { onHideAlert(alert.id) }) {
-                    AlertRow(alert) { onShowAlert(alert.id) }
+            // Key the swipe state to the content identity so it tracks the row (not the slot, and not
+            // a transient situation id) across refreshes.
+            key(alert.contentId) {
+                SwipeToHide(onHide = { onHideAlert(alert) }) {
+                    AlertRow(alert) { onShowAlert(alert.situationId) }
                 }
             }
         }

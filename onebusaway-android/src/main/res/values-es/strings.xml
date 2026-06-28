@@ -346,6 +346,10 @@
         <item quantity="one">%1$d alerta oculta</item>
         <item quantity="other"><xliff:g id="count">%1$d</xliff:g> alertas ocultas</item>
     </plurals>
+    <plurals name="alert_show_more">
+        <item quantity="one">%1$d alerta más</item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g> alertas más</item>
+    </plurals>
 
     <!-- Find -->
     <string name="find_hint_nofavoritestops">Encuentra una parada al ingresar su número en el cuadro de

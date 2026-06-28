@@ -121,8 +121,8 @@ fun createArrivalActionHandler(
         )
     }
 
-    override fun onHideAlert(alertId: String) {
-        viewModel.hideAlert(alertId)
+    override fun onHideAlert(alert: AlertItem) {
+        viewModel.hideAlert(alert)
     }
 
     override fun onShowStopDetails() {

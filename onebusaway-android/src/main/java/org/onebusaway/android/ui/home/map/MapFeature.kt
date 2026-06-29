@@ -21,11 +21,18 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -37,9 +44,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -270,6 +280,23 @@ fun MapFeature(
         initialZoom = seed.zoom,
     )
 
+    // "Zoom in to see more stops" — shown when the viewport stop load was truncated (the API's
+    // limitExceeded), i.e. more stops match the viewport than were returned. Driven purely by map state.
+    val moreStops by mapViewModel.moreStopsAvailable.collectAsStateWithLifecycle()
+    // The map sits below HomeTopBar (which already consumes the status-bar inset), so the banner is
+    // flush at the map's top edge — no extra inset. clipToBounds clips the upward slide at that edge so
+    // the bar tucks up behind the title bar instead of drawing over it.
+    Box(
+        Modifier
+            .fillMaxSize()
+            .clipToBounds()
+    ) {
+        MoreStopsBanner(
+            visible = moreStops,
+            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(),
+        )
+    }
+
     // The welcome tutorial's map-stop spotlight, wired from the flavor-neutral map seam (the published
     // projector + the shared stop list) so this host knows nothing of the underlying map SDK. A tap
     // focuses the chosen stop exactly like a marker tap, continuing into the arrivals tutorial.
@@ -329,6 +356,45 @@ fun MapFeature(
             )
         },
     )
+}
+
+/**
+ * The "zoom in to see more stops" hint: a full-width, text-height bar at the top edge of the map that
+ * slides down to appear and up (tucking behind the home top bar) to disappear. Shown while the last
+ * viewport stop load was truncated by the API; purely state-driven, no dismiss button. The status-bar
+ * inset is already consumed by HomeTopBar above the map, so the caller's slot adds no inset — only the
+ * slide clipping (clipToBounds).
+ */
+@Composable
+private fun MoreStopsBanner(visible: Boolean, modifier: Modifier = Modifier) {
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = slideInVertically(initialOffsetY = { -it }),
+        exit = slideOutVertically(targetOffsetY = { -it }),
+    ) {
+        // A plain Box (not a Surface): a non-clickable Surface still consumes pointer events across its
+        // bounds, so a pan/tap/pinch that starts on the banner strip would be swallowed instead of
+        // reaching the map underneath. A Box with just background/shadow is not hit-testable, so gestures
+        // fall through to the map.
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(4.dp)
+                // A neutral, informational tint (not a warning), alpha'd so the map shows through slightly.
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)),
+        ) {
+            Text(
+                text = stringResource(R.string.map_zoom_in_for_more_stops),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 /** The viewport (or device) is outside the current region (ported from GoogleMapHost.showOutOfRange). */

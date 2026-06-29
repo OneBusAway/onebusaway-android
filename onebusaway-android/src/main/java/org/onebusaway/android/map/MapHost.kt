@@ -128,6 +128,20 @@ class MapHost(
         _progress.value = inProgress
     }
 
+    private val _moreStopsAvailable = MutableStateFlow(false)
+
+    /**
+     * Whether the last viewport stop load was truncated (the API's `limitExceeded`): more stops match
+     * the viewport than were returned, so the UI can prompt the user to zoom in. Set by the stop
+     * loader on each load; cleared when leaving the nearby-stops view.
+     */
+    val moreStopsAvailable: StateFlow<Boolean> = _moreStopsAvailable.asStateFlow()
+
+    /** Set by the stop loader to the last response's `limitExceeded`; cleared on view changes. */
+    fun setMoreStopsAvailable(available: Boolean) {
+        _moreStopsAvailable.value = available
+    }
+
     private val _effects = MutableSharedFlow<MapEffect>(extraBufferCapacity = 8)
 
     /** One-shot events that need an Activity (e.g. the out-of-range prompt). */

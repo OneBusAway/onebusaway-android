@@ -21,10 +21,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
@@ -37,6 +39,7 @@ import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.primaryRouteType
+import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.RegionUtils
 
@@ -78,6 +81,21 @@ class StopsMapController(
     private val routeTypeById = HashMap<String, Int>()
 
     private var loadJob: Job? = null
+
+    init {
+        // Derive the stop zoom band from the camera and publish it into the render snapshot, so a pure
+        // zoom (which changes no other snapshot field) re-fires the renderer to swap full icons ⇄ dots
+        // like any other snapshot change. Always-on (not tied to the viewport loader's start/stop), so
+        // it keeps updating in route mode where the loader is stopped. host.camera only emits on camera
+        // idle, and distinctUntilChanged collapses it to just the band crossings.
+        scope.launch {
+            host.camera
+                .filterNotNull()
+                .map { stopZoomBand(it.zoom.toFloat()) }
+                .distinctUntilChanged()
+                .collect { renderState.setStopBand(it) }
+        }
+    }
 
     /** (Re)start the viewport stop loader (the old StopMapController's camera watch). */
     fun start() {
@@ -129,12 +147,17 @@ class StopsMapController(
     }
 
     private fun onStopsLoaded(result: Result<NearbyStops?>) {
+        // Default the "more stops" banner off for this load; only a successful in-region result with
+        // limitExceeded turns it back on below. Clearing once up front means every early-out (error,
+        // null, out-of-range) leaves it cleared without having to remember to — the class of bug that
+        // previously left the banner stuck on after a truncated load was followed by a null one.
+        host.setMoreStopsAvailable(false)
         val nearby = result.getOrElse {
             MapUtils.showMapError((it as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION)
             return
         }
         if (nearby == null) {
-            // No endpoint yet (or a null no-op); do nothing (#615).
+            // No endpoint yet (or a null no-op); no stops loaded, so do nothing (#615).
             return
         }
         if (nearby.outOfRange) {
@@ -165,10 +188,13 @@ class StopsMapController(
             }
         }
 
+        // More stops match the viewport than the API returned: prompt the user to zoom in.
+        host.setMoreStopsAvailable(nearby.limitExceeded)
         showStops(nearby.stops, nearby.routes)
     }
 
     private fun notifyOutOfRange() {
+        host.setMoreStopsAvailable(false)
         host.emitEffect(MapEffect.OutOfRange)
     }
 

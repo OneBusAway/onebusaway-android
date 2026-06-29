@@ -146,6 +146,9 @@ class MapViewModel @Inject constructor(
     /** Whether a viewport/route load is in flight (the old `Callback.showProgress`). */
     val progress: StateFlow<Boolean> get() = mapHost.progress
 
+    /** Whether the last nearby-stops load was truncated (drives the "zoom in to see more stops" banner). */
+    val moreStopsAvailable: StateFlow<Boolean> get() = mapHost.moreStopsAvailable
+
     /** One-shot events that need an Activity (e.g. the out-of-range prompt). */
     val effects: SharedFlow<MapEffect> get() = mapHost.effects
 
@@ -259,6 +262,7 @@ class MapViewModel @Inject constructor(
         bikeController.stop()
         stopsController.clearStops(false)
         mapHost.setProgress(false)
+        mapHost.setMoreStopsAvailable(false)
     }
 
     // ----- Focus + taps (delegated to [stopsController], except the vehicle selection) -----

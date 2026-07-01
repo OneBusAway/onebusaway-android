@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.dataview
 import kotlin.math.sqrt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
@@ -156,6 +157,161 @@ class TripTrajectoryTest {
         assertEquals(0L, interpolateScheduleTime(schedule, 150.0))
         assertEquals(0L, interpolateScheduleTime(listOf(stop(0.0, 1_000L)), 0.0))
         assertEquals(0L, interpolateScheduleTime(emptyList(), 0.0))
+    }
+
+    @Test
+    fun `a distance below the first stop returns the sentinel, not a negative-fraction time`() {
+        // Guards the lower-bound check: without it, -10 on a [0,100] schedule would compute a negative
+        // fraction and return a time before the first departure instead of the 0 sentinel.
+        val schedule = listOf(stop(0.0, 1_000L), stop(100.0, 3_000L))
+        assertEquals(0L, interpolateScheduleTime(schedule, -10.0))
+
+        // Same below-origin case when the first stop is not at distance 0.
+        val offsetSchedule = listOf(stop(50.0, 1_000L), stop(150.0, 3_000L))
+        assertEquals(0L, interpolateScheduleTime(offsetSchedule, 40.0))
+    }
+
+    @Test
+    fun `a distance exactly on an interior stop maps to a single segment, not both`() {
+        val schedule = listOf(
+            stop(0.0, 1_000L, departMs = 2_000L),
+            stop(100.0, 6_000L, departMs = 7_000L), // dwell: arrives 6000, departs 7000
+            stop(200.0, 10_000L),
+        )
+        // Exactly at the middle stop, the half-open [d0, d1) segments give it to the *next* segment,
+        // so it reads the departure (7000) deterministically rather than ambiguously matching the
+        // prior segment's arrival (6000).
+        assertEquals(7_000L, interpolateScheduleTime(schedule, 100.0))
+    }
+
+    @Test
+    fun `a distance exactly at the final stop interpolates to its arrival`() {
+        val schedule = listOf(
+            stop(0.0, 1_000L),
+            stop(100.0, 6_000L),
+            stop(200.0, 10_000L),
+        )
+        // The trip's end distance is excluded by the half-open segments, so it's mapped to the last
+        // segment's arrival (the final stop, 10000) rather than falling through to the 0 sentinel.
+        assertEquals(10_000L, interpolateScheduleTime(schedule, 200.0))
+    }
+
+    @Test
+    fun `the trip-end distance stays interpolatable when degenerate stops trail the end`() {
+        val schedule = listOf(
+            stop(0.0, 1_000L),
+            stop(100.0, 6_000L),
+            stop(100.0, 10_000L), // trailing zero-length pair (shared shape_dist_traveled)
+        )
+        // The last *interpolatable* pair is 0 -> 100 (the trailing 100 -> 100 pair forms no segment),
+        // so the max distance maps to that segment's arrival (6000) instead of falling through to 0.
+        assertEquals(6_000L, interpolateScheduleTime(schedule, 100.0))
+    }
+
+    @Test
+    fun `a distance exactly at the first stop interpolates to the start time`() {
+        val schedule = listOf(stop(0.0, 1_000L, departMs = 2_000L), stop(100.0, 6_000L))
+        // The span is lower-inclusive, so the trip origin resolves to the first segment's start
+        // (stop0's departure, 2000) rather than the sentinel.
+        assertEquals(2_000L, interpolateScheduleTime(schedule, 0.0))
+    }
+
+    @Test
+    fun `an interior degenerate segment is skipped and a later segment interpolates`() {
+        val schedule = listOf(
+            stop(0.0, 1_000L),
+            stop(100.0, 6_000L, departMs = 7_000L),
+            stop(100.0, 8_000L), // degenerate middle pair: skipped
+            stop(200.0, 12_000L),
+        )
+        // 150 lands in the 100 -> 200 segment (departure 8000 to arrival 12000), proving the loop
+        // advances past the degenerate middle pair.
+        assertEquals(10_000L, interpolateScheduleTime(schedule, 150.0))
+    }
+
+    @Test
+    fun `backward distance data yields overlapping segments resolved by first match`() {
+        // Non-monotonic shape_dist_traveled: stop2 sits behind stop1, so the segments overlap --
+        // (0 -> 100) and (50 -> 150) both claim the [50, 100) range.
+        val schedule = listOf(
+            stop(0.0, 1_000L, departMs = 2_000L),
+            stop(100.0, 6_000L),
+            stop(50.0, 8_000L, departMs = 9_000L),
+            stop(150.0, 12_000L),
+        )
+        // 75 lies in both segments; first-match gives it to (0 -> 100): 2000 + 0.75 * (6000 - 2000).
+        assertEquals(5_000L, interpolateScheduleTime(schedule, 75.0))
+        // 120 lies only in (50 -> 150), so the later overlapping segment is still reachable:
+        // 9000 + 0.7 * (12000 - 9000).
+        assertEquals(11_100L, interpolateScheduleTime(schedule, 120.0))
+    }
+
+    @Test
+    fun `a non-finite distance degrades to the sentinel rather than the divide`() {
+        // The production caller guards finiteness, but the function itself must not feed NaN/Infinity
+        // into the fraction: each fails every half-open comparison and the endpoint check, so 0L.
+        val schedule = listOf(stop(0.0, 1_000L), stop(100.0, 3_000L))
+        assertEquals(0L, interpolateScheduleTime(schedule, Double.NaN))
+        assertEquals(0L, interpolateScheduleTime(schedule, Double.POSITIVE_INFINITY))
+        assertEquals(0L, interpolateScheduleTime(schedule, Double.NEGATIVE_INFINITY))
+    }
+
+    // --- scheduleSegments ---
+
+    @Test
+    fun `segments span each stop pair from the prior departure to the next arrival`() {
+        val schedule = listOf(stop(0.0, 1_000L, departMs = 2_000L), stop(100.0, 6_000L))
+        assertEquals(listOf(ScheduleSegment(0.0, 100.0, 2_000L, 6_000L)), scheduleSegments(schedule))
+    }
+
+    @Test
+    fun `fewer than two stops yields no segments`() {
+        assertTrue(scheduleSegments(emptyList()).isEmpty())
+        assertTrue(scheduleSegments(listOf(stop(0.0, 1_000L))).isEmpty())
+    }
+
+    @Test
+    fun `a trailing zero-length stop pair is dropped`() {
+        val schedule = listOf(stop(0.0, 1_000L), stop(100.0, 6_000L), stop(100.0, 10_000L))
+        // The degenerate 100 -> 100 pair produces no segment; the real 0 -> 100 segment remains the last.
+        assertEquals(listOf(ScheduleSegment(0.0, 100.0, 1_000L, 6_000L)), scheduleSegments(schedule))
+    }
+
+    @Test
+    fun `a run of equal-distance stops collapses to first-arrival-in, last-departure-out`() {
+        val schedule = listOf(
+            stop(0.0, 1_000L),
+            stop(100.0, 6_000L, departMs = 7_000L), // first at 100: its arrival (6000) ends the entering segment
+            stop(100.0, 8_000L), // last at 100: its departure (8000) starts the leaving segment
+            stop(200.0, 12_000L),
+        )
+        assertEquals(
+            listOf(
+                ScheduleSegment(0.0, 100.0, 1_000L, 6_000L),
+                ScheduleSegment(100.0, 200.0, 8_000L, 12_000L),
+            ),
+            scheduleSegments(schedule),
+        )
+    }
+
+    @Test
+    fun `a leading equal-distance run collapses to last-departure-out at the origin`() {
+        // Symmetric to the mid-trip run: a degenerate pair at the very start drops, so the origin
+        // segment starts at the *second* stop's departure (4000), not the first stop's (2000).
+        val schedule = listOf(
+            stop(0.0, 1_000L, departMs = 2_000L),
+            stop(0.0, 3_000L, departMs = 4_000L),
+            stop(100.0, 8_000L),
+        )
+        assertEquals(listOf(ScheduleSegment(0.0, 100.0, 4_000L, 8_000L)), scheduleSegments(schedule))
+    }
+
+    @Test
+    fun `a ScheduleSegment rejects non-increasing distance`() {
+        // The factory never emits a degenerate segment, but the guard catches any future
+        // out-of-factory construction with d1 <= d0 loudly instead of dividing by zero downstream.
+        assertThrows(IllegalArgumentException::class.java) { ScheduleSegment(100.0, 100.0, 0L, 1L) }
+        assertThrows(IllegalArgumentException::class.java) { ScheduleSegment(100.0, 50.0, 0L, 1L) }
     }
 
     // --- formatDeviationLabel ---

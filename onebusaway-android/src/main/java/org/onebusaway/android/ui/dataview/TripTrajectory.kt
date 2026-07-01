@@ -188,24 +188,61 @@ private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, 
 }
 
 /**
+ * A segment with strictly increasing distance (`d0 < d1`), spanning departure time [t0] at [d0] to
+ * arrival time [t1] at [d1]. Boundary ownership (which segment claims a distance exactly on [d0]/[d1])
+ * is not a property of the segment — it lives in [interpolateScheduleTime].
+ */
+internal data class ScheduleSegment(val d0: Double, val d1: Double, val t0: Long, val t1: Long) {
+    init {
+        require(d1 > d0) { "ScheduleSegment requires strictly increasing distance, got d0=$d0 d1=$d1" }
+    }
+}
+
+/**
+ * The interpolatable segments of [schedule], in trip order, with strictly increasing distance.
+ *
+ * Stops sharing a distance (GTFS shape_dist_traveled ties, or backward data) collapse rather than
+ * forming zero-length segments: the segment *entering* a distance ends at the first such stop's
+ * arrival, and the segment *leaving* it starts at the last such stop's departure — which the pairwise
+ * construction yields for free, since a degenerate pair is dropped and the next real pair's lower
+ * bound is the last stop of the run. The result has no degenerate segment, so the caller never has to
+ * guard against one (no divide-by-zero, no ambiguous boundary ownership).
+ */
+internal fun scheduleSegments(schedule: List<ScheduleStop>): List<ScheduleSegment> =
+    (1 until schedule.size).mapNotNull { i ->
+        val prev = schedule[i - 1]
+        val next = schedule[i]
+        if (next.distanceMeters > prev.distanceMeters) {
+            ScheduleSegment(prev.distanceMeters, next.distanceMeters, prev.departureMs, next.arrivalMs)
+        } else {
+            null
+        }
+    }
+
+/**
  * The server-clock time the [schedule] says the vehicle reaches [distanceMeters], linearly
  * interpolated within the bracketing stop pair (previous stop's departure to next stop's arrival).
  * Pure, so it is unit-testable. Returns 0 when fewer than two stops exist or the distance falls
  * outside every interpolatable segment.
+ *
+ * Each segment is half-open `[d0, d1)`, so a distance exactly on a stop boundary lands in a single
+ * segment (the next one) instead of being ambiguously claimed by both. The trip's final distance,
+ * which every half-open span excludes, is mapped after the scan to the last segment's arrival so the
+ * end of the trip still resolves rather than dropping to the 0 sentinel. Operating on
+ * [scheduleSegments] (strictly increasing by construction) means there is no degenerate case left to
+ * handle here.
  */
 fun interpolateScheduleTime(schedule: List<ScheduleStop>, distanceMeters: Double): Long {
-    if (schedule.size < 2) return 0L
-    for (i in 1 until schedule.size) {
-        val d0 = schedule[i - 1].distanceMeters
-        val d1 = schedule[i].distanceMeters
-        if (distanceMeters in d0..d1 && d1 > d0) {
-            val fraction = (distanceMeters - d0) / (d1 - d0)
-            val t0 = schedule[i - 1].departureMs
-            val t1 = schedule[i].arrivalMs
-            return t0 + (fraction * (t1 - t0)).toLong()
+    val segments = scheduleSegments(schedule)
+    for (s in segments) {
+        if (distanceMeters >= s.d0 && distanceMeters < s.d1) {
+            val fraction = (distanceMeters - s.d0) / (s.d1 - s.d0)
+            return s.t0 + (fraction * (s.t1 - s.t0)).toLong()
         }
     }
-    return 0L
+    // Half-open spans exclude the trip's final distance; map that exact endpoint to the last arrival.
+    val last = segments.lastOrNull() ?: return 0L
+    return if (distanceMeters == last.d1) last.t1 else 0L
 }
 
 /**

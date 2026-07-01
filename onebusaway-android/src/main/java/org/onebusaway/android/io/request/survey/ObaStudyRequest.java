@@ -26,7 +26,7 @@ public final class ObaStudyRequest extends RequestBase implements Callable<Study
 
     public static class Builder {
 
-        private static Uri URI = null;
+        private Uri mUri = null;
 
         public Builder(Context context) {
             ObaRegion region = Application.get().getCurrentRegion();
@@ -35,11 +35,11 @@ public final class ObaStudyRequest extends RequestBase implements Callable<Study
             if(baseUrl == null) return;
             String studyAPIURL = baseUrl + Application.get().getResources().getString(R.string.studies_api_endpoint);
             studyAPIURL = studyAPIURL.replace("regionID", String.valueOf(Application.get().getCurrentRegion().getId()));
-            URI = Uri.parse(studyAPIURL).buildUpon().appendQueryParameter("user_id", SurveyPreferences.getUserUUID(context)).build();
+            mUri = Uri.parse(studyAPIURL).buildUpon().appendQueryParameter("user_id", SurveyPreferences.getUserUUID(context)).build();
         }
 
         public ObaStudyRequest build() {
-            return new ObaStudyRequest(URI);
+            return new ObaStudyRequest(mUri);
         }
     }
 

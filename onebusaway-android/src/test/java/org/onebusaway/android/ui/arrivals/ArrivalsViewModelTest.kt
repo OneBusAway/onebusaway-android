@@ -17,6 +17,10 @@ package org.onebusaway.android.ui.arrivals
 
 import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -39,7 +43,8 @@ private data class FavoriteRouteCall(
 
 private class FakeArrivalsRepository(
     var result: Result<ArrivalsData>,
-    private var persistedFilter: Set<String> = emptySet()
+    private var persistedFilter: Set<String> = emptySet(),
+    initialHideState: AlertHideState = AlertHideState()
 ) : ArrivalsRepository {
 
     val requestedMinutesAfter = mutableListOf<Int>()
@@ -54,7 +59,12 @@ private class FakeArrivalsRepository(
 
     var hiddenAlertIds: List<String>? = null
 
-    var showAllAlertsCalled = false
+    var shownAlertIds: List<String>? = null
+
+    /** The DB's hide/show truth — the single source the ViewModel derives hidden state from.
+     *  [hideAlerts]/[showAlerts] mutate it (as the real ContentProvider writes would), and a test can
+     *  mutate it directly to stand in for a hide/un-hide from another surface (the alert dialog). */
+    val hideState = MutableStateFlow(initialHideState)
 
     override suspend fun getArrivals(
         stopId: String,
@@ -94,12 +104,16 @@ private class FakeArrivalsRepository(
         lastSetStyle = style
     }
 
+    override fun alertHideState(): Flow<AlertHideState> = hideState
+
     override suspend fun hideAlerts(ids: List<String>) {
         hiddenAlertIds = ids
+        hideState.update { it.copy(decisions = it.decisions + ids.associateWith { true }) }
     }
 
-    override suspend fun showAllAlerts() {
-        showAllAlertsCalled = true
+    override suspend fun showAlerts(ids: List<String>) {
+        shownAlertIds = ids
+        hideState.update { it.copy(decisions = it.decisions + ids.associateWith { false }) }
     }
 
     override fun situation(id: String): ObaSituation? = null
@@ -110,13 +124,20 @@ private class FakeArrivalsRepository(
 @OptIn(ExperimentalCoroutinesApi::class)
 class ArrivalsViewModelTest {
 
+    // Unconfined so the derived `state` (a stateIn combine) recomputes eagerly — tests read
+    // `state.value` synchronously right after an action, with no advanceUntilIdle in between.
     @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    val mainDispatcherRule = MainDispatcherRule(UnconfinedTestDispatcher())
 
     private fun header(favorite: Boolean = false) =
         StopHeader("1_100", "Pine St & 3rd Ave", "S", favorite, routeCount = 4)
 
-    private fun data(minutesAfter: Int = 65, isStale: Boolean = false, favorite: Boolean = false) =
+    private fun data(
+        minutesAfter: Int = 65,
+        isStale: Boolean = false,
+        favorite: Boolean = false,
+        hideAlertsByDefault: Boolean = false
+    ) =
         ArrivalsData(
             arrivals = emptyList(),
             header = header(favorite),
@@ -125,8 +146,8 @@ class ArrivalsViewModelTest {
             isStale = isStale,
             effectiveRouteFilter = emptySet(),
             actions = emptyMap(),
-            alerts = emptyList(),
-            hiddenAlertCount = 0,
+            activeAlerts = emptyList(),
+            hideAlertsByDefault = hideAlertsByDefault,
             routeFilterOptions = emptyList(),
             filteredRouteCount = 0,
             stopCode = null,
@@ -314,11 +335,17 @@ class ArrivalsViewModelTest {
         assertEquals(emptySet<String>(), repository.lastSetFilter)
     }
 
+    private fun alert(
+        contentId: String,
+        situationId: String,
+        situationIds: Set<String> = setOf(situationId),
+        summary: String = "Reduced service",
+        severity: AlertSeverity = AlertSeverity.WARNING
+    ) = AlertItem(contentId, situationId, situationIds, summary, severity)
+
     @Test
     fun `hideAllAlerts hides the currently shown alerts`() = runTest {
-        val withAlerts = data().copy(
-            alerts = listOf(AlertItem("a1", "Reduced service", AlertSeverity.WARNING))
-        )
+        val withAlerts = data().copy(activeAlerts = listOf(alert(contentId = "c1", situationId = "a1")))
         val repository = FakeArrivalsRepository(Result.success(withAlerts))
         val viewModel = ArrivalsViewModel("1_100", false, repository)
         viewModel.refresh()
@@ -327,6 +354,145 @@ class ArrivalsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(listOf("a1"), repository.hiddenAlertIds)
+    }
+
+    @Test
+    fun `hideAlert removes it from the shown list reactively, without re-fetching`() = runTest {
+        val alert1 = alert(contentId = "c1", situationId = "a1")
+        val withAlerts = data().copy(
+            activeAlerts = listOf(alert1, alert(contentId = "c2", situationId = "a2", summary = "Detour"))
+        )
+        val repository = FakeArrivalsRepository(Result.success(withAlerts))
+        val viewModel = ArrivalsViewModel("1_100", false, repository)
+        viewModel.refresh()
+        assertEquals(2, (viewModel.state.value as ArrivalsUiState.Content).alerts.size)
+
+        viewModel.hideAlert(alert1)
+
+        // The shown list and hidden count update from the hidden-id flow — no second load.
+        val content = viewModel.state.value as ArrivalsUiState.Content
+        assertEquals(listOf("a2"), content.alerts.map { it.situationId })
+        assertEquals(1, content.hiddenAlertCount)
+        assertEquals(1, repository.requestedMinutesAfter.size)
+    }
+
+    @Test
+    fun `hideAlert persists every id in the content group, not just the representative`() = runTest {
+        // The feed serves the same alert under two live ids; hiding must write both so the hide holds
+        // as the feed rotates which id leads the group (the #1593 restart-durability case).
+        val grouped = alert(contentId = "c1", situationId = "a1", situationIds = setOf("a1", "a1b"))
+        val repository = FakeArrivalsRepository(Result.success(data().copy(activeAlerts = listOf(grouped))))
+        val viewModel = ArrivalsViewModel("1_100", false, repository)
+        viewModel.refresh()
+
+        viewModel.hideAlert(grouped)
+        advanceUntilIdle()
+
+        assertEquals(setOf("a1", "a1b"), repository.hiddenAlertIds?.toSet())
+    }
+
+    @Test
+    fun `showHiddenAlerts reveals hidden alerts reactively, without re-fetching`() = runTest {
+        val withAlert = data().copy(activeAlerts = listOf(alert(contentId = "c1", situationId = "a1")))
+        // The DB already reports a1 hidden.
+        val repository = FakeArrivalsRepository(
+            Result.success(withAlert),
+            initialHideState = AlertHideState(mapOf("a1" to true))
+        )
+        val viewModel = ArrivalsViewModel("1_100", false, repository)
+        viewModel.refresh()
+        // Seeded as hidden from the DB: shown empty, counted hidden.
+        assertEquals(0, (viewModel.state.value as ArrivalsUiState.Content).alerts.size)
+        assertEquals(1, (viewModel.state.value as ArrivalsUiState.Content).hiddenAlertCount)
+
+        viewModel.showHiddenAlerts()
+
+        val content = viewModel.state.value as ArrivalsUiState.Content
+        assertEquals(listOf("a1"), content.alerts.map { it.situationId })
+        assertEquals(0, content.hiddenAlertCount)
+        assertEquals(1, repository.requestedMinutesAfter.size)
+        // The reveal must persist to the DB (records the active alert ids as shown).
+        assertEquals(listOf("a1"), repository.shownAlertIds)
+    }
+
+    @Test
+    fun `an un-hide written to the DB elsewhere is reflected with no ViewModel action or re-fetch`() = runTest {
+        // Regression for #1593 finding #1: the alert dialog's Undo writes hidden=0 straight to the DB,
+        // outside the ViewModel. With the DB as the single observed source, that un-hide must surface
+        // on the screen — the old in-memory mirror could only ever add hides, so it stayed hidden.
+        val withAlert = data().copy(activeAlerts = listOf(alert(contentId = "c1", situationId = "a1")))
+        val repository = FakeArrivalsRepository(
+            Result.success(withAlert),
+            initialHideState = AlertHideState(mapOf("a1" to true))
+        )
+        val viewModel = ArrivalsViewModel("1_100", false, repository)
+        viewModel.refresh()
+        assertEquals(0, (viewModel.state.value as ArrivalsUiState.Content).alerts.size)
+
+        // The alert dialog's Undo records the alert shown directly in the DB.
+        repository.hideState.value = AlertHideState(mapOf("a1" to false))
+
+        val content = viewModel.state.value as ArrivalsUiState.Content
+        assertEquals(listOf("a1"), content.alerts.map { it.situationId })
+        assertEquals(0, content.hiddenAlertCount)
+        assertEquals(1, repository.requestedMinutesAfter.size)
+    }
+
+    @Test
+    fun `a hide holds across a refresh because the DB is the single source`() = runTest {
+        val alert1 = alert(contentId = "c1", situationId = "a1")
+        val repository = FakeArrivalsRepository(Result.success(data().copy(activeAlerts = listOf(alert1))))
+        val viewModel = ArrivalsViewModel("1_100", false, repository)
+        viewModel.refresh()
+        viewModel.hideAlert(alert1)
+        assertEquals(0, (viewModel.state.value as ArrivalsUiState.Content).alerts.size)
+
+        // A poll reloads the snapshot; the hide is in the DB, so it survives with no reconciliation.
+        viewModel.refresh()
+
+        val content = viewModel.state.value as ArrivalsUiState.Content
+        assertEquals(0, content.alerts.size)
+        assertEquals(1, content.hiddenAlertCount)
+    }
+
+    @Test
+    fun `with hide-all-alerts on, a brand-new alert is hidden on first load with no DB write`() = runTest {
+        // Regression for #1593 finding #2: the "hide all alerts" preference used to be applied via a
+        // DB insert on load that raced the snapshot, so a new alert flashed visible for a frame. The
+        // preference is now a pure input to the derivation — the alert is hidden the instant it's
+        // derived, and nothing is written on load, so there is no write for the snapshot to race.
+        val newAlert = alert(contentId = "c1", situationId = "a1")
+        val repository = FakeArrivalsRepository(
+            Result.success(data(hideAlertsByDefault = true).copy(activeAlerts = listOf(newAlert)))
+        )
+        val viewModel = ArrivalsViewModel("1_100", false, repository)
+
+        viewModel.refresh()
+
+        val content = viewModel.state.value as ArrivalsUiState.Content
+        assertEquals(0, content.alerts.size)
+        assertEquals(1, content.hiddenAlertCount)
+        // No hide was written to seed the preference — the derivation alone hid it.
+        assertEquals(null, repository.hiddenAlertIds)
+        assertEquals(AlertHideState(), repository.hideState.value)
+    }
+
+    @Test
+    fun `with hide-all-alerts on, an explicitly shown alert stays visible`() = runTest {
+        // "Show hidden alerts" records the alert shown (HIDDEN=0); that explicit decision overrides
+        // the preference, so it is not re-hidden on the next load.
+        val shownAlert = alert(contentId = "c1", situationId = "a1")
+        val repository = FakeArrivalsRepository(
+            Result.success(data(hideAlertsByDefault = true).copy(activeAlerts = listOf(shownAlert))),
+            initialHideState = AlertHideState(mapOf("a1" to false))
+        )
+        val viewModel = ArrivalsViewModel("1_100", false, repository)
+
+        viewModel.refresh()
+
+        val content = viewModel.state.value as ArrivalsUiState.Content
+        assertEquals(listOf("a1"), content.alerts.map { it.situationId })
+        assertEquals(0, content.hiddenAlertCount)
     }
 
     @Test

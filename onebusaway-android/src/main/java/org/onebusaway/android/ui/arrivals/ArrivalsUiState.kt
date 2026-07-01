@@ -44,9 +44,20 @@ data class ArrivalActions(
     val isRouteFavorite: Boolean
 )
 
-/** A service alert (situation) shown in the arrivals banner. */
+/**
+ * A service alert (situation) shown in the arrivals banner. Identity is [contentId] (the dedupe
+ * key), not [situationId]: a republished duplicate keeps the same row identity even as its backing
+ * situation id rotates. See #1593.
+ */
 data class AlertItem(
-    val id: String,
+    /** Stable content identity (the dedupe contentKey) — the row's key for hide/show and Compose. */
+    val contentId: String,
+    /** The representative situation backing this row — resolves the full alert for the detail dialog. */
+    val situationId: String,
+    /** Every situation id folded into this row (the representative plus any republished duplicates).
+     *  Hiding writes them all, and the row counts as hidden when *any* of them is hidden in the DB —
+     *  so a hide follows the content across the feed rotating its id. See #1593. */
+    val situationIds: Set<String>,
     val summary: String,
     val severity: AlertSeverity
 )
@@ -91,7 +102,11 @@ sealed interface ArrivalsUiState {
         val stopLat: Double = 0.0,
         val stopLon: Double = 0.0,
         val stopUserName: String? = null
-    ) : ArrivalsUiState
+    ) : ArrivalsUiState {
+        /** True when the stop has any service alert at all — shown *or* hidden — so the header keeps
+         *  its alert icon even after the rider hides every alert. */
+        val hasAlerts: Boolean get() = alerts.isNotEmpty() || hiddenAlertCount > 0
+    }
 
     data class Error(val message: String) : ArrivalsUiState
 }

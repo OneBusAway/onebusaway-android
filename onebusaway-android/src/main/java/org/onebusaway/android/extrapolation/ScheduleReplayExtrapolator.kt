@@ -17,7 +17,7 @@ package org.onebusaway.android.extrapolation
 
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.DiracDistribution
-import org.onebusaway.android.io.elements.ObaTripSchedule
+import org.onebusaway.android.models.ObaTripSchedule
 
 /**
  * Per-trip extrapolator for grade-separated transit (rail, subway) that replays the schedule

@@ -58,7 +58,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse
+import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.MapViewModel
@@ -137,7 +137,7 @@ class HomeActivityActions(
     val onShowWelcomeTutorial: () -> Unit,
     val onSheetSettled: (ArrivalsSheetState, Int) -> Unit,
     val onClearFocus: () -> Unit,
-    val onArrivalsLoaded: (ObaArrivalInfoResponse) -> Unit,
+    val onArrivalsLoaded: (ArrivalsLoaded) -> Unit,
     val onShowRouteOnMap: (String) -> Unit,
     val onToggleSheet: () -> Unit,
     val onCancelRouteMode: () -> Unit,

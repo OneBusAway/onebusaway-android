@@ -17,8 +17,7 @@
 
 package org.onebusaway.android.util
 
-import org.onebusaway.android.io.elements.ObaArrivalInfo
-import org.onebusaway.android.io.elements.ObaRoute
+import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.util.comparators.AlphanumComparator
 
 /** A route's two display lines: the prominent short name and an optional secondary line. */
@@ -30,9 +29,17 @@ data class RouteDisplayNames(val shortName: String, val longName: String?)
  * line is the long name (or the description when the long name is missing or equals the short
  * name). Shared by the Compose route repositories.
  */
-fun routeDisplayNames(route: ObaRoute): RouteDisplayNames = RouteDisplayNames(
-    shortName = MyTextUtils.formatDisplayText(getRouteDisplayName(route)).orEmpty(),
-    longName = getRouteDescription(route)?.takeIf { it.isNotEmpty() }
+fun routeDisplayNames(route: ObaRoute): RouteDisplayNames =
+    routeDisplayNames(route.shortName, route.longName, route.description)
+
+/** Field-based overload, for callers (e.g. the modernized io/client DTOs) without an [ObaRoute]. */
+fun routeDisplayNames(
+    shortName: String?,
+    longName: String?,
+    description: String?
+): RouteDisplayNames = RouteDisplayNames(
+    shortName = MyTextUtils.formatDisplayText(getRouteDisplayName(shortName, longName)).orEmpty(),
+    longName = getRouteDescription(shortName, longName, description)?.takeIf { it.isNotEmpty() }
 )
 
 fun getRouteDisplayName(routeShortName: String?, routeLongName: String?): String {
@@ -50,21 +57,21 @@ fun getRouteDisplayName(route: ObaRoute): String {
     return getRouteDisplayName(route.shortName, route.longName)
 }
 
-fun getRouteDisplayName(arrivalInfo: ObaArrivalInfo): String {
-    return getRouteDisplayName(arrivalInfo.shortName, arrivalInfo.routeLongName)
-}
+fun getRouteDescription(route: ObaRoute): String? =
+    getRouteDescription(route.shortName, route.longName, route.description)
 
-fun getRouteDescription(route: ObaRoute): String? {
-    var shortName = route.shortName
-    var longName = route.longName
+/** Field-based overload, for callers (e.g. the modernized io/client DTOs) without an [ObaRoute]. */
+fun getRouteDescription(shortName: String?, longName: String?, description: String?): String? {
+    var resolvedShort = shortName
+    var resolvedLong = longName
 
-    if (shortName.isNullOrEmpty()) {
-        shortName = longName
+    if (resolvedShort.isNullOrEmpty()) {
+        resolvedShort = resolvedLong
     }
-    if (longName.isNullOrEmpty() || shortName == longName) {
-        longName = route.description
+    if (resolvedLong.isNullOrEmpty() || resolvedShort == resolvedLong) {
+        resolvedLong = description
     }
-    return MyTextUtils.formatDisplayText(longName)
+    return MyTextUtils.formatDisplayText(resolvedLong)
 }
 
 /**

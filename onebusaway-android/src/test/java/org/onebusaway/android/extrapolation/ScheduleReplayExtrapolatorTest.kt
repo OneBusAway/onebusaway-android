@@ -15,10 +15,13 @@
  */
 package org.onebusaway.android.extrapolation
 
+import org.onebusaway.android.api.adapters.StopTimeData
+import org.onebusaway.android.api.adapters.TripScheduleData
+
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import org.onebusaway.android.io.elements.ObaTripSchedule
+import org.onebusaway.android.models.ObaTripSchedule
 
 class ScheduleReplayExtrapolatorTest {
 
@@ -139,31 +142,15 @@ class ScheduleReplayExtrapolatorTest {
     // --- Helpers ---
 
     private fun makeSchedule(vararg stops: Triple<Double, Long, Long>): ObaTripSchedule {
-        val stClass = ObaTripSchedule.StopTime::class.java
-        val ctor = stClass.getDeclaredConstructor()
-        ctor.isAccessible = true
-
-        val stopTimesArray = java.lang.reflect.Array.newInstance(stClass, stops.size)
-        for (i in stops.indices) {
+        val stopTimes: Array<ObaTripSchedule.StopTime> = Array(stops.size) { i ->
             val (dist, arrive, depart) = stops[i]
-            val st = ctor.newInstance()
-            setField(st, "distanceAlongTrip", dist)
-            setField(st, "arrivalTime", arrive)
-            setField(st, "departureTime", depart)
-            setField(st, "stopId", "stop_$i")
-            java.lang.reflect.Array.set(stopTimesArray, i, st)
+            StopTimeData(
+                stopId = "stop_$i",
+                arrivalTime = arrive,
+                departureTime = depart,
+                distanceAlongTrip = dist,
+            )
         }
-
-        val schedCtor = ObaTripSchedule::class.java.getDeclaredConstructor()
-        schedCtor.isAccessible = true
-        val sched = schedCtor.newInstance()
-        setField(sched, "stopTimes", stopTimesArray)
-        return sched
-    }
-
-    private fun setField(obj: Any, fieldName: String, value: Any?) {
-        val field = obj.javaClass.getDeclaredField(fieldName)
-        field.isAccessible = true
-        field.set(obj, value)
+        return TripScheduleData(stopTimes)
     }
 }

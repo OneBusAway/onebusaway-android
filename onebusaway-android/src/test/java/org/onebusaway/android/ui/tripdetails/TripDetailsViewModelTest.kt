@@ -25,7 +25,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
-import org.onebusaway.android.io.request.ObaTripDetailsResponse
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.ui.nav.NavRoutes
 
@@ -45,7 +44,9 @@ private class FakeTripDetailsRepository(
         return result
     }
 
-    override fun lastResponse(): ObaTripDetailsResponse? = null
+    override fun destinationStops(position: Int): DestinationReminderStops? = null
+
+    override fun lastLoadedTime(): Long? = null
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

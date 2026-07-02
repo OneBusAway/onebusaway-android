@@ -558,8 +558,6 @@
     <string name="preferences_preferred_sound_summary">Valitse %1$s-ilmoitusääni</string>
     <string name="preferences_trip_plan_notifications_title">Matkasuunnitelmailmoitukset (beta)</string>
     <string name="preferences_trip_plan_notifications_summary">Matkan suunnittelun jälkeen lähetä ilmoitukset, jos matka on myöhässä tai sitä ei enää suositella.</string>
-    <string name="preferences_push_firebase_data_title">Lähetä Firebase-tiedot palvelimelle</string>
-    <string name="preferences_push_firebase_data_summary">Jos olet osallistunut matkakäyttäytymistutkimukseen, tämän vaihtoehdon napauttaminen lähettää kerätyt matkakäyttäytymistiedot Firebase-palvelimelle.</string>
     <string name="preferences_user_share_destination_logs_title">Sisällytä määränpäämuistutuslokit</string>
     <string name="preferences_user_share_destination_logs_summary">Anonyymit reaaliaikaiset sijaintitiedot laitteestasi jaetaan %1$sn kanssa määränpäämuistutusominaisuuden parantamiseksi.</string>
     <string name="preference_region_dialog_title">Tarkista alue</string>
@@ -956,16 +954,6 @@
     <!-- Travel behavior study -->
 
     <!-- Firebase push data -->
-    <string name="push_firebase_data_dialog_title">Lähetetään Firebase-tietoja…</string>
-    <string name="push_firebase_data_dialog_summary">Odotetaan, kunnes kaikki aktiivisen käyttäjän odottavat kirjoitukset on vahvistettu palvelimella…</string>
-    <string name="push_firebase_data_dialog_success_title">Lähetys onnistui</string>
-    <string name="push_firebase_data_dialog_success_summary">Kaikki aktiivisen käyttäjän odottavat kirjoitukset on vahvistettu Firebase-palvelimella.</string>
-    <string name="push_firebase_data_dialog_failed_title">Lähetys epäonnistui</string>
-    <string name="push_firebase_data_dialog_failed_summary">Jokin meni pieleen. Varmista vahva internetyhteys ja yritä uudelleen.</string>
-    <string name="push_firebase_data_dialog_canceled_title">Lähetys peruutettu</string>
-    <string name="push_firebase_data_dialog_canceled_summary">Jokin meni pieleen. Varmista vahva internetyhteys ja yritä uudelleen.</string>
-    <string name="push_firebase_data_dialog_user_not_enrolled_title">Käyttäjä ei ole ilmoittautunut</string>
-    <string name="push_firebase_data_dialog_user_not_enrolled_summary">Firebase-lähetystä ei yritetty, koska käyttäjä ei ole ilmoittautunut matkakäyttäytymistietojen keräykseen.</string>
 
     <!-- Battery optimization -->
 </resources>

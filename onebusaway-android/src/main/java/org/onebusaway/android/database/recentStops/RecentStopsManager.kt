@@ -10,7 +10,7 @@ import org.onebusaway.android.app.Application
 import org.onebusaway.android.database.DatabaseProvider
 import org.onebusaway.android.database.recentStops.entity.RegionEntity
 import org.onebusaway.android.database.recentStops.entity.StopEntity
-import org.onebusaway.android.io.elements.ObaStop
+import org.onebusaway.android.models.ObaStop
 
 /**
  * Manages recent stops data by interacting with the database.
@@ -60,7 +60,7 @@ object RecentStopsManager {
             }
 
             insertRegion(context, regionId)
-            stopDao.insertStop(StopEntity(stop.id, stop.name, regionId, currentTime))
+            stopDao.insertStop(StopEntity(stop.id, stop.name.orEmpty(), regionId, currentTime))
         }
     }
 

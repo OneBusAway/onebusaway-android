@@ -20,8 +20,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import org.onebusaway.android.io.elements.ObaSituation
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -96,8 +94,8 @@ class ArrivalsViewModel @AssistedInject constructor(
      * map, move the FABs, and fire arrival-info tutorials (which need the response object) without
      * the ViewModel itself touching Android. Empty for the standalone screen, which ignores it.
      */
-    private val _responses = MutableSharedFlow<ObaArrivalInfoResponse>(extraBufferCapacity = 1)
-    val responses: SharedFlow<ObaArrivalInfoResponse> = _responses.asSharedFlow()
+    private val _arrivalsLoaded = MutableSharedFlow<ArrivalsLoaded>(extraBufferCapacity = 1)
+    val arrivalsLoaded: SharedFlow<ArrivalsLoaded> = _arrivalsLoaded.asSharedFlow()
 
     /** The pending route-favorite dialog request (the route the user tapped "favorite" on), or null. */
     private val _favoriteRequest = MutableStateFlow<ArrivalActions?>(null)
@@ -137,7 +135,7 @@ class ArrivalsViewModel @AssistedInject constructor(
                 filterLoaded = true
                 fatalError.value = null
                 loaded.value = data
-                repository.lastResponse()?.let { _responses.tryEmit(it) }
+                repository.lastLoaded()?.let { _arrivalsLoaded.tryEmit(it) }
             },
             onFailure = { error ->
                 if (loaded.value == null) fatalError.value = error.message.orEmpty()
@@ -261,11 +259,8 @@ class ArrivalsViewModel @AssistedInject constructor(
     private fun activeSituationIds(): List<String> =
         loaded.value?.activeAlerts.orEmpty().flatMapTo(mutableSetOf()) { it.situationIds }.toList()
 
-    /** The full situation for an alert id, for the alert dialog (read from the last good response). */
-    fun situation(id: String): ObaSituation? = repository.situation(id)
-
-    /** The last good response, for the report-flow picker to resolve agency/block from refs. */
-    fun lastResponse(): ObaArrivalInfoResponse? = repository.lastResponse()
+    /** The service-alert dialog's content for an alert id (read from the last good response). */
+    fun alertDetails(id: String): AlertDetails? = repository.alertDetails(id)
 
     /** Projects a fetched snapshot through the DB hide/show decisions: a row is hidden when the user
      *  hid it, shown when they showed it, else the [ArrivalsData.hideAlertsByDefault] preference

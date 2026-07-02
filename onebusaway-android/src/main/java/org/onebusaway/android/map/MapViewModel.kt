@@ -28,10 +28,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.onebusaway.android.R
-import org.onebusaway.android.io.elements.ObaRoute
-import org.onebusaway.android.io.elements.ObaStop
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
-import org.onebusaway.android.io.elements.ObaTripStatus
+import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.bike.BikeStationsRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
@@ -86,7 +87,7 @@ class MapViewModel @Inject constructor(
     // pre-seeded with the host Activity's intent extras (the MapParams.* keys), so it subsumes both the
     // deep-link intent read and the Bundle restore the host used to do.
     private val savedStateHandle: SavedStateHandle,
-    private val stopsRepository: StopsRepository,
+    private val mapDataSource: MapDataSource,
     private val routeRepository: RouteMapRepository,
     private val bikeStationsRepository: BikeStationsRepository,
     private val regionRepo: RegionRepository,
@@ -120,7 +121,7 @@ class MapViewModel @Inject constructor(
     // bias is gated on this map being in route mode.
     private val stopsController = StopsMapController(
         host = mapHost,
-        stopsRepository = stopsRepository,
+        mapDataSource = mapDataSource,
         regionRepo = regionRepo,
         locationRepository = locationRepository,
         scope = viewModelScope,

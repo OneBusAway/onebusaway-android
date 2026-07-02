@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui.report.infrastructure
 
+import org.onebusaway.android.api.adapters.ObaStopElement
+
 import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -25,8 +27,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import org.onebusaway.android.io.elements.ObaStop
-import org.onebusaway.android.io.elements.ObaStopElement
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.testing.MainDispatcherRule
 
 private class FakeServiceListRepository(private val result: ServiceListResult) : ServiceListRepository {

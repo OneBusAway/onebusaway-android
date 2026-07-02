@@ -28,7 +28,7 @@ import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.analytics.ObaAnalytics;
 import org.onebusaway.android.util.PreferenceUtils;
 
 import java.io.File;

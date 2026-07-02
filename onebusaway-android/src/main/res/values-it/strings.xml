@@ -497,23 +497,11 @@
     <string name="preferences_powered_by_oba_title">Powered by %1$s</string>
     <string name="preferences_powered_by_oba_summary">Scopri di più su questo progetto open-source</string>
 
-    <string name="preferences_push_firebase_data_title">Invia dati Firebase al server</string>
-    <string name="preferences_push_firebase_data_summary">Se hai aderito a uno studio sul comportamento di viaggio, toccando questa opzione invierai i dati di comportamento di viaggio raccolti al server Firebase. Questa funzione è utile durante i test dell\'app ed è destinata agli sviluppatori. Per i migliori risultati, assicurati di avere una buona connessione Internet.</string>
 
-    <string name="push_firebase_data_dialog_title">Invio dati Firebase in corso…</string>
-    <string name="push_firebase_data_dialog_summary">In attesa che tutte le scritture in sospeso per l\'utente attivo vengano confermate dal backend…</string>
 
-    <string name="push_firebase_data_dialog_user_not_enrolled_title">Utente non iscritto</string>
-    <string name="push_firebase_data_dialog_user_not_enrolled_summary">L\'invio a Firebase non è stato tentato perché l\'utente non è iscritto alla raccolta dati sul comportamento di viaggio. Puoi iscriverti attivando l\'impostazione \"Invia dati anonimi sulle abitudini di viaggio\".</string>
 
-    <string name="push_firebase_data_dialog_success_title">Invio riuscito</string>
-    <string name="push_firebase_data_dialog_success_summary">Tutte le scritture in sospeso per l\'utente attivo sono state confermate dal backend Firebase.</string>
 
-    <string name="push_firebase_data_dialog_failed_title">Invio fallito</string>
-    <string name="push_firebase_data_dialog_failed_summary">Qualcosa è andato storto. Assicurati di avere una buona connessione Internet e riprova.</string>
 
-    <string name="push_firebase_data_dialog_canceled_title">Invio annullato</string>
-    <string name="push_firebase_data_dialog_canceled_summary">Qualcosa è andato storto. Assicurati di avere una buona connessione Internet e riprova.</string>
 
     <string name="preferences_about_title">Informazioni</string>
     <string name="preferences_about_summary">Informazioni su versione, collaboratori e licenza</string>

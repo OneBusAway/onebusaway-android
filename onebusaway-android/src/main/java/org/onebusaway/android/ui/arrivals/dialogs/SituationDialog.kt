@@ -29,7 +29,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
-import org.onebusaway.android.io.elements.ObaSituation
+import org.onebusaway.android.ui.arrivals.AlertDetails
 import org.onebusaway.android.provider.ObaContract
 import org.onebusaway.android.util.PreferenceUtils
 
@@ -46,16 +46,16 @@ import org.onebusaway.android.util.PreferenceUtils
  */
 fun showSituationDialog(
     activity: AppCompatActivity,
-    situation: ObaSituation,
+    alert: AlertDetails,
     onDismiss: (isAlertHidden: Boolean) -> Unit,
     onUndo: () -> Unit,
     showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit
 ) {
-    val situationId = situation.id
+    val situationId = alert.id
 
     val dialog = MaterialAlertDialogBuilder(activity)
-        .setTitle(situation.summary)
-        .setMessage(buildMessage(activity, situation))
+        .setTitle(alert.summary)
+        .setMessage(buildMessage(activity, alert))
         .setPositiveButton(R.string.hide) { d, _ ->
             // Update the database to indicate that this alert has been hidden
             ObaContract.ServiceAlerts.insertOrUpdate(situationId, ContentValues(), false, true)
@@ -95,8 +95,8 @@ fun showSituationDialog(
  * The dialog body: the alert description (HTML rendered, bare URLs/phones/emails linkified, like
  * the legacy autoLink TextView) plus a "More details" link when the situation has a URL.
  */
-private fun buildMessage(activity: AppCompatActivity, situation: ObaSituation): CharSequence {
-    val description = situation.description.orEmpty()
+private fun buildMessage(activity: AppCompatActivity, alert: AlertDetails): CharSequence {
+    val description = alert.description.orEmpty()
     val message = SpannableStringBuilder(
         if (description.isNotEmpty()) {
             @Suppress("DEPRECATION")
@@ -108,7 +108,7 @@ private fun buildMessage(activity: AppCompatActivity, situation: ObaSituation): 
     @Suppress("DEPRECATION")
     Linkify.addLinks(message, Linkify.ALL)
 
-    val url = situation.url
+    val url = alert.url
     if (!url.isNullOrEmpty()) {
         message.append("\n\n")
         val start = message.length

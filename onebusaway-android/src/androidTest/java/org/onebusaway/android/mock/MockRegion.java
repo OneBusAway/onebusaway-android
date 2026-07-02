@@ -17,8 +17,7 @@ package org.onebusaway.android.mock;
 
 import android.content.Context;
 
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRegionElement;
+import org.onebusaway.android.region.Region;
 import org.onebusaway.android.util.RegionUtils;
 
 import java.util.ArrayList;
@@ -28,9 +27,9 @@ import java.util.ArrayList;
  */
 public class MockRegion {
 
-    public static ObaRegion getTampa(Context context) {
-        ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromResources(context);
-        for (ObaRegion r : regions) {
+    public static Region getTampa(Context context) {
+        ArrayList<Region> regions = RegionUtils.getRegionsFromResources(context);
+        for (Region r : regions) {
             if (r.getId() == RegionUtils.TAMPA_REGION_ID) {
                 return r;
             }
@@ -38,9 +37,9 @@ public class MockRegion {
         return null; // This should never happen
     }
 
-    public static ObaRegion getPugetSound(Context context) {
-        ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromResources(context);
-        for (ObaRegion r : regions) {
+    public static Region getPugetSound(Context context) {
+        ArrayList<Region> regions = RegionUtils.getRegionsFromResources(context);
+        for (Region r : regions) {
             if (r.getId() == RegionUtils.PUGET_SOUND_REGION_ID) {
                 return r;
             }
@@ -48,9 +47,9 @@ public class MockRegion {
         return null; // This should never happen
     }
 
-    public static ObaRegion getAtlanta(Context context) {
-        ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromResources(context);
-        for (ObaRegion r : regions) {
+    public static Region getAtlanta(Context context) {
+        ArrayList<Region> regions = RegionUtils.getRegionsFromResources(context);
+        for (Region r : regions) {
             if (r.getId() == RegionUtils.ATLANTA_REGION_ID) {
                 return r;
             }
@@ -65,20 +64,20 @@ public class MockRegion {
      * @return a test version of the Tampa region with a path appended, but no separator (i.e.,
      * http://api.tampa.onebusaway.org/api), as the base URL
      */
-    public static ObaRegion getRegionWithPathNoSeparator(Context context) {
-        ObaRegionElement.Bounds bound = new ObaRegionElement.Bounds(27.976910500000002, -82.445851,
+    public static Region getRegionWithPathNoSeparator(Context context) {
+        Region.Bounds bound = new Region.Bounds(27.976910500000002, -82.445851,
                 0.5424609999999994, 0.576357999999999);
-        ObaRegionElement.Bounds[] bounds = new ObaRegionElement.Bounds[1];
+        Region.Bounds[] bounds = new Region.Bounds[1];
         bounds[0] = bound;
 
-        return new ObaRegionElement(
+        return new Region(
                 0,
                 "Test-RegionWithPathNoSeparator",
                 true,
                 "https://api.tampa.onebusaway.org/api",
                 null,
                 bounds,
-                new ObaRegionElement.Open311Server[0],
+                new Region.Open311Server[0],
                 "en_US",
                 "test@test.org",
                 true,
@@ -108,20 +107,20 @@ public class MockRegion {
      * @return a test version of the PugetSound region without a trailing path separator (i.e.,
      * http://api.pugetsound.onebusaway.org), as the base URL
      */
-    public static ObaRegion getRegionNoSeparator(Context context) {
-        ObaRegionElement.Bounds bound = new ObaRegionElement.Bounds(47.221315, -122.4051325,
+    public static Region getRegionNoSeparator(Context context) {
+        Region.Bounds bound = new Region.Bounds(47.221315, -122.4051325,
                 0.33704, 0.440483);
-        ObaRegionElement.Bounds[] bounds = new ObaRegionElement.Bounds[1];
+        Region.Bounds[] bounds = new Region.Bounds[1];
         bounds[0] = bound;
 
-        return new ObaRegionElement(
+        return new Region(
                 0,
                 "Test-RegionWithPathNoSeparator",
                 true,
                 "https://api.pugetsound.onebusaway.org",
                 null,
                 bounds,
-                new ObaRegionElement.Open311Server[0],
+                new Region.Open311Server[0],
                 "en_US",
                 "test@test.org",
                 true,
@@ -151,20 +150,20 @@ public class MockRegion {
      * @return a test version of the Tampa region with a custom port (i.e.,
      * http://api.tampa.onebusaway.org:8088/api/), as the base URL
      */
-    public static ObaRegion getRegionWithPort(Context context) {
-        ObaRegionElement.Bounds bound = new ObaRegionElement.Bounds(27.976910500000002, -82.445851,
+    public static Region getRegionWithPort(Context context) {
+        Region.Bounds bound = new Region.Bounds(27.976910500000002, -82.445851,
                 0.5424609999999994, 0.576357999999999);
-        ObaRegionElement.Bounds[] bounds = new ObaRegionElement.Bounds[1];
+        Region.Bounds[] bounds = new Region.Bounds[1];
         bounds[0] = bound;
 
-        return new ObaRegionElement(
+        return new Region(
                 0,
                 "Test-RegionWithPort",
                 true,
                 "https://api.tampa.onebusaway.org:8088/api/",
                 null,
                 bounds,
-                new ObaRegionElement.Open311Server[0],
+                new Region.Open311Server[0],
                 "en_US",
                 "test@test.org",
                 true,
@@ -194,20 +193,20 @@ public class MockRegion {
      * @return a test version of the Tampa region without a scheme (i.e.,
      * api.tampa.onebusaway.org:8088/api/), as the base URL
      */
-    public static ObaRegion getRegionNoScheme(Context context) {
-        ObaRegionElement.Bounds bound = new ObaRegionElement.Bounds(27.976910500000002, -82.445851,
+    public static Region getRegionNoScheme(Context context) {
+        Region.Bounds bound = new Region.Bounds(27.976910500000002, -82.445851,
                 0.5424609999999994, 0.576357999999999);
-        ObaRegionElement.Bounds[] bounds = new ObaRegionElement.Bounds[1];
+        Region.Bounds[] bounds = new Region.Bounds[1];
         bounds[0] = bound;
 
-        return new ObaRegionElement(
+        return new Region(
                 0,
                 "Test-RegionNoScheme",
                 true,
                 "api.tampa.onebusaway.org/api/",
                 null,
                 bounds,
-                new ObaRegionElement.Open311Server[0],
+                new Region.Open311Server[0],
                 "en_US",
                 "test@test.org",
                 true,
@@ -237,20 +236,20 @@ public class MockRegion {
      * @return a test version of the Tampa region using HTTPS (i.e.,
      * https://api.tampa.onebusaway.org/api/), as the base URL
      */
-    public static ObaRegion getRegionWithHttps() {
-        ObaRegionElement.Bounds bound = new ObaRegionElement.Bounds(27.976910500000002, -82.445851,
+    public static Region getRegionWithHttps() {
+        Region.Bounds bound = new Region.Bounds(27.976910500000002, -82.445851,
                 0.5424609999999994, 0.576357999999999);
-        ObaRegionElement.Bounds[] bounds = new ObaRegionElement.Bounds[1];
+        Region.Bounds[] bounds = new Region.Bounds[1];
         bounds[0] = bound;
 
-        return new ObaRegionElement(
+        return new Region(
                 0,
                 "Test-RegionWithHttps",
                 true,
                 "https://api.tampa.onebusaway.org/api/",
                 null,
                 bounds,
-                new ObaRegionElement.Open311Server[0],
+                new Region.Open311Server[0],
                 "en_US",
                 "test@test.org",
                 true,
@@ -280,20 +279,20 @@ public class MockRegion {
      * @return a test version of the Tampa region using HTTPS and a port (i.e.,
      * https://api.tampa.onebusaway.org:8443/api), as the base URL
      */
-    public static ObaRegion getRegionWithHttpsAndPort() {
-        ObaRegionElement.Bounds bound = new ObaRegionElement.Bounds(27.976910500000002, -82.445851,
+    public static Region getRegionWithHttpsAndPort() {
+        Region.Bounds bound = new Region.Bounds(27.976910500000002, -82.445851,
                 0.5424609999999994, 0.576357999999999);
-        ObaRegionElement.Bounds[] bounds = new ObaRegionElement.Bounds[1];
+        Region.Bounds[] bounds = new Region.Bounds[1];
         bounds[0] = bound;
 
-        return new ObaRegionElement(
+        return new Region(
                 0,
                 "Test-RegionWithHttpsAndPort",
                 true,
                 "https://api.tampa.onebusaway.org:8443/api/",
                 null,
                 bounds,
-                new ObaRegionElement.Open311Server[0],
+                new Region.Open311Server[0],
                 "en_US",
                 "test@test.org",
                 true,
@@ -321,20 +320,20 @@ public class MockRegion {
      *
      * @return a test version of the Tampa region without an OBA Discovery or Real-time APIs
      */
-    public static ObaRegion getRegionWithoutObaApis(Context context) {
-        ObaRegionElement.Bounds bound = new ObaRegionElement.Bounds(27.976910500000002, -82.445851,
+    public static Region getRegionWithoutObaApis(Context context) {
+        Region.Bounds bound = new Region.Bounds(27.976910500000002, -82.445851,
                 0.5424609999999994, 0.576357999999999);
-        ObaRegionElement.Bounds[] bounds = new ObaRegionElement.Bounds[1];
+        Region.Bounds[] bounds = new Region.Bounds[1];
         bounds[0] = bound;
 
-        return new ObaRegionElement(
+        return new Region(
                 0,
                 "Test-RegionWithoutOBAApis",
                 true,
                 "https://api.tampa.onebusaway.org/api/",
                 null,
                 bounds,
-                null,
+                new Region.Open311Server[0],
                 "en_US",
                 "test@test.org",
                 false,
@@ -362,20 +361,20 @@ public class MockRegion {
      *
      * @return a test version of the Tampa region that is not active
      */
-    public static ObaRegion getInactiveRegion(Context context) {
-        ObaRegionElement.Bounds bound = new ObaRegionElement.Bounds(27.976910500000002, -82.445851,
+    public static Region getInactiveRegion(Context context) {
+        Region.Bounds bound = new Region.Bounds(27.976910500000002, -82.445851,
                 0.5424609999999994, 0.576357999999999);
-        ObaRegionElement.Bounds[] bounds = new ObaRegionElement.Bounds[1];
+        Region.Bounds[] bounds = new Region.Bounds[1];
         bounds[0] = bound;
 
-        return new ObaRegionElement(
+        return new Region(
                 0,
                 "Test-RegionWithoutOBAApis",
                 true,
                 "https://api.tampa.onebusaway.org/api/",
                 null,
                 bounds,
-                null,
+                new Region.Open311Server[0],
                 "en_US",
                 "test@test.org",
                 false,

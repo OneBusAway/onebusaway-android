@@ -38,7 +38,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.directions.util.CustomAddress;
-import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.region.Region;
 
 /**
  * Helper methods specific to Google Maps API v2
@@ -142,9 +142,9 @@ public class ProprietaryMapHelpV2 {
 
         int mRequestCode;
         Fragment mFragment;
-        ObaRegion mRegion;
+        Region mRegion;
 
-        public StartPlacesAutocompleteOnClick(int requestCode, Fragment fragment, ObaRegion region) {
+        public StartPlacesAutocompleteOnClick(int requestCode, Fragment fragment, Region region) {
             mRequestCode = requestCode;
             mFragment = fragment;
             mRegion = region;

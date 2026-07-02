@@ -504,10 +504,10 @@ internal fun ArrivalsList(
             if (content.arrivals.isEmpty()) {
                 item(key = "empty") { EmptyArrivals(content.minutesAfter) }
             } else if (useCards) {
-                items(groups, key = { it.first().info.run { "$routeId:$headsign" } }) { group ->
+                items(groups, key = { it.first().run { "$routeId:$headsign" } }) { group ->
                     ArrivalCardStyleB(
                         group = group,
-                        actions = content.actions[group.first().info.tripId],
+                        actions = content.actions[group.first().tripId],
                         filterActive = filterActive,
                         callbacks = rowCallbacks
                     )
@@ -518,11 +518,11 @@ internal fun ArrivalsList(
                 // unique-key rule.
                 items(
                     visibleArrivals,
-                    key = { (index, arrival) -> "${arrival.info.tripId}#$index" }
+                    key = { (index, arrival) -> "${arrival.tripId}#$index" }
                 ) { (_, arrival) ->
                     ArrivalRowStyleA(
                         arrival = arrival,
-                        actions = content.actions[arrival.info.tripId],
+                        actions = content.actions[arrival.tripId],
                         filterActive = filterActive,
                         callbacks = rowCallbacks
                     )

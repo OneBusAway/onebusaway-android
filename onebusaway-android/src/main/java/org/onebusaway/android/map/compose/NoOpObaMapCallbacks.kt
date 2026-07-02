@@ -15,8 +15,8 @@
  */
 package org.onebusaway.android.map.compose
 
-import org.onebusaway.android.io.elements.ObaStop
-import org.onebusaway.android.io.elements.ObaTripStatus
+import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.render.GeoPoint
 import org.opentripplanner.routing.bike_rental.BikeRentalStation
 

@@ -16,6 +16,8 @@
  */
 package org.onebusaway.android.report.ui
 
+import org.onebusaway.android.api.adapters.ObaStopElement
+
 import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -68,8 +70,7 @@ import kotlinx.coroutines.withContext
 import edu.usf.cutr.open311client.Open311
 import edu.usf.cutr.open311client.models.Service
 import org.onebusaway.android.R
-import org.onebusaway.android.io.elements.ObaStop
-import org.onebusaway.android.io.elements.ObaStopElement
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.map.StopsMapViewModel
 import org.onebusaway.android.map.compose.ObaMap
@@ -86,11 +87,11 @@ import java.io.IOException
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.app.di.ArrivalsViewModelFactoryEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
-import org.onebusaway.android.io.ObaAnalytics
-import org.onebusaway.android.io.PlausibleAnalytics
+import org.onebusaway.android.app.di.NetworkEntryPoint
+import org.onebusaway.android.analytics.ObaAnalytics
+import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.report.ReportContext
 import org.onebusaway.android.report.TripReportContext
-import org.onebusaway.android.report.toTripReportContext
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
@@ -186,7 +187,7 @@ fun InfrastructureIssueDestination(
 
             override fun onBikeClick(station: org.opentripplanner.routing.bike_rental.BikeRentalStation) {}
 
-            override fun onVehicleInfoWindowClick(status: org.onebusaway.android.io.elements.ObaTripStatus) {}
+            override fun onVehicleInfoWindowClick(status: org.onebusaway.android.models.ObaTripStatus) {}
 
             override fun onBikeInfoWindowClick(station: org.opentripplanner.routing.bike_rental.BikeRentalStation) {}
         }
@@ -367,7 +368,7 @@ private fun createInfrastructureIssueViewModel(
     val longitude = reportContext.lon
 
     val initialStop: ObaStop? = reportContext.stopId?.let { stopId ->
-        ObaStopElement(stopId, latitude, longitude, reportContext.stopName, reportContext.stopCode)
+        ObaStopElement(stopId, latitude, longitude, reportContext.stopName.orEmpty(), reportContext.stopCode.orEmpty())
     }
 
     val defaultIssueType = when (selectedService) {
@@ -464,7 +465,7 @@ private fun ArrivalsPickerInline(
         },
     )
     SimpleArrivalsPicker(arrivalsViewModel) { arrival ->
-        issueViewModel.onArrivalSelected(arrival.info.toTripReportContext())
+        issueViewModel.onArrivalSelected(arrival.toTripReportContext())
     }
 }
 
@@ -474,7 +475,8 @@ private fun createProblemReportViewModel(
     stop: ObaStop,
     arrival: TripReportContext?,
 ): ProblemReportViewModel {
-    val repository = DefaultProblemReportRepository(context.applicationContext)
+    val repository =
+        DefaultProblemReportRepository(NetworkEntryPoint.getProblemReport(context.applicationContext))
     return if (arrival != null) {
         ProblemReportViewModel(
             params = ProblemParams.Trip(

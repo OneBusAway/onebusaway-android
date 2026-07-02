@@ -28,10 +28,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
-import org.onebusaway.android.io.ObaApi
-import org.onebusaway.android.io.elements.ObaRegion
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.provider.ObaContract
 import org.onebusaway.android.util.RegionUtils
 
 /**
@@ -48,7 +48,11 @@ import org.onebusaway.android.util.RegionUtils
 interface RegionRepository {
 
     /** The current region, or null when none is set (e.g. a custom API URL is configured). */
-    val region: StateFlow<ObaRegion?>
+    val region: StateFlow<Region?>
+
+    /** A synchronous snapshot of the current region — for non-reactive readers (e.g. Java callers
+     * via [org.onebusaway.android.app.di.RegionEntryPoint]); reactive consumers should collect [region]. */
+    fun currentRegion(): Region? = region.value
 
     /**
      * Whether a region is currently resolved — the deduped `region != null` projection. Derived once
@@ -72,7 +76,7 @@ interface RegionRepository {
     suspend fun refresh(): RegionStatus
 
     /** Sets the region the user picked from the manual-selection dialog (the old picker's onClick). */
-    suspend fun choose(region: ObaRegion)
+    suspend fun choose(region: Region)
 
     /**
      * Clears the current region — a custom API URL was entered, or an experimental region was disabled.
@@ -96,7 +100,7 @@ interface RegionRepository {
      * `Application.setCurrentRegion` calls. The region-*derived* subsystems (Plausible, Open311) react to
      * the published [region] flow rather than being written here.
      */
-    fun applyRegion(region: ObaRegion?, regionChanged: Boolean)
+    fun applyRegion(region: Region?, regionChanged: Boolean)
 }
 
 /**
@@ -109,10 +113,10 @@ sealed interface RegionState {
     object Resolving : RegionState
 
     /** A region is set. [region] is null only when a custom API URL is configured (no region needed). */
-    data class Active(val region: ObaRegion?) : RegionState
+    data class Active(val region: Region?) : RegionState
 
     /** No region could be auto-selected; the user must pick one from [regions] (usable, name-sorted). */
-    data class NeedsManualChoice(val regions: List<ObaRegion>) : RegionState
+    data class NeedsManualChoice(val regions: List<Region>) : RegionState
 
     /** Region info could not be loaded from any source (catastrophic failure). */
     object Failed : RegionState
@@ -137,17 +141,26 @@ class DefaultRegionRepository @Inject constructor(
     private val locationRepository: LocationRepository,
 ) : RegionRepository {
 
-    private val holder = RegionStateHolder(ObaApi.getDefaultContext().region)
+    // Seeded from persistence (the region-id pref → ContentProvider lookup) so the repo is the sole
+    // owner of the current region — there is no external store to read from anymore.
+    private val holder = RegionStateHolder(loadPersistedRegion())
 
-    override val region: StateFlow<ObaRegion?> get() = holder.region
+    override val region: StateFlow<Region?> get() = holder.region
 
     override val state: StateFlow<RegionState> get() = holder.state
 
-    override fun applyRegion(region: ObaRegion?, regionChanged: Boolean) {
-        // The canonical region write: the OBA API context region every request URL-builder reads, the
-        // persisted region-id pref, and (when a region is set) the custom-URL clears. The region-derived
-        // subsystems (Plausible rebuild, Open311 re-init) react to the published flow, not here.
-        ObaApi.getDefaultContext().setRegion(region)
+    /** Loads the persisted current region (by the saved region-id) on construction, or null if none. */
+    private fun loadPersistedRegion(): Region? {
+        val id = prefs.getLong(R.string.preference_key_region, -1L)
+        if (id < 0) return null
+        return ObaContract.Regions.get(context, id.toInt())
+    }
+
+    override fun applyRegion(region: Region?, regionChanged: Boolean) {
+        // The canonical region write: this holder is the single source of truth for the current region
+        // (every reader observes [region] or reads its value), plus the persisted region-id pref and the
+        // custom-URL clears. The region-derived subsystems (Plausible rebuild, Open311 re-init) react to
+        // the published flow, not here.
         prefs.setLong(R.string.preference_key_region, region?.id ?: -1L)
         if (region != null) {
             prefs.setString(R.string.preference_key_oba_api_url, null) // using a region → clear custom OBA URL
@@ -178,7 +191,7 @@ class DefaultRegionRepository @Inject constructor(
         }
 
         // Force a server reload when we have no region, the cache has expired, or the app updated.
-        val current = ObaApi.getDefaultContext().region
+        val current = region.value
         val newVer = appVersionCode()
         val force = shouldForceReload(
             hasRegion = current != null,
@@ -227,7 +240,7 @@ class DefaultRegionRepository @Inject constructor(
         }
     }
 
-    override suspend fun choose(region: ObaRegion) = withContext(Dispatchers.IO) {
+    override suspend fun choose(region: Region) = withContext(Dispatchers.IO) {
         applyRegion(region, true)
     }
 

@@ -606,8 +606,6 @@
     <string name="preferences_category_user_logs">Registros de usuario</string>
     <string name="preferences_hide_alerts_title">Ocultar alertas</string>
     <string name="preferences_hide_alerts_summary">Ocultar alertas de servicio para paradas y rutas</string>
-    <string name="preferences_push_firebase_data_title">Enviar datos a Firebase</string>
-    <string name="preferences_push_firebase_data_summary">Ayudar a mejorar los servicios de tránsito compartiendo datos anónimos</string>
     <string name="preferences_user_share_destination_logs_title">Compartir registros de destino</string>
     <string name="preferences_user_share_destination_logs_summary">La información anónima de ubicación en tiempo real de tu dispositivo será compartida con %1$s para mejorar la función de recordatorio de destino.</string>
     <!-- Units -->
@@ -1071,16 +1069,6 @@
     <!-- Travel behavior study -->
 
     <!-- Firebase push data -->
-    <string name="push_firebase_data_dialog_title">Mejorar servicios de tránsito</string>
-    <string name="push_firebase_data_dialog_summary">Comparte datos anónimos para mejorar los servicios de tránsito</string>
-    <string name="push_firebase_data_dialog_success_title">Datos enviados</string>
-    <string name="push_firebase_data_dialog_success_summary">Tus datos se han enviado exitosamente</string>
-    <string name="push_firebase_data_dialog_failed_title">Error al enviar datos</string>
-    <string name="push_firebase_data_dialog_failed_summary">No se pudieron enviar los datos. Intenta más tarde.</string>
-    <string name="push_firebase_data_dialog_canceled_title">Envío cancelado</string>
-    <string name="push_firebase_data_dialog_canceled_summary">Has cancelado el envío de datos</string>
-    <string name="push_firebase_data_dialog_user_not_enrolled_title">No inscrito</string>
-    <string name="push_firebase_data_dialog_user_not_enrolled_summary">No estás inscrito en el programa de compartir datos</string>
 
     <!-- Battery optimization -->
 </resources>

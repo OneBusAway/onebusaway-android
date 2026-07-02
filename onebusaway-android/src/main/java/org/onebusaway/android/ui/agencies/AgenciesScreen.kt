@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui.agencies
 
+import org.onebusaway.android.models.AgencyContact
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -64,9 +66,9 @@ fun AgenciesRoute(viewModel: AgenciesViewModel, onBack: () -> Unit) {
 /** Stateless screen content, fully driven by [ListUiState] — previewable and testable. */
 @Composable
 fun AgenciesScreen(
-    state: ListUiState<AgencyItem>,
+    state: ListUiState<AgencyContact>,
     onRetry: () -> Unit,
-    onAgencyClick: (AgencyItem) -> Unit,
+    onAgencyClick: (AgencyContact) -> Unit,
     onBack: () -> Unit
 ) {
     ListScreenScaffold(
@@ -91,7 +93,7 @@ fun AgenciesScreen(
 }
 
 @Composable
-private fun AgencyRow(agency: AgencyItem, onClick: (AgencyItem) -> Unit) {
+private fun AgencyRow(agency: AgencyContact, onClick: (AgencyContact) -> Unit) {
     Column {
         Row(
             modifier = Modifier
@@ -129,9 +131,9 @@ private fun AgenciesScreenSuccessPreview() {
         AgenciesScreen(
             state = ListUiState.Success(
                 listOf(
-                    AgencyItem("1", "King County Metro", "https://kingcounty.gov/metro"),
-                    AgencyItem("40", "Sound Transit", "https://soundtransit.org"),
-                    AgencyItem("97", "No-website Transit", null)
+                    AgencyContact("1", "King County Metro", null, "https://kingcounty.gov/metro", null),
+                    AgencyContact("40", "Sound Transit", null, "https://soundtransit.org", null),
+                    AgencyContact("97", "No-website Transit", null, null, null)
                 )
             ),
             onRetry = {}, onAgencyClick = {}, onBack = {}

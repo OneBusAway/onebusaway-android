@@ -24,9 +24,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.io.ObaAnalytics
-import org.onebusaway.android.io.PlausibleAnalytics
-import org.onebusaway.android.io.elements.ObaRegion
+import org.onebusaway.android.analytics.ObaAnalytics
+import org.onebusaway.android.analytics.PlausibleAnalytics
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
@@ -78,11 +78,11 @@ class DefaultRegionsRepository @Inject constructor(
     private val locationRepository: LocationRepository,
 ) : RegionsRepository {
 
-    // Domain objects from the last successful load, so selectRegion(id) can resolve the ObaRegion
+    // Domain objects from the last successful load, so selectRegion(id) can resolve the Region
     // that RegionRepository.choose() needs. @Volatile: written on Dispatchers.IO in getRegions, read
     // in selectRegion from a separately-launched coroutine.
     @Volatile
-    private var regionsById: Map<Long, ObaRegion> = emptyMap()
+    private var regionsById: Map<Long, Region> = emptyMap()
 
     override suspend fun getRegions(refresh: Boolean): Result<List<RegionItem>> =
         withContext(Dispatchers.IO) {

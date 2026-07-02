@@ -22,7 +22,7 @@ import android.view.View;
 import androidx.fragment.app.Fragment;
 
 import org.onebusaway.android.directions.util.CustomAddress;
-import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.region.Region;
 import org.onebusaway.android.map.ProprietaryMapHelper;
 
 /**
@@ -37,7 +37,7 @@ public class GoogleProprietaryMapHelper implements ProprietaryMapHelper {
     }
 
     @Override
-    public View.OnClickListener createPlacesAutocompleteOnClick(int requestCode, Fragment fragment, ObaRegion region) {
+    public View.OnClickListener createPlacesAutocompleteOnClick(int requestCode, Fragment fragment, Region region) {
         return new ProprietaryMapHelpV2.StartPlacesAutocompleteOnClick(requestCode, fragment, region);
     }
 }

@@ -18,6 +18,7 @@ package org.onebusaway.android.map
 import android.location.Location
 import android.os.Bundle
 import androidx.lifecycle.SavedStateHandle
+import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.util.LocationUtils
@@ -201,4 +202,65 @@ fun regionRezoom(changed: Boolean, hasLocation: Boolean, cameraAtSeed: Boolean):
         return RegionRezoom.None
     }
     return if (hasLocation) RegionRezoom.FrameMyLocation else RegionRezoom.FrameRegion
+}
+
+/**
+ * The zoom/limit-exceeded half of the "is the last response still good for this viewport?" decision
+ * (the legacy `StopsResponse.fulfills`), split out from the Android [Location] center comparison so
+ * it can be unit-tested on the JVM. Assumes the caller already confirmed the centers match.
+ *
+ * @param hasResponse whether the last request produced a (non-null) response
+ * @param lastLimitExceeded the last response's `limitExceeded` flag
+ * @param lastZoom the zoom the last response was loaded at
+ * @param newZoom the zoom of the new viewport
+ * @return true if the last response still satisfies the new viewport (no reload needed)
+ */
+internal fun zoomFulfills(
+    hasResponse: Boolean,
+    lastLimitExceeded: Boolean,
+    lastZoom: Double,
+    newZoom: Double,
+): Boolean {
+    if (!hasResponse) {
+        return true
+    }
+    // Zooming in past a capped response, or zooming out, both need a fresh load.
+    if (newZoom > lastZoom && lastLimitExceeded) {
+        return false
+    }
+    if (newZoom < lastZoom) {
+        return false
+    }
+    return true
+}
+
+/**
+ * The whole-request replacement for the legacy `StopsResponse.fulfills`: is the new viewport [next]
+ * already satisfied by the last completed stop load, so no reload is needed? The reactive stop loader
+ * in [MapViewModel] uses this in place of the controller's `lastResponse?.fulfills(request)` check.
+ *
+ * [CameraSnapshot.center] is a value type, so the center comparison is honest value-equality (the
+ * legacy version compared the request center as an Android [Location] — reference equality — so a
+ * fresh instance almost never matched and the gate rarely short-circuited). The zoom/limit-exceeded
+ * half delegates to [zoomFulfills], unchanged.
+ *
+ * @param last the camera the last completed load was made at, or null if nothing has loaded yet
+ * @param lastHadResponse whether that load produced a non-null response (a null response — e.g. no
+ * API endpoint — fulfilled future same-center viewports, matching the legacy null-response no-op)
+ * @param lastLimitExceeded that response's `limitExceeded` flag
+ * @param next the new viewport
+ */
+internal fun stopRequestFulfilled(
+    last: CameraSnapshot?,
+    lastHadResponse: Boolean,
+    lastLimitExceeded: Boolean,
+    next: CameraSnapshot,
+): Boolean {
+    if (last == null) {
+        return false
+    }
+    if (last.center != next.center) {
+        return false
+    }
+    return zoomFulfills(lastHadResponse, lastLimitExceeded, last.zoom, next.zoom)
 }

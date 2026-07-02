@@ -22,7 +22,7 @@ import org.onebusaway.android.extrapolation.math.prob.FrozenDistribution
 import org.onebusaway.android.extrapolation.math.prob.GammaDistribution
 import org.onebusaway.android.extrapolation.math.prob.GammaMixtureDistribution
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
-import org.onebusaway.android.io.elements.speedAtDistance
+import org.onebusaway.android.models.ObaTripSchedule
 
 // H34 two-gamma mixture parameters, fitted on span-weighted King County Metro data (in mph).
 private const val START_B0 = 0.571381 // 1/mph
@@ -116,6 +116,26 @@ internal fun buildH34SpeedDistribution(schedSpeedMps: Double): ProbDistribution 
 
     val fast = GammaDistribution(alpha2, scale2)
     return FrozenDistribution(GammaMixtureDistribution(m, slow, fast))
+}
+
+/**
+ * The scheduled segment speed (m/s) at a given distance along the trip, or null if the schedule has
+ * too few stops or the distance is out of bounds. Only the gamma model conditions on schedule speed.
+ */
+private fun ObaTripSchedule.speedAtDistance(distanceAlongTrip: Double): Double? {
+    if (stopTimes.size < 2) return null
+
+    val segmentStart = try {
+        findSegmentStartIndex(distanceAlongTrip)
+    } catch (e: IndexOutOfBoundsException) {
+        return null
+    }
+
+    val distDelta =
+        stopTimes[segmentStart + 1].distanceAlongTrip - stopTimes[segmentStart].distanceAlongTrip
+    val timeDelta = stopTimes[segmentStart + 1].arrivalTime - stopTimes[segmentStart].departureTime
+
+    return if (distDelta > 0 && timeDelta > 0) distDelta / timeDelta else null
 }
 
 private fun sigmoid(x: Double): Double = 1.0 / (1.0 + exp(-x))

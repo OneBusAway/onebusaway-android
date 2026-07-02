@@ -21,8 +21,8 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.PlausibleAnalytics;
+import org.onebusaway.android.analytics.ObaAnalytics;
+import org.onebusaway.android.analytics.PlausibleAnalytics;
 import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher;

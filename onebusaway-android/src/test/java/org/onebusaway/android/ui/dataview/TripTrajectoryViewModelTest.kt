@@ -28,10 +28,9 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
+import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.extrapolation.data.TripState
-import org.onebusaway.android.io.request.ObaTripDetailsResponse
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.testing.testTripStatus
 import org.onebusaway.android.ui.nav.NavRoutes
@@ -50,13 +49,13 @@ class TripTrajectoryViewModelTest {
 
         override fun lookupTripState(tripId: String?): TripState? = state
 
-        override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<ObaTripDetailsResponse> =
+        override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> =
             flow {
                 detailsCollections++
                 awaitCancellation()
             }
 
-        override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<ObaTripsForRouteResponse> =
+        override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> =
             emptyFlow()
 
         override suspend fun ensureShape(tripId: String, shapeId: String): Polyline? = null
@@ -81,11 +80,11 @@ class TripTrajectoryViewModelTest {
 
         override fun lookupTripState(tripId: String?): TripState? = stored
 
-        override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<ObaTripDetailsResponse> =
+        override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> =
             // Records on collection; emits nothing — the ViewModel only collects for the side effect.
-            records.transform<TripState, ObaTripDetailsResponse> { stored = it }
+            records.transform<TripState, Unit> { stored = it }
 
-        override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<ObaTripsForRouteResponse> =
+        override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> =
             emptyFlow()
 
         override suspend fun ensureShape(tripId: String, shapeId: String): Polyline? = null

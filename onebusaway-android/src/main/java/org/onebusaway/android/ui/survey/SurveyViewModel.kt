@@ -15,13 +15,14 @@
  */
 package org.onebusaway.android.ui.survey
 
+import org.onebusaway.android.api.data.SurveyDataSource
+
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -30,16 +31,12 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import org.onebusaway.android.R
-import org.onebusaway.android.io.request.survey.ObaStudyRequest
-import org.onebusaway.android.io.request.survey.model.StudyResponse
-import org.onebusaway.android.io.request.survey.model.SubmitSurveyResponse
-import org.onebusaway.android.io.request.survey.submit.ObaSubmitSurveyRequest
-import org.onebusaway.android.io.request.survey.submit.SubmitSurveyRequestListener
+import org.onebusaway.android.models.Survey
+import org.onebusaway.android.models.SurveyQuestion
+import org.onebusaway.android.models.SurveySubmitResult
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.database.survey.SurveyDbHelper
@@ -49,7 +46,7 @@ import org.onebusaway.android.ui.survey.utils.SurveyUtils
 data class SurveySheetState(
     val title: String,
     val description: String,
-    val questions: List<StudyResponse.Surveys.Questions>,
+    val questions: List<SurveyQuestion>,
     val submitting: Boolean = false,
 )
 
@@ -60,8 +57,8 @@ data class SurveySheetState(
  * builder + validation can be reused.
  */
 data class SurveyUiState(
-    val survey: StudyResponse.Surveys? = null,
-    val heroQuestion: StudyResponse.Surveys.Questions? = null,
+    val survey: Survey? = null,
+    val heroQuestion: SurveyQuestion? = null,
     val heroMode: Int = SurveyUtils.DEFAULT_SURVEY,
     val sharedInfo: String? = null,
     val heroSubmitting: Boolean = false,
@@ -79,16 +76,16 @@ sealed interface SurveyEffect {
 
 /**
  * Drives the map survey: requesting the study, showing the hero question + remaining-questions sheet,
- * submitting answers, and persisting completion/skip/remind-later. Replaces the View-based
- * `SurveyManager` + `SurveyViewUtils` + `SurveyAdapter`; the network/JSON/DB/filtering logic is reused
- * from `ObaStudyRequest`/`ObaSubmitSurveyRequest`/`SurveyUtils`/`SurveyDbHelper`/`SurveyPreferences`.
- * Scoped to the map (the old `isVisibleOnStops = false` path).
+ * submitting answers, and persisting completion/skip/remind-later. The network/JSON/DB/filtering
+ * logic is reused from the io.client [SurveyDataSource] + `SurveyUtils`/`SurveyDbHelper`. Scoped to
+ * the map (the old `isVisibleOnStops = false` path).
  */
 @HiltViewModel
 class SurveyViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
     private val prefs: PreferencesRepository,
+    private val surveyRepo: SurveyDataSource,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SurveyUiState())
@@ -111,7 +108,7 @@ class SurveyViewModel @Inject constructor(
     private val _effects = MutableSharedFlow<SurveyEffect>(extraBufferCapacity = 1)
     val effects: SharedFlow<SurveyEffect> = _effects.asSharedFlow()
 
-    private var studyResponse: StudyResponse? = null
+    private var surveys: List<Survey>? = null
     private var surveyIndex: Int = -1
     private var updateSurveyPath: String? = null
     private var requested = false
@@ -129,26 +126,25 @@ class SurveyViewModel @Inject constructor(
         val studiesEnabled = prefs.getBoolean(R.string.preference_key_show_available_studies, true)
         if (!studiesEnabled || !SurveyUtils.shouldShowSurveyView(context, false)) return
         requested = true
+        val url = studyUrl() ?: return
         viewModelScope.launch {
-            val response = withContext(Dispatchers.IO) {
-                runCatching { ObaStudyRequest.newRequest(context).call() }.getOrNull()
-            }
+            val response = surveyRepo.studies(url, SurveyPreferences.getUserUUID(context)).getOrNull()
             if (response != null) onStudyResponse(response)
         }
     }
 
-    private fun onStudyResponse(response: StudyResponse) {
-        studyResponse = response
+    private fun onStudyResponse(response: List<Survey>) {
+        surveys = response
         surveyIndex = SurveyUtils.getCurrentSurveyIndex(response, context, false, null)
         if (surveyIndex == -1) return
-        val survey = response.surveys[surveyIndex]
+        val survey = response[surveyIndex]
         val questions = survey.questions
-        if (questions.isNullOrEmpty()) return
+        if (questions.isEmpty()) return
         val hero = questions[0]
         val mode = SurveyUtils.checkExternalSurvey(questions)
         val sharedFields = when (mode) {
-            SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION -> questions[0].content.embedded_data_fields
-            SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION -> questions[1].content.embedded_data_fields
+            SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION -> questions[0].content.embeddedDataFields
+            SurveyUtils.EXTERNAL_SURVEY_WITH_HERO_QUESTION -> questions[1].content.embeddedDataFields
             else -> null
         }
         _state.update {
@@ -200,7 +196,7 @@ class SurveyViewModel @Inject constructor(
                 dismissAll()
                 return@launch
             }
-            updateSurveyPath = response.surveyResponse?.id
+            updateSurveyPath = response.id
             _state.update {
                 it.copy(
                     sheet = SurveySheetState(
@@ -225,7 +221,7 @@ class SurveyViewModel @Inject constructor(
                 SurveyUtils.CHECK_BOX_QUESTION ->
                     q.multipleAnswer = _state.value.checkboxAnswers[id]?.toList()
                 SurveyUtils.TEXT_QUESTION, SurveyUtils.RADIO_BUTTON_QUESTION ->
-                    q.questionAnswer = _state.value.textRadioAnswers[id]
+                    q.answer = _state.value.textRadioAnswers[id]
             }
         }
         val body = SurveyUtils.getSurveyAnswersRequestBody(sheet.questions) ?: run {
@@ -267,7 +263,7 @@ class SurveyViewModel @Inject constructor(
 
     // --- helpers ---
 
-    private fun handleCompleted(survey: StudyResponse.Surveys) {
+    private fun handleCompleted(survey: Survey) {
         SurveyDbHelper.markSurveyAsCompletedOrSkipped(context, survey, SurveyDbHelper.SURVEY_COMPLETED)
         SurveyUtils.launchesUntilSurveyShown = Integer.MAX_VALUE
     }
@@ -278,8 +274,16 @@ class SurveyViewModel @Inject constructor(
 
     private fun openExternal(url: String, externalQuestionIndex: Int) {
         val survey = _state.value.survey ?: return
-        val embedded = survey.questions.getOrNull(externalQuestionIndex)?.content?.embedded_data_fields
+        val embedded = survey.questions.getOrNull(externalQuestionIndex)?.content?.embeddedDataFields
         _effects.tryEmit(SurveyEffect.OpenExternalSurvey(url, embedded))
+    }
+
+    /** Builds the study-list URL from the current region's sidecar host, or null if none is resolved. */
+    private fun studyUrl(): String? {
+        val region = regionRepository.region.value ?: return null
+        val base = region.sidecarBaseUrl ?: return null
+        return base + context.getString(R.string.studies_api_endpoint)
+            .replace("regionID", region.id.toString())
     }
 
     private fun submitUrl(hero: Boolean): String {
@@ -290,32 +294,19 @@ class SurveyViewModel @Inject constructor(
         return url
     }
 
-    private suspend fun submit(apiUrl: String, surveyId: Int, body: JSONArray): SubmitSurveyResponse? =
-        withContext(Dispatchers.IO) {
-            suspendCancellableCoroutine { cont ->
-                val request = ObaSubmitSurveyRequest.Builder(context, apiUrl)
-                    .setUserIdentifier(SurveyPreferences.getUserUUID(context))
-                    .setSurveyId(surveyId)
-                    .setStopIdentifier(null)
-                    .setStopLatitude(0.0)
-                    .setStopLongitude(0.0)
-                    .setResponses(body)
-                    .setListener(object : SubmitSurveyRequestListener {
-                        override fun onSubmitSurveyResponseReceived(response: SubmitSurveyResponse?) {
-                            if (cont.isActive) cont.resumeWith(Result.success(response))
-                        }
-
-                        override fun onSubmitSurveyFail() {
-                            if (cont.isActive) cont.resumeWith(Result.success(null))
-                        }
-                    })
-                    .build()
-                request.call()
-            }
-        }
+    private suspend fun submit(apiUrl: String, surveyId: Int, body: JSONArray): SurveySubmitResult? =
+        surveyRepo.submit(
+            url = apiUrl,
+            userIdentifier = SurveyPreferences.getUserUUID(context),
+            surveyId = surveyId,
+            stopIdentifier = null,
+            stopLatitude = 0.0,
+            stopLongitude = 0.0,
+            responses = body.toString(),
+        ).getOrNull()
 
     /** Builds the single-question JSON body for the hero question, or null if its answer is missing. */
-    private fun heroAnswerBody(hero: StudyResponse.Surveys.Questions): JSONArray? {
+    private fun heroAnswerBody(hero: SurveyQuestion): JSONArray? {
         val answer: String = when (hero.content.type) {
             SurveyUtils.CHECK_BOX_QUESTION -> {
                 val selected = _state.value.checkboxAnswers[hero.id].orEmpty().toList()
@@ -336,7 +327,7 @@ class SurveyViewModel @Inject constructor(
                 JSONObject().apply {
                     put("question_id", hero.id)
                     put("question_type", hero.content.type)
-                    put("question_label", hero.content.label_text)
+                    put("question_label", hero.content.labelText)
                     put("answer", answer)
                 }
             )

@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.region
 
-import org.onebusaway.android.io.elements.ObaRegion
+import org.onebusaway.android.region.Region
 
 /**
  * Outcome of a region-status refresh (the one-shot result of [RegionRepository.refresh]), as opposed
@@ -34,10 +34,10 @@ sealed interface RegionStatus {
     object Skipped : RegionStatus
 
     /** The build flavor hard-codes a region; it was set and auto-selection was disabled. */
-    data class Fixed(val region: ObaRegion) : RegionStatus
+    data class Fixed(val region: Region) : RegionStatus
 
     /** The current region was auto-selected or changed to [region]. */
-    data class Changed(val region: ObaRegion) : RegionStatus
+    data class Changed(val region: Region) : RegionStatus
 
     /** A region was already set and remains the best match (contents refreshed silently). */
     object Unchanged : RegionStatus
@@ -47,7 +47,7 @@ sealed interface RegionStatus {
      * (the usable regions, sorted by name). [resolveRegionStatus] returns this with an empty list as
      * a decision sentinel; [DefaultRegionRepository.refresh] attaches the real list.
      */
-    data class NeedsManualSelection(val regions: List<ObaRegion>) : RegionStatus
+    data class NeedsManualSelection(val regions: List<Region>) : RegionStatus
 
     /** Region info could not be loaded from any source (catastrophic failure). */
     object Failed : RegionStatus
@@ -71,12 +71,12 @@ internal fun shouldForceReload(
 
 /**
  * The pure region-selection branches from `ObaRegionsTask.onPostExecute` (regions compared by id,
- * matching `ObaRegionElement.equals`). [closest] is precomputed by the caller — it is null when
+ * matching `Region.equals`). [closest] is precomputed by the caller — it is null when
  * auto-selection is off or no usable region is within range.
  */
 internal fun resolveRegionStatus(
-    current: ObaRegion?,
-    closest: ObaRegion?,
+    current: Region?,
+    closest: Region?,
     autoSelect: Boolean
 ): RegionStatus {
     // The manual-selection cases carry an empty list here; the repository fills in the usable

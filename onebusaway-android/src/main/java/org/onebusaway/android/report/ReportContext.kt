@@ -15,15 +15,13 @@
  */
 package org.onebusaway.android.report
 
-import org.onebusaway.android.io.elements.ObaArrivalInfo
-
 /**
- * The trip context a "report a problem" launch carries, as plain scalars instead of the
- * [ObaArrivalInfo] domain object — every field the report submission actually reads (the Open311
- * service-report builder + the email/OBA-API problem report). Replacing the object lets the whole
- * report flow ride NavHost nav-args (process-death safe via the back-stack) rather than the host
- * activity intent. The nested vehicle/schedule status is flattened ([hasTripStatus] gates the
- * deviation + last-known-location fields, which are only read when a trip is predicted).
+ * The trip context a "report a problem" launch carries, as plain scalars — every field the report
+ * submission actually reads (the Open311 service-report builder + the email/OBA-API problem report).
+ * Plain scalars let the whole report flow ride NavHost nav-args (process-death safe via the
+ * back-stack) rather than the host activity intent. The nested vehicle/schedule status is flattened
+ * ([hasTripStatus] gates the deviation + last-known-location fields, only read when a trip is
+ * predicted). Built from the arrivals VM's `ArrivalInfo` via its `toTripReportContext()`.
  */
 data class TripReportContext(
     val tripId: String,
@@ -181,29 +179,4 @@ data class ReportContext(
             return encoded.substring(start, start + len).also { i = start + len }
         }
     }
-}
-
-/** Flattens the live [ObaArrivalInfo] (the arrivals VM / picker) into the scalar trip context. */
-fun ObaArrivalInfo.toTripReportContext(): TripReportContext {
-    val status = tripStatus
-    val location = status?.lastKnownLocation
-    return TripReportContext(
-        tripId = tripId,
-        routeId = routeId,
-        shortName = shortName,
-        routeLongName = routeLongName,
-        headsign = headsign,
-        vehicleId = vehicleId,
-        stopId = stopId,
-        serviceDate = serviceDate,
-        predicted = predicted,
-        predictedArrivalTime = predictedArrivalTime,
-        predictedDepartureTime = predictedDepartureTime,
-        scheduledArrivalTime = scheduledArrivalTime,
-        scheduledDepartureTime = scheduledDepartureTime,
-        hasTripStatus = status != null,
-        scheduleDeviation = status?.scheduleDeviation ?: 0L,
-        lastKnownLat = location?.latitude,
-        lastKnownLon = location?.longitude,
-    )
 }

@@ -20,8 +20,6 @@ import android.content.Context;
 import android.widget.Toast;
 
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.request.ObaResponse;
 import org.onebusaway.android.util.ObaRequestErrors;
 
 /**
@@ -29,20 +27,9 @@ import org.onebusaway.android.util.ObaRequestErrors;
  */
 public class MapUtils {
 
-    /**
-     * Shows error messages related to stops, routes, and vehicles on the map, based on the
-     * response from the server.
-     *
-     * @param response the response from the server, or null if the response object was null
-     */
-    public static void showMapError(ObaResponse response) {
+    /** Shows the map error toast for an OBA status [code] (used by the modernized io/client callers). */
+    public static void showMapError(int code) {
         Context context = Application.get().getApplicationContext();
-        int code;
-        if (response != null) {
-            code = response.getCode();
-        } else {
-            code = ObaApi.OBA_INTERNAL_ERROR;
-        }
         Toast.makeText(context,
                 ObaRequestErrors.getMapErrorString(context, code),
                 Toast.LENGTH_LONG).show();

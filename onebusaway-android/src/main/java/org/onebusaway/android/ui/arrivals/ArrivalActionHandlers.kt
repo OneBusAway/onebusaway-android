@@ -67,12 +67,12 @@ fun createArrivalActionHandler(
 
     override fun onShowVehiclesOnMap(arrival: ArrivalInfo) {
         DBUtil.addRouteToDB(activity, arrival)
-        onShowRouteOnMap(arrival.info.routeId)
+        onShowRouteOnMap(arrival.routeId)
     }
 
     override fun onShowTripStatus(arrival: ArrivalInfo) {
         DBUtil.addRouteToDB(activity, arrival)
-        onShowTrip(arrival.info.tripId, arrival.info.stopId)
+        onShowTrip(arrival.tripId, arrival.stopId)
     }
 
     override fun onSetReminder(arrival: ArrivalInfo) {
@@ -80,19 +80,18 @@ fun createArrivalActionHandler(
             Toast.makeText(activity, R.string.reminder_not_enabled, Toast.LENGTH_SHORT).show()
             return
         }
-        val info = arrival.info
         onEditReminder(
             ReminderEditorArgs(
-                tripId = info.tripId,
-                stopId = info.stopId,
-                routeId = info.routeId,
-                routeName = info.shortName,
+                tripId = arrival.tripId,
+                stopId = arrival.stopId,
+                routeId = arrival.routeId,
+                routeName = arrival.shortName,
                 stopName = currentContent()?.header?.name.orEmpty(),
-                headsign = info.headsign,
-                departTime = ReminderUtils.getReminderDepartureTime(info),
-                stopSequence = info.stopSequence,
-                serviceDate = info.serviceDate,
-                vehicleId = info.vehicleId,
+                headsign = arrival.headsign,
+                departTime = arrival.reminderDepartureTime,
+                stopSequence = arrival.stopSequence,
+                serviceDate = arrival.serviceDate,
+                vehicleId = arrival.vehicleId,
             )
         )
     }
@@ -103,7 +102,7 @@ fun createArrivalActionHandler(
 
     override fun onReportArrivalProblem(actions: ArrivalActions) {
         val content = currentContent() ?: return
-        val info = content.arrivals.firstOrNull { it.info.tripId == actions.tripId }?.info ?: return
+        val arrival = content.arrivals.firstOrNull { it.tripId == actions.tripId } ?: return
         InfrastructureIssueLauncher.startWithService(
             activity,
             activity.getString(R.string.ri_selected_service_trip),
@@ -112,17 +111,17 @@ fun createArrivalActionHandler(
             content.stopCode,
             content.stopLat,
             content.stopLon,
-            info,
+            arrival.toTripReportContext(),
             actions.agencyName,
             actions.blockId
         )
     }
 
     override fun onShowAlert(alertId: String) {
-        val situation = viewModel.situation(alertId) ?: return
+        val alert = viewModel.alertDetails(alertId) ?: return
         showSituationDialog(
             activity = activity,
-            situation = situation,
+            alert = alert,
             onDismiss = { isAlertHidden -> if (isAlertHidden) viewModel.manualRefresh() },
             onUndo = { viewModel.manualRefresh() },
             showUndoSnackbar = showUndoSnackbar

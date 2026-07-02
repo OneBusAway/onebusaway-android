@@ -40,13 +40,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
+import org.onebusaway.android.app.di.NetworkEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
-import org.onebusaway.android.io.ObaApi
-import org.onebusaway.android.io.request.ObaArrivalInfoRequest
 import org.onebusaway.android.provider.ObaContract
 import org.onebusaway.android.provider.contentChanges
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
-import org.onebusaway.android.util.ArrivalInfoUtils
+import org.onebusaway.android.ui.arrivals.convertArrivals
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.PreferenceUtils
@@ -383,18 +382,16 @@ private suspend fun fetchArrivals(
         .toMap()
 }
 
-/** One stop's badges (blocking — runs on IO). [convertObaArrivalInfo] already sorts by ETA. */
-private fun fetchStopBadges(context: Context, stopId: String, nowMs: Long): List<ArrivalBadge> =
+/** One stop's badges. [convertArrivals] already sorts by ETA; a non-OK code/error yields no badges. */
+private suspend fun fetchStopBadges(context: Context, stopId: String, nowMs: Long): List<ArrivalBadge> =
     runCatching {
-        val response = ObaArrivalInfoRequest.newRequest(context, stopId, ARRIVALS_MINUTES_AFTER).call()
-        val arrivals = response?.arrivalInfo
-        if (response?.code == ObaApi.OBA_OK && arrivals != null) {
-            ArrivalInfoUtils.convertObaArrivalInfo(context, arrivals, null, nowMs, false)
-                .take(MAX_ARRIVALS_PER_STOP)
-                .map { it.toBadge(context) }
-        } else {
-            emptyList()
-        }
+        val arrivals = NetworkEntryPoint.getStopArrivals(context)
+            .arrivals(stopId, ARRIVALS_MINUTES_AFTER)
+            .getOrThrow()
+            .arrivals
+        convertArrivals(context, arrivals, null, nowMs, false)
+            .take(MAX_ARRIVALS_PER_STOP)
+            .map { it.toBadge(context) }
     }.getOrDefault(emptyList())
 
 private fun ArrivalInfo.toBadge(context: Context): ArrivalBadge {
@@ -405,7 +402,7 @@ private fun ArrivalInfo.toBadge(context: Context): ArrivalBadge {
     }
     return ArrivalBadge(
         text = context.getString(
-            R.string.starred_stop_arrival_badge, getRouteDisplayName(info), etaText
+            R.string.starred_stop_arrival_badge, getRouteDisplayName(shortName, routeLongName), etaText
         ),
         colorRes = badgeColor(color)
     )

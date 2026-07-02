@@ -23,10 +23,10 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.PlausibleAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRegionElement;
+import org.onebusaway.android.analytics.ObaAnalytics;
+import org.onebusaway.android.analytics.PlausibleAnalytics;
+import org.onebusaway.android.region.Region;
+import org.onebusaway.android.region.RegionCursor;
 import org.onebusaway.android.nav.model.PathLink;
 
 import android.content.ContentResolver;
@@ -1401,11 +1401,11 @@ public final class ObaContract {
             return result;
         }
 
-        public static ObaRegion get(Context context, int id) {
+        public static Region get(Context context, int id) {
             return get(context.getContentResolver(), id);
         }
 
-        public static ObaRegion get(ContentResolver cr, int id) {
+        public static Region get(ContentResolver cr, int id) {
             final String[] PROJECTION = {
                     _ID,
                     NAME,
@@ -1441,40 +1441,10 @@ public final class ObaContract {
                         return null;
                     }
                     c.moveToFirst();
-                    String umamiUrl = c.getString(23);
-                    String umamiId = c.getString(24);
-                    ObaRegionElement.UmamiAnalyticsConfig umamiConfig =
-                            (umamiUrl != null || umamiId != null)
-                                    ? new ObaRegionElement.UmamiAnalyticsConfig(umamiUrl, umamiId)
-                                    : null;
-                    return new ObaRegionElement(id,   // id
-                            c.getString(1),             // Name
-                            true,                       // Active
-                            c.getString(2),             // OBA Base URL
-                            c.getString(3),             // SIRI Base URL
-                            RegionBounds.getRegion(cr, id), // Bounds
-                            RegionOpen311Servers.getOpen311Server(cr, id), // Open311 servers
-                            c.getString(4),             // Lang
-                            c.getString(5),             // Contact Email
-                            c.getInt(6) > 0,            // Supports Oba Discovery
-                            c.getInt(7) > 0,            // Supports Oba Realtime
-                            c.getInt(8) > 0,            // Supports Siri Realtime
-                            c.getString(9),              // Twitter URL
-                            c.getInt(10) > 0,               // Experimental
-                            c.getString(11),              // StopInfoUrl
-                            c.getString(12),              // OtpBaseUrl
-                            c.getString(13),               // OtpContactEmail
-                            c.getInt(14) > 0,           // Supports OTP Bikeshare
-                            c.getInt(15) > 0,            // Supports Embedded Social
-                            c.getString(16),               // Payment Android App ID
-                            c.getString(17),               // Payment Warning Title
-                            c.getString(18),               // Payment Warning Body
-                            c.getInt(19) > 0, // Travel behavior data collection
-                            c.getInt(20) > 0, // Enroll participants in travel behavior study
-                            c.getString(21), // Sidecar Base URL
-                            c.getString(22), // Plausible analytics server url
-                            umamiConfig      // Umami analytics config (null when unconfigured)
-                    );
+                    return RegionCursor.fromCursor(
+                            c,
+                            RegionBounds.getRegion(cr, id),
+                            RegionOpen311Servers.getOpen311Server(cr, id));
                 } finally {
                     c.close();
                 }
@@ -1509,7 +1479,7 @@ public final class ObaContract {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
-        public static ObaRegionElement.Bounds[] getRegion(ContentResolver cr, int regionId) {
+        public static Region.Bounds[] getRegion(ContentResolver cr, int regionId) {
             final String[] PROJECTION = {
                     LATITUDE,
                     LONGITUDE,
@@ -1521,7 +1491,7 @@ public final class ObaContract {
                     null, null);
             if (c != null) {
                 try {
-                    ObaRegionElement.Bounds[] results = new ObaRegionElement.Bounds[c.getCount()];
+                    Region.Bounds[] results = new Region.Bounds[c.getCount()];
                     if (c.getCount() == 0) {
                         return results;
                     }
@@ -1529,7 +1499,7 @@ public final class ObaContract {
                     int i = 0;
                     c.moveToFirst();
                     do {
-                        results[i] = new ObaRegionElement.Bounds(
+                        results[i] = new Region.Bounds(
                                 c.getDouble(0),
                                 c.getDouble(1),
                                 c.getDouble(2),
@@ -1572,7 +1542,7 @@ public final class ObaContract {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
-        public static ObaRegionElement.Open311Server[] getOpen311Server
+        public static Region.Open311Server[] getOpen311Server
                 (ContentResolver cr, int regionId) {
             final String[] PROJECTION = {
                     JURISDICTION,
@@ -1584,7 +1554,7 @@ public final class ObaContract {
                     null, null);
             if (c != null) {
                 try {
-                    ObaRegionElement.Open311Server[] results = new ObaRegionElement.Open311Server[c.getCount()];
+                    Region.Open311Server[] results = new Region.Open311Server[c.getCount()];
                     if (c.getCount() == 0) {
                         return results;
                     }
@@ -1592,7 +1562,7 @@ public final class ObaContract {
                     int i = 0;
                     c.moveToFirst();
                     do {
-                        results[i] = new ObaRegionElement.Open311Server(
+                        results[i] = new Region.Open311Server(
                                 c.getString(0),
                                 c.getString(1),
                                 c.getString(2));

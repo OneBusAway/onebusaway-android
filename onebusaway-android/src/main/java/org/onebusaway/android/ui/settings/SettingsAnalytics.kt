@@ -19,8 +19,8 @@ import android.content.Context
 import androidx.annotation.StringRes
 import com.google.firebase.analytics.FirebaseAnalytics
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.io.ObaAnalytics
-import org.onebusaway.android.io.PlausibleAnalytics
+import org.onebusaway.android.analytics.ObaAnalytics
+import org.onebusaway.android.analytics.PlausibleAnalytics
 
 /** Reports a settings UI event (label [labelRes]) to the preferences analytics page. */
 internal fun reportPreferencesEvent(context: Context, @StringRes labelRes: Int) {

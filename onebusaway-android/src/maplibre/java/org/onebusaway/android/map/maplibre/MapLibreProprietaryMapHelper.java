@@ -22,7 +22,7 @@ import android.view.View;
 import androidx.fragment.app.Fragment;
 
 import org.onebusaway.android.directions.util.CustomAddress;
-import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.region.Region;
 import org.onebusaway.android.map.ProprietaryMapHelper;
 
 /**
@@ -41,7 +41,7 @@ public class MapLibreProprietaryMapHelper implements ProprietaryMapHelper {
 
     @Override
     public View.OnClickListener createPlacesAutocompleteOnClick(int requestCode,
-            Fragment fragment, ObaRegion region) {
+            Fragment fragment, Region region) {
         // Return null — TripPlanFragment checks for null and falls back to Pelias autocomplete
         return null;
     }

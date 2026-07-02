@@ -17,7 +17,7 @@ package org.onebusaway.android.map.render
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.onebusaway.android.io.elements.ObaRoute
+import org.onebusaway.android.models.ObaRoute
 
 /** Pure-logic guards for [VehicleBitmaps]'s route-type normalization (the cablecar→tram promise). */
 class VehicleBitmapsTest {

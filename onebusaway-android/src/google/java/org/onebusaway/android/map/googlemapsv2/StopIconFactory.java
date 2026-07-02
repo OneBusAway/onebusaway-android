@@ -41,7 +41,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.models.ObaRoute;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -18,8 +18,8 @@ package org.onebusaway.android.mock;
 
 import android.location.Location;
 
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.models.ObaRoute;
+import org.onebusaway.android.models.ObaStop;
 import org.onebusaway.android.util.LocationUtils;
 
 import java.util.HashMap;

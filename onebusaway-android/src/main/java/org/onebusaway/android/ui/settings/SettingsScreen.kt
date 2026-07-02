@@ -49,7 +49,7 @@ import org.onebusaway.android.ui.settings.components.ClickPreferenceItem
 import org.onebusaway.android.ui.settings.components.ListPreferenceItem
 import org.onebusaway.android.ui.settings.components.PreferenceCategory
 import org.onebusaway.android.ui.settings.components.SwitchPreferenceItem
-import org.onebusaway.android.util.BackupUtils
+import org.onebusaway.android.backup.BackupUtils
 
 /**
  * The settings NavHost destination (former `SettingsActivity`) — now a pure-Compose

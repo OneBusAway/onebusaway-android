@@ -29,7 +29,7 @@ import com.google.firebase.storage.UploadTask;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.analytics.ObaAnalytics;
 
 import java.io.BufferedReader;
 import java.io.File;

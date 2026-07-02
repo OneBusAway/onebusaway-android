@@ -16,14 +16,14 @@
 package org.onebusaway.android.testing
 
 import android.location.Location
-import org.onebusaway.android.io.elements.ObaTripStatus
-import org.onebusaway.android.io.elements.Occupancy
-import org.onebusaway.android.io.elements.Status
+import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.models.Occupancy
+import org.onebusaway.android.models.Status
 
 /**
  * A minimal [ObaTripStatus] for JVM unit tests. Location-typed accessors return null by default, so
  * the android.location.Location stubs (which throw "Stub!") are never invoked — no Robolectric
- * needed. Pass [hasLocation] = true when a test needs `getLastKnownLocation()` to be non-null (e.g.
+ * needed. Pass [hasLocation] = true when a test needs `lastKnownLocation` to be non-null (e.g.
  * to exercise `isLocationRealtime`); the returned sentinel is only ever null-checked, never called.
  */
 fun testTripStatus(
@@ -45,37 +45,38 @@ fun testTripStatus(
 )
 
 private class TestTripStatus(
-    private val distanceAlongTrip: Double?,
-    private val totalDistanceAlongTrip: Double?,
-    private val lastUpdateTime: Long,
-    private val vehicleId: String?,
-    private val activeTripId: String?,
-    private val predicted: Boolean,
+    distanceAlongTrip: Double?,
+    totalDistanceAlongTrip: Double?,
+    lastUpdateTime: Long,
+    vehicleId: String?,
+    activeTripId: String?,
+    predicted: Boolean,
     private val hasLocation: Boolean,
 ) : ObaTripStatus {
-    override fun getServiceDate(): Long = 0L
-    override fun isPredicted(): Boolean = predicted
-    override fun getScheduleDeviation(): Long = 0L
-    override fun getVehicleId(): String? = vehicleId
-    override fun getClosestStop(): String? = null
-    override fun getClosestStopTimeOffset(): Long = 0L
-    override fun getPosition(): Location? = null
-    override fun getActiveTripId(): String? = activeTripId
-    override fun getDistanceAlongTrip(): Double? = distanceAlongTrip
-    override fun getScheduledDistanceAlongTrip(): Double? = null
-    override fun getTotalDistanceAlongTrip(): Double? = totalDistanceAlongTrip
-    override fun getOrientation(): Double? = null
-    override fun getNextStop(): String? = null
-    override fun getNextStopTimeOffset(): Long? = null
-    override fun getPhase(): String? = null
-    override fun getStatus(): Status? = null
-    override fun getLastUpdateTime(): Long = lastUpdateTime
-    override fun getLastKnownLocation(): Location? = if (hasLocation) FAKE_LOCATION else null
-    override fun getLastLocationUpdateTime(): Long = 0L
-    override fun getLastKnownDistanceAlongTrip(): Double? = null
-    override fun getLastKnownOrientation(): Double? = null
-    override fun getBlockTripSequence(): Int = 0
-    override fun getOccupancyStatus(): Occupancy? = null
+    override val serviceDate: Long = 0L
+    override val isPredicted: Boolean = predicted
+    override val scheduleDeviation: Long = 0L
+    override val vehicleId: String? = vehicleId
+    override val closestStop: String? = null
+    override val closestStopTimeOffset: Long = 0L
+    override val position: Location? = null
+    override val activeTripId: String? = activeTripId
+    override val distanceAlongTrip: Double? = distanceAlongTrip
+    override val scheduledDistanceAlongTrip: Double? = null
+    override val totalDistanceAlongTrip: Double? = totalDistanceAlongTrip
+    override val orientation: Double? = null
+    override val nextStop: String? = null
+    override val nextStopTimeOffset: Long? = null
+    override val phase: String? = null
+    override val status: Status? = null
+    override val lastUpdateTime: Long = lastUpdateTime
+    override val lastKnownLocation: Location?
+        get() = if (hasLocation) FAKE_LOCATION else null
+    override val lastLocationUpdateTime: Long = 0L
+    override val lastKnownDistanceAlongTrip: Double? = null
+    override val lastKnownOrientation: Double? = null
+    override val blockTripSequence: Int = 0
+    override val occupancyStatus: Occupancy? = null
 
     companion object {
         /**

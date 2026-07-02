@@ -21,9 +21,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import org.onebusaway.android.io.elements.ObaRegion
-import org.onebusaway.android.io.elements.ObaRoute
-import org.onebusaway.android.io.elements.ObaStop
+import org.onebusaway.android.region.Region
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionStatus
@@ -99,8 +99,8 @@ class HomeViewModel @Inject constructor(
 
     // The region whose fare-payment warning dialog is showing (PAY_FARE), or null when none — dialog UI
     // state the host's PaymentWarningDialog observes; set by [showPaymentWarning], cleared by [dismissPaymentWarning].
-    private val _paymentWarning = MutableStateFlow<ObaRegion?>(null)
-    val paymentWarning: StateFlow<ObaRegion?> = _paymentWarning.asStateFlow()
+    private val _paymentWarning = MutableStateFlow<Region?>(null)
+    val paymentWarning: StateFlow<Region?> = _paymentWarning.asStateFlow()
 
     // One-shot welcome-tutorial request (the TUTORIAL_WELCOME launch extra, the help "Show tutorials"
     // action, or the what's-new opt-out's "yes"); HomeScreen starts the Compose welcome + map-stop
@@ -152,7 +152,7 @@ class HomeViewModel @Inject constructor(
 
     /** PAY_FARE needs a fare-payment warning shown before launching: record the [region] the dialog
      *  should warn about (the host's PaymentWarningDialog observes [paymentWarning]). */
-    fun showPaymentWarning(region: ObaRegion) {
+    fun showPaymentWarning(region: Region) {
         _paymentWarning.value = region
     }
 

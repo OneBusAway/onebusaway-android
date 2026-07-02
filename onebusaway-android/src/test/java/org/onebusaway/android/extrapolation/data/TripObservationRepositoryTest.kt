@@ -23,9 +23,8 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
-import org.onebusaway.android.io.elements.ObaTripSchedule
-import org.onebusaway.android.io.request.ObaTripDetailsResponse
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse
+import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.util.Polyline
 import org.junit.Test
 
@@ -40,7 +39,7 @@ class TripObservationRepositoryTest {
 
     /** A fetcher whose trip-details call counts invocations and returns whatever [details] yields. */
     private class FakeFetcher(
-            private val details: () -> ObaTripDetailsResponse? = { null },
+            private val details: () -> TripDetails? = { null },
             /** Resolves a shapeId to its polyline; null (the default) means "no shape". */
             private val shapeFor: (String) -> Polyline? = { null }
     ) : TripObservationFetcher {
@@ -49,12 +48,12 @@ class TripObservationRepositoryTest {
         var shapeCalls = 0
             private set
 
-        override suspend fun tripDetails(tripId: String): ObaTripDetailsResponse? {
+        override suspend fun tripDetails(tripId: String): TripDetails? {
             tripDetailsCalls++
             return details()
         }
 
-        override suspend fun tripsForRoute(routeId: String): ObaTripsForRouteResponse? = null
+        override suspend fun tripsForRoute(routeId: String): RouteTrips? = null
 
         override suspend fun tripSchedule(tripId: String): ObaTripSchedule? = null
 
@@ -173,7 +172,7 @@ class TripObservationRepositoryTest {
         val fetcher = FakeFetcher() // null -> failure -> nothing to emit
         val repo = DefaultTripObservationRepository(fetcher)
 
-        val emissions = mutableListOf<ObaTripDetailsResponse>()
+        val emissions = mutableListOf<Unit>()
         repo.tripDetailsStream("trip1", intervalMs = 1_000L)
                 .onEach { emissions.add(it) }
                 .launchIn(backgroundScope)

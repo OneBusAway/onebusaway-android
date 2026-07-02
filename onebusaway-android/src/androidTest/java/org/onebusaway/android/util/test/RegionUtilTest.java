@@ -19,7 +19,7 @@ package org.onebusaway.android.util.test;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.region.Region;
 import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.RegionUtils;
@@ -45,9 +45,9 @@ public class RegionUtilTest {
     public static final float APPROXIMATE_DISTANCE_EQUALS_THRESHOLD = 2;  // meters
 
     // Mock regions to use in tests
-    ObaRegion mPsRegion;
+    Region mPsRegion;
 
-    ObaRegion mTampaRegion;
+    Region mTampaRegion;
 
     // Locations to use in tests
     Location mSeattleLoc;
@@ -83,7 +83,7 @@ public class RegionUtilTest {
 
     @Test
     public void testGetClosestRegion() {
-        ArrayList<ObaRegion> list = new ArrayList<>();
+        ArrayList<Region> list = new ArrayList<>();
         list.add(mPsRegion);
         list.add(mTampaRegion);
 
@@ -94,7 +94,7 @@ public class RegionUtilTest {
          * it is
          */
         // Close to region
-        ObaRegion closestRegion = RegionUtils.getClosestRegion(list, mSeattleLoc, useLimiter);
+        Region closestRegion = RegionUtils.getClosestRegion(list, mSeattleLoc, useLimiter);
         assertEquals(closestRegion.getId(), RegionUtils.PUGET_SOUND_REGION_ID);
 
         closestRegion = RegionUtils.getClosestRegion(list, mTampaLoc, useLimiter);

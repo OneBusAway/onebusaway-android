@@ -15,6 +15,10 @@
  */
 package org.onebusaway.android.ui.agencies
 
+import org.onebusaway.android.api.data.AgenciesDataSource
+
+import org.onebusaway.android.models.AgencyContact
+
 import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -25,11 +29,11 @@ import org.junit.Test
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.ui.compose.ListUiState
 
-private class FakeAgenciesRepository(
-    var result: Result<List<AgencyItem>>
-) : AgenciesRepository {
+private class FakeAgenciesDataSource(
+    var result: Result<List<AgencyContact>>
+) : AgenciesDataSource {
 
-    override suspend fun getAgencies(): Result<List<AgencyItem>> = result
+    override suspend fun getAgencies(): Result<List<AgencyContact>> = result
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -39,20 +43,20 @@ class AgenciesViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val agencies = listOf(
-        AgencyItem("1", "King County Metro", "https://kingcounty.gov/metro"),
-        AgencyItem("40", "Sound Transit", null)
+        AgencyContact("1", "King County Metro", null, "https://kingcounty.gov/metro", null),
+        AgencyContact("40", "Sound Transit", null, null, null)
     )
 
     @Test
     fun `initial state is Loading before the load completes`() = runTest {
-        val viewModel = AgenciesViewModel(FakeAgenciesRepository(Result.success(agencies)))
+        val viewModel = AgenciesViewModel(FakeAgenciesDataSource(Result.success(agencies)))
 
         assertEquals(ListUiState.Loading, viewModel.state.value)
     }
 
     @Test
     fun `load emits Success with the repository's agencies`() = runTest {
-        val viewModel = AgenciesViewModel(FakeAgenciesRepository(Result.success(agencies)))
+        val viewModel = AgenciesViewModel(FakeAgenciesDataSource(Result.success(agencies)))
 
         advanceUntilIdle()
 
@@ -61,7 +65,7 @@ class AgenciesViewModelTest {
 
     @Test
     fun `load emits Error when the repository fails`() = runTest {
-        val viewModel = AgenciesViewModel(FakeAgenciesRepository(Result.failure(IOException())))
+        val viewModel = AgenciesViewModel(FakeAgenciesDataSource(Result.failure(IOException())))
 
         advanceUntilIdle()
 
@@ -70,7 +74,7 @@ class AgenciesViewModelTest {
 
     @Test
     fun `retry after a failure goes through Loading and recovers`() = runTest {
-        val repository = FakeAgenciesRepository(Result.failure(IOException()))
+        val repository = FakeAgenciesDataSource(Result.failure(IOException()))
         val viewModel = AgenciesViewModel(repository)
         advanceUntilIdle()
         assertEquals(ListUiState.Error, viewModel.state.value)

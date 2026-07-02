@@ -117,7 +117,7 @@ class TripFocusController(
         repeat(MAX_SHAPE_POLL_ATTEMPTS) {
             val state = tripObservationRepository.lookupTripState(tripId)
             state?.polyline?.let { return it }
-            val shapeId = state?.tripDetailsResponse?.getTrip(tripId)?.shapeId?.takeIf { it.isNotEmpty() }
+            val shapeId = state?.shapeId?.takeIf { it.isNotEmpty() }
             if (shapeId != null) {
                 tripObservationRepository.ensureShape(tripId, shapeId)?.let { return it }
             }

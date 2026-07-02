@@ -18,8 +18,8 @@ package org.onebusaway.android.ui.arrivals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onebusaway.android.io.elements.ObaSituation
-import org.onebusaway.android.io.elements.contentKey
+import org.onebusaway.android.models.ObaSituation
+import org.onebusaway.android.models.contentKey
 
 /**
  * Unit tests for [planActiveAlerts], the pure fold that turns a stop's situations into active-alert
@@ -165,23 +165,21 @@ class ArrivalsAlertPlanTest {
     private fun contentIdFor(summary: String): String = situation("ignored", summary).contentKey
 
     /**
-     * Minimal [ObaSituation] whose [contentKey][org.onebusaway.android.io.elements.contentKey] is
+     * Minimal [ObaSituation] whose [contentKey][org.onebusaway.android.models.contentKey] is
      * driven only by [summary] — the one rider-visible field these tests vary to form content groups.
      */
     private class FakeSituation(
-        private val id: String,
-        private val summary: String?
+        override val id: String,
+        override val summary: String?
     ) : ObaSituation {
-        override fun getId() = id
-        override fun getSummary() = summary
-        override fun getDescription(): String? = null
-        override fun getAdvice(): String? = null
-        override fun getReason(): String? = null
-        override fun getUrl(): String? = null
-        override fun getSeverity(): String? = null
-        override fun getCreationTime() = 0L
-        override fun getAllAffects(): Array<ObaSituation.AllAffects> = emptyArray()
-        override fun getConsequences(): Array<ObaSituation.Consequence> = emptyArray()
-        override fun getActiveWindows(): Array<ObaSituation.ActiveWindow> = emptyArray()
+        override val description: String? = null
+        override val advice: String? = null
+        override val reason: String? = null
+        override val url: String? = null
+        override val severity: String? = null
+        override val creationTime: Long = 0L
+        override val allAffects: Array<ObaSituation.AllAffects> = emptyArray()
+        override val consequences: Array<ObaSituation.Consequence> = emptyArray()
+        override val activeWindows: Array<ObaSituation.ActiveWindow> = emptyArray()
     }
 }

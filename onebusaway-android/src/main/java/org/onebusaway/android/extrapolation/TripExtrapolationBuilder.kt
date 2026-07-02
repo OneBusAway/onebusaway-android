@@ -16,10 +16,10 @@
 package org.onebusaway.android.extrapolation
 
 import android.location.Location
+import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
-import org.onebusaway.android.io.elements.Status
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse
+import org.onebusaway.android.models.Status
 import org.onebusaway.android.map.render.DataAgeMarker
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.util.Polyline
@@ -79,7 +79,7 @@ private fun extrapolatedVehicleProjection(state: TripState, nowMs: Long): Vehicl
 }
 
 /**
- * Dead-reckoned [ExtrapolatedVehicle]s for every active, non-cancelled trip in [response] whose
+ * Dead-reckoned [ExtrapolatedVehicle]s for every active, non-cancelled trip in [routeTrips] whose
  * currently served route is in [routeIds], using [lookupState] to find each trip's [TripState]. The
  * per-vehicle counterpart of [extrapolationFromState] — the route map's live position producer, a
  * pure function the route controller's vehicle sampler calls each display frame (and that unit tests
@@ -91,14 +91,14 @@ private fun extrapolatedVehicleProjection(state: TripState, nowMs: Long): Vehicl
  * time, so the renderer animates the marker only across a fresh-AVL jump.
  */
 fun extrapolatedVehicles(
-    response: ObaTripsForRouteResponse,
+    routeTrips: RouteTrips,
     routeIds: Set<String>,
     nowMs: Long,
     lookupState: (String?) -> TripState?,
 ): List<ExtrapolatedVehicle> =
-    response.trips.mapNotNull { trip ->
+    routeTrips.trips.mapNotNull { trip ->
         val status = trip.status ?: return@mapNotNull null
-        val activeRoute = response.getTrip(status.activeTripId)?.routeId ?: return@mapNotNull null
+        val activeRoute = routeTrips.trip(status.activeTripId)?.routeId ?: return@mapNotNull null
         if (activeRoute !in routeIds || Status.CANCELED == status.status) return@mapNotNull null
         val state = lookupState(status.activeTripId)
         val projection = state?.let { extrapolatedVehicleProjection(it, nowMs) }

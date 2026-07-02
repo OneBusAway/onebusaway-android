@@ -16,8 +16,7 @@
 package org.onebusaway.android.extrapolation.data
 
 import androidx.annotation.VisibleForTesting
-import org.onebusaway.android.io.elements.ObaTripSchedule
-import org.onebusaway.android.io.request.ObaTripDetailsResponse
+import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.util.Polyline
 
 internal const val MAX_TRACKED_TRIPS = 100
@@ -83,17 +82,17 @@ internal class TripStateCache {
     }
 
     /**
-     * Caches a polled trip details response on [polledTripId], along with the trip the vehicle
-     * reported as active (which differs from [polledTripId] once the vehicle rolls onto its next
-     * run). [vehicleActiveTripId] is null when the response carried no vehicle status.
+     * Caches a polled trip details result on [polledTripId]: the polled trip's [shapeId] (for
+     * on-demand shape activation) and the trip the vehicle reported as active (which differs from
+     * [polledTripId] once the vehicle rolls onto its next run; null without a vehicle status).
      */
-    fun putTripDetailsResponse(
+    fun putTripDetails(
             polledTripId: String,
             vehicleActiveTripId: String?,
-            response: ObaTripDetailsResponse
+            shapeId: String?
     ) {
         update(polledTripId) {
-            it.copy(vehicleActiveTripId = vehicleActiveTripId, tripDetailsResponse = response)
+            it.copy(vehicleActiveTripId = vehicleActiveTripId, shapeId = shapeId)
         }
     }
 

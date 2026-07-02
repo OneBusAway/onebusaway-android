@@ -32,7 +32,6 @@ import org.onebusaway.android.region.Region;
 import org.onebusaway.android.api.test.ObaTestCase;
 import org.onebusaway.android.mock.ArrivalsFixtures;
 import org.onebusaway.android.mock.MockRegion;
-import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.arrivals.ArrivalInfo;
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsDialog;
 import org.onebusaway.android.util.ArrivalInfoUtils;
@@ -235,74 +234,16 @@ public class UIUtilTest extends ObaTestCase {
                 ArrivalsFixtures.load(getTargetContext(), "arrivals_and_departures_for_stop_hart_6497");
         String stopId = "Hillsborough Area Regional Transit_6497";
 
-        // First de-select any existing route favorites, to make sure the test returns correct results
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_2",
-                "UATC to Downtown via Nebraska Ave",
-                stopId,
-                false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_1",
-                "UATC to Downtown via Florida Ave",
-                stopId,
-                false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_18",
-                "North to UATC/Livingston",
-                stopId,
-                false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_5",
-                "South to Downtown/MTC",
-                stopId,
-                false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_2",
-                "UATC to Downtown via Nebraska Ave",
-                stopId,
-                false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_18",
-                "South to UATC/Downtown/MTC",
-                stopId,
-                false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_12",
-                "North to University Area TC",
-                stopId,
-                false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_9",
-                "UATC to Downtown via 15th St",
-                stopId,
-                false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_12",
-                "South to Downtown/MTC",
-                stopId,
-                false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_5",
-                "North to University Area TC",
-                stopId,
-                false);
+        // The two favorited route/headsign combos. Favorite state is supplied to convert() directly
+        // now (the favorites store is no longer a ContentProvider); the favorite precedence itself is
+        // unit-tested in RouteHeadsignFavoriteLogicTest.
+        java.util.Set<String> favorites = new java.util.HashSet<>(java.util.Arrays.asList(
+                "Hillsborough Area Regional Transit_6|North to University Area TC",
+                "Hillsborough Area Regional Transit_6|South to Downtown/MTC"));
 
-        // Now mark 2 favorites - first non-negative index for this route/headsign will be index 11
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_6",
-                "North to University Area TC",
-                stopId,
-                true);
-
-        // First non-negative index for this route/headsign will be index 13
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_6",
-                "South to Downtown/MTC",
-                stopId,
-                true);
-
-        // Project the fixture's arrivals via the production path.
-        ArrayList<ArrivalInfo> arrivalInfo = ArrivalsFixtures.convert(getTargetContext(), env, true);
+        // Project the fixture's arrivals via the production path, with those two marked favorite.
+        ArrayList<ArrivalInfo> arrivalInfo = ArrivalsFixtures.convert(getTargetContext(), env, true,
+                (routeId, headsign, sid) -> favorites.contains(routeId + "|" + headsign));
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
         validateUatcArrivalInfo(arrivalInfo);
@@ -318,23 +259,9 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(11, preferredArrivalIndexes.get(0).intValue());
         assertEquals(13, preferredArrivalIndexes.get(1).intValue());
 
-        // Now clear the favorites
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_6",
-                "North to University Area TC",
-                stopId,
-                false);
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(getTargetContext(),
-                "Hillsborough Area Regional Transit_6",
-                "South to Downtown/MTC",
-                stopId,
-                false);
-
-        // Process again (re-reading the now-cleared favorite info from the DB).
+        // With no favorites, the first two non-negative arrival times are returned - indexes 5 and 6.
         arrivalInfo = ArrivalsFixtures.convert(getTargetContext(), env, true);
         preferredArrivalIndexes = ArrivalInfoUtils.findPreferredArrivalIndexes(arrivalInfo);
-
-        // Now the first two non-negative arrival times should be returned - indexes 5 and 6
         assertEquals(5, preferredArrivalIndexes.get(0).intValue());
         assertEquals(6, preferredArrivalIndexes.get(1).intValue());
     }

@@ -17,7 +17,6 @@ package org.onebusaway.android.ui.nav
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.onebusaway.android.provider.ObaContract
 import org.onebusaway.android.ui.mylists.MyTabs
 import org.onebusaway.android.ui.nav.IntentRouteMapper.RouteDecision
 import org.onebusaway.android.ui.nav.IntentRouteMapper.RouteIntent
@@ -66,7 +65,7 @@ class IntentRouteMapperTest {
             RouteIntent(
                 isSearch = true,
                 searchQuery = "1st ave",
-                pathSegments = listOf(ObaContract.Stops.PATH, "1_75403"),
+                pathSegments = listOf(DeepLinkUris.STOPS_PATH, "1_75403"),
             )
         )
         assertEquals(RouteDecision.Search("1st ave"), decision)
@@ -149,7 +148,7 @@ class IntentRouteMapperTest {
             RouteDecision.Arrivals("1_75403", "Pike St & 3rd Ave"),
             decide(
                 RouteIntent(
-                    pathSegments = listOf(ObaContract.Stops.PATH, "1_75403"),
+                    pathSegments = listOf(DeepLinkUris.STOPS_PATH, "1_75403"),
                     arrivalsStopName = "Pike St & 3rd Ave",
                 )
             ),
@@ -160,7 +159,7 @@ class IntentRouteMapperTest {
     fun `a routes data-URI opens route info`() {
         assertEquals(
             RouteDecision.RouteInfo("1_100224"),
-            decide(RouteIntent(pathSegments = listOf(ObaContract.Routes.PATH, "1_100224"))),
+            decide(RouteIntent(pathSegments = listOf(DeepLinkUris.ROUTES_PATH, "1_100224"))),
         )
     }
 

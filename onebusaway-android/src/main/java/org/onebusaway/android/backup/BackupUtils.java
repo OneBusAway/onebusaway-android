@@ -108,11 +108,7 @@ public class BackupUtils {
                 PlausibleAnalytics.REPORT_BACKUP_EVENT_URL,
                 context.getString(R.string.analytics_label_button_press_save_preference),
                 null);
-        try {
-            Backup.backup(context,uri);
-        } catch (IOException e) {
-            Log.d(TAG, Objects.requireNonNull(e.getMessage()));
-        }
+        Backup.backup(context, uri);
     }
 
     /**

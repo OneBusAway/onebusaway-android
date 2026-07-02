@@ -2,6 +2,7 @@ package org.onebusaway.android.widealerts;
 
 import com.google.transit.realtime.GtfsRealtime;
 
+import org.onebusaway.android.app.di.DatabaseEntryPoint;
 import org.onebusaway.android.database.widealerts.AlertsRepository;
 import org.onebusaway.android.database.widealerts.entity.AlertEntity;
 
@@ -138,7 +139,7 @@ public class GtfsAlertsHelper {
      */
 
     public static boolean isAlertRead(Context context, GtfsRealtime.FeedEntity entity) {
-        return AlertsRepository.isAlertExists(context, entity.getId());
+        return alertsRepository(context).isAlertExists(entity.getId());
     }
 
     /**
@@ -148,7 +149,15 @@ public class GtfsAlertsHelper {
      * @param entity The `GtfsRealtime.FeedEntity` object representing the alert.
      */
     public static void markAlertAsRead(Context context, GtfsRealtime.FeedEntity entity) {
-        AlertsRepository.insertAlert(context, new AlertEntity(entity.getId()));
+        alertsRepository(context).insertAlert(new AlertEntity(entity.getId()));
+    }
+
+    /**
+     * Resolves the Hilt-provided {@link AlertsRepository} from a bare {@link Context} (this helper is a
+     * static, non-injectable Java utility). Callers here run on the GtfsAlerts background fetch thread.
+     */
+    private static AlertsRepository alertsRepository(Context context) {
+        return DatabaseEntryPoint.get(context).alertsRepository();
     }
 
     public static String getCurrentAppLanguageCode() {

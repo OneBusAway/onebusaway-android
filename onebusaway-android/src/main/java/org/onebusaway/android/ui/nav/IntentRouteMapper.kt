@@ -17,7 +17,6 @@ package org.onebusaway.android.ui.nav
 
 import android.app.SearchManager
 import android.content.Intent
-import org.onebusaway.android.provider.ObaContract
 import org.onebusaway.android.ui.arrivals.ArrivalsIntents
 import org.onebusaway.android.ui.mylists.MyTabs
 import org.onebusaway.android.util.ReminderUtils
@@ -118,10 +117,10 @@ object IntentRouteMapper {
         // path segment, since the authority is flavor-specific). MapParams.* focus / route-mode launches
         // have no data URI and resolve to None — they stay map behavior.
         return when (input.pathSegments.firstOrNull()) {
-            ObaContract.Stops.PATH ->
+            DeepLinkUris.STOPS_PATH ->
                 input.pathSegments.lastOrNull()
                     ?.let { RouteDecision.Arrivals(it, input.arrivalsStopName) } ?: RouteDecision.None
-            ObaContract.Routes.PATH ->
+            DeepLinkUris.ROUTES_PATH ->
                 input.pathSegments.lastOrNull()?.let { RouteDecision.RouteInfo(it) } ?: RouteDecision.None
             else -> RouteDecision.None
         }

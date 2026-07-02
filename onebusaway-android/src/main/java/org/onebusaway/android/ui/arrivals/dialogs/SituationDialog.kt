@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.arrivals.dialogs
 
-import android.content.ContentValues
 import android.content.Intent
 import android.net.Uri
 import android.text.Html
@@ -30,16 +29,20 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.AlertDetails
-import org.onebusaway.android.provider.ObaContract
-import org.onebusaway.android.util.PreferenceUtils
 
 /**
  * Shows a service alert (situation) in a dialog and marks it read. The buttons mirror the legacy
  * SituationDialogFragment: Hide flags this alert hidden (with an Undo snackbar), Hide All hides
  * every current alert and sets the hide-new-alerts preference, Close just dismisses.
  *
+ * The persistence of read/hidden state is delegated to the host via callbacks so this dialog stays
+ * pure UI (no ContentProvider/preference access) — the host wires them to the ViewModel/repository.
+ *
+ * @param onMarkRead persist that the alert was read (invoked when the dialog opens)
+ * @param onHide persist that this alert is hidden (the Hide button)
+ * @param onUnhide persist that this alert is no longer hidden, and refresh (the Undo action)
+ * @param onHideAll hide every current alert and suppress new ones (the Hide All button)
  * @param onDismiss called when the dialog closes; true when the alert was hidden by the user
- * @param onUndo called when the user taps the Undo snackbar after hiding the alert
  * @param showUndoSnackbar shows a snackbar (optionally with an undo action). The host supplies this so
  *   the dialog doesn't reach for a specific View — the standalone activity anchors it to its arrivals
  *   root, while the Compose hosts (home sheet, NavHost destination) drive a Compose `SnackbarHost`.
@@ -47,32 +50,29 @@ import org.onebusaway.android.util.PreferenceUtils
 fun showSituationDialog(
     activity: AppCompatActivity,
     alert: AlertDetails,
+    onMarkRead: () -> Unit,
+    onHide: () -> Unit,
+    onUnhide: () -> Unit,
+    onHideAll: () -> Unit,
     onDismiss: (isAlertHidden: Boolean) -> Unit,
-    onUndo: () -> Unit,
     showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit
 ) {
-    val situationId = alert.id
-
     val dialog = MaterialAlertDialogBuilder(activity)
         .setTitle(alert.summary)
         .setMessage(buildMessage(activity, alert))
         .setPositiveButton(R.string.hide) { d, _ ->
-            // Update the database to indicate that this alert has been hidden
-            ObaContract.ServiceAlerts.insertOrUpdate(situationId, ContentValues(), false, true)
+            onHide()
             showUndoSnackbar(
                 R.string.alert_hidden_snackbar_text,
                 R.string.alert_hidden_snackbar_action
             ) {
-                ObaContract.ServiceAlerts.insertOrUpdate(situationId, ContentValues(), false, false)
-                onUndo()
+                onUnhide()
             }
             d.dismiss()
             onDismiss(true)
         }
         .setNeutralButton(R.string.hide_all) { d, _ ->
-            // Hide existing alerts in the database, and the preference hides new ones
-            ObaContract.ServiceAlerts.hideAllAlerts()
-            PreferenceUtils.saveBoolean(activity.getString(R.string.preference_key_hide_alerts), true)
+            onHideAll()
             showUndoSnackbar(R.string.all_alert_hidden_snackbar_text, null, null)
             d.dismiss()
             onDismiss(true)
@@ -87,8 +87,7 @@ fun showSituationDialog(
     dialog.findViewById<TextView>(android.R.id.message)?.movementMethod =
         LinkMovementMethod.getInstance()
 
-    // Update the database to indicate that this alert has been read
-    ObaContract.ServiceAlerts.insertOrUpdate(situationId, ContentValues(), true, null)
+    onMarkRead()
 }
 
 /**

@@ -21,7 +21,6 @@ import org.onebusaway.android.R
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
-import org.onebusaway.android.provider.ObaContract
 import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.DisplayFormat
@@ -37,7 +36,8 @@ class ArrivalInfo(
     context: Context?,
     private val data: ArrivalData,
     now: Long,
-    includeArrivalDepartureInStatusLabel: Boolean
+    includeArrivalDepartureInStatusLabel: Boolean,
+    favorite: Boolean,
 ) {
 
     val eta: Long
@@ -164,9 +164,9 @@ class ArrivalInfo(
         )
         timeText = computeTimeLabel(context)
 
-        // Check if the user has marked this routeId/headsign/stopId as a favorite
-        isRouteAndHeadsignFavorite = ObaContract.RouteHeadsignFavorites
-            .isFavorite(data.routeId, data.headsign, data.stopId)
+        // Whether the user marked this routeId/headsign/stopId a favorite (precomputed by the caller
+        // from one favorites query, replacing the legacy per-row ContentProvider lookup).
+        isRouteAndHeadsignFavorite = favorite
 
         notifyText = computeNotifyText(context)
 

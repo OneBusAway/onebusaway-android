@@ -18,7 +18,6 @@ package org.onebusaway.android.ui.routeinfo
 import org.onebusaway.android.api.data.RouteDataSource
 import org.onebusaway.android.api.data.RouteStopsDataSource
 
-import android.content.ContentValues
 import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,7 +32,8 @@ import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.models.RouteDetails
 import org.onebusaway.android.models.RouteStopGroup
 import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.provider.ObaContract
+import org.onebusaway.android.database.oba.ImportGate
+import org.onebusaway.android.database.oba.RouteDao
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ObaRequestErrors
@@ -57,6 +57,8 @@ class DefaultRouteInfoRepository @Inject constructor(
     private val regionRepository: RegionRepository,
     private val routeRepository: RouteDataSource,
     private val routeStopsRepository: RouteStopsDataSource,
+    private val routeDao: RouteDao,
+    private val importGate: ImportGate,
 ) : RouteInfoRepository {
 
     override suspend fun loadRouteInfo(routeId: String): Result<RouteInfo> =
@@ -83,16 +85,13 @@ class DefaultRouteInfoRepository @Inject constructor(
                 }
         }
 
-    /** Records the route in the provider so it appears in recents and search (legacy parity). */
-    private fun registerRouteUsage(route: RouteDetails) {
-        val values = ContentValues()
-        values.put(ObaContract.Routes.SHORTNAME, route.shortName)
-        values.put(ObaContract.Routes.LONGNAME, route.longName)
-        values.put(ObaContract.Routes.URL, route.url)
-        regionRepository.region.value?.let {
-            values.put(ObaContract.Routes.REGION_ID, it.id)
-        }
-        ObaContract.Routes.insertOrUpdate(context, route.id, values, true)
+    /** Records the route in the recents/search table so it appears in recents and search (legacy parity). */
+    private suspend fun registerRouteUsage(route: RouteDetails) {
+        importGate.awaitReady()
+        routeDao.storeRouteDetails(
+            route.id, route.shortName, route.longName, route.url,
+            regionRepository.region.value?.id, System.currentTimeMillis()
+        )
     }
 
     private fun toRouteInfo(route: RouteDetails, directions: List<RouteDirection>): RouteInfo {

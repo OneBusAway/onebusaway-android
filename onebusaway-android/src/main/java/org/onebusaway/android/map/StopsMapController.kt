@@ -60,13 +60,16 @@ class StopsMapController(
     private val locationRepository: LocationRepository,
     private val scope: CoroutineScope,
     private val routeActive: () -> Boolean = { false },
+    // The LRU cache size, read on each load so a change in advanced settings applies on the next pan.
+    private val cacheSize: () -> Int = { DEFAULT_STOP_CACHE_SIZE },
 ) {
 
     private val renderState get() = host.renderState
 
-    // Stop accumulation across pans (capped, keeping the focused stop) + the routes cache used to
-    // resolve a stop's icon route type and to report a stop's routes to focus listeners.
-    private val stopAccum = LinkedHashMap<String, StopMarker>()
+    // Stop accumulation across pans, as an access-ordered LRU (a re-seen stop bumps to most-recently-
+    // used; once over the configured [cacheSize] the least-recently-seen non-focused stops evict) + the
+    // routes cache used to resolve a stop's icon route type and to report a stop's routes to listeners.
+    private val stopAccum = LinkedHashMap<String, StopMarker>(16, 0.75f, true)
 
     private val cachedRoutes = HashMap<String, ObaRoute>()
 
@@ -105,7 +108,7 @@ class StopsMapController(
                 flow {
                     host.setProgress(true)
                     val result = mapDataSource
-                        .nearbyStops(snapshot.center.latitude, snapshot.center.longitude, snapshot.latSpan, snapshot.lonSpan)
+                        .nearbyStops(snapshot.center.latitude, snapshot.center.longitude, snapshot.latSpan, snapshot.lonSpan, cacheSize())
                     // Only a usable load updates the fulfillment gate: a success — OK stops, or a null
                     // no-op (e.g. no stops endpoint, which intentionally fulfills future same-center
                     // viewports). A failure (error code / transport) showed no stops, so leave the gate
@@ -212,11 +215,18 @@ class StopsMapController(
 
     fun showStops(stops: List<ObaStop>, routes: List<ObaRoute>) {
         cacheRoutes(routes)
-        capStopAccumulation(stopAccum, renderState.snapshot.value.focusedStopId, FUZZY_MAX_STOP_COUNT)
         for (stop in stops) {
-            if (!stopAccum.containsKey(stop.id)) {
-                stopAccum[stop.id] = toStopMarker(stop)
-            }
+            // getOrPut's get() on a hit bumps the entry to most-recently-used (access order) while
+            // keeping the same StopMarker instance, so a stationary re-poll of the same set yields an
+            // equal list the StateFlow conflates and the renderer never runs (reordering only breaks
+            // that equality when the accumulation holds more than the fetch; either way the renderer's
+            // reconcileStopMarkers keeps unchanged stops from blinking). A miss inserts a fresh marker.
+            stopAccum.getOrPut(stop.id) { toStopMarker(stop) }
+        }
+        // Route mode feeds the whole route's stops in one batch, so don't evict them against each
+        // other; the viewport loader (the only capped accumulator) is stopped while a route shows.
+        if (!routeActive()) {
+            trimStopCache(stopAccum, renderState.snapshot.value.focusedStopId, cacheSize())
         }
         renderState.setStops(ArrayList(stopAccum.values))
     }
@@ -269,6 +279,7 @@ class StopsMapController(
     companion object {
         private const val TAG = "StopsMapController"
 
-        private const val FUZZY_MAX_STOP_COUNT = 200
+        /** Default map stop LRU cache size; overridable via the advanced settings cache-size option. */
+        const val DEFAULT_STOP_CACHE_SIZE = 200
     }
 }

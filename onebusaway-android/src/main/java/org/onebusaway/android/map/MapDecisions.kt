@@ -110,17 +110,21 @@ internal fun retainOnlyFocusedStop(accum: LinkedHashMap<String, StopMarker>, foc
 }
 
 /**
- * The stop-accumulation cap: once [accum] reaches [cap] stops, clear it (keeping only the focused
- * stop) so the next batch starts fresh — bounding the marker count as the user pans. No-op below the
- * cap. Pure, so the (easily-broken) keep-the-focused-stop-on-cap behavior is unit-testable.
+ * The stop-accumulation LRU trim: evicts least-recently-used stops until [accum] holds at most [cap],
+ * in place. [accum] is access-ordered, so its iterator walks eldest (least-recently-used) first; the
+ * entry for [focusedId] is always skipped so the focused stop is never evicted. No-op at/under the
+ * cap. Replaces the old clear-everything cap; pure, so the keep-the-focused-stop eviction is
+ * unit-testable.
  */
-internal fun capStopAccumulation(
+internal fun trimStopCache(
     accum: LinkedHashMap<String, StopMarker>,
     focusedId: String?,
     cap: Int,
 ) {
-    if (accum.size >= cap) {
-        retainOnlyFocusedStop(accum, focusedId)
+    if (accum.size <= cap) return
+    val it = accum.entries.iterator()
+    while (accum.size > cap && it.hasNext()) {
+        if (it.next().key != focusedId) it.remove()
     }
 }
 

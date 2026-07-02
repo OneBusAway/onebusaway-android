@@ -35,7 +35,14 @@ import org.onebusaway.android.util.PolylineDecoder
  */
 interface MapDataSource {
 
-    suspend fun nearbyStops(lat: Double, lon: Double, latSpan: Double, lonSpan: Double): Result<NearbyStops?>
+    /**
+     * [maxCount] caps how many stops the server returns (the map's LRU cache size): a dense viewport
+     * fills the cache in fewer pans. The server clamps this to its own hard limit and sets
+     * `limitExceeded` when more stops matched than were returned; null leaves the server default.
+     */
+    suspend fun nearbyStops(
+        lat: Double, lon: Double, latSpan: Double, lonSpan: Double, maxCount: Int? = null,
+    ): Result<NearbyStops?>
 
     suspend fun routeMap(routeId: String): Result<RouteMapData?>
 }
@@ -45,10 +52,11 @@ class DefaultMapDataSource @Inject constructor(
 ) : MapDataSource {
 
     override suspend fun nearbyStops(
-        lat: Double, lon: Double, latSpan: Double, lonSpan: Double,
+        lat: Double, lon: Double, latSpan: Double, lonSpan: Double, maxCount: Int?,
     ): Result<NearbyStops?> = api.callOrNull { service ->
-        val data = service.stopsForLocation(lat = lat, lon = lon, latSpan = latSpan, lonSpan = lonSpan)
-            .requireData()
+        val data = service.stopsForLocation(
+            lat = lat, lon = lon, latSpan = latSpan, lonSpan = lonSpan, maxCount = maxCount,
+        ).requireData()
         NearbyStops(
             stops = data.list.map(::DtoStop),
             routes = data.references.routes.map(::DtoRoute),

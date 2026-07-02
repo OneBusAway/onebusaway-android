@@ -126,6 +126,12 @@ class MapViewModel @Inject constructor(
         locationRepository = locationRepository,
         scope = viewModelScope,
         routeActive = { routeController.isActive },
+        cacheSize = {
+            prefsRepository.getInt(
+                R.string.preference_key_map_stop_cache_size,
+                StopsMapController.DEFAULT_STOP_CACHE_SIZE,
+            )
+        },
     )
 
     // ----- Map-host surface (delegated) -----

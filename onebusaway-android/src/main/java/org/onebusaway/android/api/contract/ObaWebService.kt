@@ -82,6 +82,10 @@ interface ObaWebService {
      * stops-for-location — stops near [lat]/[lon], optionally filtered by a code/name [query] and
      * bounded by [radius] (meters). Omitted (null) parameters are dropped from the request.
      * {http://developer.onebusaway.org/.../api/where/methods/stops-for-location.html}
+     *
+     * [maxCount] caps how many stops the server returns; it applies its own hard upper limit no matter
+     * how large this is set, and reports `limitExceeded` when more stops matched than were returned.
+     * When null the server's per-method default applies.
      */
     @GET("api/where/stops-for-location.json")
     suspend fun stopsForLocation(
@@ -92,6 +96,7 @@ interface ObaWebService {
         // The map fetches by bounding-box span instead of radius; both are optional and dropped when null.
         @Query("latSpan") latSpan: Double? = null,
         @Query("lonSpan") lonSpan: Double? = null,
+        @Query("maxCount") maxCount: Int? = null,
     ): ObaEnvelope<ListWithReferences<StopReference>>
 
     /**

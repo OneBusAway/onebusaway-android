@@ -23,6 +23,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
+import org.onebusaway.android.R
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.location.LocationRepository
@@ -71,6 +72,12 @@ class StopsMapViewModel @Inject constructor(
         regionRepo = regionRepo,
         locationRepository = locationRepository,
         scope = viewModelScope,
+        cacheSize = {
+            prefsRepository.getInt(
+                R.string.preference_key_map_stop_cache_size,
+                StopsMapController.DEFAULT_STOP_CACHE_SIZE,
+            )
+        },
     )
 
     init {

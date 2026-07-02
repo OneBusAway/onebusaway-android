@@ -29,6 +29,7 @@
     <string name="preference_key_last_region_update">preference_last_region_update</string>
     <string name="preference_key_auto_select_region">preference_auto_select_region</string>
     <string name="preference_key_experimental_regions">preference_experimental_regions</string>
+    <string name="preference_key_map_stop_cache_size">preferences_map_stop_cache_size</string>
     <string name="preferences_key_analytics">preference_google_analytics</string>
     <string name="preference_key_preferred_units">preference_preferred_units</string>
     <string name="preference_key_preferred_temperature_units">preference_preferred_temperature_units</string>

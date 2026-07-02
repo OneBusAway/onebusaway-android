@@ -34,7 +34,6 @@ import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
-import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
@@ -42,6 +41,7 @@ import org.onebusaway.android.models.contentKey
 import org.onebusaway.android.provider.ObaContract
 import org.onebusaway.android.provider.contentChanges
 import org.onebusaway.android.provider.loadStopUserInfo
+import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.DBUtil
@@ -217,7 +217,8 @@ class DefaultArrivalsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
     private val routeRepository: RouteDataSource,
-    private val stopArrivals: StopArrivalsDataSource
+    private val stopArrivals: StopArrivalsDataSource,
+    private val preferences: PreferencesRepository
 ) : ArrivalsRepository {
 
     private var lastGood: StopArrivals? = null
@@ -305,7 +306,7 @@ class DefaultArrivalsRepository @Inject constructor(
             actions = buildActions(snapshot, arrivals),
             activeAlerts = activeAlerts,
             hideAlertsByDefault =
-                PreferencesEntryPoint.get(context).getBoolean(R.string.preference_key_hide_alerts, false),
+                preferences.getBoolean(R.string.preference_key_hide_alerts, false),
             routeFilterOptions = routeOptions,
             filteredRouteCount = routeFilter.size,
             stopCode = stop?.stopCode,

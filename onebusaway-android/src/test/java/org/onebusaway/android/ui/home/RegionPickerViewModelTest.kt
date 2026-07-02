@@ -19,7 +19,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.region.FakeRegionRepository
@@ -29,8 +31,9 @@ import org.onebusaway.android.testing.MainDispatcherRule
 
 /**
  * Unit tests for [RegionPickerViewModel]: it exposes the repository's [RegionState.NeedsManualChoice] as the
- * [RegionPickerViewModel.picker] list and resolves it via [RegionPickerViewModel.choose] — the forced picker
- * is now driven entirely off the repository, not HomeViewModel/HomeUiState.
+ * [RegionPickerViewModel.picker] list (resolved via [RegionPickerViewModel.choose]) and [RegionState.Failed]
+ * as [RegionPickerViewModel.failed] (retried via [RegionPickerViewModel.retry]) — the forced picker and its
+ * failure sibling are now driven entirely off the repository, not HomeViewModel/HomeUiState.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class RegionPickerViewModelTest {
@@ -70,5 +73,53 @@ class RegionPickerViewModelTest {
         // choose() drives the repository to Active(chosen), so the picker reactively returns to null.
         assertEquals(listOf(chosen), repo.chosen)
         assertNull(vm.picker.value)
+    }
+
+    @Test
+    fun `a resolving transition clears a shown picker`() = runTest {
+        val repo = FakeRegionRepository().apply {
+            emitState(RegionState.NeedsManualChoice(listOf(region(1))))
+        }
+        val vm = RegionPickerViewModel(repo)
+        advanceUntilIdle()
+        assertEquals(listOf(region(1)), vm.picker.value)
+
+        // A subsequent refresh (e.g. the user retried) re-enters Resolving — the picker must clear.
+        repo.emitState(RegionState.Resolving)
+        advanceUntilIdle()
+        assertNull(vm.picker.value)
+        assertFalse(vm.failed.value)
+    }
+
+    @Test
+    fun `a failed load clears the picker and raises the failure flag`() = runTest {
+        val repo = FakeRegionRepository().apply {
+            emitState(RegionState.NeedsManualChoice(listOf(region(1))))
+        }
+        val vm = RegionPickerViewModel(repo)
+        advanceUntilIdle()
+
+        repo.emitState(RegionState.Failed)
+        advanceUntilIdle()
+
+        assertNull(vm.picker.value)
+        assertTrue(vm.failed.value)
+    }
+
+    @Test
+    fun `retry re-attempts resolution and a success clears the failure flag`() = runTest {
+        val repo = FakeRegionRepository().apply { emitState(RegionState.Failed) }
+        val vm = RegionPickerViewModel(repo)
+        advanceUntilIdle()
+        assertTrue(vm.failed.value)
+
+        // A successful retry drives the repository back to Active, so the failure flag reactively clears.
+        repo.refreshResult = org.onebusaway.android.region.RegionStatus.Changed(region(1))
+        vm.retry()
+        repo.emit(region(1))
+        advanceUntilIdle()
+
+        assertEquals(1, repo.refreshCount)
+        assertFalse(vm.failed.value)
     }
 }

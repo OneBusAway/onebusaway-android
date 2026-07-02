@@ -17,6 +17,7 @@
  */
 package org.onebusaway.android.ui
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -323,6 +324,20 @@ class HomeActivity : AppCompatActivity() {
         fun navIntent(context: Context, route: String): Intent =
             Intent(context, HomeActivity::class.java).putExtra(NavRoutes.EXTRA_NAV_ROUTE, route)
     }
+}
+
+/**
+ * Re-enters [HomeActivity] at [route] from a launcher facade (the standalone-host fallback the launcher
+ * objects use when the caller holds no NavController). Adds [Intent.FLAG_ACTIVITY_NEW_TASK] only when
+ * [this] is not an Activity — required to `startActivity` from a service/receiver context — so an Activity
+ * caller keeps the normal same-task behavior. Deliberately not folded into [HomeActivity.navIntent], which
+ * is a pure intent factory whose result is also wrapped in PendingIntents (e.g. the trip-feedback
+ * notification in NavigationService): a context-dependent flag side effect would be wrong there.
+ */
+fun Context.startHomeActivity(route: String) {
+    val intent = HomeActivity.navIntent(this, route)
+    if (this !is Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    startActivity(intent)
 }
 
 /**

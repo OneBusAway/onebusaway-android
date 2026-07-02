@@ -17,6 +17,8 @@ package org.onebusaway.android.region
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -125,6 +127,8 @@ sealed interface RegionState {
 /** Mirrors `HomeActivity`'s `checkRegionVer` preference key so the same slot is read/written. */
 private const val CHECK_REGION_VER = "checkRegionVer"
 
+private const val TAG = "RegionRepository"
+
 /**
  * Default implementation. The observable state lives in a [RegionStateHolder] (so its transitions stay
  * JVM-testable); resolution ([refresh]) is the `Context`-coupled IO ported from
@@ -204,6 +208,12 @@ class DefaultRegionRepository @Inject constructor(
 
         val results = RegionUtils.getRegions(context, force)
         if (results == null) {
+            // Catastrophic: no network, no cache, and the server was unreachable, so region info
+            // couldn't be loaded from any source. Log it and record a non-fatal so the failure rate
+            // is trackable; the Failed state drives a retryable affordance at the picker host.
+            Log.e(TAG, "Region load failed: no regions available from network or cache")
+            FirebaseCrashlytics.getInstance()
+                .recordException(IllegalStateException("Region load failed: no regions available"))
             holder.failed()
             return@withContext RegionStatus.Failed
         }

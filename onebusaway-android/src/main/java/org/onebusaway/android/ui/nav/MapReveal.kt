@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.nav
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
 
 /**
@@ -59,4 +60,27 @@ fun NavController.revealStopOnMap(stopId: String, lat: Double, lon: Double) {
         set(RESULT_MAP_STOP_LON, lon)
     }
     popBackStack(NavRoutes.HOME, false)
+}
+
+/** A complete stop reveal read back off the HOME [SavedStateHandle] — the typed counterpart of the
+ *  three [RESULT_MAP_STOP_ID]/[RESULT_MAP_STOP_LAT]/[RESULT_MAP_STOP_LON] keys [revealStopOnMap] writes. */
+data class StopReveal(val stopId: String, val lat: Double, val lon: Double)
+
+/**
+ * Reads and consumes a pending stop reveal from the HOME [SavedStateHandle] — the symmetric typed *read*
+ * for [revealStopOnMap], keeping the `RESULT_MAP_STOP_*` keys and their `Double` types in this one file
+ * rather than re-naming them in the consumer. All three keys are cleared together regardless of
+ * completeness (so a stale lat/lon pair can't linger past the reveal); returns null when no stop id is
+ * present, or — the corrupted/half-restored case the producer never writes — an id without both
+ * coordinates.
+ */
+fun SavedStateHandle.consumeStopReveal(): StopReveal? {
+    val stopId = get<String>(RESULT_MAP_STOP_ID)
+    val lat = get<Double>(RESULT_MAP_STOP_LAT)
+    val lon = get<Double>(RESULT_MAP_STOP_LON)
+    set(RESULT_MAP_STOP_ID, null)
+    set(RESULT_MAP_STOP_LAT, null)
+    set(RESULT_MAP_STOP_LON, null)
+    if (stopId == null || lat == null || lon == null) return null
+    return StopReveal(stopId, lat, lon)
 }

@@ -514,6 +514,8 @@
     <string name="region_selected_auto">selected automatically</string>
     <string name="region_selected_manually">selected manually</string>
     <string name="region_region_found">Found %1$s region</string>
+    <string name="region_load_failed_title">Couldn\'t load regions</string>
+    <string name="region_load_failed_message">Check your connection and try again.</string>
 
     <!--  Bug report -->
     <!-- Note: %1$s is replaced with app_name for white-label support -->

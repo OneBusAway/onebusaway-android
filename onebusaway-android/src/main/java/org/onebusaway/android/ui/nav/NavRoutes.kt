@@ -35,7 +35,15 @@ data class ReminderEditorArgs(
     val stopSequence: Int = 0,
     val serviceDate: Long = 0L,
     val vehicleId: String? = null,
-)
+) {
+    init {
+        // Fail fast at this construction site (the arrival "set reminder" path) rather than letting a
+        // blank id surface later as an unresolvable route/DB lookup in the editor. (The edit-existing path
+        // builds the route from raw string nav-args and doesn't go through this constructor.)
+        require(tripId.isNotBlank()) { "tripId must not be blank" }
+        require(stopId.isNotBlank()) { "stopId must not be blank" }
+    }
+}
 
 /**
  * Central registry of Navigation-Compose route ids and nav-arg keys. The single

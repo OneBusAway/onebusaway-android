@@ -23,8 +23,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -36,15 +40,42 @@ import org.onebusaway.android.region.Region
 
 /**
  * Renders the forced-choice region picker when [RegionPickerViewModel] reports the repository needs a manual
- * selection. Hosted at the activity's setContent root (a sibling of the NavHost) so the dialog — which is in
- * its own window — overlays whatever screen triggered the refresh (Home on cold launch, or the Advanced
- * settings screen when the experimental-regions toggle forces a re-resolve).
+ * selection, or a retryable "couldn't load regions" dialog when resolution failed catastrophically. Hosted
+ * at the activity's setContent root (a sibling of the NavHost) so the dialogs — each in their own window —
+ * overlay whatever screen triggered the refresh (Home on cold launch, or the Advanced settings screen when
+ * the experimental-regions toggle forces a re-resolve).
  */
 @Composable
 fun RegionPickerHost() {
     val viewModel: RegionPickerViewModel = hiltViewModel()
     val regions by viewModel.picker.collectAsStateWithLifecycle()
+    val failed by viewModel.failed.collectAsStateWithLifecycle()
+    // NeedsManualChoice and Failed are mutually exclusive repository states, so at most one shows.
     regions?.let { RegionChooserDialog(it, viewModel::choose) }
+    if (failed) RegionLoadFailedDialog(onRetry = viewModel::retry)
+}
+
+/**
+ * The catastrophic-failure affordance (no network, no cache, server unreachable): a dialog explaining the
+ * app couldn't load region info with a Retry that re-attempts resolution. Dismissible (back/scrim) unlike
+ * the forced picker — a cached region may still let the app function, so we don't hard-block the user.
+ */
+@Composable
+private fun RegionLoadFailedDialog(onRetry: () -> Unit) {
+    // Dismiss simply drops the dialog for this attempt; the state re-surfaces on the next failed refresh.
+    var dismissed by remember { mutableStateOf(false) }
+    if (dismissed) return
+    AlertDialog(
+        onDismissRequest = { dismissed = true },
+        title = { Text(stringResource(R.string.region_load_failed_title)) },
+        text = { Text(stringResource(R.string.region_load_failed_message)) },
+        confirmButton = {
+            TextButton(onClick = onRetry) { Text(stringResource(R.string.retry)) }
+        },
+        dismissButton = {
+            TextButton(onClick = { dismissed = true }) { Text(stringResource(R.string.dismiss)) }
+        },
+    )
 }
 
 /**

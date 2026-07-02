@@ -80,6 +80,12 @@ fun createArrivalActionHandler(
             Toast.makeText(activity, R.string.reminder_not_enabled, Toast.LENGTH_SHORT).show()
             return
         }
+        // A partial/omitted API response can leave tripId/stopId blank (they default to ""); the editor
+        // can't open without both, so bail with a toast rather than tripping ReminderEditorArgs' require().
+        if (arrival.tripId.isBlank() || arrival.stopId.isBlank()) {
+            Toast.makeText(activity, R.string.failed_to_set_reminder, Toast.LENGTH_SHORT).show()
+            return
+        }
         onEditReminder(
             ReminderEditorArgs(
                 tripId = arrival.tripId,

@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -212,8 +211,12 @@ internal suspend fun resetOtpVersionOnRegionChange(
     when (status) {
         is RegionStatus.Changed -> resetOtpVersion()
         is RegionStatus.NeedsManualSelection -> {
-            state.filterIsInstance<RegionState.Active>().first()
-            resetOtpVersion()
+            // Await a terminal resolution rather than only [RegionState.Active]: the forced picker is
+            // non-dismissible so the user's pick normally resolves it, but a retried refresh that fails
+            // transitions to [RegionState.Failed] instead — waiting for Active alone would suspend forever.
+            // Reset only when the region actually became active (a Failed resolution left it unchanged).
+            val resolved = state.first { it is RegionState.Active || it is RegionState.Failed }
+            if (resolved is RegionState.Active) resetOtpVersion()
         }
         RegionStatus.Unchanged, RegionStatus.Skipped, RegionStatus.Failed, is RegionStatus.Fixed -> Unit
     }

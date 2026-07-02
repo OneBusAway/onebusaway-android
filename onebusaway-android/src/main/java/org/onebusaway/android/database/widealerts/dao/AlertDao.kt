@@ -6,16 +6,18 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import org.onebusaway.android.database.widealerts.entity.AlertEntity
 
-/** Data Access Object (DAO) for the `AlertEntity` class. */
-
+/**
+ * DAO for the region wide-alert "already shown" markers (`alerts` table).
+ *
+ * These methods are intentionally blocking (not `suspend`): the only caller is the `GtfsAlerts` fetcher,
+ * which runs them on its own background fetch thread. They must never be invoked on the main thread.
+ */
 @Dao
 interface AlertDao {
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAlert(alert: AlertEntity)
+    fun insertAlert(alert: AlertEntity)
 
     @Query("SELECT * FROM alerts WHERE id = :alertId")
-    suspend fun getAlertById(alertId: String): AlertEntity?
-
-    @Query("SELECT * FROM alerts")
-    suspend fun getAllAlerts(): List<AlertEntity>
+    fun getAlertById(alertId: String): AlertEntity?
 }

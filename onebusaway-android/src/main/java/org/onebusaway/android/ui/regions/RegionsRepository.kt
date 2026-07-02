@@ -29,6 +29,7 @@ import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.region.RegionCache
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.RegionUtils
 
@@ -75,6 +76,7 @@ class DefaultRegionsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: PreferencesRepository,
     private val regionRepository: RegionRepository,
+    private val regionCache: RegionCache,
     private val locationRepository: LocationRepository,
 ) : RegionsRepository {
 
@@ -86,7 +88,7 @@ class DefaultRegionsRepository @Inject constructor(
 
     override suspend fun getRegions(refresh: Boolean): Result<List<RegionItem>> =
         withContext(Dispatchers.IO) {
-            val regions = RegionUtils.getRegions(context, refresh)
+            val regions = regionCache.loadRegions(refresh)
                 ?: return@withContext Result.failure(
                     IOException("Regions could not be loaded from any source")
                 )

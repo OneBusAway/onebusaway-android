@@ -259,11 +259,6 @@
         </activity-alias>
 
 
-        <!-- Provider is defined in build.gradle flavors -->
-        <provider
-            android:name="org.onebusaway.android.provider.ObaProvider"
-            android:authorities="${databaseAuthority}"/>
-
         <!-- Shares captured/picked report photos with the camera and Open311 endpoints -->
         <provider
             android:name="androidx.core.content.FileProvider"

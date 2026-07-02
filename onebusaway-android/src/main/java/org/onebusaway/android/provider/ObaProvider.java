@@ -302,9 +302,9 @@ public class ObaProvider extends ContentProvider {
 
             if (oldVersion == 29) {
                 db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
-                        " ADD COLUMN " + ObaContract.Regions.TRAVEL_BEHAVIOR_DATA_COLLECTION + " INTEGER");
+                        " ADD COLUMN travel_behavior_data_collection INTEGER");
                 db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
-                        " ADD COLUMN " + ObaContract.Regions.ENROLL_PARTICIPANTS_IN_STUDY + " INTEGER");
+                        " ADD COLUMN enroll_participants_in_study INTEGER");
                 ++oldVersion;
             }
 
@@ -610,11 +610,6 @@ public class ObaProvider extends ContentProvider {
                 .put(ObaContract.Regions.PAYMENT_WARNING_TITLE, ObaContract.Regions.PAYMENT_WARNING_TITLE);
         sRegionsProjectionMap
                 .put(ObaContract.Regions.PAYMENT_WARNING_BODY, ObaContract.Regions.PAYMENT_WARNING_BODY);
-        sRegionsProjectionMap
-                .put(ObaContract.Regions.TRAVEL_BEHAVIOR_DATA_COLLECTION, ObaContract.Regions.TRAVEL_BEHAVIOR_DATA_COLLECTION);
-        sRegionsProjectionMap
-                .put(ObaContract.Regions.ENROLL_PARTICIPANTS_IN_STUDY, ObaContract.Regions.ENROLL_PARTICIPANTS_IN_STUDY);
-
         sRegionBoundsProjectionMap = new HashMap<String, String>();
         sRegionBoundsProjectionMap.put(ObaContract.RegionBounds._ID, ObaContract.RegionBounds._ID);
         sRegionBoundsProjectionMap

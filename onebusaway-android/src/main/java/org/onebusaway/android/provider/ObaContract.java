@@ -530,9 +530,6 @@ public final class ObaContract {
          */
         public static final String PAYMENT_WARNING_BODY = "payment_warning_body";
 
-        public static final String TRAVEL_BEHAVIOR_DATA_COLLECTION = "travel_behavior_data_collection";
-
-        public static final String ENROLL_PARTICIPANTS_IN_STUDY = "enroll_participants_in_study";
     }
 
     protected interface RegionBoundsColumns {
@@ -1426,8 +1423,6 @@ public final class ObaContract {
                     PAYMENT_ANDROID_APP_ID,
                     PAYMENT_WARNING_TITLE,
                     PAYMENT_WARNING_BODY,
-                    TRAVEL_BEHAVIOR_DATA_COLLECTION,
-                    ENROLL_PARTICIPANTS_IN_STUDY,
                     SIDECAR_BASE_URL,
                     PLAUSIBLE_ANALYTICS_SERVER_URL,
                     UMAMI_ANALYTICS_URL,

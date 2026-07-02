@@ -48,8 +48,6 @@ data class Region(
     val paymentAndroidAppId: String? = null,
     val paymentWarningTitle: String? = null,
     val paymentWarningBody: String? = null,
-    val isTravelBehaviorDataCollectionEnabled: Boolean = false,
-    val isEnrollParticipantsInStudy: Boolean = false,
     val sidecarBaseUrl: String? = "",
     val plausibleAnalyticsServerUrl: String? = "",
     val umamiAnalytics: UmamiAnalyticsConfig? = null,

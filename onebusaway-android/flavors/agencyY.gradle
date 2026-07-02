@@ -45,8 +45,6 @@ android.productFlavors {
         buildConfigField "String", "FIXED_REGION_PAYMENT_ANDROID_APP_ID", "\"co.bytemark.hart\""
         buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_TITLE", "null"
         buildConfigField "String", "FIXED_REGION_PAYMENT_WARNING_BODY", "null"
-        buildConfigField "boolean", "FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION", "false"
-        buildConfigField "boolean", "FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY", "false"
         buildConfigField "String", "FIXED_REGION_SIDECAR_BASE_URL", "null"
         buildConfigField "String", "FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL", "null"
     }

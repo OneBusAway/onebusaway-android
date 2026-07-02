@@ -168,9 +168,6 @@
     <string name="analytics_label_download_app">download_app</string>
     <string name="analytics_label_open_app">open_app</string>
 
-    <!-- Analytics for travel behavior data collection -->
-
-
     <!-- General strings -->
     <string name="https_prefix">https://</string>
 

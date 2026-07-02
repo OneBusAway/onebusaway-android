@@ -81,8 +81,6 @@ internal fun region(
         null,          // paymentAndroidAppId
         null,          // paymentWarningTitle
         null,          // paymentWarningBody
-        false,         // travelBehaviorDataCollectionEnabled
-        false,         // enrollParticipantsInStudy
         null,          // sidecarBaseUrl
         null,          // plausibleAnalyticsServerUrl
         null           // umamiAnalytics (UmamiAnalyticsConfig)

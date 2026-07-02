@@ -32,8 +32,8 @@ object RegionCursor {
         bounds: Array<Region.Bounds>?,
         open311Servers: Array<Region.Open311Server>?,
     ): Region {
-        val umamiUrl = c.getString(23)
-        val umamiId = c.getString(24)
+        val umamiUrl = c.getString(21)
+        val umamiId = c.getString(22)
         val umami = if (umamiUrl != null || umamiId != null) {
             Region.UmamiAnalyticsConfig(umamiUrl, umamiId)
         } else {
@@ -62,10 +62,8 @@ object RegionCursor {
             paymentAndroidAppId = c.getString(16),
             paymentWarningTitle = c.getString(17),
             paymentWarningBody = c.getString(18),
-            isTravelBehaviorDataCollectionEnabled = c.getInt(19) > 0,
-            isEnrollParticipantsInStudy = c.getInt(20) > 0,
-            sidecarBaseUrl = c.getString(21),
-            plausibleAnalyticsServerUrl = c.getString(22),
+            sidecarBaseUrl = c.getString(19),
+            plausibleAnalyticsServerUrl = c.getString(20),
             umamiAnalytics = umami,
         )
     }

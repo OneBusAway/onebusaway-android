@@ -439,8 +439,6 @@ data class RegionDto(
     val paymentAndroidAppId: String? = null,
     val paymentWarningTitle: String? = null,
     val paymentWarningBody: String? = null,
-    val travelBehaviorDataCollectionEnabled: Boolean = false,
-    val enrollParticipantsInStudy: Boolean = false,
 )
 
 /** One bounding box of a region (center [lat]/[lon] and its [latSpan]/[lonSpan]). */

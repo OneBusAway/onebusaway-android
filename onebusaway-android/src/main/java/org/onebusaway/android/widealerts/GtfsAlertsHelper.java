@@ -86,10 +86,12 @@ public class GtfsAlertsHelper {
      * Checks if the entity is valid based on agency-wide, severity, and start date criteria.
      *
      * @param entity The GTFS entity.
+     * @param feedTimeMs The feed header's generation time (server clock, epoch millis), or 0 when the
+     *                   feed carried no timestamp — used as "now" for the start-date window (#1612).
      * @return True if the alert is valid, false otherwise.
      */
-    public static boolean isValidEntity(Context context, GtfsRealtime.FeedEntity entity) {
-        return isAgencyWideAlert(entity.getAlert()) && isHighSeverity(entity.getAlert()) && isStartDateWithin24Hours(entity.getAlert()) && !isAlertRead(context, entity);
+    public static boolean isValidEntity(Context context, GtfsRealtime.FeedEntity entity, long feedTimeMs) {
+        return isAgencyWideAlert(entity.getAlert()) && isHighSeverity(entity.getAlert()) && isStartDateWithin24Hours(entity.getAlert(), feedTimeMs) && !isAlertRead(context, entity);
     }
 
     /**
@@ -120,11 +122,17 @@ public class GtfsAlertsHelper {
     /**
      * Checks if the alert start date is within the last 24 hours.
      *
+     * <p>Uses the feed's server-clock generation time as "now" so the window cancels device clock
+     * skew — the alert's server {@code start} and the "now" it's measured against share one clock
+     * (#1612). Falls back to the device clock only when the feed carried no header timestamp.
+     *
      * @param alert The GTFS alert.
+     * @param feedTimeMs The feed header's generation time (server clock, epoch millis), or 0 to fall
+     *                   back to the device clock.
      * @return True if the start date is within the last 24 hours, false otherwise.
      */
-    public static boolean isStartDateWithin24Hours(GtfsRealtime.Alert alert) {
-        long currentTime = System.currentTimeMillis();
+    public static boolean isStartDateWithin24Hours(GtfsRealtime.Alert alert, long feedTimeMs) {
+        long currentTime = feedTimeMs > 0 ? feedTimeMs : System.currentTimeMillis();
         long startTime = alert.getActivePeriod(0).getStart() * 1000L;
         return (currentTime - startTime) <= 24 * 60 * 60 * 1000L;
     }

@@ -30,8 +30,15 @@ import org.onebusaway.android.R
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 
-/** The weather chip's state: the forecast (null until fetched) + the hide-weather preference. */
-data class WeatherUiState(val data: WeatherData? = null, val hidden: Boolean = false)
+/**
+ * The weather chip's state: the forecast (null until fetched), the hide-weather preference, and the
+ * preferred temperature-units preference (null = never set → the formatter uses the locale default).
+ */
+data class WeatherUiState(
+    val data: WeatherData? = null,
+    val hidden: Boolean = false,
+    val preferredTempUnits: String? = null,
+)
 
 /**
  * Owns the weather chip as a self-contained feature module (mirrors [org.onebusaway.android.ui.home.donation.DonationViewModel]/SurveyViewModel):
@@ -66,6 +73,14 @@ class WeatherViewModel @Inject constructor(
             preferencesRepository
                 .observeBoolean(R.string.preference_key_display_weather_view, true)
                 .collect { enabled -> _state.update { it.copy(hidden = !enabled) } }
+        }
+        // Observe the preferred temperature-units preference reactively so the chip re-renders when the
+        // user changes units, and the DI lookup stays out of the composable body (was read ad hoc via
+        // PreferencesEntryPoint in formatTemperature on each recomposition).
+        viewModelScope.launch {
+            preferencesRepository
+                .observeString(R.string.preference_key_preferred_temperature_units, null)
+                .collect { units -> _state.update { it.copy(preferredTempUnits = units) } }
         }
     }
 

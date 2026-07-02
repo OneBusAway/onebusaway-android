@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.util.Locale
 import org.onebusaway.android.R
-import org.onebusaway.android.app.di.PreferencesEntryPoint
 
 /**
  * Self-wiring weather feature module: collects [WeatherViewModel] state, re-reads the hide-weather
@@ -60,7 +59,7 @@ fun WeatherFeature(viewModel: WeatherViewModel, onNearby: Boolean, modifier: Mod
     if (onNearby && !state.hidden && data != null) {
         WeatherCard(
             iconRes = weatherIconRes(data.icon),
-            tempText = formatTemperature(context, data.temperatureF),
+            tempText = formatTemperature(context, data.temperatureF, state.preferredTempUnits),
             // Fog/wind icons are shown unscaled rather than center-cropped.
             fitIcon = data.icon == "fog" || data.icon == "wind",
             onClick = {
@@ -119,11 +118,14 @@ private fun weatherIconRes(condition: String): Int = when (condition.replace("-"
     else -> R.drawable.clear_day
 }
 
-/** Formats a Fahrenheit forecast temperature into the user's preferred unit, localized, e.g. "29°C". */
-private fun formatTemperature(context: Context, tempF: Double): String {
+/**
+ * Formats a Fahrenheit forecast temperature into the user's preferred unit, localized, e.g. "29°C".
+ * [preferredUnits] is the reactively-observed units preference from [WeatherViewModel]; null (never
+ * set) is treated as the locale-driven automatic default.
+ */
+private fun formatTemperature(context: Context, tempF: Double, preferredUnits: String?): String {
     val automatic = context.getString(R.string.preferences_preferred_units_option_automatic)
-    val preferred = PreferencesEntryPoint.get(context)
-        .getString(R.string.preference_key_preferred_temperature_units, automatic)
+    val preferred = preferredUnits ?: automatic
 
     // "Automatic" follows the locale default (Fahrenheit only in the US and a few others);
     // otherwise honor the explicit Celsius/Fahrenheit choice.

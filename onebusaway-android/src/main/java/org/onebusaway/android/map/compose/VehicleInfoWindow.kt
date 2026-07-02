@@ -68,8 +68,9 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun VehicleInfoWindow(status: ObaTripStatus, response: RouteTrips) {
     val res = LocalContext.current.resources
-    // "Now" in the server clock domain: the age is measured against status.lastUpdateTime (a server
-    // AVL timestamp), so a skewed device clock must not leak into it (#1612).
+    // "Now" in the server clock domain: the age is measured against the vehicle's last real-time fix
+    // (status.lastLocationUpdateTime, falling back to lastUpdateTime) — both server AVL timestamps —
+    // so a skewed device clock must not leak into it (#1612).
     val nowMs = rememberServerNowMs(response.currentTimeMs)
     // The window only opens for an already-rendered vehicle, so its trip/route are in the refs;
     // guard the unreachable null instead of dereferencing (the legacy getTrip/getRoute would NPE).
@@ -295,12 +296,8 @@ internal fun rememberServerNowMs(serverTimeMs: Long): Long {
     return serverNowMs(serverTimeMs, deviceStartMs, deviceNowMs)
 }
 
-/**
- * Projects the server clock forward from [serverTimeMs] (the anchor observed at device time
- * [deviceStartMs]) by the elapsed device time up to [deviceNowMs]. Both device operands share the
- * device clock, so their delta is skew-free; the result is a server-domain "now" (#1612). Pure so
- * it's JVM-unit-testable.
- */
+/** [serverTimeMs] advanced by elapsed device time (`deviceNowMs - deviceStartMs`). Extracted from
+ *  [rememberServerNowMs] as a pure function so it's JVM-unit-testable. */
 internal fun serverNowMs(serverTimeMs: Long, deviceStartMs: Long, deviceNowMs: Long): Long =
     serverTimeMs + (deviceNowMs - deviceStartMs)
 

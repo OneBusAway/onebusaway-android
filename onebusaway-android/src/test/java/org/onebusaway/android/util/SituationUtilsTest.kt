@@ -68,18 +68,9 @@ class SituationUtilsTest {
         assertTrue(SituationUtils.isActiveWindowForSituation(s, afterMs))
     }
 
-    /**
-     * The #1612 property: the answer depends only on the passed (server) time. Two callers with wildly
-     * different device clocks that both pass the same server `currentTime` get the same verdict — so
-     * device clock skew cannot flip an alert active/inactive.
-     */
-    @Test
-    fun `result depends only on the passed time, not any ambient clock`() {
-        val s = situation(windows = arrayOf(window(fromSec, toSec)))
-        assertTrue(SituationUtils.isActiveWindowForSituation(s, insideMs))
-        assertTrue(SituationUtils.isActiveWindowForSituation(s, insideMs))
-        assertFalse(SituationUtils.isActiveWindowForSituation(s, afterMs))
-    }
+    // The #1612 property — the verdict is a function of the passed (server) time alone, so device
+    // clock skew can't flip an alert — is what the boundary tests above already demonstrate: each
+    // passes a caller-supplied time and gets a deterministic answer.
 
     // --- fixtures ---
 

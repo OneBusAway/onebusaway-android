@@ -47,12 +47,14 @@ public class GtfsAlerts {
             try {
                 URL url = new URL(pathUrl);
                 GtfsRealtime.FeedMessage feed = GtfsRealtime.FeedMessage.parseFrom(url.openStream());
-                // The feed header timestamp is the server clock for this feed (seconds since epoch),
-                // used as "now" for the alert start-date window so it cancels device clock skew (#1612).
-                long feedTimeMs = feed.hasHeader() && feed.getHeader().hasTimestamp()
+                // "Now" for the alert start-date window: the feed header timestamp is this feed's
+                // server clock (seconds since epoch), so using it cancels device clock skew (#1612).
+                // Resolve the device-clock fallback here at the boundary so the downstream check stays
+                // a pure function of its inputs.
+                long nowMs = feed.hasHeader() && feed.getHeader().hasTimestamp()
                         ? feed.getHeader().getTimestamp() * 1000L
-                        : 0L;
-                processAlerts(feed.getEntityList(), feedTimeMs, callback);
+                        : System.currentTimeMillis();
+                processAlerts(feed.getEntityList(), nowMs, callback);
                 fetchedRegions.add(regionId);
             } catch (Exception e) {
                 Log.e(TAG, "Error fetching GTFS alert data for region: " + regionId, e);
@@ -64,13 +66,14 @@ public class GtfsAlerts {
     /**
      * Processes the list of GTFS alerts and triggers the callback for one valid alert.
      *
-     * @param alerts     The list of GTFS alert entities.
-     * @param feedTimeMs The feed header's server-clock generation time (epoch millis), or 0 when absent.
-     * @param callback   The callback to handle each alert.
+     * @param alerts   The list of GTFS alert entities.
+     * @param nowMs    "Now" in epoch millis for the start-date window — the feed's server clock, or
+     *                 the device clock when the feed carried no header timestamp (resolved by the caller).
+     * @param callback The callback to handle each alert.
      */
-    public void processAlerts(List<GtfsRealtime.FeedEntity> alerts, long feedTimeMs, GtfsAlertCallBack callback) {
+    public void processAlerts(List<GtfsRealtime.FeedEntity> alerts, long nowMs, GtfsAlertCallBack callback) {
         for (GtfsRealtime.FeedEntity entity : alerts) {
-            if (!GtfsAlertsHelper.isValidEntity(mContext, entity, feedTimeMs)) {
+            if (!GtfsAlertsHelper.isValidEntity(mContext, entity, nowMs)) {
                 continue;
             }
             GtfsRealtime.Alert alert = entity.getAlert();

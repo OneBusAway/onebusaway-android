@@ -17,9 +17,7 @@ package org.onebusaway.android.map.googlemapsv2.compose
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.Configuration
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -65,6 +63,7 @@ import org.onebusaway.android.map.render.MapProjector
 import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.util.PermissionUtils
+import org.onebusaway.android.util.ThemeUtils
 
 /**
  * The dynamic-layer redraw interval: ~20Hz, the proven upstream cadence. Downsampling from the display
@@ -376,7 +375,7 @@ private fun applyMyLocation(map: GoogleMap, context: Context, enabled: Boolean) 
 
 /** The map style for the current night-mode state: the dark theme, or POI removal in light mode. */
 private fun resolveMapStyle(context: Context): MapStyleOptions =
-    if (isInDarkMode(context)) {
+    if (ThemeUtils.isInDarkMode(context)) {
         MapStyleOptions.loadRawResourceStyle(context, R.raw.dark_map)
     } else {
         // Light mode: just hide POIs (ported from GoogleMapHost.onMapReady).
@@ -384,16 +383,3 @@ private fun resolveMapStyle(context: Context): MapStyleOptions =
             "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]"
         )
     }
-
-/** Mirrors the former GoogleMapHost.inDarkMode: app night-mode override, else the system config. */
-private fun isInDarkMode(context: Context): Boolean {
-    val mode = AppCompatDelegate.getDefaultNightMode()
-    if (mode == AppCompatDelegate.MODE_NIGHT_YES) {
-        return true
-    }
-    if (mode == AppCompatDelegate.MODE_NIGHT_NO) {
-        return false
-    }
-    return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-        Configuration.UI_MODE_NIGHT_YES
-}

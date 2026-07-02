@@ -19,9 +19,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.res.Configuration
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -59,6 +57,7 @@ import org.onebusaway.android.map.maplibre.MapLibreRenderer
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
+import org.onebusaway.android.util.ThemeUtils
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -139,7 +138,7 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                         .build()
                 }
                 map.uiSettings.isCompassEnabled = false
-                val styleUrl = if (isInDarkMode(context)) STYLE_URL_DARK else STYLE_URL_LIGHT
+                val styleUrl = if (ThemeUtils.isInDarkMode(context)) STYLE_URL_DARK else STYLE_URL_LIGHT
                 map.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
                     loadedStyle = style
                     val r = MapLibreRenderer(map, context, renderState)
@@ -315,19 +314,6 @@ private fun enableLocationComponent(map: MapLibreMap, style: Style, context: Con
         component.renderMode = RenderMode.COMPASS
     }
     component.isLocationComponentEnabled = true
-}
-
-/** Mirrors the former MapLibreMapHost.inDarkMode: app night-mode override, else the system config. */
-private fun isInDarkMode(context: Context): Boolean {
-    val mode = AppCompatDelegate.getDefaultNightMode()
-    if (mode == AppCompatDelegate.MODE_NIGHT_YES) {
-        return true
-    }
-    if (mode == AppCompatDelegate.MODE_NIGHT_NO) {
-        return false
-    }
-    return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-        Configuration.UI_MODE_NIGHT_YES
 }
 
 private fun Context.findActivity(): Activity {

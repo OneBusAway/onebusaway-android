@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.home.arrivals
 
-import android.content.Context
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -35,6 +34,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.first
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
+import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
@@ -86,6 +86,9 @@ internal fun ArrivalsSheetHost(
             LocalViewModelStoreOwner provides rememberClearedViewModelStoreOwner(stop.id)
         ) {
             val context = LocalContext.current
+            // Resolve the Hilt entry point once per stop rather than on each recomposition / each
+            // arrivals load (matches the remember { RegionEntryPoint.get(...) } pattern elsewhere).
+            val prefs = remember { PreferencesEntryPoint.get(context) }
             val viewModel: ArrivalsViewModel = viewModel(
                 factory = viewModelFactory {
                     initializer {
@@ -139,7 +142,7 @@ internal fun ArrivalsSheetHost(
                 viewModel.arrivalsLoaded.collect { loaded ->
                     onArrivalsLoaded(loaded)
                     if (tutorialState != null) {
-                        maybeStartArrivalTutorial(context, tutorialState, loaded.hasArrivals) {
+                        maybeStartArrivalTutorial(prefs, tutorialState, loaded.hasArrivals) {
                             // Suspend until the sheet is actually on screen (see the helper KDoc).
                             snapshotFlow { sheetVisibleState.value }.first { it }
                         }
@@ -163,14 +166,13 @@ internal fun ArrivalsSheetHost(
  * commit to starting, so a lost-then-retried response can't double-show.
  */
 private suspend fun maybeStartArrivalTutorial(
-    context: Context,
+    prefs: PreferencesRepository,
     tutorialState: TutorialState,
     hasArrivals: Boolean,
     awaitSheetVisible: suspend () -> Unit,
 ) {
     if (tutorialState.active) return
     if (!hasArrivals) return
-    val prefs = PreferencesEntryPoint.get(context)
     val pending = ArrivalTutorial.pendingSteps(prefs)
     if (pending.isEmpty()) return
     awaitSheetVisible()

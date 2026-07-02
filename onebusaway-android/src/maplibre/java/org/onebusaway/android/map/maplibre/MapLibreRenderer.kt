@@ -38,6 +38,8 @@ import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
+import org.onebusaway.android.map.render.StopBand
+import org.onebusaway.android.map.render.StopIconKind
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
@@ -45,6 +47,7 @@ import org.onebusaway.android.map.render.TripStopBitmaps
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
+import org.onebusaway.android.map.render.stopIconKind
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.getRouteDisplayName
 
@@ -81,6 +84,8 @@ class MapLibreRenderer(
     // icons were last drawn for. They live until MapView.onDestroy(), like vehicleMarkersByTripId.
     private val stopMarkersByStopId = HashMap<String, Marker>()
     private var renderedFocusedStopId: String? = null
+    // The zoom band the stop icons were last drawn for (full icon vs dot); see [reconcileStopMarkers].
+    private var renderedStopBand = StopBand.FULL
 
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
@@ -152,7 +157,7 @@ class MapLibreRenderer(
             )
         }
 
-        reconcileStopMarkers(snapshot.stops, snapshot.focusedStopId)
+        reconcileStopMarkers(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
 
         if (snapshot.bikeshareVisible) {
             val band = bikeZoomBand(map.cameraPosition.zoom.toFloat())
@@ -192,10 +197,11 @@ class MapLibreRenderer(
     /**
      * Diff the stop markers against [stops] in place (the [reconcileVehicleMarkers] pattern): remove
      * markers whose id has left, add markers for new ids, and re-icon an existing marker only when its
-     * focused state flips. Unchanged stops keep their native marker, so they don't blink on a static
-     * redraw. Tracked in [stopMarkersByStopId] (not [staticAnnotations]) so a static redraw leaves them.
+     * icon kind changes — a focus flip or a zoom-band crossing ([band], full icon ⇄ dot). Unchanged
+     * stops keep their native marker, so they don't blink on a static redraw. Tracked in
+     * [stopMarkersByStopId] (not [staticAnnotations]) so a static redraw leaves them.
      */
-    private fun reconcileStopMarkers(stops: List<StopMarker>, focusedStopId: String?) {
+    private fun reconcileStopMarkers(stops: List<StopMarker>, focusedStopId: String?, band: StopBand) {
         val liveIds = stops.mapTo(HashSet()) { it.id }
         val gone = stopMarkersByStopId.iterator()
         while (gone.hasNext()) {
@@ -207,26 +213,30 @@ class MapLibreRenderer(
             }
         }
         for (stop in stops) {
-            val isFocused = stop.id == focusedStopId
+            val kind = stopIconKind(stop.id == focusedStopId, band)
             val existing = stopMarkersByStopId[stop.id]
             if (existing == null) {
                 val marker = map.addMarker(
-                    MarkerOptions().position(stop.point.toLatLng()).icon(stopIcon(stop, isFocused))
+                    MarkerOptions().position(stop.point.toLatLng()).icon(stopIcon(stop, kind))
                 )
                 stopMarkersByStopId[stop.id] = marker
                 stopByMarker[marker] = stop
-            } else if ((stop.id == renderedFocusedStopId) != isFocused) {
-                // Re-icon only the marker that just lost focus and the one that just gained it (their
-                // focus state flipped).
-                existing.icon = stopIcon(stop, isFocused)
+            } else if (stopIconKind(stop.id == renderedFocusedStopId, renderedStopBand) != kind) {
+                // Only the markers whose icon kind changed need a new icon (maplibre centers the icon
+                // on the position, so the dot lands on the stop with no anchor change).
+                existing.icon = stopIcon(stop, kind)
             }
         }
         renderedFocusedStopId = focusedStopId
+        renderedStopBand = band
     }
 
-    private fun stopIcon(stop: StopMarker, focused: Boolean): Icon =
-        if (focused) MapLibreStopIcons.focusedIconForDirection(context, stop.direction)
-        else MapLibreStopIcons.iconForDirection(context, stop.direction)
+    private fun stopIcon(stop: StopMarker, kind: StopIconKind): Icon = when (kind) {
+        StopIconKind.FULL -> MapLibreStopIcons.iconForDirection(stop.direction)
+        StopIconKind.FULL_FOCUSED -> MapLibreStopIcons.focusedIconForDirection(stop.direction)
+        StopIconKind.DOT -> MapLibreStopIcons.dotIcon()
+        StopIconKind.DOT_FOCUSED -> MapLibreStopIcons.focusedDotIcon()
+    }
 
     /**
      * Update the dynamic layer for one display frame: the route's live [vehicles] (null off route mode)

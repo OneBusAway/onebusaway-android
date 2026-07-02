@@ -90,7 +90,7 @@
             <stroke
                 android:width="7dp"
                 android:color="@android:color/transparent" />
-            <solid android:color="#FF9500" />
+            <solid android:color="@color/map_stop_focus" />
             <size
                 android:width="@dimen/map_stop_icon_size_fill"
                 android:height="@dimen/map_stop_icon_size_fill" />

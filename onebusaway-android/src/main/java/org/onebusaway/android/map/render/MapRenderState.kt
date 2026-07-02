@@ -133,6 +133,10 @@ data class MapRenderSnapshot(
     // The currently focused stop id, couriered so the vehicle info-window's "more info" tap can deep
     // link into TripDetails scoped to that stop (the legacy VehicleOverlay.Controller hook).
     val focusedStopId: String? = null,
+    // The zoom band the stops render in (full directional icon vs small dot). Derived from the camera
+    // by StopsMapController and carried here so a pure zoom re-fires the renderer like any other
+    // snapshot change — keeping the renderer a pure function of the snapshot (no live camera reads).
+    val stopBand: StopBand = StopBand.FULL,
 )
 
 /**
@@ -279,6 +283,11 @@ class MapRenderState {
 
     fun setFocusedStopId(stopId: String?) {
         _snapshot.update { it.copy(focusedStopId = stopId) }
+    }
+
+    /** Sets the stop zoom band (full icon vs dot); a no-op emission when unchanged (StateFlow dedups). */
+    fun setStopBand(band: StopBand) {
+        _snapshot.update { it.copy(stopBand = band) }
     }
 
     /** Selects (or deselects with null) a vehicle by trip id; the renderer shows its data marker. */

@@ -649,6 +649,7 @@
     <string name="preferences_experimental_regions_title">Experimental regions</string>
     <string name="preferences_experimental_regions_summary">Enables regions that may be unstable
     </string>
+    <string name="map_zoom_in_for_more_stops">Zoom in to see more stops</string>
     <string name="preferences_map_stop_cache_size_title">Map stop cache size</string>
     <string name="preferences_map_stop_cache_size_summary">Max bus stops kept on the map while panning (currently %1$d)</string>
     <string name="preferences_map_stop_cache_size_error">Enter a number between %1$d and %2$d</string>

@@ -51,9 +51,7 @@
         "paymentWarningTitle": null,
         "paymentWarningBody": null,
         "paymentiOSAppStoreIdentifier": "1487465395",
-        "paymentiOSAppUrlScheme": "fb313213768708402HART",
-        "travelBehaviorDataCollectionEnabled": false,
-        "enrollParticipantsInStudy": false
+        "paymentiOSAppUrlScheme": "fb313213768708402HART"
       },
       {
         "id": 1,
@@ -138,9 +136,7 @@
         "paymentWarningTitle": "Check before you buy!",
         "paymentWarningBody": "The mobile fare payment app for Puget Sound does not support all transit service shown in OneBusAway. Please check that a ticket is eligible for your agency and route before you purchase!",
         "paymentiOSAppStoreIdentifier": "1131345078",
-        "paymentiOSAppUrlScheme": "co.bytemark.tgt",
-        "travelBehaviorDataCollectionEnabled": false,
-        "enrollParticipantsInStudy": false
+        "paymentiOSAppUrlScheme": "co.bytemark.tgt"
       },
       {
         "id": 2,
@@ -183,9 +179,7 @@
         "paymentWarningTitle": null,
         "paymentWarningBody": null,
         "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "travelBehaviorDataCollectionEnabled": false,
-        "enrollParticipantsInStudy": false
+        "paymentiOSAppUrlScheme": null
       },
       {
         "id": 4,
@@ -222,9 +216,7 @@
         "paymentWarningTitle": null,
         "paymentWarningBody": null,
         "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "travelBehaviorDataCollectionEnabled": false,
-        "enrollParticipantsInStudy": false
+        "paymentiOSAppUrlScheme": null
       },
       {
         "id": 11,
@@ -273,9 +265,7 @@
         "paymentWarningTitle": null,
         "paymentWarningBody": null,
         "paymentiOSAppStoreIdentifier": "1577230742",
-        "paymentiOSAppUrlScheme": "org.sdmts.pronto",
-        "travelBehaviorDataCollectionEnabled": false,
-        "enrollParticipantsInStudy": false
+        "paymentiOSAppUrlScheme": "org.sdmts.pronto"
       },
       {
         "id": 15,
@@ -360,9 +350,7 @@
         "paymentWarningTitle": null,
         "paymentWarningBody": null,
         "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "travelBehaviorDataCollectionEnabled": false,
-        "enrollParticipantsInStudy": false
+        "paymentiOSAppUrlScheme": null
       },
       {
         "id": 16,
@@ -399,9 +387,7 @@
         "paymentWarningTitle": null,
         "paymentWarningBody": null,
         "paymentiOSAppStoreIdentifier": null,
-        "paymentiOSAppUrlScheme": null,
-        "travelBehaviorDataCollectionEnabled": false,
-        "enrollParticipantsInStudy": false
+        "paymentiOSAppUrlScheme": null
       }
     ]
   }

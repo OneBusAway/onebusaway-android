@@ -415,8 +415,6 @@ public class RegionUtils {
                     ObaContract.Regions.PAYMENT_ANDROID_APP_ID,
                     ObaContract.Regions.PAYMENT_WARNING_TITLE,
                     ObaContract.Regions.PAYMENT_WARNING_BODY,
-                    ObaContract.Regions.TRAVEL_BEHAVIOR_DATA_COLLECTION,
-                    ObaContract.Regions.ENROLL_PARTICIPANTS_IN_STUDY,
                     ObaContract.Regions.SIDECAR_BASE_URL,
                     ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL,
                     ObaContract.Regions.UMAMI_ANALYTICS_URL,
@@ -630,8 +628,6 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_PAYMENT_ANDROID_APP_ID,
                 BuildConfig.FIXED_REGION_PAYMENT_WARNING_TITLE,
                 BuildConfig.FIXED_REGION_PAYMENT_WARNING_BODY,
-                BuildConfig.FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION,
-                BuildConfig.FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY,
                 BuildConfig.FIXED_REGION_SIDECAR_BASE_URL,
                 BuildConfig.FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL,
                 null);   // No Umami config for the fixed-region build flavor
@@ -709,10 +705,6 @@ public class RegionUtils {
         values.put(ObaContract.Regions.PAYMENT_ANDROID_APP_ID, region.getPaymentAndroidAppId());
         values.put(ObaContract.Regions.PAYMENT_WARNING_TITLE, region.getPaymentWarningTitle());
         values.put(ObaContract.Regions.PAYMENT_WARNING_BODY, region.getPaymentWarningBody());
-        values.put(ObaContract.Regions.TRAVEL_BEHAVIOR_DATA_COLLECTION,
-                region.isTravelBehaviorDataCollectionEnabled() ? 1 : 0);
-        values.put(ObaContract.Regions.ENROLL_PARTICIPANTS_IN_STUDY,
-                region.isEnrollParticipantsInStudy() ? 1 : 0);
         values.put(ObaContract.Regions.SIDECAR_BASE_URL, region.getSidecarBaseUrl());
         values.put(ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL, region.getPlausibleAnalyticsServerUrl());
         values.put(ObaContract.Regions.UMAMI_ANALYTICS_URL, region.getUmamiAnalyticsUrl());

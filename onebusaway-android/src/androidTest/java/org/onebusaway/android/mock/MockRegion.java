@@ -93,8 +93,6 @@ public class MockRegion {
                 "co.bytemark.hart",
                 null,
                 null,
-                false,
-                false,
                 "https://onebusaway.co",
                 null,
                 null);   // UmamiAnalyticsConfig — disabled in test regions
@@ -136,8 +134,6 @@ public class MockRegion {
                 null,
                 null,
                 null,
-                false,
-                false,
                 "https://onebusaway.co",
                 null,
                 null);   // UmamiAnalyticsConfig — disabled in test regions
@@ -179,8 +175,6 @@ public class MockRegion {
                 "co.bytemark.hart",
                 null,
                 null,
-                false,
-                false,
                 "https://onebusaway.co",
                 null,
                 null);   // UmamiAnalyticsConfig — disabled in test regions
@@ -222,8 +216,6 @@ public class MockRegion {
                 "co.bytemark.hart",
                 null,
                 null,
-                false,
-                false,
                 "https://onebusaway.co",
                 null,
                 null);   // UmamiAnalyticsConfig — disabled in test regions
@@ -265,8 +257,6 @@ public class MockRegion {
                 "co.bytemark.hart",
                 null,
                 null,
-                false,
-                false,
                 "https://onebusaway.co",
                 null,
                 null);   // UmamiAnalyticsConfig — disabled in test regions
@@ -308,8 +298,6 @@ public class MockRegion {
                 "co.bytemark.hart",
                 null,
                 null,
-                false,
-                false,
                 "https://onebusaway.co",
                 null,
                 null);   // UmamiAnalyticsConfig — disabled in test regions
@@ -349,8 +337,6 @@ public class MockRegion {
                 "co.bytemark.hart",
                 null,
                 null,
-                false,
-                false,
                 "https://onebusaway.co",
                 null,
                 null);   // UmamiAnalyticsConfig — disabled in test regions
@@ -390,8 +376,6 @@ public class MockRegion {
                 "co.bytemark.hart",
                 null,
                 null,
-                false,
-                false,
                 "https://onebusaway.co",
                 null,
                 null);   // UmamiAnalyticsConfig — disabled in test regions

@@ -233,7 +233,6 @@ class DefaultArrivalsRepository @Inject constructor(
         minutesAfter: Int,
         routeFilter: Set<String>?
     ): Result<ArrivalsData> = withContext(Dispatchers.IO) {
-        val now = System.currentTimeMillis()
         val filter = routeFilter ?: ObaContract.StopRouteFilters.get(context, stopId).toSet()
         var minutes = minutesAfter
         // Widen the window while the fetch is empty (or failing), matching the legacy loader.
@@ -252,11 +251,11 @@ class DefaultArrivalsRepository @Inject constructor(
                 if (!stopRecorded) {
                     snapshot.stop?.let { DBUtil.addToDB(it); stopRecorded = true }
                 }
-                Result.success(toData(snapshot, filter, isStale = false, now))
+                Result.success(toData(snapshot, filter, isStale = false))
             },
             // Refresh failed but we have prior data — keep showing it (legacy stale fallback).
             onFailure = { error ->
-                lastGood?.let { Result.success(toData(it, filter, isStale = true, now)) }
+                lastGood?.let { Result.success(toData(it, filter, isStale = true)) }
                     ?: Result.failure(
                         IOException(
                             ObaRequestErrors.getStopErrorString(
@@ -271,9 +270,11 @@ class DefaultArrivalsRepository @Inject constructor(
     private fun toData(
         snapshot: StopArrivals,
         routeFilter: Set<String>,
-        isStale: Boolean,
-        now: Long
+        isStale: Boolean
     ): ArrivalsData {
+        // Server clock as "now" so ETAs/countdowns and alert active-window checks cancel any device
+        // clock skew — the arrival times and the "now" they're measured against share one clock (#1612).
+        val now = snapshot.currentTime
         val style = BuildFlavorUtils.getArrivalInfoStyleFromPreferences(context)
         // Style B includes the arrival/departure word in the status label; Style A does not.
         val includeArrivalDepartureLabel = style == BuildFlavorUtils.ARRIVAL_INFO_STYLE_B

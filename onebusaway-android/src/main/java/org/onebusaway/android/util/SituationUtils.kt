@@ -29,6 +29,10 @@ object SituationUtils {
     /**
      * Returns true if [currentTime] (epoch millis) falls within one of the [situation]'s active
      * windows, or if the situation has no active windows (assumed always-active).
+     *
+     * [currentTime] must be the response's **server** `currentTime` whenever the active windows come
+     * from a server response, so the comparison cancels device clock skew (#1612). This function is
+     * a pure function of its inputs — it reads no clock of its own.
      */
     @JvmStatic
     fun isActiveWindowForSituation(situation: ObaSituation, currentTime: Long): Boolean {
@@ -43,7 +47,7 @@ object SituationUtils {
             val from = activeWindow.from
             val to = activeWindow.to
 
-            if (!isTimestampInSeconds(from)) {
+            if (!isTimestampInSeconds(from, currentTime)) {
                 currentTimeConverted = TimeUnit.MILLISECONDS.toMillis(currentTime)
             }
             // 0 is a valid end time that means no end to the window - see #990.
@@ -56,16 +60,15 @@ object SituationUtils {
     }
 
     /**
-     * Checks if the given timestamp is in seconds.
+     * Checks if the given timestamp is in seconds (rather than milliseconds), by magnitude.
      *
      * @param timestamp the timestamp to check
+     * @param nowMillis the current time in epoch milliseconds (the passed-in server clock — this
+     *                  helper reads no clock of its own so it stays a pure function)
      * @return true if the timestamp is in seconds, false if it is in milliseconds
      */
-    private fun isTimestampInSeconds(timestamp: Long): Boolean {
-        // Get the current time in milliseconds.
-        val currentTimeMillis = System.currentTimeMillis()
-
+    private fun isTimestampInSeconds(timestamp: Long, nowMillis: Long): Boolean {
         // If the timestamp is smaller than the current time divided by 1000, it's likely in seconds.
-        return timestamp < currentTimeMillis / 1000L
+        return timestamp < nowMillis / 1000L
     }
 }

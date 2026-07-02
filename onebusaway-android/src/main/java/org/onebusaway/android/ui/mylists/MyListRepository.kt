@@ -262,7 +262,7 @@ class StarredStopsRepository(private val context: Context) : MyListRepository<St
     /** Emits the per-stop arrival badges immediately, then re-emits every [ARRIVALS_REFRESH_MS]. */
     private fun arrivalsPoll(stopIds: List<String>): Flow<Map<String, List<ArrivalBadge>>> = flow {
         while (true) {
-            emit(fetchArrivals(context, stopIds, System.currentTimeMillis()))
+            emit(fetchArrivals(context, stopIds))
             delay(ARRIVALS_REFRESH_MS)
         }
     }
@@ -374,22 +374,21 @@ private const val MAX_ARRIVALS_PER_STOP = 3
  *  refresh latency is the slowest single request, not their sum. */
 private suspend fun fetchArrivals(
     context: Context,
-    stopIds: List<String>,
-    nowMs: Long
+    stopIds: List<String>
 ): Map<String, List<ArrivalBadge>> = coroutineScope {
-    stopIds.map { stopId -> async { stopId to fetchStopBadges(context, stopId, nowMs) } }
+    stopIds.map { stopId -> async { stopId to fetchStopBadges(context, stopId) } }
         .awaitAll()
         .toMap()
 }
 
 /** One stop's badges. [convertArrivals] already sorts by ETA; a non-OK code/error yields no badges. */
-private suspend fun fetchStopBadges(context: Context, stopId: String, nowMs: Long): List<ArrivalBadge> =
+private suspend fun fetchStopBadges(context: Context, stopId: String): List<ArrivalBadge> =
     runCatching {
-        val arrivals = NetworkEntryPoint.getStopArrivals(context)
+        val snapshot = NetworkEntryPoint.getStopArrivals(context)
             .arrivals(stopId, ARRIVALS_MINUTES_AFTER)
             .getOrThrow()
-            .arrivals
-        convertArrivals(context, arrivals, null, nowMs, false)
+        // Server clock as the ETA baseline so badges cancel device clock skew (#1612).
+        convertArrivals(context, snapshot.arrivals, null, snapshot.currentTime, false)
             .take(MAX_ARRIVALS_PER_STOP)
             .map { it.toBadge(context) }
     }.getOrDefault(emptyList())

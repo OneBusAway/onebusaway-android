@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -67,7 +68,10 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun VehicleInfoWindow(status: ObaTripStatus, response: RouteTrips) {
     val res = LocalContext.current.resources
-    val nowMs = rememberNowMs()
+    // "Now" in the server clock domain: the age is measured against the vehicle's last real-time fix
+    // (status.lastLocationUpdateTime, falling back to lastUpdateTime) — both server AVL timestamps —
+    // so a skewed device clock must not leak into it (#1612).
+    val nowMs = rememberServerNowMs(response.currentTimeMs)
     // The window only opens for an already-rendered vehicle, so its trip/route are in the refs;
     // guard the unreachable null instead of dereferencing (the legacy getTrip/getRoute would NPE).
     val trip = response.trip(status.activeTripId) ?: return
@@ -276,6 +280,26 @@ internal fun rememberNowMs(): Long {
     }
     return now
 }
+
+/**
+ * A live "now" in the **server** clock domain, anchored on [serverTimeMs] (the poll's server
+ * `currentTime`) and advanced by the device's elapsed time since this response was observed. Ticking
+ * against the server clock keeps age text (`… ago`) free of device clock skew — the age is measured
+ * against the same clock that stamped the vehicle timestamp (#1612). The device↔server offset is
+ * captured once per [serverTimeMs] (each poll), so composition lag never accumulates: at capture the
+ * result equals [serverTimeMs], then it counts up in real device time.
+ */
+@Composable
+internal fun rememberServerNowMs(serverTimeMs: Long): Long {
+    val deviceStartMs = remember(serverTimeMs) { System.currentTimeMillis() }
+    val deviceNowMs = rememberNowMs()
+    return serverNowMs(serverTimeMs, deviceStartMs, deviceNowMs)
+}
+
+/** [serverTimeMs] advanced by elapsed device time (`deviceNowMs - deviceStartMs`). Extracted from
+ *  [rememberServerNowMs] as a pure function so it's JVM-unit-testable. */
+internal fun serverNowMs(serverTimeMs: Long, deviceStartMs: Long, deviceNowMs: Long): Long =
+    serverTimeMs + (deviceNowMs - deviceStartMs)
 
 /**
  * Formats [elapsedSeconds] as "Data updated N min M sec ago" (or "… M sec ago" under a minute).

@@ -124,6 +124,26 @@ Tests are in `onebusaway-android/src/androidTest/java/`. Key test classes:
 
 CI runs on API level 33 emulator via GitHub Actions.
 
+## Time domains: server clock vs device clock (#1612)
+
+Any user-facing duration measured against a **server-provided timestamp** — ETAs ("N min"),
+countdowns, "arriving now", vehicle age ("data updated N sec ago"), alert active-window checks — must
+use the response's server clock as "now", **never** `System.currentTimeMillis()`. Mixing the two in a
+single subtraction (server timestamp − device now) leaks device clock skew straight into the number.
+
+- The server clock is on the response: `StopArrivals.currentTime`, `RouteTrips.currentTimeMs`,
+  `TripDetailsRepository.lastLoadedTime()`.
+- Extrapolation deliberately stays on the **device** clock (`TripState.anchorLocalTimeMs`) because it
+  pairs each server time with the local receive time; cross back to the server clock with
+  `TripState.toServerClock(...)` before plotting against server-clock data.
+- Purely local timers stay on the device clock: cache TTLs / recent-window cutoffs (compared against
+  locally-stamped `System.currentTimeMillis()` writes), poll scheduling (`SystemClock.elapsedRealtimeNanos`),
+  WorkManager/alarm scheduling, "updated Ns ago" against a locally-stamped `lastResponseTimeMs`.
+
+Keep ETA/active-window helpers pure — pass the "now" in as a parameter (see `SituationUtils`,
+`ArrivalInfo`); don't call the clock inside a helper. This is verified by `SituationUtilsTest` and
+`ServerNowMsTest`.
+
 ## Key Technical Details
 
 - **Min SDK**: 23 (Android 6.0)

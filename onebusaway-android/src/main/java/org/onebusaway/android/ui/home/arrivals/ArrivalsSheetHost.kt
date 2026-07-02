@@ -34,6 +34,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.first
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
@@ -73,7 +74,7 @@ internal fun ArrivalsSheetHost(
     expandProgress: () -> Float,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     onArrivalsLoaded: (ArrivalsLoaded) -> Unit,
-    onShowRouteOnMap: (String) -> Unit,
+    onShowRouteOnMap: (ShowRouteRequest) -> Unit,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (args: ReminderEditorArgs) -> Unit,
     onToggleSheet: () -> Unit,

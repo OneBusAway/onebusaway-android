@@ -28,12 +28,23 @@ data class NearbyStops(
 /**
  * A route's stops, the serving routes (for stop-marker icons), the route + agency name, and its
  * decoded shape. Polylines are [Location] points (the neutral geo type); the map layer turns them
- * into its render `GeoPoint`s.
+ * into its render `GeoPoint`s. Each [RouteMapStop] carries the direction(s) it serves, so the overlay
+ * can be narrowed to a single stop-relevant direction without a separate id index.
  */
 data class RouteMapData(
     val route: ObaRoute?,
     val agencyName: String?,
-    val stops: List<ObaStop>,
+    val stops: List<RouteMapStop>,
     val routes: List<ObaRoute>,
     val polylines: List<List<Location>>,
+)
+
+/**
+ * A [stop] as it appears on a route, tagged with the GTFS [directionIds] whose stop groups list it —
+ * usually a single direction, a two-element set for a stop shared between both directions, and empty
+ * when the route has no (numeric) direction grouping.
+ */
+data class RouteMapStop(
+    val stop: ObaStop,
+    val directionIds: Set<Int>,
 )

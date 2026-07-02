@@ -62,6 +62,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.MapViewModel
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.rememberSheetExpandProgress
@@ -138,7 +139,7 @@ class HomeActivityActions(
     val onSheetSettled: (ArrivalsSheetState, Int) -> Unit,
     val onClearFocus: () -> Unit,
     val onArrivalsLoaded: (ArrivalsLoaded) -> Unit,
-    val onShowRouteOnMap: (String) -> Unit,
+    val onShowRouteOnMap: (ShowRouteRequest) -> Unit,
     val onToggleSheet: () -> Unit,
     val onCancelRouteMode: () -> Unit,
 )

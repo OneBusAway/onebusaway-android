@@ -73,6 +73,7 @@ import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.RESULT_MAP_ROUTE_ID
+import org.onebusaway.android.ui.nav.consumeRouteReveal
 import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_ID
 import org.onebusaway.android.ui.nav.consumeStopReveal
 import org.onebusaway.android.ui.nav.navigateFromHome
@@ -130,10 +131,11 @@ fun HomeNavHost(
             val revealStopId by handle.getStateFlow<String?>(RESULT_MAP_STOP_ID, null)
                 .collectAsStateWithLifecycle()
             LaunchedEffect(revealRouteId) {
-                revealRouteId?.let { routeId ->
-                    home.mapViewModel.toRoute(routeId)
-                    handle[RESULT_MAP_ROUTE_ID] = null
-                }
+                if (revealRouteId == null) return@LaunchedEffect
+                // Read + consume the route id and its optional direction anchor atomically via the typed
+                // helper (which owns both key names), mirroring the stop branch below.
+                val request = handle.consumeRouteReveal() ?: return@LaunchedEffect
+                home.mapViewModel.toRoute(request)
             }
             LaunchedEffect(revealStopId) {
                 if (revealStopId == null) return@LaunchedEffect

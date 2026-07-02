@@ -1,0 +1,42 @@
+{
+  "code": 200,
+  "currentTime": 1444073094612,
+  "text": "OK",
+  "version": 2,
+  "data": {
+    "limitExceeded": false,
+    "outOfRange": false,
+    "list": [
+      {
+        "tripId": "trip_out",
+        "serviceDate": 1444017600000,
+        "status": {
+          "activeTripId": "trip_out",
+          "lastUpdateTime": 1000,
+          "status": "default",
+          "position": { "lat": 47.10, "lon": -122.10 }
+        }
+      },
+      {
+        "tripId": "trip_in",
+        "serviceDate": 1444017600000,
+        "status": {
+          "activeTripId": "trip_in",
+          "lastUpdateTime": 2000,
+          "status": "default",
+          "position": { "lat": 47.20, "lon": -122.20 }
+        }
+      }
+    ],
+    "references": {
+      "agencies": [],
+      "routes": [],
+      "situations": [],
+      "stops": [],
+      "trips": [
+        { "id": "trip_out", "routeId": "route_1", "directionId": "0" },
+        { "id": "trip_in", "routeId": "route_1", "directionId": "1" }
+      ]
+    }
+  }
+}

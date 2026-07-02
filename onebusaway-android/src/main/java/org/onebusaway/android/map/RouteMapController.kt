@@ -77,6 +77,21 @@ class RouteMapController(
     var routeId: String? = null
         private set
 
+    // The stop the "show vehicles on map" launch anchored to (null for a whole-route launch). Set in
+    // start(); resolved against the loaded route's direction grouping in onRouteLoaded to the
+    // directionFilter below. Exposed so a re-tap that keeps the route but changes the direction anchor
+    // re-enters (rather than just reframing).
+    var directionStopId: String? = null
+        private set
+
+    // What direction the vehicle layer should show — the single source of truth the per-frame sampler
+    // reads (so it's a field, not a captured value; the sampler is installed in start() before the route
+    // loads). [DirectionState.Pending] holds the layer back while a direction-anchored launch waits for
+    // the (slower) stops-for-route load — otherwise every vehicle would flash for those seconds and then
+    // the opposite direction would cull. [DirectionState.Resolved] carries the filter to apply (null =
+    // both directions). One value, not a filter plus a "resolved yet?" boolean, so the two can't disagree.
+    private var directionState: DirectionState = DirectionState.Resolved(null)
+
     /** Whether a route is currently shown (drives the home map's route-header focus bias). */
     val isActive: Boolean get() = routeId != null
 
@@ -93,22 +108,34 @@ class RouteMapController(
 
     /**
      * Show route [routeId]: load the route + header and start the vehicle poll. [zoomToRoute] frames
-     * the shape once it loads (consumed once).
+     * the shape once it loads (consumed once). [directionStopId], when non-null, narrows the overlay to
+     * the single direction that serves that stop (the arrivals "show vehicles on map" launch); null
+     * shows the whole route.
      */
-    fun start(routeId: String, zoomToRoute: Boolean) {
+    fun start(routeId: String, zoomToRoute: Boolean, directionStopId: String? = null) {
         this.routeId = routeId
+        this.directionStopId = directionStopId
+        // A whole-route launch has no direction to wait for, so its vehicles show as soon as they poll;
+        // a direction-anchored launch stays Pending until the route load resolves the filter (below).
+        this.directionState =
+            if (directionStopId == null) DirectionState.Resolved(null) else DirectionState.Pending
         _loadedRoute.value = LoadedRoute.Loading
         host.setProgress(true)
         // The live vehicle layer: the renderer pulls a frame from this sampler each display frame,
         // dead-reckoning every vehicle in the latest poll forward to the frame's clock (the icon
         // decision lives here, not in the producer). Yields nothing until the first poll lands. The
-        // route-id filter set is built once here, not per frame, since it's constant for this route.
+        // route-id filter set is built once here, not per frame, since it's constant for this route;
+        // directionState is read live since it's resolved only once the route loads.
         val routeIds = setOf(routeId)
         renderState.setVehiclesSampler { nowMs ->
+            // Pending holds the layer back until the direction is known, so a direction launch never
+            // flashes the opposite-direction vehicles before the (slower) route load lands to cull them.
+            val resolved = directionState as? DirectionState.Resolved ?: return@setVehiclesSampler null
             latestPoll?.let { poll ->
                 MapVehicles(
                     markers = extrapolatedVehicles(
-                        poll.response, routeIds, nowMs, tripObservationRepository::lookupTripState
+                        poll.response, routeIds, nowMs, resolved.directionId,
+                        tripObservationRepository::lookupTripState,
                     ).map { it.toMarker() },
                     response = poll.response,
                 )
@@ -125,6 +152,8 @@ class RouteMapController(
         routeJob = null
         vehicleJob = null
         routeId = null
+        directionStopId = null
+        directionState = DirectionState.Resolved(null)
         latestPoll = null
         renderState.clearRoutePolylines()
         renderState.setVehiclesSampler(null)
@@ -148,7 +177,9 @@ class RouteMapController(
         val id = routeId ?: return
         routeJob?.cancel()
         routeJob = scope.launch {
-            val result = routeRepository.getRoute(id)
+            // The repository narrows the stops (and the vehicle direction id) to directionStopId's
+            // direction when set; a whole-route launch passes null and gets the full route back.
+            val result = routeRepository.getRoute(id, directionStopId)
             // Clear the spinner once the load resolves — before dispatching, so it's cleared on the
             // error path too (mirrors StopsMapController). A cancelled load never reaches here; the
             // view transition that cancelled it clears progress via leaveCurrentView().
@@ -158,6 +189,10 @@ class RouteMapController(
     }
 
     private fun onRouteLoaded(result: Result<RouteMap?>, zoomToRoute: Boolean) {
+        // The route load has resolved (success or failure), so release the vehicle layer the sampler
+        // held back in direction mode. Default to Resolved(null) here so an error path below falls back
+        // to showing vehicles unfiltered rather than hidden forever; the success path narrows it.
+        directionState = DirectionState.Resolved(null)
         val routeMap = result.getOrElse {
             MapUtils.showMapError((it as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION)
             return
@@ -173,6 +208,9 @@ class RouteMapController(
         renderState.setRoutePolylines(
             routeMap.polylines.map { points -> RoutePolyline(route.color, points) }
         )
+        // The repository already narrowed the stops to the stop-relevant direction (whole route when the
+        // launch had no anchor); its resolved direction id is what the vehicle sampler filters by.
+        directionState = DirectionState.Resolved(routeMap.directionId)
         stopsController.showStops(routeMap.stops, routeMap.routes)
         if (zoomToRoute) {
             host.frameRoute()
@@ -221,6 +259,18 @@ class RouteMapController(
 
 /** The latest trips-for-route [response] and the device clock ([loadNanos]) when it landed. */
 private data class VehiclePoll(val response: RouteTrips, val loadNanos: Long)
+
+/**
+ * What the vehicle layer should show while in route mode — the single value the per-frame sampler reads
+ * to decide whether (and how) to draw vehicles, so a filter and a "resolved yet?" flag can't disagree.
+ */
+private sealed interface DirectionState {
+    /** A direction-anchored launch is still waiting for the route load; the sampler draws nothing yet. */
+    data object Pending : DirectionState
+
+    /** The direction is known: keep only [directionId] (null = both directions / whole route). */
+    data class Resolved(val directionId: Int?) : DirectionState
+}
 
 /**
  * The raw route-load state [RouteMapController] publishes (null when not in route mode); [MapViewModel]

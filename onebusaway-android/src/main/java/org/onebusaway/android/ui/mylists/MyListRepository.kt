@@ -16,11 +16,8 @@
 package org.onebusaway.android.ui.mylists
 
 import android.content.Context
-import android.database.ContentObserver
 import android.database.Cursor
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import android.text.format.DateUtils
 import androidx.annotation.ArrayRes
 import androidx.annotation.ColorRes
@@ -29,12 +26,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flatMapLatest
@@ -48,6 +43,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.NetworkEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.provider.ObaContract
+import org.onebusaway.android.provider.contentChanges
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.convertArrivals
 import org.onebusaway.android.util.DisplayFormat
@@ -75,18 +71,6 @@ interface MyListRepository<T> {
 /** Sort-options indices (index 0 is "name" in every list's sort array). */
 const val SORT_BY_NAME = 0
 const val SORT_BY_FREQUENCY = 1
-
-/** Emits once immediately, then again whenever [uri] (and its descendants) change. */
-private fun Context.contentChanges(uri: Uri): Flow<Unit> = callbackFlow {
-    val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
-        override fun onChange(selfChange: Boolean) {
-            trySend(Unit)
-        }
-    }
-    contentResolver.registerContentObserver(uri, true, observer)
-    trySend(Unit)
-    awaitClose { contentResolver.unregisterContentObserver(observer) }
-}
 
 /** "Recently used" = accessed within the last 7 days, or used at least once; newest first, capped at 20. */
 private const val RECENT_LIMIT = "20"

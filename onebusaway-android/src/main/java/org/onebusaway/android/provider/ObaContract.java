@@ -28,7 +28,6 @@ import org.onebusaway.android.analytics.PlausibleAnalytics;
 import org.onebusaway.android.region.Region;
 import org.onebusaway.android.region.RegionCursor;
 import org.onebusaway.android.nav.model.PathLink;
-import org.onebusaway.android.util.PreferenceUtils;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -42,6 +41,8 @@ import android.provider.BaseColumns;
 import android.text.format.Time;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The contract between clients and the ObaProvider.
@@ -1285,15 +1286,10 @@ public final class ObaContract {
                 if (markAsRead) {
                     values.put(MARKED_READ_TIME, System.currentTimeMillis());
                 }
-                if (hidden == null) {
-                    // If the user has selected to hide all alerts by default, mark this one as hidden when inserting
-                    boolean hideAllAlerts = PreferenceUtils
-                            .getBoolean(Application.get().getResources()
-                                    .getString(R.string.preference_key_hide_alerts), false);
-                    if (hideAllAlerts) {
-                        hidden = true;
-                    }
-                }
+                // A null hidden leaves HIDDEN unset (undecided). The "hide all alerts" preference is
+                // applied in the arrivals derivation (AlertHideState.isHidden + hideAlertsByDefault),
+                // NOT persisted here — otherwise merely opening an alert (mark-as-read) would harden
+                // the preference default into a permanent per-id hide. See #1593.
                 if (hidden != null) {
                     if (hidden) {
                         values.put(HIDDEN, 1);
@@ -1311,41 +1307,34 @@ public final class ObaContract {
         }
 
         /**
-         * Returns true if this service alert (situation) has been previously hidden by the
-         * user, false it if has not
+         * Returns the explicit per-situation hide decisions the user has recorded: each mapped id is
+         * either hidden (value true, HIDDEN=1) or shown (value false, HIDDEN=0). Ids with no row, or a
+         * null HIDDEN, are absent — the arrivals screen defaults those to the "hide all alerts"
+         * preference. This is the single-source-of-truth read for hidden state: paired with a
+         * {@link android.database.ContentObserver} on {@link #CONTENT_URI}, it lets the UI derive the
+         * shown/hidden split from the DB alone, so a hide/un-hide from any surface (swipe, the alert
+         * dialog, "show hidden alerts") updates the screen with nothing to reconcile.
          *
-         * @param situationId The ID of the situation (service alert)
-         * @return true if this service alert (situation) has been previously hidden by the user,
-         * false it if has not
+         * @return id → isHidden for every situation with an explicit decision (empty if none)
          */
-        public static boolean isHidden(String situationId) {
-            final String[] selection = {_ID, HIDDEN};
-            final String[] selectionArgs = {situationId, Integer.toString(1)};
-            final String WHERE = _ID + "=? AND " + HIDDEN + "=?";
+        public static Map<String, Boolean> getHideDecisions() {
+            final String[] projection = {_ID, HIDDEN};
+            final String WHERE = HIDDEN + " IS NOT NULL";
             ContentResolver cr = Application.get().getContentResolver();
-            Cursor c = cr.query(CONTENT_URI, selection, WHERE, selectionArgs, null);
-            boolean hidden;
-            if (c != null && c.getCount() > 0) {
-                hidden = true;
-            } else {
-                hidden = false;
-            }
+            Cursor c = cr.query(CONTENT_URI, projection, WHERE, null, null);
+            Map<String, Boolean> decisions = new HashMap<>();
             if (c != null) {
-                c.close();
+                try {
+                    final int idCol = c.getColumnIndexOrThrow(_ID);
+                    final int hiddenCol = c.getColumnIndexOrThrow(HIDDEN);
+                    while (c.moveToNext()) {
+                        decisions.put(c.getString(idCol), c.getInt(hiddenCol) == 1);
+                    }
+                } finally {
+                    c.close();
+                }
             }
-            return hidden;
-        }
-
-        /**
-         * Marks all alerts as not hidden, and therefore visible
-         *
-         * @return the number of rows updated
-         */
-        public static int showAllAlerts() {
-            ContentResolver cr = Application.get().getContentResolver();
-            ContentValues values = new ContentValues();
-            values.put(HIDDEN, 0);
-            return cr.update(CONTENT_URI, values, null, null);
+            return decisions;
         }
 
         /**

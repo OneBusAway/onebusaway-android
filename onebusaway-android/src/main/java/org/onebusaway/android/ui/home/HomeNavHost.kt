@@ -33,7 +33,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -238,6 +240,10 @@ fun HomeNavHost(
  * intents to the Activity, which exists before/around the composition. The channel is an UNLIMITED queue
  * (not a latch) so rapid, distinct back-to-back intents are each delivered exactly once rather than
  * overwriting one another before the collector consumes them (#1582).
+ *
+ * The collect is gated on `repeatOnLifecycle(STARTED)` so we never navigate while the activity is STOPPED.
+ * The UNLIMITED channel buffers any intent submitted during that window and replays it when the lifecycle
+ * returns to STARTED, so the gate costs no deliveries (#1592).
  */
 @Composable
 internal fun LaunchIntentEffect(
@@ -245,10 +251,13 @@ internal fun LaunchIntentEffect(
     launchIntents: Flow<Intent>,
     onSideEffects: (Intent) -> Unit,
 ) {
-    LaunchedEffect(navController) {
-        launchIntents.collect { i ->
-            onSideEffects(i)
-            IntentRouteMapper.routeForIntent(i)?.let { navController.navigateFromHome(it) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(navController, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            launchIntents.collect { i ->
+                onSideEffects(i)
+                IntentRouteMapper.routeForIntent(i)?.let { navController.navigateFromHome(it) }
+            }
         }
     }
 }

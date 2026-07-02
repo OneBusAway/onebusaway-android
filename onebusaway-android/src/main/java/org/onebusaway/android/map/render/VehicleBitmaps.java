@@ -20,6 +20,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import androidx.annotation.VisibleForTesting;
 import androidx.collection.LruCache;
 import androidx.core.content.ContextCompat;
 
@@ -100,7 +101,16 @@ public final class VehicleBitmaps {
     private static int vehicleType(VehicleMarker vehicle, RouteTrips response) {
         ObaTripStatus status = vehicle.getStatus();
         int type = response.route(response.trip(status.getActiveTripId()).getRouteId()).getType();
-        return type == ObaRoute.TYPE_CABLECAR ? ObaRoute.TYPE_TRAM : type;
+        return normalizeVehicleType(type);
+    }
+
+    /**
+     * Collapses cablecar onto tram so a cablecar route and the equivalent tram route resolve to the same
+     * icon (and therefore the same {@link #iconKey}); every other type passes through unchanged.
+     */
+    @VisibleForTesting
+    static int normalizeVehicleType(int routeType) {
+        return routeType == ObaRoute.TYPE_CABLECAR ? ObaRoute.TYPE_TRAM : routeType;
     }
 
     /** The schedule-deviation color (realtime) or the scheduled color — constant between polls. */
@@ -113,9 +123,10 @@ public final class VehicleBitmaps {
     }
 
     /**
-     * The 8-way heading slot (or the undirected slot) the icon for [vehicle] uses. Exposed so the
-     * renderer can cheaply detect when a gliding vehicle's direction arrow needs re-stamping — the
-     * tinted bitmap only changes when this index does (the color is constant between polls).
+     * The 8-way heading slot (0..7) the icon for [vehicle] uses. Exposed so the renderer can cheaply
+     * detect when a gliding vehicle's direction arrow needs re-stamping — the tinted bitmap only changes
+     * when this index does (the color is constant between polls). A live vehicle always has a heading, so
+     * the undirected slot ({@code NUM_DIRECTIONS - 1}) isn't reachable from here.
      */
     public static int directionIndex(VehicleMarker vehicle) {
         // The path bearing is already a compass direction; the server orientation needs converting.

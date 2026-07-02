@@ -23,11 +23,14 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
  * Covers [SingleFlight]'s coalescing contract: concurrent callers for one key share a single
- * execution, while an entry clears on completion so a later call runs fresh.
+ * execution, distinct keys run independently, and an entry clears on completion so a later call
+ * runs fresh — including the eager-dispatcher edge case where a non-suspending block completes
+ * before LAZY start, which would strand a stale entry if the clear fired re-entrantly.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SingleFlightTest {
@@ -55,6 +58,33 @@ class SingleFlightTest {
         assertEquals(42, a.await())
         assertEquals(42, b.await())
         assertEquals(1, executions) // b joined a's flight rather than running the block again
+    }
+
+    @Test
+    fun `distinct keys run independently`() = runTest {
+        val singleFlight = SingleFlight<String, Int>(backgroundScope)
+        val aEntered = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        var bStarted = false
+
+        // Hold key "a" in flight so "b" has to start while "a" is still running — a global lock
+        // around execution would serialize them and "b" couldn't begin until "a" was released.
+        val aBlock: suspend () -> Int = {
+            aEntered.complete(Unit)
+            release.await()
+            1
+        }
+        val bBlock: suspend () -> Int = { bStarted = true; 2 }
+
+        val a = async { singleFlight.run("a", aBlock) }
+        aEntered.await() // a is now running aBlock and parked on release
+        val b = async { singleFlight.run("b", bBlock) }
+        runCurrent()
+
+        assertTrue("b ran while a was still in flight", bStarted) // distinct keys aren't serialized
+        release.complete(Unit)
+        assertEquals(1, a.await())
+        assertEquals(2, b.await()) // b got its own result, so it was never coalesced into a
     }
 
     @Test

@@ -17,8 +17,6 @@ package org.onebusaway.android.extrapolation.data
 
 import org.onebusaway.android.api.adapters.StopTimeData
 import org.onebusaway.android.api.adapters.TripScheduleData
-
-import android.location.Location
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -28,8 +26,7 @@ import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.ObaTripStatus
-import org.onebusaway.android.models.Occupancy
-import org.onebusaway.android.models.Status
+import org.onebusaway.android.testing.testTripStatus
 
 class TripStateTest {
 
@@ -505,7 +502,7 @@ class TripStateTest {
             predicted: Boolean = false,
             hasLocation: Boolean = false,
             activeTripId: String? = "trip1"
-    ): ObaTripStatus = TestTripStatus(
+    ): ObaTripStatus = testTripStatus(
             distanceAlongTrip = distanceAlongTrip,
             totalDistanceAlongTrip = totalDistanceAlongTrip,
             lastUpdateTime = lastUpdateTime,
@@ -533,63 +530,5 @@ class TripStateTest {
             )
         }
         return TripScheduleData(stopTimes)
-    }
-}
-
-/**
- * Minimal ObaTripStatus for JVM tests. Returns null for all Location-typed methods
- * so that android.location.Location stub methods are never called.
- */
-private class TestTripStatus(
-        distanceAlongTrip: Double?,
-        totalDistanceAlongTrip: Double?,
-        lastUpdateTime: Long,
-        predicted: Boolean,
-        private val hasLocation: Boolean,
-        activeTripId: String?
-) : ObaTripStatus {
-    override val serviceDate: Long = 0L
-    override val isPredicted: Boolean = predicted
-    override val scheduleDeviation: Long = 0L
-    override val vehicleId: String? = null
-    override val closestStop: String? = null
-    override val closestStopTimeOffset: Long = 0L
-    override val position: Location? = null
-    override val activeTripId: String? = activeTripId
-    override val distanceAlongTrip: Double? = distanceAlongTrip
-    override val scheduledDistanceAlongTrip: Double? = null
-    override val totalDistanceAlongTrip: Double? = totalDistanceAlongTrip
-    override val orientation: Double? = null
-    override val nextStop: String? = null
-    override val nextStopTimeOffset: Long? = null
-    override val phase: String? = null
-    override val status: Status? = null
-    override val lastUpdateTime: Long = lastUpdateTime
-    override val lastKnownLocation: Location?
-        get() = if (hasLocation) FAKE_LOCATION else null
-    override val lastLocationUpdateTime: Long = 0L
-    override val lastKnownDistanceAlongTrip: Double? = null
-    override val lastKnownOrientation: Double? = null
-    override val blockTripSequence: Int = 0
-    override val occupancyStatus: Occupancy? = null
-
-    companion object {
-        /**
-         * A non-null Location sentinel. On the JVM test classpath the android.jar
-         * stubs are present so the class resolves, but its methods throw "Stub!".
-         * We only ever null-check this, never call methods on it.
-         */
-        private val FAKE_LOCATION: Location? = try {
-            Location("test")
-        } catch (e: RuntimeException) {
-            // android.jar stubs throw — but we just need a non-null reference
-            // Use Unsafe to allocate without calling the constructor
-            val unsafeClass = Class.forName("sun.misc.Unsafe")
-            val f = unsafeClass.getDeclaredField("theUnsafe")
-            f.isAccessible = true
-            val unsafe = f.get(null)
-            val allocate = unsafeClass.getMethod("allocateInstance", Class::class.java)
-            allocate.invoke(unsafe, Location::class.java) as Location
-        }
     }
 }

@@ -16,11 +16,13 @@
 package org.onebusaway.android.map
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.test.InstrumentationRegistry.getTargetContext
 import androidx.test.runner.AndroidJUnit4
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,7 +35,9 @@ import org.onebusaway.android.map.googlemapsv2.BitmapDescriptorCache
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.mock.Resources
+import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.RouteTrips
+import java.util.concurrent.TimeUnit
 
 /**
  * The before/after allocation guard for #1580. `GoogleMapRenderer` re-stamps a gliding vehicle's icon on
@@ -82,11 +86,12 @@ class VehicleIconAllocationTest {
             }
     }
 
-    /** Tallies for one replay: total icon requests, descriptors minted, and bitmaps decoded. */
+    /** Tallies for one replay: total icon requests, descriptors minted, bitmaps decoded, and distinct keys. */
     private class Counts {
         var requests = 0
         var allocations = 0
         var bitmapDecodes = 0
+        val keys = HashSet<String>()
     }
 
     /**
@@ -109,7 +114,9 @@ class VehicleIconAllocationTest {
                 val octant = VehicleBitmaps.directionIndex(moved)
                 if (lastOctant.put(moved.activeTripId, octant) != octant) {
                     counts.requests++
-                    cache.get(VehicleBitmaps.iconKey(moved, response)) {
+                    val key = VehicleBitmaps.iconKey(moved, response)
+                    counts.keys.add(key)
+                    cache.get(key) {
                         counts.bitmapDecodes++
                         VehicleBitmaps.vehicleBitmap(context, moved, response)
                     }
@@ -150,13 +157,122 @@ class VehicleIconAllocationTest {
             longRun.allocations,
             longRun.bitmapDecodes,
         )
-        // Bounded by the distinct directional icons (at most 8 octants per vehicle) — far below the
-        // requests it served, which is the whole point of the cache.
+        // The sharing property, asserted exactly: the cache mints one descriptor per *distinct* icon key,
+        // not one per request and not one per vehicle. A regression that keyed per-activeTripId (or dropped
+        // a shared dimension) would break this equality — the loose `<= 8 * vehicles.size` bound wouldn't.
+        assertEquals(
+            "the cache must mint exactly one descriptor per distinct icon key",
+            longRun.keys.size,
+            longRun.allocations,
+        )
         assertTrue(
-            "allocations (${longRun.allocations}) must be bounded by the distinct icons",
-            longRun.allocations <= 8 * vehicles.size,
+            "descriptors must actually be shared — far fewer allocations than requests",
+            longRun.allocations < longRun.requests,
         )
     }
+
+    /**
+     * The cache's correctness contract: equal [VehicleBitmaps.iconKey] ⟺ equal bitmap (they share
+     * `createBitmapCacheKey`). A key *collision* — two vehicles that should show different icons resolving
+     * to one key — would only *lower* the allocation count, so the bound tests above would still pass while
+     * the wrong icon was served. Sampling every vehicle across all 8 octants and grouping by `iconKey`, each
+     * group must therefore resolve to a single bitmap; a dropped key dimension (e.g. forgetting color) would
+     * merge differing bitmaps into one group and fail here.
+     */
+    @Test
+    fun equalIconKeysResolveToEqualBitmaps() {
+        val response = response()
+        val vehicles = vehicles(response)
+        assertTrue("fixture must yield at least one vehicle", vehicles.isNotEmpty())
+
+        // bearing = octant * 45° lands at each octant's center, so the sample spans all 8 directions.
+        val samples = vehicles.flatMap { vehicle ->
+            (0 until 8).map { octant ->
+                val moved = vehicle.copy(bearing = octant * 45f)
+                VehicleBitmaps.iconKey(moved, response) to
+                    VehicleBitmaps.vehicleBitmap(context, moved, response)
+            }
+        }
+        val byKey = samples.groupBy({ it.first }, { it.second })
+
+        // Non-vacuous: the sample must actually exercise sharing (several vehicles/octants per key).
+        assertTrue("expected multiple distinct icon keys", byKey.size > 1)
+        assertTrue("expected at least one key shared by multiple samples", samples.size > byKey.size)
+
+        for ((key, bitmaps) in byKey) {
+            val reference = bitmaps.first()
+            for (bitmap in bitmaps) {
+                assertTrue("all bitmaps for iconKey '$key' must be identical", bitmap.sameAs(reference))
+            }
+        }
+    }
+
+    /**
+     * The replay holds `nowMs` fixed and only rotates bearing, so schedule-deviation color never varies —
+     * leaving the key's color dimension unexercised. Hold a vehicle's octant fixed and change only its
+     * deviation (early vs. late, distinct colors): the key must change and the cache must mint a second
+     * descriptor, proving color participates in the key.
+     */
+    @Test
+    fun changedScheduleDeviationMintsANewDescriptor() {
+        val response = response()
+        val vehicle = vehicles(response).firstOrNull()
+        assertTrue("fixture must yield at least one vehicle", vehicle != null)
+
+        val early = withRealtimeDeviation(vehicle!!, TimeUnit.MINUTES.toSeconds(-10))
+        val late = withRealtimeDeviation(vehicle, TimeUnit.MINUTES.toSeconds(10))
+
+        val earlyKey = VehicleBitmaps.iconKey(early, response)
+        val lateKey = VehicleBitmaps.iconKey(late, response)
+        assertNotEquals("deviation color must be part of the icon key", earlyKey, lateKey)
+
+        val counts = Counts()
+        val cache = BitmapDescriptorCache(CACHE_SIZE) { counts.allocations++ }
+        cache.get(earlyKey) { VehicleBitmaps.vehicleBitmap(context, early, response) }
+        cache.get(lateKey) { VehicleBitmaps.vehicleBitmap(context, late, response) }
+        assertEquals("a changed deviation color must mint a second descriptor", 2, counts.allocations)
+    }
+
+    /**
+     * The cache's eviction + [BitmapDescriptorCache.clear] contract, which the production [CACHE_SIZE] is
+     * deliberately large enough to never hit. Drive past `maxSize` distinct keys and confirm an evicted key
+     * re-invokes its supplier, and that a `get` after `clear()` is a miss.
+     */
+    @Test
+    fun evictedKeyAndPostClearGetReinvokeTheSupplier() {
+        val bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+        var supplied = 0
+        val cache = BitmapDescriptorCache<Int>(2) { 0 }
+        fun get(key: String) = cache.get(key) { supplied++; bitmap }
+
+        get("a")
+        get("b")            // cache now holds [a, b]
+        get("c")            // exceeds maxSize: evicts a (LRU)
+        assertEquals("three distinct keys are three misses", 3, supplied)
+
+        get("b")            // still cached -> hit
+        assertEquals("a cached key must not re-supply", 3, supplied)
+
+        get("a")            // evicted -> miss, supplier re-invoked
+        assertEquals("an evicted key must re-invoke the supplier", 4, supplied)
+
+        cache.clear()
+        get("b")            // after clear -> miss
+        assertEquals("get after clear must re-invoke the supplier", 5, supplied)
+    }
+
+    /**
+     * Force the realtime color path and stamp [deviationSeconds] onto a copy of [vehicle], pinning the
+     * bearing so the heading octant is fixed — only the deviation color varies between the variants.
+     */
+    private fun withRealtimeDeviation(vehicle: VehicleMarker, deviationSeconds: Long): VehicleMarker =
+        vehicle.copy(
+            isRealtime = true,
+            bearing = 0f,
+            status = object : ObaTripStatus by vehicle.status {
+                override val scheduleDeviation: Long = deviationSeconds
+            },
+        )
 
     companion object {
         // Sweep the bearing through all 8 octants within a few frames, then revisit them (no new icons) —

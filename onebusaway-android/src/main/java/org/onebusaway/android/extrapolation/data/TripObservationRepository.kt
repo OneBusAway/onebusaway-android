@@ -134,8 +134,8 @@ class DefaultTripObservationRepository @Inject constructor(
         // The trip already carries its shape — nothing to fetch or hydrate.
         cache.lookupTripState(tripId)?.polyline?.let { return it }
         // Reuse the shape shared by every trip on this route, fetching it once on the first miss.
-        // Concurrent first-misses coalesce in the fetcher's SingleFlight and resolve to the same
-        // instance, so they store the same Polyline here too.
+        // Concurrent in-flight first-misses on the fetcher's confined dispatcher coalesce in its
+        // SingleFlight and resolve to the same instance, so they store the same Polyline here too.
         val polyline = shapeCache.get(shapeId)
                 ?: fetcher.shape(shapeId)?.also { shapeCache.put(shapeId, it) }
         return polyline?.also { cache.putPolyline(tripId, it) }

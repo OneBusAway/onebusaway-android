@@ -505,12 +505,12 @@ class GoogleMapRenderer(
 
     // The trip-focus icons, cached through [descriptorCache] by a stable per-icon key so each resolves
     // lazily on first show and reuses one descriptor thereafter (released, with the rest, in [dispose]).
-    private fun vehicleEstimateIcon() = tripCircleIcon(R.drawable.ic_vehicle_position)
+    private fun vehicleEstimateIcon(): BitmapDescriptor = tripCircleIcon(R.drawable.ic_vehicle_position)
 
-    private fun fastEstimateIcon() = tripCircleIcon(R.drawable.ic_fast_estimate)
+    private fun fastEstimateIcon(): BitmapDescriptor = tripCircleIcon(R.drawable.ic_fast_estimate)
 
     // The signal glyph is light, so tint it gray to read on the white disc.
-    private fun dataAgeIcon() =
+    private fun dataAgeIcon(): BitmapDescriptor =
         tripCircleIcon(R.drawable.ic_signal_indicator, TripMarkerBitmaps.STROKE_COLOR)
 
     private fun tripCircleIcon(drawableRes: Int, tintColor: Int = 0): BitmapDescriptor =
@@ -518,7 +518,7 @@ class GoogleMapRenderer(
             TripMarkerBitmaps.circle(context, drawableRes, tintColor)
         }
 
-    private fun tripStopIcon(selected: Boolean) =
+    private fun tripStopIcon(selected: Boolean): BitmapDescriptor =
         descriptorCache.get("stop:$selected") { TripStopBitmaps.dot(selected) }
 
     fun stopForMarker(marker: Marker): StopMarker? = stopByMarker[marker]

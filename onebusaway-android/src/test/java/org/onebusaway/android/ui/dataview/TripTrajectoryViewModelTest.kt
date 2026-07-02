@@ -19,8 +19,10 @@ import androidx.lifecycle.SavedStateHandle
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -30,6 +32,7 @@ import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.testing.MainDispatcherRule
+import org.onebusaway.android.testing.testTripStatus
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.util.Polyline
 import org.junit.Test
@@ -51,6 +54,35 @@ class TripTrajectoryViewModelTest {
                 detailsCollections++
                 awaitCancellation()
             }
+
+        override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> =
+            emptyFlow()
+
+        override suspend fun ensureShape(tripId: String, shapeId: String): Polyline? = null
+    }
+
+    /**
+     * A repository whose details stream, once collected, records each pushed snapshot into the store
+     * that [lookupTripState] serves — the one-way record path the screen relies on. [record] pushes
+     * a snapshot; the collected stream applies it, so a refresh() afterward sees exactly what the
+     * stream recorded.
+     */
+    private class HydratingRepo : TripObservationRepository {
+        // Capacity 1 so record()'s emit doesn't suspend waiting for the collector on the test thread.
+        private val records = MutableSharedFlow<TripState>(extraBufferCapacity = 1)
+
+        @Volatile
+        private var stored: TripState? = null
+
+        suspend fun record(state: TripState) {
+            records.emit(state)
+        }
+
+        override fun lookupTripState(tripId: String?): TripState? = stored
+
+        override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> =
+            // Records on collection; emits nothing — the ViewModel only collects for the side effect.
+            records.transform<TripState, Unit> { stored = it }
 
         override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> =
             emptyFlow()
@@ -93,5 +125,35 @@ class TripTrajectoryViewModelTest {
         vm.refresh(nowMs = 10_000L)
 
         assertEquals(0, vm.state.value.sampleCount)
+    }
+
+    @Test
+    fun `end-to-end - collecting the stream hydrates the store that refresh reads`() = runTest {
+        val repo = HydratingRepo()
+        val vm = viewModel(repo)
+        runCurrent() // init's collector subscribes to the details stream
+
+        // Nothing recorded yet: the store is empty, so refresh reflects an empty trajectory.
+        vm.refresh(nowMs = 10_000L)
+        assertEquals(0, vm.state.value.sampleCount)
+
+        // A poll records a vehicle status into the store via the collected stream.
+        repo.record(
+            TripState("trip1").withStatus(
+                testTripStatus(distanceAlongTrip = 500.0, lastUpdateTime = 5_000L, vehicleId = "bus7"),
+                serverTimeMs = 5_000L,
+                localTimeMs = 5_000L,
+            )
+        )
+        runCurrent()
+
+        // refresh now rebuilds the ui state from the hydrated snapshot.
+        vm.refresh(nowMs = 10_000L)
+        val state = vm.state.value
+        assertEquals("trip1", state.tripId)
+        assertEquals("bus7", state.vehicleId)
+        assertEquals(1, state.sampleCount)
+        assertEquals(1, state.trajectory.observations.size)
+        assertEquals(500.0, state.trajectory.observations.first().distanceMeters, 0.0)
     }
 }

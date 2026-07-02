@@ -167,7 +167,7 @@ fun ArrivalsPanel(
                 direction = content?.header?.direction,
                 isFavorite = content?.header?.isFavorite == true,
                 showActions = content != null,
-                hasAlerts = content?.alerts?.isNotEmpty() == true,
+                hasAlerts = content?.hasAlerts == true,
                 filtering = filtering,
                 collapsed = collapsed,
                 onToggleExpand = onToggleExpand,

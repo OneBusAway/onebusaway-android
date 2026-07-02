@@ -46,7 +46,8 @@ class SingleFlight<K : Any, V : Any>(private val scope: CoroutineScope) {
                     // computeIfAbsent is atomic, so concurrent callers for one key share a Deferred.
                     // The coroutine is LAZY: await() (below) starts it only after computeIfAbsent has
                     // returned and stored the Deferred, so the finally/remove can never run
-                    // re-entrantly — even for an eager dispatcher and a non-suspending block.
+                    // re-entrantly — even for an inline/undispatched dispatcher and a
+                    // non-suspending block.
                     .computeIfAbsent(key) {
                         scope.async(start = CoroutineStart.LAZY) {
                             try {

@@ -84,7 +84,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.ArrivalsViewModelFactoryEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.NetworkEntryPoint
@@ -508,7 +508,7 @@ private fun reportProblemAnalytics(context: Context, kind: ProblemKind) {
     val isTrip = kind == ProblemKind.TRIP
     ObaAnalytics.reportUiEvent(
         FirebaseAnalytics.getInstance(context),
-        Application.get().plausibleInstance,
+        AnalyticsEntryPoint.get(context).plausible,
         if (isTrip) {
             PlausibleAnalytics.REPORT_VEHICLE_PROBLEM_EVENT_URL
         } else {
@@ -612,7 +612,7 @@ private fun Open311FormInline(
             (target.category.raw as? Service)?.let { service ->
                 ObaAnalytics.reportUiEvent(
                     firebaseAnalytics,
-                    Application.get().plausibleInstance,
+                    AnalyticsEntryPoint.get(context).plausible,
                     PlausibleAnalytics.REPORT_OPEN311_SERVER_EVENT_URL,
                     resources.getString(R.string.analytics_problem),
                     service.service_name,

@@ -35,7 +35,7 @@ import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.analytics.AnalyticsProvider
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteDao
 import org.onebusaway.android.database.oba.RouteHeadsignFavoriteDao
@@ -241,7 +241,8 @@ class DefaultArrivalsRepository @Inject constructor(
     private val routeDao: RouteDao,
     private val routeHeadsignFavoriteDao: RouteHeadsignFavoriteDao,
     private val importGate: ImportGate,
-    private val preferences: PreferencesRepository
+    private val preferences: PreferencesRepository,
+    private val analyticsProvider: AnalyticsProvider,
 ) : ArrivalsRepository {
 
     /** The last good snapshot paired with the monotonic device time it was received, so the
@@ -455,7 +456,7 @@ class DefaultArrivalsRepository @Inject constructor(
         val param = "${routeId}_$headsign for ${stopId ?: "all stops"}"
         ObaAnalytics.reportUiEvent(
             FirebaseAnalytics.getInstance(context),
-            Application.get().plausibleInstance,
+            analyticsProvider.plausible,
             PlausibleAnalytics.REPORT_BOOKMARK_EVENT_URL,
             event,
             param,

@@ -3,12 +3,13 @@ package org.onebusaway.android.donations;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 import org.onebusaway.android.analytics.ObaAnalytics;
 import org.onebusaway.android.analytics.PlausibleAnalytics;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
@@ -19,10 +20,19 @@ public class DonationsManager {
     private Resources mResources;
     private int mAppLaunchCount;
 
+    // Application context, kept only to resolve the AnalyticsProvider (for the region-derived Plausible
+    // emitter) lazily at event time. Resolving it lazily — rather than injecting AnalyticsProvider into
+    // this constructor — matters because DonationsManager is built eagerly in Application.onCreate, and
+    // AnalyticsProvider pulls in the RegionRepository, which is deliberately constructed lazily
+    // post-onCreate to avoid the region-init ordering hazard.
+    private final Context mContext;
+
     public DonationsManager(
+            Context context,
             FirebaseAnalytics firebaseAnalytics,
             Resources resources,
             int appLaunchCount) {
+        this.mContext = context;
         this.mAnalytics = firebaseAnalytics;
         this.mResources = resources;
         this.mAppLaunchCount = appLaunchCount;
@@ -37,7 +47,7 @@ public class DonationsManager {
      * @param state the state or variant of the UI item, or null if the item doesn't have a state or variant
      */
     private void reportUIEvent(Integer resourceID, String state) {
-        ObaAnalytics.reportUiEvent(mAnalytics, Application.get().getPlausibleInstance(), PlausibleAnalytics.REPORT_DONATE_EVENT_URL, mResources.getString(resourceID), state);
+        ObaAnalytics.reportUiEvent(mAnalytics, AnalyticsEntryPoint.get(mContext).getPlausible(), PlausibleAnalytics.REPORT_DONATE_EVENT_URL, mResources.getString(resourceID), state);
     }
 
     // endregion

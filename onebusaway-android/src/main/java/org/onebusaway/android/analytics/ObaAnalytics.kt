@@ -21,6 +21,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.onebusaway.plausible.android.Plausible
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.util.PreferenceUtils
 
 /**
@@ -230,7 +231,10 @@ object ObaAnalytics {
 
     private fun string(resId: Int): String = Application.get().getString(resId)
 
-    private fun umami(): UmamiAnalytics? = Application.get().umamiInstance
+    // The Umami emitter now lives on the injected AnalyticsProvider. ObaAnalytics is a context-less
+    // static orchestrator, so it resolves the provider through the EntryPoint using the Application only
+    // as a graph handle (a benign context reach) rather than reading app-global analytics *state* off it.
+    private fun umami(): UmamiAnalytics? = AnalyticsEntryPoint.get(Application.get()).umami
 
     private fun Boolean.toYesNo(): String = if (this) "YES" else "NO"
 }

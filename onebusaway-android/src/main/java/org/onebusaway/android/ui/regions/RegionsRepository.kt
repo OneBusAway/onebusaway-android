@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.analytics.AnalyticsProvider
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.Region
@@ -78,6 +79,7 @@ class DefaultRegionsRepository @Inject constructor(
     private val regionRepository: RegionRepository,
     private val regionCache: RegionCache,
     private val locationRepository: LocationRepository,
+    private val analyticsProvider: AnalyticsProvider,
 ) : RegionsRepository {
 
     // Domain objects from the last successful load, so selectRegion(id) can resolve the Region
@@ -128,7 +130,7 @@ class DefaultRegionsRepository @Inject constructor(
 
         ObaAnalytics.reportUiEvent(
             FirebaseAnalytics.getInstance(context),
-            Application.get().plausibleInstance,
+            analyticsProvider.plausible,
             PlausibleAnalytics.REPORT_REGION_EVENT_URL,
             context.getString(R.string.region_selected_manually),
             region.name

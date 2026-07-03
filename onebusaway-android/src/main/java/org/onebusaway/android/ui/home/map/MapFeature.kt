@@ -60,6 +60,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.firebase.analytics.FirebaseAnalytics
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.models.ObaStop
@@ -129,7 +130,7 @@ fun MapFeature(
                 )
                 ObaAnalytics.reportUiEvent(
                     firebaseAnalytics,
-                    Application.get().plausibleInstance,
+                    AnalyticsEntryPoint.get(context).plausible,
                     PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                     resources.getString(R.string.analytics_label_button_press_map_icon),
                     null,
@@ -149,7 +150,7 @@ fun MapFeature(
                 }
                 ObaAnalytics.reportUiEvent(
                     firebaseAnalytics,
-                    Application.get().plausibleInstance,
+                    AnalyticsEntryPoint.get(context).plausible,
                     PlausibleAnalytics.REPORT_BIKE_EVENT_URL,
                     resources.getString(
                         if (station.isFloatingBike) {
@@ -328,7 +329,7 @@ fun MapFeature(
             mapViewModel.requestMyLocation(useDefaultZoom = true, animate = true)
             ObaAnalytics.reportUiEvent(
                 firebaseAnalytics,
-                Application.get().plausibleInstance,
+                AnalyticsEntryPoint.get(context).plausible,
                 PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                 resources.getString(R.string.analytics_label_button_press_location),
                 null,
@@ -343,7 +344,7 @@ fun MapFeature(
             mapViewModel.setBikeshareLayerVisible(!active, persist = true)
             ObaAnalytics.reportUiEvent(
                 firebaseAnalytics,
-                Application.get().plausibleInstance,
+                AnalyticsEntryPoint.get(context).plausible,
                 PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                 resources.getString(R.string.analytics_layer_bikeshare),
                 resources.getString(

@@ -36,7 +36,7 @@ import androidx.navigation.NavController
 import com.google.firebase.analytics.FirebaseAnalytics
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
@@ -240,7 +240,7 @@ private fun reportEvent(
 ) {
     ObaAnalytics.reportUiEvent(
         firebaseAnalytics,
-        Application.get().plausibleInstance,
+        AnalyticsEntryPoint.get(activity).plausible,
         eventUrl,
         activity.getString(R.string.analytics_problem),
         activity.getString(labelRes)

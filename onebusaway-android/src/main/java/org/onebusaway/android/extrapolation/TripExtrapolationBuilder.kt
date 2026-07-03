@@ -22,6 +22,7 @@ import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.map.render.DataAgeMarker
 import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.Polyline
 
 /**
@@ -39,7 +40,7 @@ import org.onebusaway.android.util.Polyline
 fun buildTripExtrapolation(
     state: TripState,
     result: ExtrapolationResult,
-    nowMs: Long,
+    nowMs: WallTime,
 ): TripExtrapolation? {
     val polyline = state.polyline ?: return null
     val distribution = (result as? ExtrapolationResult.Success)?.distribution
@@ -50,12 +51,13 @@ fun buildTripExtrapolation(
         band = distribution?.let { weightedBandSegments(it, polyline) } ?: emptyList(),
         dataAge = dataAgeMarker(state, nowMs),
         // The anchor's instant is constant between fixes; a change means fresh AVL data arrived.
-        fixTimeMs = state.anchorLocalTimeMs,
+        // Unwrapped to a raw Long for the renderer's animation clock (out of the typed-time slice).
+        fixTimeMs = state.anchorLocalTimeMs.epochMs,
     )
 }
 
 /** Composes [TripState.extrapolate] with [buildTripExtrapolation] — the per-frame producer the driver runs. */
-internal fun extrapolationFromState(state: TripState?, nowMs: Long): TripExtrapolation? =
+internal fun extrapolationFromState(state: TripState?, nowMs: WallTime): TripExtrapolation? =
     state?.let { buildTripExtrapolation(it, it.extrapolate(nowMs), nowMs) }
 
 /** The extrapolated (median) vehicle [point] along the trip shape and its forward [bearing] there. */
@@ -68,7 +70,7 @@ private data class VehicleProjection(val point: GeoPoint, val bearing: Float)
  * per-vehicle dead reckoning between polls; the bearing keeps the marker's direction arrow following
  * the glide instead of the stale server orientation.
  */
-private fun extrapolatedVehicleProjection(state: TripState, nowMs: Long): VehicleProjection? {
+private fun extrapolatedVehicleProjection(state: TripState, nowMs: WallTime): VehicleProjection? {
     val polyline = state.polyline ?: return null
     val distribution = (state.extrapolate(nowMs) as? ExtrapolationResult.Success)?.distribution ?: return null
     val distance = distribution.median().takeIf(Double::isFinite) ?: return null
@@ -97,7 +99,7 @@ private fun extrapolatedVehicleProjection(state: TripState, nowMs: Long): Vehicl
 fun extrapolatedVehicles(
     routeTrips: RouteTrips,
     routeIds: Set<String>,
-    nowMs: Long,
+    nowMs: WallTime,
     directionId: Int? = null,
     lookupState: (String?) -> TripState?,
 ): List<ExtrapolatedVehicle> =
@@ -124,7 +126,8 @@ fun extrapolatedVehicles(
             point = point,
             // The path tangent off the shape; NaN off-shape, so the marker falls back to the orientation.
             bearing = projection?.bearing ?: Float.NaN,
-            fixTimeMs = state?.anchorLocalTimeMs?.takeIf { it > 0L } ?: status.lastUpdateTime,
+            fixTimeMs = state?.let { it.anchorLocalTimeMs.epochMs.takeIf { ms -> ms > 0L } }
+                ?: status.lastUpdateTime,
             status = status,
             isRealtime = isRealtime,
         )
@@ -143,11 +146,13 @@ private fun weightedBandSegments(distribution: ProbDistribution, polyline: Polyl
         WeightedBandSegment(points.map(Location::toGeoPoint), slice.alpha.coerceIn(0f, 1f))
     }
 
-private fun dataAgeMarker(state: TripState, nowMs: Long): DataAgeMarker? {
+private fun dataAgeMarker(state: TripState, nowMs: WallTime): DataAgeMarker? {
     val position = state.anchor?.position ?: return null
-    if (state.anchorLocalTimeMs <= 0) return null
+    if (state.anchorLocalTimeMs.epochMs <= 0) return null
     // Shown whenever there's a last fix, like the original (no max-age hide); the label is its age.
-    return DataAgeMarker(position.toGeoPoint(), (nowMs - state.anchorLocalTimeMs).coerceAtLeast(0L))
+    // now − anchor is a same-domain (device) Duration; unwrap to raw Long ms for the marker.
+    val ageMs = (nowMs - state.anchorLocalTimeMs).inWholeMilliseconds.coerceAtLeast(0L)
+    return DataAgeMarker(position.toGeoPoint(), ageMs)
 }
 
 private fun Location.toGeoPoint() = GeoPoint(latitude, longitude)

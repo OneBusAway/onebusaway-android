@@ -22,6 +22,7 @@ import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.report.TripReportContext
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.getRouteDisplayName
@@ -35,7 +36,7 @@ import java.util.Date
 class ArrivalInfo(
     context: Context?,
     private val data: ArrivalData,
-    now: Long,
+    now: ServerTime,
     includeArrivalDepartureInStatusLabel: Boolean,
     favorite: Boolean,
 ) {
@@ -102,8 +103,8 @@ class ArrivalInfo(
 
     /** The departure time to set a reminder for: the predicted time if known, else the scheduled. */
     val reminderDepartureTime: Long
-        get() = if (data.predictedDepartureTime != 0L) data.predictedDepartureTime
-        else data.scheduledDepartureTime
+        get() = if (data.predictedDepartureTime.epochMs != 0L) data.predictedDepartureTime.epochMs
+        else data.scheduledDepartureTime.epochMs
 
     /** Flattens this arrival into the report flow's scalar context (was ObaArrivalInfo-based). */
     fun toTripReportContext(): TripReportContext = TripReportContext(
@@ -116,10 +117,10 @@ class ArrivalInfo(
         stopId = data.stopId,
         serviceDate = data.serviceDate,
         predicted = data.predicted,
-        predictedArrivalTime = data.predictedArrivalTime,
-        predictedDepartureTime = data.predictedDepartureTime,
-        scheduledArrivalTime = data.scheduledArrivalTime,
-        scheduledDepartureTime = data.scheduledDepartureTime,
+        predictedArrivalTime = data.predictedArrivalTime.epochMs,
+        predictedDepartureTime = data.predictedDepartureTime.epochMs,
+        scheduledArrivalTime = data.scheduledArrivalTime.epochMs,
+        scheduledDepartureTime = data.scheduledDepartureTime.epochMs,
         hasTripStatus = data.hasTripStatus,
         scheduleDeviation = data.scheduleDeviation,
         lastKnownLat = data.lastKnownLat,
@@ -127,10 +128,13 @@ class ArrivalInfo(
     )
 
     init {
-        // First, all times have to be converted to 'minutes'
-        val nowMins = now / MS_IN_MINS
-        val scheduled: Long
-        val predictedTime: Long
+        // First, all times have to be converted to 'minutes'. now/scheduled/predicted are all
+        // server-clock ServerTime — the ETA baseline can't be a device clock (#1620). The minute values
+        // are floored per-instant then subtracted (unchanged behavior); the typed instants guarantee
+        // the subtraction stays same-domain.
+        val nowMins = now.epochMs / MS_IN_MINS
+        val scheduled: ServerTime
+        val predictedTime: ServerTime
         // If this is the first stop in the sequence, show the departure time.
         if (data.stopSequence != 0) {
             scheduled = data.scheduledArrivalTime
@@ -143,17 +147,17 @@ class ArrivalInfo(
             isArrival = false
         }
 
-        val scheduledMins = scheduled / MS_IN_MINS
-        val predictedMins = predictedTime / MS_IN_MINS
+        val scheduledMins = scheduled.epochMs / MS_IN_MINS
+        val predictedMins = predictedTime.epochMs / MS_IN_MINS
 
         if (data.predicted) {
             predicted = true
             eta = predictedMins - nowMins
-            displayTime = predictedTime
+            displayTime = predictedTime.epochMs
         } else {
             predicted = false
             eta = scheduledMins - nowMins
-            displayTime = scheduled
+            displayTime = scheduled.epochMs
         }
 
         color = ArrivalInfoUtils.computeColor(scheduledMins, predictedMins)
@@ -181,8 +185,8 @@ class ArrivalInfo(
      */
     private fun computeStatusLabel(
         context: Context?,
-        now: Long,
-        predictedTime: Long,
+        now: ServerTime,
+        predictedTime: ServerTime,
         scheduledMins: Long,
         predictedMins: Long,
         includeArrivalDeparture: Boolean
@@ -213,7 +217,7 @@ class ArrivalInfo(
             val formatter = DateFormat.getTimeInstance(DateFormat.SHORT)
 
             val statusLabelId: Int
-            val time: Long
+            val time: ServerTime
 
             if (now < frequency.startTime) {
                 statusLabelId = R.string.stop_info_frequency_from
@@ -223,11 +227,11 @@ class ArrivalInfo(
                 time = frequency.endTime
             }
 
-            val label = formatter.format(Date(time))
+            val label = formatter.format(Date(time.epochMs))
             return context.getString(statusLabelId, headwayAsMinutes, label)
         }
 
-        if (predictedTime != 0L) {
+        if (predictedTime.epochMs != 0L) {
             // Real-time info
             var delay = predictedMins - scheduledMins
 

@@ -48,7 +48,7 @@ class TripsForRouteDecodeTest {
         assertEquals(38, observations.size)
         val first = observations[0]
         assertEquals("Hillsborough Area Regional Transit_101446", first.tripId)
-        assertEquals(1444073094612L, first.serverTimeMs)
+        assertEquals(1444073094612L, first.serverTimeMs.epochMs)
         assertEquals(1444017600000L, first.serviceDate)
         // Resolved through the refs: trip -> route -> type 3 (bus).
         assertEquals(3, first.routeType)

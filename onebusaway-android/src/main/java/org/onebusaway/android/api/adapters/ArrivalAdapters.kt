@@ -21,6 +21,7 @@ import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FrequencyWindow
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
+import org.onebusaway.android.time.ServerTime
 
 /** Adapts a modernized [ArrivalDeparture] DTO (arrivals fetch) to the [ArrivalData] model. */
 internal fun ArrivalDeparture.asArrivalData(): ArrivalData = DtoArrivalData(this)
@@ -36,13 +37,14 @@ private class DtoArrivalData(private val d: ArrivalDeparture) : ArrivalData {
     override val serviceDate get() = d.serviceDate
     override val vehicleId get() = d.vehicleId
     override val predicted get() = d.predicted
-    override val scheduledArrivalTime get() = d.scheduledArrivalTime
-    override val predictedArrivalTime get() = d.predictedArrivalTime
-    override val scheduledDepartureTime get() = d.scheduledDepartureTime
-    override val predictedDepartureTime get() = d.predictedDepartureTime
+    // Wire→server mint: these are the server clock, already epoch millis.
+    override val scheduledArrivalTime get() = ServerTime(d.scheduledArrivalTime)
+    override val predictedArrivalTime get() = ServerTime(d.predictedArrivalTime)
+    override val scheduledDepartureTime get() = ServerTime(d.scheduledDepartureTime)
+    override val predictedDepartureTime get() = ServerTime(d.predictedDepartureTime)
     override val status get() = d.tripStatus?.status?.let { Status.fromString(it) }
     override val frequency
-        get() = d.frequency?.let { FrequencyWindow(it.startTime, it.endTime, it.headway) }
+        get() = d.frequency?.let { FrequencyWindow(ServerTime(it.startTime), ServerTime(it.endTime), it.headway) }
     override val historicalOccupancy get() = Occupancy.fromString(d.historicalOccupancy)
     override val predictedOccupancy get() = Occupancy.fromString(d.occupancyStatus)
     override val hasTripStatus get() = d.tripStatus != null

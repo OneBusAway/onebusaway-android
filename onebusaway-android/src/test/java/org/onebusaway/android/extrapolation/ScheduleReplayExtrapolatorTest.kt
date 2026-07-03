@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.extrapolation
 
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.api.adapters.StopTimeData
 import org.onebusaway.android.api.adapters.TripScheduleData
 
@@ -137,7 +138,7 @@ class ScheduleReplayExtrapolatorTest {
 
     /** Convenience: replay from time 0 advancing by dtSec seconds. */
     private fun replay(schedule: ObaTripSchedule, startDist: Double, dtSec: Double): Double? =
-            replaySchedule(schedule, startDist, 0L, (dtSec * 1000).toLong())
+            replaySchedule(schedule, startDist, WallTime(0L), WallTime((dtSec * 1000).toLong()))
 
     // --- Helpers ---
 

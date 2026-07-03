@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui.dataview
 
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import androidx.lifecycle.SavedStateHandle
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
@@ -141,8 +143,8 @@ class TripTrajectoryViewModelTest {
         repo.record(
             TripState("trip1").withStatus(
                 testTripStatus(distanceAlongTrip = 500.0, lastUpdateTime = 5_000L, vehicleId = "bus7"),
-                serverTimeMs = 5_000L,
-                localTimeMs = 5_000L,
+                serverTimeMs = ServerTime(5_000L),
+                localTimeMs = WallTime(5_000L),
             )
         )
         runCurrent()

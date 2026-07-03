@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.Polyline
 
 const val DEFAULT_POLL_INTERVAL_MS = 10_000L
@@ -143,7 +144,7 @@ class DefaultTripObservationRepository @Inject constructor(
 
     /** Records everything a trip details poll carries: shapeId/active-trip, schedule, service date, observations. */
     private fun recordTripDetails(tripId: String, details: TripDetails) {
-        val localTimeMs = System.currentTimeMillis()
+        val localTimeMs = WallTime.now()
         cache.putTripDetails(tripId, details.vehicleActiveTripId, details.shapeId)
         cache.putSchedule(tripId, details.schedule)
         cache.putServiceDate(tripId, details.serviceDate)
@@ -151,7 +152,7 @@ class DefaultTripObservationRepository @Inject constructor(
     }
 
     private fun recordTripsForRoute(response: RouteTrips) {
-        val localTimeMs = System.currentTimeMillis()
+        val localTimeMs = WallTime.now()
         response.toObservations().forEach { cache.record(it, localTimeMs) }
     }
 

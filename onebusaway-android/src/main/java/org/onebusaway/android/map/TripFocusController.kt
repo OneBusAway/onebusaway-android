@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import org.onebusaway.android.extrapolation.TripExtrapolation
 import org.onebusaway.android.extrapolation.extrapolationFromState
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.map.render.BandSegment
 import org.onebusaway.android.map.render.CameraCommand
@@ -63,7 +64,7 @@ class TripFocusController(
         // here with a color that contrasts the line, so it reads against the trip shape.
         val bandColor = contrastingColor(routeColorArgb)
         renderState.setTripOverlaySampler { nowMs ->
-            extrapolationFromState(tripObservationRepository.lookupTripState(tripId), nowMs)?.toOverlay(bandColor)
+            extrapolationFromState(tripObservationRepository.lookupTripState(tripId), WallTime(nowMs))?.toOverlay(bandColor)
         }
         job = scope.launch {
             // Keep this trip's volatile status fresh while the overlay is on screen; the repository

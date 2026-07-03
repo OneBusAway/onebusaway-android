@@ -18,6 +18,8 @@ package org.onebusaway.android.extrapolation
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.DiracDistribution
 import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.time.WallTime
+import kotlin.time.DurationUnit
 
 /**
  * Per-trip extrapolator for grade-separated transit (rail, subway) that replays the schedule
@@ -27,20 +29,20 @@ class ScheduleReplayExtrapolator(state: TripState) : Extrapolator(state) {
 
     override fun doExtrapolate(
             lastDist: Double,
-            lastTimeMs: Long,
-            queryTimeMs: Long
+            lastTime: WallTime,
+            queryTime: WallTime
     ): ExtrapolationResult {
         val schedule = state.schedule ?: return ExtrapolationResult.MissingSchedule
         val distance =
-                replaySchedule(schedule, lastDist, lastTimeMs, queryTimeMs)
+                replaySchedule(schedule, lastDist, lastTime, queryTime)
                         ?: return ExtrapolationResult.MissingSchedule
         return ExtrapolationResult.Success(DiracDistribution(distance))
     }
 }
 
 /**
- * Replays the schedule forward from [startDist] by the elapsed time between [lastTimeMs] and
- * [queryTimeMs].
+ * Replays the schedule forward from [startDist] by the elapsed time between [lastTime] and
+ * [queryTime].
  *
  * Finds the schedule segment bracketing startDist, computes the corresponding schedule time, adds
  * the elapsed time, then walks forward through stops — traveling at segment speeds between stops
@@ -48,17 +50,17 @@ class ScheduleReplayExtrapolator(state: TripState) : Extrapolator(state) {
  *
  * @param schedule the trip schedule containing stop times
  * @param startDist the starting distance along the trip in meters
- * @param lastTimeMs the timestamp of the starting position in milliseconds
- * @param queryTimeMs the target time in milliseconds
+ * @param lastTime the device-wall-clock instant of the starting position
+ * @param queryTime the device-wall-clock target time (same domain as [lastTime])
  * @return the extrapolated distance in meters, or null if out of bounds
  */
 fun replaySchedule(
         schedule: ObaTripSchedule,
         startDist: Double,
-        lastTimeMs: Long,
-        queryTimeMs: Long
+        lastTime: WallTime,
+        queryTime: WallTime
 ): Double? {
-    val dtSec = (queryTimeMs - lastTimeMs) / 1000.0
+    val dtSec = (queryTime - lastTime).toDouble(DurationUnit.SECONDS)
     val stopTimes = schedule.stopTimes ?: return null
     if (stopTimes.size < 2 || dtSec < 0) return null
 

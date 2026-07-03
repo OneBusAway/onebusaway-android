@@ -19,6 +19,7 @@ import android.content.Context
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.models.ArrivalData
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.ArrivalInfoUtils
 
 /**
@@ -34,7 +35,7 @@ fun convertArrivals(
     context: Context,
     arrivals: List<ArrivalData>,
     filter: Collection<String>?,
-    ms: Long,
+    ms: ServerTime,
     includeArrivalDepartureInStatusLabel: Boolean,
     isFavorite: (routeId: String, headsign: String?, stopId: String) -> Boolean,
 ): List<ArrivalInfo> {

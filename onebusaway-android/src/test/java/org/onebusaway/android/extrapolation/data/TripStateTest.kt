@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.extrapolation.data
 
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.api.adapters.StopTimeData
 import org.onebusaway.android.api.adapters.TripScheduleData
 import org.junit.Assert.assertEquals
@@ -37,14 +39,14 @@ class TripStateTest {
     @Test
     fun `extrapolate returns NoData when no anchor`() {
         val state = TripState.empty("trip1")
-        val result = state.extrapolate(System.currentTimeMillis())
+        val result = state.extrapolate(WallTime(System.currentTimeMillis()))
         assertTrue(result is ExtrapolationResult.NoData)
     }
 
     @Test
     fun `toServerClock leaves the time unchanged when there is no anchor`() {
         // No skew can be measured without an anchor, so the local clock passes through.
-        assertEquals(12_345L, TripState.empty("trip1").toServerClock(12_345L))
+        assertEquals(12_345L, TripState.empty("trip1").toServerClock(WallTime(12_345L)).epochMs)
     }
 
     @Test
@@ -54,10 +56,10 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 105_000L),
-                                serverTimeMs = 105_000L,
-                                localTimeMs = 100_000L
+                                serverTimeMs = ServerTime(105_000L),
+                                localTimeMs = WallTime(100_000L)
                         )
-        assertEquals(107_000L, state.toServerClock(102_000L))
+        assertEquals(107_000L, state.toServerClock(WallTime(102_000L)).epochMs)
     }
 
     @Test
@@ -66,11 +68,11 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = null, lastUpdateTime = 1000L),
-                                serverTimeMs = 1000L,
-                                localTimeMs = 1000L
+                                serverTimeMs = ServerTime(1000L),
+                                localTimeMs = WallTime(1000L)
                         )
         // withStatus() skips entries with null distance, so anchor stays null
-        val result = state.extrapolate(1000L)
+        val result = state.extrapolate(WallTime(1000L))
         assertTrue(result is ExtrapolationResult.NoData)
     }
 
@@ -81,10 +83,10 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 0L),
-                                serverTimeMs = 0L,
-                                localTimeMs = 0L
+                                serverTimeMs = ServerTime(0L),
+                                localTimeMs = WallTime(0L)
                         )
-        val result = state.extrapolate(1000L)
+        val result = state.extrapolate(WallTime(1000L))
         assertTrue(result is ExtrapolationResult.NoData)
     }
 
@@ -96,11 +98,11 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = serverTime),
-                                serverTimeMs = serverTime,
-                                localTimeMs = localTime
+                                serverTimeMs = ServerTime(serverTime),
+                                localTimeMs = WallTime(localTime)
                         )
         // Query time is before anchor local time → dtMs < 0
-        val result = state.extrapolate(localTime - 1)
+        val result = state.extrapolate(WallTime(localTime - 1))
         assertTrue(result is ExtrapolationResult.Stale)
     }
 
@@ -112,11 +114,11 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = serverTime),
-                                serverTimeMs = serverTime,
-                                localTimeMs = localTime
+                                serverTimeMs = ServerTime(serverTime),
+                                localTimeMs = WallTime(localTime)
                         )
         // MAX_HORIZON_MS = 15 * 60 * 1000 = 900_000
-        val result = state.extrapolate(localTime + 900_001L)
+        val result = state.extrapolate(WallTime(localTime + 900_001L))
         assertTrue(result is ExtrapolationResult.Stale)
     }
 
@@ -128,13 +130,13 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = serverTime),
-                                serverTimeMs = serverTime,
-                                localTimeMs = localTime
+                                serverTimeMs = ServerTime(serverTime),
+                                localTimeMs = WallTime(localTime)
                         )
         // The stale check is strict (dtMs > MAX_HORIZON_MS), so dtMs == MAX_HORIZON_MS is
         // still allowed and reaches the extrapolator — which reports MissingSchedule here
         // because this state has no schedule
-        val result = state.extrapolate(localTime + 900_000L)
+        val result = state.extrapolate(WallTime(localTime + 900_000L))
         assertTrue(result is ExtrapolationResult.MissingSchedule)
     }
 
@@ -147,10 +149,10 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 49.0, lastUpdateTime = serverTime),
-                                serverTimeMs = serverTime,
-                                localTimeMs = localTime
+                                serverTimeMs = ServerTime(serverTime),
+                                localTimeMs = WallTime(localTime)
                         )
-        val result = state.extrapolate(localTime + 1000L)
+        val result = state.extrapolate(WallTime(localTime + 1000L))
         assertTrue(result is ExtrapolationResult.TripNotStarted)
     }
 
@@ -162,10 +164,10 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 50.0, lastUpdateTime = serverTime),
-                                serverTimeMs = serverTime,
-                                localTimeMs = localTime
+                                serverTimeMs = ServerTime(serverTime),
+                                localTimeMs = WallTime(localTime)
                         )
-        val result = state.extrapolate(localTime + 1000L)
+        val result = state.extrapolate(WallTime(localTime + 1000L))
         // 50.0 <= 50.0 is true, so TripNotStarted
         assertTrue(result is ExtrapolationResult.TripNotStarted)
     }
@@ -184,10 +186,10 @@ class TripStateTest {
                                         totalDistanceAlongTrip = 10000.0,
                                         lastUpdateTime = serverTime
                                 ),
-                                serverTimeMs = serverTime,
-                                localTimeMs = localTime
+                                serverTimeMs = ServerTime(serverTime),
+                                localTimeMs = WallTime(localTime)
                         )
-        val result = state.extrapolate(localTime + 1000L)
+        val result = state.extrapolate(WallTime(localTime + 1000L))
         assertTrue(result is ExtrapolationResult.TripEnded)
     }
 
@@ -203,10 +205,10 @@ class TripStateTest {
                                         totalDistanceAlongTrip = null,
                                         lastUpdateTime = serverTime
                                 ),
-                                serverTimeMs = serverTime,
-                                localTimeMs = localTime
+                                serverTimeMs = ServerTime(serverTime),
+                                localTimeMs = WallTime(localTime)
                         )
-        val result = state.extrapolate(localTime + 1000L)
+        val result = state.extrapolate(WallTime(localTime + 1000L))
         // Without totalDist, trip-ended check is skipped; should reach the extrapolator
         assertFalse(result is ExtrapolationResult.TripEnded)
     }
@@ -223,10 +225,10 @@ class TripStateTest {
                                         totalDistanceAlongTrip = 0.0,
                                         lastUpdateTime = serverTime
                                 ),
-                                serverTimeMs = serverTime,
-                                localTimeMs = localTime
+                                serverTimeMs = ServerTime(serverTime),
+                                localTimeMs = WallTime(localTime)
                         )
-        val result = state.extrapolate(localTime + 1000L)
+        val result = state.extrapolate(WallTime(localTime + 1000L))
         assertFalse(result is ExtrapolationResult.TripEnded)
     }
 
@@ -242,8 +244,8 @@ class TripStateTest {
         val after =
                 before.withStatus(
                         status(distanceAlongTrip = null, lastUpdateTime = 1000L),
-                        serverTimeMs = 1000L,
-                        localTimeMs = 1000L
+                        serverTimeMs = ServerTime(1000L),
+                        localTimeMs = WallTime(1000L)
                 )
         assertSame(before, after)
         assertEquals(0, after.history.size)
@@ -255,8 +257,8 @@ class TripStateTest {
         val after =
                 before.withStatus(
                         status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L),
-                        serverTimeMs = 0L,
-                        localTimeMs = 1000L
+                        serverTimeMs = ServerTime(0L),
+                        localTimeMs = WallTime(1000L)
                 )
         assertSame(before, after)
         assertEquals(0, after.history.size)
@@ -268,8 +270,8 @@ class TripStateTest {
         val after =
                 before.withStatus(
                         status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L),
-                        serverTimeMs = -1L,
-                        localTimeMs = 1000L
+                        serverTimeMs = ServerTime(-1L),
+                        localTimeMs = WallTime(1000L)
                 )
         assertSame(before, after)
     }
@@ -280,8 +282,8 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L),
-                                serverTimeMs = 2000L,
-                                localTimeMs = 2000L
+                                serverTimeMs = ServerTime(2000L),
+                                localTimeMs = WallTime(2000L)
                         )
         assertEquals(1, state.history.size)
     }
@@ -290,8 +292,8 @@ class TripStateTest {
     fun `withStatus skips duplicate distance and time`() {
         val s = status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L)
         val before =
-                TripState.empty("trip1").withStatus(s, serverTimeMs = 2000L, localTimeMs = 2000L)
-        val after = before.withStatus(s, serverTimeMs = 3000L, localTimeMs = 3000L)
+                TripState.empty("trip1").withStatus(s, serverTimeMs = ServerTime(2000L), localTimeMs = WallTime(2000L))
+        val after = before.withStatus(s, serverTimeMs = ServerTime(3000L), localTimeMs = WallTime(3000L))
         assertSame(before, after)
         assertEquals(1, after.history.size)
     }
@@ -302,13 +304,13 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L),
-                                serverTimeMs = 2000L,
-                                localTimeMs = 2000L
+                                serverTimeMs = ServerTime(2000L),
+                                localTimeMs = WallTime(2000L)
                         )
                         .withStatus(
                                 status(distanceAlongTrip = 600.0, lastUpdateTime = 1000L),
-                                serverTimeMs = 3000L,
-                                localTimeMs = 3000L
+                                serverTimeMs = ServerTime(3000L),
+                                localTimeMs = WallTime(3000L)
                         )
         assertEquals(2, state.history.size)
     }
@@ -319,13 +321,13 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L),
-                                serverTimeMs = 2000L,
-                                localTimeMs = 2000L
+                                serverTimeMs = ServerTime(2000L),
+                                localTimeMs = WallTime(2000L)
                         )
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 2000L),
-                                serverTimeMs = 3000L,
-                                localTimeMs = 3000L
+                                serverTimeMs = ServerTime(3000L),
+                                localTimeMs = WallTime(3000L)
                         )
         assertEquals(2, state.history.size)
     }
@@ -336,16 +338,16 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 1000L),
-                                serverTimeMs = 2000L,
-                                localTimeMs = 2000L
+                                serverTimeMs = ServerTime(2000L),
+                                localTimeMs = WallTime(2000L)
                         )
                         .withStatus(
                                 status(distanceAlongTrip = 600.0, lastUpdateTime = 3000L),
-                                serverTimeMs = 4000L,
-                                localTimeMs = 4000L
+                                serverTimeMs = ServerTime(4000L),
+                                localTimeMs = WallTime(4000L)
                         )
         assertEquals(600.0, state.anchor!!.distanceAlongTrip!!, 0.0)
-        assertEquals(3000L, state.anchorTimeMs)
+        assertEquals(3000L, state.anchorTimeMs.epochMs)
     }
 
     @Test
@@ -359,8 +361,8 @@ class TripStateTest {
                                         lastUpdateTime = 1000L,
                                         predicted = false
                                 ),
-                                serverTimeMs = 2000L,
-                                localTimeMs = 2000L
+                                serverTimeMs = ServerTime(2000L),
+                                localTimeMs = WallTime(2000L)
                         )
                         // Second: realtime, same lastUpdateTime
                         .withStatus(
@@ -370,8 +372,8 @@ class TripStateTest {
                                         predicted = true,
                                         hasLastKnownLocation = true
                                 ),
-                                serverTimeMs = 3000L,
-                                localTimeMs = 3000L
+                                serverTimeMs = ServerTime(3000L),
+                                localTimeMs = WallTime(3000L)
                         )
         // GPS entry should win the tie
         assertEquals(600.0, state.anchor!!.distanceAlongTrip!!, 0.0)
@@ -383,11 +385,11 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 5000L),
-                                serverTimeMs = 10_000L,
-                                localTimeMs = 10_000L
+                                serverTimeMs = ServerTime(10_000L),
+                                localTimeMs = WallTime(10_000L)
                         )
         // effectiveTime = lastUpdateTime = 5000
-        assertEquals(5000L, state.anchorTimeMs)
+        assertEquals(5000L, state.anchorTimeMs.epochMs)
     }
 
     @Test
@@ -396,11 +398,11 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 0L),
-                                serverTimeMs = 10_000L,
-                                localTimeMs = 10_000L
+                                serverTimeMs = ServerTime(10_000L),
+                                localTimeMs = WallTime(10_000L)
                         )
         // effectiveTime = serverTimeMs = 10000
-        assertEquals(10_000L, state.anchorTimeMs)
+        assertEquals(10_000L, state.anchorTimeMs.epochMs)
     }
 
     @Test
@@ -410,12 +412,12 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = 5000L),
-                                serverTimeMs = 12_000L,
-                                localTimeMs = 10_000L
+                                serverTimeMs = ServerTime(12_000L),
+                                localTimeMs = WallTime(10_000L)
                         )
         // serverLocalOffset = 12000 - 10000 = 2000
         // anchorLocalTimeMs = effectiveTime - offset = 5000 - 2000 = 3000
-        assertEquals(3000L, state.anchorLocalTimeMs)
+        assertEquals(3000L, state.anchorLocalTimeMs.epochMs)
     }
 
     @Test
@@ -425,8 +427,8 @@ class TripStateTest {
             state =
                     state.withStatus(
                             status(distanceAlongTrip = i.toDouble(), lastUpdateTime = i.toLong()),
-                            serverTimeMs = i.toLong() + 1000,
-                            localTimeMs = i.toLong() + 1000
+                            serverTimeMs = ServerTime(i.toLong() + 1000),
+                            localTimeMs = WallTime(i.toLong() + 1000)
                     )
         }
         assertEquals(100, state.history.size)
@@ -450,21 +452,21 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = localTime),
-                                serverTimeMs = localTime,
-                                localTimeMs = localTime
+                                serverTimeMs = ServerTime(localTime),
+                                localTimeMs = WallTime(localTime)
                         )
                         .withSchedule(schedule)
 
         // No routeType yet → gamma model
         assertTrue(
-                unknownType.extrapolate(localTime + 10_000L)
+                unknownType.extrapolate(WallTime(localTime + 10_000L))
                         is ExtrapolationResult.MissingSchedule
         )
 
         // routeType arrives on a later poll: the copy re-derives the extrapolator, so a
         // grade-separated trip switches to schedule replay instead of staying locked to gamma
         val rail = unknownType.withRouteType(ObaRoute.TYPE_SUBWAY)
-        assertTrue(rail.extrapolate(localTime + 10_000L) is ExtrapolationResult.Success)
+        assertTrue(rail.extrapolate(WallTime(localTime + 10_000L)) is ExtrapolationResult.Success)
     }
 
     @Test
@@ -474,12 +476,12 @@ class TripStateTest {
                 TripState.empty("trip1")
                         .withStatus(
                                 status(distanceAlongTrip = 500.0, lastUpdateTime = localTime),
-                                serverTimeMs = localTime,
-                                localTimeMs = localTime
+                                serverTimeMs = ServerTime(localTime),
+                                localTimeMs = WallTime(localTime)
                         )
                         .withSchedule(schedule)
                         .withRouteType(ObaRoute.TYPE_BUS)
-        assertTrue(bus.extrapolate(localTime + 10_000L) is ExtrapolationResult.MissingSchedule)
+        assertTrue(bus.extrapolate(WallTime(localTime + 10_000L)) is ExtrapolationResult.MissingSchedule)
     }
 
     @Test

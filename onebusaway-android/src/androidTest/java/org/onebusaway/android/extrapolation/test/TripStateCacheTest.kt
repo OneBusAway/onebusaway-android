@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.extrapolation.test
 
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.api.adapters.StopTimeData
 import org.onebusaway.android.api.adapters.TripScheduleData
 
@@ -276,7 +278,7 @@ class TripStateCacheTest {
         recordStatus(status1, System.currentTimeMillis(), System.currentTimeMillis())
         recordStatus(status2, System.currentTimeMillis(), System.currentTimeMillis())
 
-        val result = cache.lookupTripState("trip1")!!.extrapolate(queryTime + 5000)
+        val result = cache.lookupTripState("trip1")!!.extrapolate(WallTime(queryTime + 5000))
         assertTrue("Should succeed", result is ExtrapolationResult.Success)
         val dist = (result as ExtrapolationResult.Success).distribution
         assertTrue("Median distance should be > last distance", dist.median() > 400.0)
@@ -289,7 +291,7 @@ class TripStateCacheTest {
         val status = createStatus("v1", "trip1", 47.0, -122.0, 100.0, null, 5000.0, timestamp)
         recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
 
-        val result = cache.lookupTripState("trip1")!!.extrapolate(timestamp)
+        val result = cache.lookupTripState("trip1")!!.extrapolate(WallTime(timestamp))
         assertTrue("Should be MissingSchedule", result is ExtrapolationResult.MissingSchedule)
     }
 
@@ -342,7 +344,7 @@ class TripStateCacheTest {
                 )
 
         recordStatus(latestStatus, System.currentTimeMillis(), System.currentTimeMillis())
-        val result = cache.lookupTripState("trip1")!!.extrapolate(latestTimestamp)
+        val result = cache.lookupTripState("trip1")!!.extrapolate(WallTime(latestTimestamp))
         assertTrue("Should succeed", result is ExtrapolationResult.Success)
         val dist = (result as ExtrapolationResult.Success).distribution
         assertTrue("Extrapolated distance should be positive", dist.median() > 0)
@@ -356,11 +358,11 @@ class TripStateCacheTest {
                     TripObservation(
                             status.activeTripId!!,
                             status,
-                            serverTimeMs,
+                            ServerTime(serverTimeMs),
                             serviceDate = 0,
                             routeType = null
                     ),
-                    localTimeMs
+                    WallTime(localTimeMs)
             )
 
     private fun createStatus(

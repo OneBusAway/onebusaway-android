@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.dataview
 
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.data.TripState
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 
 /** A plotted point: distance along the trip (meters) at a server-clock time (ms since epoch). */
@@ -134,12 +135,13 @@ fun dataBounds(distances: List<Double>, times: List<Long>, padFraction: Double =
  * [TripState.extrapolate] still receives the local time it expects (it compares against the anchor's
  * local clock).
  */
-fun buildTrajectory(state: TripState, nowMs: Long): TripTrajectory {
-    val serverNowMs = state.toServerClock(nowMs)
+fun buildTrajectory(state: TripState, nowMs: WallTime): TripTrajectory {
+    // Plot on the server-clock axis; unwrap to raw Long for the graph's time coordinates.
+    val serverNowMs = state.toServerClock(nowMs).epochMs
 
     val observations = state.history.mapNotNull { entry ->
         val dist = entry.status.distanceAlongTrip ?: return@mapNotNull null
-        val time = entry.status.lastUpdateTime.takeIf { it > 0 } ?: entry.serverTimeMs
+        val time = entry.status.lastUpdateTime.takeIf { it > 0 } ?: entry.serverTimeMs.epochMs
         TrajectoryPoint(dist, time)
     }
 
@@ -169,7 +171,7 @@ fun buildTrajectory(state: TripState, nowMs: Long): TripTrajectory {
     return TripTrajectory(observations, schedule, extrapolation, dataBounds(distances, times), serverNowMs)
 }
 
-private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, nowMs: Long): ExtrapolationSeries? {
+private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, nowMs: WallTime): ExtrapolationSeries? {
     val distribution = (state.extrapolate(nowMs) as? ExtrapolationResult.Success)?.distribution ?: return null
     val anchorDist = state.anchor?.distanceAlongTrip ?: return null
     val median = distribution.median()
@@ -177,8 +179,8 @@ private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, 
     val high = distribution.quantile(CI_HIGH_QUANTILE)
     if (!median.isFinite() || !low.isFinite() || !high.isFinite()) return null
     return ExtrapolationSeries(
-        anchor = TrajectoryPoint(anchorDist, state.anchorTimeMs),
-        nowMs = state.toServerClock(nowMs),
+        anchor = TrajectoryPoint(anchorDist, state.anchorTimeMs.epochMs),
+        nowMs = state.toServerClock(nowMs).epochMs,
         medianMeters = median,
         lowMeters = low,
         highMeters = high,

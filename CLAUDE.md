@@ -144,6 +144,35 @@ Keep ETA/active-window helpers pure — pass the "now" in as a parameter (see `S
 `ArrivalInfo`); don't call the clock inside a helper. This is verified by `SituationUtilsTest` and
 `ServerNowMsTest`.
 
+### Typed instants make the mix a compile error (#1620)
+
+New time math should use the domain-tagged value classes in `org.onebusaway.android.time`
+(`TypedTime.kt`) rather than raw `Long`s, so the rules above are enforced by the compiler, not just
+review:
+
+- `ServerTime` — the OBA server clock (`currentTime`, arrival predictions, `lastUpdateTime`).
+- `WallTime` — the device wall clock (`System.currentTimeMillis()`), where extrapolation pairs each
+  server time with its local receive time.
+- `ElapsedTime` — the monotonic clock (`SystemClock.elapsedRealtime()`), for real elapsed intervals.
+
+The **only** arithmetic defined is same-domain subtraction, which yields a `kotlin.time.Duration`;
+there is no `ServerTime.minus(WallTime)`, so the #27-class bug (server timestamp − device now) fails
+to compile. `TripState` and the arrivals ETA path (`ArrivalInfo`/`ArrivalData`) already use these —
+follow that pattern when adding server-domain time math.
+
+- **Mint at the boundary:** wrap a raw wire/Android `Long` into its domain right where it enters
+  (`ServerTime(currentTime)`, `WallTime.now()`); unwrap `.epochMs` / `.ms` only when handing a value
+  to a platform API (formatting, alarms, the renderer's animation clock). Keep the ceremony at the
+  edges, not in the middle.
+- **The typed classes carry no wire knowledge.** Any unit normalization (e.g. the service-alert
+  active-window seconds↔millis rule) stays on the **API side**, at the wire→domain adapter — see
+  `situationEpochToMillis` in `api/data/ServerClockNormalization.kt`, the single place that rule lives.
+  The API layer normalizes, then hands `ServerTime` a value that is already epoch millis. Do not
+  re-implement the seconds/millis guess anywhere else (see "No unsanctioned heuristics" below).
+- The one deliberate server↔device crossing (measuring skew from a paired response) is done on raw
+  `.epochMs` with an explicit comment — see `TripState.withStatus`/`toServerClock`. Verified by
+  `TypedTimeTest`.
+
 ## No unsanctioned heuristics
 
 Do **not** introduce heuristics — magic thresholds, magnitude guesses, or "good enough" inference of

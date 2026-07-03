@@ -28,6 +28,7 @@ import org.onebusaway.android.extrapolation.ExtrapolatedVehicle
 import org.onebusaway.android.extrapolation.extrapolatedVehicles
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
+import org.onebusaway.android.time.WallTime
 import java.net.HttpURLConnection
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.models.ObaRoute
@@ -134,7 +135,7 @@ class RouteMapController(
             latestPoll?.let { poll ->
                 MapVehicles(
                     markers = extrapolatedVehicles(
-                        poll.response, routeIds, nowMs, resolved.directionId,
+                        poll.response, routeIds, WallTime(nowMs), resolved.directionId,
                         tripObservationRepository::lookupTripState,
                     ).map { it.toMarker() },
                     response = poll.response,

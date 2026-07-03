@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.map
 
+import org.onebusaway.android.time.WallTime
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
@@ -73,7 +74,7 @@ class VehicleIconAllocationTest {
             .mapNotNull { it.status?.activeTripId }
             .mapNotNull { response.trip(it)?.routeId }
             .toSet()
-        return extrapolatedVehicles(response, routeIds, nowMs = 1_000_000L) { null }
+        return extrapolatedVehicles(response, routeIds, nowMs = WallTime(1_000_000L)) { null }
             .map { v ->
                 VehicleMarker(
                     activeTripId = v.status.activeTripId.orEmpty(),

@@ -44,6 +44,7 @@ import org.onebusaway.android.database.oba.RouteListRow
 import org.onebusaway.android.database.oba.StopListRow
 import org.onebusaway.android.database.oba.TripDepartureTime
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.convertArrivals
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.MyTextUtils
@@ -322,7 +323,7 @@ private suspend fun fetchStopBadges(context: Context, stopId: String): List<Arri
             .getOrThrow()
         // Server clock as the ETA baseline so badges cancel device clock skew (#1612). These badge
         // rows don't render the favorite star, so favorite state is always false.
-        convertArrivals(context, snapshot.arrivals, null, snapshot.currentTime, false) { _, _, _ -> false }
+        convertArrivals(context, snapshot.arrivals, null, ServerTime(snapshot.currentTime), false) { _, _, _ -> false }
             .take(MAX_ARRIVALS_PER_STOP)
             .map { it.toBadge(context) }
     }.getOrDefault(emptyList())

@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.nav.NavRoutes
 
 /**
@@ -61,7 +62,7 @@ class TripTrajectoryViewModel @Inject constructor(
             vehicleId = snapshot.anchor?.vehicleId,
             sampleCount = snapshot.history.size,
             tripEnded = snapshot.vehicleActiveTripId != null && snapshot.vehicleActiveTripId != tripId,
-            trajectory = buildTrajectory(snapshot, nowMs),
+            trajectory = buildTrajectory(snapshot, WallTime(nowMs)),
         )
     }
 }

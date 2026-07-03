@@ -48,6 +48,7 @@ import org.onebusaway.android.database.oba.markStopUsed
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.models.contentKey
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
@@ -323,7 +324,7 @@ class DefaultArrivalsRepository @Inject constructor(
         // memory (the legacy per-row ContentProvider lookup is gone).
         val favoriteRows = routeHeadsignFavoriteDao.favoritesForStopOrAll(snapshot.stopId)
         val arrivals = convertArrivals(
-            context, snapshot.arrivals, routeFilter, now, includeArrivalDepartureLabel
+            context, snapshot.arrivals, routeFilter, ServerTime(now), includeArrivalDepartureLabel
         ) { routeId, headsign, stopId ->
             computeRouteHeadsignFavorite(favoriteRows, routeId, headsign, stopId)
         }

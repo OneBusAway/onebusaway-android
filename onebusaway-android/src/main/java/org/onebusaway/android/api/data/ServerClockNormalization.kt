@@ -30,8 +30,9 @@ internal fun serverNowOrDeviceClock(serverCurrentTime: Long): Long =
  * fixed** across the OBA ecosystem: GTFS-RT `active_period` is seconds per spec, but the server converts
  * it to millis on ingestion (`GtfsRealtimeAlertLibrary.toMillis`, magnitude threshold 1e12) while older
  * servers/feeds still emit seconds — so a response's `from`/`to` may be either. Normalizing here, at the
- * wire→domain adapter, lets the domain model ([org.onebusaway.android.models.ObaSituation.ActiveWindow])
- * be unambiguously millis so no downstream consumer has to re-guess. Mirrors the server's own `toMillis`.
+ * wire→domain adapter, keeps the seconds↔millis wire knowledge on the API side and lets the domain model
+ * ([org.onebusaway.android.models.ObaSituation.ActiveWindow]) be unambiguously millis so no downstream
+ * consumer has to re-guess. Mirrors the server's own `toMillis`.
  *
  * Failure mode (inherent to any magnitude rule): a genuine epoch-*millis* value below 1e12 (an instant
  * before 2001-09-09) is misread as seconds and scaled x1000; a genuine epoch-*seconds* value at/after

@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.mock
 
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.api.data.StopArrivals
 
 import android.content.Context
@@ -59,7 +60,7 @@ object ArrivalsFixtures {
         favorite: (routeId: String, headsign: String?, stopId: String) -> Boolean = { _, _, _ -> false },
     ): ArrayList<ArrivalInfo> = ArrayList(
         convertArrivals(
-            context, snapshot(env).arrivals, null, env.currentTime, includeArriveDepartLabels, favorite
+            context, snapshot(env).arrivals, null, ServerTime(env.currentTime), includeArriveDepartLabels, favorite
         )
     )
 

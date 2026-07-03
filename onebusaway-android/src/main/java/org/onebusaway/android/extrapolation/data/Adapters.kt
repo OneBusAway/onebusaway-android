@@ -20,6 +20,7 @@ package org.onebusaway.android.extrapolation.data
 import org.onebusaway.android.models.ObaTrip
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.time.ServerTime
 
 /*
  * The adapter between a trips-for-route / trip-details fetch and the trip store's standard
@@ -37,7 +38,7 @@ data class TripObservation(
         val tripId: String,
         val status: ObaTripStatus,
         /** The server's currentTime when the status was fetched. */
-        val serverTimeMs: Long,
+        val serverTimeMs: ServerTime,
         val serviceDate: Long,
         val routeType: Int?
 )
@@ -45,7 +46,8 @@ data class TripObservation(
 /** One observation per active trip in the route's vehicles (one for a single trip-details poll). */
 fun RouteTrips.toObservations(): List<TripObservation> = buildList {
     forEachActiveTrip { tripId, status, _ ->
-        add(TripObservation(tripId, status, currentTimeMs, status.serviceDate, routeTypeForTrip(tripId)))
+        // currentTimeMs is the server's currentTime, already epoch millis.
+        add(TripObservation(tripId, status, ServerTime(currentTimeMs), status.serviceDate, routeTypeForTrip(tripId)))
     }
 }
 

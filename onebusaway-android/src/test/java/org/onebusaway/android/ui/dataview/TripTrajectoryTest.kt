@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui.dataview
 
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import kotlin.math.sqrt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -113,7 +115,7 @@ class TripTrajectoryTest {
 
     @Test
     fun `an empty snapshot yields an empty trajectory with a drawable viewport`() {
-        val trajectory = buildTrajectory(TripState("trip1"), nowMs = 10_000L)
+        val trajectory = buildTrajectory(TripState("trip1"), nowMs = WallTime(10_000L))
         assertTrue(trajectory.observations.isEmpty())
         assertTrue(trajectory.schedule.isEmpty())
         assertNull("no anchor -> no extrapolation", trajectory.extrapolation)
@@ -124,15 +126,15 @@ class TripTrajectoryTest {
     @Test
     fun `the now line is left on the local clock when no anchor skew is known`() {
         // No anchor yet (anchorLocalTimeMs == 0) -> no measurable skew -> nowMs unshifted.
-        val trajectory = buildTrajectory(TripState("trip1"), nowMs = 10_000L)
+        val trajectory = buildTrajectory(TripState("trip1"), nowMs = WallTime(10_000L))
         assertEquals(10_000L, trajectory.nowMs)
     }
 
     @Test
     fun `the now line is lifted onto the server clock by the anchor skew`() {
         // Anchor seen at server-clock 1_005_000 / local-clock 1_000_000 -> server runs 5s ahead.
-        val state = TripState("trip1").copy(anchorTimeMs = 1_005_000L, anchorLocalTimeMs = 1_000_000L)
-        val trajectory = buildTrajectory(state, nowMs = 1_002_000L)
+        val state = TripState("trip1").copy(anchorTimeMs = ServerTime(1_005_000L), anchorLocalTimeMs = WallTime(1_000_000L))
+        val trajectory = buildTrajectory(state, nowMs = WallTime(1_002_000L))
         // The local "now" (1_002_000) is plotted at its server-clock equivalent (+5s skew).
         assertEquals(1_007_000L, trajectory.nowMs)
     }
@@ -145,17 +147,17 @@ class TripTrajectoryTest {
     // Reverting that lift to `nowMs = nowMs` (the pre-#1594 bug) must fail these.
 
     /**
-     * A grade-separated trip whose anchor was seen at [anchorServerMs] on the server clock and
+     * A grade-separated trip whose anchor was seen at [anchorServerTime] on the server clock and
      * [anchorLocalMs] on the local clock, mid-route. Grade-separated + a schedule routes
      * extrapolate() through schedule replay, which succeeds mid-route, so buildTrajectory() emits a
      * non-null extrapolation overlay.
      */
-    private fun skewedRailState(anchorServerMs: Long, anchorLocalMs: Long): TripState =
+    private fun skewedRailState(anchorServerTime: Long, anchorLocalMs: Long): TripState =
         TripState.empty("trip1")
             .withStatus(
-                testTripStatus(distanceAlongTrip = 500.0, lastUpdateTime = anchorServerMs, activeTripId = "trip1"),
-                serverTimeMs = anchorServerMs,
-                localTimeMs = anchorLocalMs,
+                testTripStatus(distanceAlongTrip = 500.0, lastUpdateTime = anchorServerTime, activeTripId = "trip1"),
+                serverTimeMs = ServerTime(anchorServerTime),
+                localTimeMs = WallTime(anchorLocalMs),
             )
             .withSchedule(railSchedule)
             .withRouteType(ObaRoute.TYPE_SUBWAY)
@@ -178,8 +180,8 @@ class TripTrajectoryTest {
     @Test
     fun `the extrapolation overlay now line is lifted onto the server clock by the anchor skew`() {
         // Anchor seen at server 105_000 / local 100_000 -> server runs 5s ahead.
-        val state = skewedRailState(anchorServerMs = 105_000L, anchorLocalMs = 100_000L)
-        val trajectory = buildTrajectory(state, nowMs = 102_000L)
+        val state = skewedRailState(anchorServerTime = 105_000L, anchorLocalMs = 100_000L)
+        val trajectory = buildTrajectory(state, nowMs = WallTime(102_000L))
 
         val extrapolation = requireNotNull(trajectory.extrapolation) {
             "a mid-route grade-separated anchor should yield an overlay"
@@ -191,8 +193,8 @@ class TripTrajectoryTest {
 
     @Test
     fun `the overlay now line and the trajectory now line share the server-clock axis`() {
-        val state = skewedRailState(anchorServerMs = 105_000L, anchorLocalMs = 100_000L)
-        val trajectory = buildTrajectory(state, nowMs = 102_000L)
+        val state = skewedRailState(anchorServerTime = 105_000L, anchorLocalMs = 100_000L)
+        val trajectory = buildTrajectory(state, nowMs = WallTime(102_000L))
 
         // Guards the "now line drifts off-axis" symptom (#1583): the overlay's now line must sit on
         // the same server-clock axis as the trajectory's, not lag on the raw local clock. (A bounds
@@ -205,8 +207,8 @@ class TripTrajectoryTest {
     fun `the extrapolation overlay now line drops onto the server clock when the server is behind`() {
         // Anchor seen at server 97_000 / local 100_000 -> server runs 3s behind: exercises the
         // subtraction branch of toServerClock the +5s cases never reach.
-        val state = skewedRailState(anchorServerMs = 97_000L, anchorLocalMs = 100_000L)
-        val trajectory = buildTrajectory(state, nowMs = 102_000L)
+        val state = skewedRailState(anchorServerTime = 97_000L, anchorLocalMs = 100_000L)
+        val trajectory = buildTrajectory(state, nowMs = WallTime(102_000L))
 
         val extrapolation = requireNotNull(trajectory.extrapolation)
         // toServerClock(102_000) = 102_000 + (97_000 - 100_000) = 99_000.

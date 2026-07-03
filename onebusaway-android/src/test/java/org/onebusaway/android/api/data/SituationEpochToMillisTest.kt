@@ -42,6 +42,11 @@ class SituationEpochToMillisTest {
     }
 
     @Test
+    fun `negative passes through unchanged`() {
+        assertEquals(-1L, situationEpochToMillis(-1L))
+    }
+
+    @Test
     fun `boundary at the threshold is treated as millis`() {
         // Exactly 1e12 (year 2001 in millis) is at/above the threshold → already millis.
         assertEquals(1_000_000_000_000L, situationEpochToMillis(1_000_000_000_000L))

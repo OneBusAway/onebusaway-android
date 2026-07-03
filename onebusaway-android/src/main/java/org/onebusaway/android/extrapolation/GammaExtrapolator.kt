@@ -23,6 +23,8 @@ import org.onebusaway.android.extrapolation.math.prob.GammaDistribution
 import org.onebusaway.android.extrapolation.math.prob.GammaMixtureDistribution
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.time.WallTime
+import kotlin.time.DurationUnit
 
 // H34 two-gamma mixture parameters, fitted on span-weighted King County Metro data (in mph).
 private const val START_B0 = 0.571381 // 1/mph
@@ -49,10 +51,10 @@ class GammaExtrapolator(state: TripState) : Extrapolator(state) {
 
     override fun doExtrapolate(
             lastDist: Double,
-            lastTimeMs: Long,
-            queryTimeMs: Long
+            lastTime: WallTime,
+            queryTime: WallTime
     ): ExtrapolationResult {
-        val dtSec = (queryTimeMs - lastTimeMs) / 1000.0
+        val dtSec = (queryTime - lastTime).toDouble(DurationUnit.SECONDS)
         val speedDist = resolveDistribution() ?: return ExtrapolationResult.MissingSchedule
         return ExtrapolationResult.Success(
                 AffineTransformDistribution(speedDist, lastDist, dtSec / MPS_TO_MPH)

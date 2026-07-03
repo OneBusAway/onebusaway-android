@@ -17,6 +17,7 @@ package org.onebusaway.android.extrapolation
 
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
+import org.onebusaway.android.time.WallTime
 
 /** Result of an extrapolation attempt. */
 sealed class ExtrapolationResult {
@@ -42,12 +43,13 @@ sealed class ExtrapolationResult {
  */
 abstract class Extrapolator(protected val state: TripState) {
     /**
-     * [lastTimeMs] and [queryTimeMs] must be in the same clock domain; [TripState.extrapolate]
-     * passes device-local clock values so the interval is unaffected by server/device clock skew.
+     * [lastTime] and [queryTime] are both device-wall-clock instants ([TripState.extrapolate] pairs
+     * each server time with its local receive time), so their interval is unaffected by server/device
+     * clock skew. The type makes that same-domain requirement a compile-time guarantee (#1620).
      */
     abstract fun doExtrapolate(
             lastDist: Double,
-            lastTimeMs: Long,
-            queryTimeMs: Long
+            lastTime: WallTime,
+            queryTime: WallTime
     ): ExtrapolationResult
 }

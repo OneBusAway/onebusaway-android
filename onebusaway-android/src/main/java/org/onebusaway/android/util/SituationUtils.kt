@@ -40,34 +40,14 @@ object SituationUtils {
             // We assume a situation is active if it doesn't contain any active window information.
             return true
         }
-        // Active window times arrive in either seconds or milliseconds; normalize both ends and "now"
-        // to millis by magnitude so the comparison never depends on the units of "now".
-        val nowMs = toEpochMillis(currentTime)
+        // Active-window from/to are epoch *seconds* per the OBA REST contract (see SituationWindow in
+        // ObaApiModels; confirmed by every response fixture), while [currentTime] is epoch *millis* —
+        // a known, fixed unit mismatch, so convert "now" to seconds deterministically (no unit guess).
+        val nowSec = TimeUnit.MILLISECONDS.toSeconds(currentTime)
         return situation.activeWindows.any { window ->
-            val fromMs = toEpochMillis(window.from)
             // The window must have started (guards future-dated windows), and either be open-ended
             // (to == 0 means no end — see #990) or not yet ended.
-            fromMs <= nowMs && (window.to == 0L || nowMs <= toEpochMillis(window.to))
+            window.from <= nowSec && (window.to == 0L || nowSec <= window.to)
         }
     }
-
-    /**
-     * HEURISTIC (see CLAUDE.md "No unsanctioned heuristics" — needs human sign-off): normalizes an
-     * epoch timestamp to milliseconds by **magnitude**, because the upstream feed is inconsistent
-     * about whether active-window `from`/`to` are seconds or milliseconds and carries no unit field.
-     *
-     * Assumption: values below [SECONDS_MILLIS_THRESHOLD] are seconds — that many *seconds* only
-     * reaches the year ~5138, whereas any modern *millis* timestamp is far larger — so they're scaled
-     * up; anything else is already millis. Non-positive values pass through.
-     *
-     * Failure mode: a real seconds timestamp at/after year ~5138, or a millis timestamp before 1973,
-     * is misclassified. Both are far outside any plausible transit alert window, so the guess is safe
-     * in practice — but it is still a guess, and the right long-term fix is to normalize the unit at
-     * the wire-parsing boundary (where the server/version may be known) and delete this.
-     */
-    private fun toEpochMillis(timestamp: Long): Long =
-        if (timestamp in 1 until SECONDS_MILLIS_THRESHOLD) TimeUnit.SECONDS.toMillis(timestamp) else timestamp
-
-    /** ~Year 5138 in epoch seconds / year 1973 in epoch millis — cleanly separates the two units. */
-    private const val SECONDS_MILLIS_THRESHOLD = 100_000_000_000L
 }

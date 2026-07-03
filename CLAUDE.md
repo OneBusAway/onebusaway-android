@@ -162,8 +162,14 @@ makes alone:
 3. This applies equally to **pre-existing** heuristics you touch — reworking one re-opens the sign-off.
 
 Registry of known heuristics in the codebase (each needs a human sign-off recorded on its PR):
-- `SituationUtils.toEpochMillis` — infers seconds-vs-millis for alert active-window timestamps by
-  magnitude, because the upstream feed is inconsistent about the unit. Pre-existing; reworked in #1612.
+- _(none currently)_
+
+Worked example of the preferred resolution: a legacy `UIUtils`/`SituationUtils` helper guessed whether
+an alert active-window timestamp was seconds or milliseconds by magnitude. It turned out the OBA REST
+contract defines `activeWindows.from`/`to` as epoch **seconds** (every response fixture agrees) and only
+`currentTime` is millis — a fixed, known mismatch. #1612 deleted the guess and converts deterministically.
+When you're tempted to guess a unit/type, check the wire contract and sample payloads first — the answer
+is usually knowable.
 
 ## Key Technical Details
 

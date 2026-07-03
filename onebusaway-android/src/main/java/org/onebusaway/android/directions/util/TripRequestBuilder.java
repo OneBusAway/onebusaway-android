@@ -291,7 +291,13 @@ public class TripRequestBuilder {
             otpBaseUrl = customOtpApiUrl;
             Log.d(TAG, "Using custom OTP API URL set by user '" + otpBaseUrl + "'.");
         } else {
-            otpBaseUrl = RegionEntryPoint.get(mContext).currentRegion().getOtpBaseUrl();
+            Region region = RegionEntryPoint.get(mContext).currentRegion();
+            // No custom URL and no selected region: return null so the caller (TripRequest /
+            // TripPlanRepository) surfaces a "no server selected" error instead of crashing.
+            if (region == null) {
+                return null;
+            }
+            otpBaseUrl = region.getOtpBaseUrl();
         }
         try {
             // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)

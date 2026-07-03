@@ -161,15 +161,10 @@ makes alone:
 2. Document it at the call site: the exact assumption, why no exact source exists, and its failure mode.
 3. This applies equally to **pre-existing** heuristics you touch — reworking one re-opens the sign-off.
 
-Registry of known heuristics in the codebase (each needs a human sign-off recorded on its PR):
-- _(none currently)_
-
-Worked example of the preferred resolution: a legacy `UIUtils`/`SituationUtils` helper guessed whether
-an alert active-window timestamp was seconds or milliseconds by magnitude. It turned out the OBA REST
-contract defines `activeWindows.from`/`to` as epoch **seconds** (every response fixture agrees) and only
-`currentTime` is millis — a fixed, known mismatch. #1612 deleted the guess and converts deterministically.
-When you're tempted to guess a unit/type, check the wire contract and sample payloads first — the answer
-is usually knowable.
+When you're tempted to guess a unit/type/intent, check the wire contract and sample payloads first —
+the answer is usually knowable. (Worked example: a legacy helper guessed whether an alert active-window
+timestamp was seconds or milliseconds by magnitude; the OBA REST contract in fact defines them as epoch
+**seconds**, so #1612 deleted the guess and converts deterministically.)
 
 ## Key Technical Details
 

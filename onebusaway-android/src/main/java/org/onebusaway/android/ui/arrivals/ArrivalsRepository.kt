@@ -222,11 +222,15 @@ class DefaultArrivalsRepository @Inject constructor(
     private val preferences: PreferencesRepository
 ) : ArrivalsRepository {
 
-    private var lastGood: StopArrivals? = null
+    /** The last good snapshot paired with the monotonic device time it was received, so the
+     *  stale-fallback path can project that server clock forward by elapsed device time (#1612). The
+     *  two must be read as a consistent pair; held in one `@Volatile` reference so a concurrent
+     *  getArrivals (e.g. a user refresh overlapping the poll loop) can't mix a new snapshot with an
+     *  old receipt time. */
+    private data class LastGood(val snapshot: StopArrivals, val elapsedMs: Long)
 
-    // Monotonic device time when [lastGood] was received, paired with its server currentTime so the
-    // stale-fallback path can project that server clock forward by elapsed device time (#1612).
-    private var lastGoodElapsedMs: Long = 0L
+    @Volatile
+    private var lastGood: LastGood? = null
 
     // Whether the viewed stop has been recorded in the Stops table this session. Recording (a) creates
     // the row so the favorite toggle's UPDATE actually persists, and (b) marks it used so it appears in
@@ -250,8 +254,7 @@ class DefaultArrivalsRepository @Inject constructor(
 
         result.fold(
             onSuccess = { snapshot ->
-                lastGood = snapshot
-                lastGoodElapsedMs = SystemClock.elapsedRealtime()
+                lastGood = LastGood(snapshot, SystemClock.elapsedRealtime())
                 // Record the stop once per session so favoriting persists (markAsFavorite is an
                 // UPDATE — it needs the row to exist) and the stop shows in Recent stops.
                 if (!stopRecorded) {
@@ -265,8 +268,9 @@ class DefaultArrivalsRepository @Inject constructor(
                     // No fresh server time; project the last good server clock forward by the elapsed
                     // device time so stale ETAs/countdowns keep advancing (legacy behavior) without
                     // reintroducing device clock skew (#1612).
-                    val now = stale.currentTime + (SystemClock.elapsedRealtime() - lastGoodElapsedMs)
-                    Result.success(toData(stale, filter, isStale = true, now = now))
+                    val now = stale.snapshot.currentTime +
+                        (SystemClock.elapsedRealtime() - stale.elapsedMs)
+                    Result.success(toData(stale.snapshot, filter, isStale = true, now = now))
                 }
                     ?: Result.failure(
                         IOException(
@@ -454,12 +458,12 @@ class DefaultArrivalsRepository @Inject constructor(
     }
 
     override fun alertDetails(id: String): AlertDetails? =
-        lastGood?.situation(id)?.let {
+        lastGood?.snapshot?.situation(id)?.let {
             AlertDetails(it.id, it.summary, it.description, it.url)
         }
 
     override fun lastLoaded(): ArrivalsLoaded? {
-        val snapshot = lastGood ?: return null
+        val snapshot = lastGood?.snapshot ?: return null
         return ArrivalsLoaded(snapshot.stop, snapshot.routes, snapshot.hasArrivals)
     }
 

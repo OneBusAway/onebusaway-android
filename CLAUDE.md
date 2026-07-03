@@ -169,7 +169,8 @@ guessed whether an alert active-window timestamp was seconds or millis by magnit
 millis on ingestion via its own magnitude rule (`GtfsRealtimeAlertLibrary.toMillis`, threshold 1e12),
 while older servers still emit seconds — so the field genuinely varies. The client normalization stays,
 but it's now sanctioned by the server evidence and mirrors the server's exact threshold, rather than
-being an invented guess. See `SituationUtils.toEpochMillis` and `SituationWindow`.)
+being an invented guess — and it lives at the wire→domain adapter (`situationEpochToMillis`) so the
+domain model is unambiguously millis. See `situationEpochToMillis` and `SituationWindow`.)
 
 ## Key Technical Details
 

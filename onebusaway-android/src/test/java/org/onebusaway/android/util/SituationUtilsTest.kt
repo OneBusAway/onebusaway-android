@@ -21,23 +21,19 @@ import org.junit.Test
 import org.onebusaway.android.models.ObaSituation
 
 /**
- * Unit tests for [SituationUtils.isActiveWindowForSituation]. Two things they pin down: (1) the #1612
- * guardrail — the check is a **pure function of the passed `currentTime`**, immune to device clock
- * skew; and (2) that active-window `from`/`to` are handled whether the server sent them as epoch
- * **seconds** (older servers) or **millis** (modern servers normalize GTFS-RT seconds → millis).
+ * Unit tests for [SituationUtils.isActiveWindowForSituation]. It's a pure function of the passed
+ * `currentTime`, immune to device clock skew (#1612). Active-window `from`/`to` reach it already in
+ * epoch **millis** (the wire→domain adapter normalizes the seconds-or-millis wire value; that
+ * normalization is covered separately by `SituationEpochToMillisTest`), so these fixtures use millis.
  */
 class SituationUtilsTest {
 
-    // A realistic epoch-seconds anchor and the same instant in millis (the "server currentTime").
-    private val fromSec = 1_700_000_000L
-    private val toSec = 1_700_003_600L // +1h
-    private val insideMs = 1_700_001_800_000L // +30min, in millis
+    // A window [from, to] and three "server currentTime" probes, all epoch millis.
+    private val fromMs = 1_700_000_000_000L
+    private val toMs = 1_700_003_600_000L // +1h
+    private val insideMs = 1_700_001_800_000L // +30min
     private val beforeMs = 1_699_999_000_000L
     private val afterMs = 1_700_004_000_000L
-
-    // The same window as fromSec/toSec but already in epoch millis (as a modern server emits it).
-    private val insideWindowStartMs = 1_700_000_000_000L
-    private val insideWindowEndMs = 1_700_003_600_000L
 
     @Test
     fun `no active windows means always active`() {
@@ -48,19 +44,19 @@ class SituationUtilsTest {
 
     @Test
     fun `server time inside the window is active`() {
-        val s = situation(windows = arrayOf(window(fromSec, toSec)))
+        val s = situation(windows = arrayOf(window(fromMs, toMs)))
         assertTrue(SituationUtils.isActiveWindowForSituation(s, insideMs))
     }
 
     @Test
     fun `server time before the window is inactive`() {
-        val s = situation(windows = arrayOf(window(fromSec, toSec)))
+        val s = situation(windows = arrayOf(window(fromMs, toMs)))
         assertFalse(SituationUtils.isActiveWindowForSituation(s, beforeMs))
     }
 
     @Test
     fun `server time after the window is inactive`() {
-        val s = situation(windows = arrayOf(window(fromSec, toSec)))
+        val s = situation(windows = arrayOf(window(fromMs, toMs)))
         assertFalse(SituationUtils.isActiveWindowForSituation(s, afterMs))
     }
 
@@ -68,33 +64,19 @@ class SituationUtilsTest {
     fun `zero end time is an open-ended window`() {
         // to == 0 means "no end" (see #990): active at and after the start, unbounded above, but NOT
         // before the start — an open-ended window with no upper bound must still respect its start.
-        val s = situation(windows = arrayOf(window(fromSec, 0L)))
+        val s = situation(windows = arrayOf(window(fromMs, 0L)))
         assertTrue(SituationUtils.isActiveWindowForSituation(s, insideMs))
         assertTrue(SituationUtils.isActiveWindowForSituation(s, afterMs))
         assertFalse(SituationUtils.isActiveWindowForSituation(s, beforeMs))
     }
 
     @Test
-    fun `window sent in epoch millis is handled like the seconds form`() {
-        // A modern server emits from/to already in millis (same instant as the seconds-based tests).
-        val s = situation(windows = arrayOf(window(insideWindowStartMs, insideWindowEndMs)))
-        assertTrue(SituationUtils.isActiveWindowForSituation(s, insideMs))
-        assertFalse(SituationUtils.isActiveWindowForSituation(s, beforeMs))
-        assertFalse(SituationUtils.isActiveWindowForSituation(s, afterMs))
-    }
-
-    @Test
     fun `future start with no end is inactive`() {
-        // A window that starts well in the future (seconds-based) with no end must not read as active
-        // now — the start-passed guard, not the unit heuristic, decides this.
-        val futureFromSec = 1_800_000_000L // year ~2027 in epoch seconds
-        val s = situation(windows = arrayOf(window(futureFromSec, 0L)))
+        // A window that starts in the future with no end must not read as active now.
+        val futureFromMs = 1_800_000_000_000L
+        val s = situation(windows = arrayOf(window(futureFromMs, 0L)))
         assertFalse(SituationUtils.isActiveWindowForSituation(s, insideMs))
     }
-
-    // The #1612 property — the verdict is a function of the passed (server) time alone, so device
-    // clock skew can't flip an alert — is what the boundary tests above already demonstrate: each
-    // passes a caller-supplied time and gets a deterministic answer.
 
     // --- fixtures ---
 

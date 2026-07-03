@@ -130,6 +130,13 @@ public class GtfsAlertsHelper {
      * @return True if the start date is within the last 24 hours, false otherwise.
      */
     public static boolean isStartDateWithin24Hours(GtfsRealtime.Alert alert, long nowMs) {
+        // active_period is optional in GTFS-RT (an omitted period means "always active"). With no
+        // period there is no start to bound, so don't surface it as a freshly-started wide alert —
+        // and this avoids an IndexOutOfBoundsException on getActivePeriod(0) that would otherwise
+        // abort the whole feed's processing via the caller's broad catch.
+        if (alert.getActivePeriodCount() == 0) {
+            return false;
+        }
         long startTime = alert.getActivePeriod(0).getStart() * 1000L;
         long elapsed = nowMs - startTime;
         // Must have already started (guards future-dated starts, which would otherwise pass the upper

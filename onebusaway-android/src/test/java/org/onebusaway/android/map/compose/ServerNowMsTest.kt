@@ -41,6 +41,15 @@ class ServerNowMsTest {
     }
 
     @Test
+    fun `a device-now before the anchor is clamped, never yielding a past 'now'`() {
+        // The synchronous remember(serverTimeMs) anchor can be captured up to ~1s ahead of the
+        // 1s-lagged ticker; the clamp must keep the result at serverTimeMs, not before it.
+        val server = 1_700_000_000_000L
+        val deviceStart = 5_000L
+        assertEquals(server, serverNowMs(server, deviceStart, deviceNowMs = deviceStart - 800L))
+    }
+
+    @Test
     fun `device clock offset from server does not leak into the result`() {
         // The device wall clock is skewed +10min relative to the server, but only the *delta* between
         // deviceStart and deviceNow matters — the absolute device value cancels out. Two devices with

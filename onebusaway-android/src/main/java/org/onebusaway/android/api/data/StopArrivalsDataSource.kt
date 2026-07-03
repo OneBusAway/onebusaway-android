@@ -110,7 +110,7 @@ class DefaultStopArrivalsDataSource @Inject constructor(
 
     override suspend fun arrivals(stopId: String, minutesAfter: Int): Result<StopArrivals> = api.call {
         val envelope = it.arrivalsAndDeparturesForStop(stopId, minutesAfter)
-        StopArrivals(envelope.requireData(), envelope.currentTime, minutesAfter)
+        StopArrivals(envelope.requireData(), serverNowOrDeviceClock(envelope.currentTime), minutesAfter)
     }.onFailure { Log.e(TAG, "arrivals($stopId) failed", it) }
 
     private companion object {
@@ -132,7 +132,11 @@ internal class DtoSituation(private val s: SituationReference) : ObaSituation {
         get() = s.allAffects.map { Affects(it.routeId) }.toTypedArray()
     override val consequences: Array<ObaSituation.Consequence> get() = emptyArray()
     override val activeWindows: Array<ObaSituation.ActiveWindow>
-        get() = s.activeWindows.map { Window(it.from, it.to) }.toTypedArray()
+        // Normalize the polymorphic seconds-or-millis wire values to millis here so the domain model
+        // is unambiguously millis downstream (see situationEpochToMillis).
+        get() = s.activeWindows
+            .map { Window(situationEpochToMillis(it.from), situationEpochToMillis(it.to)) }
+            .toTypedArray()
 
     private class Affects(override val routeId: String?) : ObaSituation.AllAffects {
         override val directionId: String? get() = null

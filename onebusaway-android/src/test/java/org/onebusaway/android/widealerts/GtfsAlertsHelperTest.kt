@@ -32,7 +32,6 @@ class GtfsAlertsHelperTest {
     private val nowSec = 1_700_000_000L
     private val nowMs = nowSec * 1000L
     private val hourSec = 3_600L
-    private val dayMs = 24 * 60 * 60 * 1000L
 
     @Test
     fun `start one hour ago is within 24 hours`() {
@@ -56,6 +55,12 @@ class GtfsAlertsHelperTest {
     fun `future-dated start is not within 24 hours`() {
         // Regression guard: a negative elapsed time must not slip past the upper bound.
         assertFalse(GtfsAlertsHelper.isStartDateWithin24Hours(alertStartingAt(nowSec + hourSec), nowMs))
+    }
+
+    @Test
+    fun `alert with no active period does not crash and is not surfaced`() {
+        // active_period is optional in GTFS-RT; getActivePeriod(0) would throw. Must return false, not crash.
+        assertFalse(GtfsAlertsHelper.isStartDateWithin24Hours(GtfsRealtime.Alert.newBuilder().build(), nowMs))
     }
 
     private fun alertStartingAt(startSec: Long): GtfsRealtime.Alert =

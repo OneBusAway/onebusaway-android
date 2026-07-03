@@ -351,8 +351,9 @@ data class SituationText(
  * A situation active window (to == 0 means no end). [from]/[to] are epoch timestamps whose **unit is
  * not fixed**: GTFS-RT `active_period` is seconds per spec, but the OBA server converts it to millis on
  * ingestion (`GtfsRealtimeAlertLibrary.toMillis`, magnitude threshold 1e12), while older servers/feeds
- * still emit seconds — so a response's values may be either seconds or millis. Consumers must normalize
- * by magnitude before comparing against `currentTime` (always millis); see `SituationUtils`.
+ * still emit seconds — so a response's values may be either seconds or millis. The wire→domain adapter
+ * (`DtoSituation`) normalizes them to millis via `situationEpochToMillis`, so the domain model
+ * (`ObaSituation.ActiveWindow`) is always millis; downstream code never re-guesses.
  */
 @Serializable
 data class SituationWindow(

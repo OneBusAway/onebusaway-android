@@ -236,19 +236,21 @@ class MapViewModel @Inject constructor(
      * restore). Callers ([toRoute] and the restore in `init`) only ever pass a route different from the
      * current one — re-selecting the active route is handled (re-framed) by [toRoute].
      */
-    private fun enterRoute(routeId: String, zoomToRoute: Boolean) {
+    private fun enterRoute(routeId: String, zoomToRoute: Boolean, directionStopId: String?) {
         leaveCurrentView()
-        persistRoute(routeId)
-        routeController.start(routeId, zoomToRoute)
+        persistRoute(routeId, directionStopId)
+        routeController.start(routeId, zoomToRoute, directionStopId)
         bikeController.start(directions = false, selectedBikeStationIds = null)
     }
 
     // Persist which route (if any) to restore across process death — null means nearby stops. This is
     // the whole "which view" state (the route controller is the single live source of truth), so there's
-    // no separate mode to save. The transient trip-focus view deliberately doesn't touch this, so a
-    // back-press restores the prior view.
-    private fun persistRoute(routeId: String?) {
+    // no separate mode to save. [directionStopId] rides along so a restored route keeps its direction
+    // filter. The transient trip-focus view deliberately doesn't touch this, so a back-press restores
+    // the prior view.
+    private fun persistRoute(routeId: String?, directionStopId: String? = null) {
         savedStateHandle[MapParams.ROUTE_ID] = routeId
+        savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID] = directionStopId
     }
 
     /**
@@ -308,17 +310,21 @@ class MapViewModel @Inject constructor(
     // ----- "Show route on map" / leave route mode (replaces ShowRoute / ExitRouteMode commands) -----
 
     /**
-     * Focus the map on [routeId] — the single entry every "show route on map" caller funnels through (the
-     * recent/starred lists, route search, the arrivals "show vehicles on map", RouteInfo). Enters route
-     * mode (loading its shape, stops, and live vehicles) and frames the route's bounding box. Re-frames
-     * even when the map is already parked on [routeId]: re-tapping it in the recent-routes list (the routes
-     * you most recently viewed) snaps the camera back to the route's extent instead of no-op'ing.
+     * Focus the map on [request]'s route — the single entry every "show route on map" caller funnels
+     * through (the recent/starred lists, route search, the arrivals "show vehicles on map", RouteInfo).
+     * Enters route mode (loading its shape, stops, and live vehicles) and frames the route's bounding
+     * box. Re-frames even when the map is already parked on that route + direction: re-tapping it in the
+     * recent-routes list snaps the camera back to the route's extent instead of no-op'ing.
      */
-    fun toRoute(routeId: String) {
-        if (routeController.routeId == routeId) {
+    fun toRoute(request: ShowRouteRequest) {
+        // Same route AND same direction anchor: just reframe (the recent-routes re-tap). A different
+        // route, or the same route from a different-direction stop, re-enters with the new filter.
+        if (routeController.routeId == request.routeId &&
+            routeController.directionStopId == request.directionStopId
+        ) {
             mapHost.frameRoute()
         } else {
-            enterRoute(routeId, zoomToRoute = true)
+            enterRoute(request.routeId, zoomToRoute = true, directionStopId = request.directionStopId)
         }
     }
 
@@ -408,7 +414,11 @@ class MapViewModel @Inject constructor(
             // ZOOM_TO_ROUTE is a launching-intent framing flag (consumed once); [persistRoute]
             // deliberately doesn't write it, so a process-death restore keeps the saved camera rather
             // than re-framing the route.
-            enterRoute(restoreRouteId, zoomToRoute = savedStateHandle[MapParams.ZOOM_TO_ROUTE] ?: false)
+            enterRoute(
+                restoreRouteId,
+                zoomToRoute = savedStateHandle[MapParams.ZOOM_TO_ROUTE] ?: false,
+                directionStopId = savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID],
+            )
         } else {
             showNearbyStops()
         }

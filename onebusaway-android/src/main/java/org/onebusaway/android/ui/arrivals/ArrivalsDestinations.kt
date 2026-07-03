@@ -112,9 +112,7 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
                 activity = activity,
                 viewModel = arrivalsVm,
                 currentContent = { arrivalsVm.state.value as? ArrivalsUiState.Content },
-                onShowRouteOnMap = { routeId ->
-                    navController.revealRouteOnMap(routeId)
-                },
+                onShowRouteOnMap = { request -> navController.revealRouteOnMap(request) },
                 showUndoSnackbar = { messageRes, actionRes, onAction ->
                     scope.launch {
                         val result = snackbarHostState.showSnackbar(

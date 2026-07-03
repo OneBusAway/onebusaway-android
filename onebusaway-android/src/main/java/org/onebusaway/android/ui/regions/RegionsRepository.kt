@@ -96,7 +96,7 @@ class DefaultRegionsRepository @Inject constructor(
             regionsById = usable.associateBy { it.id }
 
             val location = locationRepository.lastKnownLocation()
-            val currentRegionId = Application.get().currentRegion?.id
+            val currentRegionId = regionRepository.currentRegion()?.id
             val items = usable.map { region ->
                 RegionItem(
                     id = region.id,

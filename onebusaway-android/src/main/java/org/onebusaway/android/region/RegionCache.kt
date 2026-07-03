@@ -19,9 +19,10 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.R
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RegionDao
+import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.util.RegionUtils
 
 /**
@@ -36,6 +37,7 @@ class RegionCache @Inject constructor(
     @ApplicationContext private val context: Context,
     private val regionDao: RegionDao,
     private val importGate: ImportGate,
+    private val prefs: PreferencesRepository,
 ) {
 
     /** The cached regions, or an empty list when the cache is empty. */
@@ -82,7 +84,7 @@ class RegionCache @Inject constructor(
             // load regions") instead of falling through to save([]), which would wipe the cache.
             if (results.isNullOrEmpty()) return null
         } else {
-            Application.get().setLastRegionUpdateDate(System.currentTimeMillis())
+            prefs.setLong(R.string.preference_key_last_region_update, System.currentTimeMillis())
         }
 
         save(results)

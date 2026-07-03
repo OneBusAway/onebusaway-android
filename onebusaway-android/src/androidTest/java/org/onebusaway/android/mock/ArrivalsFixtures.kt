@@ -45,14 +45,22 @@ object ArrivalsFixtures {
     private fun snapshot(env: ObaEnvelope<EntryWithReferences<ArrivalsForStop>>): StopArrivals =
         StopArrivals(env.data!!, env.currentTime, 0)
 
-    /** The fixture's arrivals projected to display [ArrivalInfo] via the production [convertArrivals]. */
+    /**
+     * The fixture's arrivals projected to display [ArrivalInfo] via the production [convertArrivals].
+     * [favorite] supplies each row's route/headsign favorite state (defaults to none); the favorite
+     * store is no longer a ContentProvider, so tests pass the favorites in directly.
+     */
     @JvmStatic
+    @JvmOverloads
     fun convert(
         context: Context,
         env: ObaEnvelope<EntryWithReferences<ArrivalsForStop>>,
         includeArriveDepartLabels: Boolean,
+        favorite: (routeId: String, headsign: String?, stopId: String) -> Boolean = { _, _, _ -> false },
     ): ArrayList<ArrivalInfo> = ArrayList(
-        convertArrivals(context, snapshot(env).arrivals, null, env.currentTime, includeArriveDepartLabels)
+        convertArrivals(
+            context, snapshot(env).arrivals, null, env.currentTime, includeArriveDepartLabels, favorite
+        )
     )
 
     /** All situations (stop/agency + route alerts) for the fixture, via the production aggregation. */

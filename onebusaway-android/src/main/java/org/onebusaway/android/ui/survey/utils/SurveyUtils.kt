@@ -6,7 +6,6 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.database.survey.SurveyDbHelper
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.Survey
 import org.onebusaway.android.models.SurveyQuestion
@@ -41,16 +40,20 @@ object SurveyUtils {
     /**
      * Returns the index of the first uncompleted survey in the list, based on visibility settings.
      *
-     * @param studyResponse   The study response containing the list of surveys.
-     * @param context         The context used to access local data.
+     * @param surveys         The list of candidate surveys.
      * @param isVisibleOnStop Indicates whether the survey view is related to stops.
+     * @param currentStop     The current stop (used only when isVisibleOnStop is true).
+     * @param isCompleted     Predicate telling whether a survey id already has a persisted response;
+     *                        supplied by the caller from
+     *                        [org.onebusaway.android.database.survey.SurveyRepository.completedSurveyIds]
+     *                        so this function stays pure/JVM-testable and does no DB access itself.
      * @return The zero-based index of the current survey, or -1 if all surveys are completed or filtered out.
      */
     fun getCurrentSurveyIndex(
         surveys: List<Survey>,
-        context: Context,
         isVisibleOnStop: Boolean,
-        currentStop: ObaStop?
+        currentStop: ObaStop?,
+        isCompleted: (Int) -> Boolean
     ): Int {
         var alwaysVisibleIndex = -1
         var oneTimeSurveyIndex = -1
@@ -83,7 +86,7 @@ object SurveyUtils {
                 if (showQuestionOnMaps != true) continue
             }
 
-            val isSurveyCompleted = SurveyDbHelper.isSurveyCompleted(context, survey.id)
+            val isSurveyCompleted = isCompleted(survey.id)
 
             if (alwaysVisible == true) {
                 if (allowMultipleResponses == true) {

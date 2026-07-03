@@ -23,7 +23,6 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,7 +36,8 @@ import org.onebusaway.android.R
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.preferences.PreferencesRepository
-import org.onebusaway.android.provider.ObaContract
+import org.onebusaway.android.database.oba.ImportGate
+import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
@@ -63,6 +63,8 @@ class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: PreferencesRepository,
     private val regionRepository: RegionRepository,
+    private val serviceAlertDao: ServiceAlertDao,
+    private val importGate: ImportGate,
 ) : ViewModel() {
 
     private val env = SettingsEnvironment(
@@ -141,7 +143,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onHideAlertsChanged(value: Boolean) {
         prefs.setBoolean(R.string.preference_key_hide_alerts, value)
-        if (value) viewModelScope.launch(Dispatchers.IO) { ObaContract.ServiceAlerts.hideAllAlerts() }
+        if (value) viewModelScope.launch { importGate.awaitReady(); serviceAlertDao.setAllHidden(1) }
     }
 
     /**

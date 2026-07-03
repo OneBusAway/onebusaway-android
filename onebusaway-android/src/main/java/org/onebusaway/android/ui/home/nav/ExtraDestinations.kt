@@ -39,7 +39,7 @@ import org.onebusaway.android.ui.nightlight.NightLightRoute
 import org.onebusaway.android.ui.searchresults.SearchResultsRoute
 import org.onebusaway.android.ui.searchresults.SearchResultsViewModel
 import org.onebusaway.android.ui.survey.SurveyWebViewScreen
-import org.onebusaway.android.util.DBUtil
+import org.onebusaway.android.app.di.DatabaseEntryPoint
 
 /**
  * The standalone one-off destinations that don't belong to a larger feature graph: the donation
@@ -122,15 +122,13 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
                 viewModel = searchVm,
                 onBack = { navController.popBackStack() },
                 onRouteListStops = { route ->
-                    DBUtil.addRouteToDB(
-                        activity, route.id, route.shortName, route.longName, route.url
-                    )
+                    DatabaseEntryPoint.get(activity).routeRecorder()
+                        .recordDetails(route.id, route.shortName, route.longName, route.url)
                     navController.navigate(NavRoutes.routeInfo(route.id))
                 },
                 onRouteShowOnMap = { route ->
-                    DBUtil.addRouteToDB(
-                        activity, route.id, route.shortName, route.longName, route.url
-                    )
+                    DatabaseEntryPoint.get(activity).routeRecorder()
+                        .recordDetails(route.id, route.shortName, route.longName, route.url)
                     navController.revealRouteOnMap(route.id)
                 },
                 onStopArrivals = { stop ->

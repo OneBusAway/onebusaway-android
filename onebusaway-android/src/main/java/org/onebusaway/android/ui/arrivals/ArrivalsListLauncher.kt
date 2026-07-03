@@ -20,7 +20,7 @@ import org.onebusaway.android.ui.HomeActivity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import org.onebusaway.android.provider.ObaContract
+import org.onebusaway.android.ui.nav.DeepLinkUris
 
 /**
  * Launches the real-time arrivals screen for a stop.
@@ -38,7 +38,7 @@ object ArrivalsListLauncher {
 
         /** The built intent; Java callers see this as getIntent(). */
         val intent: Intent = Intent(context, HomeActivity::class.java).apply {
-            data = Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId)
+            data = Uri.withAppendedPath(DeepLinkUris.STOPS, stopId)
         }
 
         fun setStopName(stopName: String?): Builder {

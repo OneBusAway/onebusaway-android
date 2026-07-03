@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.provider
 
-import android.content.Context
+import org.onebusaway.android.database.oba.StopUserInfoMapRow
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.util.MyTextUtils
 
@@ -34,44 +34,9 @@ fun stopDisplayName(serverName: String?, userInfo: StopUserInfo?): String =
     userInfo?.userName?.takeIf { it.isNotEmpty() } ?: MyTextUtils.formatDisplayText(serverName).orEmpty()
 
 /**
- * Loads a single stop's favorite/custom-name customization with a targeted query, for screens
- * (like arrivals) that only need the one stop. Returns null when the stop has no saved row.
+ * Builds the id → [StopUserInfo] map from the Room rows (the legacy UIUtils.StopUserInfoMap), so each
+ * search result can show the star and the user's custom name. Callers fetch the rows via
+ * `StopDao.userInfoMap()` after the one-time import gate.
  */
-fun loadStopUserInfo(context: Context, stopId: String): StopUserInfo? =
-    context.contentResolver.query(
-        ObaContract.Stops.CONTENT_URI,
-        arrayOf(ObaContract.Stops.FAVORITE, ObaContract.Stops.USER_NAME),
-        "${ObaContract.Stops._ID} = ?",
-        arrayOf(stopId),
-        null
-    )?.use { cursor ->
-        if (cursor.moveToFirst()) {
-            StopUserInfo(isFavorite = cursor.getInt(0) == 1, userName = cursor.getString(1))
-        } else {
-            null
-        }
-    }
-
-/**
- * Loads the user's favorite and custom-named stops from the ContentProvider, keyed by stop id.
- * The same query the legacy UIUtils.StopUserInfoMap ran; shared by the Compose stop repositories
- * so each row can show the star and the user's name.
- */
-fun loadStopUserInfo(context: Context): Map<String, StopUserInfo> {
-    val map = mutableMapOf<String, StopUserInfo>()
-    context.contentResolver.query(
-        ObaContract.Stops.CONTENT_URI,
-        arrayOf(ObaContract.Stops._ID, ObaContract.Stops.FAVORITE, ObaContract.Stops.USER_NAME),
-        "(" + ObaContract.Stops.USER_NAME + " IS NOT NULL) OR (" + ObaContract.Stops.FAVORITE + "=1)",
-        null,
-        null
-    )?.use { cursor ->
-        while (cursor.moveToNext()) {
-            map[cursor.getString(0)] = StopUserInfo(
-                isFavorite = cursor.getInt(1) == 1,
-                userName = cursor.getString(2)
-            )
-        }
-    }
-    return map
-}
+fun List<StopUserInfoMapRow>.toStopUserInfoMap(): Map<String, StopUserInfo> =
+    associate { it.stopId to StopUserInfo(isFavorite = it.favorite == 1, userName = it.userName) }

@@ -73,6 +73,9 @@ class HomeActivity : AppCompatActivity() {
     @Inject
     lateinit var regionRepository: RegionRepository
 
+    @Inject
+    lateinit var reminderRepository: org.onebusaway.android.reminders.ReminderRepository
+
     // The launch-intent channel: the OS delivers external entry points (deep links, FCM, launcher
     // shortcuts) to this Activity before/around the composition, so they're surfaced here for the NavHost's
     // [LaunchIntentEffect] to translate (via IntentRouteMapper) and open once composed. Seeded on a fresh
@@ -217,7 +220,7 @@ class HomeActivity : AppCompatActivity() {
             return
         }
         intent.getStringExtra(ReminderUtils.ARRIVAL_PAYLOAD_KEY)?.let { arrivalJson ->
-            ReminderUtils.handleArrivalPayload(applicationContext, arrivalJson)
+            reminderRepository.deleteReminderFromPayload(arrivalJson)
         }
     }
 

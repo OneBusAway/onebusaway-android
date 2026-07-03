@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.models.NearbyStops
 import org.onebusaway.android.models.RouteMapData
+import org.onebusaway.android.models.RouteMapStop
 import org.onebusaway.android.util.PolylineDecoder
 
 /**
@@ -68,10 +69,22 @@ class DefaultMapDataSource @Inject constructor(
     override suspend fun routeMap(routeId: String): Result<RouteMapData?> = api.callOrNull { service ->
         val data = service.stopsForRoute(routeId, includePolylines = true).requireData()
         val route = data.references.route(routeId)?.let(::DtoRoute)
+        // Invert the direction stop groups (type "direction") into a stop id -> direction ids map, so
+        // each stop can carry its own direction. Only numeric group ids are kept — they're what a
+        // vehicle's trip directionId matches; a stop listed under two groups gets both.
+        val directionsByStop = mutableMapOf<String, MutableSet<Int>>()
+        data.entry.stopGroupings.forEach { grouping ->
+            grouping.stopGroups.forEach { group ->
+                group.id?.toIntOrNull()?.let { dir ->
+                    group.stopIds.forEach { directionsByStop.getOrPut(it) { mutableSetOf() }.add(dir) }
+                }
+            }
+        }
         RouteMapData(
             route = route,
             agencyName = route?.agencyId?.let { data.references.agency(it)?.name },
-            stops = data.references.stops.map(::DtoStop),
+            stops = data.references.stops.map(::DtoStop)
+                .map { RouteMapStop(it, directionsByStop[it.id].orEmpty()) },
             routes = data.references.routes.map(::DtoRoute),
             // Decoding the route's shape polylines is the one bit of non-trivial CPU work in this
             // layer; offload just it (the Retrofit calls are already main-safe, like the other sources).

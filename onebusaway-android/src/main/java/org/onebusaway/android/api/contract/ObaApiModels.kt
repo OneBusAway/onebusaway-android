@@ -173,9 +173,13 @@ data class StopGrouping(
     val stopGroups: List<StopGroup> = emptyList(),
 )
 
-/** One directional group: a display [name] and the ordered [stopIds] it contains. */
+/**
+ * One directional group: its [id] (the GTFS direction id, "0"/"1", for a `type: "direction"`
+ * grouping), a display [name], and the ordered [stopIds] it contains.
+ */
 @Serializable
 data class StopGroup(
+    val id: String? = null,
     val name: StopGroupName = StopGroupName(),
     val stopIds: List<String> = emptyList(),
 ) {

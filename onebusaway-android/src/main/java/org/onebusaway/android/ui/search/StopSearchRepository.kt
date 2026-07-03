@@ -21,10 +21,11 @@ import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.provider.StopUserInfo
-import org.onebusaway.android.provider.loadStopUserInfo
 import org.onebusaway.android.provider.stopDisplayName
+import org.onebusaway.android.provider.toStopUserInfoMap
 import org.onebusaway.android.util.LocationUtils
 
 /**
@@ -72,7 +73,9 @@ class DefaultStopSearchRepository(
                 val center = LocationUtils.getSearchCenter(context)
                 val stops = search.stopsNearOrEmpty(center.latitude, center.longitude, query, null)
                     .getOrThrow()
-                val userInfo = loadStopUserInfo(context)
+                val db = DatabaseEntryPoint.get(context)
+                db.importGate().awaitReady()
+                val userInfo = db.stopDao().userInfoMap().toStopUserInfoMap()
                 stops.map { it.toStopSearchResult(userInfo[it.id]) }
             }.onFailure { Log.e(TAG, "stop search failed", it) }
         }

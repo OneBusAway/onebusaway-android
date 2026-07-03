@@ -57,7 +57,9 @@ import edu.usf.cutr.open311client.models.Open311Option;
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 import java.nio.charset.StandardCharsets;
 
+import dagger.hilt.android.EntryPointAccessors;
 import dagger.hilt.android.HiltAndroidApp;
+import org.onebusaway.android.app.di.DatabaseEntryPoint;
 
 @HiltAndroidApp
 public class Application extends android.app.Application {
@@ -92,6 +94,11 @@ public class Application extends android.app.Application {
         mApp = this;
 
         initOba();
+
+        // Kick the one-time legacy ContentProvider -> Room data import (fire-and-forget) so it overlaps
+        // startup; every migrated repository read/write awaits this gate before touching the DB.
+        EntryPointAccessors.fromApplication(this, DatabaseEntryPoint.class).importGate().start();
+
         // The region and location repositories (which own region/location state) are now Hilt
         // @Singletons, constructed lazily on first injection after onCreate. The region repo seeds
         // itself from persistence (the saved region-id → ContentProvider lookup); the location repo

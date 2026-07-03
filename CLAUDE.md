@@ -144,6 +144,27 @@ Keep ETA/active-window helpers pure — pass the "now" in as a parameter (see `S
 `ArrivalInfo`); don't call the clock inside a helper. This is verified by `SituationUtilsTest` and
 `ServerNowMsTest`.
 
+## No unsanctioned heuristics
+
+Do **not** introduce heuristics — magic thresholds, magnitude guesses, or "good enough" inference of
+something the data should state explicitly. Examples of what counts: guessing whether a timestamp is
+in seconds vs milliseconds from its size; inferring a unit, type, ID scheme, or intent from a value's
+range; fuzzy string matching where an exact key exists; "if it looks like X, treat it as X." Heuristics
+pass the happy path and misbehave silently at the edges, and they rot as the upstream data shifts.
+
+Prefer resolving the fact at its source instead: normalize units/shape at the parse or wire boundary,
+carry an explicit field, or fail loudly (throw / return an error) rather than guessing.
+
+If a heuristic is genuinely unavoidable, it is a **human-sign-off gate**, not a judgment call an agent
+makes alone:
+1. Call it out explicitly in the PR description and get a human to approve it before merge.
+2. Document it at the call site: the exact assumption, why no exact source exists, and its failure mode.
+3. This applies equally to **pre-existing** heuristics you touch — reworking one re-opens the sign-off.
+
+Registry of known heuristics in the codebase (each needs a human sign-off recorded on its PR):
+- `SituationUtils.toEpochMillis` — infers seconds-vs-millis for alert active-window timestamps by
+  magnitude, because the upstream feed is inconsistent about the unit. Pre-existing; reworked in #1612.
+
 ## Key Technical Details
 
 - **Min SDK**: 23 (Android 6.0)

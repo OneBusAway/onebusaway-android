@@ -52,10 +52,18 @@ object SituationUtils {
     }
 
     /**
-     * Normalizes an epoch timestamp to milliseconds by magnitude (active-window times arrive in
-     * seconds or milliseconds). Values below [SECONDS_MILLIS_THRESHOLD] are seconds — that many
-     * *seconds* only reaches the year ~5138, whereas any modern *millis* timestamp is far larger —
-     * so they're scaled up; anything else is already millis. Non-positive values pass through.
+     * HEURISTIC (see CLAUDE.md "No unsanctioned heuristics" — needs human sign-off): normalizes an
+     * epoch timestamp to milliseconds by **magnitude**, because the upstream feed is inconsistent
+     * about whether active-window `from`/`to` are seconds or milliseconds and carries no unit field.
+     *
+     * Assumption: values below [SECONDS_MILLIS_THRESHOLD] are seconds — that many *seconds* only
+     * reaches the year ~5138, whereas any modern *millis* timestamp is far larger — so they're scaled
+     * up; anything else is already millis. Non-positive values pass through.
+     *
+     * Failure mode: a real seconds timestamp at/after year ~5138, or a millis timestamp before 1973,
+     * is misclassified. Both are far outside any plausible transit alert window, so the guess is safe
+     * in practice — but it is still a guess, and the right long-term fix is to normalize the unit at
+     * the wire-parsing boundary (where the server/version may be known) and delete this.
      */
     private fun toEpochMillis(timestamp: Long): Long =
         if (timestamp in 1 until SECONDS_MILLIS_THRESHOLD) TimeUnit.SECONDS.toMillis(timestamp) else timestamp

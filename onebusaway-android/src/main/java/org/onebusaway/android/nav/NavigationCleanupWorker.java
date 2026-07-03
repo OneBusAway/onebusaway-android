@@ -18,7 +18,6 @@ package org.onebusaway.android.nav;
 import android.content.Context;
 import android.util.Log;
 
-import org.onebusaway.android.app.Application;
 
 import java.io.File;
 import java.util.Calendar;
@@ -46,9 +45,9 @@ public class NavigationCleanupWorker extends Worker {
     }
 
     private void cleanDir() {
-        File dir = new File(Application.get().getApplicationContext().getFilesDir()
+        File dir = new File(getApplicationContext().getFilesDir()
                 .getAbsolutePath() + File.separator + LOG_DIRECTORY);
-        Log.d(TAG, "Directory - " + Application.get().getApplicationContext()
+        Log.d(TAG, "Directory - " + getApplicationContext()
                 .getFilesDir().getAbsolutePath() + File.separator + LOG_DIRECTORY);
         Calendar time = Calendar.getInstance();
         time.add(Calendar.HOUR_OF_DAY, -24);

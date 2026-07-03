@@ -92,48 +92,48 @@ public class FeedbackReceiver extends BroadcastReceiver {
                     new NotificationCompat.Builder(context
                             , Application.CHANNEL_DESTINATION_ALERT_ID)
                             .setSmallIcon(R.drawable.ic_stat_notification)
-                            .setContentTitle(Application.get().getResources()
+                            .setContentTitle(context.getResources()
                                     .getString(R.string.feedback_notify_title))
-                            .setContentText(Application.get().getResources()
+                            .setContentText(context.getResources()
                                     .getString(R.string.feedback_notify_confirmation));
 
             Log.d(TAG, "Thank you!");
             repliedNotification.setOngoing(false);
 
             NotificationManager mNotificationManager = (NotificationManager)
-                    Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
+                    context.getSystemService(Context.NOTIFICATION_SERVICE);
             mNotificationManager.notify(notifyId, repliedNotification.build());
 
             if (response == FEEDBACK_YES) {
-                userResponse = Application.get().getString(R.string.analytics_label_destination_reminder_yes);
+                userResponse = context.getString(R.string.analytics_label_destination_reminder_yes);
             } else {
-                userResponse = Application.get().getString(R.string.analytics_label_destination_reminder_no);
+                userResponse = context.getString(R.string.analytics_label_destination_reminder_no);
             }
 
             Log.d(TAG, "cancelling notification");
             mNotificationManager.cancel(notifyId);
 
-            Boolean pref = PreferenceUtils.getBoolean(Application.get().getResources()
+            Boolean pref = PreferenceUtils.getBoolean(context.getResources()
                     .getString(R.string.preferences_key_user_share_destination_logs), true);
 
             if (pref) {
                 Log.d(TAG, "True");
-                moveLog(feedback, userResponse, logFile);
+                moveLog(context, feedback, userResponse, logFile);
             } else {
                 Log.d(TAG, "False");
                 deleteLog(logFile);
-                logFeedback(feedback, userResponse);
+                logFeedback(context, feedback, userResponse);
             }
         }
     }
 
-    private void moveLog(String feedback, String userResponse, String logFile) {
+    private void moveLog(Context context, String feedback, String userResponse, String logFile) {
         try {
             File lFile = new File(logFile);
             FileUtils.write(lFile, System.getProperty("line.separator") + "User Feedback - " + feedback, true);
             Log.d(TAG, "Feedback appended");
 
-            File destFolder = new File(Application.get().getApplicationContext().getFilesDir()
+            File destFolder = new File(context.getFilesDir()
                     .getAbsolutePath() + File.separator + LOG_DIRECTORY + File.separator + userResponse);
 
             Log.d(TAG, "sourceLocation: " + lFile);
@@ -174,14 +174,14 @@ public class FeedbackReceiver extends BroadcastReceiver {
         WorkManager.getInstance().enqueue(uploadCheckWork);
     }
 
-    private void logFeedback(String feedbackText, String userResponse) {
+    private void logFeedback(Context context, String feedbackText, String userResponse) {
         Boolean wasGoodReminder;
-        if (userResponse.equals(Application.get().getString(R.string.analytics_label_destination_reminder_yes))) {
+        if (userResponse.equals(context.getString(R.string.analytics_label_destination_reminder_yes))) {
             wasGoodReminder = true;
         } else {
             wasGoodReminder = false;
         }
-        AnalyticsEntryPoint.get(Application.get()).reportDestinationReminderFeedback(wasGoodReminder
+        AnalyticsEntryPoint.get(context).reportDestinationReminderFeedback(wasGoodReminder
                 , ((!isEmpty(feedbackText)) ? feedbackText : null), null);
         Log.d(TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
                 + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText)) ? feedbackText : null));

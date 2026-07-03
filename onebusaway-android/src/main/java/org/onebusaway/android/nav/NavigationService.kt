@@ -125,14 +125,14 @@ class NavigationService : Service() {
                     )
                 )
 
-                navProvider = NavigationServiceProvider(tripId, destinationStopId)
+                navProvider = NavigationServiceProvider(this@NavigationService, tripId, destinationStopId)
             } else {
                 val args = navStopDao.getDetails("1")
                 if (args != null) {
                     tripId = args.tripId
                     destinationStopId = args.destinationId
                     beforeStopId = args.beforeId
-                    navProvider = NavigationServiceProvider(tripId, destinationStopId, 1)
+                    navProvider = NavigationServiceProvider(this@NavigationService, tripId, destinationStopId, 1)
                 }
             }
 
@@ -289,7 +289,7 @@ class NavigationService : Service() {
             val readableDate = sdf.format(Calendar.getInstance().time)
 
             val subFolder = File(
-                Application.get().applicationContext
+                applicationContext
                     .filesDir.absolutePath + File.separator + LOG_DIRECTORY
             )
 
@@ -347,14 +347,13 @@ class NavigationService : Service() {
     }
 
     fun getUserFeedback() {
-        val app = Application.get()
         val builder: NotificationCompat.Builder
 
-        val message = Application.get().getString(R.string.feedback_notify_dialog_msg)
+        val message = getString(R.string.feedback_notify_dialog_msg)
         mFirstFeedback = PreferenceUtils.getBoolean(FIRST_FEEDBACK, true)
 
         // Create delete intent to set flag for snackbar creation next time the app is opened.
-        val delIntent = Intent(app.applicationContext, FeedbackReceiver::class.java)
+        val delIntent = Intent(applicationContext, FeedbackReceiver::class.java)
         delIntent.putExtra(FeedbackReceiver.NOTIFICATION_ID, NavigationServiceProvider.NOTIFICATION_ID + 1)
 
         if (mFirstFeedback || Build.VERSION.SDK_INT < Build.VERSION_CODES.N ||
@@ -363,7 +362,7 @@ class NavigationService : Service() {
             // Feedback is a HomeActivity NavHost destination; makeIntent builds the
             // explicit HomeActivity intent carrying the feedback route (with these args as nav-args).
             var fdIntent = FeedbackLauncher.makeIntent(
-                app.applicationContext, FeedbackLauncher.FEEDBACK_NO, logFile!!.absolutePath, tripId,
+                applicationContext, FeedbackLauncher.FEEDBACK_NO, logFile!!.absolutePath, tripId,
                 NavigationServiceProvider.NOTIFICATION_ID + 1
             )
             fdIntent.action = FeedbackReceiver.ACTION_REPLY
@@ -375,16 +374,16 @@ class NavigationService : Service() {
             }
 
             // Pending intent used to handle feedback when user taps on 'No'
-            val fdPendingIntentNo = PendingIntent.getActivity(app.applicationContext, 1, fdIntent, flags)
+            val fdPendingIntentNo = PendingIntent.getActivity(applicationContext, 1, fdIntent, flags)
 
             fdIntent = FeedbackLauncher.makeIntent(
-                app.applicationContext, FeedbackLauncher.FEEDBACK_YES, logFile!!.absolutePath, tripId,
+                applicationContext, FeedbackLauncher.FEEDBACK_YES, logFile!!.absolutePath, tripId,
                 NavigationServiceProvider.NOTIFICATION_ID + 1
             )
             fdIntent.action = FeedbackReceiver.ACTION_REPLY
 
             // Pending intent used to handle feedback when user taps on 'Yes'
-            val fdPendingIntentYes = PendingIntent.getActivity(app.applicationContext, 2, fdIntent, flags)
+            val fdPendingIntentYes = PendingIntent.getActivity(applicationContext, 2, fdIntent, flags)
 
             delIntent.action = FeedbackReceiver.ACTION_DISMISS_FEEDBACK
             val delFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -392,27 +391,27 @@ class NavigationService : Service() {
             } else {
                 0
             }
-            val pDelIntent = PendingIntent.getBroadcast(app.applicationContext, 0, delIntent, delFlags)
+            val pDelIntent = PendingIntent.getBroadcast(applicationContext, 0, delIntent, delFlags)
 
             builder = NotificationCompat.Builder(
-                Application.get().applicationContext, Application.CHANNEL_DESTINATION_ALERT_ID
+                applicationContext, Application.CHANNEL_DESTINATION_ALERT_ID
             )
                 .setSmallIcon(R.drawable.ic_stat_notification)
-                .setContentTitle(Application.get().resources.getString(R.string.feedback_notify_title))
+                .setContentTitle(resources.getString(R.string.feedback_notify_title))
                 .setContentText(message)
                 .addAction(
-                    0, Application.get().resources.getString(R.string.feedback_action_reply_no),
+                    0, resources.getString(R.string.feedback_action_reply_no),
                     fdPendingIntentNo
                 )
                 .addAction(
-                    0, Application.get().resources.getString(R.string.feedback_action_reply_yes),
+                    0, resources.getString(R.string.feedback_action_reply_yes),
                     fdPendingIntentYes
                 )
                 .setDeleteIntent(pDelIntent)
                 .setAutoCancel(true)
         } else {
             // Intent to handle user feedback when a user taps on 'No'
-            val intentNo = Intent(Application.get().applicationContext, FeedbackReceiver::class.java)
+            val intentNo = Intent(applicationContext, FeedbackReceiver::class.java)
             intentNo.action = FeedbackReceiver.ACTION_REPLY
             intentNo.putExtra(FeedbackReceiver.NOTIFICATION_ID, NavigationServiceProvider.NOTIFICATION_ID + 1)
             intentNo.putExtra(FeedbackReceiver.TRIP_ID, tripId)
@@ -427,10 +426,10 @@ class NavigationService : Service() {
 
             // PendingIntent to handle user feedback when a user taps on 'No'
             val fdPendingIntentNo = PendingIntent.getBroadcast(
-                Application.get().applicationContext, 100, intentNo, flags
+                applicationContext, 100, intentNo, flags
             )
 
-            val replyLabelNo = Application.get().resources.getString(R.string.feedback_action_reply_no)
+            val replyLabelNo = resources.getString(R.string.feedback_action_reply_no)
 
             val remoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).setLabel(replyLabelNo).build()
 
@@ -439,7 +438,7 @@ class NavigationService : Service() {
                 .build()
 
             // Intent to handle user feedback when a user taps on 'Yes'
-            val intentYes = Intent(Application.get().applicationContext, FeedbackReceiver::class.java)
+            val intentYes = Intent(applicationContext, FeedbackReceiver::class.java)
             intentYes.action = FeedbackReceiver.ACTION_REPLY
             intentYes.putExtra(FeedbackReceiver.NOTIFICATION_ID, NavigationServiceProvider.NOTIFICATION_ID + 1)
             intentYes.putExtra(FeedbackReceiver.TRIP_ID, tripId)
@@ -448,10 +447,10 @@ class NavigationService : Service() {
 
             // PendingIntent to handle user feedback when a user taps on 'No'
             val fdPendingIntentYes = PendingIntent.getBroadcast(
-                Application.get().applicationContext, 101, intentYes, flags
+                applicationContext, 101, intentYes, flags
             )
 
-            val replyLabelYes = Application.get().resources.getString(R.string.feedback_action_reply_yes)
+            val replyLabelYes = resources.getString(R.string.feedback_action_reply_yes)
 
             val remoteInput1 = RemoteInput.Builder(KEY_TEXT_REPLY).setLabel(replyLabelYes).build()
 
@@ -460,13 +459,13 @@ class NavigationService : Service() {
                 .build()
 
             delIntent.action = FeedbackReceiver.ACTION_DISMISS_FEEDBACK
-            val pDelIntent = PendingIntent.getBroadcast(app.applicationContext, 0, delIntent, flags)
+            val pDelIntent = PendingIntent.getBroadcast(applicationContext, 0, delIntent, flags)
 
             builder = NotificationCompat.Builder(
-                Application.get().applicationContext, Application.CHANNEL_DESTINATION_ALERT_ID
+                applicationContext, Application.CHANNEL_DESTINATION_ALERT_ID
             )
                 .setSmallIcon(R.drawable.ic_stat_notification)
-                .setContentTitle(Application.get().resources.getString(R.string.feedback_notify_title))
+                .setContentTitle(resources.getString(R.string.feedback_notify_title))
                 .setContentText(message)
                 .addAction(replyActionNo)
                 .addAction(replyActionYes)
@@ -477,7 +476,7 @@ class NavigationService : Service() {
         builder.setOngoing(false)
 
         val notificationManager =
-            Application.get().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(NavigationServiceProvider.NOTIFICATION_ID + 1, builder.build())
     }
 

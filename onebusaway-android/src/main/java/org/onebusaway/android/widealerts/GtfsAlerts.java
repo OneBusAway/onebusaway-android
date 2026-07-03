@@ -3,7 +3,8 @@ package org.onebusaway.android.widealerts;
 import com.google.transit.realtime.GtfsRealtime;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.RegionEntryPoint;
+import org.onebusaway.android.region.Region;
 import org.onebusaway.android.util.PreferenceUtils;
 
 import android.content.Context;
@@ -83,7 +84,7 @@ public class GtfsAlerts {
             String url = GtfsAlertsHelper.getAlertUrl(alert);
 
             Log.d(TAG, "Alert: " + id + " - " + title + " - " + description + " - " + url);
-            GtfsAlertsHelper.markAlertAsRead(Application.get().getApplicationContext(), entity);
+            GtfsAlertsHelper.markAlertAsRead(mContext, entity);
             callback.onAlert(title, description, url);
             // Only trigger the callback for one alert.
             break;
@@ -97,11 +98,12 @@ public class GtfsAlerts {
      * @return The URL to fetch GTFS alerts.
      */
     public String getGtfsAlertsUrl(String regionId) {
-        Application app = Application.get();
-        String baseUrl = app.getCurrentRegion().getSidecarBaseUrl();
+        Region region = RegionEntryPoint.get(mContext).currentRegion();
+        if (region == null) return null;
+        String baseUrl = region.getSidecarBaseUrl();
         if (baseUrl == null) return null;
-        boolean isTestAlert = PreferenceUtils.getBoolean(app.getString(R.string.preferences_display_test_alerts), false);
-        String alertAPIURL = baseUrl + app.getString(R.string.alerts_api_endpoint);
+        boolean isTestAlert = PreferenceUtils.getBoolean(mContext.getString(R.string.preferences_display_test_alerts), false);
+        String alertAPIURL = baseUrl + mContext.getString(R.string.alerts_api_endpoint);
         alertAPIURL = alertAPIURL.replace("regionID", regionId);
         if (isTestAlert) alertAPIURL += "?test=1";
         return alertAPIURL;

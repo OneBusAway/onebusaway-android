@@ -87,10 +87,11 @@ public class GtfsAlertsHelper {
      * Checks if the entity is valid based on agency-wide, severity, and start date criteria.
      *
      * @param entity The GTFS entity.
+     * @param nowMs  "Now" in epoch millis (the feed's server clock) for the start-date window (#1612).
      * @return True if the alert is valid, false otherwise.
      */
-    public static boolean isValidEntity(Context context, GtfsRealtime.FeedEntity entity) {
-        return isAgencyWideAlert(entity.getAlert()) && isHighSeverity(entity.getAlert()) && isStartDateWithin24Hours(entity.getAlert()) && !isAlertRead(context, entity);
+    public static boolean isValidEntity(Context context, GtfsRealtime.FeedEntity entity, long nowMs) {
+        return isAgencyWideAlert(entity.getAlert()) && isHighSeverity(entity.getAlert()) && isStartDateWithin24Hours(entity.getAlert(), nowMs) && !isAlertRead(context, entity);
     }
 
     /**
@@ -119,15 +120,29 @@ public class GtfsAlertsHelper {
     }
 
     /**
-     * Checks if the alert start date is within the last 24 hours.
+     * Checks if the alert start date is within the last 24 hours of {@code nowMs}.
+     *
+     * <p>{@code nowMs} should be the feed's server-clock generation time so the window cancels device
+     * clock skew — the alert's server {@code start} and the "now" it's measured against share one clock
+     * (#1612). Pure function of its inputs; the caller resolves the device-clock fallback.
      *
      * @param alert The GTFS alert.
+     * @param nowMs "Now" in epoch millis (the feed's server clock).
      * @return True if the start date is within the last 24 hours, false otherwise.
      */
-    public static boolean isStartDateWithin24Hours(GtfsRealtime.Alert alert) {
-        long currentTime = System.currentTimeMillis();
+    public static boolean isStartDateWithin24Hours(GtfsRealtime.Alert alert, long nowMs) {
+        // active_period is optional in GTFS-RT (an omitted period means "always active"). With no
+        // period there is no start to bound, so don't surface it as a freshly-started wide alert —
+        // and this avoids an IndexOutOfBoundsException on getActivePeriod(0) that would otherwise
+        // abort the whole feed's processing via the caller's broad catch.
+        if (alert.getActivePeriodCount() == 0) {
+            return false;
+        }
         long startTime = alert.getActivePeriod(0).getStart() * 1000L;
-        return (currentTime - startTime) <= 24 * 60 * 60 * 1000L;
+        long elapsed = nowMs - startTime;
+        // Must have already started (guards future-dated starts, which would otherwise pass the upper
+        // bound with a negative elapsed) and be no older than 24 hours.
+        return elapsed >= 0 && elapsed <= 24 * 60 * 60 * 1000L;
     }
 
     /**

@@ -47,7 +47,7 @@ private fun routeTripsOf(
     override val trips: List<ObaTripDetails> = entries.map { DtoTripDetails(it) }
     override fun trip(tripId: String?): ObaTrip? = tripId?.let { references.trip(it) }?.let { DtoTrip(it) }
     override fun route(routeId: String): ObaRoute? = references.route(routeId)?.let { DtoRoute(it) }
-    override val currentTimeMs: Long = serverTimeMs
+    override val currentTimeMs: Long = serverNowOrDeviceClock(serverTimeMs)
 }
 
 /** Adapts a modernized trips-for-route envelope (a list of vehicles) to [RouteTrips]. */

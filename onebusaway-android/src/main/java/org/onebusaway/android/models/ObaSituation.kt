@@ -60,10 +60,11 @@ interface ObaSituation : ObaElement {
     }
 
     interface ActiveWindow {
-        /** The starting time of the active window for this situation. */
+        /** The active window's start, **epoch milliseconds** (the wire value — which may be seconds or
+         *  millis depending on the server — is normalized to millis at the adapter). */
         val from: Long
 
-        /** The ending time of the active window for this situation. */
+        /** The active window's end, **epoch milliseconds**; 0 means no end (open-ended window). */
         val to: Long
     }
 

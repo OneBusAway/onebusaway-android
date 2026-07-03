@@ -124,6 +124,54 @@ Tests are in `onebusaway-android/src/androidTest/java/`. Key test classes:
 
 CI runs on API level 33 emulator via GitHub Actions.
 
+## Time domains: server clock vs device clock (#1612)
+
+Any user-facing duration measured against a **server-provided timestamp** — ETAs ("N min"),
+countdowns, "arriving now", vehicle age ("data updated N sec ago"), alert active-window checks — must
+use the response's server clock as "now", **never** `System.currentTimeMillis()`. Mixing the two in a
+single subtraction (server timestamp − device now) leaks device clock skew straight into the number.
+
+- The server clock is on the response: `StopArrivals.currentTime`, `RouteTrips.currentTimeMs`,
+  `TripDetailsRepository.lastLoadedTime()`.
+- Extrapolation deliberately stays on the **device** clock (`TripState.anchorLocalTimeMs`) because it
+  pairs each server time with the local receive time; cross back to the server clock with
+  `TripState.toServerClock(...)` before plotting against server-clock data.
+- Purely local timers stay on the device clock: cache TTLs / recent-window cutoffs (compared against
+  locally-stamped `System.currentTimeMillis()` writes), poll scheduling (`SystemClock.elapsedRealtimeNanos`),
+  WorkManager/alarm scheduling, "updated Ns ago" against a locally-stamped `lastResponseTimeMs`.
+
+Keep ETA/active-window helpers pure — pass the "now" in as a parameter (see `SituationUtils`,
+`ArrivalInfo`); don't call the clock inside a helper. This is verified by `SituationUtilsTest` and
+`ServerNowMsTest`.
+
+## No unsanctioned heuristics
+
+Do **not** introduce heuristics — magic thresholds, magnitude guesses, or "good enough" inference of
+something the data should state explicitly. Examples of what counts: guessing whether a timestamp is
+in seconds vs milliseconds from its size; inferring a unit, type, ID scheme, or intent from a value's
+range; fuzzy string matching where an exact key exists; "if it looks like X, treat it as X." Heuristics
+pass the happy path and misbehave silently at the edges, and they rot as the upstream data shifts.
+
+Prefer resolving the fact at its source instead: normalize units/shape at the parse or wire boundary,
+carry an explicit field, or fail loudly (throw / return an error) rather than guessing.
+
+If a heuristic is genuinely unavoidable, it is a **human-sign-off gate**, not a judgment call an agent
+makes alone:
+1. Call it out explicitly in the PR description and get a human to approve it before merge.
+2. Document it at the call site: the exact assumption, why no exact source exists, and its failure mode.
+3. This applies equally to **pre-existing** heuristics you touch — reworking one re-opens the sign-off.
+
+When you're tempted to guess a unit/type/intent, check the wire contract, the sample payloads, **and
+the producer's source** first — the answer is usually knowable, and sometimes the honest answer is
+"the field really is polymorphic," which is itself worth documenting. (Worked example: a legacy helper
+guessed whether an alert active-window timestamp was seconds or millis by magnitude. Reading the OBA
+**server** source settled it — GTFS-RT `active_period` is seconds per spec, but the server normalizes to
+millis on ingestion via its own magnitude rule (`GtfsRealtimeAlertLibrary.toMillis`, threshold 1e12),
+while older servers still emit seconds — so the field genuinely varies. The client normalization stays,
+but it's now sanctioned by the server evidence and mirrors the server's exact threshold, rather than
+being an invented guess — and it lives at the wire→domain adapter (`situationEpochToMillis`) so the
+domain model is unambiguously millis. See `situationEpochToMillis` and `SituationWindow`.)
+
 ## Key Technical Details
 
 - **Min SDK**: 23 (Android 6.0)

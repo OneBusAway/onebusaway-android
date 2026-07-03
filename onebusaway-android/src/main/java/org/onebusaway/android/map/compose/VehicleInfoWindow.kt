@@ -17,6 +17,7 @@ package org.onebusaway.android.map.compose
 
 import android.content.res.Configuration
 import android.content.res.Resources
+import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -67,7 +69,10 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun VehicleInfoWindow(status: ObaTripStatus, response: RouteTrips) {
     val res = LocalContext.current.resources
-    val nowMs = rememberNowMs()
+    // "Now" in the server clock domain: the age is measured against the vehicle's last real-time fix
+    // (status.lastLocationUpdateTime, falling back to lastUpdateTime) — both server AVL timestamps —
+    // so a skewed device clock must not leak into it (#1612).
+    val nowMs = rememberServerNowMs(response.currentTimeMs)
     // The window only opens for an already-rendered vehicle, so its trip/route are in the refs;
     // guard the unreachable null instead of dereferencing (the legacy getTrip/getRoute would NPE).
     val trip = response.trip(status.activeTripId) ?: return
@@ -262,20 +267,43 @@ private fun lastUpdatedText(res: Resources, realtime: Boolean, status: ObaTripSt
 }
 
 /**
- * A wall-clock that updates once per second, for live "… ago" age text. Lets a marker info window tick
- * even though its data (status/response) is unchanged between polls (strong skipping would otherwise
- * freeze it).
+ * A monotonic device clock (`SystemClock.elapsedRealtime`) that updates once per second, for live
+ * "… ago" age text. Lets a marker info window tick even though its data (status/response) is unchanged
+ * between polls (strong skipping would otherwise freeze it). Monotonic, not wall-clock, so measuring an
+ * interval against it is immune to NTP corrections / the user changing the device clock.
  */
 @Composable
-internal fun rememberNowMs(): Long {
-    val now by produceState(System.currentTimeMillis()) {
+internal fun rememberElapsedRealtimeMs(): Long {
+    val now by produceState(SystemClock.elapsedRealtime()) {
         while (true) {
-            value = System.currentTimeMillis()
+            value = SystemClock.elapsedRealtime()
             delay(1000)
         }
     }
     return now
 }
+
+/**
+ * A live "now" in the **server** clock domain, anchored on [serverTimeMs] (the poll's server
+ * `currentTime`) and advanced by the device's elapsed time since this response was observed. Ticking
+ * against the server clock keeps age text (`… ago`) free of device clock skew — the age is measured
+ * against the same clock that stamped the vehicle timestamp (#1612). The offset is captured once per
+ * [serverTimeMs] (each poll) from the **monotonic** clock, so composition lag never accumulates and a
+ * device clock change can't corrupt it: at capture the result equals [serverTimeMs], then it counts up
+ * in real elapsed device time.
+ */
+@Composable
+internal fun rememberServerNowMs(serverTimeMs: Long): Long {
+    val deviceStartMs = remember(serverTimeMs) { SystemClock.elapsedRealtime() }
+    val deviceNowMs = rememberElapsedRealtimeMs()
+    return serverNowMs(serverTimeMs, deviceStartMs, deviceNowMs)
+}
+
+/** [serverTimeMs] advanced by elapsed device time. The delta is clamped at 0 so a fresh anchor (the
+ *  synchronous [remember] capture racing the 1s-lagged ticker) never yields a "now" before the anchor.
+ *  Extracted from [rememberServerNowMs] as a pure function so it's JVM-unit-testable. */
+internal fun serverNowMs(serverTimeMs: Long, deviceStartMs: Long, deviceNowMs: Long): Long =
+    serverTimeMs + (deviceNowMs - deviceStartMs).coerceAtLeast(0L)
 
 /**
  * Formats [elapsedSeconds] as "Data updated N min M sec ago" (or "… M sec ago" under a minute).

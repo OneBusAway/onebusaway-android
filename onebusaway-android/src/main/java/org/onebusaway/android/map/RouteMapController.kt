@@ -242,15 +242,15 @@ class RouteMapController(
     }
 
     /**
-     * Builds the render [VehicleMarker] from a display-free [ExtrapolatedVehicle], deriving the
-     * live-vs-scheduled flag from the source status (the renderer picks its icon from it).
+     * Builds the render [VehicleMarker] from a display-free [ExtrapolatedVehicle], carrying the
+     * draw-time live-vs-scheduled flag through (the renderer picks its icon from it).
      */
     private fun ExtrapolatedVehicle.toMarker(): VehicleMarker =
         VehicleMarker(
             // Vehicles are only built for trips with a resolvable active id, so this is non-null here.
             activeTripId = status.activeTripId.orEmpty(),
             point = point,
-            isRealtime = status.isLocationRealtime,
+            isRealtime = isRealtime,
             status = status,
             fixTimeMs = fixTimeMs,
             bearing = bearing,

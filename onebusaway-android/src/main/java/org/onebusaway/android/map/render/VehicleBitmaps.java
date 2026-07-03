@@ -115,11 +115,8 @@ public final class VehicleBitmaps {
 
     /** The schedule-deviation color (realtime) or the scheduled color — constant between polls. */
     private static int colorResource(VehicleMarker vehicle) {
-        if (vehicle.isRealtime()) {
-            long deviationMin = TimeUnit.SECONDS.toMinutes(vehicle.getStatus().getScheduleDeviation());
-            return ArrivalInfoUtils.computeColorFromDeviation(deviationMin);
-        }
-        return R.color.stop_info_scheduled_time;
+        long deviationMin = TimeUnit.SECONDS.toMinutes(vehicle.getStatus().getScheduleDeviation());
+        return ArrivalInfoUtils.statusColor(vehicle.isRealtime(), deviationMin);
     }
 
     /**

@@ -18,7 +18,6 @@ package org.onebusaway.android.map.bike
 import javax.inject.Inject
 import android.location.Location
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
 import org.onebusaway.android.api.contract.BikeWebService
 import org.onebusaway.android.api.contract.toBikeRentalStations
 import org.onebusaway.android.preferences.PreferencesRepository
@@ -53,13 +52,13 @@ class DefaultBikeStationsRepository @Inject constructor(
         // /routers/default (e.g. Puget Sound), so blindly prepending it doubles the path. Try the
         // recorded structure first, then fall back to the old one and record it (shared with trip
         // planning via the same flag, reset on region change).
-        val useOld = Application.get().useOldOtpApiUrlVersion
+        val useOld = prefs.getBoolean(R.string.preference_key_otp_api_url_version, false)
         try {
             fetch(base, useOld, southWest, northEast)
         } catch (e: Exception) {
             if (useOld) throw e
             fetch(base, useOldUrlStructure = true, southWest, northEast)
-                .also { Application.get().useOldOtpApiUrlVersion = true }
+                .also { prefs.setBoolean(R.string.preference_key_otp_api_url_version, true) }
         }
     }
 

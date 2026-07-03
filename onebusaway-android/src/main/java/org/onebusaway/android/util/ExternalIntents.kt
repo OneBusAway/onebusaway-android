@@ -77,7 +77,7 @@ object ExternalIntents {
         context: Context, email: String, location: String?,
         tripPlanUrl: String?, tripPlanFail: Boolean
     ) {
-        val obaRegionName = RegionUtils.getObaRegionName()
+        val obaRegionName = RegionUtils.getObaRegionName(context)
         val autoRegion = PreferenceUtils
             .getBoolean(context.getString(R.string.preference_key_auto_select_region), true)
         val regionSelectionMethod: String

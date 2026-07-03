@@ -337,6 +337,10 @@
     <string name="route_info_context_showonmap">Show on map</string>
     <string name="route_info_no_shape_data">Sorry, map information isn\'t available for this route
     </string>
+    <!-- Route map header: switch which direction of the route is shown -->
+    <string name="route_header_switch_direction">Switch direction</string>
+    <!-- Fallback label for a route direction whose headsign is missing -->
+    <string name="route_direction_unnamed">Other direction</string>
 
     <!-- My stops/routes -->
     <string name="my_recent_title">Recent</string>

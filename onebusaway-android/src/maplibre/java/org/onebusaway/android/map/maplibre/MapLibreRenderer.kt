@@ -97,8 +97,8 @@ class MapLibreRenderer(
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
     // vehicles keyed by active trip id, the trip-focus estimate markers keyed by role, and the band's
-    // (interaction-free) polylines re-added each frame. [lastVehicleResponse] is the latest poll — both
-    // the change-detector for the vehicle reconcile and the source for [vehicleResponse].
+    // (interaction-free) polylines re-added each frame. [lastVehicleResponse] is the current poll, set on
+    // each vehicle-set reconcile and read by [vehicleResponse].
     private val vehicleMarkersByTripId = HashMap<String, Marker>()
     private val tripMarkersByRole = HashMap<String, Marker>()
     private val bandPolylines = mutableListOf<Polyline>()
@@ -244,20 +244,27 @@ class MapLibreRenderer(
      * fix via [nowMs]); the band is re-added.
      */
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
-        updateVehicles(vehicles, nowMs)
+        moveVehicles(vehicles, nowMs)
         updateTripOverlay(overlay, nowMs)
     }
 
-    private fun updateVehicles(vehicles: MapVehicles?, nowMs: Long) {
+    /**
+     * Reconcile the vehicle marker *set* (add/remove markers, refresh icons/titles/tap-routing) against a
+     * pushed [MapRenderState.vehicleSet] emission — a new poll, a direction switch, or leaving route mode
+     * (null). Driven reactively by the adapter, not the frame loop, so the set changes the instant it's
+     * published rather than being inferred from the per-frame motion sample.
+     */
+    fun reconcileVehicles(set: MapVehicles?) {
+        reconcileVehicleMarkers(set?.markers.orEmpty(), set?.response)
+        lastVehicleResponse = set?.response
+    }
+
+    // Per-frame motion: move each already-reconciled marker to its smoothed extrapolated position — no set
+    // diffing or icon work on the hot path, only an icon re-stamp when a vehicle's heading octant flips.
+    // Markers not yet reconciled are skipped.
+    private fun moveVehicles(vehicles: MapVehicles?, nowMs: Long) {
         val response = vehicles?.response
         val markers = vehicles?.markers.orEmpty()
-        // The vehicle set, icons/titles, and tap-routing only change on a new poll (response identity),
-        // so reconcile then. Every display frame in between just moves each marker to its smoothed
-        // extrapolated position — no set diffing or icon work on the hot path.
-        if (response !== lastVehicleResponse) {
-            reconcileVehicleMarkers(markers, response)
-            lastVehicleResponse = response
-        }
         for (vehicle in markers) {
             val marker = vehicleMarkersByTripId[vehicle.activeTripId] ?: continue
             marker.moveTo(

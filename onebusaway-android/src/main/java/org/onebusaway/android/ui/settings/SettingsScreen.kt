@@ -42,7 +42,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.settings.components.ClickPreferenceItem
@@ -115,7 +115,7 @@ fun SettingsRoute(
     // EXTRA_SHOW_CHECK_REGION_DIALOG extra.
     LaunchedEffect(Unit) {
         if (activity.intent.getBooleanExtra(HomeActivity.EXTRA_SHOW_CHECK_REGION_DIALOG, false)) {
-            Application.get().currentRegion?.let { region ->
+            RegionEntryPoint.get(activity).currentRegion()?.let { region ->
                 MaterialAlertDialogBuilder(activity)
                     .setTitle(activity.getString(R.string.preference_region_dialog_title))
                     .setMessage(

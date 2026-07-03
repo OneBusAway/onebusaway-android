@@ -33,6 +33,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.Region
@@ -252,7 +253,7 @@ object ExternalIntents {
      * @return the region whose payment warning must be shown first, or null if already handled
      */
     fun payFareOrWarningRegion(activity: Activity): Region? {
-        val region = Application.get().currentRegion
+        val region = RegionEntryPoint.get(activity).currentRegion()
         if (region == null) {
             // If a custom API URL is set (i.e., no region), then no op
             return null

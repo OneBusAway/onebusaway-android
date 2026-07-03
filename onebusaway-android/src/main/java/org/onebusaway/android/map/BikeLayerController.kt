@@ -26,7 +26,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.map.bike.BikeAction
 import org.onebusaway.android.map.bike.BikeStationsRepository
 import org.onebusaway.android.map.bike.bikeAction
@@ -48,6 +49,7 @@ class BikeLayerController(
     private val host: MapHost,
     private val bikeStationsRepository: BikeStationsRepository,
     private val prefsRepository: PreferencesRepository,
+    private val regionRepository: RegionRepository,
     private val scope: CoroutineScope,
 ) {
 
@@ -80,7 +82,11 @@ class BikeLayerController(
             ) { camera, layerVisible -> camera to layerVisible }
                 // collectLatest so a newer viewport cancels an in-flight station load (the old loadJob?.cancel()).
                 .collectLatest { (camera, layerVisible) ->
-                    if (!Application.isBikeshareEnabled()) {
+                    if (!BikeshareAvailability.isEnabled(
+                            regionRepository.currentRegion(),
+                            prefsRepository.getString(R.string.preference_key_otp_api_url, null),
+                        )
+                    ) {
                         return@collectLatest
                     }
                     when (bikeAction(directions, selectedBikeStationIds, layerVisible)) {

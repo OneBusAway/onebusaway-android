@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.util.BikeshareAvailability
 
 /** The map-chrome visibility gates: which FABs/controls show over the map, derived from prefs + region. */
 data class MapChromeState(
@@ -65,13 +66,10 @@ class MapChromeViewModel @Inject constructor(
                 regionRepo.region,
                 prefsRepo.observeString(R.string.preference_key_otp_api_url, null),
             ) { zoomControls, leftHand, bikeVisible, region, otpUrl ->
-                // Reactive re-derivation of Application.isBikeshareEnabled() for this consumer, so the
-                // gate tracks region + the OTP-URL pref instead of reading the Application static. The
-                // same predicate still lives in Application.isBikeshareEnabled(), LayerUtils, and
-                // MapViewModel's resume sync; converging them onto one shared reactive source is the
-                // deferred LayerUtils TODO(D4) — keep these in sync until then.
-                val bikeshareEnabled =
-                    (region != null && region.supportsOtpBikeshare) || !otpUrl.isNullOrEmpty()
+                // Reactive re-derivation of bikeshare availability for this consumer, tracking region +
+                // the OTP-URL pref. Shares the one predicate ([BikeshareAvailability]) with the trip/layer
+                // call sites, so this stays a live flow while they resolve it per-call from a Context.
+                val bikeshareEnabled = BikeshareAvailability.isEnabled(region, otpUrl)
                 MapChromeState(
                     zoomControls = zoomControls,
                     leftHand = leftHand,

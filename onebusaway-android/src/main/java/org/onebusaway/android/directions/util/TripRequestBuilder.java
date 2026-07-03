@@ -17,14 +17,18 @@
 package org.onebusaway.android.directions.util;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.PreferencesEntryPoint;
+import org.onebusaway.android.app.di.RegionEntryPoint;
 import org.onebusaway.android.directions.tasks.TripRequest;
+import org.onebusaway.android.region.Region;
 import org.onebusaway.android.ui.tripplan.TripModes;
+import org.onebusaway.android.util.BikeshareAvailability;
 import org.onebusaway.android.util.RegionUtils;
 import org.opentripplanner.api.ws.Request;
 import org.opentripplanner.routing.core.OptimizeType;
@@ -66,7 +70,12 @@ public class TripRequestBuilder {
 
     private int mModeId;
 
-    public TripRequestBuilder(Bundle bundle) {
+    // Application context, used to read the region / OTP-config seams (bikeshare availability, the OTP
+    // base URL) that used to be reached through the Application static.
+    private final Context mContext;
+
+    public TripRequestBuilder(Context context, Bundle bundle) {
+        this.mContext = context.getApplicationContext();
         this.mBundle = bundle;
     }
 
@@ -161,10 +170,10 @@ public class TripRequestBuilder {
                 break;
             // Transit & bikeshare
             case TripModes.TRANSIT_AND_BIKE:
-                if (Application.isBikeshareEnabled()) {
+                if (BikeshareAvailability.isEnabled(mContext)) {
                     modes = Arrays.asList(TraverseMode.TRANSIT.toString(),
                             TraverseMode.WALK.toString(),
-                            Application.get().getString(R.string.traverse_mode_bicycle_rent));
+                            mContext.getString(R.string.traverse_mode_bicycle_rent));
                 } else {
                     modes = Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
                 }
@@ -177,7 +186,7 @@ public class TripRequestBuilder {
                         TraverseMode.WALK.toString());
                 break;
             case TripModes.BIKESHARE:
-                modes = Arrays.asList(Application.get().getString(R.string.traverse_mode_bicycle_rent));
+                modes = Arrays.asList(mContext.getString(R.string.traverse_mode_bicycle_rent));
                 break;
             default:
                 Log.e(TAG, "Invalid mode set ID");
@@ -192,7 +201,7 @@ public class TripRequestBuilder {
 
     public int getModeSetId() {
         // IF bike mode is selected in the trip plan additional preferences but bikeshare is not enabled use the default mode (TRANSTI)
-        if (TripModes.BIKESHARE == mModeId && !Application.isBikeshareEnabled()) {
+        if (TripModes.BIKESHARE == mModeId && !BikeshareAvailability.isEnabled(mContext)) {
             return TripModes.TRANSIT_ONLY;
         }
         return mModeId;
@@ -216,7 +225,7 @@ public class TripRequestBuilder {
         Request request = buildRequest();
         // TripRequest will accept a null value and give a user-friendly error
         String fmtOtpBaseUrl = getFormattedOtpBaseUrl();
-        TripRequest tripRequest = new TripRequest(fmtOtpBaseUrl, mListener);
+        TripRequest tripRequest = new TripRequest(mContext, fmtOtpBaseUrl, mListener);
         tripRequest.execute(request);
         return tripRequest;
     }
@@ -276,19 +285,20 @@ public class TripRequestBuilder {
      */
     public String getFormattedOtpBaseUrl() {
         String otpBaseUrl;
-        Application app = Application.get();
-        if (!TextUtils.isEmpty(app.getCustomOtpApiUrl())) {
-            otpBaseUrl = app.getCustomOtpApiUrl();
+        String customOtpApiUrl = PreferencesEntryPoint.get(mContext)
+                .getString(mContext.getString(R.string.preference_key_otp_api_url), (String) null);
+        if (!TextUtils.isEmpty(customOtpApiUrl)) {
+            otpBaseUrl = customOtpApiUrl;
             Log.d(TAG, "Using custom OTP API URL set by user '" + otpBaseUrl + "'.");
         } else {
-            otpBaseUrl = app.getCurrentRegion().getOtpBaseUrl();
+            otpBaseUrl = RegionEntryPoint.get(mContext).currentRegion().getOtpBaseUrl();
         }
         try {
             // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
             URL url = new URL(otpBaseUrl);
         } catch (MalformedURLException e) {
             // Assume HTTPS scheme, since without a scheme the Uri won't parse the authority
-            otpBaseUrl = app.getString(R.string.https_prefix) + otpBaseUrl;
+            otpBaseUrl = mContext.getString(R.string.https_prefix) + otpBaseUrl;
         }
         return otpBaseUrl != null ? RegionUtils.formatOtpBaseUrl(otpBaseUrl) : null;
     }
@@ -381,7 +391,7 @@ public class TripRequestBuilder {
     /**
      * Initialize from a BaseBundle
      */
-    public static TripRequestBuilder initFromBundleSimple(Bundle bundle) {
+    public static TripRequestBuilder initFromBundleSimple(Context context, Bundle bundle) {
         Bundle target = new Bundle();
         target.putBoolean(ARRIVE_BY, bundle.getBoolean(ARRIVE_BY));
 
@@ -408,7 +418,7 @@ public class TripRequestBuilder {
         target.putString(MODE_SET, bundle.getString(MODE_SET));
         target.putLong(DATE_TIME, bundle.getLong(DATE_TIME));
 
-        return new TripRequestBuilder(target);
+        return new TripRequestBuilder(context, target);
     }
 
     /**

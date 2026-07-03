@@ -16,10 +16,12 @@
 
 package org.onebusaway.android.directions.tasks;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import org.onebusaway.android.app.Application;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.di.PreferencesEntryPoint;
 import org.onebusaway.android.directions.util.JacksonConfig;
 import org.opentripplanner.api.model.TripPlan;
 import org.opentripplanner.api.ws.Message;
@@ -68,8 +70,12 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
     private Callback mCallback;
 
+    // Application context, used to read/write the OTP-url-version flag through PreferencesEntryPoint.
+    private final Context mContext;
+
     // change Server object to baseUrl string.
-    public TripRequest(String baseUrl, Callback callback) {
+    public TripRequest(Context context, String baseUrl, Callback callback) {
+        mContext = context.getApplicationContext();
         mBaseUrl = baseUrl;
         mCallback = callback;
     }
@@ -87,7 +93,8 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
             return null;
         } else {
             String prefix = FOLDER_STRUCTURE_PREFIX_NEW;
-            boolean useOldUrlVersion = Application.get().getUseOldOtpApiUrlVersion();
+            boolean useOldUrlVersion = PreferencesEntryPoint.get(mContext)
+                    .getBoolean(R.string.preference_key_otp_api_url_version, false);
             for (Request req : reqs) {
                 mResponse = requestPlan(req, prefix, mBaseUrl, useOldUrlVersion);
             }
@@ -175,7 +182,8 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
             if (useOldUrlStructure) {
                 // If the old url structure is successful then cache it
-                Application.get().setUseOldOtpApiUrlVersion(true);
+                PreferencesEntryPoint.get(mContext)
+                        .setBoolean(R.string.preference_key_otp_api_url_version, true);
             }
         } catch (java.net.SocketTimeoutException e) {
             Log.e(TAG, "Timeout fetching JSON or XML: " + e);

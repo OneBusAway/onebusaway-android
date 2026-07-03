@@ -251,7 +251,7 @@ private fun wireClicks(
         val response = renderer.vehicleResponse()
         if (vehicle != null && response != null) {
             callbacks.onVehicleClick(vehicle.status) // selects it -> renderer shows the most-recent-data dot
-            infoWindows.open(marker) { VehicleInfoWindow(vehicle.status, response) }
+            infoWindows.open(marker) { VehicleInfoWindow(vehicle.status, vehicle.isRealtime, response) }
             return@setOnMarkerClickListener true
         }
         val bike = renderer.bikeForMarker(marker)

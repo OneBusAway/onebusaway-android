@@ -64,4 +64,8 @@ data class ExtrapolatedVehicle(
     val bearing: Float,
     val fixTimeMs: Long,
     val status: ObaTripStatus,
+    // Live-vs-scheduled, decided at draw time from whatever produced [point] (the extrapolation anchor
+    // when [point] is extrapolated, else the current status), so the icon/info-window can't disagree
+    // with the position the marker is actually drawn at. See #1621.
+    val isRealtime: Boolean,
 )

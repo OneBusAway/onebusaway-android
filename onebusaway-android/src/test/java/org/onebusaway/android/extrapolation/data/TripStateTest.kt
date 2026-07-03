@@ -368,7 +368,7 @@ class TripStateTest {
                                         distanceAlongTrip = 600.0,
                                         lastUpdateTime = 1000L,
                                         predicted = true,
-                                        hasLocation = true
+                                        hasLastKnownLocation = true
                                 ),
                                 serverTimeMs = 3000L,
                                 localTimeMs = 3000L
@@ -500,14 +500,14 @@ class TripStateTest {
             totalDistanceAlongTrip: Double? = null,
             lastUpdateTime: Long = 0L,
             predicted: Boolean = false,
-            hasLocation: Boolean = false,
+            hasLastKnownLocation: Boolean = false,
             activeTripId: String? = "trip1"
     ): ObaTripStatus = testTripStatus(
             distanceAlongTrip = distanceAlongTrip,
             totalDistanceAlongTrip = totalDistanceAlongTrip,
             lastUpdateTime = lastUpdateTime,
             predicted = predicted,
-            hasLocation = hasLocation,
+            hasLastKnownLocation = hasLastKnownLocation,
             activeTripId = activeTripId
     )
 

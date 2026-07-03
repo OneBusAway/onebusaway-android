@@ -83,7 +83,8 @@ data class GenericMarker(val point: GeoPoint, val hue: Float?)
  * One real-time vehicle marker. [status] is the raw io/elements status (the renderer derives the
  * icon, color, and info-window text from it, paired with the shared [MapVehicles.response]);
  * [activeTripId] is the stable key used for marker identity + animation; [isRealtime] is the
- * populate-time decision (last-known location present + predicted) that selects the live-vs-scheduled icon.
+ * draw-time decision (from whatever produced the drawn point — the extrapolation anchor or the current
+ * status) that selects the live-vs-scheduled icon.
  */
 data class VehicleMarker(
     val activeTripId: String,

@@ -112,12 +112,21 @@ fun extrapolatedVehicles(
             ?: status.lastKnownLocation?.toGeoPoint()
             ?: status.position?.toGeoPoint()
             ?: return@mapNotNull null
+        // Real-time iff the source of [point] is real-time: an extrapolated point inherits its anchor
+        // fix's flag, a point taken from the current status uses that status'. This keeps the marker
+        // from reading "scheduled" for a vehicle we're actively tracking/extrapolating (#1621).
+        val isRealtime = if (projection != null) {
+            state?.anchor?.isLocationRealtime == true
+        } else {
+            status.isLocationRealtime
+        }
         ExtrapolatedVehicle(
             point = point,
             // The path tangent off the shape; NaN off-shape, so the marker falls back to the orientation.
             bearing = projection?.bearing ?: Float.NaN,
             fixTimeMs = state?.anchorLocalTimeMs?.takeIf { it > 0L } ?: status.lastUpdateTime,
             status = status,
+            isRealtime = isRealtime,
         )
     }
 

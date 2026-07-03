@@ -105,9 +105,19 @@ interface ObaTripStatus {
     val occupancyStatus: Occupancy?
 
     /**
-     * True if the server provided a real-time location for this vehicle — i.e. it has a last-known
-     * location *and* the trip is predicted.
+     * True if the server provided a real-time location for this vehicle — i.e. the trip is predicted
+     * *and* we have a real-time location for it.
+     *
+     * "A location" means either [lastKnownLocation] (a raw GPS fix) or [position] (which, per its own
+     * contract, "is only present if the trip is actively running"). Requiring [lastKnownLocation]
+     * specifically wrongly flagged an actively-running, predicted vehicle as *scheduled* when the feed
+     * populated only [position] — that marker was still drawn (and extrapolated) from [position], and
+     * its arrival listings showed predictions, so styling it scheduled contradicted both. See #1621.
+     *
+     * The arrival listings answer the same "is this real-time?" question with `ObaArrivalInfo.predicted`
+     * (bare [isPredicted], with no location requirement since a list row needs no coordinates); keep the
+     * two in step if the feed's real-time semantics ever change.
      */
     val isLocationRealtime: Boolean
-        get() = lastKnownLocation != null && isPredicted
+        get() = isPredicted && (lastKnownLocation != null || position != null)
 }

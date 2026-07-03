@@ -65,32 +65,29 @@ import java.util.concurrent.TimeUnit
  * `ComposeView`.
  */
 @Composable
-fun VehicleInfoWindow(status: ObaTripStatus, response: RouteTrips) {
+fun VehicleInfoWindow(status: ObaTripStatus, isRealtime: Boolean, response: RouteTrips) {
     val res = LocalContext.current.resources
     val nowMs = rememberNowMs()
     // The window only opens for an already-rendered vehicle, so its trip/route are in the refs;
     // guard the unreachable null instead of dereferencing (the legacy getTrip/getRoute would NPE).
     val trip = response.trip(status.activeTripId) ?: return
     val route = response.route(trip.routeId) ?: return
-    val realtime = status.isLocationRealtime
     val deviationMin = TimeUnit.SECONDS.toMinutes(status.scheduleDeviation)
 
+    // [isRealtime] is the drawn marker's live-vs-scheduled flag (from the renderer), so the window can't
+    // disagree with the icon; the arrival listings share the scheduled-vs-deviation coloring via ArrivalInfoUtils.
     VehicleInfoWindowContent(
         title = getRouteDisplayName(route) + " " +
             stringResource(R.string.trip_info_separator) + " " +
             MyTextUtils.formatDisplayText(trip.headsign),
-        statusLabel = if (realtime) {
+        statusLabel = if (isRealtime) {
             ArrivalInfoUtils.computeArrivalLabelFromDelay(res, deviationMin)
         } else {
             stringResource(R.string.stop_info_scheduled)
         },
-        statusColor = if (realtime) {
-            colorResource(ArrivalInfoUtils.computeColorFromDeviation(deviationMin))
-        } else {
-            colorResource(R.color.stop_info_scheduled_time)
-        },
-        occupancyDots = if (realtime) occupancyDots(status.occupancyStatus) else 0,
-        lastUpdated = lastUpdatedText(res, realtime, status, nowMs),
+        statusColor = colorResource(ArrivalInfoUtils.statusColor(isRealtime, deviationMin)),
+        occupancyDots = if (isRealtime) occupancyDots(status.occupancyStatus) else 0,
+        lastUpdated = lastUpdatedText(res, isRealtime, status, nowMs),
     )
 }
 

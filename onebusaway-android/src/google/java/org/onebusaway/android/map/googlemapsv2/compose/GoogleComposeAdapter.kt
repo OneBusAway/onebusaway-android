@@ -347,7 +347,7 @@ private fun GoogleInfoWindows.openVehicleWindow(renderer: GoogleMapRenderer, mar
         // want the latest poll at render time rather than a collectAsState that would never recompose here.
         @Suppress("StateFlowValueCalledInComposition")
         val response = renderer.vehicleResponse.value
-        if (live != null && response != null) VehicleInfoWindow(live.status, response)
+        if (live != null && response != null) VehicleInfoWindow(live.status, live.isRealtime, response)
     }
 }
 

@@ -20,6 +20,8 @@ package org.onebusaway.android.util;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.PreferencesEntryPoint;
+import org.onebusaway.android.app.di.RegionEntryPoint;
 import org.onebusaway.android.api.bridge.RegionsClient;
 import org.onebusaway.android.region.Region;
 
@@ -121,26 +123,30 @@ public class RegionUtils {
      *
      * @return regionName
      */
-    public static String getObaRegionName() {
+    public static String getObaRegionName(Context context) {
         String regionName = null;
-        Region region = Application.get().getCurrentRegion();
+        Region region = RegionEntryPoint.get(context).currentRegion();
         if (region != null && region.getName() != null) {
             regionName = region.getName();
-        } else if (Application.get().getCustomApiUrl() != null) {
-            regionName = createHashCode(Application.get().getCustomApiUrl().getBytes());
+        } else {
+            String customApiUrl = PreferencesEntryPoint.get(context)
+                    .getString(context.getString(R.string.preference_key_oba_api_url), (String) null);
+            if (customApiUrl != null) {
+                regionName = createHashCode(context, customApiUrl.getBytes());
+            }
         }
         return regionName;
     }
 
-    private static String createHashCode(byte[] bytes) {
+    private static String createHashCode(Context context, byte[] bytes) {
         MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("SHA-1");
             digest.update(bytes);
-            return Application.get().getString(R.string.analytics_label_custom_url) +
+            return context.getString(R.string.analytics_label_custom_url) +
                     ": " + Application.getHex(digest.digest());
         } catch (Exception e) {
-            return Application.get().getString(R.string.analytics_label_custom_url);
+            return context.getString(R.string.analytics_label_custom_url);
         }
     }
 

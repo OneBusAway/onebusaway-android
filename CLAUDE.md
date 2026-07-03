@@ -161,10 +161,15 @@ makes alone:
 2. Document it at the call site: the exact assumption, why no exact source exists, and its failure mode.
 3. This applies equally to **pre-existing** heuristics you touch — reworking one re-opens the sign-off.
 
-When you're tempted to guess a unit/type/intent, check the wire contract and sample payloads first —
-the answer is usually knowable. (Worked example: a legacy helper guessed whether an alert active-window
-timestamp was seconds or milliseconds by magnitude; the OBA REST contract in fact defines them as epoch
-**seconds**, so #1612 deleted the guess and converts deterministically.)
+When you're tempted to guess a unit/type/intent, check the wire contract, the sample payloads, **and
+the producer's source** first — the answer is usually knowable, and sometimes the honest answer is
+"the field really is polymorphic," which is itself worth documenting. (Worked example: a legacy helper
+guessed whether an alert active-window timestamp was seconds or millis by magnitude. Reading the OBA
+**server** source settled it — GTFS-RT `active_period` is seconds per spec, but the server normalizes to
+millis on ingestion via its own magnitude rule (`GtfsRealtimeAlertLibrary.toMillis`, threshold 1e12),
+while older servers still emit seconds — so the field genuinely varies. The client normalization stays,
+but it's now sanctioned by the server evidence and mirrors the server's exact threshold, rather than
+being an invented guess. See `SituationUtils.toEpochMillis` and `SituationWindow`.)
 
 ## Key Technical Details
 

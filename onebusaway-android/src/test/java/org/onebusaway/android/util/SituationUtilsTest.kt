@@ -21,10 +21,10 @@ import org.junit.Test
 import org.onebusaway.android.models.ObaSituation
 
 /**
- * Unit tests for [SituationUtils.isActiveWindowForSituation]. The point of these (beyond the
- * boundary behaviour) is the #1612 guardrail: the check is a **pure function of the passed
- * `currentTime`** and reads no clock of its own, so a caller feeding the response's server
- * `currentTime` gets a result that is immune to device clock skew.
+ * Unit tests for [SituationUtils.isActiveWindowForSituation]. Two things they pin down: (1) the #1612
+ * guardrail — the check is a **pure function of the passed `currentTime`**, immune to device clock
+ * skew; and (2) that active-window `from`/`to` are handled whether the server sent them as epoch
+ * **seconds** (older servers) or **millis** (modern servers normalize GTFS-RT seconds → millis).
  */
 class SituationUtilsTest {
 
@@ -34,6 +34,10 @@ class SituationUtilsTest {
     private val insideMs = 1_700_001_800_000L // +30min, in millis
     private val beforeMs = 1_699_999_000_000L
     private val afterMs = 1_700_004_000_000L
+
+    // The same window as fromSec/toSec but already in epoch millis (as a modern server emits it).
+    private val insideWindowStartMs = 1_700_000_000_000L
+    private val insideWindowEndMs = 1_700_003_600_000L
 
     @Test
     fun `no active windows means always active`() {
@@ -68,6 +72,15 @@ class SituationUtilsTest {
         assertTrue(SituationUtils.isActiveWindowForSituation(s, insideMs))
         assertTrue(SituationUtils.isActiveWindowForSituation(s, afterMs))
         assertFalse(SituationUtils.isActiveWindowForSituation(s, beforeMs))
+    }
+
+    @Test
+    fun `window sent in epoch millis is handled like the seconds form`() {
+        // A modern server emits from/to already in millis (same instant as the seconds-based tests).
+        val s = situation(windows = arrayOf(window(insideWindowStartMs, insideWindowEndMs)))
+        assertTrue(SituationUtils.isActiveWindowForSituation(s, insideMs))
+        assertFalse(SituationUtils.isActiveWindowForSituation(s, beforeMs))
+        assertFalse(SituationUtils.isActiveWindowForSituation(s, afterMs))
     }
 
     @Test

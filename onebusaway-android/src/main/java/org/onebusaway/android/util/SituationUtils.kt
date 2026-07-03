@@ -40,14 +40,28 @@ object SituationUtils {
             // We assume a situation is active if it doesn't contain any active window information.
             return true
         }
-        // Active-window from/to are epoch *seconds* per the OBA REST contract (see SituationWindow in
-        // ObaApiModels; confirmed by every response fixture), while [currentTime] is epoch *millis* —
-        // a known, fixed unit mismatch, so convert "now" to seconds deterministically (no unit guess).
-        val nowSec = TimeUnit.MILLISECONDS.toSeconds(currentTime)
+        // currentTime is always epoch millis; active-window from/to are polymorphic (see toEpochMillis),
+        // so normalize both ends to millis before comparing.
+        val nowMs = currentTime
         return situation.activeWindows.any { window ->
             // The window must have started (guards future-dated windows), and either be open-ended
             // (to == 0 means no end — see #990) or not yet ended.
-            window.from <= nowSec && (window.to == 0L || nowSec <= window.to)
+            toEpochMillis(window.from) <= nowMs && (window.to == 0L || nowMs <= toEpochMillis(window.to))
         }
     }
+
+    /**
+     * Normalizes an active-window timestamp to epoch milliseconds. The unit is **not fixed** across
+     * the OBA ecosystem: GTFS-RT `active_period` is seconds per spec, but the server converts it to
+     * millis on ingestion — and older servers/feeds emit seconds — so a response's `from`/`to` may be
+     * either. This mirrors the server's own normalization (`GtfsRealtimeAlertLibrary.toMillis`,
+     * threshold 1e12) so the check is correct whichever unit the server sent. Non-positive values
+     * (e.g. an unset `from`) pass through as-is.
+     */
+    private fun toEpochMillis(timestamp: Long): Long =
+        if (timestamp in 1 until SECONDS_MILLIS_THRESHOLD) TimeUnit.SECONDS.toMillis(timestamp) else timestamp
+
+    /** OBA's server-side seconds-vs-millis boundary (`GtfsRealtimeAlertLibrary.toMillis`): a value
+     *  below this is treated as epoch seconds and scaled up; at or above it, as epoch millis. */
+    private const val SECONDS_MILLIS_THRESHOLD = 1_000_000_000_000L
 }

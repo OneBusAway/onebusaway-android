@@ -253,30 +253,6 @@ public class Application extends android.app.Application {
 
 
     /**
-     * Gets the date at which the region information was last updated, in the number of
-     * milliseconds
-     * since January 1, 1970, 00:00:00 GMT
-     * Default value is 0 if the region info has never been updated.
-     *
-     * @return the date at which the region information was last updated, in the number of
-     * milliseconds since January 1, 1970, 00:00:00 GMT.  Default value is 0 if the region info has
-     * never been updated.
-     */
-    public long getLastRegionUpdateDate() {
-        return PreferenceUtils.getLong(getString(R.string.preference_key_last_region_update), 0);
-    }
-
-    /**
-     * Sets the date at which the region information was last updated
-     *
-     * @param date the date at which the region information was last updated, in the number of
-     *             milliseconds since January 1, 1970, 00:00:00 GMT
-     */
-    public void setLastRegionUpdateDate(long date) {
-        PreferenceUtils.saveLong(getString(R.string.preference_key_last_region_update), date);
-    }
-
-    /**
      * Returns the custom URL if the user has set a custom API URL manually via Preferences, or
      * null
      * if it has not been set

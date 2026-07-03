@@ -23,7 +23,7 @@ import android.provider.Settings
 
 import java.net.HttpURLConnection
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.api.ObaApi
 
 /**
@@ -44,7 +44,7 @@ object ObaRequestErrors {
             HttpURLConnection.HTTP_INTERNAL_ERROR ->
                 context.getString(R.string.internal_error)
             HttpURLConnection.HTTP_NOT_FOUND -> {
-                val r = Application.get().currentRegion
+                val r = RegionEntryPoint.get(context).currentRegion()
                 if (r != null) {
                     context.getString(R.string.route_not_found_error_with_region_name, r.name)
                 } else {
@@ -73,7 +73,7 @@ object ObaRequestErrors {
             HttpURLConnection.HTTP_INTERNAL_ERROR ->
                 context.getString(R.string.internal_error)
             HttpURLConnection.HTTP_NOT_FOUND -> {
-                val r = Application.get().currentRegion
+                val r = RegionEntryPoint.get(context).currentRegion()
                 if (r != null) {
                     context.getString(R.string.stop_not_found_error_with_region_name, r.name)
                 } else {

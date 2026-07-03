@@ -23,7 +23,6 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
 import org.onebusaway.android.analytics.AnalyticsProvider
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
@@ -98,7 +97,7 @@ class DefaultRegionsRepository @Inject constructor(
             regionsById = usable.associateBy { it.id }
 
             val location = locationRepository.lastKnownLocation()
-            val currentRegionId = Application.get().currentRegion?.id
+            val currentRegionId = regionRepository.currentRegion()?.id
             val items = usable.map { region ->
                 RegionItem(
                     id = region.id,

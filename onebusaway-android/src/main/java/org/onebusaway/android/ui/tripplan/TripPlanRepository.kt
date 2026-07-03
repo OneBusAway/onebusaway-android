@@ -28,7 +28,6 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
 import org.onebusaway.android.directions.util.CustomAddress
 import org.onebusaway.android.directions.util.JacksonConfig
 import org.onebusaway.android.directions.util.TripRequestBuilder
@@ -37,6 +36,7 @@ import org.opentripplanner.api.ws.Message
 import org.opentripplanner.api.ws.Request
 import org.opentripplanner.api.ws.Response
 import org.opentripplanner.routing.core.TraverseMode
+import org.onebusaway.android.preferences.PreferencesRepository
 
 /** Plans a trip against the region's OpenTripPlanner server. */
 interface TripPlanRepository {
@@ -50,7 +50,8 @@ interface TripPlanRepository {
  * messages (ported from TripPlanActivity.getErrorMessage) and surfaced as [Result.failure].
  */
 class DefaultTripPlanRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val prefs: PreferencesRepository,
 ) : TripPlanRepository {
 
     override suspend fun plan(params: TripPlanParams): Result<List<Itinerary>> =
@@ -70,7 +71,11 @@ class DefaultTripPlanRepository @Inject constructor(
                 val baseUrl = builder.formattedOtpBaseUrl
                     ?: throw IOException(context.getString(R.string.tripplanner_no_server_selected_error))
 
-                val response = requestPlan(request, baseUrl, Application.get().useOldOtpApiUrlVersion)
+                val response = requestPlan(
+                    request,
+                    baseUrl,
+                    prefs.getBoolean(R.string.preference_key_otp_api_url_version, false),
+                )
                 val itineraries = response.plan?.itinerary
                 if (itineraries.isNullOrEmpty()) {
                     throw IOException(errorMessage(response.error?.id ?: -1))
@@ -126,7 +131,7 @@ class DefaultTripPlanRepository @Inject constructor(
             }
             val response: Response = JacksonConfig.getObjectReaderInstance().readValue(connection.inputStream)
             if (useOldUrlStructure) {
-                Application.get().useOldOtpApiUrlVersion = true
+                prefs.setBoolean(R.string.preference_key_otp_api_url_version, true)
             }
             return response
         } catch (e: SocketTimeoutException) {

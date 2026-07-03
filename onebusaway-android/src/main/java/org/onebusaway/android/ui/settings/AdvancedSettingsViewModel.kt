@@ -62,7 +62,7 @@ class AdvancedSettingsViewModel @Inject constructor(
 
     init {
         // The old fragment reset this on every (re)display of the advanced screen.
-        Application.get().setUseOldOtpApiUrlVersion(false)
+        prefs.setBoolean(R.string.preference_key_otp_api_url_version, false)
     }
 
     val state: StateFlow<AdvancedSettingsUiState> =

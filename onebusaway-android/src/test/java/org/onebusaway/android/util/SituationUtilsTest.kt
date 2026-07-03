@@ -62,10 +62,21 @@ class SituationUtilsTest {
 
     @Test
     fun `zero end time is an open-ended window`() {
-        // to == 0 means "no end" (see #990): active at and after the start, unbounded above.
+        // to == 0 means "no end" (see #990): active at and after the start, unbounded above, but NOT
+        // before the start — an open-ended window with no upper bound must still respect its start.
         val s = situation(windows = arrayOf(window(fromSec, 0L)))
         assertTrue(SituationUtils.isActiveWindowForSituation(s, insideMs))
         assertTrue(SituationUtils.isActiveWindowForSituation(s, afterMs))
+        assertFalse(SituationUtils.isActiveWindowForSituation(s, beforeMs))
+    }
+
+    @Test
+    fun `future start with no end is inactive`() {
+        // A window that starts well in the future (seconds-based) with no end must not read as active
+        // now — the start-passed guard, not the unit heuristic, decides this.
+        val futureFromSec = 1_800_000_000L // year ~2027 in epoch seconds
+        val s = situation(windows = arrayOf(window(futureFromSec, 0L)))
+        assertFalse(SituationUtils.isActiveWindowForSituation(s, insideMs))
     }
 
     // The #1612 property — the verdict is a function of the passed (server) time alone, so device

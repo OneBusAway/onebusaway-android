@@ -131,7 +131,10 @@ public class GtfsAlertsHelper {
      */
     public static boolean isStartDateWithin24Hours(GtfsRealtime.Alert alert, long nowMs) {
         long startTime = alert.getActivePeriod(0).getStart() * 1000L;
-        return (nowMs - startTime) <= 24 * 60 * 60 * 1000L;
+        long elapsed = nowMs - startTime;
+        // Must have already started (guards future-dated starts, which would otherwise pass the upper
+        // bound with a negative elapsed) and be no older than 24 hours.
+        return elapsed >= 0 && elapsed <= 24 * 60 * 60 * 1000L;
     }
 
     /**

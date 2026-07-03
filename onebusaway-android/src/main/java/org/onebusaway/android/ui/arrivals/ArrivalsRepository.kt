@@ -22,6 +22,7 @@ import org.onebusaway.android.api.data.RouteDataSource
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
+import android.os.SystemClock
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import javax.inject.Inject
@@ -223,6 +224,10 @@ class DefaultArrivalsRepository @Inject constructor(
 
     private var lastGood: StopArrivals? = null
 
+    // Monotonic device time when [lastGood] was received, paired with its server currentTime so the
+    // stale-fallback path can project that server clock forward by elapsed device time (#1612).
+    private var lastGoodElapsedMs: Long = 0L
+
     // Whether the viewed stop has been recorded in the Stops table this session. Recording (a) creates
     // the row so the favorite toggle's UPDATE actually persists, and (b) marks it used so it appears in
     // Recent stops. markAsUsed bumps USE_COUNT, so this is done once — not on every 60s poll/refresh.
@@ -246,16 +251,23 @@ class DefaultArrivalsRepository @Inject constructor(
         result.fold(
             onSuccess = { snapshot ->
                 lastGood = snapshot
+                lastGoodElapsedMs = SystemClock.elapsedRealtime()
                 // Record the stop once per session so favoriting persists (markAsFavorite is an
                 // UPDATE — it needs the row to exist) and the stop shows in Recent stops.
                 if (!stopRecorded) {
                     snapshot.stop?.let { DBUtil.addToDB(it); stopRecorded = true }
                 }
-                Result.success(toData(snapshot, filter, isStale = false))
+                Result.success(toData(snapshot, filter, isStale = false, now = snapshot.currentTime))
             },
             // Refresh failed but we have prior data — keep showing it (legacy stale fallback).
             onFailure = { error ->
-                lastGood?.let { Result.success(toData(it, filter, isStale = true)) }
+                lastGood?.let { stale ->
+                    // No fresh server time; project the last good server clock forward by the elapsed
+                    // device time so stale ETAs/countdowns keep advancing (legacy behavior) without
+                    // reintroducing device clock skew (#1612).
+                    val now = stale.currentTime + (SystemClock.elapsedRealtime() - lastGoodElapsedMs)
+                    Result.success(toData(stale, filter, isStale = true, now = now))
+                }
                     ?: Result.failure(
                         IOException(
                             ObaRequestErrors.getStopErrorString(
@@ -270,11 +282,12 @@ class DefaultArrivalsRepository @Inject constructor(
     private fun toData(
         snapshot: StopArrivals,
         routeFilter: Set<String>,
-        isStale: Boolean
-    ): ArrivalsData {
+        isStale: Boolean,
         // Server clock as "now" so ETAs/countdowns and alert active-window checks cancel any device
-        // clock skew — the arrival times and the "now" they're measured against share one clock (#1612).
-        val now = snapshot.currentTime
+        // clock skew — the fresh response's currentTime, or (on the stale path) the last good server
+        // clock projected forward by elapsed device time (#1612).
+        now: Long
+    ): ArrivalsData {
         val style = BuildFlavorUtils.getArrivalInfoStyleFromPreferences(context)
         // Style B includes the arrival/departure word in the status label; Style A does not.
         val includeArrivalDepartureLabel = style == BuildFlavorUtils.ARRIVAL_INFO_STYLE_B

@@ -40,35 +40,26 @@ object SituationUtils {
             // We assume a situation is active if it doesn't contain any active window information.
             return true
         }
-        // Active window times are in seconds or milliseconds since epoch.
-        var currentTimeConverted = TimeUnit.MILLISECONDS.toSeconds(currentTime)
-        var isActiveWindowForSituation = false
-        for (activeWindow in situation.activeWindows) {
-            val from = activeWindow.from
-            val to = activeWindow.to
-
-            if (!isTimestampInSeconds(from, currentTime)) {
-                currentTimeConverted = TimeUnit.MILLISECONDS.toMillis(currentTime)
-            }
-            // 0 is a valid end time that means no end to the window - see #990.
-            if (from <= currentTimeConverted && (to == 0L || currentTimeConverted <= to)) {
-                isActiveWindowForSituation = true
-                break
-            }
+        // Active window times arrive in either seconds or milliseconds; normalize both ends and "now"
+        // to millis by magnitude so the comparison never depends on the units of "now".
+        val nowMs = toEpochMillis(currentTime)
+        return situation.activeWindows.any { window ->
+            val fromMs = toEpochMillis(window.from)
+            // The window must have started (guards future-dated windows), and either be open-ended
+            // (to == 0 means no end — see #990) or not yet ended.
+            fromMs <= nowMs && (window.to == 0L || nowMs <= toEpochMillis(window.to))
         }
-        return isActiveWindowForSituation
     }
 
     /**
-     * Checks if the given timestamp is in seconds (rather than milliseconds), by magnitude.
-     *
-     * @param timestamp the timestamp to check
-     * @param nowMillis the current time in epoch milliseconds (the passed-in server clock — this
-     *                  helper reads no clock of its own so it stays a pure function)
-     * @return true if the timestamp is in seconds, false if it is in milliseconds
+     * Normalizes an epoch timestamp to milliseconds by magnitude (active-window times arrive in
+     * seconds or milliseconds). Values below [SECONDS_MILLIS_THRESHOLD] are seconds — that many
+     * *seconds* only reaches the year ~5138, whereas any modern *millis* timestamp is far larger —
+     * so they're scaled up; anything else is already millis. Non-positive values pass through.
      */
-    private fun isTimestampInSeconds(timestamp: Long, nowMillis: Long): Boolean {
-        // If the timestamp is smaller than the current time divided by 1000, it's likely in seconds.
-        return timestamp < nowMillis / 1000L
-    }
+    private fun toEpochMillis(timestamp: Long): Long =
+        if (timestamp in 1 until SECONDS_MILLIS_THRESHOLD) TimeUnit.SECONDS.toMillis(timestamp) else timestamp
+
+    /** ~Year 5138 in epoch seconds / year 1973 in epoch millis — cleanly separates the two units. */
+    private const val SECONDS_MILLIS_THRESHOLD = 100_000_000_000L
 }

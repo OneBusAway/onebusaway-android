@@ -71,19 +71,33 @@ object Backup {
         }
     }
 
+    /**
+     * Restores [uri] into the app database, returning true when the caller must restart the process to
+     * finish.
+     *
+     * A Room-format backup is restored by swapping the database *file*, which forces a
+     * [DatabaseProvider.closeDatabase]/reopen and so a brand-new [org.onebusaway.android.database.AppDatabase]
+     * instance. The Hilt object graph still holds the old (now-closed) singleton — and every repository
+     * that captured a DAO from it — so those would throw on their next query. Returning true tells the
+     * caller to restart the process, rebuilding the whole graph against the restored file. A
+     * legacy-format backup is merged into the live instance in place (no swap, no close) and returns
+     * false.
+     */
     @JvmStatic
     @Throws(IOException::class)
-    fun restore(context: Context, uri: Uri) {
+    fun restore(context: Context, uri: Uri): Boolean {
         val backupFile = uriToTempFile(context, uri)
             ?: throw IOException("Could not read backup file")
-        try {
+        return try {
             if (isRoomBackup(backupFile)) {
                 restoreRoomBackup(context, backupFile)
+                true
             } else {
                 // A legacy ContentProvider-format backup: merge it into the current Room DB via the
                 // same importer used for the one-time migration (rare, user-initiated, so blocking).
                 val importer = DatabaseEntryPoint.get(context).legacyDataImporter()
                 runBlocking { importer.importFrom(backupFile) }
+                false
             }
         } finally {
             backupFile.delete()

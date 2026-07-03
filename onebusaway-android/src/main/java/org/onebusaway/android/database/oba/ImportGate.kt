@@ -43,12 +43,27 @@ import org.onebusaway.android.app.di.AppScope
  *
  * IMPORTANT: never await this from inside a DAO — the importer itself writes via [LegacyImportDao], so
  * gating a DAO method would deadlock the import on itself.
+ *
+ * Extracted as an interface so gated repositories can be unit-tested with a no-op fake (the production
+ * implementation, [DefaultImportGate], needs an app scope and the importer, which aren't constructible
+ * in a JVM test).
  */
+interface ImportGate {
+    /** Suspends until the one-time import has completed (starting it on first call). Never throws. */
+    suspend fun awaitReady()
+
+    /**
+     * Eagerly begins the one-time import (fire-and-forget), so it overlaps app startup instead of
+     * first blocking a repository read. Idempotent — the import still runs exactly once.
+     */
+    fun start()
+}
+
 @Singleton
-class ImportGate @Inject constructor(
+class DefaultImportGate @Inject constructor(
     @AppScope private val appScope: CoroutineScope,
     private val importer: LegacyDataImporter,
-) {
+) : ImportGate {
     private val ready: Deferred<Unit> by lazy {
         appScope.async {
             // Independent + individually guarded: a failure of either import must not crash the app or
@@ -69,14 +84,9 @@ class ImportGate @Inject constructor(
         }
     }
 
-    /** Suspends until the one-time import has completed (starting it on first call). Never throws. */
-    suspend fun awaitReady() = ready.await()
+    override suspend fun awaitReady() = ready.await()
 
-    /**
-     * Eagerly begins the one-time import (fire-and-forget), so it overlaps app startup instead of
-     * first blocking a repository read. Idempotent — the [ready] job still runs exactly once.
-     */
-    fun start() {
+    override fun start() {
         ready.start()
     }
 

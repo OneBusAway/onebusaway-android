@@ -106,7 +106,9 @@ private fun RouteListRow.toRouteItem() = RouteListItem(
 /** Recently viewed stops, marked unused on removal/clear. */
 class RecentStopsRepository(private val context: Context) : MyListRepository<StopListItem> {
 
-    private val stopDao = DatabaseEntryPoint.get(context).stopDao()
+    private val entryPoint = DatabaseEntryPoint.get(context)
+    private val stopDao = entryPoint.stopDao()
+    private val importGate = entryPoint.importGate()
     private val region = RegionEntryPoint.get(context).region
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -115,15 +117,25 @@ class RecentStopsRepository(private val context: Context) : MyListRepository<Sto
             .map { rows -> rows.map { it.toStopItem(context) } }
             .flowOn(Dispatchers.IO)
 
-    override suspend fun remove(id: String) = stopDao.markUnused(id)
+    // Gate the writes: a remove/clear racing the one-time importer's clear-then-insert would otherwise
+    // be silently wiped. Reads self-heal via Room invalidation once the import commits, so they don't.
+    override suspend fun remove(id: String) {
+        importGate.awaitReady()
+        stopDao.markUnused(id)
+    }
 
-    override suspend fun clearAll() = stopDao.markAllUnused()
+    override suspend fun clearAll() {
+        importGate.awaitReady()
+        stopDao.markAllUnused()
+    }
 }
 
 /** Recently viewed routes, marked unused on removal/clear. */
 class RecentRoutesRepository(private val context: Context) : MyListRepository<RouteListItem> {
 
-    private val routeDao = DatabaseEntryPoint.get(context).routeDao()
+    private val entryPoint = DatabaseEntryPoint.get(context)
+    private val routeDao = entryPoint.routeDao()
+    private val importGate = entryPoint.importGate()
     private val region = RegionEntryPoint.get(context).region
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -132,9 +144,15 @@ class RecentRoutesRepository(private val context: Context) : MyListRepository<Ro
             .map { rows -> rows.map { it.toRouteItem() } }
             .flowOn(Dispatchers.IO)
 
-    override suspend fun remove(id: String) = routeDao.markUnused(id)
+    override suspend fun remove(id: String) {
+        importGate.awaitReady()
+        routeDao.markUnused(id)
+    }
 
-    override suspend fun clearAll() = routeDao.markAllUnused()
+    override suspend fun clearAll() {
+        importGate.awaitReady()
+        routeDao.markAllUnused()
+    }
 }
 
 /** Persists the chosen sort order as the matching [optionsRes] string under [prefKeyRes] (legacy format). */
@@ -146,7 +164,9 @@ private fun saveSortOrder(context: Context, order: Int, @ArrayRes optionsRes: In
 /** Starred stops, sorted by name or frequency, with live next-arrivals refreshed on a 60s poll. */
 class StarredStopsRepository(private val context: Context) : MyListRepository<StopListItem> {
 
-    private val stopDao = DatabaseEntryPoint.get(context).stopDao()
+    private val entryPoint = DatabaseEntryPoint.get(context)
+    private val stopDao = entryPoint.stopDao()
+    private val importGate = entryPoint.importGate()
     private val region = RegionEntryPoint.get(context).region
     private val sort = MutableStateFlow(PreferenceUtils.getStopSortOrderFromPreferences())
 
@@ -181,9 +201,15 @@ class StarredStopsRepository(private val context: Context) : MyListRepository<St
             }
             .flowOn(Dispatchers.IO)
 
-    override suspend fun remove(id: String) = stopDao.setFavorite(id, 0)
+    override suspend fun remove(id: String) {
+        importGate.awaitReady()
+        stopDao.setFavorite(id, 0)
+    }
 
-    override suspend fun clearAll() = stopDao.clearAllFavorites()
+    override suspend fun clearAll() {
+        importGate.awaitReady()
+        stopDao.clearAllFavorites()
+    }
 }
 
 /** Starred routes, sorted by name or frequency. */
@@ -192,6 +218,7 @@ class StarredRoutesRepository(private val context: Context) : MyListRepository<R
     private val entryPoint = DatabaseEntryPoint.get(context)
     private val routeDao = entryPoint.routeDao()
     private val headsignDao = entryPoint.routeHeadsignFavoriteDao()
+    private val importGate = entryPoint.importGate()
     private val region = RegionEntryPoint.get(context).region
     private val sort = MutableStateFlow(PreferenceUtils.getStopSortOrderFromPreferences())
 
@@ -216,11 +243,13 @@ class StarredRoutesRepository(private val context: Context) : MyListRepository<R
     // Unstarring a whole route removes all its headsign favorites and clears the route's favorite flag
     // (the all-stops unfavorite path creates no exclusion records).
     override suspend fun remove(id: String) {
+        importGate.awaitReady()
         headsignDao.deleteForRoute(id, null)
         routeDao.setFavorite(id, 0)
     }
 
     override suspend fun clearAll() {
+        importGate.awaitReady()
         headsignDao.clearAll()
         routeDao.clearAllFavorites()
     }

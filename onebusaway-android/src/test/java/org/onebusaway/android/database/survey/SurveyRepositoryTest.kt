@@ -18,6 +18,7 @@ package org.onebusaway.android.database.survey
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.survey.dao.StudiesDao
 import org.onebusaway.android.database.survey.entity.Study
 import org.onebusaway.android.database.survey.entity.Survey
@@ -34,7 +35,7 @@ class SurveyRepositoryTest {
 
     private val studies = FakeStudiesDao()
     private val surveys = FakeSurveysDao()
-    private val repo = SurveyRepository(studies, surveys)
+    private val repo = SurveyRepository(studies, surveys, NoopImportGate)
 
     private fun surveyModel(id: Int, study: SurveyStudy?) = SurveyModel(
         study = study,
@@ -104,6 +105,12 @@ class SurveyRepositoryTest {
 
         assertEquals(setOf(3, 9), repo.completedSurveyIds())
     }
+}
+
+/** The import gate is already satisfied in these tests — awaitReady is a no-op. */
+private object NoopImportGate : ImportGate {
+    override suspend fun awaitReady() {}
+    override fun start() {}
 }
 
 private class FakeStudiesDao : StudiesDao {

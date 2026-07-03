@@ -24,6 +24,8 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import org.onebusaway.android.database.AppDatabase
 import org.onebusaway.android.database.DatabaseProvider
+import org.onebusaway.android.database.oba.DefaultImportGate
+import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.LegacyDataImporter
 import org.onebusaway.android.database.oba.LegacyImportDao
 import org.onebusaway.android.database.oba.NavStopDao
@@ -89,6 +91,9 @@ object DatabaseModule {
 
     @Provides
     fun provideAlertDao(db: AppDatabase): AlertDao = db.alertsDao()
+
+    @Provides
+    fun provideImportGate(impl: DefaultImportGate): ImportGate = impl
 
     @Provides
     @Singleton

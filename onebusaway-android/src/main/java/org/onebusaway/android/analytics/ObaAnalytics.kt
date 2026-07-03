@@ -15,26 +15,34 @@
  */
 package org.onebusaway.android.analytics
 
+import android.content.Context
 import android.location.Location
 import android.os.Bundle
 import com.google.firebase.analytics.FirebaseAnalytics
-import com.onebusaway.plausible.android.Plausible
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
-import org.onebusaway.android.app.di.AnalyticsEntryPoint
-import org.onebusaway.android.util.PreferenceUtils
+import org.onebusaway.android.preferences.PreferencesRepository
 
 /**
  * Analytics orchestrator for the app: fans each tracked event out to Firebase, Plausible
- * ([PlausibleAnalytics]) and Umami ([UmamiAnalyticsReporter]). Exposed as `@JvmStatic` methods so the
- * many Java + Kotlin call sites keep calling `ObaAnalytics.xxx(...)` unchanged.
+ * ([PlausibleAnalytics]) and Umami ([UmamiAnalyticsReporter]). An injected app-singleton — it holds the
+ * Firebase emitter, the region-derived [AnalyticsProvider] (Plausible/Umami), and the analytics-enabled
+ * preference itself, so call sites just call `obaAnalytics.reportXxx(...)` instead of threading a
+ * `FirebaseAnalytics` + `Plausible` in. Injectable classes inject it directly; the context-less static /
+ * Java / composable call sites reach it via [org.onebusaway.android.app.di.AnalyticsEntryPoint].
  *
  * @author Cagri Cetin, Sean Barbeau
  */
-object ObaAnalytics {
+@Singleton
+class ObaAnalytics @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val analyticsProvider: AnalyticsProvider,
+    private val preferences: PreferencesRepository,
+) {
 
-    /** A device fix is only accurate enough to bucket stop distance when below this (meters). */
-    private const val LOCATION_ACCURACY_THRESHOLD = 50f
+    private val firebase: FirebaseAnalytics = FirebaseAnalytics.getInstance(context)
 
     /** Distance buckets reported when a stop is tapped. */
     enum class ObaStopDistance(private val label: String, val distanceInMeters: Int) {
@@ -63,22 +71,15 @@ object ObaAnalytics {
      * @param id ID of the UI element
      * @param state the state/variant of the UI item, or null if it has none
      */
-    @JvmStatic
-    fun reportUiEvent(
-        analytics: FirebaseAnalytics,
-        plausible: Plausible?,
-        pageUrl: String,
-        id: String,
-        state: String?,
-    ) {
+    fun reportUiEvent(pageUrl: String, id: String, state: String?) {
         if (!isAnalyticsActive()) return
         val bundle = Bundle().apply {
             putString(FirebaseAnalytics.Param.ITEM_ID, id)
             if (!state.isNullOrEmpty()) putString(FirebaseAnalytics.Param.ITEM_VARIANT, state)
         }
-        analytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle)
-        PlausibleAnalytics.reportUiEvent(plausible, pageUrl, id, state)
-        UmamiAnalyticsReporter.reportUiEvent(umami(), pageUrl, id, state)
+        firebase.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle)
+        PlausibleAnalytics.reportUiEvent(analyticsProvider.plausible, pageUrl, id, state)
+        UmamiAnalyticsReporter.reportUiEvent(analyticsProvider.umami, pageUrl, id, state)
     }
 
     /**
@@ -86,13 +87,12 @@ object ObaAnalytics {
      *
      * @param signUpMethod sign-up method of the login, or null if unknown
      */
-    @JvmStatic
-    fun reportLoginEvent(analytics: FirebaseAnalytics, signUpMethod: String?) {
+    fun reportLoginEvent(signUpMethod: String?) {
         if (!isAnalyticsActive()) return
         val bundle = signUpMethod?.takeIf { it.isNotEmpty() }?.let {
             Bundle().apply { putString(FirebaseAnalytics.Param.METHOD, it) }
         }
-        analytics.logEvent(FirebaseAnalytics.Event.LOGIN, bundle)
+        firebase.logEvent(FirebaseAnalytics.Event.LOGIN, bundle)
     }
 
     /**
@@ -100,16 +100,15 @@ object ObaAnalytics {
      *
      * @param searchTerm search term used, or null if unknown
      */
-    @JvmStatic
-    fun reportSearchEvent(plausible: Plausible?, analytics: FirebaseAnalytics, searchTerm: String?) {
+    fun reportSearchEvent(searchTerm: String?) {
         if (!isAnalyticsActive()) return
         val bundle = searchTerm?.takeIf { it.isNotEmpty() }?.let {
             Bundle().apply { putString(FirebaseAnalytics.Param.SEARCH_TERM, it) }
         }
-        analytics.logEvent(FirebaseAnalytics.Event.SEARCH, bundle)
+        firebase.logEvent(FirebaseAnalytics.Event.SEARCH, bundle)
         searchTerm?.let {
-            PlausibleAnalytics.reportSearchEvent(plausible, it)
-            UmamiAnalyticsReporter.reportSearchEvent(umami(), it)
+            PlausibleAnalytics.reportSearchEvent(analyticsProvider.plausible, it)
+            UmamiAnalyticsReporter.reportSearchEvent(analyticsProvider.umami, it)
         }
     }
 
@@ -117,10 +116,7 @@ object ObaAnalytics {
      * Reports the user viewing a stop, bucketing the distance between the device and the stop (only
      * when the device fix is accurate enough — under [LOCATION_ACCURACY_THRESHOLD]).
      */
-    @JvmStatic
     fun reportViewStopEvent(
-        plausible: Plausible?,
-        analytics: FirebaseAnalytics,
         stopId: String,
         stopName: String?,
         myLocation: Location?,
@@ -129,13 +125,11 @@ object ObaAnalytics {
         if (!isAnalyticsActive() || myLocation == null) return
         if (myLocation.accuracy < LOCATION_ACCURACY_THRESHOLD) {
             val stopDistance = ObaStopDistance.forDistance(myLocation.distanceTo(stopLocation))
-            reportViewStopEvent(plausible, analytics, stopId, stopName, stopDistance.toString())
+            reportViewStopEvent(stopId, stopName, stopDistance.toString())
         }
     }
 
     private fun reportViewStopEvent(
-        plausible: Plausible?,
-        analytics: FirebaseAnalytics,
         stopId: String,
         stopName: String?,
         proximityToStopCategory: String,
@@ -147,51 +141,46 @@ object ObaAnalytics {
             putString(FirebaseAnalytics.Param.ITEM_CATEGORY, string(R.string.analytics_label_stop_category))
             putString(FirebaseAnalytics.Param.LOCATION_ID, proximityToStopCategory)
         }
-        analytics.logEvent(FirebaseAnalytics.Event.VIEW_ITEM, bundle)
-        PlausibleAnalytics.reportViewStopEvent(plausible, stopId, proximityToStopCategory)
-        UmamiAnalyticsReporter.reportViewStopEvent(umami(), stopId, proximityToStopCategory)
+        firebase.logEvent(FirebaseAnalytics.Event.VIEW_ITEM, bundle)
+        PlausibleAnalytics.reportViewStopEvent(analyticsProvider.plausible, stopId, proximityToStopCategory)
+        UmamiAnalyticsReporter.reportViewStopEvent(analyticsProvider.umami, stopId, proximityToStopCategory)
     }
 
     /** Sets the current region as a Firebase user property and on the Umami emitter. */
-    @JvmStatic
-    fun setRegion(analytics: FirebaseAnalytics, regionName: String?) {
+    fun setRegion(regionName: String?) {
         if (!isAnalyticsActive()) return
-        analytics.setUserProperty(string(R.string.analytics_label_region_name), regionName)
-        umami()?.setRegionName(regionName)
+        firebase.setUserProperty(string(R.string.analytics_label_region_name), regionName)
+        analyticsProvider.umami?.setRegionName(regionName)
     }
 
     /** Records (and toggles Firebase collection for) the send-anonymous-usage-data preference. */
-    @JvmStatic
-    fun setSendAnonymousData(analytics: FirebaseAnalytics, isAnalyticsActive: Boolean) {
-        analytics.setUserProperty(
+    fun setSendAnonymousData(isAnalyticsActive: Boolean) {
+        firebase.setUserProperty(
             string(R.string.analytics_label_analytics_property),
             isAnalyticsActive.toYesNo(),
         )
-        analytics.setAnalyticsCollectionEnabled(isAnalyticsActive)
+        firebase.setAnalyticsCollectionEnabled(isAnalyticsActive)
     }
 
     /** Records the left-handed-mode preference as a Firebase user property. */
-    @JvmStatic
-    fun setLeftHanded(analytics: FirebaseAnalytics, isLeftHanded: Boolean) {
+    fun setLeftHanded(isLeftHanded: Boolean) {
         if (!isAnalyticsActive()) return
-        analytics.setUserProperty(string(R.string.analytics_label_left_hand_property), isLeftHanded.toYesNo())
+        firebase.setUserProperty(string(R.string.analytics_label_left_hand_property), isLeftHanded.toYesNo())
     }
 
     /** Records the hide-departed-vehicles preference as a Firebase user property. */
-    @JvmStatic
-    fun setShowDepartedVehicles(analytics: FirebaseAnalytics, showDepartedVehicles: Boolean) {
+    fun setShowDepartedVehicles(showDepartedVehicles: Boolean) {
         if (!isAnalyticsActive()) return
-        analytics.setUserProperty(
+        firebase.setUserProperty(
             string(R.string.analytics_label_show_departed_vehicles_property),
             showDepartedVehicles.toYesNo(),
         )
     }
 
     /** Records whether the device has touch exploration (accessibility) enabled. */
-    @JvmStatic
-    fun setAccessibility(analytics: FirebaseAnalytics, isAccessibilityActive: Boolean) {
+    fun setAccessibility(isAccessibilityActive: Boolean) {
         if (!isAnalyticsActive()) return
-        analytics.setUserProperty(string(R.string.analytics_accessibility), isAccessibilityActive.toYesNo())
+        firebase.setUserProperty(string(R.string.analytics_accessibility), isAccessibilityActive.toYesNo())
     }
 
     /**
@@ -201,9 +190,7 @@ object ObaAnalytics {
      * @param feedbackText free-text feedback, or null if none was entered
      * @param fileName name of the uploaded trip-data file, or null if nothing was uploaded
      */
-    @JvmStatic
     fun reportDestinationReminderFeedback(
-        analytics: FirebaseAnalytics,
         wasGoodReminder: Boolean,
         feedbackText: String?,
         fileName: String?,
@@ -222,19 +209,19 @@ object ObaAnalytics {
             if (!feedbackText.isNullOrEmpty()) putString(FirebaseAnalytics.Param.CONTENT, feedbackText)
             if (!fileName.isNullOrEmpty()) putString(FirebaseAnalytics.Param.LOCATION_ID, fileName)
         }
-        analytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle)
+        firebase.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle)
     }
 
     /** Whether the user has left analytics collection enabled in settings. */
     private fun isAnalyticsActive(): Boolean =
-        PreferenceUtils.getBoolean(string(R.string.preferences_key_analytics), true)
+        preferences.getBoolean(R.string.preferences_key_analytics, true)
 
-    private fun string(resId: Int): String = Application.get().getString(resId)
-
-    // The Umami emitter now lives on the injected AnalyticsProvider. ObaAnalytics is a context-less
-    // static orchestrator, so it resolves the provider through the EntryPoint using the Application only
-    // as a graph handle (a benign context reach) rather than reading app-global analytics *state* off it.
-    private fun umami(): UmamiAnalytics? = AnalyticsEntryPoint.get(Application.get()).umami
+    private fun string(resId: Int): String = context.getString(resId)
 
     private fun Boolean.toYesNo(): String = if (this) "YES" else "NO"
+
+    private companion object {
+        /** A device fix is only accurate enough to bucket stop distance when below this (meters). */
+        const val LOCATION_ACCURACY_THRESHOLD = 50f
+    }
 }

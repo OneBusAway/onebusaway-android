@@ -70,7 +70,6 @@ import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
-import com.google.firebase.analytics.FirebaseAnalytics
 import java.util.Calendar
 import java.util.TimeZone
 import kotlinx.coroutines.launch
@@ -83,7 +82,6 @@ import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.directions.util.CustomAddress
 import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.directions.util.TripRequestBuilder
-import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
@@ -110,7 +108,6 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
     val activity = LocalContext.current.findActivity()
 
     // Built once for the lifetime of this destination (analytics + region email for "report problem").
-    val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(activity) }
     // HomeActivity doesn't inject RegionRepository; reach the shared singleton via the EntryPoint.
     val regionRepository = remember { RegionEntryPoint.get(activity) }
 
@@ -177,9 +174,9 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
     LaunchedEffect(viewModel) {
         viewModel.planState.collect { state ->
             when (state) {
-                is PlanResult.Loading -> reportPlanAnalytics(activity, firebaseAnalytics)
+                is PlanResult.Loading -> reportPlanAnalytics(activity)
                 is PlanResult.Error -> {
-                    showFeedbackDialog(activity, firebaseAnalytics, regionRepository, state.message)
+                    showFeedbackDialog(activity, regionRepository, state.message)
                     viewModel.clearPlanResult()
                 }
                 else -> {}
@@ -209,7 +206,7 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
         onFromPickOnMap = { launchMapPicker("from", viewModel.formState.value.from) },
         onToPickOnMap = { launchMapPicker("to", viewModel.formState.value.to) },
         onAdvancedSettings = { showAdvanced = true },
-        onReportProblem = { reportProblem(activity, firebaseAnalytics, regionRepository) }
+        onReportProblem = { reportProblem(activity, regionRepository) }
     )
 
     if (showAdvanced) {
@@ -541,7 +538,6 @@ private fun AdvancedSettingsDialog(
 
 private fun showFeedbackDialog(
     activity: AppCompatActivity,
-    firebaseAnalytics: FirebaseAnalytics,
     regionRepository: RegionRepository,
     message: String
 ) {
@@ -550,14 +546,13 @@ private fun showFeedbackDialog(
         .setMessage(message)
         .setPositiveButton(android.R.string.ok, null)
         .setNegativeButton(R.string.report_problem_report) { _, _ ->
-            reportProblem(activity, firebaseAnalytics, regionRepository)
+            reportProblem(activity, regionRepository)
         }
         .show()
 }
 
 private fun reportProblem(
     activity: AppCompatActivity,
-    firebaseAnalytics: FirebaseAnalytics,
     regionRepository: RegionRepository
 ) {
     val email = regionRepository.region.value?.otpContactEmail
@@ -569,19 +564,16 @@ private fun reportProblem(
     val location = LocationEntryPoint.get(activity.applicationContext).lastKnownLocation()
     val locationString = location?.let { LocationUtils.printLocationDetails(it) }
     ExternalIntents.sendEmail(activity, email, locationString, null, true)
-    ObaAnalytics.reportUiEvent(
-        firebaseAnalytics, AnalyticsEntryPoint.get(activity).plausible,
+    AnalyticsEntryPoint.get(activity).reportUiEvent(
         PlausibleAnalytics.REPORT_TRIP_PLANNER_EVENT_URL,
         activity.getString(R.string.analytics_label_app_feedback_otp), null
     )
 }
 
 private fun reportPlanAnalytics(
-    activity: AppCompatActivity,
-    firebaseAnalytics: FirebaseAnalytics
+    activity: AppCompatActivity
 ) {
-    ObaAnalytics.reportUiEvent(
-        firebaseAnalytics, AnalyticsEntryPoint.get(activity).plausible,
+    AnalyticsEntryPoint.get(activity).reportUiEvent(
         PlausibleAnalytics.REPORT_TRIP_PLANNER_EVENT_URL,
         activity.getString(R.string.analytics_label_trip_plan), null
     )

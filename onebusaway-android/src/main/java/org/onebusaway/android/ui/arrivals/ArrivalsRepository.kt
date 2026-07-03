@@ -21,7 +21,6 @@ import org.onebusaway.android.api.data.RouteDataSource
 
 import android.content.Context
 import android.os.SystemClock
-import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import javax.inject.Inject
@@ -35,7 +34,6 @@ import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
-import org.onebusaway.android.analytics.AnalyticsProvider
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteDao
 import org.onebusaway.android.database.oba.RouteHeadsignFavoriteDao
@@ -242,7 +240,7 @@ class DefaultArrivalsRepository @Inject constructor(
     private val routeHeadsignFavoriteDao: RouteHeadsignFavoriteDao,
     private val importGate: ImportGate,
     private val preferences: PreferencesRepository,
-    private val analyticsProvider: AnalyticsProvider,
+    private val obaAnalytics: ObaAnalytics,
 ) : ArrivalsRepository {
 
     /** The last good snapshot paired with the monotonic device time it was received, so the
@@ -454,9 +452,7 @@ class DefaultArrivalsRepository @Inject constructor(
             if (favorite) R.string.analytics_label_star_route else R.string.analytics_label_unstar_route
         )
         val param = "${routeId}_$headsign for ${stopId ?: "all stops"}"
-        ObaAnalytics.reportUiEvent(
-            FirebaseAnalytics.getInstance(context),
-            analyticsProvider.plausible,
+        obaAnalytics.reportUiEvent(
             PlausibleAnalytics.REPORT_BOOKMARK_EVENT_URL,
             event,
             param,

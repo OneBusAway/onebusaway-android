@@ -80,7 +80,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import com.google.firebase.analytics.FirebaseAnalytics
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -88,7 +87,6 @@ import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.ArrivalsViewModelFactoryEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.NetworkEntryPoint
-import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.report.ReportContext
 import org.onebusaway.android.report.TripReportContext
@@ -506,9 +504,7 @@ private fun createProblemReportViewModel(
 /** Port of ProblemReportFragment.reportAnalytics — the stop/trip problem Plausible event. */
 private fun reportProblemAnalytics(context: Context, kind: ProblemKind) {
     val isTrip = kind == ProblemKind.TRIP
-    ObaAnalytics.reportUiEvent(
-        FirebaseAnalytics.getInstance(context),
-        AnalyticsEntryPoint.get(context).plausible,
+    AnalyticsEntryPoint.get(context).reportUiEvent(
         if (isTrip) {
             PlausibleAnalytics.REPORT_VEHICLE_PROBLEM_EVENT_URL
         } else {
@@ -605,14 +601,11 @@ private fun Open311FormInline(
 
     // Publish the send action to the app bar while shown; clear it (and the spinner) on leave. Port of
     // onSend: submit + the Open311 server analytics event.
-    val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(context) }
     DisposableEffect(vm) {
         onSubmit {
             vm.submit()
             (target.category.raw as? Service)?.let { service ->
-                ObaAnalytics.reportUiEvent(
-                    firebaseAnalytics,
-                    AnalyticsEntryPoint.get(context).plausible,
+                AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_OPEN311_SERVER_EVENT_URL,
                     resources.getString(R.string.analytics_problem),
                     service.service_name,

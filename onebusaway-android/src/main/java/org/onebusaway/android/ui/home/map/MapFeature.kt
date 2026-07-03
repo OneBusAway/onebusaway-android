@@ -57,11 +57,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.firebase.analytics.FirebaseAnalytics
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
-import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
@@ -103,7 +101,6 @@ fun MapFeature(
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
-    val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(context) }
 
     // Compose-native permission launcher: deliver the result to the map view model (blue dot) + the
     // home view model (the deferred first-launch region check).
@@ -116,7 +113,7 @@ fun MapFeature(
         homeViewModel.onLocationPermissionResult()
     }
 
-    val callbacks = remember(mapViewModel, homeViewModel, firebaseAnalytics) {
+    val callbacks = remember(mapViewModel, homeViewModel) {
         object : ObaMapCallbacks {
             override fun onStopClick(stop: ObaStop) {
                 mapViewModel.onStopTapped(stop)
@@ -128,9 +125,7 @@ fun MapFeature(
                 homeViewModel.onStopFocused(
                     FocusedStop(stop.id, stop.name, stop.stopCode, stop.latitude, stop.longitude)
                 )
-                ObaAnalytics.reportUiEvent(
-                    firebaseAnalytics,
-                    AnalyticsEntryPoint.get(context).plausible,
+                AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                     resources.getString(R.string.analytics_label_button_press_map_icon),
                     null,
@@ -148,9 +143,7 @@ fun MapFeature(
                 if (bikeId == null || !bikeId.equals(station.id, ignoreCase = true)) {
                     homeViewModel.onBikeStationFocused(station.id)
                 }
-                ObaAnalytics.reportUiEvent(
-                    firebaseAnalytics,
-                    AnalyticsEntryPoint.get(context).plausible,
+                AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_BIKE_EVENT_URL,
                     resources.getString(
                         if (station.isFloatingBike) {
@@ -327,9 +320,7 @@ fun MapFeature(
             )
             PreferenceUtils.setUserDeniedLocationPermissions(false)
             mapViewModel.requestMyLocation(useDefaultZoom = true, animate = true)
-            ObaAnalytics.reportUiEvent(
-                firebaseAnalytics,
-                AnalyticsEntryPoint.get(context).plausible,
+            AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                 resources.getString(R.string.analytics_label_button_press_location),
                 null,
@@ -342,9 +333,7 @@ fun MapFeature(
             // Persist the toggled state (DataStore) + drive the bike loader. MapChromeViewModel observes
             // the visibility pref reactively, so the bikeshare-active tint updates without a host push.
             mapViewModel.setBikeshareLayerVisible(!active, persist = true)
-            ObaAnalytics.reportUiEvent(
-                firebaseAnalytics,
-                AnalyticsEntryPoint.get(context).plausible,
+            AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                 resources.getString(R.string.analytics_layer_bikeshare),
                 resources.getString(

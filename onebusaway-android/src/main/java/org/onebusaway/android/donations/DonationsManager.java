@@ -1,10 +1,7 @@
 package org.onebusaway.android.donations;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
-
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.di.AnalyticsEntryPoint;
-import org.onebusaway.android.analytics.ObaAnalytics;
 import org.onebusaway.android.analytics.PlausibleAnalytics;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -29,25 +26,22 @@ public class DonationsManager {
 
     public DonationsManager(
             Context context,
-            FirebaseAnalytics firebaseAnalytics,
             Resources resources,
             int appLaunchCount) {
         this.mContext = context;
-        this.mAnalytics = firebaseAnalytics;
         this.mResources = resources;
         this.mAppLaunchCount = appLaunchCount;
     }
 
     // region Analytics
 
-    private FirebaseAnalytics mAnalytics;
     /**
      * Reports UI events using Firebase
      * @param resourceID ID of the UI element to report
      * @param state the state or variant of the UI item, or null if the item doesn't have a state or variant
      */
     private void reportUIEvent(Integer resourceID, String state) {
-        ObaAnalytics.reportUiEvent(mAnalytics, AnalyticsEntryPoint.get(mContext).getPlausible(), PlausibleAnalytics.REPORT_DONATE_EVENT_URL, mResources.getString(resourceID), state);
+        AnalyticsEntryPoint.get(mContext).reportUiEvent(PlausibleAnalytics.REPORT_DONATE_EVENT_URL, mResources.getString(resourceID), state);
     }
 
     // endregion

@@ -21,7 +21,6 @@ import android.util.Log;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
@@ -29,7 +28,7 @@ import com.google.firebase.storage.UploadTask;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.analytics.ObaAnalytics;
+import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -47,11 +46,9 @@ public class NavigationUploadWorker extends Worker {
 
     public static final String TAG = "NavigationUploadWorker";
 
-    private FirebaseAnalytics mFirebaseAnalytics;
 
     public NavigationUploadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
     }
 
     @NonNull
@@ -128,7 +125,7 @@ public class NavigationUploadWorker extends Worker {
         } else {
             wasGoodReminder = false;
         }
-        ObaAnalytics.reportDestinationReminderFeedback(mFirebaseAnalytics, wasGoodReminder
+        AnalyticsEntryPoint.get(Application.get()).reportDestinationReminderFeedback(wasGoodReminder
                 , ((!isEmpty(feedbackText)) ? feedbackText : null), fileName);
         Log.d(TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
                 + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText)) ? feedbackText : null) + ", filename - " + fileName);

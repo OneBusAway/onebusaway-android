@@ -17,12 +17,10 @@ package org.onebusaway.android.nav;
 
 import static android.app.PendingIntent.*;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.app.di.AnalyticsEntryPoint;
-import org.onebusaway.android.analytics.ObaAnalytics;
 import org.onebusaway.android.analytics.PlausibleAnalytics;
 import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
@@ -99,11 +97,9 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     private String mTripId;             // Trip ID
     private String mStopId;             // Stop ID
 
-    private FirebaseAnalytics mFirebaseAnalytics;
 
     public NavigationServiceProvider(String tripId, String stopId) {
         Log.d(TAG, "Creating NavigationServiceProvider...");
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(Application.get().getApplicationContext());
         if (mTTS == null) {
             mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
         }
@@ -114,7 +110,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     public NavigationServiceProvider(String tripId, String stopId, int flag) {
         Log.d(TAG, "Creating NavigationServiceProvider...");
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(Application.get().getApplicationContext());
         mResuming = flag == 1;
         if (mTTS == null) {
             mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
@@ -504,7 +499,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     if (proximityEvent(EVENT_TYPE_GET_READY, ALERT_STATE_NONE)) {
                         mNavProvider.updateUi(EVENT_TYPE_GET_READY);
                         Log.d(TAG, "-----Get ready!");
-                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics, AnalyticsEntryPoint.get(Application.get()).getPlausible(), PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL, Application.get().getString(R.string.analytics_label_destination_reminder), Application.get().getString(R.string.analytics_label_destination_reminder_variant_get_ready));
+                        AnalyticsEntryPoint.get(Application.get()).reportUiEvent(PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL, Application.get().getString(R.string.analytics_label_destination_reminder), Application.get().getString(R.string.analytics_label_destination_reminder_variant_get_ready));
                         return EVENT_TYPE_GET_READY; //Get ready alert played
                     }
                 }
@@ -514,7 +509,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     if (proximityEvent(EVENT_TYPE_PULL_CORD, ALERT_STATE_SHOWN_TO_RIDER)) {
                         mNavProvider.updateUi(EVENT_TYPE_PULL_CORD);
                         Log.d(TAG, "-----Get off the bus!");
-                        ObaAnalytics.reportUiEvent(mFirebaseAnalytics, AnalyticsEntryPoint.get(Application.get()).getPlausible(), PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL, Application.get().getString(R.string.analytics_label_destination_reminder), Application.get().getString(R.string.analytics_label_destination_reminder_variant_exit_at_next_stop));
+                        AnalyticsEntryPoint.get(Application.get()).reportUiEvent(PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL, Application.get().getString(R.string.analytics_label_destination_reminder), Application.get().getString(R.string.analytics_label_destination_reminder_variant_exit_at_next_stop));
                         return EVENT_TYPE_PULL_CORD; // Get off bus alert played
                     }
                 }

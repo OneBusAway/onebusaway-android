@@ -26,13 +26,12 @@ import android.os.PowerManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.donations.DonationsManager;
-import org.onebusaway.android.analytics.ObaAnalytics;
+import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 import org.onebusaway.android.api.ObaApi;
 import org.onebusaway.android.region.Region;
 import org.onebusaway.android.app.di.LocationEntryPoint;
@@ -77,7 +76,6 @@ public class Application extends android.app.Application {
     // itself lives in the reactive LocationRepository singleton.)
     static GeomagneticField mGeomagneticField = null;
 
-    private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
     public void onCreate() {
@@ -111,7 +109,7 @@ public class Application extends android.app.Application {
 
         initFirebaseMessaging();
 
-        mDonationsManager = new DonationsManager(getApplicationContext(), mFirebaseAnalytics, getResources(), getAppLaunchCount());
+        mDonationsManager = new DonationsManager(getApplicationContext(), getResources(), getAppLaunchCount());
 
         mGtfsAlerts = new GtfsAlerts(getApplicationContext());
     }
@@ -406,12 +404,11 @@ public class Application extends android.app.Application {
     }
 
     private void reportAnalytics() {
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         // The Plausible/Umami emitters are owned + built reactively by AnalyticsProvider; here we only set
         // the initial Firebase/Umami region label via setRegion (which resolves the Umami emitter through
         // the provider itself).
         if (getCustomApiUrl() == null && getCurrentRegion() != null) {
-            ObaAnalytics.setRegion(mFirebaseAnalytics, getCurrentRegion().getName());
+            AnalyticsEntryPoint.get(this).setRegion(getCurrentRegion().getName());
         } else if (getCustomApiUrl() != null) {
             String customUrl;
             try {
@@ -422,7 +419,7 @@ public class Application extends android.app.Application {
             } catch (Exception e) {
                 customUrl = getString(R.string.analytics_label_custom_url);
             }
-            ObaAnalytics.setRegion(mFirebaseAnalytics, customUrl);
+            AnalyticsEntryPoint.get(this).setRegion(customUrl);
         }
     }
 

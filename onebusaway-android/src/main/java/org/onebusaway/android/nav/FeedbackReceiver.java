@@ -22,13 +22,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.analytics.ObaAnalytics;
+import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 import org.onebusaway.android.util.PreferenceUtils;
 
 import java.io.File;
@@ -56,13 +55,11 @@ public class FeedbackReceiver extends BroadcastReceiver {
     public static final int FEEDBACK_NO = 1;
     public static final int FEEDBACK_YES = 2;
 
-    private FirebaseAnalytics mFirebaseAnalytics;
 
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "onReceive");
 
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
 
         int notifyId = intent.getIntExtra(NOTIFICATION_ID,
                 NavigationServiceProvider.NOTIFICATION_ID + 1);
@@ -184,7 +181,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
         } else {
             wasGoodReminder = false;
         }
-        ObaAnalytics.reportDestinationReminderFeedback(mFirebaseAnalytics, wasGoodReminder
+        AnalyticsEntryPoint.get(Application.get()).reportDestinationReminderFeedback(wasGoodReminder
                 , ((!isEmpty(feedbackText)) ? feedbackText : null), null);
         Log.d(TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
                 + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText)) ? feedbackText : null));

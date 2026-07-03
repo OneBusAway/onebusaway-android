@@ -19,6 +19,7 @@ import android.content.Context
 import com.google.firebase.analytics.FirebaseAnalytics
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.models.ObaTripStatus
@@ -58,7 +59,7 @@ object MapNavigation {
         }
         ObaAnalytics.reportUiEvent(
             FirebaseAnalytics.getInstance(context),
-            app.plausibleInstance,
+            AnalyticsEntryPoint.get(context).plausible,
             PlausibleAnalytics.REPORT_BIKE_EVENT_URL,
             context.getString(
                 if (station.isFloatingBike) {

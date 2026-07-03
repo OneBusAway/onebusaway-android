@@ -28,7 +28,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 import org.onebusaway.android.analytics.ObaAnalytics;
 import org.onebusaway.android.analytics.PlausibleAnalytics;
 
@@ -70,8 +70,7 @@ public class BackupUtils {
     static private void doRestore(Context activityContext, Uri uri, Runnable onRestored) {
         final Context context = activityContext.getApplicationContext();
         ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
-                // TODO(D4): plausible is region-mutable; inject a Provider
-                Application.get().getPlausibleInstance(),
+                AnalyticsEntryPoint.get(context).getPlausible(),
                 PlausibleAnalytics.REPORT_BACKUP_EVENT_URL,
                 context.getString(R.string.analytics_label_button_press_restore_preference),
                 null);
@@ -126,8 +125,7 @@ public class BackupUtils {
     public static void save(Context activityContext,Uri uri) {
         Context context = activityContext.getApplicationContext();
         ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
-                // TODO(D4): plausible is region-mutable; inject a Provider
-                Application.get().getPlausibleInstance(),
+                AnalyticsEntryPoint.get(context).getPlausible(),
                 PlausibleAnalytics.REPORT_BACKUP_EVENT_URL,
                 context.getString(R.string.analytics_label_button_press_save_preference),
                 null);

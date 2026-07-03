@@ -28,6 +28,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.google.firebase.analytics.FirebaseAnalytics
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.nav.revealRouteOnMap
@@ -113,7 +114,7 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
         val searchVm: SearchResultsViewModel = hiltViewModel()
         LaunchedEffect(query) {
             ObaAnalytics.reportSearchEvent(
-                Application.get().plausibleInstance, firebaseAnalytics, query
+                AnalyticsEntryPoint.get(activity).plausible, firebaseAnalytics, query
             )
             searchVm.search(query)
         }

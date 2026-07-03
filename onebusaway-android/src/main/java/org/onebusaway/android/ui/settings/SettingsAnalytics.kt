@@ -18,7 +18,7 @@ package org.onebusaway.android.ui.settings
 import android.content.Context
 import androidx.annotation.StringRes
 import com.google.firebase.analytics.FirebaseAnalytics
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 
@@ -26,7 +26,7 @@ import org.onebusaway.android.analytics.PlausibleAnalytics
 internal fun reportPreferencesEvent(context: Context, @StringRes labelRes: Int) {
     ObaAnalytics.reportUiEvent(
         FirebaseAnalytics.getInstance(context),
-        Application.get().plausibleInstance,
+        AnalyticsEntryPoint.get(context).plausible,
         PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
         context.getString(labelRes),
         null,

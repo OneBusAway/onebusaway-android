@@ -49,7 +49,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
@@ -303,10 +303,10 @@ internal fun HomeAnalyticsEffect(analyticsEvents: SharedFlow<HomeAnalyticsEvent>
     LaunchedEffect(analyticsEvents) {
         analyticsEvents.collect { event ->
             val firebase = FirebaseAnalytics.getInstance(context)
-            val plausible = Application.get().plausibleInstance
+            val plausible = AnalyticsEntryPoint.get(context).plausible
             when (event) {
                 is HomeAnalyticsEvent.RegionSelected ->
-                    ObaAnalytics.setRegion(plausible, firebase, event.regionName)
+                    ObaAnalytics.setRegion(firebase, event.regionName)
                 is HomeAnalyticsEvent.MenuItem ->
                     ObaAnalytics.reportUiEvent(
                         firebase, plausible, PlausibleAnalytics.REPORT_MENU_EVENT_URL,

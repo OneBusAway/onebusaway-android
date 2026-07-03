@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.apache.commons.io.FileUtils
 import org.onebusaway.android.R
+import org.onebusaway.android.analytics.AnalyticsProvider
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
@@ -83,6 +84,7 @@ class NavigationService : Service() {
     @Inject lateinit var navStopDao: NavStopDao
     @Inject lateinit var stopDao: StopDao
     @Inject lateinit var importGate: ImportGate
+    @Inject lateinit var analyticsProvider: AnalyticsProvider
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var navJob: Job? = null
@@ -246,7 +248,7 @@ class NavigationService : Service() {
                 finishedTime = System.currentTimeMillis()
             } else if (System.currentTimeMillis() - finishedTime >= 30000) {
                 ObaAnalytics.reportUiEvent(
-                    firebaseAnalytics, Application.get().plausibleInstance,
+                    firebaseAnalytics, analyticsProvider.plausible,
                     PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL,
                     getString(R.string.analytics_label_destination_reminder),
                     getString(R.string.analytics_label_destination_reminder_variant_ended)

@@ -76,6 +76,7 @@ import java.util.TimeZone
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.directions.util.ConversionUtils
@@ -569,7 +570,7 @@ private fun reportProblem(
     val locationString = location?.let { LocationUtils.printLocationDetails(it) }
     ExternalIntents.sendEmail(activity, email, locationString, null, true)
     ObaAnalytics.reportUiEvent(
-        firebaseAnalytics, Application.get().plausibleInstance,
+        firebaseAnalytics, AnalyticsEntryPoint.get(activity).plausible,
         PlausibleAnalytics.REPORT_TRIP_PLANNER_EVENT_URL,
         activity.getString(R.string.analytics_label_app_feedback_otp), null
     )
@@ -580,7 +581,7 @@ private fun reportPlanAnalytics(
     firebaseAnalytics: FirebaseAnalytics
 ) {
     ObaAnalytics.reportUiEvent(
-        firebaseAnalytics, Application.get().plausibleInstance,
+        firebaseAnalytics, AnalyticsEntryPoint.get(activity).plausible,
         PlausibleAnalytics.REPORT_TRIP_PLANNER_EVENT_URL,
         activity.getString(R.string.analytics_label_trip_plan), null
     )

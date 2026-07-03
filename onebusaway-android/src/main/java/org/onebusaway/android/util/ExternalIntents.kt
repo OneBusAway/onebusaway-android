@@ -33,6 +33,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
@@ -289,7 +290,7 @@ object ExternalIntents {
             activity.startActivity(intent)
             ObaAnalytics.reportUiEvent(
                 FirebaseAnalytics.getInstance(activity),
-                Application.get().plausibleInstance,
+                AnalyticsEntryPoint.get(activity).plausible,
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                 Application.get().getString(R.string.analytics_label_button_fare_payment),
                 Application.get().getString(R.string.analytics_label_open_app)
@@ -301,7 +302,7 @@ object ExternalIntents {
             activity.startActivity(intent)
             ObaAnalytics.reportUiEvent(
                 FirebaseAnalytics.getInstance(activity),
-                Application.get().plausibleInstance,
+                AnalyticsEntryPoint.get(activity).plausible,
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                 Application.get().getString(R.string.analytics_label_button_fare_payment),
                 Application.get().getString(R.string.analytics_label_download_app)
@@ -324,7 +325,7 @@ object ExternalIntents {
             context.startActivity(intent)
             ObaAnalytics.reportUiEvent(
                 FirebaseAnalytics.getInstance(context),
-                Application.get().plausibleInstance,
+                AnalyticsEntryPoint.get(context).plausible,
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                 Application.get().getString(R.string.analytics_label_button_bike_share),
                 Application.get().getString(R.string.analytics_label_open_app)
@@ -336,7 +337,7 @@ object ExternalIntents {
             context.startActivity(intent)
             ObaAnalytics.reportUiEvent(
                 FirebaseAnalytics.getInstance(context),
-                Application.get().plausibleInstance,
+                AnalyticsEntryPoint.get(context).plausible,
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                 Application.get().getString(R.string.analytics_label_button_bike_share),
                 Application.get().getString(R.string.analytics_label_download_app)

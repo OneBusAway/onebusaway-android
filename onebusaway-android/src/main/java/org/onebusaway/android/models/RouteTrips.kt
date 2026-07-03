@@ -19,7 +19,7 @@ package org.onebusaway.android.models
  * The result of a trips-for-route (or single trip-details) fetch, narrowed to what the
  * speed-estimation/vehicle-render code consumes: the per-vehicle [trips] (each carrying an
  * [ObaTripStatus] via [ObaTripDetails.status]), the [trip]/[route] lookups those statuses point
- * into, and the server clock ([currentTimeMs]). io.client produces it (`asRouteTrips`) from the wire.
+ * into, and the server clock ([currentTimeMs]). api produces it (`asRouteTrips`) from the wire.
  */
 interface RouteTrips {
 

@@ -19,7 +19,7 @@ import org.onebusaway.android.time.ServerTime
 
 /**
  * The arrival fields the display model (`ArrivalInfo`) computes from, abstracted from the wire type.
- * io.client adapts the arrivals fetch into these (`DtoArrivalData`). The arrival/departure instants
+ * api adapts the arrivals fetch into these (`DtoArrivalData`). The arrival/departure instants
  * are server-clock [ServerTime] (#1620) so the ETA subtraction against a server "now" can't be mixed
  * with a device clock; `serviceDate` stays a raw Long service-day identifier.
  */

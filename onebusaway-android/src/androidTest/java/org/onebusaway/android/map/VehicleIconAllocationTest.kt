@@ -59,7 +59,7 @@ class VehicleIconAllocationTest {
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     // A real, busy trips-for-route snapshot (38 vehicles across many HART routes, with full route refs so
-    // icon type/color resolve) — the "busy route" the issue calls out. Decoded through the io/client DTO
+    // icon type/color resolve) — the "busy route" the issue calls out. Decoded through the api/ DTO
     // path the production fetch now uses, then adapted to the [RouteTrips] model.
     private fun response(): RouteTrips {
         val envelope: ObaEnvelope<ListWithReferences<TripDetailsEntry>> =

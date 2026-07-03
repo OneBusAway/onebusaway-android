@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.provider
+package org.onebusaway.android.database.oba
 
-import org.onebusaway.android.database.oba.StopUserInfoMapRow
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.util.MyTextUtils
 
@@ -29,7 +28,7 @@ data class StopUserInfo(val isFavorite: Boolean, val userName: String?)
 fun stopDisplayName(stop: ObaStop, userInfo: StopUserInfo?): String =
     stopDisplayName(stop.name, userInfo)
 
-/** Field-based overload, for callers (e.g. the modernized io/client DTOs) without an [ObaStop]. */
+/** Field-based overload, for callers (e.g. the api/ REST DTOs) without an [ObaStop]. */
 fun stopDisplayName(serverName: String?, userInfo: StopUserInfo?): String =
     userInfo?.userName?.takeIf { it.isNotEmpty() } ?: MyTextUtils.formatDisplayText(serverName).orEmpty()
 

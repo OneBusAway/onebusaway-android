@@ -54,7 +54,7 @@ class ExtrapolatedVehiclesTest {
 
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
-    // Decode the same fixture through the io/client DTO path the production fetch now uses.
+    // Decode the same fixture through the api/ DTO path the production fetch now uses.
     private fun response(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
         Resources.read(getTargetContext(), Resources.getTestUri("trips_for_route_extrapolation"))
             .use { json.decodeFromString(it.readText()) }

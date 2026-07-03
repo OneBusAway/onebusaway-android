@@ -23,12 +23,14 @@ import org.onebusaway.android.app.Application
 import org.onebusaway.android.app.di.RegionEntryPoint
 
 /**
- * Wires the region-*derived* `Application` subsystems — Plausible analytics + Open311 reporting — to the
- * [RegionRepository] region flow. Instead of the old region write transaction
- * imperatively rebuilding them, they re-initialize whenever the observed region changes — the §1.2
- * "everything that cares observes it" form. The `StateFlow` replays its seeded value immediately
- * (`Main.immediate`), so this also performs the initial init, subsuming the former onCreate
- * `initOpen311(currentRegion)` call.
+ * Wires the region-*derived* Open311 reporting endpoints to the [RegionRepository] region flow. Instead
+ * of the old region write transaction imperatively rebuilding them, they re-initialize whenever the
+ * observed region changes — the §1.2 "everything that cares observes it" form. The `StateFlow` replays
+ * its seeded value immediately (`Main.immediate`), so this also performs the initial init, subsuming the
+ * former onCreate `initOpen311(currentRegion)` call.
+ *
+ * The other region-derived subsystem — the Plausible/Umami analytics emitters — observes the same region
+ * flow independently, from [org.onebusaway.android.analytics.AnalyticsProvider].
  *
  * Started once from `Application.onCreate` (after `initObaRegion`, so the repo seeds from the region
  * already loaded). The collector runs for the process lifetime — an app-global subscription.

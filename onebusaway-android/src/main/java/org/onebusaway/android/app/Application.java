@@ -97,9 +97,10 @@ public class Application extends android.app.Application {
         // starts empty and fills from setLastKnownLocation (listener updates) / its lazy provider poll.
         // The legacy setCurrentRegion / setLastKnownLocation writers reach them via their EntryPoints.
         // So nothing to construct here.
-        // The region-derived subsystems (Plausible, Open311) observe the region flow (A7) — this
+        // The region-derived Open311 endpoints observe the region flow (A7) via RegionSubsystems — this
         // performs their initial init (the StateFlow replays the repo's seeded region) and re-inits on
-        // change, replacing the former explicit initOpen311(getCurrentRegion()) call.
+        // change, replacing the former explicit initOpen311(getCurrentRegion()) call. The Plausible/Umami
+        // analytics emitters observe the same flow independently, from AnalyticsProvider.
         RegionSubsystems.observe(this);
 
         reportAnalytics();
@@ -234,7 +235,8 @@ public class Application extends android.app.Application {
 
     public synchronized void setCurrentRegion(Region region, boolean regionChanged) {
         // The canonical region write lives in RegionRepository as of A7; the region-derived subsystems
-        // (Plausible, Umami, Open311) re-init reactively via RegionSubsystems observing the published flow.
+        // re-init reactively by observing the published flow — Open311 via RegionSubsystems, the
+        // Plausible/Umami analytics emitters via AnalyticsProvider.
         RegionEntryPoint.get(this).applyRegion(region, regionChanged);
     }
 
@@ -430,10 +432,10 @@ public class Application extends android.app.Application {
     private void reportAnalytics() {
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         // The Plausible/Umami emitters are owned + built reactively by AnalyticsProvider; here we only set
-        // the initial Firebase/Umami region label. setRegion resolves the Umami emitter through the
-        // provider itself, so it needs no Plausible instance (its first arg is unused).
+        // the initial Firebase/Umami region label via setRegion (which resolves the Umami emitter through
+        // the provider itself).
         if (getCustomApiUrl() == null && getCurrentRegion() != null) {
-            ObaAnalytics.setRegion(null, mFirebaseAnalytics, getCurrentRegion().getName());
+            ObaAnalytics.setRegion(mFirebaseAnalytics, getCurrentRegion().getName());
         } else if (getCustomApiUrl() != null) {
             String customUrl;
             try {
@@ -444,7 +446,7 @@ public class Application extends android.app.Application {
             } catch (Exception e) {
                 customUrl = getString(R.string.analytics_label_custom_url);
             }
-            ObaAnalytics.setRegion(null, mFirebaseAnalytics, customUrl);
+            ObaAnalytics.setRegion(mFirebaseAnalytics, customUrl);
         }
     }
 

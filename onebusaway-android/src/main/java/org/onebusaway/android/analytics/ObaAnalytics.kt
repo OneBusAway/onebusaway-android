@@ -154,7 +154,7 @@ object ObaAnalytics {
 
     /** Sets the current region as a Firebase user property and on the Umami emitter. */
     @JvmStatic
-    fun setRegion(plausible: Plausible?, analytics: FirebaseAnalytics, regionName: String?) {
+    fun setRegion(analytics: FirebaseAnalytics, regionName: String?) {
         if (!isAnalyticsActive()) return
         analytics.setUserProperty(string(R.string.analytics_label_region_name), regionName)
         umami()?.setRegionName(regionName)

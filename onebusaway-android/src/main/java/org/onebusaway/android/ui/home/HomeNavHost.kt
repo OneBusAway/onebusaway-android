@@ -306,7 +306,7 @@ internal fun HomeAnalyticsEffect(analyticsEvents: SharedFlow<HomeAnalyticsEvent>
             val plausible = AnalyticsEntryPoint.get(context).plausible
             when (event) {
                 is HomeAnalyticsEvent.RegionSelected ->
-                    ObaAnalytics.setRegion(plausible, firebase, event.regionName)
+                    ObaAnalytics.setRegion(firebase, event.regionName)
                 is HomeAnalyticsEvent.MenuItem ->
                     ObaAnalytics.reportUiEvent(
                         firebase, plausible, PlausibleAnalytics.REPORT_MENU_EVENT_URL,

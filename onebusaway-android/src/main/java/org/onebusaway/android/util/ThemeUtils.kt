@@ -16,6 +16,8 @@
  */
 package org.onebusaway.android.util
 
+import android.content.Context
+import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
@@ -48,5 +50,22 @@ object ThemeUtils {
             else -> return
         }
         AppCompatDelegate.setDefaultNightMode(mode)
+    }
+
+    /**
+     * Returns true if the app is currently in dark mode: the AppCompat night-mode
+     * override takes precedence, otherwise the system UI configuration decides.
+     */
+    @JvmStatic
+    fun isInDarkMode(context: Context): Boolean {
+        val mode = AppCompatDelegate.getDefaultNightMode()
+        if (mode == AppCompatDelegate.MODE_NIGHT_YES) {
+            return true
+        }
+        if (mode == AppCompatDelegate.MODE_NIGHT_NO) {
+            return false
+        }
+        return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
     }
 }

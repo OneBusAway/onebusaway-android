@@ -58,7 +58,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.models.ObaStop
@@ -407,6 +406,7 @@ private fun OutOfRangeDialog(regionName: String, onConfirm: () -> Unit, onDismis
 @Composable
 private fun NoLocationDialog(onEnable: () -> Unit, onDismiss: () -> Unit) {
     var neverAskAgain by remember { mutableStateOf(false) }
+    val neverShowDialogKey = stringResource(R.string.preference_key_never_show_location_dialog)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.main_nolocation_title)) },
@@ -421,11 +421,7 @@ private fun NoLocationDialog(onEnable: () -> Unit, onDismiss: () -> Unit) {
                         checked = neverAskAgain,
                         onCheckedChange = {
                             neverAskAgain = it
-                            PreferenceUtils.saveBoolean(
-                                Application.get()
-                                    .getString(R.string.preference_key_never_show_location_dialog),
-                                it,
-                            )
+                            PreferenceUtils.saveBoolean(neverShowDialogKey, it)
                         },
                     )
                     Text(stringResource(R.string.main_never_ask_again))

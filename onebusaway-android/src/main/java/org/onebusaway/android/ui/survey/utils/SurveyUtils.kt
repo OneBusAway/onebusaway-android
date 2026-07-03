@@ -6,6 +6,7 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import org.onebusaway.android.app.Application
+import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.Survey
 import org.onebusaway.android.models.SurveyQuestion
@@ -261,7 +262,7 @@ object SurveyUtils {
 
     fun shouldShowSurveyView(context: Context, isVisibleOnStops: Boolean): Boolean {
         // User will receive a survey every `surveyLaunchCount` app launches
-        if (Application.get().appLaunchCount % launchesUntilSurveyShown != 0) return false
+        if (PreferenceUtils.getInt(Application.APP_LAUNCH_COUNT_KEY, 0) % launchesUntilSurveyShown != 0) return false
 
         // Don't show the UI if there's a reminder date that is still in the future.
         val reminderDate = getSurveyRequestReminderDate(context)

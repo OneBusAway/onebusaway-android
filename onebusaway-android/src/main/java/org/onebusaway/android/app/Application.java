@@ -139,16 +139,16 @@ public class Application extends android.app.Application {
     }
 
 
-    private static String appLaunchCountPreferencesKey = "appLaunchCountPreferencesKey";
+    public static final String APP_LAUNCH_COUNT_KEY = "APP_LAUNCH_COUNT_KEY";
 
     private void incrementAppLaunchCount() {
-        int count = PreferenceUtils.getInt(appLaunchCountPreferencesKey, 0);
+        int count = PreferenceUtils.getInt(APP_LAUNCH_COUNT_KEY, 0);
         count += 1;
-        PreferenceUtils.saveInt(appLaunchCountPreferencesKey, count);
+        PreferenceUtils.saveInt(APP_LAUNCH_COUNT_KEY, count);
     }
 
     public int getAppLaunchCount() {
-        return PreferenceUtils.getInt(appLaunchCountPreferencesKey, 0);
+        return PreferenceUtils.getInt(APP_LAUNCH_COUNT_KEY, 0);
     }
 
     /**

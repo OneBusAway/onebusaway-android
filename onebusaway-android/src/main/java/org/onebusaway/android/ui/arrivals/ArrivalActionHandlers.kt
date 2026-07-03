@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.tripinfo.TripInfoLauncher
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.ui.arrivals.dialogs.RouteFavoriteHost
@@ -39,7 +40,8 @@ fun createArrivalActionHandler(
     activity: AppCompatActivity,
     viewModel: ArrivalsViewModel,
     currentContent: () -> ArrivalsUiState.Content?,
-    onShowRouteOnMap: (routeId: String) -> Unit,
+    // Carries the arrival's stop in the request, so route mode can narrow to the stop-relevant direction.
+    onShowRouteOnMap: (ShowRouteRequest) -> Unit,
     // How to show the alert hide/undo snackbar — supplied by the host so the dialog isn't tied to a
     // specific View (the standalone activity anchors to its root; Compose hosts use a SnackbarHost).
     showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit,
@@ -67,7 +69,8 @@ fun createArrivalActionHandler(
 
     override fun onShowVehiclesOnMap(arrival: ArrivalInfo) {
         DBUtil.addRouteToDB(activity, arrival)
-        onShowRouteOnMap(arrival.routeId)
+        // Pass the arrival's stop so route mode shows only the direction (stops + vehicles) serving it.
+        onShowRouteOnMap(ShowRouteRequest(arrival.routeId, arrival.stopId))
     }
 
     override fun onShowTripStatus(arrival: ArrivalInfo) {

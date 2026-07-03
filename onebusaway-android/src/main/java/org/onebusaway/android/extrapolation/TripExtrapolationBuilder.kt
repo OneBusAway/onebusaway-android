@@ -85,6 +85,10 @@ private fun extrapolatedVehicleProjection(state: TripState, nowMs: Long): Vehicl
  * pure function the route controller's vehicle sampler calls each display frame (and that unit tests
  * can call directly without Android).
  *
+ * When [directionId] is non-null, only vehicles whose currently-served trip runs that GTFS direction
+ * are kept — the "show vehicles on map" filter that drops the opposite-direction buses. Null keeps
+ * both directions (the whole-route view).
+ *
  * Each vehicle is dead-reckoned forward from its last fix via [extrapolatedVehicleProjection] when the
  * trip's shape is known, else placed at the reported last-known/position point. [ExtrapolatedVehicle.fixTimeMs]
  * is the store's anchor instant (constant between fixes) when extrapolating, else the reported update
@@ -94,12 +98,14 @@ fun extrapolatedVehicles(
     routeTrips: RouteTrips,
     routeIds: Set<String>,
     nowMs: Long,
+    directionId: Int? = null,
     lookupState: (String?) -> TripState?,
 ): List<ExtrapolatedVehicle> =
     routeTrips.trips.mapNotNull { trip ->
         val status = trip.status ?: return@mapNotNull null
-        val activeRoute = routeTrips.trip(status.activeTripId)?.routeId ?: return@mapNotNull null
-        if (activeRoute !in routeIds || Status.CANCELED == status.status) return@mapNotNull null
+        val activeTrip = routeTrips.trip(status.activeTripId) ?: return@mapNotNull null
+        if (activeTrip.routeId !in routeIds || Status.CANCELED == status.status) return@mapNotNull null
+        if (directionId != null && activeTrip.directionId != directionId) return@mapNotNull null
         val state = lookupState(status.activeTripId)
         val projection = state?.let { extrapolatedVehicleProjection(it, nowMs) }
         val point = projection?.point

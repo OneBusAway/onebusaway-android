@@ -20,12 +20,11 @@ import org.onebusaway.android.ui.arrivals.ArrivalsListLauncher
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import org.onebusaway.android.R
-import org.onebusaway.android.provider.ObaContract
+import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.ui.common.Shortcuts
 import org.onebusaway.android.ui.search.RouteSearchResult
 import org.onebusaway.android.ui.search.StopSearchResult
 import org.onebusaway.android.util.ExternalIntents
-import org.onebusaway.android.util.ReminderUtils
 
 /**
  * Shared navigation and row-action wiring for the My-tab list destinations (recent/starred ×
@@ -103,9 +102,8 @@ internal fun AppCompatActivity.reminderActions(
     RowAction(getString(R.string.trip_list_context_edit)) { editReminder(reminder, onEdit) },
     RowAction(getString(R.string.trip_list_context_delete)) {
         confirmDeleteReminder(this) {
-            ReminderUtils.requestDeleteAlarm(
-                this, ObaContract.Trips.buildUri(reminder.tripId, reminder.stopId)
-            )
+            DatabaseEntryPoint.get(this).reminderRepository()
+                .deleteReminderInBackground(reminder.tripId, reminder.stopId)
         }
     },
     RowAction(getString(R.string.trip_list_context_showstop)) {

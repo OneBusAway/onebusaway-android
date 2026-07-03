@@ -1,50 +1,59 @@
 package org.onebusaway.android.database.survey
 
-import android.content.Context
-import androidx.room.Room
-import org.onebusaway.android.database.AppDatabase
+import javax.inject.Inject
+import javax.inject.Singleton
+import org.onebusaway.android.database.oba.ImportGate
+import org.onebusaway.android.database.survey.dao.StudiesDao
+import org.onebusaway.android.database.survey.dao.SurveysDao
 import org.onebusaway.android.database.survey.entity.Study
 import org.onebusaway.android.database.survey.entity.Survey
+import org.onebusaway.android.models.Survey as SurveyModel
 
 /**
- * Repository class for managing Study and Survey data operations.
- * Provides methods for interacting with Study and Survey entities.
+ * Repository for the survey Study/Survey tables in the unified [org.onebusaway.android.database.AppDatabase]
+ * (storage-modernization). Hilt-injected; the one-time import of any pre-existing `study-survey-db`
+ * data is handled by [org.onebusaway.android.database.oba.LegacyDataImporter.importSurveyDbIfNeeded].
+ * Reads/writes await [ImportGate] first so a query can't race that import — returning an empty completed
+ * set (which would re-show an already-answered survey) or writing a row the import then collides with.
  */
+@Singleton
+class SurveyRepository @Inject constructor(
+    private val studiesDao: StudiesDao,
+    private val surveysDao: SurveysDao,
+    private val importGate: ImportGate,
+) {
 
-class SurveyRepository(context: Context) {
-    private val db: AppDatabase = Room.databaseBuilder(
-        context.applicationContext, AppDatabase::class.java, "study-survey-db"
-    ).build()
+    /**
+     * The set of survey ids that already have a persisted response (completed or skipped), so a survey
+     * isn't shown again. Fetched once per study response and consulted in-memory rather than querying
+     * per-survey (see [org.onebusaway.android.ui.survey.utils.SurveyUtils.getCurrentSurveyIndex]).
+     */
+    suspend fun completedSurveyIds(): Set<Int> {
+        importGate.awaitReady()
+        return surveysDao.getAllSurveys().map { it.survey_id }.toSet()
+    }
 
-    private val studiesDao = db.studiesDao()
-    private val surveysDao = db.surveysDao()
+    /**
+     * Persists a survey as completed or skipped (formerly `SurveyDbHelper.markSurveyAsCompletedOrSkipped`):
+     * upserts the parent study, then records the survey row with the given [state].
+     */
+    suspend fun markCompletedOrSkipped(curSurvey: SurveyModel, state: Int) {
+        importGate.awaitReady()
+        val study = curSurvey.study ?: return
+        upsertStudy(Study(study.id, study.name.orEmpty(), study.description.orEmpty(), true))
+        surveysDao.insertSurvey(Survey(curSurvey.id, study.id, curSurvey.name.orEmpty(), state))
+    }
 
-    suspend fun addOrUpdateStudy(study: Study) {
-        val existingStudy = studiesDao.getStudyById(study.study_id)
-        if (existingStudy == null) {
+    private suspend fun upsertStudy(study: Study) {
+        if (studiesDao.getStudyById(study.study_id) == null) {
             studiesDao.insertStudy(study)
         } else {
             studiesDao.updateStudy(study)
         }
     }
 
-    suspend fun getAllStudies(): List<Study> {
-        return studiesDao.getAllStudies()
-    }
-
-    suspend fun addSurvey(survey: Survey) {
-        surveysDao.insertSurvey(survey)
-    }
-
-    suspend fun getSurveysForStudy(studyId: Int): List<Survey> {
-        return surveysDao.getSurveysByStudyId(studyId)
-    }
-
-    suspend fun checkSurveyCompleted(surveyId: Int): Boolean {
-        return surveysDao.isSurveyIdExists(surveyId)
-    }
-
-    suspend fun getAllSurveys(): List<Survey> {
-        return surveysDao.getAllSurveys();
+    companion object {
+        const val SURVEY_COMPLETED = 1
+        const val SURVEY_SKIPPED = 2
     }
 }

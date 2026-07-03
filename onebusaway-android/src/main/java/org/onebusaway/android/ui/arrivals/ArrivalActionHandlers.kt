@@ -25,9 +25,10 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
+import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.report.ui.InfrastructureIssueLauncher
-import org.onebusaway.android.util.DBUtil
 import org.onebusaway.android.util.ExternalIntents
+import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.ReminderUtils
 
 /**
@@ -68,14 +69,20 @@ fun createArrivalActionHandler(
     }
 
     override fun onShowVehiclesOnMap(arrival: ArrivalInfo) {
-        DBUtil.addRouteToDB(activity, arrival)
+        recordRoute(arrival)
         // Pass the arrival's stop so route mode shows only the direction (stops + vehicles) serving it.
         onShowRouteOnMap(ShowRouteRequest(arrival.routeId, arrival.stopId))
     }
 
     override fun onShowTripStatus(arrival: ArrivalInfo) {
-        DBUtil.addRouteToDB(activity, arrival)
+        recordRoute(arrival)
         onShowTrip(arrival.tripId, arrival.stopId)
+    }
+
+    /** Records the route in recents/search before navigating (the legacy DBUtil.addRouteToDB). */
+    fun recordRoute(arrival: ArrivalInfo) {
+        DatabaseEntryPoint.get(activity).routeRecorder()
+            .recordFromArrival(arrival.routeId, arrival.shortName, arrival.routeLongName, arrival.headsign)
     }
 
     override fun onSetReminder(arrival: ArrivalInfo) {
@@ -131,8 +138,16 @@ fun createArrivalActionHandler(
         showSituationDialog(
             activity = activity,
             alert = alert,
+            onMarkRead = { viewModel.markAlertRead(alertId) },
+            onHide = { viewModel.hideAlert(alertId) },
+            onUnhide = { viewModel.unhideAlert(alertId) },
+            onHideAll = {
+                viewModel.hideAllRecordedAlerts()
+                PreferenceUtils.saveBoolean(
+                    activity.getString(R.string.preference_key_hide_alerts), true
+                )
+            },
             onDismiss = { isAlertHidden -> if (isAlertHidden) viewModel.manualRefresh() },
-            onUndo = { viewModel.manualRefresh() },
             showUndoSnackbar = showUndoSnackbar
         )
     }

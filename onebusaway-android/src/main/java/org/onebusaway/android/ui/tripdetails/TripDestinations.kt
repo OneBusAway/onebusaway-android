@@ -29,7 +29,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import org.onebusaway.android.R
-import org.onebusaway.android.provider.ObaContract
+import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -41,7 +41,6 @@ import org.onebusaway.android.ui.tripinfo.TripInfoRoute
 import org.onebusaway.android.ui.tripinfo.TripInfoViewModel
 import org.onebusaway.android.ui.tripinfo.confirmDeleteReminder
 import org.onebusaway.android.util.PermissionUtils
-import org.onebusaway.android.util.ReminderUtils
 
 /**
  * The trip navigation cluster: a trip's stops + live vehicle ([NavRoutes.TRIP_DETAILS]) and the
@@ -182,10 +181,8 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
                 },
                 onDelete = {
                     confirmDeleteReminder(activity) {
-                        ReminderUtils.requestDeleteAlarm(
-                            activity,
-                            ObaContract.Trips.buildUri(infoTripId, infoStopId)
-                        )
+                        DatabaseEntryPoint.get(activity).reminderRepository()
+                            .deleteReminderInBackground(infoTripId, infoStopId)
                         navController.popBackStack()
                     }
                 },

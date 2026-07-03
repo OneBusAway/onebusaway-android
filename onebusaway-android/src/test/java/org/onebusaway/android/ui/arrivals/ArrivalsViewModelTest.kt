@@ -114,6 +114,12 @@ private class FakeArrivalsRepository(
         hideState.update { it.copy(decisions = it.decisions + ids.associateWith { false }) }
     }
 
+    override suspend fun markAlertRead(id: String) {}
+
+    override suspend fun setAlertHidden(id: String, hidden: Boolean) {}
+
+    override suspend fun hideAllRecordedAlerts() {}
+
     override fun alertDetails(id: String): AlertDetails? = null
 
     override fun lastLoaded(): ArrivalsLoaded? = null

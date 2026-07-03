@@ -24,11 +24,13 @@ import android.location.Location
 import java.io.IOException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import org.onebusaway.android.database.oba.ImportGate
+import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.provider.StopUserInfo
-import org.onebusaway.android.provider.loadStopUserInfo
 import org.onebusaway.android.provider.stopDisplayName
+import org.onebusaway.android.provider.toStopUserInfoMap
 import org.onebusaway.android.util.LocationUtils
 import org.onebusaway.android.util.routeDisplayNames
 
@@ -47,6 +49,8 @@ interface SearchResultsRepository {
 class DefaultSearchResultsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val search: LocationSearchDataSource,
+    private val stopDao: StopDao,
+    private val importGate: ImportGate,
 ) : SearchResultsRepository {
 
     override suspend fun search(query: String): Result<List<SearchResultItem>> = coroutineScope {
@@ -67,7 +71,10 @@ class DefaultSearchResultsRepository @Inject constructor(
             )
         }
 
-        val userInfo = loadStopUserInfo(context)
+        // The favourite/custom-name enrichment is best-effort: a DB hiccup here must not fail a search
+        // that already has route/stop results, so treat it as a soft miss (empty map) like the lookups.
+        importGate.awaitReady()
+        val userInfo = runCatching { stopDao.userInfoMap().toStopUserInfoMap() }.getOrDefault(emptyMap())
         val items = buildList {
             routeResult.getOrNull()?.forEach { add(toRoute(it)) }
             stopResult.getOrNull()?.forEach { add(toStop(it, userInfo[it.id])) }

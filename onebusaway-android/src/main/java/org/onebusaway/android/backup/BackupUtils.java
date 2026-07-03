@@ -76,7 +76,15 @@ public class BackupUtils {
                 context.getString(R.string.analytics_label_button_press_restore_preference),
                 null);
         try {
-            Backup.restore(context, uri);
+            boolean restartRequired = Backup.restore(context, uri);
+            if (restartRequired) {
+                // A Room-format backup swapped the database file, leaving Hilt holding the old, closed
+                // AppDatabase singleton (and every repository that captured a DAO from it). Relaunch the
+                // app so the whole object graph rebuilds against the restored file; the fresh start
+                // re-resolves the region, so onRestored isn't needed on this path.
+                restartApp(context);
+                return;
+            }
             Toast.makeText(context,
                     context.getString(R.string.preferences_db_restored,
                             context.getString(R.string.app_name)),
@@ -96,6 +104,21 @@ public class BackupUtils {
     }
 
     /**
+     * Relaunches the app in a fresh process. Used after a Room-format backup restore swaps the database
+     * file: the Hilt-scoped {@link org.onebusaway.android.database.AppDatabase} singleton (and every
+     * repository that captured a DAO from it) still points at the old, now-closed instance, and Hilt
+     * can't evict a singleton — a process restart is the reliable way to rebuild the graph. The activity
+     * start is handed to the system before the process dies, so it relaunches into a clean process.
+     */
+    private static void restartApp(Context context) {
+        Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+        if (launch != null && launch.getComponent() != null) {
+            context.startActivity(Intent.makeRestartActivityTask(launch.getComponent()));
+        }
+        Runtime.getRuntime().exit(0);
+    }
+
+    /**
      * Creates a backup of the current OBA database on local storage.
      * @param uri The URI representing the location where the backup file should be saved.
      * @param activityContext context of the calling activity (used to check permissions)
@@ -108,11 +131,7 @@ public class BackupUtils {
                 PlausibleAnalytics.REPORT_BACKUP_EVENT_URL,
                 context.getString(R.string.analytics_label_button_press_save_preference),
                 null);
-        try {
-            Backup.backup(context,uri);
-        } catch (IOException e) {
-            Log.d(TAG, Objects.requireNonNull(e.getMessage()));
-        }
+        Backup.backup(context, uri);
     }
 
     /**

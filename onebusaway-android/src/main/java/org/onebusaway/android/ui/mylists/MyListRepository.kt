@@ -16,8 +16,6 @@
 package org.onebusaway.android.ui.mylists
 
 import android.content.Context
-import android.database.Cursor
-import android.net.Uri
 import android.text.format.DateUtils
 import androidx.annotation.ArrayRes
 import androidx.annotation.ColorRes
@@ -31,33 +29,39 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
+import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.NetworkEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
-import org.onebusaway.android.provider.ObaContract
-import org.onebusaway.android.provider.contentChanges
+import org.onebusaway.android.database.oba.ReminderRow
+import org.onebusaway.android.database.oba.RouteListRow
+import org.onebusaway.android.database.oba.StopListRow
+import org.onebusaway.android.database.oba.TripDepartureTime
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.convertArrivals
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.PreferenceUtils
-import org.onebusaway.android.util.ReminderUtils
 import org.onebusaway.android.util.getRouteDisplayName
 
 /**
- * A My-tab list backed by the content provider: [observe] re-emits whenever the underlying table
- * changes (the legacy `ContentObserver` behavior). [remove], [clearAll], and [setSort] are optional
- * capabilities — a list overrides the ones it supports and inherits a no-op otherwise (e.g. recents
- * don't sort; reminders delete via the host, not the repository). All ContentResolver/cursor work is
- * quarantined on [Dispatchers.IO] so [MyListViewModel] stays Context-free and JVM-testable.
+ * A My-tab list backed by the unified Room database: [observe] re-emits whenever the underlying table
+ * changes (Room's per-table invalidation, replacing the legacy `ContentObserver`). [remove],
+ * [clearAll], and [setSort] are optional capabilities — a list overrides the ones it supports and
+ * inherits a no-op otherwise (e.g. recents don't sort; reminders delete via the host, not the
+ * repository). DAOs are resolved from a [DatabaseEntryPoint] because these repositories are hand-built
+ * from a [Context] at the Compose call site; all work stays on [Dispatchers.IO] so [MyListViewModel]
+ * stays Context-free and JVM-testable.
+ *
+ * The recent/starred lists scope to the active region reactively (via [RegionEntryPoint]'s region
+ * flow), so switching regions refreshes the lists immediately — the legacy lists only refreshed on the
+ * next stop/route write.
  */
 interface MyListRepository<T> {
     fun observe(): Flow<List<T>>
@@ -73,126 +77,81 @@ const val SORT_BY_NAME = 0
 const val SORT_BY_FREQUENCY = 1
 
 /** "Recently used" = accessed within the last 7 days, or used at least once; newest first, capped at 20. */
-private const val RECENT_LIMIT = "20"
 private val RECENT_WINDOW_MS = 7 * DateUtils.DAY_IN_MILLIS
 
-/** The recent-list WHERE clause (the legacy "recently used" query); [cutoffMs] is the window start. */
-private fun recentSelection(accessTime: String, useCount: String, cutoffMs: Long, regionWhere: String) =
-    "(($accessTime IS NOT NULL AND $accessTime > $cutoffMs) OR ($useCount > 0))$regionWhere"
+private fun recentCutoff(): Long = System.currentTimeMillis() - RECENT_WINDOW_MS
 
-private fun regionWhere(context: Context, regionField: String): String {
-    val region = RegionEntryPoint.get(context).region.value ?: return ""
-    return " AND ($regionField=${region.id} OR $regionField IS NULL)"
-}
-
-private val STOP_PROJECTION = arrayOf(
-    ObaContract.Stops._ID,
-    ObaContract.Stops.UI_NAME,
-    ObaContract.Stops.DIRECTION,
-    ObaContract.Stops.LATITUDE,
-    ObaContract.Stops.LONGITUDE,
-    ObaContract.Stops.FAVORITE
-)
-
-private fun Cursor.toStopItem(context: Context): StopListItem {
-    val rawDirection = getString(2)
-    val directionText = rawDirection?.takeIf { it.isNotEmpty() }
+private fun StopListRow.toStopItem(context: Context): StopListItem {
+    val directionText = direction?.takeIf { it.isNotEmpty() }
         ?.let { context.getString(DisplayFormat.getStopDirectionText(it)) }
         ?.takeIf { it.isNotEmpty() }
     return StopListItem(
-        id = getString(0),
-        name = getString(1).orEmpty(),
-        rawDirection = rawDirection,
+        id = id,
+        name = uiName.orEmpty(),
+        rawDirection = direction,
         directionText = directionText,
-        lat = getDouble(3),
-        lon = getDouble(4),
-        isFavorite = getInt(5) == 1
+        lat = latitude,
+        lon = longitude,
+        isFavorite = favorite == 1,
     )
 }
 
-private val ROUTE_PROJECTION = arrayOf(
-    ObaContract.Routes._ID,
-    ObaContract.Routes.SHORTNAME,
-    ObaContract.Routes.LONGNAME,
-    ObaContract.Routes.URL
-)
-
-private fun Cursor.toRouteItem() = RouteListItem(
-    id = getString(0),
-    shortName = getString(1).orEmpty(),
-    longName = getString(2)?.takeIf { it.isNotEmpty() },
-    url = getString(3)?.takeIf { it.isNotEmpty() }
+private fun RouteListRow.toRouteItem() = RouteListItem(
+    id = id,
+    shortName = shortName,
+    longName = longName?.takeIf { it.isNotEmpty() },
+    url = url?.takeIf { it.isNotEmpty() },
 )
 
 /** Recently viewed stops, marked unused on removal/clear. */
 class RecentStopsRepository(private val context: Context) : MyListRepository<StopListItem> {
 
+    private val entryPoint = DatabaseEntryPoint.get(context)
+    private val stopDao = entryPoint.stopDao()
+    private val importGate = entryPoint.importGate()
+    private val region = RegionEntryPoint.get(context).region
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun observe(): Flow<List<StopListItem>> =
-        context.contentChanges(ObaContract.Stops.CONTENT_URI)
-            .conflate()
-            .map { queryRecentStops() }
+        region.flatMapLatest { r -> stopDao.recents(recentCutoff(), r?.id) }
+            .map { rows -> rows.map { it.toStopItem(context) } }
             .flowOn(Dispatchers.IO)
 
-    override suspend fun remove(id: String) = withContext(Dispatchers.IO) {
-        ObaContract.Stops.markAsUnused(
-            context, Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, id)
-        )
-        Unit
+    // Gate the writes: a remove/clear racing the one-time importer's clear-then-insert would otherwise
+    // be silently wiped. Reads self-heal via Room invalidation once the import commits, so they don't.
+    override suspend fun remove(id: String) {
+        importGate.awaitReady()
+        stopDao.markUnused(id)
     }
 
-    override suspend fun clearAll() = withContext(Dispatchers.IO) {
-        ObaContract.Stops.markAsUnused(context, ObaContract.Stops.CONTENT_URI)
-        Unit
-    }
-
-    private fun queryRecentStops(): List<StopListItem> {
-        val cutoff = System.currentTimeMillis() - RECENT_WINDOW_MS
-        val selection = recentSelection(
-            ObaContract.Stops.ACCESS_TIME, ObaContract.Stops.USE_COUNT, cutoff,
-            regionWhere(context, ObaContract.Stops.REGION_ID)
-        )
-        val uri = ObaContract.Stops.CONTENT_URI.buildUpon()
-            .appendQueryParameter("limit", RECENT_LIMIT).build()
-        val sort = "${ObaContract.Stops.ACCESS_TIME} desc, ${ObaContract.Stops.USE_COUNT} desc"
-        return context.contentResolver.query(uri, STOP_PROJECTION, selection, null, sort)
-            ?.use { c -> buildList { while (c.moveToNext()) add(c.toStopItem(context)) } }
-            ?: emptyList()
+    override suspend fun clearAll() {
+        importGate.awaitReady()
+        stopDao.markAllUnused()
     }
 }
 
 /** Recently viewed routes, marked unused on removal/clear. */
 class RecentRoutesRepository(private val context: Context) : MyListRepository<RouteListItem> {
 
+    private val entryPoint = DatabaseEntryPoint.get(context)
+    private val routeDao = entryPoint.routeDao()
+    private val importGate = entryPoint.importGate()
+    private val region = RegionEntryPoint.get(context).region
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun observe(): Flow<List<RouteListItem>> =
-        context.contentChanges(ObaContract.Routes.CONTENT_URI)
-            .conflate()
-            .map { queryRecentRoutes() }
+        region.flatMapLatest { r -> routeDao.recents(recentCutoff(), r?.id) }
+            .map { rows -> rows.map { it.toRouteItem() } }
             .flowOn(Dispatchers.IO)
 
-    override suspend fun remove(id: String) = withContext(Dispatchers.IO) {
-        ObaContract.Routes.markAsUnused(
-            context, Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, id)
-        )
-        Unit
+    override suspend fun remove(id: String) {
+        importGate.awaitReady()
+        routeDao.markUnused(id)
     }
 
-    override suspend fun clearAll() = withContext(Dispatchers.IO) {
-        ObaContract.Routes.markAsUnused(context, ObaContract.Routes.CONTENT_URI)
-        Unit
-    }
-
-    private fun queryRecentRoutes(): List<RouteListItem> {
-        val cutoff = System.currentTimeMillis() - RECENT_WINDOW_MS
-        val selection = recentSelection(
-            ObaContract.Routes.ACCESS_TIME, ObaContract.Routes.USE_COUNT, cutoff,
-            regionWhere(context, ObaContract.Routes.REGION_ID)
-        )
-        val uri = ObaContract.Routes.CONTENT_URI.buildUpon()
-            .appendQueryParameter("limit", RECENT_LIMIT).build()
-        val sort = "${ObaContract.Routes.ACCESS_TIME} desc, ${ObaContract.Routes.USE_COUNT} desc"
-        return context.contentResolver.query(uri, ROUTE_PROJECTION, selection, null, sort)
-            ?.use { c -> buildList { while (c.moveToNext()) add(c.toRouteItem()) } }
-            ?: emptyList()
+    override suspend fun clearAll() {
+        importGate.awaitReady()
+        routeDao.markAllUnused()
     }
 }
 
@@ -205,6 +164,10 @@ private fun saveSortOrder(context: Context, order: Int, @ArrayRes optionsRes: In
 /** Starred stops, sorted by name or frequency, with live next-arrivals refreshed on a 60s poll. */
 class StarredStopsRepository(private val context: Context) : MyListRepository<StopListItem> {
 
+    private val entryPoint = DatabaseEntryPoint.get(context)
+    private val stopDao = entryPoint.stopDao()
+    private val importGate = entryPoint.importGate()
+    private val region = RegionEntryPoint.get(context).region
     private val sort = MutableStateFlow(PreferenceUtils.getStopSortOrderFromPreferences())
 
     override fun setSort(order: Int) {
@@ -214,63 +177,49 @@ class StarredStopsRepository(private val context: Context) : MyListRepository<St
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun observe(): Flow<List<StopListItem>> =
-        combine(context.contentChanges(ObaContract.Stops.CONTENT_URI).conflate(), sort) { _, order ->
-            queryStarredStops(order)
-        }.flatMapLatest { stops ->
-            // Restart the arrivals poll whenever the stop set (or sort) changes: show the stops with
-            // their Loading badges first, then re-emit them with each poll's results merged in.
-            if (stops.isEmpty()) {
-                flowOf(stops)
-            } else {
-                arrivalsPoll(stops.map { it.id })
-                    .map { byStop ->
-                        stops.map { it.copy(arrivals = StopArrivals.Loaded(byStop[it.id].orEmpty())) }
-                    }
-                    .onStart { emit(stops) }
+        combine(region, sort) { r, order -> r?.id to order }
+            .flatMapLatest { (regionId, order) ->
+                val rows = if (order == SORT_BY_FREQUENCY) {
+                    stopDao.starredByFrequency(regionId)
+                } else {
+                    stopDao.starredByName(regionId)
+                }
+                rows.map { list -> list.map { it.toStopItem(context).copy(arrivals = StopArrivals.Loading) } }
             }
-        }.flowOn(Dispatchers.IO)
-
-    override suspend fun remove(id: String) = withContext(Dispatchers.IO) {
-        ObaContract.Stops.markAsFavorite(
-            context, Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, id), false
-        )
-        Unit
-    }
-
-    override suspend fun clearAll() = withContext(Dispatchers.IO) {
-        ObaContract.Stops.markAsFavorite(context, ObaContract.Stops.CONTENT_URI, false)
-        Unit
-    }
-
-    private fun queryStarredStops(order: Int): List<StopListItem> {
-        val selection = "${ObaContract.Stops.FAVORITE}=1" + regionWhere(context, ObaContract.Stops.REGION_ID)
-        val sortOrder = if (order == SORT_BY_FREQUENCY) {
-            "${ObaContract.Stops.USE_COUNT} desc"
-        } else {
-            "${ObaContract.Stops.UI_NAME} asc"
-        }
-        return context.contentResolver
-            .query(ObaContract.Stops.CONTENT_URI, STOP_PROJECTION, selection, null, sortOrder)
-            ?.use { c ->
-                buildList {
-                    while (c.moveToNext()) add(c.toStopItem(context).copy(arrivals = StopArrivals.Loading))
+            .flatMapLatest { stops ->
+                // Restart the arrivals poll whenever the stop set (or sort) changes: show the stops with
+                // their Loading badges first, then re-emit them with each poll's results merged in.
+                if (stops.isEmpty()) {
+                    flowOf(stops)
+                } else {
+                    arrivalsPoll(context, stops.map { it.id })
+                        .map { byStop ->
+                            stops.map { it.copy(arrivals = StopArrivals.Loaded(byStop[it.id].orEmpty())) }
+                        }
+                        .onStart { emit(stops) }
                 }
             }
-            ?: emptyList()
+            .flowOn(Dispatchers.IO)
+
+    override suspend fun remove(id: String) {
+        importGate.awaitReady()
+        stopDao.setFavorite(id, 0)
     }
 
-    /** Emits the per-stop arrival badges immediately, then re-emits every [ARRIVALS_REFRESH_MS]. */
-    private fun arrivalsPoll(stopIds: List<String>): Flow<Map<String, List<ArrivalBadge>>> = flow {
-        while (true) {
-            emit(fetchArrivals(context, stopIds, System.currentTimeMillis()))
-            delay(ARRIVALS_REFRESH_MS)
-        }
+    override suspend fun clearAll() {
+        importGate.awaitReady()
+        stopDao.clearAllFavorites()
     }
 }
 
 /** Starred routes, sorted by name or frequency. */
 class StarredRoutesRepository(private val context: Context) : MyListRepository<RouteListItem> {
 
+    private val entryPoint = DatabaseEntryPoint.get(context)
+    private val routeDao = entryPoint.routeDao()
+    private val headsignDao = entryPoint.routeHeadsignFavoriteDao()
+    private val importGate = entryPoint.importGate()
+    private val region = RegionEntryPoint.get(context).region
     private val sort = MutableStateFlow(PreferenceUtils.getStopSortOrderFromPreferences())
 
     override fun setSort(order: Int) {
@@ -278,43 +227,39 @@ class StarredRoutesRepository(private val context: Context) : MyListRepository<R
         sort.value = order
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun observe(): Flow<List<RouteListItem>> =
-        combine(context.contentChanges(ObaContract.Routes.CONTENT_URI).conflate(), sort) { _, order ->
-            queryStarredRoutes(order)
-        }.flowOn(Dispatchers.IO)
+        combine(region, sort) { r, order -> r?.id to order }
+            .flatMapLatest { (regionId, order) ->
+                if (order == SORT_BY_FREQUENCY) {
+                    routeDao.starredByFrequency(regionId)
+                } else {
+                    routeDao.starredByName(regionId)
+                }
+            }
+            .map { rows -> rows.map { it.toRouteItem() } }
+            .flowOn(Dispatchers.IO)
 
-    override suspend fun remove(id: String) = withContext(Dispatchers.IO) {
-        ObaContract.Routes.markAsFavorite(
-            context, Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, id), false
-        )
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(context, id, null, null, false)
-        Unit
+    // Unstarring a whole route removes all its headsign favorites and clears the route's favorite flag
+    // (the all-stops unfavorite path creates no exclusion records).
+    override suspend fun remove(id: String) {
+        importGate.awaitReady()
+        headsignDao.deleteForRoute(id, null)
+        routeDao.setFavorite(id, 0)
     }
 
-    override suspend fun clearAll() = withContext(Dispatchers.IO) {
-        ObaContract.Routes.markAsFavorite(context, ObaContract.Routes.CONTENT_URI, false)
-        ObaContract.RouteHeadsignFavorites.clearAllFavorites(context)
-        Unit
-    }
-
-    private fun queryStarredRoutes(order: Int): List<RouteListItem> {
-        val selection = "${ObaContract.Routes.FAVORITE}=1" + regionWhere(context, ObaContract.Routes.REGION_ID)
-        val sortOrder = if (order == SORT_BY_FREQUENCY) {
-            "${ObaContract.Routes.USE_COUNT} desc"
-        } else {
-            "length(${ObaContract.Routes.SHORTNAME}), ${ObaContract.Routes.SHORTNAME} asc"
-        }
-        return context.contentResolver
-            .query(ObaContract.Routes.CONTENT_URI, ROUTE_PROJECTION, selection, null, sortOrder)
-            ?.use { c -> buildList { while (c.moveToNext()) add(c.toRouteItem()) } }
-            ?: emptyList()
+    override suspend fun clearAll() {
+        importGate.awaitReady()
+        headsignDao.clearAll()
+        routeDao.clearAllFavorites()
     }
 }
 
 /** Saved trip reminders, sorted by name or departure time. Deletion is a host concern (it cancels the
- *  scheduled alarm), so this only observes + sorts; the ContentObserver reflects deletions. */
+ *  scheduled alarm), so this only observes + sorts; Room reflects deletions automatically. */
 class RemindersRepository(private val context: Context) : MyListRepository<ReminderItem> {
 
+    private val tripDao = DatabaseEntryPoint.get(context).tripDao()
     private val sort = MutableStateFlow(PreferenceUtils.getReminderSortOrderFromPreferences())
 
     override fun setSort(order: Int) {
@@ -322,44 +267,24 @@ class RemindersRepository(private val context: Context) : MyListRepository<Remin
         sort.value = order
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun observe(): Flow<List<ReminderItem>> =
-        combine(context.contentChanges(ObaContract.Trips.CONTENT_URI).conflate(), sort) { _, order ->
-            queryReminders(order)
-        }.flowOn(Dispatchers.IO)
-
-    private fun queryReminders(order: Int): List<ReminderItem> {
-        val sortOrder = if (order == SORT_BY_NAME) {
-            "${ObaContract.Trips.NAME} asc"
-        } else {
-            "${ObaContract.Trips.DEPARTURE} asc"
+        sort.flatMapLatest { order ->
+            if (order == SORT_BY_NAME) tripDao.remindersByName() else tripDao.remindersByDeparture()
         }
-        return context.contentResolver
-            .query(ObaContract.Trips.CONTENT_URI, TRIP_PROJECTION, null, null, sortOrder)
-            ?.use { c -> buildList { while (c.moveToNext()) add(c.toReminderItem(context)) } }
-            ?: emptyList()
-    }
+            .map { rows -> rows.map { it.toReminderItem(context) } }
+            .flowOn(Dispatchers.IO)
 }
 
-private val TRIP_PROJECTION = arrayOf(
-    ObaContract.Trips._ID,
-    ObaContract.Trips.NAME,
-    ObaContract.Trips.HEADSIGN,
-    ObaContract.Trips.DEPARTURE,
-    ObaContract.Trips.ROUTE_ID,
-    ObaContract.Trips.STOP_ID
-)
-
-private fun Cursor.toReminderItem(context: Context): ReminderItem {
-    val routeId = getString(4)
-    val routeName = ReminderUtils.getRouteShortName(context, routeId)
-    val departureMs = ObaContract.Trips.convertDBToTime(getInt(3))
+private fun ReminderRow.toReminderItem(context: Context): ReminderItem {
+    val departureMs = TripDepartureTime.toEpochMillis(departure)
     return ReminderItem(
-        tripId = getString(0),
-        stopId = getString(5),
-        routeId = routeId,
-        name = getString(1).orEmpty().ifEmpty { context.getString(R.string.trip_info_noname) },
-        headsign = getString(2)?.takeIf { it.isNotEmpty() }?.let { MyTextUtils.formatDisplayText(it) },
-        routeText = routeName?.let { context.getString(R.string.trip_info_route, it) },
+        tripId = tripId,
+        stopId = stopId,
+        routeId = routeId.orEmpty(),
+        name = name.orEmpty().ifEmpty { context.getString(R.string.trip_info_noname) },
+        headsign = headsign?.takeIf { it.isNotEmpty() }?.let { MyTextUtils.formatDisplayText(it) },
+        routeText = routeShortName?.let { context.getString(R.string.trip_info_route, it) },
         departureText = context.getString(R.string.trip_info_depart, DisplayFormat.formatTime(context, departureMs))
     )
 }
@@ -369,6 +294,14 @@ private fun Cursor.toReminderItem(context: Context): ReminderItem {
 private const val ARRIVALS_REFRESH_MS = 60_000L
 private const val ARRIVALS_MINUTES_AFTER = 35
 private const val MAX_ARRIVALS_PER_STOP = 3
+
+/** Emits the per-stop arrival badges immediately, then re-emits every [ARRIVALS_REFRESH_MS]. */
+private fun arrivalsPoll(context: Context, stopIds: List<String>): Flow<Map<String, List<ArrivalBadge>>> = flow {
+    while (true) {
+        emit(fetchArrivals(context, stopIds, System.currentTimeMillis()))
+        delay(ARRIVALS_REFRESH_MS)
+    }
+}
 
 /** Fetches each stop's next arrivals concurrently (the blocking per-stop calls fan out on IO) so the
  *  refresh latency is the slowest single request, not their sum. */
@@ -389,7 +322,8 @@ private suspend fun fetchStopBadges(context: Context, stopId: String, nowMs: Lon
             .arrivals(stopId, ARRIVALS_MINUTES_AFTER)
             .getOrThrow()
             .arrivals
-        convertArrivals(context, arrivals, null, nowMs, false)
+        // These badge rows don't render the favorite star, so favorite state is always false.
+        convertArrivals(context, arrivals, null, nowMs, false) { _, _, _ -> false }
             .take(MAX_ARRIVALS_PER_STOP)
             .map { it.toBadge(context) }
     }.getOrDefault(emptyList())

@@ -57,6 +57,11 @@ android {
         }
     }
 
+    // Expose the exported Room schemas to instrumented tests so MigrationTestHelper can load them.
+    sourceSets {
+        androidTest.assets.srcDirs += files("$projectDir/schemas")
+    }
+
     /**
      * brand - how the name, look, and feel of each OneBusAway-based app is presented
      * platform - Google
@@ -162,7 +167,8 @@ android {
 }
 
 /**
- * Set brand BuildConfig.DATABASE_AUTHORITY, used in org.onebusaway.android.provider.ObaContract
+ * Set brand BuildConfig.DATABASE_AUTHORITY, used in org.onebusaway.android.ui.nav.DeepLinkUris (the
+ * content:// stop/route deep-link authority) — historically the ObaProvider ContentProvider authority.
  */
 androidComponents {
     onVariants(selector().all(), { variant ->
@@ -297,6 +303,7 @@ dependencies {
     implementation "androidx.room:room-runtime:2.7.0"
     ksp "androidx.room:room-compiler:2.7.0"
     implementation "androidx.room:room-ktx:2.7.0"
+    androidTestImplementation "androidx.room:room-testing:2.7.0"
     // Hilt
     implementation "com.google.dagger:hilt-android:2.59.2"
     ksp "com.google.dagger:hilt-android-compiler:2.59.2"

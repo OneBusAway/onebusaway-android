@@ -23,6 +23,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.location.Location
+import android.location.LocationManager
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
@@ -32,6 +33,8 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -45,9 +48,13 @@ import org.onebusaway.android.app.Application
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
+import org.onebusaway.android.database.oba.ImportGate
+import org.onebusaway.android.database.oba.NavStopDao
+import org.onebusaway.android.database.oba.NavStopRecord
+import org.onebusaway.android.database.oba.StopDao
+import org.onebusaway.android.database.oba.StopLocationRow
 import org.onebusaway.android.nav.model.Path
 import org.onebusaway.android.nav.model.PathLink
-import org.onebusaway.android.provider.ObaContract
 import org.onebusaway.android.ui.feedback.FeedbackLauncher
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.util.LocationUtils
@@ -70,7 +77,12 @@ import java.util.concurrent.TimeUnit
  * to its [NavigationServiceProvider], which computes trip statuses and issues notifications/TTS. Once
  * the NavigationServiceProvider reports finished, the service stops itself.
  */
+@AndroidEntryPoint
 class NavigationService : Service() {
+
+    @Inject lateinit var navStopDao: NavStopDao
+    @Inject lateinit var stopDao: StopDao
+    @Inject lateinit var importGate: ImportGate
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var navJob: Job? = null
@@ -94,70 +106,101 @@ class NavigationService : Service() {
         Log.d(TAG, "Starting Service")
         firebaseAnalytics = FirebaseAnalytics.getInstance(this)
         val currentTime = System.currentTimeMillis()
-        if (intent != null) {
-            destinationStopId = intent.getStringExtra(DESTINATION_ID)
-            beforeStopId = intent.getStringExtra(BEFORE_STOP_ID)
-            tripId = intent.getStringExtra(TRIP_ID)
+        // The nav-stop read/write is now Room-backed (suspend), so the setup runs on the service scope
+        // after the one-time import gate. Dispatchers.Main.immediate keeps startForeground on the main
+        // thread; only the fast Room reads suspend, so it is still called promptly.
+        serviceScope.launch {
+            importGate.awaitReady()
+            if (intent != null) {
+                destinationStopId = intent.getStringExtra(DESTINATION_ID)
+                beforeStopId = intent.getStringExtra(BEFORE_STOP_ID)
+                tripId = intent.getStringExtra(TRIP_ID)
 
-            ObaContract.NavStops.insert(
-                Application.get().applicationContext, currentTime,
-                1, 1, tripId, destinationStopId, beforeStopId
-            )
+                navStopDao.replaceActive(
+                    NavStopRecord(
+                        navId = "1",
+                        startTime = currentTime,
+                        tripId = tripId.orEmpty(),
+                        destinationId = destinationStopId.orEmpty(),
+                        beforeId = beforeStopId.orEmpty(),
+                        sequence = 1,
+                        active = 1,
+                    )
+                )
 
-            navProvider = NavigationServiceProvider(tripId, destinationStopId)
-        } else {
-            val args = ObaContract.NavStops.getDetails(Application.get().applicationContext, "1")
-            if (args != null && args.size == 3) {
-                tripId = args[0]
-                destinationStopId = args[1]
-                beforeStopId = args[2]
-                navProvider = NavigationServiceProvider(tripId, destinationStopId, 1)
+                navProvider = NavigationServiceProvider(tripId, destinationStopId)
+            } else {
+                val args = navStopDao.getDetails("1")
+                if (args != null) {
+                    tripId = args.tripId
+                    destinationStopId = args.destinationId
+                    beforeStopId = args.beforeId
+                    navProvider = NavigationServiceProvider(tripId, destinationStopId, 1)
+                }
             }
-        }
 
-        // Log in anonymously via Firebase
-        initAnonFirebaseLogin()
-
-        // Setup file for logging.
-        if (logFile == null) {
-            setupLog()
-        }
-
-        val dest = ObaContract.Stops.getLocation(Application.get().applicationContext, destinationStopId)
-        val last = ObaContract.Stops.getLocation(Application.get().applicationContext, beforeStopId)
-        val pathLink = PathLink(currentTime, null, last, dest, tripId)
-
-        navProvider?.let {
-            // TODO Support more than one path link
-            val links = ArrayList<PathLink>(1)
-            links.add(pathLink)
-            it.navigate(Path(links))
-        }
-
-        // Collect the shared location feed (1 s cadence) instead of owning a private LocationHelper.
-        // Start it AFTER navigate() initializes the proximity calculator: the repository's StateFlow
-        // replays its seeded value immediately on collect, so handleLocation() -> locationUpdated()
-        // must not run before the provider is set up (the legacy LocationHelper delivered its first fix
-        // asynchronously, after navigate()).
-        if (navJob?.isActive != true) {
-            Log.d(TAG, "Requesting Location Updates")
-            navJob = serviceScope.launch {
-                LocationEntryPoint.get(this@NavigationService)
-                    .locationUpdates(NAV_UPDATE_INTERVAL_SECONDS)
-                    .collect { handleLocation(it) }
+            // No intent and no persisted nav to resume (a system restart of the sticky service after
+            // the trip ended): there's nothing to navigate, so stop cleanly instead of hitting the
+            // navProvider!! below with an NPE.
+            if (navProvider == null) {
+                Log.w(TAG, "No navigation data to resume; stopping service")
+                stopSelf()
+                return@launch
             }
-        }
 
-        val notification = navProvider!!.getForegroundStartingNotification()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(
-                NavigationServiceProvider.NOTIFICATION_ID, notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-            )
-        } else {
-            startForeground(NavigationServiceProvider.NOTIFICATION_ID, notification)
+            // Log in anonymously via Firebase
+            initAnonFirebaseLogin()
+
+            val dest = destinationStopId?.let { stopLocation(stopDao.location(it)) }
+            val last = beforeStopId?.let { stopLocation(stopDao.location(it)) }
+
+            // Setup file for logging.
+            if (logFile == null) {
+                setupLog(dest, last)
+            }
+
+            val pathLink = PathLink(currentTime, null, last, dest, tripId)
+
+            navProvider?.let {
+                // TODO Support more than one path link
+                val links = ArrayList<PathLink>(1)
+                links.add(pathLink)
+                it.navigate(Path(links))
+            }
+
+            // Collect the shared location feed (1 s cadence) instead of owning a private LocationHelper.
+            // Start it AFTER navigate() initializes the proximity calculator: the repository's StateFlow
+            // replays its seeded value immediately on collect, so handleLocation() -> locationUpdated()
+            // must not run before the provider is set up (the legacy LocationHelper delivered its first fix
+            // asynchronously, after navigate()).
+            if (navJob?.isActive != true) {
+                Log.d(TAG, "Requesting Location Updates")
+                navJob = serviceScope.launch {
+                    LocationEntryPoint.get(this@NavigationService)
+                        .locationUpdates(NAV_UPDATE_INTERVAL_SECONDS)
+                        .collect { handleLocation(it) }
+                }
+            }
+
+            val notification = navProvider!!.getForegroundStartingNotification()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(
+                    NavigationServiceProvider.NOTIFICATION_ID, notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                )
+            } else {
+                startForeground(NavigationServiceProvider.NOTIFICATION_ID, notification)
+            }
         }
         return Service.START_STICKY
+    }
+
+    /** Converts a stop's stored coordinates to a [Location] (the legacy Stops.getLocation shape). */
+    private fun stopLocation(row: StopLocationRow?): Location? = row?.let {
+        Location(LocationManager.GPS_PROVIDER).apply {
+            latitude = it.latitude
+            longitude = it.longitude
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -238,7 +281,7 @@ class NavigationService : Service() {
      * Creates the log file that GPS data and navigation performance is written to - see
      * DESTINATION_ALERTS.md
      */
-    private fun setupLog() {
+    private fun setupLog(dest: Location?, last: Location?) {
         try {
             // Get the counter that's incremented for each test
             val navTestId = getString(R.string.preference_key_nav_test_id)
@@ -263,12 +306,10 @@ class NavigationService : Service() {
 
             Log.d(TAG, ":" + file.absolutePath)
 
-            val dest = ObaContract.Stops.getLocation(Application.get().applicationContext, destinationStopId)
-            val last = ObaContract.Stops.getLocation(Application.get().applicationContext, beforeStopId)
-
             val header = String.format(
                 Locale.US, "%s,%s,%f,%f,%s,%f,%f\n", tripId, destinationStopId,
-                dest.latitude, dest.longitude, beforeStopId, last.latitude, last.longitude
+                dest?.latitude ?: 0.0, dest?.longitude ?: 0.0, beforeStopId,
+                last?.latitude ?: 0.0, last?.longitude ?: 0.0
             )
 
             FileUtils.write(file, header, false)

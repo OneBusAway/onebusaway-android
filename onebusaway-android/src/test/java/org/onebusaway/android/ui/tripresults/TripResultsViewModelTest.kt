@@ -22,7 +22,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -64,18 +63,17 @@ class TripResultsViewModelTest {
     @Test
     fun `setItineraries emits Success with the options and selected index`() = runTest {
         val viewModel = TripResultsViewModel(FakeTripResultsRepository(Result.success(options)))
-        viewModel.setItineraries(itineraries(2), initialIndex = 1, showMap = false)
+        viewModel.setItineraries(itineraries(2), initialIndex = 1)
         advanceUntilIdle()
         val state = viewModel.state.value as TripResultsUiState.Success
         assertEquals(options, state.options)
         assertEquals(1, state.selectedIndex)
-        assertFalse(state.showMap)
     }
 
     @Test
     fun `an out-of-range initial index is clamped`() = runTest {
         val viewModel = TripResultsViewModel(FakeTripResultsRepository(Result.success(options)))
-        viewModel.setItineraries(itineraries(2), initialIndex = 9, showMap = false)
+        viewModel.setItineraries(itineraries(2), initialIndex = 9)
         advanceUntilIdle()
         assertEquals(1, (viewModel.state.value as TripResultsUiState.Success).selectedIndex)
     }
@@ -85,7 +83,7 @@ class TripResultsViewModelTest {
         val repository = FakeTripResultsRepository(Result.success(options))
         val viewModel = TripResultsViewModel(repository)
         val list = itineraries(2)
-        viewModel.setItineraries(list, initialIndex = 0, showMap = false)
+        viewModel.setItineraries(list, initialIndex = 0)
         advanceUntilIdle()
         repository.directionsForCalls.clear()
 
@@ -100,7 +98,7 @@ class TripResultsViewModelTest {
     fun `selectOption ignores the current index and out-of-range indices`() = runTest {
         val repository = FakeTripResultsRepository(Result.success(options))
         val viewModel = TripResultsViewModel(repository)
-        viewModel.setItineraries(itineraries(2), initialIndex = 0, showMap = false)
+        viewModel.setItineraries(itineraries(2), initialIndex = 0)
         advanceUntilIdle()
         repository.directionsForCalls.clear()
 
@@ -120,7 +118,7 @@ class TripResultsViewModelTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.selectedItinerary.collect { emitted.add(it.first) }
         }
-        viewModel.setItineraries(list, initialIndex = 0, showMap = false)
+        viewModel.setItineraries(list, initialIndex = 0)
         advanceUntilIdle()
 
         viewModel.selectOption(1)
@@ -130,21 +128,11 @@ class TripResultsViewModelTest {
     }
 
     @Test
-    fun `toggleMap flips showMap on the Success state`() = runTest {
-        val viewModel = TripResultsViewModel(FakeTripResultsRepository(Result.success(options)))
-        viewModel.setItineraries(itineraries(1), initialIndex = 0, showMap = false)
-        advanceUntilIdle()
-
-        viewModel.toggleMap(true)
-        assertTrue((viewModel.state.value as TripResultsUiState.Success).showMap)
-    }
-
-    @Test
     fun `a summarize failure surfaces Error with the message`() = runTest {
         val viewModel = TripResultsViewModel(
             FakeTripResultsRepository(Result.failure(IOException("boom")))
         )
-        viewModel.setItineraries(itineraries(1), initialIndex = 0, showMap = false)
+        viewModel.setItineraries(itineraries(1), initialIndex = 0)
         advanceUntilIdle()
 
         assertEquals(TripResultsUiState.Error("boom"), viewModel.state.value)

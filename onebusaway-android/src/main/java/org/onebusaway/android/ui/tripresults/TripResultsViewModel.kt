@@ -48,13 +48,11 @@ class TripResultsViewModel @Inject constructor(
 
     private var itineraries: List<Itinerary> = emptyList()
     private var selectedIndex: Int = 0
-    private var showMap: Boolean = false
 
-    /** Seeds the results from a completed plan. [initialIndex]/[showMap] restore prior UI state. */
-    fun setItineraries(itineraries: List<Itinerary>, initialIndex: Int, showMap: Boolean) {
+    /** Seeds the results from a completed plan. [initialIndex] restores the prior option selection. */
+    fun setItineraries(itineraries: List<Itinerary>, initialIndex: Int) {
         this.itineraries = itineraries
         this.selectedIndex = initialIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
-        this.showMap = showMap
         load()
     }
 
@@ -64,14 +62,6 @@ class TripResultsViewModel @Inject constructor(
         selectedIndex = index
         itineraries.getOrNull(index)?.let { _selectedItinerary.tryEmit(index to it) }
         load()
-    }
-
-    /** Switches between the list and map tabs. */
-    fun toggleMap(show: Boolean) {
-        showMap = show
-        (_state.value as? TripResultsUiState.Success)?.let {
-            _state.value = it.copy(showMap = show)
-        }
     }
 
     private fun load() {
@@ -84,8 +74,7 @@ class TripResultsViewModel @Inject constructor(
                     _state.value = TripResultsUiState.Success(
                         options = options,
                         selectedIndex = selectedIndex,
-                        directions = directions,
-                        showMap = showMap
+                        directions = directions
                     )
                 },
                 onFailure = { error ->

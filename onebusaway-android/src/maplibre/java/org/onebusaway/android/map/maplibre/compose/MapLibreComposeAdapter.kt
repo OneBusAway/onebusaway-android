@@ -62,6 +62,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onSubscription
 import kotlin.math.abs
 
 private const val STYLE_URL_LIGHT = "https://tiles.openfreemap.org/styles/liberty"
@@ -212,9 +213,14 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                 onDispose { host.setMapAttached(false) }
             }
             LaunchedEffect(map) {
-                renderState.cameraCommands.collect { command ->
-                    applyCameraCommand(command, map, renderState)
-                }
+                renderState.cameraCommands
+                    // Flush any frame deferred while the map was detached the moment this collector is
+                    // registered — emissions in onSubscription reach this collector, so a deferred fit
+                    // isn't dropped by the no-replay flow if the first camera-idle beats us (#1640).
+                    .onSubscription { host.onCameraCommandsSubscribed() }
+                    .collect { command ->
+                        applyCameraCommand(command, map, renderState)
+                    }
             }
         }
 

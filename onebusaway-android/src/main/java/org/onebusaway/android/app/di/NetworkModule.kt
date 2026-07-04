@@ -22,6 +22,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -29,6 +30,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.api.contract.BikeWebService
+import org.onebusaway.android.api.contract.OtpWebService
 import org.onebusaway.android.api.contract.RegionsWebService
 import org.onebusaway.android.api.contract.ReminderWebService
 import org.onebusaway.android.api.contract.SurveyWebService
@@ -118,11 +120,24 @@ object NetworkModule {
         plainRetrofit(json).create(ReminderWebService::class.java)
 
     /**
-     * A Retrofit built on a plain OkHttp client (debug logging only, no [ApiParamsInterceptor]) for
-     * services that pass an absolute `@Url` per call rather than relying on the region host rewrite.
+     * The OpenTripPlanner trip-planner client. Like [provideBikeWebService] it targets the region's OTP
+     * host via absolute `@Url`, so it uses a plain client without [ApiParamsInterceptor] — but with the
+     * legacy 15s connect/read timeouts the OTP `/plan` call has always used (OTP servers can be slow),
+     * rather than OkHttp's shorter defaults.
      */
-    private fun plainRetrofit(json: Json): Retrofit {
-        val client = OkHttpClient.Builder()
+    @Provides
+    @Singleton
+    fun provideOtpWebService(json: Json): OtpWebService {
+        val client = plainClient {
+            connectTimeout(OTP_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            readTimeout(OTP_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        }
+        return plainRetrofit(json, client).create(OtpWebService::class.java)
+    }
+
+    /** A plain OkHttp client (debug logging only, no [ApiParamsInterceptor]), optionally [configure]d. */
+    private fun plainClient(configure: OkHttpClient.Builder.() -> Unit = {}): OkHttpClient =
+        OkHttpClient.Builder()
             .apply {
                 if (BuildConfig.DEBUG) {
                     addInterceptor(
@@ -130,11 +145,19 @@ object NetworkModule {
                     )
                 }
             }
+            .apply(configure)
             .build()
-        return Retrofit.Builder()
+
+    /**
+     * A Retrofit built on a plain [client] (defaults to [plainClient]) for services that pass an
+     * absolute `@Url` per call rather than relying on the region host rewrite.
+     */
+    private fun plainRetrofit(json: Json, client: OkHttpClient = plainClient()): Retrofit =
+        Retrofit.Builder()
             .baseUrl("https://localhost/")
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-    }
+
+    private const val OTP_TIMEOUT_SECONDS = 15L
 }

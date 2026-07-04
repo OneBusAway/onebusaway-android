@@ -87,24 +87,26 @@ object Backup {
         try {
             val importer = DatabaseEntryPoint.get(context).legacyDataImporter()
             if (isRoomBackup(backupFile)) {
-                restoreRoomBackup(importer, backupFile)
+                mergeBackup { importer.importRoomBackupFrom(backupFile) }
             } else {
                 // A legacy ContentProvider-format backup: merge only the 11 legacy tables into the
                 // current Room DB via the same importer used for the one-time migration.
-                runBlocking { importer.importFrom(backupFile) }
+                mergeBackup { importer.importFrom(backupFile) }
             }
         } finally {
             backupFile.delete()
         }
     }
 
-    private fun restoreRoomBackup(importer: LegacyDataImporter, backupFile: File) {
+    private fun mergeBackup(merge: suspend () -> Unit) {
         try {
-            runBlocking { importer.importRoomBackupFrom(backupFile) }
+            runBlocking { merge() }
         } catch (e: Exception) {
             // The merge is one transaction, so an incompatible backup — an unreadable file, or a schema/
             // FK mismatch surfacing mid-write — rolls back with the live database untouched. Nothing was
             // swapped and the AppDatabase was never closed, so there is nothing to roll back on disk.
+            // Wrapping as IOException lets BackupUtils.doRestore() show the restore-error toast instead
+            // of crashing on an unchecked exception.
             throw IOException("Restored backup is not a compatible database", e)
         }
     }

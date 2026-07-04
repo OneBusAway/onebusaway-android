@@ -77,4 +77,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun routeHeadsignFavoriteDao(): RouteHeadsignFavoriteDao
     abstract fun regionDao(): RegionDao
     abstract fun navStopDao(): NavStopDao
+
+    companion object {
+        /** The Room database filename (also the backup target). */
+        const val DATABASE_NAME = "app_database"
+    }
 }

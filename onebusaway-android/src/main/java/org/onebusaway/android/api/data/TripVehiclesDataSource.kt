@@ -68,7 +68,7 @@ internal fun ObaEnvelope<EntryWithReferences<TripDetailsEntry>>.asRouteTrips(): 
  * The wire-fetch seam for the speed-estimation/vehicle layer: each OBA call the trip data layer
  * needs, adapting the wire response to the model types (so the extrapolation fetcher never touches a
  * DTO). These do the fetch+adapt only; a non-OK code / transport failure maps to [Result.failure]
- * (consistent with the other io.client data sources). The caller (`DefaultTripObservationFetcher`)
+ * (consistent with the other api data sources). The caller (`DefaultTripObservationFetcher`)
  * owns the null-on-failure + de-duplication policy.
  */
 interface TripVehiclesDataSource {

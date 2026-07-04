@@ -43,7 +43,7 @@ data class RouteMap(
 
 /**
  * Loads a route's stops + shapes (one-shot, stops-for-route with polylines) for the route/stop
- * overlays, via the io.client [MapDataSource]. Turns the source's [android.location.Location] shape
+ * overlays, via the api [MapDataSource]. Turns the source's [android.location.Location] shape
  * points into the render [GeoPoint]s the overlay consumes, and — when the caller passes a
  * `directionStopId` — narrows the stops to that stop's direction. (Route-mode real-time vehicles are
  * polled via the trip-observation repository's `routeVehiclesStream`.)

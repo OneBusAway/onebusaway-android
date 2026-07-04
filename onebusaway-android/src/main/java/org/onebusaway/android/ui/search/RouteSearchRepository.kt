@@ -44,7 +44,7 @@ interface RouteSearchRepository {
 }
 
 /**
- * Default implementation over the io.client [LocationSearchDataSource]: queries around the user's
+ * Default implementation over the api [LocationSearchDataSource]: queries around the user's
  * location first and falls back to a wide-radius search around the region's default center when that
  * returns nothing usable (the legacy route-search behavior). [context] is still needed for the
  * in-memory location lookups; [search] is constructor-injected (resolved at the Compose call site)

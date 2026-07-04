@@ -103,7 +103,7 @@ abstract class RepositoryModule {
     @Binds
     abstract fun bindAgenciesDataSource(impl: DefaultAgenciesDataSource): AgenciesDataSource
 
-    // Modernized Retrofit/kotlinx.serialization route-details fetcher (io/client). Stateless, so
+    // Modernized Retrofit/kotlinx.serialization route-details fetcher (api/). Stateless, so
     // unscoped like the other per-call fetchers.
     @Binds
     abstract fun bindRouteDataSource(impl: DefaultRouteDataSource): RouteDataSource

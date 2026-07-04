@@ -32,7 +32,7 @@ data class RouteDisplayNames(val shortName: String, val longName: String?)
 fun routeDisplayNames(route: ObaRoute): RouteDisplayNames =
     routeDisplayNames(route.shortName, route.longName, route.description)
 
-/** Field-based overload, for callers (e.g. the modernized io/client DTOs) without an [ObaRoute]. */
+/** Field-based overload, for callers (e.g. the modernized api/ DTOs) without an [ObaRoute]. */
 fun routeDisplayNames(
     shortName: String?,
     longName: String?,
@@ -60,7 +60,7 @@ fun getRouteDisplayName(route: ObaRoute): String {
 fun getRouteDescription(route: ObaRoute): String? =
     getRouteDescription(route.shortName, route.longName, route.description)
 
-/** Field-based overload, for callers (e.g. the modernized io/client DTOs) without an [ObaRoute]. */
+/** Field-based overload, for callers (e.g. the modernized api/ DTOs) without an [ObaRoute]. */
 fun getRouteDescription(shortName: String?, longName: String?, description: String?): String? {
     var resolvedShort = shortName
     var resolvedLong = longName

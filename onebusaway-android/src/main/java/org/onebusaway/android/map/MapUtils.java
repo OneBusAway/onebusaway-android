@@ -26,7 +26,7 @@ import org.onebusaway.android.util.ObaRequestErrors;
  */
 public class MapUtils {
 
-    /** Shows the map error toast for an OBA status [code] (used by the modernized io/client callers). */
+    /** Shows the map error toast for an OBA status [code] (used by the modernized api/ callers). */
     public static void showMapError(Context context, int code) {
         Toast.makeText(context,
                 ObaRequestErrors.getMapErrorString(context, code),

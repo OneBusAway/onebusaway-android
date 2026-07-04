@@ -25,7 +25,7 @@ import org.onebusaway.android.util.ArrivalInfoUtils
 /**
  * Builds the display [ArrivalInfo]s from [arrivals]: filters to [filter] routes (empty == all),
  * drops past arrivals unless the user opted in, and sorts by ETA. Callers feed it the [ArrivalData]
- * the io.client arrivals fetch ([org.onebusaway.android.api.StopArrivals.arrivals]) produces.
+ * the api arrivals fetch ([org.onebusaway.android.api.data.StopArrivals.arrivals]) produces.
  *
  * [isFavorite] resolves each arrival's route/headsign favorite state; the caller precomputes it from
  * one favorites query (the legacy per-row ContentProvider lookup is gone). Reminder lists that don't

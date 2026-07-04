@@ -50,7 +50,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -541,7 +540,6 @@ private fun Open311FormInline(
     onSubmittingChanged: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
-    val resources = LocalResources.current
     val scope = rememberCoroutineScope()
     val vm: Open311ProblemViewModel = viewModel(
         key = "open311:${target.category.code ?: target.category.name}",
@@ -607,7 +605,7 @@ private fun Open311FormInline(
             (target.category.raw as? Service)?.let { service ->
                 AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_OPEN311_SERVER_EVENT_URL,
-                    resources.getString(R.string.analytics_problem),
+                    context.getString(R.string.analytics_problem),
                     service.service_name,
                 )
             }

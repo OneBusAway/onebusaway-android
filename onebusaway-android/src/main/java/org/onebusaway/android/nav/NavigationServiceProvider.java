@@ -571,9 +571,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      * @return the notification to use for the foreground service if eventType == EVENT_TYPE_INITIAL_STARTUP, otherwise returns null
      */
     private Notification updateUi(int eventType) {
-        Context app = mContext;
         TripDetailsLauncher.Builder bldr = new TripDetailsLauncher.Builder(
-                app.getApplicationContext(), mTripId);
+                mContext, mTripId);
 
         bldr = bldr.setDestinationId(mStopId);
         Intent intent = bldr.getIntent();
@@ -586,11 +585,11 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             flags = FLAG_UPDATE_CURRENT;
         }
 
-        PendingIntent pIntent = getActivity(app.getApplicationContext(), 1, intent,
+        PendingIntent pIntent = getActivity(mContext, 1, intent,
                 flags);
 
         // Create deletion intent to stop repeated voice comands.
-        Intent receiverIntent = new Intent(app.getApplicationContext(), NavigationReceiver.class);
+        Intent receiverIntent = new Intent(mContext, NavigationReceiver.class);
         int cancelFlags;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             cancelFlags = FLAG_MUTABLE;
@@ -609,19 +608,19 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             // Build initial notification used to start the service in the foreground
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM, NavigationReceiver.CANCEL_TRIP);
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID);
-            PendingIntent pCancelIntent = getBroadcast(app.getApplicationContext(),
+            PendingIntent pCancelIntent = getBroadcast(mContext,
                     0, receiverIntent, cancelFlags);
             mBuilder.addAction(R.drawable.ic_navigation_close,
-                    app.getString(R.string.destination_reminder_cancel_trip), pCancelIntent);
+                    mContext.getString(R.string.destination_reminder_cancel_trip), pCancelIntent);
             mBuilder.setOngoing(true);
             return mBuilder.build();
         } else if (eventType == EVENT_TYPE_UPDATE_DISTANCE) {
             // Retrieve preferred unit and calculate distance.
-            String IMPERIAL = app.getString(R.string.preferences_preferred_units_option_imperial);
-            String METRIC = app.getString(R.string.preferences_preferred_units_option_metric);
-            String AUTOMATIC = app.getString(R.string.preferences_preferred_units_option_automatic);
+            String IMPERIAL = mContext.getString(R.string.preferences_preferred_units_option_imperial);
+            String METRIC = mContext.getString(R.string.preferences_preferred_units_option_metric);
+            String AUTOMATIC = mContext.getString(R.string.preferences_preferred_units_option_automatic);
             String preferredUnits = PreferenceUtils
-                    .getString(app.getString(R.string.preference_key_preferred_units), AUTOMATIC);
+                    .getString(mContext.getString(R.string.preference_key_preferred_units), AUTOMATIC);
             double distance = mProxCalculator.endDistance;
             double miles = distance * RegionUtils.METERS_TO_MILES;  // Get miles.
             double kilometers = distance / 1000;                    // Get kilometers.
@@ -673,11 +672,11 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM, NavigationReceiver.CANCEL_TRIP);
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID);
-            PendingIntent pCancelIntent = getBroadcast(app.getApplicationContext(),
+            PendingIntent pCancelIntent = getBroadcast(mContext,
                     0, receiverIntent, cancelFlags);
 
             mBuilder.addAction(R.drawable.ic_navigation_close,
-                    app.getString(R.string.destination_reminder_cancel_trip), pCancelIntent);
+                    mContext.getString(R.string.destination_reminder_cancel_trip), pCancelIntent);
 
             mBuilder.setOngoing(true);
             NotificationManager mNotificationManager = (NotificationManager)
@@ -688,7 +687,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM,
                     NavigationReceiver.DISMISS_NOTIFICATION);
-            PendingIntent pDelIntent = getBroadcast(app.getApplicationContext(),
+            PendingIntent pDelIntent = getBroadcast(mContext,
                     0, receiverIntent, cancelFlags);
 
             String message = mContext.getString(R.string.destination_voice_get_ready);
@@ -714,7 +713,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM,
                     NavigationReceiver.DISMISS_NOTIFICATION);
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 2);
-            PendingIntent pDelIntent = getBroadcast(app.getApplicationContext(),
+            PendingIntent pDelIntent = getBroadcast(mContext,
                     0, receiverIntent, cancelFlags);
 
             String message = mContext.getString(R.string.destination_voice_request_stop);

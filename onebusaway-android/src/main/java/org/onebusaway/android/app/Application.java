@@ -139,7 +139,8 @@ public class Application extends android.app.Application {
     }
 
 
-    public static final String APP_LAUNCH_COUNT_KEY = "APP_LAUNCH_COUNT_KEY";
+    // Preserve the original preference-key value so persisted launch counts survive upgrades.
+    public static final String APP_LAUNCH_COUNT_KEY = "appLaunchCountPreferencesKey";
 
     private void incrementAppLaunchCount() {
         int count = PreferenceUtils.getInt(APP_LAUNCH_COUNT_KEY, 0);

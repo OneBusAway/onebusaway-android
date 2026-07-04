@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.map
 
-import android.content.Context
 import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -31,11 +30,9 @@ import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.time.WallTime
 import java.net.HttpURLConnection
-import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.RouteMapStop
-import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.RoutePolyline
@@ -63,7 +60,6 @@ import org.onebusaway.android.map.render.VehicleMarker
  * and selection.
  */
 class RouteMapController(
-    private val context: Context,
     private val host: MapHost,
     private val renderState: MapRenderState,
     private val routeRepository: RouteMapRepository,
@@ -248,14 +244,14 @@ class RouteMapController(
         // success path below narrows the filter and re-publishes.
         directionState = DirectionState.Resolved(null)
         val routeMap = result.getOrElse {
-            MapUtils.showMapError(context, (it as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION)
+            host.emitEffect(MapEffect.ShowError.from(it))
             publishVehicleSet()
             return
         }
         // A null result (no endpoint) or an unresolved route reads as an error, like the legacy
         // null-response path.
         val route = routeMap?.route ?: run {
-            MapUtils.showMapError(context, HttpURLConnection.HTTP_INTERNAL_ERROR)
+            host.emitEffect(MapEffect.ShowError(HttpURLConnection.HTTP_INTERNAL_ERROR))
             publishVehicleSet()
             return
         }

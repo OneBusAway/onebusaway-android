@@ -67,7 +67,6 @@ class StopsMapViewModel @Inject constructor(
     val camera: StateFlow<CameraSnapshot?> get() = mapHost.camera
 
     private val stopsController = StopsMapController(
-        context = context,
         host = mapHost,
         mapDataSource = mapDataSource,
         regionRepo = regionRepo,

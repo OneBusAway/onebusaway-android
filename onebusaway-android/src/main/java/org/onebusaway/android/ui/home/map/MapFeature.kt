@@ -73,6 +73,7 @@ import org.onebusaway.android.ui.home.HomeViewModel
 import org.onebusaway.android.ui.home.MapDirective
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
 import org.onebusaway.android.util.LayerUtils
+import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
 import org.opentripplanner.routing.bike_rental.BikeRentalStation
@@ -203,6 +204,9 @@ fun MapFeature(
                     permissionLauncher.launch(PermissionUtils.LOCATION_PERMISSIONS)
                 MapEffect.WaitingForLocation -> Toast.makeText(
                     context, R.string.main_waiting_for_location, Toast.LENGTH_SHORT
+                ).show()
+                is MapEffect.ShowError -> Toast.makeText(
+                    context, ObaRequestErrors.getMapErrorString(context, effect.code), Toast.LENGTH_LONG
                 ).show()
             }
         }

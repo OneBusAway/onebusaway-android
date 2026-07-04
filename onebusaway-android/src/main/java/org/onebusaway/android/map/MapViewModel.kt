@@ -124,7 +124,6 @@ class MapViewModel @Inject constructor(
     // renderState; the route loader feeds the route's own stops in via showStops. The route-header focus
     // bias is gated on this map being in route mode.
     private val stopsController = StopsMapController(
-        context = context,
         host = mapHost,
         mapDataSource = mapDataSource,
         regionRepo = regionRepo,
@@ -179,7 +178,6 @@ class MapViewModel @Inject constructor(
     // stops into stopsController so they accumulate + focus like nearby stops. (Explicit type so the
     // stopsController `routeActive` lambda above can resolve it without a circular inference.)
     private val routeController: RouteMapController = RouteMapController(
-        context = context,
         host = mapHost,
         renderState = mapHost.renderState,
         routeRepository = routeRepository,

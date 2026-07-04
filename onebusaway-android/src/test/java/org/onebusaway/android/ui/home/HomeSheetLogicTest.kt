@@ -38,35 +38,6 @@ class HomeSheetLogicTest {
         assertFalse(shouldShowSheet(null))
     }
 
-    // --- sheetReconcile (the parity-critical decision) ---
-
-    @Test
-    fun `when it should not show, the sheet hides from any resting state`() {
-        for (current in ArrivalsSheetState.entries) {
-            assertEquals(SheetReconcile.HIDE, sheetReconcile(shouldShow = false, current = current))
-        }
-    }
-
-    @Test
-    fun `when it should show, only a hidden sheet is peeked open`() {
-        assertEquals(
-            SheetReconcile.PEEK_OPEN,
-            sheetReconcile(shouldShow = true, current = ArrivalsSheetState.Hidden)
-        )
-    }
-
-    @Test
-    fun `when it should show, a peeking or full sheet keeps the user's position`() {
-        assertEquals(
-            SheetReconcile.LEAVE,
-            sheetReconcile(shouldShow = true, current = ArrivalsSheetState.Collapsed)
-        )
-        assertEquals(
-            SheetReconcile.LEAVE,
-            sheetReconcile(shouldShow = true, current = ArrivalsSheetState.Expanded)
-        )
-    }
-
     // --- toggleSheetTarget ---
 
     @Test

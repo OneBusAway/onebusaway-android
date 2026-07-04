@@ -85,22 +85,6 @@ class HomeViewModelTest {
     // pending-focus gate, so one shared fixture suffices.
     private val obaStop = ObaStopElement("1", 47.6, -122.3, "Main St", "100")
 
-    // --- one-shot sheet / drawer commands ---
-
-    @Test
-    fun `the chevron tap emits ToggleSheet`() = runTest {
-        val vm = viewModel()
-        val events = mutableListOf<SheetCommand>()
-        val job = launch { vm.sheetCommands.collect { events.add(it) } }
-        advanceUntilIdle()
-
-        vm.requestToggleSheet()
-        advanceUntilIdle()
-
-        assertEquals(listOf<SheetCommand>(SheetCommand.ToggleSheet), events)
-        job.cancel()
-    }
-
     // --- arrivals sheet settled -> map padding / recenter ---
 
     @Test

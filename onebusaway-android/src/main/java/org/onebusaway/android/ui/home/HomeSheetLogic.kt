@@ -21,33 +21,20 @@ package org.onebusaway.android.ui.home
  * from inside a `@Composable`) is unit-testable. [HomeScreen] does the Compose plumbing — keying the
  * effect, reading the live `SheetState`, animating — and defers every *decision* to these functions.
  *
- * The model: **visibility is business state** ([shouldShowSheet]) reconciled by [sheetReconcile];
- * **expansion is ephemeral UI** toggled by [toggleSheetTarget] and unwound by [sheetBackAction].
+ * The model: **visibility is business state** ([shouldShowSheet]); **expansion is ephemeral UI**
+ * toggled by [toggleSheetTarget] and unwound by [sheetBackAction].
  */
 
 /** The arrivals sheet's resting position, reported from the screen back to the activity and the state
- *  the reconcile/toggle/back decisions below operate on. */
+ *  the toggle/back decisions below operate on. */
 enum class ArrivalsSheetState { Hidden, Collapsed, Expanded }
 
 /** The sheet is shown (peeking or full) iff a stop is focused. (HOME is always the map now — the
- *  list screens are their own destinations — so a focused stop is the only condition.) */
+ *  list screens are their own destinations — so a focused stop is the only condition.) [HomeScreen]
+ *  translates this into an animated peek height (the sheet has no `Hidden` drag anchor). */
 internal fun shouldShowSheet(focusedStop: FocusedStop?): Boolean = focusedStop != null
 
-/** What [HomeScreen] does to the sheet when the focused stop / tab changes (not on a user drag). */
-enum class SheetReconcile { HIDE, PEEK_OPEN, LEAVE }
-
-/**
- * Reconcile the sheet toward its desired visibility. When it should show, only a *hidden* sheet is
- * peeked open — a peek/full sheet keeps the user's current position (mirrors the legacy
- * `showSlidingPanel()`, which only acted when the panel was hidden). When it shouldn't show, hide it.
- */
-internal fun sheetReconcile(shouldShow: Boolean, current: ArrivalsSheetState): SheetReconcile = when {
-    !shouldShow -> SheetReconcile.HIDE
-    current == ArrivalsSheetState.Hidden -> SheetReconcile.PEEK_OPEN
-    else -> SheetReconcile.LEAVE
-}
-
-/** The chevron toggle target: a full sheet collapses to peek; anything else expands to full. */
+/** The drag-handle toggle target: a full sheet collapses to peek; anything else expands to full. */
 internal fun toggleSheetTarget(current: ArrivalsSheetState): ArrivalsSheetState =
     if (current == ArrivalsSheetState.Expanded) ArrivalsSheetState.Collapsed else ArrivalsSheetState.Expanded
 

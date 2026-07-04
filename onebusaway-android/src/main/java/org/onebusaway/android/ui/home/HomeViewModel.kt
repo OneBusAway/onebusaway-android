@@ -203,9 +203,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Chevron tap — ask the screen to toggle the sheet (it holds the live SheetState). */
-    fun requestToggleSheet() = emit(SheetCommand.ToggleSheet)
-
     /**
      * The host has a restored / deep-linked focus the imperative map hasn't been told about yet;
      * complete it once the arrivals load (see [onArrivalsLoaded]). A fresh map tap already centers the
@@ -377,9 +374,6 @@ sealed interface HomeAnalyticsEvent {
  * [org.onebusaway.android.ui.home.chrome.HomeTopBar]'s hamburger, so it needs no command.)
  */
 sealed interface SheetCommand {
-    /** The arrivals-sheet chevron was tapped — toggle peek <-> full. */
-    object ToggleSheet : SheetCommand
-
     /** Collapse the sheet to its peek (e.g. after "show vehicles on map"). */
     object CollapseSheet : SheetCommand
 }

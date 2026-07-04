@@ -19,6 +19,7 @@ package org.onebusaway.android.ui.compose
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -59,12 +60,21 @@ class SheetExpandProgress internal constructor(
      * drags.
      */
     val fraction: () -> Float = {
-        val peekAnchor = containerHeightPx - peekHeightPx()
-        val offset = runCatching { sheetState.requireOffset() }.getOrNull()
-        if (peekAnchor <= 0f || offset == null) {
+        // While the sheet is animating to its peek (a collapse settle), report 0 rather than the live
+        // offset. The settle uses a slightly under-damped spring that overshoots a few px above the peek
+        // anchor as it comes to rest; that would make this briefly positive and flash the below-peek
+        // content in for a frame. During a drag (not animating) or a settle toward Expanded, the live
+        // offset is used, so the reveal still tracks the drag in lockstep.
+        if (sheetState.isAnimationRunning && sheetState.targetValue == SheetValue.PartiallyExpanded) {
             0f
         } else {
-            ((peekAnchor - offset) / peekAnchor).coerceIn(0f, 1f)
+            val peekAnchor = containerHeightPx - peekHeightPx()
+            val offset = runCatching { sheetState.requireOffset() }.getOrNull()
+            if (peekAnchor <= 0f || offset == null) {
+                0f
+            } else {
+                ((peekAnchor - offset) / peekAnchor).coerceIn(0f, 1f)
+            }
         }
     }
 }

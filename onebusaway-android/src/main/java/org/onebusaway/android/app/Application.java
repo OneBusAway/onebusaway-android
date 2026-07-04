@@ -24,7 +24,6 @@ import android.util.Log;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
-import org.onebusaway.android.donations.DonationsManager;
 import org.onebusaway.android.notifications.NotificationChannels;
 import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 import org.onebusaway.android.api.ObaApi;
@@ -56,8 +55,6 @@ public class Application extends android.app.Application {
 
     // Region preference (long id)
     private static final String TAG = "Application";
-
-    private DonationsManager mDonationsManager;
 
     private static Application mApp;
 
@@ -97,8 +94,6 @@ public class Application extends android.app.Application {
         incrementAppLaunchCount();
 
         FirebaseMessagingEntryPoint.get(this).fetchAndStoreToken();
-
-        mDonationsManager = new DonationsManager(getApplicationContext(), getResources(), getAppLaunchCount());
     }
 
     /**
@@ -118,8 +113,6 @@ public class Application extends android.app.Application {
     public static Application get() {
         return mApp;
     }
-
-    public static DonationsManager getDonationsManager() { return get().mDonationsManager; }
 
 
     // Preserve the original preference-key value so persisted launch counts survive upgrades.

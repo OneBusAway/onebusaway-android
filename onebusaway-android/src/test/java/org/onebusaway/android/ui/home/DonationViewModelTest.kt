@@ -41,8 +41,8 @@ class DonationViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     // These tests cover only the dialog/effect logic, which never calls the DonationsManager, so a
-    // bare instance (its Android collaborators are never touched) is enough to satisfy the constructor.
-    private fun donationViewModel() = DonationViewModel(DonationsManager(null, null, 0))
+    // bare instance (its collaborators are captured but never dereferenced) satisfies the constructor.
+    private fun donationViewModel() = DonationViewModel(DonationsManager(null, null))
 
     @Test
     fun `close requests the dismiss confirmation, cancel clears it`() = runTest {

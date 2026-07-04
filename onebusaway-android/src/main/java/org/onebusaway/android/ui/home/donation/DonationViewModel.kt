@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.home.donation
 
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -74,6 +75,9 @@ class DonationViewModel @Inject constructor(
         manager.dismissDonationRequests()
         _effects.tryEmit(DonationEffect.OpenDonatePage)
     }
+
+    /** The donations-page intent for the [DonationEffect.OpenDonatePage] handler to start. */
+    fun buildDonationsPageIntent(): Intent = manager.buildOpenDonationsPageIntent()
 
     /** "I don't want to help" — stop asking, hide the dialog, and re-gate the card. */
     fun dismissForever() {

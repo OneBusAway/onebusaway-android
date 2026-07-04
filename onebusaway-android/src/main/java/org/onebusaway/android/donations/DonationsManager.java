@@ -3,34 +3,42 @@ package org.onebusaway.android.donations;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 import org.onebusaway.android.analytics.PlausibleAnalytics;
+import org.onebusaway.android.preferences.PreferencesRepository;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.net.Uri;
 
 import java.util.Date;
 
-public class DonationsManager {
-    private Resources mResources;
-    private int mAppLaunchCount;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
-    // Application context, kept only to resolve the AnalyticsProvider (for the region-derived Plausible
-    // emitter) lazily at event time. Resolving it lazily — rather than injecting AnalyticsProvider into
-    // this constructor — matters because DonationsManager is built eagerly in Application.onCreate, and
-    // AnalyticsProvider pulls in the RegionRepository, which is deliberately constructed lazily
-    // post-onCreate to avoid the region-init ordering hazard.
+import dagger.hilt.android.qualifiers.ApplicationContext;
+
+@Singleton
+public class DonationsManager {
+
+    // Application context, used at event time to (a) read Resources for event labels / the donate URL and
+    // (b) lazily resolve the AnalyticsProvider (for the region-derived Plausible emitter). Resolving the
+    // AnalyticsProvider lazily — rather than injecting it into this constructor — keeps the constructor off
+    // the region graph: AnalyticsProvider pulls in the RegionRepository, which is deliberately constructed
+    // lazily to avoid the region-init ordering hazard.
     private final Context mContext;
 
+    private final PreferencesRepository mPreferences;
+
+    // The constructor only captures its collaborators — no dereferencing — so a bare instance can back
+    // the JVM unit tests of consumers whose exercised paths never touch the manager. Resources and the
+    // launch count are read lazily at their use sites.
+    @Inject
     public DonationsManager(
-            Context context,
-            Resources resources,
-            int appLaunchCount) {
+            @ApplicationContext Context context,
+            PreferencesRepository preferences) {
         this.mContext = context;
-        this.mResources = resources;
-        this.mAppLaunchCount = appLaunchCount;
+        this.mPreferences = preferences;
     }
 
     // region Analytics
@@ -41,7 +49,7 @@ public class DonationsManager {
      * @param state the state or variant of the UI item, or null if the item doesn't have a state or variant
      */
     private void reportUIEvent(Integer resourceID, String state) {
-        AnalyticsEntryPoint.get(mContext).reportUiEvent(PlausibleAnalytics.REPORT_DONATE_EVENT_URL, mResources.getString(resourceID), state);
+        AnalyticsEntryPoint.get(mContext).reportUiEvent(PlausibleAnalytics.REPORT_DONATE_EVENT_URL, mContext.getResources().getString(resourceID), state);
     }
 
     // endregion
@@ -131,7 +139,7 @@ public class DonationsManager {
         }
 
         // Don't show the donations UI on the first few launches of the app.
-        if (mAppLaunchCount < 3) {
+        if (mPreferences.getAppLaunchCount() < 3) {
             return false;
         }
 
@@ -151,7 +159,7 @@ public class DonationsManager {
 
     public Intent buildOpenDonationsPageIntent() {
         reportUIEvent(R.string.analytics_label_button_press_donate, null);
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(mResources.getString(R.string.donate_url)));
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(mContext.getResources().getString(R.string.donate_url)));
         return intent;
     }
 

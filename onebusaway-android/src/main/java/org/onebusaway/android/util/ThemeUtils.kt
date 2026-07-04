@@ -20,7 +20,6 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
 
 /**
  * Applies the user's selected app theme to the AppCompat night-mode delegate.
@@ -28,21 +27,20 @@ import org.onebusaway.android.app.Application
 object ThemeUtils {
 
     @JvmStatic
-    fun setAppTheme(themeValue: String) {
-        val app = Application.get()
+    fun setAppTheme(context: Context, themeValue: String) {
         val mode = when {
             themeValue.equals(
-                app.getString(R.string.preferences_app_theme_option_system_default),
+                context.getString(R.string.preferences_app_theme_option_system_default),
                 ignoreCase = true
             ) -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
 
             themeValue.equals(
-                app.getString(R.string.preferences_app_theme_option_dark),
+                context.getString(R.string.preferences_app_theme_option_dark),
                 ignoreCase = true
             ) -> AppCompatDelegate.MODE_NIGHT_YES
 
             themeValue.equals(
-                app.getString(R.string.preferences_app_theme_option_light),
+                context.getString(R.string.preferences_app_theme_option_light),
                 ignoreCase = true
             ) -> AppCompatDelegate.MODE_NIGHT_NO
 

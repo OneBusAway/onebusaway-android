@@ -65,7 +65,7 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
             onBack = { navController.popBackStack() },
             onSort = {
                 host.chooseSortOrder(
-                    PreferenceUtils.getStopSortOrderFromPreferences(), R.array.sort_stops
+                    PreferenceUtils.getStopSortOrderFromPreferences(host), R.array.sort_stops
                 ) { vm.setSort(it) }
             },
             onClear = {
@@ -97,7 +97,7 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
             onBack = { navController.popBackStack() },
             onSort = {
                 host.chooseSortOrder(
-                    PreferenceUtils.getStopSortOrderFromPreferences(), R.array.sort_stops
+                    PreferenceUtils.getStopSortOrderFromPreferences(host), R.array.sort_stops
                 ) { vm.setSort(it) }
             },
             onClear = {

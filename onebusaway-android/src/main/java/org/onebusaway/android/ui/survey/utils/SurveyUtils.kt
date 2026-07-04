@@ -4,7 +4,6 @@ import android.util.Log
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import org.onebusaway.android.app.Application
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.Survey
 import org.onebusaway.android.models.SurveyQuestion
@@ -258,12 +257,24 @@ object SurveyUtils {
         return 0
     }
 
+    /**
+     * Decides whether the map survey may be shown. Stays a pure, JVM-testable object: the caller
+     * resolves the two bits of Application-lifecycle state and passes them in, rather than this helper
+     * reaching `Application.get()` (see #1642).
+     *
+     * @param appLaunchCount    number of app launches so far (the injected `APP_LAUNCH_COUNT_KEY` pref).
+     * @param donationUiShowing whether the donation UI is currently eligible to show — resolved by the
+     *                          caller from the injected `DonationsManager`; the survey defers to it on
+     *                          the map so the two don't compete.
+     */
     fun shouldShowSurveyView(
         surveyPreferences: SurveyPreferences,
+        appLaunchCount: Int,
+        donationUiShowing: Boolean,
         isVisibleOnStops: Boolean,
     ): Boolean {
         // User will receive a survey every `surveyLaunchCount` app launches
-        if (Application.get().appLaunchCount % launchesUntilSurveyShown != 0) return false
+        if (appLaunchCount % launchesUntilSurveyShown != 0) return false
 
         // Don't show the UI if there's a reminder date that is still in the future.
         val reminderDate = getSurveyRequestReminderDate(surveyPreferences)
@@ -275,7 +286,7 @@ object SurveyUtils {
         if (!isVisibleOnStops) {
             // If the donation UI is visible, do not show the survey on the map
             // Otherwise, show the survey on the map
-            return !Application.getDonationsManager().shouldShowDonationUI()
+            return !donationUiShowing
         }
 
         return true

@@ -25,6 +25,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import org.onebusaway.android.app.di.AppScope
+import org.onebusaway.android.donations.DonationsManager
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -90,6 +91,7 @@ class SurveyViewModel @Inject constructor(
     private val surveyPreferences: SurveyPreferences,
     private val surveyRepo: SurveyDataSource,
     private val surveyStore: SurveyRepository,
+    private val donationsManager: DonationsManager,
     @AppScope private val appScope: CoroutineScope,
 ) : ViewModel() {
 
@@ -130,7 +132,13 @@ class SurveyViewModel @Inject constructor(
         if (regionRepository.region.value == null) return
         val studiesEnabled = prefs.getBoolean(R.string.preference_key_show_available_studies, true)
         if (!studiesEnabled ||
-            !SurveyUtils.shouldShowSurveyView(surveyPreferences, false)) return
+            !SurveyUtils.shouldShowSurveyView(
+                surveyPreferences,
+                prefs.getAppLaunchCount(),
+                donationsManager.shouldShowDonationUI(),
+                isVisibleOnStops = false,
+            )
+        ) return
         requested = true
         val url = studyUrl() ?: return
         viewModelScope.launch {

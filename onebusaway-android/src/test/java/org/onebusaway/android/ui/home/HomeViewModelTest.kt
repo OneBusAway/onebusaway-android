@@ -90,14 +90,14 @@ class HomeViewModelTest {
     @Test
     fun `the initial sheet reveal from hidden emits no map effects`() = runTest {
         val vm = viewModel()
-        val events = mutableListOf<SheetCommand>()
-        val job = launch { vm.sheetCommands.collect { events.add(it) } }
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
         advanceUntilIdle()
 
         vm.onSheetSettled(ArrivalsSheetState.Collapsed, 120) // previous == Hidden -> skip
         advanceUntilIdle()
 
-        assertTrue(events.isEmpty())
+        assertTrue(map.sent.isEmpty())
         assertEquals(ArrivalsSheetState.Collapsed, vm.lastSettledSheet)
         job.cancel()
     }
@@ -246,21 +246,19 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `show route on map collapses the sheet and shows the route`() = runTest {
+    fun `show route on map shows the route`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
-        val events = mutableListOf<SheetCommand>()
-        val eventJob = launch { vm.sheetCommands.collect { events.add(it) } }
         advanceUntilIdle()
 
         vm.requestShowRouteOnMap(ShowRouteRequest("42"))
         advanceUntilIdle()
 
-        assertEquals(listOf<SheetCommand>(SheetCommand.CollapseSheet), events)
+        // The sheet collapse is now a declarative UI reaction to route mode (routeHeader != null),
+        // not a VM command — so this covers only the route directive.
         assertEquals(listOf("42"), map.routesShown)
         mapJob.cancel()
-        eventJob.cancel()
     }
 
     @Test

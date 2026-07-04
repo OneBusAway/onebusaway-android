@@ -62,7 +62,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
@@ -160,8 +159,8 @@ class HomeActivityActions(
  * fights a user drag. The sheet has no `Hidden` drag anchor (`skipHiddenState = true`), so peek is the
  * hard floor of the drag; show/hide is instead an animated peek height (0 <-> real peek) that slides
  * the whole sheet in and out. **Expansion (peek<->full)** is the live `SheetState`, toggled by the drag
- * handle and nudged by the one-shot [SheetCommand.CollapseSheet] command (the screen alone knows the
- * live state), plus [BackHandler]. The arrivals panel is hosted directly per focused stop (see [ArrivalsSheetHost]);
+ * handle and collapsed as a declarative reaction to route mode activating (`routeHeader != null`;
+ * the screen alone knows the live state), plus [BackHandler]. The arrivals panel is hosted directly per focused stop (see [ArrivalsSheetHost]);
  * the map ([MapFeature]), the route-mode header ([RouteHeaderOverlay]), and the survey ([org.onebusaway.android.ui.survey.SurveyOverlay])
  * are all composables now — no map-related `AndroidView` / View seam remains.
  */
@@ -169,7 +168,6 @@ class HomeActivityActions(
 @Composable
 fun HomeScreen(
     state: HomeUiState,
-    sheetCommands: SharedFlow<SheetCommand>,
     // The map is a self-wiring [MapFeature]; it composes only while HOME is the current destination, so
     // SDK init is already lazy. The route-mode header and survey are Compose overlays over it.
     homeViewModel: HomeViewModel,
@@ -211,8 +209,8 @@ fun HomeScreen(
 
         // Tapping the drag handle toggles the live sheet between peek and full (a full sheet collapses
         // to peek, anything else expands). This lives next to the SheetState now — the header used to
-        // trigger it via a VM round-trip (SheetCommand.ToggleSheet), needed only because the header was
-        // in a different composable tree; the handle is right here, so it toggles directly.
+        // trigger it via a VM round-trip, needed only because the header was in a different composable
+        // tree; the handle is right here, so it toggles directly.
         val toggleSheet: () -> Unit = remember {
             {
                 scope.launch {
@@ -303,13 +301,12 @@ fun HomeScreen(
             }
         }
 
-        // One-shot sheet commands from the ViewModel (the screen holds the live SheetState).
-        LaunchedEffect(Unit) {
-            sheetCommands.collect { command ->
-                when (command) {
-                    SheetCommand.CollapseSheet -> runCatching { sheetState.partialExpand() }
-                }
-            }
+        // Collapse the sheet to peek when the map enters route mode ("show vehicles on map"). A
+        // declarative reaction to route-mode state rather than a VM command — the screen holds the live
+        // SheetState, and route mode surfaces here as `routeHeader != null`.
+        val routeModeActive = routeHeader != null
+        LaunchedEffect(routeModeActive) {
+            if (routeModeActive) runCatching { sheetState.partialExpand() }
         }
 
         // The "Found X region" snackbar (replaces the legacy toast): a one-shot VM event, shown once per

@@ -31,7 +31,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
-import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -44,7 +43,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.apache.commons.io.FileUtils
 import org.onebusaway.android.R
-import org.onebusaway.android.analytics.AnalyticsProvider
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
@@ -84,7 +82,7 @@ class NavigationService : Service() {
     @Inject lateinit var navStopDao: NavStopDao
     @Inject lateinit var stopDao: StopDao
     @Inject lateinit var importGate: ImportGate
-    @Inject lateinit var analyticsProvider: AnalyticsProvider
+    @Inject lateinit var obaAnalytics: ObaAnalytics
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var navJob: Job? = null
@@ -102,11 +100,8 @@ class NavigationService : Service() {
 
     private var finishedTime: Long = 0
 
-    private lateinit var firebaseAnalytics: FirebaseAnalytics
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "Starting Service")
-        firebaseAnalytics = FirebaseAnalytics.getInstance(this)
         val currentTime = System.currentTimeMillis()
         // The nav-stop read/write is now Room-backed (suspend), so the setup runs on the service scope
         // after the one-time import gate. Dispatchers.Main.immediate keeps startForeground on the main
@@ -247,8 +242,7 @@ class NavigationService : Service() {
             if (finishedTime == 0L) {
                 finishedTime = System.currentTimeMillis()
             } else if (System.currentTimeMillis() - finishedTime >= 30000) {
-                ObaAnalytics.reportUiEvent(
-                    firebaseAnalytics, analyticsProvider.plausible,
+                obaAnalytics.reportUiEvent(
                     PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL,
                     getString(R.string.analytics_label_destination_reminder),
                     getString(R.string.analytics_label_destination_reminder_variant_ended)

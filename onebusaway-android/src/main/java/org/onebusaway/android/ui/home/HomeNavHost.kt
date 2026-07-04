@@ -43,7 +43,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
@@ -284,10 +283,7 @@ internal fun AccessibilityAnalyticsEffect() {
     val context = LocalContext.current
     LifecycleEventEffect(Lifecycle.Event.ON_START) {
         val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-        ObaAnalytics.setAccessibility(
-            FirebaseAnalytics.getInstance(context),
-            am.isTouchExplorationEnabled,
-        )
+        AnalyticsEntryPoint.get(context).setAccessibility(am.isTouchExplorationEnabled)
     }
 }
 
@@ -302,14 +298,13 @@ internal fun HomeAnalyticsEffect(analyticsEvents: SharedFlow<HomeAnalyticsEvent>
     val resources = LocalResources.current
     LaunchedEffect(analyticsEvents) {
         analyticsEvents.collect { event ->
-            val firebase = FirebaseAnalytics.getInstance(context)
-            val plausible = AnalyticsEntryPoint.get(context).plausible
+            val analytics = AnalyticsEntryPoint.get(context)
             when (event) {
                 is HomeAnalyticsEvent.RegionSelected ->
-                    ObaAnalytics.setRegion(firebase, event.regionName)
+                    analytics.setRegion(event.regionName)
                 is HomeAnalyticsEvent.MenuItem ->
-                    ObaAnalytics.reportUiEvent(
-                        firebase, plausible, PlausibleAnalytics.REPORT_MENU_EVENT_URL,
+                    analytics.reportUiEvent(
+                        PlausibleAnalytics.REPORT_MENU_EVENT_URL,
                         resources.getString(event.labelRes), null,
                     )
             }

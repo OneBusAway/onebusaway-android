@@ -16,14 +16,12 @@
 package org.onebusaway.android.ui.regions
 
 import android.content.Context
-import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
-import org.onebusaway.android.analytics.AnalyticsProvider
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.Region
@@ -78,7 +76,7 @@ class DefaultRegionsRepository @Inject constructor(
     private val regionRepository: RegionRepository,
     private val regionCache: RegionCache,
     private val locationRepository: LocationRepository,
-    private val analyticsProvider: AnalyticsProvider,
+    private val obaAnalytics: ObaAnalytics,
 ) : RegionsRepository {
 
     // Domain objects from the last successful load, so selectRegion(id) can resolve the Region
@@ -127,9 +125,7 @@ class DefaultRegionsRepository @Inject constructor(
             prefs.setBoolean(R.string.preference_key_auto_select_region, false)
         }
 
-        ObaAnalytics.reportUiEvent(
-            FirebaseAnalytics.getInstance(context),
-            analyticsProvider.plausible,
+        obaAnalytics.reportUiEvent(
             PlausibleAnalytics.REPORT_REGION_EVENT_URL,
             context.getString(R.string.region_selected_manually),
             region.name

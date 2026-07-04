@@ -19,7 +19,6 @@ import android.content.Context
 import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -65,6 +64,7 @@ class SettingsViewModel @Inject constructor(
     private val regionRepository: RegionRepository,
     private val serviceAlertDao: ServiceAlertDao,
     private val importGate: ImportGate,
+    private val obaAnalytics: ObaAnalytics,
 ) : ViewModel() {
 
     private val env = SettingsEnvironment(
@@ -72,8 +72,6 @@ class SettingsViewModel @Inject constructor(
         sdkInt = Build.VERSION.SDK_INT,
         isObaFlavor = BuildFlavorUtils.isOBABuildFlavor(),
     )
-
-    private val firebaseAnalytics: FirebaseAnalytics by lazy { FirebaseAnalytics.getInstance(context) }
 
     val state: StateFlow<SettingsUiState> =
         combine(prefs.observeChanges(), regionRepository.region) { _, region -> compute(region) }
@@ -138,7 +136,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onShowNegativeArrivalsChanged(value: Boolean) {
         prefs.setBoolean(R.string.preference_key_show_negative_arrivals, value)
-        ObaAnalytics.setShowDepartedVehicles(firebaseAnalytics, value)
+        obaAnalytics.setShowDepartedVehicles(value)
     }
 
     fun onHideAlertsChanged(value: Boolean) {
@@ -168,7 +166,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onLeftHandModeChanged(value: Boolean) {
         prefs.setBoolean(R.string.preference_key_left_hand_mode, value)
-        ObaAnalytics.setLeftHanded(firebaseAnalytics, value)
+        obaAnalytics.setLeftHanded(value)
     }
 
     fun onShowHeaderArrivalsChanged(value: Boolean) =
@@ -182,7 +180,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onAnalyticsChanged(value: Boolean) {
         prefs.setBoolean(R.string.preferences_key_analytics, value)
-        ObaAnalytics.setSendAnonymousData(firebaseAnalytics, value)
+        obaAnalytics.setSendAnonymousData(value)
     }
 
     fun onShareDestinationLogsChanged(value: Boolean) =

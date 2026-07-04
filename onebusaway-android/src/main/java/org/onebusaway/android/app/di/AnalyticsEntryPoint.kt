@@ -20,30 +20,29 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import org.onebusaway.android.analytics.AnalyticsProvider
+import org.onebusaway.android.analytics.ObaAnalytics
 
 /**
- * A Hilt [EntryPoint] that lets code which can't be constructor- or field-injected — the static
- * `ObaAnalytics` orchestrator, static Java utilities, composable helpers without a ViewModel — reach
- * the [AnalyticsProvider] seam (and thus the current region's Plausible/Umami emitters) instead of
- * `Application.get().getPlausibleInstance()` / `getUmamiInstance()`. It needs a [Context] only to
- * resolve the singleton graph; the returned provider is the same app-singleton every injected consumer
- * shares.
+ * A Hilt [EntryPoint] that lets code which can't be constructor- or field-injected — static Java
+ * utilities, composable helpers without a ViewModel — reach the injected [ObaAnalytics] orchestrator.
+ * It needs a [Context] only to resolve the singleton graph; the returned orchestrator is the same
+ * app-singleton every injected consumer shares (and holds the Firebase + Plausible/Umami emitters, so
+ * callers no longer thread those in).
  *
  * Use it only where injection genuinely isn't available — Hilt-reachable classes (Activities,
- * Fragments, Services, ViewModels, Workers) should inject [AnalyticsProvider] directly.
+ * Fragments, Services, ViewModels, Workers) should inject [ObaAnalytics] directly.
  */
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface AnalyticsEntryPoint {
 
-    fun analyticsProvider(): AnalyticsProvider
+    fun obaAnalytics(): ObaAnalytics
 
     companion object {
-        /** Resolves the [AnalyticsProvider] from any [context] (its application is used). */
+        /** Resolves the [ObaAnalytics] orchestrator from any [context] (its application is used). */
         @JvmStatic
-        fun get(context: Context): AnalyticsProvider =
+        fun get(context: Context): ObaAnalytics =
             EntryPointAccessors.fromApplication(context, AnalyticsEntryPoint::class.java)
-                .analyticsProvider()
+                .obaAnalytics()
     }
 }

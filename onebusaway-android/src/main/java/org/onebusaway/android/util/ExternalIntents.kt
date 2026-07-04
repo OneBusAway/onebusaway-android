@@ -29,13 +29,11 @@ import android.text.TextUtils
 import android.widget.Toast
 
 import com.google.android.gms.common.GoogleApiAvailability
-import com.google.firebase.analytics.FirebaseAnalytics
 
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
-import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.Region
 
@@ -288,9 +286,7 @@ object ExternalIntents {
             // Launch installed app
             intent.addCategory(Intent.CATEGORY_LAUNCHER)
             activity.startActivity(intent)
-            ObaAnalytics.reportUiEvent(
-                FirebaseAnalytics.getInstance(activity),
-                AnalyticsEntryPoint.get(activity).plausible,
+            AnalyticsEntryPoint.get(activity).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                 Application.get().getString(R.string.analytics_label_button_fare_payment),
                 Application.get().getString(R.string.analytics_label_open_app)
@@ -300,9 +296,7 @@ object ExternalIntents {
             intent = Intent(Intent.ACTION_VIEW)
             intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, paymentAndroidAppId)))
             activity.startActivity(intent)
-            ObaAnalytics.reportUiEvent(
-                FirebaseAnalytics.getInstance(activity),
-                AnalyticsEntryPoint.get(activity).plausible,
+            AnalyticsEntryPoint.get(activity).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                 Application.get().getString(R.string.analytics_label_button_fare_payment),
                 Application.get().getString(R.string.analytics_label_download_app)
@@ -323,9 +317,7 @@ object ExternalIntents {
             // Launch installed app
             intent.addCategory(Intent.CATEGORY_LAUNCHER)
             context.startActivity(intent)
-            ObaAnalytics.reportUiEvent(
-                FirebaseAnalytics.getInstance(context),
-                AnalyticsEntryPoint.get(context).plausible,
+            AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                 Application.get().getString(R.string.analytics_label_button_bike_share),
                 Application.get().getString(R.string.analytics_label_open_app)
@@ -335,9 +327,7 @@ object ExternalIntents {
             intent = Intent(Intent.ACTION_VIEW)
             intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, context.getString(R.string.hopr_android_app_id))))
             context.startActivity(intent)
-            ObaAnalytics.reportUiEvent(
-                FirebaseAnalytics.getInstance(context),
-                AnalyticsEntryPoint.get(context).plausible,
+            AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
                 Application.get().getString(R.string.analytics_label_button_bike_share),
                 Application.get().getString(R.string.analytics_label_download_app)

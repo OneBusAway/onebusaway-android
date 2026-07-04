@@ -145,7 +145,7 @@ public class RealtimeService extends IntentService {
      */
     boolean rescheduleRealtimeUpdates(Bundle bundle) {
         // Delay if this trip doesn't start for at least an hour
-        Date start = new TripRequestBuilder(bundle).getDateTime();
+        Date start = new TripRequestBuilder(this, bundle).getDateTime();
 
         if (start != null) {
             Date queryStart = new Date(start.getTime() - OTPConstants.REALTIME_SERVICE_QUERY_WINDOW);
@@ -175,7 +175,7 @@ public class RealtimeService extends IntentService {
     }
 
     private void checkForItineraryChange(final Bundle bundle) {
-        TripRequestBuilder builder = TripRequestBuilder.initFromBundleSimple(bundle);
+        TripRequestBuilder builder = TripRequestBuilder.initFromBundleSimple(this, bundle);
         ItineraryDescription desc = getItineraryDescription(bundle);
         Class target = getNotificationTarget(bundle);
         if (target == null) {
@@ -383,7 +383,7 @@ public class RealtimeService extends IntentService {
 
         Bundle extras = new Bundle();
         try {
-            new TripRequestBuilder(params).copyIntoBundleSimple(extras);
+            new TripRequestBuilder(this, params).copyIntoBundleSimple(extras);
         } catch (NullPointerException e) {
             Log.e(TAG, "getSimplifiedBundle: error copying trip params into bundle", e);
             return null;

@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.tripplan
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.ContactsContract
@@ -75,7 +76,6 @@ import java.util.Calendar
 import java.util.TimeZone
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
@@ -91,6 +91,7 @@ import org.onebusaway.android.ui.compose.components.SwitchRow
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.tripresults.TripResults
+import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.LocationUtils
 import org.onebusaway.android.util.PreferenceUtils
@@ -192,7 +193,7 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
     // fresh; read the restore extras off the host intent once. (A notification arriving while already
     // on this destination — singleTop, no recomposition — won't re-restore; acceptable rare edge.)
     LaunchedEffect(Unit) {
-        maybeRestoreFromIntent(viewModel, activity.intent)?.let { activity.setIntent(it) }
+        maybeRestoreFromIntent(viewModel, activity, activity.intent)?.let { activity.setIntent(it) }
     }
 
     var showAdvanced by remember { mutableStateOf(false) }
@@ -436,7 +437,7 @@ private fun AdvancedSettingsDialog(
             labels[i] to TripModes.getTripModeCodeFromSelection(typed.getResourceId(i, 0))
         }
         typed.recycle()
-        if (Application.isBikeshareEnabled()) {
+        if (BikeshareAvailability.isEnabled(activity)) {
             all
         } else {
             all.filter { it.second != TripModes.BIKESHARE && it.second != TripModes.TRANSIT_AND_BIKE }
@@ -593,14 +594,18 @@ private fun reportPlanAnalytics(
  * there was nothing to restore.
  */
 @Suppress("UNCHECKED_CAST", "DEPRECATION")
-private fun maybeRestoreFromIntent(viewModel: TripPlanViewModel, intent: Intent?): Intent? {
+private fun maybeRestoreFromIntent(
+    viewModel: TripPlanViewModel,
+    context: Context,
+    intent: Intent?,
+): Intent? {
     val extras = intent?.extras ?: return null
     if (extras.getSerializable(OTPConstants.INTENT_SOURCE) == null) return null
     val itineraries =
         (extras.getSerializable(OTPConstants.ITINERARIES) as? ArrayList<Itinerary>).orEmpty()
     if (itineraries.isEmpty()) return null
 
-    val builder = TripRequestBuilder.initFromBundleSimple(extras)
+    val builder = TripRequestBuilder.initFromBundleSimple(context, extras)
     viewModel.restoreFrom(
         from = builder.from?.toPlaceItem(),
         to = builder.to?.toPlaceItem(),

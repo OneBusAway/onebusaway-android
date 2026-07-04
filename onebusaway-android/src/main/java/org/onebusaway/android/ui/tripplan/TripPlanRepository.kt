@@ -57,7 +57,7 @@ class DefaultTripPlanRepository @Inject constructor(
     override suspend fun plan(params: TripPlanParams): Result<List<Itinerary>> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val builder = TripRequestBuilder(Bundle()).apply {
+                val builder = TripRequestBuilder(context, Bundle()).apply {
                     setFrom(params.from.toCustomAddress())
                     setTo(params.to.toCustomAddress())
                     val calendar = Calendar.getInstance().apply { timeInMillis = params.dateTimeMillis }

@@ -70,6 +70,7 @@ class DirectionsMapViewModel @Inject constructor(
         host = mapHost,
         bikeStationsRepository = bikeStationsRepository,
         prefsRepository = prefsRepository,
+        regionRepository = regionRepo,
         scope = viewModelScope,
     )
 

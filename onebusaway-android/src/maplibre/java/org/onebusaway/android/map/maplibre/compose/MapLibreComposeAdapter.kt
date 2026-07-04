@@ -167,6 +167,13 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                     renderState.tripStops.map { },
                 ).collect { activeRenderer.renderStatic() }
             }
+            // The vehicle set (which vehicles exist + their icons): reconcile the markers whenever it's
+            // pushed — a poll, a direction switch, or leaving route mode (null). Discrete, so it's reactive
+            // (not inferred from the per-frame motion loop below), which is what makes a direction switch
+            // take effect immediately instead of waiting for the next poll.
+            LaunchedEffect(activeRenderer) {
+                renderState.vehicleSet.collect { activeRenderer.reconcileVehicles(it) }
+            }
             // Dynamic layer (the live vehicles + the trip-focus band/markers): while either sampler is
             // installed, pull a fresh frame each display frame and update the annotations in place.
             // withFrameNanos paces us to the display refresh and idles when nothing's drawing.

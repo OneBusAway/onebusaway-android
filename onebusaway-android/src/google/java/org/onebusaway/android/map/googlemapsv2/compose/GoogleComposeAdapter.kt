@@ -183,6 +183,13 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                     renderState.tripStops.map { },
                 ).collect { activeRenderer.renderStatic() }
             }
+            // The vehicle set (which vehicles exist + their icons): reconcile the markers whenever it's
+            // pushed — a poll, a direction switch, or leaving route mode (null). Discrete, so it's reactive
+            // (not inferred from the per-frame motion loop below), which is what makes a direction switch
+            // take effect immediately instead of waiting for the next poll.
+            LaunchedEffect(activeRenderer) {
+                renderState.vehicleSet.collect { activeRenderer.reconcileVehicles(it) }
+            }
             // Each fresh vehicle poll re-renders an open info window from the now-current live state, so a
             // shown bubble reflects the latest data instead of a tap-time snapshot.
             LaunchedEffect(activeRenderer, activeInfoWindows) {

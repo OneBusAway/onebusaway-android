@@ -21,7 +21,7 @@ import org.onebusaway.android.models.ObaSituation
 
 /**
  * Utility methods related to situations (service alerts). Aggregation of a response's situations
- * lives in `io.client.StopArrivals.situations`; this is the model-level active-window check.
+ * lives in `api.StopArrivals.situations`; this is the model-level active-window check.
  */
 object SituationUtils {
 

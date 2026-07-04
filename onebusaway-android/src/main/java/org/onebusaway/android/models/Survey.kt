@@ -16,7 +16,7 @@
 package org.onebusaway.android.models
 
 /**
- * A survey ("study") from the sidecar studies API, decoupled from the wire DTO (io.client adapts the
+ * A survey ("study") from the sidecar studies API, decoupled from the wire DTO (api adapts the
  * wire `StudyResponse` into these). The UI's in-progress answers live on [SurveyQuestion].
  */
 data class Survey(

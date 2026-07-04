@@ -30,7 +30,7 @@ import org.onebusaway.android.models.SurveySubmitResult
  * [SubmitSurveyResponse] to the [Survey] / [SurveySubmitResult] model so the survey feature never
  * sees the DTOs. The caller passes the fully-resolved sidecar URL (built from the region) + the
  * JSON-encoded answer body, exactly as the web service expects. A transport/decode failure maps to
- * [Result.failure] (consistent with the other io.client data sources).
+ * [Result.failure] (consistent with the other api data sources).
  */
 interface SurveyDataSource {
 

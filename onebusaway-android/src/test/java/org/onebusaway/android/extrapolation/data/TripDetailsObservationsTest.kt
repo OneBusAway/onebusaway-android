@@ -28,7 +28,7 @@ import java.io.File
 
 /**
  * Ports the trip-details cases of the retired instrumented AdaptersTest onto the modernized DTO path:
- * decodes the same trip-details fixtures into the io/client envelope, adapts via the single-entry
+ * decodes the same trip-details fixtures into the api/ envelope, adapts via the single-entry
  * [asRouteTrips] and distills [toObservations] — one observation for an active vehicle, none when the
  * response has no status or no active trip. JVM-only ([toObservations] reads no Android types).
  */

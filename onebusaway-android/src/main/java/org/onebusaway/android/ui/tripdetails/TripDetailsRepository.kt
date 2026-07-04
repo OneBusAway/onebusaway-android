@@ -89,7 +89,7 @@ interface TripDetailsRepository {
 data class DestinationReminderStops(val beforeStopId: String, val destinationStopId: String)
 
 /**
- * Default implementation over the io.client [TripDetailsDataSource]. Ports TripDetailsListFragment's
+ * Default implementation over the api [TripDetailsDataSource]. Ports TripDetailsListFragment's
  * binding (header status/deviation, per-stop time + color, passed/vehicle markers, scroll target),
  * falling back to the last good response on failure. Stays on [Dispatchers.IO] for the blocking
  * provider write in [destinationStops]; all Android statics (resources, time formatting, color

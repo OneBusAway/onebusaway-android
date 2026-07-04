@@ -141,10 +141,13 @@ data class MapRenderSnapshot(
 )
 
 /**
- * The route-mode vehicle layer: the markers and the [response] their icons/info-windows derive from.
- * Produced on demand by a [FrameSampler]: the renderer pulls a fresh frame (re-extrapolated to the
- * frame's clock) each display frame, so the per-frame motion lives in the UI's frame loop rather than a
- * ~20×/second push. The selected vehicle is tracked separately (see [MapRenderState.selectedVehicleTripId]).
+ * The route-mode vehicle **set**: which vehicles exist and the [response] their icons/info-windows
+ * derive from. This is discrete state — it changes only at events (a new poll, a direction switch,
+ * leaving route mode), so it's *pushed* (see [MapRenderState.vehicleSet]) and the renderer reconciles
+ * markers from each emission. Per-frame *motion* is a separate concern (see
+ * [MapRenderState.vehiclesSampler]); the [markers] here carry only a seed position for a freshly-added
+ * marker, which the motion sampler immediately supersedes. The selected vehicle is tracked separately
+ * (see [MapRenderState.selectedVehicleTripId]).
  */
 data class MapVehicles(
     val markers: List<VehicleMarker> = emptyList(),
@@ -237,12 +240,27 @@ class MapRenderState {
         _snapshot.update { it.copy(genericMarkers = it.genericMarkers - id) }
     }
 
-    // --- Vehicles (the old VehicleOverlay): the renderer pulls a live marker frame from this sampler ---
-    // --- each display frame (re-extrapolated to the frame's clock), so per-frame motion lives in the ---
-    // --- UI's frame loop, not a ~20Hz push. Null => not in route mode (the renderer draws nothing). ---
+    // --- Vehicles (the old VehicleOverlay). The layer is split by change-rate so the renderer never has ---
+    // --- to *infer* a discrete change from a per-frame value: ---
+    // ---   • the SET (which vehicles + their icons/response) is discrete, so it's pushed here and the ---
+    // ---     renderer reconciles markers on each emission (a poll, a direction switch, or leaving mode); ---
+    // ---   • MOTION (each vehicle's position) is continuous, so it stays a per-frame [vehiclesSampler] ---
+    // ---     the renderer pulls to move the already-reconciled markers. ---
+    // --- Both null => not in route mode (the renderer draws nothing). ---
+
+    private val _vehicleSet = MutableStateFlow<MapVehicles?>(null)
+
+    /** The current vehicle set; the renderer reconciles its markers whenever this emits. */
+    val vehicleSet: StateFlow<MapVehicles?> = _vehicleSet.asStateFlow()
+
+    /** Publish the vehicle set (on a poll / direction switch), or null on leaving route mode. */
+    fun setVehicleSet(set: MapVehicles?) {
+        _vehicleSet.value = set
+    }
 
     private val _vehiclesSampler = MutableStateFlow<FrameSampler<MapVehicles>?>(null)
 
+    /** Per-frame motion for the current set: the renderer pulls a frame to move markers in place. */
     val vehiclesSampler: StateFlow<FrameSampler<MapVehicles>?> = _vehiclesSampler.asStateFlow()
 
     fun setVehiclesSampler(sampler: FrameSampler<MapVehicles>?) {

@@ -79,7 +79,7 @@ sealed interface SurveyEffect {
 /**
  * Drives the map survey: requesting the study, showing the hero question + remaining-questions sheet,
  * submitting answers, and persisting completion/skip/remind-later. The network/JSON/DB/filtering
- * logic is reused from the io.client [SurveyDataSource] + `SurveyUtils`/[SurveyRepository]. Scoped to
+ * logic is reused from the api [SurveyDataSource] + `SurveyUtils`/[SurveyRepository]. Scoped to
  * the map (the old `isVisibleOnStops = false` path).
  */
 @HiltViewModel

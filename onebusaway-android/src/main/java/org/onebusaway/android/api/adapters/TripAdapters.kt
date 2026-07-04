@@ -30,7 +30,7 @@ import org.onebusaway.android.models.Status
 import org.onebusaway.android.util.LocationUtils
 
 /*
- * Adapters that present the io/client trip DTOs as the `models` domain interfaces
+ * Adapters that present the api/ trip DTOs as the `models` domain interfaces
  * (ObaTripStatus/ObaTrip/ObaTripDetails), so the speed-estimation/vehicle-render code — which works
  * through those interfaces — consumes the modernized fetch unchanged. The same
  * one-DTO-implements-the-interface pattern the map boundary uses for stops/routes.
@@ -86,7 +86,7 @@ internal class DtoTripDetails(private val entry: TripDetailsEntry) : ObaTripDeta
     override val schedule: ObaTripSchedule? get() = entry.schedule?.toObaTripSchedule()
 }
 
-/** Maps the io/client [TripSchedule] DTO to the [ObaTripSchedule] model (consumed by schedule replay). */
+/** Maps the api/ [TripSchedule] DTO to the [ObaTripSchedule] model (consumed by schedule replay). */
 fun TripSchedule.toObaTripSchedule(): ObaTripSchedule {
     val times: List<ObaTripSchedule.StopTime> = stopTimes.map {
         StopTimeData(

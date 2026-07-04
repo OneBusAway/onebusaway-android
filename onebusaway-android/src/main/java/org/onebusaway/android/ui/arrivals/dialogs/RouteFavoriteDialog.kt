@@ -30,7 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
-import org.onebusaway.android.ui.arrivals.RadioOptionList
+import org.onebusaway.android.ui.compose.components.RadioOptionList
 
 // Selections need to match strings.xml "route_favorite_options"
 private const val SELECTION_THIS_STOP = 0

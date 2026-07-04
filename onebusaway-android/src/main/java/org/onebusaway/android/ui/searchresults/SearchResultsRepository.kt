@@ -28,9 +28,9 @@ import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.provider.StopUserInfo
-import org.onebusaway.android.provider.stopDisplayName
-import org.onebusaway.android.provider.toStopUserInfoMap
+import org.onebusaway.android.database.oba.StopUserInfo
+import org.onebusaway.android.database.oba.stopDisplayName
+import org.onebusaway.android.database.oba.toStopUserInfoMap
 import org.onebusaway.android.util.LocationUtils
 import org.onebusaway.android.util.routeDisplayNames
 
@@ -41,7 +41,7 @@ interface SearchResultsRepository {
 }
 
 /**
- * Default implementation over the io.client [LocationSearchDataSource]. Runs the routes-for-location
+ * Default implementation over the api [LocationSearchDataSource]. Runs the routes-for-location
  * and stops-for-location requests in parallel (matching the legacy screen's single combined loader)
  * and merges them routes-first. All Android statics are quarantined here so [SearchResultsViewModel]
  * stays JVM-testable.

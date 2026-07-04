@@ -17,7 +17,7 @@ package org.onebusaway.android.models
 
 /**
  * The schedule for a trip: the ordered stop times plus the neighboring trips in the block. The
- * concrete holder lives in `io.client`; the schedule-geometry logic lives in `extrapolation`.
+ * concrete holder lives in `api`; the schedule-geometry logic lives in `extrapolation`.
  */
 interface ObaTripSchedule {
 

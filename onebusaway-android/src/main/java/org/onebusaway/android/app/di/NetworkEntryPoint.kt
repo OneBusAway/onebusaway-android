@@ -29,11 +29,11 @@ import org.onebusaway.android.api.contract.ReminderWebService
 
 /**
  * A Hilt [EntryPoint] that lets code which can't be constructor- or field-injected reach the shared
- * io/client services and data sources. It needs a [Context] only to resolve the singleton graph; the
+ * api/ services and data sources. It needs a [Context] only to resolve the singleton graph; the
  * returned instance is the same app-singleton every injected consumer shares.
  *
  * Seam rule for reaching the modernized REST client, in order of preference:
- * 1. **An io/client data source** (e.g. `RouteDataSource`) when a domain model is shared across
+ * 1. **An api/ data source** (e.g. `RouteDataSource`) when a domain model is shared across
  *    features or the consumer is another repository — depend on that, not on the web service.
  * 2. **Constructor injection** directly into Hilt-reachable consumers (most feature repositories,
  *    `@HiltViewModel`s, services).

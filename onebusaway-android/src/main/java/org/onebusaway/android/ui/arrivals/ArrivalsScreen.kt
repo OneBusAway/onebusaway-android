@@ -95,6 +95,7 @@ import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.ui.compose.components.LoadingContent
+import org.onebusaway.android.ui.compose.components.RadioOptionList
 
 /** Refresh interval matching the legacy ArrivalsListFragment (fixed 60s, not the server value). */
 private const val REFRESH_PERIOD_MS = 60_000L
@@ -350,30 +351,6 @@ private fun SortByDialog(
             TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
         }
     )
-}
-
-/** A single-choice radio list (one row per option), shared by the sort and route-favorite dialogs. */
-@Composable
-internal fun RadioOptionList(
-    options: Array<String>,
-    selectedIndex: Int,
-    onSelect: (Int) -> Unit
-) {
-    Column {
-        options.forEachIndexed { index, label ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onSelect(index) }
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(selected = index == selectedIndex, onClick = { onSelect(index) })
-                Spacer(Modifier.width(8.dp))
-                Text(label, style = MaterialTheme.typography.bodyLarge)
-            }
-        }
-    }
 }
 
 @Composable

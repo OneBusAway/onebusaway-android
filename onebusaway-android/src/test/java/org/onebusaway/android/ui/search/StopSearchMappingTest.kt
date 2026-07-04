@@ -22,7 +22,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.contract.StopReference
-import org.onebusaway.android.provider.StopUserInfo
+import org.onebusaway.android.database.oba.StopUserInfo
 
 /** Pure-logic coverage for [toStopSearchResult]: custom-name / favorite decoration and defaults. */
 class StopSearchMappingTest {

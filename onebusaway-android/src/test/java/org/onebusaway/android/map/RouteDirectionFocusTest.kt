@@ -21,7 +21,10 @@ import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.models.RouteMapStop
 
-/** [focusDirection] — the pure "narrow a route to the stop-relevant direction" repository helper. */
+/**
+ * [anchorDirectionId] (resolve the launch anchor stop → its direction) and [stopsForDirection]
+ * (narrow a route's stops to a direction) — the pure repository/controller direction helpers.
+ */
 class RouteDirectionFocusTest {
 
     private fun stop(id: String, vararg directions: Int) =
@@ -30,58 +33,61 @@ class RouteDirectionFocusTest {
     // Outbound (direction 0) serves a/b, inbound (direction 1) serves c/d.
     private val stops = listOf(stop("a", 0), stop("b", 0), stop("c", 1), stop("d", 1))
 
+    // ----- anchorDirectionId -----
+
     @Test
-    fun nullAnchorKeepsWholeRoute() {
-        val focus = stops.focusDirection(anchorStopId = null)
-        assertEquals(listOf("a", "b", "c", "d"), focus.stops.map { it.id })
-        assertNull(focus.directionId)
+    fun nullAnchorResolvesNoDirection() {
+        assertNull(stops.anchorDirectionId(anchorStopId = null))
     }
 
     @Test
-    fun anchorInOneDirectionFiltersStopsAndResolvesId() {
-        val focus = stops.focusDirection(anchorStopId = "c")
-        assertEquals(listOf("c", "d"), focus.stops.map { it.id })
-        assertEquals(1, focus.directionId)
+    fun anchorInOneDirectionResolvesItsId() {
+        assertEquals(1, stops.anchorDirectionId(anchorStopId = "c"))
+        assertEquals(0, stops.anchorDirectionId(anchorStopId = "a"))
+    }
+
+    @Test
+    fun ambiguousSharedAnchorResolvesNoDirection() {
+        // Anchoring on a stop that serves both directions is ambiguous -> whole route.
+        val withShared = stops + stop("s", 0, 1)
+        assertNull(withShared.anchorDirectionId(anchorStopId = "s"))
+    }
+
+    @Test
+    fun anchorNotAmongStopsResolvesNoDirection() {
+        assertNull(stops.anchorDirectionId(anchorStopId = "zzz"))
+    }
+
+    @Test
+    fun ungroupedAnchorResolvesNoDirection() {
+        // A stop with no direction membership (route without a numeric direction grouping) -> whole route.
+        val withUngrouped = stops + stop("u")
+        assertNull(withUngrouped.anchorDirectionId(anchorStopId = "u"))
+    }
+
+    // ----- stopsForDirection -----
+
+    @Test
+    fun nullDirectionKeepsWholeRoute() {
+        assertEquals(listOf("a", "b", "c", "d"), stops.stopsForDirection(null).map { it.id })
+    }
+
+    @Test
+    fun directionFiltersToItsStops() {
+        assertEquals(listOf("c", "d"), stops.stopsForDirection(1).map { it.id })
     }
 
     @Test
     fun filteredStopsPreserveSourceOrder() {
         // A source order of d before c must survive the filter to direction 1.
         val reordered = listOf(stop("d", 1), stop("c", 1), stop("a", 0))
-        assertEquals(listOf("d", "c"), reordered.focusDirection("c").stops.map { it.id })
+        assertEquals(listOf("d", "c"), reordered.stopsForDirection(1).map { it.id })
     }
 
     @Test
     fun sharedStopInTargetDirectionIsIncluded() {
-        // A stop serving both directions shows for the tapped one (not dropped).
+        // A stop serving both directions shows for the selected one (not dropped).
         val withShared = stops + stop("s", 0, 1)
-        val focus = withShared.focusDirection(anchorStopId = "a")
-        assertEquals(listOf("a", "b", "s"), focus.stops.map { it.id })
-        assertEquals(0, focus.directionId)
-    }
-
-    @Test
-    fun ambiguousSharedAnchorKeepsWholeRoute() {
-        // Anchoring on a stop that serves both directions is ambiguous -> whole route.
-        val withShared = stops + stop("s", 0, 1)
-        val focus = withShared.focusDirection(anchorStopId = "s")
-        assertEquals(5, focus.stops.size)
-        assertNull(focus.directionId)
-    }
-
-    @Test
-    fun anchorNotAmongStopsKeepsWholeRoute() {
-        val focus = stops.focusDirection(anchorStopId = "zzz")
-        assertEquals(4, focus.stops.size)
-        assertNull(focus.directionId)
-    }
-
-    @Test
-    fun ungroupedAnchorKeepsWholeRoute() {
-        // A stop with no direction membership (route without a numeric direction grouping) -> whole route.
-        val withUngrouped = stops + stop("u")
-        val focus = withUngrouped.focusDirection(anchorStopId = "u")
-        assertEquals(5, focus.stops.size)
-        assertNull(focus.directionId)
+        assertEquals(listOf("a", "b", "s"), withShared.stopsForDirection(0).map { it.id })
     }
 }

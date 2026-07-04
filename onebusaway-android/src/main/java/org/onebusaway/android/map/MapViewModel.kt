@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.stateIn
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.models.ObaTripStatus
@@ -48,13 +49,16 @@ import org.onebusaway.android.util.getRouteDisplayName
 /**
  * The route-mode header content (the old `R.id.route_info` overlay): the route's short/long name +
  * agency, or a loading state while the route loads. Published while a route is shown and rendered
- * as a Compose overlay by the home screen. Null when not in route mode.
+ * as a Compose overlay by the home screen. Null when not in route mode. [directions] +
+ * [currentDirectionId] drive the header's switch-direction affordance (empty/size-1 = no switch).
  */
 data class RouteHeader(
     val loading: Boolean,
     val shortName: String,
     val longName: String,
     val agency: String,
+    val directions: List<RouteMapDirection> = emptyList(),
+    val currentDirectionId: Int? = null,
 )
 
 /**
@@ -214,6 +218,8 @@ class MapViewModel @Inject constructor(
             shortName = MyTextUtils.formatDisplayText(getRouteDisplayName(route))!!,
             longName = MyTextUtils.formatDisplayText(getRouteDescription(route))!!,
             agency = agencyName ?: "",
+            directions = directions,
+            currentDirectionId = currentDirectionId,
         )
     }
 
@@ -237,21 +243,32 @@ class MapViewModel @Inject constructor(
      * restore). Callers ([toRoute] and the restore in `init`) only ever pass a route different from the
      * current one — re-selecting the active route is handled (re-framed) by [toRoute].
      */
-    private fun enterRoute(routeId: String, zoomToRoute: Boolean, directionStopId: String?) {
+    private fun enterRoute(
+        routeId: String,
+        zoomToRoute: Boolean,
+        directionStopId: String?,
+        initialDirectionId: Int? = null,
+    ) {
         leaveCurrentView()
-        persistRoute(routeId, directionStopId)
-        routeController.start(routeId, zoomToRoute, directionStopId)
+        persistRoute(routeId, directionStopId, initialDirectionId)
+        routeController.start(routeId, zoomToRoute, directionStopId, initialDirectionId)
         bikeController.start(directions = false, selectedBikeStationIds = null)
     }
 
     // Persist which route (if any) to restore across process death — null means nearby stops. This is
     // the whole "which view" state (the route controller is the single live source of truth), so there's
     // no separate mode to save. [directionStopId] rides along so a restored route keeps its direction
-    // filter. The transient trip-focus view deliberately doesn't touch this, so a back-press restores
-    // the prior view.
-    private fun persistRoute(routeId: String?, directionStopId: String? = null) {
+    // filter; [initialDirectionId] persists a later user switch (null on a fresh entry, clearing any
+    // prior route's saved direction). The transient trip-focus view deliberately doesn't touch this, so
+    // a back-press restores the prior view.
+    private fun persistRoute(
+        routeId: String?,
+        directionStopId: String? = null,
+        initialDirectionId: Int? = null,
+    ) {
         savedStateHandle[MapParams.ROUTE_ID] = routeId
         savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID] = directionStopId
+        savedStateHandle[MapParams.ROUTE_DIRECTION_ID] = initialDirectionId
     }
 
     /**
@@ -331,6 +348,19 @@ class MapViewModel @Inject constructor(
 
     /** Leave route mode back to nearby stops, preserving the current camera (the route header's cancel). */
     fun exitRouteMode() = showNearbyStops()
+
+    /**
+     * Switch the shown route to another of its directions (one of the header's [RouteHeader.directions]
+     * ids) via the header's swap affordance. Re-filters the stops + vehicles in place (no reload /
+     * reframe). On a real switch, persists the choice and retires the launch anchor
+     * ([MapParams.ROUTE_DIRECTION_STOP_ID]) so a process-death restore honors this explicit selection
+     * rather than re-resolving the anchor stop.
+     */
+    fun selectRouteDirection(directionId: Int) {
+        if (!routeController.selectDirection(directionId)) return
+        savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID] = null
+        savedStateHandle[MapParams.ROUTE_DIRECTION_ID] = directionId
+    }
 
     // ----- Trip-focus mode (the speed-estimation trip map) -----
 
@@ -419,6 +449,8 @@ class MapViewModel @Inject constructor(
                 restoreRouteId,
                 zoomToRoute = savedStateHandle[MapParams.ZOOM_TO_ROUTE] ?: false,
                 directionStopId = savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID],
+                // A user-selected direction persisted before process death wins over the anchor stop.
+                initialDirectionId = savedStateHandle[MapParams.ROUTE_DIRECTION_ID],
             )
         } else {
             showNearbyStops()

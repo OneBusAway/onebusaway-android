@@ -15,9 +15,13 @@
  */
 package org.onebusaway.android.models
 
+import org.onebusaway.android.time.ServerTime
+
 /**
  * The arrival fields the display model (`ArrivalInfo`) computes from, abstracted from the wire type.
- * io.client adapts the arrivals fetch into these (`DtoArrivalData`); times are epoch millis.
+ * api adapts the arrivals fetch into these (`DtoArrivalData`). The arrival/departure instants
+ * are server-clock [ServerTime] (#1620) so the ETA subtraction against a server "now" can't be mixed
+ * with a device clock; `serviceDate` stays a raw Long service-day identifier.
  */
 interface ArrivalData {
     val routeId: String
@@ -30,10 +34,10 @@ interface ArrivalData {
     val serviceDate: Long
     val vehicleId: String?
     val predicted: Boolean
-    val scheduledArrivalTime: Long
-    val predictedArrivalTime: Long
-    val scheduledDepartureTime: Long
-    val predictedDepartureTime: Long
+    val scheduledArrivalTime: ServerTime
+    val predictedArrivalTime: ServerTime
+    val scheduledDepartureTime: ServerTime
+    val predictedDepartureTime: ServerTime
     val status: Status?
     val frequency: FrequencyWindow?
     val historicalOccupancy: Occupancy?
@@ -45,5 +49,5 @@ interface ArrivalData {
     val lastKnownLon: Double?
 }
 
-/** Headway-based (exact_times=0) service window; epoch millis / seconds, matching the wire. */
-data class FrequencyWindow(val startTime: Long, val endTime: Long, val headway: Long)
+/** Headway-based (exact_times=0) service window; server-clock bounds, [headway] in seconds. */
+data class FrequencyWindow(val startTime: ServerTime, val endTime: ServerTime, val headway: Long)

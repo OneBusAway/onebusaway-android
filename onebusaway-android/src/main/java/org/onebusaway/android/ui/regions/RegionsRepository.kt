@@ -16,19 +16,18 @@
 package org.onebusaway.android.ui.regions
 
 import android.content.Context
-import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.region.RegionCache
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.RegionUtils
 
@@ -75,7 +74,9 @@ class DefaultRegionsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: PreferencesRepository,
     private val regionRepository: RegionRepository,
+    private val regionCache: RegionCache,
     private val locationRepository: LocationRepository,
+    private val obaAnalytics: ObaAnalytics,
 ) : RegionsRepository {
 
     // Domain objects from the last successful load, so selectRegion(id) can resolve the Region
@@ -86,15 +87,15 @@ class DefaultRegionsRepository @Inject constructor(
 
     override suspend fun getRegions(refresh: Boolean): Result<List<RegionItem>> =
         withContext(Dispatchers.IO) {
-            val regions = RegionUtils.getRegions(context, refresh)
+            val regions = regionCache.loadRegions(refresh)
                 ?: return@withContext Result.failure(
                     IOException("Regions could not be loaded from any source")
                 )
-            val usable = regions.filter { RegionUtils.isRegionUsable(it) }
+            val usable = regions.filter { RegionUtils.isRegionUsable(context, it) }
             regionsById = usable.associateBy { it.id }
 
             val location = locationRepository.lastKnownLocation()
-            val currentRegionId = Application.get().currentRegion?.id
+            val currentRegionId = regionRepository.currentRegion()?.id
             val items = usable.map { region ->
                 RegionItem(
                     id = region.id,
@@ -124,9 +125,7 @@ class DefaultRegionsRepository @Inject constructor(
             prefs.setBoolean(R.string.preference_key_auto_select_region, false)
         }
 
-        ObaAnalytics.reportUiEvent(
-            FirebaseAnalytics.getInstance(context),
-            Application.get().plausibleInstance,
+        obaAnalytics.reportUiEvent(
             PlausibleAnalytics.REPORT_REGION_EVENT_URL,
             context.getString(R.string.region_selected_manually),
             region.name

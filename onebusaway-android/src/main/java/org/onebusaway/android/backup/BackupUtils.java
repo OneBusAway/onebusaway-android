@@ -25,11 +25,9 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.analytics.ObaAnalytics;
+import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 import org.onebusaway.android.analytics.PlausibleAnalytics;
 
 import java.io.IOException;
@@ -69,13 +67,13 @@ public class BackupUtils {
      */
     static private void doRestore(Context activityContext, Uri uri, Runnable onRestored) {
         final Context context = activityContext.getApplicationContext();
-        ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
-                // TODO(D4): plausible is region-mutable; inject a Provider
-                Application.get().getPlausibleInstance(),
+        AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_BACKUP_EVENT_URL,
                 context.getString(R.string.analytics_label_button_press_restore_preference),
                 null);
         try {
+            // Both backup formats are merged into the live database in place, so the object graph stays
+            // valid and no process restart is needed.
             Backup.restore(context, uri);
             Toast.makeText(context,
                     context.getString(R.string.preferences_db_restored,
@@ -102,17 +100,11 @@ public class BackupUtils {
      */
     public static void save(Context activityContext,Uri uri) {
         Context context = activityContext.getApplicationContext();
-        ObaAnalytics.reportUiEvent(FirebaseAnalytics.getInstance(activityContext),
-                // TODO(D4): plausible is region-mutable; inject a Provider
-                Application.get().getPlausibleInstance(),
+        AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_BACKUP_EVENT_URL,
                 context.getString(R.string.analytics_label_button_press_save_preference),
                 null);
-        try {
-            Backup.backup(context,uri);
-        } catch (IOException e) {
-            Log.d(TAG, Objects.requireNonNull(e.getMessage()));
-        }
+        Backup.backup(context, uri);
     }
 
     /**

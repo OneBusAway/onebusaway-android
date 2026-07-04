@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.extrapolation.test
 
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.api.data.asRouteTrips
 
 import androidx.test.InstrumentationRegistry.getTargetContext
@@ -53,7 +54,7 @@ class ExtrapolatedVehiclesTest {
 
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
-    // Decode the same fixture through the io/client DTO path the production fetch now uses.
+    // Decode the same fixture through the api/ DTO path the production fetch now uses.
     private fun response(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
         Resources.read(getTargetContext(), Resources.getTestUri("trips_for_route_extrapolation"))
             .use { json.decodeFromString(it.readText()) }
@@ -62,14 +63,14 @@ class ExtrapolatedVehiclesTest {
     fun skipsCanceledMissingRefAndPositionlessVehiclesWithoutCrashing() {
         // route_1 + route_2 requested: only trip_A and trip_B survive; the canceled, ref-less, and
         // positionless trips are dropped rather than throwing.
-        val vehicles = extrapolatedVehicles(response().asRouteTrips(),setOf("route_1", "route_2"), nowMs = 1_000_000L, noState)
+        val vehicles = extrapolatedVehicles(response().asRouteTrips(),setOf("route_1", "route_2"), nowMs = WallTime(1_000_000L), lookupState = noState)
 
         assertEquals(listOf("trip_A", "trip_B"), vehicles.map { it.status.activeTripId })
     }
 
     @Test
     fun placesVehicleAtLastKnownLocationAndReportsFixTimeWhenNoState() {
-        val vehicles = extrapolatedVehicles(response().asRouteTrips(),setOf("route_1"), nowMs = 1_000_000L, noState)
+        val vehicles = extrapolatedVehicles(response().asRouteTrips(),setOf("route_1"), nowMs = WallTime(1_000_000L), lookupState = noState)
 
         assertEquals(1, vehicles.size)
         val vehicle = vehicles[0]
@@ -85,7 +86,7 @@ class ExtrapolatedVehiclesTest {
 
     @Test
     fun fallsBackToPositionWhenNoLastKnownLocation() {
-        val vehicles = extrapolatedVehicles(response().asRouteTrips(),setOf("route_2"), nowMs = 1_000_000L, noState)
+        val vehicles = extrapolatedVehicles(response().asRouteTrips(),setOf("route_2"), nowMs = WallTime(1_000_000L), lookupState = noState)
 
         assertEquals(1, vehicles.size)
         val vehicle = vehicles[0]
@@ -97,9 +98,40 @@ class ExtrapolatedVehiclesTest {
     @Test
     fun filtersToRequestedRoutesOnly() {
         // route_3 serves none of the trips.
-        assertTrue(extrapolatedVehicles(response().asRouteTrips(),setOf("route_3"), nowMs = 1_000_000L, noState).isEmpty())
+        assertTrue(extrapolatedVehicles(response().asRouteTrips(),setOf("route_3"), nowMs = WallTime(1_000_000L), lookupState = noState).isEmpty())
         // Empty request -> nothing.
-        assertTrue(extrapolatedVehicles(response().asRouteTrips(),emptySet(), nowMs = 1_000_000L, noState).isEmpty())
+        assertTrue(extrapolatedVehicles(response().asRouteTrips(),emptySet(), nowMs = WallTime(1_000_000L), lookupState = noState).isEmpty())
+    }
+
+    // A trips-for-route response with two vehicles on route_1 heading opposite directions (GTFS
+    // directionId 0 vs 1) — the "show vehicles on map" direction filter's fixture.
+    private fun directionResponse(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
+        Resources.read(getTargetContext(), Resources.getTestUri("trips_for_route_direction_filter"))
+            .use { json.decodeFromString(it.readText()) }
+
+    @Test
+    fun keepsOnlyTheRequestedDirectionWhenDirectionIdGiven() {
+        val trips = directionResponse().asRouteTrips()
+        // directionId 0 -> only the outbound vehicle.
+        assertEquals(
+            listOf("trip_out"),
+            extrapolatedVehicles(trips, setOf("route_1"), nowMs = WallTime(1_000_000L), directionId = 0, lookupState = noState)
+                .map { it.status.activeTripId }
+        )
+        // directionId 1 -> only the inbound vehicle (the opposite-direction bus the old view showed).
+        assertEquals(
+            listOf("trip_in"),
+            extrapolatedVehicles(trips, setOf("route_1"), nowMs = WallTime(1_000_000L), directionId = 1, lookupState = noState)
+                .map { it.status.activeTripId }
+        )
+    }
+
+    @Test
+    fun keepsBothDirectionsWhenDirectionIdNull() {
+        val vehicles = extrapolatedVehicles(
+            directionResponse().asRouteTrips(), setOf("route_1"), nowMs = WallTime(1_000_000L), lookupState = noState
+        )
+        assertEquals(listOf("trip_out", "trip_in"), vehicles.map { it.status.activeTripId })
     }
 
     @Test
@@ -107,10 +139,10 @@ class ExtrapolatedVehiclesTest {
         // A shapeless state still anchors fixTimeMs (so the renderer sees a stable fix instant); the
         // point falls back to the raw fix because there's no polyline to dead-reckon along.
         val anchored: (String?) -> TripState? = { tripId ->
-            if (tripId == "trip_A") TripState("trip_A", anchorLocalTimeMs = 999_000L) else null
+            if (tripId == "trip_A") TripState("trip_A", anchorLocalTimeMs = WallTime(999_000L)) else null
         }
 
-        val vehicle = extrapolatedVehicles(response().asRouteTrips(),setOf("route_1"), nowMs = 1_000_000L, anchored).single()
+        val vehicle = extrapolatedVehicles(response().asRouteTrips(),setOf("route_1"), nowMs = WallTime(1_000_000L), lookupState = anchored).single()
 
         assertEquals(999_000L, vehicle.fixTimeMs)
         assertEquals(47.20, vehicle.point.latitude, 1e-6)

@@ -21,10 +21,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.models.NearbyStops
@@ -35,6 +37,7 @@ import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.primaryRouteType
+import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.RegionUtils
 
@@ -58,13 +61,16 @@ class StopsMapController(
     private val locationRepository: LocationRepository,
     private val scope: CoroutineScope,
     private val routeActive: () -> Boolean = { false },
+    // The LRU cache size, read on each load so a change in advanced settings applies on the next pan.
+    private val cacheSize: () -> Int = { DEFAULT_STOP_CACHE_SIZE },
 ) {
 
     private val renderState get() = host.renderState
 
-    // Stop accumulation across pans (capped, keeping the focused stop) + the routes cache used to
-    // resolve a stop's icon route type and to report a stop's routes to focus listeners.
-    private val stopAccum = LinkedHashMap<String, StopMarker>()
+    // Stop accumulation across pans, as an access-ordered LRU (a re-seen stop bumps to most-recently-
+    // used; once over the configured [cacheSize] the least-recently-seen non-focused stops evict) + the
+    // routes cache used to resolve a stop's icon route type and to report a stop's routes to listeners.
+    private val stopAccum = LinkedHashMap<String, StopMarker>(16, 0.75f, true)
 
     private val cachedRoutes = HashMap<String, ObaRoute>()
 
@@ -73,6 +79,21 @@ class StopsMapController(
     private val routeTypeById = HashMap<String, Int>()
 
     private var loadJob: Job? = null
+
+    init {
+        // Derive the stop zoom band from the camera and publish it into the render snapshot, so a pure
+        // zoom (which changes no other snapshot field) re-fires the renderer to swap full icons ⇄ dots
+        // like any other snapshot change. Always-on (not tied to the viewport loader's start/stop), so
+        // it keeps updating in route mode where the loader is stopped. host.camera only emits on camera
+        // idle, and distinctUntilChanged collapses it to just the band crossings.
+        scope.launch {
+            host.camera
+                .filterNotNull()
+                .map { stopZoomBand(it.zoom.toFloat()) }
+                .distinctUntilChanged()
+                .collect { renderState.setStopBand(it) }
+        }
+    }
 
     /** (Re)start the viewport stop loader (the old StopMapController's camera watch). */
     fun start() {
@@ -103,7 +124,7 @@ class StopsMapController(
                 flow {
                     host.setProgress(true)
                     val result = mapDataSource
-                        .nearbyStops(snapshot.center.latitude, snapshot.center.longitude, snapshot.latSpan, snapshot.lonSpan)
+                        .nearbyStops(snapshot.center.latitude, snapshot.center.longitude, snapshot.latSpan, snapshot.lonSpan, cacheSize())
                     // Only a usable load updates the fulfillment gate: a success — OK stops, or a null
                     // no-op (e.g. no stops endpoint, which intentionally fulfills future same-center
                     // viewports). A failure (error code / transport) showed no stops, so leave the gate
@@ -124,12 +145,17 @@ class StopsMapController(
     }
 
     private fun onStopsLoaded(result: Result<NearbyStops?>) {
+        // Default the "more stops" banner off for this load; only a successful in-region result with
+        // limitExceeded turns it back on below. Clearing once up front means every early-out (error,
+        // null, out-of-range) leaves it cleared without having to remember to — the class of bug that
+        // previously left the banner stuck on after a truncated load was followed by a null one.
+        host.setMoreStopsAvailable(false)
         val nearby = result.getOrElse {
             host.emitEffect(MapEffect.ShowError.from(it))
             return
         }
         if (nearby == null) {
-            // No endpoint yet (or a null no-op); do nothing (#615).
+            // No endpoint yet (or a null no-op); no stops loaded, so do nothing (#615).
             return
         }
         if (nearby.outOfRange) {
@@ -160,10 +186,13 @@ class StopsMapController(
             }
         }
 
+        // More stops match the viewport than the API returned: prompt the user to zoom in.
+        host.setMoreStopsAvailable(nearby.limitExceeded)
         showStops(nearby.stops, nearby.routes)
     }
 
     private fun notifyOutOfRange() {
+        host.setMoreStopsAvailable(false)
         host.emitEffect(MapEffect.OutOfRange)
     }
 
@@ -210,11 +239,18 @@ class StopsMapController(
 
     fun showStops(stops: List<ObaStop>, routes: List<ObaRoute>) {
         cacheRoutes(routes)
-        capStopAccumulation(stopAccum, renderState.snapshot.value.focusedStopId, FUZZY_MAX_STOP_COUNT)
         for (stop in stops) {
-            if (!stopAccum.containsKey(stop.id)) {
-                stopAccum[stop.id] = toStopMarker(stop)
-            }
+            // getOrPut's get() on a hit bumps the entry to most-recently-used (access order) while
+            // keeping the same StopMarker instance, so a stationary re-poll of the same set yields an
+            // equal list the StateFlow conflates and the renderer never runs (reordering only breaks
+            // that equality when the accumulation holds more than the fetch; either way the renderer's
+            // reconcileStopMarkers keeps unchanged stops from blinking). A miss inserts a fresh marker.
+            stopAccum.getOrPut(stop.id) { toStopMarker(stop) }
+        }
+        // Route mode feeds the whole route's stops in one batch, so don't evict them against each
+        // other; the viewport loader (the only capped accumulator) is stopped while a route shows.
+        if (!routeActive()) {
+            trimStopCache(stopAccum, renderState.snapshot.value.focusedStopId, cacheSize())
         }
         renderState.setStops(ArrayList(stopAccum.values))
     }
@@ -267,6 +303,7 @@ class StopsMapController(
     companion object {
         private const val TAG = "StopsMapController"
 
-        private const val FUZZY_MAX_STOP_COUNT = 200
+        /** Default map stop LRU cache size; overridable via the advanced settings cache-size option. */
+        const val DEFAULT_STOP_CACHE_SIZE = 200
     }
 }

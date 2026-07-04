@@ -83,7 +83,7 @@ public class LocationHelper implements android.location.LocationListener {
      */
     public LocationHelper(Context context, int interval) {
         mContext = context;
-        mLocationManager = (LocationManager) Application.get().getBaseContext()
+        mLocationManager = (LocationManager) mContext
                 .getSystemService(Context.LOCATION_SERVICE);
         // Create the LocationRequest object with high accuracy and the requested update
         // interval, allowing updates as fast as every second

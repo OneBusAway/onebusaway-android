@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.map
 
+import org.onebusaway.android.time.WallTime
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
@@ -58,7 +59,7 @@ class VehicleIconAllocationTest {
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     // A real, busy trips-for-route snapshot (38 vehicles across many HART routes, with full route refs so
-    // icon type/color resolve) — the "busy route" the issue calls out. Decoded through the io/client DTO
+    // icon type/color resolve) — the "busy route" the issue calls out. Decoded through the api/ DTO
     // path the production fetch now uses, then adapted to the [RouteTrips] model.
     private fun response(): RouteTrips {
         val envelope: ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
@@ -73,7 +74,7 @@ class VehicleIconAllocationTest {
             .mapNotNull { it.status?.activeTripId }
             .mapNotNull { response.trip(it)?.routeId }
             .toSet()
-        return extrapolatedVehicles(response, routeIds, nowMs = 1_000_000L) { null }
+        return extrapolatedVehicles(response, routeIds, nowMs = WallTime(1_000_000L)) { null }
             .map { v ->
                 VehicleMarker(
                     activeTripId = v.status.activeTripId.orEmpty(),

@@ -17,21 +17,25 @@ package org.onebusaway.android.region
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
+import org.onebusaway.android.app.di.AppScope
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.preferences.PreferencesRepository
-import org.onebusaway.android.provider.ObaContract
 import org.onebusaway.android.util.RegionUtils
 
 /**
@@ -125,6 +129,8 @@ sealed interface RegionState {
 /** Mirrors `HomeActivity`'s `checkRegionVer` preference key so the same slot is read/written. */
 private const val CHECK_REGION_VER = "checkRegionVer"
 
+private const val TAG = "RegionRepository"
+
 /**
  * Default implementation. The observable state lives in a [RegionStateHolder] (so its transitions stay
  * JVM-testable); resolution ([refresh]) is the `Context`-coupled IO ported from
@@ -139,21 +145,33 @@ class DefaultRegionRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: PreferencesRepository,
     private val locationRepository: LocationRepository,
+    private val regionCache: RegionCache,
+    @AppScope private val appScope: CoroutineScope,
 ) : RegionRepository {
 
-    // Seeded from persistence (the region-id pref → ContentProvider lookup) so the repo is the sole
-    // owner of the current region — there is no external store to read from anymore.
-    private val holder = RegionStateHolder(loadPersistedRegion())
+    // Seeded null and then asynchronously from the region cache once the one-time import has run — the
+    // Room cache read is suspend and must wait on the importer, so the @Singleton constructor can't read
+    // it synchronously anymore. region.value is briefly null at cold start until the seed resolves; the
+    // region-derived subsystems collect the flow and re-init on emit, so they pick it up.
+    private val holder = RegionStateHolder(null)
+
+    init {
+        appScope.launch {
+            val seeded = loadPersistedRegion()
+            // Don't clobber a region a concurrent refresh() may have already set.
+            if (seeded != null && holder.region.value == null) holder.activated(seeded)
+        }
+    }
 
     override val region: StateFlow<Region?> get() = holder.region
 
     override val state: StateFlow<RegionState> get() = holder.state
 
-    /** Loads the persisted current region (by the saved region-id) on construction, or null if none. */
-    private fun loadPersistedRegion(): Region? {
+    /** Loads the persisted current region (by the saved region-id) from the cache, or null if none. */
+    private suspend fun loadPersistedRegion(): Region? {
         val id = prefs.getLong(R.string.preference_key_region, -1L)
         if (id < 0) return null
-        return ObaContract.Regions.get(context, id.toInt())
+        return regionCache.cachedRegion(id)
     }
 
     override fun applyRegion(region: Region?, regionChanged: Boolean) {
@@ -184,7 +202,7 @@ class DefaultRegionRepository @Inject constructor(
         // A build flavor may hard-code its region; set it and disable auto-selection.
         if (BuildConfig.USE_FIXED_REGION) {
             val region = RegionUtils.getRegionFromBuildFlavor()
-            RegionUtils.saveToProvider(context, listOf(region))
+            regionCache.save(listOf(region))
             applyRegion(region, true)
             prefs.setBoolean(R.string.preference_key_auto_select_region, false)
             return@withContext RegionStatus.Fixed(region)
@@ -202,8 +220,14 @@ class DefaultRegionRepository @Inject constructor(
         )
         prefs.setInt(CHECK_REGION_VER, newVer)
 
-        val results = RegionUtils.getRegions(context, force)
+        val results = regionCache.loadRegions(force)
         if (results == null) {
+            // Catastrophic: no network, no cache, and the server was unreachable, so region info
+            // couldn't be loaded from any source. Log it and record a non-fatal so the failure rate
+            // is trackable; the Failed state drives a retryable affordance at the picker host.
+            Log.e(TAG, "Region load failed: no regions available from network or cache")
+            FirebaseCrashlytics.getInstance()
+                .recordException(IllegalStateException("Region load failed: no regions available"))
             holder.failed()
             return@withContext RegionStatus.Failed
         }
@@ -211,7 +235,7 @@ class DefaultRegionRepository @Inject constructor(
         val autoSelect = prefs.getBoolean(R.string.preference_key_auto_select_region, true)
         // getClosestRegion uses Location.distanceTo, so only compute it when auto-selecting.
         val closest = if (autoSelect) {
-            RegionUtils.getClosestRegion(results, locationRepository.lastKnownLocation(), true)
+            RegionUtils.getClosestRegion(context, results, locationRepository.lastKnownLocation(), true)
         } else {
             null
         }
@@ -232,7 +256,7 @@ class DefaultRegionRepository @Inject constructor(
             }
             is RegionStatus.NeedsManualSelection -> {
                 // Attach the picker list (usable regions, name-sorted) to the decision sentinel.
-                val regions = results.filter { RegionUtils.isRegionUsable(it) }.sortedBy { it.name }
+                val regions = results.filter { RegionUtils.isRegionUsable(context, it) }.sortedBy { it.name }
                 holder.needsChoice(regions)
                 RegionStatus.NeedsManualSelection(regions)
             }

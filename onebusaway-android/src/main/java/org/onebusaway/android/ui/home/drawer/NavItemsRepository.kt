@@ -17,7 +17,8 @@ package org.onebusaway.android.ui.home.drawer
 
 import android.text.TextUtils
 import javax.inject.Inject
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.R
+import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.ReminderUtils
 
@@ -46,6 +47,7 @@ interface NavItemsRepository {
  */
 class DefaultNavItemsRepository @Inject constructor(
     private val regionRepository: RegionRepository,
+    private val prefs: PreferencesRepository,
 ) : NavItemsRepository {
 
     override fun availability(): NavItemAvailability {
@@ -54,7 +56,8 @@ class DefaultNavItemsRepository @Inject constructor(
             showReminders = ReminderUtils.shouldShowReminders(),
             planTripAvailable = region != null &&
                 (!TextUtils.isEmpty(region.otpBaseUrl) ||
-                    !TextUtils.isEmpty(Application.get().customOtpApiUrl)),
+                    !TextUtils.isEmpty(
+                        prefs.getString(R.string.preference_key_otp_api_url, null))),
             payFareAvailable = region != null && !TextUtils.isEmpty(region.paymentAndroidAppId),
         )
     }

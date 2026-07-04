@@ -28,6 +28,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.location.FakeLocationRepository
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.RegionStatus
 import org.onebusaway.android.region.region
@@ -50,7 +51,7 @@ private class MapDirectiveRecorder(private val vm: HomeViewModel) {
     val sent = mutableListOf<MapDirective>()
 
     val recenters get() = sent.filterIsInstance<MapDirective.RecenterOnFocusedStop>().map { it.lat to it.lon }
-    val routesShown get() = sent.filterIsInstance<MapDirective.ShowRoute>().map { it.routeId }
+    val routesShown get() = sent.filterIsInstance<MapDirective.ShowRoute>().map { it.request.routeId }
     val clearFocusCount get() = sent.count { it is MapDirective.ClearFocus }
     val focusStops get() = sent.filterIsInstance<MapDirective.FocusStop>()
     val lastBottomPadding get() = vm.mapBottomPadding.value
@@ -84,35 +85,19 @@ class HomeViewModelTest {
     // pending-focus gate, so one shared fixture suffices.
     private val obaStop = ObaStopElement("1", 47.6, -122.3, "Main St", "100")
 
-    // --- one-shot sheet / drawer commands ---
-
-    @Test
-    fun `the chevron tap emits ToggleSheet`() = runTest {
-        val vm = viewModel()
-        val events = mutableListOf<SheetCommand>()
-        val job = launch { vm.sheetCommands.collect { events.add(it) } }
-        advanceUntilIdle()
-
-        vm.requestToggleSheet()
-        advanceUntilIdle()
-
-        assertEquals(listOf<SheetCommand>(SheetCommand.ToggleSheet), events)
-        job.cancel()
-    }
-
     // --- arrivals sheet settled -> map padding / recenter ---
 
     @Test
     fun `the initial sheet reveal from hidden emits no map effects`() = runTest {
         val vm = viewModel()
-        val events = mutableListOf<SheetCommand>()
-        val job = launch { vm.sheetCommands.collect { events.add(it) } }
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
         advanceUntilIdle()
 
         vm.onSheetSettled(ArrivalsSheetState.Collapsed, 120) // previous == Hidden -> skip
         advanceUntilIdle()
 
-        assertTrue(events.isEmpty())
+        assertTrue(map.sent.isEmpty())
         assertEquals(ArrivalsSheetState.Collapsed, vm.lastSettledSheet)
         job.cancel()
     }
@@ -261,21 +246,19 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `show route on map collapses the sheet and shows the route`() = runTest {
+    fun `show route on map shows the route`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
-        val events = mutableListOf<SheetCommand>()
-        val eventJob = launch { vm.sheetCommands.collect { events.add(it) } }
         advanceUntilIdle()
 
-        vm.requestShowRouteOnMap("42")
+        vm.requestShowRouteOnMap(ShowRouteRequest("42"))
         advanceUntilIdle()
 
-        assertEquals(listOf<SheetCommand>(SheetCommand.CollapseSheet), events)
+        // The sheet collapse is now a declarative UI reaction to route mode (routeHeader != null),
+        // not a VM command — so this covers only the route directive.
         assertEquals(listOf("42"), map.routesShown)
         mapJob.cancel()
-        eventJob.cancel()
     }
 
     @Test

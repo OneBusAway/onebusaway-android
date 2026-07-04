@@ -16,7 +16,7 @@
 package org.onebusaway.android.models
 
 /**
- * A route's details, decoupled from the wire DTOs. Built in io.client (`toRouteDetails`) from the
+ * A route's details, decoupled from the wire DTOs. Built in api (`toRouteDetails`) from the
  * route-details response; [agency] is resolved from the response references.
  */
 data class RouteDetails(

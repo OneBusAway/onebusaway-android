@@ -49,10 +49,8 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.LocationSettingsStatusCodes
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.firebase.analytics.FirebaseAnalytics
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
-import org.onebusaway.android.analytics.ObaAnalytics
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.nav.NavigationService
 import org.onebusaway.android.preferences.PreferencesRepository
@@ -168,8 +166,7 @@ internal fun rememberDestinationReminderAction(
         if (!prefsRepository.getBoolean(R.string.preference_key_never_show_destination_reminder_beta_dialog, false)) {
             destinationReminderBetaDialog()
         }
-        ObaAnalytics.reportUiEvent(
-            FirebaseAnalytics.getInstance(context), Application.get().plausibleInstance,
+        AnalyticsEntryPoint.get(context).reportUiEvent(
             PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL,
             resources.getString(R.string.analytics_label_destination_reminder),
             resources.getString(R.string.analytics_label_destination_reminder_variant_started)

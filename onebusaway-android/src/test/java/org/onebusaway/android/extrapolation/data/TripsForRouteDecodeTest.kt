@@ -28,7 +28,7 @@ import java.io.File
 
 /**
  * Ports the trips-for-route coverage of the instrumented AdaptersTest onto the modernized DTO path:
- * decodes the same HART fixture into the io/client envelope, adapts it through [asRouteTrips] (DTO →
+ * decodes the same HART fixture into the api/ envelope, adapts it through [asRouteTrips] (DTO →
  * the legacy interfaces) and distills [toObservations], asserting the same anchors. JVM-only since
  * [toObservations] reads no Android types (the vehicle position — which needs Location — is exercised
  * by the instrumented ExtrapolatedVehiclesTest).
@@ -48,7 +48,7 @@ class TripsForRouteDecodeTest {
         assertEquals(38, observations.size)
         val first = observations[0]
         assertEquals("Hillsborough Area Regional Transit_101446", first.tripId)
-        assertEquals(1444073094612L, first.serverTimeMs)
+        assertEquals(1444073094612L, first.serverTimeMs.epochMs)
         assertEquals(1444017600000L, first.serviceDate)
         // Resolved through the refs: trip -> route -> type 3 (bus).
         assertEquals(3, first.routeType)

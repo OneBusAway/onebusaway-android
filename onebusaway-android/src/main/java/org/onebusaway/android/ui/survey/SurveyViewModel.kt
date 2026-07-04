@@ -23,6 +23,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import org.onebusaway.android.app.di.AppScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -39,7 +41,7 @@ import org.onebusaway.android.models.SurveyQuestion
 import org.onebusaway.android.models.SurveySubmitResult
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
-import org.onebusaway.android.database.survey.SurveyDbHelper
+import org.onebusaway.android.database.survey.SurveyRepository
 import org.onebusaway.android.ui.survey.utils.SurveyUtils
 
 /** The bottom-sheet state for the survey's remaining (non-hero) questions. */
@@ -77,7 +79,7 @@ sealed interface SurveyEffect {
 /**
  * Drives the map survey: requesting the study, showing the hero question + remaining-questions sheet,
  * submitting answers, and persisting completion/skip/remind-later. The network/JSON/DB/filtering
- * logic is reused from the io.client [SurveyDataSource] + `SurveyUtils`/`SurveyDbHelper`. Scoped to
+ * logic is reused from the api [SurveyDataSource] + `SurveyUtils`/[SurveyRepository]. Scoped to
  * the map (the old `isVisibleOnStops = false` path).
  */
 @HiltViewModel
@@ -85,7 +87,10 @@ class SurveyViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
     private val prefs: PreferencesRepository,
+    private val surveyPreferences: SurveyPreferences,
     private val surveyRepo: SurveyDataSource,
+    private val surveyStore: SurveyRepository,
+    @AppScope private val appScope: CoroutineScope,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SurveyUiState())
@@ -124,18 +129,20 @@ class SurveyViewModel @Inject constructor(
         // A region is required to build the study request URL; defer (without latching) until resolved.
         if (regionRepository.region.value == null) return
         val studiesEnabled = prefs.getBoolean(R.string.preference_key_show_available_studies, true)
-        if (!studiesEnabled || !SurveyUtils.shouldShowSurveyView(context, false)) return
+        if (!studiesEnabled ||
+            !SurveyUtils.shouldShowSurveyView(surveyPreferences, false)) return
         requested = true
         val url = studyUrl() ?: return
         viewModelScope.launch {
-            val response = surveyRepo.studies(url, SurveyPreferences.getUserUUID(context)).getOrNull()
+            val response = surveyRepo.studies(url, surveyPreferences.getUserUUID()).getOrNull()
             if (response != null) onStudyResponse(response)
         }
     }
 
-    private fun onStudyResponse(response: List<Survey>) {
+    private suspend fun onStudyResponse(response: List<Survey>) {
         surveys = response
-        surveyIndex = SurveyUtils.getCurrentSurveyIndex(response, context, false, null)
+        val completed = surveyStore.completedSurveyIds()
+        surveyIndex = SurveyUtils.getCurrentSurveyIndex(response, false, null) { it in completed }
         if (surveyIndex == -1) return
         val survey = response[surveyIndex]
         val questions = survey.questions
@@ -250,22 +257,29 @@ class SurveyViewModel @Inject constructor(
     fun cancelDismiss() = _state.update { it.copy(showDismissDialog = false) }
 
     fun skipSurvey() {
-        _state.value.survey?.let {
-            SurveyDbHelper.markSurveyAsCompletedOrSkipped(context, it, SurveyDbHelper.SURVEY_SKIPPED)
-        }
+        _state.value.survey?.let { persistSurveyState(it, SurveyRepository.SURVEY_SKIPPED) }
         dismissAll()
     }
 
     fun remindMeLater() {
-        SurveyUtils.remindUserLater(context)
+        SurveyUtils.remindUserLater(surveyPreferences)
         dismissAll()
     }
 
     // --- helpers ---
 
     private fun handleCompleted(survey: Survey) {
-        SurveyDbHelper.markSurveyAsCompletedOrSkipped(context, survey, SurveyDbHelper.SURVEY_COMPLETED)
+        persistSurveyState(survey, SurveyRepository.SURVEY_COMPLETED)
         SurveyUtils.launchesUntilSurveyShown = Integer.MAX_VALUE
+    }
+
+    /**
+     * Persists the survey's completed/skipped state off the main thread. Runs on [appScope] (not
+     * [viewModelScope]) so the write can't be cancelled by the ViewModel being cleared when the user
+     * navigates away immediately after skipping/completing.
+     */
+    private fun persistSurveyState(survey: Survey, state: Int) {
+        appScope.launch { surveyStore.markCompletedOrSkipped(survey, state) }
     }
 
     private fun dismissAll() {
@@ -297,7 +311,7 @@ class SurveyViewModel @Inject constructor(
     private suspend fun submit(apiUrl: String, surveyId: Int, body: JSONArray): SurveySubmitResult? =
         surveyRepo.submit(
             url = apiUrl,
-            userIdentifier = SurveyPreferences.getUserUUID(context),
+            userIdentifier = surveyPreferences.getUserUUID(),
             surveyId = surveyId,
             stopIdentifier = null,
             stopLatitude = 0.0,

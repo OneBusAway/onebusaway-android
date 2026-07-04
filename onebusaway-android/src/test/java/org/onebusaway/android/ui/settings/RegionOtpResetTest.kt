@@ -78,4 +78,25 @@ class RegionOtpResetTest {
         assertTrue("resets once the region becomes Active", reset)
         job.cancel()
     }
+
+    @Test
+    fun `a forced manual selection that fails resolves without resetting`() = runTest {
+        val regions = listOf(region(1), region(2))
+        val state = MutableStateFlow<RegionState>(RegionState.NeedsManualChoice(regions))
+        var reset = false
+
+        val job = launch {
+            resetOtpVersionOnRegionChange(RegionStatus.NeedsManualSelection(regions), state) { reset = true }
+        }
+        advanceUntilIdle()
+        assertFalse("must not reset before the pick resolves", reset)
+
+        // A retried refresh fails instead of the user picking — the await must terminate (not hang) on
+        // Failed, and leave the OTP version untouched since no region became active.
+        state.value = RegionState.Failed
+        advanceUntilIdle()
+        assertFalse("a Failed resolution leaves the OTP version untouched", reset)
+        assertTrue("the await must terminate on Failed rather than suspend forever", job.isCompleted)
+        job.cancel()
+    }
 }

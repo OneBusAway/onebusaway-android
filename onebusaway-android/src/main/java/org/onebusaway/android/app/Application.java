@@ -26,15 +26,12 @@ import android.os.PowerManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.messaging.FirebaseMessaging;
-
-import com.onebusaway.plausible.android.Plausible;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.donations.DonationsManager;
-import org.onebusaway.android.analytics.ObaAnalytics;
+import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 import org.onebusaway.android.api.ObaApi;
 import org.onebusaway.android.region.Region;
 import org.onebusaway.android.app.di.LocationEntryPoint;
@@ -46,8 +43,6 @@ import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ThemeUtils;
 import org.onebusaway.android.widealerts.GtfsAlerts;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.util.UUID;
 
@@ -57,7 +52,9 @@ import edu.usf.cutr.open311client.models.Open311Option;
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 import java.nio.charset.StandardCharsets;
 
+import dagger.hilt.android.EntryPointAccessors;
 import dagger.hilt.android.HiltAndroidApp;
+import org.onebusaway.android.app.di.DatabaseEntryPoint;
 
 @HiltAndroidApp
 public class Application extends android.app.Application {
@@ -79,11 +76,6 @@ public class Application extends android.app.Application {
     // itself lives in the reactive LocationRepository singleton.)
     static GeomagneticField mGeomagneticField = null;
 
-    private FirebaseAnalytics mFirebaseAnalytics;
-
-    private Plausible mPlausible;
-
-    private org.onebusaway.android.analytics.UmamiAnalytics mUmami;
 
     @Override
     public void onCreate() {
@@ -92,15 +84,21 @@ public class Application extends android.app.Application {
         mApp = this;
 
         initOba();
+
+        // Kick the one-time legacy ContentProvider -> Room data import (fire-and-forget) so it overlaps
+        // startup; every migrated repository read/write awaits this gate before touching the DB.
+        EntryPointAccessors.fromApplication(this, DatabaseEntryPoint.class).importGate().start();
+
         // The region and location repositories (which own region/location state) are now Hilt
         // @Singletons, constructed lazily on first injection after onCreate. The region repo seeds
         // itself from persistence (the saved region-id → ContentProvider lookup); the location repo
         // starts empty and fills from setLastKnownLocation (listener updates) / its lazy provider poll.
         // The legacy setCurrentRegion / setLastKnownLocation writers reach them via their EntryPoints.
         // So nothing to construct here.
-        // The region-derived subsystems (Plausible, Open311) observe the region flow (A7) — this
+        // The region-derived Open311 endpoints observe the region flow (A7) via RegionSubsystems — this
         // performs their initial init (the StateFlow replays the repo's seeded region) and re-inits on
-        // change, replacing the former explicit initOpen311(getCurrentRegion()) call.
+        // change, replacing the former explicit initOpen311(getCurrentRegion()) call. The Plausible/Umami
+        // analytics emitters observe the same flow independently, from AnalyticsProvider.
         RegionSubsystems.observe(this);
 
         reportAnalytics();
@@ -111,7 +109,7 @@ public class Application extends android.app.Application {
 
         initFirebaseMessaging();
 
-        mDonationsManager = new DonationsManager(mFirebaseAnalytics, getResources(), getAppLaunchCount());
+        mDonationsManager = new DonationsManager(getApplicationContext(), getResources(), getAppLaunchCount());
 
         mGtfsAlerts = new GtfsAlerts(getApplicationContext());
     }
@@ -141,16 +139,17 @@ public class Application extends android.app.Application {
     }
 
 
-    private static String appLaunchCountPreferencesKey = "appLaunchCountPreferencesKey";
+    // Preserve the original preference-key value so persisted launch counts survive upgrades.
+    public static final String APP_LAUNCH_COUNT_KEY = "appLaunchCountPreferencesKey";
 
     private void incrementAppLaunchCount() {
-        int count = PreferenceUtils.getInt(appLaunchCountPreferencesKey, 0);
+        int count = PreferenceUtils.getInt(APP_LAUNCH_COUNT_KEY, 0);
         count += 1;
-        PreferenceUtils.saveInt(appLaunchCountPreferencesKey, count);
+        PreferenceUtils.saveInt(APP_LAUNCH_COUNT_KEY, count);
     }
 
     public int getAppLaunchCount() {
-        return PreferenceUtils.getInt(appLaunchCountPreferencesKey, 0);
+        return PreferenceUtils.getInt(APP_LAUNCH_COUNT_KEY, 0);
     }
 
     /**
@@ -235,103 +234,22 @@ public class Application extends android.app.Application {
 
     public synchronized void setCurrentRegion(Region region, boolean regionChanged) {
         // The canonical region write lives in RegionRepository as of A7; the region-derived subsystems
-        // (Plausible, Umami, Open311) re-init reactively via RegionSubsystems observing the published flow.
+        // re-init reactively by observing the published flow — Open311 via RegionSubsystems, the
+        // Plausible/Umami analytics emitters via AnalyticsProvider.
         RegionEntryPoint.get(this).applyRegion(region, regionChanged);
     }
 
     /**
-     * Re-initializes the region-*derived* subsystems — the Plausible/Umami analytics instances and the
-     * Open311 reporting endpoints — for [region]. Driven reactively by
+     * Re-initializes the region-*derived* Open311 reporting endpoints for [region]. Driven reactively by
      * {@link org.onebusaway.android.region.RegionSubsystems}, which observes the region flow (A7), rather
-     * than poked imperatively by a region write transaction.
+     * than poked imperatively by a region write transaction. The Plausible/Umami analytics emitters are
+     * likewise region-derived, but they are owned + rebuilt by
+     * {@link org.onebusaway.android.analytics.AnalyticsProvider} (which observes the same flow).
      */
     public void onRegionChanged(Region region) {
-        buildPlausibleInstance(region);
-        buildUmamiInstance(region);
         initOpen311(region);
     }
 
-    /**
-     * Return Plausible instance for the application
-     * @return Plausible instance
-     */
-    public Plausible getPlausibleInstance() {
-        if(mPlausible == null) {
-            buildPlausibleInstance(getCurrentRegion());
-        }
-        return mPlausible;
-    }
-
-    /**
-     * Build the Plausible instance for the application
-     * Include the domain and the plausible server url for the current region
-     * @param region
-     */
-    private void buildPlausibleInstance(Region region) {
-        mPlausible = null;
-        if (region == null || region.getObaBaseUrl() == null || region.getPlausibleAnalyticsServerUrl() == null) return;
-        String domain;
-        try {
-            domain = new URI(region.getObaBaseUrl()).getHost();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-        mPlausible = new Plausible(this, domain, region.getPlausibleAnalyticsServerUrl());
-    }
-
-    public org.onebusaway.android.analytics.UmamiAnalytics getUmamiInstance() {
-        if (mUmami == null) {
-            buildUmamiInstance(getCurrentRegion());
-        }
-        return mUmami;
-    }
-
-    private void buildUmamiInstance(Region region) {
-        mUmami = null;
-        if (region == null
-                || region.getObaBaseUrl() == null
-                || region.getUmamiAnalyticsUrl() == null
-                || region.getUmamiAnalyticsId() == null) {
-            return;
-        }
-        String host;
-        try {
-            host = new URI(region.getObaBaseUrl()).getHost();
-        } catch (URISyntaxException e) {
-            // Fire-and-forget telemetry must never throw on a malformed URL.
-            return;
-        }
-        if (host == null) {
-            return;
-        }
-        mUmami = new org.onebusaway.android.analytics.UmamiAnalytics(
-                region.getUmamiAnalyticsUrl(), region.getUmamiAnalyticsId(), host);
-    }
-
-
-    /**
-     * Gets the date at which the region information was last updated, in the number of
-     * milliseconds
-     * since January 1, 1970, 00:00:00 GMT
-     * Default value is 0 if the region info has never been updated.
-     *
-     * @return the date at which the region information was last updated, in the number of
-     * milliseconds since January 1, 1970, 00:00:00 GMT.  Default value is 0 if the region info has
-     * never been updated.
-     */
-    public long getLastRegionUpdateDate() {
-        return PreferenceUtils.getLong(getString(R.string.preference_key_last_region_update), 0);
-    }
-
-    /**
-     * Sets the date at which the region information was last updated
-     *
-     * @param date the date at which the region information was last updated, in the number of
-     *             milliseconds since January 1, 1970, 00:00:00 GMT
-     */
-    public void setLastRegionUpdateDate(long date) {
-        PreferenceUtils.saveLong(getString(R.string.preference_key_last_region_update), date);
-    }
 
     /**
      * Returns the custom URL if the user has set a custom API URL manually via Preferences, or
@@ -458,7 +376,7 @@ public class Application extends android.app.Application {
                 .getString(R.string.preference_key_app_theme);
         String appThemePref = PreferenceUtils.getString(appThemePrefKey);
         if (appThemePref != null) {
-            ThemeUtils.setAppTheme(appThemePref);
+            ThemeUtils.setAppTheme(this, appThemePref);
         }
     }
 
@@ -487,38 +405,23 @@ public class Application extends android.app.Application {
     }
 
     private void reportAnalytics() {
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        // The Plausible/Umami emitters are owned + built reactively by AnalyticsProvider; here we only set
+        // the initial Firebase/Umami region label via setRegion (which resolves the Umami emitter through
+        // the provider itself).
         if (getCustomApiUrl() == null && getCurrentRegion() != null) {
-            buildPlausibleInstance(getCurrentRegion());
-            buildUmamiInstance(getCurrentRegion());
-            ObaAnalytics.setRegion(mPlausible, mFirebaseAnalytics, getCurrentRegion().getName());
-        } else if (Application.get().getCustomApiUrl() != null) {
-            String customUrl = null;
-            MessageDigest digest = null;
+            AnalyticsEntryPoint.get(this).setRegion(getCurrentRegion().getName());
+        } else if (getCustomApiUrl() != null) {
+            String customUrl;
             try {
-                digest = MessageDigest.getInstance("SHA-1");
+                MessageDigest digest = MessageDigest.getInstance("SHA-1");
                 digest.update(getCustomApiUrl().getBytes(StandardCharsets.UTF_8));
                 customUrl = getString(R.string.analytics_label_custom_url) +
                         ": " + getHex(digest.digest());
             } catch (Exception e) {
-                customUrl = Application.get().getString(R.string.analytics_label_custom_url);
+                customUrl = getString(R.string.analytics_label_custom_url);
             }
-            ObaAnalytics.setRegion(mPlausible, mFirebaseAnalytics, customUrl);
+            AnalyticsEntryPoint.get(this).setRegion(customUrl);
         }
-    }
-
-    /**
-     * Method to check whether bikeshare layer is enabled or not.
-     *
-     * @return true if the bikeshare layer is an option that can be toggled on/off
-     */
-    public static boolean isBikeshareEnabled() {
-        // Bike layer is enabled if either the current region
-        // supports it or a custom otp url is set. The custom otp url is used to make the testing
-        // process easier
-        return ((Application.get().getCurrentRegion() != null
-                && Application.get().getCurrentRegion().getSupportsOtpBikeshare())
-                || !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl()));
     }
 
     private void createNotificationChannels() {

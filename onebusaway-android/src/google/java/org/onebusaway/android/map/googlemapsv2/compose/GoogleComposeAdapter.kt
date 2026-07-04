@@ -17,9 +17,7 @@ package org.onebusaway.android.map.googlemapsv2.compose
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.Configuration
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -52,6 +50,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onSubscription
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapHost
 import org.onebusaway.android.map.compose.BikeInfoWindow
@@ -65,6 +64,7 @@ import org.onebusaway.android.map.render.MapProjector
 import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.util.PermissionUtils
+import org.onebusaway.android.util.ThemeUtils
 
 /**
  * The dynamic-layer redraw interval: ~20Hz, the proven upstream cadence. Downsampling from the display
@@ -184,6 +184,13 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                     renderState.tripStops.map { },
                 ).collect { activeRenderer.renderStatic() }
             }
+            // The vehicle set (which vehicles exist + their icons): reconcile the markers whenever it's
+            // pushed — a poll, a direction switch, or leaving route mode (null). Discrete, so it's reactive
+            // (not inferred from the per-frame motion loop below), which is what makes a direction switch
+            // take effect immediately instead of waiting for the next poll.
+            LaunchedEffect(activeRenderer) {
+                renderState.vehicleSet.collect { activeRenderer.reconcileVehicles(it) }
+            }
             // Each fresh vehicle poll re-renders an open info window from the now-current live state, so a
             // shown bubble reflects the latest data instead of a tap-time snapshot.
             LaunchedEffect(activeRenderer, activeInfoWindows) {
@@ -245,7 +252,12 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                 onDispose { host.setMapAttached(false) }
             }
             LaunchedEffect(map) {
-                renderState.cameraCommands.collect { applyCameraCommand(it, map, renderState, context) }
+                renderState.cameraCommands
+                    // Flush any frame deferred while the map was detached the moment this collector is
+                    // registered — emissions made in onSubscription are delivered here, so a deferred
+                    // fit isn't dropped by the no-replay flow if the first camera-idle beats us (#1640).
+                    .onSubscription { host.onCameraCommandsSubscribed() }
+                    .collect { applyCameraCommand(it, map, renderState, context) }
             }
             // Publish a flavor-neutral lat/lng -> root-space projector so map-SDK-agnostic callers (the
             // onboarding spotlight) can locate a marker on screen without touching the Google SDK.
@@ -348,7 +360,7 @@ private fun GoogleInfoWindows.openVehicleWindow(renderer: GoogleMapRenderer, mar
         // want the latest poll at render time rather than a collectAsState that would never recompose here.
         @Suppress("StateFlowValueCalledInComposition")
         val response = renderer.vehicleResponse.value
-        if (live != null && response != null) VehicleInfoWindow(live.status, response)
+        if (live != null && response != null) VehicleInfoWindow(live.status, live.isRealtime, response)
     }
 }
 
@@ -376,7 +388,7 @@ private fun applyMyLocation(map: GoogleMap, context: Context, enabled: Boolean) 
 
 /** The map style for the current night-mode state: the dark theme, or POI removal in light mode. */
 private fun resolveMapStyle(context: Context): MapStyleOptions =
-    if (isInDarkMode(context)) {
+    if (ThemeUtils.isInDarkMode(context)) {
         MapStyleOptions.loadRawResourceStyle(context, R.raw.dark_map)
     } else {
         // Light mode: just hide POIs (ported from GoogleMapHost.onMapReady).
@@ -384,16 +396,3 @@ private fun resolveMapStyle(context: Context): MapStyleOptions =
             "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]"
         )
     }
-
-/** Mirrors the former GoogleMapHost.inDarkMode: app night-mode override, else the system config. */
-private fun isInDarkMode(context: Context): Boolean {
-    val mode = AppCompatDelegate.getDefaultNightMode()
-    if (mode == AppCompatDelegate.MODE_NIGHT_YES) {
-        return true
-    }
-    if (mode == AppCompatDelegate.MODE_NIGHT_NO) {
-        return false
-    }
-    return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-        Configuration.UI_MODE_NIGHT_YES
-}

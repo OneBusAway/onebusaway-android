@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.extrapolation.test
 
+import org.onebusaway.android.time.WallTime
 import android.location.Location
 import androidx.test.runner.AndroidJUnit4
 import org.junit.Assert.assertEquals
@@ -60,7 +61,7 @@ class TripExtrapolationBuilderTest {
         val extrapolation = buildTripExtrapolation(
             TripState("t", polyline = northLine()),
             ExtrapolationResult.Success(UniformDist(3000.0)),
-            nowMs = 0L,
+            nowMs = WallTime(0L),
         )!!
 
         val vehicle = extrapolation.vehiclePoint!!
@@ -83,7 +84,7 @@ class TripExtrapolationBuilderTest {
     @Test
     fun missingShapeYieldsNoExtrapolation() {
         assertNull(
-            buildTripExtrapolation(TripState("t"), ExtrapolationResult.Success(UniformDist(1000.0)), 0L)
+            buildTripExtrapolation(TripState("t"), ExtrapolationResult.Success(UniformDist(1000.0)), WallTime(0L))
         )
     }
 
@@ -92,7 +93,7 @@ class TripExtrapolationBuilderTest {
         val extrapolation = buildTripExtrapolation(
             TripState("t", polyline = northLine()),
             ExtrapolationResult.NoData,
-            nowMs = 0L,
+            nowMs = WallTime(0L),
         )!!
         assertNull(extrapolation.vehiclePoint)
         assertNull(extrapolation.fastEstimatePoint)

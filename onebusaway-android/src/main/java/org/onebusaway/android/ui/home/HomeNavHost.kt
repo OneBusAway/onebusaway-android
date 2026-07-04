@@ -19,6 +19,7 @@ package org.onebusaway.android.ui.home
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.view.accessibility.AccessibilityManager
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
@@ -42,12 +43,12 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
@@ -71,9 +72,9 @@ import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.RESULT_MAP_ROUTE_ID
+import org.onebusaway.android.ui.nav.consumeRouteReveal
 import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_ID
-import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_LAT
-import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_LON
+import org.onebusaway.android.ui.nav.consumeStopReveal
 import org.onebusaway.android.ui.nav.navigateFromHome
 import org.onebusaway.android.ui.settings.settingsGraph
 import org.onebusaway.android.ui.survey.SurveyViewModel
@@ -84,12 +85,15 @@ import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.PreferenceUtils
 
+private const val TAG = "HomeNavHost"
+
 /**
  * The HOME destination's dependency surface — the one destination that consumes the full home bundle
- * (the feature ViewModels, the list VMs, the arrivals factory, the callbacks, and the map seed). Built
- * once in [HomeActivity.onCreate] and passed to [HomeNavHost]. Every *other* destination instead
- * recovers the host via `LocalContext.current.findActivity()` and reads its (non-private) members, so
- * only HOME needs this holder (the six feature VMs + the list VMs are private to the activity).
+ * (the feature ViewModels, the list VMs, the arrivals factory, the Activity-bound [activityActions], and
+ * the map seed). Built once in [HomeActivity.onCreate] and passed to [HomeNavHost]. Every *other*
+ * destination instead recovers the host via `LocalContext.current.findActivity()` and reads its
+ * (non-private) members, so only HOME needs this holder (the six feature VMs + the list VMs are private
+ * to the activity).
  */
 class HomeDestinationDeps(
     val homeViewModel: HomeViewModel,
@@ -126,24 +130,30 @@ fun HomeNavHost(
             val revealStopId by handle.getStateFlow<String?>(RESULT_MAP_STOP_ID, null)
                 .collectAsStateWithLifecycle()
             LaunchedEffect(revealRouteId) {
-                revealRouteId?.let { routeId ->
-                    home.mapViewModel.toRoute(routeId)
-                    handle[RESULT_MAP_ROUTE_ID] = null
-                }
+                if (revealRouteId == null) return@LaunchedEffect
+                // Read + consume the route id and its optional direction anchor atomically via the typed
+                // helper (which owns both key names), mirroring the stop branch below.
+                val request = handle.consumeRouteReveal() ?: return@LaunchedEffect
+                home.mapViewModel.toRoute(request)
             }
             LaunchedEffect(revealStopId) {
-                revealStopId?.let { stopId ->
-                    val lat = handle.get<Double>(RESULT_MAP_STOP_LAT)
-                    val lon = handle.get<Double>(RESULT_MAP_STOP_LON)
-                    if (lat != null && lon != null) {
-                        home.homeViewModel.onStopFocused(FocusedStop(stopId, null, null, lat, lon))
-                        home.homeViewModel.markPendingMapFocus()
-                    }
-                    // Consume all three keys together (STOP_ID gates application; lat/lon are nulled for
-                    // symmetry so a stale pair can't linger past the reveal).
-                    handle[RESULT_MAP_STOP_ID] = null
-                    handle[RESULT_MAP_STOP_LAT] = null
-                    handle[RESULT_MAP_STOP_LON] = null
+                if (revealStopId == null) return@LaunchedEffect
+                // Read + consume all three keys atomically via the typed helper (which owns the key names
+                // and Double types). A non-null result applies the focus; a null result here means STOP_ID
+                // was present but lat/lon were missing.
+                val reveal = handle.consumeStopReveal()
+                if (reveal != null) {
+                    home.homeViewModel.onStopFocused(
+                        FocusedStop(reveal.stopId, null, null, reveal.lat, reveal.lon)
+                    )
+                    home.homeViewModel.markPendingMapFocus()
+                } else {
+                    // Keys already consumed; record the dropped focus so the latent path is findable
+                    // (see consumeStopReveal for why this is only reachable on a corrupted handle).
+                    Log.w(TAG, "Dropped a partial stop reveal: stop id present but lat/lon missing")
+                    FirebaseCrashlytics.getInstance().recordException(
+                        IllegalStateException("Partial stop reveal: stop id present but lat/lon missing")
+                    )
                 }
             }
             val state by home.homeViewModel.uiState.collectAsStateWithLifecycle()
@@ -189,7 +199,6 @@ fun HomeNavHost(
             }
             HomeScreen(
                 state = state,
-                sheetCommands = home.homeViewModel.sheetCommands,
                 homeViewModel = home.homeViewModel,
                 mapViewModel = home.mapViewModel,
                 routeHeader = routeHeader,
@@ -273,10 +282,7 @@ internal fun AccessibilityAnalyticsEffect() {
     val context = LocalContext.current
     LifecycleEventEffect(Lifecycle.Event.ON_START) {
         val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-        ObaAnalytics.setAccessibility(
-            FirebaseAnalytics.getInstance(context),
-            am.isTouchExplorationEnabled,
-        )
+        AnalyticsEntryPoint.get(context).setAccessibility(am.isTouchExplorationEnabled)
     }
 }
 
@@ -291,14 +297,13 @@ internal fun HomeAnalyticsEffect(analyticsEvents: SharedFlow<HomeAnalyticsEvent>
     val resources = LocalResources.current
     LaunchedEffect(analyticsEvents) {
         analyticsEvents.collect { event ->
-            val firebase = FirebaseAnalytics.getInstance(context)
-            val plausible = Application.get().plausibleInstance
+            val analytics = AnalyticsEntryPoint.get(context)
             when (event) {
                 is HomeAnalyticsEvent.RegionSelected ->
-                    ObaAnalytics.setRegion(plausible, firebase, event.regionName)
+                    analytics.setRegion(event.regionName)
                 is HomeAnalyticsEvent.MenuItem ->
-                    ObaAnalytics.reportUiEvent(
-                        firebase, plausible, PlausibleAnalytics.REPORT_MENU_EVENT_URL,
+                    analytics.reportUiEvent(
+                        PlausibleAnalytics.REPORT_MENU_EVENT_URL,
                         resources.getString(event.labelRes), null,
                     )
             }

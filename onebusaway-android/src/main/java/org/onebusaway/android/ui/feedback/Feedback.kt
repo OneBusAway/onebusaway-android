@@ -51,13 +51,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
-import com.google.firebase.analytics.FirebaseAnalytics
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import org.apache.commons.io.FileUtils
 import org.onebusaway.android.R
-import org.onebusaway.android.analytics.ObaAnalytics
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.nav.NavigationService
 import org.onebusaway.android.nav.NavigationUploadWorker
 import org.onebusaway.android.preferences.PreferencesRepository
@@ -178,8 +177,8 @@ class FeedbackSubmitter(
     }
 
     private fun logFeedback(liked: Boolean, feedbackText: String) {
-        ObaAnalytics.reportDestinationReminderFeedback(
-            FirebaseAnalytics.getInstance(context), liked, feedbackText.ifEmpty { null }, null
+        AnalyticsEntryPoint.get(context).reportDestinationReminderFeedback(
+            liked, feedbackText.ifEmpty { null }, null
         )
     }
 }

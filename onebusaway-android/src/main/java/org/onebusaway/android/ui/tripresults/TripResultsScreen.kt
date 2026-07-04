@@ -37,21 +37,19 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -63,7 +61,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
@@ -79,49 +76,29 @@ import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.opentripplanner.api.model.Itinerary
 
 /**
- * The results header: the (1–3) itinerary option cards plus the list/map tab row. Shown above the
- * directions list / map frame. Empty until the first [TripResultsUiState.Success].
+ * The results header: the (1–3) itinerary option cards. Shown above the directions list, pinned at the
+ * top of the results sheet. Empty until the first [TripResultsUiState.Success]. The map is revealed by
+ * dragging this sheet down — it renders as the scaffold body behind it ([TripResultsMap]) — so there is
+ * no list/map tab here (#1640).
  */
 @Composable
 fun TripResultsHeader(
     state: TripResultsUiState,
-    onSelectOption: (Int) -> Unit,
-    onTabSelected: (showMap: Boolean) -> Unit
+    onSelectOption: (Int) -> Unit
 ) {
     val success = state as? TripResultsUiState.Success ?: return
-    Column(Modifier.background(MaterialTheme.colorScheme.surface)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            success.options.forEachIndexed { index, option ->
-                OptionCard(
-                    option = option,
-                    selected = index == success.selectedIndex,
-                    onClick = { onSelectOption(index) }
-                )
-            }
-        }
-        val selectedTab = if (success.showMap) 1 else 0
-        TabRow(selectedTabIndex = selectedTab) {
-            Tab(
-                selected = selectedTab == 0,
-                onClick = { onTabSelected(false) },
-                text = { Text(stringResource(R.string.trip_plan_list_view)) },
-                icon = { Icon(painterResource(R.drawable.ic_list), contentDescription = null) }
-            )
-            Tab(
-                selected = selectedTab == 1,
-                onClick = { onTabSelected(true) },
-                text = { Text(stringResource(R.string.trip_plan_map_view)) },
-                icon = {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrivals_styleb_action_map),
-                        contentDescription = null
-                    )
-                }
+    Row(
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.surface)
+            .fillMaxWidth()
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        success.options.forEachIndexed { index, option ->
+            OptionCard(
+                option = option,
+                selected = index == success.selectedIndex,
+                onClick = { onSelectOption(index) }
             )
         }
     }
@@ -161,13 +138,13 @@ private fun RowScope.OptionCard(
 }
 
 /**
- * The directions list (or the loading/error state). Shown when the list tab is selected; the map tab
- * shows the declarative [ObaMap] instead.
+ * The directions list (or the loading/error state), filling the results sheet below the header. The map
+ * is the scaffold body behind the sheet ([TripResultsMap]), not a sibling tab.
  */
 @Composable
-fun TripResultsList(state: TripResultsUiState) {
+fun TripResultsList(state: TripResultsUiState, modifier: Modifier = Modifier) {
     Box(
-        Modifier
+        modifier
             .fillMaxSize()
             .background(colorResource(R.color.md_theme_surfaceContainer))
     ) {
@@ -194,54 +171,46 @@ fun TripResultsList(state: TripResultsUiState) {
 }
 
 /**
- * Stateful trip-results entry hosted inline in the trip-plan bottom sheet (Tier 1: replaces the former
- * `TripResultsFragment`). Owns the [TripResultsViewModel] (option cards + directions) and a
- * directions-mode [DirectionsMapViewModel]; renders the header plus either the directions list or the declarative
- * [ObaMap] per the list/map tab, frames the selected itinerary once the map settles, and starts the
- * background trip-update poller when the user has trip-update notifications enabled.
+ * The trip-results **sheet content**: the header (option cards) plus the directions list. Drives the
+ * [TripResultsViewModel] (option cards + directions) and the directions-mode [DirectionsMapViewModel] —
+ * seeds the plan and follows option selection onto the map — and starts the background trip-update
+ * poller when the user has trip-update notifications enabled. [DirectionsMapViewModel.showItinerary]
+ * both draws and frames the itinerary (deferring the frame until the map is ready), so no separate
+ * "map ready" step is needed here.
+ *
+ * The map itself is deliberately **not** drawn here: it renders as the trip-plan scaffold *body* (behind
+ * this sheet) via [TripResultsMap], revealed by dragging this sheet down. That keeps an interactive
+ * [ObaMap] out of the draggable bottom sheet, where the sheet's
+ * [androidx.compose.material3.BottomSheetScaffold] would otherwise steal its vertical drags (#1640).
+ * Both VMs are hoisted to the caller so the body and this sheet share them.
  */
 @Composable
-fun TripResults(
+fun TripResultsSheet(
     itineraries: List<Itinerary>,
+    resultsViewModel: TripResultsViewModel,
+    mapViewModel: DirectionsMapViewModel,
     modifier: Modifier = Modifier,
 ) {
-    val resultsViewModel: TripResultsViewModel = hiltViewModel()
-    val mapViewModel: DirectionsMapViewModel = hiltViewModel(key = "tripResultsMap")
     val state by resultsViewModel.state.collectAsStateWithLifecycle()
     val activity = LocalContext.current.findActivity()
 
-    // Re-frame the selected itinerary on the next camera idle (set on itinerary / map-shown change).
-    var needsFraming by remember { mutableStateOf(false) }
-
     // Seed from the completed plan + point the map at the first itinerary (the old bindResults).
     LaunchedEffect(itineraries) {
-        resultsViewModel.setItineraries(itineraries, initialIndex = 0, showMap = false)
-        itineraries.firstOrNull()?.let {
-            mapViewModel.showItinerary(it)
-            needsFraming = true
-        }
+        resultsViewModel.setItineraries(itineraries, initialIndex = 0)
+        itineraries.firstOrNull()?.let { mapViewModel.showItinerary(it) }
         maybeStartTripUpdates(activity, itineraries, index = 0)
     }
 
-    // Follow the selected option onto the map (the old observeSelection).
+    // Follow the selected option onto the map (the old observeSelection). Read [itineraries] through
+    // rememberUpdatedState so the long-lived collector always sees the latest list — keying the effect on
+    // resultsViewModel alone would pin the first snapshot, so a later selection could start trip updates
+    // for a stale plan after new results arrive (selectedItinerary is a no-replay SharedFlow, so keeping
+    // one collector — rather than restarting it — also can't drop a concurrent emission).
+    val currentItineraries by rememberUpdatedState(itineraries)
     LaunchedEffect(resultsViewModel) {
         resultsViewModel.selectedItinerary.collect { (index, itinerary) ->
             mapViewModel.showItinerary(itinerary)
-            needsFraming = true
-            maybeStartTripUpdates(activity, itineraries, index)
-        }
-    }
-
-    val showMap = (state as? TripResultsUiState.Success)?.showMap == true
-
-    // Frame the itinerary once the map is shown + settled (the old observeMapReady): the map VM
-    // publishes its camera on each idle, so the first non-null camera while shown is "map ready".
-    LaunchedEffect(resultsViewModel, showMap) {
-        mapViewModel.camera.collect { camera ->
-            if (camera != null && needsFraming && showMap) {
-                needsFraming = false
-                mapViewModel.frameDirections()
-            }
+            maybeStartTripUpdates(activity, currentItineraries, index)
         }
     }
 
@@ -249,27 +218,27 @@ fun TripResults(
         TripResultsHeader(
             state = state,
             onSelectOption = resultsViewModel::selectOption,
-            onTabSelected = { show ->
-                resultsViewModel.toggleMap(show)
-                if (show) needsFraming = true
-            },
         )
-        Box(
-            Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        ) {
-            if (showMap) {
-                ObaMap(
-                    host = mapViewModel.host,
-                    callbacks = NoOpObaMapCallbacks,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            } else {
-                TripResultsList(state)
-            }
-        }
+        TripResultsList(state, Modifier.weight(1f))
     }
+}
+
+/**
+ * The trip-results **map**, rendered as the trip-plan scaffold *body* (behind the results sheet) while
+ * the map tab is active. Kept out of the draggable sheet so vertical drags pan the map rather than
+ * moving the sheet (#1640); [mapViewModel] is the shared directions-mode VM that [TripResultsSheet]
+ * drives (draws the selected itinerary, frames it on the first idle).
+ */
+@Composable
+fun TripResultsMap(
+    mapViewModel: DirectionsMapViewModel,
+    modifier: Modifier = Modifier,
+) {
+    ObaMap(
+        host = mapViewModel.host,
+        callbacks = NoOpObaMapCallbacks,
+        modifier = modifier,
+    )
 }
 
 /**
@@ -398,11 +367,10 @@ private fun TripResultsPreview() {
                     isTransit = true,
                     subItems = listOf(DirectionItem(NO_ICON_PREVIEW, "Capitol Hill Station"))
                 )
-            ),
-            showMap = false
+            )
         )
         Column {
-            TripResultsHeader(state, onSelectOption = {}, onTabSelected = {})
+            TripResultsHeader(state, onSelectOption = {})
             TripResultsList(state)
         }
     }

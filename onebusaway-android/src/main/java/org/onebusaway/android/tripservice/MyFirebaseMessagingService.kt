@@ -16,6 +16,7 @@ import javax.inject.Inject
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.reminders.ReminderRepository
 import org.onebusaway.android.ui.arrivals.ArrivalsListLauncher
 import org.onebusaway.android.util.ReminderUtils
 
@@ -32,6 +33,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     @Inject
     lateinit var prefsRepository: PreferencesRepository
+
+    @Inject
+    lateinit var reminderRepository: ReminderRepository
 
     companion object {
         private const val TAG = "FirebaseMsgService"
@@ -51,7 +55,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         Log.d(TAG, "Received reminder for stopId: $stopId")
 
         val context = applicationContext
-        ReminderUtils.handleArrivalPayload(context, arrivalJson)
+        reminderRepository.deleteReminderFromPayload(arrivalJson)
         showNotification(context, message, stopId)
     }
 

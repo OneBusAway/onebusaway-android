@@ -40,6 +40,10 @@ import org.onebusaway.android.testing.FakePreferencesRepository
  * and `refresh()`'s actual result drives [resetOtpVersionOnRegionChange]. (The precedence of the reset rule
  * itself is covered by [RegionOtpResetTest]; the analytics report needs a Context and is left to
  * instrumented coverage.)
+ *
+ * Also covers [applyMapStopCacheSize] — the Context-free half of
+ * [AdvancedSettingsViewModel.onMapStopCacheSizeChanged]: persist + accept a valid size, reject + persist
+ * nothing on an invalid one.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AdvancedSettingsViewModelTest {
@@ -93,6 +97,23 @@ class AdvancedSettingsViewModelTest {
             assertNotNull("nothing to clear when the region wasn't experimental", repo.region.value)
             assertFalse("the toggle is persisted", prefs.getBoolean(EXPERIMENTAL, true))
         }
+
+    private val MAP_STOP_CACHE_SIZE = R.string.preference_key_map_stop_cache_size
+
+    @Test
+    fun `a valid map stop cache size is accepted and persisted`() {
+        val prefs = FakePreferencesRepository()
+        assertTrue("a valid in-range size is accepted", applyMapStopCacheSize("250", prefs))
+        assertEquals("the size is persisted", 250, prefs.getInt(MAP_STOP_CACHE_SIZE, -1))
+    }
+
+    @Test
+    fun `an invalid map stop cache size is rejected and persists nothing`() {
+        val prefs = FakePreferencesRepository()
+        assertFalse("an out-of-range size is rejected", applyMapStopCacheSize("99999", prefs))
+        assertFalse("a non-numeric size is rejected", applyMapStopCacheSize("abc", prefs))
+        assertEquals("nothing was persisted", -1, prefs.getInt(MAP_STOP_CACHE_SIZE, -1))
+    }
 
     @Test
     fun `a re-resolve that needs a manual pick defers the OTP reset until the user chooses`() = runTest {

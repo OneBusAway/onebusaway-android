@@ -19,11 +19,9 @@ import android.content.Context
 import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,7 +35,8 @@ import org.onebusaway.android.R
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.preferences.PreferencesRepository
-import org.onebusaway.android.provider.ObaContract
+import org.onebusaway.android.database.oba.ImportGate
+import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
@@ -63,6 +62,9 @@ class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: PreferencesRepository,
     private val regionRepository: RegionRepository,
+    private val serviceAlertDao: ServiceAlertDao,
+    private val importGate: ImportGate,
+    private val obaAnalytics: ObaAnalytics,
 ) : ViewModel() {
 
     private val env = SettingsEnvironment(
@@ -70,8 +72,6 @@ class SettingsViewModel @Inject constructor(
         sdkInt = Build.VERSION.SDK_INT,
         isObaFlavor = BuildFlavorUtils.isOBABuildFlavor(),
     )
-
-    private val firebaseAnalytics: FirebaseAnalytics by lazy { FirebaseAnalytics.getInstance(context) }
 
     val state: StateFlow<SettingsUiState> =
         combine(prefs.observeChanges(), regionRepository.region) { _, region -> compute(region) }
@@ -136,12 +136,12 @@ class SettingsViewModel @Inject constructor(
 
     fun onShowNegativeArrivalsChanged(value: Boolean) {
         prefs.setBoolean(R.string.preference_key_show_negative_arrivals, value)
-        ObaAnalytics.setShowDepartedVehicles(firebaseAnalytics, value)
+        obaAnalytics.setShowDepartedVehicles(value)
     }
 
     fun onHideAlertsChanged(value: Boolean) {
         prefs.setBoolean(R.string.preference_key_hide_alerts, value)
-        if (value) viewModelScope.launch(Dispatchers.IO) { ObaContract.ServiceAlerts.hideAllAlerts() }
+        if (value) viewModelScope.launch { importGate.awaitReady(); serviceAlertDao.setAllHidden(1) }
     }
 
     /**
@@ -166,7 +166,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onLeftHandModeChanged(value: Boolean) {
         prefs.setBoolean(R.string.preference_key_left_hand_mode, value)
-        ObaAnalytics.setLeftHanded(firebaseAnalytics, value)
+        obaAnalytics.setLeftHanded(value)
     }
 
     fun onShowHeaderArrivalsChanged(value: Boolean) =
@@ -180,7 +180,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onAnalyticsChanged(value: Boolean) {
         prefs.setBoolean(R.string.preferences_key_analytics, value)
-        ObaAnalytics.setSendAnonymousData(firebaseAnalytics, value)
+        obaAnalytics.setSendAnonymousData(value)
     }
 
     fun onShareDestinationLogsChanged(value: Boolean) =
@@ -200,7 +200,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onAppThemeChanged(value: String) {
         prefs.setString(R.string.preference_key_app_theme, value)
-        ThemeUtils.setAppTheme(value)
+        ThemeUtils.setAppTheme(context, value)
         _effects.trySend(SettingsEffect.RecreateActivity)
     }
 

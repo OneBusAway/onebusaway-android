@@ -29,11 +29,10 @@ import android.text.TextUtils
 import android.widget.Toast
 
 import com.google.android.gms.common.GoogleApiAvailability
-import com.google.firebase.analytics.FirebaseAnalytics
 
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
-import org.onebusaway.android.analytics.ObaAnalytics
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
+import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.Region
 
@@ -77,7 +76,7 @@ object ExternalIntents {
         context: Context, email: String, location: String?,
         tripPlanUrl: String?, tripPlanFail: Boolean
     ) {
-        val obaRegionName = RegionUtils.getObaRegionName()
+        val obaRegionName = RegionUtils.getObaRegionName(context)
         val autoRegion = PreferenceUtils
             .getBoolean(context.getString(R.string.preference_key_auto_select_region), true)
         val regionSelectionMethod: String
@@ -252,7 +251,7 @@ object ExternalIntents {
      * @return the region whose payment warning must be shown first, or null if already handled
      */
     fun payFareOrWarningRegion(activity: Activity): Region? {
-        val region = Application.get().currentRegion
+        val region = RegionEntryPoint.get(activity).currentRegion()
         if (region == null) {
             // If a custom API URL is set (i.e., no region), then no op
             return null
@@ -286,24 +285,20 @@ object ExternalIntents {
             // Launch installed app
             intent.addCategory(Intent.CATEGORY_LAUNCHER)
             activity.startActivity(intent)
-            ObaAnalytics.reportUiEvent(
-                FirebaseAnalytics.getInstance(activity),
-                Application.get().plausibleInstance,
+            AnalyticsEntryPoint.get(activity).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
-                Application.get().getString(R.string.analytics_label_button_fare_payment),
-                Application.get().getString(R.string.analytics_label_open_app)
+                activity.getString(R.string.analytics_label_button_fare_payment),
+                activity.getString(R.string.analytics_label_open_app)
             )
         } else {
             // Go to Play Store listing to download app
             intent = Intent(Intent.ACTION_VIEW)
-            intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, paymentAndroidAppId)))
+            intent.setData(Uri.parse(activity.getString(R.string.google_play_listing_prefix, paymentAndroidAppId)))
             activity.startActivity(intent)
-            ObaAnalytics.reportUiEvent(
-                FirebaseAnalytics.getInstance(activity),
-                Application.get().plausibleInstance,
+            AnalyticsEntryPoint.get(activity).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
-                Application.get().getString(R.string.analytics_label_button_fare_payment),
-                Application.get().getString(R.string.analytics_label_download_app)
+                activity.getString(R.string.analytics_label_button_fare_payment),
+                activity.getString(R.string.analytics_label_download_app)
             )
         }
     }
@@ -321,24 +316,20 @@ object ExternalIntents {
             // Launch installed app
             intent.addCategory(Intent.CATEGORY_LAUNCHER)
             context.startActivity(intent)
-            ObaAnalytics.reportUiEvent(
-                FirebaseAnalytics.getInstance(context),
-                Application.get().plausibleInstance,
+            AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
-                Application.get().getString(R.string.analytics_label_button_bike_share),
-                Application.get().getString(R.string.analytics_label_open_app)
+                context.getString(R.string.analytics_label_button_bike_share),
+                context.getString(R.string.analytics_label_open_app)
             )
         } else {
             // Go to Play Store listing to download app
             intent = Intent(Intent.ACTION_VIEW)
-            intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, context.getString(R.string.hopr_android_app_id))))
+            intent.setData(Uri.parse(context.getString(R.string.google_play_listing_prefix, context.getString(R.string.hopr_android_app_id))))
             context.startActivity(intent)
-            ObaAnalytics.reportUiEvent(
-                FirebaseAnalytics.getInstance(context),
-                Application.get().plausibleInstance,
+            AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
-                Application.get().getString(R.string.analytics_label_button_bike_share),
-                Application.get().getString(R.string.analytics_label_download_app)
+                context.getString(R.string.analytics_label_button_bike_share),
+                context.getString(R.string.analytics_label_download_app)
             )
         }
     }

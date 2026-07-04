@@ -119,12 +119,16 @@ public class ArrivalInfoUtils {
      * or if we don't have real-time info (i.e., scheduled)
      */
     public static int computeColor(final long scheduled, final long predicted) {
-        if (predicted != 0) {
-            return computeColorFromDeviation(predicted - scheduled);
-        } else {
-            // Use scheduled color
-            return R.color.stop_info_scheduled_time;
-        }
+        return statusColor(predicted != 0, predicted - scheduled);
+    }
+
+    /**
+     * The one live-vs-scheduled color choice shared by the map's vehicle markers/info windows and the
+     * arrival-list rows: the schedule-deviation color when real-time, otherwise the scheduled (gray)
+     * color. [deviationMinutes] is ignored when not real-time.
+     */
+    public static int statusColor(final boolean isRealtime, final long deviationMinutes) {
+        return isRealtime ? computeColorFromDeviation(deviationMinutes) : R.color.stop_info_scheduled_time;
     }
 
     /**

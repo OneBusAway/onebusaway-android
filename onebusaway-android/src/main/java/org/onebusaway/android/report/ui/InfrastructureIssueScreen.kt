@@ -50,7 +50,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -80,15 +79,13 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import com.google.firebase.analytics.FirebaseAnalytics
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.ArrivalsViewModelFactoryEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.NetworkEntryPoint
-import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.report.ReportContext
 import org.onebusaway.android.report.TripReportContext
@@ -506,9 +503,7 @@ private fun createProblemReportViewModel(
 /** Port of ProblemReportFragment.reportAnalytics — the stop/trip problem Plausible event. */
 private fun reportProblemAnalytics(context: Context, kind: ProblemKind) {
     val isTrip = kind == ProblemKind.TRIP
-    ObaAnalytics.reportUiEvent(
-        FirebaseAnalytics.getInstance(context),
-        Application.get().plausibleInstance,
+    AnalyticsEntryPoint.get(context).reportUiEvent(
         if (isTrip) {
             PlausibleAnalytics.REPORT_VEHICLE_PROBLEM_EVENT_URL
         } else {
@@ -545,7 +540,6 @@ private fun Open311FormInline(
     onSubmittingChanged: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
-    val resources = LocalResources.current
     val scope = rememberCoroutineScope()
     val vm: Open311ProblemViewModel = viewModel(
         key = "open311:${target.category.code ?: target.category.name}",
@@ -605,16 +599,13 @@ private fun Open311FormInline(
 
     // Publish the send action to the app bar while shown; clear it (and the spinner) on leave. Port of
     // onSend: submit + the Open311 server analytics event.
-    val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(context) }
     DisposableEffect(vm) {
         onSubmit {
             vm.submit()
             (target.category.raw as? Service)?.let { service ->
-                ObaAnalytics.reportUiEvent(
-                    firebaseAnalytics,
-                    Application.get().plausibleInstance,
+                AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_OPEN311_SERVER_EVENT_URL,
-                    resources.getString(R.string.analytics_problem),
+                    context.getString(R.string.analytics_problem),
                     service.service_name,
                 )
             }

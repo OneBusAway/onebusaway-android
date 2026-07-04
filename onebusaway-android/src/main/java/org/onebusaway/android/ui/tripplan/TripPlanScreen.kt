@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.tripplan
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.ContactsContract
@@ -70,26 +71,28 @@ import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
-import com.google.firebase.analytics.FirebaseAnalytics
 import java.util.Calendar
 import java.util.TimeZone
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.directions.util.CustomAddress
 import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.directions.util.TripRequestBuilder
-import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.components.SwitchRow
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.nav.NavRoutes
-import org.onebusaway.android.ui.tripresults.TripResults
+import org.onebusaway.android.map.DirectionsMapViewModel
+import org.onebusaway.android.ui.tripresults.TripResultsMap
+import org.onebusaway.android.ui.tripresults.TripResultsSheet
+import org.onebusaway.android.ui.tripresults.TripResultsViewModel
+import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.LocationUtils
 import org.onebusaway.android.util.PreferenceUtils
@@ -109,7 +112,6 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
     val activity = LocalContext.current.findActivity()
 
     // Built once for the lifetime of this destination (analytics + region email for "report problem").
-    val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(activity) }
     // HomeActivity doesn't inject RegionRepository; reach the shared singleton via the EntryPoint.
     val regionRepository = remember { RegionEntryPoint.get(activity) }
 
@@ -176,9 +178,9 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
     LaunchedEffect(viewModel) {
         viewModel.planState.collect { state ->
             when (state) {
-                is PlanResult.Loading -> reportPlanAnalytics(activity, firebaseAnalytics)
+                is PlanResult.Loading -> reportPlanAnalytics(activity)
                 is PlanResult.Error -> {
-                    showFeedbackDialog(activity, firebaseAnalytics, regionRepository, state.message)
+                    showFeedbackDialog(activity, regionRepository, state.message)
                     viewModel.clearPlanResult()
                 }
                 else -> {}
@@ -191,7 +193,7 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
     // fresh; read the restore extras off the host intent once. (A notification arriving while already
     // on this destination — singleTop, no recomposition — won't re-restore; acceptable rare edge.)
     LaunchedEffect(Unit) {
-        maybeRestoreFromIntent(viewModel, activity.intent)?.let { activity.setIntent(it) }
+        maybeRestoreFromIntent(viewModel, activity, activity.intent)?.let { activity.setIntent(it) }
     }
 
     var showAdvanced by remember { mutableStateOf(false) }
@@ -208,7 +210,7 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
         onFromPickOnMap = { launchMapPicker("from", viewModel.formState.value.from) },
         onToPickOnMap = { launchMapPicker("to", viewModel.formState.value.to) },
         onAdvancedSettings = { showAdvanced = true },
-        onReportProblem = { reportProblem(activity, firebaseAnalytics, regionRepository) }
+        onReportProblem = { reportProblem(activity, regionRepository) }
     )
 
     if (showAdvanced) {
@@ -217,10 +219,13 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
 }
 
 /**
- * The trip-plan container: the [TripPlanForm] is the main content; when a plan completes, the
- * results appear inline in a Material3 bottom sheet via [TripResults] (Compose, owning its own
- * directions-mode map). Date/time/contacts/current-location/advanced/report are platform interactions
- * delegated to the host Activity.
+ * The trip-plan container: before a plan completes the [TripPlanForm] is the scaffold body; once results
+ * arrive, the directions map ([TripResultsMap]) takes over the scaffold *body* and the results header +
+ * directions list appear in a Material3 bottom sheet over it ([TripResultsSheet]). Dragging the sheet
+ * down reveals the map — so the interactive map owns its own gesture area instead of being trapped in the
+ * draggable sheet (#1640). Back walks the sheet from expanded → peek → dismissed (form) before exiting.
+ * Date/time/contacts/current-location/advanced/report are platform interactions delegated to the host
+ * Activity.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -241,6 +246,14 @@ fun TripPlanRoute(
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     val planState by viewModel.planState.collectAsStateWithLifecycle()
 
+    // The results VMs are hoisted here (not created inside the sheet content) so the map can render as
+    // the scaffold *body* — behind the sheet — while the results header + directions list stay in the
+    // sheet. The map is revealed by dragging the sheet down, so an interactive map never sits inside the
+    // draggable bottom sheet, which would otherwise steal its vertical drags (#1640). Both are scoped to
+    // this destination's back-stack entry, so hoisting doesn't change their identity or lifetime.
+    val resultsViewModel: TripResultsViewModel = hiltViewModel()
+    val mapViewModel: DirectionsMapViewModel = hiltViewModel(key = "tripResultsMap")
+
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
             initialValue = SheetValue.Hidden,
@@ -251,13 +264,18 @@ fun TripPlanRoute(
     val scope = rememberCoroutineScope()
     val sheetExpanded = scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
 
-    // Back (system or toolbar) collapses an expanded results sheet first, then exits — mirrors
-    // the legacy sliding-panel behavior (onBackPressed collapsed the panel before finishing).
+    // Back (system or toolbar) walks the results back to the form before exiting: an expanded sheet
+    // collapses to its peek (revealing the map behind it), the peek dismisses the results (returning the
+    // form as the scaffold body), and only then does back exit the screen. Since the map — not the form —
+    // now sits behind the sheet, this peek step is how the user gets back to the form to re-plan.
     val collapseOrBack: () -> Unit = {
-        if (sheetExpanded) scope.launch { scaffoldState.bottomSheetState.partialExpand() }
-        else onBack()
+        when {
+            sheetExpanded -> scope.launch { scaffoldState.bottomSheetState.partialExpand() }
+            hasResults -> viewModel.clearPlanResult()
+            else -> onBack()
+        }
     }
-    BackHandler(enabled = sheetExpanded) { collapseOrBack() }
+    BackHandler(enabled = hasResults) { collapseOrBack() }
 
     // Expand the sheet when results arrive; hide it when the form is reset to Idle.
     LaunchedEffect(planState) {
@@ -280,35 +298,47 @@ fun TripPlanRoute(
             sheetContent = {
                 val result = planState
                 if (result is PlanResult.Success) {
-                    TripResults(
+                    TripResultsSheet(
                         itineraries = result.itineraries,
+                        resultsViewModel = resultsViewModel,
+                        mapViewModel = mapViewModel,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
             }
         ) { padding ->
-            Column(Modifier.padding(padding)) {
-                if (planState is PlanResult.Loading) {
-                    LinearProgressIndicator(Modifier.fillMaxWidth())
-                }
-                TripPlanForm(
-                    state = formState,
-                    onFromQueryChange = viewModel::onFromQueryChange,
-                    onToQueryChange = viewModel::onToQueryChange,
-                    onSelectFrom = viewModel::setFrom,
-                    onSelectTo = viewModel::setTo,
-                    onFromCurrentLocation = onFromCurrentLocation,
-                    onToCurrentLocation = onToCurrentLocation,
-                    onFromContacts = onFromContacts,
-                    onToContacts = onToContacts,
-                    onFromPickOnMap = onFromPickOnMap,
-                    onToPickOnMap = onToPickOnMap,
-                    onSetArriving = viewModel::setArriving,
-                    onPickDate = onPickDate,
-                    onPickTime = onPickTime,
-                    onReverse = viewModel::reverseTrip,
-                    onAdvancedSettings = onAdvancedSettings
+            // With results, the directions map fills the scaffold body, behind the peeking sheet, so it
+            // owns its whole gesture area and vertical drags pan the map — dragging the sheet down reveals
+            // it (#1640). Before a plan completes, the body is the trip-plan form.
+            if (hasResults) {
+                TripResultsMap(
+                    mapViewModel = mapViewModel,
+                    modifier = Modifier.fillMaxSize()
                 )
+            } else {
+                Column(Modifier.padding(padding)) {
+                    if (planState is PlanResult.Loading) {
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                    }
+                    TripPlanForm(
+                        state = formState,
+                        onFromQueryChange = viewModel::onFromQueryChange,
+                        onToQueryChange = viewModel::onToQueryChange,
+                        onSelectFrom = viewModel::setFrom,
+                        onSelectTo = viewModel::setTo,
+                        onFromCurrentLocation = onFromCurrentLocation,
+                        onToCurrentLocation = onToCurrentLocation,
+                        onFromContacts = onFromContacts,
+                        onToContacts = onToContacts,
+                        onFromPickOnMap = onFromPickOnMap,
+                        onToPickOnMap = onToPickOnMap,
+                        onSetArriving = viewModel::setArriving,
+                        onPickDate = onPickDate,
+                        onPickTime = onPickTime,
+                        onReverse = viewModel::reverseTrip,
+                        onAdvancedSettings = onAdvancedSettings
+                    )
+                }
             }
         }
     }
@@ -435,7 +465,7 @@ private fun AdvancedSettingsDialog(
             labels[i] to TripModes.getTripModeCodeFromSelection(typed.getResourceId(i, 0))
         }
         typed.recycle()
-        if (Application.isBikeshareEnabled()) {
+        if (BikeshareAvailability.isEnabled(activity)) {
             all
         } else {
             all.filter { it.second != TripModes.BIKESHARE && it.second != TripModes.TRANSIT_AND_BIKE }
@@ -540,7 +570,6 @@ private fun AdvancedSettingsDialog(
 
 private fun showFeedbackDialog(
     activity: AppCompatActivity,
-    firebaseAnalytics: FirebaseAnalytics,
     regionRepository: RegionRepository,
     message: String
 ) {
@@ -549,14 +578,13 @@ private fun showFeedbackDialog(
         .setMessage(message)
         .setPositiveButton(android.R.string.ok, null)
         .setNegativeButton(R.string.report_problem_report) { _, _ ->
-            reportProblem(activity, firebaseAnalytics, regionRepository)
+            reportProblem(activity, regionRepository)
         }
         .show()
 }
 
 private fun reportProblem(
     activity: AppCompatActivity,
-    firebaseAnalytics: FirebaseAnalytics,
     regionRepository: RegionRepository
 ) {
     val email = regionRepository.region.value?.otpContactEmail
@@ -568,19 +596,16 @@ private fun reportProblem(
     val location = LocationEntryPoint.get(activity.applicationContext).lastKnownLocation()
     val locationString = location?.let { LocationUtils.printLocationDetails(it) }
     ExternalIntents.sendEmail(activity, email, locationString, null, true)
-    ObaAnalytics.reportUiEvent(
-        firebaseAnalytics, Application.get().plausibleInstance,
+    AnalyticsEntryPoint.get(activity).reportUiEvent(
         PlausibleAnalytics.REPORT_TRIP_PLANNER_EVENT_URL,
         activity.getString(R.string.analytics_label_app_feedback_otp), null
     )
 }
 
 private fun reportPlanAnalytics(
-    activity: AppCompatActivity,
-    firebaseAnalytics: FirebaseAnalytics
+    activity: AppCompatActivity
 ) {
-    ObaAnalytics.reportUiEvent(
-        firebaseAnalytics, Application.get().plausibleInstance,
+    AnalyticsEntryPoint.get(activity).reportUiEvent(
         PlausibleAnalytics.REPORT_TRIP_PLANNER_EVENT_URL,
         activity.getString(R.string.analytics_label_trip_plan), null
     )
@@ -592,14 +617,18 @@ private fun reportPlanAnalytics(
  * there was nothing to restore.
  */
 @Suppress("UNCHECKED_CAST", "DEPRECATION")
-private fun maybeRestoreFromIntent(viewModel: TripPlanViewModel, intent: Intent?): Intent? {
+private fun maybeRestoreFromIntent(
+    viewModel: TripPlanViewModel,
+    context: Context,
+    intent: Intent?,
+): Intent? {
     val extras = intent?.extras ?: return null
     if (extras.getSerializable(OTPConstants.INTENT_SOURCE) == null) return null
     val itineraries =
         (extras.getSerializable(OTPConstants.ITINERARIES) as? ArrayList<Itinerary>).orEmpty()
     if (itineraries.isEmpty()) return null
 
-    val builder = TripRequestBuilder.initFromBundleSimple(extras)
+    val builder = TripRequestBuilder.initFromBundleSimple(context, extras)
     viewModel.restoreFrom(
         from = builder.from?.toPlaceItem(),
         to = builder.to?.toPlaceItem(),

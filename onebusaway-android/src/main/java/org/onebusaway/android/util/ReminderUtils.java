@@ -17,14 +17,8 @@ package org.onebusaway.android.util;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.api.bridge.ReminderClient;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.provider.ProviderQueries;
 
-import android.content.ContentResolver;
 import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -34,7 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Utilities to assist in the registering of reminder alarms for arriving/departing buses
+ * Pure helpers for the reminder feature: FCM payload parsing, the reminder-availability check, and the
+ * valid-lead-time list. The reminder storage (create/delete/exists over the Trips table) moved to
+ * {@code org.onebusaway.android.reminders.ReminderRepository} at the storage-modernization cutover.
  */
 public class ReminderUtils {
 
@@ -43,89 +39,9 @@ public class ReminderUtils {
     /**
      * Key for the arrival-and-departure reminder payload (JSON): the FCM message data key on receipt
      * and the intent extra it is forwarded as. Shared by the FCM service, the route translator, and
-     * this class's payload parsers ({@link #getStopIdFromPayload}, {@link #handleArrivalPayload}).
+     * the payload parsers ({@link #getStopIdFromPayload}, {@link #getTripIdFromPayload}).
      */
     public static final String ARRIVAL_PAYLOAD_KEY = "arrival_and_departure";
-
-    /**
-     * Retrieves the short name of a bus route based on the provided route ID.
-     *
-     * @param context the application context
-     * @param id the ID of the route
-     * @return the short name of the route
-     */
-    public static String getRouteShortName(Context context, String id) {
-        return ProviderQueries.stringForQuery(context, Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, id), ObaContract.Routes.SHORTNAME);
-    }
-
-    /**
-     * Deletes a saved reminder for a specific trip and stop ID.
-     *
-     * @param context the application context
-     * @param tripId the ID of the trip
-     * @param stopId the ID of the stop
-     */
-    public static void deleteSavedReminder(Context context, String tripId, String stopId) {
-        String selection = ObaContract.Trips.TRIP_ID + " = ? AND " + ObaContract.Trips.STOP_ID + " = ?";
-        String[] selectionArgs = new String[]{tripId, stopId};
-
-        Uri uri = ObaContract.Trips.CONTENT_URI;
-
-        try {
-            context.getContentResolver().delete(uri, selection, selectionArgs);
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to delete reminder for trip=" + tripId + " stop=" + stopId, e);
-        }
-    }
-
-    /**
-     * Retrieves the delete path for an alarm based on the provided trip URI.
-     *
-     * @param context the application context
-     * @param tripUri the URI of the trip
-     * @return the delete path for the alarm, or null if not found
-     */
-    public static String getAlarmDeletePath(Context context, Uri tripUri) {
-        ContentResolver cr = context.getContentResolver();
-        String alarmDeletePath = null;
-
-        try (Cursor cursor = cr.query(tripUri, new String[]{ObaContract.Trips.ALARM_DELETE_PATH}, null, null, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                alarmDeletePath = cursor.getString(cursor.getColumnIndexOrThrow(ObaContract.Trips.ALARM_DELETE_PATH));
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to get alarm delete path", e);
-        }
-        return alarmDeletePath;
-    }
-
-    /**
-     * Requests server-side deletion of the reminder alarm for the trip URI (fire-and-forget) and
-     * removes the trip row from the content provider.
-     *
-     * @param context the application context
-     * @param tripUri the URI of the trip
-     */
-    public static void requestDeleteAlarm(Context context, Uri tripUri) {
-        String alarmDeletePath = getAlarmDeletePath(context, tripUri);
-        ReminderClient.deleteAlarm(context, alarmDeletePath);
-
-        context.getContentResolver().delete(tripUri, null, null);
-    }
-
-    /**
-     * Checks if an alarm exists for the specified trip URI.
-     *
-     * @param context the application context
-     * @param tripURI the URI of the trip
-     * @return true if the alarm exists, false otherwise
-     */
-    public static boolean isAlarmExist(Context context, Uri tripURI) {
-        ContentResolver cr = context.getContentResolver();
-        try (Cursor c = cr.query(tripURI, new String[]{ObaContract.Trips._ID}, null, null, null)) {
-            return (c != null && c.getCount() > 0);
-        }
-    }
 
     /**
      * Extracts the stop_id from an FCM arrival_and_departure JSON payload.
@@ -134,11 +50,25 @@ public class ReminderUtils {
      * @return the stop ID, or null if not present or unparseable
      */
     public static String getStopIdFromPayload(String arrivalJson) {
+        return stringFromPayload(arrivalJson, "stop_id");
+    }
+
+    /**
+     * Extracts the trip_id from an FCM arrival_and_departure JSON payload.
+     *
+     * @param arrivalJson the JSON string from the arrival_and_departure FCM data field
+     * @return the trip ID, or null if not present or unparseable
+     */
+    public static String getTripIdFromPayload(String arrivalJson) {
+        return stringFromPayload(arrivalJson, "trip_id");
+    }
+
+    private static String stringFromPayload(String arrivalJson, String key) {
         if (arrivalJson == null) return null;
         try {
             JSONObject arrival = new JSONObject(arrivalJson);
-            String stopId = arrival.optString("stop_id", "");
-            return stopId.isEmpty() ? null : stopId;
+            String value = arrival.optString(key, "");
+            return value.isEmpty() ? null : value;
         } catch (JSONException e) {
             Log.e(TAG, "Error parsing arrival_and_departure JSON", e);
             return null;
@@ -146,32 +76,10 @@ public class ReminderUtils {
     }
 
     /**
-     * Processes an FCM arrival_and_departure payload: extracts trip/stop IDs and
-     * deletes the corresponding saved reminder.
-     *
-     * @param context the application context
-     * @param arrivalJson the JSON string from the arrival_and_departure FCM data field
-     */
-    public static void handleArrivalPayload(Context context, String arrivalJson) {
-        if (arrivalJson == null) return;
-        try {
-            JSONObject arrival = new JSONObject(arrivalJson);
-            String tripId = arrival.optString("trip_id", "");
-            String stopId = arrival.optString("stop_id", "");
-            if (!stopId.isEmpty()) {
-                deleteSavedReminder(context, tripId, stopId);
-            }
-        } catch (JSONException e) {
-            Log.e(TAG, "Error parsing arrival_and_departure JSON", e);
-        }
-    }
-
-    /**
      * Checks if reminders should be available by verifying an FCM push token has been obtained.
      * Returns false if the token has not yet been fetched or registration failed.
      */
-    public static boolean shouldShowReminders(){
-        // TODO(D4): inject
+    public static boolean shouldShowReminders() {
         String pushId = Application.getUserPushID();
         return pushId != null && !pushId.isEmpty();
     }
@@ -182,9 +90,8 @@ public class ReminderUtils {
      * @param departTime the departure time in milliseconds
      * @return the valid reminder times
      */
-
     public static String[] getReminderTimes(Context context, long departTime) {
-        Integer[] times = {3,5,10,15,20,25,30};
+        Integer[] times = {3, 5, 10, 15, 20, 25, 30};
         // Convert milliseconds to minutes and calculate the time until departure
         long departTimeInMinutes = (long) Math.ceil((departTime - System.currentTimeMillis()) / 60000.0);
         String[] allTimes = context.getResources().getStringArray(R.array.reminder_time);
@@ -197,7 +104,7 @@ public class ReminderUtils {
         for (Integer time : times) {
             if (time <= departTimeInMinutes) {
                 validTimes.add(allTimes[index]);
-            }else{
+            } else {
                 break;
             }
             ++index;

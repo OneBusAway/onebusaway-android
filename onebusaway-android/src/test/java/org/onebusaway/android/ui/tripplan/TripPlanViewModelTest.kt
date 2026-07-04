@@ -24,6 +24,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.util.TimeProvider
 import org.opentripplanner.api.model.Itinerary
@@ -52,6 +53,9 @@ class TripPlanViewModelTest {
             calls++
             return result
         }
+
+        override fun planBlocking(builder: TripRequestBuilder): List<Itinerary> =
+            result.getOrDefault(emptyList())
     }
 
     private inner class FakeAdvancedSettingsRepository : AdvancedSettingsRepository {

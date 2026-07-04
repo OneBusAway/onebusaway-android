@@ -16,17 +16,20 @@
 package org.onebusaway.android.app.di
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.SharedPreferencesMigration
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -45,11 +48,20 @@ import org.onebusaway.android.util.TimeProvider
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    /** Process-lifetime scope for fire-and-forget persistence work (DataStore + repository writes). */
+    /**
+     * Process-lifetime scope for fire-and-forget persistence work (DataStore + repository writes). The
+     * [CoroutineExceptionHandler] makes it crash-safe: a failed background write (e.g. a Room/SQLite
+     * error from a recents/reminder write) is logged and swallowed rather than reaching the thread's
+     * default handler and crashing the app — these are best-effort and must never take the app down.
+     */
     @Provides
     @Singleton
     @AppScope
-    fun provideAppScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    fun provideAppScope(): CoroutineScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, e ->
+            Log.e("AppScope", "Uncaught exception in a fire-and-forget coroutine; ignoring", e)
+        }
+    )
 
     // The Preferences DataStore backing [PreferencesRepository]. A one-time SharedPreferencesMigration
     // imports the existing default prefs file ("<package>_preferences"), so existing users' values carry
@@ -73,4 +85,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideTimeProvider(): TimeProvider = TimeProvider { System.currentTimeMillis() }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseAnalytics(
+        @ApplicationContext context: Context,
+    ): FirebaseAnalytics = FirebaseAnalytics.getInstance(context)
 }

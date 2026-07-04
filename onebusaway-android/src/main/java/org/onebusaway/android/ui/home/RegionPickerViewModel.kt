@@ -22,19 +22,20 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionState
 
 /**
- * The forced-choice region picker as a self-contained reactive feature (mirrors the other
- * `regionRepo`-observing home VMs, e.g. [org.onebusaway.android.ui.home.widealert.WideAlertViewModel]):
- * region resolution lives entirely in [RegionRepository], which raises [RegionState.NeedsManualChoice]
- * whenever no region can be auto-selected. This exposes that as the [picker] list and resolves it via
- * [choose] — so the picker shows regardless of which screen triggered the refresh (it's rendered at the
- * activity root), rather than being a HomeViewModel/HomeUiState concern.
+ * The forced-choice region picker (and its catastrophic-failure sibling) as a self-contained reactive
+ * feature (mirrors the other `regionRepo`-observing home VMs, e.g.
+ * [org.onebusaway.android.ui.home.widealert.WideAlertViewModel]): region resolution lives entirely in
+ * [RegionRepository], which raises [RegionState.NeedsManualChoice] whenever no region can be auto-selected
+ * and [RegionState.Failed] when region info couldn't be loaded at all. This exposes the former as the
+ * [picker] list (resolved via [choose]) and the latter as [failed] (retried via [retry]) — so both show
+ * regardless of which screen triggered the refresh (they're rendered at the activity root), rather than
+ * being a HomeViewModel/HomeUiState concern.
  */
 @HiltViewModel
 class RegionPickerViewModel @Inject constructor(
@@ -48,16 +49,29 @@ class RegionPickerViewModel @Inject constructor(
     private val _picker = MutableStateFlow<List<Region>?>(null)
     val picker: StateFlow<List<Region>?> = _picker.asStateFlow()
 
+    // Whether region info couldn't be loaded at all (catastrophic failure) — drives the retryable
+    // "couldn't load regions" affordance. A resolving/active/manual-choice transition clears it.
+    private val _failed = MutableStateFlow(false)
+    val failed: StateFlow<Boolean> = _failed.asStateFlow()
+
     init {
+        // One collector drives both projections so the picker and the failure affordance can never
+        // disagree about the current state.
         viewModelScope.launch {
-            regionRepo.state
-                .map { (it as? RegionState.NeedsManualChoice)?.regions }
-                .collect { _picker.value = it }
+            regionRepo.state.collect { state ->
+                _picker.value = (state as? RegionState.NeedsManualChoice)?.regions
+                _failed.value = state is RegionState.Failed
+            }
         }
     }
 
     /** The user picked [region]: the repository applies it, which drives [picker] back to null. */
     fun choose(region: Region) {
         viewModelScope.launch { regionRepo.choose(region) }
+    }
+
+    /** Re-attempt resolution after a [failed] load; a success drives [failed] back to false. */
+    fun retry() {
+        viewModelScope.launch { regionRepo.refresh() }
     }
 }

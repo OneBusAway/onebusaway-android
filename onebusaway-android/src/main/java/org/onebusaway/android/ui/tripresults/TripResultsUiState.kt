@@ -53,13 +53,11 @@ sealed interface TripResultsUiState {
      * @param options the itinerary option cards (1–3)
      * @param selectedIndex the currently-selected option
      * @param directions the directions for the selected option
-     * @param showMap whether the map tab (rather than the list) is selected
      */
     data class Success(
         val options: List<ItineraryOption>,
         val selectedIndex: Int,
-        val directions: List<DirectionItem>,
-        val showMap: Boolean
+        val directions: List<DirectionItem>
     ) : TripResultsUiState
 
     data class Error(val message: String) : TripResultsUiState

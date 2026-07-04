@@ -29,10 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
+import org.onebusaway.android.map.StopsMapController
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.settings.components.ClickPreferenceItem
@@ -122,6 +124,21 @@ fun AdvancedSettingsRoute(
                 else -> true
             }
         },
+        onMapStopCacheSizeChange = { value ->
+            viewModel.onMapStopCacheSizeChanged(value).also { accepted ->
+                if (!accepted) {
+                    Toast.makeText(
+                        context,
+                        resources.getString(
+                            R.string.preferences_map_stop_cache_size_error,
+                            MAP_STOP_CACHE_SIZE_MIN,
+                            MAP_STOP_CACHE_SIZE_MAX,
+                        ),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            }
+        },
         onResetDonationTimestamps = viewModel::onResetDonationTimestamps,
     )
 }
@@ -134,6 +151,7 @@ fun AdvancedSettingsScreen(
     onDisplayTestAlerts: (Boolean) -> Unit,
     onObaUrlChange: (String) -> Boolean,
     onOtpUrlChange: (String) -> Boolean,
+    onMapStopCacheSizeChange: (String) -> Boolean,
     onResetDonationTimestamps: () -> Unit,
 ) {
     val appName = stringResource(R.string.app_name)
@@ -165,6 +183,17 @@ fun AdvancedSettingsScreen(
                     summary = stringResource(R.string.display_test_wide_alerts_for_regions),
                     checked = state.displayTestAlerts,
                     onCheckedChange = onDisplayTestAlerts,
+                )
+                EditTextPreferenceItem(
+                    title = stringResource(R.string.preferences_map_stop_cache_size_title),
+                    summary = stringResource(
+                        R.string.preferences_map_stop_cache_size_summary,
+                        state.mapStopCacheSize,
+                    ),
+                    currentValue = state.mapStopCacheSize.toString(),
+                    hint = StopsMapController.DEFAULT_STOP_CACHE_SIZE.toString(),
+                    onValueChange = onMapStopCacheSizeChange,
+                    keyboardType = KeyboardType.Number,
                 )
                 EditTextPreferenceItem(
                     title = stringResource(R.string.preferences_oba_api_servername_title, appName),

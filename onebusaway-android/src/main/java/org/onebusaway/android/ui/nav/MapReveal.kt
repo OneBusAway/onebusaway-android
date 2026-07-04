@@ -15,7 +15,9 @@
  */
 package org.onebusaway.android.ui.nav
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
+import org.onebusaway.android.map.ShowRouteRequest
 
 /**
  * Navigate to an in-app [route], popping up to HOME and de-duping the top — the single navigation
@@ -41,14 +43,37 @@ fun NavController.navigateFromHome(route: String) =
  * HOME is the NavHost start destination, so it is always on the back stack and [getBackStackEntry] is safe.
  */
 const val RESULT_MAP_ROUTE_ID = "mapReveal.routeId"
+const val RESULT_MAP_ROUTE_DIRECTION_STOP_ID = "mapReveal.routeDirectionStopId"
 const val RESULT_MAP_STOP_ID = "mapReveal.stopId"
 const val RESULT_MAP_STOP_LAT = "mapReveal.stopLat"
 const val RESULT_MAP_STOP_LON = "mapReveal.stopLon"
 
-/** Reveal the map in route mode for [routeId], popping back to HOME. */
-fun NavController.revealRouteOnMap(routeId: String) {
-    getBackStackEntry(NavRoutes.HOME).savedStateHandle[RESULT_MAP_ROUTE_ID] = routeId
+/**
+ * Reveal the map in route mode for [request], popping back to HOME. The [ShowRouteRequest] is serialized
+ * to the `RESULT_MAP_ROUTE_*` keys and read back by [consumeRouteReveal] — the one place field names live.
+ */
+fun NavController.revealRouteOnMap(request: ShowRouteRequest) {
+    val handle = getBackStackEntry(NavRoutes.HOME).savedStateHandle
+    handle[RESULT_MAP_ROUTE_ID] = request.routeId
+    handle[RESULT_MAP_ROUTE_DIRECTION_STOP_ID] = request.directionStopId
     popBackStack(NavRoutes.HOME, /* inclusive = */ false)
+}
+
+/** Reveal the whole route [routeId] on the map (no direction focus) — the plain-route launchers. */
+fun NavController.revealRouteOnMap(routeId: String) = revealRouteOnMap(ShowRouteRequest(routeId))
+
+/**
+ * Reads and consumes a pending route reveal from the HOME [SavedStateHandle] — the symmetric typed
+ * *read* for [revealRouteOnMap], keeping the `RESULT_MAP_ROUTE_*` key names in this one file rather
+ * than re-reading them in the consumer. The keys are cleared together (so a stale direction anchor
+ * can't linger past the reveal); returns null when no route id is present.
+ */
+fun SavedStateHandle.consumeRouteReveal(): ShowRouteRequest? {
+    val routeId = get<String>(RESULT_MAP_ROUTE_ID)
+    val directionStopId = get<String>(RESULT_MAP_ROUTE_DIRECTION_STOP_ID)
+    set(RESULT_MAP_ROUTE_ID, null)
+    set(RESULT_MAP_ROUTE_DIRECTION_STOP_ID, null)
+    return routeId?.let { ShowRouteRequest(it, directionStopId) }
 }
 
 /** Reveal the map focused on [stopId] at [lat]/[lon], popping back to HOME. */
@@ -59,4 +84,27 @@ fun NavController.revealStopOnMap(stopId: String, lat: Double, lon: Double) {
         set(RESULT_MAP_STOP_LON, lon)
     }
     popBackStack(NavRoutes.HOME, false)
+}
+
+/** A complete stop reveal read back off the HOME [SavedStateHandle] — the typed counterpart of the
+ *  three [RESULT_MAP_STOP_ID]/[RESULT_MAP_STOP_LAT]/[RESULT_MAP_STOP_LON] keys [revealStopOnMap] writes. */
+data class StopReveal(val stopId: String, val lat: Double, val lon: Double)
+
+/**
+ * Reads and consumes a pending stop reveal from the HOME [SavedStateHandle] — the symmetric typed *read*
+ * for [revealStopOnMap], keeping the `RESULT_MAP_STOP_*` keys and their `Double` types in this one file
+ * rather than re-naming them in the consumer. All three keys are cleared together regardless of
+ * completeness (so a stale lat/lon pair can't linger past the reveal); returns null when no stop id is
+ * present, or — the corrupted/half-restored case the producer never writes — an id without both
+ * coordinates.
+ */
+fun SavedStateHandle.consumeStopReveal(): StopReveal? {
+    val stopId = get<String>(RESULT_MAP_STOP_ID)
+    val lat = get<Double>(RESULT_MAP_STOP_LAT)
+    val lon = get<Double>(RESULT_MAP_STOP_LON)
+    set(RESULT_MAP_STOP_ID, null)
+    set(RESULT_MAP_STOP_LAT, null)
+    set(RESULT_MAP_STOP_LON, null)
+    if (stopId == null || lat == null || lon == null) return null
+    return StopReveal(stopId, lat, lon)
 }

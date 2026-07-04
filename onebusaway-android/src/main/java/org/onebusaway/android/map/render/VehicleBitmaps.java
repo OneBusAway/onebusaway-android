@@ -25,7 +25,6 @@ import androidx.collection.LruCache;
 import androidx.core.content.ContextCompat;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
 import org.onebusaway.android.models.ObaRoute;
 import org.onebusaway.android.models.ObaTripStatus;
 import org.onebusaway.android.models.RouteTrips;
@@ -115,11 +114,8 @@ public final class VehicleBitmaps {
 
     /** The schedule-deviation color (realtime) or the scheduled color — constant between polls. */
     private static int colorResource(VehicleMarker vehicle) {
-        if (vehicle.isRealtime()) {
-            long deviationMin = TimeUnit.SECONDS.toMinutes(vehicle.getStatus().getScheduleDeviation());
-            return ArrivalInfoUtils.computeColorFromDeviation(deviationMin);
-        }
-        return R.color.stop_info_scheduled_time;
+        long deviationMin = TimeUnit.SECONDS.toMinutes(vehicle.getStatus().getScheduleDeviation());
+        return ArrivalInfoUtils.statusColor(vehicle.isRealtime(), deviationMin);
     }
 
     /**
@@ -143,7 +139,7 @@ public final class VehicleBitmaps {
         String key = createBitmapCacheKey(vehicleType, halfWind, colorResource);
         Bitmap b = sColoredIconCache.get(key);
         if (b == null) {
-            b = BitmapUtils.colorBitmap(getIcon(halfWind, vehicleType), color);
+            b = BitmapUtils.colorBitmap(getIcon(context.getResources(), halfWind, vehicleType), color);
             if (sColoredIconCache.get(key) == null) {
                 sColoredIconCache.put(key, b);
             }
@@ -158,7 +154,7 @@ public final class VehicleBitmaps {
         return vehicleType + " " + halfWind + " " + colorResource;
     }
 
-    private static Bitmap getIcon(int halfWind, int vehicleType) {
+    private static Bitmap getIcon(Resources r, int halfWind, int vehicleType) {
         if (!supportedVehicleType(vehicleType)) {
             vehicleType = DEFAULT_VEHICLE_TYPE;
         }
@@ -168,19 +164,19 @@ public final class VehicleBitmaps {
         if (b == null) {
             switch (vehicleType) {
                 case ObaRoute.TYPE_BUS:
-                    b = createBusIcon(halfWind);
+                    b = createBusIcon(r, halfWind);
                     break;
                 case ObaRoute.TYPE_FERRY:
-                    b = createFerryIcon(halfWind);
+                    b = createFerryIcon(r, halfWind);
                     break;
                 case ObaRoute.TYPE_TRAM:
-                    b = createTramIcon(halfWind);
+                    b = createTramIcon(r, halfWind);
                     break;
                 case ObaRoute.TYPE_SUBWAY:
-                    b = createSubwayIcon(halfWind);
+                    b = createSubwayIcon(r, halfWind);
                     break;
                 case ObaRoute.TYPE_RAIL:
-                    b = createRailIcon(halfWind);
+                    b = createRailIcon(r, halfWind);
                     break;
                 // default: not needed, since supported vehicles are checked prior
             }
@@ -197,8 +193,7 @@ public final class VehicleBitmaps {
                 vehicleType == ObaRoute.TYPE_RAIL;
     }
 
-    private static Bitmap createBusIcon(int halfWind) {
-        Resources r = Application.get().getResources();
+    private static Bitmap createBusIcon(Resources r, int halfWind) {
         switch (halfWind) {
             case NORTH:
                 return BitmapFactory.decodeResource(r, R.drawable.ic_marker_with_bus_smaller_north_inside);
@@ -221,8 +216,7 @@ public final class VehicleBitmaps {
         }
     }
 
-    private static Bitmap createTramIcon(int halfWind) {
-        Resources r = Application.get().getResources();
+    private static Bitmap createTramIcon(Resources r, int halfWind) {
         switch (halfWind) {
             case NORTH:
                 return BitmapFactory.decodeResource(r, R.drawable.ic_marker_with_tram_smaller_north_inside);
@@ -245,8 +239,7 @@ public final class VehicleBitmaps {
         }
     }
 
-    private static Bitmap createRailIcon(int halfWind) {
-        Resources r = Application.get().getResources();
+    private static Bitmap createRailIcon(Resources r, int halfWind) {
         switch (halfWind) {
             case NORTH:
                 return BitmapFactory.decodeResource(r, R.drawable.ic_marker_with_train_smaller_north_inside);
@@ -269,8 +262,7 @@ public final class VehicleBitmaps {
         }
     }
 
-    private static Bitmap createFerryIcon(int halfWind) {
-        Resources r = Application.get().getResources();
+    private static Bitmap createFerryIcon(Resources r, int halfWind) {
         switch (halfWind) {
             case NORTH:
                 return BitmapFactory.decodeResource(r, R.drawable.ic_marker_with_boat_smaller_north_inside);
@@ -293,8 +285,7 @@ public final class VehicleBitmaps {
         }
     }
 
-    private static Bitmap createSubwayIcon(int halfWind) {
-        Resources r = Application.get().getResources();
+    private static Bitmap createSubwayIcon(Resources r, int halfWind) {
         switch (halfWind) {
             case NORTH:
                 return BitmapFactory.decodeResource(r, R.drawable.ic_marker_with_subway_smaller_north_inside);

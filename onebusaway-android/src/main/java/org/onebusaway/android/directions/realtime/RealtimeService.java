@@ -30,15 +30,14 @@ import androidx.core.app.NotificationCompat;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.TripPlanRepositoryEntryPoint;
 import org.onebusaway.android.directions.model.ItineraryDescription;
-import org.onebusaway.android.directions.tasks.TripRequest;
 import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.ui.nav.NavRoutes;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.Leg;
-import org.opentripplanner.api.model.TripPlan;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -145,7 +144,7 @@ public class RealtimeService extends IntentService {
      */
     boolean rescheduleRealtimeUpdates(Bundle bundle) {
         // Delay if this trip doesn't start for at least an hour
-        Date start = new TripRequestBuilder(bundle).getDateTime();
+        Date start = new TripRequestBuilder(this, bundle).getDateTime();
 
         if (start != null) {
             Date queryStart = new Date(start.getTime() - OTPConstants.REALTIME_SERVICE_QUERY_WINDOW);
@@ -175,7 +174,7 @@ public class RealtimeService extends IntentService {
     }
 
     private void checkForItineraryChange(final Bundle bundle) {
-        TripRequestBuilder builder = TripRequestBuilder.initFromBundleSimple(bundle);
+        TripRequestBuilder builder = TripRequestBuilder.initFromBundleSimple(this, bundle);
         ItineraryDescription desc = getItineraryDescription(bundle);
         Class target = getNotificationTarget(bundle);
         if (target == null) {
@@ -189,65 +188,57 @@ public class RealtimeService extends IntentService {
 
         Log.d(TAG, "Check for change");
 
-        TripRequest.Callback callback = new TripRequest.Callback() {
-            @Override
-            public void onTripRequestComplete(TripPlan tripPlan, String url) {
-                if (tripPlan == null || tripPlan.itineraries == null || tripPlan.itineraries.isEmpty()) {
-                    onTripRequestFailure(-1, null);
-                    return;
-                }
-
-                // Check each itinerary. Notify user if our *current* itinerary doesn't exist
-                // or has a lower rank.
-                for (int i = 0; i < tripPlan.itineraries.size(); i++) {
-                    ItineraryDescription other = new ItineraryDescription(tripPlan.itineraries.get(i));
-
-                    if (itineraryDescription.itineraryMatches(other)) {
-
-                        long delay = itineraryDescription.getDelay(other);
-                        Log.d(TAG, "Schedule deviation on itinerary: " + delay);
-
-                        if (Math.abs(delay) > OTPConstants.REALTIME_SERVICE_DELAY_THRESHOLD) {
-                            Log.d(TAG, "Notify due to large early/late schedule deviation.");
-                            showNotification(itineraryDescription,
-                                    (delay > 0) ? R.string.trip_plan_delay
-                                            : R.string.trip_plan_early,
-                                    R.string.trip_plan_notification_new_plan_text,
-                                    source, builder.getBundle(), tripPlan.itineraries);
-                            disableListenForTripUpdates();
-                            return;
-                        }
-
-                        // Otherwise, we are still good.
-                        Log.d(TAG, "Itinerary exists and no large schedule deviation.");
-                        checkDisableDueToTimeout(itineraryDescription);
-
-                        return;
-                    }
-                }
-                Log.d(TAG, "Did not find a matching itinerary in new call - notify user that something has changed.");
-                showNotification(itineraryDescription,
-                        R.string.trip_plan_notification_new_plan_title,
-                        R.string.trip_plan_notification_new_plan_text, source,
-                        builder.getBundle(), tripPlan.itineraries);
-                disableListenForTripUpdates();
-            }
-
-            @Override
-            public void onTripRequestFailure(int result, String url) {
-                Log.e(TAG, "Failure checking itineraries. Result=" + result + ", url=" + url);
-                disableListenForTripUpdates();
-            }
-        };
-
-        builder.setListener(callback);
-
+        // onHandleIntent already runs on the IntentService worker thread, so we can plan
+        // synchronously here. This replaces the legacy TripRequest AsyncTask + callback.
+        List<Itinerary> itineraries;
         try {
-            builder.execute();
+            itineraries = TripPlanRepositoryEntryPoint.get(this).planBlocking(builder);
         } catch (Exception e) {
             e.printStackTrace();
             disableListenForTripUpdates();
+            return;
         }
+
+        if (itineraries.isEmpty()) {
+            Log.e(TAG, "Failure checking itineraries - no results returned.");
+            disableListenForTripUpdates();
+            return;
+        }
+
+        // Check each itinerary. Notify user if our *current* itinerary doesn't exist
+        // or has a lower rank.
+        for (int i = 0; i < itineraries.size(); i++) {
+            ItineraryDescription other = new ItineraryDescription(itineraries.get(i));
+
+            if (itineraryDescription.itineraryMatches(other)) {
+
+                long delay = itineraryDescription.getDelay(other);
+                Log.d(TAG, "Schedule deviation on itinerary: " + delay);
+
+                if (Math.abs(delay) > OTPConstants.REALTIME_SERVICE_DELAY_THRESHOLD) {
+                    Log.d(TAG, "Notify due to large early/late schedule deviation.");
+                    showNotification(itineraryDescription,
+                            (delay > 0) ? R.string.trip_plan_delay
+                                    : R.string.trip_plan_early,
+                            R.string.trip_plan_notification_new_plan_text,
+                            source, builder.getBundle(), itineraries);
+                    disableListenForTripUpdates();
+                    return;
+                }
+
+                // Otherwise, we are still good.
+                Log.d(TAG, "Itinerary exists and no large schedule deviation.");
+                checkDisableDueToTimeout(itineraryDescription);
+
+                return;
+            }
+        }
+        Log.d(TAG, "Did not find a matching itinerary in new call - notify user that something has changed.");
+        showNotification(itineraryDescription,
+                R.string.trip_plan_notification_new_plan_title,
+                R.string.trip_plan_notification_new_plan_text, source,
+                builder.getBundle(), itineraries);
+        disableListenForTripUpdates();
     }
 
     private void showNotification(ItineraryDescription description, int title, int message,
@@ -383,7 +374,7 @@ public class RealtimeService extends IntentService {
 
         Bundle extras = new Bundle();
         try {
-            new TripRequestBuilder(params).copyIntoBundleSimple(extras);
+            new TripRequestBuilder(this, params).copyIntoBundleSimple(extras);
         } catch (NullPointerException e) {
             Log.e(TAG, "getSimplifiedBundle: error copying trip params into bundle", e);
             return null;

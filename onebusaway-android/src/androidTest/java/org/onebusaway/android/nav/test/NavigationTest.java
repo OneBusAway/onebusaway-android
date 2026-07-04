@@ -947,7 +947,7 @@ public class NavigationTest extends ObaTestCase {
          * @param expectedPullCordIndex the index for when the "Pull the Cord Now" notification is expected
          */
         void runSimulation(int expectedGetReadyIndex, int expectedPullCordIndex) {
-            NavigationServiceProvider provider = new NavigationServiceProvider(mTripId,
+            NavigationServiceProvider provider = new NavigationServiceProvider(getTargetContext(), mTripId,
                     mDestinationId);
             Location prevLocation = null;
             // Use the first location time as the starting time for this PathLink

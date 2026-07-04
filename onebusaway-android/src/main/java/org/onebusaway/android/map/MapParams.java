@@ -26,6 +26,13 @@ public class MapParams {
 
     public static final String ROUTE_ID = ".RouteId";
 
+    // The stop a "show vehicles on map" launch anchored to, so route mode restores its direction filter.
+    public static final String ROUTE_DIRECTION_STOP_ID = ".RouteDirectionStopId";
+
+    // The user-selected direction (via the route header's switch), restored across process death.
+    // Wins over the anchor stop when it's still a valid direction of the restored route.
+    public static final String ROUTE_DIRECTION_ID = ".RouteDirectionId";
+
     public static final String CENTER_LAT = ".MapCenterLat";
 
     public static final String CENTER_LON = ".MapCenterLon";

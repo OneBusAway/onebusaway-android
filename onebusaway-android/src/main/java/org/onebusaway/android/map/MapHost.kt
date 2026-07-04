@@ -94,17 +94,47 @@ class MapHost(
         savedStateHandle[MapParams.CENTER_LAT] = snapshot.center.latitude
         savedStateHandle[MapParams.CENTER_LON] = snapshot.center.longitude
         savedStateHandle[MapParams.ZOOM] = snapshot.zoom.toFloat()
-        // A region change that arrived before the map was ready deferred its framing to here (the first
-        // idle means the adapter is composed + subscribed to cameraCommands, so the command won't be lost).
+        // Apply any frame deferred while the map wasn't ready, but ONLY once the adapter's command
+        // collector is actually subscribed — not merely attached. [setMapAttached] runs in a
+        // DisposableEffect that fires *before* the separate LaunchedEffect that subscribes to
+        // [MapRenderState.cameraCommands], so there's a window where mapAttached is true but no collector
+        // exists yet; a map tearing down likewise reports a final idle after its collector is gone.
+        // Flushing then would dispatch the pending frame into a no-replay flow with no subscriber, losing
+        // it and stranding the camera at the (0,0) seed. This path only covers the
+        // "attached + subscribed but not yet idled" window (e.g. a region resolving just after attach);
+        // the reliable flush on (re)attach is [onCameraCommandsSubscribed].
+        if (mapAttached && cameraCommandsSubscribed) applyDeferredCameraFrames()
+    }
+
+    /**
+     * Apply any camera frame requested while the map was detached: the region re-zoom ([rezoomForRegion]),
+     * the route re-fit ([frameRoute]), or the directions itinerary fit ([frameItinerary]). The
+     * camera-command flow has no replay, so a frame dispatched before a collector exists is lost —
+     * these deferrals hold the intent until the map is ready, then dispatch it against a live subscriber.
+     */
+    private fun applyDeferredCameraFrames() {
         if (pendingRegionFrame) {
             pendingRegionFrame = false
             frameCurrentRegion()
         }
-        // Likewise a route re-frame requested while the map was detached (see [frameRoute]).
-        if (pendingRouteFrame) {
-            pendingRouteFrame = false
-            dispatchCamera(CameraCommand.FitToRoute)
+        if (pendingFrameCommands.isNotEmpty()) {
+            val commands = pendingFrameCommands
+            pendingFrameCommands = emptyList()
+            commands.forEach { dispatchCamera(it) }
         }
+    }
+
+    /**
+     * The flavor adapter calls this the instant it subscribes to [MapRenderState.cameraCommands] (from
+     * `Flow.onSubscription`), so a frame deferred while the map was detached is dispatched against a
+     * guaranteed-live collector rather than racing it. The first `onCameraIdle` can fire *before* the
+     * adapter's collector is registered — with a no-replay command flow that dropped the deferred frame,
+     * leaving the camera at the (0,0) world seed (the trip-plan directions map, drawn behind the results
+     * sheet the moment a plan completes, hit this every time).
+     */
+    fun onCameraCommandsSubscribed() {
+        cameraCommandsSubscribed = true
+        applyDeferredCameraFrames()
     }
 
     /**
@@ -126,6 +156,20 @@ class MapHost(
     /** Set by the use-case loaders while a load is in flight. */
     fun setProgress(inProgress: Boolean) {
         _progress.value = inProgress
+    }
+
+    private val _moreStopsAvailable = MutableStateFlow(false)
+
+    /**
+     * Whether the last viewport stop load was truncated (the API's `limitExceeded`): more stops match
+     * the viewport than were returned, so the UI can prompt the user to zoom in. Set by the stop
+     * loader on each load; cleared when leaving the nearby-stops view.
+     */
+    val moreStopsAvailable: StateFlow<Boolean> = _moreStopsAvailable.asStateFlow()
+
+    /** Set by the stop loader to the last response's `limitExceeded`; cleared on view changes. */
+    fun setMoreStopsAvailable(available: Boolean) {
+        _moreStopsAvailable.value = available
     }
 
     private val _effects = MutableSharedFlow<MapEffect>(extraBufferCapacity = 8)
@@ -152,34 +196,71 @@ class MapHost(
 
     fun dispatchCamera(command: CameraCommand) = renderState.dispatchCamera(command)
 
-    // Whether a flavor map adapter is currently composed + subscribed to [cameraCommands]. Toggled by the
-    // adapter on composition enter/leave; lets [frameRoute] choose between dispatching now and deferring.
+    // Whether a flavor map adapter is currently composed. Toggled by the adapter on composition
+    // enter/leave; lets [frameOrDefer] choose between dispatching now and deferring.
     private var mapAttached = false
 
-    // Set when a route re-frame is requested while the map is detached — the camera-command flow has no
-    // replay, so a command dispatched before the adapter (re)subscribes is lost. Consumed on the first
-    // onCameraIdle after it re-attaches (when it's composed, laid out, and subscribed). Like [pendingRegionFrame].
-    private var pendingRouteFrame = false
+    // Whether the adapter's [MapRenderState.cameraCommands] collector is actually subscribed. Distinct
+    // from [mapAttached] because the adapter sets attached in a DisposableEffect that runs *before* the
+    // LaunchedEffect that subscribes, so there's an attached-but-not-subscribed window; a deferred flush
+    // into the no-replay command flow during it would be lost. Set on subscribe ([onCameraCommandsSubscribed]),
+    // cleared on detach so a re-attach re-arms it.
+    private var cameraCommandsSubscribed = false
+
+    // Set when a framing move (route/itinerary bounds fit, or the degenerate directions start-center) is
+    // requested while the map is detached — the camera-command flow has no replay, so a command
+    // dispatched before the adapter (re)subscribes is lost. Holds the latest such frame's commands until
+    // the map is ready (see [frameOrDefer]); a single pending frame is enough because a given host only
+    // ever fits one thing (the home map fits a route, the trip-results map fits an itinerary), but the
+    // start-center frame is two commands (recenter + zoom), so it's a list. The region re-zoom is
+    // deferred separately via [pendingRegionFrame] because it runs decision logic ([frameCurrentRegion]).
+    private var pendingFrameCommands: List<CameraCommand> = emptyList()
 
     /** The flavor adapter reports when its render-state subscription starts/ends (the map composable enter/leave). */
     fun setMapAttached(attached: Boolean) {
         mapAttached = attached
+        if (!attached) cameraCommandsSubscribed = false
     }
 
     /**
-     * Frame the active route's bounding box (the "zoom to route" camera move). Dispatches now when a map
-     * adapter is attached; otherwise defers to the first [onCameraIdle] after one re-attaches, so the frame
-     * isn't dropped when re-selecting the already-shown route from a list that navigates back to a freshly
-     * re-created map (the recent-routes case). The route's shape is already in the render state, so the
-     * deferred [CameraCommand.FitToRoute] has bounds to fit.
+     * Dispatch a framing move now when the map adapter's command collector is subscribed; otherwise hold
+     * it until the map is ready (flushed by [onCameraCommandsSubscribed], or [applyDeferredCameraFrames]
+     * on the first idle), so a frame isn't dropped into the no-replay command flow when it's requested
+     * against a map that's attached but hasn't subscribed yet (the [setMapAttached] DisposableEffect runs
+     * before the subscribing LaunchedEffect). The shape/route is already in the render state, so a
+     * deferred bounds-fit has bounds to fit.
      */
-    fun frameRoute() {
-        if (mapAttached) {
-            dispatchCamera(CameraCommand.FitToRoute)
+    private fun frameOrDefer(vararg commands: CameraCommand) {
+        if (mapAttached && cameraCommandsSubscribed) {
+            commands.forEach { dispatchCamera(it) }
         } else {
-            pendingRouteFrame = true
+            pendingFrameCommands = commands.toList()
         }
     }
+
+    /**
+     * Frame the active route's bounding box (the "zoom to route" camera move). Deferred if the map isn't
+     * ready — e.g. re-selecting the already-shown route from a list that navigates back to a freshly
+     * re-created map (the recent-routes case).
+     */
+    fun frameRoute() = frameOrDefer(CameraCommand.FitToRoute)
+
+    /**
+     * Frame the current directions itinerary's bounding box. Deferred if the map isn't ready — the
+     * directions map is composed behind the results sheet the instant a plan completes, before the
+     * adapter subscribes to the command flow.
+     */
+    fun frameItinerary() = frameOrDefer(CameraCommand.FitToItinerary)
+
+    /**
+     * Frame a degenerate directions itinerary (no route shape — start == end): center on [lat],[lon] at
+     * the default zoom. Deferred like [frameItinerary] if the map isn't ready, since it's dispatched at
+     * the same moment (a plan completing behind the results sheet) and the command flow has no replay.
+     */
+    fun frameStart(lat: Double, lon: Double) = frameOrDefer(
+        CameraCommand.Recenter(lat, lon, animate = false, applyRouteBias = false),
+        CameraCommand.SetZoom(MapParams.DEFAULT_ZOOM.toFloat()),
+    )
 
     /** Animate/move the camera to a point with no route-header bias (a general recenter for any screen). */
     fun centerOn(lat: Double, lon: Double, animate: Boolean) {
@@ -222,14 +303,14 @@ class MapHost(
     fun requestLocationPermissionIfNeeded() {
         if (PermissionUtils.hasGrantedAtLeastOnePermission(context, PermissionUtils.LOCATION_PERMISSIONS)) {
             _myLocationEnabled.value = true
-        } else if (!PreferenceUtils.userDeniedLocationPermission()) {
+        } else if (!PreferenceUtils.userDeniedLocationPermission(context)) {
             emitEffect(MapEffect.ShowPermissionRationale)
         }
     }
 
     /** The Activity delivered a location-permission result; reflect it (blue dot on grant). */
     fun onLocationPermissionResult(granted: Boolean) {
-        PreferenceUtils.setUserDeniedLocationPermissions(!granted)
+        PreferenceUtils.setUserDeniedLocationPermissions(context, !granted)
         if (granted) {
             _myLocationEnabled.value = true
             // onResume already ran startUpdates() with no permission (a no-op); now that it's granted,
@@ -258,7 +339,7 @@ class MapHost(
             hasPermission = PermissionUtils.hasGrantedAtLeastOnePermission(
                 app, PermissionUtils.LOCATION_PERMISSIONS
             ),
-            userDeniedPermission = PreferenceUtils.userDeniedLocationPermission(),
+            userDeniedPermission = PreferenceUtils.userDeniedLocationPermission(context),
         )
         when (action) {
             MyLocationAction.MoveToLocation -> last?.let {

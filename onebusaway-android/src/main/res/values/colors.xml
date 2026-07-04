@@ -26,6 +26,9 @@
     <color name="theme_primary_variant">@color/brand_color_dark</color>
     <color name="theme_accent">#5db53b</color>
 
+    <!-- The focused/selected map stop highlight: the selected_map_stop_icon.xml fill + the focused dot. -->
+    <color name="map_stop_focus">#FF9500</color>
+
     <color name="body_text_1">#de000000</color>
     <color name="body_text_2">#8a000000</color>
     <color name="body_text_disabled">#44000000</color>

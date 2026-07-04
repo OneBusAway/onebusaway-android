@@ -20,15 +20,12 @@ package org.onebusaway.android.util;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.PreferencesEntryPoint;
+import org.onebusaway.android.app.di.RegionEntryPoint;
 import org.onebusaway.android.api.bridge.RegionsClient;
 import org.onebusaway.android.region.Region;
-import org.onebusaway.android.region.RegionCursor;
-import org.onebusaway.android.provider.ObaContract;
 
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.location.Location;
 import android.util.Log;
 
@@ -73,7 +70,7 @@ public class RegionUtils {
      * enforceThreshold is true and the closest region exceeded DISTANCE_LIMITER threshold or a
      * region couldn't be found
      */
-    public static Region getClosestRegion(ArrayList<Region> regions, Location loc,
+    public static Region getClosestRegion(Context context, List<Region> regions, Location loc,
             boolean enforceThreshold) {
         if (loc == null) {
             return null;
@@ -91,7 +88,7 @@ public class RegionUtils {
         Log.d(TAG, "Finding region closest to " + loc.getLatitude() + "," + loc.getLongitude());
 
         for (Region region : regions) {
-            if (!isRegionUsable(region)) {
+            if (!isRegionUsable(context, region)) {
                 Log.d(TAG,
                         "Excluding '" + region.getName() + "' from 'closest region' consideration");
                 continue;
@@ -126,26 +123,30 @@ public class RegionUtils {
      *
      * @return regionName
      */
-    public static String getObaRegionName() {
+    public static String getObaRegionName(Context context) {
         String regionName = null;
-        Region region = Application.get().getCurrentRegion();
+        Region region = RegionEntryPoint.get(context).currentRegion();
         if (region != null && region.getName() != null) {
             regionName = region.getName();
-        } else if (Application.get().getCustomApiUrl() != null) {
-            regionName = createHashCode(Application.get().getCustomApiUrl().getBytes());
+        } else {
+            String customApiUrl = PreferencesEntryPoint.get(context)
+                    .getString(context.getString(R.string.preference_key_oba_api_url), (String) null);
+            if (customApiUrl != null) {
+                regionName = createHashCode(context, customApiUrl.getBytes());
+            }
         }
         return regionName;
     }
 
-    private static String createHashCode(byte[] bytes) {
+    private static String createHashCode(Context context, byte[] bytes) {
         MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("SHA-1");
             digest.update(bytes);
-            return Application.get().getString(R.string.analytics_label_custom_url) +
+            return context.getString(R.string.analytics_label_custom_url) +
                     ": " + Application.getHex(digest.digest());
         } catch (Exception e) {
-            return Application.get().getString(R.string.analytics_label_custom_url);
+            return context.getString(R.string.analytics_label_custom_url);
         }
     }
 
@@ -289,7 +290,7 @@ public class RegionUtils {
      * @param region region to be checked
      * @return true if the region is usable by this application, false if it is not
      */
-    public static boolean isRegionUsable(Region region) {
+    public static boolean isRegionUsable(Context context, Region region) {
         if (!region.getActive()) {
             Log.d(TAG, "Region '" + region.getName() + "' is not active.");
             return false;
@@ -303,7 +304,7 @@ public class RegionUtils {
             return false;
         }
         if (region.getExperimental() && !PreferenceUtils.getBoolean(
-                Application.get().getString(R.string.preference_key_experimental_regions), false)) {
+                context.getString(R.string.preference_key_experimental_regions), false)) {
             Log.d(TAG,
                     "Region '" + region.getName() + "' is experimental and user hasn't opted in.");
             return false;
@@ -322,249 +323,9 @@ public class RegionUtils {
         return baseUrl.replaceFirst("/$", "");
     }
 
-    /**
-     * Gets regions from either the server, local provider, or if both fails the regions file
-     * packaged
-     * with the APK.  Includes fail-over logic to prefer sources in above order, with server being
-     * the first preference.
-     *
-     * @param forceReload true if a reload from the server should be forced, false if it should not
-     * @return a list of regions from either the server, the local provider, or the packaged
-     * resource file
-     */
-    public synchronized static ArrayList<Region> getRegions(Context context,
-            boolean forceReload) {
-        ArrayList<Region> results;
-        if (!forceReload) {
-            //
-            // Check the DB
-            //
-            results = RegionUtils.getRegionsFromProvider(context);
-            if (results != null) {
-                Log.d(TAG, "Retrieved regions from database.");
-                return results;
-            }
-            Log.d(TAG, "Regions list retrieved from database was null.");
-        }
 
-        results = RegionUtils.getRegionsFromServer(context);
-        if (results == null || results.isEmpty()) {
-            Log.d(TAG, "Regions list retrieved from server was null or empty.");
 
-            if (forceReload) {
-                //If we tried to force a reload from the server, then we haven't tried to reload from local provider yet
-                results = RegionUtils.getRegionsFromProvider(context);
-                if (results != null) {
-                    Log.d(TAG, "Retrieved regions from database.");
-                    return results;
-                } else {
-                    Log.d(TAG, "Regions list retrieved from database was null.");
-                }
-            }
-
-            //If we reach this point, the call to the Regions REST API failed and no results were
-            //available locally from a prior server request.        
-            //Fetch regions from local resource file as last resort (otherwise user can't use app)
-            results = RegionUtils.getRegionsFromResources(context);
-
-            if (results == null) {
-                //This is a complete failure to load region info from all sources, app will be useless
-                Log.d(TAG, "Regions list retrieved from local resource file was null.");
-                return results;
-            }
-
-            Log.d(TAG, "Retrieved regions from local resource file.");
-        } else {
-            Log.d(TAG, "Retrieved regions list from server.");
-            //Update local time for when the last region info was retrieved from the server
-            Application.get().setLastRegionUpdateDate(new Date().getTime());
-        }
-
-        //If the region info came from the server or local resource file, we need to save it to the local provider
-        RegionUtils.saveToProvider(context, results);
-        return results;
-    }
-
-    public static ArrayList<Region> getRegionsFromProvider(Context context) {
-        // Prefetch the bounds to limit the number of DB calls.
-        HashMap<Long, ArrayList<Region.Bounds>> allBounds = getBoundsFromProvider(
-                context);
-
-        HashMap<Long, ArrayList<Region.Open311Server>> allOpen311Servers =
-                getOpen311ServersFromProvider(context);
-
-        Cursor c = null;
-        try {
-            final String[] PROJECTION = {
-                    ObaContract.Regions._ID,
-                    ObaContract.Regions.NAME,
-                    ObaContract.Regions.OBA_BASE_URL,
-                    ObaContract.Regions.SIRI_BASE_URL,
-                    ObaContract.Regions.LANGUAGE,
-                    ObaContract.Regions.CONTACT_EMAIL,
-                    ObaContract.Regions.SUPPORTS_OBA_DISCOVERY,
-                    ObaContract.Regions.SUPPORTS_OBA_REALTIME,
-                    ObaContract.Regions.SUPPORTS_SIRI_REALTIME,
-                    ObaContract.Regions.TWITTER_URL,
-                    ObaContract.Regions.EXPERIMENTAL,
-                    ObaContract.Regions.STOP_INFO_URL,
-                    ObaContract.Regions.OTP_BASE_URL,
-                    ObaContract.Regions.OTP_CONTACT_EMAIL,
-                    ObaContract.Regions.SUPPORTS_OTP_BIKESHARE,
-                    ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL,
-                    ObaContract.Regions.PAYMENT_ANDROID_APP_ID,
-                    ObaContract.Regions.PAYMENT_WARNING_TITLE,
-                    ObaContract.Regions.PAYMENT_WARNING_BODY,
-                    ObaContract.Regions.TRAVEL_BEHAVIOR_DATA_COLLECTION,
-                    ObaContract.Regions.ENROLL_PARTICIPANTS_IN_STUDY,
-                    ObaContract.Regions.SIDECAR_BASE_URL,
-                    ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL,
-                    ObaContract.Regions.UMAMI_ANALYTICS_URL,
-                    ObaContract.Regions.UMAMI_ANALYTICS_ID
-            };
-
-            ContentResolver cr = context.getContentResolver();
-            c = cr.query(
-                    ObaContract.Regions.CONTENT_URI, PROJECTION, null, null,
-                    ObaContract.Regions._ID);
-            if (c == null) {
-                return null;
-            }
-            if (c.getCount() == 0) {
-                c.close();
-                return null;
-            }
-            ArrayList<Region> results = new ArrayList<Region>();
-
-            c.moveToFirst();
-            do {
-                long id = c.getLong(0);
-                ArrayList<Region.Bounds> bounds = allBounds.get(id);
-                Region.Bounds[] bounds2 = (bounds != null) ?
-                        bounds.toArray(new Region.Bounds[]{}) :
-                        null;
-
-                ArrayList<Region.Open311Server> open311Servers = allOpen311Servers.get(id);
-                Region.Open311Server[] open311Servers2 = (open311Servers != null) ?
-                        open311Servers.toArray(new Region.Open311Server[]{}) :
-                        null;
-
-                results.add(RegionCursor.fromCursor(c, bounds2, open311Servers2));
-
-            } while (c.moveToNext());
-
-            return results;
-
-        } finally {
-            if (c != null) {
-                c.close();
-            }
-        }
-    }
-
-    private static HashMap<Long, ArrayList<Region.Bounds>> getBoundsFromProvider(
-            Context context) {
-        // Prefetch the bounds to limit the number of DB calls.
-        Cursor c = null;
-        try {
-            final String[] PROJECTION = {
-                    ObaContract.RegionBounds.REGION_ID,
-                    ObaContract.RegionBounds.LATITUDE,
-                    ObaContract.RegionBounds.LONGITUDE,
-                    ObaContract.RegionBounds.LAT_SPAN,
-                    ObaContract.RegionBounds.LON_SPAN
-            };
-            HashMap<Long, ArrayList<Region.Bounds>> results
-                    = new HashMap<Long, ArrayList<Region.Bounds>>();
-
-            ContentResolver cr = context.getContentResolver();
-            c = cr.query(ObaContract.RegionBounds.CONTENT_URI, PROJECTION, null, null, null);
-            if (c == null) {
-                return results;
-            }
-            if (c.getCount() == 0) {
-                c.close();
-                return results;
-            }
-            c.moveToFirst();
-            do {
-                long regionId = c.getLong(0);
-                ArrayList<Region.Bounds> bounds = results.get(regionId);
-                Region.Bounds b = new Region.Bounds(
-                        c.getDouble(1),
-                        c.getDouble(2),
-                        c.getDouble(3),
-                        c.getDouble(4));
-                if (bounds != null) {
-                    bounds.add(b);
-                } else {
-                    bounds = new ArrayList<Region.Bounds>();
-                    bounds.add(b);
-                    results.put(regionId, bounds);
-                }
-
-            } while (c.moveToNext());
-
-            return results;
-
-        } finally {
-            if (c != null) {
-                c.close();
-            }
-        }
-    }
-
-    private static HashMap<Long, ArrayList<Region.Open311Server>> getOpen311ServersFromProvider(
-            Context context) {
-        // Prefetch the bounds to limit the number of DB calls.
-        Cursor c = null;
-        try {
-            final String[] PROJECTION = {
-                    ObaContract.RegionOpen311Servers.REGION_ID,
-                    ObaContract.RegionOpen311Servers.JURISDICTION,
-                    ObaContract.RegionOpen311Servers.API_KEY,
-                    ObaContract.RegionOpen311Servers.BASE_URL
-            };
-            HashMap<Long, ArrayList<Region.Open311Server>> results
-                    = new HashMap<Long, ArrayList<Region.Open311Server>>();
-
-            ContentResolver cr = context.getContentResolver();
-            c = cr.query(ObaContract.RegionOpen311Servers.CONTENT_URI, PROJECTION, null, null, null);
-            if (c == null) {
-                return results;
-            }
-            if (c.getCount() == 0) {
-                c.close();
-                return results;
-            }
-            c.moveToFirst();
-            do {
-                long regionId = c.getLong(0);
-                ArrayList<Region.Open311Server> open311Servers = results.get(regionId);
-                Region.Open311Server b = new Region.Open311Server(
-                        c.getString(1),
-                        c.getString(2),
-                        c.getString(3));
-                if (open311Servers != null) {
-                    open311Servers.add(b);
-                } else {
-                    open311Servers = new ArrayList<Region.Open311Server>();
-                    open311Servers.add(b);
-                    results.put(regionId, open311Servers);
-                }
-
-            } while (c.moveToNext());
-
-            return results;
-
-        } finally {
-            if (c != null) {
-                c.close();
-            }
-        }
-    }
-
-    private synchronized static ArrayList<Region> getRegionsFromServer(Context context) {
+    public synchronized static ArrayList<Region> getRegionsFromServer(Context context) {
         return new ArrayList<Region>(RegionsClient.fetchRegionsFromServer(context));
     }
 
@@ -572,7 +333,7 @@ public class RegionUtils {
      * Retrieves region information from a regions file bundled within the app APK
      *
      * IMPORTANT - this should be a last resort, and we should always try to pull regions
-     * info from the local provider or Regions REST API instead of from the bundled file.
+     * info from the cached regions or the Regions REST API instead of from the bundled file.
      *
      * This method is only intended to be a fail-safe in case the Regions REST API goes
      * offline and a user downloads and installs OBA Android during that period
@@ -630,112 +391,10 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_PAYMENT_ANDROID_APP_ID,
                 BuildConfig.FIXED_REGION_PAYMENT_WARNING_TITLE,
                 BuildConfig.FIXED_REGION_PAYMENT_WARNING_BODY,
-                BuildConfig.FIXED_REGION_TRAVEL_BEHAVIOR_DATA_COLLECTION,
-                BuildConfig.FIXED_REGION_ENROLL_PARTICIPANTS_IN_STUDY,
                 BuildConfig.FIXED_REGION_SIDECAR_BASE_URL,
                 BuildConfig.FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL,
                 null);   // No Umami config for the fixed-region build flavor
         return region;
     }
 
-    //
-    // Saving
-    //
-    public synchronized static void saveToProvider(Context context, List<Region> regions) {
-        // Delete all the existing regions
-        ContentResolver cr = context.getContentResolver();
-        cr.delete(ObaContract.Regions.CONTENT_URI, null, null);
-        // Should be a no-op?
-        cr.delete(ObaContract.RegionBounds.CONTENT_URI, null, null);
-        // Delete all existing open311 endpoints
-        cr.delete(ObaContract.RegionOpen311Servers.CONTENT_URI, null, null);
-
-        for (Region region : regions) {
-            if (!isRegionUsable(region)) {
-                Log.d(TAG, "Skipping insert of '" + region.getName() + "' to provider...");
-                continue;
-            }
-
-            cr.insert(ObaContract.Regions.CONTENT_URI, toContentValues(region));
-            Log.d(TAG, "Saved region '" + region.getName() + "' to provider");
-            long regionId = region.getId();
-            // Bulk insert the bounds
-            Region.Bounds[] bounds = region.getBounds();
-            if (bounds != null) {
-                ContentValues[] values = new ContentValues[bounds.length];
-                for (int i = 0; i < bounds.length; ++i) {
-                    values[i] = toContentValues(regionId, bounds[i]);
-                }
-                cr.bulkInsert(ObaContract.RegionBounds.CONTENT_URI, values);
-            }
-
-            Region.Open311Server[] open311Servers = region.getOpen311Servers();
-
-            if (open311Servers != null) {
-                ContentValues[] values = new ContentValues[open311Servers.length];
-                for (int i = 0; i < open311Servers.length; ++i) {
-                    values[i] = toContentValues(regionId, open311Servers[i]);
-                }
-                cr.bulkInsert(ObaContract.RegionOpen311Servers.CONTENT_URI, values);
-            }
-        }
-    }
-
-    private static ContentValues toContentValues(Region region) {
-        ContentValues values = new ContentValues();
-        values.put(ObaContract.Regions._ID, region.getId());
-            values.put(ObaContract.Regions.NAME, region.getName());
-        String obaUrl = region.getObaBaseUrl();
-        values.put(ObaContract.Regions.OBA_BASE_URL, obaUrl != null ? obaUrl : "");
-        String siriUrl = region.getSiriBaseUrl();
-        values.put(ObaContract.Regions.SIRI_BASE_URL, siriUrl != null ? siriUrl : "");
-        values.put(ObaContract.Regions.LANGUAGE, region.getLanguage());
-        values.put(ObaContract.Regions.CONTACT_EMAIL, region.getContactEmail());
-        values.put(ObaContract.Regions.SUPPORTS_OBA_DISCOVERY,
-                region.getSupportsObaDiscoveryApis() ? 1 : 0);
-        values.put(ObaContract.Regions.SUPPORTS_OBA_REALTIME,
-                region.getSupportsObaRealtimeApis() ? 1 : 0);
-        values.put(ObaContract.Regions.SUPPORTS_SIRI_REALTIME,
-                region.getSupportsSiriRealtimeApis() ? 1 : 0);
-        values.put(ObaContract.Regions.TWITTER_URL, region.getTwitterUrl());
-        values.put(ObaContract.Regions.EXPERIMENTAL, region.getExperimental());
-        values.put(ObaContract.Regions.STOP_INFO_URL, region.getStopInfoUrl());
-        values.put(ObaContract.Regions.OTP_BASE_URL, region.getOtpBaseUrl());
-        values.put(ObaContract.Regions.OTP_CONTACT_EMAIL, region.getOtpContactEmail());
-        values.put(ObaContract.Regions.SUPPORTS_OTP_BIKESHARE,
-                region.getSupportsOtpBikeshare() ? 1 : 0);
-        values.put(ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL,
-                region.getSupportsEmbeddedSocial() ? 1 : 0);
-        values.put(ObaContract.Regions.PAYMENT_ANDROID_APP_ID, region.getPaymentAndroidAppId());
-        values.put(ObaContract.Regions.PAYMENT_WARNING_TITLE, region.getPaymentWarningTitle());
-        values.put(ObaContract.Regions.PAYMENT_WARNING_BODY, region.getPaymentWarningBody());
-        values.put(ObaContract.Regions.TRAVEL_BEHAVIOR_DATA_COLLECTION,
-                region.isTravelBehaviorDataCollectionEnabled() ? 1 : 0);
-        values.put(ObaContract.Regions.ENROLL_PARTICIPANTS_IN_STUDY,
-                region.isEnrollParticipantsInStudy() ? 1 : 0);
-        values.put(ObaContract.Regions.SIDECAR_BASE_URL, region.getSidecarBaseUrl());
-        values.put(ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL, region.getPlausibleAnalyticsServerUrl());
-        values.put(ObaContract.Regions.UMAMI_ANALYTICS_URL, region.getUmamiAnalyticsUrl());
-        values.put(ObaContract.Regions.UMAMI_ANALYTICS_ID, region.getUmamiAnalyticsId());
-        return values;
-    }
-
-    private static ContentValues toContentValues(long region, Region.Bounds bounds) {
-        ContentValues values = new ContentValues();
-        values.put(ObaContract.RegionBounds.REGION_ID, region);
-        values.put(ObaContract.RegionBounds.LATITUDE, bounds.getLat());
-        values.put(ObaContract.RegionBounds.LONGITUDE, bounds.getLon());
-        values.put(ObaContract.RegionBounds.LAT_SPAN, bounds.getLatSpan());
-        values.put(ObaContract.RegionBounds.LON_SPAN, bounds.getLonSpan());
-        return values;
-    }
-
-    private static ContentValues toContentValues(long region, Region.Open311Server open311Server) {
-        ContentValues values = new ContentValues();
-        values.put(ObaContract.RegionOpen311Servers.REGION_ID, region);
-        values.put(ObaContract.RegionOpen311Servers.BASE_URL, open311Server.getBaseUrl());
-        values.put(ObaContract.RegionOpen311Servers.JURISDICTION, open311Server.getJuridisctionId());
-        values.put(ObaContract.RegionOpen311Servers.API_KEY, open311Server.getApiKey());
-        return values;
-    }
 }

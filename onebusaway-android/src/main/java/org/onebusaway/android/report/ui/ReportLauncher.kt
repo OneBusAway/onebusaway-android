@@ -33,13 +33,11 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.appcompat.app.AppCompatActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.google.firebase.analytics.FirebaseAnalytics
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
-import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.report.ReportContext
@@ -116,7 +114,6 @@ object ReportLauncher {
 @Composable
 fun ReportDestination(navController: NavController, reportContext: ReportContext) {
     val activity = LocalContext.current.findActivity()
-    val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(activity) }
 
     // Whether the region needs validating: false → show the type list straight away. Computed once.
     val needsValidation = remember { showValidateRegionDialog(activity) }
@@ -160,7 +157,7 @@ fun ReportDestination(navController: NavController, reportContext: ReportContext
             viewModel = hiltViewModel(),
             onBack = { navController.popBackStack() },
             onActionSelected = { action ->
-                onReportActionSelected(activity, firebaseAnalytics, navController, action, reportContext)
+                onReportActionSelected(activity, navController, action, reportContext)
             }
         )
     }
@@ -168,7 +165,6 @@ fun ReportDestination(navController: NavController, reportContext: ReportContext
 
 private fun onReportActionSelected(
     activity: AppCompatActivity,
-    firebaseAnalytics: FirebaseAnalytics,
     navController: NavController,
     action: ReportAction,
     reportContext: ReportContext
@@ -180,7 +176,7 @@ private fun onReportActionSelected(
         ReportAction.CUSTOMER_SERVICE -> {
             navController.navigate(NavRoutes.customerService(encodedContext))
             reportEvent(
-                activity, firebaseAnalytics,
+                activity,
                 PlausibleAnalytics.REPORT_MORE_EVENT_URL, R.string.analytics_label_customer_service
             )
         }
@@ -192,7 +188,7 @@ private fun onReportActionSelected(
                 )
             )
             reportEvent(
-                activity, firebaseAnalytics,
+                activity,
                 PlausibleAnalytics.REPORT_STOP_PROBLEM_EVENT_URL, R.string.analytics_label_stop_problem
             )
         }
@@ -204,28 +200,27 @@ private fun onReportActionSelected(
                 )
             )
             reportEvent(
-                activity, firebaseAnalytics,
+                activity,
                 PlausibleAnalytics.REPORT_VEHICLE_PROBLEM_EVENT_URL, R.string.analytics_label_trip_problem
             )
         }
 
-        ReportAction.APP_FEEDBACK -> sendAppFeedback(activity, firebaseAnalytics, reportContext.locationString)
+        ReportAction.APP_FEEDBACK -> sendAppFeedback(activity, reportContext.locationString)
     }
 }
 
 private fun sendAppFeedback(
     activity: AppCompatActivity,
-    firebaseAnalytics: FirebaseAnalytics,
     locationString: String?
 ) {
     ExternalIntents.sendEmail(activity, activity.getString(R.string.ri_app_feedback_email), locationString)
     reportEvent(
-        activity, firebaseAnalytics,
+        activity,
         PlausibleAnalytics.REPORT_MORE_EVENT_URL, R.string.analytics_label_app_feedback
     )
     if (locationString == null) {
         reportEvent(
-            activity, firebaseAnalytics,
+            activity,
             PlausibleAnalytics.REPORT_VEHICLE_PROBLEM_EVENT_URL,
             R.string.analytics_label_app_feedback_without_location
         )
@@ -234,13 +229,10 @@ private fun sendAppFeedback(
 
 private fun reportEvent(
     activity: AppCompatActivity,
-    firebaseAnalytics: FirebaseAnalytics,
     eventUrl: String,
     labelRes: Int
 ) {
-    ObaAnalytics.reportUiEvent(
-        firebaseAnalytics,
-        Application.get().plausibleInstance,
+    AnalyticsEntryPoint.get(activity).reportUiEvent(
         eventUrl,
         activity.getString(R.string.analytics_problem),
         activity.getString(labelRes)

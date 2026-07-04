@@ -20,7 +20,7 @@ package org.onebusaway.android.region
 /**
  * A region in the OneBusAway multi-region system: the OBA/SIRI/OTP/sidecar endpoints and
  * capabilities for one deployment. Built from the regions-directory wire (RegionDto.toObaRegion),
- * the local ContentProvider cache ([RegionCursor.fromCursor]), and tests (MockRegion).
+ * the local Room region cache ([RegionMapper.toRegion]), and tests (MockRegion).
  *
  * Was the io/elements `ObaRegion` interface + its sole `ObaRegionElement` implementation; collapsed
  * into one data class since there was never a second implementation.
@@ -48,8 +48,6 @@ data class Region(
     val paymentAndroidAppId: String? = null,
     val paymentWarningTitle: String? = null,
     val paymentWarningBody: String? = null,
-    val isTravelBehaviorDataCollectionEnabled: Boolean = false,
-    val isEnrollParticipantsInStudy: Boolean = false,
     val sidecarBaseUrl: String? = "",
     val plausibleAnalyticsServerUrl: String? = "",
     val umamiAnalytics: UmamiAnalyticsConfig? = null,

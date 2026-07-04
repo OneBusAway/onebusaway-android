@@ -19,9 +19,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.res.Configuration
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -59,10 +57,12 @@ import org.onebusaway.android.map.maplibre.MapLibreRenderer
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
+import org.onebusaway.android.util.ThemeUtils
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onSubscription
 import kotlin.math.abs
 
 private const val STYLE_URL_LIGHT = "https://tiles.openfreemap.org/styles/liberty"
@@ -139,7 +139,7 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                         .build()
                 }
                 map.uiSettings.isCompassEnabled = false
-                val styleUrl = if (isInDarkMode(context)) STYLE_URL_DARK else STYLE_URL_LIGHT
+                val styleUrl = if (ThemeUtils.isInDarkMode(context)) STYLE_URL_DARK else STYLE_URL_LIGHT
                 map.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
                     loadedStyle = style
                     val r = MapLibreRenderer(map, context, renderState)
@@ -167,6 +167,13 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                     renderState.snapshot.map { },
                     renderState.tripStops.map { },
                 ).collect { activeRenderer.renderStatic() }
+            }
+            // The vehicle set (which vehicles exist + their icons): reconcile the markers whenever it's
+            // pushed — a poll, a direction switch, or leaving route mode (null). Discrete, so it's reactive
+            // (not inferred from the per-frame motion loop below), which is what makes a direction switch
+            // take effect immediately instead of waiting for the next poll.
+            LaunchedEffect(activeRenderer) {
+                renderState.vehicleSet.collect { activeRenderer.reconcileVehicles(it) }
             }
             // Dynamic layer (the live vehicles + the trip-focus band/markers): while either sampler is
             // installed, pull a fresh frame each display frame and update the annotations in place.
@@ -213,9 +220,14 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                 onDispose { host.setMapAttached(false) }
             }
             LaunchedEffect(map) {
-                renderState.cameraCommands.collect { command ->
-                    applyCameraCommand(command, map, renderState)
-                }
+                renderState.cameraCommands
+                    // Flush any frame deferred while the map was detached the moment this collector is
+                    // registered — emissions in onSubscription reach this collector, so a deferred fit
+                    // isn't dropped by the no-replay flow if the first camera-idle beats us (#1640).
+                    .onSubscription { host.onCameraCommandsSubscribed() }
+                    .collect { command ->
+                        applyCameraCommand(command, map, renderState)
+                    }
             }
         }
 
@@ -252,7 +264,7 @@ private fun wireClicks(
         val response = renderer.vehicleResponse()
         if (vehicle != null && response != null) {
             callbacks.onVehicleClick(vehicle.status) // selects it -> renderer shows the most-recent-data dot
-            infoWindows.open(marker) { VehicleInfoWindow(vehicle.status, response) }
+            infoWindows.open(marker) { VehicleInfoWindow(vehicle.status, vehicle.isRealtime, response) }
             return@setOnMarkerClickListener true
         }
         val bike = renderer.bikeForMarker(marker)
@@ -315,19 +327,6 @@ private fun enableLocationComponent(map: MapLibreMap, style: Style, context: Con
         component.renderMode = RenderMode.COMPASS
     }
     component.isLocationComponentEnabled = true
-}
-
-/** Mirrors the former MapLibreMapHost.inDarkMode: app night-mode override, else the system config. */
-private fun isInDarkMode(context: Context): Boolean {
-    val mode = AppCompatDelegate.getDefaultNightMode()
-    if (mode == AppCompatDelegate.MODE_NIGHT_YES) {
-        return true
-    }
-    if (mode == AppCompatDelegate.MODE_NIGHT_NO) {
-        return false
-    }
-    return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-        Configuration.UI_MODE_NIGHT_YES
 }
 
 private fun Context.findActivity(): Activity {

@@ -23,8 +23,9 @@ import org.onebusaway.android.models.Status
 /**
  * A minimal [ObaTripStatus] for JVM unit tests. Location-typed accessors return null by default, so
  * the android.location.Location stubs (which throw "Stub!") are never invoked — no Robolectric
- * needed. Pass [hasLocation] = true when a test needs `lastKnownLocation` to be non-null (e.g.
- * to exercise `isLocationRealtime`); the returned sentinel is only ever null-checked, never called.
+ * needed. Pass [hasLastKnownLocation]/[hasPosition] = true when a test needs `lastKnownLocation`/`position` to
+ * be non-null (e.g. to exercise `isLocationRealtime`); the returned sentinel is only ever null-checked,
+ * never called.
  */
 fun testTripStatus(
     distanceAlongTrip: Double? = null,
@@ -33,7 +34,8 @@ fun testTripStatus(
     vehicleId: String? = null,
     activeTripId: String? = null,
     predicted: Boolean = false,
-    hasLocation: Boolean = false,
+    hasLastKnownLocation: Boolean = false,
+    hasPosition: Boolean = false,
 ): ObaTripStatus = TestTripStatus(
     distanceAlongTrip = distanceAlongTrip,
     totalDistanceAlongTrip = totalDistanceAlongTrip,
@@ -41,7 +43,8 @@ fun testTripStatus(
     vehicleId = vehicleId,
     activeTripId = activeTripId,
     predicted = predicted,
-    hasLocation = hasLocation,
+    hasLastKnownLocation = hasLastKnownLocation,
+    hasPosition = hasPosition,
 )
 
 private class TestTripStatus(
@@ -51,7 +54,8 @@ private class TestTripStatus(
     vehicleId: String?,
     activeTripId: String?,
     predicted: Boolean,
-    private val hasLocation: Boolean,
+    private val hasLastKnownLocation: Boolean,
+    private val hasPosition: Boolean,
 ) : ObaTripStatus {
     override val serviceDate: Long = 0L
     override val isPredicted: Boolean = predicted
@@ -59,7 +63,8 @@ private class TestTripStatus(
     override val vehicleId: String? = vehicleId
     override val closestStop: String? = null
     override val closestStopTimeOffset: Long = 0L
-    override val position: Location? = null
+    override val position: Location?
+        get() = if (hasPosition) FAKE_LOCATION else null
     override val activeTripId: String? = activeTripId
     override val distanceAlongTrip: Double? = distanceAlongTrip
     override val scheduledDistanceAlongTrip: Double? = null
@@ -71,7 +76,7 @@ private class TestTripStatus(
     override val status: Status? = null
     override val lastUpdateTime: Long = lastUpdateTime
     override val lastKnownLocation: Location?
-        get() = if (hasLocation) FAKE_LOCATION else null
+        get() = if (hasLastKnownLocation) FAKE_LOCATION else null
     override val lastLocationUpdateTime: Long = 0L
     override val lastKnownDistanceAlongTrip: Double? = null
     override val lastKnownOrientation: Double? = null

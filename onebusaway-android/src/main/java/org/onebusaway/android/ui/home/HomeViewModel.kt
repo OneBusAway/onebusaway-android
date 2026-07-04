@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
@@ -72,9 +73,6 @@ class HomeViewModel @Inject constructor(
     )
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    private val _sheetCommands = MutableSharedFlow<SheetCommand>(extraBufferCapacity = 4)
-    val sheetCommands: SharedFlow<SheetCommand> = _sheetCommands.asSharedFlow()
-
     // The map's bottom inset (driven by the arrivals sheet) — idempotent last-wins state, applied by
     // MapFeature. A StateFlow (not an event) so a re-entering map re-reads the latest value.
     private val _mapBottomPadding = MutableStateFlow(0)
@@ -82,8 +80,8 @@ class HomeViewModel @Inject constructor(
 
     // One-shot outbound map interactions (recenter / show route / focus / clear focus) that can't be
     // modeled as state. MapFeature collects these and calls the map view model — so this VM needs no
-    // reference to the map's VM (the seam the old MapInteractionBus filled). Buffered like sheetCommands
-    // so a directive issued just before the collector is active isn't dropped.
+    // reference to the map's VM (the seam the old MapInteractionBus filled). Buffered so a directive
+    // issued just before the collector is active isn't dropped.
     private val _mapDirectives = MutableSharedFlow<MapDirective>(extraBufferCapacity = 8)
     val mapDirectives: SharedFlow<MapDirective> = _mapDirectives.asSharedFlow()
 
@@ -193,17 +191,12 @@ class HomeViewModel @Inject constructor(
         when (state) {
             ArrivalsSheetState.Expanded -> {
                 _mapBottomPadding.value = peekPx
-                _uiState.value.focusedStop?.let {
-                    emitMapDirective(MapDirective.RecenterOnFocusedStop(it.lat, it.lon))
-                }
+                recenterOnFocusedStop()
             }
             ArrivalsSheetState.Collapsed -> _mapBottomPadding.value = peekPx
             ArrivalsSheetState.Hidden -> _mapBottomPadding.value = 0
         }
     }
-
-    /** Chevron tap — ask the screen to toggle the sheet (it holds the live SheetState). */
-    fun requestToggleSheet() = emit(SheetCommand.ToggleSheet)
 
     /**
      * The host has a restored / deep-linked focus the imperative map hasn't been told about yet;
@@ -242,10 +235,20 @@ class HomeViewModel @Inject constructor(
         emitMapDirective(MapDirective.FocusStop(stop, routes, settledSheet == ArrivalsSheetState.Expanded))
     }
 
-    /** "Show vehicles on map" — collapse the sheet (screen), then switch the map to route mode. */
-    fun requestShowRouteOnMap(routeId: String) {
-        emit(SheetCommand.CollapseSheet)
-        emitMapDirective(MapDirective.ShowRoute(routeId))
+    /** Animate the map's camera back onto the focused stop, if one is focused (else a no-op). */
+    fun recenterOnFocusedStop() {
+        _uiState.value.focusedStop?.let {
+            emitMapDirective(MapDirective.RecenterOnFocusedStop(it.lat, it.lon))
+        }
+    }
+
+    /**
+     * "Show vehicles on map" — switch the map to route mode. The [request] carries the route and (for
+     * the arrivals-row launch) the direction stop to focus on. The sheet collapse is a declarative
+     * reaction to route mode activating (see [HomeScreen]'s `routeModeActive` effect), not a command.
+     */
+    fun requestShowRouteOnMap(request: ShowRouteRequest) {
+        emitMapDirective(MapDirective.ShowRoute(request))
     }
 
     /**
@@ -266,13 +269,8 @@ class HomeViewModel @Inject constructor(
         _analyticsEvents.tryEmit(HomeAnalyticsEvent.MenuItem(labelRes))
     }
 
-    // tryEmit (not a launched emit): the buffer (capacity 4, 0 replay) has room for these low-frequency
-    // one-shot commands, matching the codebase effect-flow idiom (MapViewModel etc.).
-    private fun emit(command: SheetCommand) {
-        _sheetCommands.tryEmit(command)
-    }
-
-    // The outbound-map-directive counterpart of [emit] (buffered, replay-less; see [mapDirectives]).
+    // tryEmit (not a launched emit): the buffer (capacity 8, 0 replay) has room for these low-frequency
+    // one-shot directives, matching the codebase effect-flow idiom (MapViewModel etc.).
     private fun emitMapDirective(directive: MapDirective) {
         _mapDirectives.tryEmit(directive)
     }
@@ -368,19 +366,6 @@ sealed interface HomeAnalyticsEvent {
 }
 
 /**
- * One-shot sheet commands driven from the ViewModel, consumed by [HomeScreen] (which alone holds the
- * live `SheetState`) off its own [HomeViewModel.sheetCommands] flow. (The drawer is opened directly by
- * [org.onebusaway.android.ui.home.chrome.HomeTopBar]'s hamburger, so it needs no command.)
- */
-sealed interface SheetCommand {
-    /** The arrivals-sheet chevron was tapped — toggle peek <-> full. */
-    object ToggleSheet : SheetCommand
-
-    /** Collapse the sheet to its peek (e.g. after "show vehicles on map"). */
-    object CollapseSheet : SheetCommand
-}
-
-/**
  * One-shot outbound Home→Map interactions emitted on [HomeViewModel.mapDirectives] and bridged to the
  * [org.onebusaway.android.map.MapViewModel] by [org.onebusaway.android.ui.home.map.MapFeature] (the
  * composable that holds both view models). Keeping these on [HomeViewModel] — rather than a shared
@@ -392,8 +377,8 @@ sealed interface MapDirective {
     /** Animate the camera to recenter on the currently focused stop (sheet expanded). */
     data class RecenterOnFocusedStop(val lat: Double, val lon: Double) : MapDirective
 
-    /** Enter route mode for the given route (the "show vehicles on map" action). */
-    data class ShowRoute(val routeId: String) : MapDirective
+    /** Enter route mode for [request]'s route (the "show vehicles on map" action). */
+    data class ShowRoute(val request: ShowRouteRequest) : MapDirective
 
     /** Clear the map's render focus (back-press from a peeking arrivals sheet). */
     object ClearFocus : MapDirective

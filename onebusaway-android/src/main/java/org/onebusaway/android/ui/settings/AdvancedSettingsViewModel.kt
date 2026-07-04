@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -34,8 +33,9 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.region.Region
+import org.onebusaway.android.map.StopsMapController
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.ApiUrlValidator
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionState
@@ -62,7 +62,7 @@ class AdvancedSettingsViewModel @Inject constructor(
 
     init {
         // The old fragment reset this on every (re)display of the advanced screen.
-        Application.get().setUseOldOtpApiUrlVersion(false)
+        prefs.setBoolean(R.string.preference_key_otp_api_url_version, false)
     }
 
     val state: StateFlow<AdvancedSettingsUiState> =
@@ -82,6 +82,10 @@ class AdvancedSettingsViewModel @Inject constructor(
             displayTestAlerts = prefs.getBoolean(R.string.preferences_display_test_alerts, false),
             customObaApiUrl = prefs.getString(R.string.preference_key_oba_api_url, null),
             customOtpApiUrl = prefs.getString(R.string.preference_key_otp_api_url, null),
+            mapStopCacheSize = prefs.getInt(
+                R.string.preference_key_map_stop_cache_size,
+                StopsMapController.DEFAULT_STOP_CACHE_SIZE,
+            ),
         ),
         region = region?.let { AdvancedRegionInfo(it.experimental) },
         useFixedRegion = BuildConfig.USE_FIXED_REGION,
@@ -94,6 +98,12 @@ class AdvancedSettingsViewModel @Inject constructor(
 
     fun onDisplayTestAlertsChanged(value: Boolean) =
         prefs.setBoolean(R.string.preferences_display_test_alerts, value)
+
+    /**
+     * Apply an edit to the map stop LRU cache size. Returns true if the input was a valid in-range
+     * number (and was persisted); false otherwise so the dialog stays open (reject-on-invalid).
+     */
+    fun onMapStopCacheSizeChanged(text: String): Boolean = applyMapStopCacheSize(text, prefs)
 
     /**
      * Apply an experimental-regions toggle (the screen owns the enable/disable confirmation dialogs).
@@ -175,6 +185,18 @@ internal suspend fun applyExperimentalRegionsToggle(
 }
 
 /**
+ * The map-stop-cache-size edit's domain effect, split from [AdvancedSettingsViewModel.onMapStopCacheSizeChanged]
+ * so it's free of Android dependencies and unit-tested directly (see AdvancedSettingsViewModelTest): on a
+ * valid in-range [text] (see [parseStopCacheSize]) persist the size and return true; on an invalid entry
+ * persist nothing and return false so the screen keeps the field open with the range error.
+ */
+internal fun applyMapStopCacheSize(text: String, prefs: PreferencesRepository): Boolean {
+    val size = parseStopCacheSize(text) ?: return false
+    prefs.setInt(R.string.preference_key_map_stop_cache_size, size)
+    return true
+}
+
+/**
  * The domain rule that a toggle-initiated experimental-region *change* resets the OTP API version to the
  * current default ([resetOtpVersion]). The repository's own [RegionRepository.applyRegion] reset covers
  * regions that carry an `otpBaseUrl`; this covers the toggle case uniformly (incl. `otpBaseUrl == null`).
@@ -189,8 +211,12 @@ internal suspend fun resetOtpVersionOnRegionChange(
     when (status) {
         is RegionStatus.Changed -> resetOtpVersion()
         is RegionStatus.NeedsManualSelection -> {
-            state.filterIsInstance<RegionState.Active>().first()
-            resetOtpVersion()
+            // Await a terminal resolution rather than only [RegionState.Active]: the forced picker is
+            // non-dismissible so the user's pick normally resolves it, but a retried refresh that fails
+            // transitions to [RegionState.Failed] instead — waiting for Active alone would suspend forever.
+            // Reset only when the region actually became active (a Failed resolution left it unchanged).
+            val resolved = state.first { it is RegionState.Active || it is RegionState.Failed }
+            if (resolved is RegionState.Active) resetOtpVersion()
         }
         RegionStatus.Unchanged, RegionStatus.Skipped, RegionStatus.Failed, is RegionStatus.Fixed -> Unit
     }

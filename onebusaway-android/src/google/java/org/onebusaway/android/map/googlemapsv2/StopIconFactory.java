@@ -41,6 +41,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.map.render.StopBitmaps;
 import org.onebusaway.android.models.ObaRoute;
 
 import java.util.HashMap;
@@ -97,12 +98,22 @@ public final class StopIconFactory {
     private static final int NUM_DIRECTIONS = 9; // 8 directions + undirected mStops
 
     /**
-     * Icon cache keyed by route type, each containing a Bitmap array of size NUM_DIRECTIONS.
+     * Descriptor cache keyed by route type, each a BitmapDescriptor array of size NUM_DIRECTIONS. The
+     * descriptors (native texture wrappers) are built once so re-iconing markers — e.g. swapping every
+     * stop full icon ⇄ dot on a zoom-band crossing, up to the full stop cache at once (default 200, up
+     * to 2000) — reuses them instead of minting a fresh texture per marker (the cost that made the
+     * transition stutter).
      */
-    private static final SparseArray<Bitmap[]> sStopIcons = new SparseArray<>();
+    private static final SparseArray<BitmapDescriptor[]> sStopDescriptors = new SparseArray<>();
 
-    /** Focused (selected) variant of {@link #sStopIcons}. */
-    private static final SparseArray<Bitmap[]> sStopIconsFocused = new SparseArray<>();
+    /** Focused (selected) variant of {@link #sStopDescriptors}. */
+    private static final SparseArray<BitmapDescriptor[]> sStopDescriptorsFocused = new SparseArray<>();
+
+    /** The small directionless dot shown in place of the full icon at distant zoom (declutter). */
+    private static BitmapDescriptor sDotDescriptor;
+
+    /** The focused (accent) variant of {@link #sDotDescriptor}, so a selection stays visible far out. */
+    private static BitmapDescriptor sDotDescriptorFocused;
 
     /**
      * Route types that get distinct stop icons on the map.
@@ -172,6 +183,21 @@ public final class StopIconFactory {
         return getFocusedStopBitmapDescriptor(direction, routeType);
     }
 
+    /**
+     * The small dot shown in place of the full icon at distant zoom. Directionless and route-type
+     * agnostic (a neutral themed point), so the caller anchors it at the marker center (0.5, 0.5).
+     */
+    public static synchronized BitmapDescriptor dotStopIcon() {
+        ensureLoaded();
+        return sDotDescriptor;
+    }
+
+    /** The focused (accent) dot, shown for the selected stop at distant zoom. */
+    public static synchronized BitmapDescriptor focusedDotStopIcon() {
+        ensureLoaded();
+        return sDotDescriptorFocused;
+    }
+
     /** Marker anchor X for the given direction (positions the pin tip on the circle center). */
     public static float anchorX(String direction) {
         return getXPercentOffsetForDirection(direction);
@@ -225,9 +251,23 @@ public final class StopIconFactory {
                         (int) (bmp.getWidth() * FOCUS_ICON_SCALE),
                         (int) (bmp.getHeight() * FOCUS_ICON_SCALE), true);
             }
-            sStopIcons.put(routeType, icons);
-            sStopIconsFocused.put(routeType, iconsFocused);
+            sStopDescriptors.put(routeType, toDescriptors(icons));
+            sStopDescriptorsFocused.put(routeType, toDescriptors(iconsFocused));
         }
+
+        sDotDescriptor = BitmapDescriptorFactory.fromBitmap(
+                StopBitmaps.dot(mPx, r.getColor(R.color.theme_primary)));
+        sDotDescriptorFocused = BitmapDescriptorFactory.fromBitmap(
+                StopBitmaps.dot(mPx, r.getColor(R.color.map_stop_focus)));
+    }
+
+    /** Wraps each pre-rendered bitmap into a BitmapDescriptor once, so callers can reuse them. */
+    private static BitmapDescriptor[] toDescriptors(Bitmap[] bitmaps) {
+        BitmapDescriptor[] descriptors = new BitmapDescriptor[bitmaps.length];
+        for (int i = 0; i < bitmaps.length; i++) {
+            descriptors[i] = BitmapDescriptorFactory.fromBitmap(bitmaps[i]);
+        }
+        return descriptors;
     }
 
     /**
@@ -623,19 +663,19 @@ public final class StopIconFactory {
     }
 
     /**
-     * Looks up a stop icon from the given cache based on direction and route type.
+     * Looks up a cached stop descriptor by direction and route type.
      * Falls back to TYPE_BUS if the requested type is not found, then to the default marker.
      *
-     * @param cache     icon cache to look up from (normal or focused)
+     * @param cache     descriptor cache to look up from (normal or focused)
      * @param direction stop direction string
      * @param routeType one of ObaRoute.TYPE_* constants
      * @return BitmapDescriptor for the stop icon
      */
     @NonNull
-    private static BitmapDescriptor lookupStopIcon(SparseArray<Bitmap[]> cache, String direction,
-            int routeType) {
+    private static BitmapDescriptor lookupStopIcon(SparseArray<BitmapDescriptor[]> cache,
+            String direction, int routeType) {
         int normalizedType = normalizeRouteType(routeType);
-        Bitmap[] icons = cache.get(normalizedType);
+        BitmapDescriptor[] icons = cache.get(normalizedType);
         if (icons == null) {
             icons = cache.get(ObaRoute.TYPE_BUS);
         }
@@ -643,16 +683,16 @@ public final class StopIconFactory {
             Log.w(TAG, "Stop icons not initialized for type " + routeType);
             return BitmapDescriptorFactory.defaultMarker();
         }
-        return BitmapDescriptorFactory.fromBitmap(icons[getDirectionIndex(direction)]);
+        return icons[getDirectionIndex(direction)];
     }
 
     private static BitmapDescriptor getStopBitmapDescriptor(String direction, int routeType) {
-        return lookupStopIcon(sStopIcons, direction, routeType);
+        return lookupStopIcon(sStopDescriptors, direction, routeType);
     }
 
     @NonNull
     private static BitmapDescriptor getFocusedStopBitmapDescriptor(String direction,
             int routeType) {
-        return lookupStopIcon(sStopIconsFocused, direction, routeType);
+        return lookupStopIcon(sStopDescriptorsFocused, direction, routeType);
     }
 }

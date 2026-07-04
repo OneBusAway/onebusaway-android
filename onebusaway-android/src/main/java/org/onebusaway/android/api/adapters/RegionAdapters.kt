@@ -50,8 +50,6 @@ fun RegionDto.toObaRegion(): Region = Region(
     paymentAndroidAppId,
     paymentWarningTitle,
     paymentWarningBody,
-    travelBehaviorDataCollectionEnabled,
-    enrollParticipantsInStudy,
     sidecarBaseUrl,
     plausibleAnalyticsServerUrl,
     // Match getRegionsFromProvider: only build a config when something is actually set.

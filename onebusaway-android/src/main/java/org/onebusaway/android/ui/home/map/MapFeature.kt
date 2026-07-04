@@ -21,11 +21,18 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -37,9 +44,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -47,10 +57,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.firebase.analytics.FirebaseAnalytics
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
-import org.onebusaway.android.analytics.ObaAnalytics
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
@@ -93,7 +101,6 @@ fun MapFeature(
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
-    val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(context) }
 
     // Compose-native permission launcher: deliver the result to the map view model (blue dot) + the
     // home view model (the deferred first-launch region check).
@@ -106,7 +113,7 @@ fun MapFeature(
         homeViewModel.onLocationPermissionResult()
     }
 
-    val callbacks = remember(mapViewModel, homeViewModel, firebaseAnalytics) {
+    val callbacks = remember(mapViewModel, homeViewModel) {
         object : ObaMapCallbacks {
             override fun onStopClick(stop: ObaStop) {
                 mapViewModel.onStopTapped(stop)
@@ -118,9 +125,7 @@ fun MapFeature(
                 homeViewModel.onStopFocused(
                     FocusedStop(stop.id, stop.name, stop.stopCode, stop.latitude, stop.longitude)
                 )
-                ObaAnalytics.reportUiEvent(
-                    firebaseAnalytics,
-                    Application.get().plausibleInstance,
+                AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                     resources.getString(R.string.analytics_label_button_press_map_icon),
                     null,
@@ -138,9 +143,7 @@ fun MapFeature(
                 if (bikeId == null || !bikeId.equals(station.id, ignoreCase = true)) {
                     homeViewModel.onBikeStationFocused(station.id)
                 }
-                ObaAnalytics.reportUiEvent(
-                    firebaseAnalytics,
-                    Application.get().plausibleInstance,
+                AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_BIKE_EVENT_URL,
                     resources.getString(
                         if (station.isFloatingBike) {
@@ -181,7 +184,7 @@ fun MapFeature(
             when (directive) {
                 is MapDirective.RecenterOnFocusedStop ->
                     mapViewModel.recenterOnFocusedStop(directive.lat, directive.lon)
-                is MapDirective.ShowRoute -> mapViewModel.toRoute(directive.routeId)
+                is MapDirective.ShowRoute -> mapViewModel.toRoute(directive.request)
                 MapDirective.ClearFocus -> mapViewModel.clearFocus()
                 is MapDirective.FocusStop ->
                     mapViewModel.focusStop(directive.stop, directive.routes, directive.overlayExpanded)
@@ -245,12 +248,12 @@ fun MapFeature(
         )
         MapEffect.ShowPermissionRationale -> PermissionRationaleDialog(
             onOk = {
-                PreferenceUtils.setUserDeniedLocationPermissions(false)
+                PreferenceUtils.setUserDeniedLocationPermissions(context, false)
                 permissionLauncher.launch(PermissionUtils.LOCATION_PERMISSIONS)
                 dialog = null
             },
             onNoThanks = {
-                PreferenceUtils.setUserDeniedLocationPermissions(true)
+                PreferenceUtils.setUserDeniedLocationPermissions(context, true)
                 mapViewModel.onLocationPermissionResult(false)
                 homeViewModel.onLocationPermissionResult()
                 dialog = null
@@ -273,6 +276,23 @@ fun MapFeature(
         initialLongitude = seed.lon,
         initialZoom = seed.zoom,
     )
+
+    // "Zoom in to see more stops" — shown when the viewport stop load was truncated (the API's
+    // limitExceeded), i.e. more stops match the viewport than were returned. Driven purely by map state.
+    val moreStops by mapViewModel.moreStopsAvailable.collectAsStateWithLifecycle()
+    // The map sits below HomeTopBar (which already consumes the status-bar inset), so the banner is
+    // flush at the map's top edge — no extra inset. clipToBounds clips the upward slide at that edge so
+    // the bar tucks up behind the title bar instead of drawing over it.
+    Box(
+        Modifier
+            .fillMaxSize()
+            .clipToBounds()
+    ) {
+        MoreStopsBanner(
+            visible = moreStops,
+            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(),
+        )
+    }
 
     // The welcome tutorial's map-stop spotlight, wired from the flavor-neutral map seam (the published
     // projector + the shared stop list) so this host knows nothing of the underlying map SDK. A tap
@@ -301,11 +321,9 @@ fun MapFeature(
             PreferenceUtils.saveBoolean(
                 resources.getString(R.string.preference_key_never_show_location_dialog), false
             )
-            PreferenceUtils.setUserDeniedLocationPermissions(false)
+            PreferenceUtils.setUserDeniedLocationPermissions(context, false)
             mapViewModel.requestMyLocation(useDefaultZoom = true, animate = true)
-            ObaAnalytics.reportUiEvent(
-                firebaseAnalytics,
-                Application.get().plausibleInstance,
+            AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                 resources.getString(R.string.analytics_label_button_press_location),
                 null,
@@ -318,9 +336,7 @@ fun MapFeature(
             // Persist the toggled state (DataStore) + drive the bike loader. MapChromeViewModel observes
             // the visibility pref reactively, so the bikeshare-active tint updates without a host push.
             mapViewModel.setBikeshareLayerVisible(!active, persist = true)
-            ObaAnalytics.reportUiEvent(
-                firebaseAnalytics,
-                Application.get().plausibleInstance,
+            AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                 resources.getString(R.string.analytics_layer_bikeshare),
                 resources.getString(
@@ -333,6 +349,45 @@ fun MapFeature(
             )
         },
     )
+}
+
+/**
+ * The "zoom in to see more stops" hint: a full-width, text-height bar at the top edge of the map that
+ * slides down to appear and up (tucking behind the home top bar) to disappear. Shown while the last
+ * viewport stop load was truncated by the API; purely state-driven, no dismiss button. The status-bar
+ * inset is already consumed by HomeTopBar above the map, so the caller's slot adds no inset — only the
+ * slide clipping (clipToBounds).
+ */
+@Composable
+private fun MoreStopsBanner(visible: Boolean, modifier: Modifier = Modifier) {
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = slideInVertically(initialOffsetY = { -it }),
+        exit = slideOutVertically(targetOffsetY = { -it }),
+    ) {
+        // A plain Box (not a Surface): a non-clickable Surface still consumes pointer events across its
+        // bounds, so a pan/tap/pinch that starts on the banner strip would be swallowed instead of
+        // reaching the map underneath. A Box with just background/shadow is not hit-testable, so gestures
+        // fall through to the map.
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(4.dp)
+                // A neutral, informational tint (not a warning), alpha'd so the map shows through slightly.
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)),
+        ) {
+            Text(
+                text = stringResource(R.string.map_zoom_in_for_more_stops),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 /** The viewport (or device) is outside the current region (ported from GoogleMapHost.showOutOfRange). */
@@ -355,6 +410,7 @@ private fun OutOfRangeDialog(regionName: String, onConfirm: () -> Unit, onDismis
 @Composable
 private fun NoLocationDialog(onEnable: () -> Unit, onDismiss: () -> Unit) {
     var neverAskAgain by remember { mutableStateOf(false) }
+    val neverShowDialogKey = stringResource(R.string.preference_key_never_show_location_dialog)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.main_nolocation_title)) },
@@ -369,11 +425,7 @@ private fun NoLocationDialog(onEnable: () -> Unit, onDismiss: () -> Unit) {
                         checked = neverAskAgain,
                         onCheckedChange = {
                             neverAskAgain = it
-                            PreferenceUtils.saveBoolean(
-                                Application.get()
-                                    .getString(R.string.preference_key_never_show_location_dialog),
-                                it,
-                            )
+                            PreferenceUtils.saveBoolean(neverShowDialogKey, it)
                         },
                     )
                     Text(stringResource(R.string.main_never_ask_again))

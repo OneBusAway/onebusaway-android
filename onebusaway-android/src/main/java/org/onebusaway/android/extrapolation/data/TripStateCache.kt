@@ -17,6 +17,7 @@ package org.onebusaway.android.extrapolation.data
 
 import androidx.annotation.VisibleForTesting
 import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.Polyline
 
 internal const val MAX_TRACKED_TRIPS = 100
@@ -61,7 +62,7 @@ internal class TripStateCache {
     // --- Writes ---
 
     /** Records [observation] into its trip's snapshot. */
-    fun record(observation: TripObservation, localTimeMs: Long) {
+    fun record(observation: TripObservation, localTimeMs: WallTime) {
         update(observation.tripId) { it.withObservation(observation, localTimeMs) }
     }
 

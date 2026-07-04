@@ -34,6 +34,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.first
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
@@ -58,13 +59,12 @@ import org.onebusaway.android.ui.tutorial.tutorialAnchor
  *
  * Polling lifecycle is owned by `ArrivalsPanel` itself (`ArrivalsPolling` → `repeatOnLifecycle`), so
  * it also pauses with the screen. Loaded responses are forwarded to the host via [onArrivalsLoaded]
- * (the map recenter / focus marker / tutorials), the chevron toggles the sheet via [onToggleSheet],
- * and the preview size drives the peek height via [onPreferredHeight].
+ * (the map recenter / focus marker / tutorials), and the preview size drives the peek height via
+ * [onPreferredHeight]. Expand/collapse is driven by the sheet's drag handle (in the host scaffold).
  */
 @Composable
 internal fun ArrivalsSheetHost(
     focusedStop: FocusedStop?,
-    collapsed: Boolean,
     // The sheet is actually on screen (not hidden) — gates the onboarding spotlight so it can't fire
     // over a hidden panel.
     sheetVisible: Boolean,
@@ -73,11 +73,12 @@ internal fun ArrivalsSheetHost(
     expandProgress: () -> Float,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     onArrivalsLoaded: (ArrivalsLoaded) -> Unit,
-    onShowRouteOnMap: (String) -> Unit,
+    onShowRouteOnMap: (ShowRouteRequest) -> Unit,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (args: ReminderEditorArgs) -> Unit,
-    onToggleSheet: () -> Unit,
     onPreferredHeight: (previewCount: Int, filtering: Boolean) -> Unit,
+    // Tapping the drawer's stop-name title — the host recenters the map on the focused stop.
+    onTitleClick: () -> Unit,
     showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit,
 ) {
     val stop = focusedStop ?: return
@@ -123,15 +124,16 @@ internal fun ArrivalsSheetHost(
                 ArrivalsPanel(
                     viewModel = viewModel,
                     listState = listState,
-                    collapsed = collapsed,
                     expandProgress = expandProgress,
                     initialTitle = stop.name.orEmpty(),
                     handler = handler,
-                    onToggleExpand = onToggleSheet,
                     onPreferredHeight = onPreferredHeight,
+                    onTitleClick = onTitleClick,
                     etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
                     starAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_STAR),
-                    chevronAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_PANEL),
+                    // The onboarding "slide up to see more" spotlight now anchors on the pinned header
+                    // (the chevron it used to point at is gone).
+                    headerAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_PANEL),
                 )
             }
 

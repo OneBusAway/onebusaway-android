@@ -22,10 +22,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.bike.BikeStationsRepository
-import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.opentripplanner.api.model.Itinerary
@@ -36,8 +34,10 @@ import org.opentripplanner.api.model.Itinerary
  * route header / vehicle poll, no trip-focus overlay, no Home command bus. That keeps the trip-results
  * map from instantiating the home map's full machinery just to draw an itinerary.
  *
- * [showItinerary] draws the selected itinerary (and turns on its own bike-share stations);
- * [frameDirections] re-fits it once the map is ready. Deps are constructor-injected by Hilt.
+ * [showItinerary] draws the selected itinerary (and turns on its own bike-share stations) and frames
+ * it — deferring the frame to the first camera-idle if the map adapter isn't attached yet (see
+ * [MapHost.frameItinerary]), so the initial fit isn't lost when the map is composed behind the results
+ * sheet on plan completion. Deps are constructor-injected by Hilt.
  */
 @HiltViewModel
 class DirectionsMapViewModel @Inject constructor(
@@ -61,15 +61,13 @@ class DirectionsMapViewModel @Inject constructor(
     /** The shared map surface the flavor adapter binds to. */
     val host: MapHost get() = mapHost
 
-    /** The live camera, published by the adapter on each idle (the screen frames on the first idle). */
-    val camera: StateFlow<CameraSnapshot?> get() = mapHost.camera
-
     private val directionsController = DirectionsMapController(mapHost)
 
     private val bikeController = BikeLayerController(
         host = mapHost,
         bikeStationsRepository = bikeStationsRepository,
         prefsRepository = prefsRepository,
+        regionRepository = regionRepo,
         scope = viewModelScope,
     )
 
@@ -83,7 +81,4 @@ class DirectionsMapViewModel @Inject constructor(
             selectedBikeStationIds = DirectionsMapController.bikeStationIdsFromItinerary(itinerary),
         )
     }
-
-    /** Re-fit the current itinerary once the map is ready (re-appliable). */
-    fun frameDirections() = directionsController.frameDirections()
 }

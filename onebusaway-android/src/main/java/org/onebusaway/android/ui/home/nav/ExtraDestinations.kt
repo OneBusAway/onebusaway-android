@@ -26,9 +26,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.google.firebase.analytics.FirebaseAnalytics
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.analytics.ObaAnalytics
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.nav.revealRouteOnMap
 import org.onebusaway.android.ui.nav.revealStopOnMap
@@ -39,7 +38,7 @@ import org.onebusaway.android.ui.nightlight.NightLightRoute
 import org.onebusaway.android.ui.searchresults.SearchResultsRoute
 import org.onebusaway.android.ui.searchresults.SearchResultsViewModel
 import org.onebusaway.android.ui.survey.SurveyWebViewScreen
-import org.onebusaway.android.util.DBUtil
+import org.onebusaway.android.app.di.DatabaseEntryPoint
 
 /**
  * The standalone one-off destinations that don't belong to a larger feature graph: the donation
@@ -106,15 +105,12 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
         ),
     ) { backStackEntry ->
         val activity = LocalContext.current.findActivity()
-        // The Firebase analytics process-singleton, fetched from the Context like everywhere else
-        // (MapFeature/TripPlanScreen) rather than reaching into the host for it.
-        val firebaseAnalytics = remember { FirebaseAnalytics.getInstance(activity) }
+        // Analytics is reached via AnalyticsEntryPoint off the Context (as in MapFeature/TripPlanScreen)
+        // rather than reaching into the host for it.
         val query = backStackEntry.arguments?.getString(NavRoutes.ARG_QUERY).orEmpty()
         val searchVm: SearchResultsViewModel = hiltViewModel()
         LaunchedEffect(query) {
-            ObaAnalytics.reportSearchEvent(
-                Application.get().plausibleInstance, firebaseAnalytics, query
-            )
+            AnalyticsEntryPoint.get(activity).reportSearchEvent(query)
             searchVm.search(query)
         }
         ObaTheme {
@@ -122,15 +118,13 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
                 viewModel = searchVm,
                 onBack = { navController.popBackStack() },
                 onRouteListStops = { route ->
-                    DBUtil.addRouteToDB(
-                        activity, route.id, route.shortName, route.longName, route.url
-                    )
+                    DatabaseEntryPoint.get(activity).routeRecorder()
+                        .recordDetails(route.id, route.shortName, route.longName, route.url)
                     navController.navigate(NavRoutes.routeInfo(route.id))
                 },
                 onRouteShowOnMap = { route ->
-                    DBUtil.addRouteToDB(
-                        activity, route.id, route.shortName, route.longName, route.url
-                    )
+                    DatabaseEntryPoint.get(activity).routeRecorder()
+                        .recordDetails(route.id, route.shortName, route.longName, route.url)
                     navController.revealRouteOnMap(route.id)
                 },
                 onStopArrivals = { stop ->

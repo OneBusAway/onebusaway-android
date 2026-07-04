@@ -1,12 +1,10 @@
 package org.onebusaway.android.ui.survey.utils
 
-import android.content.Context
 import android.util.Log
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import org.onebusaway.android.app.Application
-import org.onebusaway.android.database.survey.SurveyDbHelper
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.Survey
 import org.onebusaway.android.models.SurveyQuestion
@@ -41,16 +39,20 @@ object SurveyUtils {
     /**
      * Returns the index of the first uncompleted survey in the list, based on visibility settings.
      *
-     * @param studyResponse   The study response containing the list of surveys.
-     * @param context         The context used to access local data.
+     * @param surveys         The list of candidate surveys.
      * @param isVisibleOnStop Indicates whether the survey view is related to stops.
+     * @param currentStop     The current stop (used only when isVisibleOnStop is true).
+     * @param isCompleted     Predicate telling whether a survey id already has a persisted response;
+     *                        supplied by the caller from
+     *                        [org.onebusaway.android.database.survey.SurveyRepository.completedSurveyIds]
+     *                        so this function stays pure/JVM-testable and does no DB access itself.
      * @return The zero-based index of the current survey, or -1 if all surveys are completed or filtered out.
      */
     fun getCurrentSurveyIndex(
         surveys: List<Survey>,
-        context: Context,
         isVisibleOnStop: Boolean,
-        currentStop: ObaStop?
+        currentStop: ObaStop?,
+        isCompleted: (Int) -> Boolean
     ): Int {
         var alwaysVisibleIndex = -1
         var oneTimeSurveyIndex = -1
@@ -83,7 +85,7 @@ object SurveyUtils {
                 if (showQuestionOnMaps != true) continue
             }
 
-            val isSurveyCompleted = SurveyDbHelper.isSurveyCompleted(context, survey.id)
+            val isSurveyCompleted = isCompleted(survey.id)
 
             if (alwaysVisible == true) {
                 if (allowMultipleResponses == true) {
@@ -256,12 +258,15 @@ object SurveyUtils {
         return 0
     }
 
-    fun shouldShowSurveyView(context: Context, isVisibleOnStops: Boolean): Boolean {
+    fun shouldShowSurveyView(
+        surveyPreferences: SurveyPreferences,
+        isVisibleOnStops: Boolean,
+    ): Boolean {
         // User will receive a survey every `surveyLaunchCount` app launches
         if (Application.get().appLaunchCount % launchesUntilSurveyShown != 0) return false
 
         // Don't show the UI if there's a reminder date that is still in the future.
-        val reminderDate = getSurveyRequestReminderDate(context)
+        val reminderDate = getSurveyRequestReminderDate(surveyPreferences)
         if (reminderDate != null && reminderDate.after(Date())) {
             return false
         }
@@ -276,7 +281,7 @@ object SurveyUtils {
         return true
     }
 
-    fun remindUserLater(context: Context) {
+    fun remindUserLater(surveyPreferences: SurveyPreferences) {
         // Calculate the delay in milliseconds:
         // 86400 seconds in a day * remindMeLaterDays * 1000 milliseconds per second
         val dateInMilliSeconds = 86400L * remindMeLaterDays * 1000
@@ -285,14 +290,14 @@ object SurveyUtils {
         val futureDate = Date(Date().time + dateInMilliSeconds)
 
         // Save the calculated future date in SharedPreferences as the survey reminder date
-        SurveyPreferences.setSurveyReminderDate(context, futureDate)
+        surveyPreferences.setSurveyReminderDate(futureDate)
     }
 
     /**
      * @return Optional date at which the app should remind the user to take survey.
      */
-    private fun getSurveyRequestReminderDate(context: Context): Date? {
-        val timestamp = SurveyPreferences.getSurveyReminderDate(context)
+    private fun getSurveyRequestReminderDate(surveyPreferences: SurveyPreferences): Date? {
+        val timestamp = surveyPreferences.getSurveyReminderDate()
         if (timestamp < 1) {
             return null
         }

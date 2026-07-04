@@ -34,6 +34,7 @@ import org.maplibre.android.annotations.IconFactory;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.map.render.StopBitmaps;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -79,8 +80,18 @@ public final class MapLibreStopIcons {
 
     private static final int NUM_DIRECTIONS = 9;
 
-    private static final Bitmap[] bus_stop_icons = new Bitmap[NUM_DIRECTIONS];
-    private static final Bitmap[] bus_stop_icons_focused = new Bitmap[NUM_DIRECTIONS];
+    // The Icons (native texture wrappers) are built once so re-iconing markers — e.g. swapping every
+    // stop full icon ⇄ dot on a zoom-band crossing, up to the full stop cache at once (default 200, up
+    // to 2000) — reuses them instead of wrapping a fresh Icon per marker (the cost that made the
+    // transition stutter).
+    private static final Icon[] bus_stop_icons = new Icon[NUM_DIRECTIONS];
+    private static final Icon[] bus_stop_icons_focused = new Icon[NUM_DIRECTIONS];
+
+    /** The small directionless dot shown in place of the full icon at distant zoom (declutter). */
+    private static Icon dot_stop_icon;
+
+    /** The focused (accent) variant of {@link #dot_stop_icon}, so a selection stays visible far out. */
+    private static Icon dot_stop_icon_focused;
 
     private static final float FOCUS_ICON_SCALE = 1.5f;
 
@@ -100,15 +111,31 @@ public final class MapLibreStopIcons {
     }
 
     /** The normal (unfocused) stop icon for a direction string ("N".."NW" / "null"). */
-    public static synchronized Icon iconForDirection(Context context, String direction) {
+    public static synchronized Icon iconForDirection(String direction) {
         ensureLoaded();
-        return IconFactory.getInstance(context).fromBitmap(bus_stop_icons[indexFor(direction)]);
+        return bus_stop_icons[indexFor(direction)];
     }
 
     /** The focused (1.5x) stop icon for a direction string. */
-    public static synchronized Icon focusedIconForDirection(Context context, String direction) {
+    public static synchronized Icon focusedIconForDirection(String direction) {
         ensureLoaded();
-        return IconFactory.getInstance(context).fromBitmap(bus_stop_icons_focused[indexFor(direction)]);
+        return bus_stop_icons_focused[indexFor(direction)];
+    }
+
+    /**
+     * The small dot shown in place of the full icon at distant zoom — directionless and route-type
+     * agnostic (a neutral themed point). maplibre centers the icon on the position, so it lands on
+     * the stop without anchor math.
+     */
+    public static synchronized Icon dotIcon() {
+        ensureLoaded();
+        return dot_stop_icon;
+    }
+
+    /** The focused (accent) dot, shown for the selected stop at distant zoom. */
+    public static synchronized Icon focusedDotIcon() {
+        ensureLoaded();
+        return dot_stop_icon_focused;
     }
 
     private static int indexFor(String direction) {
@@ -132,17 +159,19 @@ public final class MapLibreStopIcons {
         mArrowPaintStroke.setStrokeWidth(1.0f);
         mArrowPaintStroke.setAntiAlias(true);
 
+        IconFactory iconFactory = IconFactory.getInstance(Application.get());
         String[] directions = {NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, EAST, NORTH_EAST, NO_DIRECTION};
         for (int i = 0; i < directions.length; i++) {
-            bus_stop_icons[i] = createBusStopIcon(directions[i], false);
-            bus_stop_icons_focused[i] = createBusStopIcon(directions[i], true);
+            bus_stop_icons[i] = iconFactory.fromBitmap(createBusStopIcon(directions[i], false));
+            Bitmap focused = createBusStopIcon(directions[i], true);
+            focused = Bitmap.createScaledBitmap(focused,
+                    (int) (focused.getWidth() * FOCUS_ICON_SCALE),
+                    (int) (focused.getHeight() * FOCUS_ICON_SCALE), true);
+            bus_stop_icons_focused[i] = iconFactory.fromBitmap(focused);
         }
-        for (int i = 0; i < NUM_DIRECTIONS; i++) {
-            Bitmap bmp = bus_stop_icons_focused[i];
-            bus_stop_icons_focused[i] = Bitmap.createScaledBitmap(bmp,
-                    (int) (bmp.getWidth() * FOCUS_ICON_SCALE),
-                    (int) (bmp.getHeight() * FOCUS_ICON_SCALE), true);
-        }
+
+        dot_stop_icon = iconFactory.fromBitmap(StopBitmaps.dot(mPx, r.getColor(R.color.theme_primary)));
+        dot_stop_icon_focused = iconFactory.fromBitmap(StopBitmaps.dot(mPx, r.getColor(R.color.map_stop_focus)));
     }
 
     @SuppressWarnings("deprecation")

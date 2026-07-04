@@ -19,9 +19,9 @@ package org.onebusaway.android.ui.tripinfo
 import android.content.Context
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
-import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
+import org.onebusaway.android.ui.startHomeActivity
 
 /**
  * Launches the trip-reminder editor (create or edit a trip arrival reminder).
@@ -29,7 +29,7 @@ import org.onebusaway.android.ui.nav.ReminderEditorArgs
  * The editor is a NavHost destination hosted by HomeActivity; this is no longer an Activity but a launcher
  * facade. The edit path carries only the trip/stop ids; the arrivals "set reminder" path also passes the
  * full trip context so a brand-new reminder needs no DB round-trip. This [start] is the standalone-host
- * fallback (it re-enters HomeActivity with the route via [HomeActivity.navIntent], which the translator
+ * fallback (it re-enters HomeActivity with the route via [startHomeActivity], which the translator
  * turns into the [NavRoutes.TRIP_INFO] route); in-app callers that already hold a NavController navigate the
  * route directly instead.
  */
@@ -37,7 +37,7 @@ object TripInfoLauncher {
 
     /** Re-enters HomeActivity at the [NavRoutes.TRIP_INFO] reminder editor for [args]. */
     fun start(context: Context, args: ReminderEditorArgs) {
-        context.startActivity(HomeActivity.navIntent(context, NavRoutes.tripInfo(args)))
+        context.startHomeActivity(NavRoutes.tripInfo(args))
     }
 }
 

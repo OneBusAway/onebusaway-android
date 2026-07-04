@@ -17,67 +17,96 @@ package org.onebusaway.android.ui.tripplan
 
 import android.content.Context
 import android.os.Bundle
+import androidx.annotation.WorkerThread
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.io.FileNotFoundException
 import java.io.IOException
 import java.net.HttpURLConnection
-import java.net.SocketTimeoutException
-import java.net.URL
 import java.util.Calendar
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.api.contract.OtpPlanParser
+import org.onebusaway.android.api.contract.OtpWebService
 import org.onebusaway.android.directions.util.CustomAddress
-import org.onebusaway.android.directions.util.JacksonConfig
 import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.opentripplanner.api.model.Itinerary
 import org.opentripplanner.api.ws.Message
 import org.opentripplanner.api.ws.Request
 import org.opentripplanner.api.ws.Response
 import org.opentripplanner.routing.core.TraverseMode
+import org.onebusaway.android.preferences.PreferencesRepository
 
 /** Plans a trip against the region's OpenTripPlanner server. */
 interface TripPlanRepository {
     suspend fun plan(params: TripPlanParams): Result<List<Itinerary>>
+
+    /**
+     * Blocking OTP plan for a caller that is already on a background thread and has assembled its
+     * own [TripRequestBuilder] — the RealtimeService IntentService worker, which replaced the legacy
+     * `TripRequest` AsyncTask. Returns the itineraries, or an empty list on any failure (mirroring
+     * the old callback's failure path, which only logged and disabled updates). Kept non-suspend and
+     * Result-free so it stays cleanly callable from the Java service.
+     */
+    @WorkerThread
+    fun planBlocking(builder: TripRequestBuilder): List<Itinerary>
 }
 
 /**
  * The coroutine replacement for the legacy `TripRequest` AsyncTask. Reuses [TripRequestBuilder] to
- * assemble the OTP request + base URL, then performs the (blocking) HTTP call + Jackson parse on the
- * IO thread — including the old-URL-structure fallback. OTP error codes are mapped to user-facing
- * messages (ported from TripPlanActivity.getErrorMessage) and surfaced as [Result.failure].
+ * assemble the OTP request + base URL, then performs the (blocking) Retrofit call ([OtpWebService]) +
+ * [OtpPlanParser] parse on the IO thread — including the old-URL-structure fallback. OTP error codes are
+ * mapped to user-facing messages (ported from TripPlanActivity.getErrorMessage) and surfaced as
+ * [Result.failure].
  */
 class DefaultTripPlanRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val prefs: PreferencesRepository,
+    private val otpWebService: OtpWebService,
 ) : TripPlanRepository {
 
     override suspend fun plan(params: TripPlanParams): Result<List<Itinerary>> =
         withContext(Dispatchers.IO) {
-            runCatching {
-                val builder = TripRequestBuilder(Bundle()).apply {
-                    setFrom(params.from.toCustomAddress())
-                    setTo(params.to.toCustomAddress())
-                    val calendar = Calendar.getInstance().apply { timeInMillis = params.dateTimeMillis }
-                    if (params.arriving) setArrivalTime(calendar) else setDepartureTime(calendar)
-                    setModeSetById(params.modeId)
-                    setWheelchairAccessible(params.wheelchair)
-                    setOptimizeTransfers(params.optimizeTransfers)
-                    params.maxWalkMeters?.let { setMaxWalkDistance(it) }
-                }
-                val request = builder.buildRequest()
-                val baseUrl = builder.formattedOtpBaseUrl
-                    ?: throw IOException(context.getString(R.string.tripplanner_no_server_selected_error))
-
-                val response = requestPlan(request, baseUrl, Application.get().useOldOtpApiUrlVersion)
-                val itineraries = response.plan?.itinerary
-                if (itineraries.isNullOrEmpty()) {
-                    throw IOException(errorMessage(response.error?.id ?: -1))
-                }
-                itineraries
-            }
+            runCatching { planInternal(builderFor(params)) }
         }
+
+    @WorkerThread
+    override fun planBlocking(builder: TripRequestBuilder): List<Itinerary> =
+        runCatching { planInternal(builder) }.getOrDefault(emptyList())
+
+    /** Assembles a [TripRequestBuilder] from the UI-supplied [params]. */
+    private fun builderFor(params: TripPlanParams): TripRequestBuilder =
+        TripRequestBuilder(context, Bundle()).apply {
+            setFrom(params.from.toCustomAddress())
+            setTo(params.to.toCustomAddress())
+            val calendar = Calendar.getInstance().apply { timeInMillis = params.dateTimeMillis }
+            if (params.arriving) setArrivalTime(calendar) else setDepartureTime(calendar)
+            setModeSetById(params.modeId)
+            setWheelchairAccessible(params.wheelchair)
+            setOptimizeTransfers(params.optimizeTransfers)
+            params.maxWalkMeters?.let { setMaxWalkDistance(it) }
+        }
+
+    /**
+     * Runs the OTP request for an already-assembled [builder] on the calling thread. Throws
+     * [IOException] with a user-facing message when no server is selected or the plan is empty/errored.
+     */
+    private fun planInternal(builder: TripRequestBuilder): List<Itinerary> {
+        val request = builder.buildRequest()
+        val baseUrl = builder.formattedOtpBaseUrl
+            ?: throw IOException(context.getString(R.string.tripplanner_no_server_selected_error))
+
+        val response = requestPlan(
+            request,
+            baseUrl,
+            prefs.getBoolean(R.string.preference_key_otp_api_url_version, false),
+        )
+        val itineraries = response.plan?.itinerary
+        if (itineraries.isNullOrEmpty()) {
+            throw IOException(errorMessage(response.error?.id ?: -1))
+        }
+        return itineraries
+    }
 
     /**
      * Ports TripRequest.requestPlan: build the URL, fetch + parse, fall back to the old structure.
@@ -118,31 +147,35 @@ class DefaultTripPlanRepository @Inject constructor(
             baseUrl + PREFIX_NEW + PLAN_LOCATION + query
         }
 
-        var connection: HttpURLConnection? = null
-        try {
-            connection = (URL(url).openConnection() as HttpURLConnection).apply {
-                connectTimeout = HTTP_TIMEOUT_MS
-                readTimeout = HTTP_TIMEOUT_MS
-            }
-            val response: Response = JacksonConfig.getObjectReaderInstance().readValue(connection.inputStream)
-            if (useOldUrlStructure) {
-                Application.get().useOldOtpApiUrlVersion = true
-            }
-            return response
-        } catch (e: SocketTimeoutException) {
+        val response = try {
+            otpWebService.plan(url).execute()
+        } catch (e: IOException) {
+            // Transport failure / timeout (SocketTimeoutException is an IOException) — mirror the legacy
+            // catch-all mapping to the request-timeout message.
             throw IOException(errorMessage(Message.REQUEST_TIMEOUT.id), e)
-        } catch (e: FileNotFoundException) {
-            if (!useOldUrlStructure) {
-                connection?.disconnect()
-                connection = null
-                return requestPlan(request, baseUrl, useOldUrlStructure = true)
+        }
+
+        // A 404 on the new /routers/default structure means an older OTP server; retry the old /plan
+        // structure once (Retrofit has already buffered + closed the error body). On success below the
+        // preference is flipped so subsequent plans skip straight to the old structure.
+        if (response.code() == HttpURLConnection.HTTP_NOT_FOUND && !useOldUrlStructure) {
+            return requestPlan(request, baseUrl, useOldUrlStructure = true)
+        }
+
+        val parsed: Response = try {
+            val body = response.body()
+            if (!response.isSuccessful || body == null) {
+                throw IOException("OTP /plan returned HTTP ${response.code()}")
             }
-            throw IOException(errorMessage(Message.REQUEST_TIMEOUT.id), e)
+            body.use { OtpPlanParser.parse(it.byteStream()) }
         } catch (e: IOException) {
             throw IOException(errorMessage(Message.REQUEST_TIMEOUT.id), e)
-        } finally {
-            connection?.disconnect()
         }
+
+        if (useOldUrlStructure) {
+            prefs.setBoolean(R.string.preference_key_otp_api_url_version, true)
+        }
+        return parsed
     }
 
     private fun PlaceItem.toCustomAddress(): CustomAddress {
@@ -187,6 +220,5 @@ class DefaultTripPlanRepository @Inject constructor(
         const val PREFIX_NEW = "/routers/default"
         const val PLAN_LOCATION = "/plan"
         const val OTP_RENTAL_QUALIFIER = "_RENT"
-        const val HTTP_TIMEOUT_MS = 15000
     }
 }

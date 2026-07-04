@@ -36,8 +36,15 @@ import org.onebusaway.android.models.ObaTrip
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Status
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import org.onebusaway.android.app.di.AppScope
+import org.onebusaway.android.database.oba.ImportGate
+import org.onebusaway.android.database.oba.StopDao
+import org.onebusaway.android.database.oba.markStopUsed
+import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.ArrivalInfoUtils
-import org.onebusaway.android.util.DBUtil
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ObaRequestErrors
@@ -82,7 +89,7 @@ interface TripDetailsRepository {
 data class DestinationReminderStops(val beforeStopId: String, val destinationStopId: String)
 
 /**
- * Default implementation over the io.client [TripDetailsDataSource]. Ports TripDetailsListFragment's
+ * Default implementation over the api [TripDetailsDataSource]. Ports TripDetailsListFragment's
  * binding (header status/deviation, per-stop time + color, passed/vehicle markers, scroll target),
  * falling back to the last good response on failure. Stays on [Dispatchers.IO] for the blocking
  * provider write in [destinationStops]; all Android statics (resources, time formatting, color
@@ -92,6 +99,10 @@ data class DestinationReminderStops(val beforeStopId: String, val destinationSto
 class DefaultTripDetailsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val tripDetailsDataSource: TripDetailsDataSource,
+    private val stopDao: StopDao,
+    private val regionRepository: RegionRepository,
+    private val importGate: ImportGate,
+    @AppScope private val appScope: CoroutineScope,
 ) : TripDetailsRepository {
 
     private var lastGood: TripDetails? = null
@@ -123,9 +134,20 @@ class DefaultTripDetailsRepository @Inject constructor(
         val destStop = td.stop(stopTimes[position].stopId) ?: return null
         val beforeStop = td.stop(stopTimes[position - 1].stopId) ?: return null
         // Persist both so NavigationService can resolve them when the reminder fires (legacy parity).
-        DBUtil.addToDB(beforeStop)
-        DBUtil.addToDB(destStop)
+        // Fire-and-forget on the app scope: the write only needs to land before the reminder fires
+        // (minutes later), so destinationStops can stay synchronous for its callers.
+        persistStop(beforeStop)
+        persistStop(destStop)
         return DestinationReminderStops(beforeStop.id, destStop.id)
+    }
+
+    /** Records a stop row (the legacy DBUtil.addToDB) so NavigationService can look up its location. */
+    private fun persistStop(stop: ObaStop) {
+        appScope.launch {
+            importGate.awaitReady()
+            val regionId = regionRepository.region.value?.id
+            stopDao.markStopUsed(stop, regionId, System.currentTimeMillis())
+        }
     }
 
     override fun lastLoadedTime(): Long? = lastGood?.currentTime

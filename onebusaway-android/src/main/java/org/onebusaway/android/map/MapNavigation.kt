@@ -16,10 +16,9 @@
 package org.onebusaway.android.map
 
 import android.content.Context
-import com.google.firebase.analytics.FirebaseAnalytics
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
-import org.onebusaway.android.analytics.ObaAnalytics
+import org.onebusaway.android.app.di.RegionEntryPoint
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
@@ -51,14 +50,11 @@ object MapNavigation {
      */
     @JvmStatic
     fun openBikeDeepLink(context: Context, station: BikeRentalStation) {
-        val app = Application.get()
-        val region = app.currentRegion ?: return
+        val region = RegionEntryPoint.get(context).currentRegion() ?: return
         if (region.id != RegionUtils.TAMPA_REGION_ID.toLong()) {
             return
         }
-        ObaAnalytics.reportUiEvent(
-            FirebaseAnalytics.getInstance(context),
-            app.plausibleInstance,
+        AnalyticsEntryPoint.get(context).reportUiEvent(
             PlausibleAnalytics.REPORT_BIKE_EVENT_URL,
             context.getString(
                 if (station.isFloatingBike) {

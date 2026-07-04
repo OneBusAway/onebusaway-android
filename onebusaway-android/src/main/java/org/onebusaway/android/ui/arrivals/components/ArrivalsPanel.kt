@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// This panel threads named per-element anchor modifiers (etaAnchor/starAnchor/chevronAnchor) a host
+// This panel threads named per-element anchor modifiers (etaAnchor/starAnchor/headerAnchor) a host
 // attaches to specific sub-elements for the onboarding spotlight — several per composable, none being
 // the root `modifier` — so ModifierParameter's "name it modifier" rule doesn't apply here.
 @file:Suppress("ModifierParameter")
 
 package org.onebusaway.android.ui.arrivals.components
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,7 +52,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -86,10 +84,10 @@ import org.onebusaway.android.util.ArrivalInfoUtils
 
 /**
  * The arrivals content for HomeActivity's map slide-up panel. Unlike the standalone screen, the
- * drawer is laid out top-to-bottom as: the arrivals (a compact 2-row peek when [collapsed], the full
- * scrollable list when expanded), then the stop header pinned at the bottom with the expand/collapse
- * chevron — matching the legacy ArrivalsListHeader. The hosting BottomSheetScaffold supplies the drag
- * handle above this content.
+ * drawer is laid out top-to-bottom as: the pinned stop header, then the arrivals (a compact 2-row peek
+ * at rest, morphing into the full scrollable list as the drawer opens). The hosting BottomSheetScaffold
+ * supplies the drag handle above this content; tapping/dragging it drives expand/collapse (the header
+ * no longer carries a chevron or tap-to-toggle).
  *
  * The peek height is driven by the host: this composable reports the preferred-arrival count +
  * filter state via [onPreferredHeight] so the host can size the collapsed panel. Polling, callbacks,
@@ -99,19 +97,20 @@ import org.onebusaway.android.util.ArrivalInfoUtils
 fun ArrivalsPanel(
     viewModel: ArrivalsViewModel,
     listState: LazyListState,
-    collapsed: Boolean,
     // The drawer's live open fraction (0 = collapsed peek, 1 = fully expanded), read each frame to
     // morph the leading peek rows in lockstep with the drag and to reveal the rest of the list.
     expandProgress: () -> Float,
     initialTitle: String,
     handler: ArrivalActionHandler,
-    onToggleExpand: () -> Unit,
     onPreferredHeight: (previewCount: Int, filtering: Boolean) -> Unit,
+    // Tapping the pinned stop-name header invokes this (null = not tappable); the drawer host wires it
+    // to an animated map recenter on the focused stop.
+    onTitleClick: (() -> Unit)? = null,
     // Opaque anchor modifiers a host may attach to the first peek row's ETA pill + favorite star and the
-    // header chevron (e.g. for an onboarding spotlight). The panel stays ignorant of what they're for.
+    // pinned header (e.g. for an onboarding spotlight). The panel stays ignorant of what they're for.
     etaAnchor: Modifier = Modifier,
     starAnchor: Modifier = Modifier,
-    chevronAnchor: Modifier = Modifier,
+    headerAnchor: Modifier = Modifier,
 ) {
     // The system navigation-bar inset (height varies by handset); see the list contentPadding below.
     val navBarInset = navigationBarBottomPadding()
@@ -169,10 +168,9 @@ fun ArrivalsPanel(
                 showActions = content != null,
                 hasAlerts = content?.hasAlerts == true,
                 filtering = filtering,
-                collapsed = collapsed,
-                onToggleExpand = onToggleExpand,
                 onToggleFavorite = viewModel::toggleFavorite,
-                chevronModifier = chevronAnchor,
+                onTitleClick = onTitleClick,
+                headerModifier = headerAnchor,
             )
             if (content == null) {
                 LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -417,10 +415,12 @@ internal fun EtaPill(
 }
 
 /**
- * The stop header pinned at the bottom of the panel: the favorite star and stop name (with a
+ * The stop header pinned at the top of the panel: the favorite star and stop name (with a
  * compass-direction tag appended, e.g. "Pine St & 3rd Ave (N)") as one centered unit, any
- * filter/alert indicators plus the expand/collapse chevron right-justified. Tapping the row toggles
- * the panel. [starSize]/[chevronSize] are exposed so the icon sizing can be tuned in the preview.
+ * filter/alert indicators right-justified. Expand/collapse is driven by the sheet's drag handle now,
+ * so the header no longer toggles on tap or shows a chevron. Tapping the stop name instead invokes
+ * [onTitleClick] (null = not tappable), which the drawer host uses to recenter the map on the stop.
+ * [starSize] is exposed so the star's sizing can be tuned in the preview.
  */
 @Composable
 private fun ArrivalsPanelHeader(
@@ -430,22 +430,18 @@ private fun ArrivalsPanelHeader(
     showActions: Boolean,
     hasAlerts: Boolean,
     filtering: Boolean,
-    collapsed: Boolean,
-    onToggleExpand: () -> Unit,
     onToggleFavorite: () -> Unit,
-    chevronModifier: Modifier = Modifier,
+    onTitleClick: (() -> Unit)? = null,
+    headerModifier: Modifier = Modifier,
     starSize: Dp = 20.dp,
-    chevronSize: Dp = 18.dp
 ) {
-    val chevronRotation by animateFloatAsState(if (collapsed) 0f else 180f, label = "chevron")
     val name = if (!direction.isNullOrBlank()) "$title (${direction.trim()})" else title
     Box(
-        Modifier
+        headerModifier
             .fillMaxWidth()
-            .clickable { onToggleExpand() }
             .padding(horizontal = 8.dp, vertical = 10.dp)
     ) {
-        // Star + name as one centered unit (kept clear of the right-justified chevron).
+        // Star + name as one centered unit (kept clear of the right-justified indicators).
         Row(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -469,10 +465,11 @@ private fun ArrivalsPanelHeader(
                 text = name,
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = onTitleClick?.let { Modifier.clickable(onClick = it) } ?: Modifier
             )
         }
-        // Filter/alert indicators + chevron, right-justified.
+        // Filter/alert indicators, right-justified.
         Row(
             modifier = Modifier.align(Alignment.CenterEnd),
             verticalAlignment = Alignment.CenterVertically
@@ -491,14 +488,6 @@ private fun ArrivalsPanelHeader(
                     tint = MaterialTheme.colorScheme.error
                 )
             }
-            Icon(
-                painter = painterResource(R.drawable.ic_navigation_expand_more),
-                contentDescription = stringResource(R.string.stop_header_sliding_panel_collapsed),
-                modifier = chevronModifier
-                    .rotate(chevronRotation)
-                    .size(chevronSize),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
@@ -540,12 +529,9 @@ private fun DrawerCollapsedPreview() {
                     showActions = true,
                     hasAlerts = false,
                     filtering = false,
-                    collapsed = true,
-                    onToggleExpand = {},
                     onToggleFavorite = {},
-                    // Tune these in the preview to dial in the star / chevron sizing
+                    // Tune this in the preview to dial in the star sizing
                     starSize = 20.dp,
-                    chevronSize = 18.dp
                 )
             }
         }
@@ -585,12 +571,10 @@ private fun ArrivalsPanelHeaderPreview() {
                     showActions = true,
                     hasAlerts = false,
                     filtering = false,
-                    collapsed = true,
-                    onToggleExpand = {},
                     onToggleFavorite = {}
                 )
                 PeekDivider()
-                // Long stop name: it should ellipsize, kept clear of the right-justified chevron.
+                // Long stop name: it should ellipsize, kept clear of the right-justified indicators.
                 ArrivalsPanelHeader(
                     title = "Northgate Transit Center - Bay 3 & Light Rail Station Entrance",
                     direction = "SW",
@@ -598,8 +582,6 @@ private fun ArrivalsPanelHeaderPreview() {
                     showActions = true,
                     hasAlerts = true,
                     filtering = true,
-                    collapsed = false,
-                    onToggleExpand = {},
                     onToggleFavorite = {}
                 )
             }

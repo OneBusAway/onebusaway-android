@@ -21,15 +21,13 @@ import android.util.Log;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.analytics.ObaAnalytics;
+import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -47,18 +45,16 @@ public class NavigationUploadWorker extends Worker {
 
     public static final String TAG = "NavigationUploadWorker";
 
-    private FirebaseAnalytics mFirebaseAnalytics;
 
     public NavigationUploadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
     }
 
     @NonNull
     @Override
     public Result doWork() {
-        uploadLog(Application.get().getString(R.string.analytics_label_destination_reminder_yes));
-        uploadLog(Application.get().getString(R.string.analytics_label_destination_reminder_no));
+        uploadLog(getApplicationContext().getString(R.string.analytics_label_destination_reminder_yes));
+        uploadLog(getApplicationContext().getString(R.string.analytics_label_destination_reminder_no));
         return Result.success();
     }
 
@@ -66,7 +62,7 @@ public class NavigationUploadWorker extends Worker {
 
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
-        File dir = new File(Application.get().getApplicationContext().getFilesDir()
+        File dir = new File(getApplicationContext().getFilesDir()
                 .getAbsolutePath() + File.separator + LOG_DIRECTORY + File.separator + response);
         if (dir.exists()) {
             Log.d(TAG, "Directory exists");
@@ -104,10 +100,8 @@ public class NavigationUploadWorker extends Worker {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         Log.d(TAG, logFileName + " uploaded successful");
-                        String userResponse = taskSnapshot.getMetadata().getCustomMetadata(Application
-                                .get().getString(R.string.analytics_label_custom_metadata_response));
-                        String feedbackText = taskSnapshot.getMetadata().getCustomMetadata(Application
-                                .get().getString(R.string.analytics_label_custom_metadata_feedback));
+                        String userResponse = taskSnapshot.getMetadata().getCustomMetadata(getApplicationContext().getString(R.string.analytics_label_custom_metadata_response));
+                        String feedbackText = taskSnapshot.getMetadata().getCustomMetadata(getApplicationContext().getString(R.string.analytics_label_custom_metadata_feedback));
                         String fileURL = taskSnapshot.getStorage().getDownloadUrl().toString();
                         Log.d(TAG, "Response - " + userResponse);
                         Log.d(TAG, "FeedbackText - " + feedbackText);
@@ -123,12 +117,12 @@ public class NavigationUploadWorker extends Worker {
 
     private void logFeedback(String feedbackText, String userResponse, String fileName) {
         Boolean wasGoodReminder;
-        if (userResponse.equals(Application.get().getString(R.string.analytics_label_destination_reminder_yes))) {
+        if (userResponse.equals(getApplicationContext().getString(R.string.analytics_label_destination_reminder_yes))) {
             wasGoodReminder = true;
         } else {
             wasGoodReminder = false;
         }
-        ObaAnalytics.reportDestinationReminderFeedback(mFirebaseAnalytics, wasGoodReminder
+        AnalyticsEntryPoint.get(getApplicationContext()).reportDestinationReminderFeedback(wasGoodReminder
                 , ((!isEmpty(feedbackText)) ? feedbackText : null), fileName);
         Log.d(TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
                 + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText)) ? feedbackText : null) + ", filename - " + fileName);

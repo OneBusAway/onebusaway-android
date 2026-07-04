@@ -38,6 +38,8 @@ import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
+import org.onebusaway.android.map.render.StopBand
+import org.onebusaway.android.map.render.StopIconKind
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
@@ -45,6 +47,7 @@ import org.onebusaway.android.map.render.TripStopBitmaps
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
+import org.onebusaway.android.map.render.stopIconKind
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.getRouteDisplayName
 
@@ -55,9 +58,10 @@ import org.onebusaway.android.util.getRouteDisplayName
  * handlers.
  *
  * Two redraw paths, mirroring the Google flavor's two recomposition boundaries:
- *  - [renderStatic] (stops / route polylines / bikes / generics / trip-stop dots) is a clear-and-redraw
- *    of just the static annotations, driven by snapshot/trip-stop changes (viewport loads, the vehicle
- *    poll, focus) — a bounded cost.
+ *  - [renderStatic] clear-and-redraws the static annotations (route polylines / bikes / generics /
+ *    trip-stop dots) and reconciles the stop markers in place ([reconcileStopMarkers], so unchanged
+ *    stops don't blink), driven by snapshot/trip-stop changes (viewport loads, the vehicle poll,
+ *    focus) — a bounded cost.
  *  - [renderDynamic] (the live vehicle markers + the trip-focus band/estimate markers) is pulled each
  *    display frame by the adapter's vsync loop. It updates marker positions **in place** (so an open
  *    info window survives and there's no per-frame flicker) and only adds/removes annotations as the
@@ -73,6 +77,16 @@ class MapLibreRenderer(
 ) {
     private val stopByMarker = HashMap<Marker, StopMarker>()
 
+    // Stop markers tracked by stop id so [reconcileStopMarkers] can diff them in place (add new,
+    // remove gone, re-icon only on a focus flip) instead of clear-and-redraw — keeping unchanged stops
+    // from blinking on every static redraw. Like the vehicle markers, these are NOT in
+    // [staticAnnotations] and so survive a static redraw; [renderedFocusedStopId] is the focus the
+    // icons were last drawn for. They live until MapView.onDestroy(), like vehicleMarkersByTripId.
+    private val stopMarkersByStopId = HashMap<String, Marker>()
+    private var renderedFocusedStopId: String? = null
+    // The zoom band the stop icons were last drawn for (full icon vs dot); see [reconcileStopMarkers].
+    private var renderedStopBand = StopBand.FULL
+
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
@@ -83,8 +97,8 @@ class MapLibreRenderer(
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
     // vehicles keyed by active trip id, the trip-focus estimate markers keyed by role, and the band's
-    // (interaction-free) polylines re-added each frame. [lastVehicleResponse] is the latest poll — both
-    // the change-detector for the vehicle reconcile and the source for [vehicleResponse].
+    // (interaction-free) polylines re-added each frame. [lastVehicleResponse] is the current poll, set on
+    // each vehicle-set reconcile and read by [vehicleResponse].
     private val vehicleMarkersByTripId = HashMap<String, Marker>()
     private val tripMarkersByRole = HashMap<String, Marker>()
     private val bandPolylines = mutableListOf<Polyline>()
@@ -119,7 +133,8 @@ class MapLibreRenderer(
             map.removeAnnotations(staticAnnotations)
             staticAnnotations.clear()
         }
-        stopByMarker.clear()
+        // Stop markers are reconciled in place (not in staticAnnotations), so they survive this; only
+        // the bike tap map is cleared here.
         bikeByMarker.clear()
 
         for (polyline in snapshot.routePolylines) {
@@ -142,18 +157,7 @@ class MapLibreRenderer(
             )
         }
 
-        for (stop in snapshot.stops) {
-            val icon = if (stop.id == snapshot.focusedStopId) {
-                MapLibreStopIcons.focusedIconForDirection(context, stop.direction)
-            } else {
-                MapLibreStopIcons.iconForDirection(context, stop.direction)
-            }
-            val marker = map.addMarker(
-                MarkerOptions().position(stop.point.toLatLng()).icon(icon)
-            )
-            staticAnnotations.add(marker)
-            stopByMarker[marker] = stop
-        }
+        reconcileStopMarkers(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
 
         if (snapshot.bikeshareVisible) {
             val band = bikeZoomBand(map.cameraPosition.zoom.toFloat())
@@ -191,25 +195,76 @@ class MapLibreRenderer(
     }
 
     /**
+     * Diff the stop markers against [stops] in place (the [reconcileVehicleMarkers] pattern): remove
+     * markers whose id has left, add markers for new ids, and re-icon an existing marker only when its
+     * icon kind changes — a focus flip or a zoom-band crossing ([band], full icon ⇄ dot). Unchanged
+     * stops keep their native marker, so they don't blink on a static redraw. Tracked in
+     * [stopMarkersByStopId] (not [staticAnnotations]) so a static redraw leaves them.
+     */
+    private fun reconcileStopMarkers(stops: List<StopMarker>, focusedStopId: String?, band: StopBand) {
+        val liveIds = stops.mapTo(HashSet()) { it.id }
+        val gone = stopMarkersByStopId.iterator()
+        while (gone.hasNext()) {
+            val entry = gone.next()
+            if (entry.key !in liveIds) {
+                map.removeAnnotation(entry.value)
+                stopByMarker.remove(entry.value)
+                gone.remove()
+            }
+        }
+        for (stop in stops) {
+            val kind = stopIconKind(stop.id == focusedStopId, band)
+            val existing = stopMarkersByStopId[stop.id]
+            if (existing == null) {
+                val marker = map.addMarker(
+                    MarkerOptions().position(stop.point.toLatLng()).icon(stopIcon(stop, kind))
+                )
+                stopMarkersByStopId[stop.id] = marker
+                stopByMarker[marker] = stop
+            } else if (stopIconKind(stop.id == renderedFocusedStopId, renderedStopBand) != kind) {
+                // Only the markers whose icon kind changed need a new icon (maplibre centers the icon
+                // on the position, so the dot lands on the stop with no anchor change).
+                existing.icon = stopIcon(stop, kind)
+            }
+        }
+        renderedFocusedStopId = focusedStopId
+        renderedStopBand = band
+    }
+
+    private fun stopIcon(stop: StopMarker, kind: StopIconKind): Icon = when (kind) {
+        StopIconKind.FULL -> MapLibreStopIcons.iconForDirection(stop.direction)
+        StopIconKind.FULL_FOCUSED -> MapLibreStopIcons.focusedIconForDirection(stop.direction)
+        StopIconKind.DOT -> MapLibreStopIcons.dotIcon()
+        StopIconKind.DOT_FOCUSED -> MapLibreStopIcons.focusedDotIcon()
+    }
+
+    /**
      * Update the dynamic layer for one display frame: the route's live [vehicles] (null off route mode)
      * and the trip-focus [overlay] (null off trip-focus). Markers move in place (smoothed across a fresh
      * fix via [nowMs]); the band is re-added.
      */
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
-        updateVehicles(vehicles, nowMs)
+        moveVehicles(vehicles, nowMs)
         updateTripOverlay(overlay, nowMs)
     }
 
-    private fun updateVehicles(vehicles: MapVehicles?, nowMs: Long) {
+    /**
+     * Reconcile the vehicle marker *set* (add/remove markers, refresh icons/titles/tap-routing) against a
+     * pushed [MapRenderState.vehicleSet] emission — a new poll, a direction switch, or leaving route mode
+     * (null). Driven reactively by the adapter, not the frame loop, so the set changes the instant it's
+     * published rather than being inferred from the per-frame motion sample.
+     */
+    fun reconcileVehicles(set: MapVehicles?) {
+        reconcileVehicleMarkers(set?.markers.orEmpty(), set?.response)
+        lastVehicleResponse = set?.response
+    }
+
+    // Per-frame motion: move each already-reconciled marker to its smoothed extrapolated position — no set
+    // diffing or icon work on the hot path, only an icon re-stamp when a vehicle's heading octant flips.
+    // Markers not yet reconciled are skipped.
+    private fun moveVehicles(vehicles: MapVehicles?, nowMs: Long) {
         val response = vehicles?.response
         val markers = vehicles?.markers.orEmpty()
-        // The vehicle set, icons/titles, and tap-routing only change on a new poll (response identity),
-        // so reconcile then. Every display frame in between just moves each marker to its smoothed
-        // extrapolated position — no set diffing or icon work on the hot path.
-        if (response !== lastVehicleResponse) {
-            reconcileVehicleMarkers(markers, response)
-            lastVehicleResponse = response
-        }
         for (vehicle in markers) {
             val marker = vehicleMarkersByTripId[vehicle.activeTripId] ?: continue
             marker.moveTo(

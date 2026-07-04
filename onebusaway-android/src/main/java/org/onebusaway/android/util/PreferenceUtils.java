@@ -37,7 +37,17 @@ import java.util.Locale;
  */
 public class PreferenceUtils {
 
-    /** The single point of contact with persisted prefs (same app-singleton every consumer shares). */
+    /**
+     * The single point of contact with persisted prefs (same app-singleton every consumer shares).
+     *
+     * <p>This is the one deliberately-kept {@code Application.get()} reach in this hub (#1636): it's a
+     * pure DI graph handle — a {@link Context} used only to resolve the {@link PreferencesEntryPoint},
+     * never for its own state. The ~20 accessors here are static and reached from ~90 call sites, most
+     * without a {@code Context} in scope, so threading one through purely to resolve the same
+     * app-singleton would be churn with no behavioral gain. It can only be removed by making
+     * {@code PreferenceUtils} itself injectable. The resource/string reaches that <em>did</em> need a
+     * real {@code Context} (sort-order arrays, the location-denied key) now take one as a parameter.
+     */
     private static PreferencesRepository repo() {
         return PreferencesEntryPoint.get(Application.get());
     }
@@ -88,8 +98,8 @@ public class PreferenceUtils {
      *
      * @return the currently selected stop sort order as the index in R.array.sort_stops
      */
-    public static int getStopSortOrderFromPreferences() {
-        Resources r = Application.get().getResources();
+    public static int getStopSortOrderFromPreferences(Context context) {
+        Resources r = context.getResources();
         String[] sortOptions = r.getStringArray(R.array.sort_stops);
         String sortPref = repo().getString(r.getString(
                 R.string.preference_key_default_stop_sort), sortOptions[0]);
@@ -106,8 +116,8 @@ public class PreferenceUtils {
      *
      * @return the currently selected reminder sort order as the index in R.array.sort_stops
      */
-    public static int getReminderSortOrderFromPreferences(){
-        Resources resources = Application.get().getResources();
+    public static int getReminderSortOrderFromPreferences(Context context){
+        Resources resources = context.getResources();
         String[] sortOptions = resources.getStringArray(R.array.sort_reminders);
         String sortPref = repo().getString(resources.getString(
                 R.string.preference_key_default_reminder_sort), sortOptions[0]);
@@ -178,8 +188,8 @@ public class PreferenceUtils {
      * location permissions. Note that this means they haven't actually be prompted with the
      * system permission dialog.
      */
-    public static boolean userDeniedLocationPermission() {
-        Resources r = Application.get().getResources();
+    public static boolean userDeniedLocationPermission(Context context) {
+        Resources r = context.getResources();
         return getBoolean(r.getString(R.string.preferences_key_user_denied_location_permissions), false);
     }
 
@@ -188,8 +198,8 @@ public class PreferenceUtils {
      * location permissions, or false if they have indicated that they want to be prompted with
      * the system permission dialog.
      */
-    public static void setUserDeniedLocationPermissions(boolean value) {
-        Resources r = Application.get().getResources();
+    public static void setUserDeniedLocationPermissions(Context context, boolean value) {
+        Resources r = context.getResources();
         saveBoolean(r.getString(R.string.preferences_key_user_denied_location_permissions), value);
     }
 

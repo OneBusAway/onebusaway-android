@@ -19,7 +19,7 @@ import org.onebusaway.android.ui.HomeActivity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import org.onebusaway.android.provider.ObaContract
+import org.onebusaway.android.ui.nav.DeepLinkUris
 
 /**
  * Launches the route-info screen (a route's stops grouped by direction).
@@ -41,6 +41,6 @@ object RouteInfoLauncher {
     @JvmStatic
     fun makeIntent(context: Context, routeId: String): Intent =
         Intent(context, HomeActivity::class.java).apply {
-            data = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, routeId)
+            data = Uri.withAppendedPath(DeepLinkUris.ROUTES, routeId)
         }
 }

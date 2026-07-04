@@ -23,12 +23,15 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import androidx.lifecycle.SavedStateHandle
 import org.onebusaway.android.R
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
+import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.preferences.PreferencesRepository
@@ -94,47 +97,6 @@ class MapHost(
         savedStateHandle[MapParams.CENTER_LAT] = snapshot.center.latitude
         savedStateHandle[MapParams.CENTER_LON] = snapshot.center.longitude
         savedStateHandle[MapParams.ZOOM] = snapshot.zoom.toFloat()
-        // Apply any frame deferred while the map wasn't ready, but ONLY once the adapter's command
-        // collector is actually subscribed — not merely attached. [setMapAttached] runs in a
-        // DisposableEffect that fires *before* the separate LaunchedEffect that subscribes to
-        // [MapRenderState.cameraCommands], so there's a window where mapAttached is true but no collector
-        // exists yet; a map tearing down likewise reports a final idle after its collector is gone.
-        // Flushing then would dispatch the pending frame into a no-replay flow with no subscriber, losing
-        // it and stranding the camera at the (0,0) seed. This path only covers the
-        // "attached + subscribed but not yet idled" window (e.g. a region resolving just after attach);
-        // the reliable flush on (re)attach is [onCameraCommandsSubscribed].
-        if (mapAttached && cameraCommandsSubscribed) applyDeferredCameraFrames()
-    }
-
-    /**
-     * Apply any camera frame requested while the map was detached: the region re-zoom ([rezoomForRegion]),
-     * the route re-fit ([frameRoute]), or the directions itinerary fit ([frameItinerary]). The
-     * camera-command flow has no replay, so a frame dispatched before a collector exists is lost —
-     * these deferrals hold the intent until the map is ready, then dispatch it against a live subscriber.
-     */
-    private fun applyDeferredCameraFrames() {
-        if (pendingRegionFrame) {
-            pendingRegionFrame = false
-            frameCurrentRegion()
-        }
-        if (pendingFrameCommands.isNotEmpty()) {
-            val commands = pendingFrameCommands
-            pendingFrameCommands = emptyList()
-            commands.forEach { dispatchCamera(it) }
-        }
-    }
-
-    /**
-     * The flavor adapter calls this the instant it subscribes to [MapRenderState.cameraCommands] (from
-     * `Flow.onSubscription`), so a frame deferred while the map was detached is dispatched against a
-     * guaranteed-live collector rather than racing it. The first `onCameraIdle` can fire *before* the
-     * adapter's collector is registered — with a no-replay command flow that dropped the deferred frame,
-     * leaving the camera at the (0,0) world seed (the trip-plan directions map, drawn behind the results
-     * sheet the moment a plan completes, hit this every time).
-     */
-    fun onCameraCommandsSubscribed() {
-        cameraCommandsSubscribed = true
-        applyDeferredCameraFrames()
     }
 
     /**
@@ -194,85 +156,50 @@ class MapHost(
 
     fun setBottomPadding(px: Int) = renderState.setBottomPadding(px)
 
-    fun dispatchCamera(command: CameraCommand) = renderState.dispatchCamera(command)
+    /** Dispatch a transient camera gesture (zoom step / recenter / my-location move / stop-tap center). */
+    fun dispatchGesture(command: CameraCommand) = renderState.dispatchGesture(command)
 
-    // Whether a flavor map adapter is currently composed. Toggled by the adapter on composition
-    // enter/leave; lets [frameOrDefer] choose between dispatching now and deferring.
-    private var mapAttached = false
+    /** Set the map's retained framing intent (fit route / itinerary / region / a fixed point). */
+    fun frame(intent: FramingIntent) = renderState.frame(intent)
 
-    // Whether the adapter's [MapRenderState.cameraCommands] collector is actually subscribed. Distinct
-    // from [mapAttached] because the adapter sets attached in a DisposableEffect that runs *before* the
-    // LaunchedEffect that subscribes, so there's an attached-but-not-subscribed window; a deferred flush
-    // into the no-replay command flow during it would be lost. Set on subscribe ([onCameraCommandsSubscribed]),
-    // cleared on detach so a re-attach re-arms it.
-    private var cameraCommandsSubscribed = false
-
-    // Set when a framing move (route/itinerary bounds fit, or the degenerate directions start-center) is
-    // requested while the map is detached — the camera-command flow has no replay, so a command
-    // dispatched before the adapter (re)subscribes is lost. Holds the latest such frame's commands until
-    // the map is ready (see [frameOrDefer]); a single pending frame is enough because a given host only
-    // ever fits one thing (the home map fits a route, the trip-results map fits an itinerary), but the
-    // start-center frame is two commands (recenter + zoom), so it's a list. The region re-zoom is
-    // deferred separately via [pendingRegionFrame] because it runs decision logic ([frameCurrentRegion]).
-    private var pendingFrameCommands: List<CameraCommand> = emptyList()
-
-    /** The flavor adapter reports when its render-state subscription starts/ends (the map composable enter/leave). */
-    fun setMapAttached(attached: Boolean) {
-        mapAttached = attached
-        if (!attached) cameraCommandsSubscribed = false
-    }
+    /** Clear the retained framing so a stale fit isn't re-applied when the map leaves a framed view. */
+    fun clearFraming() = renderState.clearFraming()
 
     /**
-     * Dispatch a framing move now when the map adapter's command collector is subscribed; otherwise hold
-     * it until the map is ready (flushed by [onCameraCommandsSubscribed], or [applyDeferredCameraFrames]
-     * on the first idle), so a frame isn't dropped into the no-replay command flow when it's requested
-     * against a map that's attached but hasn't subscribed yet (the [setMapAttached] DisposableEffect runs
-     * before the subscribing LaunchedEffect). The shape/route is already in the render state, so a
-     * deferred bounds-fit has bounds to fit.
+     * Frame the active route's bounding box (the "zoom to route" camera move). Sets the retained
+     * [FramingIntent.Route], so a late or re-created adapter replays it — the frame isn't dropped when
+     * re-selecting the already-shown route from a list that navigates back to a freshly re-created map
+     * (the recent-routes case), nor swallowed when re-tapping the same route to snap back to its extent.
+     * The route's shape is already in the render state, so the framing has bounds to fit.
      */
-    private fun frameOrDefer(vararg commands: CameraCommand) {
-        if (mapAttached && cameraCommandsSubscribed) {
-            commands.forEach { dispatchCamera(it) }
-        } else {
-            pendingFrameCommands = commands.toList()
-        }
-    }
+    fun frameRoute() = frame(FramingIntent.Route)
 
     /**
-     * Frame the active route's bounding box (the "zoom to route" camera move). Deferred if the map isn't
-     * ready — e.g. re-selecting the already-shown route from a list that navigates back to a freshly
-     * re-created map (the recent-routes case).
-     */
-    fun frameRoute() = frameOrDefer(CameraCommand.FitToRoute)
-
-    /**
-     * Frame the current directions itinerary's bounding box. Deferred if the map isn't ready — the
+     * Frame the current directions itinerary's bounding box. Retained, so it isn't lost when the
      * directions map is composed behind the results sheet the instant a plan completes, before the
-     * adapter subscribes to the command flow.
+     * adapter subscribes (#1640) — the replay catches the late subscriber up.
      */
-    fun frameItinerary() = frameOrDefer(CameraCommand.FitToItinerary)
+    fun frameItinerary() = frame(FramingIntent.Itinerary)
 
     /**
      * Frame a degenerate directions itinerary (no route shape — start == end): center on [lat],[lon] at
-     * the default zoom. Deferred like [frameItinerary] if the map isn't ready, since it's dispatched at
-     * the same moment (a plan completing behind the results sheet) and the command flow has no replay.
+     * the default zoom. Retained like [frameItinerary] since it's requested at the same moment (a plan
+     * completing behind the results sheet).
      */
-    fun frameStart(lat: Double, lon: Double) = frameOrDefer(
-        CameraCommand.Recenter(lat, lon, animate = false, applyRouteBias = false),
-        CameraCommand.SetZoom(MapParams.DEFAULT_ZOOM.toFloat()),
-    )
+    fun frameStart(lat: Double, lon: Double) =
+        frame(FramingIntent.Point(lat, lon, MapParams.DEFAULT_ZOOM.toFloat()))
 
     /** Animate/move the camera to a point with no route-header bias (a general recenter for any screen). */
     fun centerOn(lat: Double, lon: Double, animate: Boolean) {
-        dispatchCamera(CameraCommand.Recenter(lat, lon, animate, applyRouteBias = false))
+        dispatchGesture(CameraCommand.Recenter(lat, lon, animate, applyRouteBias = false))
     }
 
-    fun zoomIn() = dispatchCamera(CameraCommand.ZoomIn)
+    fun zoomIn() = dispatchGesture(CameraCommand.ZoomIn)
 
-    fun zoomOut() = dispatchCamera(CameraCommand.ZoomOut)
+    fun zoomOut() = dispatchGesture(CameraCommand.ZoomOut)
 
     /** Frame the current region's bounds (the out-of-range dialog's "take me there"). */
-    fun zoomToRegion() = dispatchCamera(CameraCommand.ZoomToRegion)
+    fun zoomToRegion() = frame(FramingIntent.Region)
 
     // ----- Generic markers -----
 
@@ -343,7 +270,7 @@ class MapHost(
         )
         when (action) {
             MyLocationAction.MoveToLocation -> last?.let {
-                dispatchCamera(
+                dispatchGesture(
                     CameraCommand.MoveToLocation(it.latitude, it.longitude, useDefaultZoom, animate)
                 )
             }
@@ -356,37 +283,40 @@ class MapHost(
 
     // ----- Region re-zoom (the old ObaRegionsTask.Callback.onRegionTaskFinished) -----
 
-    // Set when a region change wants to re-center but the map hasn't published its camera yet — the
-    // camera-command flow has no replay, so a command dispatched before the adapter subscribes is lost.
-    // Consumed on the first onCameraIdle (when the adapter is definitely subscribed).
-    private var pendingRegionFrame = false
-
     /**
      * The current region changed (driven by the region collector, so this only fires on a real change to
-     * a present region). Frames it once the map is ready; if the map hasn't published a camera yet, defer
-     * to the first [onCameraIdle] so the camera command isn't lost.
+     * a present region). Frames it once the map has published a camera — awaiting the first non-null
+     * [camera] reactively rather than deferring through a boolean flushed in [onCameraIdle]. Waiting for
+     * the camera lets the `cameraAtSeed` decision read the real restored/seed viewport (not a premature
+     * null). Both outcomes are retained framings ([FramingIntent]), so the frame survives even if the
+     * first camera idle beats the adapter's subscription (#1640) — the exact seed-window this decision
+     * runs in — rather than being dropped into the no-replay gesture flow.
      */
     private fun rezoomForRegion() {
-        if (_camera.value == null) {
-            pendingRegionFrame = true
-            return
+        scope.launch {
+            val cam = camera.filterNotNull().first()
+            frameCurrentRegion(cam)
         }
-        frameCurrentRegion()
     }
 
     /**
      * Frame the current region: if we have no location, or the camera is still at the (0,0) seed, frame
      * the user's location if we have one, else the region — but don't yank a camera the user already moved.
+     * Both frames go through the retained [FramingIntent] flow (not the FAB's [requestMyLocation] gesture
+     * path), so neither can be lost in the first-idle-before-subscribe window this cold-start decision
+     * runs in. The my-location leg has already established a fix here (regionRezoom returns FrameMyLocation
+     * only when one exists), so it centers on it directly rather than re-deriving the FAB's dialog logic.
      */
-    private fun frameCurrentRegion() {
+    private fun frameCurrentRegion(cam: CameraSnapshot) {
         // lastKnownLocation() (not the repo's .value): this runs at cold-start framing and must trigger
         // the lazy provider poll so the first frame can target the user's location.
         val location = locationRepository.lastKnownLocation()
-        val center = _camera.value?.center
-        val atSeed = center == null || (center.latitude == 0.0 && center.longitude == 0.0)
+        val center = cam.center
+        val atSeed = center.latitude == 0.0 && center.longitude == 0.0
         when (regionRezoom(changed = true, hasLocation = location != null, cameraAtSeed = atSeed)) {
-            RegionRezoom.FrameMyLocation -> requestMyLocation(useDefaultZoom = true, animate = false)
-            RegionRezoom.FrameRegion -> dispatchCamera(CameraCommand.ZoomToRegion)
+            RegionRezoom.FrameMyLocation ->
+                location?.let { frame(FramingIntent.Point(it.latitude, it.longitude, SEED_DEFAULT_ZOOM)) }
+            RegionRezoom.FrameRegion -> frame(FramingIntent.Region)
             RegionRezoom.None -> {}
         }
     }

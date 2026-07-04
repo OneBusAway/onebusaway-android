@@ -62,7 +62,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onSubscription
+import kotlinx.coroutines.flow.filterNotNull
 import kotlin.math.abs
 
 private const val STYLE_URL_LIGHT = "https://tiles.openfreemap.org/styles/liberty"
@@ -76,8 +76,8 @@ private const val FRAME_INTERVAL_NANOS = 8_333_333L
  * [AndroidView] (there is no maplibre-compose), bridging the MapView's imperative lifecycle to Compose
  * via a [LifecycleEventObserver], and drives the [MapHost]: it sets the style, builds the
  * [MapLibreRenderer] and re-renders on every render-state change, wires map/marker/info-window clicks
- * to [callbacks], reports camera idles to [MapHost.onCameraIdle], applies the dispatched camera intents
- * from the render state's cameraCommands, and enables the location blue dot from the host's
+ * to [callbacks], reports camera idles to [MapHost.onCameraIdle], applies the render state's camera
+ * gestures + retained framing intent, and enables the location blue dot from the host's
  * permission-derived flag. There is no imperative host.
  *
  * Lifecycle note: `addObserver` on an already-STARTED/RESUMED lifecycle synchronously dispatches the
@@ -211,23 +211,18 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
             }
         }
 
-        // Declarative camera: apply the dispatched camera intents to the map once ready, and tell the host
-        // the adapter is subscribed (so a deferred route re-frame can dispatch now rather than waiting).
+        // Declarative camera. Transient gestures apply as they arrive (dropped if none pending when the
+        // map wasn't subscribed); the retained framing intent is replayed to this collector when the map
+        // (re)composes, so a fit requested before the adapter subscribed — the directions map composed
+        // behind the results sheet (#1640), or a re-tap of the shown route — is re-applied here rather
+        // than deferred through a host flag; null clears it (no framing to apply).
         val map = mapLibreMap
         if (map != null) {
-            DisposableEffect(map) {
-                host.setMapAttached(true)
-                onDispose { host.setMapAttached(false) }
+            LaunchedEffect(map) {
+                renderState.cameraGestures.collect { command -> applyCameraCommand(command, map) }
             }
             LaunchedEffect(map) {
-                renderState.cameraCommands
-                    // Flush any frame deferred while the map was detached the moment this collector is
-                    // registered — emissions in onSubscription reach this collector, so a deferred fit
-                    // isn't dropped by the no-replay flow if the first camera-idle beats us (#1640).
-                    .onSubscription { host.onCameraCommandsSubscribed() }
-                    .collect { command ->
-                        applyCameraCommand(command, map, renderState)
-                    }
+                renderState.framingIntent.filterNotNull().collect { applyFramingIntent(it, map, renderState) }
             }
         }
 

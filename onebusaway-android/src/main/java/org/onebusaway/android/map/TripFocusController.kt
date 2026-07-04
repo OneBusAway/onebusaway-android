@@ -26,7 +26,7 @@ import org.onebusaway.android.extrapolation.extrapolationFromState
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.map.render.BandSegment
-import org.onebusaway.android.map.render.CameraCommand
+import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.TripStopDot
@@ -88,7 +88,7 @@ class TripFocusController(
                     )
                 )
             )
-            host.dispatchCamera(CameraCommand.FitToRoute)
+            host.frame(FramingIntent.Route)
         }
     }
 

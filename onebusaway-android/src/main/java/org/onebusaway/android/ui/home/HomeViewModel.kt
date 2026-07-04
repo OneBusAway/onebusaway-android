@@ -194,9 +194,7 @@ class HomeViewModel @Inject constructor(
         when (state) {
             ArrivalsSheetState.Expanded -> {
                 _mapBottomPadding.value = peekPx
-                _uiState.value.focusedStop?.let {
-                    emitMapDirective(MapDirective.RecenterOnFocusedStop(it.lat, it.lon))
-                }
+                recenterOnFocusedStop()
             }
             ArrivalsSheetState.Collapsed -> _mapBottomPadding.value = peekPx
             ArrivalsSheetState.Hidden -> _mapBottomPadding.value = 0
@@ -238,6 +236,13 @@ class HomeViewModel @Inject constructor(
         }
         pendingMapFocus = false
         emitMapDirective(MapDirective.FocusStop(stop, routes, settledSheet == ArrivalsSheetState.Expanded))
+    }
+
+    /** Animate the map's camera back onto the focused stop, if one is focused (else a no-op). */
+    fun recenterOnFocusedStop() {
+        _uiState.value.focusedStop?.let {
+            emitMapDirective(MapDirective.RecenterOnFocusedStop(it.lat, it.lon))
+        }
     }
 
     /**

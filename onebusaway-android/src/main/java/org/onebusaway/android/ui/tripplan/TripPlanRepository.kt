@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.tripplan
 
 import android.content.Context
 import android.os.Bundle
+import androidx.annotation.WorkerThread
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -41,6 +42,16 @@ import org.onebusaway.android.preferences.PreferencesRepository
 /** Plans a trip against the region's OpenTripPlanner server. */
 interface TripPlanRepository {
     suspend fun plan(params: TripPlanParams): Result<List<Itinerary>>
+
+    /**
+     * Blocking OTP plan for a caller that is already on a background thread and has assembled its
+     * own [TripRequestBuilder] — the RealtimeService IntentService worker, which replaced the legacy
+     * `TripRequest` AsyncTask. Returns the itineraries, or an empty list on any failure (mirroring
+     * the old callback's failure path, which only logged and disabled updates). Kept non-suspend and
+     * Result-free so it stays cleanly callable from the Java service.
+     */
+    @WorkerThread
+    fun planBlocking(builder: TripRequestBuilder): List<Itinerary>
 }
 
 /**
@@ -56,33 +67,46 @@ class DefaultTripPlanRepository @Inject constructor(
 
     override suspend fun plan(params: TripPlanParams): Result<List<Itinerary>> =
         withContext(Dispatchers.IO) {
-            runCatching {
-                val builder = TripRequestBuilder(context, Bundle()).apply {
-                    setFrom(params.from.toCustomAddress())
-                    setTo(params.to.toCustomAddress())
-                    val calendar = Calendar.getInstance().apply { timeInMillis = params.dateTimeMillis }
-                    if (params.arriving) setArrivalTime(calendar) else setDepartureTime(calendar)
-                    setModeSetById(params.modeId)
-                    setWheelchairAccessible(params.wheelchair)
-                    setOptimizeTransfers(params.optimizeTransfers)
-                    params.maxWalkMeters?.let { setMaxWalkDistance(it) }
-                }
-                val request = builder.buildRequest()
-                val baseUrl = builder.formattedOtpBaseUrl
-                    ?: throw IOException(context.getString(R.string.tripplanner_no_server_selected_error))
-
-                val response = requestPlan(
-                    request,
-                    baseUrl,
-                    prefs.getBoolean(R.string.preference_key_otp_api_url_version, false),
-                )
-                val itineraries = response.plan?.itinerary
-                if (itineraries.isNullOrEmpty()) {
-                    throw IOException(errorMessage(response.error?.id ?: -1))
-                }
-                itineraries
-            }
+            runCatching { planInternal(builderFor(params)) }
         }
+
+    @WorkerThread
+    override fun planBlocking(builder: TripRequestBuilder): List<Itinerary> =
+        runCatching { planInternal(builder) }.getOrDefault(emptyList())
+
+    /** Assembles a [TripRequestBuilder] from the UI-supplied [params]. */
+    private fun builderFor(params: TripPlanParams): TripRequestBuilder =
+        TripRequestBuilder(context, Bundle()).apply {
+            setFrom(params.from.toCustomAddress())
+            setTo(params.to.toCustomAddress())
+            val calendar = Calendar.getInstance().apply { timeInMillis = params.dateTimeMillis }
+            if (params.arriving) setArrivalTime(calendar) else setDepartureTime(calendar)
+            setModeSetById(params.modeId)
+            setWheelchairAccessible(params.wheelchair)
+            setOptimizeTransfers(params.optimizeTransfers)
+            params.maxWalkMeters?.let { setMaxWalkDistance(it) }
+        }
+
+    /**
+     * Runs the OTP request for an already-assembled [builder] on the calling thread. Throws
+     * [IOException] with a user-facing message when no server is selected or the plan is empty/errored.
+     */
+    private fun planInternal(builder: TripRequestBuilder): List<Itinerary> {
+        val request = builder.buildRequest()
+        val baseUrl = builder.formattedOtpBaseUrl
+            ?: throw IOException(context.getString(R.string.tripplanner_no_server_selected_error))
+
+        val response = requestPlan(
+            request,
+            baseUrl,
+            prefs.getBoolean(R.string.preference_key_otp_api_url_version, false),
+        )
+        val itineraries = response.plan?.itinerary
+        if (itineraries.isNullOrEmpty()) {
+            throw IOException(errorMessage(response.error?.id ?: -1))
+        }
+        return itineraries
+    }
 
     /**
      * Ports TripRequest.requestPlan: build the URL, fetch + parse, fall back to the old structure.

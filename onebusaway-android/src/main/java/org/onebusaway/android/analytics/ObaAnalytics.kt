@@ -40,9 +40,8 @@ class ObaAnalytics @Inject constructor(
     @ApplicationContext private val context: Context,
     private val analyticsProvider: AnalyticsProvider,
     private val preferences: PreferencesRepository,
+    private val firebase: FirebaseAnalytics,
 ) {
-
-    private val firebase: FirebaseAnalytics = FirebaseAnalytics.getInstance(context)
 
     /** Distance buckets reported when a stop is tapped. */
     enum class ObaStopDistance(private val label: String, val distanceInMeters: Int) {

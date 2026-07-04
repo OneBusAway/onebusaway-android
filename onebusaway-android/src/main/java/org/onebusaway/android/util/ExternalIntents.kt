@@ -31,7 +31,6 @@ import android.widget.Toast
 import com.google.android.gms.common.GoogleApiAvailability
 
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
@@ -288,18 +287,18 @@ object ExternalIntents {
             activity.startActivity(intent)
             AnalyticsEntryPoint.get(activity).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
-                Application.get().getString(R.string.analytics_label_button_fare_payment),
-                Application.get().getString(R.string.analytics_label_open_app)
+                activity.getString(R.string.analytics_label_button_fare_payment),
+                activity.getString(R.string.analytics_label_open_app)
             )
         } else {
             // Go to Play Store listing to download app
             intent = Intent(Intent.ACTION_VIEW)
-            intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, paymentAndroidAppId)))
+            intent.setData(Uri.parse(activity.getString(R.string.google_play_listing_prefix, paymentAndroidAppId)))
             activity.startActivity(intent)
             AnalyticsEntryPoint.get(activity).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
-                Application.get().getString(R.string.analytics_label_button_fare_payment),
-                Application.get().getString(R.string.analytics_label_download_app)
+                activity.getString(R.string.analytics_label_button_fare_payment),
+                activity.getString(R.string.analytics_label_download_app)
             )
         }
     }
@@ -319,18 +318,18 @@ object ExternalIntents {
             context.startActivity(intent)
             AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
-                Application.get().getString(R.string.analytics_label_button_bike_share),
-                Application.get().getString(R.string.analytics_label_open_app)
+                context.getString(R.string.analytics_label_button_bike_share),
+                context.getString(R.string.analytics_label_open_app)
             )
         } else {
             // Go to Play Store listing to download app
             intent = Intent(Intent.ACTION_VIEW)
-            intent.setData(Uri.parse(Application.get().getString(R.string.google_play_listing_prefix, context.getString(R.string.hopr_android_app_id))))
+            intent.setData(Uri.parse(context.getString(R.string.google_play_listing_prefix, context.getString(R.string.hopr_android_app_id))))
             context.startActivity(intent)
             AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
-                Application.get().getString(R.string.analytics_label_button_bike_share),
-                Application.get().getString(R.string.analytics_label_download_app)
+                context.getString(R.string.analytics_label_button_bike_share),
+                context.getString(R.string.analytics_label_download_app)
             )
         }
     }

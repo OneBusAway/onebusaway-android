@@ -105,8 +105,8 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
         ),
     ) { backStackEntry ->
         val activity = LocalContext.current.findActivity()
-        // The Firebase analytics process-singleton, fetched from the Context like everywhere else
-        // (MapFeature/TripPlanScreen) rather than reaching into the host for it.
+        // Analytics is reached via AnalyticsEntryPoint off the Context (as in MapFeature/TripPlanScreen)
+        // rather than reaching into the host for it.
         val query = backStackEntry.arguments?.getString(NavRoutes.ARG_QUERY).orEmpty()
         val searchVm: SearchResultsViewModel = hiltViewModel()
         LaunchedEffect(query) {

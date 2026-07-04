@@ -17,7 +17,7 @@ package org.onebusaway.android.map
 
 import android.content.Context
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.models.ObaTripStatus
@@ -50,8 +50,7 @@ object MapNavigation {
      */
     @JvmStatic
     fun openBikeDeepLink(context: Context, station: BikeRentalStation) {
-        val app = Application.get()
-        val region = app.currentRegion ?: return
+        val region = RegionEntryPoint.get(context).currentRegion() ?: return
         if (region.id != RegionUtils.TAMPA_REGION_ID.toLong()) {
             return
         }

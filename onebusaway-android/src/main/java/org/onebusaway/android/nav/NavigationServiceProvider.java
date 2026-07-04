@@ -97,22 +97,27 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     private String mTripId;             // Trip ID
     private String mStopId;             // Stop ID
 
+    // Application context, threaded from the hosting NavigationService (replaces the Application static).
+    private final Context mContext;
 
-    public NavigationServiceProvider(String tripId, String stopId) {
+
+    public NavigationServiceProvider(Context context, String tripId, String stopId) {
         Log.d(TAG, "Creating NavigationServiceProvider...");
+        mContext = context.getApplicationContext();
         if (mTTS == null) {
-            mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
+            mTTS = new TextToSpeech(mContext, this);
         }
         mTripId = tripId;
         mStopId = stopId;
 
     }
 
-    public NavigationServiceProvider(String tripId, String stopId, int flag) {
+    public NavigationServiceProvider(Context context, String tripId, String stopId, int flag) {
         Log.d(TAG, "Creating NavigationServiceProvider...");
+        mContext = context.getApplicationContext();
         mResuming = flag == 1;
         if (mTTS == null) {
-            mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
+            mTTS = new TextToSpeech(mContext, this);
         }
         mTripId = tripId;
         mStopId = stopId;
@@ -499,7 +504,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     if (proximityEvent(EVENT_TYPE_GET_READY, ALERT_STATE_NONE)) {
                         mNavProvider.updateUi(EVENT_TYPE_GET_READY);
                         Log.d(TAG, "-----Get ready!");
-                        AnalyticsEntryPoint.get(Application.get()).reportUiEvent(PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL, Application.get().getString(R.string.analytics_label_destination_reminder), Application.get().getString(R.string.analytics_label_destination_reminder_variant_get_ready));
+                        AnalyticsEntryPoint.get(mContext).reportUiEvent(PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL, mContext.getString(R.string.analytics_label_destination_reminder), mContext.getString(R.string.analytics_label_destination_reminder_variant_get_ready));
                         return EVENT_TYPE_GET_READY; //Get ready alert played
                     }
                 }
@@ -509,7 +514,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
                     if (proximityEvent(EVENT_TYPE_PULL_CORD, ALERT_STATE_SHOWN_TO_RIDER)) {
                         mNavProvider.updateUi(EVENT_TYPE_PULL_CORD);
                         Log.d(TAG, "-----Get off the bus!");
-                        AnalyticsEntryPoint.get(Application.get()).reportUiEvent(PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL, Application.get().getString(R.string.analytics_label_destination_reminder), Application.get().getString(R.string.analytics_label_destination_reminder_variant_exit_at_next_stop));
+                        AnalyticsEntryPoint.get(mContext).reportUiEvent(PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL, mContext.getString(R.string.analytics_label_destination_reminder), mContext.getString(R.string.analytics_label_destination_reminder_variant_exit_at_next_stop));
                         return EVENT_TYPE_PULL_CORD; // Get off bus alert played
                     }
                 }
@@ -566,9 +571,8 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      * @return the notification to use for the foreground service if eventType == EVENT_TYPE_INITIAL_STARTUP, otherwise returns null
      */
     private Notification updateUi(int eventType) {
-        Application app = Application.get();
         TripDetailsLauncher.Builder bldr = new TripDetailsLauncher.Builder(
-                app.getApplicationContext(), mTripId);
+                mContext, mTripId);
 
         bldr = bldr.setDestinationId(mStopId);
         Intent intent = bldr.getIntent();
@@ -581,11 +585,11 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             flags = FLAG_UPDATE_CURRENT;
         }
 
-        PendingIntent pIntent = getActivity(app.getApplicationContext(), 1, intent,
+        PendingIntent pIntent = getActivity(mContext, 1, intent,
                 flags);
 
         // Create deletion intent to stop repeated voice comands.
-        Intent receiverIntent = new Intent(app.getApplicationContext(), NavigationReceiver.class);
+        Intent receiverIntent = new Intent(mContext, NavigationReceiver.class);
         int cancelFlags;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             cancelFlags = FLAG_MUTABLE;
@@ -594,29 +598,29 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         }
 
         NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(Application.get().getApplicationContext()
+                new NotificationCompat.Builder(mContext
                         , Application.CHANNEL_DESTINATION_ALERT_ID)
                         .setSmallIcon(R.drawable.ic_content_flag)
-                        .setContentTitle(Application.get().getResources()
+                        .setContentTitle(mContext.getResources()
                                 .getString(R.string.destination_reminder_title))
                         .setContentIntent(pIntent);
         if (eventType == EVENT_TYPE_INITIAL_STARTUP) {
             // Build initial notification used to start the service in the foreground
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM, NavigationReceiver.CANCEL_TRIP);
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID);
-            PendingIntent pCancelIntent = getBroadcast(app.getApplicationContext(),
+            PendingIntent pCancelIntent = getBroadcast(mContext,
                     0, receiverIntent, cancelFlags);
             mBuilder.addAction(R.drawable.ic_navigation_close,
-                    app.getString(R.string.destination_reminder_cancel_trip), pCancelIntent);
+                    mContext.getString(R.string.destination_reminder_cancel_trip), pCancelIntent);
             mBuilder.setOngoing(true);
             return mBuilder.build();
         } else if (eventType == EVENT_TYPE_UPDATE_DISTANCE) {
             // Retrieve preferred unit and calculate distance.
-            String IMPERIAL = app.getString(R.string.preferences_preferred_units_option_imperial);
-            String METRIC = app.getString(R.string.preferences_preferred_units_option_metric);
-            String AUTOMATIC = app.getString(R.string.preferences_preferred_units_option_automatic);
+            String IMPERIAL = mContext.getString(R.string.preferences_preferred_units_option_imperial);
+            String METRIC = mContext.getString(R.string.preferences_preferred_units_option_metric);
+            String AUTOMATIC = mContext.getString(R.string.preferences_preferred_units_option_automatic);
             String preferredUnits = PreferenceUtils
-                    .getString(app.getString(R.string.preference_key_preferred_units), AUTOMATIC);
+                    .getString(mContext.getString(R.string.preference_key_preferred_units), AUTOMATIC);
             double distance = mProxCalculator.endDistance;
             double miles = distance * RegionUtils.METERS_TO_MILES;  // Get miles.
             double kilometers = distance / 1000;                    // Get kilometers.
@@ -647,46 +651,46 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             if (useImperial) {
                 if (miles < 0.1) {
                     // Show feet when distance is less than 0.1 miles
-                    mBuilder.setContentText(Application.get().getResources().getQuantityString(
+                    mBuilder.setContentText(mContext.getResources().getQuantityString(
                             R.plurals.distance_feet, roundedFeet, roundedFeet));
                 } else {
                     // Show miles
-                    mBuilder.setContentText(Application.get().getResources().getQuantityString(
+                    mBuilder.setContentText(mContext.getResources().getQuantityString(
                             R.plurals.distance_miles, (int) miles, fmt.format(miles)));
                 }
             } else {
                 if (kilometers < 1) {
                     // Show meters when distance is less than 1 km
-                    mBuilder.setContentText(Application.get().getResources().getQuantityString(
+                    mBuilder.setContentText(mContext.getResources().getQuantityString(
                             R.plurals.distance_meters, meters, meters));
                 } else {
                     // Show kilometers
-                    mBuilder.setContentText(Application.get().getResources().getQuantityString(
+                    mBuilder.setContentText(mContext.getResources().getQuantityString(
                             R.plurals.distance_kilometers, (int) kilometers, fmt.format(kilometers)));
                 }
             }
 
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM, NavigationReceiver.CANCEL_TRIP);
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID);
-            PendingIntent pCancelIntent = getBroadcast(app.getApplicationContext(),
+            PendingIntent pCancelIntent = getBroadcast(mContext,
                     0, receiverIntent, cancelFlags);
 
             mBuilder.addAction(R.drawable.ic_navigation_close,
-                    app.getString(R.string.destination_reminder_cancel_trip), pCancelIntent);
+                    mContext.getString(R.string.destination_reminder_cancel_trip), pCancelIntent);
 
             mBuilder.setOngoing(true);
             NotificationManager mNotificationManager = (NotificationManager)
-                    Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
+                    mContext.getSystemService(Context.NOTIFICATION_SERVICE);
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
         } else if (eventType == EVENT_TYPE_GET_READY) {   // Get ready to pack
             mGetReady = true;
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM,
                     NavigationReceiver.DISMISS_NOTIFICATION);
-            PendingIntent pDelIntent = getBroadcast(app.getApplicationContext(),
+            PendingIntent pDelIntent = getBroadcast(mContext,
                     0, receiverIntent, cancelFlags);
 
-            String message = Application.get().getString(R.string.destination_voice_get_ready);
+            String message = mContext.getString(R.string.destination_voice_get_ready);
             for (int i = 0; i < NUM_GET_READY_REPEAT; i++) {
                 speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
                 if (i < NUM_GET_READY_REPEAT - 1) {
@@ -699,7 +703,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             mBuilder.setDeleteIntent(pDelIntent);
 
             NotificationManager mNotificationManager =
-                    (NotificationManager) Application.get()
+                    (NotificationManager) mContext
                             .getSystemService(Context.NOTIFICATION_SERVICE);
 
             mNotificationManager.notify(NOTIFICATION_ID + 1, mBuilder.build());
@@ -709,10 +713,10 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             receiverIntent.putExtra(NavigationReceiver.ACTION_NUM,
                     NavigationReceiver.DISMISS_NOTIFICATION);
             receiverIntent.putExtra(NavigationReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 2);
-            PendingIntent pDelIntent = getBroadcast(app.getApplicationContext(),
+            PendingIntent pDelIntent = getBroadcast(mContext,
                     0, receiverIntent, cancelFlags);
 
-            String message = Application.get().getString(R.string.destination_voice_request_stop);
+            String message = mContext.getString(R.string.destination_voice_request_stop);
             // TODO: Slow down voice commands, add count as property.
             for (int i = 0; i < NUM_PULL_CORD_REPEAT; i++) {
                 speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
@@ -725,20 +729,20 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             mBuilder.setDeleteIntent(pDelIntent);
 
             NotificationManager mNotificationManager =
-                    (NotificationManager) Application.get()
+                    (NotificationManager) mContext
                             .getSystemService(Context.NOTIFICATION_SERVICE);
 
             mNotificationManager.cancel(NOTIFICATION_ID + 1);
             mNotificationManager.notify(NOTIFICATION_ID + 2, mBuilder.build());
 
-            mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext()
+            mBuilder = new NotificationCompat.Builder(mContext
                     , Application.CHANNEL_DESTINATION_ALERT_ID)
                     .setSmallIcon(R.drawable.ic_content_flag)
                     .setContentTitle(
-                            Application.get().getResources().getString(R.string.destination_reminder_title))
+                            mContext.getResources().getString(R.string.destination_reminder_title))
                     .setContentIntent(pIntent)
                     .setAutoCancel(true);
-            message = Application.get().getString(R.string.destination_voice_arriving_destination);
+            message = mContext.getString(R.string.destination_voice_arriving_destination);
             mBuilder.setContentText(message);
             mBuilder.setOngoing(false);
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());

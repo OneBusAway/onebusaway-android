@@ -29,7 +29,7 @@ import org.onebusaway.android.ui.arrivals.convertArrivals
 
 /**
  * Test helper for instrumented tests that exercise the arrival/situation projections against a
- * captured arrivals-and-departures fixture: decodes the fixture as the io/client wire DTO and runs
+ * captured arrivals-and-departures fixture: decodes the fixture as the api/ wire DTO and runs
  * the same `convertArrivals` / `StopArrivals.situations` aggregation the app uses, so the assertions
  * ride the production path.
  */
@@ -37,7 +37,7 @@ object ArrivalsFixtures {
 
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
-    /** Decodes a `res/raw` arrivals-and-departures fixture into the io/client envelope. */
+    /** Decodes a `res/raw` arrivals-and-departures fixture into the api/ envelope. */
     @JvmStatic
     fun load(context: Context, fixture: String): ObaEnvelope<EntryWithReferences<ArrivalsForStop>> =
         Resources.read(context, Resources.getTestUri(fixture))

@@ -41,7 +41,7 @@ interface ProblemReportRepository {
 
 /**
  * Default implementation that unpacks the UI's report params + [Location] into the plain values the
- * io.client [ProblemReportDataSource] takes, keeping the wire call (and the legacy `data` param) inside
+ * api [ProblemReportDataSource] takes, keeping the wire call (and the legacy `data` param) inside
  * io. A non-OK app-level code or a transport failure maps to [Result.failure] in the service.
  */
 class DefaultProblemReportRepository(

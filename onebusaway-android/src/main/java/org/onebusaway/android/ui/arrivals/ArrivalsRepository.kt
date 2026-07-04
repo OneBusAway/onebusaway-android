@@ -219,7 +219,7 @@ data class AlertDetails(
 )
 
 /**
- * Default implementation over the io.client [StopArrivalsDataSource]. Ports ArrivalsListLoader's
+ * Default implementation over the api [StopArrivalsDataSource]. Ports ArrivalsListLoader's
  * behavior: widen the time window until arrivals are found, and fall back to the last good response
  * when a refresh fails. Builds the [ArrivalInfo] display model plus the per-arrival actions, service
  * alerts, and route-filter options on the IO thread (their constructors read ContentProviders). All

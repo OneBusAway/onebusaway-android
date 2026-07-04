@@ -23,9 +23,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.provider.StopUserInfo
-import org.onebusaway.android.provider.stopDisplayName
-import org.onebusaway.android.provider.toStopUserInfoMap
+import org.onebusaway.android.database.oba.StopUserInfo
+import org.onebusaway.android.database.oba.stopDisplayName
+import org.onebusaway.android.database.oba.toStopUserInfoMap
 import org.onebusaway.android.util.LocationUtils
 
 /**
@@ -53,7 +53,7 @@ interface StopSearchRepository {
 }
 
 /**
- * Default implementation over the io.client [LocationSearchDataSource] (constructor-injected,
+ * Default implementation over the api [LocationSearchDataSource] (constructor-injected,
  * resolved at the Compose call site), decorated with the user's stop favorites and custom names from
  * the ContentProvider (the same query the legacy UIUtils.StopUserInfoMap ran). [context] is still
  * needed for the location lookup and the provider query.

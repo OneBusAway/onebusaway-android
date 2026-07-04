@@ -250,16 +250,16 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.0'
     // Open311 client library
     implementation 'com.github.OneBusAway:open311-client:1.0.10'
-    // JSON data binding for OBA REST API responses (legacy hand-rolled client, still used by the
-    // endpoints not yet migrated to the api/ stack below).
-    // NOTE: 2.13.x is the last Jackson line supporting Android SDK 21+ (2.14+ requires SDK 26,
-    // and core library desugaring does not help) - do not bump further while minSdk is 21
+    // JSON data binding for the OpenTripPlanner trip-planner (opentripplanner-pojos, via
+    // directions/util/JacksonConfig). The OBA REST API no longer uses Jackson - it is fully on the
+    // api/ Retrofit + kotlinx.serialization stack below.
+    // NOTE: 2.13.x is the last Jackson line supporting Android SDK 23-25 (2.14+ requires SDK 26,
+    // and core library desugaring does not help) - do not bump further while minSdk < 26
     implementation 'com.fasterxml.jackson.core:jackson-core:2.13.5'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.13.5'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.5'
-    // Modernized REST stack (api/): Retrofit + OkHttp + kotlinx.serialization. Migrated to
-    // incrementally, endpoint by endpoint; coexists with the Jackson client above during the
-    // transition.
+    // The OBA REST stack (api/): Retrofit + OkHttp + kotlinx.serialization. Every OBA "where"
+    // endpoint runs on this; the hand-rolled io/ client it replaced has been removed.
     implementation 'com.squareup.retrofit2:retrofit:2.11.0'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
@@ -283,7 +283,8 @@ dependencies {
     googleImplementation 'com.google.android.libraries.places:places-compat:2.6.0'
     // Autocomplete text views with clear button for trip planning
     implementation 'com.google.android.material:material:1.12.0'
-    // Explicit dependency on Gson is now apparently needed
+    // Version pin: a transitive dependency pulls in Gson 2.8.5; this forces it up to 2.10.1.
+    // (Gson is not used directly in app source.)
     implementation 'com.google.code.gson:gson:2.10.1'
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
     androidTestImplementation 'androidx.test:runner:1.6.2'

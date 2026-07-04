@@ -388,7 +388,12 @@ fun HomeScreen(
                     // the arrivals panel body paints, so the handle reads as part of the panel rather
                     // than sitting on a separate default-colored strip.
                     sheetContainerColor = MaterialTheme.colorScheme.surface,
-                    sheetDragHandle = { ArrivalsDragHandle(onToggle = toggleSheet) },
+                    sheetDragHandle = {
+                        ArrivalsDragHandle(
+                            onToggle = toggleSheet,
+                            modifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_PANEL),
+                        )
+                    },
                     sheetContent = {
                         ArrivalsSheetHost(
                             focusedStop = state.focusedStop,
@@ -634,11 +639,13 @@ private val LEGACY_IN_PANEL_HANDLE_BUDGET = 20.dp
  * scaffold's built-in handle click.
  */
 @Composable
-private fun ArrivalsDragHandle(onToggle: () -> Unit) {
+private fun ArrivalsDragHandle(onToggle: () -> Unit, modifier: Modifier = Modifier) {
     // The click sits on the outer padded Box (before the padding) so the tap target covers more than the
-    // bar; it shadows the scaffold's own handle click. The bar itself is a short tinted pill.
+    // bar; it shadows the scaffold's own handle click. The bar itself is a short tinted pill. [modifier]
+    // is the host's anchor slot (the onboarding "slide up" spotlight points here) — outermost so the
+    // spotlight hugs just the handle, not the full-width header.
     Box(
-        modifier = Modifier
+        modifier = modifier
             .clickable(onClick = onToggle)
             .padding(horizontal = 24.dp, vertical = DRAG_HANDLE_VERTICAL_PADDING),
         contentAlignment = Alignment.Center,

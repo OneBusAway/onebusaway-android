@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// This panel threads named per-element anchor modifiers (etaAnchor/starAnchor/headerAnchor) a host
-// attaches to specific sub-elements for the onboarding spotlight — several per composable, none being
-// the root `modifier` — so ModifierParameter's "name it modifier" rule doesn't apply here.
+// This panel threads named per-element anchor modifiers (etaAnchor/starAnchor) a host attaches to
+// specific sub-elements for the onboarding spotlight — several per composable, none being the root
+// `modifier` — so ModifierParameter's "name it modifier" rule doesn't apply here.
 @file:Suppress("ModifierParameter")
 
 package org.onebusaway.android.ui.arrivals.components
@@ -106,11 +106,10 @@ fun ArrivalsPanel(
     // Tapping the pinned stop-name header invokes this (null = not tappable); the drawer host wires it
     // to an animated map recenter on the focused stop.
     onTitleClick: (() -> Unit)? = null,
-    // Opaque anchor modifiers a host may attach to the first peek row's ETA pill + favorite star and the
-    // pinned header (e.g. for an onboarding spotlight). The panel stays ignorant of what they're for.
+    // Opaque anchor modifiers a host may attach to the first peek row's ETA pill + favorite star (e.g.
+    // for an onboarding spotlight). The panel stays ignorant of what they're for.
     etaAnchor: Modifier = Modifier,
     starAnchor: Modifier = Modifier,
-    headerAnchor: Modifier = Modifier,
 ) {
     // The system navigation-bar inset (height varies by handset); see the list contentPadding below.
     val navBarInset = navigationBarBottomPadding()
@@ -170,7 +169,6 @@ fun ArrivalsPanel(
                 filtering = filtering,
                 onToggleFavorite = viewModel::toggleFavorite,
                 onTitleClick = onTitleClick,
-                headerModifier = headerAnchor,
             )
             if (content == null) {
                 LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -432,12 +430,11 @@ private fun ArrivalsPanelHeader(
     filtering: Boolean,
     onToggleFavorite: () -> Unit,
     onTitleClick: (() -> Unit)? = null,
-    headerModifier: Modifier = Modifier,
     starSize: Dp = 20.dp,
 ) {
     val name = if (!direction.isNullOrBlank()) "$title (${direction.trim()})" else title
     Box(
-        headerModifier
+        Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 10.dp)
     ) {

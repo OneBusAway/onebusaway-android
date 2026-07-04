@@ -250,16 +250,10 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.0'
     // Open311 client library
     implementation 'com.github.OneBusAway:open311-client:1.0.10'
-    // JSON data binding for the OpenTripPlanner trip-planner (opentripplanner-pojos, via
-    // directions/util/JacksonConfig). The OBA REST API no longer uses Jackson - it is fully on the
-    // api/ Retrofit + kotlinx.serialization stack below.
-    // NOTE: 2.13.x is the last Jackson line supporting Android SDK 23-25 (2.14+ requires SDK 26,
-    // and core library desugaring does not help) - do not bump further while minSdk < 26
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.13.5'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.13.5'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.5'
     // The OBA REST stack (api/): Retrofit + OkHttp + kotlinx.serialization. Every OBA "where"
-    // endpoint runs on this; the hand-rolled io/ client it replaced has been removed.
+    // endpoint runs on this; the hand-rolled io/ client it replaced has been removed. The whole app
+    // now parses JSON through this stack — the last Jackson consumer (the OTP `/plan` response) moved
+    // to kotlinx.serialization in api/contract/OtpPlanModels.kt, so the Jackson dependency is gone.
     implementation 'com.squareup.retrofit2:retrofit:2.11.0'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
@@ -267,7 +261,9 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3'
     // For sorting alphanumeric route names
     implementation 'org.onebusaway.util:comparators:1.0.0'
-    // POJOs used for full data-binding via Jackson
+    // OpenTripPlanner response POJOs. The directions/ + trip-planner UI read these types directly;
+    // the OTP `/plan` JSON is now decoded by api/contract/OtpPlanModels.kt (kotlinx.serialization)
+    // and mapped onto them, replacing the old Jackson data-binding.
     implementation 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
     // Pelias for point-of-interest search and geocoding for trip planning origin and destination
     implementation 'com.github.OneBusAway:pelias-client-library:v1.1.0'

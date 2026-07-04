@@ -29,8 +29,8 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
+import org.onebusaway.android.api.contract.OtpPlanParser
 import org.onebusaway.android.directions.util.CustomAddress
-import org.onebusaway.android.directions.util.JacksonConfig
 import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.opentripplanner.api.model.Itinerary
 import org.opentripplanner.api.ws.Message
@@ -56,8 +56,8 @@ interface TripPlanRepository {
 
 /**
  * The coroutine replacement for the legacy `TripRequest` AsyncTask. Reuses [TripRequestBuilder] to
- * assemble the OTP request + base URL, then performs the (blocking) HTTP call + Jackson parse on the
- * IO thread — including the old-URL-structure fallback. OTP error codes are mapped to user-facing
+ * assemble the OTP request + base URL, then performs the (blocking) HTTP call + [OtpPlanParser]
+ * parse on the IO thread — including the old-URL-structure fallback. OTP error codes are mapped to user-facing
  * messages (ported from TripPlanActivity.getErrorMessage) and surfaced as [Result.failure].
  */
 class DefaultTripPlanRepository @Inject constructor(
@@ -153,7 +153,7 @@ class DefaultTripPlanRepository @Inject constructor(
                 connectTimeout = HTTP_TIMEOUT_MS
                 readTimeout = HTTP_TIMEOUT_MS
             }
-            val response: Response = JacksonConfig.getObjectReaderInstance().readValue(connection.inputStream)
+            val response: Response = OtpPlanParser.parse(connection.inputStream)
             if (useOldUrlStructure) {
                 prefs.setBoolean(R.string.preference_key_otp_api_url_version, true)
             }

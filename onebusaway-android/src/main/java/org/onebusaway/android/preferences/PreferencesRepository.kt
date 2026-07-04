@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.onebusaway.android.app.Application
 import org.onebusaway.android.app.di.AppScope
 
 /**
@@ -80,6 +81,13 @@ interface PreferencesRepository {
 
     fun getFloat(@StringRes keyRes: Int, default: Float): Float
     fun getFloat(key: String, default: Float): Float
+
+    /**
+     * The persisted app-launch counter ([Application.APP_LAUNCH_COUNT_KEY]), 0 if never launched. A
+     * named read so consumers (e.g. the survey gate) inject this instead of re-inlining the key and its
+     * default — the injectable equivalent of the `Application.get().getAppLaunchCount()` reach (#1642).
+     */
+    fun getAppLaunchCount(): Int
 
     fun setBoolean(@StringRes keyRes: Int, value: Boolean)
     fun setBoolean(key: String, value: Boolean)
@@ -156,6 +164,8 @@ class DefaultPreferencesRepository @Inject constructor(
 
     override fun getFloat(keyRes: Int, default: Float) = getFloat(context.getString(keyRes), default)
     override fun getFloat(key: String, default: Float) = cache[floatPreferencesKey(key)] ?: default
+
+    override fun getAppLaunchCount() = getInt(Application.APP_LAUNCH_COUNT_KEY, 0)
 
     // --- writes (optimistic cache update + async persist) ---
 

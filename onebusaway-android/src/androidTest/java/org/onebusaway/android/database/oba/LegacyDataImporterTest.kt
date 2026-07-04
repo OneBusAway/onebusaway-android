@@ -362,6 +362,7 @@ private object NoopPreferences : PreferencesRepository {
     override fun getLong(key: String, default: Long) = default
     override fun getFloat(keyRes: Int, default: Float) = default
     override fun getFloat(key: String, default: Float) = default
+    override fun getAppLaunchCount() = 0
     override fun setBoolean(keyRes: Int, value: Boolean) = Unit
     override fun setBoolean(key: String, value: Boolean) = Unit
     override fun setString(keyRes: Int, value: String?) = Unit

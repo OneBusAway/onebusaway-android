@@ -91,7 +91,7 @@ class DefaultRegionsRepository @Inject constructor(
                 ?: return@withContext Result.failure(
                     IOException("Regions could not be loaded from any source")
                 )
-            val usable = regions.filter { RegionUtils.isRegionUsable(it) }
+            val usable = regions.filter { RegionUtils.isRegionUsable(context, it) }
             regionsById = usable.associateBy { it.id }
 
             val location = locationRepository.lastKnownLocation()

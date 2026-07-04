@@ -235,7 +235,7 @@ class DefaultRegionRepository @Inject constructor(
         val autoSelect = prefs.getBoolean(R.string.preference_key_auto_select_region, true)
         // getClosestRegion uses Location.distanceTo, so only compute it when auto-selecting.
         val closest = if (autoSelect) {
-            RegionUtils.getClosestRegion(results, locationRepository.lastKnownLocation(), true)
+            RegionUtils.getClosestRegion(context, results, locationRepository.lastKnownLocation(), true)
         } else {
             null
         }
@@ -256,7 +256,7 @@ class DefaultRegionRepository @Inject constructor(
             }
             is RegionStatus.NeedsManualSelection -> {
                 // Attach the picker list (usable regions, name-sorted) to the decision sentinel.
-                val regions = results.filter { RegionUtils.isRegionUsable(it) }.sortedBy { it.name }
+                val regions = results.filter { RegionUtils.isRegionUsable(context, it) }.sortedBy { it.name }
                 holder.needsChoice(regions)
                 RegionStatus.NeedsManualSelection(regions)
             }

@@ -169,7 +169,7 @@ class StarredStopsRepository(private val context: Context) : MyListRepository<St
     private val stopDao = entryPoint.stopDao()
     private val importGate = entryPoint.importGate()
     private val region = RegionEntryPoint.get(context).region
-    private val sort = MutableStateFlow(PreferenceUtils.getStopSortOrderFromPreferences())
+    private val sort = MutableStateFlow(PreferenceUtils.getStopSortOrderFromPreferences(context))
 
     override fun setSort(order: Int) {
         saveSortOrder(context, order, R.array.sort_stops, R.string.preference_key_default_stop_sort)
@@ -221,7 +221,7 @@ class StarredRoutesRepository(private val context: Context) : MyListRepository<R
     private val headsignDao = entryPoint.routeHeadsignFavoriteDao()
     private val importGate = entryPoint.importGate()
     private val region = RegionEntryPoint.get(context).region
-    private val sort = MutableStateFlow(PreferenceUtils.getStopSortOrderFromPreferences())
+    private val sort = MutableStateFlow(PreferenceUtils.getStopSortOrderFromPreferences(context))
 
     override fun setSort(order: Int) {
         saveSortOrder(context, order, R.array.sort_stops, R.string.preference_key_default_stop_sort)
@@ -261,7 +261,7 @@ class StarredRoutesRepository(private val context: Context) : MyListRepository<R
 class RemindersRepository(private val context: Context) : MyListRepository<ReminderItem> {
 
     private val tripDao = DatabaseEntryPoint.get(context).tripDao()
-    private val sort = MutableStateFlow(PreferenceUtils.getReminderSortOrderFromPreferences())
+    private val sort = MutableStateFlow(PreferenceUtils.getReminderSortOrderFromPreferences(context))
 
     override fun setSort(order: Int) {
         saveSortOrder(context, order, R.array.sort_reminders, R.string.preference_key_default_reminder_sort)

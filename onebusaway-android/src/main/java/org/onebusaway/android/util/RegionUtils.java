@@ -70,7 +70,7 @@ public class RegionUtils {
      * enforceThreshold is true and the closest region exceeded DISTANCE_LIMITER threshold or a
      * region couldn't be found
      */
-    public static Region getClosestRegion(List<Region> regions, Location loc,
+    public static Region getClosestRegion(Context context, List<Region> regions, Location loc,
             boolean enforceThreshold) {
         if (loc == null) {
             return null;
@@ -88,7 +88,7 @@ public class RegionUtils {
         Log.d(TAG, "Finding region closest to " + loc.getLatitude() + "," + loc.getLongitude());
 
         for (Region region : regions) {
-            if (!isRegionUsable(region)) {
+            if (!isRegionUsable(context, region)) {
                 Log.d(TAG,
                         "Excluding '" + region.getName() + "' from 'closest region' consideration");
                 continue;
@@ -290,7 +290,7 @@ public class RegionUtils {
      * @param region region to be checked
      * @return true if the region is usable by this application, false if it is not
      */
-    public static boolean isRegionUsable(Region region) {
+    public static boolean isRegionUsable(Context context, Region region) {
         if (!region.getActive()) {
             Log.d(TAG, "Region '" + region.getName() + "' is not active.");
             return false;
@@ -304,7 +304,7 @@ public class RegionUtils {
             return false;
         }
         if (region.getExperimental() && !PreferenceUtils.getBoolean(
-                Application.get().getString(R.string.preference_key_experimental_regions), false)) {
+                context.getString(R.string.preference_key_experimental_regions), false)) {
             Log.d(TAG,
                     "Region '" + region.getName() + "' is experimental and user hasn't opted in.");
             return false;

@@ -236,14 +236,14 @@ class MapHost(
     fun requestLocationPermissionIfNeeded() {
         if (PermissionUtils.hasGrantedAtLeastOnePermission(context, PermissionUtils.LOCATION_PERMISSIONS)) {
             _myLocationEnabled.value = true
-        } else if (!PreferenceUtils.userDeniedLocationPermission()) {
+        } else if (!PreferenceUtils.userDeniedLocationPermission(context)) {
             emitEffect(MapEffect.ShowPermissionRationale)
         }
     }
 
     /** The Activity delivered a location-permission result; reflect it (blue dot on grant). */
     fun onLocationPermissionResult(granted: Boolean) {
-        PreferenceUtils.setUserDeniedLocationPermissions(!granted)
+        PreferenceUtils.setUserDeniedLocationPermissions(context, !granted)
         if (granted) {
             _myLocationEnabled.value = true
             // onResume already ran startUpdates() with no permission (a no-op); now that it's granted,
@@ -272,7 +272,7 @@ class MapHost(
             hasPermission = PermissionUtils.hasGrantedAtLeastOnePermission(
                 app, PermissionUtils.LOCATION_PERMISSIONS
             ),
-            userDeniedPermission = PreferenceUtils.userDeniedLocationPermission(),
+            userDeniedPermission = PreferenceUtils.userDeniedLocationPermission(context),
         )
         when (action) {
             MyLocationAction.MoveToLocation -> last?.let {

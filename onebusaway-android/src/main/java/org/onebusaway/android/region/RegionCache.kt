@@ -59,7 +59,7 @@ class RegionCache @Inject constructor(
     suspend fun save(regions: List<Region>) {
         importGate.awaitReady()
         val usable = regions
-            .filter { RegionUtils.isRegionUsable(it) }
+            .filter { RegionUtils.isRegionUsable(context, it) }
             .map { RegionMapper.toEntities(it) }
         regionDao.replaceAll(usable)
     }

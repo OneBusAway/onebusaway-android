@@ -16,7 +16,6 @@
 
 package org.onebusaway.android.directions.util;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -25,7 +24,6 @@ import android.util.Log;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.di.PreferencesEntryPoint;
 import org.onebusaway.android.app.di.RegionEntryPoint;
-import org.onebusaway.android.directions.tasks.TripRequest;
 import org.onebusaway.android.region.Region;
 import org.onebusaway.android.ui.tripplan.TripModes;
 import org.onebusaway.android.util.BikeshareAvailability;
@@ -63,8 +61,6 @@ public class TripRequestBuilder {
     private static final String MAX_WALK_DISTANCE = ".MAX_WALK_DISTANCE";
     private static final String MODE_SET = ".MODE_SET";
     private static final String DATE_TIME = ".DATE_TIME";
-
-    private TripRequest.Callback mListener;
 
     private Bundle mBundle;
 
@@ -112,11 +108,6 @@ public class TripRequestBuilder {
 
     public TripRequestBuilder setTo(CustomAddress to) {
         mBundle.putParcelable(TO_ADDRESS, to);
-        return this;
-    }
-
-    public TripRequestBuilder setListener(TripRequest.Callback listener) {
-        this.mListener = listener;
         return this;
     }
 
@@ -221,22 +212,9 @@ public class TripRequestBuilder {
         return mBundle.getString(MODE_SET);
     }
 
-    public TripRequest execute(Activity activity) {
-        Request request = buildRequest();
-        // TripRequest will accept a null value and give a user-friendly error
-        String fmtOtpBaseUrl = getFormattedOtpBaseUrl();
-        TripRequest tripRequest = new TripRequest(mContext, fmtOtpBaseUrl, mListener);
-        tripRequest.execute(request);
-        return tripRequest;
-    }
-
-    public void execute() {
-        execute(null);
-    }
-
     /**
-     * Builds the OTP {@link Request} from the current bundle state. Shared by the legacy AsyncTask
-     * path ({@link #execute(Activity)}) and the coroutine trip-plan repository.
+     * Builds the OTP {@link Request} from the current bundle state. Consumed by the coroutine
+     * trip-plan repository (both the UI plan path and the RealtimeService background plan).
      *
      * @throws IllegalArgumentException if the origin or destination is missing
      */
@@ -292,8 +270,8 @@ public class TripRequestBuilder {
             Log.d(TAG, "Using custom OTP API URL set by user '" + otpBaseUrl + "'.");
         } else {
             Region region = RegionEntryPoint.get(mContext).currentRegion();
-            // No custom URL and no selected region: return null so the caller (TripRequest /
-            // TripPlanRepository) surfaces a "no server selected" error instead of crashing.
+            // No custom URL and no selected region: return null so the caller (TripPlanRepository)
+            // surfaces a "no server selected" error instead of crashing.
             if (region == null) {
                 return null;
             }

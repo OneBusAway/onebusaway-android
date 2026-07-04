@@ -200,7 +200,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onAppThemeChanged(value: String) {
         prefs.setString(R.string.preference_key_app_theme, value)
-        ThemeUtils.setAppTheme(value)
+        ThemeUtils.setAppTheme(context, value)
         _effects.trySend(SettingsEffect.RecreateActivity)
     }
 

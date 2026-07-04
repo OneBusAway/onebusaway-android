@@ -19,7 +19,6 @@ package org.onebusaway.android.map;
 import android.content.Context;
 import android.widget.Toast;
 
-import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.ObaRequestErrors;
 
 /**
@@ -28,8 +27,7 @@ import org.onebusaway.android.util.ObaRequestErrors;
 public class MapUtils {
 
     /** Shows the map error toast for an OBA status [code] (used by the modernized api/ callers). */
-    public static void showMapError(int code) {
-        Context context = Application.get().getApplicationContext();
+    public static void showMapError(Context context, int code) {
         Toast.makeText(context,
                 ObaRequestErrors.getMapErrorString(context, code),
                 Toast.LENGTH_LONG).show();

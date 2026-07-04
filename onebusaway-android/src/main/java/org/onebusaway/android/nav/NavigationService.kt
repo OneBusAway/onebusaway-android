@@ -43,7 +43,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.apache.commons.io.FileUtils
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
@@ -394,7 +394,7 @@ class NavigationService : Service() {
             val pDelIntent = PendingIntent.getBroadcast(applicationContext, 0, delIntent, delFlags)
 
             builder = NotificationCompat.Builder(
-                applicationContext, Application.CHANNEL_DESTINATION_ALERT_ID
+                applicationContext, NotificationChannels.DESTINATION_ALERT_ID
             )
                 .setSmallIcon(R.drawable.ic_stat_notification)
                 .setContentTitle(resources.getString(R.string.feedback_notify_title))
@@ -462,7 +462,7 @@ class NavigationService : Service() {
             val pDelIntent = PendingIntent.getBroadcast(applicationContext, 0, delIntent, flags)
 
             builder = NotificationCompat.Builder(
-                applicationContext, Application.CHANNEL_DESTINATION_ALERT_ID
+                applicationContext, NotificationChannels.DESTINATION_ALERT_ID
             )
                 .setSmallIcon(R.drawable.ic_stat_notification)
                 .setContentTitle(resources.getString(R.string.feedback_notify_title))

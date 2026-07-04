@@ -16,18 +16,16 @@
  */
 package org.onebusaway.android.app;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.hardware.GeomagneticField;
 import android.location.Location;
-import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.donations.DonationsManager;
+import org.onebusaway.android.notifications.NotificationChannels;
 import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 import org.onebusaway.android.api.ObaApi;
 import org.onebusaway.android.region.Region;
@@ -58,10 +56,6 @@ public class Application extends android.app.Application {
 
     // Region preference (long id)
     private static final String TAG = "Application";
-
-    public static final String CHANNEL_TRIP_PLAN_UPDATES_ID = "trip_plan_updates";
-    public static final String CHANNEL_ARRIVAL_REMINDERS_ID = "arrival_reminders";
-    public static final String CHANNEL_DESTINATION_ALERT_ID = "destination_alerts";
 
     private DonationsManager mDonationsManager;
 
@@ -98,7 +92,7 @@ public class Application extends android.app.Application {
 
         reportAnalytics();
 
-        createNotificationChannels();
+        NotificationChannels.registerAll(this);
 
         incrementAppLaunchCount();
 
@@ -370,33 +364,6 @@ public class Application extends android.app.Application {
                 customUrl = getString(R.string.analytics_label_custom_url);
             }
             AnalyticsEntryPoint.get(this).setRegion(customUrl);
-        }
-    }
-
-    private void createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel1 = new NotificationChannel(
-                    CHANNEL_TRIP_PLAN_UPDATES_ID,
-                    "Trip plan notifications (beta)",
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            channel1.setDescription("After planning a trip, send notifications if the trip is delayed or no longer recommended.");
-
-            NotificationChannel channel2 = new NotificationChannel(
-                    CHANNEL_ARRIVAL_REMINDERS_ID,
-                    "Bus arrival notifications",
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            channel2.setDescription("Notifications to remind the user of an arriving bus.");
-
-            NotificationChannel channel3 = new NotificationChannel(
-                    CHANNEL_DESTINATION_ALERT_ID,
-                    "Destination alerts",
-                    NotificationManager.IMPORTANCE_LOW);
-            channel3.setDescription("All notifications relating to Destination alerts");
-
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            manager.createNotificationChannel(channel1);
-            manager.createNotificationChannel(channel2);
-            manager.createNotificationChannel(channel3);
         }
     }
 

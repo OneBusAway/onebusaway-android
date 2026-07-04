@@ -29,7 +29,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
+import org.onebusaway.android.notifications.NotificationChannels;
 import org.onebusaway.android.app.di.TripPlanRepositoryEntryPoint;
 import org.onebusaway.android.directions.model.ItineraryDescription;
 import org.onebusaway.android.directions.util.OTPConstants;
@@ -270,7 +270,7 @@ public class RealtimeService extends IntentService {
                         flags);
 
         NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(getApplicationContext(), Application.CHANNEL_TRIP_PLAN_UPDATES_ID)
+                new NotificationCompat.Builder(getApplicationContext(), NotificationChannels.TRIP_PLAN_UPDATES_ID)
                         .setSmallIcon(R.drawable.ic_stat_notification)
                         .setContentTitle(titleText)
                         .setStyle(new NotificationCompat.BigTextStyle().bigText(messageText))

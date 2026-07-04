@@ -14,7 +14,7 @@ import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.reminders.ReminderRepository
 import org.onebusaway.android.ui.arrivals.ArrivalsListLauncher
@@ -74,7 +74,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         )
 
         val notificationBuilder =
-            NotificationCompat.Builder(this, Application.CHANNEL_ARRIVAL_REMINDERS_ID)
+            NotificationCompat.Builder(this, NotificationChannels.ARRIVAL_REMINDERS_ID)
                 .setSmallIcon(R.drawable.ic_stat_notification)
                 .setColor(NOTIFICATION_COLOR)
                 .setContentTitle("OneBusAway")

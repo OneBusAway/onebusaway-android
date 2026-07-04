@@ -19,7 +19,7 @@ import static android.app.PendingIntent.*;
 
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
+import org.onebusaway.android.notifications.NotificationChannels;
 import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 import org.onebusaway.android.analytics.PlausibleAnalytics;
 import org.onebusaway.android.nav.model.Path;
@@ -599,7 +599,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(mContext
-                        , Application.CHANNEL_DESTINATION_ALERT_ID)
+                        , NotificationChannels.DESTINATION_ALERT_ID)
                         .setSmallIcon(R.drawable.ic_content_flag)
                         .setContentTitle(mContext.getResources()
                                 .getString(R.string.destination_reminder_title))
@@ -736,7 +736,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
             mNotificationManager.notify(NOTIFICATION_ID + 2, mBuilder.build());
 
             mBuilder = new NotificationCompat.Builder(mContext
-                    , Application.CHANNEL_DESTINATION_ALERT_ID)
+                    , NotificationChannels.DESTINATION_ALERT_ID)
                     .setSmallIcon(R.drawable.ic_content_flag)
                     .setContentTitle(
                             mContext.getResources().getString(R.string.destination_reminder_title))

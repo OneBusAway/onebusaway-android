@@ -26,7 +26,7 @@ import android.util.Log;
 import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
+import org.onebusaway.android.notifications.NotificationChannels;
 import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 import org.onebusaway.android.util.PreferenceUtils;
 
@@ -90,7 +90,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
 
             NotificationCompat.Builder repliedNotification =
                     new NotificationCompat.Builder(context
-                            , Application.CHANNEL_DESTINATION_ALERT_ID)
+                            , NotificationChannels.DESTINATION_ALERT_ID)
                             .setSmallIcon(R.drawable.ic_stat_notification)
                             .setContentTitle(context.getResources()
                                     .getString(R.string.feedback_notify_title))

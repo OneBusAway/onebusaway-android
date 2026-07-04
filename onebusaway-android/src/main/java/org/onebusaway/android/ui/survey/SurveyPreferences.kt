@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.survey
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
@@ -34,6 +35,7 @@ import org.onebusaway.android.preferences.PreferencesRepository
  */
 @Singleton
 class SurveyPreferences @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val prefs: PreferencesRepository,
 ) {
 
@@ -51,8 +53,8 @@ class SurveyPreferences @Inject constructor(
      *
      * @return The stored reminder date as a long (milliseconds since epoch), or -1 if not set
      */
-    fun getSurveyReminderDate(context: Context): Long {
-        migrateLegacyIfNeeded(context)
+    fun getSurveyReminderDate(): Long {
+        migrateLegacyIfNeeded()
         return prefs.getLong(SURVEY_REMINDER_DATE_KEY, -1)
     }
 
@@ -61,14 +63,14 @@ class SurveyPreferences @Inject constructor(
      *
      * @return The user's UUID as a String.
      */
-    fun getUserUUID(context: Context): String {
-        migrateLegacyIfNeeded(context)
+    fun getUserUUID(): String {
+        migrateLegacyIfNeeded()
         prefs.getString(UUID_KEY, null)?.let { return it }
         return UUID.randomUUID().toString().also { prefs.setString(UUID_KEY, it) }
     }
 
     /** One-time copy of the old separate `survey_pref` SharedPreferences values into DataStore. */
-    private fun migrateLegacyIfNeeded(context: Context) {
+    private fun migrateLegacyIfNeeded() {
         if (prefs.getBoolean(LEGACY_MIGRATED_KEY, false)) return
         val legacy = context.getSharedPreferences(LEGACY_PREFS_NAME, Context.MODE_PRIVATE)
         legacy.getString(UUID_KEY, null)?.let { prefs.setString(UUID_KEY, it) }

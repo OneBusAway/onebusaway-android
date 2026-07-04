@@ -130,11 +130,11 @@ class SurveyViewModel @Inject constructor(
         if (regionRepository.region.value == null) return
         val studiesEnabled = prefs.getBoolean(R.string.preference_key_show_available_studies, true)
         if (!studiesEnabled ||
-            !SurveyUtils.shouldShowSurveyView(context, surveyPreferences, false)) return
+            !SurveyUtils.shouldShowSurveyView(surveyPreferences, false)) return
         requested = true
         val url = studyUrl() ?: return
         viewModelScope.launch {
-            val response = surveyRepo.studies(url, surveyPreferences.getUserUUID(context)).getOrNull()
+            val response = surveyRepo.studies(url, surveyPreferences.getUserUUID()).getOrNull()
             if (response != null) onStudyResponse(response)
         }
     }
@@ -311,7 +311,7 @@ class SurveyViewModel @Inject constructor(
     private suspend fun submit(apiUrl: String, surveyId: Int, body: JSONArray): SurveySubmitResult? =
         surveyRepo.submit(
             url = apiUrl,
-            userIdentifier = surveyPreferences.getUserUUID(context),
+            userIdentifier = surveyPreferences.getUserUUID(),
             surveyId = surveyId,
             stopIdentifier = null,
             stopLatitude = 0.0,

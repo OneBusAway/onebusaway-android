@@ -1,6 +1,5 @@
 package org.onebusaway.android.ui.survey.utils
 
-import android.content.Context
 import android.util.Log
 import org.json.JSONArray
 import org.json.JSONException
@@ -260,7 +259,6 @@ object SurveyUtils {
     }
 
     fun shouldShowSurveyView(
-        context: Context,
         surveyPreferences: SurveyPreferences,
         isVisibleOnStops: Boolean,
     ): Boolean {
@@ -268,7 +266,7 @@ object SurveyUtils {
         if (Application.get().appLaunchCount % launchesUntilSurveyShown != 0) return false
 
         // Don't show the UI if there's a reminder date that is still in the future.
-        val reminderDate = getSurveyRequestReminderDate(context, surveyPreferences)
+        val reminderDate = getSurveyRequestReminderDate(surveyPreferences)
         if (reminderDate != null && reminderDate.after(Date())) {
             return false
         }
@@ -298,8 +296,8 @@ object SurveyUtils {
     /**
      * @return Optional date at which the app should remind the user to take survey.
      */
-    private fun getSurveyRequestReminderDate(context: Context, surveyPreferences: SurveyPreferences): Date? {
-        val timestamp = surveyPreferences.getSurveyReminderDate(context)
+    private fun getSurveyRequestReminderDate(surveyPreferences: SurveyPreferences): Date? {
+        val timestamp = surveyPreferences.getSurveyReminderDate()
         if (timestamp < 1) {
             return null
         }

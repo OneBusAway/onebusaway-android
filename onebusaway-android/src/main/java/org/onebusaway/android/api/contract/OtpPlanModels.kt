@@ -15,8 +15,10 @@
  */
 package org.onebusaway.android.api.contract
 
+import java.io.IOException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -235,6 +237,11 @@ private fun String?.toVertexType(): VertexType? =
  * coroutine [org.onebusaway.android.ui.tripplan.DefaultTripPlanRepository]. Configured like the rest
  * of the modernized stack (`ignoreUnknownKeys` + `coerceInputValues`, mirroring `NetworkModule`), and
  * exposed as a `@JvmStatic` so the remaining Java caller can invoke it directly.
+ *
+ * A malformed body is rethrown as [IOException] rather than the unchecked
+ * [SerializationException] `decodeFromString` raises, so both call sites route it through the same
+ * `IOException`-based network-failure handling (the Java AsyncTask only catches `IOException`, and the
+ * repository maps `IOException` to a user-facing message).
  */
 object OtpPlanParser {
 
@@ -244,5 +251,11 @@ object OtpPlanParser {
     }
 
     @JvmStatic
-    fun parse(body: String): Response = json.decodeFromString<OtpResponseDto>(body).toResponse()
+    @Throws(IOException::class)
+    fun parse(body: String): Response =
+        try {
+            json.decodeFromString<OtpResponseDto>(body).toResponse()
+        } catch (e: SerializationException) {
+            throw IOException("Malformed OTP /plan response", e)
+        }
 }

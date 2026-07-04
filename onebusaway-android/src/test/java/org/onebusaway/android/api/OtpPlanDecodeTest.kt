@@ -15,12 +15,11 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.OtpResponseDto
-import org.onebusaway.android.api.contract.toResponse
-
-import kotlinx.serialization.json.Json
+import java.io.IOException
+import org.onebusaway.android.api.contract.OtpPlanParser
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.opentripplanner.api.model.RelativeDirection
@@ -37,8 +36,6 @@ import org.opentripplanner.api.model.VertexType
  * bare number and a quoted string decode to the same literal text.
  */
 class OtpPlanDecodeTest {
-
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     @Test
     fun decodesAndMapsPlan() {
@@ -91,7 +88,7 @@ class OtpPlanDecodeTest {
             }
         """.trimIndent()
 
-        val response = json.decodeFromString<OtpResponseDto>(body).toResponse()
+        val response = OtpPlanParser.parse(body)
         assertNull(response.error)
 
         val itineraries = response.plan.itinerary
@@ -138,7 +135,7 @@ class OtpPlanDecodeTest {
     fun mapsErrorResponse() {
         val body = """{ "error": { "id": 404, "msg": "Path not found", "noPath": true } }"""
 
-        val response = json.decodeFromString<OtpResponseDto>(body).toResponse()
+        val response = OtpPlanParser.parse(body)
         assertNull(response.plan)
         assertEquals(404, response.error.id)
         assertEquals("Path not found", response.error.msg)
@@ -153,8 +150,21 @@ class OtpPlanDecodeTest {
             ] } ] } }
         """.trimIndent()
 
-        val response = json.decodeFromString<OtpResponseDto>(body).toResponse()
+        val response = OtpPlanParser.parse(body)
         val leg = response.plan.itinerary[0].legs[0]
         assertNull(leg.from.vertexType)
+    }
+
+    /**
+     * A malformed body must surface as [IOException] — not the unchecked `SerializationException`
+     * `decodeFromString` raises — so it routes through the same network-failure handling both call
+     * sites already have (the Java AsyncTask only catches `IOException`; the repository maps it to a
+     * user-facing message).
+     */
+    @Test
+    fun malformedBodyThrowsIOException() {
+        assertThrows(IOException::class.java) {
+            OtpPlanParser.parse("""{ "plan": { "itineraries": [ """)
+        }
     }
 }

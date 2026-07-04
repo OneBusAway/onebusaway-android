@@ -45,8 +45,8 @@ interface TripPlanRepository {
 
 /**
  * The coroutine replacement for the legacy `TripRequest` AsyncTask. Reuses [TripRequestBuilder] to
- * assemble the OTP request + base URL, then performs the (blocking) HTTP call + Jackson parse on the
- * IO thread — including the old-URL-structure fallback. OTP error codes are mapped to user-facing
+ * assemble the OTP request + base URL, then performs the (blocking) HTTP call + [OtpPlanParser]
+ * parse on the IO thread — including the old-URL-structure fallback. OTP error codes are mapped to user-facing
  * messages (ported from TripPlanActivity.getErrorMessage) and surfaced as [Result.failure].
  */
 class DefaultTripPlanRepository @Inject constructor(

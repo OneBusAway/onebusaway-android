@@ -77,6 +77,8 @@ internal fun ArrivalsSheetHost(
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (args: ReminderEditorArgs) -> Unit,
     onPreferredHeight: (previewCount: Int, filtering: Boolean) -> Unit,
+    // Tapping the drawer's stop-name title — the host recenters the map on the focused stop.
+    onTitleClick: () -> Unit,
     showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit,
 ) {
     val stop = focusedStop ?: return
@@ -126,6 +128,7 @@ internal fun ArrivalsSheetHost(
                     initialTitle = stop.name.orEmpty(),
                     handler = handler,
                     onPreferredHeight = onPreferredHeight,
+                    onTitleClick = onTitleClick,
                     etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
                     starAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_STAR),
                     // The onboarding "slide up to see more" spotlight now anchors on the pinned header

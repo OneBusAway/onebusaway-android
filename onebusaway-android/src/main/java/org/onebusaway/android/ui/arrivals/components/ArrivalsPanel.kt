@@ -103,6 +103,9 @@ fun ArrivalsPanel(
     initialTitle: String,
     handler: ArrivalActionHandler,
     onPreferredHeight: (previewCount: Int, filtering: Boolean) -> Unit,
+    // Tapping the pinned stop-name header invokes this (null = not tappable); the drawer host wires it
+    // to an animated map recenter on the focused stop.
+    onTitleClick: (() -> Unit)? = null,
     // Opaque anchor modifiers a host may attach to the first peek row's ETA pill + favorite star and the
     // pinned header (e.g. for an onboarding spotlight). The panel stays ignorant of what they're for.
     etaAnchor: Modifier = Modifier,
@@ -166,6 +169,7 @@ fun ArrivalsPanel(
                 hasAlerts = content?.hasAlerts == true,
                 filtering = filtering,
                 onToggleFavorite = viewModel::toggleFavorite,
+                onTitleClick = onTitleClick,
                 headerModifier = headerAnchor,
             )
             if (content == null) {
@@ -414,8 +418,9 @@ internal fun EtaPill(
  * The stop header pinned at the top of the panel: the favorite star and stop name (with a
  * compass-direction tag appended, e.g. "Pine St & 3rd Ave (N)") as one centered unit, any
  * filter/alert indicators right-justified. Expand/collapse is driven by the sheet's drag handle now,
- * so the header no longer toggles on tap or shows a chevron. [starSize] is exposed so the star's
- * sizing can be tuned in the preview.
+ * so the header no longer toggles on tap or shows a chevron. Tapping the stop name instead invokes
+ * [onTitleClick] (null = not tappable), which the drawer host uses to recenter the map on the stop.
+ * [starSize] is exposed so the star's sizing can be tuned in the preview.
  */
 @Composable
 private fun ArrivalsPanelHeader(
@@ -426,6 +431,7 @@ private fun ArrivalsPanelHeader(
     hasAlerts: Boolean,
     filtering: Boolean,
     onToggleFavorite: () -> Unit,
+    onTitleClick: (() -> Unit)? = null,
     headerModifier: Modifier = Modifier,
     starSize: Dp = 20.dp,
 ) {
@@ -459,7 +465,8 @@ private fun ArrivalsPanelHeader(
                 text = name,
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = onTitleClick?.let { Modifier.clickable(onClick = it) } ?: Modifier
             )
         }
         // Filter/alert indicators, right-justified.

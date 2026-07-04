@@ -407,6 +407,7 @@ fun HomeScreen(
                                 routeFiltering = filtering
                                 arrivalsReady = true
                             },
+                            onTitleClick = homeViewModel::recenterOnFocusedStop,
                             showUndoSnackbar = { messageRes, actionRes, onAction ->
                                 scope.launch {
                                     val result = snackbarHostState.showSnackbar(

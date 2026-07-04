@@ -22,7 +22,6 @@ import android.content.Context;
 import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.os.Build;
-import android.os.PowerManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -409,20 +408,6 @@ public class Application extends android.app.Application {
             manager.createNotificationChannel(channel2);
             manager.createNotificationChannel(channel3);
         }
-    }
-
-    public static Boolean isIgnoringBatteryOptimizations(Context applicationContext) {
-        PowerManager pm = (PowerManager) applicationContext.getSystemService(Context.POWER_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                pm.isIgnoringBatteryOptimizations(applicationContext.getPackageName())) {
-            return true;
-        }
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return null;
-        }
-
-        return false;
     }
 
     private void initFirebaseMessaging() {

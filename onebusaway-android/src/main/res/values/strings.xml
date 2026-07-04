@@ -799,7 +799,7 @@
     </string>
     <string name="tutorial_arrival_header_sliding_panel_title">Slide up to show more arrivals
     </string>
-    <string name="tutorial_arrival_header_sliding_panel_text">Tap on the arrow or drag the panel up
+    <string name="tutorial_arrival_header_sliding_panel_text">Drag the panel up
         to see more arrivals for this stop.
     </string>
     <string name="tutorial_arrival_header_star_route_title">Star your favorite routes</string>

@@ -174,7 +174,6 @@ class HomeActivity : AppCompatActivity() {
         onClearFocus = viewModel::requestClearMapFocus,
         onArrivalsLoaded = ::onArrivalsLoaded,
         onShowRouteOnMap = viewModel::requestShowRouteOnMap,
-        onToggleSheet = viewModel::requestToggleSheet,
         onCancelRouteMode = ::onCancelRouteMode,
     )
 

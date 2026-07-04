@@ -59,13 +59,12 @@ import org.onebusaway.android.ui.tutorial.tutorialAnchor
  *
  * Polling lifecycle is owned by `ArrivalsPanel` itself (`ArrivalsPolling` → `repeatOnLifecycle`), so
  * it also pauses with the screen. Loaded responses are forwarded to the host via [onArrivalsLoaded]
- * (the map recenter / focus marker / tutorials), the chevron toggles the sheet via [onToggleSheet],
- * and the preview size drives the peek height via [onPreferredHeight].
+ * (the map recenter / focus marker / tutorials), and the preview size drives the peek height via
+ * [onPreferredHeight]. Expand/collapse is driven by the sheet's drag handle (in the host scaffold).
  */
 @Composable
 internal fun ArrivalsSheetHost(
     focusedStop: FocusedStop?,
-    collapsed: Boolean,
     // The sheet is actually on screen (not hidden) — gates the onboarding spotlight so it can't fire
     // over a hidden panel.
     sheetVisible: Boolean,
@@ -77,7 +76,6 @@ internal fun ArrivalsSheetHost(
     onShowRouteOnMap: (ShowRouteRequest) -> Unit,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (args: ReminderEditorArgs) -> Unit,
-    onToggleSheet: () -> Unit,
     onPreferredHeight: (previewCount: Int, filtering: Boolean) -> Unit,
     showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit,
 ) {
@@ -124,15 +122,15 @@ internal fun ArrivalsSheetHost(
                 ArrivalsPanel(
                     viewModel = viewModel,
                     listState = listState,
-                    collapsed = collapsed,
                     expandProgress = expandProgress,
                     initialTitle = stop.name.orEmpty(),
                     handler = handler,
-                    onToggleExpand = onToggleSheet,
                     onPreferredHeight = onPreferredHeight,
                     etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
                     starAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_STAR),
-                    chevronAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_PANEL),
+                    // The onboarding "slide up to see more" spotlight now anchors on the pinned header
+                    // (the chevron it used to point at is gone).
+                    headerAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_PANEL),
                 )
             }
 

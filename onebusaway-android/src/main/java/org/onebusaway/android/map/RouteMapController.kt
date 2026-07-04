@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.map
 
+import android.content.Context
 import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -62,6 +63,7 @@ import org.onebusaway.android.map.render.VehicleMarker
  * and selection.
  */
 class RouteMapController(
+    private val context: Context,
     private val host: MapHost,
     private val renderState: MapRenderState,
     private val routeRepository: RouteMapRepository,
@@ -246,14 +248,14 @@ class RouteMapController(
         // success path below narrows the filter and re-publishes.
         directionState = DirectionState.Resolved(null)
         val routeMap = result.getOrElse {
-            MapUtils.showMapError((it as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION)
+            MapUtils.showMapError(context, (it as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION)
             publishVehicleSet()
             return
         }
         // A null result (no endpoint) or an unresolved route reads as an error, like the legacy
         // null-response path.
         val route = routeMap?.route ?: run {
-            MapUtils.showMapError(HttpURLConnection.HTTP_INTERNAL_ERROR)
+            MapUtils.showMapError(context, HttpURLConnection.HTTP_INTERNAL_ERROR)
             publishVehicleSet()
             return
         }

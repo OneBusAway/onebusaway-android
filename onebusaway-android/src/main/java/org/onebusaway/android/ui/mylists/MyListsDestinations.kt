@@ -109,7 +109,7 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                     ) {
                         IconButton(onClick = {
                             activity.chooseSortOrder(
-                                PreferenceUtils.getReminderSortOrderFromPreferences(),
+                                PreferenceUtils.getReminderSortOrderFromPreferences(activity),
                                 R.array.sort_reminders
                             ) { reminders.setSort(it) }
                         }) {

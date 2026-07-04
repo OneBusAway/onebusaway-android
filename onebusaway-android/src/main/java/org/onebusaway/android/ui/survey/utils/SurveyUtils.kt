@@ -259,12 +259,16 @@ object SurveyUtils {
         return 0
     }
 
-    fun shouldShowSurveyView(context: Context, isVisibleOnStops: Boolean): Boolean {
+    fun shouldShowSurveyView(
+        context: Context,
+        surveyPreferences: SurveyPreferences,
+        isVisibleOnStops: Boolean,
+    ): Boolean {
         // User will receive a survey every `surveyLaunchCount` app launches
         if (Application.get().appLaunchCount % launchesUntilSurveyShown != 0) return false
 
         // Don't show the UI if there's a reminder date that is still in the future.
-        val reminderDate = getSurveyRequestReminderDate(context)
+        val reminderDate = getSurveyRequestReminderDate(context, surveyPreferences)
         if (reminderDate != null && reminderDate.after(Date())) {
             return false
         }
@@ -279,7 +283,7 @@ object SurveyUtils {
         return true
     }
 
-    fun remindUserLater(context: Context) {
+    fun remindUserLater(surveyPreferences: SurveyPreferences) {
         // Calculate the delay in milliseconds:
         // 86400 seconds in a day * remindMeLaterDays * 1000 milliseconds per second
         val dateInMilliSeconds = 86400L * remindMeLaterDays * 1000
@@ -288,14 +292,14 @@ object SurveyUtils {
         val futureDate = Date(Date().time + dateInMilliSeconds)
 
         // Save the calculated future date in SharedPreferences as the survey reminder date
-        SurveyPreferences.setSurveyReminderDate(context, futureDate)
+        surveyPreferences.setSurveyReminderDate(futureDate)
     }
 
     /**
      * @return Optional date at which the app should remind the user to take survey.
      */
-    private fun getSurveyRequestReminderDate(context: Context): Date? {
-        val timestamp = SurveyPreferences.getSurveyReminderDate(context)
+    private fun getSurveyRequestReminderDate(context: Context, surveyPreferences: SurveyPreferences): Date? {
+        val timestamp = surveyPreferences.getSurveyReminderDate(context)
         if (timestamp < 1) {
             return null
         }

@@ -87,6 +87,7 @@ class SurveyViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
     private val prefs: PreferencesRepository,
+    private val surveyPreferences: SurveyPreferences,
     private val surveyRepo: SurveyDataSource,
     private val surveyStore: SurveyRepository,
     @AppScope private val appScope: CoroutineScope,
@@ -128,11 +129,12 @@ class SurveyViewModel @Inject constructor(
         // A region is required to build the study request URL; defer (without latching) until resolved.
         if (regionRepository.region.value == null) return
         val studiesEnabled = prefs.getBoolean(R.string.preference_key_show_available_studies, true)
-        if (!studiesEnabled || !SurveyUtils.shouldShowSurveyView(context, false)) return
+        if (!studiesEnabled ||
+            !SurveyUtils.shouldShowSurveyView(context, surveyPreferences, false)) return
         requested = true
         val url = studyUrl() ?: return
         viewModelScope.launch {
-            val response = surveyRepo.studies(url, SurveyPreferences.getUserUUID(context)).getOrNull()
+            val response = surveyRepo.studies(url, surveyPreferences.getUserUUID(context)).getOrNull()
             if (response != null) onStudyResponse(response)
         }
     }
@@ -260,7 +262,7 @@ class SurveyViewModel @Inject constructor(
     }
 
     fun remindMeLater() {
-        SurveyUtils.remindUserLater(context)
+        SurveyUtils.remindUserLater(surveyPreferences)
         dismissAll()
     }
 
@@ -309,7 +311,7 @@ class SurveyViewModel @Inject constructor(
     private suspend fun submit(apiUrl: String, surveyId: Int, body: JSONArray): SurveySubmitResult? =
         surveyRepo.submit(
             url = apiUrl,
-            userIdentifier = SurveyPreferences.getUserUUID(context),
+            userIdentifier = surveyPreferences.getUserUUID(context),
             surveyId = surveyId,
             stopIdentifier = null,
             stopLatitude = 0.0,

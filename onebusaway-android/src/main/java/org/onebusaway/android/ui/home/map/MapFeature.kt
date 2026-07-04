@@ -244,12 +244,12 @@ fun MapFeature(
         )
         MapEffect.ShowPermissionRationale -> PermissionRationaleDialog(
             onOk = {
-                PreferenceUtils.setUserDeniedLocationPermissions(false)
+                PreferenceUtils.setUserDeniedLocationPermissions(context, false)
                 permissionLauncher.launch(PermissionUtils.LOCATION_PERMISSIONS)
                 dialog = null
             },
             onNoThanks = {
-                PreferenceUtils.setUserDeniedLocationPermissions(true)
+                PreferenceUtils.setUserDeniedLocationPermissions(context, true)
                 mapViewModel.onLocationPermissionResult(false)
                 homeViewModel.onLocationPermissionResult()
                 dialog = null
@@ -317,7 +317,7 @@ fun MapFeature(
             PreferenceUtils.saveBoolean(
                 resources.getString(R.string.preference_key_never_show_location_dialog), false
             )
-            PreferenceUtils.setUserDeniedLocationPermissions(false)
+            PreferenceUtils.setUserDeniedLocationPermissions(context, false)
             mapViewModel.requestMyLocation(useDefaultZoom = true, animate = true)
             AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_MAP_EVENT_URL,

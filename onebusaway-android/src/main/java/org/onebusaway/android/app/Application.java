@@ -376,7 +376,7 @@ public class Application extends android.app.Application {
                 .getString(R.string.preference_key_app_theme);
         String appThemePref = PreferenceUtils.getString(appThemePrefKey);
         if (appThemePref != null) {
-            ThemeUtils.setAppTheme(appThemePref);
+            ThemeUtils.setAppTheme(this, appThemePref);
         }
     }
 

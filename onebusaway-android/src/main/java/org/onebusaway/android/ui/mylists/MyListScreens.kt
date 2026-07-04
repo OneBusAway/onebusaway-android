@@ -79,7 +79,7 @@ internal fun AppCompatActivity.starredStopsTab(
     iconRes = R.drawable.ic_tab_starred_unselected,
     onSort = {
         chooseSortOrder(
-            PreferenceUtils.getStopSortOrderFromPreferences(),
+            PreferenceUtils.getStopSortOrderFromPreferences(this@starredStopsTab),
             R.array.sort_stops,
         ) { viewModel.setSort(it) }
     },

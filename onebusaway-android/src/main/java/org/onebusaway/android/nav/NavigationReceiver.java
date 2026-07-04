@@ -20,8 +20,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import org.onebusaway.android.app.Application;
-
 /**
  * Receives broadcasts when the user interacts with the navigation notification and passes them
  * to the NavigationServiceProvider
@@ -48,14 +46,14 @@ public class NavigationReceiver extends BroadcastReceiver {
                 break;
 
             case CANCEL_TRIP:
-                cancelTrip(navId);
+                cancelTrip(context);
                 break;
         }
 
     }
 
-    private void cancelTrip(int navId) {
-        Context appCxt = Application.get().getApplicationContext();
+    private void cancelTrip(Context context) {
+        Context appCxt = context.getApplicationContext();
         appCxt.stopService(new Intent(appCxt, NavigationService.class));
         NotificationManager manager = (NotificationManager)
                 appCxt.getSystemService(Context.NOTIFICATION_SERVICE);

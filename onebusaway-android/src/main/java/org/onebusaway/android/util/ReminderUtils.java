@@ -16,7 +16,6 @@
 package org.onebusaway.android.util;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
 
 import android.content.Context;
 import android.util.Log;
@@ -73,15 +72,6 @@ public class ReminderUtils {
             Log.e(TAG, "Error parsing arrival_and_departure JSON", e);
             return null;
         }
-    }
-
-    /**
-     * Checks if reminders should be available by verifying an FCM push token has been obtained.
-     * Returns false if the token has not yet been fetched or registration failed.
-     */
-    public static boolean shouldShowReminders() {
-        String pushId = Application.getUserPushID();
-        return pushId != null && !pushId.isEmpty();
     }
 
     /**

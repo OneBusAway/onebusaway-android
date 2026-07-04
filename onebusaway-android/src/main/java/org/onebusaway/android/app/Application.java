@@ -25,8 +25,6 @@ import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.google.firebase.messaging.FirebaseMessaging;
-
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.donations.DonationsManager;
@@ -53,6 +51,7 @@ import java.nio.charset.StandardCharsets;
 import dagger.hilt.android.EntryPointAccessors;
 import dagger.hilt.android.HiltAndroidApp;
 import org.onebusaway.android.app.di.DatabaseEntryPoint;
+import org.onebusaway.android.app.di.FirebaseMessagingEntryPoint;
 
 @HiltAndroidApp
 public class Application extends android.app.Application {
@@ -103,7 +102,7 @@ public class Application extends android.app.Application {
 
         incrementAppLaunchCount();
 
-        initFirebaseMessaging();
+        FirebaseMessagingEntryPoint.get(this).fetchAndStoreToken();
 
         mDonationsManager = new DonationsManager(getApplicationContext(), getResources(), getAppLaunchCount());
     }
@@ -399,24 +398,6 @@ public class Application extends android.app.Application {
             manager.createNotificationChannel(channel2);
             manager.createNotificationChannel(channel3);
         }
-    }
-
-    private void initFirebaseMessaging() {
-        FirebaseMessaging.getInstance().getToken()
-                .addOnCompleteListener(task -> {
-                    if (!task.isSuccessful()) {
-                        Log.e(TAG, "Fetching FCM registration token failed", task.getException());
-                        return;
-                    }
-                    String token = task.getResult();
-                    PreferenceUtils.saveString(getString(R.string.firebase_messaging_token), token);
-                });
-    }
-
-    public static String getUserPushID() {
-        String key = get().getApplicationContext().getString(R.string.firebase_messaging_token);
-        String token = PreferenceUtils.getString(key);
-        return token != null ? token : "";
     }
 
 }

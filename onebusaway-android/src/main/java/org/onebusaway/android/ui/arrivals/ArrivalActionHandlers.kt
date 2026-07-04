@@ -26,10 +26,10 @@ import androidx.appcompat.app.AppCompatActivity
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.app.di.DatabaseEntryPoint
+import org.onebusaway.android.app.di.FirebaseMessagingEntryPoint
 import org.onebusaway.android.report.ui.InfrastructureIssueLauncher
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.PreferenceUtils
-import org.onebusaway.android.util.ReminderUtils
 
 /**
  * Builds the [ArrivalActionHandler] shared by the standalone arrivals activity and the map panel.
@@ -86,7 +86,7 @@ fun createArrivalActionHandler(
     }
 
     override fun onSetReminder(arrival: ArrivalInfo) {
-        if (!ReminderUtils.shouldShowReminders()) {
+        if (!FirebaseMessagingEntryPoint.get(activity).hasPushToken()) {
             Toast.makeText(activity, R.string.reminder_not_enabled, Toast.LENGTH_SHORT).show()
             return
         }

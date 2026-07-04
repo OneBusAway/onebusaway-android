@@ -7,7 +7,7 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
 
 /**
  * Reads/writes the region wide-alert "already shown" markers. Hilt-injected (storage-modernization
- * replaced the former `object` that reached [org.onebusaway.android.database.DatabaseProvider] directly).
+ * replaced the former `object` that reached the database singleton directly).
  * The GTFS alert fetcher reaches it via [org.onebusaway.android.app.di.DatabaseEntryPoint] from its
  * background fetch thread, so the [AlertDao] calls here are synchronous.
  */

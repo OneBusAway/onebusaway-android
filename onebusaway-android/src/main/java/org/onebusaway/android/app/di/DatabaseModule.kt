@@ -16,6 +16,7 @@
 package org.onebusaway.android.app.di
 
 import android.content.Context
+import androidx.room.Room
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,7 +24,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import org.onebusaway.android.database.AppDatabase
-import org.onebusaway.android.database.DatabaseProvider
+import org.onebusaway.android.database.MIGRATION_1_2
+import org.onebusaway.android.database.MIGRATION_2_3
 import org.onebusaway.android.database.oba.DefaultImportGate
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.LegacyDataImporter
@@ -43,8 +45,10 @@ import org.onebusaway.android.preferences.PreferencesRepository
 
 /**
  * Provides the unified Room [AppDatabase] and its DAOs to Hilt-managed code (storage-modernization).
- * The instance is sourced from [DatabaseProvider] so it's the same singleton reached by the few
- * bare-[Context] callers (e.g. Backup, and the GTFS alert fetcher via [DatabaseEntryPoint]).
+ * Hilt is the *sole* owner of the [AppDatabase] singleton: the few bare-[Context] callers (e.g. Backup,
+ * and the GTFS alert fetcher) reach this same instance via [DatabaseEntryPoint]. Because nothing ever
+ * closes/rebuilds it out-of-band (a backup restore now merges rows in place rather than swapping the
+ * file), no consumer can end up holding a stale/closed instance.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -53,7 +57,11 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
-        DatabaseProvider.getDatabase(context)
+        Room.databaseBuilder(
+            context.applicationContext,
+            AppDatabase::class.java,
+            AppDatabase.DATABASE_NAME
+        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
 
     @Provides
     fun provideLegacyImportDao(db: AppDatabase): LegacyImportDao = db.legacyImportDao()

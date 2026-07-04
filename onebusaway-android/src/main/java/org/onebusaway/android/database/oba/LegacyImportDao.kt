@@ -20,6 +20,9 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import org.onebusaway.android.database.survey.entity.Study
+import org.onebusaway.android.database.survey.entity.Survey
+import org.onebusaway.android.database.widealerts.entity.AlertEntity
 
 /** The 11 legacy tables' rows, read from the legacy ContentProvider DB, ready to insert into Room. */
 data class LegacyData(
@@ -34,6 +37,18 @@ data class LegacyData(
     val open311Servers: List<Open311ServerRecord>,
     val routeHeadsignFavorites: List<RouteHeadsignFavoriteRecord>,
     val navStops: List<NavStopRecord>,
+)
+
+/**
+ * Every table of a full Room-format backup: the 11 [legacy] tables plus the survey and wide-alert
+ * tables that a Room backup carries but a legacy ContentProvider backup doesn't. Restoring one replaces
+ * the whole database, so all three groups are cleared and re-inserted together (see [replaceAll]).
+ */
+data class RoomBackupData(
+    val legacy: LegacyData,
+    val studies: List<Study>,
+    val surveys: List<Survey>,
+    val alerts: List<AlertEntity>,
 )
 
 /**
@@ -78,6 +93,16 @@ interface LegacyImportDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNavStops(rows: List<NavStopRecord>)
 
+    // Survey + wide-alert tables — only present in a full Room-format backup (see [replaceAll]).
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertStudies(rows: List<Study>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSurveys(rows: List<Survey>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAlerts(rows: List<AlertEntity>)
+
     @Query("DELETE FROM stops") suspend fun clearStops()
     @Query("DELETE FROM routes") suspend fun clearRoutes()
     @Query("DELETE FROM trips") suspend fun clearTrips()
@@ -89,6 +114,28 @@ interface LegacyImportDao {
     @Query("DELETE FROM regions") suspend fun clearRegions()
     @Query("DELETE FROM route_headsign_favorites") suspend fun clearRouteHeadsignFavorites()
     @Query("DELETE FROM nav_stops") suspend fun clearNavStops()
+    @Query("DELETE FROM surveys") suspend fun clearSurveys()
+    @Query("DELETE FROM studies") suspend fun clearStudies()
+    @Query("DELETE FROM alerts") suspend fun clearAlerts()
+
+    /**
+     * Replaces *every* table from a full Room-format backup atomically — the 11 legacy tables plus the
+     * survey and wide-alert tables. Restoring a Room backup means "make the database match the backup",
+     * so tables absent from an older backup end up empty. Runs in one transaction: any incompatibility
+     * (unreadable file surfaced by the caller, or an FK violation here) rolls the whole thing back,
+     * leaving the live database untouched. Surveys are cleared before studies (the surveys -> studies FK)
+     * and inserted after, mirroring [replaceAll]'s parent/child ordering for the legacy tables.
+     */
+    @Transaction
+    suspend fun replaceAll(data: RoomBackupData) {
+        clearSurveys()
+        clearStudies()
+        clearAlerts()
+        replaceAll(data.legacy)
+        insertStudies(data.studies)
+        insertSurveys(data.surveys)
+        insertAlerts(data.alerts)
+    }
 
     /**
      * Replaces all legacy-table data atomically. Children are cleared before parents and parents

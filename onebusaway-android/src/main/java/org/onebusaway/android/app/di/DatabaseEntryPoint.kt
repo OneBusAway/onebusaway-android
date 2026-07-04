@@ -20,6 +20,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import org.onebusaway.android.database.AppDatabase
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.LegacyDataImporter
 import org.onebusaway.android.database.oba.RouteDao
@@ -39,6 +40,8 @@ import org.onebusaway.android.reminders.ReminderRepository
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface DatabaseEntryPoint {
+
+    fun appDatabase(): AppDatabase
 
     fun stopDao(): StopDao
 

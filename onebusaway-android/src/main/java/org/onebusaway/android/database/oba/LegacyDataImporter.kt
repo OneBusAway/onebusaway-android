@@ -24,6 +24,7 @@ import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.database.AppDatabase
 import org.onebusaway.android.database.survey.entity.Study
 import org.onebusaway.android.database.survey.entity.Survey
+import org.onebusaway.android.database.widealerts.entity.AlertEntity
 import org.onebusaway.android.preferences.PreferencesRepository
 
 /**
@@ -66,6 +67,32 @@ class LegacyDataImporter(
     }
 
     /**
+     * Restores a full Room-format backup by merging every table into the *live* database in one
+     * transaction — no file swap and no close/reopen, so Hilt's [AppDatabase] singleton (and every DAO
+     * captured from it by the `@Singleton` repositories) stays valid and no process restart is needed.
+     * Room's own invalidation then notifies any active observers.
+     *
+     * Reads defensively by column name (like [importFrom]) so an older Room backup missing a table or a
+     * late column imports without a "no such column" failure. Any incompatibility — an unreadable file
+     * (thrown while opening below) or an FK violation during the write — propagates out and the
+     * transaction rolls back, leaving the live database untouched. Visible for testing.
+     */
+    suspend fun importRoomBackupFrom(backupFile: File) {
+        val data = SQLiteDatabase.openDatabase(
+            backupFile.path, null, SQLiteDatabase.OPEN_READWRITE
+        ).use { db ->
+            val (studies, surveys) = readSurveyData(db)
+            RoomBackupData(
+                legacy = readAll(db),
+                studies = studies,
+                surveys = surveys,
+                alerts = db.read("alerts") { AlertEntity(id = str("id") ?: return@read null) },
+            )
+        }
+        database.legacyImportDao().replaceAll(data)
+    }
+
+    /**
      * Imports the rogue `study-survey-db` file (the old separate survey Room database) into the unified
      * database once, then deletes it. Read raw so the old file's Room schema version is irrelevant (it
      * had no migrations, so opening it as the now-v3 [AppDatabase] would otherwise crash).
@@ -83,34 +110,39 @@ class LegacyDataImporter(
     /** Reads studies/surveys from a legacy survey DB file and writes them into Room. Visible for testing. */
     suspend fun importSurveyFrom(surveyFile: File) {
         val (studies, surveys) =
-            SQLiteDatabase.openDatabase(surveyFile.path, null, SQLiteDatabase.OPEN_READWRITE).use { db ->
-                val studies = db.read("studies") {
-                    Study(
-                        study_id = int("study_id") ?: return@read null,
-                        name = str("name").orEmpty(),
-                        description = str("description").orEmpty(),
-                        is_subscribed = (int("is_subscribed") ?: 0) != 0,
-                    )
-                }
-                val surveys = db.read("surveys") {
-                    Survey(
-                        survey_id = int("survey_id") ?: return@read null,
-                        study_id = int("study_id") ?: return@read null,
-                        name = str("name").orEmpty(),
-                        state = int("state") ?: 0,
-                    )
-                }
-                studies to surveys
-            }
-        // Studies before surveys (the surveys -> studies foreign key). Drop any survey whose study was
-        // skipped by the defensive read (a malformed study row) so one orphan can't FK-abort the whole
-        // survey import.
-        val studyIds = studies.mapTo(HashSet()) { it.study_id }
+            SQLiteDatabase.openDatabase(surveyFile.path, null, SQLiteDatabase.OPEN_READWRITE)
+                .use { readSurveyData(it) }
+        // Studies before surveys (the surveys -> studies foreign key).
         database.withTransaction {
             studies.forEach { database.studiesDao().insertStudy(it) }
-            surveys.filter { it.study_id in studyIds }
-                .forEach { database.surveysDao().insertSurvey(it) }
+            surveys.forEach { database.surveysDao().insertSurvey(it) }
         }
+    }
+
+    /**
+     * Reads studies and surveys from an open DB, dropping any survey whose study was skipped by the
+     * defensive read (a malformed study row, or a study missing entirely) so one orphan can't FK-abort
+     * the whole import. Shared by the survey-DB migration and the Room-backup restore.
+     */
+    private fun readSurveyData(db: SQLiteDatabase): Pair<List<Study>, List<Survey>> {
+        val studies = db.read("studies") {
+            Study(
+                study_id = int("study_id") ?: return@read null,
+                name = str("name").orEmpty(),
+                description = str("description").orEmpty(),
+                is_subscribed = (int("is_subscribed") ?: 0) != 0,
+            )
+        }
+        val studyIds = studies.mapTo(HashSet()) { it.study_id }
+        val surveys = db.read("surveys") {
+            Survey(
+                survey_id = int("survey_id") ?: return@read null,
+                study_id = int("study_id") ?: return@read null,
+                name = str("name").orEmpty(),
+                state = int("state") ?: 0,
+            )
+        }.filter { it.study_id in studyIds }
+        return studies to surveys
     }
 
     private fun readAll(db: SQLiteDatabase) = LegacyData(

@@ -29,6 +29,9 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onebusaway.android.database.AppDatabase
+import org.onebusaway.android.database.survey.entity.Study
+import org.onebusaway.android.database.survey.entity.Survey
+import org.onebusaway.android.database.widealerts.entity.AlertEntity
 import org.onebusaway.android.preferences.PreferencesRepository
 
 /**
@@ -168,6 +171,73 @@ class LegacyDataImporterTest {
         } finally {
             surveyFile.delete()
         }
+    }
+
+    @Test
+    fun importRoomBackup_replacesEveryTableIncludingSurveyAndAlerts() = runBlocking {
+        // Live DB starts with rows that a full Room-format restore must replace/clear: a stale study +
+        // survey and a stale wide-alert marker that are absent from the backup.
+        room.studiesDao().insertStudy(Study(1, "Stale", "Old", false))
+        room.surveysDao().insertSurvey(Survey(1, 1, "Stale Survey", 0))
+        room.alertsDao().insertAlert(AlertEntity("stale-alert"))
+
+        // The seeded file already holds the 11 legacy tables; add the survey + alert tables so it looks
+        // like a full Room-format backup (byte copy of the unified AppDatabase file).
+        SQLiteDatabase.openDatabase(legacyFile.path, null, SQLiteDatabase.OPEN_READWRITE).use { db ->
+            db.execSQL(
+                "CREATE TABLE studies (study_id INTEGER PRIMARY KEY, name TEXT, description TEXT, " +
+                    "is_subscribed INTEGER)"
+            )
+            db.execSQL("INSERT INTO studies VALUES (7,'Study','Desc',1)")
+            db.execSQL(
+                "CREATE TABLE surveys (survey_id INTEGER PRIMARY KEY, study_id INTEGER, name TEXT, " +
+                    "state INTEGER)"
+            )
+            db.execSQL("INSERT INTO surveys VALUES (3,7,'Survey',1)")
+            db.execSQL("CREATE TABLE alerts (id TEXT PRIMARY KEY)")
+            db.execSQL("INSERT INTO alerts VALUES ('a1')")
+        }
+
+        importer.importRoomBackupFrom(legacyFile)
+
+        // Legacy tables imported.
+        assertEquals(1, count("stops"))
+        assertEquals(1, count("regions"))
+        // Survey + alert tables imported and the stale live rows are gone (whole-DB replace semantics).
+        assertEquals(1, count("studies"))
+        assertEquals(7, scalarInt("SELECT study_id FROM studies LIMIT 1"))
+        assertEquals(1, count("surveys"))
+        assertEquals(3, scalarInt("SELECT survey_id FROM surveys LIMIT 1"))
+        assertEquals(1, count("alerts"))
+        assertEquals("a1", scalarStr("SELECT id FROM alerts LIMIT 1"))
+    }
+
+    @Test
+    fun importRoomBackup_rollsBackOnIncompatibleBackup_leavingLiveDataUntouched() = runBlocking {
+        // A pre-existing live row that must survive a failed restore.
+        room.alertsDao().insertAlert(AlertEntity("keep-me"))
+
+        // Corrupt the seeded file so a region_bounds row references a missing region: the merge hits a
+        // FOREIGN KEY failure part-way through and the single transaction rolls everything back.
+        SQLiteDatabase.openDatabase(legacyFile.path, null, SQLiteDatabase.OPEN_READWRITE).use {
+            it.execSQL("CREATE TABLE alerts (id TEXT PRIMARY KEY)")
+            it.execSQL("INSERT INTO alerts VALUES ('a1')")
+            it.execSQL("UPDATE region_bounds SET region_id = 999")
+        }
+
+        var threw = false
+        try {
+            importer.importRoomBackupFrom(legacyFile)
+        } catch (e: Exception) {
+            threw = true
+        }
+
+        assertEquals(true, threw)
+        // Nothing from the backup landed, and the pre-existing live data is intact.
+        assertEquals(0, count("stops"))
+        assertEquals(0, count("regions"))
+        assertEquals(1, count("alerts"))
+        assertEquals("keep-me", scalarStr("SELECT id FROM alerts LIMIT 1"))
     }
 
     @Test

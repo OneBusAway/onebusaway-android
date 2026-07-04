@@ -274,46 +274,6 @@ public class Application extends android.app.Application {
         PreferenceUtils.saveString(getString(R.string.preference_key_oba_api_url), url);
     }
 
-    /**
-     * Returns the custom OTP URL if the user has set a custom API URL manually via Preferences, or
-     * null
-     * if it has not been set
-     *
-     * @return the custom URL if the user has set a custom API URL manually via Preferences, or null
-     * if it has not been set
-     */
-    public String getCustomOtpApiUrl() {
-        return PreferenceUtils.getString(getString(R.string.preference_key_otp_api_url));
-    }
-
-    /**
-     * Sets the custom OTP URL used to reach a OBA REST API server that is not available via the
-     * Regions
-     * REST API
-     *
-     * @param url the custom URL
-     */
-    public void setCustomOtpApiUrl(String url) {
-        PreferenceUtils.saveString(getString(R.string.preference_key_otp_api_url), url);
-    }
-
-    /**
-     * @return true if the OTP url version is old, or false  if it has not been set
-     */
-    public boolean getUseOldOtpApiUrlVersion() {
-        return PreferenceUtils.getBoolean(getString(R.string.preference_key_otp_api_url_version), false);
-    }
-
-    /**
-     * Sets the OTP Api url version
-     *
-     * @param useOldOtpApiUrlVersion indicates that if otp url structure belongs to older version
-     */
-    public void setUseOldOtpApiUrlVersion(boolean useOldOtpApiUrlVersion) {
-        PreferenceUtils.saveBoolean(getString(R.string.preference_key_otp_api_url_version),
-                useOldOtpApiUrlVersion);
-    }
-
     private static final String HEXES = "0123456789abcdef";
 
     public static String getHex(byte[] raw) {

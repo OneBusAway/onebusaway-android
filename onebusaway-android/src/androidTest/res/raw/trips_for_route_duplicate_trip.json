@@ -1,0 +1,68 @@
+{
+  "code": 200,
+  "currentTime": 1444073094612,
+  "text": "OK",
+  "version": 2,
+  "data": {
+    "limitExceeded": false,
+    "outOfRange": false,
+    "list": [
+      {
+        "tripId": "trip_dup1",
+        "serviceDate": 1444017600000,
+        "status": {
+          "activeTripId": "trip_dup1",
+          "lastUpdateTime": 1000,
+          "status": "default",
+          "distanceAlongTrip": 100.0,
+          "position": { "lat": 47.101, "lon": -122.101 }
+        }
+      },
+      {
+        "tripId": "trip_dup1",
+        "serviceDate": 1444017600000,
+        "status": {
+          "activeTripId": "trip_dup1",
+          "lastUpdateTime": 1000,
+          "status": "default",
+          "distanceAlongTrip": 250.0,
+          "position": { "lat": 47.111, "lon": -122.111 },
+          "lastKnownLocation": { "lat": 47.201, "lon": -122.201 }
+        }
+      },
+      {
+        "tripId": "trip_dup2",
+        "serviceDate": 1444017600000,
+        "status": {
+          "activeTripId": "trip_dup2",
+          "lastUpdateTime": 2000,
+          "status": "default",
+          "distanceAlongTrip": 250.0,
+          "position": { "lat": 47.112, "lon": -122.112 },
+          "lastKnownLocation": { "lat": 47.202, "lon": -122.202 }
+        }
+      },
+      {
+        "tripId": "trip_dup2",
+        "serviceDate": 1444017600000,
+        "status": {
+          "activeTripId": "trip_dup2",
+          "lastUpdateTime": 2000,
+          "status": "default",
+          "distanceAlongTrip": 100.0,
+          "position": { "lat": 47.102, "lon": -122.102 }
+        }
+      }
+    ],
+    "references": {
+      "agencies": [],
+      "routes": [],
+      "situations": [],
+      "stops": [],
+      "trips": [
+        { "id": "trip_dup1", "routeId": "route_1" },
+        { "id": "trip_dup2", "routeId": "route_1" }
+      ]
+    }
+  }
+}

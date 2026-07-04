@@ -19,20 +19,63 @@ import org.opentripplanner.api.model.Itinerary
 
 /**
  * A JVM-pure projection of a trip-plan endpoint (a [org.onebusaway.android.directions.util.CustomAddress]),
- * so the ViewModel and its tests don't depend on `android.location.Address`. [lat]/[lon] are null
- * for endpoints without coordinates (e.g. a contacts pick); the repository encodes those as a raw
- * string for the OTP server to geocode.
+ * so the ViewModel and its tests don't depend on `android.location.Address`. Modeled as a sealed type
+ * so the form can render each kind appropriately: only [FreeText] is an editable field; every resolved
+ * kind ([Geocoded]/[AddressBook]/[CurrentLocation]/[MapPoint]) is shown as a cancellable pill.
+ *
+ * [lat]/[lon] are null for endpoints without coordinates (e.g. a contacts pick or a still-typed query);
+ * the repository encodes those as a raw string for the OTP server to geocode.
  */
-data class PlaceItem(
-    val displayName: String,
-    val lat: Double? = null,
-    val lon: Double? = null,
-    /** The geocoder flagged this as a public-transit location (drives the suggestion icon). */
-    val isTransit: Boolean = false,
-    val isCurrentLocation: Boolean = false
-) {
+sealed interface TripEndpoint {
+    val lat: Double?
+    val lon: Double?
+
     /** Mirrors CustomAddress.isSet(): a usable endpoint must have coordinates. */
     val hasCoordinates: Boolean get() = lat != null && lon != null
+
+    /** The geocoder flagged this as a public-transit location (drives the pill/suggestion icon). */
+    val isTransit: Boolean get() = false
+
+    /**
+     * The text this endpoint carries itself (a typed query or a resolved place name), or null for the
+     * fixed-label kinds ([CurrentLocation]/[MapPoint]) whose label is a string resource resolved by the
+     * Android layer. Keeps the shared part of the endpoint→label mapping in one place instead of
+     * duplicated across each call site's `when`.
+     */
+    val displayText: String? get() = when (this) {
+        is FreeText -> query
+        is Geocoded -> displayName
+        is AddressBook -> displayName
+        is CurrentLocation, is MapPoint -> null
+    }
+
+    /** Empty or still-being-typed text — the only editable, non-pill state. Never has coordinates. */
+    data class FreeText(val query: String = "") : TripEndpoint {
+        override val lat: Double? get() = null
+        override val lon: Double? get() = null
+    }
+
+    /** A geocoder (Pelias) autocomplete pick. */
+    data class Geocoded(
+        val displayName: String,
+        override val lat: Double?,
+        override val lon: Double?,
+        /** The geocoder flagged this as a public-transit location (drives the pill/suggestion icon). */
+        override val isTransit: Boolean = false,
+    ) : TripEndpoint
+
+    /** An address-book (contacts) pick; may still need server-side geocoding (null coordinates). */
+    data class AddressBook(
+        val displayName: String,
+        override val lat: Double?,
+        override val lon: Double?,
+    ) : TripEndpoint
+
+    /** The device's current location. Its label is a fixed string resolved by the UI. */
+    data class CurrentLocation(override val lat: Double?, override val lon: Double?) : TripEndpoint
+
+    /** A point chosen on the map. Its label is a fixed string resolved by the UI. */
+    data class MapPoint(override val lat: Double, override val lon: Double) : TripEndpoint
 }
 
 /** The advanced trip options, persisted in preferences by the host. */
@@ -45,8 +88,8 @@ data class AdvancedSettings(
 
 /** A fully-specified plan request handed to [TripPlanRepository]. */
 data class TripPlanParams(
-    val from: PlaceItem,
-    val to: PlaceItem,
+    val from: TripEndpoint,
+    val to: TripEndpoint,
     val dateTimeMillis: Long,
     val arriving: Boolean,
     val modeId: Int,
@@ -57,12 +100,10 @@ data class TripPlanParams(
 
 /** The trip-plan form (origin/destination, when, and the advanced options). */
 data class TripPlanFormState(
-    val from: PlaceItem? = null,
-    val to: PlaceItem? = null,
-    val fromQuery: String = "",
-    val toQuery: String = "",
-    val fromSuggestions: List<PlaceItem> = emptyList(),
-    val toSuggestions: List<PlaceItem> = emptyList(),
+    val from: TripEndpoint = TripEndpoint.FreeText(),
+    val to: TripEndpoint = TripEndpoint.FreeText(),
+    val fromSuggestions: List<TripEndpoint.Geocoded> = emptyList(),
+    val toSuggestions: List<TripEndpoint.Geocoded> = emptyList(),
     val dateTimeMillis: Long = 0L,
     val arriving: Boolean = false,
     val dateLabel: String = "",
@@ -74,7 +115,7 @@ data class TripPlanFormState(
 ) {
     /** Mirrors TripRequestBuilder.ready(): both endpoints must resolve to coordinates. */
     val canSubmit: Boolean
-        get() = from?.hasCoordinates == true && to?.hasCoordinates == true
+        get() = from.hasCoordinates && to.hasCoordinates
 
     /** The current advanced options, for persistence by the host. */
     val advancedSettings: AdvancedSettings
@@ -82,8 +123,8 @@ data class TripPlanFormState(
 
     /** Builds the plan request; only call when [canSubmit] is true. */
     fun toParams(): TripPlanParams = TripPlanParams(
-        from = from!!,
-        to = to!!,
+        from = from,
+        to = to,
         dateTimeMillis = dateTimeMillis,
         arriving = arriving,
         modeId = modeId,

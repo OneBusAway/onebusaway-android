@@ -24,6 +24,7 @@ import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,8 +32,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.onebusaway.android.util.TimeProvider
 import org.opentripplanner.api.model.Itinerary
 
@@ -74,6 +75,15 @@ class TripPlanViewModel @Inject constructor(
     private val fromQueries = MutableStateFlow("")
     private val toQueries = MutableStateFlow("")
 
+    // Plan submissions, driven reactively. Each user action that can change the plan sends its params
+    // (or null when the form isn't submittable) here; the collector below [mapLatest]-cancels the plan
+    // in flight as soon as the next input arrives, so a slow plan that outlives its edit can't publish a
+    // stale result — the same latest-wins pattern as the suggestion pipelines, no request bookkeeping.
+    // A CONFLATED channel (not a SharedFlow) keeps only the latest input and retains it until the
+    // collector is ready, so an input sent before collection starts isn't lost. Deliberately NOT derived
+    // from [_formState]: restoreFrom injects a result without re-planning.
+    private val planInputs = Channel<TripPlanParams?>(Channel.CONFLATED)
+
     init {
         fromQueries
             .debounce(SUGGEST_DEBOUNCE_MS)
@@ -85,42 +95,72 @@ class TripPlanViewModel @Inject constructor(
             .mapLatest(::suggestionsFor)
             .onEach { suggestions -> _formState.update { it.copy(toSuggestions = suggestions) } }
             .launchIn(viewModelScope)
+        planInputs.receiveAsFlow()
+            .mapLatest { params ->
+                if (params == null) {
+                    // Form no longer submittable: drop a surfaced result (Success/Loading) back to Idle.
+                    if (_planState.value !is PlanResult.Idle) _planState.value = PlanResult.Idle
+                } else {
+                    _planState.value = PlanResult.Loading
+                    planRepository.plan(params).fold(
+                        onSuccess = { _planState.value = PlanResult.Success(it) },
+                        onFailure = { _planState.value = PlanResult.Error(it.message.orEmpty()) }
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
-    private suspend fun suggestionsFor(query: String): List<PlaceItem> =
+    private suspend fun suggestionsFor(query: String): List<TripEndpoint.Geocoded> =
         if (query.isBlank()) emptyList() else geocode.suggest(query).getOrDefault(emptyList())
 
     fun onFromQueryChange(query: String) {
-        _formState.update { it.copy(fromQuery = query) }
+        _formState.update { it.copy(from = TripEndpoint.FreeText(query)) }
         fromQueries.value = query
+        // Editing over a resolved endpoint makes the form non-submittable — drop any stale route too.
+        replanOrClearResult()
     }
 
     fun onToQueryChange(query: String) {
-        _formState.update { it.copy(toQuery = query) }
+        _formState.update { it.copy(to = TripEndpoint.FreeText(query)) }
         toQueries.value = query
+        replanOrClearResult()
     }
 
-    /** Sets the origin (from a suggestion, current location, or contacts) and re-plans if ready. */
-    fun setFrom(place: PlaceItem) {
-        _formState.update { it.copy(from = place, fromQuery = place.displayName, fromSuggestions = emptyList()) }
-        autoSubmitIfReady()
+    /** Sets the origin (from a suggestion, current location, contacts, or map) and re-plans if ready. */
+    fun setFrom(endpoint: TripEndpoint) {
+        _formState.update { it.copy(from = endpoint, fromSuggestions = emptyList()) }
+        replanOrClearResult()
     }
 
-    fun setTo(place: PlaceItem) {
-        _formState.update { it.copy(to = place, toQuery = place.displayName, toSuggestions = emptyList()) }
-        autoSubmitIfReady()
+    fun setTo(endpoint: TripEndpoint) {
+        _formState.update { it.copy(to = endpoint, toSuggestions = emptyList()) }
+        replanOrClearResult()
+    }
+
+    /** Clears the origin back to an empty editable field (the pill's ✕), dropping any stale result. */
+    fun clearFrom() {
+        _formState.update { it.copy(from = TripEndpoint.FreeText(), fromSuggestions = emptyList()) }
+        fromQueries.value = ""
+        replanOrClearResult()
+    }
+
+    fun clearTo() {
+        _formState.update { it.copy(to = TripEndpoint.FreeText(), toSuggestions = emptyList()) }
+        toQueries.value = ""
+        replanOrClearResult()
     }
 
     fun setDateTime(millis: Long) {
         _formState.update {
             it.copy(dateTimeMillis = millis, dateLabel = formatDate(millis), timeLabel = formatTime(millis))
         }
-        autoSubmitIfReady()
+        replanOrClearResult()
     }
 
     fun setArriving(arriving: Boolean) {
         _formState.update { it.copy(arriving = arriving) }
-        autoSubmitIfReady()
+        replanOrClearResult()
     }
 
     fun applyAdvancedSettings(settings: AdvancedSettings) {
@@ -132,31 +172,17 @@ class TripPlanViewModel @Inject constructor(
                 wheelchair = settings.wheelchair
             )
         }
-        autoSubmitIfReady()
+        replanOrClearResult()
     }
 
     fun reverseTrip() {
         _formState.update {
             it.copy(
                 from = it.to, to = it.from,
-                fromQuery = it.toQuery, toQuery = it.fromQuery,
                 fromSuggestions = emptyList(), toSuggestions = emptyList()
             )
         }
-        autoSubmitIfReady()
-    }
-
-    /** Submits the plan if both endpoints resolve to coordinates. */
-    fun planTrip() {
-        val form = _formState.value
-        if (!form.canSubmit) return
-        _planState.value = PlanResult.Loading
-        viewModelScope.launch {
-            planRepository.plan(form.toParams()).fold(
-                onSuccess = { _planState.value = PlanResult.Success(it) },
-                onFailure = { _planState.value = PlanResult.Error(it.message.orEmpty()) }
-            )
-        }
+        replanOrClearResult()
     }
 
     /** Clears a surfaced error after the host shows it. */
@@ -169,8 +195,8 @@ class TripPlanViewModel @Inject constructor(
      * without re-planning, so the user lands back on the trip they were watching.
      */
     fun restoreFrom(
-        from: PlaceItem?,
-        to: PlaceItem?,
+        from: TripEndpoint?,
+        to: TripEndpoint?,
         dateTimeMillis: Long,
         arriving: Boolean,
         itineraries: List<Itinerary>
@@ -179,8 +205,6 @@ class TripPlanViewModel @Inject constructor(
             it.copy(
                 from = from ?: it.from,
                 to = to ?: it.to,
-                fromQuery = from?.displayName ?: it.fromQuery,
-                toQuery = to?.displayName ?: it.toQuery,
                 dateTimeMillis = dateTimeMillis,
                 dateLabel = formatDate(dateTimeMillis),
                 timeLabel = formatTime(dateTimeMillis),
@@ -192,8 +216,15 @@ class TripPlanViewModel @Inject constructor(
         }
     }
 
-    private fun autoSubmitIfReady() {
-        if (_formState.value.canSubmit) planTrip()
+    /**
+     * Called after any form change: hand the latest plan inputs to the [planInputs] pipeline, which
+     * re-plans when both endpoints resolve and otherwise drops a stale result back to [PlanResult.Idle]
+     * so a changed or cleared endpoint can't leave an old route on screen (the results sheet keys off
+     * [PlanResult.Success]). Emitting supersedes any in-flight plan via the collector's [mapLatest].
+     */
+    private fun replanOrClearResult() {
+        val form = _formState.value
+        planInputs.trySend(if (form.canSubmit) form.toParams() else null)
     }
 
     private fun formatDate(millis: Long): String =

@@ -886,6 +886,8 @@
     <string name="trip_plan_pick_on_map">Pick location on map</string>
     <string name="trip_plan_use_this_location">Use this location</string>
     <string name="trip_plan_map_location">Selected location</string>
+    <string name="trip_plan_clear_endpoint">Clear</string>
+    <string name="trip_plan_contacts">Choose from contacts</string>
 
 
     <string name="trip_plan_list_view">List View</string>

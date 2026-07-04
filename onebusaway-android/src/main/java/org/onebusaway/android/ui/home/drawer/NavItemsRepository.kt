@@ -20,7 +20,7 @@ import javax.inject.Inject
 import org.onebusaway.android.R
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
-import org.onebusaway.android.util.ReminderUtils
+import org.onebusaway.android.push.FirebaseMessagingManager
 
 /** The (app-global) inputs that gate which home nav-drawer rows are shown — surfaced as a `StateFlow`
  *  by [NavDrawerViewModel] for [HomeNavDrawerSheet] to render. */
@@ -48,12 +48,13 @@ interface NavItemsRepository {
 class DefaultNavItemsRepository @Inject constructor(
     private val regionRepository: RegionRepository,
     private val prefs: PreferencesRepository,
+    private val firebaseMessagingManager: FirebaseMessagingManager,
 ) : NavItemsRepository {
 
     override fun availability(): NavItemAvailability {
         val region = regionRepository.region.value
         return NavItemAvailability(
-            showReminders = ReminderUtils.shouldShowReminders(),
+            showReminders = firebaseMessagingManager.hasPushToken(),
             planTripAvailable = region != null &&
                 (!TextUtils.isEmpty(region.otpBaseUrl) ||
                     !TextUtils.isEmpty(

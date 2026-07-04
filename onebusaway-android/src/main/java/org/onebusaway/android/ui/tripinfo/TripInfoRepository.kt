@@ -22,7 +22,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.push.FirebaseMessagingManager
 import org.onebusaway.android.api.contract.ReminderWebService
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteDao
@@ -101,6 +101,7 @@ class DefaultTripInfoRepository @Inject constructor(
     private val tripDao: TripDao,
     private val stopDao: StopDao,
     private val importGate: ImportGate,
+    private val firebaseMessagingManager: FirebaseMessagingManager,
 ) : TripInfoRepository {
 
     override suspend fun load(args: TripInfoArgs): TripInfoData = withContext(Dispatchers.IO) {
@@ -232,8 +233,8 @@ class DefaultTripInfoRepository @Inject constructor(
         val base = region.sidecarBaseUrl ?: return null
         // The push id is the one required field not guaranteed by the typed args (it's absent until
         // push registration completes); the legacy builder returned null in that case.
-        val userPushId = Application.getUserPushID()
-        if (userPushId.isNullOrEmpty()) return null
+        val userPushId = firebaseMessagingManager.userPushId()
+        if (userPushId.isEmpty()) return null
         val url = base + context.getString(R.string.arrivals_reminders_api_endpoint) +
             region.id + "/alarms"
         return runCatching {

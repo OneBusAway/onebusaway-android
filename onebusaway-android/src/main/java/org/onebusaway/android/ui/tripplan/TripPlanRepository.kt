@@ -129,7 +129,7 @@ class DefaultTripPlanRepository @Inject constructor(
                 connectTimeout = HTTP_TIMEOUT_MS
                 readTimeout = HTTP_TIMEOUT_MS
             }
-            val response: Response = OtpPlanParser.parse(connection.inputStream.bufferedReader().readText())
+            val response: Response = OtpPlanParser.parse(connection.inputStream)
             if (useOldUrlStructure) {
                 prefs.setBoolean(R.string.preference_key_otp_api_url_version, true)
             }

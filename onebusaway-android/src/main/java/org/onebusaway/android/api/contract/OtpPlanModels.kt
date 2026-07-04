@@ -16,6 +16,7 @@
 package org.onebusaway.android.api.contract
 
 import java.io.IOException
+import java.io.InputStream
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -159,7 +160,7 @@ fun OtpResponseDto.toResponse(): Response = Response().also {
 }
 
 private fun OtpTripPlanDto.toTripPlan(): TripPlan = TripPlan().also {
-    it.itineraries = ArrayList(itineraries.map { itinerary -> itinerary.toItinerary() })
+    it.itineraries = itineraries.map { itinerary -> itinerary.toItinerary() }
 }
 
 private fun OtpErrorDto.toPlannerError(): PlannerError = PlannerError().also {
@@ -172,7 +173,7 @@ private fun OtpErrorDto.toPlannerError(): PlannerError = PlannerError().also {
 private fun OtpItineraryDto.toItinerary(): Itinerary = Itinerary().also {
     it.duration = duration?.toLong() ?: 0L
     it.startTime = startTime
-    it.legs = ArrayList(legs.map { leg -> leg.toLeg() })
+    it.legs = legs.map { leg -> leg.toLeg() }
 }
 
 private fun OtpLegDto.toLeg(): Leg = Leg().also {
@@ -206,18 +207,14 @@ private fun OtpPlaceDto.toPlace(): Place = Place().also {
     it.stopCode = stopCode
     it.lat = lat
     it.lon = lon
-    it.vertexType = vertexType.toVertexType()
+    it.vertexType = vertexType.toEnum<VertexType>()
     it.bikeShareId = bikeShareId
 }
 
 private fun OtpWalkStepDto.toWalkStep(): WalkStep = WalkStep().also {
     it.distance = distance ?: 0.0
-    it.relativeDirection = relativeDirection?.let { name ->
-        runCatching { RelativeDirection.valueOf(name) }.getOrNull()
-    }
-    it.absoluteDirection = absoluteDirection?.let { name ->
-        runCatching { AbsoluteDirection.valueOf(name) }.getOrNull()
-    }
+    it.relativeDirection = relativeDirection.toEnum<RelativeDirection>()
+    it.absoluteDirection = absoluteDirection.toEnum<AbsoluteDirection>()
     it.streetName = streetName
     it.exit = exit
     it.stayOn = stayOn ?: false
@@ -229,8 +226,9 @@ private fun OtpWalkStepDto.toWalkStep(): WalkStep = WalkStep().also {
 private fun OtpLegGeometryDto.toBean(): EncodedPolylineBean =
     EncodedPolylineBean(points, levels, length?.toInt() ?: 0)
 
-private fun String?.toVertexType(): VertexType? =
-    this?.let { runCatching { VertexType.valueOf(it) }.getOrNull() }
+/** Decodes an OTP enum name, degrading an unknown/absent value to null rather than throwing. */
+private inline fun <reified E : Enum<E>> String?.toEnum(): E? =
+    this?.let { runCatching { enumValueOf<E>(it) }.getOrNull() }
 
 /**
  * The single OTP `/plan` JSON entry point, shared by the legacy Java `TripRequest` AsyncTask and the
@@ -258,4 +256,12 @@ object OtpPlanParser {
         } catch (e: SerializationException) {
             throw IOException("Malformed OTP /plan response", e)
         }
+
+    /**
+     * Reads [input] fully as UTF-8 and [parse]s it — the single stream→[Response] entry point, so
+     * callers don't each hand-roll the read (and its charset choice).
+     */
+    @JvmStatic
+    @Throws(IOException::class)
+    fun parse(input: InputStream): Response = parse(input.readBytes().toString(Charsets.UTF_8))
 }

@@ -131,9 +131,8 @@ internal fun ArrivalsSheetHost(
                     onTitleClick = onTitleClick,
                     etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
                     starAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_STAR),
-                    // The onboarding "slide up to see more" spotlight now anchors on the pinned header
-                    // (the chevron it used to point at is gone).
-                    headerAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_PANEL),
+                    // The onboarding "slide up to see more" spotlight (KEY_PANEL) anchors on the sheet's
+                    // drag handle in the host scaffold, not the panel — see ArrivalsDragHandle.
                 )
             }
 

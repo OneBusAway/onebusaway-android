@@ -16,15 +16,18 @@
 package org.onebusaway.android.map.render
 
 /**
- * A one-shot camera intent. A use-case controller dispatches one of these to
- * [MapRenderState.cameraCommands], and the flavor adapter applies it against its imperative map
- * (`GoogleMap`/`MapLibreMap.animateCamera(...)`) — so the camera is driven from state, decoupled from
- * any one screen, rather than poked directly on the map.
+ * A one-shot, **transient** camera gesture (zoom step, recenter, my-location move, stop-tap centering).
+ * A use-case controller dispatches one of these to [MapRenderState.cameraGestures], and the flavor
+ * adapter applies it against its imperative map (`GoogleMap`/`MapLibreMap.animateCamera(...)`) — so the
+ * camera is driven from state, decoupled from any one screen, rather than poked directly on the map.
+ *
+ * Transient: a gesture dispatched while no map is subscribed is *meant* to be discarded (the flow has no
+ * replay). Persistent framing — fit the route / itinerary / region — is the separate [FramingIntent],
+ * which is retained so a late subscriber catches up.
  *
  * Flavor-neutral: it carries *intent*, never a Google/maplibre `CameraUpdate`. The renderer computes
- * the actual bounds/target from the current render state + the live viewport. Bounds-fitting commands
- * read [MapRenderSnapshot.routePolylines]; framing math that needs the map (the closest-vehicle
- * visibility check, the route-mode recenter bias) is resolved by the renderer from the live camera.
+ * the actual target from the current render state + the live viewport; the route-mode recenter bias is
+ * resolved by the renderer from the live camera.
  */
 sealed interface CameraCommand {
 
@@ -53,15 +56,6 @@ sealed interface CameraCommand {
 
     /** Set the zoom level (preserving the current center). */
     data class SetZoom(val zoom: Float) : CameraCommand
-
-    /** Fit the route/itinerary polyline bounds with the default padding. */
-    object FitToRoute : CameraCommand
-
-    /** Fit the route/itinerary polyline bounds, padding against the screen dimensions. */
-    object FitToItinerary : CameraCommand
-
-    /** Fit the current region's bounds. */
-    object ZoomToRegion : CameraCommand
 
     /** Step zoom in/out (the zoom FABs). */
     object ZoomIn : CameraCommand

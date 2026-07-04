@@ -48,9 +48,9 @@ import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.Marker
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onSubscription
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapHost
 import org.onebusaway.android.map.compose.BikeInfoWindow
@@ -79,8 +79,9 @@ private const val FRAME_INTERVAL_NANOS = 50_000_000L
  * android-maps-compose), bridging the MapView's imperative lifecycle to Compose via a
  * [LifecycleEventObserver], and drives the shared [MapHost]. It sets the style, builds the
  * [GoogleMapRenderer] and re-renders on every render-state change, wires map/marker/info-window clicks
- * to [callbacks], reports camera idles to [MapHost.onCameraIdle], applies the dispatched camera intents,
- * and enables the location blue dot from the host's permission-derived flag.
+ * to [callbacks], reports camera idles to [MapHost.onCameraIdle], applies the render state's camera
+ * gestures + retained framing intent, and enables the location blue dot from the host's
+ * permission-derived flag.
  *
  * The live route vehicles + the trip-focus estimate markers are native [Marker]s moved in place at
  * ~20Hz (the [GoogleMapRenderer.renderDynamic] loop below), so they glide with the map — no Compose
@@ -245,19 +246,16 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
             LaunchedEffect(map) {
                 renderState.padding.collect { map.setPadding(0, it.topPx, 0, it.bottomPx) }
             }
-            // Declarative camera: apply the host-dispatched camera intents to the map once ready, and
-            // tell the host the adapter is subscribed (so a deferred route re-frame can dispatch now).
-            DisposableEffect(map) {
-                host.setMapAttached(true)
-                onDispose { host.setMapAttached(false) }
+            // Declarative camera. Transient gestures apply as they arrive (dropped if none pending when
+            // the map wasn't subscribed). The retained framing intent is replayed to this collector when
+            // the map (re)composes, so a fit requested before the adapter subscribed — the directions map
+            // composed behind the results sheet (#1640), or a re-tap of the already-shown route — is
+            // re-applied here rather than deferred through a host flag; null clears it (no framing to apply).
+            LaunchedEffect(map) {
+                renderState.cameraGestures.collect { applyCameraCommand(it, map) }
             }
             LaunchedEffect(map) {
-                renderState.cameraCommands
-                    // Flush any frame deferred while the map was detached the moment this collector is
-                    // registered — emissions made in onSubscription are delivered here, so a deferred
-                    // fit isn't dropped by the no-replay flow if the first camera-idle beats us (#1640).
-                    .onSubscription { host.onCameraCommandsSubscribed() }
-                    .collect { applyCameraCommand(it, map, renderState, context) }
+                renderState.framingIntent.filterNotNull().collect { applyFramingIntent(it, map, renderState, context) }
             }
             // Publish a flavor-neutral lat/lng -> root-space projector so map-SDK-agnostic callers (the
             // onboarding spotlight) can locate a marker on screen without touching the Google SDK.

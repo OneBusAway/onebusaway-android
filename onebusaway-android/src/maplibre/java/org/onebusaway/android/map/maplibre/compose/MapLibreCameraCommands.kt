@@ -23,6 +23,7 @@ import org.maplibre.android.maps.MapLibreMap
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.map.maplibre.MapHelpMapLibre
 import org.onebusaway.android.map.render.CameraCommand
+import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.MapRenderState
 import kotlin.math.abs
 
@@ -30,17 +31,14 @@ import kotlin.math.abs
 private const val CAMERA_DEFAULT_ZOOM = 16.0
 
 /**
- * Applies one [CameraCommand] to the maplibre [MapLibreMap] — the declarative counterpart of the
- * Google adapter's `applyCameraCommand`. It's a faithful port of the old `MapLibreMapHost` camera
- * methods (which called `mMap.animateCamera/moveCamera` directly); now the host dispatches intents and
- * the adapter applies them here. maplibre's camera calls are fire-and-forget (not suspending), so this
- * isn't a suspend function. Bounds-fitting reads the route shape from [renderState]; the route-header
- * recenter bias reads the live viewport from [map].
- *
- * As on the old host, route/itinerary/closest-vehicle framing all just frame the route shape — the
- * screen-dimension padding and closest-vehicle inclusion were Google-only refinements.
+ * Applies one transient [CameraCommand] gesture to the maplibre [MapLibreMap] — the declarative
+ * counterpart of the Google adapter's `applyCameraCommand`. It's a faithful port of the old
+ * `MapLibreMapHost` camera methods (which called `mMap.animateCamera/moveCamera` directly); now the host
+ * dispatches gestures and the adapter applies them here. maplibre's camera calls are fire-and-forget
+ * (not suspending), so this isn't a suspend function. The route-header recenter bias reads the live
+ * viewport from [map]. Retained framing is applied by [applyFramingIntent].
  */
-fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap, renderState: MapRenderState) {
+fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap) {
     when (cmd) {
         is CameraCommand.Recenter -> {
             val cp = map.cameraPosition
@@ -75,23 +73,37 @@ fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap, renderState: MapRen
 
         is CameraCommand.SetZoom -> map.moveCamera(CameraUpdateFactory.zoomTo(cmd.zoom.toDouble()))
 
-        CameraCommand.FitToRoute,
-        CameraCommand.FitToItinerary -> {
-            val bounds = routePolylineBounds(renderState) ?: return
-            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0))
-        }
-
-        CameraCommand.ZoomToRegion -> {
-            val region = Application.get().currentRegion ?: return
-            map.animateCamera(CameraUpdateFactory.newLatLngBounds(MapHelpMapLibre.getRegionBounds(region), 0))
-        }
-
         CameraCommand.ZoomIn -> map.animateCamera(CameraUpdateFactory.zoomIn())
 
         CameraCommand.ZoomOut -> map.animateCamera(CameraUpdateFactory.zoomOut())
 
         // maplibre has no map-type tilt reset, so its host never dispatches this.
         CameraCommand.ResetTilt -> Unit
+    }
+}
+
+/**
+ * Applies the map's retained [FramingIntent] to the maplibre [MapLibreMap] — the counterpart of the
+ * Google adapter's `applyFramingIntent`. As on the old host, route/itinerary framing both just frame the
+ * route shape (the screen-dimension padding was a Google-only refinement); the bounds are re-read from
+ * [renderState]/the region live, so it's safe to re-apply when a re-created adapter replays the framing.
+ */
+fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: MapRenderState) {
+    when (intent) {
+        FramingIntent.Route,
+        FramingIntent.Itinerary -> {
+            val bounds = routePolylineBounds(renderState) ?: return
+            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0))
+        }
+
+        FramingIntent.Region -> {
+            val region = Application.get().currentRegion ?: return
+            map.animateCamera(CameraUpdateFactory.newLatLngBounds(MapHelpMapLibre.getRegionBounds(region), 0))
+        }
+
+        is FramingIntent.Point -> map.moveCamera(
+            CameraUpdateFactory.newLatLngZoom(LatLng(intent.lat, intent.lon), intent.zoom.toDouble())
+        )
     }
 }
 

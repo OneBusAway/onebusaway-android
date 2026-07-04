@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.map.render
 
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -202,15 +203,41 @@ class MapRenderState {
         _projector.value = projector
     }
 
-    // One-shot camera intents a controller dispatches and the flavor adapter applies against its
-    // imperative map (animateCamera/moveCamera). Buffered so the synchronous dispatch never suspends or
-    // drops under a brief burst (e.g. the vehicle poll).
-    private val _cameraCommands = MutableSharedFlow<CameraCommand>(extraBufferCapacity = 16)
+    // Transient one-shot camera gestures a controller dispatches and the flavor adapter applies against
+    // its imperative map (animateCamera/moveCamera). replay=0: a gesture dispatched with no map
+    // subscribed is meant to be discarded — it carries no lasting intent to catch a late subscriber up
+    // on (that's [framingIntent]'s job). Buffered so the synchronous dispatch never suspends or drops
+    // under a brief burst (e.g. the vehicle poll).
+    private val _cameraGestures = MutableSharedFlow<CameraCommand>(extraBufferCapacity = 16)
 
-    val cameraCommands: SharedFlow<CameraCommand> = _cameraCommands.asSharedFlow()
+    val cameraGestures: SharedFlow<CameraCommand> = _cameraGestures.asSharedFlow()
 
-    fun dispatchCamera(command: CameraCommand) {
-        _cameraCommands.tryEmit(command)
+    fun dispatchGesture(command: CameraCommand) {
+        _cameraGestures.tryEmit(command)
+    }
+
+    // The map's retained framing intent (fit route / itinerary / region / a fixed point), or null for no
+    // framing. A replay=1 SharedFlow rather than a StateFlow, for two reasons a plain StateFlow can't
+    // serve at once: (1) a fresh adapter — a config-change or process-restore recompose, or the map
+    // composed behind the directions results sheet (#1640) — replays the current framing and re-applies
+    // it, which is what lets the host drop the pendingFrameCommands / cameraCommandsSubscribed deferral
+    // machinery a replay=0 flow forced; and (2) re-emitting the *same* framing (re-tapping the shown
+    // route to snap back to its extent) still re-fires, whereas a StateFlow would swallow the identical
+    // value as a no-op. Null is emitted to clear framing when the map leaves a framed view, so a stale
+    // route fit isn't re-applied in nearby-stops mode.
+    private val _framingIntent = MutableSharedFlow<FramingIntent?>(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
+    val framingIntent: SharedFlow<FramingIntent?> = _framingIntent.asSharedFlow()
+
+    fun frame(intent: FramingIntent) {
+        _framingIntent.tryEmit(intent)
+    }
+
+    fun clearFraming() {
+        _framingIntent.tryEmit(null)
     }
 
     fun getRoutePolylines(): List<RoutePolyline> = _snapshot.value.routePolylines

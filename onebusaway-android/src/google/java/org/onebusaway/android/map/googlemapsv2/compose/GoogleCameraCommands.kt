@@ -26,6 +26,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
 import org.onebusaway.android.map.render.CameraCommand
+import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.util.ViewUtils
 import kotlin.math.abs
@@ -35,17 +36,15 @@ private const val CAMERA_DEFAULT_ZOOM = 16.0f
 private const val DEFAULT_MAP_PADDING_DP = 20.0f
 
 /**
- * Applies one [CameraCommand] to the imperative [GoogleMap] — a faithful port of the `GoogleMapHost`
- * methods that called `mMap.animateCamera/moveCamera` directly (the maps-compose `CameraPositionState`
- * detour is gone). The math (bounds, the route-header recenter bias, the closest-vehicle visibility
- * short-circuit) is unchanged, now reading the live camera from [map] and the route shape from
- * [renderState]. Google's camera calls are fire-and-forget, so this is not a suspend function.
+ * Applies one transient [CameraCommand] gesture to the imperative [GoogleMap] — a faithful port of the
+ * `GoogleMapHost` methods that called `mMap.animateCamera/moveCamera` directly (the maps-compose
+ * `CameraPositionState` detour is gone). The route-header recenter bias is unchanged, now reading the
+ * live camera from [map]. Google's camera calls are fire-and-forget, so this is not a suspend function.
+ * Retained framing (fit route / itinerary / region) is applied by [applyFramingIntent].
  */
 fun applyCameraCommand(
     cmd: CameraCommand,
     map: GoogleMap,
-    renderState: MapRenderState,
-    context: Context,
 ) {
     when (cmd) {
         is CameraCommand.Recenter -> {
@@ -85,36 +84,6 @@ fun applyCameraCommand(
 
         is CameraCommand.SetZoom -> map.moveCamera(CameraUpdateFactory.zoomTo(cmd.zoom))
 
-        CameraCommand.FitToRoute -> {
-            val bounds = routePolylineBounds(renderState)
-            if (bounds == null) {
-                Toast.makeText(context, R.string.route_info_no_shape_data, Toast.LENGTH_SHORT).show()
-            } else {
-                map.moveCamera(
-                    CameraUpdateFactory.newLatLngBounds(bounds, ViewUtils.dpToPixels(context, DEFAULT_MAP_PADDING_DP))
-                )
-            }
-        }
-
-        CameraCommand.FitToItinerary -> {
-            val bounds = routePolylineBounds(renderState) ?: return
-            val dm = context.resources.displayMetrics
-            map.moveCamera(
-                CameraUpdateFactory.newLatLngBounds(
-                    bounds, dm.widthPixels, dm.heightPixels,
-                    ViewUtils.dpToPixels(context, DEFAULT_MAP_PADDING_DP)
-                )
-            )
-        }
-
-        CameraCommand.ZoomToRegion -> {
-            val region = Application.get().currentRegion ?: return
-            val bounds = MapHelpV2.getRegionBounds(region)
-            // Use screen dimensions to avoid IllegalStateException (#581).
-            val dm = context.resources.displayMetrics
-            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, dm.widthPixels, dm.heightPixels, 0))
-        }
-
         CameraCommand.ZoomIn -> map.animateCamera(CameraUpdateFactory.zoomIn())
 
         CameraCommand.ZoomOut -> map.animateCamera(CameraUpdateFactory.zoomOut())
@@ -127,6 +96,55 @@ fun applyCameraCommand(
                 )
             )
         }
+    }
+}
+
+/**
+ * Applies the map's retained [FramingIntent] to the imperative [GoogleMap] — the bounds/target math
+ * ported unchanged from the former `FitToRoute`/`FitToItinerary`/`ZoomToRegion` camera commands,
+ * re-reading the route shape from [renderState] and the region bounds live so it's safe to re-apply when
+ * a re-created adapter replays the current framing. Fire-and-forget, so not a suspend function.
+ */
+fun applyFramingIntent(
+    intent: FramingIntent,
+    map: GoogleMap,
+    renderState: MapRenderState,
+    context: Context,
+) {
+    when (intent) {
+        FramingIntent.Route -> {
+            val bounds = routePolylineBounds(renderState)
+            if (bounds == null) {
+                Toast.makeText(context, R.string.route_info_no_shape_data, Toast.LENGTH_SHORT).show()
+            } else {
+                map.moveCamera(
+                    CameraUpdateFactory.newLatLngBounds(bounds, ViewUtils.dpToPixels(context, DEFAULT_MAP_PADDING_DP))
+                )
+            }
+        }
+
+        FramingIntent.Itinerary -> {
+            val bounds = routePolylineBounds(renderState) ?: return
+            val dm = context.resources.displayMetrics
+            map.moveCamera(
+                CameraUpdateFactory.newLatLngBounds(
+                    bounds, dm.widthPixels, dm.heightPixels,
+                    ViewUtils.dpToPixels(context, DEFAULT_MAP_PADDING_DP)
+                )
+            )
+        }
+
+        FramingIntent.Region -> {
+            val region = Application.get().currentRegion ?: return
+            val bounds = MapHelpV2.getRegionBounds(region)
+            // Use screen dimensions to avoid IllegalStateException (#581).
+            val dm = context.resources.displayMetrics
+            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, dm.widthPixels, dm.heightPixels, 0))
+        }
+
+        is FramingIntent.Point -> map.moveCamera(
+            CameraUpdateFactory.newLatLngZoom(LatLng(intent.lat, intent.lon), intent.zoom)
+        )
     }
 }
 

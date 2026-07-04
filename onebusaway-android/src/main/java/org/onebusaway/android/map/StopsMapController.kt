@@ -205,7 +205,7 @@ class StopsMapController(
     fun onStopTapped(stop: ObaStop) {
         setFocusedStopId(stop.id)
         val loc = stop.location
-        host.dispatchCamera(CameraCommand.CenterOnStopTap(loc.latitude, loc.longitude))
+        host.dispatchGesture(CameraCommand.CenterOnStopTap(loc.latitude, loc.longitude))
     }
 
     /** A tap away from any marker clears the stop render focus (the old onMapClick). */
@@ -220,7 +220,7 @@ class StopsMapController(
      */
     fun focusStop(stop: ObaStop, routes: List<ObaRoute>?, overlayExpanded: Boolean) {
         val loc = stop.location
-        host.dispatchCamera(
+        host.dispatchGesture(
             CameraCommand.Recenter(
                 loc.latitude, loc.longitude,
                 animate = false,

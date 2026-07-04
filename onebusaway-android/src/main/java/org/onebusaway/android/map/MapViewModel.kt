@@ -283,6 +283,10 @@ class MapViewModel @Inject constructor(
         stopsController.clearStops(false)
         mapHost.setProgress(false)
         mapHost.setMoreStopsAvailable(false)
+        // Drop any retained framing (route/itinerary/region fit) so it isn't replayed onto the next view
+        // — e.g. a stale route fit re-applied when a re-created adapter re-subscribes in nearby-stops
+        // mode. The view we enter next sets its own framing (or none, for nearby stops).
+        mapHost.clearFraming()
     }
 
     // ----- Focus + taps (delegated to [stopsController], except the vehicle selection) -----
@@ -306,7 +310,7 @@ class MapViewModel @Inject constructor(
 
     /** Recenter on the focused stop after the arrivals sheet expands over it (a Home map directive). */
     fun recenterOnFocusedStop(lat: Double, lon: Double) {
-        mapHost.dispatchCamera(
+        mapHost.dispatchGesture(
             CameraCommand.Recenter(lat, lon, animate = true, applyRouteBias = routeController.isActive)
         )
     }

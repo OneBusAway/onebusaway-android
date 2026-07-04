@@ -199,7 +199,6 @@ fun HomeNavHost(
             }
             HomeScreen(
                 state = state,
-                sheetCommands = home.homeViewModel.sheetCommands,
                 homeViewModel = home.homeViewModel,
                 mapViewModel = home.mapViewModel,
                 routeHeader = routeHeader,

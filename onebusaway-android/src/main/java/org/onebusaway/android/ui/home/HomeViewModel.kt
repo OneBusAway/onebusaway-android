@@ -73,9 +73,6 @@ class HomeViewModel @Inject constructor(
     )
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    private val _sheetCommands = MutableSharedFlow<SheetCommand>(extraBufferCapacity = 4)
-    val sheetCommands: SharedFlow<SheetCommand> = _sheetCommands.asSharedFlow()
-
     // The map's bottom inset (driven by the arrivals sheet) — idempotent last-wins state, applied by
     // MapFeature. A StateFlow (not an event) so a re-entering map re-reads the latest value.
     private val _mapBottomPadding = MutableStateFlow(0)
@@ -83,8 +80,8 @@ class HomeViewModel @Inject constructor(
 
     // One-shot outbound map interactions (recenter / show route / focus / clear focus) that can't be
     // modeled as state. MapFeature collects these and calls the map view model — so this VM needs no
-    // reference to the map's VM (the seam the old MapInteractionBus filled). Buffered like sheetCommands
-    // so a directive issued just before the collector is active isn't dropped.
+    // reference to the map's VM (the seam the old MapInteractionBus filled). Buffered so a directive
+    // issued just before the collector is active isn't dropped.
     private val _mapDirectives = MutableSharedFlow<MapDirective>(extraBufferCapacity = 8)
     val mapDirectives: SharedFlow<MapDirective> = _mapDirectives.asSharedFlow()
 
@@ -246,11 +243,11 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * "Show vehicles on map" — collapse the sheet (screen), then switch the map to route mode. The
-     * [request] carries the route and (for the arrivals-row launch) the direction stop to focus on.
+     * "Show vehicles on map" — switch the map to route mode. The [request] carries the route and (for
+     * the arrivals-row launch) the direction stop to focus on. The sheet collapse is a declarative
+     * reaction to route mode activating (see [HomeScreen]'s `routeModeActive` effect), not a command.
      */
     fun requestShowRouteOnMap(request: ShowRouteRequest) {
-        emit(SheetCommand.CollapseSheet)
         emitMapDirective(MapDirective.ShowRoute(request))
     }
 
@@ -272,13 +269,8 @@ class HomeViewModel @Inject constructor(
         _analyticsEvents.tryEmit(HomeAnalyticsEvent.MenuItem(labelRes))
     }
 
-    // tryEmit (not a launched emit): the buffer (capacity 4, 0 replay) has room for these low-frequency
-    // one-shot commands, matching the codebase effect-flow idiom (MapViewModel etc.).
-    private fun emit(command: SheetCommand) {
-        _sheetCommands.tryEmit(command)
-    }
-
-    // The outbound-map-directive counterpart of [emit] (buffered, replay-less; see [mapDirectives]).
+    // tryEmit (not a launched emit): the buffer (capacity 8, 0 replay) has room for these low-frequency
+    // one-shot directives, matching the codebase effect-flow idiom (MapViewModel etc.).
     private fun emitMapDirective(directive: MapDirective) {
         _mapDirectives.tryEmit(directive)
     }
@@ -371,16 +363,6 @@ sealed interface HomeAnalyticsEvent {
 
     /** A nav-drawer / help-menu selection identified by its analytics label string resource. */
     data class MenuItem(@StringRes val labelRes: Int) : HomeAnalyticsEvent
-}
-
-/**
- * One-shot sheet commands driven from the ViewModel, consumed by [HomeScreen] (which alone holds the
- * live `SheetState`) off its own [HomeViewModel.sheetCommands] flow. (The drawer is opened directly by
- * [org.onebusaway.android.ui.home.chrome.HomeTopBar]'s hamburger, so it needs no command.)
- */
-sealed interface SheetCommand {
-    /** Collapse the sheet to its peek (e.g. after "show vehicles on map"). */
-    object CollapseSheet : SheetCommand
 }
 
 /**

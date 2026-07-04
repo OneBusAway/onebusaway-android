@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onSubscription
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapHost
 import org.onebusaway.android.map.compose.BikeInfoWindow
@@ -251,7 +252,12 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                 onDispose { host.setMapAttached(false) }
             }
             LaunchedEffect(map) {
-                renderState.cameraCommands.collect { applyCameraCommand(it, map, renderState, context) }
+                renderState.cameraCommands
+                    // Flush any frame deferred while the map was detached the moment this collector is
+                    // registered — emissions made in onSubscription are delivered here, so a deferred
+                    // fit isn't dropped by the no-replay flow if the first camera-idle beats us (#1640).
+                    .onSubscription { host.onCameraCommandsSubscribed() }
+                    .collect { applyCameraCommand(it, map, renderState, context) }
             }
             // Publish a flavor-neutral lat/lng -> root-space projector so map-SDK-agnostic callers (the
             // onboarding spotlight) can locate a marker on screen without touching the Google SDK.

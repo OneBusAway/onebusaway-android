@@ -88,7 +88,10 @@ import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.components.SwitchRow
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.nav.NavRoutes
-import org.onebusaway.android.ui.tripresults.TripResults
+import org.onebusaway.android.map.DirectionsMapViewModel
+import org.onebusaway.android.ui.tripresults.TripResultsMap
+import org.onebusaway.android.ui.tripresults.TripResultsSheet
+import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.LocationUtils
@@ -216,10 +219,13 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
 }
 
 /**
- * The trip-plan container: the [TripPlanForm] is the main content; when a plan completes, the
- * results appear inline in a Material3 bottom sheet via [TripResults] (Compose, owning its own
- * directions-mode map). Date/time/contacts/current-location/advanced/report are platform interactions
- * delegated to the host Activity.
+ * The trip-plan container: before a plan completes the [TripPlanForm] is the scaffold body; once results
+ * arrive, the directions map ([TripResultsMap]) takes over the scaffold *body* and the results header +
+ * directions list appear in a Material3 bottom sheet over it ([TripResultsSheet]). Dragging the sheet
+ * down reveals the map — so the interactive map owns its own gesture area instead of being trapped in the
+ * draggable sheet (#1640). Back walks the sheet from expanded → peek → dismissed (form) before exiting.
+ * Date/time/contacts/current-location/advanced/report are platform interactions delegated to the host
+ * Activity.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -240,6 +246,14 @@ fun TripPlanRoute(
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     val planState by viewModel.planState.collectAsStateWithLifecycle()
 
+    // The results VMs are hoisted here (not created inside the sheet content) so the map can render as
+    // the scaffold *body* — behind the sheet — while the results header + directions list stay in the
+    // sheet. The map is revealed by dragging the sheet down, so an interactive map never sits inside the
+    // draggable bottom sheet, which would otherwise steal its vertical drags (#1640). Both are scoped to
+    // this destination's back-stack entry, so hoisting doesn't change their identity or lifetime.
+    val resultsViewModel: TripResultsViewModel = hiltViewModel()
+    val mapViewModel: DirectionsMapViewModel = hiltViewModel(key = "tripResultsMap")
+
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
             initialValue = SheetValue.Hidden,
@@ -250,13 +264,18 @@ fun TripPlanRoute(
     val scope = rememberCoroutineScope()
     val sheetExpanded = scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
 
-    // Back (system or toolbar) collapses an expanded results sheet first, then exits — mirrors
-    // the legacy sliding-panel behavior (onBackPressed collapsed the panel before finishing).
+    // Back (system or toolbar) walks the results back to the form before exiting: an expanded sheet
+    // collapses to its peek (revealing the map behind it), the peek dismisses the results (returning the
+    // form as the scaffold body), and only then does back exit the screen. Since the map — not the form —
+    // now sits behind the sheet, this peek step is how the user gets back to the form to re-plan.
     val collapseOrBack: () -> Unit = {
-        if (sheetExpanded) scope.launch { scaffoldState.bottomSheetState.partialExpand() }
-        else onBack()
+        when {
+            sheetExpanded -> scope.launch { scaffoldState.bottomSheetState.partialExpand() }
+            hasResults -> viewModel.clearPlanResult()
+            else -> onBack()
+        }
     }
-    BackHandler(enabled = sheetExpanded) { collapseOrBack() }
+    BackHandler(enabled = hasResults) { collapseOrBack() }
 
     // Expand the sheet when results arrive; hide it when the form is reset to Idle.
     LaunchedEffect(planState) {
@@ -279,35 +298,47 @@ fun TripPlanRoute(
             sheetContent = {
                 val result = planState
                 if (result is PlanResult.Success) {
-                    TripResults(
+                    TripResultsSheet(
                         itineraries = result.itineraries,
+                        resultsViewModel = resultsViewModel,
+                        mapViewModel = mapViewModel,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
             }
         ) { padding ->
-            Column(Modifier.padding(padding)) {
-                if (planState is PlanResult.Loading) {
-                    LinearProgressIndicator(Modifier.fillMaxWidth())
-                }
-                TripPlanForm(
-                    state = formState,
-                    onFromQueryChange = viewModel::onFromQueryChange,
-                    onToQueryChange = viewModel::onToQueryChange,
-                    onSelectFrom = viewModel::setFrom,
-                    onSelectTo = viewModel::setTo,
-                    onFromCurrentLocation = onFromCurrentLocation,
-                    onToCurrentLocation = onToCurrentLocation,
-                    onFromContacts = onFromContacts,
-                    onToContacts = onToContacts,
-                    onFromPickOnMap = onFromPickOnMap,
-                    onToPickOnMap = onToPickOnMap,
-                    onSetArriving = viewModel::setArriving,
-                    onPickDate = onPickDate,
-                    onPickTime = onPickTime,
-                    onReverse = viewModel::reverseTrip,
-                    onAdvancedSettings = onAdvancedSettings
+            // With results, the directions map fills the scaffold body, behind the peeking sheet, so it
+            // owns its whole gesture area and vertical drags pan the map — dragging the sheet down reveals
+            // it (#1640). Before a plan completes, the body is the trip-plan form.
+            if (hasResults) {
+                TripResultsMap(
+                    mapViewModel = mapViewModel,
+                    modifier = Modifier.fillMaxSize()
                 )
+            } else {
+                Column(Modifier.padding(padding)) {
+                    if (planState is PlanResult.Loading) {
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                    }
+                    TripPlanForm(
+                        state = formState,
+                        onFromQueryChange = viewModel::onFromQueryChange,
+                        onToQueryChange = viewModel::onToQueryChange,
+                        onSelectFrom = viewModel::setFrom,
+                        onSelectTo = viewModel::setTo,
+                        onFromCurrentLocation = onFromCurrentLocation,
+                        onToCurrentLocation = onToCurrentLocation,
+                        onFromContacts = onFromContacts,
+                        onToContacts = onToContacts,
+                        onFromPickOnMap = onFromPickOnMap,
+                        onToPickOnMap = onToPickOnMap,
+                        onSetArriving = viewModel::setArriving,
+                        onPickDate = onPickDate,
+                        onPickTime = onPickTime,
+                        onReverse = viewModel::reverseTrip,
+                        onAdvancedSettings = onAdvancedSettings
+                    )
+                }
             }
         }
     }

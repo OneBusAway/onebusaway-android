@@ -21,7 +21,6 @@ import android.util.Log
 import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.models.ObaShape
 import org.onebusaway.android.util.PolylineDecoder
-import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.RoutePolyline
 import org.opentripplanner.api.model.EncodedPolylineBean
@@ -87,19 +86,16 @@ class DirectionsMapController(private val host: MapHost) {
 
     /**
      * Frames the current directions itinerary: fit the route shape, or (no route — start == end)
-     * center on the start at the default zoom. Re-appliable so the owner can frame once the map is
-     * ready (the frame dispatched at [start] time is lost before the adapter subscribes).
+     * center on the start at the default zoom. Both cases route through [MapHost] framing helpers
+     * ([MapHost.frameItinerary] / [MapHost.frameStart]), which dispatch now if the map adapter is
+     * attached and otherwise defer until it subscribes — so a frame issued before the adapter subscribes
+     * (the map is drawn behind the results sheet the instant a plan completes) isn't dropped.
      */
     fun frameDirections() {
         if (directionsHasRoute) {
-            host.dispatchCamera(CameraCommand.FitToItinerary)
+            host.frameItinerary()
         } else {
-            directionsStart?.let {
-                host.dispatchCamera(
-                    CameraCommand.Recenter(it.latitude, it.longitude, animate = false, applyRouteBias = false)
-                )
-                host.dispatchCamera(CameraCommand.SetZoom(MapParams.DEFAULT_ZOOM.toFloat()))
-            }
+            directionsStart?.let { host.frameStart(it.latitude, it.longitude) }
         }
     }
 

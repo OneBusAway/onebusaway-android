@@ -29,9 +29,7 @@ import org.onebusaway.android.extrapolation.extrapolatedVehicles
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import java.net.HttpURLConnection
-import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.RoutePolyline
@@ -159,13 +157,13 @@ class RouteMapController(
 
     private fun onRouteLoaded(result: Result<RouteMap?>, zoomToRoute: Boolean) {
         val routeMap = result.getOrElse {
-            MapUtils.showMapError((it as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION)
+            host.emitEffect(MapEffect.ShowError.from(it))
             return
         }
         // A null result (no endpoint) or an unresolved route reads as an error, like the legacy
         // null-response path.
         val route = routeMap?.route ?: run {
-            MapUtils.showMapError(HttpURLConnection.HTTP_INTERNAL_ERROR)
+            host.emitEffect(MapEffect.ShowError(HttpURLConnection.HTTP_INTERNAL_ERROR))
             return
         }
         _loadedRoute.value = LoadedRoute.Loaded(route, routeMap.agencyName)

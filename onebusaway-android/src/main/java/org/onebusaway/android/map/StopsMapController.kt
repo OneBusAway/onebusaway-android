@@ -26,8 +26,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import org.onebusaway.android.api.ObaApi
-import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.models.NearbyStops
 import org.onebusaway.android.models.ObaRoute
@@ -127,7 +125,7 @@ class StopsMapController(
 
     private fun onStopsLoaded(result: Result<NearbyStops?>) {
         val nearby = result.getOrElse {
-            MapUtils.showMapError((it as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION)
+            host.emitEffect(MapEffect.ShowError.from(it))
             return
         }
         if (nearby == null) {

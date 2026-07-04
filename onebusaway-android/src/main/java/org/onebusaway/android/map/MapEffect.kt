@@ -15,6 +15,9 @@
  */
 package org.onebusaway.android.map
 
+import org.onebusaway.android.api.ObaApi
+import org.onebusaway.android.api.ObaApiException
+
 /**
  * A one-shot map event that needs an Activity to carry out (so it can't be plain state). [MapHost]
  * emits these on [MapHost.effects] (re-exposed by the map view models); the hosting Activity collects
@@ -38,4 +41,17 @@ sealed interface MapEffect {
 
     /** We have permission + services but no fix yet — "waiting for location" toast. */
     object WaitingForLocation : MapEffect
+
+    /**
+     * A viewport/route load failed — show the map error toast for OBA status [code] (an HTTP status or
+     * an `ObaApi.OBA_*` sentinel). Rendered by the UI layer, so the cold controllers don't reach for a
+     * `Context` just to present the toast.
+     */
+    data class ShowError(val code: Int) : MapEffect {
+        companion object {
+            /** The status code a failed load reports: an [ObaApiException]'s code, else a generic I/O error. */
+            fun from(cause: Throwable): ShowError =
+                ShowError((cause as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION)
+        }
+    }
 }

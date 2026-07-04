@@ -19,7 +19,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.widealerts.GtfsAlerts
 
 /** A region-wide GTFS alert to surface to the user (drives the home wide-alert dialog). */
 data class WideAlert(val title: String, val message: String, val url: String?)
@@ -38,10 +38,12 @@ interface WideAlertsRepository {
  * [kotlinx.coroutines.Dispatchers.IO] is needed because the fetcher already threads itself; the
  * collector's context decides where emissions are observed.
  */
-class DefaultWideAlertsRepository @Inject constructor() : WideAlertsRepository {
+class DefaultWideAlertsRepository @Inject constructor(
+    private val gtfsAlerts: GtfsAlerts,
+) : WideAlertsRepository {
 
     override fun wideAlerts(regionId: String): Flow<WideAlert> = callbackFlow {
-        Application.getGtfsAlerts().fetchAlerts(regionId) { title, message, url ->
+        gtfsAlerts.fetchAlerts(regionId) { title, message, url ->
             trySend(WideAlert(title, message, url))
         }
         // The fetcher exposes no cancellation handle; its background thread is short-lived.

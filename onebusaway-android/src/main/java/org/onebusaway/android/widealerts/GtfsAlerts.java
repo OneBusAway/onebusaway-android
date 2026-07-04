@@ -15,16 +15,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import dagger.hilt.android.qualifiers.ApplicationContext;
+
 /**
  * Fetches GTFS alerts and processes them.
  */
+@Singleton
 public class GtfsAlerts {
 
     private static final String TAG = "GtfsAlerts";
     private static final Set<String> fetchedRegions = new HashSet<>();
     private final Context mContext;
 
-    public GtfsAlerts(Context context) {
+    @Inject
+    public GtfsAlerts(@ApplicationContext Context context) {
         mContext = context;
     }
 

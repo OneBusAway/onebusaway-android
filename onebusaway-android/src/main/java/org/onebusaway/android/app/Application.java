@@ -41,7 +41,6 @@ import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ThemeUtils;
-import org.onebusaway.android.widealerts.GtfsAlerts;
 
 import java.security.MessageDigest;
 import java.util.UUID;
@@ -67,8 +66,6 @@ public class Application extends android.app.Application {
     public static final String CHANNEL_DESTINATION_ALERT_ID = "destination_alerts";
 
     private DonationsManager mDonationsManager;
-
-    private GtfsAlerts mGtfsAlerts;
 
     private static Application mApp;
 
@@ -110,8 +107,6 @@ public class Application extends android.app.Application {
         initFirebaseMessaging();
 
         mDonationsManager = new DonationsManager(getApplicationContext(), getResources(), getAppLaunchCount());
-
-        mGtfsAlerts = new GtfsAlerts(getApplicationContext());
     }
 
     /**
@@ -133,10 +128,6 @@ public class Application extends android.app.Application {
     }
 
     public static DonationsManager getDonationsManager() { return get().mDonationsManager; }
-
-    public static GtfsAlerts getGtfsAlerts() {
-        return get().mGtfsAlerts;
-    }
 
 
     // Preserve the original preference-key value so persisted launch counts survive upgrades.

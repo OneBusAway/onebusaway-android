@@ -45,8 +45,8 @@ import org.onebusaway.android.util.RegionUtils
  * re-centering) collect [region]/[state]; the resolution action ([refresh]/[choose]) lives here too,
  * folding in the former `RegionStatusRepository`.
  *
- * One process-singleton instance is held on `Application` (mirroring `getGtfsAlerts()`), so every view
- * model shares the same flow; tests substitute a fake. It lives in the neutral `region` package so both
+ * One process-singleton instance is provided by Hilt (like the other app-scoped `@Singleton`s), so every
+ * view model shares the same flow; tests substitute a fake. It lives in the neutral `region` package so both
  * the map and the home UI can depend on it without a backward dependency.
  */
 interface RegionRepository {

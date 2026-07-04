@@ -33,16 +33,14 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import org.onebusaway.android.app.Application
-import org.onebusaway.android.donations.DonationsManager
 import org.onebusaway.android.util.TimeProvider
 
 /**
- * Provides the process-wide singletons that still live on [Application] (the de-facto DI container), so
- * Hilt-managed code can inject them instead of reaching `Application.getX()` statically. During the
- * transition they're sourced from the existing [Application] instances. (RegionRepository and
- * LocationRepository are real Hilt `@Singleton`s — they're bound in
- * `RepositoryModule`, not here.) More singletons get added here as converted consumers need them.
+ * Provides process-wide infrastructure singletons that aren't a repository binding: the app-lifetime
+ * [AppScope] coroutine scope, the Preferences [DataStore], and the wall-clock [TimeProvider]. (Feature
+ * singletons like `RegionRepository`/`LocationRepository`/`DonationsManager` are real Hilt
+ * `@Singleton`s — bound in `RepositoryModule` or constructed from their own `@Inject` constructors, not
+ * sourced from `Application` here.)
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -76,10 +74,6 @@ object AppModule {
         scope = scope,
         produceFile = { context.preferencesDataStoreFile("settings") },
     )
-
-    @Provides
-    @Singleton
-    fun provideDonationsManager(): DonationsManager = Application.getDonationsManager()
 
     /** Wall-clock source — the single `System.currentTimeMillis()` boundary for injected consumers. */
     @Provides

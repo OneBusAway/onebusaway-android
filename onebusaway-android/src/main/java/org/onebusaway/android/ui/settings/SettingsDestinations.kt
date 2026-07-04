@@ -26,7 +26,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.DonationsEntryPoint
 import org.onebusaway.android.ui.about.AboutScreen
 import org.onebusaway.android.ui.about.buildVersionText
 import org.onebusaway.android.ui.agencies.AgenciesRoute
@@ -106,7 +106,7 @@ fun NavGraphBuilder.settingsGraph(navController: NavHostController) {
                 onGoHomeResetTutorial = { NavHelp.goHome(activity, true) },
                 onOpenDonate = {
                     activity.startActivity(
-                        Application.getDonationsManager().buildOpenDonationsPageIntent()
+                        DonationsEntryPoint.get(activity).buildOpenDonationsPageIntent()
                     )
                 },
                 onOpenPoweredByOba = {

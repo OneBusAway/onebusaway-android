@@ -26,7 +26,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.DonationsEntryPoint
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.nav.revealRouteOnMap
@@ -56,10 +56,9 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
             DonationLearnMoreScreen(
                 onBack = { navController.popBackStack() },
                 onDonate = {
-                    Application.getDonationsManager().dismissDonationRequests()
-                    context.startActivity(
-                        Application.getDonationsManager().buildOpenDonationsPageIntent()
-                    )
+                    val donationsManager = DonationsEntryPoint.get(context)
+                    donationsManager.dismissDonationRequests()
+                    context.startActivity(donationsManager.buildOpenDonationsPageIntent())
                     navController.popBackStack()
                 },
             )

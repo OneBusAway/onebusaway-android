@@ -26,6 +26,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onebusaway.android.extrapolation.data.TripState
+import org.onebusaway.android.extrapolation.data.toObservations
 import org.onebusaway.android.extrapolation.extrapolatedVehicles
 import org.onebusaway.android.api.contract.ListWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
@@ -132,6 +133,55 @@ class ExtrapolatedVehiclesTest {
             directionResponse().asRouteTrips(), setOf("route_1"), nowMs = WallTime(1_000_000L), lookupState = noState
         )
         assertEquals(listOf("trip_out", "trip_in"), vehicles.map { it.status.activeTripId })
+    }
+
+    // A trips-for-route response listing the same trip twice — a schedule-only entry (position, no
+    // fix) and a real-time entry (lastKnownLocation), in each order — the #1667/#50 flicker fixture.
+    private fun duplicateResponse(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
+        Resources.read(getTargetContext(), Resources.getTestUri("trips_for_route_duplicate_trip"))
+            .use { json.decodeFromString(it.readText()) }
+
+    @Test
+    fun wireDedupCollapsesDuplicateTripKeepingTheRealtimeFix() {
+        // asRouteTrips() collapses each doubled trip id to one entry, keeping the GPS-fix entry
+        // regardless of which order it appeared in (dup1: scheduled then GPS; dup2: GPS then scheduled).
+        val trips = duplicateResponse().asRouteTrips().trips
+        assertEquals(listOf("trip_dup1", "trip_dup2"), trips.map { it.id })
+        assertEquals(47.201, trips[0].status!!.lastKnownLocation!!.latitude, 1e-6)
+        assertEquals(47.202, trips[1].status!!.lastKnownLocation!!.latitude, 1e-6)
+    }
+
+    @Test
+    fun oneMarkerPerTripWhenTheResponseDuplicatesIt() {
+        // End to end: the doubled trip yields a single vehicle at the real-time point, not two
+        // vehicles fighting over one activeTripId marker key.
+        val vehicles = extrapolatedVehicles(
+            duplicateResponse().asRouteTrips(), setOf("route_1"), nowMs = WallTime(1_000_000L), lookupState = noState
+        )
+        assertEquals(listOf("trip_dup1", "trip_dup2"), vehicles.map { it.status.activeTripId })
+        assertEquals(47.201, vehicles[0].point.latitude, 1e-6)
+        assertEquals(47.202, vehicles[1].point.latitude, 1e-6)
+    }
+
+    // Two distinct trips both reporting the same active trip (a vehicle mid-rollover): the ghost
+    // predecessor (scheduled) and the real-time successor — collide on activeTripId, not trip id.
+    private fun rolloverResponse(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
+        Resources.read(getTargetContext(), Resources.getTestUri("trips_for_route_rollover"))
+            .use { json.decodeFromString(it.readText()) }
+
+    @Test
+    fun wireDedupCollapsesRolloverAcrossRenderAndStore() {
+        // The seam keys on activeTripId, so the ghost predecessor and the real-time successor collapse
+        // to one entry there — fixing both consumers of RouteTrips at once: the render vehicles...
+        val trips = rolloverResponse().asRouteTrips()
+        val vehicles = extrapolatedVehicles(
+            trips, setOf("route_1"), nowMs = WallTime(1_000_000L), lookupState = noState
+        )
+        assertEquals(1, vehicles.size)
+        assertEquals("trip_next", vehicles[0].status.activeTripId)
+        assertEquals(47.99, vehicles[0].point.latitude, 1e-6)
+        // ...and the store's observations (which forEachActiveTrip keys by activeTripId): one, not two.
+        assertEquals(listOf("trip_next"), trips.toObservations().map { it.tripId })
     }
 
     @Test

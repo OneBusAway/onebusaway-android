@@ -21,18 +21,21 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.api.contract.OtpPlanParser;
 import org.onebusaway.android.app.di.PreferencesEntryPoint;
-import org.onebusaway.android.directions.util.JacksonConfig;
 import org.opentripplanner.api.model.TripPlan;
 import org.opentripplanner.api.ws.Message;
 import org.opentripplanner.api.ws.Request;
 import org.opentripplanner.api.ws.Response;
 import org.opentripplanner.routing.core.TraverseMode;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -177,8 +180,7 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setConnectTimeout(HTTP_CONNECTION_TIMEOUT);
             urlConnection.setReadTimeout(HTTP_SOCKET_TIMEOUT);
-            plan = JacksonConfig.getObjectReaderInstance()
-                    .readValue(urlConnection.getInputStream());
+            plan = OtpPlanParser.parse(readBody(urlConnection.getInputStream()));
 
             if (useOldUrlStructure) {
                 // If the old url structure is successful then cache it
@@ -214,5 +216,16 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
             }
         }
         return plan;
+    }
+
+    /** Reads the full HTTP body as a UTF-8 string for {@link OtpPlanParser#parse(String)}. */
+    private static String readBody(InputStream in) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] chunk = new byte[8192];
+        int read;
+        while ((read = in.read(chunk)) != -1) {
+            buffer.write(chunk, 0, read);
+        }
+        return buffer.toString(StandardCharsets.UTF_8.name());
     }
 }

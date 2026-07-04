@@ -28,8 +28,8 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
+import org.onebusaway.android.api.contract.OtpPlanParser
 import org.onebusaway.android.directions.util.CustomAddress
-import org.onebusaway.android.directions.util.JacksonConfig
 import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.opentripplanner.api.model.Itinerary
 import org.opentripplanner.api.ws.Message
@@ -129,7 +129,7 @@ class DefaultTripPlanRepository @Inject constructor(
                 connectTimeout = HTTP_TIMEOUT_MS
                 readTimeout = HTTP_TIMEOUT_MS
             }
-            val response: Response = JacksonConfig.getObjectReaderInstance().readValue(connection.inputStream)
+            val response: Response = OtpPlanParser.parse(connection.inputStream.bufferedReader().readText())
             if (useOldUrlStructure) {
                 prefs.setBoolean(R.string.preference_key_otp_api_url_version, true)
             }

@@ -89,7 +89,10 @@ public final class MapLibreStopIcons {
     /** The small directionless dot shown in place of the full icon at distant zoom (declutter). */
     private static Icon dot_stop_icon;
 
-    /** The focused (accent) variant of {@link #dot_stop_icon}, so a selection stays visible far out. */
+    /**
+     * The focused variant of {@link #dot_stop_icon}: a larger ({@link StopBitmaps#FOCUSED_DOT_SCALE})
+     * accent dot, so the selected stop stays visible and clearly larger than its neighbours far out.
+     */
     private static Icon dot_stop_icon_focused;
 
     private static final float FOCUS_ICON_SCALE = 1.5f;
@@ -173,7 +176,8 @@ public final class MapLibreStopIcons {
         }
 
         dot_stop_icon = iconFactory.fromBitmap(StopBitmaps.dot(mPx, r.getColor(R.color.theme_primary)));
-        dot_stop_icon_focused = iconFactory.fromBitmap(StopBitmaps.dot(mPx, r.getColor(R.color.map_stop_focus)));
+        dot_stop_icon_focused = iconFactory.fromBitmap(StopBitmaps.dot(mPx,
+                r.getColor(R.color.map_stop_focus), StopBitmaps.FOCUSED_DOT_SCALE));
     }
 
     @SuppressWarnings("deprecation")

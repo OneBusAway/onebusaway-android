@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.TimeProvider
 import org.opentripplanner.api.model.Itinerary
 
@@ -49,12 +50,22 @@ import org.opentripplanner.api.model.Itinerary
 class TripPlanViewModel @Inject constructor(
     private val geocode: GeocodeRepository,
     private val planRepository: TripPlanRepository,
+    private val regionRepository: RegionRepository,
     timeProvider: TimeProvider,
     settingsRepository: AdvancedSettingsRepository,
 ) : ViewModel() {
 
     private val initialDateTimeMillis = timeProvider.now()
     private val initialSettings = settingsRepository.load()
+
+    /**
+     * The active region's OTP "report a problem" contact email, or null when none is configured. The
+     * VM owns the [RegionRepository] dependency so the host destination never reaches into the data
+     * layer itself; it's a one-shot read at report time (the host builds the feedback email) rather
+     * than surfaced form state, mirroring [RegionRepository.currentRegion].
+     */
+    val otpContactEmail: String?
+        get() = regionRepository.region.value?.otpContactEmail
 
     private val _formState = MutableStateFlow(
         TripPlanFormState(

@@ -101,6 +101,9 @@ class ArrivalInfo(
     val serviceDate: Long get() = data.serviceDate
     val vehicleId: String? get() = data.vehicleId
 
+    /** The service-alert (situation) ids that reference this specific arrival; empty when none. */
+    val situationIds: List<String> get() = data.situationIds
+
     /** The departure time to set a reminder for: the predicted time if known, else the scheduled. */
     val reminderDepartureTime: Long
         get() = if (data.predictedDepartureTime.epochMs != 0L) data.predictedDepartureTime.epochMs

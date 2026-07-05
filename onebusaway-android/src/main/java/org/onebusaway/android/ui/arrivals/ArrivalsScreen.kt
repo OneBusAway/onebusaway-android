@@ -137,7 +137,8 @@ internal fun rememberArrivalRowCallbacks(
         onSetReminder = handler::onSetReminder,
         onShowOnlyRoute = viewModel::showOnlyRoute,
         onShowRouteSchedule = handler::onShowRouteSchedule,
-        onReportArrivalProblem = handler::onReportArrivalProblem
+        onReportArrivalProblem = handler::onReportArrivalProblem,
+        onShowAlert = handler::onShowAlert
     )
 }
 

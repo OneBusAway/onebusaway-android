@@ -261,6 +261,7 @@ private fun PeekRow(
         isFavorite = actions?.isRouteFavorite == true,
         onFavorite = { actions?.let { callbacks.onRouteFavorite(it) } },
         onMore = { expanded = true },
+        onAlertClick = alertClick(actions, callbacks),
         etaModifier = etaModifier,
         starModifier = starModifier,
         menu = {
@@ -309,6 +310,7 @@ private fun PeekRowVisual(
     modifier: Modifier = Modifier,
     etaModifier: Modifier = Modifier,
     starModifier: Modifier = Modifier,
+    onAlertClick: (() -> Unit)? = null,
     menu: @Composable () -> Unit = {}
 ) {
     Row(
@@ -339,6 +341,9 @@ private fun PeekRowVisual(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
+        if (onAlertClick != null) {
+            ArrivalAlertIndicator(onClick = onAlertClick)
+        }
         Spacer(Modifier.width(8.dp))
         EtaPill(eta, etaColor, predicted, modifier = etaModifier)
         Box {

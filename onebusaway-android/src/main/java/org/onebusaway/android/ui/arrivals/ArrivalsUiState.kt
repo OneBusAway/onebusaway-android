@@ -41,7 +41,10 @@ data class ArrivalActions(
     val scheduleUrl: String?,
     val agencyName: String?,
     val blockId: String?,
-    val isRouteFavorite: Boolean
+    val isRouteFavorite: Boolean,
+    /** The representative *active* service-alert id affecting this arrival, or null when none —
+     *  drives the per-row alert indicator and the situation it opens on tap (issue #1687 Bug 2). */
+    val alertSituationId: String? = null
 )
 
 /**

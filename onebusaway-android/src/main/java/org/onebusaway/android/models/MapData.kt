@@ -31,6 +31,11 @@ data class NearbyStops(
  * into its render `GeoPoint`s. Each [RouteMapStop] carries the direction(s) it serves, so the overlay
  * can be narrowed to a single stop-relevant direction without a separate id index. [directions]
  * enumerates the route's selectable directions (id + headsign) so the header can offer a switch.
+ *
+ * [polylines] is the whole-route (merged, undirected) shape drawn when no direction is selected;
+ * [polylinesByDirection] holds each direction's own shape (keyed by GTFS [RouteMapDirection.directionId],
+ * travel-ordered, possibly several branches), drawn once that direction is selected. A direction absent
+ * from the map (no per-direction shape on the wire) falls back to [polylines].
  */
 data class RouteMapData(
     val route: ObaRoute?,
@@ -39,6 +44,7 @@ data class RouteMapData(
     val routes: List<ObaRoute>,
     val directions: List<RouteMapDirection>,
     val polylines: List<List<Location>>,
+    val polylinesByDirection: Map<Int, List<List<Location>>>,
 )
 
 /**

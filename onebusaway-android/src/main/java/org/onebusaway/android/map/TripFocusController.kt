@@ -85,6 +85,8 @@ class TripFocusController(
                         color = routeColorArgb,
                         points = shape.points.map { it.toGeoPoint() },
                         widthDp = TRIP_LINE_WIDTH_DP,
+                        // A single trip shape runs one way; keep its travel-direction chevrons.
+                        directional = true,
                     )
                 )
             )

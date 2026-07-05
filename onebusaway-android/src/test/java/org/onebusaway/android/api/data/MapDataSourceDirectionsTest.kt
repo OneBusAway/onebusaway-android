@@ -17,6 +17,7 @@ package org.onebusaway.android.api.data
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.api.contract.ShapeEntry
 import org.onebusaway.android.api.contract.StopGroup
 import org.onebusaway.android.api.contract.StopGroupName
 import org.onebusaway.android.api.contract.StopGrouping
@@ -25,8 +26,14 @@ import org.onebusaway.android.models.RouteMapDirection
 /** [directionsFrom] — building the route's selectable directions + stop membership from stop groups. */
 class MapDataSourceDirectionsTest {
 
-    private fun group(id: String?, names: List<String> = emptyList(), stopIds: List<String> = emptyList()) =
-        StopGroup(id = id, name = StopGroupName(names), stopIds = stopIds)
+    private fun group(
+        id: String?,
+        names: List<String> = emptyList(),
+        stopIds: List<String> = emptyList(),
+        polylines: List<ShapeEntry> = emptyList(),
+    ) = StopGroup(id = id, name = StopGroupName(names), stopIds = stopIds, polylines = polylines)
+
+    private fun shape(points: String) = ShapeEntry(points = points, length = points.length)
 
     private fun grouping(vararg groups: StopGroup) = StopGrouping(groups.toList())
 
@@ -93,5 +100,55 @@ class MapDataSourceDirectionsTest {
         assertEquals(setOf(1), result.directionsByStop["b"])
         assertEquals(setOf(0, 1), result.directionsByStop["shared"])
         assertEquals(null, result.directionsByStop["absent"])
+    }
+
+    @Test
+    fun polylinesAreCollectedPerDirection() {
+        val result = directionsFrom(
+            listOf(
+                grouping(
+                    group("0", polylines = listOf(shape("aaa"))),
+                    group("1", polylines = listOf(shape("bbb"), shape("ccc"))),
+                )
+            )
+        ).polylinesByDirection
+        assertEquals(listOf(shape("aaa")), result[0])
+        assertEquals(listOf(shape("bbb"), shape("ccc")), result[1])
+    }
+
+    @Test
+    fun polylinesAccumulateForADirectionSplitAcrossGroups() {
+        // A direction whose branches arrive in two groups keeps both, in order.
+        val result = directionsFrom(
+            listOf(
+                grouping(group("0", polylines = listOf(shape("aaa")))),
+                grouping(group("0", polylines = listOf(shape("bbb")))),
+            )
+        ).polylinesByDirection
+        assertEquals(listOf(shape("aaa"), shape("bbb")), result[0])
+    }
+
+    @Test
+    fun repeatedShapeAcrossGroupsIsKeptForDedupDownstream() {
+        // The same shape listed under one direction in two groups accumulates both here; the data
+        // source de-dups before decoding (so it isn't drawn twice). directionsFrom itself keeps both.
+        val result = directionsFrom(
+            listOf(
+                grouping(
+                    group("0", polylines = listOf(shape("aaa"))),
+                    group("0", polylines = listOf(shape("aaa"))),
+                )
+            )
+        ).polylinesByDirection
+        assertEquals(listOf(shape("aaa"), shape("aaa")), result[0])
+        assertEquals(listOf(shape("aaa")), result[0]!!.distinct())
+    }
+
+    @Test
+    fun directionWithoutPolylinesIsAbsentFromTheMap() {
+        // No group-level shape (e.g. an older server) leaves the direction out, so the caller falls back.
+        val result = directionsFrom(listOf(grouping(group("0", listOf("to Downtown")))))
+            .polylinesByDirection
+        assertEquals(null, result[0])
     }
 }

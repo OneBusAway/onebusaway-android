@@ -67,7 +67,12 @@ class DirectionsMapController(private val host: MapHost) {
         val legPolylines = legs.mapNotNull { leg ->
             val shape = LegShape(leg.legGeometry)
             if (shape.length > 0) {
-                RoutePolyline(resolveLegColor(leg), shape.points.map { it.toGeoPoint() })
+                // An itinerary leg is traversed one way; keep its travel-direction chevrons.
+                RoutePolyline(
+                    resolveLegColor(leg),
+                    shape.points.map { it.toGeoPoint() },
+                    directional = true,
+                )
             } else {
                 null
             }

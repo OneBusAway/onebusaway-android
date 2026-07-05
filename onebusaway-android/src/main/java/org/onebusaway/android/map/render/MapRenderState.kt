@@ -56,13 +56,24 @@ data class MapPadding(val topPx: Int = 0, val bottomPx: Int = 0)
 const val DEFAULT_ROUTE_LINE_COLOR: Int = 0xFF0000FF.toInt()
 
 /**
- * One route/itinerary polyline: an ordered list of points and an optional [color]. The directional-arrow
- * stamp is a rendering detail added by the flavor renderer, so it isn't part of the state. A null [color]
+ * One route/itinerary polyline: an ordered list of points and an optional [color]. A null [color]
  * means "use the [DEFAULT_ROUTE_LINE_COLOR]" — choosing the fallback is a display decision, so producers
  * can pass a route's raw (possibly absent) GTFS color straight through and renderers draw [resolvedColor].
  * [widthDp] overrides the renderer's default line width when set (the trip-focus map draws a thicker line).
+ *
+ * [directional] asks the flavor renderer to stamp travel-direction arrows/chevrons along the line — set
+ * it only when [points] are ordered in the direction of travel and that orientation is meaningful (a
+ * single trip/leg shape, or a route narrowed to one selected direction). The whole-route merged shape,
+ * whose points aren't a single travel order, leaves it false so the line reads as undirected. Whether a
+ * renderer can honor it is flavor-specific (Google stamps a chevron texture; the maplibre classic
+ * annotation has no arrow support yet).
  */
-data class RoutePolyline(val color: Int?, val points: List<GeoPoint>, val widthDp: Float? = null) {
+data class RoutePolyline(
+    val color: Int?,
+    val points: List<GeoPoint>,
+    val widthDp: Float? = null,
+    val directional: Boolean = false,
+) {
     /** The [color] to draw, applying the [DEFAULT_ROUTE_LINE_COLOR] fallback in one place for every renderer. */
     val resolvedColor: Int get() = color ?: DEFAULT_ROUTE_LINE_COLOR
 }

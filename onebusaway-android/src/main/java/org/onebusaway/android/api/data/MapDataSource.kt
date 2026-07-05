@@ -23,6 +23,7 @@ import org.onebusaway.android.api.requireData
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.onebusaway.android.api.contract.ShapeEntry
 import org.onebusaway.android.api.contract.StopGrouping
 import org.onebusaway.android.models.NearbyStops
 import org.onebusaway.android.models.RouteMapDirection
@@ -74,6 +75,17 @@ class DefaultMapDataSource @Inject constructor(
         // The route's selectable directions + each stop's direction membership, from one pass over the
         // direction stop groups.
         val dirs = directionsFrom(data.entry.stopGroupings)
+        // Decoding the route's shape polylines is the one bit of non-trivial CPU work in this layer;
+        // offload just it (the Retrofit calls are already main-safe, like the other sources). Both the
+        // whole-route merged set and each direction's own (cleaner, travel-ordered) shape are decoded
+        // here; the controller draws the merged set for the whole route and a direction's own shape once
+        // one is selected.
+        val (wholeRoute, byDirection) = withContext(Dispatchers.Default) {
+            data.entry.polylines.map { it.decode() } to
+                // distinct() drops a shape a direction listed under more than one group, so it isn't
+                // drawn (and arrow-stamped) twice over itself.
+                dirs.polylinesByDirection.mapValues { (_, shapes) -> shapes.distinct().map { it.decode() } }
+        }
         RouteMapData(
             route = route,
             agencyName = route?.agencyId?.let { data.references.agency(it)?.name },
@@ -81,19 +93,23 @@ class DefaultMapDataSource @Inject constructor(
                 .map { RouteMapStop(it, dirs.directionsByStop[it.id].orEmpty()) },
             routes = data.references.routes.map(::DtoRoute),
             directions = dirs.directions,
-            // Decoding the route's shape polylines is the one bit of non-trivial CPU work in this
-            // layer; offload just it (the Retrofit calls are already main-safe, like the other sources).
-            polylines = withContext(Dispatchers.Default) {
-                data.entry.polylines.map { PolylineDecoder.decodeLine(it.points, it.length) }
-            },
+            polylines = wholeRoute,
+            polylinesByDirection = byDirection,
         )
     }
+
+    private fun ShapeEntry.decode(): List<android.location.Location> =
+        PolylineDecoder.decodeLine(points, length)
 }
 
-/** A route's selectable [directions] plus the [directionsByStop] membership, from one pass. */
+/**
+ * A route's selectable [directions], the [directionsByStop] membership, and each direction's own
+ * (still-encoded) [polylinesByDirection] shapes — all from one pass over the stop groups.
+ */
 internal data class RouteDirections(
     val directions: List<RouteMapDirection>,
     val directionsByStop: Map<String, Set<Int>>,
+    val polylinesByDirection: Map<Int, List<ShapeEntry>>,
 )
 
 /**
@@ -109,17 +125,25 @@ internal data class RouteDirections(
  * that instead exposes branch/variant ids beyond 0/1 will still list those directions and their stops,
  * but no vehicle's trip `directionId` will match, so selecting such a direction shows its stops with an
  * empty vehicle layer. Non-numeric ids are dropped (they can't be a GTFS direction).
+ *
+ * A direction's shapes are accumulated across every group that carries its id (so a direction split
+ * over several groups keeps all its branches); a direction whose groups carried no polylines is absent
+ * from [RouteDirections.polylinesByDirection], and the caller falls back to the whole-route shape.
  */
 internal fun directionsFrom(stopGroupings: List<StopGrouping>): RouteDirections {
     val directions = mutableListOf<RouteMapDirection>()
     val seen = mutableSetOf<Int>()
     val byStop = mutableMapOf<String, MutableSet<Int>>()
+    val polylinesByDir = mutableMapOf<Int, MutableList<ShapeEntry>>()
     stopGroupings.forEach { grouping ->
         grouping.stopGroups.forEach { group ->
             val dir = group.id?.toIntOrNull() ?: return@forEach
             if (seen.add(dir)) directions += RouteMapDirection(dir, group.displayName.orEmpty())
             group.stopIds.forEach { byStop.getOrPut(it) { mutableSetOf() }.add(dir) }
+            if (group.polylines.isNotEmpty()) {
+                polylinesByDir.getOrPut(dir) { mutableListOf() } += group.polylines
+            }
         }
     }
-    return RouteDirections(directions.sortedBy { it.directionId }, byStop)
+    return RouteDirections(directions.sortedBy { it.directionId }, byStop, polylinesByDir)
 }

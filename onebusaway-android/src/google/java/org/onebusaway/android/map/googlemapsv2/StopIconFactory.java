@@ -111,7 +111,10 @@ public final class StopIconFactory {
     /** The small directionless dot shown in place of the full icon at distant zoom (declutter). */
     private static BitmapDescriptor sDotDescriptor;
 
-    /** The focused (accent) variant of {@link #sDotDescriptor}, so a selection stays visible far out. */
+    /**
+     * The focused variant of {@link #sDotDescriptor}: a larger ({@link StopBitmaps#FOCUSED_DOT_SCALE})
+     * accent dot, so the selected stop stays visible and clearly larger than its neighbours far out.
+     */
     private static BitmapDescriptor sDotDescriptorFocused;
 
     /**
@@ -261,7 +264,8 @@ public final class StopIconFactory {
         sDotDescriptor = BitmapDescriptorFactory.fromBitmap(
                 StopBitmaps.dot(mPx, r.getColor(R.color.theme_primary)));
         sDotDescriptorFocused = BitmapDescriptorFactory.fromBitmap(
-                StopBitmaps.dot(mPx, r.getColor(R.color.map_stop_focus)));
+                StopBitmaps.dot(mPx, r.getColor(R.color.map_stop_focus),
+                        StopBitmaps.FOCUSED_DOT_SCALE));
     }
 
     /** Wraps each pre-rendered bitmap into a BitmapDescriptor once, so callers can reuse them. */

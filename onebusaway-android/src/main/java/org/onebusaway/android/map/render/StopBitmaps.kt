@@ -30,12 +30,22 @@ import kotlin.math.roundToInt
  */
 object StopBitmaps {
     /**
+     * How much larger the focused (selected) dot is drawn than a normal dot, so the selected stop
+     * stays visibly larger than its neighbours even in the zoomed-out dot band (#1679). Mirrors the
+     * full-icon focus enlargement the flavour factories apply up close (their `FOCUS_ICON_SCALE`).
+     */
+    const val FOCUSED_DOT_SCALE = 1.5f
+
+    /**
      * A filled circle in [fillColor] with a thin white outline for contrast against the map, sized
-     * from [baseIconPx] (the full stop icon size) so a dense viewport reads as points.
+     * from [baseIconPx] (the full stop icon size) so a dense viewport reads as points. [scale]
+     * enlarges the dot relative to that base — the focused stop passes [FOCUSED_DOT_SCALE] so its
+     * selection reads as larger than surrounding dots.
      */
     @JvmStatic
-    fun dot(baseIconPx: Int, fillColor: Int): Bitmap {
-        val sizePx = max(6, (baseIconPx * 0.5f).roundToInt())
+    @JvmOverloads
+    fun dot(baseIconPx: Int, fillColor: Int, scale: Float = 1f): Bitmap {
+        val sizePx = max(6, (baseIconPx * 0.5f * scale).roundToInt())
         val bm = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bm)
         val center = sizePx / 2f

@@ -43,7 +43,7 @@ object RegionSubsystems {
     fun observe(app: Application) {
         scope.launch {
             RegionEntryPoint.get(app).region.collect { region ->
-                app.onRegionChanged(region)
+                Open311Subsystem.applyRegion(region)
             }
         }
     }

@@ -19,8 +19,6 @@ package org.onebusaway.android.app;
 import android.content.Context;
 import android.hardware.GeomagneticField;
 import android.location.Location;
-import android.text.TextUtils;
-import android.util.Log;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
@@ -39,8 +37,6 @@ import org.onebusaway.android.util.ThemeUtils;
 import java.security.MessageDigest;
 import java.util.UUID;
 
-import edu.usf.cutr.open311client.Open311Manager;
-import edu.usf.cutr.open311client.models.Open311Option;
 
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 import java.nio.charset.StandardCharsets;
@@ -53,9 +49,6 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint;
 
 @HiltAndroidApp
 public class Application extends android.app.Application {
-
-    // Region preference (long id)
-    private static final String TAG = "Application";
 
     private static Application mApp;
 
@@ -212,18 +205,6 @@ public class Application extends android.app.Application {
     }
 
     /**
-     * Re-initializes the region-*derived* Open311 reporting endpoints for [region]. Driven reactively by
-     * {@link org.onebusaway.android.region.RegionSubsystems}, which observes the region flow (A7), rather
-     * than poked imperatively by a region write transaction. The Plausible/Umami analytics emitters are
-     * likewise region-derived, but they are owned + rebuilt by
-     * {@link org.onebusaway.android.analytics.AnalyticsProvider} (which observes the same flow).
-     */
-    public void onRegionChanged(Region region) {
-        initOpen311(region);
-    }
-
-
-    /**
      * Returns the custom URL if the user has set a custom API URL manually via Preferences, or
      * null
      * if it has not been set
@@ -255,30 +236,6 @@ public class Application extends android.app.Application {
                     .append(HEXES.charAt((b & 0x0F)));
         }
         return hex.toString();
-    }
-
-    private void initOpen311(Region region) {
-        if (BuildConfig.DEBUG) {
-            Open311Manager.getSettings().setDebugMode(true);
-            Open311Manager.getSettings().setDryRun(true);
-            Log.w(TAG,
-                    "Open311 issue reporting is in debug/dry run mode - no issues will be submitted.");
-        }
-
-        // Clear all open311 endpoints
-        Open311Manager.clearOpen311();
-
-        // Read the open311 preferences from the region and set
-        if (region != null && region.getOpen311Servers() != null) {
-            for (Region.Open311Server open311Server : region.getOpen311Servers()) {
-                String jurisdictionId = open311Server.getJuridisctionId();
-
-                Open311Option option = new Open311Option(open311Server.getBaseUrl(),
-                        open311Server.getApiKey(),
-                        TextUtils.isEmpty(jurisdictionId) ? null : jurisdictionId);
-                Open311Manager.initOpen311WithOption(option);
-            }
-        }
     }
 
     private void reportAnalytics() {

@@ -19,7 +19,6 @@ package org.onebusaway.android.util;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
 import org.onebusaway.android.app.di.PreferencesEntryPoint;
 import org.onebusaway.android.app.di.RegionEntryPoint;
 import org.onebusaway.android.api.bridge.RegionsClient;
@@ -29,7 +28,6 @@ import android.content.Context;
 import android.location.Location;
 import android.util.Log;
 
-import java.security.MessageDigest;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -132,22 +130,10 @@ public class RegionUtils {
             String customApiUrl = PreferencesEntryPoint.get(context)
                     .getString(context.getString(R.string.preference_key_oba_api_url), (String) null);
             if (customApiUrl != null) {
-                regionName = createHashCode(context, customApiUrl.getBytes());
+                regionName = CustomApiUrlLabel.forUrl(context, customApiUrl);
             }
         }
         return regionName;
-    }
-
-    private static String createHashCode(Context context, byte[] bytes) {
-        MessageDigest digest;
-        try {
-            digest = MessageDigest.getInstance("SHA-1");
-            digest.update(bytes);
-            return context.getString(R.string.analytics_label_custom_url) +
-                    ": " + Application.getHex(digest.digest());
-        } catch (Exception e) {
-            return context.getString(R.string.analytics_label_custom_url);
-        }
     }
 
     /**

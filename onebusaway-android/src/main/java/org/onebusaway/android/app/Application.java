@@ -31,15 +31,14 @@ import org.onebusaway.android.app.di.RegionEntryPoint;
 import org.onebusaway.android.region.RegionSubsystems;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.CustomApiUrlLabel;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ThemeUtils;
 
-import java.security.MessageDigest;
 import java.util.UUID;
 
 
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
-import java.nio.charset.StandardCharsets;
 
 import dagger.hilt.android.EntryPointAccessors;
 import dagger.hilt.android.HiltAndroidApp;
@@ -227,17 +226,6 @@ public class Application extends android.app.Application {
         PreferenceUtils.saveString(getString(R.string.preference_key_oba_api_url), url);
     }
 
-    private static final String HEXES = "0123456789abcdef";
-
-    public static String getHex(byte[] raw) {
-        final StringBuilder hex = new StringBuilder(2 * raw.length);
-        for (byte b : raw) {
-            hex.append(HEXES.charAt((b & 0xF0) >> 4))
-                    .append(HEXES.charAt((b & 0x0F)));
-        }
-        return hex.toString();
-    }
-
     private void reportAnalytics() {
         // The Plausible/Umami emitters are owned + built reactively by AnalyticsProvider; here we only set
         // the initial Firebase/Umami region label via setRegion (which resolves the Umami emitter through
@@ -245,16 +233,8 @@ public class Application extends android.app.Application {
         if (getCustomApiUrl() == null && getCurrentRegion() != null) {
             AnalyticsEntryPoint.get(this).setRegion(getCurrentRegion().getName());
         } else if (getCustomApiUrl() != null) {
-            String customUrl;
-            try {
-                MessageDigest digest = MessageDigest.getInstance("SHA-1");
-                digest.update(getCustomApiUrl().getBytes(StandardCharsets.UTF_8));
-                customUrl = getString(R.string.analytics_label_custom_url) +
-                        ": " + getHex(digest.digest());
-            } catch (Exception e) {
-                customUrl = getString(R.string.analytics_label_custom_url);
-            }
-            AnalyticsEntryPoint.get(this).setRegion(customUrl);
+            AnalyticsEntryPoint.get(this)
+                    .setRegion(CustomApiUrlLabel.forUrl(this, getCustomApiUrl()));
         }
     }
 

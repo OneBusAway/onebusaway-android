@@ -50,6 +50,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import org.onebusaway.android.R
+import org.onebusaway.android.util.ExternalIntents
 
 /**
  * Self-wiring donation feature module: collects [DonationViewModel] state, builds its callbacks, runs
@@ -82,8 +83,8 @@ fun DonationFeature(
             viewModel.effects.collect { effect ->
                 when (effect) {
                     DonationEffect.OpenLearnMore -> currentOnLearnMore()
-                    DonationEffect.OpenDonatePage ->
-                        context.startActivity(viewModel.buildDonationsPageIntent())
+                    is DonationEffect.OpenDonatePage ->
+                        ExternalIntents.goToUrl(context, effect.url)
                 }
             }
         }

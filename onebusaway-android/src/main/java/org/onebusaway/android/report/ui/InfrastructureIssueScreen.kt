@@ -99,7 +99,6 @@ import org.onebusaway.android.ui.report.infrastructure.GeoPoint
 import org.onebusaway.android.ui.report.infrastructure.InfrastructureControls
 import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueEvent
 import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueViewModel
-import org.onebusaway.android.ui.report.infrastructure.IssueLocation
 import org.onebusaway.android.ui.report.infrastructure.ReportTarget
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.report.open311.DefaultOpen311Repository
@@ -151,10 +150,6 @@ fun InfrastructureIssueDestination(
         }
     )
 
-    // The single manual marker reconciled from the ViewModel's markerLocation (an effect-held id, so
-    // it survives recomposition but not the destination leaving — which is correct).
-    val markerId = remember { intArrayOf(NO_MARKER) }
-
     // The "report submitted" dialog (Tier 1: was ReportSuccessDialog, a DialogFragment).
     var showSuccess by remember { mutableStateOf(false) }
 
@@ -190,13 +185,6 @@ fun InfrastructureIssueDestination(
         }
     }
 
-    // Reconcile the single manual marker.
-    LaunchedEffect(viewModel) {
-        viewModel.uiState.map { it.markerLocation }.distinctUntilChanged().collect { location ->
-            reconcileMarker(mapViewModel, markerId, location)
-        }
-    }
-
     // Loading-services progress drives the destination's local progress overlay.
     LaunchedEffect(viewModel) {
         viewModel.uiState.map { it.loadingServices }.distinctUntilChanged().collect { loading ->
@@ -225,6 +213,15 @@ fun InfrastructureIssueDestination(
     // Back: if a form/picker is showing, drop the spinner back to the hint (and clear the form);
     // otherwise pop the whole destination. Mirrors the former onBackPressed + form back-stack.
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // The single manual pin IS the current markerLocation: for each value a marker exists, and it's
+    // disposed when the value changes or the destination leaves. Keyed on the (value-equal) location,
+    // so the map holds exactly one marker with no id bookkeeping (was reconcileMarker's IntArray box).
+    val markerLocation = state.markerLocation
+    DisposableEffect(markerLocation) {
+        val id = markerLocation?.let { mapViewModel.addMarker(it.latitude, it.longitude, null) }
+        onDispose { id?.let(mapViewModel::removeMarker) }
+    }
     // A form/picker is showing whenever the target isn't the hint (all forms are inline now bar Open311,
     // which is also driven by the target). Back drops the spinner back to the hint.
     BackHandler(enabled = state.target != ReportTarget.None) {
@@ -332,24 +329,8 @@ fun InfrastructureIssueDestination(
 
 // --- Ported imperative glue (was InfrastructureIssueActivity) -----------------------------------
 
-private const val NO_MARKER = -1
-
 // The former map FrameLayout was 200dp tall (infrastructure_issue.xml).
 private const val MAP_HEIGHT = 200
-
-private fun reconcileMarker(
-    mapViewModel: StopsMapViewModel,
-    markerId: IntArray,
-    location: IssueLocation?,
-) {
-    if (markerId[0] != NO_MARKER) {
-        mapViewModel.removeMarker(markerId[0])
-        markerId[0] = NO_MARKER
-    }
-    if (location != null) {
-        markerId[0] = mapViewModel.addMarker(location.latitude, location.longitude, null)
-    }
-}
 
 /**
  * Builds the [InfrastructureIssueViewModel] from the nav-arg [selectedService] and the decoded

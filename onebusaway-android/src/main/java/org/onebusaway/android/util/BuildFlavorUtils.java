@@ -65,6 +65,24 @@ public class BuildFlavorUtils {
     }
 
     /**
+     * On first run — when no arrival-info-style preference has been set yet — seeds the default style
+     * from this build flavor's {@link BuildConfig#ARRIVAL_INFO_STYLE}. User selections always override
+     * this, so it only writes when the preference is unset. (Extracted from {@code Application.onCreate}.)
+     */
+    public static void applyDefaultArrivalInfoStyleIfUnset(Context context) {
+        if (PreferencesEntryPoint.get(context)
+                .getString(R.string.preference_key_arrival_info_style, null) != null) {
+            return;
+        }
+        // Only STYLE_A maps to A; STYLE_B and any other value default to B (matches the legacy switch).
+        int style = BuildConfig.ARRIVAL_INFO_STYLE == ARRIVAL_INFO_STYLE_A
+                ? ARRIVAL_INFO_STYLE_A : ARRIVAL_INFO_STYLE_B;
+        PreferencesEntryPoint.get(context).setString(
+                R.string.preference_key_arrival_info_style,
+                getPreferenceOptionForArrivalInfoBuildFlavorStyle(context, style));
+    }
+
+    /**
      * Returns the current Arrival Info Style saved in the preferences, represented using the
      * ARRIVAL_INFO_STYLE_* constants in this class
      * @return the current Arrival Info Style saved in the preferences, which will be one of the

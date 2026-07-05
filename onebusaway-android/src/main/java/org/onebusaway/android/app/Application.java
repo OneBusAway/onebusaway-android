@@ -49,6 +49,7 @@ import dagger.hilt.android.EntryPointAccessors;
 import dagger.hilt.android.HiltAndroidApp;
 import org.onebusaway.android.app.di.DatabaseEntryPoint;
 import org.onebusaway.android.app.di.FirebaseMessagingEntryPoint;
+import org.onebusaway.android.app.di.PreferencesEntryPoint;
 
 @HiltAndroidApp
 public class Application extends android.app.Application {
@@ -69,7 +70,16 @@ public class Application extends android.app.Application {
 
         mApp = this;
 
-        initOba();
+        // Seed the per-install app UID once, eagerly, before any reader needs it. It has multiple
+        // independent direct readers (ObaEndpointResolver sends it as app_uid; the Open311 report path
+        // reads it as device_id), so seeding lazily in one reader can't guarantee it for the others.
+        if (PreferenceUtils.getString(ObaApi.APP_UID) == null) {
+            PreferenceUtils.saveString(ObaApi.APP_UID, UUID.randomUUID().toString());
+        }
+
+        // Seed first-run OBA defaults: the build-flavor arrival-info style, and apply the saved theme.
+        BuildFlavorUtils.applyDefaultArrivalInfoStyleIfUnset(this);
+        ThemeUtils.applyPersistedTheme(this);
 
         // Kick the one-time legacy ContentProvider -> Room data import (fire-and-forget) so it overlaps
         // startup; every migrated repository read/write awaits this gate before touching the DB.
@@ -91,7 +101,7 @@ public class Application extends android.app.Application {
 
         NotificationChannels.registerAll(this);
 
-        incrementAppLaunchCount();
+        PreferencesEntryPoint.get(this).incrementAppLaunchCount();
 
         FirebaseMessagingEntryPoint.get(this).fetchAndStoreToken();
     }
@@ -112,20 +122,6 @@ public class Application extends android.app.Application {
     //
     public static Application get() {
         return mApp;
-    }
-
-
-    // Preserve the original preference-key value so persisted launch counts survive upgrades.
-    public static final String APP_LAUNCH_COUNT_KEY = "appLaunchCountPreferencesKey";
-
-    private void incrementAppLaunchCount() {
-        int count = PreferenceUtils.getInt(APP_LAUNCH_COUNT_KEY, 0);
-        count += 1;
-        PreferenceUtils.saveInt(APP_LAUNCH_COUNT_KEY, count);
-    }
-
-    public int getAppLaunchCount() {
-        return PreferenceUtils.getInt(APP_LAUNCH_COUNT_KEY, 0);
     }
 
     /**
@@ -259,61 +255,6 @@ public class Application extends android.app.Application {
                     .append(HEXES.charAt((b & 0x0F)));
         }
         return hex.toString();
-    }
-
-    private String getAppUid() {
-        return UUID.randomUUID().toString();
-    }
-
-    private void initOba() {
-        // Ensure a per-install app UID is persisted; ObaEndpointResolver reads it as app_uid.
-        if (PreferenceUtils.getString(ObaApi.APP_UID) == null) {
-            PreferenceUtils.saveString(ObaApi.APP_UID, getAppUid());
-        }
-
-        checkArrivalStylePreferenceDefault();
-        checkDarkMode();
-    }
-
-    private void checkArrivalStylePreferenceDefault() {
-        String arrivalInfoStylePrefKey = getResources()
-                .getString(R.string.preference_key_arrival_info_style);
-        String arrivalInfoStylePref = PreferenceUtils.getString(arrivalInfoStylePrefKey);
-        if (arrivalInfoStylePref == null) {
-            // First execution of app - set the default arrival info style based on the BuildConfig value
-            switch (BuildConfig.ARRIVAL_INFO_STYLE) {
-                case BuildFlavorUtils.ARRIVAL_INFO_STYLE_A:
-                    // Use OBA classic style for default
-                    PreferenceUtils.saveString(arrivalInfoStylePrefKey, BuildFlavorUtils
-                            .getPreferenceOptionForArrivalInfoBuildFlavorStyle(this,
-                                    BuildFlavorUtils.ARRIVAL_INFO_STYLE_A));
-                    Log.d(TAG, "Using arrival info style A (OBA Classic) as default preference");
-                    break;
-                case BuildFlavorUtils.ARRIVAL_INFO_STYLE_B:
-                    // Use a card-styled footer for default
-                    PreferenceUtils.saveString(arrivalInfoStylePrefKey, BuildFlavorUtils
-                            .getPreferenceOptionForArrivalInfoBuildFlavorStyle(this,
-                                    BuildFlavorUtils.ARRIVAL_INFO_STYLE_B));
-                    Log.d(TAG, "Using arrival info style B (Cards) as default preference");
-                    break;
-                default:
-                    // Use a card-styled footer for default
-                    PreferenceUtils.saveString(arrivalInfoStylePrefKey, BuildFlavorUtils
-                            .getPreferenceOptionForArrivalInfoBuildFlavorStyle(this,
-                                    BuildFlavorUtils.ARRIVAL_INFO_STYLE_B));
-                    Log.d(TAG, "Using arrival info style B (Cards) as default preference");
-                    break;
-            }
-        }
-    }
-
-    private void checkDarkMode() {
-        String appThemePrefKey = getResources()
-                .getString(R.string.preference_key_app_theme);
-        String appThemePref = PreferenceUtils.getString(appThemePrefKey);
-        if (appThemePref != null) {
-            ThemeUtils.setAppTheme(this, appThemePref);
-        }
     }
 
     private void initOpen311(Region region) {

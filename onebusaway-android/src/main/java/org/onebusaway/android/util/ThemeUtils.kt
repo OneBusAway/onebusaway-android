@@ -20,6 +20,7 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
 import org.onebusaway.android.R
+import org.onebusaway.android.app.di.PreferencesEntryPoint
 
 /**
  * Applies the user's selected app theme to the AppCompat night-mode delegate.
@@ -48,6 +49,17 @@ object ThemeUtils {
             else -> return
         }
         AppCompatDelegate.setDefaultNightMode(mode)
+    }
+
+    /**
+     * Applies the persisted app-theme preference to the night-mode delegate, if the user has chosen
+     * one. Called at startup so the saved theme takes effect; a no-op when no theme has been set.
+     */
+    @JvmStatic
+    fun applyPersistedTheme(context: Context) {
+        val themeValue = PreferencesEntryPoint.get(context)
+            .getString(R.string.preference_key_app_theme, null) ?: return
+        setAppTheme(context, themeValue)
     }
 
     /**

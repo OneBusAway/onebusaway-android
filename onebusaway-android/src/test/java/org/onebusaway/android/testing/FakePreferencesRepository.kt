@@ -18,7 +18,6 @@ package org.onebusaway.android.testing
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
-import org.onebusaway.android.app.Application
 import org.onebusaway.android.preferences.PreferencesRepository
 
 /**
@@ -67,7 +66,8 @@ class FakePreferencesRepository(private val observeValue: Boolean = true) : Pref
     override fun getFloat(key: String, default: Float) = read(key, default)
 
     // Mirrors the real impl: reads APP_LAUNCH_COUNT_KEY, so a test can seed it via setInt(key, n).
-    override fun getAppLaunchCount() = getInt(Application.APP_LAUNCH_COUNT_KEY, 0)
+    // incrementAppLaunchCount() is inherited from the interface default (getAppLaunchCount + setInt).
+    override fun getAppLaunchCount() = getInt(PreferencesRepository.APP_LAUNCH_COUNT_KEY, 0)
 
     override fun setBoolean(keyRes: Int, value: Boolean) { values[keyRes] = value; boolFlow(keyRes).value = value }
     override fun setBoolean(key: String, value: Boolean) { values[key] = value; boolFlow(key).value = value }

@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.onebusaway.android.app.Application
 import org.onebusaway.android.app.di.AppScope
 
 /**
@@ -83,11 +82,20 @@ interface PreferencesRepository {
     fun getFloat(key: String, default: Float): Float
 
     /**
-     * The persisted app-launch counter ([Application.APP_LAUNCH_COUNT_KEY]), 0 if never launched. A
-     * named read so consumers (e.g. the survey gate) inject this instead of re-inlining the key and its
-     * default — the injectable equivalent of the `Application.get().getAppLaunchCount()` reach (#1642).
+     * The persisted app-launch counter ([APP_LAUNCH_COUNT_KEY]), 0 if never launched. A named read so
+     * consumers (e.g. the survey gate) inject this instead of re-inlining the key and its default — the
+     * injectable equivalent of the `Application.get().getAppLaunchCount()` reach (#1642).
      */
     fun getAppLaunchCount(): Int
+
+    /**
+     * Increments the persisted app-launch counter by one. Called once per launch at startup. A default
+     * method: it's pure composition of [getAppLaunchCount] + [setInt], so every implementation (and the
+     * test fakes) shares this one body.
+     */
+    fun incrementAppLaunchCount() {
+        setInt(APP_LAUNCH_COUNT_KEY, getAppLaunchCount() + 1)
+    }
 
     fun setBoolean(@StringRes keyRes: Int, value: Boolean)
     fun setBoolean(key: String, value: Boolean)
@@ -103,6 +111,12 @@ interface PreferencesRepository {
 
     fun setFloat(@StringRes keyRes: Int, value: Float)
     fun setFloat(key: String, value: Float)
+
+    companion object {
+        /** Preference key for the persisted app-launch counter. Preserves the original value so counts
+         * survive upgrades. Owned here (the counter's home) rather than on `Application`. */
+        const val APP_LAUNCH_COUNT_KEY = "appLaunchCountPreferencesKey"
+    }
 }
 
 /**
@@ -165,7 +179,7 @@ class DefaultPreferencesRepository @Inject constructor(
     override fun getFloat(keyRes: Int, default: Float) = getFloat(context.getString(keyRes), default)
     override fun getFloat(key: String, default: Float) = cache[floatPreferencesKey(key)] ?: default
 
-    override fun getAppLaunchCount() = getInt(Application.APP_LAUNCH_COUNT_KEY, 0)
+    override fun getAppLaunchCount() = getInt(PreferencesRepository.APP_LAUNCH_COUNT_KEY, 0)
 
     // --- writes (optimistic cache update + async persist) ---
 

@@ -60,7 +60,8 @@ class ObaEndpointResolver @Inject constructor(
     /** The app version code (`app_ver`) — a build constant, so no per-request lookup. */
     val appVersion: Int get() = BuildConfig.VERSION_CODE
 
-    /** The persisted per-install app UID (`app_uid`), generated once at app startup. Invariant per
-     * process, so read once at construction rather than on every request. */
+    /** The persisted per-install app UID (`app_uid`), seeded eagerly in `Application.onCreate` (it has
+     * other direct readers too, e.g. the Open311 report path). Invariant per process, so read once at
+     * construction rather than on every request. */
     val appUid: String? = preferences.getString(ObaApi.APP_UID, null)
 }

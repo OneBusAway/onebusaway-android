@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.PreferencesEntryPoint;
 import org.onebusaway.android.region.Region;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -45,14 +46,18 @@ public abstract class ObaTestCase {
 
         // Save the current region / custom API URL so the override below can be undone in after().
         mOldRegion = Application.get().getCurrentRegion();
-        mOldCustomApiUrl = mOldRegion == null ? Application.get().getCustomApiUrl() : null;
+        mOldCustomApiUrl = mOldRegion == null
+                ? PreferencesEntryPoint.get(getTargetContext())
+                        .getString(R.string.preference_key_oba_api_url, null)
+                : null;
 
         /*
          * Assume Puget Sound API, mainly for backwards compatibility with older tests
          * that were written before multi-region functionality. This is overwritten in some
          * subclasses so multiple regions / APIs can be tested.
          */
-        Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
+        PreferencesEntryPoint.get(getTargetContext())
+                .setString(R.string.preference_key_oba_api_url, "api.pugetsound.onebusaway.org");
     }
 
     @After
@@ -60,9 +65,11 @@ public abstract class ObaTestCase {
         if (mOldRegion != null) {
             Application.get().setCurrentRegion(mOldRegion);
         } else if (mOldCustomApiUrl != null) {
-            Application.get().setCustomApiUrl(mOldCustomApiUrl);
+            PreferencesEntryPoint.get(getTargetContext())
+                    .setString(R.string.preference_key_oba_api_url, mOldCustomApiUrl);
         } else {
-            Application.get().setCustomApiUrl(null);
+            PreferencesEntryPoint.get(getTargetContext())
+                    .setString(R.string.preference_key_oba_api_url, null);
             Application.get().setCurrentRegion(null);
         }
     }

@@ -33,7 +33,6 @@ import org.maplibre.android.annotations.Icon;
 import org.maplibre.android.annotations.IconFactory;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
 import org.onebusaway.android.map.render.StopBitmaps;
 
 import java.util.HashMap;
@@ -102,23 +101,26 @@ public final class MapLibreStopIcons {
     private static float mPercentOffset = 0.5f;
     private static Paint mArrowPaintStroke;
 
-    /** Builds the icon caches on first use. */
-    public static synchronized void ensureLoaded() {
+    /**
+     * Builds the icon caches on first use. The [context] is used only to read app resources while
+     * rendering the bitmaps; only the first call (which populates the caches) touches it.
+     */
+    public static synchronized void ensureLoaded(Context context) {
         if (!sLoaded) {
-            loadIcons();
+            loadIcons(context);
             sLoaded = true;
         }
     }
 
     /** The normal (unfocused) stop icon for a direction string ("N".."NW" / "null"). */
-    public static synchronized Icon iconForDirection(String direction) {
-        ensureLoaded();
+    public static synchronized Icon iconForDirection(Context context, String direction) {
+        ensureLoaded(context);
         return bus_stop_icons[indexFor(direction)];
     }
 
     /** The focused (1.5x) stop icon for a direction string. */
-    public static synchronized Icon focusedIconForDirection(String direction) {
-        ensureLoaded();
+    public static synchronized Icon focusedIconForDirection(Context context, String direction) {
+        ensureLoaded(context);
         return bus_stop_icons_focused[indexFor(direction)];
     }
 
@@ -127,14 +129,14 @@ public final class MapLibreStopIcons {
      * agnostic (a neutral themed point). maplibre centers the icon on the position, so it lands on
      * the stop without anchor math.
      */
-    public static synchronized Icon dotIcon() {
-        ensureLoaded();
+    public static synchronized Icon dotIcon(Context context) {
+        ensureLoaded(context);
         return dot_stop_icon;
     }
 
     /** The focused (accent) dot, shown for the selected stop at distant zoom. */
-    public static synchronized Icon focusedDotIcon() {
-        ensureLoaded();
+    public static synchronized Icon focusedDotIcon(Context context) {
+        ensureLoaded(context);
         return dot_stop_icon_focused;
     }
 
@@ -143,8 +145,8 @@ public final class MapLibreStopIcons {
         return index != null ? index : 8;
     }
 
-    private static void loadIcons() {
-        Resources r = Application.get().getResources();
+    private static void loadIcons(Context context) {
+        Resources r = context.getResources();
         mPx = r.getDimensionPixelSize(R.dimen.map_stop_shadow_size_6);
         mArrowWidthPx = mPx / 2f;
         mArrowHeightPx = mPx / 3f;
@@ -159,11 +161,11 @@ public final class MapLibreStopIcons {
         mArrowPaintStroke.setStrokeWidth(1.0f);
         mArrowPaintStroke.setAntiAlias(true);
 
-        IconFactory iconFactory = IconFactory.getInstance(Application.get());
+        IconFactory iconFactory = IconFactory.getInstance(context);
         String[] directions = {NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, EAST, NORTH_EAST, NO_DIRECTION};
         for (int i = 0; i < directions.length; i++) {
-            bus_stop_icons[i] = iconFactory.fromBitmap(createBusStopIcon(directions[i], false));
-            Bitmap focused = createBusStopIcon(directions[i], true);
+            bus_stop_icons[i] = iconFactory.fromBitmap(createBusStopIcon(context, directions[i], false));
+            Bitmap focused = createBusStopIcon(context, directions[i], true);
             focused = Bitmap.createScaledBitmap(focused,
                     (int) (focused.getWidth() * FOCUS_ICON_SCALE),
                     (int) (focused.getHeight() * FOCUS_ICON_SCALE), true);
@@ -175,13 +177,12 @@ public final class MapLibreStopIcons {
     }
 
     @SuppressWarnings("deprecation")
-    private static Bitmap createBusStopIcon(String direction, boolean selected) {
+    private static Bitmap createBusStopIcon(Context context, String direction, boolean selected) {
         if (direction == null) {
             throw new IllegalArgumentException("direction is null");
         }
 
-        Resources r = Application.get().getResources();
-        Context context = Application.get();
+        Resources r = context.getResources();
 
         Float directionAngle = null;
         Bitmap bm;

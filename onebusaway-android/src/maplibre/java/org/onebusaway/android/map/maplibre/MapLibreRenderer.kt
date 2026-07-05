@@ -232,10 +232,10 @@ class MapLibreRenderer(
     }
 
     private fun stopIcon(stop: StopMarker, kind: StopIconKind): Icon = when (kind) {
-        StopIconKind.FULL -> MapLibreStopIcons.iconForDirection(stop.direction)
-        StopIconKind.FULL_FOCUSED -> MapLibreStopIcons.focusedIconForDirection(stop.direction)
-        StopIconKind.DOT -> MapLibreStopIcons.dotIcon()
-        StopIconKind.DOT_FOCUSED -> MapLibreStopIcons.focusedDotIcon()
+        StopIconKind.FULL -> MapLibreStopIcons.iconForDirection(context, stop.direction)
+        StopIconKind.FULL_FOCUSED -> MapLibreStopIcons.focusedIconForDirection(context, stop.direction)
+        StopIconKind.DOT -> MapLibreStopIcons.dotIcon(context)
+        StopIconKind.DOT_FOCUSED -> MapLibreStopIcons.focusedDotIcon(context)
     }
 
     /**

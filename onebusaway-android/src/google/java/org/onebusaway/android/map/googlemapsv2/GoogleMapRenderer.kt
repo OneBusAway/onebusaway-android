@@ -280,10 +280,10 @@ class GoogleMapRenderer(
     }
 
     private fun stopIcon(stop: StopMarker, kind: StopIconKind): BitmapDescriptor = when (kind) {
-        StopIconKind.FULL -> StopIconFactory.stopIcon(stop.direction, stop.routeType)
-        StopIconKind.FULL_FOCUSED -> StopIconFactory.focusedStopIcon(stop.direction, stop.routeType)
-        StopIconKind.DOT -> StopIconFactory.dotStopIcon()
-        StopIconKind.DOT_FOCUSED -> StopIconFactory.focusedDotStopIcon()
+        StopIconKind.FULL -> StopIconFactory.stopIcon(context, stop.direction, stop.routeType)
+        StopIconKind.FULL_FOCUSED -> StopIconFactory.focusedStopIcon(context, stop.direction, stop.routeType)
+        StopIconKind.DOT -> StopIconFactory.dotStopIcon(context)
+        StopIconKind.DOT_FOCUSED -> StopIconFactory.focusedDotStopIcon(context)
     }
 
     private fun stopAnchor(stop: StopMarker, kind: StopIconKind): Pair<Float, Float> =

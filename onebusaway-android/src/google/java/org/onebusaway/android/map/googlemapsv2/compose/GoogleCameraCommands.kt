@@ -23,7 +23,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import org.onebusaway.android.R
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.FramingIntent
@@ -135,7 +135,7 @@ fun applyFramingIntent(
         }
 
         FramingIntent.Region -> {
-            val region = Application.get().currentRegion ?: return
+            val region = RegionEntryPoint.get(context).currentRegion() ?: return
             val bounds = MapHelpV2.getRegionBounds(region)
             // Use screen dimensions to avoid IllegalStateException (#581).
             val dm = context.resources.displayMetrics

@@ -24,8 +24,7 @@ import org.onebusaway.android.region.Region
  * The observable region state ([region] + [state]) that [DefaultRegionRepository] exposes. Extracted
  * so the state transitions stay JVM-unit-testable without a `Context` — the
  * repository's resolution is `Context`-coupled (it calls `RegionUtils.getRegions` etc.), but the
- * holder is pure. Both the repository's `refresh`/`choose` and the legacy `Application.setCurrentRegion`
- * bridge feed it.
+ * holder is pure. The repository's `refresh`/`choose`/`applyRegion` writers feed it.
  *
  * [region] holds the last-set region (null when a custom API URL is configured); [state] adds the
  * transient [RegionState.Resolving] / [RegionState.NeedsManualChoice] / [RegionState.Failed] nuance.

@@ -23,8 +23,8 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
 import org.onebusaway.android.app.di.PreferencesEntryPoint;
+import org.onebusaway.android.app.di.RegionEntryPoint;
 import org.onebusaway.android.api.contract.ArrivalsForStop;
 import org.onebusaway.android.api.contract.EntryWithReferences;
 import org.onebusaway.android.api.contract.ObaEnvelope;
@@ -229,7 +229,7 @@ public class UIUtilTest extends ObaTestCase {
         // Load a captured arrivals fixture and project it via the production DTO path
         Region tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
-        Application.get().setCurrentRegion(tampa);
+        RegionEntryPoint.get(getTargetContext()).applyRegion(tampa, true);
 
         ObaEnvelope<EntryWithReferences<ArrivalsForStop>> env =
                 ArrivalsFixtures.load(getTargetContext(), "arrivals_and_departures_for_stop_hart_6497");
@@ -275,7 +275,7 @@ public class UIUtilTest extends ObaTestCase {
         // Load a captured arrivals fixture and project it via the production DTO path
         Region tampa = MockRegion.getTampa(getTargetContext());
         assertNotNull(tampa);
-        Application.get().setCurrentRegion(tampa);
+        RegionEntryPoint.get(getTargetContext()).applyRegion(tampa, true);
 
         ObaEnvelope<EntryWithReferences<ArrivalsForStop>> env =
                 ArrivalsFixtures.load(getTargetContext(), "arrivals_and_departures_for_stop_hart_6497");

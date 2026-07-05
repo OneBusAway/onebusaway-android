@@ -30,7 +30,6 @@ import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.notifications.NotificationChannels
-import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionSubsystems
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.CustomApiUrlLabel
@@ -65,7 +64,8 @@ class Application : android.app.Application() {
         // @Singletons, constructed lazily on first injection after onCreate. The region repo seeds
         // itself from persistence (the saved region-id → ContentProvider lookup); the location repo
         // starts empty and fills from setLastKnownLocation (listener updates) / its lazy provider poll.
-        // The legacy setCurrentRegion / setLastKnownLocation writers reach them via their EntryPoints.
+        // The legacy setLastKnownLocation writer reaches the location repo via its EntryPoint; region
+        // reads/writes now go straight through RegionRepository (via injection or RegionEntryPoint).
         // So nothing to construct here.
         // The region-derived Open311 endpoints observe the region flow (A7) via RegionSubsystems — this
         // performs their initial init (the StateFlow replays the repo's seeded region) and re-inits on
@@ -92,28 +92,6 @@ class Application : android.app.Application() {
         mApp = null
     }
 
-    /**
-     * The current region. RegionRepository is the sole owner; this reads its current value and stays as
-     * a convenience for the remaining non-injectable readers that go through Application (Java tests via
-     * `getCurrentRegion()`; the flavor camera-command composables via `currentRegion`).
-     */
-    val currentRegion: Region?
-        @Synchronized get() = RegionEntryPoint.get(this).currentRegion()
-
-    /**
-     * Sets the current region directly. The production region writers all route
-     * through [org.onebusaway.android.region.RegionRepository] (`refresh`/`choose`/`clear`); this
-     * remains only as the instrumented-test seam (the `io/` request tests that pin a known region
-     * synchronously). It delegates the canonical region write to `RegionRepository.applyRegion`; the
-     * region-derived subsystems (Open311 via RegionSubsystems, the Plausible/Umami emitters via
-     * AnalyticsProvider) re-init reactively by observing the published flow.
-     */
-    @Synchronized
-    @JvmOverloads
-    fun setCurrentRegion(region: Region?, regionChanged: Boolean = true) {
-        RegionEntryPoint.get(this).applyRegion(region, regionChanged)
-    }
-
     private fun reportAnalytics() {
         // The Plausible/Umami emitters are owned + built reactively by AnalyticsProvider; here we only set
         // the initial Firebase/Umami region label via setRegion (which resolves the Umami emitter through
@@ -123,7 +101,7 @@ class Application : android.app.Application() {
         val label = if (customApiUrl != null) {
             CustomApiUrlLabel.forUrl(this, customApiUrl)
         } else {
-            currentRegion?.name
+            RegionEntryPoint.get(this).currentRegion()?.name
         }
         label?.let { AnalyticsEntryPoint.get(this).setRegion(it) }
     }

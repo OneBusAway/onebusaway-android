@@ -27,7 +27,11 @@ import org.onebusaway.android.util.PreferenceUtils
 import org.opentripplanner.api.model.Itinerary
 import org.opentripplanner.routing.core.TraverseMode
 import java.time.Instant
-import java.util.Calendar
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.util.Date
 import java.util.TimeZone
 
 /**
@@ -39,6 +43,13 @@ object ConversionUtils {
     private const val TAG = "ConversionUtils"
 
     private const val FEET_PER_METER = 3.281
+
+    /**
+     * OTP agency time-zone offsets are expressed relative to GMT, and trip times are rendered as
+     * agency wall-clock time by shifting the instant by that offset and reading it in GMT. GMT is a
+     * zero-offset zone, so [ZoneOffset.UTC] is equivalent for the day/hour/minute/second fields.
+     */
+    private val GMT: ZoneId = ZoneOffset.UTC
 
     /**
      * Given a date string from an OTP server, parse it into an [Instant].
@@ -239,17 +250,16 @@ object ConversionUtils {
         inLine: Boolean,
         color: Int = -1,
     ): CharSequence {
-        // NOTE: this locale-aware, GMT-anchored formatter is intentionally still Calendar-based.
-        // It pairs android.text.format.DateFormat (which requires java.util.Date/Calendar) with
-        // GMT wall-clock rounding and same-day comparisons; rewriting it on java.time risks a
-        // subtle formatting regression and is deferred until it can be device-verified.
-        val cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"))
+        // Date/time math is java.time (see agencyWallClock / isToday / isTomorrow). The actual
+        // string is still produced by android.text.format.DateFormat because it honors the user's
+        // 12-/24-hour device setting in addition to the locale; DateTimeFormatter honors only the
+        // locale, so swapping it would silently change the clock format for users who override the
+        // device toggle. DateFormat needs a java.util.Date, so the java.time instant is converted
+        // for that single call.
         val timeFormat = android.text.format.DateFormat.getTimeFormat(applicationContext)
         val dateFormat = android.text.format.DateFormat.getDateFormat(applicationContext)
         timeFormat.timeZone = TimeZone.getTimeZone("GMT")
         dateFormat.timeZone = TimeZone.getTimeZone("GMT")
-
-        cal.timeInMillis = time
 
         var noDeviceTimezoneNote = ""
         if (offsetGMT != TimeZone.getDefault().getOffset(time)) {
@@ -259,26 +269,25 @@ object ConversionUtils {
             }
         }
 
-        cal.add(Calendar.MILLISECOND, offsetGMT)
+        val agencyTime = agencyWallClock(time, offsetGMT)
+        val displayDate = Date.from(agencyTime.toInstant())
+        val agencyDay = agencyTime.toLocalDate()
+        val today = LocalDate.now(ZoneId.systemDefault())
 
-        if (cal.get(Calendar.SECOND) >= 30) {
-            cal.add(Calendar.MINUTE, 1)
-        }
-
-        val spannableTime = SpannableString(timeFormat.format(cal.time))
+        val spannableTime = SpannableString(timeFormat.format(displayDate))
         if (color != -1) {
             spannableTime.setSpan(ForegroundColorSpan(color), 0, spannableTime.length, 0)
         }
 
         return if (inLine) {
             when {
-                isToday(cal) -> TextUtils.concat(
+                isToday(agencyDay, today) -> TextUtils.concat(
                     " ",
                     applicationContext.resources.getString(R.string.time_connector_before_time),
                     " ", spannableTime, " ", noDeviceTimezoneNote
                 )
 
-                isTomorrow(cal) -> TextUtils.concat(
+                isTomorrow(agencyDay, today) -> TextUtils.concat(
                     " ",
                     applicationContext.resources.getString(R.string.time_connector_next_day), " ",
                     applicationContext.resources.getString(R.string.time_connector_before_time),
@@ -288,23 +297,23 @@ object ConversionUtils {
                 else -> TextUtils.concat(
                     " ",
                     applicationContext.resources.getString(R.string.time_connector_before_date), " ",
-                    dateFormat.format(cal.time), " ",
+                    dateFormat.format(displayDate), " ",
                     applicationContext.resources.getString(R.string.time_connector_before_time),
                     " ", spannableTime, " ", noDeviceTimezoneNote
                 )
             }
         } else {
             when {
-                isToday(cal) -> TextUtils.concat(spannableTime, " ", noDeviceTimezoneNote)
+                isToday(agencyDay, today) -> TextUtils.concat(spannableTime, " ", noDeviceTimezoneNote)
 
-                isTomorrow(cal) -> TextUtils.concat(
+                isTomorrow(agencyDay, today) -> TextUtils.concat(
                     " ", spannableTime, ", ",
                     applicationContext.resources.getString(R.string.time_connector_next_day), " ",
                     noDeviceTimezoneNote
                 )
 
                 else -> TextUtils.concat(
-                    spannableTime, ", ", dateFormat.format(cal.time), " ", noDeviceTimezoneNote
+                    spannableTime, ", ", dateFormat.format(displayDate), " ", noDeviceTimezoneNote
                 )
             }
         }
@@ -317,22 +326,12 @@ object ConversionUtils {
         oldTime: Long,
         newTime: Long,
     ): CharSequence {
-        // NOTE: intentionally still Calendar-based; see the note on getTimeWithContext above.
-        val calOldTime = Calendar.getInstance(TimeZone.getTimeZone("GMT"))
-        val calNewTime = Calendar.getInstance(TimeZone.getTimeZone("GMT"))
+        // See getTimeWithContext: java.time for the date math, android.text.format.DateFormat (fed a
+        // converted java.util.Date) for the localized, device-12/24h-aware string.
         val timeFormat = android.text.format.DateFormat.getTimeFormat(applicationContext)
         val dateFormat = android.text.format.DateFormat.getDateFormat(applicationContext)
         timeFormat.timeZone = TimeZone.getTimeZone("GMT")
         dateFormat.timeZone = TimeZone.getTimeZone("GMT")
-        var beforeDateString: CharSequence = ""
-        val beforeTimeString: CharSequence
-        var newDateString: CharSequence = ""
-        val timezone: CharSequence
-        val oldDateString: SpannableString
-        val newTimeString: SpannableString
-        val oldTimeString: SpannableString
-        calOldTime.timeInMillis = oldTime
-        calNewTime.timeInMillis = newTime
 
         var noDeviceTimezoneNote = ""
         if (offsetGMT != TimeZone.getDefault().getOffset(oldTime)) {
@@ -342,68 +341,75 @@ object ConversionUtils {
             }
         }
 
-        calOldTime.add(Calendar.MILLISECOND, offsetGMT)
-        calNewTime.add(Calendar.MILLISECOND, offsetGMT)
+        val oldAgency = agencyWallClock(oldTime, offsetGMT, round = false)
+        val newAgency = agencyWallClock(newTime, offsetGMT, round = false)
+        val oldDisplay = Date.from(oldAgency.toInstant())
+        val newDisplay = Date.from(newAgency.toInstant())
+        val today = LocalDate.now(ZoneId.systemDefault())
 
-        if (isTomorrow(calNewTime)) {
+        var beforeDateString: CharSequence = ""
+        var newDateString: CharSequence = ""
+
+        val oldDateString: SpannableString
+        if (isTomorrow(newAgency.toLocalDate(), today)) {
             oldDateString = SpannableString(
                 applicationContext.resources.getString(R.string.time_connector_next_day) + " "
             )
         } else {
             beforeDateString =
                 applicationContext.resources.getString(R.string.time_connector_before_date) + " "
-            oldDateString = SpannableString(dateFormat.format(calNewTime.time) + " ")
+            oldDateString = SpannableString(dateFormat.format(newDisplay) + " ")
         }
 
-        if (calNewTime.get(Calendar.DAY_OF_MONTH) != calOldTime.get(Calendar.DAY_OF_MONTH)) {
+        if (newAgency.dayOfMonth != oldAgency.dayOfMonth) {
             beforeDateString =
                 applicationContext.resources.getString(R.string.time_connector_before_date) + " "
-            newDateString = dateFormat.format(calNewTime.time) + " "
+            newDateString = dateFormat.format(newDisplay) + " "
             oldDateString.setSpan(StrikethroughSpan(), 0, oldDateString.length - 1, 0)
         }
 
-        beforeTimeString =
+        val beforeTimeString: CharSequence =
             applicationContext.resources.getString(R.string.time_connector_before_time) + " "
-        timezone = noDeviceTimezoneNote
+        val timezone: CharSequence = noDeviceTimezoneNote
 
         val color = applicationContext.resources.getColor(
-            ArrivalInfoUtils.computeColorFromDeviation(
-                calNewTime.timeInMillis - calOldTime.timeInMillis
-            )
+            ArrivalInfoUtils.computeColorFromDeviation(newTime - oldTime)
         )
 
-        newTimeString = SpannableString(timeFormat.format(calNewTime.time) + " ")
+        val newTimeString = SpannableString(timeFormat.format(newDisplay) + " ")
         newTimeString.setSpan(ForegroundColorSpan(color), 0, newTimeString.length, 0)
-        if (calOldTime.get(Calendar.HOUR_OF_DAY) != calNewTime.get(Calendar.HOUR_OF_DAY) ||
-            calOldTime.get(Calendar.MINUTE) != calNewTime.get(Calendar.MINUTE)
-        ) {
-            oldTimeString = SpannableString(timeFormat.format(calOldTime.time) + " ")
-            oldTimeString.setSpan(StrikethroughSpan(), 0, oldTimeString.length - 1, 0)
-        } else {
-            oldTimeString = SpannableString(" ")
-        }
+
+        val oldTimeString: SpannableString =
+            if (oldAgency.hour != newAgency.hour || oldAgency.minute != newAgency.minute) {
+                SpannableString(timeFormat.format(oldDisplay) + " ").apply {
+                    setSpan(StrikethroughSpan(), 0, length - 1, 0)
+                }
+            } else {
+                SpannableString(" ")
+            }
+
         return TextUtils.concat(
             beforeDateString, newDateString, oldDateString,
             beforeTimeString, oldTimeString, newTimeString, timezone
         )
     }
 
-    @JvmStatic
-    fun isToday(cal: Calendar): Boolean {
-        val actualTime = Calendar.getInstance()
-        return actualTime.get(Calendar.ERA) == cal.get(Calendar.ERA) &&
-            actualTime.get(Calendar.YEAR) == cal.get(Calendar.YEAR) &&
-            actualTime.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR)
+    /**
+     * Shift an epoch-millis instant by the agency's GMT offset so it reads as agency wall-clock time
+     * when rendered in [GMT], optionally rounding to the nearest minute (>= 30s rounds up). This
+     * reproduces the legacy Calendar path: `add(MILLISECOND, offsetGMT)` followed by
+     * `add(MINUTE, 1)` when `get(SECOND) >= 30`.
+     */
+    internal fun agencyWallClock(time: Long, offsetGMT: Int, round: Boolean = true): ZonedDateTime {
+        val shifted = Instant.ofEpochMilli(time).plusMillis(offsetGMT.toLong()).atZone(GMT)
+        return if (round && shifted.second >= 30) shifted.plusMinutes(1) else shifted
     }
 
-    @JvmStatic
-    fun isTomorrow(cal: Calendar): Boolean {
-        val tomorrowTime = Calendar.getInstance()
-        tomorrowTime.add(Calendar.DAY_OF_YEAR, 1)
-        return tomorrowTime.get(Calendar.ERA) == cal.get(Calendar.ERA) &&
-            tomorrowTime.get(Calendar.YEAR) == cal.get(Calendar.YEAR) &&
-            tomorrowTime.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR)
-    }
+    /** True when [date] is the same calendar day as [today] (both device-local dates). */
+    internal fun isToday(date: LocalDate, today: LocalDate): Boolean = date == today
+
+    /** True when [date] is the calendar day after [today] (both device-local dates). */
+    internal fun isTomorrow(date: LocalDate, today: LocalDate): Boolean = date == today.plusDays(1)
 
     /**
      * Shows only the last n words of a sentence, being n the number of words to make the longer

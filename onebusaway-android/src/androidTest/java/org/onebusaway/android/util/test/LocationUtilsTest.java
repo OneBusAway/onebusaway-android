@@ -21,7 +21,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.LocationEntryPoint;
 import org.onebusaway.android.api.test.ObaTestCase;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PermissionUtils;
@@ -176,7 +176,7 @@ public class LocationUtilsTest extends ObaTestCase {
              * (e.g., HTC EVO LTE) have custom framework providers such as "hybrid" that might
              * show up here. So, we can't test for a specific provider.
              */
-            loc = Application.getLastKnownLocation(getTargetContext());
+            loc = LocationEntryPoint.get(getTargetContext()).lastKnownLocation();
             /**
              * On devices that behave correctly the following non-null test should pass.  However, it's
              * possible that it can fail on some devices (e.g., on a fresh reboot on a device without
@@ -201,7 +201,7 @@ public class LocationUtilsTest extends ObaTestCase {
             /**
              * Could return either a fused or Location API v1 location
              */
-            loc = Application.getLastKnownLocation(getTargetContext());
+            loc = LocationEntryPoint.get(getTargetContext()).lastKnownLocation();
             assertNotNull(loc);
             Log.d(TAG,
                     "Location Provider for Location Services test is '" + loc.getProvider() + "'");

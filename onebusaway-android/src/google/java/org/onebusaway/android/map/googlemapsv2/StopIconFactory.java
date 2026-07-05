@@ -40,7 +40,6 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
 import org.onebusaway.android.map.render.StopBitmaps;
 import org.onebusaway.android.models.ObaRoute;
 
@@ -163,23 +162,27 @@ public final class StopIconFactory {
                 new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN));
     }
 
-    /** Builds the icon caches on first use (the old constructor called loadIcons() each time). */
-    public static synchronized void ensureLoaded() {
+    /**
+     * Builds the icon caches on first use (the old constructor called loadIcons() each time). The
+     * [context] is used only to read app resources while rendering the bitmaps; only the first call
+     * (which populates the caches) touches it.
+     */
+    public static synchronized void ensureLoaded(Context context) {
         if (!sLoaded) {
-            loadIcons();
+            loadIcons(context);
             sLoaded = true;
         }
     }
 
     /** The normal (unfocused) stop icon for a direction + primary route type. */
-    public static synchronized BitmapDescriptor stopIcon(String direction, int routeType) {
-        ensureLoaded();
+    public static synchronized BitmapDescriptor stopIcon(Context context, String direction, int routeType) {
+        ensureLoaded(context);
         return getStopBitmapDescriptor(direction, routeType);
     }
 
     /** The focused (1.5x) stop icon for a direction + primary route type. */
-    public static synchronized BitmapDescriptor focusedStopIcon(String direction, int routeType) {
-        ensureLoaded();
+    public static synchronized BitmapDescriptor focusedStopIcon(Context context, String direction, int routeType) {
+        ensureLoaded(context);
         return getFocusedStopBitmapDescriptor(direction, routeType);
     }
 
@@ -187,14 +190,14 @@ public final class StopIconFactory {
      * The small dot shown in place of the full icon at distant zoom. Directionless and route-type
      * agnostic (a neutral themed point), so the caller anchors it at the marker center (0.5, 0.5).
      */
-    public static synchronized BitmapDescriptor dotStopIcon() {
-        ensureLoaded();
+    public static synchronized BitmapDescriptor dotStopIcon(Context context) {
+        ensureLoaded(context);
         return sDotDescriptor;
     }
 
     /** The focused (accent) dot, shown for the selected stop at distant zoom. */
-    public static synchronized BitmapDescriptor focusedDotStopIcon() {
-        ensureLoaded();
+    public static synchronized BitmapDescriptor focusedDotStopIcon(Context context) {
+        ensureLoaded(context);
         return sDotDescriptorFocused;
     }
 
@@ -211,9 +214,9 @@ public final class StopIconFactory {
     /**
      * Cache the BitmapDescriptors that hold the images used for icons
      */
-    private static final void loadIcons() {
+    private static final void loadIcons(Context context) {
         // Initialize variables used for all marker icons
-        Resources r = Application.get().getResources();
+        Resources r = context.getResources();
         mPx = r.getDimensionPixelSize(R.dimen.map_stop_shadow_size_6);
         float arrowHeightPx = mPx / 3f;
         float arrowSpacingReductionPx = mPx / 10f;
@@ -241,8 +244,8 @@ public final class StopIconFactory {
             Bitmap[] icons = new Bitmap[NUM_DIRECTIONS];
             Bitmap[] iconsFocused = new Bitmap[NUM_DIRECTIONS];
             for (int i = 0; i < directions.length; i++) {
-                icons[i] = createStopIcon(directions[i], false, routeType);
-                iconsFocused[i] = createStopIcon(directions[i], true, routeType);
+                icons[i] = createStopIcon(context, directions[i], false, routeType);
+                iconsFocused[i] = createStopIcon(context, directions[i], true, routeType);
             }
             // Scale the focused icons to be larger than the normal icons
             for (int i = 0; i < NUM_DIRECTIONS; i++) {
@@ -281,13 +284,12 @@ public final class StopIconFactory {
      * @return a stop icon bitmap with the arrow pointing the given direction, or with no arrow
      * if direction is NO_DIRECTION
      */
-    private static Bitmap createStopIcon(String direction, boolean selected, int routeType) {
+    private static Bitmap createStopIcon(Context context, String direction, boolean selected, int routeType) {
         if (direction == null) {
             throw new IllegalArgumentException("direction must not be null");
         }
 
-        Resources r = Application.get().getResources();
-        Context context = Application.get();
+        Resources r = context.getResources();
 
         // All stops get a slightly larger circle so the vehicle glyph is clearly visible
         int px = (int) (mPx * GLYPH_ICON_SCALE);

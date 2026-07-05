@@ -20,7 +20,6 @@ import android.os.Bundle
 import androidx.annotation.WorkerThread
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
-import java.net.HttpURLConnection
 import java.util.Calendar
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -99,7 +98,7 @@ class DefaultTripPlanRepository @Inject constructor(
         val response = requestPlan(
             request,
             baseUrl,
-            prefs.getBoolean(R.string.preference_key_otp_api_url_version, false),
+            oldServer = prefs.getBoolean(R.string.preference_key_otp_api_url_version, false),
         )
         val itineraries = response.plan?.itinerary
         if (itineraries.isNullOrEmpty()) {
@@ -109,14 +108,31 @@ class DefaultTripPlanRepository @Inject constructor(
     }
 
     /**
-     * Ports TripRequest.requestPlan: build the URL, fetch + parse, fall back to the old structure.
-     * Returns the response paired with the final request URL (for travel-behavior logging).
+     * Builds the OTP `/plan` URL, fetches, and parses. The endpoint OTP exposes is
+     * `{server}/routers/{routerId}/plan`, but a region's otpBaseUrl is published rooted either at the
+     * server or already at the router — and which one it is is readable from the URL, so we hit the
+     * right endpoint on the first try instead of probing:
+     *  - a base already rooted at a router (contains `/routers/`, e.g. Puget Sound's
+     *    `…/otp/routers/default`) only needs `/plan` appended. Re-adding the segment doubled the path
+     *    (`…/routers/default/routers/default/plan`), which the server answers with a 500 — that was
+     *    why trip planning always failed for those regions.
+     *  - a server-root base (`…/otp`) needs the `/routers/default` segment inserted first.
+     *
+     * The single distinction the URL can't make is a modern server-root vs a pre-1.0 OTP server that
+     * never had `/routers/…` at all — both look like `…/otp`. For that case only, [oldServer] retries
+     * the bare `/plan` path once and records the answer (the `otp_api_url_version` flag, shared with
+     * the bike layer and reset on region change) so later plans skip the probe.
      */
     private fun requestPlan(
         request: Request,
         baseUrl: String,
-        useOldUrlStructure: Boolean
+        oldServer: Boolean
     ): Response {
+        val routerRooted = baseUrl.contains(OTP_ROUTERS_SEGMENT)
+        // A router-rooted base is unambiguously a modern server, so it can never be the pre-1.0 kind
+        // the `oldServer` fallback exists for; force it modern even if a stale flag says otherwise.
+        val ancientServer = oldServer && !routerRooted
+
         val query = buildString {
             var first = true
             for (entry in request.parameters.entries) {
@@ -125,27 +141,17 @@ class DefaultTripPlanRepository @Inject constructor(
             }
         }.let { params ->
             if (request.bikeRental) {
-                if (useOldUrlStructure) {
-                    params.replace(
-                        TraverseMode.BICYCLE.toString(),
-                        TraverseMode.BICYCLE.toString() + ", " + TraverseMode.WALK.toString()
-                    )
-                } else {
-                    params.replace(
-                        TraverseMode.BICYCLE.toString(),
-                        TraverseMode.BICYCLE.toString() + OTP_RENTAL_QUALIFIER
-                    )
-                }
+                // Pre-1.0 servers spell bike rental as "BICYCLE, WALK"; modern ones as "BICYCLE_RENT".
+                val bicycle = TraverseMode.BICYCLE.toString()
+                val rental = if (ancientServer) "$bicycle, ${TraverseMode.WALK}"
+                             else bicycle + OTP_RENTAL_QUALIFIER
+                params.replace(bicycle, rental)
             } else {
                 params
             }
         }
 
-        val url = if (useOldUrlStructure) {
-            baseUrl + PLAN_LOCATION + query
-        } else {
-            baseUrl + PREFIX_NEW + PLAN_LOCATION + query
-        }
+        val url = otpPlanUrl(baseUrl, query, oldServer)
 
         val response = try {
             otpWebService.plan(url).execute()
@@ -155,11 +161,13 @@ class DefaultTripPlanRepository @Inject constructor(
             throw IOException(errorMessage(Message.REQUEST_TIMEOUT.id), e)
         }
 
-        // A 404 on the new /routers/default structure means an older OTP server; retry the old /plan
-        // structure once (Retrofit has already buffered + closed the error body). On success below the
-        // preference is flipped so subsequent plans skip straight to the old structure.
-        if (response.code() == HttpURLConnection.HTTP_NOT_FOUND && !useOldUrlStructure) {
-            return requestPlan(request, baseUrl, useOldUrlStructure = true)
+        // A server-root base we assumed was modern but that failed at the HTTP layer is a pre-1.0
+        // server: retry the bare `/plan` path once. OTP returns *planner* errors (no path, out of
+        // bounds, …) as HTTP 200 with an `error` body, so a non-2xx here is always structural, never a
+        // routing failure. Router-rooted bases already hit the exact endpoint, so there's nothing to
+        // try. Retrofit has already buffered + closed the error body.
+        if (!response.isSuccessful && !routerRooted && !oldServer) {
+            return requestPlan(request, baseUrl, oldServer = true)
         }
 
         val parsed: Response = try {
@@ -172,7 +180,8 @@ class DefaultTripPlanRepository @Inject constructor(
             throw IOException(errorMessage(Message.REQUEST_TIMEOUT.id), e)
         }
 
-        if (useOldUrlStructure) {
+        // Record a discovered pre-1.0 server so later plans (and the bike layer) skip the probe.
+        if (ancientServer) {
             prefs.setBoolean(R.string.preference_key_otp_api_url_version, true)
         }
         return parsed
@@ -225,9 +234,25 @@ class DefaultTripPlanRepository @Inject constructor(
         else -> context.getString(R.string.tripplanner_error_not_defined)
     }
 
-    private companion object {
-        const val PREFIX_NEW = "/routers/default"
-        const val PLAN_LOCATION = "/plan"
-        const val OTP_RENTAL_QUALIFIER = "_RENT"
-    }
 }
+
+/** OTP's default-router path segment: present in a router-rooted base, inserted for a server-root one. */
+private const val OTP_ROUTERS_SEGMENT = "/routers/default"
+private const val OTP_PLAN_LOCATION = "/plan"
+private const val OTP_RENTAL_QUALIFIER = "_RENT"
+
+/**
+ * The OTP `/plan` URL for [baseUrl] with an already-built [query] (a leading-`?` query string).
+ *
+ * OTP's endpoint is `{server}/routers/{routerId}/plan`, but a region's otpBaseUrl is published rooted
+ * either at the server or already at the router, and that's readable from the URL — so we build the
+ * right endpoint directly instead of prepending `/routers/default` blindly (which doubled the path and
+ * 500'd for router-rooted regions like Puget Sound). A server-root base gets the segment inserted; a
+ * router-rooted base (or a [oldServer] pre-1.0 server established by the fallback) gets `/plan` alone.
+ */
+internal fun otpPlanUrl(baseUrl: String, query: String, oldServer: Boolean): String =
+    if (baseUrl.contains(OTP_ROUTERS_SEGMENT) || oldServer) {
+        "$baseUrl$OTP_PLAN_LOCATION$query"
+    } else {
+        "$baseUrl$OTP_ROUTERS_SEGMENT$OTP_PLAN_LOCATION$query"
+    }

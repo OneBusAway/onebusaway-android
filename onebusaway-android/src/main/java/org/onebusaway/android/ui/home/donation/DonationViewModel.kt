@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.home.donation
 
-import android.content.Intent
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -37,7 +36,9 @@ data class DonationUiState(
 /** One-shot donation navigation the activity carries out (it owns startActivity + the intents). */
 sealed interface DonationEffect {
     object OpenLearnMore : DonationEffect
-    object OpenDonatePage : DonationEffect
+
+    /** Open the donations page at [url]. The host builds/starts the intent (mirrors [SurveyEffect]). */
+    data class OpenDonatePage(val url: String) : DonationEffect
 }
 
 /**
@@ -70,14 +71,12 @@ class DonationViewModel @Inject constructor(
         _effects.tryEmit(DonationEffect.OpenLearnMore)
     }
 
-    /** Donate now: stop asking (the legacy order), then open the donations page. */
+    /** Donate now: stop asking (the legacy order), report the tap, then open the donations page. */
     fun donate() {
         manager.dismissDonationRequests()
-        _effects.tryEmit(DonationEffect.OpenDonatePage)
+        manager.reportDonateButtonPress()
+        _effects.tryEmit(DonationEffect.OpenDonatePage(manager.donateUrl()))
     }
-
-    /** The donations-page intent for the [DonationEffect.OpenDonatePage] handler to start. */
-    fun buildDonationsPageIntent(): Intent = manager.buildOpenDonationsPageIntent()
 
     /** "I don't want to help" — stop asking, hide the dialog, and re-gate the card. */
     fun dismissForever() {

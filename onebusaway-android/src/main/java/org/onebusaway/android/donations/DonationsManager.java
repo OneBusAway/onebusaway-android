@@ -157,10 +157,24 @@ public class DonationsManager {
 
     // region UI/Activities
 
-    public Intent buildOpenDonationsPageIntent() {
+    /** Fires the "donate button pressed" analytics event (Firebase + Plausible). */
+    public void reportDonateButtonPress() {
         reportUIEvent(R.string.analytics_label_button_press_donate, null);
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(mContext.getResources().getString(R.string.donate_url)));
-        return intent;
+    }
+
+    /** The donations-page URL — the single source both the intent builder and the host (Compose) read. */
+    public String donateUrl() {
+        return mContext.getResources().getString(R.string.donate_url);
+    }
+
+    /**
+     * Reports the donate-button event and builds the donations-page intent, for callers without a
+     * ViewModel (the settings / learn-more nav destinations). ViewModel-backed UI reports via
+     * {@link #reportDonateButtonPress()} and lets its host build the intent from {@link #donateUrl()}.
+     */
+    public Intent buildOpenDonationsPageIntent() {
+        reportDonateButtonPress();
+        return new Intent(Intent.ACTION_VIEW, Uri.parse(donateUrl()));
     }
 
     // endregion

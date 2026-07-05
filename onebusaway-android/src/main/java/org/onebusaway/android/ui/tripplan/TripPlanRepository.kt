@@ -20,7 +20,7 @@ import android.os.Bundle
 import androidx.annotation.WorkerThread
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
-import java.util.Calendar
+import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -78,8 +78,8 @@ class DefaultTripPlanRepository @Inject constructor(
         TripRequestBuilder(context, Bundle()).apply {
             setFrom(params.from.toCustomAddress())
             setTo(params.to.toCustomAddress())
-            val calendar = Calendar.getInstance().apply { timeInMillis = params.dateTimeMillis }
-            if (params.arriving) setArrivalTime(calendar) else setDepartureTime(calendar)
+            val instant = Instant.ofEpochMilli(params.dateTimeMillis)
+            if (params.arriving) setArrivalTime(instant) else setDepartureTime(instant)
             setModeSetById(params.modeId)
             setWheelchairAccessible(params.wheelchair)
             setOptimizeTransfers(params.optimizeTransfers)

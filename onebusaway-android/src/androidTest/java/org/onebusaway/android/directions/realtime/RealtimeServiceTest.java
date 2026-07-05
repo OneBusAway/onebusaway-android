@@ -29,8 +29,8 @@ import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.Leg;
 
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -81,7 +81,7 @@ public class RealtimeServiceTest {
         Bundle bundle = new Bundle();
         // Set start time to 2 hours in the future (Query window is 1 hour)
         long futureTime = System.currentTimeMillis() + (OTPConstants.REALTIME_SERVICE_QUERY_WINDOW * 2);
-        new TripRequestBuilder(InstrumentationRegistry.getTargetContext(), bundle).setDateTime(new Date(futureTime));
+        new TripRequestBuilder(InstrumentationRegistry.getTargetContext(), bundle).setDateTime(Instant.ofEpochMilli(futureTime));
 
         boolean result = mService.rescheduleRealtimeUpdates(bundle);
         assertTrue("Realtime updates should be rescheduled for future trips", result);
@@ -92,7 +92,7 @@ public class RealtimeServiceTest {
         Bundle bundle = new Bundle();
         // Set start time to 30 minutes in the future (within 1 hour window)
         long nearTime = System.currentTimeMillis() + (OTPConstants.REALTIME_SERVICE_QUERY_WINDOW / 2);
-        new TripRequestBuilder(InstrumentationRegistry.getTargetContext(), bundle).setDateTime(new Date(nearTime));
+        new TripRequestBuilder(InstrumentationRegistry.getTargetContext(), bundle).setDateTime(Instant.ofEpochMilli(nearTime));
 
         boolean result = mService.rescheduleRealtimeUpdates(bundle);
         assertFalse("Realtime updates should not be rescheduled if trip starts soon", result);
@@ -172,7 +172,7 @@ public class RealtimeServiceTest {
         CustomAddress to = new CustomAddress();
         to.setLatitude(0);
         to.setLongitude(0);
-        new TripRequestBuilder(InstrumentationRegistry.getTargetContext(), bundle).setFrom(from).setTo(to).setDateTime(new Date());
+        new TripRequestBuilder(InstrumentationRegistry.getTargetContext(), bundle).setFrom(from).setTo(to).setDateTime(Instant.now());
 
         // Build a valid itinerary with one transit leg so ItineraryDescription succeeds
         // and we actually reach the NOTIFICATION_TARGET check (not the catch block).

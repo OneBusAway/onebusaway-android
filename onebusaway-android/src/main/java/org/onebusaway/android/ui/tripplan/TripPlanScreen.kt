@@ -625,7 +625,7 @@ private fun maybeRestoreFromIntent(
     viewModel.restoreFrom(
         from = builder.from?.toGeocoded(),
         to = builder.to?.toGeocoded(),
-        dateTimeMillis = builder.dateTime?.time ?: System.currentTimeMillis(),
+        dateTimeMillis = builder.dateTime?.toEpochMilli() ?: System.currentTimeMillis(),
         arriving = builder.arriveBy,
         itineraries = itineraries
     )

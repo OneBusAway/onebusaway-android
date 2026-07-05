@@ -222,7 +222,7 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                 renderState.cameraGestures.collect { command -> applyCameraCommand(command, map) }
             }
             LaunchedEffect(map) {
-                renderState.framingIntent.filterNotNull().collect { applyFramingIntent(it, map, renderState) }
+                renderState.framingIntent.filterNotNull().collect { applyFramingIntent(it, map, renderState, context) }
             }
         }
 

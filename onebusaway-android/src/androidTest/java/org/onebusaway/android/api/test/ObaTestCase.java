@@ -19,8 +19,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
 import org.onebusaway.android.app.di.PreferencesEntryPoint;
+import org.onebusaway.android.app.di.RegionEntryPoint;
 import org.onebusaway.android.region.Region;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -45,7 +45,7 @@ public abstract class ObaTestCase {
         getTargetContext().setTheme(R.style.Theme_OneBusAway);
 
         // Save the current region / custom API URL so the override below can be undone in after().
-        mOldRegion = Application.get().getCurrentRegion();
+        mOldRegion = RegionEntryPoint.get(getTargetContext()).currentRegion();
         mOldCustomApiUrl = mOldRegion == null
                 ? PreferencesEntryPoint.get(getTargetContext())
                         .getString(R.string.preference_key_oba_api_url, null)
@@ -63,14 +63,14 @@ public abstract class ObaTestCase {
     @After
     public void after() {
         if (mOldRegion != null) {
-            Application.get().setCurrentRegion(mOldRegion);
+            RegionEntryPoint.get(getTargetContext()).applyRegion(mOldRegion, true);
         } else if (mOldCustomApiUrl != null) {
             PreferencesEntryPoint.get(getTargetContext())
                     .setString(R.string.preference_key_oba_api_url, mOldCustomApiUrl);
         } else {
             PreferencesEntryPoint.get(getTargetContext())
                     .setString(R.string.preference_key_oba_api_url, null);
-            Application.get().setCurrentRegion(null);
+            RegionEntryPoint.get(getTargetContext()).applyRegion(null, true);
         }
     }
 }

@@ -15,12 +15,13 @@
  */
 package org.onebusaway.android.map.maplibre.compose
 
+import android.content.Context
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
-import org.onebusaway.android.app.Application
+import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.map.maplibre.MapHelpMapLibre
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.FramingIntent
@@ -88,7 +89,7 @@ fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap) {
  * route shape (the screen-dimension padding was a Google-only refinement); the bounds are re-read from
  * [renderState]/the region live, so it's safe to re-apply when a re-created adapter replays the framing.
  */
-fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: MapRenderState) {
+fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: MapRenderState, context: Context) {
     when (intent) {
         FramingIntent.Route,
         FramingIntent.Itinerary -> {
@@ -97,7 +98,7 @@ fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: Map
         }
 
         FramingIntent.Region -> {
-            val region = Application.get().currentRegion ?: return
+            val region = RegionEntryPoint.get(context).currentRegion() ?: return
             map.animateCamera(CameraUpdateFactory.newLatLngBounds(MapHelpMapLibre.getRegionBounds(region), 0))
         }
 

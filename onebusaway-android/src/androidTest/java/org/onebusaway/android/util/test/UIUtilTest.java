@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.PreferencesEntryPoint;
 import org.onebusaway.android.api.contract.ArrivalsForStop;
 import org.onebusaway.android.api.contract.EntryWithReferences;
 import org.onebusaway.android.api.contract.ObaEnvelope;
@@ -543,7 +544,8 @@ public class UIUtilTest extends ObaTestCase {
      */
     @Test
     public void testGetAllSituations() throws Exception {
-        Application.get().setCustomApiUrl("sdmts.onebusway.org/api");
+        PreferencesEntryPoint.get(getTargetContext())
+                .setString(R.string.preference_key_oba_api_url, "sdmts.onebusway.org/api");
 
         /**
          * Test route-specific alerts only

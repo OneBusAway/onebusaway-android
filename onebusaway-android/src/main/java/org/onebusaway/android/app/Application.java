@@ -203,38 +203,17 @@ public class Application extends android.app.Application {
         RegionEntryPoint.get(this).applyRegion(region, regionChanged);
     }
 
-    /**
-     * Returns the custom URL if the user has set a custom API URL manually via Preferences, or
-     * null
-     * if it has not been set
-     *
-     * @return the custom URL if the user has set a custom API URL manually via Preferences, or null
-     * if it has not been set
-     */
-    public String getCustomApiUrl() {
-        return PreferenceUtils.getString(getString(R.string.preference_key_oba_api_url));
-    }
-
-    /**
-     * Sets the custom URL used to reach a OBA REST API server that is not available via the
-     * Regions
-     * REST API
-     *
-     * @param url the custom URL
-     */
-    public void setCustomApiUrl(String url) {
-        PreferenceUtils.saveString(getString(R.string.preference_key_oba_api_url), url);
-    }
-
     private void reportAnalytics() {
         // The Plausible/Umami emitters are owned + built reactively by AnalyticsProvider; here we only set
         // the initial Firebase/Umami region label via setRegion (which resolves the Umami emitter through
         // the provider itself).
-        if (getCustomApiUrl() == null && getCurrentRegion() != null) {
+        String customApiUrl = PreferencesEntryPoint.get(this)
+                .getString(R.string.preference_key_oba_api_url, null);
+        if (customApiUrl == null && getCurrentRegion() != null) {
             AnalyticsEntryPoint.get(this).setRegion(getCurrentRegion().getName());
-        } else if (getCustomApiUrl() != null) {
+        } else if (customApiUrl != null) {
             AnalyticsEntryPoint.get(this)
-                    .setRegion(CustomApiUrlLabel.forUrl(this, getCustomApiUrl()));
+                    .setRegion(CustomApiUrlLabel.forUrl(this, customApiUrl));
         }
     }
 

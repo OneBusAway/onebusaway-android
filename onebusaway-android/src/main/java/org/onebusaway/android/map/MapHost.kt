@@ -253,8 +253,8 @@ class MapHost(
      */
     fun requestMyLocation(useDefaultZoom: Boolean, animate: Boolean) {
         val app = context
-        // lastKnownLocation() (not the repo's .value): the FAB must trigger the lazy provider poll, like
-        // the legacy Application.getLastKnownLocation. Reading .value would show the "waiting" toast
+        // lastKnownLocation() (not the repo's .value): the FAB must trigger the lazy provider poll.
+        // Reading .value would show the "waiting" toast
         // whenever nothing has seeded the flow yet (e.g. the cold-start poll ran before permission was
         // granted, or the region never changed so frameCurrentRegion never polled).
         val last = locationRepository.lastKnownLocation()

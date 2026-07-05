@@ -22,7 +22,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.Priority;
 
-import org.onebusaway.android.app.Application;
+import org.onebusaway.android.app.di.LocationEntryPoint;
 
 import android.content.Context;
 import android.location.Location;
@@ -160,12 +160,12 @@ public class LocationHelper implements android.location.LocationListener {
     public void onLocationChanged(Location location) {
         // Offer this location to the centralized location store, it case its better than currently
         // stored location
-        Application.setLastKnownLocation(location);
+        LocationEntryPoint.getSink(mContext).update(location);
         // Notify listeners with the newest location from the central store (which could be the one
         // that was just generated above)
-        Location lastLocation = Application.getLastKnownLocation(mContext);
+        Location lastLocation = LocationEntryPoint.get(mContext).lastKnownLocation();
         if (lastLocation != null) {
-            // We need to copy the location, it case this object is reset in Application
+            // We need to copy the location, in case the store replaces this object
             Location locationForListeners = new Location("for listeners");
             locationForListeners.set(lastLocation);
             for (Listener l : mListeners) {

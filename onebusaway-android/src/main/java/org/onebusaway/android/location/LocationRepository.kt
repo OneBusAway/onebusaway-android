@@ -103,8 +103,7 @@ interface LocationSink {
 
     /**
      * Offers a raw location from the device listener. Publishes it (as a fresh copy) iff it is "better"
-     * than the current value per [LocationUtils.compareLocations]; returns whether it was accepted (the
-     * caller uses this to keep the location-derived magnetic declination in sync).
+     * than the current value per [LocationUtils.compareLocations]; returns whether it was accepted.
      */
     fun update(raw: Location?): Boolean
 }
@@ -127,10 +126,9 @@ class DefaultLocationRepository @Inject constructor(
     // launched below runs ONE LocationHelper at the minimum requested interval, rebuilding (via
     // collectLatest) when that minimum changes and tearing down when demand drops to zero — so the
     // whole app has a single set of OS registrations. Each fix reaches `_location` through
-    // LocationHelper.onLocationChanged -> Application.setLastKnownLocation -> update() (which also
-    // refreshes the magnetic declination); the feed's own listener is a no-op that just starts the
-    // providers. Consumers that want the fixes collect [locationUpdates]; the map only holds the feed
-    // open via start/stopUpdates.
+    // LocationHelper.onLocationChanged -> LocationSink.update(); the feed's own listener is a no-op that
+    // just starts the providers. Consumers that want the fixes collect [locationUpdates]; the map only
+    // holds the feed open via start/stopUpdates.
     private val demand = MutableStateFlow<List<Int>>(emptyList())
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -150,7 +148,7 @@ class DefaultLocationRepository @Inject constructor(
     /**
      * Runs one [LocationHelper] at [intervalSeconds] until cancelled — which `collectLatest` does when
      * the minimum requested interval changes or demand drops to zero. A no-op keep-alive listener
-     * starts the providers; fixes are ingested via the helper's `Application.setLastKnownLocation` path.
+     * starts the providers; fixes are ingested via the helper's [LocationSink.update] path.
      * Retries registration until permission is granted (or this run is cancelled).
      */
     private suspend fun runFeed(intervalSeconds: Int) {

@@ -16,9 +16,6 @@
  */
 package org.onebusaway.android.app
 
-import android.content.Context
-import android.hardware.GeomagneticField
-import android.location.Location
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.HiltAndroidApp
 import org.onebusaway.android.R
@@ -26,7 +23,6 @@ import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.FirebaseMessagingEntryPoint
-import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.notifications.NotificationChannels
@@ -63,10 +59,9 @@ class Application : android.app.Application() {
         // The region and location repositories (which own region/location state) are now Hilt
         // @Singletons, constructed lazily on first injection after onCreate. The region repo seeds
         // itself from persistence (the saved region-id → ContentProvider lookup); the location repo
-        // starts empty and fills from setLastKnownLocation (listener updates) / its lazy provider poll.
-        // The legacy setLastKnownLocation writer reaches the location repo via its EntryPoint; region
-        // reads/writes now go straight through RegionRepository (via injection or RegionEntryPoint).
-        // So nothing to construct here.
+        // starts empty and fills from the device-listener ingestion path (LocationHelper ->
+        // LocationSink.update) / its lazy provider poll. Region reads/writes go straight through
+        // RegionRepository (via injection or RegionEntryPoint). So nothing to construct here.
         // The region-derived Open311 endpoints observe the region flow (A7) via RegionSubsystems — this
         // performs their initial init (the StateFlow replays the repo's seeded region) and re-inits on
         // change, replacing the former explicit initOpen311(getCurrentRegion()) call. The Plausible/Umami
@@ -113,56 +108,7 @@ class Application : android.app.Application() {
         // before onCreate and every caller dereferences it.
         private var mApp: Application? = null
 
-        // Magnetic declination is based on location, so track this centrally too. (The last-known
-        // location itself lives in the reactive LocationRepository singleton.)
-        private var mGeomagneticField: GeomagneticField? = null
-
         @JvmStatic
         fun get(): Application = mApp!!
-
-        /**
-         * Returns the last known location that the application has seen, or null if we haven't seen a
-         * location yet. When trying to get a most recent location in one shot, this method should
-         * always be called.
-         *
-         * The location lives in the reactive [org.onebusaway.android.location.LocationRepository]; this
-         * is a thin delegate kept for the `LocationHelper` listener read-back and the instrumented
-         * tests under `io/`. Injectable production readers inject `LocationRepository` directly. The
-         * [cxt] is used only to resolve the singleton graph (any context's application works), so a null
-         * one falls back to the Application itself.
-         */
-        @JvmStatic
-        @Synchronized
-        fun getLastKnownLocation(cxt: Context?): Location? {
-            val ctx = cxt ?: mApp ?: return null
-            return LocationEntryPoint.get(ctx).lastKnownLocation()
-        }
-
-        /**
-         * Sets the last known location observed by the application via an instance of LocationHelper.
-         * The location itself is stored in the `LocationRepository` (which applies the "is it better?"
-         * gate); when it accepts the update we refresh the location-derived magnetic declination here.
-         */
-        @JvmStatic
-        @Synchronized
-        fun setLastKnownLocation(l: Location) {
-            val app = mApp ?: return
-            if (LocationEntryPoint.getSink(app).update(l)) {
-                mGeomagneticField = GeomagneticField(
-                    l.latitude.toFloat(),
-                    l.longitude.toFloat(),
-                    l.altitude.toFloat(),
-                    System.currentTimeMillis()
-                )
-            }
-        }
-
-        /**
-         * Returns the declination of the horizontal component of the magnetic field from true north, in
-         * degrees (i.e. positive means the magnetic field is rotated east that much from true north), or
-         * null if it's not available.
-         */
-        @JvmStatic
-        fun getMagneticDeclination(): Float? = mGeomagneticField?.declination
     }
 }

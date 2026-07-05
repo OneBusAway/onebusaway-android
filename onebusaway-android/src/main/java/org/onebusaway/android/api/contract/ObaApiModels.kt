@@ -175,13 +175,18 @@ data class StopGrouping(
 
 /**
  * One directional group: its [id] (the GTFS direction id, "0"/"1", for a `type: "direction"`
- * grouping), a display [name], and the ordered [stopIds] it contains.
+ * grouping), a display [name], the ordered [stopIds] it contains, and (when `includePolylines=true`)
+ * the [polylines] for that direction — the encoded shapes a vehicle travelling this direction follows,
+ * ordered in the direction of travel and possibly several (route branches/variants). This is the
+ * per-direction shape the whole-route [StopsForRoute.polylines] merges (and fragments); the map draws
+ * it, not the merged set, once a direction is selected.
  */
 @Serializable
 data class StopGroup(
     val id: String? = null,
     val name: StopGroupName = StopGroupName(),
     val stopIds: List<String> = emptyList(),
+    val polylines: List<ShapeEntry> = emptyList(),
 ) {
     /** The group's display name — the first entry of the name object's `names` array, like legacy. */
     val displayName: String? get() = name.names.firstOrNull()

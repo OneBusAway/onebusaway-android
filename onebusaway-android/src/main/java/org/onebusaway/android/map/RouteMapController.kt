@@ -98,6 +98,10 @@ class RouteMapController(
 
     private var directions: List<RouteMapDirection> = emptyList()
 
+    // The loaded route's shape (whole-route merged set + each direction's own travel-ordered shape),
+    // retained so a direction switch re-narrows the drawn line without a reload. Null until first load.
+    private var routeShape: RouteMap? = null
+
     // The direction shown now (null = whole route). Derived from [directionState] rather than stored
     // separately, so the stop filter and the vehicle filter can never disagree. Meaningful only once
     // resolved (it reads null during the Pending window, which no caller relies on).
@@ -199,6 +203,7 @@ class RouteMapController(
         routeStops = emptyList()
         routeStopRoutes = emptyList()
         directions = emptyList()
+        routeShape = null
         directionState = DirectionState.Resolved(null)
         latestPoll = null
         renderState.clearRoutePolylines()
@@ -260,18 +265,15 @@ class RouteMapController(
         routeStops = routeMap.stops
         routeStopRoutes = routeMap.routes
         directions = routeMap.directions
+        routeShape = routeMap
         val override = initialDirectionOverride
         val resolved =
             if (override != null && directions.any { it.directionId == override }) override
             else routeMap.initialDirectionId
         directionState = DirectionState.Resolved(resolved)
         _loadedRoute.value = LoadedRoute.Loaded(route, routeMap.agencyName, directions, resolved)
-        // Pass the route's raw GTFS color through; the render layer picks the fallback when it's absent.
-        // The shape is whole-route (never narrowed by direction), so a switch leaves it untouched.
-        renderState.setRoutePolylines(
-            routeMap.polylines.map { points -> RoutePolyline(route.color, points) }
-        )
         showDirectionStops()
+        showDirectionPolylines()
         // The load resolved the filter (Pending -> Resolved); push the now-visible vehicle set in case a
         // poll already landed while it was held back.
         publishVehicleSet()
@@ -289,6 +291,25 @@ class RouteMapController(
     }
 
     /**
+     * Re-draw the route shape for [currentDirectionId]: the selected direction's own travel-ordered
+     * shape (with direction arrows), or the whole-route merged shape drawn undirected when none is
+     * selected. Passes the route's raw GTFS color through; the render layer picks the fallback when
+     * it's absent. Called on load and on every direction switch.
+     */
+    private fun showDirectionPolylines() {
+        val route = routeShape ?: return
+        // shapeForDirection pairs the drawn shape with its directionality, so arrows are stamped only
+        // when the selected direction's own travel-ordered shape is used — never on the whole-route
+        // merged fallback (a direction that carried no shape on the wire).
+        val shape = route.shapeForDirection(currentDirectionId)
+        renderState.setRoutePolylines(
+            shape.polylines.map { points ->
+                RoutePolyline(route.route?.color, points, directional = shape.directional)
+            }
+        )
+    }
+
+    /**
      * Switch the shown direction to [directionId] (one of [directions]' ids, or null for the whole
      * route) without a network reload: re-filter the stops and the vehicle set against the current poll,
      * republish both, and update the header. The renderer reconciles markers from the pushed vehicle set,
@@ -301,6 +322,7 @@ class RouteMapController(
         // A vehicle selected in the old direction is now filtered out — drop the selection.
         renderState.setSelectedVehicle(null)
         showDirectionStops()
+        showDirectionPolylines()
         // Re-filter the vehicle set against the same poll and push it — the renderer reconciles markers on
         // this emission, so the swap is immediate instead of waiting for the next poll.
         publishVehicleSet()

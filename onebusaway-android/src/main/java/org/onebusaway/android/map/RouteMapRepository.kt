@@ -22,14 +22,19 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.RouteMapStop
+import android.location.Location
 import org.onebusaway.android.map.render.GeoPoint
 
 /**
  * A route's full stops (each tagged with the direction(s) it serves, so the controller can re-filter
  * to any direction without a reload), the serving routes (for stop-marker icons), the route + agency
  * name, its shape, the route's selectable [directions] (id + headsign), and the
- * [initialDirectionId] resolved from the launch's anchor stop (null = whole route). The shape is
- * never narrowed by direction — both directions share it.
+ * [initialDirectionId] resolved from the launch's anchor stop (null = whole route).
+ *
+ * [polylines] is the whole-route (merged, undirected) shape shown when no direction is selected;
+ * [polylinesByDirection] holds each direction's own shape (keyed by GTFS direction id, travel-ordered),
+ * shown once a direction is selected. Use [polylinesForDirection] to pick between them with the
+ * whole-route fallback.
  */
 data class RouteMap(
     val route: ObaRoute?,
@@ -37,9 +42,26 @@ data class RouteMap(
     val stops: List<RouteMapStop>,
     val routes: List<ObaRoute>,
     val polylines: List<List<GeoPoint>>,
+    val polylinesByDirection: Map<Int, List<List<GeoPoint>>>,
     val directions: List<RouteMapDirection>,
     val initialDirectionId: Int?,
-)
+) {
+    /**
+     * The shape to draw for [directionId], paired with whether it reads as directional. A selected
+     * direction with its own (travel-ordered) shape yields that shape with [DirectionShape.directional]
+     * true; the whole route ([directionId] null) or a direction that carried no shape of its own on the
+     * wire falls back to the merged [polylines] with [DirectionShape.directional] false — so arrows are
+     * never stamped on the undirected merged shape. Both facts come from one place, so they can't
+     * diverge. Pure; unit-tested.
+     */
+    fun shapeForDirection(directionId: Int?): DirectionShape {
+        val own = directionId?.let { polylinesByDirection[it]?.takeIf(List<*>::isNotEmpty) }
+        return DirectionShape(own ?: polylines, directional = own != null)
+    }
+}
+
+/** A route shape to draw and whether it's a single travel direction (so the renderer stamps arrows). */
+data class DirectionShape(val polylines: List<List<GeoPoint>>, val directional: Boolean)
 
 /**
  * Loads a route's stops + shapes (one-shot, stops-for-route with polylines) for the route/stop
@@ -71,8 +93,9 @@ class DefaultRouteMapRepository @Inject constructor(
                     agencyName = it.agencyName,
                     stops = it.stops,
                     routes = it.routes,
-                    polylines = it.polylines.map { line ->
-                        line.map { p -> GeoPoint(p.latitude, p.longitude) }
+                    polylines = it.polylines.map { line -> line.map(Location::toGeoPoint) },
+                    polylinesByDirection = it.polylinesByDirection.mapValues { (_, lines) ->
+                        lines.map { line -> line.map(Location::toGeoPoint) }
                     },
                     directions = it.directions,
                     initialDirectionId = it.stops.anchorDirectionId(directionStopId),

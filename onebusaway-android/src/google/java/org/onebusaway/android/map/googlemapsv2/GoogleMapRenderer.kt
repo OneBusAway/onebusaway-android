@@ -181,9 +181,14 @@ class GoogleMapRenderer(
 
         for (polyline in snapshot.routePolylines) {
             val width = polyline.widthDp?.let { it * density } ?: DEFAULT_ROUTE_WIDTH_PX
+            // Stamp travel-direction chevrons only when the line asked for them (a single trip/leg or a
+            // route narrowed to one direction); an undirected whole-route shape draws a plain stroke.
+            val stroke = StrokeStyle.colorBuilder(polyline.resolvedColor)
+                .apply { if (polyline.directional) stamp(arrowStamp) }
+                .build()
             val options = PolylineOptions()
                 .width(width)
-                .addSpan(StyleSpan(StrokeStyle.colorBuilder(polyline.resolvedColor).stamp(arrowStamp).build()))
+                .addSpan(StyleSpan(stroke))
             for (point in polyline.points) options.add(point.toLatLng())
             staticPolylines.add(map.addPolyline(options))
         }

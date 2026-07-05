@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -55,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import android.app.Activity
 import android.app.NotificationManager
@@ -142,7 +144,11 @@ private fun RowScope.OptionCard(
  * is the scaffold body behind the sheet ([TripResultsMap]), not a sibling tab.
  */
 @Composable
-fun TripResultsList(state: TripResultsUiState, modifier: Modifier = Modifier) {
+fun TripResultsList(
+    state: TripResultsUiState,
+    modifier: Modifier = Modifier,
+    bottomInset: Dp = 0.dp,
+) {
     Box(
         modifier
             .fillMaxSize()
@@ -160,7 +166,12 @@ fun TripResultsList(state: TripResultsUiState, modifier: Modifier = Modifier) {
                     .padding(32.dp)
             )
 
-            is TripResultsUiState.Success -> LazyColumn(Modifier.fillMaxSize()) {
+            // The surface reaches the bottom edge; a bottom content padding lets the final directions row
+            // be scrolled clear of the nav chrome without an empty strip below the list.
+            is TripResultsUiState.Success -> LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = bottomInset),
+            ) {
                 itemsIndexed(state.directions) { _, item ->
                     DirectionRow(item)
                     HorizontalDivider()
@@ -190,6 +201,7 @@ fun TripResultsSheet(
     resultsViewModel: TripResultsViewModel,
     mapViewModel: DirectionsMapViewModel,
     modifier: Modifier = Modifier,
+    listBottomInset: Dp = 0.dp,
 ) {
     val state by resultsViewModel.state.collectAsStateWithLifecycle()
     val activity = LocalContext.current.findActivity()
@@ -219,7 +231,7 @@ fun TripResultsSheet(
             state = state,
             onSelectOption = resultsViewModel::selectOption,
         )
-        TripResultsList(state, Modifier.weight(1f))
+        TripResultsList(state, Modifier.weight(1f), bottomInset = listBottomInset)
     }
 }
 

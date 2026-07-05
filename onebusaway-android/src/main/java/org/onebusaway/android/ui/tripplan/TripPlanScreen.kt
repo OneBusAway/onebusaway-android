@@ -25,31 +25,34 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -60,10 +63,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -83,8 +92,8 @@ import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.RegionRepository
-import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.components.SwitchRow
+import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.map.DirectionsMapViewModel
@@ -214,15 +223,15 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
 }
 
 /**
- * The trip-plan container: before a plan completes the [TripPlanForm] is the scaffold body; once results
- * arrive, the directions map ([TripResultsMap]) takes over the scaffold *body* and the results header +
- * directions list appear in a Material3 bottom sheet over it ([TripResultsSheet]). Dragging the sheet
- * down reveals the map — so the interactive map owns its own gesture area instead of being trapped in the
- * draggable sheet (#1640). Back walks the sheet from expanded → peek → dismissed (form) before exiting.
- * Date/time/contacts/current-location/advanced/report are platform interactions delegated to the host
- * Activity.
+ * The trip-plan container: the directions map ([TripResultsMap]) is the constant scaffold *body*, with
+ * the form hovering over it as a top sheet ([TripPlanFormSheet], slides down from the top) and — once a
+ * plan completes — the results header + directions list in a Material3 bottom sheet over it
+ * ([TripResultsSheet]). Both sheets keep their gestures off the map, which owns its whole area and pans
+ * with vertical drags (#1640). When results arrive the top form collapses to a compact `From → To` bar
+ * (tap to re-edit); the bottom sheet expands. Back walks: directions-expanded → peek → form-collapsed →
+ * results-cleared → exit. Date/time/contacts/current-location/advanced/report are platform interactions
+ * delegated to the host Activity.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TripPlanRoute(
     viewModel: TripPlanViewModel,
@@ -241,121 +250,215 @@ fun TripPlanRoute(
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     val planState by viewModel.planState.collectAsStateWithLifecycle()
 
-    // The results VMs are hoisted here (not created inside the sheet content) so the map can render as
-    // the scaffold *body* — behind the sheet — while the results header + directions list stay in the
-    // sheet. The map is revealed by dragging the sheet down, so an interactive map never sits inside the
-    // draggable bottom sheet, which would otherwise steal its vertical drags (#1640). Both are scoped to
-    // this destination's back-stack entry, so hoisting doesn't change their identity or lifetime.
+    // The results VMs are hoisted here (not created inside the sheet content) so the map renders as the
+    // constant backdrop behind both sheets, while the results header + directions list live in the bottom
+    // sheet. Both are scoped to this destination's back-stack entry, so hoisting doesn't change their
+    // identity/lifetime.
     val resultsViewModel: TripResultsViewModel = hiltViewModel()
     val mapViewModel: DirectionsMapViewModel = hiltViewModel(key = "tripResultsMap")
 
-    val scaffoldState = rememberBottomSheetScaffoldState(
-        bottomSheetState = rememberStandardBottomSheetState(
-            initialValue = SheetValue.Hidden,
-            skipHiddenState = false
-        )
-    )
     val hasResults = planState is PlanResult.Success
     val scope = rememberCoroutineScope()
-    val sheetExpanded = scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
+    val density = LocalDensity.current
 
-    // Back (system or toolbar) walks the results back to the form before exiting: an expanded sheet
-    // collapses to its peek (revealing the map behind it), the peek dismisses the results (returning the
-    // form as the scaffold body), and only then does back exit the screen. Since the map — not the form —
-    // now sits behind the sheet, this peek step is how the user gets back to the form to re-plan.
+    // The directions sheet is a fixed half-screen tall; its two positions (fully open vs. handle-only)
+    // are driven by an AnchoredDraggable state whose drag gesture is attached to the *handle only* (see
+    // [DirectionsSheet]) — so the handle opens/closes the sheet while the directions list inside scrolls
+    // freely, never hijacked by the sheet drag.
+    // The sheet's usable content is 40% of the screen; the sheet then extends *past* that down to the
+    // very bottom edge by the system nav-bar inset, so there's no gap below it. That inset is reserved as
+    // bottom padding inside the sheet (see [DirectionsSheet]) — the top edge is raised to make room while
+    // the bottom stays flush, keeping the content (and collapsed handle) above the gesture/nav chrome.
+    val navInset = navigationBarBottomPadding()
+    val contentHeight = (LocalConfiguration.current.screenHeightDp * 0.4f).dp
+    val sheetHeight = contentHeight + navInset
+    // Collapsed slides the sheet down until just the handle remains above the nav chrome.
+    val collapsedOffsetPx = with(density) { (contentHeight - DIRECTIONS_HANDLE_PEEK).toPx() }
+    val dragState = remember { AnchoredDraggableState(initialValue = DirectionsAnchor.Expanded) }
+    val anchors = remember(collapsedOffsetPx) {
+        DraggableAnchors {
+            DirectionsAnchor.Expanded at 0f
+            DirectionsAnchor.Collapsed at collapsedOffsetPx
+        }
+    }
+    LaunchedEffect(anchors) { dragState.updateAnchors(anchors) }
+    val directionsExpanded = dragState.targetValue == DirectionsAnchor.Expanded
+
+    val toggleDirections: () -> Unit = {
+        scope.launch {
+            runCatching {
+                dragState.animateTo(
+                    if (directionsExpanded) DirectionsAnchor.Collapsed else DirectionsAnchor.Expanded
+                )
+            }
+        }
+    }
+
+    // The top form sheet drags like the directions sheet (finger-following height): expanded = full form,
+    // collapsed = the From/To summary. Its anchors are set inside the sheet once the form is measured.
+    val formDragState = remember { AnchoredDraggableState(initialValue = FormAnchor.Expanded) }
+    val formExpanded = formDragState.targetValue == FormAnchor.Expanded
+
+    // Back walks the flow back to front: an open directions sheet collapses to its handle, then an
+    // expanded form collapses to its From/To summary, then the results are dropped (returning to the
+    // form), and only then does back exit the screen.
     val collapseOrBack: () -> Unit = {
         when {
-            sheetExpanded -> scope.launch { scaffoldState.bottomSheetState.partialExpand() }
+            hasResults && directionsExpanded -> toggleDirections()
+            hasResults && formExpanded ->
+                scope.launch { runCatching { formDragState.animateTo(FormAnchor.Collapsed) } }
             hasResults -> viewModel.clearPlanResult()
             else -> onBack()
         }
     }
     BackHandler(enabled = hasResults) { collapseOrBack() }
 
-    // Expand the sheet when results arrive; hide it when the form is reset to Idle.
+    // React to plan state: fresh results collapse the form to its summary and open the directions sheet;
+    // resetting to Idle re-expands the form (the directions sheet unmounts with the results).
     LaunchedEffect(planState) {
         when (planState) {
-            is PlanResult.Success -> scaffoldState.bottomSheetState.expand()
-            PlanResult.Idle -> scaffoldState.bottomSheetState.hide()
+            is PlanResult.Success -> {
+                runCatching { formDragState.animateTo(FormAnchor.Collapsed) }
+                runCatching { dragState.animateTo(DirectionsAnchor.Expanded) }
+            }
+            PlanResult.Idle -> runCatching { formDragState.animateTo(FormAnchor.Expanded) }
             else -> {}
         }
     }
 
-    // The toolbar lives above the sheet (not in the scaffold's topBar slot) so the results sheet
-    // only ever fills the area *below* the toolbar — the toolbar stays visible even when the sheet
-    // is fully expanded, matching the legacy panel.
-    Column(Modifier.fillMaxSize()) {
-        TripPlanTopBar(onBack = collapseOrBack, onReportProblem = onReportProblem)
-        BottomSheetScaffold(
-            modifier = Modifier.weight(1f),
-            scaffoldState = scaffoldState,
-            sheetPeekHeight = if (hasResults) 220.dp else 0.dp,
-            sheetContent = {
-                val result = planState
-                if (result is PlanResult.Success) {
-                    TripResultsSheet(
-                        itineraries = result.itineraries,
-                        resultsViewModel = resultsViewModel,
-                        mapViewModel = mapViewModel,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
-        ) { padding ->
-            // With results, the directions map fills the scaffold body, behind the peeking sheet, so it
-            // owns its whole gesture area and vertical drags pan the map — dragging the sheet down reveals
-            // it (#1640). Before a plan completes, the body is the trip-plan form.
-            if (hasResults) {
-                TripResultsMap(
+    Box(Modifier.fillMaxSize()) {
+        // The directions map is the constant backdrop both sheets hover over. It owns its whole gesture
+        // area (#1640); before a plan completes it shows the base map centered on the user's location,
+        // and draws the selected itinerary once results arrive.
+        TripResultsMap(
+            mapViewModel = mapViewModel,
+            modifier = Modifier.fillMaxSize()
+        )
+        if (planState is PlanResult.Loading) {
+            LinearProgressIndicator(
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+            )
+        }
+        // The bottom directions sheet — half-screen when open, handle-only when closed. Mounts with the
+        // results; the handle drags/toggles it while the list inside scrolls.
+        val result = planState
+        if (result is PlanResult.Success) {
+            DirectionsSheet(
+                dragState = dragState,
+                sheetHeight = sheetHeight,
+                onToggle = toggleDirections,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            ) {
+                TripResultsSheet(
+                    itineraries = result.itineraries,
+                    resultsViewModel = resultsViewModel,
                     mapViewModel = mapViewModel,
+                    // The sheet's surface reaches the bottom edge; keep the last directions row scrollable
+                    // clear of the nav chrome via list content padding instead of an empty inset strip.
+                    listBottomInset = navInset,
                     modifier = Modifier.fillMaxSize()
                 )
-            } else {
-                Column(Modifier.padding(padding)) {
-                    if (planState is PlanResult.Loading) {
-                        LinearProgressIndicator(Modifier.fillMaxWidth())
-                    }
-                    TripPlanForm(
-                        state = formState,
-                        onFromQueryChange = viewModel::onFromQueryChange,
-                        onToQueryChange = viewModel::onToQueryChange,
-                        onSelectFrom = viewModel::setFrom,
-                        onSelectTo = viewModel::setTo,
-                        onClearFrom = viewModel::clearFrom,
-                        onClearTo = viewModel::clearTo,
-                        onFromCurrentLocation = onFromCurrentLocation,
-                        onToCurrentLocation = onToCurrentLocation,
-                        onFromContacts = onFromContacts,
-                        onToContacts = onToContacts,
-                        onFromPickOnMap = onFromPickOnMap,
-                        onToPickOnMap = onToPickOnMap,
-                        onSetArriving = viewModel::setArriving,
-                        onPickDate = onPickDate,
-                        onPickTime = onPickTime,
-                        onReverse = viewModel::reverseTrip,
-                        onAdvancedSettings = onAdvancedSettings
-                    )
-                }
             }
+        }
+        // The top form sheet, slid down from the top edge over the map.
+        TripPlanFormSheet(
+            dragState = formDragState,
+            state = formState,
+            onFromQueryChange = viewModel::onFromQueryChange,
+            onToQueryChange = viewModel::onToQueryChange,
+            onSelectFrom = viewModel::setFrom,
+            onSelectTo = viewModel::setTo,
+            onClearFrom = viewModel::clearFrom,
+            onClearTo = viewModel::clearTo,
+            onFromCurrentLocation = onFromCurrentLocation,
+            onToCurrentLocation = onToCurrentLocation,
+            onFromContacts = onFromContacts,
+            onToContacts = onToContacts,
+            onFromPickOnMap = onFromPickOnMap,
+            onToPickOnMap = onToPickOnMap,
+            onSetArriving = viewModel::setArriving,
+            onPickDate = onPickDate,
+            onPickTime = onPickTime,
+            onReverse = viewModel::reverseTrip,
+            onAdvancedSettings = onAdvancedSettings,
+            onBack = collapseOrBack,
+            onReportProblem = onReportProblem,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
+    }
+}
+
+// The directions sheet's drag handle geometry. The peek height equals the whole handle strip so that,
+// collapsed, exactly the handle shows; the bar + vertical padding also drive what the strip draws.
+private val DIRECTIONS_HANDLE_BAR_HEIGHT = 4.dp
+private val DIRECTIONS_HANDLE_VERTICAL_PADDING = 14.dp
+private val DIRECTIONS_HANDLE_PEEK = DIRECTIONS_HANDLE_BAR_HEIGHT + DIRECTIONS_HANDLE_VERTICAL_PADDING * 2
+
+/** The two rest positions of the directions sheet: fully open (half-screen) or handle-only. */
+private enum class DirectionsAnchor { Collapsed, Expanded }
+
+/**
+ * The bottom directions sheet: a fixed [sheetHeight] tall, pinned to the bottom edge and translated by
+ * [dragState] between fully open (offset 0) and handle-only (slid down). The drag gesture lives on the
+ * handle **only**, so the directions list ([content]) inside scrolls freely — a body drag never moves
+ * the sheet. Tapping the handle also toggles it via [onToggle].
+ *
+ * The sheet extends past its content down to the very bottom edge (no gap); [content] fills all the way
+ * down. Nav-bar clearance for the list is handled as scroll content padding by the caller, so the last
+ * directions row can still be scrolled clear of the chrome without leaving an empty strip here.
+ */
+@Composable
+private fun DirectionsSheet(
+    dragState: AnchoredDraggableState<DirectionsAnchor>,
+    sheetHeight: Dp,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(sheetHeight)
+            .offset {
+                // `offset` is NaN until the anchors are applied; rest at the open position (0) until then.
+                IntOffset(0, dragState.offset.let { if (it.isNaN()) 0 else it.roundToInt() })
+            },
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 8.dp,
+    ) {
+        Column {
+            DirectionsDragHandle(dragState = dragState, onToggle = onToggle)
+            Box(Modifier.weight(1f)) { content() }
         }
     }
 }
 
+/**
+ * The directions sheet's grab handle — the only open/close control. It carries the sheet's drag gesture
+ * (so the body/list can scroll independently), and a tap toggles open/closed via [onToggle]. Mirrors the
+ * home arrivals sheet's [org.onebusaway.android.ui.home] handle styling.
+ */
 @Composable
-private fun TripPlanTopBar(onBack: () -> Unit, onReportProblem: () -> Unit) {
-    var menuExpanded by remember { mutableStateOf(false) }
-    ObaTopAppBar(title = stringResource(R.string.trip_plan_title), onBack = onBack) {
-        IconButton(onClick = { menuExpanded = true }) {
-            Icon(Icons.Filled.MoreVert, contentDescription = null)
-        }
-        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.tripplanner_report_trip_problem)) },
-                onClick = {
-                    menuExpanded = false
-                    onReportProblem()
-                }
-            )
+private fun DirectionsDragHandle(
+    dragState: AnchoredDraggableState<DirectionsAnchor>,
+    onToggle: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .anchoredDraggable(dragState, Orientation.Vertical)
+            .clickable(onClick = onToggle)
+            .padding(vertical = DIRECTIONS_HANDLE_VERTICAL_PADDING),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            color = colorResource(R.color.navdrawer_icon_tint),
+            shape = RoundedCornerShape(percent = 50),
+        ) {
+            Box(Modifier.size(width = 32.dp, height = DIRECTIONS_HANDLE_BAR_HEIGHT))
         }
     }
 }

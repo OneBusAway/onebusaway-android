@@ -169,7 +169,7 @@ class CustomAddress(locale: Locale) : Address(locale) {
                     }
                     a.phone = parcel.readString()
                     a.url = parcel.readString()
-                    a.extras = parcel.readBundle()
+                    a.extras = parcel.readBundle(CustomAddress::class.java.classLoader)
                     return a
                 }
 

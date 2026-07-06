@@ -19,10 +19,12 @@
   opens HomeActivity with a NAV_ROUTE extra (org.onebusaway.android.ui.HomeActivity.NAV_ROUTE) that
   HomeActivity's translator navigates to. Replaces the legacy launcher CREATE_SHORTCUT picker.
 -->
-<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <shortcut
         android:shortcutId="starred_stops"
         android:enabled="true"
+        tools:targetApi="25"
         android:icon="@drawable/ic_drawer_star"
         android:shortcutShortLabel="@string/starred_stops_shortcut"
         android:shortcutLongLabel="@string/starred_stops_shortcut">
@@ -38,6 +40,7 @@
     <shortcut
         android:shortcutId="recent_stops"
         android:enabled="true"
+        tools:targetApi="25"
         android:icon="@drawable/ic_history"
         android:shortcutShortLabel="@string/recent_stops_shortcut"
         android:shortcutLongLabel="@string/recent_stops_shortcut">
@@ -53,6 +56,7 @@
     <shortcut
         android:shortcutId="recent_routes"
         android:enabled="true"
+        tools:targetApi="25"
         android:icon="@drawable/ic_bus"
         android:shortcutShortLabel="@string/recent_routes_shortcut"
         android:shortcutLongLabel="@string/recent_routes_shortcut">
@@ -68,6 +72,7 @@
     <shortcut
         android:shortcutId="recent"
         android:enabled="true"
+        tools:targetApi="25"
         android:icon="@drawable/ic_history"
         android:shortcutShortLabel="@string/my_recent_title"
         android:shortcutLongLabel="@string/my_recent_title">

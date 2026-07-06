@@ -421,6 +421,9 @@ open class RealtimeService : IntentService("RealtimeService") {
 
             bundle.putSerializable(OTPConstants.NOTIFICATION_TARGET, source.javaClass)
             val intent = Intent(OTPConstants.INTENT_START_CHECKS)
+            // Scope the broadcast to our own app: RealtimeWakefulReceiver is non-exported, and
+            // package-less implicit broadcasts aren't delivered to manifest receivers on API 26+.
+            intent.setPackage(source.packageName)
             intent.putExtras(bundle)
             source.sendBroadcast(intent)
         }

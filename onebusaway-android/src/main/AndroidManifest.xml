@@ -45,13 +45,20 @@
     <!-- For notifications, POST_NOTIFICATIONS is required when targeting Android 12 or higher-->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true"/>
+
     <application
         android:allowBackup="false"
         android:name="org.onebusaway.android.app.Application"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Theme.OneBusAway.NoActionBar"
-        android:networkSecurityConfig="@xml/network_security_config">
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:networkSecurityConfig="@xml/network_security_config"
+        tools:targetApi="24">
 
 
         <meta-data
@@ -278,10 +285,12 @@
             android:name=".nav.NavigationService"
             android:foregroundServiceType="location" />
 
+        <!-- Triggered only by the app's own explicit-component notification PendingIntents
+             (NavigationServiceProvider), so it needs no cross-app access. -->
         <receiver
             android:name=".nav.NavigationReceiver"
             android:enabled="true"
-            android:exported="true" >
+            android:exported="false" >
             <intent-filter>
                 <action android:name=".nav.NavigationReceiver" />
             </intent-filter>
@@ -291,8 +300,10 @@
             android:enabled="true">
         </receiver>
 
+        <!-- Only receives the app's own realtime-check broadcasts (RealtimeService), so
+             it needs no cross-app access. The intent-filter still matches the same-app broadcast. -->
         <receiver android:name=".directions.realtime.RealtimeWakefulReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <!-- Should match constants for actions defined in OTPConstants -->
                 <action android:name="${applicationId}.directions.action.START_CHECKS"/>
@@ -325,8 +336,4 @@
             </intent-filter>
         </service>
     </application>
-
-    <uses-feature
-        android:glEsVersion="0x00020000"
-        android:required="true"/>
 </manifest>

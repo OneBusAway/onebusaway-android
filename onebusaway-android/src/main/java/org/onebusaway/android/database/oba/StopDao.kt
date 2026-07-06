@@ -134,6 +134,10 @@ interface StopDao {
     )
     fun starredByFrequency(regionId: Long?): Flow<List<StopListRow>>
 
+    /** The ids of every starred (favorite) stop, live — the map stars these on its markers (#1680). */
+    @Query("SELECT _id FROM stops WHERE favorite = 1")
+    fun favoriteStopIds(): Flow<List<String>>
+
     // --- Recents/starred mutations ---
 
     @Query("UPDATE stops SET use_count = 0, access_time = NULL WHERE _id = :stopId")

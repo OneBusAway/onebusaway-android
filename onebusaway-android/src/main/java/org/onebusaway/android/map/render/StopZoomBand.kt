@@ -29,16 +29,28 @@ enum class StopBand { DOT, FULL }
 fun stopZoomBand(zoom: Float): StopBand =
     if (zoom < STOP_DOT_ZOOM_THRESHOLD) StopBand.DOT else StopBand.FULL
 
-/** The icon variants a stop marker can show: full icon (normal/focused) or dot (normal/focused). */
-enum class StopIconKind { FULL, FULL_FOCUSED, DOT, DOT_FOCUSED }
+/**
+ * The icon variants a stop marker can show: the full directional icon or the far-zoom dot (each
+ * normal/focused), plus the distinctive star a starred (favorite) stop gets in place of either
+ * (#1680), likewise normal/focused.
+ */
+enum class StopIconKind {
+    FULL, FULL_FOCUSED, DOT, DOT_FOCUSED,
+    FAVORITE, FAVORITE_FOCUSED, FAVORITE_DOT, FAVORITE_DOT_FOCUSED,
+}
 
 /**
- * The icon a stop marker should show given whether it's the [focused] stop and the current zoom
- * [band]. The focused stop always gets a distinct (accent) icon — the enlarged full icon up close,
- * an accent-colored dot far out — so a selection stays visible at every zoom. Pure, so the renderers'
- * "did this marker's icon change?" decision is unit-testable and identical across both map flavors.
+ * The icon a stop marker should show given whether it's the [focused] stop, whether it's a
+ * [favorite] (starred) stop, and the current zoom [band]. A starred stop gets a distinctive star
+ * (full-size close up, smaller in the dot band) instead of its directional icon/dot, so it's easy to
+ * pick out and navigate to (#1680); the focused stop always gets a distinct (enlarged/accent) variant
+ * so a selection stays visible at every zoom. Pure, so the renderers' "did this marker's icon change?"
+ * decision is unit-testable and identical across both map flavors.
  */
-fun stopIconKind(focused: Boolean, band: StopBand): StopIconKind = when {
+fun stopIconKind(focused: Boolean, band: StopBand, favorite: Boolean = false): StopIconKind = when {
+    favorite && band == StopBand.DOT ->
+        if (focused) StopIconKind.FAVORITE_DOT_FOCUSED else StopIconKind.FAVORITE_DOT
+    favorite -> if (focused) StopIconKind.FAVORITE_FOCUSED else StopIconKind.FAVORITE
     band == StopBand.DOT -> if (focused) StopIconKind.DOT_FOCUSED else StopIconKind.DOT
     focused -> StopIconKind.FULL_FOCUSED
     else -> StopIconKind.FULL

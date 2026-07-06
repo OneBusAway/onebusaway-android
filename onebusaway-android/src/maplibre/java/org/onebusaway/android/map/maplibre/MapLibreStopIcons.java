@@ -95,6 +95,20 @@ public final class MapLibreStopIcons {
      */
     private static Icon dot_stop_icon_focused;
 
+    /**
+     * The distinctive star shown for a starred (favorite) stop (#1680), in place of its directional
+     * icon up close / its dot far out — with a focused (enlarged) variant of each. The full-band star
+     * keeps the direction arrow the other stop markers carry, so it's per-direction; the dot-band star
+     * has no arrow (matching the plain dot), so it's a single direction-agnostic icon.
+     */
+    private static final Icon[] star_stop_icons = new Icon[NUM_DIRECTIONS];
+
+    private static final Icon[] star_stop_icons_focused = new Icon[NUM_DIRECTIONS];
+
+    private static Icon star_dot_stop_icon;
+
+    private static Icon star_dot_stop_icon_focused;
+
     private static final float FOCUS_ICON_SCALE = 1.5f;
 
     private static int mPx;
@@ -143,6 +157,30 @@ public final class MapLibreStopIcons {
         return dot_stop_icon_focused;
     }
 
+    /** The distinctive star (with the direction arrow) for a starred stop up close. */
+    public static synchronized Icon favoriteIcon(Context context, String direction) {
+        ensureLoaded(context);
+        return star_stop_icons[indexFor(direction)];
+    }
+
+    /** The focused (enlarged) star (with the direction arrow) for the selected starred stop up close. */
+    public static synchronized Icon focusedFavoriteIcon(Context context, String direction) {
+        ensureLoaded(context);
+        return star_stop_icons_focused[indexFor(direction)];
+    }
+
+    /** The smaller star shown for a starred stop in the far-zoom dot band. */
+    public static synchronized Icon favoriteDotIcon(Context context) {
+        ensureLoaded(context);
+        return star_dot_stop_icon;
+    }
+
+    /** The focused (enlarged) star for the selected starred stop in the dot band. */
+    public static synchronized Icon focusedFavoriteDotIcon(Context context) {
+        ensureLoaded(context);
+        return star_dot_stop_icon_focused;
+    }
+
     private static int indexFor(String direction) {
         Integer index = directionToIndexMap.get(direction);
         return index != null ? index : 8;
@@ -166,18 +204,45 @@ public final class MapLibreStopIcons {
 
         IconFactory iconFactory = IconFactory.getInstance(context);
         String[] directions = {NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, EAST, NORTH_EAST, NO_DIRECTION};
+
+        // Star colors: the normal star is the gold gradient (light→dark); a selected star uses the same
+        // focus color as every other selected stop (solid). The arrow keeps the theme primary→accent.
+        int starLight = r.getColor(R.color.map_stop_favorite_light);
+        int starDark = r.getColor(R.color.map_stop_favorite_dark);
+        int focusColor = r.getColor(R.color.map_stop_focus);
+        int arrowTip = r.getColor(R.color.theme_primary);
+        int arrowBase = r.getColor(R.color.theme_accent);
+        // The star outline matches the plain circle's ring width (same for full- and dot-band).
+        float starOutlinePx = StopBitmaps.STAR_OUTLINE_WIDTH_DP * r.getDisplayMetrics().density;
+        int starPx = Math.round(mPx * StopBitmaps.STAR_SIZE_SCALE);
+
         for (int i = 0; i < directions.length; i++) {
             bus_stop_icons[i] = iconFactory.fromBitmap(createBusStopIcon(context, directions[i], false));
-            Bitmap focused = createBusStopIcon(context, directions[i], true);
-            focused = Bitmap.createScaledBitmap(focused,
-                    (int) (focused.getWidth() * FOCUS_ICON_SCALE),
-                    (int) (focused.getHeight() * FOCUS_ICON_SCALE), true);
-            bus_stop_icons_focused[i] = iconFactory.fromBitmap(focused);
+            // Starred-stop full-band icon: an inflated star with the normal-sized direction arrow drawn
+            // on top; the focused variant is the selected-color star, enlarged as a whole.
+            boolean hasArrow = !directions[i].equals(NO_DIRECTION);
+            float angle = StopBitmaps.compassAngle(directions[i]);
+            star_stop_icons[i] = iconFactory.fromBitmap(StopBitmaps.favoriteMarker(
+                    mPx, starPx, hasArrow, angle, starLight, starDark, arrowTip, arrowBase, starOutlinePx));
+            star_stop_icons_focused[i] = iconFactory.fromBitmap(StopBitmaps.scale(
+                    StopBitmaps.favoriteMarker(mPx, starPx, hasArrow, angle,
+                            focusColor, focusColor, arrowTip, arrowBase, starOutlinePx),
+                    FOCUS_ICON_SCALE));
+            bus_stop_icons_focused[i] = iconFactory.fromBitmap(
+                    StopBitmaps.scale(createBusStopIcon(context, directions[i], true), FOCUS_ICON_SCALE));
         }
 
         dot_stop_icon = iconFactory.fromBitmap(StopBitmaps.dot(mPx, r.getColor(R.color.theme_primary)));
-        dot_stop_icon_focused = iconFactory.fromBitmap(StopBitmaps.dot(mPx,
-                r.getColor(R.color.map_stop_focus), StopBitmaps.FOCUSED_DOT_SCALE));
+        dot_stop_icon_focused = iconFactory.fromBitmap(
+                StopBitmaps.dot(mPx, focusColor, StopBitmaps.FOCUSED_DOT_SCALE));
+
+        // Dot-band starred stops: a plain star (no arrow, matching the plain dot), dot-sized and enlarged
+        // when focused. Gold gradient normally, the selected color when focused; same thin outline.
+        int starDotPx = Math.round(mPx * 0.5f * StopBitmaps.STAR_SIZE_SCALE);
+        star_dot_stop_icon = iconFactory.fromBitmap(
+                StopBitmaps.star(starDotPx, starLight, starDark, starOutlinePx));
+        star_dot_stop_icon_focused = iconFactory.fromBitmap(StopBitmaps.star(
+                Math.round(starDotPx * StopBitmaps.FOCUSED_DOT_SCALE), focusColor, focusColor, starOutlinePx));
     }
 
     @SuppressWarnings("deprecation")

@@ -32,6 +32,7 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.api.data.MapDataSource
+import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.bike.BikeStationsRepository
@@ -98,6 +99,7 @@ class MapViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
     private val prefsRepository: PreferencesRepository,
     private val tripObservationRepository: TripObservationRepository,
+    private val stopDao: StopDao,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -136,6 +138,9 @@ class MapViewModel @Inject constructor(
                 StopsMapController.DEFAULT_STOP_CACHE_SIZE,
             )
         },
+        // The home map stars the user's favorite stops (#1680). Room runs the query off the main thread
+        // and re-emits on any favorite change, so starring a stop updates the map immediately.
+        favoriteStopIds = stopDao.favoriteStopIds().map { it.toSet() },
     )
 
     // ----- Map-host surface (delegated) -----

@@ -54,4 +54,30 @@ class StopZoomBandTest {
         assertEquals(StopIconKind.FULL, stopIconKind(focused = false, band = StopBand.FULL))
         assertEquals(StopIconKind.FULL_FOCUSED, stopIconKind(focused = true, band = StopBand.FULL))
     }
+
+    @Test
+    fun `a starred stop gets the star in place of its icon or dot, focus enlarging it`() {
+        assertEquals(
+            StopIconKind.FAVORITE,
+            stopIconKind(focused = false, band = StopBand.FULL, favorite = true)
+        )
+        assertEquals(
+            StopIconKind.FAVORITE_FOCUSED,
+            stopIconKind(focused = true, band = StopBand.FULL, favorite = true)
+        )
+        assertEquals(
+            StopIconKind.FAVORITE_DOT,
+            stopIconKind(focused = false, band = StopBand.DOT, favorite = true)
+        )
+        assertEquals(
+            StopIconKind.FAVORITE_DOT_FOCUSED,
+            stopIconKind(focused = true, band = StopBand.DOT, favorite = true)
+        )
+    }
+
+    @Test
+    fun `favorite defaults to false so a non-starred stop keeps its plain icon`() {
+        assertEquals(StopIconKind.FULL, stopIconKind(focused = false, band = StopBand.FULL))
+        assertEquals(StopIconKind.DOT, stopIconKind(focused = false, band = StopBand.DOT))
+    }
 }

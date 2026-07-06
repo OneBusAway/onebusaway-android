@@ -259,11 +259,11 @@ fun MyRecentDestination(
         onBack = onBack,
         tabs = listOf(
             activity.recentStopsTab(
-                recentStops, R.string.my_recent_stops, R.drawable.ic_menu_stop,
+                recentStops, R.string.my_recent_stops, R.drawable.ic_bus_map_pin,
                 onShowStopOnMap, onOpenStop,
             ),
             activity.recentRoutesTab(
-                recentRoutes, R.string.my_recent_routes, R.drawable.ic_bus, onShowRouteOnMap,
+                recentRoutes, R.string.my_recent_routes, R.drawable.ic_route, onShowRouteOnMap,
             ),
         ),
     )

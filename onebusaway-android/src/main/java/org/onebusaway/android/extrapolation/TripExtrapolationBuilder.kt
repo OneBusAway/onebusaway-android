@@ -46,8 +46,8 @@ fun buildTripExtrapolation(
     val distribution = (result as? ExtrapolationResult.Success)?.distribution
 
     return TripExtrapolation(
-        vehiclePoint = distribution?.pointAlong(polyline, distribution.median()),
-        fastEstimatePoint = distribution?.pointAlong(polyline, distribution.quantile(FAST_ESTIMATE_QUANTILE)),
+        vehiclePoint = distribution?.let { polyline.pointAtDistance(it.median()) },
+        fastEstimatePoint = distribution?.let { polyline.pointAtDistance(it.quantile(FAST_ESTIMATE_QUANTILE)) },
         band = distribution?.let { weightedBandSegments(it, polyline) } ?: emptyList(),
         dataAge = dataAgeMarker(state, nowMs),
         // The anchor's instant is constant between fixes; a change means fresh AVL data arrived.
@@ -133,9 +133,9 @@ fun extrapolatedVehicles(
         )
     }
 
-/** The point [distance] along [polyline], or null when [distance] is non-finite or off the shape. */
-private fun ProbDistribution.pointAlong(polyline: Polyline, distance: Double): GeoPoint? =
-    distance.takeIf(Double::isFinite)?.let { polyline.interpolate(it)?.toGeoPoint() }
+/** The point [distance] along this shape, or null when [distance] is non-finite or off the shape. */
+private fun Polyline.pointAtDistance(distance: Double): GeoPoint? =
+    distance.takeIf(Double::isFinite)?.let { interpolate(it)?.toGeoPoint() }
 
 private fun weightedBandSegments(distribution: ProbDistribution, polyline: Polyline): List<WeightedBandSegment> =
     // Draw the band only out to the fast-estimate marker (the optimistic forward bound), not the full
@@ -147,12 +147,22 @@ private fun weightedBandSegments(distribution: ProbDistribution, polyline: Polyl
     }
 
 private fun dataAgeMarker(state: TripState, nowMs: WallTime): DataAgeMarker? {
-    val position = state.anchor?.position ?: return null
+    val anchor = state.anchor ?: return null
     if (state.anchorLocalTimeMs.epochMs <= 0) return null
+    // Plot the dot at the extrapolation's own anchor: the anchor's distanceAlongTrip — the exact value
+    // the glide is seeded from (TripState.extrapolate) — projected onto the shape. This keeps the "data
+    // received" dot pinned to the glide's origin so it can never float ahead of the glide. Drawing it at
+    // the anchor's raw `position` instead (a different, server-extrapolated field than distanceAlongTrip)
+    // let the two disagree, so the dot appeared ahead of the glide when they diverged — the regression
+    // from a821321a8 ("Remove bestLocation — always use position for display"). Fall back to the reported
+    // position only when the fix carries no distance or the shape can't place it.
+    val point = anchor.distanceAlongTrip?.let { dist -> state.polyline?.pointAtDistance(dist) }
+        ?: anchor.position?.toGeoPoint()
+        ?: return null
     // Shown whenever there's a last fix, like the original (no max-age hide); the label is its age.
     // now − anchor is a same-domain (device) Duration; unwrap to raw Long ms for the marker.
     val ageMs = (nowMs - state.anchorLocalTimeMs).inWholeMilliseconds.coerceAtLeast(0L)
-    return DataAgeMarker(position.toGeoPoint(), ageMs)
+    return DataAgeMarker(point, ageMs)
 }
 
 private fun Location.toGeoPoint() = GeoPoint(latitude, longitude)

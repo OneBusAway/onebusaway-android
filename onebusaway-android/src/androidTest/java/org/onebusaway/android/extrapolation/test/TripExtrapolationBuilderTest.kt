@@ -28,6 +28,9 @@ import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.buildTripExtrapolation
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
+import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.models.Occupancy
+import org.onebusaway.android.models.Status
 import org.onebusaway.android.util.Polyline
 
 /**
@@ -50,6 +53,34 @@ class TripExtrapolationBuilderTest {
         latitude = lat
         longitude = lng
     }
+
+    /** A minimal predicted [ObaTripStatus] anchor carrying only the fields the data-age marker reads. */
+    private fun anchorStatus(position: Location?, distanceAlongTrip: Double?): ObaTripStatus =
+        object : ObaTripStatus {
+            override val serviceDate = 0L
+            override val isPredicted = true
+            override val scheduleDeviation = 0L
+            override val vehicleId: String? = null
+            override val closestStop: String? = null
+            override val closestStopTimeOffset = 0L
+            override val position = position
+            override val activeTripId: String? = "t"
+            override val distanceAlongTrip = distanceAlongTrip
+            override val scheduledDistanceAlongTrip: Double? = null
+            override val totalDistanceAlongTrip: Double? = null
+            override val orientation: Double? = null
+            override val nextStop: String? = null
+            override val nextStopTimeOffset: Long? = null
+            override val phase: String? = null
+            override val status: Status? = null
+            override val lastUpdateTime = 0L
+            override val lastKnownLocation = position
+            override val lastLocationUpdateTime = 0L
+            override val lastKnownDistanceAlongTrip: Double? = null
+            override val lastKnownOrientation: Double? = null
+            override val blockTripSequence = 0
+            override val occupancyStatus: Occupancy? = null
+        }
 
     /** A straight ~3.3 km line heading north along longitude -122. */
     private fun northLine() = Polyline(
@@ -79,6 +110,53 @@ class TripExtrapolationBuilderTest {
             assertTrue(it.points.size >= 2)
         }
         assertNull("no anchor -> no data-age marker", extrapolation.dataAge)
+    }
+
+    @Test
+    fun dataAgeMarkerFollowsProjectedAnchorDistanceNotRawPosition() {
+        // Anchor's raw position is well OFF the shape (lng -122.5), but its distanceAlongTrip places it
+        // mid-line (1500 m ~ lat 47.015 on the north line). The dot must follow the projected distance —
+        // the same value the glide is seeded from — so it can't float ahead of the glide (regression from
+        // a821321a8, which pinned the dot to the raw `position`).
+        val extrapolation = buildTripExtrapolation(
+            TripState(
+                "t",
+                anchor = anchorStatus(position = loc(47.5, -122.5), distanceAlongTrip = 1500.0),
+                anchorLocalTimeMs = WallTime(1_000L),
+                polyline = northLine(),
+            ),
+            ExtrapolationResult.Success(UniformDist(3000.0)),
+            nowMs = WallTime(6_000L),
+        )!!
+
+        val dot = extrapolation.dataAge!!
+        assertEquals("dot rides the shape (projected distance), not the off-route raw position",
+            -122.0, dot.point.longitude, 1e-6)
+        assertTrue(dot.point.latitude > 47.0 && dot.point.latitude < 47.03)
+        // The projected dot coincides with the glide's origin: the median (q0.50 of the uniform over the
+        // remaining shape) is at or ahead of it, never behind.
+        assertTrue("glide median is not behind the data dot",
+            extrapolation.vehiclePoint!!.latitude >= dot.point.latitude - 1e-9)
+        assertEquals(5_000L, dot.ageMillis)
+    }
+
+    @Test
+    fun dataAgeMarkerFallsBackToRawPositionWithoutDistance() {
+        // No distanceAlongTrip to project (and no shape placement possible) → fall back to raw position.
+        val extrapolation = buildTripExtrapolation(
+            TripState(
+                "t",
+                anchor = anchorStatus(position = loc(47.5, -122.5), distanceAlongTrip = null),
+                anchorLocalTimeMs = WallTime(1_000L),
+                polyline = northLine(),
+            ),
+            ExtrapolationResult.NoData,
+            nowMs = WallTime(1_000L),
+        )!!
+
+        val dot = extrapolation.dataAge!!
+        assertEquals(-122.5, dot.point.longitude, 1e-6)
+        assertEquals(47.5, dot.point.latitude, 1e-6)
     }
 
     @Test

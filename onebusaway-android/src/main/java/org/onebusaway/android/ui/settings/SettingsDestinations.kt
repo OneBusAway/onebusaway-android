@@ -18,9 +18,9 @@
 package org.onebusaway.android.ui.settings
 
 import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -113,7 +113,7 @@ fun NavGraphBuilder.settingsGraph(navController: NavHostController) {
                     activity.startActivity(
                         Intent(
                             Intent.ACTION_VIEW,
-                            Uri.parse(activity.getString(R.string.powered_by_oba_url))
+                            activity.getString(R.string.powered_by_oba_url).toUri()
                         )
                     )
                 },

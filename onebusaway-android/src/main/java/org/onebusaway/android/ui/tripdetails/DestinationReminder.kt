@@ -171,9 +171,12 @@ internal fun rememberDestinationReminderAction(
             resources.getString(R.string.analytics_label_destination_reminder),
             resources.getString(R.string.analytics_label_destination_reminder_variant_started)
         )
-        ActivityCompat.requestPermissions(
-            activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_PERMISSION_REQUEST
-        )
+        // POST_NOTIFICATIONS is a runtime permission only on API 33+; older versions grant it implicitly.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.requestPermissions(
+                activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_PERMISSION_REQUEST
+            )
+        }
         val serviceIntent = setUpNavigationService(position) ?: return
         startNavigationService(serviceIntent)
         Toast.makeText(

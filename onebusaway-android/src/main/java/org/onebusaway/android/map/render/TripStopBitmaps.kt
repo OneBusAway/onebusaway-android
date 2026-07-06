@@ -19,6 +19,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import androidx.core.graphics.createBitmap
 
 /**
  * The trip-focus map's scheduled-stop dot bitmaps: a white disc with a gray stroke, plus a
@@ -38,7 +39,7 @@ object TripStopBitmaps {
     fun dot(selected: Boolean): Bitmap = cache.getOrPut(selected) { draw(selected) }
 
     private fun draw(selected: Boolean): Bitmap {
-        val bitmap = Bitmap.createBitmap(SIZE_PX, SIZE_PX, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(SIZE_PX, SIZE_PX)
         val canvas = Canvas(bitmap)
         val center = SIZE_PX / 2f
         val radius = center - STROKE_PX / 2f

@@ -20,6 +20,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 
 /**
  * Circular trip-marker bitmaps: a dark-stroked, opaque-white-filled disc with a drawable centered
@@ -58,7 +59,7 @@ object TripMarkerBitmaps {
         val strokeWidth = STROKE_WIDTH_DP * density
         val center = sizePx / 2f
 
-        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(sizePx, sizePx)
         val canvas = Canvas(bitmap)
 
         canvas.drawCircle(center, center, center - strokeWidth / 2f, Paint(Paint.ANTI_ALIAS_FLAG).apply {

@@ -23,10 +23,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.text.TextUtils
 import android.widget.Toast
+import androidx.core.net.toUri
 
 import com.google.android.gms.common.GoogleApiAvailability
 
@@ -42,7 +42,7 @@ import org.onebusaway.android.region.Region
 object ExternalIntents {
 
     fun goToUrl(context: Context, url: String) {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
         try {
             context.startActivity(intent)
         } catch (e: ActivityNotFoundException) {
@@ -53,7 +53,7 @@ object ExternalIntents {
 
     fun goToPhoneDialer(context: Context, url: String) {
         val intent = Intent(Intent.ACTION_DIAL)
-        intent.setData(Uri.parse(url))
+        intent.setData(url.toUri())
         context.startActivity(intent)
     }
 
@@ -293,7 +293,7 @@ object ExternalIntents {
         } else {
             // Go to Play Store listing to download app
             intent = Intent(Intent.ACTION_VIEW)
-            intent.setData(Uri.parse(activity.getString(R.string.google_play_listing_prefix, paymentAndroidAppId)))
+            intent.setData(activity.getString(R.string.google_play_listing_prefix, paymentAndroidAppId).toUri())
             activity.startActivity(intent)
             AnalyticsEntryPoint.get(activity).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
@@ -324,7 +324,7 @@ object ExternalIntents {
         } else {
             // Go to Play Store listing to download app
             intent = Intent(Intent.ACTION_VIEW)
-            intent.setData(Uri.parse(context.getString(R.string.google_play_listing_prefix, context.getString(R.string.hopr_android_app_id))))
+            intent.setData(context.getString(R.string.google_play_listing_prefix, context.getString(R.string.hopr_android_app_id)).toUri())
             context.startActivity(intent)
             AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,

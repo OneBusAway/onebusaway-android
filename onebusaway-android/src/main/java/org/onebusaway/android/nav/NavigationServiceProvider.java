@@ -34,7 +34,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
-import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
@@ -758,11 +757,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      * @param queueFlag Flag to use when adding message to queue.
      */
     private void speak(String message, int queueFlag) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mTTS.speak(message, queueFlag, null, "TRIPMESSAGE");
-        } else {
-            mTTS.speak(message, queueFlag, null);
-        }
+        mTTS.speak(message, queueFlag, null, "TRIPMESSAGE");
     }
 
     /**
@@ -772,10 +767,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      * @param queueFlag Flag to use when adding to the queue.
      */
     private void silence(long duration, int queueFlag) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mTTS.playSilentUtterance(duration, queueFlag, "TRIPSILENCE");
-        } else {
-            mTTS.playSilence(duration, queueFlag, null);
-        }
+        mTTS.playSilentUtterance(duration, queueFlag, "TRIPSILENCE");
     }
 }

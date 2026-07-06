@@ -54,6 +54,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.toColorInt
 import kotlinx.coroutines.delay
 
 private const val UI_TICK_MS = 1_000L
@@ -142,9 +143,9 @@ private fun TrajectoryGraph(trajectory: TripTrajectory, modifier: Modifier) {
         }
     }
     val labelPaint = remember(density) { textPaint(density, android.graphics.Color.LTGRAY, 15f) }
-    val nowLabelPaint = remember(density) { textPaint(density, android.graphics.Color.parseColor("#FF4444"), 15f) }
+    val nowLabelPaint = remember(density) { textPaint(density, "#FF4444".toColorInt(), 15f) }
     val deviationLabelPaint = remember(density) {
-        textPaint(density, android.graphics.Color.parseColor("#FFAA00"), 16.5f, bold = true)
+        textPaint(density, "#FFAA00".toColorInt(), 16.5f, bold = true)
     }
     val timeFormat = remember(is24Hour) { if (is24Hour) "HH:mm:ss" else "h:mm:ss" }
 

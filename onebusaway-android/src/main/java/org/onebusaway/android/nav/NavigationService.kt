@@ -28,6 +28,7 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.PendingIntentCompat
 import androidx.core.app.RemoteInput
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
@@ -418,15 +419,11 @@ class NavigationService : Service() {
             intentNo.putExtra(FeedbackReceiver.RESPONSE, FeedbackReceiver.FEEDBACK_NO)
             intentNo.putExtra(FeedbackReceiver.LOG_FILE, logFile!!.absolutePath)
 
-            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                PendingIntent.FLAG_MUTABLE
-            } else {
-                0
-            }
-
-            // PendingIntent to handle user feedback when a user taps on 'No'
-            val fdPendingIntentNo = PendingIntent.getBroadcast(
-                applicationContext, 100, intentNo, flags
+            // PendingIntent to handle user feedback when a user taps on 'No'.
+            // Mutable so the RemoteInput reply can be written into it; PendingIntentCompat
+            // applies FLAG_MUTABLE/FLAG_IMMUTABLE per API level without an inlined S+ constant.
+            val fdPendingIntentNo = PendingIntentCompat.getBroadcast(
+                applicationContext, 100, intentNo, 0, true
             )
 
             val replyLabelNo = resources.getString(R.string.feedback_action_reply_no)
@@ -445,9 +442,9 @@ class NavigationService : Service() {
             intentYes.putExtra(FeedbackReceiver.RESPONSE, FeedbackReceiver.FEEDBACK_YES)
             intentYes.putExtra(FeedbackReceiver.LOG_FILE, logFile!!.absolutePath)
 
-            // PendingIntent to handle user feedback when a user taps on 'No'
-            val fdPendingIntentYes = PendingIntent.getBroadcast(
-                applicationContext, 101, intentYes, flags
+            // PendingIntent to handle user feedback when a user taps on 'Yes'
+            val fdPendingIntentYes = PendingIntentCompat.getBroadcast(
+                applicationContext, 101, intentYes, 0, true
             )
 
             val replyLabelYes = resources.getString(R.string.feedback_action_reply_yes)
@@ -459,7 +456,7 @@ class NavigationService : Service() {
                 .build()
 
             delIntent.action = FeedbackReceiver.ACTION_DISMISS_FEEDBACK
-            val pDelIntent = PendingIntent.getBroadcast(applicationContext, 0, delIntent, flags)
+            val pDelIntent = PendingIntentCompat.getBroadcast(applicationContext, 0, delIntent, 0, true)
 
             builder = NotificationCompat.Builder(
                 applicationContext, NotificationChannels.DESTINATION_ALERT_ID

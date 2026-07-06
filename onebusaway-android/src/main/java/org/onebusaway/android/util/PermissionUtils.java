@@ -19,7 +19,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.os.Build;
 
 import androidx.core.content.ContextCompat;
 
@@ -80,10 +79,6 @@ public class PermissionUtils {
      * @return true if the provided permission in requiredPermission has been granted, or false if it has not
      */
     public static boolean hasGrantedPermission(Context context, String requiredPermission) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            // Permissions granted at install time
-            return true;
-        }
         return ContextCompat.checkSelfPermission(context, requiredPermission) == PackageManager.PERMISSION_GRANTED;
     }
 }

@@ -18,6 +18,7 @@
 package org.onebusaway.android.ui.tripdetails
 
 import android.Manifest
+import android.os.Build
 import android.widget.Toast
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
@@ -172,11 +173,14 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
                 viewModel = infoVm,
                 onBack = { navController.popBackStack() },
                 onSave = {
-                    ActivityCompat.requestPermissions(
-                        activity,
-                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                        PermissionUtils.NOTIFICATION_PERMISSION_REQUEST
-                    )
+                    // POST_NOTIFICATIONS is a runtime permission only on API 33+; older versions grant it implicitly.
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        ActivityCompat.requestPermissions(
+                            activity,
+                            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                            PermissionUtils.NOTIFICATION_PERMISSION_REQUEST
+                        )
+                    }
                     infoVm.save()
                 },
                 onDelete = {

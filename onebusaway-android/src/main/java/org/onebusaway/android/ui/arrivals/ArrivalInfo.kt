@@ -103,7 +103,7 @@ class ArrivalInfo(
 
     /** The departure time to set a reminder for: the predicted time if known, else the scheduled. */
     val reminderDepartureTime: Long
-        get() = if (data.predictedDepartureTime.epochMs != 0L) data.predictedDepartureTime.epochMs
+        get() = if (data.predictedDepartureTime.epochMs > 0L) data.predictedDepartureTime.epochMs
         else data.scheduledDepartureTime.epochMs
 
     /** Flattens this arrival into the report flow's scalar context (was ObaArrivalInfo-based). */
@@ -116,7 +116,11 @@ class ArrivalInfo(
         vehicleId = data.vehicleId,
         stopId = data.stopId,
         serviceDate = data.serviceDate,
-        predicted = data.predicted,
+        // The normalized flag (data.predicted AND a positive predicted instant), not the raw
+        // server flag: at a closed stop the server keeps predicted:true but suppresses the
+        // instants to 0 (issue #1687), and the report builder branches on this to pick the
+        // predicted vs scheduled times — the raw flag would format Date(0) as a 1969 garbage time.
+        predicted = predicted,
         predictedArrivalTime = data.predictedArrivalTime.epochMs,
         predictedDepartureTime = data.predictedDepartureTime.epochMs,
         scheduledArrivalTime = data.scheduledArrivalTime.epochMs,
@@ -150,7 +154,13 @@ class ArrivalInfo(
         val scheduledMins = scheduled.epochMs / MS_IN_MINS
         val predictedMins = predictedTime.epochMs / MS_IN_MINS
 
-        if (data.predicted) {
+        // A prediction is only usable when the server actually gave us a positive instant. A closed
+        // stop keeps `predicted:true` but suppresses the near-term prediction to a non-positive
+        // sentinel (normalized to 0 at the wire→domain boundary, issue #1687); keying the ETA off the
+        // boolean alone would subtract a 0 timestamp from "now" and render garbage (~ -29,718,596 min).
+        val hasPrediction = data.predicted && predictedTime.epochMs > 0L
+
+        if (hasPrediction) {
             predicted = true
             eta = predictedMins - nowMins
             displayTime = predictedTime.epochMs
@@ -163,7 +173,7 @@ class ArrivalInfo(
         color = ArrivalInfoUtils.computeColor(scheduledMins, predictedMins)
 
         statusText = computeStatusLabel(
-            context, now, predictedTime, scheduledMins, predictedMins,
+            context, now, hasPrediction, scheduledMins, predictedMins,
             includeArrivalDepartureInStatusLabel
         )
         timeText = computeTimeLabel(context)
@@ -186,7 +196,7 @@ class ArrivalInfo(
     private fun computeStatusLabel(
         context: Context?,
         now: ServerTime,
-        predictedTime: ServerTime,
+        hasPrediction: Boolean,
         scheduledMins: Long,
         predictedMins: Long,
         includeArrivalDeparture: Boolean
@@ -231,7 +241,7 @@ class ArrivalInfo(
             return context.getString(statusLabelId, headwayAsMinutes, label)
         }
 
-        if (predictedTime.epochMs != 0L) {
+        if (hasPrediction) {
             // Real-time info
             var delay = predictedMins - scheduledMins
 

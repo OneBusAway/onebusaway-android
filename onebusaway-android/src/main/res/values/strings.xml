@@ -205,14 +205,6 @@
             min early
         </item>
     </plurals>
-    <plurals name="stop_info_car_count">
-        <item quantity="one">1 car</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">
-            <xliff:g id="count">%d</xliff:g>
-            cars
-        </item>
-    </plurals>
     <string name="stop_info_scheduled_arrival">Scheduled arrival</string>
     <string name="stop_info_scheduled_departure">Scheduled departure</string>
     <string name="stop_info_scheduled">Scheduled</string>
@@ -288,9 +280,6 @@
     <string name="stop_info_favorite">Favorite stop</string>
     <string name="stop_info_official_stop_name_label">Official name: %1$s</string>
     <string name="stop_info_route_ids_label">Routes:</string>
-    <string name="stop_header_sliding_panel_collapsed">Sliding panel collapsed. Tap to expand and
-        show detailed arrivals list, or press Back button to hide.
-    </string>
 
     <!-- Destination reminders -->
     <string name="destination_reminder_dialog_title">Destination reminder (beta)</string>
@@ -921,9 +910,6 @@
     <string name="trip_plan_clear_endpoint">Clear</string>
     <string name="trip_plan_contacts">Choose from contacts</string>
 
-
-    <string name="trip_plan_list_view">List View</string>
-    <string name="trip_plan_map_view">Map View</string>
 
     <string name="tripplanner_no_server_selected_error">No region selected</string>
     <string name="tripplanner_error_dialog_title">Planning not possible</string>

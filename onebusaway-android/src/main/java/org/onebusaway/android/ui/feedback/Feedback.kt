@@ -49,6 +49,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import java.io.File
@@ -173,7 +174,11 @@ class FeedbackSubmitter(
         val uploadCheckWork = PeriodicWorkRequest
             .Builder(NavigationUploadWorker::class.java, 24, TimeUnit.HOURS)
             .build()
-        WorkManager.getInstance().enqueue(uploadCheckWork)
+        WorkManager.getInstance().enqueueUniquePeriodicWork(
+            NavigationUploadWorker.UNIQUE_WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            uploadCheckWork
+        )
     }
 
     private fun logFeedback(liked: Boolean, feedbackText: String) {

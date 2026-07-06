@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.RemoteInput;
+import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
@@ -170,8 +171,12 @@ public class FeedbackReceiver extends BroadcastReceiver {
         // Create the actual work object:
         PeriodicWorkRequest uploadCheckWork = uploadLogsBuilder.build();
 
-        // Then enqueue the recurring task:
-        WorkManager.getInstance().enqueue(uploadCheckWork);
+        // Then enqueue the recurring task under a unique name so repeated feedback submissions keep
+        // a single upload chain instead of stacking one each time:
+        WorkManager.getInstance().enqueueUniquePeriodicWork(
+                NavigationUploadWorker.UNIQUE_WORK_NAME,
+                ExistingPeriodicWorkPolicy.KEEP,
+                uploadCheckWork);
     }
 
     private void logFeedback(Context context, String feedbackText, String userResponse) {

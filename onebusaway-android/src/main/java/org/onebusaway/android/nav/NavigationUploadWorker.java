@@ -45,6 +45,12 @@ public class NavigationUploadWorker extends Worker {
 
     public static final String TAG = "NavigationUploadWorker";
 
+    /**
+     * Unique name for the periodic upload work, shared by every enqueue site so WorkManager keeps a
+     * single recurring chain instead of stacking a new one per feedback submission.
+     */
+    public static final String UNIQUE_WORK_NAME = "navigation_log_upload";
+
 
     public NavigationUploadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);

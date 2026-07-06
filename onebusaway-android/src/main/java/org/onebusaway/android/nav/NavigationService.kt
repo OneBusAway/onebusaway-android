@@ -30,6 +30,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.PendingIntentCompat
 import androidx.core.app.RemoteInput
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import com.google.firebase.auth.FirebaseAuth
@@ -485,8 +486,13 @@ class NavigationService : Service() {
         // Create the actual work object:
         val cleanUpCheckWork = cleanupLogsBuilder.build()
 
-        // Then enqueue the recurring task:
-        WorkManager.getInstance().enqueue(cleanUpCheckWork)
+        // Then enqueue the recurring task under a unique name so repeated navigation starts keep a
+        // single cleanup chain instead of stacking one each time:
+        WorkManager.getInstance().enqueueUniquePeriodicWork(
+            NavigationCleanupWorker.UNIQUE_WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            cleanUpCheckWork
+        )
     }
 
     companion object {

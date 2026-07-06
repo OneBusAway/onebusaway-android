@@ -45,6 +45,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -236,7 +237,7 @@ fun HomeScreen(
         // the screen, since the panel and the sheet both live here (no need to round-trip the VM). Seeded
         // at the two-arrivals height so the first reveal doesn't flash undersized (legacy default), and
         // arrivalsReady gates the peek open until the focused stop's arrivals load (reset on focus change).
-        var peekArrivalCount by remember { mutableStateOf(2) }
+        var peekArrivalCount by remember { mutableIntStateOf(2) }
         var routeFiltering by remember { mutableStateOf(false) }
         var arrivalsReady by remember { mutableStateOf(false) }
         LaunchedEffect(state.focusedStop?.id) { arrivalsReady = false }

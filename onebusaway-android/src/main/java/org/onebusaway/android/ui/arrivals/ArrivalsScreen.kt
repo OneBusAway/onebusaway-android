@@ -64,6 +64,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -532,7 +533,7 @@ private fun AlertList(
     onShowAlert: (String) -> Unit,
     onHideAlert: (AlertItem) -> Unit
 ) {
-    var visibleCount by rememberSaveable { mutableStateOf(ALERT_PAGE_SIZE) }
+    var visibleCount by rememberSaveable { mutableIntStateOf(ALERT_PAGE_SIZE) }
     val visible = alerts.take(visibleCount)
     Column {
         for (alert in visible) {

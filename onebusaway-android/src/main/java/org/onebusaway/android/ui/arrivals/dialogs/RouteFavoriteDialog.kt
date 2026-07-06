@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -70,7 +71,7 @@ private fun RouteFavoriteDialog(
         routeTitle
     )
     val options = stringArrayResource(R.array.route_favorite_options)
-    var selected by remember { mutableStateOf(SELECTION_THIS_STOP) }
+    var selected by remember { mutableIntStateOf(SELECTION_THIS_STOP) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },

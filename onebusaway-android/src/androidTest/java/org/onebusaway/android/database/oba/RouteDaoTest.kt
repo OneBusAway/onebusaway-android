@@ -18,10 +18,13 @@ package org.onebusaway.android.database.oba
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -74,6 +77,21 @@ class RouteDaoTest {
         assertEquals(1L, r.regionId)             // regionId = null keeps the existing region
         assertEquals("10", r.shortName)          // short/long names refreshed
         assertEquals("Route 10 renamed", r.longName)
+    }
+
+    @Test
+    fun isFavorite_reflectsTheFavoriteBit() = runBlocking {
+        // No row yet -> not a favorite (the route-map header's default before a star lands).
+        assertFalse(dao.isFavorite("r4").first())
+
+        dao.storeRouteDetails("r4", "40", "Route 40", "http://u", regionId = 4L, now = 100)
+        assertFalse(dao.isFavorite("r4").first())   // row exists, favorite still unset
+
+        dao.setFavorite("r4", 1)
+        assertTrue(dao.isFavorite("r4").first())
+
+        dao.setFavorite("r4", 0)
+        assertFalse(dao.isFavorite("r4").first())
     }
 
     @Test

@@ -54,6 +54,10 @@ interface RouteDao {
     @Query("SELECT _id FROM routes WHERE favorite = 1")
     suspend fun favoriteRouteIds(): List<String>
 
+    /** Whether [routeId] is starred, live — drives the route-map header star toggle (#1727). */
+    @Query("SELECT EXISTS(SELECT 1 FROM routes WHERE _id = :routeId AND favorite = 1)")
+    fun isFavorite(routeId: String): Flow<Boolean>
+
     // --- Usage/metadata writes (the legacy partial upsert; see RoutesStore) ---
 
     /**

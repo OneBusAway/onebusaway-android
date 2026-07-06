@@ -80,6 +80,14 @@ internal fun planActiveAlerts(
             )
         }
 
+/**
+ * The representative *active* service-alert id for an arrival: the first of the arrival's referenced
+ * [situationIds] that is currently active, or null when none apply. Drives the per-row alert
+ * indicator (issue #1687 Bug 2) so a row lights up only for an alert the banner is also surfacing.
+ */
+internal fun activeAlertFor(situationIds: List<String>, activeSituationIds: Set<String>): String? =
+    situationIds.firstOrNull { it in activeSituationIds }
+
 /** Maps an ObaSituation severity onto the three banner styles, matching the legacy SituationAlert. */
 internal fun severityOf(severity: String?): AlertSeverity = when (severity) {
     ObaSituation.SEVERITY_NO_IMPACT -> AlertSeverity.INFO
@@ -339,10 +347,12 @@ class DefaultArrivalsRepository @Inject constructor(
         val routeOptions = buildRouteFilterOptions(snapshot, stop, routeFilter)
         // Pure grouping; no store write. Hidden state is derived in the ViewModel from [alertHideState]
         // plus [ArrivalsData.hideAlertsByDefault], so nothing on the load path can race the snapshot.
-        val activeAlerts = planActiveAlerts(
-            situations = snapshot.situations(ArrayList(routeFilter)),
-            isActive = { SituationUtils.isActiveWindowForSituation(it, now) }
-        )
+        val situations = snapshot.situations(ArrayList(routeFilter))
+        val isActive = { s: ObaSituation -> SituationUtils.isActiveWindowForSituation(s, now) }
+        val activeAlerts = planActiveAlerts(situations, isActive)
+        // The situation ids that are active right now, so a per-arrival alert indicator lights up
+        // only for currently-active alerts — matching the banner's active set (issue #1687 Bug 2).
+        val activeSituationIds = situations.filter(isActive).mapTo(HashSet()) { it.id }
         return ArrivalsData(
             arrivals = arrivals,
             header = header,
@@ -350,7 +360,7 @@ class DefaultArrivalsRepository @Inject constructor(
             style = style,
             isStale = isStale,
             effectiveRouteFilter = routeFilter,
-            actions = buildActions(snapshot, arrivals),
+            actions = buildActions(snapshot, arrivals, activeSituationIds),
             activeAlerts = activeAlerts,
             hideAlertsByDefault =
                 preferences.getBoolean(R.string.preference_key_hide_alerts, false),
@@ -374,7 +384,8 @@ class DefaultArrivalsRepository @Inject constructor(
     /** Precomputes the navigation/dialog data for each arrival (legacy reads these on menu tap). */
     private fun buildActions(
         snapshot: StopArrivals,
-        arrivals: List<ArrivalInfo>
+        arrivals: List<ArrivalInfo>,
+        activeSituationIds: Set<String>
     ): Map<String, ArrivalActions> = arrivals.associate { arrival ->
         val route = snapshot.route(arrival.routeId)
         arrival.tripId to ArrivalActions(
@@ -387,7 +398,8 @@ class DefaultArrivalsRepository @Inject constructor(
             scheduleUrl = route?.url,
             agencyName = route?.agencyId?.let { snapshot.agencyName(it) },
             blockId = snapshot.trip(arrival.tripId)?.blockId,
-            isRouteFavorite = arrival.isRouteAndHeadsignFavorite
+            isRouteFavorite = arrival.isRouteAndHeadsignFavorite,
+            alertSituationId = activeAlertFor(arrival.situationIds, activeSituationIds)
         )
     }
 

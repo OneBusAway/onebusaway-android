@@ -26,6 +26,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.directions.util.TripRequestBuilder
+import org.onebusaway.android.region.FakeRegionRepository
+import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.util.TimeProvider
 import org.opentripplanner.api.model.Itinerary
@@ -77,8 +80,9 @@ class TripPlanViewModelTest {
 
     private fun viewModel(
         geocode: GeocodeRepository = FakeGeocodeRepository(Result.success(emptyList())),
-        plan: TripPlanRepository = FakeTripPlanRepository(Result.success(listOf(Itinerary())))
-    ) = TripPlanViewModel(geocode, plan, TimeProvider { 0L }, FakeAdvancedSettingsRepository())
+        plan: TripPlanRepository = FakeTripPlanRepository(Result.success(listOf(Itinerary()))),
+        region: RegionRepository = FakeRegionRepository()
+    ) = TripPlanViewModel(geocode, plan, region, TimeProvider { 0L }, FakeAdvancedSettingsRepository())
 
     /** Sets both resolved endpoints (which auto-submits a plan once both have coordinates). */
     private fun setBothEndpoints(vm: TripPlanViewModel) {
@@ -264,6 +268,17 @@ class TripPlanViewModelTest {
         setBothEndpoints(vm)
         advanceUntilIdle()
         assertEquals(PlanResult.Error("no route"), vm.planState.value)
+    }
+
+    @Test
+    fun `otpContactEmail reflects the active region's OTP contact`() = runTest {
+        val regionRepo = FakeRegionRepository(region(id = 1, otpContactEmail = "otp@example.com"))
+        val vm = viewModel(region = regionRepo)
+        assertEquals("otp@example.com", vm.otpContactEmail)
+
+        // A region change (or clearing) is reflected on the next read — it isn't cached in the VM.
+        regionRepo.emit(region(id = 2, otpContactEmail = null))
+        assertEquals(null, vm.otpContactEmail)
     }
 
     @Test

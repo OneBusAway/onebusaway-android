@@ -58,6 +58,7 @@ internal fun region(
     id: Long,
     supportsOtpBikeshare: Boolean = false,
     twitterUrl: String? = null,
+    otpContactEmail: String? = null,
 ): Region = Region(
         id,            // id
         "Region $id",  // name
@@ -75,7 +76,7 @@ internal fun region(
         false,         // experimental
         null,          // stopInfoUrl
         null,          // otpBaseUrl
-        null,          // otpContactEmail
+        otpContactEmail, // otpContactEmail
         supportsOtpBikeshare, // supportsOtpBikeshare
         false,         // supportsEmbeddedSocial
         null,          // paymentAndroidAppId

@@ -77,12 +77,10 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
-import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.onebusaway.android.analytics.PlausibleAnalytics
-import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.components.SwitchRow
 import org.onebusaway.android.ui.compose.findActivity
@@ -109,10 +107,6 @@ import org.opentripplanner.api.model.Itinerary
 fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
     val viewModel = hiltViewModel<TripPlanViewModel>()
     val activity = LocalContext.current.findActivity()
-
-    // Built once for the lifetime of this destination (analytics + region email for "report problem").
-    // HomeActivity doesn't inject RegionRepository; reach the shared singleton via the EntryPoint.
-    val regionRepository = remember { RegionEntryPoint.get(activity) }
 
     // -- Contacts pick: a launcher + the endpoint a pending pick should populate. A contacts pick
     // doesn't dispose this composable, so a plain remember (not rememberSaveable) suffices.
@@ -175,7 +169,7 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
             when (state) {
                 is PlanResult.Loading -> reportPlanAnalytics(activity)
                 is PlanResult.Error -> {
-                    showFeedbackDialog(activity, regionRepository, state.message)
+                    showFeedbackDialog(activity, viewModel.otpContactEmail, state.message)
                     viewModel.clearPlanResult()
                 }
                 else -> {}
@@ -205,7 +199,7 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
         onFromPickOnMap = { launchMapPicker("from", viewModel.formState.value.from) },
         onToPickOnMap = { launchMapPicker("to", viewModel.formState.value.to) },
         onAdvancedSettings = { showAdvanced = true },
-        onReportProblem = { reportProblem(activity, regionRepository) }
+        onReportProblem = { reportProblem(activity, viewModel.otpContactEmail) }
     )
 
     if (showAdvanced) {
@@ -563,7 +557,7 @@ private fun AdvancedSettingsDialog(
 
 private fun showFeedbackDialog(
     activity: AppCompatActivity,
-    regionRepository: RegionRepository,
+    contactEmail: String?,
     message: String
 ) {
     MaterialAlertDialogBuilder(activity)
@@ -571,24 +565,23 @@ private fun showFeedbackDialog(
         .setMessage(message)
         .setPositiveButton(android.R.string.ok, null)
         .setNegativeButton(R.string.report_problem_report) { _, _ ->
-            reportProblem(activity, regionRepository)
+            reportProblem(activity, contactEmail)
         }
         .show()
 }
 
 private fun reportProblem(
     activity: AppCompatActivity,
-    regionRepository: RegionRepository
+    contactEmail: String?
 ) {
-    val email = regionRepository.region.value?.otpContactEmail
-    if (email.isNullOrEmpty()) {
+    if (contactEmail.isNullOrEmpty()) {
         Toast.makeText(activity, activity.getString(R.string.tripplanner_no_contact), Toast.LENGTH_SHORT)
             .show()
         return
     }
     val location = LocationEntryPoint.get(activity.applicationContext).lastKnownLocation()
     val locationString = location?.let { LocationUtils.printLocationDetails(it) }
-    ExternalIntents.sendEmail(activity, email, locationString, null, true)
+    ExternalIntents.sendEmail(activity, contactEmail, locationString, null, true)
     AnalyticsEntryPoint.get(activity).reportUiEvent(
         PlausibleAnalytics.REPORT_TRIP_PLANNER_EVENT_URL,
         activity.getString(R.string.analytics_label_app_feedback_otp), null

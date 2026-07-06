@@ -138,6 +138,7 @@ private data class FakeArrivalData(
     override val predictedDepartureTime: ServerTime = ServerTime(0L),
     override val status: Status? = null,
     override val frequency: FrequencyWindow? = null,
+    override val situationIds: List<String> = emptyList(),
     override val historicalOccupancy: Occupancy? = null,
     override val predictedOccupancy: Occupancy? = null,
     override val hasTripStatus: Boolean = false,

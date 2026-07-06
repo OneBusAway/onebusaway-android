@@ -53,6 +53,7 @@ import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -460,7 +461,7 @@ private fun AdvancedSettingsDialog(
     }
     val current = remember { viewModel.formState.value }
     var selectedMode by remember {
-        mutableStateOf(options.firstOrNull { it.second == current.modeId }?.second ?: options.first().second)
+        mutableIntStateOf(options.firstOrNull { it.second == current.modeId }?.second ?: options.first().second)
     }
     var minimizeTransfers by remember { mutableStateOf(current.optimizeTransfers) }
     var wheelchair by remember { mutableStateOf(current.wheelchair) }

@@ -23,6 +23,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Shader
 import androidx.core.graphics.createBitmap
+import androidx.core.graphics.withRotation
 import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.max
@@ -230,24 +231,23 @@ object StopBitmaps {
                 lineTo(center, center - tipDistance)
                 close()
             }
-            canvas.save()
-            canvas.rotate(directionAngleDeg, center, center)
-            val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                style = Paint.Style.FILL
-                // Darkest at the tip, matching the plain markers' arrow shading.
-                shader = LinearGradient(
-                    center, center - tipDistance, center, center - tipDistance + arrowHeight,
-                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR
-                )
+            canvas.withRotation(directionAngleDeg, center, center) {
+                val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    style = Paint.Style.FILL
+                    // Darkest at the tip, matching the plain markers' arrow shading.
+                    shader = LinearGradient(
+                        center, center - tipDistance, center, center - tipDistance + arrowHeight,
+                        arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR
+                    )
+                }
+                drawPath(path, fill)
+                val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    style = Paint.Style.STROKE
+                    strokeWidth = 1f
+                    color = Color.WHITE
+                }
+                drawPath(path, stroke)
             }
-            canvas.drawPath(path, fill)
-            val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                style = Paint.Style.STROKE
-                strokeWidth = 1f
-                color = Color.WHITE
-            }
-            canvas.drawPath(path, stroke)
-            canvas.restore()
         }
         return bm
     }

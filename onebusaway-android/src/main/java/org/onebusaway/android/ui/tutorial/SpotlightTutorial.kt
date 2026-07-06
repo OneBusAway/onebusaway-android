@@ -54,6 +54,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -106,7 +107,7 @@ data class TutorialStep(
 class TutorialState {
     var steps by mutableStateOf<List<TutorialStep>>(emptyList())
         private set
-    var index by mutableStateOf(0)
+    var index by mutableIntStateOf(0)
         private set
 
     private val bounds = mutableStateMapOf<String, Rect>()

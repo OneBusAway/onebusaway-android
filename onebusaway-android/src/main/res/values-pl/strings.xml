@@ -174,14 +174,6 @@
             minut wcześniej
         </item>
     </plurals>
-    <plurals name="stop_info_car_count" tools:ignore="MissingQuantity">
-        <item quantity="one">1 wagon</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">
-            <xliff:g id="count">%d</xliff:g>
-            wagon
-        </item>
-    </plurals>
     <string name="stop_info_scheduled_arrival">Planowany przyjazd</string>
     <string name="stop_info_scheduled_departure">Planowany odjazd</string>
     <string name="stop_info_scheduled">Planowo</string>
@@ -258,9 +250,6 @@
     <string name="stop_info_favorite">Ulubiony przystanek</string>
     <string name="stop_info_route_ids_label">Trasy:</string>
     <string name="stop_info_official_stop_name_label">Oficjalna nazwa: %1$s</string>
-    <string name="stop_header_sliding_panel_collapsed">Przesuwanie panelu powiększone. Dotknij by powiększyć i
-        pokazać szczegółową listę przyjazdów, lub wciśnij przycisk powrotu by ukryć.
-    </string>
 
     <!-- Destination reminders -->
     <string name="destination_reminder_dialog_title">Przypomnienie o celu podróży (beta)</string>
@@ -876,8 +865,6 @@
     <string name="trip_plan_arriving">Przyjazd</string>
     <string name="trip_plan_date">Data</string>
     <string name="trip_plan_time">Czas</string>
-    <string name="trip_plan_list_view">Widok listy</string>
-    <string name="trip_plan_map_view">Widok mapy</string>
 
     <string name="tripplanner_no_server_selected_error">Nie wybrano regionu</string>
     <string name="tripplanner_error_dialog_title">Planowanie niemożliwe</string>

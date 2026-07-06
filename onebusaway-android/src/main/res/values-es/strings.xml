@@ -238,18 +238,6 @@
             min antes
         </item>
     </plurals>
-    <plurals name="stop_info_car_count">
-        <item quantity="one">1 coche</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">
-            <xliff:g id="count">%d</xliff:g>
-            coches
-        </item>
-        <item quantity="many">
-            <xliff:g id="count">%d</xliff:g>
-            coches
-        </item>
-    </plurals>
     <string name="stop_info_scheduled_arrival">Llegada planificada</string>
     <string name="stop_info_scheduled_departure">Salida planificada</string>
     <string name="stop_info_scheduled">Planificada</string>
@@ -336,9 +324,6 @@
     <string name="stop_info_favorite">Parada Favorita</string>
     <string name="stop_info_official_stop_name_label">Nombre oficial: %1$s</string>
     <string name="stop_info_route_ids_label">Rutas:</string>
-    <string name="stop_header_sliding_panel_collapsed">El planel desplizante se colapso. Toque para expandir y
-        ver la lista detallada de llegadas, o presione el botón Atrás para ocultar.
-    </string>
 
     <!-- Stop Details -->
     <string name="stop_details_code">Parada # %1$s</string>
@@ -883,8 +868,6 @@
     <string name="trip_plan_date">Fecha</string>
     <string name="trip_plan_time">Tiempo</string>
 
-    <string name="trip_plan_list_view">Vista de Lista</string>
-    <string name="trip_plan_map_view">Vista de Mapa</string>
 
     <string name="tripplanner_no_server_selected_error">No hay ninguna región seleccionada</string>
     <string name="tripplanner_error_dialog_title">No fue posible realizar la Planeación</string>

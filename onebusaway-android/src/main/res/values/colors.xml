@@ -41,10 +41,6 @@
     <!-- Navigation Drawer -->
     <color name="navdrawer_icon_tint">#888</color>
 
-    <!-- Default route line color on map -->
-    <color name="route_line_color_default">#00F</color>
-    <color name="route_text_color_default">@android:color/black</color>
-
     <!-- Arrival times header -->
 
     <!-- Arrival time colors -->

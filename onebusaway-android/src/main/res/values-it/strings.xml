@@ -157,18 +157,6 @@
         <item quantity="many">
             <xliff:g id="count">%d</xliff:g> min di anticipo</item>
     </plurals>
-    <plurals name="stop_info_car_count">
-        <item quantity="one">1 vagone</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">
-            <xliff:g id="count">%d</xliff:g>
-            vagoni
-        </item>
-        <item quantity="many">
-            <xliff:g id="count">%d</xliff:g>
-            vagoni
-        </item>
-    </plurals>
     <string name="stop_info_scheduled_arrival">Arrivo previsto</string>
     <string name="stop_info_scheduled_departure">Partenza prevista</string>
     <string name="stop_info_scheduled">Previsione</string>
@@ -241,7 +229,6 @@
     <string name="stop_info_favorite">La mia fermata</string>
     <string name="stop_info_official_stop_name_label">Nome ufficiale: %1$s</string>
     <string name="stop_info_route_ids_label">Linee:</string>
-    <string name="stop_header_sliding_panel_collapsed">Pannello di scorrimento ridotto. Tocca per estendere e mostrare la lista completa degli arrivi, o premi il pulsante Indietro per nasconderla.</string>
 
     <!-- Destination reminders -->
     <string name="destination_reminder_dialog_title">Promemoria di destinazione (beta)</string>
@@ -725,8 +712,6 @@
     <string name="trip_plan_time">Tempo</string>
 
 
-    <string name="trip_plan_list_view">Vista elenco</string>
-    <string name="trip_plan_map_view">Vista mappa</string>
 
     <string name="tripplanner_no_server_selected_error">Nessuna area selezionata</string>
     <string name="tripplanner_error_dialog_title">Impossibile pianificare</string>

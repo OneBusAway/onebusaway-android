@@ -36,6 +36,35 @@ internal fun ArrivalDeparture.asArrivalData(): ArrivalData = DtoArrivalData(this
 private fun predictedOrAbsent(epochMs: Long): Long = if (epochMs > 0L) epochMs else 0L
 
 private class DtoArrivalData(private val d: ArrivalDeparture) : ArrivalData {
+
+    /**
+     * The authoritative predicted instant for a stop, in epoch millis, computed at the wire→domain
+     * boundary from OBA's canonical relationship `predicted = scheduled + scheduleDeviation` rather
+     * than the absolute `predicted{Arrival,Departure}Time` field.
+     *
+     * The server derives BOTH the absolute predicted times and `tripStatus.scheduleDeviation` from
+     * the same deviation, so for healthy data this yields exactly the server's own predicted time (a
+     * no-op). But the two can disagree when the absolute field is corrupt: at the WSF "Seattle"
+     * terminal (stop `95_7`, issue #1688) the `predictedDepartureTime` for origin-terminal sailings
+     * is pinned ~15h stale near the service-day start, while `scheduleDeviation` stays sane (60s /
+     * 780s) and the same trip's `predictedArrivalTime` matches `scheduled + scheduleDeviation`
+     * exactly. Deriving from the deviation repairs that garbage (~ -900 min ETA).
+     *
+     * Only applied when the trip is actually tracked (`predicted` AND a `tripStatus` to read the
+     * deviation from) AND there is a real scheduled anchor to add the deviation to; otherwise there
+     * is no usable real-time source, so fall back to the sentinel-normalized absolute value (issue
+     * #1687). The `scheduledEpochMs > 0` guard matters because the wire defaults an absent scheduled
+     * time to 0: without it, `0 + deviation` would be a ~epoch-1970 instant that passes the downstream
+     * `> 0` prediction gate and reproduces the very garbage ETA this fix removes. [scheduleDeviation]
+     * is seconds (+late/−early); scheduled times are epoch millis.
+     */
+    private fun predictedInstant(scheduledEpochMs: Long, absolutePredictedEpochMs: Long): Long =
+        if (d.predicted && d.tripStatus != null && scheduledEpochMs > 0L) {
+            scheduledEpochMs + d.tripStatus.scheduleDeviation * MS_IN_SECOND
+        } else {
+            predictedOrAbsent(absolutePredictedEpochMs)
+        }
+
     override val routeId get() = d.routeId
     override val tripId get() = d.tripId
     override val stopId get() = d.stopId
@@ -48,9 +77,11 @@ private class DtoArrivalData(private val d: ArrivalDeparture) : ArrivalData {
     override val predicted get() = d.predicted
     // Wire→server mint: these are the server clock, already epoch millis.
     override val scheduledArrivalTime get() = ServerTime(d.scheduledArrivalTime)
-    override val predictedArrivalTime get() = ServerTime(predictedOrAbsent(d.predictedArrivalTime))
+    override val predictedArrivalTime
+        get() = ServerTime(predictedInstant(d.scheduledArrivalTime, d.predictedArrivalTime))
     override val scheduledDepartureTime get() = ServerTime(d.scheduledDepartureTime)
-    override val predictedDepartureTime get() = ServerTime(predictedOrAbsent(d.predictedDepartureTime))
+    override val predictedDepartureTime
+        get() = ServerTime(predictedInstant(d.scheduledDepartureTime, d.predictedDepartureTime))
     override val status get() = d.tripStatus?.status?.let { Status.fromString(it) }
     override val situationIds get() = d.situationIds
     override val frequency
@@ -61,4 +92,8 @@ private class DtoArrivalData(private val d: ArrivalDeparture) : ArrivalData {
     override val scheduleDeviation get() = d.tripStatus?.scheduleDeviation ?: 0L
     override val lastKnownLat get() = d.tripStatus?.lastKnownLocation?.lat
     override val lastKnownLon get() = d.tripStatus?.lastKnownLocation?.lon
+
+    private companion object {
+        private const val MS_IN_SECOND = 1000L
+    }
 }

@@ -19,6 +19,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.api.adapters.asArrivalData
+import org.onebusaway.android.api.contract.ArrivalDeparture
+import org.onebusaway.android.api.contract.TripStatus
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FrequencyWindow
 import org.onebusaway.android.models.Occupancy
@@ -117,6 +120,40 @@ class ArrivalInfoTest {
         val info = infoFor(arrival(predicted = true, predictedArrivalTime = 1_783_119_500_000L))
 
         assertTrue("a genuine prediction stays real-time in the report", info.toTripReportContext().predicted)
+    }
+
+    /**
+     * Issue #1688: end-to-end through the real wire→domain adapter. WSF "Seattle" terminal origin
+     * departure (stopSequence 0) whose absolute predictedDepartureTime is ~15h stale but whose
+     * scheduleDeviation is a sane +60s. The adapter derives predicted = scheduled + scheduleDeviation,
+     * so the ETA is a sane near-future value instead of the reported ~ -900 min garbage.
+     */
+    @Test
+    fun `a stale absolute predicted departure yields a sane ETA via scheduleDeviation`() {
+        val nowWsf = ServerTime(1_783_117_313_123L)
+        val scheduledDeparture = 1_783_120_500_000L
+        val data = ArrivalDeparture(
+            stopSequence = 0,
+            predicted = true,
+            scheduledDepartureTime = scheduledDeparture,
+            predictedDepartureTime = 1_783_062_899_000L, // garbage, ~15h in the past
+            tripStatus = TripStatus(predicted = true, scheduleDeviation = 60),
+        ).asArrivalData()
+
+        val info = ArrivalInfo(
+            context = null,
+            data = data,
+            now = nowWsf,
+            includeArrivalDepartureInStatusLabel = false,
+            favorite = false,
+        )
+
+        assertTrue("still a real-time prediction", info.predicted)
+        assertFalse("origin-terminal sailing shows the departure", info.isArrival)
+        val derived = scheduledDeparture + 60_000L
+        assertEquals("displayTime is the derived predicted departure", derived, info.displayTime)
+        assertEquals(derived / 60_000 - nowWsf.epochMs / 60_000, info.eta)
+        assertTrue("ETA is a sane ~+54 min, never the -900 min garbage", info.eta in 50..60)
     }
 }
 

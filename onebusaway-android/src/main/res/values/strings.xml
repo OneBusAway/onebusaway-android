@@ -15,7 +15,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <string name="app_name">OneBusAway</string>
 
@@ -223,8 +224,14 @@
     <string name="stop_info_time_arrived_at">Arrived at %1s</string>
     <string name="stop_info_time_departed_at">Departed at %1s</string>
 
-    <string name="stop_info_frequency_from">Every %1$d mins from %2$s</string>
-    <string name="stop_info_frequency_until">Every %1$d mins until %2$s</string>
+    <plurals name="stop_info_frequency_from">
+        <item quantity="one">Every %1$d min from %2$s</item>
+        <item quantity="other">Every %1$d mins from %2$s</item>
+    </plurals>
+    <plurals name="stop_info_frequency_until">
+        <item quantity="one">Every %1$d min until %2$s</item>
+        <item quantity="other">Every %1$d mins until %2$s</item>
+    </plurals>
     <string name="stop_info_eta_now">NOW</string>
     <string name="stop_info_option_showonmap">Show on map</string>
     <string name="menu_option_sort_by">Sort by</string>
@@ -272,7 +279,9 @@
     <string name="stop_info_load_more_arrivals">Load more arrivals</string>
     <string name="stop_info_item_options_title">Bus options</string>
     <string name="stop_info_filter_title">Show only these routes</string>
-    <string name="stop_info_filter_header">Showing %1$d of %2$d routes</string>
+    <!-- Not a plural candidate: "%2$d routes" is a ratio's denominator ("N of M"), not a count that
+         inflects on its own; getQuantityString would key off the wrong number. -->
+    <string name="stop_info_filter_header" tools:ignore="PluralsCandidate">Showing %1$d of %2$d routes</string>
     <string name="stop_info_save">Save</string>
     <string name="stop_info_cancel">Cancel</string>
     <string name="stop_info_clear">Clear</string>
@@ -657,7 +666,8 @@
     <string name="map_zoom_in_for_more_stops">Zoom in to see more stops</string>
     <string name="preferences_map_stop_cache_size_title">Map stop cache size</string>
     <string name="preferences_map_stop_cache_size_summary">Max bus stops kept on the map while panning (currently %1$d)</string>
-    <string name="preferences_map_stop_cache_size_error">Enter a number between %1$d and %2$d</string>
+    <!-- Not a plural candidate: "%1$d and %2$d" are the bounds of a range, not a count that inflects. -->
+    <string name="preferences_map_stop_cache_size_error" tools:ignore="PluralsCandidate">Enter a number between %1$d and %2$d</string>
     <string name="preferences_experimental_regions_enable_warning">Experimental regions may be
         unstable and without real-time info! Go ahead?
     </string>
@@ -754,22 +764,43 @@
     <string name="trip_status">Trip status</string>
     <string name="trip_details_vehicle">Vehicle: %1$s</string>
     <string name="trip_details_scheduled_data">Schedule data</string>
-    <string name="trip_details_real_time_sec_late">%1$d sec late (Last update: %2$s)</string>
-    <string name="trip_details_real_time_min_sec_late">%1$d min %2$d sec late (Last update: %3$s)
-    </string>
-    <string name="trip_details_real_time_sec_early">%1$d sec early (Last update: %2$s)</string>
-    <string name="trip_details_real_time_min_sec_early">%1$d min %2$d sec early (Last update:
-        %3$s)
-    </string>
+    <plurals name="trip_details_real_time_sec_late">
+        <item quantity="one">%1$d sec late (Last update: %2$s)</item>
+        <item quantity="other">%1$d sec late (Last update: %2$s)</item>
+    </plurals>
+    <plurals name="trip_details_real_time_min_sec_late">
+        <item quantity="one">%1$d min %2$d sec late (Last update: %3$s)</item>
+        <item quantity="other">%1$d min %2$d sec late (Last update: %3$s)</item>
+    </plurals>
+    <plurals name="trip_details_real_time_sec_early">
+        <item quantity="one">%1$d sec early (Last update: %2$s)</item>
+        <item quantity="other">%1$d sec early (Last update: %2$s)</item>
+    </plurals>
+    <plurals name="trip_details_real_time_min_sec_early">
+        <item quantity="one">%1$d min %2$d sec early (Last update: %3$s)</item>
+        <item quantity="other">%1$d min %2$d sec early (Last update: %3$s)</item>
+    </plurals>
     <string name="trip_details_current_stop">Current stop</string>
     <string name="trip_details_current_bus_position">Bus is currently at</string>
     <string name="trip_details_dest_stop">Destination stop</string>
 
     <!-- Vehicles on Map -->
-    <string name="vehicle_last_updated_sec">Data updated %1$d sec ago</string>
-    <string name="vehicle_last_updated_min_and_sec">Data updated %1$d min %2$d sec ago</string>
-    <string name="vehicle_estimate_from_update_sec">Estimate from data updated %1$d sec ago</string>
-    <string name="vehicle_estimate_from_update_min_and_sec">Estimate from data updated %1$d min %2$d sec ago</string>
+    <plurals name="vehicle_last_updated_sec">
+        <item quantity="one">Data updated %1$d sec ago</item>
+        <item quantity="other">Data updated %1$d sec ago</item>
+    </plurals>
+    <plurals name="vehicle_last_updated_min_and_sec">
+        <item quantity="one">Data updated %1$d min %2$d sec ago</item>
+        <item quantity="other">Data updated %1$d min %2$d sec ago</item>
+    </plurals>
+    <plurals name="vehicle_estimate_from_update_sec">
+        <item quantity="one">Estimate from data updated %1$d sec ago</item>
+        <item quantity="other">Estimate from data updated %1$d sec ago</item>
+    </plurals>
+    <plurals name="vehicle_estimate_from_update_min_and_sec">
+        <item quantity="one">Estimate from data updated %1$d min %2$d sec ago</item>
+        <item quantity="other">Estimate from data updated %1$d min %2$d sec ago</item>
+    </plurals>
     <string name="vehicle_last_updated_scheduled">Position calculated from schedule</string>
 
     <!-- Night Light -->
@@ -1114,7 +1145,8 @@
     <string name="donation_dismiss_dialog_cancel_button">Cancel</string>
     <string name="title_activity_donation_learn_more">Why we need your help</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="donation_learn_more_explanation">We have big plans to improve %1$s, but we can\'t do it without your help. This app is currently built with 100%% volunteer labor, and we need you to help us fund future development.\n\nAs a key project of the Open Transit Software Foundation, a 501(c)(3) non-profit, we rely on the goodwill of users like you to keep running and making this software better.\n\nEvery year, only a small fraction of our users donate, but every contribution, big or small, helps ensure that %1$s remains free, updated, and accessible to everyone. A small donation, even just the cost of one week of commuting, $27.50, can make all the difference.\n\nYour tax-deductible contribution ensures that %1$s remains free and accessible for everyone. Let\'s shape the future of transit together!\n\nThank you,\nThe %1$s Team</string>
+    <!-- "(c)" here is the "501(c)(3)" US tax-code designation, not a copyright symbol. -->
+    <string name="donation_learn_more_explanation" tools:ignore="TypographyOther">We have big plans to improve %1$s, but we can\'t do it without your help. This app is currently built with 100%% volunteer labor, and we need you to help us fund future development.\n\nAs a key project of the Open Transit Software Foundation, a 501(c)(3) non-profit, we rely on the goodwill of users like you to keep running and making this software better.\n\nEvery year, only a small fraction of our users donate, but every contribution, big or small, helps ensure that %1$s remains free, updated, and accessible to everyone. A small donation, even just the cost of one week of commuting, $27.50, can make all the difference.\n\nYour tax-deductible contribution ensures that %1$s remains free and accessible for everyone. Let\'s shape the future of transit together!\n\nThank you,\nThe %1$s Team</string>
     <string name="preferences_reset_donation_timestamps_title">Reset Donation Timestamps</string>
     <string name="preferences_reset_donation_timestamps_summary">Tapping this option will clear both the \'Remind Me Later\' and \'Don\'t Bother Me\' timestamps associated with donation requests.</string>
     <string name="preferences_show_weather_view">Show weather view</string>

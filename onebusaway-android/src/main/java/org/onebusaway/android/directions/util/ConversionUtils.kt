@@ -32,6 +32,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.Date
+import java.util.Locale
 import java.util.TimeZone
 
 /**
@@ -111,21 +112,21 @@ object ConversionUtils {
 
         if (PreferenceUtils.getUnitsAreMetricFromPreferences(applicationContext)) {
             if (value < 1000) {
-                text += String.format(OTPConstants.FORMAT_DISTANCE_METERS, value) + " " +
+                text += String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_METERS, value) + " " +
                     applicationContext.resources.getString(R.string.meters_abbreviation)
             } else {
                 value /= 1000
-                text += String.format(OTPConstants.FORMAT_DISTANCE_KILOMETERS, value) + " " +
+                text += String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_KILOMETERS, value) + " " +
                     applicationContext.resources.getString(R.string.kilometers_abbreviation)
             }
         } else {
             var feet = value * FEET_PER_METER
             if (feet < 1000) {
-                text += String.format(OTPConstants.FORMAT_DISTANCE_METERS, feet) + " " +
+                text += String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_METERS, feet) + " " +
                     applicationContext.resources.getString(R.string.feet_abbreviation)
             } else {
                 feet /= 5280
-                text += String.format(OTPConstants.FORMAT_DISTANCE_KILOMETERS, feet) + " " +
+                text += String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_KILOMETERS, feet) + " " +
                     applicationContext.resources.getString(R.string.miles_abbreviation)
             }
         }

@@ -233,15 +233,15 @@ class ArrivalInfo(
             val time: ServerTime
 
             if (now < frequency.startTime) {
-                statusLabelId = R.string.stop_info_frequency_from
+                statusLabelId = R.plurals.stop_info_frequency_from
                 time = frequency.startTime
             } else {
-                statusLabelId = R.string.stop_info_frequency_until
+                statusLabelId = R.plurals.stop_info_frequency_until
                 time = frequency.endTime
             }
 
             val label = formatter.format(Date(time.epochMs))
-            return context.getString(statusLabelId, headwayAsMinutes, label)
+            return res.getQuantityString(statusLabelId, headwayAsMinutes, headwayAsMinutes, label)
         }
 
         if (hasPrediction) {

@@ -32,6 +32,7 @@ import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.BitmapUtils;
 import org.onebusaway.android.util.MathUtils;
 
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -159,7 +160,7 @@ public final class VehicleBitmaps {
             vehicleType = DEFAULT_VEHICLE_TYPE;
         }
 
-        String cacheKey = String.format("%d %d", halfWind, vehicleType);
+        String cacheKey = String.format(Locale.US, "%d %d", halfWind, vehicleType);
         Bitmap b = sUncoloredIcons.get(cacheKey);
         if (b == null) {
             switch (vehicleType) {

@@ -193,8 +193,18 @@
     <string name="stop_info_time_arrived_at">Przyjedzie o %1s</string>
     <string name="stop_info_time_departed_at">Odjedzie o %1s</string>
 
-    <string name="stop_info_frequency_from">Co %1$d min od %2$s</string>
-    <string name="stop_info_frequency_until">Co %1$d min do %2$s</string>
+    <plurals name="stop_info_frequency_from">
+        <item quantity="one">Co %1$d min od %2$s</item>
+        <item quantity="few">Co %1$d min od %2$s</item>
+        <item quantity="many">Co %1$d min od %2$s</item>
+        <item quantity="other">Co %1$d min od %2$s</item>
+    </plurals>
+    <plurals name="stop_info_frequency_until">
+        <item quantity="one">Co %1$d min do %2$s</item>
+        <item quantity="few">Co %1$d min do %2$s</item>
+        <item quantity="many">Co %1$d min do %2$s</item>
+        <item quantity="other">Co %1$d min do %2$s</item>
+    </plurals>
     <string name="stop_info_eta_now">TERAZ</string>
     <string name="stop_info_option_showonmap">Pokaż na mapie</string>
     <string name="menu_option_sort_by">Sortuj</string>
@@ -676,20 +686,59 @@
     <!-- Trip Details -->
     <string name="trip_details_vehicle">Pojazd: %1$s</string>
     <string name="trip_details_scheduled_data">Planowany</string>
-    <string name="trip_details_real_time_sec_late">%1$d sek spóźnienia (Ostatnia aktualizacja: %2$s)</string>
-    <string name="trip_details_real_time_min_sec_late">%1$d min %2$d sek spóźnienia (Ostatnia aktualizacja: %3$s)
-    </string>
-    <string name="trip_details_real_time_sec_early">%1$d sek wcześniej (Ostatnia aktualizacja: %2$s)</string>
-    <string name="trip_details_real_time_min_sec_early">%1$d min %2$d sek wcześniej (Last update:
+    <plurals name="trip_details_real_time_sec_late">
+        <item quantity="one">%1$d sek spóźnienia (Ostatnia aktualizacja: %2$s)</item>
+        <item quantity="few">%1$d sek spóźnienia (Ostatnia aktualizacja: %2$s)</item>
+        <item quantity="many">%1$d sek spóźnienia (Ostatnia aktualizacja: %2$s)</item>
+        <item quantity="other">%1$d sek spóźnienia (Ostatnia aktualizacja: %2$s)</item>
+    </plurals>
+    <plurals name="trip_details_real_time_min_sec_late">
+        <item quantity="one">%1$d min %2$d sek spóźnienia (Ostatnia aktualizacja: %3$s)
+    </item>
+        <item quantity="few">%1$d min %2$d sek spóźnienia (Ostatnia aktualizacja: %3$s)
+    </item>
+        <item quantity="many">%1$d min %2$d sek spóźnienia (Ostatnia aktualizacja: %3$s)
+    </item>
+        <item quantity="other">%1$d min %2$d sek spóźnienia (Ostatnia aktualizacja: %3$s)
+    </item>
+    </plurals>
+    <plurals name="trip_details_real_time_sec_early">
+        <item quantity="one">%1$d sek wcześniej (Ostatnia aktualizacja: %2$s)</item>
+        <item quantity="few">%1$d sek wcześniej (Ostatnia aktualizacja: %2$s)</item>
+        <item quantity="many">%1$d sek wcześniej (Ostatnia aktualizacja: %2$s)</item>
+        <item quantity="other">%1$d sek wcześniej (Ostatnia aktualizacja: %2$s)</item>
+    </plurals>
+    <plurals name="trip_details_real_time_min_sec_early">
+        <item quantity="one">%1$d min %2$d sek wcześniej (Last update:
         %3$s)
-    </string>
+    </item>
+        <item quantity="few">%1$d min %2$d sek wcześniej (Last update:
+        %3$s)
+    </item>
+        <item quantity="many">%1$d min %2$d sek wcześniej (Last update:
+        %3$s)
+    </item>
+        <item quantity="other">%1$d min %2$d sek wcześniej (Last update:
+        %3$s)
+    </item>
+    </plurals>
     <string name="trip_details_current_stop">Obecny przystanek</string>
     <string name="trip_details_current_bus_position">Autobus jest obecnie na</string>
     <string name="trip_details_dest_stop">Przystanek docelowy</string>
 
     <!-- Vehicles on Map -->
-    <string name="vehicle_last_updated_sec">Dane zaaktualizaowane %1$d sek temu</string>
-    <string name="vehicle_last_updated_min_and_sec">Dane zaaktualizowane %1$d min %2$d sek temu</string>
+    <plurals name="vehicle_last_updated_sec">
+        <item quantity="one">Dane zaaktualizaowane %1$d sek temu</item>
+        <item quantity="few">Dane zaaktualizaowane %1$d sek temu</item>
+        <item quantity="many">Dane zaaktualizaowane %1$d sek temu</item>
+        <item quantity="other">Dane zaaktualizaowane %1$d sek temu</item>
+    </plurals>
+    <plurals name="vehicle_last_updated_min_and_sec">
+        <item quantity="one">Dane zaaktualizowane %1$d min %2$d sek temu</item>
+        <item quantity="few">Dane zaaktualizowane %1$d min %2$d sek temu</item>
+        <item quantity="many">Dane zaaktualizowane %1$d min %2$d sek temu</item>
+        <item quantity="other">Dane zaaktualizowane %1$d min %2$d sek temu</item>
+    </plurals>
     <string name="vehicle_last_updated_scheduled">Pozycja obliczona na podstawie rozkładu</string>
 
     <!-- Night Light -->
@@ -786,7 +835,8 @@
     <string name="donation_dismiss_dialog_remind_me_later_button">Przypomnij mi później</string>
     <string name="donation_dismiss_dialog_cancel_button">Anuluj</string>
     <string name="title_activity_donation_learn_more">Dlaczego potrzebujemy Twojej pomocy</string>
-    <string name="donation_learn_more_explanation">Mamy wielkie plany na ulepszenie %1$s, ale nie możemy tego zrobić bez Twojej pomocy. Ta aplikacja jest obecnie tworzona w 100%% dzięki pracy wolontariuszy, i potrzebujemy Ciebie, abyś pomógł nam sfinansować przyszły rozwój.\n\nJako kluczowy projekt Open Transit Software Foundation, organizacji non-profit 501(c)(3), polegamy na dobrej woli użytkowników takich jak Ty, aby kontynuować działanie i ulepszanie tego oprogramowania.\n\nCo roku tylko mała część naszych użytkowników dokonuje darowizn, ale każdy wkład, duży czy mały, pomaga zapewnić, że %1$s pozostanie darmowe, aktualne i dostępne dla wszystkich. Mała darowizna, nawet tylko koszt tygodniowego dojazdu do pracy, 27,50 dolarów, może zrobić różnicę.\n\nTwoja darowizna odliczalna od podatku zapewnia, że %1$s pozostanie darmowe i dostępne dla każdego. Kształtujmy razem przyszłość transportu publicznego!\n\nDziękujemy,\nZespół %1$s</string>
+    <!-- "(c)" here is the "501(c)(3)" US tax-code designation, not a copyright symbol. -->
+    <string name="donation_learn_more_explanation" tools:ignore="TypographyOther">Mamy wielkie plany na ulepszenie %1$s, ale nie możemy tego zrobić bez Twojej pomocy. Ta aplikacja jest obecnie tworzona w 100%% dzięki pracy wolontariuszy, i potrzebujemy Ciebie, abyś pomógł nam sfinansować przyszły rozwój.\n\nJako kluczowy projekt Open Transit Software Foundation, organizacji non-profit 501(c)(3), polegamy na dobrej woli użytkowników takich jak Ty, aby kontynuować działanie i ulepszanie tego oprogramowania.\n\nCo roku tylko mała część naszych użytkowników dokonuje darowizn, ale każdy wkład, duży czy mały, pomaga zapewnić, że %1$s pozostanie darmowe, aktualne i dostępne dla wszystkich. Mała darowizna, nawet tylko koszt tygodniowego dojazdu do pracy, 27,50 dolarów, może zrobić różnicę.\n\nTwoja darowizna odliczalna od podatku zapewnia, że %1$s pozostanie darmowe i dostępne dla każdego. Kształtujmy razem przyszłość transportu publicznego!\n\nDziękujemy,\nZespół %1$s</string>
     <string name="preferences_reset_donation_timestamps_title">Zresetuj Znaczniki Czasu Dotacji</string>
     <string name="preferences_reset_donation_timestamps_summary">Dotknięcie tej opcji spowoduje wyczyszczenie znaczników czasu \'Przypomnij mi później\' i \'Nie przeszkadzaj mi\' związanych z prośbami o darowizny.</string>
     <string name="preferences_show_weather_view">Pokaż widok pogody</string>

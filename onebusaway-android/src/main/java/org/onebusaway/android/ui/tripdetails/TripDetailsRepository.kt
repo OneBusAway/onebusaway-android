@@ -253,13 +253,13 @@ class DefaultTripDetailsRepository @Inject constructor(
             val lastUpdate = DisplayFormat.formatTime(context, status.lastUpdateTime)
             when {
                 deviation >= 0 && deviation < 60 ->
-                    context.getString(R.string.trip_details_real_time_sec_late, seconds, lastUpdate)
+                    context.resources.getQuantityString(R.plurals.trip_details_real_time_sec_late, seconds.toInt(), seconds, lastUpdate)
                 deviation >= 0 ->
-                    context.getString(R.string.trip_details_real_time_min_sec_late, minutes, seconds, lastUpdate)
+                    context.resources.getQuantityString(R.plurals.trip_details_real_time_min_sec_late, seconds.toInt(), minutes, seconds, lastUpdate)
                 deviation > -60 ->
-                    context.getString(R.string.trip_details_real_time_sec_early, seconds, lastUpdate)
+                    context.resources.getQuantityString(R.plurals.trip_details_real_time_sec_early, seconds.toInt(), seconds, lastUpdate)
                 else ->
-                    context.getString(R.string.trip_details_real_time_min_sec_early, minutes, seconds, lastUpdate)
+                    context.resources.getQuantityString(R.plurals.trip_details_real_time_min_sec_early, seconds.toInt(), minutes, seconds, lastUpdate)
             }
         }
     }

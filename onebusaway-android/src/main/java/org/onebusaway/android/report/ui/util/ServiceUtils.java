@@ -21,6 +21,7 @@ import org.onebusaway.android.report.constants.ReportConstants;
 import android.content.Context;
 
 import java.util.List;
+import java.util.Locale;
 
 import edu.usf.cutr.open311client.models.Service;
 
@@ -136,7 +137,7 @@ public class ServiceUtils {
         String[] transitKeywords = context.getResources().
                 getStringArray(R.array.report_stop_transit_category_keywords);
         for (String keyword : transitKeywords) {
-            if (text != null && text.toLowerCase().contains(keyword)) {
+            if (text != null && text.toLowerCase(Locale.getDefault()).contains(keyword)) {
                 return true;
             }
         }
@@ -157,7 +158,7 @@ public class ServiceUtils {
                 getStringArray(R.array.report_trip_transit_category_keywords);
 
         for (String keyword : transitKeywords) {
-            if (text != null && text.toLowerCase().contains(keyword)) {
+            if (text != null && text.toLowerCase(Locale.getDefault()).contains(keyword)) {
                 return true;
             }
         }
@@ -214,7 +215,7 @@ public class ServiceUtils {
         boolean didMatch = false;
 
         for (String keyword : stopIdKeywords) {
-            if (desc != null && desc.toLowerCase().contains(keyword)) {
+            if (desc != null && desc.toLowerCase(Locale.getDefault()).contains(keyword)) {
                 if (didMatch) {
                     // if this is the second matched keyword then return true
                     return true;

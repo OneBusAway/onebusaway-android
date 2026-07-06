@@ -117,7 +117,9 @@ fun applyFramingIntent(
             if (bounds == null) {
                 Toast.makeText(context, R.string.route_info_no_shape_data, Toast.LENGTH_SHORT).show()
             } else {
-                map.moveCamera(
+                // animateCamera (not moveCamera) so UI-driven route framing eases in, matching the
+                // maplibre adapter's applyFramingIntent (#1719).
+                map.animateCamera(
                     CameraUpdateFactory.newLatLngBounds(bounds, ViewUtils.dpToPixels(context, DEFAULT_MAP_PADDING_DP))
                 )
             }
@@ -126,7 +128,8 @@ fun applyFramingIntent(
         FramingIntent.Itinerary -> {
             val bounds = routePolylineBounds(renderState) ?: return
             val dm = context.resources.displayMetrics
-            map.moveCamera(
+            // animateCamera to match the maplibre adapter (#1719); see Route above.
+            map.animateCamera(
                 CameraUpdateFactory.newLatLngBounds(
                     bounds, dm.widthPixels, dm.heightPixels,
                     ViewUtils.dpToPixels(context, DEFAULT_MAP_PADDING_DP)

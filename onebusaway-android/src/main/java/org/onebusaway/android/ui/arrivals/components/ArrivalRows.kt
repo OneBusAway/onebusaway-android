@@ -243,7 +243,8 @@ fun ArrivalRowStyleA(
         isFavorite = actions?.isRouteFavorite,
         onFavorite = { actions?.let { callbacks.onRouteFavorite(it) } },
         onMore = { expanded = true },
-        onContentClick = { expanded = true },
+        // Tapping the row body defaults to "Show vehicles on map"; the overflow icon opens the menu.
+        onContentClick = { callbacks.onShowVehiclesOnMap(arrival) },
         overflow = {
             ArrivalActionsMenu(expanded, { expanded = false }, arrival, actions, filterActive, callbacks)
         }
@@ -378,6 +379,9 @@ fun ArrivalCardStyleB(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        // Tapping a row shows its route/direction on the map (same as Style A); HomeScreen's
+                        // wrapped onShowRouteOnMap drags the sheet down to peek on every such tap.
+                        .clickable { callbacks.onShowVehiclesOnMap(arrival) }
                         .padding(top = if (index == 0) 8.dp else 0.dp)
                         // Subsequent arrivals are dimmed, matching the legacy card
                         .alpha(if (index == 0) 1f else 0.55f),

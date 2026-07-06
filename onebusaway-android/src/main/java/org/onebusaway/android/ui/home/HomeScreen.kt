@@ -224,6 +224,14 @@ fun HomeScreen(
             }
         }
 
+        // Drag the sheet down to peek. Unlike the declarative routeModeActive effect below (which only
+        // fires on the off->on route-mode transition), this is a per-tap action, so it also drags an
+        // already-expanded sheet down when the user taps a "show vehicles on map" row while route mode
+        // is already active for another route.
+        val collapseSheet: () -> Unit = remember {
+            { scope.launch { runCatching { sheetState.partialExpand() } } }
+        }
+
         // The arrivals sheet's measurement state, reported by the panel via onPreferredHeight — local to
         // the screen, since the panel and the sheet both live here (no need to round-trip the VM). Seeded
         // at the two-arrivals height so the first reveal doesn't flash undersized (legacy default), and
@@ -401,7 +409,12 @@ fun HomeScreen(
                             expandProgress = sheetProgress.fraction,
                             arrivalsViewModelFactory = arrivalsViewModelFactory,
                             onArrivalsLoaded = onArrivalsLoaded,
-                            onShowRouteOnMap = onShowRouteOnMap,
+                            // Showing vehicles on the map drags the sheet down to peek so the route is
+                            // visible, whether or not route mode was already active (see collapseSheet).
+                            onShowRouteOnMap = { request ->
+                                onShowRouteOnMap(request)
+                                collapseSheet()
+                            },
                             onShowTrip = onShowTrip,
                             onEditReminder = onEditReminder,
                             onPreferredHeight = { count, filtering ->

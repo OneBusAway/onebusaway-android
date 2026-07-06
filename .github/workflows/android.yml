@@ -35,6 +35,12 @@ jobs:
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
 
+      # Android Lint gate: catches minSdk (NewApi) regressions and other lint errors that
+      # compile + API-33 tests can't see (#1692). Runs on the host before the emulator so it
+      # fails fast; `check` below keeps skipping lint (-x lint) to avoid running it twice.
+      - name: Android Lint
+        run: ./gradlew :onebusaway-android:lintObaGoogleDebug --stacktrace
+
       - name: AVD cache
         uses: actions/cache@v4
         id: avd-cache

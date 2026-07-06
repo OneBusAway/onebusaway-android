@@ -522,6 +522,9 @@ private fun Open311FormInline(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    // Read the analytics label in composition (stringResource) rather than context.getString() inside
+    // the submit callback below, which lint flags (LocalContextGetResourceValueCall, #1692).
+    val analyticsProblem = stringResource(R.string.analytics_problem)
     val vm: Open311ProblemViewModel = viewModel(
         key = "open311:${target.category.code ?: target.category.name}",
         factory = viewModelFactory {
@@ -586,7 +589,7 @@ private fun Open311FormInline(
             (target.category.raw as? Service)?.let { service ->
                 AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_OPEN311_SERVER_EVENT_URL,
-                    context.getString(R.string.analytics_problem),
+                    analyticsProblem,
                     service.service_name,
                 )
             }

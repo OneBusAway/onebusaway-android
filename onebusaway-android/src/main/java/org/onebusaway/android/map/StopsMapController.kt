@@ -23,9 +23,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.api.data.MapDataSource
@@ -63,6 +65,10 @@ class StopsMapController(
     private val routeActive: () -> Boolean = { false },
     // The LRU cache size, read on each load so a change in advanced settings applies on the next pan.
     private val cacheSize: () -> Int = { DEFAULT_STOP_CACHE_SIZE },
+    // The ids of the user's starred (favorite) stops, live: starring/unstarring re-flags the drawn
+    // markers so their star icon + tap preference appear immediately (#1680). Defaults to no favorites
+    // for the slim stop maps (the report/picker) that don't surface starred stops.
+    private val favoriteStopIds: Flow<Set<String>> = flowOf(emptySet()),
 ) {
 
     private val renderState get() = host.renderState
@@ -77,6 +83,10 @@ class StopsMapController(
     // routeId -> ObaRoute.TYPE_*, maintained alongside cachedRoutes so toStopMarker doesn't rebuild
     // the lookup on every pan.
     private val routeTypeById = HashMap<String, Int>()
+
+    // The user's current favorite stop ids, kept in sync by the collector in init. Read on the main
+    // thread only (all mutators here run there), so a plain field is safe.
+    private var favoriteIds: Set<String> = emptySet()
 
     private var loadJob: Job? = null
 
@@ -93,6 +103,32 @@ class StopsMapController(
                 .distinctUntilChanged()
                 .collect { renderState.setStopBand(it) }
         }
+
+        // Track the user's starred stops: re-flag the already-accumulated markers on any change so a
+        // star/unstar shows/hides the star icon + tap preference without waiting for the next pan (#1680).
+        scope.launch {
+            favoriteStopIds.collect { ids ->
+                favoriteIds = ids
+                applyFavorites()
+            }
+        }
+    }
+
+    /**
+     * Re-flag the accumulated markers against the current [favoriteIds] and republish if any changed.
+     * Collects the changes before mutating [stopAccum] so we never write to the access-ordered map while
+     * iterating it.
+     */
+    private fun applyFavorites() {
+        val updates = buildList {
+            for ((id, marker) in stopAccum) {
+                val favorite = id in favoriteIds
+                if (marker.favorite != favorite) add(id to marker.copy(favorite = favorite))
+            }
+        }
+        if (updates.isEmpty()) return
+        for ((id, marker) in updates) stopAccum[id] = marker
+        renderState.setStops(ArrayList(stopAccum.values))
     }
 
     /** (Re)start the viewport stop loader (the old StopMapController's camera watch). */
@@ -297,7 +333,10 @@ class StopsMapController(
         val routeType = primaryRouteType(stop.routeIds, routeTypeById)
         // ObaStop.getDirection() is "N".."NW" or the literal "null" string for no direction.
         val direction = stop.direction ?: "null"
-        return StopMarker(stop.id, stop.location.toGeoPoint(), direction, routeType, stop)
+        return StopMarker(
+            stop.id, stop.location.toGeoPoint(), direction, routeType, stop,
+            favorite = stop.id in favoriteIds,
+        )
     }
 
     companion object {

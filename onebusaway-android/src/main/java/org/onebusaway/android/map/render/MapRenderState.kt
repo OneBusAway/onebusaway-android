@@ -127,6 +127,8 @@ data class BikeMarker(
  * One bus-stop marker. [direction]/[routeType] choose the icon + anchor; [stop] is the raw pojo
  * couriered so a tap can notify focus listeners. Whether this stop renders focused (the 1.5x icon) is
  * decided by [MapRenderSnapshot.focusedStopId], not stored here, so focusing is a one-field change.
+ * [favorite] is stored here (it's a per-stop property that changes as the user stars/unstars), driving
+ * the distinctive star icon + tap preference (#1680).
  */
 data class StopMarker(
     val id: String,
@@ -134,6 +136,7 @@ data class StopMarker(
     val direction: String,
     val routeType: Int,
     val stop: ObaStop,
+    val favorite: Boolean = false,
 )
 
 /** Immutable snapshot of everything the map should render. Grows one overlay per phase. */

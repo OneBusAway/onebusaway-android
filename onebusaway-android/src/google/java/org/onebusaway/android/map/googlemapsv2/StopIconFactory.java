@@ -118,6 +118,23 @@ public final class StopIconFactory {
     private static BitmapDescriptor sDotDescriptorFocused;
 
     /**
+     * The distinctive star shown for a starred (favorite) stop (#1680), in place of its directional
+     * icon up close / its dot far out — with a focused (enlarged) variant of each.
+     *
+     * The full-band star keeps the direction arrow the other stop markers carry, so it's per-direction
+     * (indexed like {@link #sStopDescriptors}) and anchored the same way. The dot-band star has no arrow
+     * (matching the plain dot), so it's a single direction-agnostic descriptor anchored at the marker
+     * center (0.5, 0.5). Route-type agnostic in both bands (no route glyph on the star).
+     */
+    private static BitmapDescriptor[] sFavoriteDescriptors;
+
+    private static BitmapDescriptor[] sFavoriteDescriptorsFocused;
+
+    private static BitmapDescriptor sStarDotDescriptor;
+
+    private static BitmapDescriptor sStarDotDescriptorFocused;
+
+    /**
      * Route types that get distinct stop icons on the map.
      * TYPE_CABLECAR uses TYPE_TRAM icon; TYPE_GONDOLA/TYPE_FUNICULAR fall back to TYPE_BUS.
      */
@@ -204,6 +221,30 @@ public final class StopIconFactory {
         return sDotDescriptorFocused;
     }
 
+    /** The distinctive star (with the direction arrow) for a starred stop up close. */
+    public static synchronized BitmapDescriptor favoriteStopIcon(Context context, String direction) {
+        ensureLoaded(context);
+        return sFavoriteDescriptors[getDirectionIndex(direction)];
+    }
+
+    /** The focused (enlarged) star (with the direction arrow) for the selected starred stop up close. */
+    public static synchronized BitmapDescriptor focusedFavoriteStopIcon(Context context, String direction) {
+        ensureLoaded(context);
+        return sFavoriteDescriptorsFocused[getDirectionIndex(direction)];
+    }
+
+    /** The smaller star shown for a starred stop in the far-zoom dot band. */
+    public static synchronized BitmapDescriptor favoriteDotStopIcon(Context context) {
+        ensureLoaded(context);
+        return sStarDotDescriptor;
+    }
+
+    /** The focused (enlarged) star for the selected starred stop in the dot band. */
+    public static synchronized BitmapDescriptor focusedFavoriteDotStopIcon(Context context) {
+        ensureLoaded(context);
+        return sStarDotDescriptorFocused;
+    }
+
     /** Marker anchor X for the given direction (positions the pin tip on the circle center). */
     public static float anchorX(String direction) {
         return getXPercentOffsetForDirection(direction);
@@ -252,20 +293,56 @@ public final class StopIconFactory {
             }
             // Scale the focused icons to be larger than the normal icons
             for (int i = 0; i < NUM_DIRECTIONS; i++) {
-                Bitmap bmp = iconsFocused[i];
-                iconsFocused[i] = Bitmap.createScaledBitmap(bmp,
-                        (int) (bmp.getWidth() * FOCUS_ICON_SCALE),
-                        (int) (bmp.getHeight() * FOCUS_ICON_SCALE), true);
+                iconsFocused[i] = StopBitmaps.scale(iconsFocused[i], FOCUS_ICON_SCALE);
             }
             sStopDescriptors.put(routeType, toDescriptors(icons));
             sStopDescriptorsFocused.put(routeType, toDescriptors(iconsFocused));
         }
 
+        // Star colors: the normal star is the gold gradient (light→dark); a selected star uses the same
+        // focus color as every other selected stop (solid). The arrow keeps the theme primary→accent.
+        int starLight = r.getColor(R.color.map_stop_favorite_light);
+        int starDark = r.getColor(R.color.map_stop_favorite_dark);
+        int focusColor = r.getColor(R.color.map_stop_focus);
+        int arrowTip = r.getColor(R.color.theme_primary);
+        int arrowBase = r.getColor(R.color.theme_accent);
+        // The star outline matches the plain circle's ring width (same for full- and dot-band), drawn at
+        // the star's own scale so the star inflation doesn't thicken it.
+        float starOutlinePx = StopBitmaps.STAR_OUTLINE_WIDTH_DP * r.getDisplayMetrics().density;
+
+        // Starred-stop full-band icons: an inflated star with the normal-sized direction arrow drawn on
+        // top, per direction. Route-type agnostic (no route glyph), so build the 9 directions once. The
+        // focused variant is the selected-color star, enlarged like every other focused marker.
+        int normalPx = (int) (mPx * GLYPH_ICON_SCALE);
+        int starPx = Math.round(mPx * StopBitmaps.STAR_SIZE_SCALE);
+        Bitmap[] favorites = new Bitmap[NUM_DIRECTIONS];
+        Bitmap[] favoritesFocused = new Bitmap[NUM_DIRECTIONS];
+        for (int i = 0; i < directions.length; i++) {
+            boolean hasArrow = !directions[i].equals(NO_DIRECTION);
+            float angle = StopBitmaps.compassAngle(directions[i]);
+            favorites[i] = StopBitmaps.favoriteMarker(normalPx, starPx, hasArrow, angle,
+                    starLight, starDark, arrowTip, arrowBase, starOutlinePx);
+            favoritesFocused[i] = StopBitmaps.scale(
+                    StopBitmaps.favoriteMarker(normalPx, starPx, hasArrow, angle,
+                            focusColor, focusColor, arrowTip, arrowBase, starOutlinePx),
+                    FOCUS_ICON_SCALE);
+        }
+        sFavoriteDescriptors = toDescriptors(favorites);
+        sFavoriteDescriptorsFocused = toDescriptors(favoritesFocused);
+
         sDotDescriptor = BitmapDescriptorFactory.fromBitmap(
                 StopBitmaps.dot(mPx, r.getColor(R.color.theme_primary)));
         sDotDescriptorFocused = BitmapDescriptorFactory.fromBitmap(
-                StopBitmaps.dot(mPx, r.getColor(R.color.map_stop_focus),
-                        StopBitmaps.FOCUSED_DOT_SCALE));
+                StopBitmaps.dot(mPx, focusColor, StopBitmaps.FOCUSED_DOT_SCALE));
+
+        // Dot-band starred stops: a plain star (no arrow, matching the plain dot), dot-sized and enlarged
+        // when focused. Gold gradient normally, the selected color when focused; same thin outline.
+        int starDotPx = Math.round(mPx * 0.5f * StopBitmaps.STAR_SIZE_SCALE);
+        sStarDotDescriptor = BitmapDescriptorFactory.fromBitmap(
+                StopBitmaps.star(starDotPx, starLight, starDark, starOutlinePx));
+        sStarDotDescriptorFocused = BitmapDescriptorFactory.fromBitmap(
+                StopBitmaps.star(Math.round(starDotPx * StopBitmaps.FOCUSED_DOT_SCALE),
+                        focusColor, focusColor, starOutlinePx));
     }
 
     /** Wraps each pre-rendered bitmap into a BitmapDescriptor once, so callers can reuse them. */

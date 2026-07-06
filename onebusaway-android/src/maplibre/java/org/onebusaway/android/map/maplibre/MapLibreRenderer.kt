@@ -86,6 +86,11 @@ class MapLibreRenderer(
     private var renderedFocusedStopId: String? = null
     // The zoom band the stop icons were last drawn for (full icon vs dot); see [reconcileStopMarkers].
     private var renderedStopBand = StopBand.FULL
+    // The stop ids drawn as starred (favorite) last reconcile, so a star/unstar flips the icon even
+    // when focus and band are unchanged; see [reconcileStopMarkers]. (Unlike the Google renderer,
+    // maplibre markers carry no z-index, so the #1680 tap-preference is icon-only here — a starred stop
+    // can't be given draw/tap priority over an overlapping plain stop on this flavor.)
+    private var renderedFavoriteStopIds: Set<String> = emptySet()
 
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
@@ -213,7 +218,7 @@ class MapLibreRenderer(
             }
         }
         for (stop in stops) {
-            val kind = stopIconKind(stop.id == focusedStopId, band)
+            val kind = stopIconKind(stop.id == focusedStopId, band, stop.favorite)
             val existing = stopMarkersByStopId[stop.id]
             if (existing == null) {
                 val marker = map.addMarker(
@@ -221,14 +226,20 @@ class MapLibreRenderer(
                 )
                 stopMarkersByStopId[stop.id] = marker
                 stopByMarker[marker] = stop
-            } else if (stopIconKind(stop.id == renderedFocusedStopId, renderedStopBand) != kind) {
+            } else if (stopIconKind(
+                    stop.id == renderedFocusedStopId,
+                    renderedStopBand,
+                    stop.id in renderedFavoriteStopIds,
+                ) != kind
+            ) {
                 // Only the markers whose icon kind changed need a new icon (maplibre centers the icon
-                // on the position, so the dot lands on the stop with no anchor change).
+                // on the position, so the dot/star lands on the stop with no anchor change).
                 existing.icon = stopIcon(stop, kind)
             }
         }
         renderedFocusedStopId = focusedStopId
         renderedStopBand = band
+        renderedFavoriteStopIds = buildSet { for (s in stops) if (s.favorite) add(s.id) }
     }
 
     private fun stopIcon(stop: StopMarker, kind: StopIconKind): Icon = when (kind) {
@@ -236,6 +247,10 @@ class MapLibreRenderer(
         StopIconKind.FULL_FOCUSED -> MapLibreStopIcons.focusedIconForDirection(context, stop.direction)
         StopIconKind.DOT -> MapLibreStopIcons.dotIcon(context)
         StopIconKind.DOT_FOCUSED -> MapLibreStopIcons.focusedDotIcon(context)
+        StopIconKind.FAVORITE -> MapLibreStopIcons.favoriteIcon(context, stop.direction)
+        StopIconKind.FAVORITE_FOCUSED -> MapLibreStopIcons.focusedFavoriteIcon(context, stop.direction)
+        StopIconKind.FAVORITE_DOT -> MapLibreStopIcons.favoriteDotIcon(context)
+        StopIconKind.FAVORITE_DOT_FOCUSED -> MapLibreStopIcons.focusedFavoriteDotIcon(context)
     }
 
     /**

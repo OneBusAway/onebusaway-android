@@ -88,6 +88,9 @@ class GoogleMapRenderer(
     private var renderedFocusedStopId: String? = null
     // The zoom band the stop icons were last drawn for (full icon vs dot); see [reconcileStopMarkers].
     private var renderedStopBand = StopBand.FULL
+    // The stop ids drawn as starred (favorite) last reconcile, so a star/unstar flips the icon (+ tap
+    // z-index) even when focus and band are unchanged; see [reconcileStopMarkers].
+    private var renderedFavoriteStopIds: Set<String> = emptySet()
 
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
@@ -259,7 +262,7 @@ class GoogleMapRenderer(
             }
         }
         for (stop in stops) {
-            val kind = stopIconKind(stop.id == focusedStopId, band)
+            val kind = stopIconKind(stop.id == focusedStopId, band, stop.favorite)
             val existing = stopMarkersByStopId[stop.id]
             if (existing == null) {
                 val (anchorX, anchorY) = stopAnchor(stop, kind)
@@ -269,19 +272,28 @@ class GoogleMapRenderer(
                         .icon(stopIcon(stop, kind))
                         .flat(true)
                         .anchor(anchorX, anchorY)
+                        // A starred stop sits above its neighbours so it wins an overlapping tap (#1680).
+                        .zIndex(if (stop.favorite) FAVORITE_STOP_Z_INDEX else 0f)
                 )!!
                 stopMarkersByStopId[stop.id] = marker
                 stopByMarker[marker] = stop
-            } else if (stopIconKind(stop.id == renderedFocusedStopId, renderedStopBand) != kind) {
+            } else if (stopIconKind(
+                    stop.id == renderedFocusedStopId,
+                    renderedStopBand,
+                    stop.id in renderedFavoriteStopIds,
+                ) != kind
+            ) {
                 // Only the markers whose icon kind changed need a new icon (and matching anchor: the
-                // full icon is anchored on its circle per direction, the dot at the marker center).
+                // full icon is anchored on its circle per direction, the dot/star at the marker center).
                 existing.setIcon(stopIcon(stop, kind))
                 val (anchorX, anchorY) = stopAnchor(stop, kind)
                 existing.setAnchor(anchorX, anchorY)
+                existing.zIndex = if (stop.favorite) FAVORITE_STOP_Z_INDEX else 0f
             }
         }
         renderedFocusedStopId = focusedStopId
         renderedStopBand = band
+        renderedFavoriteStopIds = buildSet { for (s in stops) if (s.favorite) add(s.id) }
     }
 
     private fun stopIcon(stop: StopMarker, kind: StopIconKind): BitmapDescriptor = when (kind) {
@@ -289,12 +301,19 @@ class GoogleMapRenderer(
         StopIconKind.FULL_FOCUSED -> StopIconFactory.focusedStopIcon(context, stop.direction, stop.routeType)
         StopIconKind.DOT -> StopIconFactory.dotStopIcon(context)
         StopIconKind.DOT_FOCUSED -> StopIconFactory.focusedDotStopIcon(context)
+        StopIconKind.FAVORITE -> StopIconFactory.favoriteStopIcon(context, stop.direction)
+        StopIconKind.FAVORITE_FOCUSED -> StopIconFactory.focusedFavoriteStopIcon(context, stop.direction)
+        StopIconKind.FAVORITE_DOT -> StopIconFactory.favoriteDotStopIcon(context)
+        StopIconKind.FAVORITE_DOT_FOCUSED -> StopIconFactory.focusedFavoriteDotStopIcon(context)
     }
 
     private fun stopAnchor(stop: StopMarker, kind: StopIconKind): Pair<Float, Float> =
         when (kind) {
-            StopIconKind.DOT, StopIconKind.DOT_FOCUSED -> 0.5f to 0.5f
-            else -> StopIconFactory.anchorX(stop.direction) to StopIconFactory.anchorY(stop.direction)
+            // The full directional icon is anchored on its circle per direction. The dot and every star
+            // (its star is centered, with the arrow drawn symmetrically around it) are centered.
+            StopIconKind.FULL, StopIconKind.FULL_FOCUSED ->
+                StopIconFactory.anchorX(stop.direction) to StopIconFactory.anchorY(stop.direction)
+            else -> 0.5f to 0.5f
         }
 
     /**
@@ -312,6 +331,7 @@ class GoogleMapRenderer(
         stopMarkersByStopId.clear()
         stopByMarker.clear()
         renderedFocusedStopId = null
+        renderedFavoriteStopIds = emptySet()
 
         vehicleMarkersByTripId.values.forEach { it.remove() }
         vehicleMarkersByTripId.clear()
@@ -610,6 +630,11 @@ class GoogleMapRenderer(
 
         // z-index used to show vehicle markers on top of stop markers (default marker z-index is 0).
         private const val VEHICLE_Z_INDEX = 1f
+
+        // A starred stop draws just above normal stops (default z-index 0) but below vehicles, so it wins
+        // an overlapping tap over a neighbouring plain stop — the "tap preference" of #1680. gms dispatches
+        // an overlapping-marker click to the highest z-index marker.
+        private const val FAVORITE_STOP_Z_INDEX = 0.5f
 
         // The uncertainty band draws above the static route line; the estimate markers above the band,
         // each at a distinct z-index so overlapping ones keep a stable draw order (no per-frame alpha

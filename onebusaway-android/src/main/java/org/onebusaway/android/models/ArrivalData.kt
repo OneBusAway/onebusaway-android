@@ -40,6 +40,9 @@ interface ArrivalData {
     val predictedDepartureTime: ServerTime
     val status: Status?
     val frequency: FrequencyWindow?
+    /** Ids of the service alerts (situations) that reference this specific arrival, resolved against
+     *  the response's references pool. Empty when the arrival carries no per-trip alert. */
+    val situationIds: List<String>
     val historicalOccupancy: Occupancy?
     val predictedOccupancy: Occupancy?
     /** Real-time fields, for the report context; defaults when there is no trip status. */

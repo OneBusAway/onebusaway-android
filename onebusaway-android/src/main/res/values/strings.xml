@@ -234,6 +234,7 @@
     <string name="stop_info_option_report_problem">Report stop problem</string>
     <string name="stop_info_option_night_light">Night light</string>
     <string name="stop_info_option_hide_alerts">Hide active alerts</string>
+    <string name="stop_info_arrival_service_alert">View service alert for this arrival</string>
     <string name="stop_info_nodata_minutes">No arrivals in the next %1$d min.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_nodata_hours_minutes">

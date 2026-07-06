@@ -26,6 +26,15 @@ import org.onebusaway.android.time.ServerTime
 /** Adapts a modernized [ArrivalDeparture] DTO (arrivals fetch) to the [ArrivalData] model. */
 internal fun ArrivalDeparture.asArrivalData(): ArrivalData = DtoArrivalData(this)
 
+/**
+ * A closed (or otherwise suppressed) stop keeps `predicted:true` but replaces the near-term
+ * prediction with a non-positive sentinel — observed `-1` and `0` for stop `1_82673` in issue #1687.
+ * Collapse any non-positive predicted instant to the single canonical "no prediction" value `0`
+ * here at the wire→domain boundary, so downstream `!= 0` / `> 0` guards all see one sentinel and a
+ * `-1` can never be treated as a real epoch-millis timestamp.
+ */
+private fun predictedOrAbsent(epochMs: Long): Long = if (epochMs > 0L) epochMs else 0L
+
 private class DtoArrivalData(private val d: ArrivalDeparture) : ArrivalData {
     override val routeId get() = d.routeId
     override val tripId get() = d.tripId
@@ -39,10 +48,11 @@ private class DtoArrivalData(private val d: ArrivalDeparture) : ArrivalData {
     override val predicted get() = d.predicted
     // Wire→server mint: these are the server clock, already epoch millis.
     override val scheduledArrivalTime get() = ServerTime(d.scheduledArrivalTime)
-    override val predictedArrivalTime get() = ServerTime(d.predictedArrivalTime)
+    override val predictedArrivalTime get() = ServerTime(predictedOrAbsent(d.predictedArrivalTime))
     override val scheduledDepartureTime get() = ServerTime(d.scheduledDepartureTime)
-    override val predictedDepartureTime get() = ServerTime(d.predictedDepartureTime)
+    override val predictedDepartureTime get() = ServerTime(predictedOrAbsent(d.predictedDepartureTime))
     override val status get() = d.tripStatus?.status?.let { Status.fromString(it) }
+    override val situationIds get() = d.situationIds
     override val frequency
         get() = d.frequency?.let { FrequencyWindow(ServerTime(it.startTime), ServerTime(it.endTime), it.headway) }
     override val historicalOccupancy get() = Occupancy.fromString(d.historicalOccupancy)

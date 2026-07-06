@@ -15,7 +15,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
---><resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+--><resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2" xmlns:tools="http://schemas.android.com/tools">
 
     <string name="app_name">OneBusAway</string>
 
@@ -80,7 +80,7 @@
     <string name="main_never_ask_again">Non chiedere più</string>
     <string name="main_never_show_again">Non mostrare più</string>
 
-    <string name="main_waiting_for_location">Ricerca della posizione...</string>
+    <string name="main_waiting_for_location">Ricerca della posizione…</string>
     <string name="no_location_permission">Impossibile individuare la posizione. Fornisci all\'app l\'accesso alla posizione nelle impostazioni di sistema.</string>
     <string name="main_outofrange_title">Fuori portata</string>
     <string name="main_outofrange">Il servizio di trasporti di %1$s non copre il luogo in cui ti trovi.\n\nSpostare mappa su %1$s?</string>
@@ -106,37 +106,47 @@
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%d</xliff:g> min di ritardo</item>
+        <item quantity="many">
+            <xliff:g id="count">%d</xliff:g> min di ritardo</item>
     </plurals>
     <plurals name="stop_info_arrive_early">
         <item quantity="one">1 min di anticipo</item>
         <!-- Below element should remain on same line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%d</xliff:g> min di anticipo</item>
+        <item quantity="many">
+            <xliff:g id="count">%d</xliff:g> min di anticipo</item>
     </plurals>
     <plurals name="stop_info_depart_delayed">
         <item quantity="one">Partito in ritardo di 1 min</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Partito in ritardo di  <xliff:g id="count">%d</xliff:g> min</item>
+        <item quantity="many">Partito in ritardo di  <xliff:g id="count">%d</xliff:g> min</item>
     </plurals>
     <plurals name="stop_info_depart_early">
         <item quantity="one">Partito in anticipo di 1 min</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Partito in anticipo di <xliff:g id="count">%d</xliff:g> min</item>
+        <item quantity="many">Partito in anticipo di <xliff:g id="count">%d</xliff:g> min</item>
     </plurals>
     <plurals name="stop_info_arrived_delayed">
         <item quantity="one">Arrivato in ritardo di 1 min</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Arrivato in ritardo di <xliff:g id="count">%d</xliff:g> min</item>
+        <item quantity="many">Arrivato in ritardo di <xliff:g id="count">%d</xliff:g> min</item>
     </plurals>
     <plurals name="stop_info_arrived_early">
         <item quantity="one">Arrivato in anticipo di 1 min</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Arrivato in anticipo di <xliff:g id="count">%d</xliff:g> min</item>
+        <item quantity="many">Arrivato in anticipo di <xliff:g id="count">%d</xliff:g> min</item>
     </plurals>
     <plurals name="stop_info_status_late_without_arrive_depart">
         <item quantity="one">1 min di ritardo</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
+            <xliff:g id="count">%d</xliff:g> min di ritardo</item>
+        <item quantity="many">
             <xliff:g id="count">%d</xliff:g> min di ritardo</item>
     </plurals>
     <plurals name="stop_info_status_early_without_arrive_depart">
@@ -144,11 +154,17 @@
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%d</xliff:g> min di anticipo</item>
+        <item quantity="many">
+            <xliff:g id="count">%d</xliff:g> min di anticipo</item>
     </plurals>
     <plurals name="stop_info_car_count">
         <item quantity="one">1 vagone</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
+            <xliff:g id="count">%d</xliff:g>
+            vagoni
+        </item>
+        <item quantity="many">
             <xliff:g id="count">%d</xliff:g>
             vagoni
         </item>
@@ -164,8 +180,16 @@
     <string name="stop_info_time_arrived_at">Arrivato alle ore %1s</string>
     <string name="stop_info_time_departed_at">Partito alle ore %1s</string>
 
-    <string name="stop_info_frequency_from">Ogni %1$d min dalle ore %2$s</string>
-    <string name="stop_info_frequency_until">Ogni %1$d min fino alle ore %2$s</string>
+    <plurals name="stop_info_frequency_from">
+        <item quantity="one">Ogni %1$d min dalle ore %2$s</item>
+        <item quantity="many">Ogni %1$d min dalle ore %2$s</item>
+        <item quantity="other">Ogni %1$d min dalle ore %2$s</item>
+    </plurals>
+    <plurals name="stop_info_frequency_until">
+        <item quantity="one">Ogni %1$d min fino alle ore %2$s</item>
+        <item quantity="many">Ogni %1$d min fino alle ore %2$s</item>
+        <item quantity="other">Ogni %1$d min fino alle ore %2$s</item>
+    </plurals>
     <string name="stop_info_eta_now">ORA</string>
     <string name="stop_info_option_showonmap">Mostra sulla mappa</string>
     <string name="menu_option_sort_by">Ordina per</string>
@@ -181,11 +205,14 @@
         <item quantity="one">Nessun arrivo nella prossima ora e %1$d min.</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Nessun arrivo nelle prossime <xliff:g id="count">%2$d</xliff:g> ore e %1$d min.</item>
+        <item quantity="many">Nessun arrivo nelle prossime <xliff:g id="count">%2$d</xliff:g> ore e %1$d min.</item>
     </plurals>
     <plurals name="stop_info_nodata_hours_minutes_short_format">
         <item quantity="one">1h %1$d+ min</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
+        </item>
+        <item quantity="many"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
         </item>
     </plurals>
     <string name="stop_info_no_additional_data_minutes">Nessun altro arrivo nei prossimi %1$d min.</string>
@@ -194,11 +221,14 @@
         <item quantity="one">Nessun altro arrivo nella prossima ora e %1$d min.</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Nessun altro arrivo nelle prossime<xliff:g id="count">%2$d</xliff:g> ore e %1$d min.</item>
+        <item quantity="many">Nessun altro arrivo nelle prossime<xliff:g id="count">%2$d</xliff:g> ore e %1$d min.</item>
     </plurals>
     <plurals name="stop_info_no_additional_data_hours_minutes_short_format">
         <item quantity="one">1h %1$d+ min</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
+        </item>
+        <item quantity="many"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
         </item>
     </plurals>
     <string name="stop_info_load_more_arrivals">Carica più arrivi</string>
@@ -301,10 +331,12 @@
     <plurals name="alert_filter_text">
         <item quantity="one">%1$d avviso nascosto</item>
         <item quantity="other"><xliff:g id="count">%1$d</xliff:g> avvisi nascosti</item>
+        <item quantity="many"><xliff:g id="count">%1$d</xliff:g> avvisi nascosti</item>
     </plurals>
     <plurals name="alert_show_more">
         <item quantity="one">%1$d altro avviso</item>
         <item quantity="other"><xliff:g id="count">%1$d</xliff:g> altri avvisi</item>
+        <item quantity="many"><xliff:g id="count">%1$d</xliff:g> altri avvisi</item>
     </plurals>
 
     <!-- Find -->
@@ -375,11 +407,15 @@
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g> miglia di distanza</item>
+        <item quantity="many">
+            <xliff:g id="count">%s</xliff:g> miglia di distanza</item>
     </plurals>
     <plurals name="distance_feet">
         <item quantity="one">1 piede di distanza</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
+            <xliff:g id="count">%s</xliff:g> piedi di distanza</item>
+        <item quantity="many">
             <xliff:g id="count">%s</xliff:g> piedi di distanza</item>
     </plurals>
     <plurals name="distance_kilometers">
@@ -387,11 +423,15 @@
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g> chilometri di distanza</item>
+        <item quantity="many">
+            <xliff:g id="count">%s</xliff:g> chilometri di distanza</item>
     </plurals>
     <plurals name="distance_meters">
         <item quantity="one">1 metro di distanza</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
+            <xliff:g id="count">%s</xliff:g> metri di distanza</item>
+        <item quantity="many">
             <xliff:g id="count">%s</xliff:g> metri di distanza</item>
     </plurals>
 
@@ -570,17 +610,41 @@
     <!-- Trip Details -->
     <string name="trip_details_vehicle">Mezzo: %1$s</string>
     <string name="trip_details_scheduled_data">Dati orario</string>
-    <string name="trip_details_real_time_sec_late">%1$d s di ritardo (Ultimo aggiornamento: %2$s)</string>
-    <string name="trip_details_real_time_min_sec_late">%1$d min e %2$d s di ritardo (Ultimo aggiornamento: %3$s)</string>
-    <string name="trip_details_real_time_sec_early">%1$d s di anticipo (Ultimo aggiornamento: %2$s)</string>
-    <string name="trip_details_real_time_min_sec_early">%1$d min e %2$d s di anticipo (Ultimo aggiornamento: %3$s)</string>
+    <plurals name="trip_details_real_time_sec_late">
+        <item quantity="one">%1$d s di ritardo (Ultimo aggiornamento: %2$s)</item>
+        <item quantity="many">%1$d s di ritardo (Ultimo aggiornamento: %2$s)</item>
+        <item quantity="other">%1$d s di ritardo (Ultimo aggiornamento: %2$s)</item>
+    </plurals>
+    <plurals name="trip_details_real_time_min_sec_late">
+        <item quantity="one">%1$d min e %2$d s di ritardo (Ultimo aggiornamento: %3$s)</item>
+        <item quantity="many">%1$d min e %2$d s di ritardo (Ultimo aggiornamento: %3$s)</item>
+        <item quantity="other">%1$d min e %2$d s di ritardo (Ultimo aggiornamento: %3$s)</item>
+    </plurals>
+    <plurals name="trip_details_real_time_sec_early">
+        <item quantity="one">%1$d s di anticipo (Ultimo aggiornamento: %2$s)</item>
+        <item quantity="many">%1$d s di anticipo (Ultimo aggiornamento: %2$s)</item>
+        <item quantity="other">%1$d s di anticipo (Ultimo aggiornamento: %2$s)</item>
+    </plurals>
+    <plurals name="trip_details_real_time_min_sec_early">
+        <item quantity="one">%1$d min e %2$d s di anticipo (Ultimo aggiornamento: %3$s)</item>
+        <item quantity="many">%1$d min e %2$d s di anticipo (Ultimo aggiornamento: %3$s)</item>
+        <item quantity="other">%1$d min e %2$d s di anticipo (Ultimo aggiornamento: %3$s)</item>
+    </plurals>
     <string name="trip_details_current_stop">Fermata attuale</string>
     <string name="trip_details_current_bus_position">L\'autobus si trova qui:</string>
     <string name="trip_details_dest_stop">Fermata di destinazione</string>
 
     <!-- Vehicles on Map -->
-    <string name="vehicle_last_updated_sec">Dati aggiornati %1$d s fa</string>
-    <string name="vehicle_last_updated_min_and_sec">Data aggiornati %1$d min %2$d s fa</string>
+    <plurals name="vehicle_last_updated_sec">
+        <item quantity="one">Dati aggiornati %1$d s fa</item>
+        <item quantity="many">Dati aggiornati %1$d s fa</item>
+        <item quantity="other">Dati aggiornati %1$d s fa</item>
+    </plurals>
+    <plurals name="vehicle_last_updated_min_and_sec">
+        <item quantity="one">Data aggiornati %1$d min %2$d s fa</item>
+        <item quantity="many">Data aggiornati %1$d min %2$d s fa</item>
+        <item quantity="other">Data aggiornati %1$d min %2$d s fa</item>
+    </plurals>
     <string name="vehicle_last_updated_scheduled">Posizione calcolata in base all\'orario</string>
 
     <!-- Night Light -->
@@ -613,7 +677,7 @@
     <!-- About -->
     <!-- About screen: structured prose; the name lists are in the string-arrays below -->
     <string name="about_welcome_title">Benvenuti in %1$s!</string>
-    <string name="about_intro">Questa app è stata realizzata da un team di volontari e si basa sulla dedizione, passione e talenti dei suoi contributori open source.</string>
+    <string name="about_intro">%1$s è stata realizzata da un team di volontari e si basa sulla dedizione, passione e talenti dei suoi contributori open source.</string>
     <string name="about_contributors_header">Contributori al Codice:</string>
     <string name="about_contributors_intro">I nostri dedicati contributori migliorano la funzionalità e l\'esperienza utente dell\'applicazione:</string>
     <string name="about_translations_header">Traduttori:</string>
@@ -875,7 +939,8 @@
     <string name="donation_dismiss_dialog_remind_me_later_button">Ricordamelo Più Tardi</string>
     <string name="donation_dismiss_dialog_cancel_button">Annulla</string>
     <string name="title_activity_donation_learn_more">Perché abbiamo bisogno del tuo aiuto</string>
-    <string name="donation_learn_more_explanation">"Abbiamo grandi piani per migliorare %1$s, ma non possiamo farlo senza il tuo aiuto. Questa app è attualmente sviluppata con il 100%% di lavoro volontario, e abbiamo bisogno del tuo aiuto per finanziare lo sviluppo futuro.\n\nCome progetto chiave della Open Transit Software Foundation, un'organizzazione non profit 501(c)(3), ci affidiamo alla buona volontà di utenti come te per continuare a funzionare e migliorare questo software.\n\nOgni anno, solo una piccola frazione dei nostri utenti dona, ma ogni contributo, grande o piccolo, aiuta a garantire che %1$s rimanga gratuito, aggiornato e accessibile a tutti. Una piccola donazione, anche solo il costo di una settimana di pendolarismo, $27.50, può fare tutta la differenza.\n\nIl tuo contributo deducibile dalle tasse assicura che %1$s rimanga libero e accessibile per tutti. Modelliamo insieme il futuro del trasporto pubblico!\n\nGrazie,\nIl Team di %1$s"</string>
+    <!-- "(c)" here is the "501(c)(3)" US tax-code designation, not a copyright symbol. -->
+    <string name="donation_learn_more_explanation" tools:ignore="TypographyOther">"Abbiamo grandi piani per migliorare %1$s, ma non possiamo farlo senza il tuo aiuto. Questa app è attualmente sviluppata con il 100%% di lavoro volontario, e abbiamo bisogno del tuo aiuto per finanziare lo sviluppo futuro.\n\nCome progetto chiave della Open Transit Software Foundation, un'organizzazione non profit 501(c)(3), ci affidiamo alla buona volontà di utenti come te per continuare a funzionare e migliorare questo software.\n\nOgni anno, solo una piccola frazione dei nostri utenti dona, ma ogni contributo, grande o piccolo, aiuta a garantire che %1$s rimanga gratuito, aggiornato e accessibile a tutti. Una piccola donazione, anche solo il costo di una settimana di pendolarismo, $27.50, può fare tutta la differenza.\n\nIl tuo contributo deducibile dalle tasse assicura che %1$s rimanga libero e accessibile per tutti. Modelliamo insieme il futuro del trasporto pubblico!\n\nGrazie,\nIl Team di %1$s"</string>
     <string name="preferences_reset_donation_timestamps_title">Reimposta i Timestamp delle Donazioni</string>
     <string name="preferences_reset_donation_timestamps_summary">Toccando questa opzione verranno cancellati i timestamp di \'Ricordamelo più tardi\' e \'Non disturbarmi\' associati alle richieste di donazione.</string>
     <string name="preferences_show_weather_view">Mostra vista meteo</string>

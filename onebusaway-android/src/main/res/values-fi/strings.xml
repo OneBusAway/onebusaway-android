@@ -14,7 +14,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <string name="app_name">OneBusAway</string>
 
@@ -217,8 +218,14 @@
     <string name="stop_info_time_arrived_at">Saapui %1s</string>
     <string name="stop_info_time_departed_at">Lähti %1s</string>
 
-    <string name="stop_info_frequency_from">Joka %1$d. min %2$s lähtien</string>
-    <string name="stop_info_frequency_until">Joka %1$d. min %2$s asti</string>
+    <plurals name="stop_info_frequency_from">
+        <item quantity="one">Joka %1$d. min %2$s lähtien</item>
+        <item quantity="other">Joka %1$d. min %2$s lähtien</item>
+    </plurals>
+    <plurals name="stop_info_frequency_until">
+        <item quantity="one">Joka %1$d. min %2$s asti</item>
+        <item quantity="other">Joka %1$d. min %2$s asti</item>
+    </plurals>
     <string name="stop_info_eta_now">NYT</string>
     <string name="stop_info_option_showonmap">Näytä kartalla</string>
     <string name="menu_option_sort_by">Järjestä</string>
@@ -582,19 +589,40 @@
     <!-- Trip Details -->
     <string name="trip_details_vehicle">Ajoneuvo: %1$s</string>
     <string name="trip_details_scheduled_data">Aikataulu</string>
-    <string name="trip_details_real_time_sec_late">%1$d s myöhässä (Viim. päivitys: %2$s)</string>
-    <string name="trip_details_real_time_min_sec_late">%1$d min %2$d s myöhässä (Viim. päivitys: %3$s)
-    </string>
-    <string name="trip_details_real_time_sec_early">%1$d s etuajassa (Viim. päivitys: %2$s)</string>
-    <string name="trip_details_real_time_min_sec_early">%1$d min %2$d s etuajassa (Viim. päivitys:
+    <plurals name="trip_details_real_time_sec_late">
+        <item quantity="one">%1$d s myöhässä (Viim. päivitys: %2$s)</item>
+        <item quantity="other">%1$d s myöhässä (Viim. päivitys: %2$s)</item>
+    </plurals>
+    <plurals name="trip_details_real_time_min_sec_late">
+        <item quantity="one">%1$d min %2$d s myöhässä (Viim. päivitys: %3$s)
+    </item>
+        <item quantity="other">%1$d min %2$d s myöhässä (Viim. päivitys: %3$s)
+    </item>
+    </plurals>
+    <plurals name="trip_details_real_time_sec_early">
+        <item quantity="one">%1$d s etuajassa (Viim. päivitys: %2$s)</item>
+        <item quantity="other">%1$d s etuajassa (Viim. päivitys: %2$s)</item>
+    </plurals>
+    <plurals name="trip_details_real_time_min_sec_early">
+        <item quantity="one">%1$d min %2$d s etuajassa (Viim. päivitys:
         %3$s)
-    </string>
+    </item>
+        <item quantity="other">%1$d min %2$d s etuajassa (Viim. päivitys:
+        %3$s)
+    </item>
+    </plurals>
     <string name="trip_details_current_stop">Nykyinen pysäkki</string>
     <string name="trip_details_current_bus_position">Bussin nykyinen sijainti</string>
 
     <!-- Vehicles on Map -->
-    <string name="vehicle_last_updated_sec">Tiedot päivitetty %1$d s sitten</string>
-    <string name="vehicle_last_updated_min_and_sec">Tiedot päivitetty %1$d min %2$d s sitten</string>
+    <plurals name="vehicle_last_updated_sec">
+        <item quantity="one">Tiedot päivitetty %1$d s sitten</item>
+        <item quantity="other">Tiedot päivitetty %1$d s sitten</item>
+    </plurals>
+    <plurals name="vehicle_last_updated_min_and_sec">
+        <item quantity="one">Tiedot päivitetty %1$d min %2$d s sitten</item>
+        <item quantity="other">Tiedot päivitetty %1$d min %2$d s sitten</item>
+    </plurals>
     <string name="vehicle_last_updated_scheduled">Sijainti laskettu aikataulun perusteella</string>
 
     <!-- Night Light -->
@@ -637,7 +665,7 @@
     <!-- About -->
     <!-- About screen: structured prose; the name lists are in the string-arrays below -->
     <string name="about_welcome_title">Tervetuloa %1$s-hankkeeseen!</string>
-    <string name="about_intro">Tämä sovellus on vapaaehtoistiimin tekemä ja se nojaa sen avoimen lähdekoodin avustajien omistautumiseen, intohimoon ja kykyihin.</string>
+    <string name="about_intro">%1$s on vapaaehtoistiimin tekemä ja se nojaa sen avoimen lähdekoodin avustajien omistautumiseen, intohimoon ja kykyihin.</string>
     <string name="about_contributors_header">Koodinkehittäjät:</string>
     <string name="about_contributors_intro">Omistautuneet avustajamme parantavat sovelluksen toiminnallisuutta ja käyttäjäkokemusta:</string>
     <string name="about_translations_header">Kääntäjät:</string>
@@ -691,7 +719,8 @@
     <string name="donation_dismiss_dialog_remind_me_later_button">Muistuta Minua Myöhemmin</string>
     <string name="donation_dismiss_dialog_cancel_button">Peruuta</string>
     <string name="title_activity_donation_learn_more">Miksi tarvitsemme apuasi</string>
-    <string name="donation_learn_more_explanation">Meillä on suuria suunnitelmia %1$sn parantamiseksi, mutta emme voi tehdä sitä ilman apuasi. Tämä sovellus on tällä hetkellä rakennettu 100%% vapaaehtoistyöllä, ja tarvitsemme sinua auttamaan meitä rahoittamaan tulevan kehityksen.\n\nOpen Transit Software Foundationin, 501(c)(3) voittoa tavoittelemattoman järjestön, keskeisenä hankkeena me luotamme käyttäjien, kuten sinun, hyväntahtoisuuteen pysyäksemme toiminnassa ja tehdäksemme tästä ohjelmistosta paremman.\n\nJoka vuosi vain pieni osa käyttäjistämme lahjoittaa, mutta jokainen panos, suuri tai pieni, auttaa varmistamaan, että %1$s pysyy ilmaisena, päivitettynä ja kaikkien saavutettavissa. Pieni lahjoitus, vaikkapa vain yhden viikon työmatkakustannusten verran, 27,50 dollaria, voi tehdä suuren eron.\n\nVerovähennyskelpoinen panoksesi varmistaa, että %1$s pysyy vapaana ja kaikkien saavutettavissa. Muovataan yhdessä joukkoliikenteen tulevaisuutta!\n\nKiitos,\n%1$s-tiimi</string>
+    <!-- "(c)" here is the "501(c)(3)" US tax-code designation, not a copyright symbol. -->
+    <string name="donation_learn_more_explanation" tools:ignore="TypographyOther">Meillä on suuria suunnitelmia %1$sn parantamiseksi, mutta emme voi tehdä sitä ilman apuasi. Tämä sovellus on tällä hetkellä rakennettu 100%% vapaaehtoistyöllä, ja tarvitsemme sinua auttamaan meitä rahoittamaan tulevan kehityksen.\n\nOpen Transit Software Foundationin, 501(c)(3) voittoa tavoittelemattoman järjestön, keskeisenä hankkeena me luotamme käyttäjien, kuten sinun, hyväntahtoisuuteen pysyäksemme toiminnassa ja tehdäksemme tästä ohjelmistosta paremman.\n\nJoka vuosi vain pieni osa käyttäjistämme lahjoittaa, mutta jokainen panos, suuri tai pieni, auttaa varmistamaan, että %1$s pysyy ilmaisena, päivitettynä ja kaikkien saavutettavissa. Pieni lahjoitus, vaikkapa vain yhden viikon työmatkakustannusten verran, 27,50 dollaria, voi tehdä suuren eron.\n\nVerovähennyskelpoinen panoksesi varmistaa, että %1$s pysyy vapaana ja kaikkien saavutettavissa. Muovataan yhdessä joukkoliikenteen tulevaisuutta!\n\nKiitos,\n%1$s-tiimi</string>
     <string name="preferences_reset_donation_timestamps_title">Nollaa Lahjoituksen Aikaleimat</string>
     <string name="preferences_reset_donation_timestamps_summary">Tämän vaihtoehdon napauttaminen poistaa sekä \'Muistuta minua myöhemmin\' että \'Älä vaivaudu\' aikaleimat, jotka liittyvät lahjoituspyyntöihin.</string>
     <string name="preferences_show_weather_view">Näytä säätönäkymä</string>

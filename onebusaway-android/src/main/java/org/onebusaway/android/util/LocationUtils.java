@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import edu.usf.cutr.pelias.AutocompleteRequest;
@@ -258,7 +259,7 @@ public class LocationUtils {
             sb.append(loc.getAccuracy());
         }
         sb.append(", ");
-        sb.append(String.format("%.0f", timeDiffSec) + " second(s) ago");
+        sb.append(String.format(Locale.US, "%.0f", timeDiffSec) + " second(s) ago");
 
         return sb.toString();
     }

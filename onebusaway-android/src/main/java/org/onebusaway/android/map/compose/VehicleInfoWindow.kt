@@ -309,12 +309,12 @@ internal fun serverNowMs(serverTimeMs: Long, deviceStartMs: Long, deviceNowMs: L
  */
 internal fun formatDataAge(res: Resources, elapsedSeconds: Long, estimating: Boolean = false): String {
     val s = elapsedSeconds.coerceAtLeast(0)
-    val secRes = if (estimating) R.string.vehicle_estimate_from_update_sec else R.string.vehicle_last_updated_sec
+    val secRes = if (estimating) R.plurals.vehicle_estimate_from_update_sec else R.plurals.vehicle_last_updated_sec
     val minSecRes =
-        if (estimating) R.string.vehicle_estimate_from_update_min_and_sec else R.string.vehicle_last_updated_min_and_sec
+        if (estimating) R.plurals.vehicle_estimate_from_update_min_and_sec else R.plurals.vehicle_last_updated_min_and_sec
     return if (s < 60) {
-        res.getString(secRes, s)
+        res.getQuantityString(secRes, s.toInt(), s)
     } else {
-        res.getString(minSecRes, TimeUnit.SECONDS.toMinutes(s), s % 60)
+        res.getQuantityString(minSecRes, (s % 60).toInt(), TimeUnit.SECONDS.toMinutes(s), s % 60)
     }
 }

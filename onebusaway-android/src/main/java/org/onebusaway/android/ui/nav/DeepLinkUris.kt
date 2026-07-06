@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.nav
 
 import android.net.Uri
+import androidx.core.net.toUri
 import org.onebusaway.android.BuildConfig
 
 /**
@@ -40,8 +41,8 @@ object DeepLinkUris {
     const val ROUTES_PATH = "routes"
 
     /** Base stop URI; append the stop id to target a stop. */
-    val STOPS: Uri = Uri.parse("content://$AUTHORITY/$STOPS_PATH")
+    val STOPS: Uri = "content://$AUTHORITY/$STOPS_PATH".toUri()
 
     /** Base route URI; append the route id to target a route. */
-    val ROUTES: Uri = Uri.parse("content://$AUTHORITY/$ROUTES_PATH")
+    val ROUTES: Uri = "content://$AUTHORITY/$ROUTES_PATH".toUri()
 }

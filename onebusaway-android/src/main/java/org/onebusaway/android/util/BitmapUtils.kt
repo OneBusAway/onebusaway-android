@@ -23,6 +23,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Matrix
 import android.os.Environment
+import androidx.core.graphics.createBitmap
 import androidx.exifinterface.media.ExifInterface
 import java.io.File
 import java.io.IOException
@@ -54,7 +55,7 @@ object BitmapUtils {
             pixels[x] = if (pixels[x] == Color.BLACK) color else pixels[x]
         }
 
-        val out = Bitmap.createBitmap(width, height, source.config!!)
+        val out = createBitmap(width, height, source.config!!)
         out.setPixels(pixels, 0, width, 0, 0, width, height)
         return out
     }

@@ -19,11 +19,8 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationManager;
-import android.os.Build;
 import android.os.SystemClock;
 import android.provider.Settings;
-import android.text.TextUtils;
 import android.util.Log;
 
 import org.onebusaway.android.BuildConfig;
@@ -202,26 +199,12 @@ public class LocationUtils {
      */
     public static int getLocationMode(Context context) {
         int locationMode = Settings.Secure.LOCATION_MODE_OFF;
-        String locationProviders;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            try {
-                locationMode = Settings.Secure
-                        .getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
-            } catch (Settings.SettingNotFoundException e) {
-                e.printStackTrace();
-            }
-        } else {
-            locationProviders = Settings.Secure.getString(context.getContentResolver(),
-                    Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
-
-            if (TextUtils.isEmpty(locationProviders)) {
-                locationMode = Settings.Secure.LOCATION_MODE_OFF;
-            } else if (locationProviders.contains(LocationManager.GPS_PROVIDER)) {
-                locationMode = Settings.Secure.LOCATION_MODE_HIGH_ACCURACY;
-            } else if (locationProviders.contains(LocationManager.NETWORK_PROVIDER)) {
-                locationMode = Settings.Secure.LOCATION_MODE_BATTERY_SAVING;
-            }
+        try {
+            locationMode = Settings.Secure
+                    .getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
+        } catch (Settings.SettingNotFoundException e) {
+            e.printStackTrace();
         }
         return locationMode;
     }
@@ -236,17 +219,9 @@ public class LocationUtils {
             return "";
         }
 
-        long timeDiff;
-        double timeDiffSec;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            timeDiff = SystemClock.elapsedRealtimeNanos() - loc.getElapsedRealtimeNanos();
-            // Convert to seconds
-            timeDiffSec = timeDiff / 1E9;
-        } else {
-            timeDiff = System.currentTimeMillis() - loc.getTime();
-            timeDiffSec = timeDiff / 1E3;
-        }
+        long timeDiff = SystemClock.elapsedRealtimeNanos() - loc.getElapsedRealtimeNanos();
+        // Convert to seconds
+        double timeDiffSec = timeDiff / 1E9;
 
         StringBuilder sb = new StringBuilder();
         sb.append(loc.getProvider());

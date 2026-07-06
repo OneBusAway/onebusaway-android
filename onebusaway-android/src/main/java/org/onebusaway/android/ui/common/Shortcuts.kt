@@ -18,13 +18,13 @@ package org.onebusaway.android.ui.common
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.LayerDrawable
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.content.res.ResourcesCompat
@@ -130,11 +130,7 @@ object Shortcuts {
         val iconInset = ViewUtils.dpToPixels(context, 7.0f)
         layerDrawable.setLayerInset(1, iconInset, iconInset, iconInset, iconInset)
 
-        val b = Bitmap.createBitmap(
-            layerDrawable.intrinsicWidth,
-            layerDrawable.intrinsicHeight,
-            Bitmap.Config.ARGB_8888
-        )
+        val b = createBitmap(layerDrawable.intrinsicWidth, layerDrawable.intrinsicHeight)
         val canvas = Canvas(b)
         layerDrawable.setBounds(0, 0, canvas.width, canvas.height)
         layerDrawable.draw(canvas)

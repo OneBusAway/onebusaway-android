@@ -17,7 +17,7 @@
 
 package org.onebusaway.android.util
 
-import android.graphics.Color
+import androidx.core.graphics.toColorInt
 
 /**
  * Parses an OBA route hex color (a bare hex string like "FDB71A") to an Android ARGB int, or null
@@ -27,7 +27,7 @@ import android.graphics.Color
 fun parseObaHexColor(hex: String?): Int? =
     hex?.takeIf { it.isNotEmpty() }?.let {
         try {
-            Color.parseColor("#${it.trim()}")
+            "#${it.trim()}".toColorInt()
         } catch (e: IllegalArgumentException) {
             null
         }

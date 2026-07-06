@@ -17,6 +17,7 @@ package org.onebusaway.android.api.net
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -49,9 +50,9 @@ class ObaEndpointResolver @Inject constructor(
         val raw = custom?.takeIf { it.isNotEmpty() } ?: regionRepository.region.value?.obaBaseUrl
         ?: return null
         // A scheme-less custom URL is assumed to be https (#126).
-        val withScheme = if (Uri.parse(raw).scheme != null) raw
+        val withScheme = if (raw.toUri().scheme != null) raw
         else context.getString(R.string.https_prefix) + raw
-        return Uri.parse(withScheme)
+        return withScheme.toUri()
     }
 
     /** The OBA API key appended to every request. */

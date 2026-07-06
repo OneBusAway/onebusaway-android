@@ -16,7 +16,6 @@
 package org.onebusaway.android.ui.home.widealert
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -30,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.net.toUri
 import org.onebusaway.android.R
 
 /**
@@ -56,7 +56,7 @@ fun WideAlertDialog(alert: WideAlert, onDismiss: () -> Unit) {
         confirmButton = {
             if (alert.url != null) {
                 TextButton(onClick = {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(alert.url)))
+                    context.startActivity(Intent(Intent.ACTION_VIEW, alert.url.toUri()))
                     onDismiss()
                 }) { Text(stringResource(R.string.more_info)) }
             }

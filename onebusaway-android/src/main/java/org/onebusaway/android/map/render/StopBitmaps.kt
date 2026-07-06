@@ -22,6 +22,7 @@ import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Shader
+import androidx.core.graphics.createBitmap
 import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.max
@@ -91,7 +92,7 @@ object StopBitmaps {
     @JvmOverloads
     fun dot(baseIconPx: Int, fillColor: Int, scale: Float = 1f): Bitmap {
         val sizePx = max(6, (baseIconPx * 0.5f * scale).roundToInt())
-        val bm = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val bm = createBitmap(sizePx, sizePx)
         val canvas = Canvas(bm)
         val center = sizePx / 2f
         val stroke = max(1f, sizePx / 10f)
@@ -123,7 +124,7 @@ object StopBitmaps {
     @JvmStatic
     fun star(sizePx: Int, topColor: Int, bottomColor: Int, outlineWidthPx: Float): Bitmap {
         val size = max(8, sizePx)
-        val bm = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val bm = createBitmap(size, size)
         drawStar(Canvas(bm), size / 2f, size / 2f, size.toFloat(), topColor, bottomColor, outlineWidthPx)
         return bm
     }
@@ -208,7 +209,7 @@ object StopBitmaps {
         // arrow tip — so the arrow fits at any rotation. +2 leaves room for the anti-aliased outline.
         val reach = max(starRadius, if (hasArrow) tipDistance else 0f)
         val size = ceil(2 * reach).toInt() + 2
-        val bm = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val bm = createBitmap(size, size)
         val canvas = Canvas(bm)
         val center = size / 2f
 

@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -420,7 +421,7 @@ private fun buildRingtonePickerIntent(existingValue: String?): Intent {
         RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
     )
     if (existingValue != null) {
-        val existingUri = if (existingValue.isEmpty()) null else Uri.parse(existingValue)
+        val existingUri = if (existingValue.isEmpty()) null else existingValue.toUri()
         intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, existingUri)
     }
     return intent

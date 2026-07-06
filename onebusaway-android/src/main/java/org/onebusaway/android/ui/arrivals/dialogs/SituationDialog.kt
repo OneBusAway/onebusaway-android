@@ -16,7 +16,6 @@
 package org.onebusaway.android.ui.arrivals.dialogs
 
 import android.content.Intent
-import android.net.Uri
 import android.text.Html
 import android.text.SpannableStringBuilder
 import android.text.Spanned
@@ -26,6 +25,7 @@ import android.text.util.Linkify
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.AlertDetails
@@ -115,7 +115,7 @@ private fun buildMessage(activity: AppCompatActivity, alert: AlertDetails): Char
         message.setSpan(
             object : ClickableSpan() {
                 override fun onClick(widget: View) {
-                    activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                    activity.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
                 }
             },
             start, message.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE

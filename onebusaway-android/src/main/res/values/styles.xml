@@ -33,6 +33,13 @@
     <style name="Theme.OneBusAway.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@color/theme_primary_variant</item>
+    </style>
+
+    <!-- Change the Action Bar SearchView cursor color so its easier to see -->
+    <style name="cursorColor" parent="Widget.AppCompat.AutoCompleteTextView">
+        <item name="android:textCursorDrawable">@drawable/cursor</item>
     </style>
 
 </resources>

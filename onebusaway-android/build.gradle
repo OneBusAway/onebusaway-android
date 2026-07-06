@@ -152,7 +152,10 @@ android {
     }
     namespace='org.onebusaway.android'
     lint {
-        disable 'MissingTranslation', 'ExtraTranslation'
+        // LogNotTimber: this project intentionally uses android.util.Log, not Timber. The check is
+        // a library-preference nudge, not a correctness signal, and its ~190 hits drown out the
+        // actionable warnings, so we opt out of it rather than suppress each call site.
+        disable 'MissingTranslation', 'ExtraTranslation', 'LogNotTimber'
         // Fail the build (and CI, #1692) on any lint error — notably NewApi minSdk violations,
         // which compile + API-33 instrumented tests can't catch.
         abortOnError true

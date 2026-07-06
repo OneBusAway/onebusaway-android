@@ -33,6 +33,12 @@ public class NavigationCleanupWorker extends Worker {
 
     public static final String TAG = "NavigationCleanupWorker";
 
+    /**
+     * Unique name for the periodic cleanup work so WorkManager keeps a single recurring chain
+     * instead of stacking a new one each time navigation starts.
+     */
+    public static final String UNIQUE_WORK_NAME = "navigation_log_cleanup";
+
     public NavigationCleanupWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
     }

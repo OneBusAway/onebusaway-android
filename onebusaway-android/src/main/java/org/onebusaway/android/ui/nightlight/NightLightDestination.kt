@@ -17,6 +17,7 @@
 package org.onebusaway.android.ui.nightlight
 
 import org.onebusaway.android.ui.HomeActivity
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.view.WindowManager
@@ -79,6 +80,11 @@ private const val PREFERENCE_SHOWED_DIALOG = "showed_night_light_dialog"
  * screen (a [DisposableEffect] adds them on enter and restores them on exit), shows the one-time
  * epilepsy intro, and drives [NightLightScreen]. [onBack] pops the back stack.
  */
+// The night-light screen doubles as a reading light, so it deliberately pins portrait (with the
+// screen kept on at full brightness) while visible; the DisposableEffect below restores the caller's
+// prior orientation on exit. The lock is the intended UX, not an accessibility oversight, so we
+// suppress SourceLockedOrientationActivity here rather than drop it.
+@SuppressLint("SourceLockedOrientationActivity")
 @Composable
 fun NightLightRoute(onBack: () -> Unit) {
     val context = LocalContext.current

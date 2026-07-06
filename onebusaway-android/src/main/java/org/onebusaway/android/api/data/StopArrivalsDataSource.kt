@@ -55,8 +55,13 @@ class StopArrivals internal constructor(
     /** The focused stop, or null when the references don't include it. */
     val stop: ObaStop? get() = refs.stop(stopId)?.let(::DtoStop)
 
-    /** The arrivals/departures, adapted to the [ArrivalData] model (display-ready). */
-    val arrivals: List<ArrivalData> get() = entry.arrivalsAndDepartures.map { it.asArrivalData() }
+    /**
+     * The arrivals/departures, adapted to the [ArrivalData] model (display-ready), with block-id
+     * "phantom" duplicates collapsed (see [collapseBlockIdPhantoms] / #1710).
+     */
+    val arrivals: List<ArrivalData>
+        get() = entry.arrivalsAndDepartures.map { it.asArrivalData() }
+            .collapseBlockIdPhantoms { tripId -> refs.trip(tripId)?.blockId }
 
     /** Every referenced route (for the map overlay + the route-filter options). */
     val routes: List<ObaRoute> get() = refs.routes.map(::DtoRoute)

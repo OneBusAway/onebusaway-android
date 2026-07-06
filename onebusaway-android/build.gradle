@@ -153,6 +153,9 @@ android {
     namespace='org.onebusaway.android'
     lint {
         disable 'MissingTranslation', 'ExtraTranslation'
+        // Fail the build (and CI, #1692) on any lint error — notably NewApi minSdk violations,
+        // which compile + API-33 instrumented tests can't catch.
+        abortOnError true
     }
 
     useLibrary 'android.test.runner'

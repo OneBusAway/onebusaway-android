@@ -530,7 +530,7 @@ class DirectionsGenerator(
             // Order matters: the first matching mode wins (e.g. a SUBWAY+TRAM set resolves to
             // subway, not railway), so SUBWAY must stay ahead of TRAM.
             return when {
-                mode.contains(TraverseMode.BUS) -> R.drawable.ic_maps_directions_bus
+                mode.contains(TraverseMode.BUS) -> R.drawable.ic_bus
                 mode.contains(TraverseMode.RAIL) -> R.drawable.ic_directions_railway
                 mode.contains(TraverseMode.FERRY) || mode.contains(TraverseMode.GONDOLA) ->
                     R.drawable.ic_directions_boat

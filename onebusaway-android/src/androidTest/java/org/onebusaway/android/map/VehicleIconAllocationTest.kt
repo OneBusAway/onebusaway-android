@@ -19,8 +19,8 @@ import org.onebusaway.android.time.WallTime
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
-import androidx.test.InstrumentationRegistry.getTargetContext
-import androidx.test.runner.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -54,7 +54,7 @@ import java.util.concurrent.TimeUnit
 @RunWith(AndroidJUnit4::class)
 class VehicleIconAllocationTest {
 
-    private val context: Context get() = getTargetContext()
+    private val context: Context get() = InstrumentationRegistry.getInstrumentation().targetContext
 
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 

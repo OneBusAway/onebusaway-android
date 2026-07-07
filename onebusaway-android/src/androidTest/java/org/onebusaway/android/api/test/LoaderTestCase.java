@@ -27,7 +27,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import androidx.loader.content.Loader;
 import androidx.loader.content.Loader.OnLoadCompleteListener;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 /**
  * A convenience class for testing {@link Loader}s. This test case

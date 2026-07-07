@@ -32,9 +32,9 @@ import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
 
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import static androidx.test.InstrumentationRegistry.getTargetContext;
+import androidx.test.platform.app.InstrumentationRegistry;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
@@ -168,7 +168,7 @@ public class LocationUtilsTest extends ObaTestCase {
         Location loc;
 
         // Make sure we're not running on an emulator, since we'll get a null location there
-        if (!TestUtils.isRunningOnEmulator() && PermissionUtils.hasGrantedAllPermissions(getTargetContext(), LOCATION_PERMISSIONS)) {
+        if (!TestUtils.isRunningOnEmulator() && PermissionUtils.hasGrantedAllPermissions(InstrumentationRegistry.getInstrumentation().getTargetContext(), LOCATION_PERMISSIONS)) {
             /**
              * Retrieves the last known location from any available source - the fused provider
              * when Google Play Services is present, otherwise the framework Location API v1
@@ -176,7 +176,7 @@ public class LocationUtilsTest extends ObaTestCase {
              * (e.g., HTC EVO LTE) have custom framework providers such as "hybrid" that might
              * show up here. So, we can't test for a specific provider.
              */
-            loc = LocationEntryPoint.get(getTargetContext()).lastKnownLocation();
+            loc = LocationEntryPoint.get(InstrumentationRegistry.getInstrumentation().getTargetContext()).lastKnownLocation();
             /**
              * On devices that behave correctly the following non-null test should pass.  However, it's
              * possible that it can fail on some devices (e.g., on a fresh reboot on a device without
@@ -194,14 +194,14 @@ public class LocationUtilsTest extends ObaTestCase {
 
         // Test with Google Play Services, if its supported, and if we're not running on an emulator
         GoogleApiAvailability api = GoogleApiAvailability.getInstance();
-        if (api.isGooglePlayServicesAvailable(getTargetContext())
+        if (api.isGooglePlayServicesAvailable(InstrumentationRegistry.getInstrumentation().getTargetContext())
                 == ConnectionResult.SUCCESS &&
                 !TestUtils.isRunningOnEmulator() &&
-                PermissionUtils.hasGrantedAllPermissions(getTargetContext(), LOCATION_PERMISSIONS)) {
+                PermissionUtils.hasGrantedAllPermissions(InstrumentationRegistry.getInstrumentation().getTargetContext(), LOCATION_PERMISSIONS)) {
             /**
              * Could return either a fused or Location API v1 location
              */
-            loc = LocationEntryPoint.get(getTargetContext()).lastKnownLocation();
+            loc = LocationEntryPoint.get(InstrumentationRegistry.getInstrumentation().getTargetContext()).lastKnownLocation();
             assertNotNull(loc);
             Log.d(TAG,
                     "Location Provider for Location Services test is '" + loc.getProvider() + "'");

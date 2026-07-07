@@ -16,7 +16,7 @@
 package org.onebusaway.android.extrapolation.test
 
 import android.location.Location
-import androidx.test.runner.AndroidJUnit4
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull

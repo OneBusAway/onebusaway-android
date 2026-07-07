@@ -21,7 +21,7 @@ import org.onebusaway.android.report.ui.util.ServiceUtils;
 
 import android.test.AndroidTestCase;
 
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 /**
  * Tests to evaluate issue reporting utilities

@@ -20,8 +20,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.preferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.test.InstrumentationRegistry.getTargetContext
-import androidx.test.runner.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -49,7 +49,7 @@ class PreferencesRepositoryReadYourWritesTest {
     @Test
     fun synchronousReadReflectsLatestWrite_despiteAStaleDataStoreEmission() = runTest {
         val dataStore = FakeDataStore()
-        val repo = DefaultPreferencesRepository(getTargetContext(), dataStore, backgroundScope)
+        val repo = DefaultPreferencesRepository(InstrumentationRegistry.getInstrumentation().targetContext, dataStore, backgroundScope)
         runCurrent() // let the cache machinery subscribe + process the initial (empty) state
 
         repo.setString(key, "first")   // optimistic cache = "first"

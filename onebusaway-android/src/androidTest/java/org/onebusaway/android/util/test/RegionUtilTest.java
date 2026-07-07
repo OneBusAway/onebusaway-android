@@ -28,9 +28,9 @@ import android.location.Location;
 
 import java.util.ArrayList;
 
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import static androidx.test.InstrumentationRegistry.getTargetContext;
+import androidx.test.platform.app.InstrumentationRegistry;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNull;
@@ -60,8 +60,8 @@ public class RegionUtilTest {
 
     @Before
     public void before() {
-        mPsRegion = MockRegion.getPugetSound(getTargetContext());
-        mTampaRegion = MockRegion.getTampa(getTargetContext());
+        mPsRegion = MockRegion.getPugetSound(InstrumentationRegistry.getInstrumentation().getTargetContext());
+        mTampaRegion = MockRegion.getTampa(InstrumentationRegistry.getInstrumentation().getTargetContext());
 
         // Region locations
         mSeattleLoc = LocationUtils.makeLocation(47.6097, -122.3331);
@@ -94,14 +94,14 @@ public class RegionUtilTest {
          * it is
          */
         // Close to region
-        Region closestRegion = RegionUtils.getClosestRegion(getTargetContext(), list, mSeattleLoc, useLimiter);
+        Region closestRegion = RegionUtils.getClosestRegion(InstrumentationRegistry.getInstrumentation().getTargetContext(), list, mSeattleLoc, useLimiter);
         assertEquals(closestRegion.getId(), RegionUtils.PUGET_SOUND_REGION_ID);
 
-        closestRegion = RegionUtils.getClosestRegion(getTargetContext(), list, mTampaLoc, useLimiter);
+        closestRegion = RegionUtils.getClosestRegion(InstrumentationRegistry.getInstrumentation().getTargetContext(), list, mTampaLoc, useLimiter);
         assertEquals(closestRegion.getId(), RegionUtils.TAMPA_REGION_ID);
 
         // Far from region
-        closestRegion = RegionUtils.getClosestRegion(getTargetContext(), list, mZeroZeroLoc, useLimiter);
+        closestRegion = RegionUtils.getClosestRegion(InstrumentationRegistry.getInstrumentation().getTargetContext(), list, mZeroZeroLoc, useLimiter);
         assertEquals(closestRegion.getId(), RegionUtils.TAMPA_REGION_ID);
 
         /**
@@ -111,17 +111,17 @@ public class RegionUtilTest {
         useLimiter = true;
 
         // Close to region
-        closestRegion = RegionUtils.getClosestRegion(getTargetContext(), list, mSeattleLoc, useLimiter);
+        closestRegion = RegionUtils.getClosestRegion(InstrumentationRegistry.getInstrumentation().getTargetContext(), list, mSeattleLoc, useLimiter);
         assertEquals(closestRegion.getId(), RegionUtils.PUGET_SOUND_REGION_ID);
 
-        closestRegion = RegionUtils.getClosestRegion(getTargetContext(), list, mTampaLoc, useLimiter);
+        closestRegion = RegionUtils.getClosestRegion(InstrumentationRegistry.getInstrumentation().getTargetContext(), list, mTampaLoc, useLimiter);
         assertEquals(closestRegion.getId(), RegionUtils.TAMPA_REGION_ID);
 
         // Far from region
-        closestRegion = RegionUtils.getClosestRegion(getTargetContext(), list, mLondonLoc, useLimiter);
+        closestRegion = RegionUtils.getClosestRegion(InstrumentationRegistry.getInstrumentation().getTargetContext(), list, mLondonLoc, useLimiter);
         assertNull(closestRegion);
 
-        closestRegion = RegionUtils.getClosestRegion(getTargetContext(), list, mZeroZeroLoc, useLimiter);
+        closestRegion = RegionUtils.getClosestRegion(InstrumentationRegistry.getInstrumentation().getTargetContext(), list, mZeroZeroLoc, useLimiter);
         assertNull(closestRegion);
     }
 
@@ -146,11 +146,11 @@ public class RegionUtilTest {
 
     @Test
     public void testIsRegionUsable() {
-        assertTrue(RegionUtils.isRegionUsable(getTargetContext(), mPsRegion));
-        assertTrue(RegionUtils.isRegionUsable(getTargetContext(), mTampaRegion));
+        assertTrue(RegionUtils.isRegionUsable(InstrumentationRegistry.getInstrumentation().getTargetContext(), mPsRegion));
+        assertTrue(RegionUtils.isRegionUsable(InstrumentationRegistry.getInstrumentation().getTargetContext(), mTampaRegion));
 
-        assertFalse(RegionUtils.isRegionUsable(getTargetContext(), MockRegion.getRegionWithoutObaApis(getTargetContext())));
-        assertFalse(RegionUtils.isRegionUsable(getTargetContext(), MockRegion.getInactiveRegion(getTargetContext())));
+        assertFalse(RegionUtils.isRegionUsable(InstrumentationRegistry.getInstrumentation().getTargetContext(), MockRegion.getRegionWithoutObaApis(InstrumentationRegistry.getInstrumentation().getTargetContext())));
+        assertFalse(RegionUtils.isRegionUsable(InstrumentationRegistry.getInstrumentation().getTargetContext(), MockRegion.getInactiveRegion(InstrumentationRegistry.getInstrumentation().getTargetContext())));
     }
 
     /**

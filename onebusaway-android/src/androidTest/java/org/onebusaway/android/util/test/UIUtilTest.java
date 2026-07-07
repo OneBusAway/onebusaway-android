@@ -18,7 +18,7 @@
 package org.onebusaway.android.util.test;
 
 import androidx.core.util.Pair;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import static androidx.test.InstrumentationRegistry.getTargetContext;
+import androidx.test.platform.app.InstrumentationRegistry;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
@@ -155,7 +155,7 @@ public class UIUtilTest extends ObaTestCase {
         routeDisplayNames.add("5");
 
         // Test without stop nickname or direction
-        stopDetails = StopDetailsDialog.createStopDetailsDialogText(getTargetContext(),
+        stopDetails = StopDetailsDialog.createStopDetailsDialogText(InstrumentationRegistry.getInstrumentation().getTargetContext(),
                 stopName,
                 stopUserName,
                 stopCode,
@@ -170,7 +170,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // Test with stop nickname and without direction
         stopUserName = "My stop nickname";
-        stopDetails = StopDetailsDialog.createStopDetailsDialogText(getTargetContext(),
+        stopDetails = StopDetailsDialog.createStopDetailsDialogText(InstrumentationRegistry.getInstrumentation().getTargetContext(),
                 stopName,
                 stopUserName,
                 stopCode,
@@ -188,7 +188,7 @@ public class UIUtilTest extends ObaTestCase {
         // Test without stop nickname and with direction
         stopUserName = null;
         stopDirection = "S";
-        stopDetails = StopDetailsDialog.createStopDetailsDialogText(getTargetContext(),
+        stopDetails = StopDetailsDialog.createStopDetailsDialogText(InstrumentationRegistry.getInstrumentation().getTargetContext(),
                 stopName,
                 stopUserName,
                 stopCode,
@@ -200,13 +200,13 @@ public class UIUtilTest extends ObaTestCase {
         expectedMessage.append(newLine);
         expectedMessage.append("Routes: " + routeDisplayNames.get(0));
         expectedMessage.append(newLine);
-        expectedMessage.append(getTargetContext().getString(DisplayFormat.getStopDirectionText(stopDirection)));
+        expectedMessage.append(InstrumentationRegistry.getInstrumentation().getTargetContext().getString(DisplayFormat.getStopDirectionText(stopDirection)));
         assertEquals(expectedMessage.toString(), (String) stopDetails.second);
 
         // Test with stop nickname and direction
         stopUserName = "My stop nickname";
         stopDirection = "S";
-        stopDetails = StopDetailsDialog.createStopDetailsDialogText(getTargetContext(),
+        stopDetails = StopDetailsDialog.createStopDetailsDialogText(InstrumentationRegistry.getInstrumentation().getTargetContext(),
                 stopName,
                 stopUserName,
                 stopCode,
@@ -220,19 +220,19 @@ public class UIUtilTest extends ObaTestCase {
         expectedMessage.append(newLine);
         expectedMessage.append("Routes: " + routeDisplayNames.get(0));
         expectedMessage.append(newLine);
-        expectedMessage.append(getTargetContext().getString(DisplayFormat.getStopDirectionText(stopDirection)));
+        expectedMessage.append(InstrumentationRegistry.getInstrumentation().getTargetContext().getString(DisplayFormat.getStopDirectionText(stopDirection)));
         assertEquals(expectedMessage.toString(), (String) stopDetails.second);
     }
 
     @Test
     public void testArrivalTimeIndexSearch() throws Exception {
         // Load a captured arrivals fixture and project it via the production DTO path
-        Region tampa = MockRegion.getTampa(getTargetContext());
+        Region tampa = MockRegion.getTampa(InstrumentationRegistry.getInstrumentation().getTargetContext());
         assertNotNull(tampa);
-        RegionEntryPoint.get(getTargetContext()).applyRegion(tampa, true);
+        RegionEntryPoint.get(InstrumentationRegistry.getInstrumentation().getTargetContext()).applyRegion(tampa, true);
 
         ObaEnvelope<EntryWithReferences<ArrivalsForStop>> env =
-                ArrivalsFixtures.load(getTargetContext(), "arrivals_and_departures_for_stop_hart_6497");
+                ArrivalsFixtures.load(InstrumentationRegistry.getInstrumentation().getTargetContext(), "arrivals_and_departures_for_stop_hart_6497");
         String stopId = "Hillsborough Area Regional Transit_6497";
 
         // The two favorited route/headsign combos. Favorite state is supplied to convert() directly
@@ -243,7 +243,7 @@ public class UIUtilTest extends ObaTestCase {
                 "Hillsborough Area Regional Transit_6|South to Downtown/MTC"));
 
         // Project the fixture's arrivals via the production path, with those two marked favorite.
-        ArrayList<ArrivalInfo> arrivalInfo = ArrivalsFixtures.convert(getTargetContext(), env, true,
+        ArrayList<ArrivalInfo> arrivalInfo = ArrivalsFixtures.convert(InstrumentationRegistry.getInstrumentation().getTargetContext(), env, true,
                 (routeId, headsign, sid) -> favorites.contains(routeId + "|" + headsign));
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
@@ -261,7 +261,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(13, preferredArrivalIndexes.get(1).intValue());
 
         // With no favorites, the first two non-negative arrival times are returned - indexes 5 and 6.
-        arrivalInfo = ArrivalsFixtures.convert(getTargetContext(), env, true);
+        arrivalInfo = ArrivalsFixtures.convert(InstrumentationRegistry.getInstrumentation().getTargetContext(), env, true);
         preferredArrivalIndexes = ArrivalInfoUtils.findPreferredArrivalIndexes(arrivalInfo);
         assertEquals(5, preferredArrivalIndexes.get(0).intValue());
         assertEquals(6, preferredArrivalIndexes.get(1).intValue());
@@ -273,17 +273,17 @@ public class UIUtilTest extends ObaTestCase {
     @Test
     public void testArrivalInfoLabels() throws Exception {
         // Load a captured arrivals fixture and project it via the production DTO path
-        Region tampa = MockRegion.getTampa(getTargetContext());
+        Region tampa = MockRegion.getTampa(InstrumentationRegistry.getInstrumentation().getTargetContext());
         assertNotNull(tampa);
-        RegionEntryPoint.get(getTargetContext()).applyRegion(tampa, true);
+        RegionEntryPoint.get(InstrumentationRegistry.getInstrumentation().getTargetContext()).applyRegion(tampa, true);
 
         ObaEnvelope<EntryWithReferences<ArrivalsForStop>> env =
-                ArrivalsFixtures.load(getTargetContext(), "arrivals_and_departures_for_stop_hart_6497");
+                ArrivalsFixtures.load(InstrumentationRegistry.getInstrumentation().getTargetContext(), "arrivals_and_departures_for_stop_hart_6497");
 
         /**
          * Labels *with* arrive/depart included, and time labels
          */
-        ArrayList<ArrivalInfo> arrivalInfo = ArrivalsFixtures.convert(getTargetContext(), env, true);
+        ArrayList<ArrivalInfo> arrivalInfo = ArrivalsFixtures.convert(InstrumentationRegistry.getInstrumentation().getTargetContext(), env, true);
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
         validateUatcArrivalInfo(arrivalInfo);
@@ -384,7 +384,7 @@ public class UIUtilTest extends ObaTestCase {
         /**
          * Status labels *without* arrive/depart included
          */
-        arrivalInfo = ArrivalsFixtures.convert(getTargetContext(), env, false);
+        arrivalInfo = ArrivalsFixtures.convert(InstrumentationRegistry.getInstrumentation().getTargetContext(), env, false);
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
         validateUatcArrivalInfo(arrivalInfo);
@@ -535,7 +535,7 @@ public class UIUtilTest extends ObaTestCase {
     }
 
     private String formatTime(long time) {
-        return DisplayFormat.formatTime(getTargetContext(), time);
+        return DisplayFormat.formatTime(InstrumentationRegistry.getInstrumentation().getTargetContext(), time);
     }
 
     /**
@@ -544,14 +544,14 @@ public class UIUtilTest extends ObaTestCase {
      */
     @Test
     public void testGetAllSituations() throws Exception {
-        PreferencesEntryPoint.get(getTargetContext())
+        PreferencesEntryPoint.get(InstrumentationRegistry.getInstrumentation().getTargetContext())
                 .setString(R.string.preference_key_oba_api_url, "sdmts.onebusway.org/api");
 
         /**
          * Test route-specific alerts only
          */
         ObaEnvelope<EntryWithReferences<ArrivalsForStop>> env = ArrivalsFixtures.load(
-                getTargetContext(), "arrivals_and_departures_for_stop_mts_11670_route_alerts");
+                InstrumentationRegistry.getInstrumentation().getTargetContext(), "arrivals_and_departures_for_stop_mts_11670_route_alerts");
         // No stop-specific alerts; route alerts don't appear in the entry's situations - see #700.
         assertEquals(0, ArrivalsFixtures.stopSituations(env).size());
 
@@ -577,7 +577,7 @@ public class UIUtilTest extends ObaTestCase {
          */
 
         env = ArrivalsFixtures.load(
-                getTargetContext(), "arrivals_and_departures_for_stop_mts_13353_route_and_stop_alerts");
+                InstrumentationRegistry.getInstrumentation().getTargetContext(), "arrivals_and_departures_for_stop_mts_13353_route_and_stop_alerts");
         // One stop alert in the entry; route alerts excluded - see #700.
         assertEquals(1, ArrivalsFixtures.stopSituations(env).size());
 
@@ -601,7 +601,7 @@ public class UIUtilTest extends ObaTestCase {
         Test filtering routes alerts
          */
         env = ArrivalsFixtures.load(
-                getTargetContext(), "arrivals_and_departures_for_stop_mts_11671_filter_route_alerts");
+                InstrumentationRegistry.getInstrumentation().getTargetContext(), "arrivals_and_departures_for_stop_mts_11671_filter_route_alerts");
 
         List<String> routeFilters = new ArrayList<>();
         routeFilters.add("MTS_1");

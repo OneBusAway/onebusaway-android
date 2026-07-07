@@ -132,8 +132,12 @@ class CustomAddress(locale: Locale) : Address(locale) {
         val CREATOR: Parcelable.Creator<CustomAddress> =
             object : Parcelable.Creator<CustomAddress> {
                 override fun createFromParcel(parcel: Parcel): CustomAddress {
-                    val language = parcel.readString()
+                    val language = parcel.readString().orEmpty()
                     val country = parcel.readString()
+                    // Locale.of(...) requires API 34 (> minSdk 23), and Locale.Builder validates
+                    // strictly — it can throw on the lenient, parcel-sourced language/country the
+                    // legacy constructor accepts — so keep the deprecated-but-lenient constructor. #1728
+                    @Suppress("DEPRECATION")
                     val locale = if (!country.isNullOrEmpty()) {
                         Locale(language, country)
                     } else {

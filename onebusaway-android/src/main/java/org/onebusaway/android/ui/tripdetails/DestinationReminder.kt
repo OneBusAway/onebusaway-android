@@ -158,8 +158,13 @@ internal fun rememberDestinationReminderAction(
             askUserToTurnLocationOn()
             return
         }
+        // LOCATION_MODE_HIGH_ACCURACY: Android's location "modes" were deprecated in API 28 (collapsed
+        // to a simple on/off + per-app precision). Reworking this high-accuracy nudge is a UX decision
+        // (tracked in #1728); the legacy setting still reads on devices, so keep it for now.
+        @Suppress("DEPRECATION")
+        val highAccuracyMode = Settings.Secure.LOCATION_MODE_HIGH_ACCURACY
         if (!prefsRepository.getBoolean(R.string.preference_key_never_show_change_location_mode_dialog, false) &&
-            LocationUtils.getLocationMode(context) != Settings.Secure.LOCATION_MODE_HIGH_ACCURACY
+            LocationUtils.getLocationMode(context) != highAccuracyMode
         ) {
             dialogForLocationModeChanges()
         }

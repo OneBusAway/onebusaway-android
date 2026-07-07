@@ -19,6 +19,7 @@ package org.onebusaway.android.util
 
 import android.content.Context
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.provider.Settings
 
 import java.net.HttpURLConnection
@@ -129,7 +130,8 @@ object ObaRequestErrors {
             return false
         }
         val cr = context.contentResolver
-        return Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0) != 0
+        // AIRPLANE_MODE_ON moved from Settings.System to Settings.Global in API 17; same value/semantics.
+        return Settings.Global.getInt(cr, Settings.Global.AIRPLANE_MODE_ON, 0) != 0
     }
 
     /**
@@ -146,7 +148,12 @@ object ObaRequestErrors {
         }
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
-        val activeNetwork = cm.activeNetworkInfo
-        return activeNetwork != null && activeNetwork.isConnectedOrConnecting
+        // Replaces the deprecated activeNetworkInfo.isConnectedOrConnecting: an active network with
+        // INTERNET capability. NetworkCapabilities has no "connecting" state — an active network is
+        // already connected — so this drops the transient connecting case, which is fine here (this
+        // only decides whether a failure should be reported as a connectivity problem).
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 }

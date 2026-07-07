@@ -19,11 +19,12 @@ package org.onebusaway.android.ui.common
 import android.content.Context
 import android.content.Intent
 import android.graphics.Canvas
-import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.LayerDrawable
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.BlendModeColorFilterCompat
+import androidx.core.graphics.BlendModeCompat
 import androidx.core.graphics.createBitmap
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -110,9 +111,9 @@ object Shortcuts {
 
         val drawableIcon: Drawable = ResourcesCompat
             .getDrawable(context.resources, icon, context.theme)!!
-        drawableIcon.setColorFilter(
+        drawableIcon.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
             ContextCompat.getColor(context, R.color.shortcut_icon),
-            PorterDuff.Mode.SRC_IN
+            BlendModeCompat.SRC_IN
         )
         val drawableBackground: Drawable = ResourcesCompat
             .getDrawable(context.resources, R.drawable.launcher_background, context.theme)!!

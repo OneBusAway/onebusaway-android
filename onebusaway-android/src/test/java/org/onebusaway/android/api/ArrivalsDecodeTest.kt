@@ -102,7 +102,7 @@ class ArrivalsDecodeTest {
         assertEquals("MANY_SEATS_AVAILABLE", arrival.occupancyStatus)
         assertEquals(listOf("1_sit"), arrival.situationIds)
         assertEquals("default", arrival.tripStatus!!.status)
-        assertEquals(47.6, arrival.tripStatus!!.lastKnownLocation!!.lat, 0.0)
+        assertEquals(47.6, arrival.tripStatus.lastKnownLocation!!.lat, 0.0)
     }
 
     @Test

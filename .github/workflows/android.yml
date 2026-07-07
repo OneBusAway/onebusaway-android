@@ -39,7 +39,7 @@ jobs:
       # compile + API-33 tests can't see (#1692). Runs on the host before the emulator so it
       # fails fast; `check` below keeps skipping lint (-x lint) to avoid running it twice.
       - name: Android Lint
-        run: ./gradlew :onebusaway-android:lintObaGoogleDebug --stacktrace
+        run: ./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true --stacktrace
 
       - name: AVD cache
         uses: actions/cache@v4
@@ -71,4 +71,4 @@ jobs:
           target: google_apis
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: ./gradlew test check connectedObaGoogleDebugAndroidTest -x lint --stacktrace
+          script: ./gradlew test check connectedObaGoogleDebugAndroidTest -x lint -PwarningsAsErrors=true --stacktrace

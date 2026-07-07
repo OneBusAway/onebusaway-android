@@ -20,6 +20,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.Drawable
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.withTranslation
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import org.onebusaway.android.R
@@ -53,7 +55,7 @@ object MarkerRendering {
     fun rasterize(context: Context, @DrawableRes resId: Int, sizePx: Int, tint: Int? = null, insetPx: Int = 0): Bitmap {
         val drawable = ContextCompat.getDrawable(context, resId)!!.mutate()
         if (tint != null) drawable.setTint(tint)
-        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(sizePx, sizePx)
         drawable.setBounds(insetPx, insetPx, sizePx - insetPx, sizePx - insetPx)
         drawable.draw(Canvas(bitmap))
         return bitmap
@@ -102,10 +104,9 @@ object MarkerRendering {
     /** Runs [draw] once per [OUTLINE_OFFSETS] entry, translated by [outline] — the black-outline dilate. */
     fun stampOffsets(canvas: Canvas, outline: Float, draw: () -> Unit) {
         for (o in OUTLINE_OFFSETS) {
-            canvas.save()
-            canvas.translate(o[0] * outline, o[1] * outline)
-            draw()
-            canvas.restore()
+            canvas.withTranslation(o[0] * outline, o[1] * outline) {
+                draw()
+            }
         }
     }
 }

@@ -67,6 +67,9 @@ fun VehicleMarkerGrid(color: Color = Color(0xFF2266CC)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(name, Modifier.width(56.dp), fontSize = 12.sp)
                 for (dir in 0..8) {
+                    // previewBitmap is @VisibleForTesting; this @Preview catalog is dev-only tooling
+                    // (not a production render path), so calling it here is intentional.
+                    @Suppress("VisibleForTests")
                     val bmp = remember(type, dir, argb) {
                         VehicleBitmaps.previewBitmap(context, type, dir, argb).asImageBitmap()
                     }

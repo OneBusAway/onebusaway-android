@@ -145,6 +145,12 @@ android {
     kotlin {
         compilerOptions {
             jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+            // Promote Kotlin warnings to errors, but only when -PwarningsAsErrors=true is passed (CI
+            // does; see .github/workflows/android.yml). Local builds default to off, so a Kotlin/AGP
+            // bump that introduces new warnings can't block day-to-day work — it surfaces in CI
+            // instead, where it's addressed. The codebase is at zero warnings as of #1692.
+            allWarningsAsErrors = providers.gradleProperty("warningsAsErrors")
+                .map { it.toBoolean() }.orElse(false)
         }
     }
     testOptions {
@@ -156,9 +162,24 @@ android {
         // a library-preference nudge, not a correctness signal, and its ~190 hits drown out the
         // actionable warnings, so we opt out of it rather than suppress each call site.
         disable 'MissingTranslation', 'ExtraTranslation', 'LogNotTimber'
+        // Run the FULL lint catalog — including checks that are off by default and library-provided
+        // ones (Compose, UseKtx, …) — so the checked set is comprehensive and current for the installed
+        // lint, not just its (drifting) default-enabled subset. Pre-existing hits are grandfathered by
+        // the baseline below; only NEW issues are reported.
+        checkAllWarnings true
+        // Checked-in record of the issues present when it was generated. New issues aren't in it, so
+        // they're reported (and, under -PwarningsAsErrors, fail the build). After an AGP/lint bump that
+        // adds/changes checks, regenerate it: delete the file and re-run lint (it recreates + passes).
+        baseline = file('lint-baseline.xml')
         // Fail the build (and CI, #1692) on any lint error — notably NewApi minSdk violations,
         // which compile + API-33 instrumented tests can't catch.
         abortOnError true
+        // Under -PwarningsAsErrors=true (CI passes it; see .github/workflows/android.yml), promote lint
+        // warnings to errors too, matching the Kotlin-compiler gate above. Local builds default to off so
+        // an AGP/lint bump that adds new (non-baselined) warnings surfaces in CI rather than blocking
+        // day-to-day work.
+        warningsAsErrors = project.hasProperty('warningsAsErrors') &&
+            project.property('warningsAsErrors') == 'true'
     }
 
     useLibrary 'android.test.runner'

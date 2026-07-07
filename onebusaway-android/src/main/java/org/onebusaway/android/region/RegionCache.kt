@@ -34,7 +34,7 @@ import org.onebusaway.android.util.RegionUtils
  */
 @Singleton
 class RegionCache @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val regionDao: RegionDao,
     private val importGate: ImportGate,
     private val prefs: PreferencesRepository,

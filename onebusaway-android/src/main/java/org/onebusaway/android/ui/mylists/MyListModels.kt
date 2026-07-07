@@ -48,7 +48,7 @@ sealed interface StopArrivals {
 /** One "route · ETA" arrival badge; [colorRes] is the lateness color. */
 data class ArrivalBadge(
     val text: String,
-    @ColorRes val colorRes: Int
+    @param:ColorRes val colorRes: Int
 )
 
 /** A route row for the My-tab starred/recent lists. */

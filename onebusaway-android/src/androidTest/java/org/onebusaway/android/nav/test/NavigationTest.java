@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.nav.test;
 
-import static androidx.test.InstrumentationRegistry.getTargetContext;
+import androidx.test.platform.app.InstrumentationRegistry;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static junit.framework.Assert.assertEquals;
@@ -27,7 +27,7 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.util.Log;
 
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.Assume;
@@ -760,7 +760,7 @@ public class NavigationTest extends ObaTestCase {
         double actualMiles = meters * RegionUtils.METERS_TO_MILES;
         assertEquals("Meters to miles conversion should be accurate", expectedMiles, actualMiles, 0.00001);
 
-        Context context = getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         DecimalFormat fmt = new DecimalFormat("0.0");
         
         // Test imperial units (feet for small distances)
@@ -792,7 +792,7 @@ public class NavigationTest extends ObaTestCase {
      * @param expectedPullCordIndex the index for when the "Pull the Cord Now" notification is expected
      */
     private void runSimulation(String csvFileName, int expectedGetReadyIndex, int expectedPullCordIndex) throws IOException {
-        Reader reader = Resources.read(getTargetContext(), Resources.getTestUri(csvFileName));
+        Reader reader = Resources.read(InstrumentationRegistry.getInstrumentation().getTargetContext(), Resources.getTestUri(csvFileName));
         String csv = IOUtils.toString(reader);
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(expectedGetReadyIndex, expectedPullCordIndex);
@@ -947,7 +947,7 @@ public class NavigationTest extends ObaTestCase {
          * @param expectedPullCordIndex the index for when the "Pull the Cord Now" notification is expected
          */
         void runSimulation(int expectedGetReadyIndex, int expectedPullCordIndex) {
-            NavigationServiceProvider provider = new NavigationServiceProvider(getTargetContext(), mTripId,
+            NavigationServiceProvider provider = new NavigationServiceProvider(InstrumentationRegistry.getInstrumentation().getTargetContext(), mTripId,
                     mDestinationId);
             Location prevLocation = null;
             // Use the first location time as the starting time for this PathLink

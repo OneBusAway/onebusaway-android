@@ -23,9 +23,9 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint;
 import org.onebusaway.android.app.di.RegionEntryPoint;
 import org.onebusaway.android.region.Region;
 
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import static androidx.test.InstrumentationRegistry.getTargetContext;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 /**
  * Base test class extended for most OBA unit tests. Sets the OBA theme (needed for {@code attr/?}
@@ -42,12 +42,12 @@ public abstract class ObaTestCase {
     @Before
     public void before() {
         // The theme needs to be set when using "attr/?" elements - see #279
-        getTargetContext().setTheme(R.style.Theme_OneBusAway);
+        InstrumentationRegistry.getInstrumentation().getTargetContext().setTheme(R.style.Theme_OneBusAway);
 
         // Save the current region / custom API URL so the override below can be undone in after().
-        mOldRegion = RegionEntryPoint.get(getTargetContext()).currentRegion();
+        mOldRegion = RegionEntryPoint.get(InstrumentationRegistry.getInstrumentation().getTargetContext()).currentRegion();
         mOldCustomApiUrl = mOldRegion == null
-                ? PreferencesEntryPoint.get(getTargetContext())
+                ? PreferencesEntryPoint.get(InstrumentationRegistry.getInstrumentation().getTargetContext())
                         .getString(R.string.preference_key_oba_api_url, null)
                 : null;
 
@@ -56,21 +56,21 @@ public abstract class ObaTestCase {
          * that were written before multi-region functionality. This is overwritten in some
          * subclasses so multiple regions / APIs can be tested.
          */
-        PreferencesEntryPoint.get(getTargetContext())
+        PreferencesEntryPoint.get(InstrumentationRegistry.getInstrumentation().getTargetContext())
                 .setString(R.string.preference_key_oba_api_url, "api.pugetsound.onebusaway.org");
     }
 
     @After
     public void after() {
         if (mOldRegion != null) {
-            RegionEntryPoint.get(getTargetContext()).applyRegion(mOldRegion, true);
+            RegionEntryPoint.get(InstrumentationRegistry.getInstrumentation().getTargetContext()).applyRegion(mOldRegion, true);
         } else if (mOldCustomApiUrl != null) {
-            PreferencesEntryPoint.get(getTargetContext())
+            PreferencesEntryPoint.get(InstrumentationRegistry.getInstrumentation().getTargetContext())
                     .setString(R.string.preference_key_oba_api_url, mOldCustomApiUrl);
         } else {
-            PreferencesEntryPoint.get(getTargetContext())
+            PreferencesEntryPoint.get(InstrumentationRegistry.getInstrumentation().getTargetContext())
                     .setString(R.string.preference_key_oba_api_url, null);
-            RegionEntryPoint.get(getTargetContext()).applyRegion(null, true);
+            RegionEntryPoint.get(InstrumentationRegistry.getInstrumentation().getTargetContext()).applyRegion(null, true);
         }
     }
 }

@@ -142,11 +142,11 @@ private const val TAG = "RegionRepository"
  */
 @Singleton
 class DefaultRegionRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val prefs: PreferencesRepository,
     private val locationRepository: LocationRepository,
     private val regionCache: RegionCache,
-    @AppScope private val appScope: CoroutineScope,
+    @param:AppScope private val appScope: CoroutineScope,
 ) : RegionRepository {
 
     // Seeded null and then asynchronously from the region cache once the one-time import has run — the

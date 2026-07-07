@@ -33,7 +33,7 @@ data class TripHeader(
     /** Vehicle id label; null when there's no real-time vehicle. */
     val vehicleId: String?,
     val statusText: String,
-    @ColorRes val statusColor: Int,
+    @param:ColorRes val statusColor: Int,
     /** True when the trip has real-time data (drives the pulsing indicator). */
     val isRealtime: Boolean
 )

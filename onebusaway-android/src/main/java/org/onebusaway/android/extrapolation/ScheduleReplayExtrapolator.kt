@@ -61,7 +61,7 @@ fun replaySchedule(
         queryTime: WallTime
 ): Double? {
     val dtSec = (queryTime - lastTime).toDouble(DurationUnit.SECONDS)
-    val stopTimes = schedule.stopTimes ?: return null
+    val stopTimes = schedule.stopTimes
     if (stopTimes.size < 2 || dtSec < 0) return null
 
     val segIdx =

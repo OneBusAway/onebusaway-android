@@ -97,12 +97,12 @@ data class DestinationReminderStops(val beforeStopId: String, val destinationSto
  * deferred (as in the Compose arrivals rows).
  */
 class DefaultTripDetailsRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val tripDetailsDataSource: TripDetailsDataSource,
     private val stopDao: StopDao,
     private val regionRepository: RegionRepository,
     private val importGate: ImportGate,
-    @AppScope private val appScope: CoroutineScope,
+    @param:AppScope private val appScope: CoroutineScope,
 ) : TripDetailsRepository {
 
     private var lastGood: TripDetails? = null

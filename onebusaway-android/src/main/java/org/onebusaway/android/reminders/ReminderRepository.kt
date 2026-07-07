@@ -35,8 +35,8 @@ import org.onebusaway.android.util.ReminderUtils
  */
 @Singleton
 class ReminderRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
-    @AppScope private val appScope: CoroutineScope,
+    @param:ApplicationContext private val context: Context,
+    @param:AppScope private val appScope: CoroutineScope,
     private val tripDao: TripDao,
     private val importGate: ImportGate,
 ) {

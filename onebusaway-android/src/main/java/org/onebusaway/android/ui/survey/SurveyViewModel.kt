@@ -85,14 +85,14 @@ sealed interface SurveyEffect {
  */
 @HiltViewModel
 class SurveyViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
     private val prefs: PreferencesRepository,
     private val surveyPreferences: SurveyPreferences,
     private val surveyRepo: SurveyDataSource,
     private val surveyStore: SurveyRepository,
     private val donationsManager: DonationsManager,
-    @AppScope private val appScope: CoroutineScope,
+    @param:AppScope private val appScope: CoroutineScope,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SurveyUiState())

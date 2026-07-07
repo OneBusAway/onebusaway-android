@@ -44,14 +44,14 @@ interface TripResultsRepository {
     suspend fun directionsFor(itinerary: Itinerary): Result<List<DirectionItem>>
 }
 
-class DefaultTripResultsRepository @Inject constructor(@ApplicationContext private val context: Context) : TripResultsRepository {
+class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext private val context: Context) : TripResultsRepository {
 
     override suspend fun summarize(
         itineraries: List<Itinerary>
     ): Result<List<ItineraryOption>> = withContext(Dispatchers.IO) {
         runCatching {
             itineraries.map { itinerary ->
-                val durationSec = itinerary.duration.toLong()
+                val durationSec = itinerary.duration
                 ItineraryOption(
                     title = DirectionsGenerator(itinerary.legs, context).itineraryTitle,
                     durationText = ConversionUtils

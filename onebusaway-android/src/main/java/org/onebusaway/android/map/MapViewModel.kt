@@ -100,7 +100,7 @@ class MapViewModel @Inject constructor(
     private val prefsRepository: PreferencesRepository,
     private val tripObservationRepository: TripObservationRepository,
     private val stopDao: StopDao,
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     // The flavor-neutral map surface: render state + camera + padding + generic markers +

@@ -174,7 +174,7 @@ class FeedbackSubmitter(
         val uploadCheckWork = PeriodicWorkRequest
             .Builder(NavigationUploadWorker::class.java, 24, TimeUnit.HOURS)
             .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork(
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             NavigationUploadWorker.UNIQUE_WORK_NAME,
             ExistingPeriodicWorkPolicy.KEEP,
             uploadCheckWork

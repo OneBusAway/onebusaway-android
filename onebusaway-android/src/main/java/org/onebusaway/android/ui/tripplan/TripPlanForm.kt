@@ -34,7 +34,7 @@ import androidx.compose.material3.InputChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.text.input.VisualTransformation
@@ -229,7 +229,7 @@ private fun EditableAddressField(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(tagPrefix + TripPlanTestTags.FIELD_SUFFIX)
-                .menuAnchor(MenuAnchorType.PrimaryEditable)
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
         )
         ExposedDropdownMenu(expanded = showMenu, onDismissRequest = { expanded = false }) {
             suggestions.forEach { place ->
@@ -388,7 +388,7 @@ private fun LeavingArrivingDropdown(
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(text = { Text(leaving) }, onClick = { expanded = false; onSetArriving(false) })

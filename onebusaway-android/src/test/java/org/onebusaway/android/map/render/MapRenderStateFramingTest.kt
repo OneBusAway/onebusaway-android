@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.map.render
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -30,6 +31,7 @@ import org.junit.Test
  * results sheet, a re-created map — isn't dropped), re-fires on an identical value (unlike a StateFlow),
  * and can be cleared; transient gestures are dropped when nothing is listening.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class MapRenderStateFramingTest {
 
     @Test

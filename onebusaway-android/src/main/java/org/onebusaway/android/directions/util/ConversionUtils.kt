@@ -21,6 +21,7 @@ import android.text.TextUtils
 import android.text.style.ForegroundColorSpan
 import android.text.style.StrikethroughSpan
 import android.util.Log
+import androidx.core.content.ContextCompat
 import org.onebusaway.android.R
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.PreferenceUtils
@@ -373,7 +374,8 @@ object ConversionUtils {
             applicationContext.resources.getString(R.string.time_connector_before_time) + " "
         val timezone: CharSequence = noDeviceTimezoneNote
 
-        val color = applicationContext.resources.getColor(
+        val color = ContextCompat.getColor(
+            applicationContext,
             ArrivalInfoUtils.computeColorFromDeviation(newTime - oldTime)
         )
 

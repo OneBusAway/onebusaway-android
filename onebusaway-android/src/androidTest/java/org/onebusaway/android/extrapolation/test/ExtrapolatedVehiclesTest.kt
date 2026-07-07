@@ -18,8 +18,8 @@ package org.onebusaway.android.extrapolation.test
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.api.data.asRouteTrips
 
-import androidx.test.InstrumentationRegistry.getTargetContext
-import androidx.test.runner.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -57,7 +57,7 @@ class ExtrapolatedVehiclesTest {
 
     // Decode the same fixture through the api/ DTO path the production fetch now uses.
     private fun response(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
-        Resources.read(getTargetContext(), Resources.getTestUri("trips_for_route_extrapolation"))
+        Resources.read(InstrumentationRegistry.getInstrumentation().targetContext, Resources.getTestUri("trips_for_route_extrapolation"))
             .use { json.decodeFromString(it.readText()) }
 
     @Test
@@ -107,7 +107,7 @@ class ExtrapolatedVehiclesTest {
     // A trips-for-route response with two vehicles on route_1 heading opposite directions (GTFS
     // directionId 0 vs 1) — the "show vehicles on map" direction filter's fixture.
     private fun directionResponse(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
-        Resources.read(getTargetContext(), Resources.getTestUri("trips_for_route_direction_filter"))
+        Resources.read(InstrumentationRegistry.getInstrumentation().targetContext, Resources.getTestUri("trips_for_route_direction_filter"))
             .use { json.decodeFromString(it.readText()) }
 
     @Test
@@ -138,7 +138,7 @@ class ExtrapolatedVehiclesTest {
     // A trips-for-route response listing the same trip twice — a schedule-only entry (position, no
     // fix) and a real-time entry (lastKnownLocation), in each order — the #1667/#50 flicker fixture.
     private fun duplicateResponse(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
-        Resources.read(getTargetContext(), Resources.getTestUri("trips_for_route_duplicate_trip"))
+        Resources.read(InstrumentationRegistry.getInstrumentation().targetContext, Resources.getTestUri("trips_for_route_duplicate_trip"))
             .use { json.decodeFromString(it.readText()) }
 
     @Test
@@ -166,7 +166,7 @@ class ExtrapolatedVehiclesTest {
     // Two distinct trips both reporting the same active trip (a vehicle mid-rollover): the ghost
     // predecessor (scheduled) and the real-time successor — collide on activeTripId, not trip id.
     private fun rolloverResponse(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
-        Resources.read(getTargetContext(), Resources.getTestUri("trips_for_route_rollover"))
+        Resources.read(InstrumentationRegistry.getInstrumentation().targetContext, Resources.getTestUri("trips_for_route_rollover"))
             .use { json.decodeFromString(it.readText()) }
 
     @Test

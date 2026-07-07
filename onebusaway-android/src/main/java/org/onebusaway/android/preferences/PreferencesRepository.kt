@@ -137,9 +137,9 @@ interface PreferencesRepository {
  * read [dataStore]`.data` directly via the `observe*` methods, so they don't need the cache.
  */
 class DefaultPreferencesRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val dataStore: DataStore<Preferences>,
-    @AppScope private val scope: CoroutineScope,
+    @param:AppScope private val scope: CoroutineScope,
 ) : PreferencesRepository {
 
     // Seeded synchronously so the first synchronous read (e.g. from Application.onCreate) sees real

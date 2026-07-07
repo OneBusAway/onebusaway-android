@@ -37,7 +37,7 @@ import org.onebusaway.android.preferences.PreferencesRepository
  */
 @Singleton
 class ObaAnalytics @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val analyticsProvider: AnalyticsProvider,
     private val preferences: PreferencesRepository,
     private val firebase: FirebaseAnalytics,

@@ -53,7 +53,7 @@ interface RouteInfoRepository {
  * quarantined here so [RouteInfoViewModel] stays JVM-testable.
  */
 class DefaultRouteInfoRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
     private val routeRepository: RouteDataSource,
     private val routeStopsRepository: RouteStopsDataSource,

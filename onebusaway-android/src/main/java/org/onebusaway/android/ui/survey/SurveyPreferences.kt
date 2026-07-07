@@ -35,7 +35,7 @@ import org.onebusaway.android.preferences.PreferencesRepository
  */
 @Singleton
 class SurveyPreferences @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val prefs: PreferencesRepository,
 ) {
 

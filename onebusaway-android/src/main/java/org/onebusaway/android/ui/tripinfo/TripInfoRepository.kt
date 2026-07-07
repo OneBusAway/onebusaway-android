@@ -93,7 +93,7 @@ interface TripInfoRepository {
 }
 
 class DefaultTripInfoRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
     private val reminderService: ReminderWebService,
     private val reminderRepository: ReminderRepository,

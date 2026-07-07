@@ -59,7 +59,7 @@ interface TripPlanRepository {
  * [Result.failure].
  */
 class DefaultTripPlanRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val prefs: PreferencesRepository,
     private val otpWebService: OtpWebService,
 ) : TripPlanRepository {

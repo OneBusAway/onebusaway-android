@@ -47,7 +47,7 @@ interface SearchResultsRepository {
  * stays JVM-testable.
  */
 class DefaultSearchResultsRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val search: LocationSearchDataSource,
     private val stopDao: StopDao,
     private val importGate: ImportGate,

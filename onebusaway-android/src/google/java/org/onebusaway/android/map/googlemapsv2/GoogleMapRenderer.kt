@@ -16,6 +16,10 @@
 package org.onebusaway.android.map.googlemapsv2
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -152,8 +156,33 @@ class GoogleMapRenderer(
     // used.)
     private val arrowStamp: TextureStyle by lazy {
         TextureStyle.newBuilder(
-            BitmapDescriptorFactory.fromResource(R.drawable.ic_navigation_expand_more)
+            // Render the (vector) chevron to a bitmap; BitmapDescriptorFactory.fromResource can't
+            // rasterize a VectorDrawable. The stamp scales to the polyline width, so [glyphScale]
+            // (not the bitmap size) controls how large the chevron reads by filling more of the tile.
+            // The stamp is color-independent (white); the per-polyline color comes from the
+            // StrokeStyle above. keyboard_arrow_down is a neutral black template, so tint it white here.
+            BitmapDescriptorFactory.fromBitmap(
+                vectorToBitmap(R.drawable.keyboard_arrow_down, 36, glyphScale = 1.7f, tint = Color.WHITE)
+            )
         ).build()
+    }
+
+    /**
+     * Rasterizes a drawable (vector or raster) into a square [sizeDp]-dp bitmap at screen density.
+     * [glyphScale] zooms the glyph within the tile (>1 fills more of it, cropping the transparent
+     * margin); used to enlarge the polyline arrow stamp without widening the line. [tint], when set,
+     * recolors the glyph (the stamp texture carries its own color, independent of the line).
+     */
+    private fun vectorToBitmap(resId: Int, sizeDp: Int, glyphScale: Float = 1f, tint: Int? = null): Bitmap {
+        val sizePx = (sizeDp * density).toInt()
+        val drawable = ContextCompat.getDrawable(context, resId)!!.mutate()
+        if (tint != null) drawable.setTint(tint)
+        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val inset = (sizePx * (1f - glyphScale) / 2f).toInt()
+        drawable.setBounds(inset, inset, sizePx - inset, sizePx - inset)
+        drawable.draw(canvas)
+        return bitmap
     }
 
     // Wraps each distinct marker icon in a BitmapDescriptor exactly once, keyed by a stable logical id, so

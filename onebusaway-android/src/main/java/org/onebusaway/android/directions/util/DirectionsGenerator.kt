@@ -573,10 +573,9 @@ class DirectionsGenerator(
                 RelativeDirection.SLIGHTLY_RIGHT -> R.drawable.ic_turn_slight_right
                 RelativeDirection.UTURN_LEFT -> R.drawable.ic_uturn_left
                 RelativeDirection.UTURN_RIGHT -> R.drawable.ic_uturn_right
-                else -> {
-                    Log.d(TAG, "No icon for direction: $relDir")
-                    -1
-                }
+                // No else: the when is exhaustive over RelativeDirection, so a future OTP enum
+                // addition surfaces as a compile error here rather than a silent missing icon.
+                // (The caller's -1 initializer still covers the "icon not set" case.)
             }
         }
     }

@@ -573,9 +573,10 @@ private fun AlertList(
  */
 @Composable
 private fun SwipeToHide(onHide: () -> Unit, content: @Composable () -> Unit) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { it == SwipeToDismissBoxValue.StartToEnd }
-    )
+    // Which swipe directions are allowed is expressed by the box's enableDismissFromStartToEnd /
+    // enableDismissFromEndToStart flags below (the modern "leave disallowed anchors out" approach),
+    // replacing the deprecated confirmValueChange veto callback.
+    val dismissState = rememberSwipeToDismissBoxState()
     val rowVisible = remember { MutableTransitionState(true) }
     // Once the row settles in the dismissed position, start the collapse.
     LaunchedEffect(dismissState.currentValue) {

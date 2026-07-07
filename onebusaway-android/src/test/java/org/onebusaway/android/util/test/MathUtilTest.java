@@ -17,17 +17,13 @@
 package org.onebusaway.android.util.test;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.onebusaway.android.util.MathUtils;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import static junit.framework.Assert.assertEquals;
 
 /**
  * Tests to evaluate utility methods related to math conversions
  */
-@RunWith(AndroidJUnit4.class)
 public class MathUtilTest {
 
     /**

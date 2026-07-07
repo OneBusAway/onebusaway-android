@@ -16,16 +16,12 @@
 package org.onebusaway.android.util.test;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.onebusaway.android.util.MyTextUtils;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
-@RunWith(AndroidJUnit4.class)
 public class MyTextUtilsTest {
 
     @Test

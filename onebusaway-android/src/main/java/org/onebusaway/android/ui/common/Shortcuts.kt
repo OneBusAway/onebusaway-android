@@ -77,7 +77,7 @@ object Shortcuts {
             context,
             routeName,
             RouteInfoLauncher.makeIntent(context, routeId),
-            R.drawable.ic_trip_details
+            R.drawable.ic_route
         )
         ShortcutManagerCompat.requestPinShortcut(context, shortcut, null)
         return shortcut

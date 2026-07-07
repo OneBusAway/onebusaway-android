@@ -171,6 +171,15 @@
     ]
   },
   {
+    "featureType": "transit.station.bus",
+    "elementType": "all",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
     "featureType": "water",
     "elementType": "geometry",
     "stylers": [

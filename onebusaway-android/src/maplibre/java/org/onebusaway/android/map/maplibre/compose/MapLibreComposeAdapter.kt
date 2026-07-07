@@ -83,7 +83,12 @@ private const val FRAME_INTERVAL_NANOS = 8_333_333L
  * Lifecycle note: `addObserver` on an already-STARTED/RESUMED lifecycle synchronously dispatches the
  * upward events, so the MapView still receives `onStart`/`onResume` when it enters composition late.
  * `onCreate` happens once at [remember] time; `onDestroy` happens once in `onDispose`.
+ *
+ * Uses the deprecated-but-functional classic annotation API (setInfoWindowAdapter, and the marker/
+ * info-window click wiring in [wireClicks]). Migrating to SymbolManager/LineManager is a feature-level
+ * rewrite tracked in #1728; suppress the deprecation until then.
  */
+@Suppress("DEPRECATION")
 class MapLibreComposeAdapter : ObaComposeMapAdapter {
 
     @Composable
@@ -237,6 +242,7 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
  * open window deep links. The bike content is wrapped in a white bubble ([VehicleInfoWindow] draws its
  * own card, [BikeInfoWindow] is background-free), matching the Google flavor.
  */
+@Suppress("DEPRECATION") // classic Marker/InfoWindow click API; migration tracked in #1728
 private fun wireClicks(
     map: MapLibreMap,
     renderer: MapLibreRenderer,

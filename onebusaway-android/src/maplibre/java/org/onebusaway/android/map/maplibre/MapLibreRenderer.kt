@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// Classic annotation API (Marker/Polyline/Icon/IconFactory) is deprecated in maplibre 11.x but still
+// functional; file-level so the deprecated *imports* are covered too. Migration tracked in #1728.
+@file:Suppress("DEPRECATION")
+
 package org.onebusaway.android.map.maplibre
 
 import android.content.Context
@@ -69,6 +73,11 @@ import org.onebusaway.android.util.getRouteDisplayName
  *
  * maplibre markers have no per-marker anchor and the classic info window is title/snippet, so the rich
  * Google Compose info windows degrade to a title + snippet here (a deliberate flavor gap).
+ *
+ * The classic annotation API (Marker/Polyline/Icon/IconFactory) is deprecated in maplibre 11.x but
+ * still fully functional. This whole renderer — and the tap/info-window layer it feeds — is built on
+ * it, and the replacement (SymbolManager/LineManager) has no info-window support, so migrating is a
+ * feature-level rewrite (tracked in #1728), not a lint fix. Suppressed file-wide (see the top).
  */
 class MapLibreRenderer(
     private val map: MapLibreMap,

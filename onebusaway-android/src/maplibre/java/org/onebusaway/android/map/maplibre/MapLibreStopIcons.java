@@ -43,7 +43,11 @@ import java.util.Map;
  * StopOverlay. Holds the 9-direction normal + focused bitmap caches and wraps them as maplibre
  * {@link Icon}s; the declarative MapRenderState renderer asks it for an icon per stop. Built once on
  * first use. (maplibre markers have no per-marker anchor, so the direction offset math is dropped.)
+ *
+ * <p>Wraps bitmaps as the deprecated-but-functional classic {@link Icon}/{@link IconFactory}; the move
+ * to the SymbolManager style-image model is part of the feature-level rewrite tracked in issue #1728.
  */
+@SuppressWarnings("deprecation")
 public final class MapLibreStopIcons {
 
     private MapLibreStopIcons() {

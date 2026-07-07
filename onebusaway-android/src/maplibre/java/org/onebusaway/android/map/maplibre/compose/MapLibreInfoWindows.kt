@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// Classic Marker/InfoWindowAdapter API is deprecated in maplibre 11.x but still functional; file-level
+// so the deprecated *import* is covered too. SymbolManager has no info window; migration tracked in #1728.
+@file:Suppress("DEPRECATION")
+
 package org.onebusaway.android.map.maplibre.compose
 
 import android.app.Activity
@@ -38,6 +42,10 @@ import org.onebusaway.android.map.compose.ComposeBitmapRenderer
  * synchronous size, which maplibre anchors correctly on the first frame. [clear] drops the tracked
  * window (a tap away / another marker). Markers with no content (the trip-focus estimate markers) fall
  * through to the SDK's default title window.
+ *
+ * Built on the deprecated-but-functional classic annotation API (Marker/InfoWindowAdapter/selectMarker);
+ * SymbolManager has no info-window equivalent, so replacing it is the feature-level rewrite tracked in
+ * #1728. Suppressed file-wide (see the top).
  */
 class MapLibreInfoWindows(
     private val activity: Activity,

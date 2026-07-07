@@ -389,8 +389,10 @@ private fun resolveMapStyle(context: Context): MapStyleOptions =
     if (ThemeUtils.isInDarkMode(context)) {
         MapStyleOptions.loadRawResourceStyle(context, R.raw.dark_map)
     } else {
-        // Light mode: just hide POIs (ported from GoogleMapHost.onMapReady).
+        // Light mode: hide POIs (ported from GoogleMapHost.onMapReady) and bus-stop icons,
+        // which are redundant with our own stop markers.
         MapStyleOptions(
-            "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]"
+            "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}," +
+                "{\"featureType\":\"transit.station.bus\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]"
         )
     }

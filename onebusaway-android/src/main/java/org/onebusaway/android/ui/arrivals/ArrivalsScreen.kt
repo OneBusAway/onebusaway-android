@@ -246,9 +246,9 @@ fun ArrivalsScreen(
                             Icon(
                                 painter = painterResource(
                                     if (content.header.isFavorite) {
-                                        R.drawable.ic_toggle_star
+                                        R.drawable.star
                                     } else {
-                                        R.drawable.ic_toggle_star_outline
+                                        R.drawable.star_outline
                                     }
                                 ),
                                 contentDescription = stringResource(R.string.stop_info_favorite),

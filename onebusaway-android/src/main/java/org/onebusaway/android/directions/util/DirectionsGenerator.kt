@@ -553,7 +553,7 @@ class DirectionsGenerator(
         @JvmStatic
         fun getStopIcon(mode: TraverseModeSet): Int {
             if (mode.contains(TraverseMode.BUS) || mode.contains(TraverseMode.RAIL)) {
-                return R.drawable.ic_stop_flag_triangle
+                return R.drawable.stop_flag
             }
             // Just use the mode icon
             return getModeIcon(mode)

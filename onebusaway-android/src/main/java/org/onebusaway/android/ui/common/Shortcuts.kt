@@ -55,7 +55,7 @@ object Shortcuts {
             context,
             shortcutName,
             builder.intent,
-            R.drawable.ic_stop_flag_triangle
+            R.drawable.stop_flag
         )
         ShortcutManagerCompat.requestPinShortcut(context, shortcut, null)
         return shortcut

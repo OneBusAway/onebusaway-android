@@ -25,7 +25,7 @@
         android:shortcutId="starred_stops"
         android:enabled="true"
         tools:targetApi="25"
-        android:icon="@drawable/ic_drawer_star"
+        android:icon="@drawable/star"
         android:shortcutShortLabel="@string/starred_stops_shortcut"
         android:shortcutLongLabel="@string/starred_stops_shortcut">
         <intent

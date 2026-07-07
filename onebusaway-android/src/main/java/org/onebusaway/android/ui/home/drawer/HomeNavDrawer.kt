@@ -65,8 +65,8 @@ fun HomeNavDrawerSheet(
     ModalDrawerSheet(Modifier.width(dimensionResource(R.dimen.navigation_drawer_width))) {
         Spacer(Modifier.height(12.dp))
         Column(Modifier.verticalScroll(rememberScrollState())) {
-            DrawerRow(R.string.navdrawer_item_starred_stops, R.drawable.ic_stop_flag_triangle, onStarredStops)
-            DrawerRow(R.string.navdrawer_item_starred_routes, R.drawable.ic_bus, onStarredRoutes)
+            DrawerRow(R.string.navdrawer_item_starred_stops, R.drawable.stop_flag, onStarredStops)
+            DrawerRow(R.string.navdrawer_item_starred_routes, R.drawable.ic_route, onStarredRoutes)
             if (showReminders) {
                 DrawerRow(R.string.navdrawer_item_my_reminders, R.drawable.ic_drawer_alarm, onReminders)
             }

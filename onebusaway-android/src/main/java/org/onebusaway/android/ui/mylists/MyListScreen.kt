@@ -269,7 +269,7 @@ private fun FavoriteStarSlot(favorite: Boolean) {
     Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
         if (favorite) {
             Icon(
-                painter = painterResource(R.drawable.ic_toggle_star),
+                painter = painterResource(R.drawable.star),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
                 modifier = Modifier.size(23.dp)

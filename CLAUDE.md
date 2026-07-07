@@ -25,6 +25,20 @@ OneBusAway for Android is a real-time transit information app providing bus arri
 adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.ui.HomeActivity
 ```
 
+### CI is strict — warnings fail the build
+
+CI passes `-PwarningsAsErrors=true`, so **every Kotlin compiler warning (`w:`) is a hard error** in CI —
+deprecations, redundant/dead code, unnecessary `!!`, etc. — even though a plain local `./gradlew` build
+only prints them. The codebase is kept at **zero** compiler warnings (#1692); don't regress it.
+
+- Before pushing, compile clean. To reproduce the CI gate locally:
+  `./gradlew :onebusaway-android:compileObaGoogleDebugKotlin -PwarningsAsErrors=true`
+- **Fix the warning at its source.** Only reach for `@Suppress` / `@SuppressWarnings` when the migration
+  genuinely can't be done here (e.g. a replacement API that needs a higher `minSdk`, or a schema change),
+  and then always add a one-line rationale **and a tracking-issue link** at the suppression site.
+- **Android Lint also fails the build** (`lint { abortOnError true }`) — notably `NewApi`/minSdk
+  violations the API-33 tests can't catch — so keep lint clean too.
+
 ## Automated Publishing (gradle-play-publisher)
 
 Uses [gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher) to auto-increment `versionCode`, build, and upload to Google Play.
@@ -122,7 +136,8 @@ Tests are in `onebusaway-android/src/androidTest/java/`. Key test classes:
 - Region functionality tests (RegionsTest)
 - Utility tests (LocationUtilsTest, RegionUtilTest)
 
-CI runs on API level 33 emulator via GitHub Actions.
+CI runs on API level 33 emulator via GitHub Actions, and is **strict** — Kotlin warnings and Android
+Lint errors both fail the build (see "CI is strict" under Build Commands).
 
 ## Time domains: server clock vs device clock (#1612)
 

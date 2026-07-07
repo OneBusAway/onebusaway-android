@@ -39,9 +39,14 @@ only prints them. The codebase is kept at **zero** compiler warnings (#1692); do
 - **Android Lint is gated the same way.** Lint *errors* always fail the build (`abortOnError`) —
   notably `NewApi`/minSdk violations the API-33 tests can't catch. Under `-PwarningsAsErrors=true`,
   lint *warnings* fail too (`warningsAsErrors`), so keep lint clean. Reproduce locally with
-  `./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true`. Only the default-enabled
-  checks are gated (no `checkAllWarnings`); if an AGP/lint bump floods new warnings, fix them or add a
-  `lint-baseline.xml`.
+  `./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true`.
+  - Lint runs the **full catalog** (`checkAllWarnings true`), and the ~760 pre-existing findings are
+    grandfathered in `onebusaway-android/lint-baseline.xml`. Only **new** issues (not in the baseline)
+    are reported — so don't introduce new ones, and prefer fixing over baselining.
+  - After an AGP/lint bump that adds or changes checks, **regenerate the baseline**: delete
+    `lint-baseline.xml` and run `./gradlew :onebusaway-android:lintObaGoogleDebug` (it recreates the
+    file and intentionally fails that one run; the next run passes). Then review the diff before
+    committing so genuinely new issues aren't silently absorbed.
 
 ## Automated Publishing (gradle-play-publisher)
 

@@ -77,7 +77,7 @@ fun HomeNavDrawerSheet(
                 DrawerRow(R.string.navdrawer_item_pay_fare, R.drawable.ic_payment, onPayFare)
             }
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            DrawerRow(R.string.navdrawer_item_open_source, R.drawable.ic_drawer_github, onOpenSource)
+            DrawerRow(R.string.navdrawer_item_open_source, R.drawable.github_invertocat_black, onOpenSource)
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
             DrawerRow(R.string.navdrawer_item_settings, icon = null, onSettings)
             DrawerRow(R.string.navdrawer_item_help, icon = null, onHelp)

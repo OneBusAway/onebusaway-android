@@ -278,10 +278,6 @@
         </provider>
 
         <service
-            android:name=".directions.realtime.RealtimeService">
-        </service>
-
-        <service
             android:name=".nav.NavigationService"
             android:foregroundServiceType="location" />
 
@@ -300,9 +296,9 @@
             android:enabled="true">
         </receiver>
 
-        <!-- Only receives the app's own realtime-check broadcasts (RealtimeService), so
+        <!-- Only receives the app's own realtime-check broadcasts (RealtimeChecker), so
              it needs no cross-app access. The intent-filter still matches the same-app broadcast. -->
-        <receiver android:name=".directions.realtime.RealtimeWakefulReceiver"
+        <receiver android:name=".directions.realtime.RealtimeReceiver"
             android:exported="false">
             <intent-filter>
                 <!-- Should match constants for actions defined in OTPConstants -->

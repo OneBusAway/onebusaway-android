@@ -42,7 +42,7 @@ interface TripPlanRepository {
 
     /**
      * Blocking OTP plan for a caller that is already on a background thread and has assembled its
-     * own [TripRequestBuilder] — the RealtimeService IntentService worker, which replaced the legacy
+     * own [TripRequestBuilder] — the RealtimeChecker background worker, which replaced the legacy
      * `TripRequest` AsyncTask. Returns the itineraries, or an empty list on any failure (mirroring
      * the old callback's failure path, which only logged and disabled updates). Kept non-suspend and
      * Result-free so it stays cleanly callable from the Java service.

@@ -32,7 +32,7 @@ import retrofit2.http.Url
  * the body is parsed through the shared [OtpPlanParser] (keeping the OTP-library `Response` mapping +
  * malformed-body handling in one place, and letting the repository detect the old-server 404 to fall
  * back to the legacy URL structure), and the repository has a blocking `planBlocking` path (the Java
- * `RealtimeService` worker) that must call it without a coroutine.
+ * `RealtimeChecker` worker) that must call it without a coroutine.
  */
 interface OtpWebService {
 

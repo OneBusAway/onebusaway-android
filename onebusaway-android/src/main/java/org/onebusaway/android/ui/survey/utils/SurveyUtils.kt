@@ -120,7 +120,7 @@ object SurveyUtils {
         visibleStopsList: List<String>?,
         visibleRouteList: List<String>?
     ): Boolean {
-        if (currentStop == null || currentStop.id == null) return false
+        if (currentStop == null) return false
         // If both visibleStopsList and visibleRouteList are null, show the survey by default.
         if (visibleRouteList == null && visibleStopsList == null) {
             return true
@@ -339,7 +339,7 @@ object SurveyUtils {
      * @return The stop identifier or null if conditions are not met.
      */
     fun getCurrentStopIdentifier(currentStop: ObaStop?, visibleOnStops: Boolean): String? {
-        return if (currentStop != null && currentStop.id != null && visibleOnStops) {
+        return if (currentStop != null && visibleOnStops) {
             currentStop.id
         } else {
             null

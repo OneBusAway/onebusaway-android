@@ -340,7 +340,7 @@ private fun rememberThumbnail(path: String?): ImageBitmap? {
         } else {
             withContext(Dispatchers.IO) {
                 runCatching {
-                    BitmapUtils.decodeSampledBitmapFromFile(path, 192, 192)?.asImageBitmap()
+                    BitmapUtils.decodeSampledBitmapFromFile(path, 192, 192).asImageBitmap()
                 }.getOrNull()
             }
         }

@@ -51,7 +51,7 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
     ): Result<List<ItineraryOption>> = withContext(Dispatchers.IO) {
         runCatching {
             itineraries.map { itinerary ->
-                val durationSec = itinerary.duration.toLong()
+                val durationSec = itinerary.duration
                 ItineraryOption(
                     title = DirectionsGenerator(itinerary.legs, context).itineraryTitle,
                     durationText = ConversionUtils

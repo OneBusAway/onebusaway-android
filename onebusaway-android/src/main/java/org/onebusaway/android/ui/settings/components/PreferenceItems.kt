@@ -98,7 +98,7 @@ private fun PreferenceRow(
     val clickable = onClick != null && enabled
     val rowModifier = modifier
         .fillMaxWidth()
-        .then(if (clickable) Modifier.clickable(onClick = onClick!!) else Modifier)
+        .then(if (clickable) Modifier.clickable(onClick = onClick) else Modifier)
         .padding(horizontal = 16.dp, vertical = 12.dp)
     val alpha = if (enabled) 1f else DISABLED_ALPHA
     Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {

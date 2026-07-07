@@ -118,7 +118,7 @@ fun extrapolatedVehicles(
         // fix's flag, a point taken from the current status uses that status'. This keeps the marker
         // from reading "scheduled" for a vehicle we're actively tracking/extrapolating (#1621).
         val isRealtime = if (projection != null) {
-            state?.anchor?.isLocationRealtime == true
+            state.anchor?.isLocationRealtime == true
         } else {
             status.isLocationRealtime
         }

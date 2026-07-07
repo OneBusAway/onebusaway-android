@@ -465,7 +465,6 @@ class DirectionsGenerator(
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_uturn_left)
                     RelativeDirection.UTURN_RIGHT ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_uturn_right)
-                    else -> null
                 }
             }
             return null
@@ -491,7 +490,6 @@ class DirectionsGenerator(
                         resources.getString(R.string.step_by_step_non_transit_dir_absolute_southwest)
                     AbsoluteDirection.WEST ->
                         resources.getString(R.string.step_by_step_non_transit_dir_absolute_west)
-                    else -> null
                 }
             }
             return null

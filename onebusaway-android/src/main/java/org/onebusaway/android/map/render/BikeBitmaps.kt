@@ -20,8 +20,6 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import androidx.annotation.DrawableRes
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toBitmap
 import org.onebusaway.android.R
 
 /**
@@ -42,11 +40,8 @@ object BikeBitmaps {
     /** Big markers fill a square this many dp on a side (the former raster's size). */
     private const val BIG_SIZE_DP = 32f
 
-    /** pin_base is authored on a 24-unit grid; the glyph geometry is in those units. */
-    private const val GRID = 24f
-    private const val GLYPH_CX = 12f
-    private const val GLYPH_CY = 8f // pin head center
-    private const val GLYPH_SIZE = 11f // the glyph's 24-grid box
+    /** The glyph's 24-grid box (its artwork fills ~70% of this). */
+    private const val GLYPH_SIZE = 11f
 
     // The three icons never vary, so cache them once. The maplibre renderer clears + redraws every
     // marker on each snapshot, so without this it would re-render these per bike per render.
@@ -58,7 +53,7 @@ object BikeBitmaps {
     @JvmStatic
     fun small(context: Context): Bitmap = sSmall ?: run {
         val px = context.resources.getDimensionPixelSize(R.dimen.bikeshare_small_marker_size)
-        ContextCompat.getDrawable(context, R.drawable.bike_marker_small)!!.toBitmap(px, px).also { sSmall = it }
+        MarkerRendering.rasterize(context, R.drawable.bike_marker_small, px).also { sSmall = it }
     }
 
     /** The large bike-station pin (navy pin + white bike-dock glyph). */
@@ -71,27 +66,14 @@ object BikeBitmaps {
     fun bigFloating(context: Context): Bitmap =
         sBigFloating ?: bigMarker(context, R.drawable.ic_directions_bike).also { sBigFloating = it }
 
-    /** Composites pin_base (tinted navy) with a centered white [glyphRes]. */
+    /** Composites pin_base (tinted navy) with a centered white [glyphRes] — no outline, tip at the bottom. */
     private fun bigMarker(context: Context, @DrawableRes glyphRes: Int): Bitmap {
-        val scale = context.resources.displayMetrics.density * BIG_SIZE_DP / GRID
-        val sizePx = (GRID * scale).toInt()
+        val scale = context.resources.displayMetrics.density * BIG_SIZE_DP / MarkerRendering.GRID
+        val sizePx = (MarkerRendering.GRID * scale).toInt()
         val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-
-        ContextCompat.getDrawable(context, R.drawable.pin_base)!!.mutate().apply {
-            setTint(PIN_COLOR)
-            setBounds(0, 0, sizePx, sizePx)
-            draw(canvas)
-        }
-        ContextCompat.getDrawable(context, glyphRes)!!.mutate().apply {
-            setTint(Color.WHITE)
-            val half = GLYPH_SIZE / 2f
-            setBounds(
-                ((GLYPH_CX - half) * scale).toInt(), ((GLYPH_CY - half) * scale).toInt(),
-                ((GLYPH_CX + half) * scale).toInt(), ((GLYPH_CY + half) * scale).toInt(),
-            )
-            draw(canvas)
-        }
+        MarkerRendering.drawPinAndGlyph(
+            Canvas(bitmap), context, sizePx, scale, PIN_COLOR, glyphRes, Color.WHITE, GLYPH_SIZE, outline = 0f,
+        )
         return bitmap
     }
 }

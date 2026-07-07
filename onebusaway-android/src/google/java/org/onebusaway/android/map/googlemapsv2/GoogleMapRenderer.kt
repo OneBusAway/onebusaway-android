@@ -17,9 +17,7 @@ package org.onebusaway.android.map.googlemapsv2
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
-import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -43,6 +41,7 @@ import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.StopIconKind
@@ -175,14 +174,8 @@ class GoogleMapRenderer(
      */
     private fun vectorToBitmap(resId: Int, sizeDp: Int, glyphScale: Float = 1f, tint: Int? = null): Bitmap {
         val sizePx = (sizeDp * density).toInt()
-        val drawable = ContextCompat.getDrawable(context, resId)!!.mutate()
-        if (tint != null) drawable.setTint(tint)
-        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
         val inset = (sizePx * (1f - glyphScale) / 2f).toInt()
-        drawable.setBounds(inset, inset, sizePx - inset, sizePx - inset)
-        drawable.draw(canvas)
-        return bitmap
+        return MarkerRendering.rasterize(context, resId, sizePx, tint, inset)
     }
 
     // Wraps each distinct marker icon in a BitmapDescriptor exactly once, keyed by a stable logical id, so

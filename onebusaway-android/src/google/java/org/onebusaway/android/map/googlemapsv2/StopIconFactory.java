@@ -39,6 +39,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.map.render.MarkerRendering;
 import org.onebusaway.android.map.render.StopBitmaps;
 import org.onebusaway.android.models.ObaRoute;
 
@@ -615,23 +616,11 @@ public final class StopIconFactory {
                 {ObaRoute.TYPE_FERRY, R.drawable.ic_ferry},
         };
         for (int[] entry : glyphMapping) {
-            sRouteTypeGlyphs.put(entry[0], renderGlyph(context, entry[1], glyphSizePx));
+            // Rasterize via the shared helper (Drawable API, not decodeResource) so these glyphs can be
+            // VectorDrawables; only the alpha matters here — sGlyphPaint recolors them white (SRC_IN)
+            // when stamped onto the stop circle.
+            sRouteTypeGlyphs.put(entry[0], MarkerRendering.rasterize(context, entry[1], glyphSizePx));
         }
-    }
-
-    /**
-     * Renders a route-type glyph drawable into a square bitmap. Drawing through the Drawable API
-     * (rather than BitmapFactory.decodeResource) lets these glyphs be VectorDrawables; only the
-     * alpha channel matters here, since {@link #sGlyphPaint} recolors the glyph white via a SRC_IN
-     * filter when it is stamped onto the stop circle.
-     */
-    private static Bitmap renderGlyph(Context context, int resId, int sizePx) {
-        Drawable d = ContextCompat.getDrawable(context, resId);
-        Bitmap bm = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bm);
-        d.setBounds(0, 0, sizePx, sizePx);
-        d.draw(canvas);
-        return bm;
     }
 
     /**

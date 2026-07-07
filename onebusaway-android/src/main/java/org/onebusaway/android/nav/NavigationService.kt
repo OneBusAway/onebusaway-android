@@ -488,7 +488,7 @@ class NavigationService : Service() {
 
         // Then enqueue the recurring task under a unique name so repeated navigation starts keep a
         // single cleanup chain instead of stacking one each time:
-        WorkManager.getInstance().enqueueUniquePeriodicWork(
+        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
             NavigationCleanupWorker.UNIQUE_WORK_NAME,
             ExistingPeriodicWorkPolicy.KEEP,
             cleanUpCheckWork

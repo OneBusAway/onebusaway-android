@@ -36,8 +36,12 @@ only prints them. The codebase is kept at **zero** compiler warnings (#1692); do
 - **Fix the warning at its source.** Only reach for `@Suppress` / `@SuppressWarnings` when the migration
   genuinely can't be done here (e.g. a replacement API that needs a higher `minSdk`, or a schema change),
   and then always add a one-line rationale **and a tracking-issue link** at the suppression site.
-- **Android Lint also fails the build** (`lint { abortOnError true }`) — notably `NewApi`/minSdk
-  violations the API-33 tests can't catch — so keep lint clean too.
+- **Android Lint is gated the same way.** Lint *errors* always fail the build (`abortOnError`) —
+  notably `NewApi`/minSdk violations the API-33 tests can't catch. Under `-PwarningsAsErrors=true`,
+  lint *warnings* fail too (`warningsAsErrors`), so keep lint clean. Reproduce locally with
+  `./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true`. Only the default-enabled
+  checks are gated (no `checkAllWarnings`); if an AGP/lint bump floods new warnings, fix them or add a
+  `lint-baseline.xml`.
 
 ## Automated Publishing (gradle-play-publisher)
 

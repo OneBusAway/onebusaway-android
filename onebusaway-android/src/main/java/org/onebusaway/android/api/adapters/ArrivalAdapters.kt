@@ -21,6 +21,7 @@ import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FrequencyWindow
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
+import org.onebusaway.android.models.isVehicleServingTrip
 import org.onebusaway.android.time.ServerTime
 
 /** Adapts a modernized [ArrivalDeparture] DTO (arrivals fetch) to the [ArrivalData] model. */
@@ -45,7 +46,8 @@ private class DtoArrivalData(private val d: ArrivalDeparture) : ArrivalData {
     override val stopSequence get() = d.stopSequence
     override val serviceDate get() = d.serviceDate
     override val vehicleId get() = d.vehicleId
-    override val predicted get() = d.predicted
+    // Real-time only when the vehicle is on *this* trip, not merely somewhere on its block (#1681).
+    override val isTracked get() = d.predicted && isVehicleServingTrip(d.tripId, d.tripStatus?.activeTripId)
     // Wire→server mint: these are the server clock, already epoch millis.
     override val scheduledArrivalTime get() = ServerTime(d.scheduledArrivalTime)
     override val predictedArrivalTime get() = ServerTime(predictedOrAbsent(d.predictedArrivalTime))

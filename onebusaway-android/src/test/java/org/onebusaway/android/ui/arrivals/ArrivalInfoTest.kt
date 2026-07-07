@@ -19,6 +19,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.R
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FrequencyWindow
 import org.onebusaway.android.models.Occupancy
@@ -44,12 +45,15 @@ class ArrivalInfoTest {
     /** A valid scheduled arrival ~50 min out, mirroring the issue's `scheduledArrivalTime`. */
     private val scheduledArrival = 1_783_119_110_000L
 
+    /** A genuine prediction, a few minutes later than [scheduledArrival] (running late). */
+    private val predictedArrival = 1_783_119_500_000L
+
     private fun arrival(
-        predicted: Boolean,
+        isTracked: Boolean,
         predictedArrivalTime: Long,
         scheduledArrivalTime: Long = scheduledArrival,
     ): ArrivalData = FakeArrivalData(
-        predicted = predicted,
+        isTracked = isTracked,
         predictedArrivalTime = ServerTime(predictedArrivalTime),
         scheduledArrivalTime = ServerTime(scheduledArrivalTime),
     )
@@ -64,7 +68,7 @@ class ArrivalInfoTest {
 
     @Test
     fun `predicted true with a minus-one sentinel falls back to the scheduled time`() {
-        val info = infoFor(arrival(predicted = true, predictedArrivalTime = -1L))
+        val info = infoFor(arrival(isTracked = true, predictedArrivalTime = -1L))
 
         assertFalse("a -1 predicted sentinel is not a real prediction", info.predicted)
         assertEquals("displayTime falls back to the scheduled instant", scheduledArrival, info.displayTime)
@@ -75,7 +79,7 @@ class ArrivalInfoTest {
 
     @Test
     fun `predicted true with a zero sentinel falls back to the scheduled time`() {
-        val info = infoFor(arrival(predicted = true, predictedArrivalTime = 0L))
+        val info = infoFor(arrival(isTracked = true, predictedArrivalTime = 0L))
 
         assertFalse("a 0 predicted sentinel is not a real prediction", info.predicted)
         assertEquals(scheduledArrival, info.displayTime)
@@ -85,8 +89,7 @@ class ArrivalInfoTest {
 
     @Test
     fun `a genuine positive prediction is still honored`() {
-        val predictedArrival = 1_783_119_500_000L // slightly later than scheduled
-        val info = infoFor(arrival(predicted = true, predictedArrivalTime = predictedArrival))
+        val info = infoFor(arrival(isTracked = true, predictedArrivalTime = predictedArrival))
 
         assertTrue(info.predicted)
         assertEquals(predictedArrival, info.displayTime)
@@ -95,7 +98,7 @@ class ArrivalInfoTest {
 
     @Test
     fun `an unpredicted arrival uses the scheduled time`() {
-        val info = infoFor(arrival(predicted = false, predictedArrivalTime = 0L))
+        val info = infoFor(arrival(isTracked = false, predictedArrivalTime = 0L))
 
         assertFalse(info.predicted)
         assertEquals(scheduledArrival, info.displayTime)
@@ -103,18 +106,45 @@ class ArrivalInfoTest {
     }
 
     @Test
+    fun `an untracked arrival with a stale predicted instant shows scheduled and gray (issue 1681)`() {
+        // The adapter already gated a block-inherited arrival to isTracked=false; even with a positive
+        // predicted instant present, the projection must present it as scheduled (not a deviation color).
+        val info = infoFor(arrival(isTracked = false, predictedArrivalTime = predictedArrival))
+
+        assertFalse("an untracked arrival is not real-time", info.predicted)
+        assertEquals("displayTime falls back to the scheduled instant", scheduledArrival, info.displayTime)
+        assertEquals(scheduledArrival / 60_000 - now.epochMs / 60_000, info.eta)
+        assertEquals(
+            "a scheduled (untracked) arrival is gray, not a deviation color",
+            R.color.stop_info_scheduled_time, info.color
+        )
+    }
+
+    @Test
+    fun `a tracked running-late arrival keeps its deviation color`() {
+        val info = infoFor(arrival(isTracked = true, predictedArrivalTime = predictedArrival))
+
+        assertTrue(info.predicted)
+        assertEquals(predictedArrival, info.displayTime)
+        assertEquals(
+            "a tracked, running-late arrival keeps its deviation color",
+            R.color.stop_info_delayed, info.color
+        )
+    }
+
+    @Test
     fun `report context carries the normalized predicted flag for a suppressed prediction`() {
         // Closed stop: server keeps predicted:true but suppresses the instant to a sentinel. The
         // report builder branches on TripReportContext.predicted to pick predicted vs scheduled
         // times, so it must see false here — otherwise it formats Date(0) as a 1969 garbage time.
-        val info = infoFor(arrival(predicted = true, predictedArrivalTime = -1L))
+        val info = infoFor(arrival(isTracked = true, predictedArrivalTime = -1L))
 
         assertFalse("suppressed prediction is not real-time in the report", info.toTripReportContext().predicted)
     }
 
     @Test
     fun `report context carries the normalized predicted flag for a genuine prediction`() {
-        val info = infoFor(arrival(predicted = true, predictedArrivalTime = 1_783_119_500_000L))
+        val info = infoFor(arrival(isTracked = true, predictedArrivalTime = 1_783_119_500_000L))
 
         assertTrue("a genuine prediction stays real-time in the report", info.toTripReportContext().predicted)
     }
@@ -122,7 +152,7 @@ class ArrivalInfoTest {
 
 /** Minimal [ArrivalData] stub; only the arrival-time fields matter for these ETA assertions. */
 private data class FakeArrivalData(
-    override val predicted: Boolean,
+    override val isTracked: Boolean,
     override val predictedArrivalTime: ServerTime,
     override val scheduledArrivalTime: ServerTime,
     override val routeId: String = "1_100",

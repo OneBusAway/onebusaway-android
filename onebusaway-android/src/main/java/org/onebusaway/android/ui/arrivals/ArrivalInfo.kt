@@ -119,10 +119,10 @@ class ArrivalInfo(
         vehicleId = data.vehicleId,
         stopId = data.stopId,
         serviceDate = data.serviceDate,
-        // The normalized flag (data.predicted AND a positive predicted instant), not the raw
-        // server flag: at a closed stop the server keeps predicted:true but suppresses the
-        // instants to 0 (issue #1687), and the report builder branches on this to pick the
-        // predicted vs scheduled times — the raw flag would format Date(0) as a 1969 garbage time.
+        // The projection's own flag (tracked AND a positive predicted instant), not the raw server
+        // flag: at a closed stop the server keeps predicted:true but suppresses the instants to 0
+        // (issue #1687), and the report builder branches on this to pick the predicted vs scheduled
+        // times — the raw flag would format Date(0) as a 1969 garbage time.
         predicted = predicted,
         predictedArrivalTime = data.predictedArrivalTime.epochMs,
         predictedDepartureTime = data.predictedDepartureTime.epochMs,
@@ -157,11 +157,11 @@ class ArrivalInfo(
         val scheduledMins = scheduled.epochMs / MS_IN_MINS
         val predictedMins = predictedTime.epochMs / MS_IN_MINS
 
-        // A prediction is only usable when the server actually gave us a positive instant. A closed
-        // stop keeps `predicted:true` but suppresses the near-term prediction to a non-positive
-        // sentinel (normalized to 0 at the wire→domain boundary, issue #1687); keying the ETA off the
-        // boolean alone would subtract a 0 timestamp from "now" and render garbage (~ -29,718,596 min).
-        val hasPrediction = data.predicted && predictedTime.epochMs > 0L
+        // A prediction is usable only when the arrival is really tracked (server predicted it *and*
+        // the vehicle is serving this trip, not just its block — #1681, gated on `isTracked` at the
+        // adapter) and the server gave a positive instant. The latter drops the #1687 closed-stop
+        // sentinel — a suppressed instant of 0 that would subtract to a garbage ETA (~ -29,718,596 min).
+        val hasPrediction = data.isTracked && predictedTime.epochMs > 0L
 
         if (hasPrediction) {
             predicted = true
@@ -173,7 +173,9 @@ class ArrivalInfo(
             displayTime = scheduled.epochMs
         }
 
-        color = ArrivalInfoUtils.computeColor(scheduledMins, predictedMins)
+        // Color must track the `predicted` flag: a scheduled row (#1681/#1687) reads gray, not a
+        // deviation color. Gate on `hasPrediction`, not statusColor's own weaker realtime test.
+        color = ArrivalInfoUtils.statusColor(hasPrediction, predictedMins - scheduledMins)
 
         statusText = computeStatusLabel(
             context, now, hasPrediction, scheduledMins, predictedMins,

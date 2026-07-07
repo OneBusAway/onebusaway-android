@@ -294,7 +294,10 @@ public class UIUtilTest extends ObaTestCase {
         validateUatcArrivalInfo(arrivalInfo);
 
         // Arrivals/departures that have already happened
-        assertEquals("Arrived on time", arrivalInfo.get(0).getStatusText());
+        // #1681: arrivals whose vehicle is on another trip in the block (activeTripId != tripId) are
+        // "Scheduled", not tracked — indexes 0, 9, 13, 16, 18, 20, 22, 23, 28, 29, 31 here. The rest
+        // (activeTripId == tripId) keep their real-time deviation labels.
+        assertEquals("Scheduled arrival", arrivalInfo.get(0).getStatusText());
         assertEquals("Arrived at " + formatTime(1438804260000L),
                 arrivalInfo.get(0).getTimeText());
         assertEquals("Departed 2 min late", arrivalInfo.get(1).getStatusText());
@@ -316,7 +319,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("On time", arrivalInfo.get(8).getStatusText());
         assertEquals("Departing at " + formatTime(1438804800000L),
                 arrivalInfo.get(8).getTimeText());
-        assertEquals("On time", arrivalInfo.get(9).getStatusText());
+        assertEquals("Scheduled departure", arrivalInfo.get(9).getStatusText());
         assertEquals("Departing at " + formatTime(1438804800000L),
                 arrivalInfo.get(9).getTimeText());
         assertEquals("10 min delay", arrivalInfo.get(10).getStatusText());
@@ -328,8 +331,8 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("On time", arrivalInfo.get(12).getStatusText());
         assertEquals("Arriving at " + formatTime(1438805100000L),
                 arrivalInfo.get(12).getTimeText());
-        assertEquals("1 min early", arrivalInfo.get(13).getStatusText());
-        assertEquals("Departing at " + formatTime(1438805340000L),
+        assertEquals("Scheduled departure", arrivalInfo.get(13).getStatusText());
+        assertEquals("Departing at " + formatTime(1438805400000L),
                 arrivalInfo.get(13).getTimeText());
         assertEquals("1 min delay", arrivalInfo.get(14).getStatusText());
         assertEquals("Arriving at " + formatTime(1438805520000L),
@@ -337,28 +340,28 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("On time", arrivalInfo.get(15).getStatusText());
         assertEquals("Arriving at " + formatTime(1438805700000L),
                 arrivalInfo.get(15).getTimeText());
-        assertEquals("On time", arrivalInfo.get(16).getStatusText());
+        assertEquals("Scheduled departure", arrivalInfo.get(16).getStatusText());
         assertEquals("Departing at " + formatTime(1438805700000L),
                 arrivalInfo.get(16).getTimeText());
         assertEquals("4 min delay", arrivalInfo.get(17).getStatusText());
         assertEquals("Arriving at " + formatTime(1438805880000L),
                 arrivalInfo.get(17).getTimeText());
-        assertEquals("On time", arrivalInfo.get(18).getStatusText());
+        assertEquals("Scheduled departure", arrivalInfo.get(18).getStatusText());
         assertEquals("Departing at " + formatTime(1438806000000L),
                 arrivalInfo.get(18).getTimeText());
-        assertEquals("8 min delay", arrivalInfo.get(19).getStatusText());
-        assertEquals("Arriving at " + formatTime(1438806060000L),
+        assertEquals("Scheduled departure", arrivalInfo.get(19).getStatusText());
+        assertEquals("Departing at " + formatTime(1438806000000L),
                 arrivalInfo.get(19).getTimeText());
-        assertEquals("2 min delay", arrivalInfo.get(20).getStatusText());
-        assertEquals("Departing at " + formatTime(1438806124000L),
+        assertEquals("8 min delay", arrivalInfo.get(20).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438806060000L),
                 arrivalInfo.get(20).getTimeText());
         assertEquals("3 min delay", arrivalInfo.get(21).getStatusText());
         assertEquals("Arriving at " + formatTime(1438806180000L),
                 arrivalInfo.get(21).getTimeText());
-        assertEquals("On time", arrivalInfo.get(22).getStatusText());
+        assertEquals("Scheduled arrival", arrivalInfo.get(22).getStatusText());
         assertEquals("Arriving at " + formatTime(1438806300000L),
                 arrivalInfo.get(22).getTimeText());
-        assertEquals("On time", arrivalInfo.get(23).getStatusText());
+        assertEquals("Scheduled departure", arrivalInfo.get(23).getStatusText());
         assertEquals("Departing at " + formatTime(1438806300000L),
                 arrivalInfo.get(23).getTimeText());
         assertEquals("6 min delay", arrivalInfo.get(24).getStatusText());
@@ -373,16 +376,16 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("On time", arrivalInfo.get(27).getStatusText());
         assertEquals("Arriving at " + formatTime(1438806540000L),
                 arrivalInfo.get(27).getTimeText());
-        assertEquals("On time", arrivalInfo.get(28).getStatusText());
+        assertEquals("Scheduled departure", arrivalInfo.get(28).getStatusText());
         assertEquals("Departing at " + formatTime(1438806600000L),
                 arrivalInfo.get(28).getTimeText());
-        assertEquals("On time", arrivalInfo.get(29).getStatusText());
+        assertEquals("Scheduled departure", arrivalInfo.get(29).getStatusText());
         assertEquals("Departing at " + formatTime(1438806600000L),
                 arrivalInfo.get(29).getTimeText());
         assertEquals("9 min delay", arrivalInfo.get(30).getStatusText());
         assertEquals("Arriving at " + formatTime(1438806600000L),
                 arrivalInfo.get(30).getTimeText());
-        assertEquals("On time", arrivalInfo.get(31).getStatusText());
+        assertEquals("Scheduled departure", arrivalInfo.get(31).getStatusText());
         assertEquals("Departing at " + formatTime(1438806600000L),
                 arrivalInfo.get(31).getTimeText());
 
@@ -394,7 +397,8 @@ public class UIUtilTest extends ObaTestCase {
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
         validateUatcArrivalInfo(arrivalInfo);
 
-        assertEquals("On time", arrivalInfo.get(0).getStatusText());
+        // #1681: same block-inherited indexes read "Scheduled" (no arrive/depart word here).
+        assertEquals("Scheduled", arrivalInfo.get(0).getStatusText());
         assertEquals("2 min late", arrivalInfo.get(1).getStatusText());
         assertEquals("1 min early", arrivalInfo.get(2).getStatusText());
         assertEquals("On time", arrivalInfo.get(3).getStatusText());
@@ -404,29 +408,29 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("On time", arrivalInfo.get(6).getStatusText());
         assertEquals("5 min delay", arrivalInfo.get(7).getStatusText());
         assertEquals("On time", arrivalInfo.get(8).getStatusText());
-        assertEquals("On time", arrivalInfo.get(9).getStatusText());
+        assertEquals("Scheduled", arrivalInfo.get(9).getStatusText());
         assertEquals("10 min delay", arrivalInfo.get(10).getStatusText());
         assertEquals("1 min early", arrivalInfo.get(11).getStatusText());
         assertEquals("On time", arrivalInfo.get(12).getStatusText());
-        assertEquals("1 min early", arrivalInfo.get(13).getStatusText());
+        assertEquals("Scheduled", arrivalInfo.get(13).getStatusText());
         assertEquals("1 min delay", arrivalInfo.get(14).getStatusText());
         assertEquals("On time", arrivalInfo.get(15).getStatusText());
-        assertEquals("On time", arrivalInfo.get(16).getStatusText());
+        assertEquals("Scheduled", arrivalInfo.get(16).getStatusText());
         assertEquals("4 min delay", arrivalInfo.get(17).getStatusText());
-        assertEquals("On time", arrivalInfo.get(18).getStatusText());
-        assertEquals("8 min delay", arrivalInfo.get(19).getStatusText());
-        assertEquals("2 min delay", arrivalInfo.get(20).getStatusText());
+        assertEquals("Scheduled", arrivalInfo.get(18).getStatusText());
+        assertEquals("Scheduled", arrivalInfo.get(19).getStatusText());
+        assertEquals("8 min delay", arrivalInfo.get(20).getStatusText());
         assertEquals("3 min delay", arrivalInfo.get(21).getStatusText());
-        assertEquals("On time", arrivalInfo.get(22).getStatusText());
-        assertEquals("On time", arrivalInfo.get(23).getStatusText());
+        assertEquals("Scheduled", arrivalInfo.get(22).getStatusText());
+        assertEquals("Scheduled", arrivalInfo.get(23).getStatusText());
         assertEquals("6 min delay", arrivalInfo.get(24).getStatusText());
         assertEquals("3 min delay", arrivalInfo.get(25).getStatusText());
         assertEquals("6 min delay", arrivalInfo.get(26).getStatusText());
         assertEquals("On time", arrivalInfo.get(27).getStatusText());
-        assertEquals("On time", arrivalInfo.get(28).getStatusText());
-        assertEquals("On time", arrivalInfo.get(29).getStatusText());
+        assertEquals("Scheduled", arrivalInfo.get(28).getStatusText());
+        assertEquals("Scheduled", arrivalInfo.get(29).getStatusText());
         assertEquals("9 min delay", arrivalInfo.get(30).getStatusText());
-        assertEquals("On time", arrivalInfo.get(31).getStatusText());
+        assertEquals("Scheduled", arrivalInfo.get(31).getStatusText());
 
         /**
          * Test notification texts
@@ -459,7 +463,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(12).getShortName(), arrivalInfo.get(12).getRouteLongName())
                 + " is arriving in 10 min!", arrivalInfo.get(12).getNotifyText());
         assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(13).getShortName(), arrivalInfo.get(13).getRouteLongName())
-                + " is departing in 14 min!", arrivalInfo.get(13).getNotifyText());
+                + " is departing in 15 min!", arrivalInfo.get(13).getNotifyText());
         assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(14).getShortName(), arrivalInfo.get(14).getRouteLongName())
                 + " is arriving in 17 min!", arrivalInfo.get(14).getNotifyText());
         assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(15).getShortName(), arrivalInfo.get(15).getRouteLongName())
@@ -471,9 +475,9 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(18).getShortName(), arrivalInfo.get(18).getRouteLongName())
                 + " is departing in 25 min!", arrivalInfo.get(18).getNotifyText());
         assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(19).getShortName(), arrivalInfo.get(19).getRouteLongName())
-                + " is arriving in 26 min!", arrivalInfo.get(19).getNotifyText());
+                + " is departing in 25 min!", arrivalInfo.get(19).getNotifyText());
         assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(20).getShortName(), arrivalInfo.get(20).getRouteLongName())
-                + " is departing in 27 min!", arrivalInfo.get(20).getNotifyText());
+                + " is arriving in 26 min!", arrivalInfo.get(20).getNotifyText());
         assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(21).getShortName(), arrivalInfo.get(21).getRouteLongName())
                 + " is arriving in 28 min!", arrivalInfo.get(21).getNotifyText());
         assertEquals("Route " + RouteDisplay.getRouteDisplayName(arrivalInfo.get(22).getShortName(), arrivalInfo.get(22).getRouteLongName())
@@ -518,14 +522,17 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(6, arrivalInfo.get(10).getEta());
         assertEquals(7, arrivalInfo.get(11).getEta());
         assertEquals(10, arrivalInfo.get(12).getEta());
-        assertEquals(14, arrivalInfo.get(13).getEta());
+        // #1681: block-inherited (vehicle on another trip), so scheduled ETA, not predicted (was 14).
+        assertEquals(15, arrivalInfo.get(13).getEta());
         assertEquals(17, arrivalInfo.get(14).getEta());
         assertEquals(20, arrivalInfo.get(15).getEta());
         assertEquals(20, arrivalInfo.get(16).getEta());
         assertEquals(23, arrivalInfo.get(17).getEta());
         assertEquals(25, arrivalInfo.get(18).getEta());
-        assertEquals(26, arrivalInfo.get(19).getEta());
-        assertEquals(27, arrivalInfo.get(20).getEta());
+        // #1681: block-inherited arrival (was predicted 27); at scheduled ETA 25 it now sorts here,
+        // ahead of the tracked "8 min delay" arrival that keeps ETA 26 (index 20).
+        assertEquals(25, arrivalInfo.get(19).getEta());
+        assertEquals(26, arrivalInfo.get(20).getEta());
         assertEquals(28, arrivalInfo.get(21).getEta());
         assertEquals(30, arrivalInfo.get(22).getEta());
         assertEquals(30, arrivalInfo.get(23).getEta());

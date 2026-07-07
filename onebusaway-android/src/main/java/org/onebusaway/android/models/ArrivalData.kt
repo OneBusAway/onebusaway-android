@@ -33,7 +33,14 @@ interface ArrivalData {
     val stopSequence: Int
     val serviceDate: Long
     val vehicleId: String?
-    val predicted: Boolean
+    /**
+     * True when this arrival is genuinely backed by real-time tracking: the server predicted it *and*
+     * the vehicle is currently serving this very trip. The raw server `predicted` flag alone is not
+     * enough — OBA marks it block-wide, so a later trip in a tracked vehicle's block inherits it (a
+     * stop hours out then falsely reads as tracked, #1681). Derived at the wire→model boundary via
+     * [isVehicleServingTrip]; consumers read this, never the raw flag.
+     */
+    val isTracked: Boolean
     val scheduledArrivalTime: ServerTime
     val predictedArrivalTime: ServerTime
     val scheduledDepartureTime: ServerTime

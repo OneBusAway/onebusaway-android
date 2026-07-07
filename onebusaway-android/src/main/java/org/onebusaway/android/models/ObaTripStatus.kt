@@ -121,3 +121,16 @@ interface ObaTripStatus {
     val isLocationRealtime: Boolean
         get() = isPredicted && (lastKnownLocation != null || position != null)
 }
+
+/**
+ * Whether a vehicle whose status reports [activeTripId] is currently serving the trip [tripId].
+ *
+ * OBA reports a vehicle's real-time status (predicted, deviation, position) against the *block* it's
+ * running, and marks every trip in that block `predicted:true`. But that status is only about the trip
+ * the vehicle is actually on — its `activeTripId`. A later trip in the same block (a stop hours out on
+ * a subsequent run) must be treated as schedule-only, not tracked (#1681).
+ *
+ * Strict by design: an absent/blank [activeTripId] (older servers, or no trip status) reads as
+ * *not serving*, so real-time is shown only when the server explicitly names the active trip.
+ */
+fun isVehicleServingTrip(tripId: String, activeTripId: String?): Boolean = tripId == activeTripId

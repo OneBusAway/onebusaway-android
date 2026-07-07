@@ -107,22 +107,6 @@ public class ArrivalInfoUtils {
     }
 
     /**
-     * Returns the status color to be used, depending on whether the vehicle is running early,
-     * late,
-     * ontime,
-     * or if we don't have real-time info (i.e., scheduled)
-     *
-     * @param scheduled the scheduled time, in minutes past unix epoch
-     * @param predicted the predicted time, in minutes past unix epoch
-     * @return the status color to be used, depending on whether the vehicle is running early, late,
-     * ontime,
-     * or if we don't have real-time info (i.e., scheduled)
-     */
-    public static int computeColor(final long scheduled, final long predicted) {
-        return statusColor(predicted != 0, predicted - scheduled);
-    }
-
-    /**
      * The one live-vs-scheduled color choice shared by the map's vehicle markers/info windows and the
      * arrival-list rows: the schedule-deviation color when real-time, otherwise the scheduled (gray)
      * color. [deviationMinutes] is ignored when not real-time.

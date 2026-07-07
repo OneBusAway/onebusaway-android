@@ -33,6 +33,7 @@ import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTrip
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.models.isVehicleServingTrip
 
 /**
  * A resolved snapshot of one trip's details: the [trip]/[route]/[status]/[schedule] plus a stop +
@@ -62,7 +63,7 @@ class TripDetails internal constructor(
      * yields a schedule-only presentation (legacy behavior).
      */
     val status: ObaTripStatus?
-        get() = entry.status?.takeIf { it.activeTripId == entry.tripId }?.let(::DtoTripStatus)
+        get() = entry.status?.takeIf { isVehicleServingTrip(entry.tripId, it.activeTripId) }?.let(::DtoTripStatus)
 
     /** The trip's schedule (ordered stop times), or null when absent. */
     val schedule: ObaTripSchedule? get() = entry.schedule?.toObaTripSchedule()

@@ -136,7 +136,7 @@ private data class FakeArrivalData(
     override val headsign: String? = "Interlaken Park Via 19th Ave",
     override val shortName: String? = "12",
     override val routeLongName: String? = null,
-    override val predicted: Boolean = true,
+    override val isTracked: Boolean = true,
     override val scheduledArrivalTime: ServerTime = ServerTime(0L),
     override val predictedArrivalTime: ServerTime = ServerTime(0L),
     override val scheduledDepartureTime: ServerTime = ServerTime(0L),

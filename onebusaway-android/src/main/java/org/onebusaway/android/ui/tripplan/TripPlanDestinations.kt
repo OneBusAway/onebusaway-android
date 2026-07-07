@@ -32,8 +32,8 @@ import org.onebusaway.android.ui.nav.NavRoutes
  */
 fun NavGraphBuilder.tripPlanGraph(navController: NavHostController) {
     // Trip plan destination: the trip-planning form + results sheet. Reached
-    // in-app from the home drawer's "Plan a trip"; re-entered from a RealtimeService trip-
-    // update notification (RealtimeService tags the open intent with the TRIP_PLAN route).
+    // in-app from the home drawer's "Plan a trip"; re-entered from a RealtimeChecker trip-
+    // update notification (RealtimeChecker tags the open intent with the TRIP_PLAN route).
     // The destination ports the former TripPlanActivity's Android glue. Non-exported.
     composable(NavRoutes.TRIP_PLAN) {
         ObaTheme {

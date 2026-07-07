@@ -169,7 +169,7 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
 
     /**
      * Builds the OTP [Request] from the current bundle state. Consumed by the coroutine
-     * trip-plan repository (both the UI plan path and the RealtimeService background plan).
+     * trip-plan repository (both the UI plan path and the RealtimeChecker background plan).
      *
      * @throws IllegalArgumentException if the origin or destination is missing
      */

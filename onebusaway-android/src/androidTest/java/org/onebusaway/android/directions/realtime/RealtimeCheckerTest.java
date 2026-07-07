@@ -16,8 +16,6 @@
 
 package org.onebusaway.android.directions.realtime;
 
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 
 import org.junit.Before;
@@ -42,37 +40,22 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 /**
- * Regression test for RealtimeService.
+ * Regression test for RealtimeChecker (formerly the RealtimeService IntentService).
  */
 @RunWith(AndroidJUnit4.class)
-public class RealtimeServiceTest {
+public class RealtimeCheckerTest {
 
-    private RealtimeService mService;
+    private RealtimeChecker mChecker;
 
     @Before
     public void setUp() {
-        mService = new RealtimeService() {
-            @Override
-            public Context getApplicationContext() {
-                return InstrumentationRegistry.getInstrumentation().getTargetContext();
-            }
-
-            @Override
-            public String getPackageName() {
-                return InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName();
-            }
-
-            @Override
-            public Object getSystemService(String name) {
-                return InstrumentationRegistry.getInstrumentation().getTargetContext().getSystemService(name);
-            }
-        };
+        mChecker = new RealtimeChecker(InstrumentationRegistry.getInstrumentation().getTargetContext());
     }
 
     @Test
     public void testRescheduleRealtimeUpdatesWithNullStart() {
         Bundle bundle = new Bundle();
-        boolean result = mService.rescheduleRealtimeUpdates(bundle);
+        boolean result = mChecker.rescheduleRealtimeUpdates(bundle);
         assertFalse("Realtime updates should not be rescheduled when start time is null", result);
     }
 
@@ -83,7 +66,7 @@ public class RealtimeServiceTest {
         long futureTime = System.currentTimeMillis() + (OTPConstants.REALTIME_SERVICE_QUERY_WINDOW * 2);
         new TripRequestBuilder(InstrumentationRegistry.getInstrumentation().getTargetContext(), bundle).setDateTime(Instant.ofEpochMilli(futureTime));
 
-        boolean result = mService.rescheduleRealtimeUpdates(bundle);
+        boolean result = mChecker.rescheduleRealtimeUpdates(bundle);
         assertTrue("Realtime updates should be rescheduled for future trips", result);
     }
 
@@ -94,7 +77,7 @@ public class RealtimeServiceTest {
         long nearTime = System.currentTimeMillis() + (OTPConstants.REALTIME_SERVICE_QUERY_WINDOW / 2);
         new TripRequestBuilder(InstrumentationRegistry.getInstrumentation().getTargetContext(), bundle).setDateTime(Instant.ofEpochMilli(nearTime));
 
-        boolean result = mService.rescheduleRealtimeUpdates(bundle);
+        boolean result = mChecker.rescheduleRealtimeUpdates(bundle);
         assertFalse("Realtime updates should not be rescheduled if trip starts soon", result);
     }
 
@@ -103,15 +86,15 @@ public class RealtimeServiceTest {
         Bundle bundle = new Bundle();
 
         // Test with empty bundle
-        assertNull("getItinerary should return null for empty bundle", mService.getItinerary(bundle));
+        assertNull("getItinerary should return null for empty bundle", mChecker.getItinerary(bundle));
 
         // Test with null itineraries list
         bundle.putSerializable(OTPConstants.ITINERARIES, null);
-        assertNull("getItinerary should return null for null itineraries", mService.getItinerary(bundle));
+        assertNull("getItinerary should return null for null itineraries", mChecker.getItinerary(bundle));
 
         // Test with empty itineraries list
         bundle.putSerializable(OTPConstants.ITINERARIES, new ArrayList<Itinerary>());
-        assertNull("getItinerary should return null for empty list", mService.getItinerary(bundle));
+        assertNull("getItinerary should return null for empty list", mChecker.getItinerary(bundle));
 
         // Test with valid itinerary
         ArrayList<Itinerary> list = new ArrayList<>();
@@ -120,34 +103,27 @@ public class RealtimeServiceTest {
         bundle.putSerializable(OTPConstants.ITINERARIES, list);
         bundle.putInt(OTPConstants.SELECTED_ITINERARY, 0);
 
-        assertEquals("getItinerary should return the selected itinerary", it, mService.getItinerary(bundle));
+        assertEquals("getItinerary should return the selected itinerary", it, mChecker.getItinerary(bundle));
 
         // Test with out of bounds index (positive)
         bundle.putInt(OTPConstants.SELECTED_ITINERARY, 1);
-        assertNull("getItinerary should return null for out of bounds index", mService.getItinerary(bundle));
+        assertNull("getItinerary should return null for out of bounds index", mChecker.getItinerary(bundle));
 
         // Test with out of bounds index (negative)
         bundle.putInt(OTPConstants.SELECTED_ITINERARY, -1);
-        assertNull("getItinerary should return null for negative index", mService.getItinerary(bundle));
+        assertNull("getItinerary should return null for negative index", mChecker.getItinerary(bundle));
     }
 
     @Test
-    public void testOnHandleIntentWithEmptyBundleDoesNotCrash() {
-        Intent intent = new Intent(OTPConstants.INTENT_START_CHECKS);
+    public void testHandleStartChecksWithEmptyBundleDoesNotCrash() {
+        // START_CHECKS with a malformed/empty bundle (the receiver is exported, so this can arrive
+        // from outside): must not throw. See #790/#791/#1486.
         try {
-            mService.onHandleIntent(intent);
+            mChecker.handleStartChecks(new Bundle());
         } catch (NullPointerException e) {
-            fail("onHandleIntent should not throw NPE on empty bundle: " + e.getMessage());
+            fail("handleStartChecks should not throw NPE on empty bundle: " + e.getMessage());
         }
         // Other exceptions propagate naturally and fail the test visibly
-
-        // Test with null action
-        Intent nullActionIntent = new Intent();
-        try {
-            mService.onHandleIntent(nullActionIntent);
-        } catch (NullPointerException e) {
-            fail("onHandleIntent should not throw NPE on null action: " + e.getMessage());
-        }
     }
 
     @Test
@@ -155,9 +131,9 @@ public class RealtimeServiceTest {
         // Bundle with no itineraries and no selected index
         Bundle badBundle = new Bundle();
 
-        Bundle result = mService.getSimplifiedBundle(badBundle);
-        // After the fix, getSimplifiedBundle() should handle the null itinerary gracefully
-        // and return null instead of crashing.
+        Bundle result = mChecker.getSimplifiedBundle(badBundle);
+        // getSimplifiedBundle() should handle the null itinerary gracefully and return null instead
+        // of crashing.
         assertNull("getSimplifiedBundle should return null for missing itinerary", result);
     }
 
@@ -190,9 +166,9 @@ public class RealtimeServiceTest {
         bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
         bundle.putInt(OTPConstants.SELECTED_ITINERARY, 0);
         // Intentionally DO NOT put OTPConstants.NOTIFICATION_TARGET into the bundle
-        Bundle result = mService.getSimplifiedBundle(bundle);
-        // After the fix, getSimplifiedBundle() should handle missing NOTIFICATION_TARGET
-        // gracefully and return null instead of crashing.
+        Bundle result = mChecker.getSimplifiedBundle(bundle);
+        // getSimplifiedBundle() should handle missing NOTIFICATION_TARGET gracefully and return null
+        // instead of crashing.
         assertNull("getSimplifiedBundle should return null when NOTIFICATION_TARGET is missing", result);
     }
 }

@@ -17,7 +17,6 @@ package org.onebusaway.android.directions.realtime
 
 import android.app.Activity
 import android.app.AlarmManager
-import android.app.IntentService
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -27,7 +26,6 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.legacy.content.WakefulBroadcastReceiver
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.TripPlanRepositoryEntryPoint
 import org.onebusaway.android.directions.model.ItineraryDescription
@@ -40,33 +38,51 @@ import org.opentripplanner.api.model.Itinerary
 import java.time.Instant
 
 /**
- * This service is started after a trip is planned by the user so they can be notified if the
- * trip results for their request change in the near future. For example, if a user plans a trip,
- * and then the top result for that trip gets delayed by 20 minutes, the user will be notified
- * that new trip results are available.
+ * Monitors a planned trip so the user is notified if the results for their request change in the
+ * near future — e.g. if the top result gets delayed by 20 minutes, they're told new trip results
+ * are available.
+ *
+ * This holds the logic that used to live in the `RealtimeService` [android.app.IntentService]. It's
+ * now a plain [Context]-scoped class driven by [RealtimeReceiver]:
+ *  - `START_CHECKS` runs [handleStartChecks] synchronously (no network — just reads the bundle and
+ *    (re)schedules alarms), so it's safe on the receiver's thread.
+ *  - `CHECK_TRIP_TIME` runs [handleCheck] (the network re-plan) inside [RealtimeCheckWorker], which
+ *    gives it a background thread and a wakelock in place of the retired `WakefulBroadcastReceiver`.
+ *
+ * The ~60 s poll cadence still comes from [AlarmManager] (below WorkManager's 15-minute periodic
+ * floor). Moving off background polling entirely — the deeper anachronism here — is tracked in the
+ * rearchitecture issue, separate from this deprecation cleanup.
  */
-open class RealtimeService : IntentService("RealtimeService") {
+class RealtimeChecker(private val context: Context) {
 
-    public override fun onHandleIntent(intent: Intent?) {
-        val bundle = intent?.extras ?: Bundle()
-
-        when (intent?.action) {
-            OTPConstants.INTENT_START_CHECKS -> {
-                disableListenForTripUpdates()
-                if (!rescheduleRealtimeUpdates(bundle)) {
-                    val itinerary = getItinerary(bundle)
-                    if (itinerary != null) {
-                        startRealtimeUpdates(bundle, itinerary)
-                    } else {
-                        Log.w(TAG, "Cannot start realtime updates - no itinerary in bundle")
-                    }
-                }
+    /** Handle a `START_CHECKS` request: (re)schedule the realtime-update alarms. No network. */
+    fun handleStartChecks(bundle: Bundle) {
+        disableListenForTripUpdates()
+        if (!rescheduleRealtimeUpdates(bundle)) {
+            val itinerary = getItinerary(bundle)
+            if (itinerary != null) {
+                startRealtimeUpdates(bundle, itinerary)
+            } else {
+                Log.w(TAG, "Cannot start realtime updates - no itinerary in bundle")
             }
-
-            OTPConstants.INTENT_CHECK_TRIP_TIME -> checkForItineraryChange(bundle)
         }
+    }
 
-        intent?.let { WakefulBroadcastReceiver.completeWakefulIntent(it) }
+    /**
+     * Handle a `CHECK_TRIP_TIME` request: re-plan the trip and notify on a meaningful change. Runs
+     * the blocking network plan, so it's invoked from [RealtimeCheckWorker]'s background thread.
+     */
+    fun handleCheck(bundle: Bundle) {
+        val builder = TripRequestBuilder.initFromBundleSimple(context, bundle)
+        val desc = getItineraryDescription(bundle)
+        val target = getNotificationTarget(bundle)
+        // A CHECK request missing its itinerary/target extras is malformed (the receiver is
+        // exported, so this can arrive from outside): stop listening rather than crash.
+        if (desc == null || target == null) {
+            disableListenForTripUpdates()
+            return
+        }
+        checkForItineraryChange(target, builder, desc)
     }
 
     // Depending on preferences / whether there is realtime info, start updates.
@@ -104,18 +120,18 @@ open class RealtimeService : IntentService("RealtimeService") {
      */
     fun rescheduleRealtimeUpdates(bundle: Bundle): Boolean {
         // Delay if this trip doesn't start for at least an hour
-        val start = TripRequestBuilder(this, bundle).dateTime
+        val start = TripRequestBuilder(context, bundle).dateTime
 
         if (start != null) {
             val queryStart = start.minusMillis(OTPConstants.REALTIME_SERVICE_QUERY_WINDOW)
             if (Instant.now().isBefore(queryStart)) {
                 Log.d(TAG, "Start service at $queryStart")
-                val future = Intent(applicationContext, RealtimeWakefulReceiver::class.java)
+                val future = Intent(context, RealtimeReceiver::class.java)
                 future.action = OTPConstants.INTENT_START_CHECKS
                 future.putExtras(bundle)
 
                 val flags = immutableFlags(PendingIntent.FLAG_CANCEL_CURRENT)
-                val pendingIntent = PendingIntent.getBroadcast(applicationContext, 0, future, flags)
+                val pendingIntent = PendingIntent.getBroadcast(context, 0, future, flags)
                 getAlarmManager().set(AlarmManager.RTC_WAKEUP, queryStart.toEpochMilli(), pendingIntent)
                 return true
             }
@@ -129,19 +145,6 @@ open class RealtimeService : IntentService("RealtimeService") {
         return false
     }
 
-    private fun checkForItineraryChange(bundle: Bundle) {
-        val builder = TripRequestBuilder.initFromBundleSimple(this, bundle)
-        val desc = getItineraryDescription(bundle)
-        val target = getNotificationTarget(bundle)
-        // A CHECK broadcast missing its itinerary/target extras is malformed (the receiver is
-        // exported, so this can arrive from outside): stop listening rather than crash.
-        if (desc == null || target == null) {
-            disableListenForTripUpdates()
-            return
-        }
-        checkForItineraryChange(target, builder, desc)
-    }
-
     private fun checkForItineraryChange(
         source: Class<*>,
         builder: TripRequestBuilder,
@@ -149,10 +152,10 @@ open class RealtimeService : IntentService("RealtimeService") {
     ) {
         Log.d(TAG, "Check for change")
 
-        // onHandleIntent already runs on the IntentService worker thread, so we can plan
-        // synchronously here. This replaces the legacy TripRequest AsyncTask + callback.
+        // The worker runs this on a background thread, so we can plan synchronously here. This
+        // replaces the legacy TripRequest AsyncTask + callback.
         val itineraries: List<Itinerary> = try {
-            TripPlanRepositoryEntryPoint.get(this).planBlocking(builder)
+            TripPlanRepositoryEntryPoint.get(context).planBlocking(builder)
         } catch (e: Exception) {
             Log.e(TAG, "checkForItineraryChange: error planning trip", e)
             disableListenForTripUpdates()
@@ -237,24 +240,24 @@ open class RealtimeService : IntentService("RealtimeService") {
         params: Bundle,
         itineraries: List<Itinerary>,
     ) {
-        val titleText = resources.getString(title)
-        val messageText = resources.getString(message)
+        val titleText = context.resources.getString(title)
+        val messageText = context.resources.getString(message)
 
-        val openIntent = Intent(applicationContext, notificationTarget)
+        val openIntent = Intent(context, notificationTarget)
         openIntent.putExtras(params)
         openIntent.putExtra(OTPConstants.INTENT_SOURCE, OTPConstants.Source.NOTIFICATION)
         @Suppress("UNCHECKED_CAST")
         openIntent.putExtra(OTPConstants.ITINERARIES, itineraries as ArrayList<Itinerary>)
         // The trip-plan screen is now a HomeActivity NavHost destination; route the re-entry there.
         // (notificationTarget resolves to HomeActivity because TripResultsFragment — which starts
-        // this service — is hosted by HomeActivity's fragment manager.)
+        // this monitoring — is hosted by HomeActivity's fragment manager.)
         openIntent.putExtra(NavRoutes.EXTRA_NAV_ROUTE, NavRoutes.TRIP_PLAN)
         openIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val flags = immutableFlags(PendingIntent.FLAG_CANCEL_CURRENT)
-        val openPendingIntent = PendingIntent.getActivity(applicationContext, 0, openIntent, flags)
+        val openPendingIntent = PendingIntent.getActivity(context, 0, openIntent, flags)
 
         val mBuilder = NotificationCompat.Builder(
-            applicationContext, NotificationChannels.TRIP_PLAN_UPDATES_ID
+            context, NotificationChannels.TRIP_PLAN_UPDATES_ID
         )
             .setSmallIcon(R.drawable.ic_bus)
             .setContentTitle(titleText)
@@ -264,7 +267,7 @@ open class RealtimeService : IntentService("RealtimeService") {
             .setContentIntent(openPendingIntent)
 
         val notificationManager =
-            applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notification = mBuilder.build()
         notification.defaults = Notification.DEFAULT_ALL
         notification.flags =
@@ -288,7 +291,7 @@ open class RealtimeService : IntentService("RealtimeService") {
     }
 
     private fun getAlarmManager(): AlarmManager =
-        applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
     // Android S+ requires every PendingIntent to declare mutability; ours are all immutable.
     private fun immutableFlags(base: Int): Int =
@@ -300,7 +303,7 @@ open class RealtimeService : IntentService("RealtimeService") {
 
     private fun getAlarmIntent(bundle: Bundle?): PendingIntent? {
         // Use an explicit Intent for Android U+ restrictions on implicit PendingIntents
-        val intent = Intent(applicationContext, RealtimeWakefulReceiver::class.java)
+        val intent = Intent(context, RealtimeReceiver::class.java)
         intent.action = OTPConstants.INTENT_CHECK_TRIP_TIME
         if (bundle != null) {
             val extras = getSimplifiedBundle(bundle)
@@ -311,7 +314,7 @@ open class RealtimeService : IntentService("RealtimeService") {
             intent.putExtras(extras)
         }
         val flags = immutableFlags(PendingIntent.FLAG_UPDATE_CURRENT)
-        return PendingIntent.getBroadcast(applicationContext, 0, intent, flags)
+        return PendingIntent.getBroadcast(context, 0, intent, flags)
     }
 
     fun getItinerary(bundle: Bundle): Itinerary? {
@@ -367,7 +370,7 @@ open class RealtimeService : IntentService("RealtimeService") {
 
         val extras = Bundle()
         try {
-            TripRequestBuilder(this, params).copyIntoBundleSimple(extras)
+            TripRequestBuilder(context, params).copyIntoBundleSimple(extras)
         } catch (e: NullPointerException) {
             Log.e(TAG, "getSimplifiedBundle: error copying trip params into bundle", e)
             return null
@@ -402,13 +405,13 @@ open class RealtimeService : IntentService("RealtimeService") {
 
     companion object {
 
-        private const val TAG = "RealtimeService"
+        private const val TAG = "RealtimeChecker"
 
         private const val ITINERARY_DESC = ".ItineraryDesc"
         private const val ITINERARY_END_DATE = ".ItineraryEndDate"
 
         /**
-         * Start realtime updates.
+         * Start monitoring a planned trip.
          *
          * @param source Activity from which updates are started
          * @param bundle Bundle with selected itinerary/parameters
@@ -421,7 +424,7 @@ open class RealtimeService : IntentService("RealtimeService") {
 
             bundle.putSerializable(OTPConstants.NOTIFICATION_TARGET, source.javaClass)
             val intent = Intent(OTPConstants.INTENT_START_CHECKS)
-            // Scope the broadcast to our own app: RealtimeWakefulReceiver is non-exported, and
+            // Scope the broadcast to our own app: RealtimeReceiver is non-exported, and
             // package-less implicit broadcasts aren't delivered to manifest receivers on API 26+.
             intent.setPackage(source.packageName)
             intent.putExtras(bundle)

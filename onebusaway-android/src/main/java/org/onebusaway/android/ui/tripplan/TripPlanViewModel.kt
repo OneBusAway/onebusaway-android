@@ -202,7 +202,7 @@ class TripPlanViewModel @Inject constructor(
     }
 
     /**
-     * Seeds the form and results from a re-entry (e.g. a RealtimeService trip-update notification)
+     * Seeds the form and results from a re-entry (e.g. a RealtimeChecker trip-update notification)
      * without re-planning, so the user lands back on the trip they were watching.
      */
     fun restoreFrom(

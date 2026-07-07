@@ -24,7 +24,7 @@ import org.onebusaway.android.ui.tripplan.TripPlanRepository
 
 /**
  * A Hilt [EntryPoint] that lets code which can't be constructor- or field-injected — the Java
- * `RealtimeService` IntentService — reach the [TripPlanRepository] seam. It replaces the legacy
+ * `RealtimeChecker` — reach the [TripPlanRepository] seam. It replaces the legacy
  * `TripRequest` AsyncTask that the service used to construct directly.
  *
  * Use it only where injection genuinely isn't available; Hilt-reachable classes (Activities,

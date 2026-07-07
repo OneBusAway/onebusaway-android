@@ -321,7 +321,7 @@ object NavRoutes {
     }
 
     // --- Trip plan (former TripPlanActivity + TripPlanLocationPickerActivity) ---
-    // The trip-plan form + results screen. No args (re-entry from a RealtimeService notification
+    // The trip-plan form + results screen. No args (re-entry from a RealtimeChecker notification
     // carries its restore extras on the HomeActivity intent, read by the destination).
     const val TRIP_PLAN = "tripPlan"
 

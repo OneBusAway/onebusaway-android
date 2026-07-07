@@ -17,6 +17,7 @@ package org.onebusaway.android.directions.util
 
 import android.content.Context
 import android.os.Bundle
+import androidx.core.os.BundleCompat
 import android.text.TextUtils
 import android.util.Log
 import org.onebusaway.android.R
@@ -66,10 +67,10 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
     }
 
     val from: CustomAddress?
-        get() = mBundle.getParcelable(FROM_ADDRESS)
+        get() = BundleCompat.getParcelable(mBundle, FROM_ADDRESS, CustomAddress::class.java)
 
     val to: CustomAddress?
-        get() = mBundle.getParcelable(TO_ADDRESS)
+        get() = BundleCompat.getParcelable(mBundle, TO_ADDRESS, CustomAddress::class.java)
 
     fun setTo(to: CustomAddress): TripRequestBuilder {
         mBundle.putParcelable(TO_ADDRESS, to)
@@ -84,7 +85,7 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
     }
 
     private fun getOptimizeType(): OptimizeType {
-        val type = mBundle.getSerializable(OPTIMIZE_TRANSFERS) as? OptimizeType
+        val type = BundleCompat.getSerializable(mBundle, OPTIMIZE_TRANSFERS, OptimizeType::class.java)
         return type ?: OptimizeType.QUICK
     }
 

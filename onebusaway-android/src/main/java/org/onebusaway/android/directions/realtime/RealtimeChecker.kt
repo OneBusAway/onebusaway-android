@@ -17,7 +17,6 @@ package org.onebusaway.android.directions.realtime
 
 import android.app.Activity
 import android.app.AlarmManager
-import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
@@ -26,6 +25,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.os.BundleCompat
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.TripPlanRepositoryEntryPoint
 import org.onebusaway.android.directions.model.ItineraryDescription
@@ -265,16 +265,17 @@ class RealtimeChecker(private val context: Context) {
             .setContentText(messageText)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setContentIntent(openPendingIntent)
+            .setAutoCancel(true)
+            // Sound/vibration/lights for pre-O; on O+ the TRIP_PLAN_UPDATES channel governs these and
+            // NotificationCompat ignores the defaults. (Replaces the deprecated raw Notification.defaults
+            // / FLAG_SHOW_LIGHTS — DEFAULT_ALL already includes lights.)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
 
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notification = mBuilder.build()
-        notification.defaults = Notification.DEFAULT_ALL
-        notification.flags =
-            notification.flags or Notification.FLAG_AUTO_CANCEL or Notification.FLAG_SHOW_LIGHTS
 
         val notificationId = description.id
-        notificationManager.notify(notificationId, notification)
+        notificationManager.notify(notificationId, mBuilder.build())
     }
 
     // If the end time for this itinerary has passed, disable trip updates.
@@ -320,7 +321,8 @@ class RealtimeChecker(private val context: Context) {
     fun getItinerary(bundle: Bundle): Itinerary? {
         @Suppress("UNCHECKED_CAST")
         val itineraries =
-            bundle.getSerializable(OTPConstants.ITINERARIES) as? ArrayList<Itinerary>
+            BundleCompat.getSerializable(bundle, OTPConstants.ITINERARIES, ArrayList::class.java)
+                as? ArrayList<Itinerary>
         if (itineraries.isNullOrEmpty()) {
             return null
         }
@@ -387,9 +389,9 @@ class RealtimeChecker(private val context: Context) {
 
         val ids = idList.toTypedArray()
         extras.putStringArray(ITINERARY_DESC, ids)
-        extras.putLong(ITINERARY_END_DATE, desc.endDate!!.toEpochMilli())
+        extras.putLong(ITINERARY_END_DATE, desc.endDate.toEpochMilli())
 
-        val source = params.getSerializable(OTPConstants.NOTIFICATION_TARGET) as? Class<*>
+        val source = BundleCompat.getSerializable(params, OTPConstants.NOTIFICATION_TARGET, Class::class.java)
         if (source == null) {
             Log.e(
                 TAG, "getSimplifiedBundle: NOTIFICATION_TARGET is missing from params, " +

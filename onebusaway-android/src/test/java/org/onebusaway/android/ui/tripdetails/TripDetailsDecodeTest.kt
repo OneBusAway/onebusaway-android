@@ -86,8 +86,8 @@ class TripDetailsDecodeTest {
         assertEquals("1_s2", status.nextStop)
 
         assertEquals(2, entry.schedule!!.stopTimes.size)
-        assertEquals("1_s1", entry.schedule!!.stopTimes[0].stopId)
-        assertEquals(60180L, entry.schedule!!.stopTimes[0].arrivalTime)
+        assertEquals("1_s1", entry.schedule.stopTimes[0].stopId)
+        assertEquals(60180L, entry.schedule.stopTimes[0].arrivalTime)
 
         // Trip ref uses the wire names tripHeadsign / tripShortName.
         val trip = data.references.trip("1_t")!!

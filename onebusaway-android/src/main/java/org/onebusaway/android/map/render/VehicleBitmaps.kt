@@ -69,15 +69,11 @@ object VehicleBitmaps {
     const val ANCHOR_U = 0.5f
     val ANCHOR_V = (GRID + PAD_GRID) / (GRID + 2f * PAD_GRID)
 
-    // The mode glyph is centered on the pin head — concentric with the direction-arrow ring.
-    private const val GLYPH_CX = 12f
-    private const val GLYPH_CY = 8f
+    // The pin head center: the mode glyph is centered here (concentric with the direction-arrow ring),
+    // and the heading arrow rotates about it.
+    private const val HEAD_CX = 12f
+    private const val HEAD_CY = 8f
     private const val GLYPH_SIZE = 10.8f // the glyph's 24-grid box (its artwork fills ~70% of this)
-
-    // The heading arrow: a triangle at the top of the head (NORTH), rotated about the head center by
-    // the heading octant. Tip points outward.
-    private const val ARROW_CX = 12f
-    private const val ARROW_CY = 8f // rotation pivot = pin head center
 
     /** Hairline black outline width, in 24-grid units (scales with the marker); ~1px on screen. */
     private const val OUTLINE_GRID = 0.25f
@@ -206,15 +202,15 @@ object VehicleBitmaps {
         val glyph = ContextCompat.getDrawable(context, glyphRes(type))!!.mutate()
         val half = GLYPH_SIZE / 2f
         glyph.setBounds(
-            ((GLYPH_CX - half) * scale).toInt(), ((GLYPH_CY - half) * scale).toInt(),
-            ((GLYPH_CX + half) * scale).toInt(), ((GLYPH_CY + half) * scale).toInt(),
+            ((HEAD_CX - half) * scale).toInt(), ((HEAD_CY - half) * scale).toInt(),
+            ((HEAD_CX + half) * scale).toInt(), ((HEAD_CY + half) * scale).toInt(),
         )
         drawOutlined(canvas, glyph, outline, Color.WHITE)
 
         // 3. Heading arrow, white, rotated about the head center by the octant (undirected = no arrow).
         if (halfWind != UNDIRECTED) {
             canvas.save()
-            canvas.rotate(halfWind * 45f, ARROW_CX * scale, ARROW_CY * scale)
+            canvas.rotate(halfWind * 45f, HEAD_CX * scale, HEAD_CY * scale)
             val arrow = Path().apply {
                 // Wide chevron, tip grazing the head edge; scaled 0.9 about the tip.
                 moveTo(12f * scale, 0.1f * scale)
@@ -222,27 +218,27 @@ object VehicleBitmaps {
                 lineTo(9.84f * scale, 2.44f * scale)
                 close()
             }
-            for (o in OUTLINE_OFFSETS) {
-                canvas.save()
-                canvas.translate(o[0] * outline, o[1] * outline)
-                canvas.drawPath(arrow, blackPaint)
-                canvas.restore()
-            }
+            stampOffsets(canvas, outline) { canvas.drawPath(arrow, blackPaint) }
             canvas.drawPath(arrow, whitePaint)
             canvas.restore()
         }
         return bitmap
     }
 
-    /** Draws [drawable] with a black outline: stamped black at the [OUTLINE_OFFSETS], then [fill] on top. */
-    private fun drawOutlined(canvas: Canvas, drawable: Drawable, outline: Float, fill: Int) {
-        drawable.setTint(Color.BLACK)
+    /** Runs [draw] once per [OUTLINE_OFFSETS] entry, translated by [outline] — the black-outline dilate. */
+    private inline fun stampOffsets(canvas: Canvas, outline: Float, draw: () -> Unit) {
         for (o in OUTLINE_OFFSETS) {
             canvas.save()
             canvas.translate(o[0] * outline, o[1] * outline)
-            drawable.draw(canvas)
+            draw()
             canvas.restore()
         }
+    }
+
+    /** Draws [drawable] with a black outline: stamped black at the [OUTLINE_OFFSETS], then [fill] on top. */
+    private fun drawOutlined(canvas: Canvas, drawable: Drawable, outline: Float, fill: Int) {
+        drawable.setTint(Color.BLACK)
+        stampOffsets(canvas, outline) { drawable.draw(canvas) }
         drawable.setTint(fill)
         drawable.draw(canvas)
     }

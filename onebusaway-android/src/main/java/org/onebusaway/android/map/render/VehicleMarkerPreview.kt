@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -66,7 +67,9 @@ fun VehicleMarkerGrid(color: Color = Color(0xFF2266CC)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(name, Modifier.width(56.dp), fontSize = 12.sp)
                 for (dir in 0..8) {
-                    val bmp = VehicleBitmaps.previewBitmap(context, type, dir, argb).asImageBitmap()
+                    val bmp = remember(type, dir, argb) {
+                        VehicleBitmaps.previewBitmap(context, type, dir, argb).asImageBitmap()
+                    }
                     Image(bmp, contentDescription = null, modifier = Modifier.width(44.dp).height(48.dp))
                 }
             }

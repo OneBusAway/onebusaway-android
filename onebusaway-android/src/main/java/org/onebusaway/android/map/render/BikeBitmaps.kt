@@ -21,6 +21,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
 import org.onebusaway.android.R
 
 /**
@@ -57,12 +58,7 @@ object BikeBitmaps {
     @JvmStatic
     fun small(context: Context): Bitmap = sSmall ?: run {
         val px = context.resources.getDimensionPixelSize(R.dimen.bikeshare_small_marker_size)
-        val bitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
-        ContextCompat.getDrawable(context, R.drawable.bike_marker_small)!!.apply {
-            setBounds(0, 0, px, px)
-            draw(Canvas(bitmap))
-        }
-        bitmap.also { sSmall = it }
+        ContextCompat.getDrawable(context, R.drawable.bike_marker_small)!!.toBitmap(px, px).also { sSmall = it }
     }
 
     /** The large bike-station pin (navy pin + white bike-dock glyph). */

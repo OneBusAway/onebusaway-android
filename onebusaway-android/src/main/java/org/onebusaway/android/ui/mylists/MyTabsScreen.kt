@@ -30,8 +30,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -117,7 +117,7 @@ fun MyTabsScreen(
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            TabRow(selectedTabIndex = pagerState.currentPage) {
+            PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
                 tabs.forEachIndexed { index, tab ->
                     Tab(
                         selected = pagerState.currentPage == index,

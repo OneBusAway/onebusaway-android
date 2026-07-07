@@ -35,8 +35,10 @@ internal fun AppCompatActivity.confirmClear(
         .setTitle(titleRes)
         .setMessage(messageRes)
         .setIcon(android.R.drawable.ic_dialog_alert)
-        .setPositiveButton(android.R.string.yes) { _, _ -> onConfirm() }
-        .setNegativeButton(android.R.string.no, null)
+        // android.R.string.yes/no are deprecated (they already alias "OK"/"Cancel" on modern
+        // platforms); use the app's ok/cancel, which are translated and match that displayed text.
+        .setPositiveButton(R.string.ok) { _, _ -> onConfirm() }
+        .setNegativeButton(R.string.cancel, null)
         .show()
 }
 

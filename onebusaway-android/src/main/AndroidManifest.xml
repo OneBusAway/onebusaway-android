@@ -324,7 +324,7 @@
         <meta-data android:name="com.google.android.gms.maps.API_OPTIONS" android:value="B3H9HE845CFHYG"/>
         <meta-data
                 android:name="com.google.firebase.messaging.default_notification_icon"
-                android:resource="@drawable/ic_stat_notification" />
+                android:resource="@drawable/ic_bus" />
         <meta-data
                 android:name="com.google.firebase.messaging.default_notification_color"
                 android:resource="@color/theme_primary" />

@@ -229,7 +229,7 @@ private fun BikeshareItem(
             contentColor = Color.White
         ) {
             Icon(
-                painterResource(R.drawable.ic_directions_bike_white),
+                painterResource(R.drawable.ic_directions_bike),
                 contentDescription = stringResource(R.string.layers_speedial_bikeshare_label),
                 modifier = Modifier.size(20.dp)
             )

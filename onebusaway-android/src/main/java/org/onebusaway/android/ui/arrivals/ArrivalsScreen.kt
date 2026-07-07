@@ -246,9 +246,9 @@ fun ArrivalsScreen(
                             Icon(
                                 painter = painterResource(
                                     if (content.header.isFavorite) {
-                                        R.drawable.ic_toggle_star
+                                        R.drawable.star
                                     } else {
-                                        R.drawable.ic_toggle_star_outline
+                                        R.drawable.star_outline
                                     }
                                 ),
                                 contentDescription = stringResource(R.string.stop_info_favorite),
@@ -369,7 +369,7 @@ internal fun OverflowMenu(
     Box {
         IconButton(onClick = { expanded = true }) {
             Icon(
-                painter = painterResource(R.drawable.ic_navigation_more_vert),
+                painter = painterResource(R.drawable.more_vert),
                 contentDescription = stringResource(R.string.stop_info_item_options_title),
                 tint = MaterialTheme.colorScheme.onSurface
             )

@@ -398,7 +398,7 @@ class NavigationService : Service() {
             builder = NotificationCompat.Builder(
                 applicationContext, NotificationChannels.DESTINATION_ALERT_ID
             )
-                .setSmallIcon(R.drawable.ic_stat_notification)
+                .setSmallIcon(R.drawable.ic_bus)
                 .setContentTitle(resources.getString(R.string.feedback_notify_title))
                 .setContentText(message)
                 .addAction(
@@ -462,7 +462,7 @@ class NavigationService : Service() {
             builder = NotificationCompat.Builder(
                 applicationContext, NotificationChannels.DESTINATION_ALERT_ID
             )
-                .setSmallIcon(R.drawable.ic_stat_notification)
+                .setSmallIcon(R.drawable.ic_bus)
                 .setContentTitle(resources.getString(R.string.feedback_notify_title))
                 .setContentText(message)
                 .addAction(replyActionNo)

@@ -528,7 +528,7 @@ class DirectionsGenerator(
             // Order matters: the first matching mode wins (e.g. a SUBWAY+TRAM set resolves to
             // subway, not railway), so SUBWAY must stay ahead of TRAM.
             return when {
-                mode.contains(TraverseMode.BUS) -> R.drawable.ic_maps_directions_bus
+                mode.contains(TraverseMode.BUS) -> R.drawable.ic_bus
                 mode.contains(TraverseMode.RAIL) -> R.drawable.ic_directions_railway
                 mode.contains(TraverseMode.FERRY) || mode.contains(TraverseMode.GONDOLA) ->
                     R.drawable.ic_directions_boat
@@ -551,7 +551,7 @@ class DirectionsGenerator(
         @JvmStatic
         fun getStopIcon(mode: TraverseModeSet): Int {
             if (mode.contains(TraverseMode.BUS) || mode.contains(TraverseMode.RAIL)) {
-                return R.drawable.ic_stop_flag_triangle
+                return R.drawable.stop_flag
             }
             // Just use the mode icon
             return getModeIcon(mode)

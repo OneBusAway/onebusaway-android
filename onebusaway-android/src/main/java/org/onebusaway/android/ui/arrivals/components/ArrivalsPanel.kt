@@ -320,7 +320,7 @@ private fun PeekRowVisual(
         IconButton(onClick = onFavorite, modifier = starModifier) {
             Icon(
                 painter = painterResource(
-                    if (isFavorite) R.drawable.ic_toggle_star else R.drawable.ic_toggle_star_outline
+                    if (isFavorite) R.drawable.star else R.drawable.star_outline
                 ),
                 contentDescription = stringResource(
                     if (isFavorite) R.string.bus_options_menu_remove_star
@@ -349,7 +349,7 @@ private fun PeekRowVisual(
         Box {
             IconButton(onClick = onMore) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_navigation_more_vert),
+                    painter = painterResource(R.drawable.more_vert),
                     contentDescription = stringResource(R.string.stop_info_item_options_title),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -453,7 +453,7 @@ private fun ArrivalsPanelHeader(
             if (showActions) {
                 Icon(
                     painter = painterResource(
-                        if (isFavorite) R.drawable.ic_toggle_star else R.drawable.ic_toggle_star_outline
+                        if (isFavorite) R.drawable.star else R.drawable.star_outline
                     ),
                     contentDescription = stringResource(R.string.stop_info_favorite),
                     tint = colorResource(R.color.navdrawer_icon_tint),

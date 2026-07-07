@@ -75,7 +75,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         val notificationBuilder =
             NotificationCompat.Builder(this, NotificationChannels.ARRIVAL_REMINDERS_ID)
-                .setSmallIcon(R.drawable.ic_stat_notification)
+                .setSmallIcon(R.drawable.ic_bus)
                 .setColor(NOTIFICATION_COLOR)
                 .setContentTitle("OneBusAway")
                 .setContentText(message)

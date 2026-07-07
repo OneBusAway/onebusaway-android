@@ -76,7 +76,7 @@ internal fun AppCompatActivity.starredStopsTab(
 ): MyTab = MyTab(
     tag = MyTabs.STARRED_STOPS,
     titleRes = R.string.my_starred_title,
-    iconRes = R.drawable.ic_tab_starred_unselected,
+    iconRes = R.drawable.star,
     onSort = {
         chooseSortOrder(
             PreferenceUtils.getStopSortOrderFromPreferences(this@starredStopsTab),
@@ -137,7 +137,7 @@ internal fun stopSearchTab(
 ): MyTab = MyTab(
     tag = MyTabs.SEARCH,
     titleRes = R.string.my_search_title,
-    iconRes = R.drawable.ic_tab_search_unselected,
+    iconRes = R.drawable.search,
 ) {
     StopSearchDestination(viewModel, onShowOnMap, onOpenStop)
 }
@@ -149,7 +149,7 @@ internal fun routeSearchTab(
 ): MyTab = MyTab(
     tag = MyTabs.SEARCH,
     titleRes = R.string.my_search_title,
-    iconRes = R.drawable.ic_tab_search_unselected,
+    iconRes = R.drawable.search,
 ) {
     RouteSearchDestination(viewModel, onShowOnMap, onOpenRoute)
 }
@@ -259,11 +259,11 @@ fun MyRecentDestination(
         onBack = onBack,
         tabs = listOf(
             activity.recentStopsTab(
-                recentStops, R.string.my_recent_stops, R.drawable.ic_menu_stop,
+                recentStops, R.string.my_recent_stops, R.drawable.stop_flag,
                 onShowStopOnMap, onOpenStop,
             ),
             activity.recentRoutesTab(
-                recentRoutes, R.string.my_recent_routes, R.drawable.ic_bus, onShowRouteOnMap,
+                recentRoutes, R.string.my_recent_routes, R.drawable.ic_route, onShowRouteOnMap,
             ),
         ),
     )

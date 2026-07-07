@@ -16,6 +16,8 @@
 package org.onebusaway.android.map.googlemapsv2
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Color
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -39,6 +41,7 @@ import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.StopIconKind
@@ -152,8 +155,27 @@ class GoogleMapRenderer(
     // used.)
     private val arrowStamp: TextureStyle by lazy {
         TextureStyle.newBuilder(
-            BitmapDescriptorFactory.fromResource(R.drawable.ic_navigation_expand_more)
+            // Render the (vector) chevron to a bitmap; BitmapDescriptorFactory.fromResource can't
+            // rasterize a VectorDrawable. The stamp scales to the polyline width, so [glyphScale]
+            // (not the bitmap size) controls how large the chevron reads by filling more of the tile.
+            // The stamp is color-independent (white); the per-polyline color comes from the
+            // StrokeStyle above. keyboard_arrow_down is a neutral black template, so tint it white here.
+            BitmapDescriptorFactory.fromBitmap(
+                vectorToBitmap(R.drawable.keyboard_arrow_down, 36, glyphScale = 1.7f, tint = Color.WHITE)
+            )
         ).build()
+    }
+
+    /**
+     * Rasterizes a drawable (vector or raster) into a square [sizeDp]-dp bitmap at screen density.
+     * [glyphScale] zooms the glyph within the tile (>1 fills more of it, cropping the transparent
+     * margin); used to enlarge the polyline arrow stamp without widening the line. [tint], when set,
+     * recolors the glyph (the stamp texture carries its own color, independent of the line).
+     */
+    private fun vectorToBitmap(resId: Int, sizeDp: Int, glyphScale: Float = 1f, tint: Int? = null): Bitmap {
+        val sizePx = (sizeDp * density).toInt()
+        val inset = (sizePx * (1f - glyphScale) / 2f).toInt()
+        return MarkerRendering.rasterize(context, resId, sizePx, tint, inset)
     }
 
     // Wraps each distinct marker icon in a BitmapDescriptor exactly once, keyed by a stable logical id, so
@@ -484,6 +506,8 @@ class GoogleMapRenderer(
                     MarkerOptions()
                         .position(vehicle.point.toLatLng())
                         .icon(vehicleIcon(vehicle, response))
+                        // Anchor the pin tip (not the padded bitmap edge) on the vehicle location.
+                        .anchor(VehicleBitmaps.ANCHOR_U, VehicleBitmaps.ANCHOR_V)
                         .title(vehicleTitle(vehicle, response))
                         .zIndex(VEHICLE_Z_INDEX)
                 )!!

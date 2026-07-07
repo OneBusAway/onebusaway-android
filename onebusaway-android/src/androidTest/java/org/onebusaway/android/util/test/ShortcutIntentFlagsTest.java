@@ -55,7 +55,7 @@ public class ShortcutIntentFlagsTest {
         final AtomicReference<ShortcutInfoCompat> shortcutRef = new AtomicReference<>();
 
         instr.runOnMainSync(() -> shortcutRef.set(
-                Shortcuts.makeShortcutInfo(themed, "test", destIntent, R.drawable.ic_drawer_star)));
+                Shortcuts.makeShortcutInfo(themed, "test", destIntent, R.drawable.star)));
 
         Intent shortcutIntent = shortcutRef.get().getIntent();
         int flags = shortcutIntent.getFlags();

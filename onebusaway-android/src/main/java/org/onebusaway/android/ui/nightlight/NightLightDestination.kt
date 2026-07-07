@@ -141,7 +141,7 @@ fun NightLightRoute(onBack: () -> Unit) {
             activity,
             activity.getString(R.string.stop_info_option_night_light),
             HomeActivity.navIntent(activity, NavRoutes.NIGHT_LIGHT),
-            R.drawable.ic_night_light
+            R.drawable.lightbulb_2
         )
         ShortcutManagerCompat.requestPinShortcut(activity, shortcut, null)
     })

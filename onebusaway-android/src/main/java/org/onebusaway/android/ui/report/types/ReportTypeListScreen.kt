@@ -107,7 +107,7 @@ private fun ReportTypeListScreenPreview() {
             state = ListUiState.Success(
                 listOf(
                     ReportType("Contact Customer Service", "Driver compliments, lost & found, etc.", R.drawable.ic_customer_service, ReportAction.CUSTOMER_SERVICE),
-                    ReportType("Report a Stop Problem", "Missing route, wrong stop name, etc.", R.drawable.ic_stop_flag_triangle, ReportAction.STOP_PROBLEM),
+                    ReportType("Report a Stop Problem", "Missing route, wrong stop name, etc.", R.drawable.stop_flag, ReportAction.STOP_PROBLEM),
                     ReportType("Report an Arrival Time Problem", "Vehicle never came, wrong time, etc.", R.drawable.ic_arrival_time, ReportAction.ARRIVAL_PROBLEM)
                 )
             ),

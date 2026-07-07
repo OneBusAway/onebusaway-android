@@ -67,7 +67,7 @@ fun StopRowContent(
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         if (isFavorite) {
             Icon(
-                painter = painterResource(R.drawable.ic_toggle_star),
+                painter = painterResource(R.drawable.star),
                 contentDescription = stringResource(R.string.stop_info_favorite),
                 tint = colorResource(R.color.navdrawer_icon_tint)
             )

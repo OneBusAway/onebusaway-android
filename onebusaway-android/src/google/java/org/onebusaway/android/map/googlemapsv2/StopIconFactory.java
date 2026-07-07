@@ -18,7 +18,6 @@ package org.onebusaway.android.map.googlemapsv2;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -40,6 +39,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.map.render.MarkerRendering;
 import org.onebusaway.android.map.render.StopBitmaps;
 import org.onebusaway.android.models.ObaRoute;
 
@@ -156,6 +156,14 @@ public final class StopIconFactory {
      * All stop types (bus, rail, subway, tram, ferry) display a glyph, matching iOS/Wayfinder.
      */
     private static final float GLYPH_ICON_SCALE = 1.35f;
+
+    /**
+     * Fraction of the (GLYPH_ICON_SCALE-scaled) icon size occupied by the route-type glyph inside the
+     * stop circle. The mode glyphs are standard 24dp Material icons whose artwork fills the ~20x20dp
+     * live area, so they are shrunk here to sit within the circle with margin. This is the single knob
+     * for glyph size and applies to all modes uniformly (bus/rail/subway/tram/ferry). Lower = smaller.
+     */
+    private static final float GLYPH_SIZE_FRACTION = 0.60f;
 
     private static int mPx; // Bus stop icon size
 
@@ -278,8 +286,8 @@ public final class StopIconFactory {
 
         // Pre-scale route type glyph icons to the target circle size
         int px = (int) (mPx * GLYPH_ICON_SCALE);
-        int glyphSizePx = (int) (px * 0.70f);
-        loadRouteTypeGlyphs(r, glyphSizePx);
+        int glyphSizePx = (int) (px * GLYPH_SIZE_FRACTION);
+        loadRouteTypeGlyphs(context, glyphSizePx);
 
         String[] directions = {NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, EAST,
                 NORTH_EAST, NO_DIRECTION};
@@ -596,10 +604,10 @@ public final class StopIconFactory {
      * These are the same icons used in TripDetailsListFragment for route type display.
      * Pre-scaling avoids repeated Bitmap.createScaledBitmap() calls during icon generation.
      *
-     * @param r           Resources to load drawables from
+     * @param context     Context to load drawables from
      * @param glyphSizePx target glyph size in pixels (already scaled for circle size)
      */
-    private static void loadRouteTypeGlyphs(Resources r, int glyphSizePx) {
+    private static void loadRouteTypeGlyphs(Context context, int glyphSizePx) {
         int[][] glyphMapping = {
                 {ObaRoute.TYPE_BUS, R.drawable.ic_bus},
                 {ObaRoute.TYPE_RAIL, R.drawable.ic_train},
@@ -608,9 +616,10 @@ public final class StopIconFactory {
                 {ObaRoute.TYPE_FERRY, R.drawable.ic_ferry},
         };
         for (int[] entry : glyphMapping) {
-            Bitmap raw = BitmapFactory.decodeResource(r, entry[1]);
-            sRouteTypeGlyphs.put(entry[0],
-                    Bitmap.createScaledBitmap(raw, glyphSizePx, glyphSizePx, true));
+            // Rasterize via the shared helper (Drawable API, not decodeResource) so these glyphs can be
+            // VectorDrawables; only the alpha matters here — sGlyphPaint recolors them white (SRC_IN)
+            // when stamped onto the stop circle.
+            sRouteTypeGlyphs.put(entry[0], MarkerRendering.rasterize(context, entry[1], glyphSizePx));
         }
     }
 

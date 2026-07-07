@@ -103,7 +103,7 @@ private fun AgencyRow(agency: AgencyContact, onClick: (AgencyContact) -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_maps_directions_bus),
+                painter = painterResource(R.drawable.ic_bus),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )

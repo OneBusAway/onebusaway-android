@@ -418,7 +418,10 @@ class MapLibreRenderer(
     }
 
     private fun bottomAnchored(bitmap: Bitmap): Bitmap {
-        val out = Bitmap.createBitmap(bitmap.width, bitmap.height * 2, Bitmap.Config.ARGB_8888)
+        // MapLibre icons are center-anchored; pad below so the center lands on the pin tip
+        // ([VehicleBitmaps.ANCHOR_V] of the height), not the padded bitmap's bottom edge.
+        val tipY = VehicleBitmaps.ANCHOR_V * bitmap.height
+        val out = Bitmap.createBitmap(bitmap.width, (2f * tipY).toInt(), Bitmap.Config.ARGB_8888)
         Canvas(out).drawBitmap(bitmap, 0f, 0f, null)
         return out
     }

@@ -513,6 +513,8 @@ class GoogleMapRenderer(
                     MarkerOptions()
                         .position(vehicle.point.toLatLng())
                         .icon(vehicleIcon(vehicle, response))
+                        // Anchor the pin tip (not the padded bitmap edge) on the vehicle location.
+                        .anchor(VehicleBitmaps.ANCHOR_U, VehicleBitmaps.ANCHOR_V)
                         .title(vehicleTitle(vehicle, response))
                         .zIndex(VEHICLE_Z_INDEX)
                 )!!

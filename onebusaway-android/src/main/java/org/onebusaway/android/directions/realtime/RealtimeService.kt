@@ -256,7 +256,7 @@ open class RealtimeService : IntentService("RealtimeService") {
         val mBuilder = NotificationCompat.Builder(
             applicationContext, NotificationChannels.TRIP_PLAN_UPDATES_ID
         )
-            .setSmallIcon(R.drawable.ic_stat_notification)
+            .setSmallIcon(R.drawable.ic_bus)
             .setContentTitle(titleText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(messageText))
             .setContentText(messageText)

@@ -92,7 +92,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
             NotificationCompat.Builder repliedNotification =
                     new NotificationCompat.Builder(context
                             , NotificationChannels.DESTINATION_ALERT_ID)
-                            .setSmallIcon(R.drawable.ic_stat_notification)
+                            .setSmallIcon(R.drawable.ic_bus)
                             .setContentTitle(context.getResources()
                                     .getString(R.string.feedback_notify_title))
                             .setContentText(context.getResources()

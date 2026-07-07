@@ -74,7 +74,7 @@ fun HomeNavDrawerSheet(
                 DrawerRow(R.string.navdrawer_item_plan_trip, R.drawable.ic_maps_directions, onPlanTrip)
             }
             if (payFareAvailable) {
-                DrawerRow(R.string.navdrawer_item_pay_fare, R.drawable.ic_payment, onPayFare)
+                DrawerRow(R.string.navdrawer_item_pay_fare, R.drawable.credit_card, onPayFare)
             }
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
             DrawerRow(R.string.navdrawer_item_open_source, R.drawable.github_invertocat_black, onOpenSource)

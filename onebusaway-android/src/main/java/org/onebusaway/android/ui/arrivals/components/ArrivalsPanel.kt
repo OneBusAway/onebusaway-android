@@ -349,7 +349,7 @@ private fun PeekRowVisual(
         Box {
             IconButton(onClick = onMore) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_navigation_more_vert),
+                    painter = painterResource(R.drawable.more_vert),
                     contentDescription = stringResource(R.string.stop_info_item_options_title),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -67,7 +67,7 @@ object ArrivalTutorial {
             id = KEY_MORE_MENU,
             title = R.string.tutorial_recent_stops_routes_title,
             body = R.string.tutorial_recent_stops_routes_text,
-            bodyIcon = R.drawable.ic_navigation_more_vert,
+            bodyIcon = R.drawable.more_vert,
         ),
     )
 

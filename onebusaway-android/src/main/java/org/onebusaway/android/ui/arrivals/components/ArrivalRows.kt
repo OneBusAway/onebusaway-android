@@ -301,7 +301,7 @@ private fun StyleACard(
             }
             Box(Modifier.align(Alignment.TopEnd)) {
                 CornerIcon(
-                    iconRes = R.drawable.ic_navigation_more_horiz,
+                    iconRes = R.drawable.more_horiz,
                     contentDescription = stringResource(R.string.stop_info_item_options_title),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     onClick = onMore
@@ -367,7 +367,7 @@ fun ArrivalCardStyleB(
                 Box {
                     IconButton(onClick = { expanded = true }) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_navigation_more_vert),
+                            painter = painterResource(R.drawable.more_vert),
                             contentDescription = stringResource(R.string.stop_info_item_options_title)
                         )
                     }

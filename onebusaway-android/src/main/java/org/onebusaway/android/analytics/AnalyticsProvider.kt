@@ -39,7 +39,7 @@ import org.onebusaway.android.region.RegionRepository
  */
 @Singleton
 class AnalyticsProvider @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     regionRepository: RegionRepository,
     @AppScope scope: CoroutineScope,
 ) {

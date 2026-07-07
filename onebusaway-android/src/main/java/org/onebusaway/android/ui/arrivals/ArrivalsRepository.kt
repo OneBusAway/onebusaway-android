@@ -238,7 +238,7 @@ data class AlertDetails(
  * which would share `lastGood` across stops and corrupt per-stop state.
  */
 class DefaultArrivalsRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
     private val routeRepository: RouteDataSource,
     private val stopArrivals: StopArrivalsDataSource,

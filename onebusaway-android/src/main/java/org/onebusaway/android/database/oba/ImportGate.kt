@@ -61,7 +61,7 @@ interface ImportGate {
 
 @Singleton
 class DefaultImportGate @Inject constructor(
-    @AppScope private val appScope: CoroutineScope,
+    @param:AppScope private val appScope: CoroutineScope,
     private val importer: LegacyDataImporter,
 ) : ImportGate {
     private val ready: Deferred<Unit> by lazy {

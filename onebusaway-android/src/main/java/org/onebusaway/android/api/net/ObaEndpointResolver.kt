@@ -35,7 +35,7 @@ import org.onebusaway.android.region.RegionRepository
  */
 @Singleton
 class ObaEndpointResolver @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
     private val preferences: PreferencesRepository,
 ) {

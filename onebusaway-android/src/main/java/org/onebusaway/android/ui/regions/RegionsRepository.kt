@@ -71,7 +71,7 @@ interface RegionsRepository {
  * stays JVM-testable.
  */
 class DefaultRegionsRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val prefs: PreferencesRepository,
     private val regionRepository: RegionRepository,
     private val regionCache: RegionCache,

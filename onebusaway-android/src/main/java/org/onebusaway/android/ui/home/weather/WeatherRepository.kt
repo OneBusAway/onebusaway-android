@@ -43,7 +43,7 @@ interface WeatherRepository {
  * response without a current forecast all map to [Result.failure] (matching the legacy AsyncTask).
  */
 class DefaultWeatherRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
     private val weatherService: WeatherWebService,
 ) : WeatherRepository {

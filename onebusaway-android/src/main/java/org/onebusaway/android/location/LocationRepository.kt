@@ -115,7 +115,7 @@ interface LocationSink {
  */
 @Singleton
 class DefaultLocationRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
 ) : LocationRepository, LocationSink {
 
     private val _location = MutableStateFlow<Location?>(null)

@@ -33,7 +33,7 @@ interface AdvancedSettingsRepository {
  * that with an injected SharedPreferences is broader preferences work.)
  */
 class DefaultAdvancedSettingsRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : AdvancedSettingsRepository {
 
     override fun load(): AdvancedSettings {

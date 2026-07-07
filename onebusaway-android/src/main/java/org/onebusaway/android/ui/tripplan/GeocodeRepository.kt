@@ -39,7 +39,7 @@ interface GeocodeRepository {
  * Runs the blocking work on the IO thread and projects onto the JVM-pure [TripEndpoint.Geocoded].
  */
 class DefaultGeocodeRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
 ) : GeocodeRepository {
 

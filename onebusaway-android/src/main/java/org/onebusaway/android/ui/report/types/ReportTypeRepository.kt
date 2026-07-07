@@ -35,7 +35,7 @@ interface ReportTypeRepository {
  * applies the region-email gate via [ReportTypeGate].
  */
 class DefaultReportTypeRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
 ) : ReportTypeRepository {
 

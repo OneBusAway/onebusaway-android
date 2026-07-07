@@ -30,7 +30,7 @@ import org.onebusaway.android.util.MyTextUtils
  */
 @Singleton
 class RouteRecorder @Inject constructor(
-    @AppScope private val appScope: CoroutineScope,
+    @param:AppScope private val appScope: CoroutineScope,
     private val routeDao: RouteDao,
     private val regionRepository: RegionRepository,
     private val importGate: ImportGate,

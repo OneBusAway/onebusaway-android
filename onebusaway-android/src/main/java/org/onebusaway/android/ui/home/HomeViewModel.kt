@@ -362,7 +362,7 @@ sealed interface HomeAnalyticsEvent {
     data class RegionSelected(val regionName: String) : HomeAnalyticsEvent
 
     /** A nav-drawer / help-menu selection identified by its analytics label string resource. */
-    data class MenuItem(@StringRes val labelRes: Int) : HomeAnalyticsEvent
+    data class MenuItem(@param:StringRes val labelRes: Int) : HomeAnalyticsEvent
 }
 
 /**

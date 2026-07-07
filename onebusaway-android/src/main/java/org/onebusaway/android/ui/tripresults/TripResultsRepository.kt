@@ -44,7 +44,7 @@ interface TripResultsRepository {
     suspend fun directionsFor(itinerary: Itinerary): Result<List<DirectionItem>>
 }
 
-class DefaultTripResultsRepository @Inject constructor(@ApplicationContext private val context: Context) : TripResultsRepository {
+class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext private val context: Context) : TripResultsRepository {
 
     override suspend fun summarize(
         itineraries: List<Itinerary>

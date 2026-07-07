@@ -21,6 +21,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.withRotation
 import androidx.annotation.DrawableRes
 import androidx.annotation.VisibleForTesting
 import androidx.collection.LruCache
@@ -173,7 +175,7 @@ object VehicleBitmaps {
         val contentPx = (MarkerRendering.GRID * scale).toInt()
         val sizePx = (MarkerRendering.GRID * scale + 2f * pad).toInt()
         val outline = OUTLINE_GRID * scale
-        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(sizePx, sizePx)
         val canvas = Canvas(bitmap)
         // Draw inside a [pad] border so the outline halo has room; the grid geometry is relative to
         // this translated content origin.
@@ -184,18 +186,19 @@ object VehicleBitmaps {
 
         // Heading arrow, white, rotated about the head center by the octant (undirected = no arrow).
         if (halfWind != UNDIRECTED) {
-            canvas.save()
-            canvas.rotate(halfWind * 45f, MarkerRendering.HEAD_CX * scale, MarkerRendering.HEAD_CY * scale)
-            val arrow = Path().apply {
-                // Wide chevron, tip grazing the head edge; scaled 0.9 about the tip.
-                moveTo(12f * scale, 0.1f * scale)
-                lineTo(14.16f * scale, 2.44f * scale)
-                lineTo(9.84f * scale, 2.44f * scale)
-                close()
+            canvas.withRotation(
+                halfWind * 45f, MarkerRendering.HEAD_CX * scale, MarkerRendering.HEAD_CY * scale
+            ) {
+                val arrow = Path().apply {
+                    // Wide chevron, tip grazing the head edge; scaled 0.9 about the tip.
+                    moveTo(12f * scale, 0.1f * scale)
+                    lineTo(14.16f * scale, 2.44f * scale)
+                    lineTo(9.84f * scale, 2.44f * scale)
+                    close()
+                }
+                MarkerRendering.stampOffsets(canvas, outline) { canvas.drawPath(arrow, blackPaint) }
+                canvas.drawPath(arrow, whitePaint)
             }
-            MarkerRendering.stampOffsets(canvas, outline) { canvas.drawPath(arrow, blackPaint) }
-            canvas.drawPath(arrow, whitePaint)
-            canvas.restore()
         }
         return bitmap
     }

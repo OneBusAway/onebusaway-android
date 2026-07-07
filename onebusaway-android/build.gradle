@@ -165,6 +165,13 @@ android {
         // Fail the build (and CI, #1692) on any lint error — notably NewApi minSdk violations,
         // which compile + API-33 instrumented tests can't catch.
         abortOnError true
+        // Under -PwarningsAsErrors=true (CI passes it; see .github/workflows/android.yml), promote lint
+        // warnings to errors too, matching the Kotlin-compiler gate above. Local builds default to off so
+        // an AGP/lint bump that adds new checks surfaces in CI rather than blocking day-to-day work. Kept
+        // WITHOUT checkAllWarnings on purpose — only the default-enabled checks are gated, not lint's full
+        // (opinionated) catalog. If a bump floods new warnings, either fix them or add a lint-baseline.xml.
+        warningsAsErrors = project.hasProperty('warningsAsErrors') &&
+            project.property('warningsAsErrors') == 'true'
     }
 
     useLibrary 'android.test.runner'

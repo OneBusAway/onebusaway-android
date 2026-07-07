@@ -19,6 +19,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import androidx.core.graphics.createBitmap
 import androidx.annotation.DrawableRes
 import org.onebusaway.android.R
 
@@ -70,7 +71,7 @@ object BikeBitmaps {
     private fun bigMarker(context: Context, @DrawableRes glyphRes: Int): Bitmap {
         val scale = context.resources.displayMetrics.density * BIG_SIZE_DP / MarkerRendering.GRID
         val sizePx = (MarkerRendering.GRID * scale).toInt()
-        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(sizePx, sizePx)
         MarkerRendering.drawPinAndGlyph(
             Canvas(bitmap), context, sizePx, scale, PIN_COLOR, glyphRes, Color.WHITE, GLYPH_SIZE, outline = 0f,
         )

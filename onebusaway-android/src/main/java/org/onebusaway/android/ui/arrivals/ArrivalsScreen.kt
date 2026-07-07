@@ -134,6 +134,7 @@ internal fun rememberArrivalRowCallbacks(
     ArrivalRowCallbacks(
         onRouteFavorite = handler::onRouteFavorite,
         onShowVehiclesOnMap = handler::onShowVehiclesOnMap,
+        onEtaClick = handler::onFocusVehicleOnMap,
         onShowTripStatus = handler::onShowTripStatus,
         onSetReminder = handler::onSetReminder,
         onShowOnlyRoute = viewModel::showOnlyRoute,
@@ -151,6 +152,8 @@ internal fun rememberArrivalRowCallbacks(
 interface ArrivalActionHandler {
     fun onRouteFavorite(actions: ArrivalActions)
     fun onShowVehiclesOnMap(arrival: ArrivalInfo)
+    /** The ETA-pill tap: frame the arrival's live vehicle with its stop, or toast if none is tracked. */
+    fun onFocusVehicleOnMap(arrival: ArrivalInfo)
     fun onShowTripStatus(arrival: ArrivalInfo)
     fun onSetReminder(arrival: ArrivalInfo)
     fun onShowRouteSchedule(scheduleUrl: String)

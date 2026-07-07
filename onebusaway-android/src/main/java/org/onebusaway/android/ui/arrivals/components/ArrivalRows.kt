@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.colorResource
@@ -77,6 +78,8 @@ import org.onebusaway.util.comparators.AlphanumComparator
 class ArrivalRowCallbacks(
     val onRouteFavorite: (ArrivalActions) -> Unit,
     val onShowVehiclesOnMap: (ArrivalInfo) -> Unit,
+    /** The ETA pill was tapped: focus that arrival's live vehicle + its stop (whole-route tap is the row body). */
+    val onEtaClick: (ArrivalInfo) -> Unit,
     val onShowTripStatus: (ArrivalInfo) -> Unit,
     val onSetReminder: (ArrivalInfo) -> Unit,
     val onShowOnlyRoute: (String) -> Unit,
@@ -150,7 +153,8 @@ private fun ArrivalRowVisual(
     predicted: Boolean,
     canceled: Boolean,
     modifier: Modifier = Modifier,
-    onAlertClick: (() -> Unit)? = null
+    onAlertClick: (() -> Unit)? = null,
+    onEtaClick: (() -> Unit)? = null,
 ) {
     val decoration = strikeThroughIf(canceled)
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
@@ -185,7 +189,7 @@ private fun ArrivalRowVisual(
             ArrivalAlertIndicator(onClick = onAlertClick)
         }
         Spacer(Modifier.width(8.dp))
-        EtaContent(eta, statusColor, predicted, canceled)
+        EtaContent(eta, statusColor, predicted, canceled, onClick = onEtaClick)
     }
 }
 
@@ -209,7 +213,8 @@ internal fun ArrivalAlertIndicator(onClick: () -> Unit, modifier: Modifier = Mod
 internal fun ArrivalRowContent(
     arrival: ArrivalInfo,
     modifier: Modifier = Modifier,
-    onAlertClick: (() -> Unit)? = null
+    onAlertClick: (() -> Unit)? = null,
+    onEtaClick: (() -> Unit)? = null,
 ) {
     ArrivalRowVisual(
         shortName = arrival.shortName.orEmpty(),
@@ -221,7 +226,8 @@ internal fun ArrivalRowContent(
         predicted = arrival.predicted,
         canceled = arrival.status == Status.CANCELED,
         modifier = modifier,
-        onAlertClick = onAlertClick
+        onAlertClick = onAlertClick,
+        onEtaClick = onEtaClick,
     )
 }
 
@@ -243,13 +249,19 @@ fun ArrivalRowStyleA(
         isFavorite = actions?.isRouteFavorite,
         onFavorite = { actions?.let { callbacks.onRouteFavorite(it) } },
         onMore = { expanded = true },
-        // Tapping the row body defaults to "Show vehicles on map"; the overflow icon opens the menu.
+        // Tapping the row body frames the whole route; the ETA pill (below) instead focuses this trip's
+        // vehicle + stop, and the overflow icon opens the menu.
         onContentClick = { callbacks.onShowVehiclesOnMap(arrival) },
         overflow = {
             ArrivalActionsMenu(expanded, { expanded = false }, arrival, actions, filterActive, callbacks)
         }
     ) {
-        ArrivalRowContent(arrival, Modifier.fillMaxWidth(), alertClick(actions, callbacks))
+        ArrivalRowContent(
+            arrival,
+            Modifier.fillMaxWidth(),
+            onAlertClick = alertClick(actions, callbacks),
+            onEtaClick = { callbacks.onEtaClick(arrival) },
+        )
     }
 }
 
@@ -379,8 +391,9 @@ fun ArrivalCardStyleB(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        // Tapping a row shows its route/direction on the map (same as Style A); HomeScreen's
-                        // wrapped onShowRouteOnMap drags the sheet down to peek on every such tap.
+                        // Tapping a row frames the whole route/direction on the map (same as Style A);
+                        // HomeScreen's wrapped onShowRouteOnMap drags the sheet down to peek on every such
+                        // tap. The ETA pill (below) instead focuses this trip's vehicle + stop.
                         .clickable { callbacks.onShowVehiclesOnMap(arrival) }
                         .padding(top = if (index == 0) 8.dp else 0.dp)
                         // Subsequent arrivals are dimmed, matching the legacy card
@@ -389,7 +402,7 @@ fun ArrivalCardStyleB(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     StatusText(arrival)
-                    EtaBlock(arrival)
+                    EtaBlock(arrival, onClick = { callbacks.onEtaClick(arrival) })
                 }
             }
         }
@@ -466,11 +479,25 @@ private fun StatusPill(text: String, color: Color) {
 }
 
 /** The prominent ETA, color-coded by lateness, with the real-time indicator as a superscript on
- *  the "min" label (matching the drawer pill); the legacy `eta`/`eta_min`. */
+ *  the "min" label (matching the drawer pill); the legacy `eta`/`eta_min`. [onClick], when non-null,
+ *  makes the ETA its own tap target (focus this trip's vehicle + stop, distinct from the row-body tap). */
 @Composable
-private fun EtaContent(eta: Long, color: Color, predicted: Boolean, canceled: Boolean) {
+private fun EtaContent(
+    eta: Long,
+    color: Color,
+    predicted: Boolean,
+    canceled: Boolean,
+    onClick: (() -> Unit)? = null,
+) {
     val decoration = strikeThroughIf(canceled)
-    Row {
+    // When clickable, clip to the pill shape so the tap ripple stays inside the ETA. No padding/size
+    // change, so the ETA looks identical at rest; the clickable is a solid target on the number itself.
+    val rowModifier = if (onClick != null) {
+        Modifier.clip(PillShape).clickable(onClick = onClick)
+    } else {
+        Modifier
+    }
+    Row(modifier = rowModifier) {
         if (eta == 0L) {
             Text(
                 text = stringResource(R.string.stop_info_eta_now),
@@ -548,10 +575,14 @@ internal fun StatusText(arrival: ArrivalInfo) {
     if (text.isNotEmpty()) StatusPill(text, colorResource(arrival.color))
 }
 
-/** [ArrivalInfo]-driven ETA, for the Style B card and the map-panel preview. */
+/** [ArrivalInfo]-driven ETA, for the Style B card and the map-panel preview. [onClick], when non-null,
+ *  makes the ETA a tap target (focus this trip's vehicle + stop). */
 @Composable
-internal fun EtaBlock(arrival: ArrivalInfo) {
-    EtaContent(arrival.eta, colorResource(arrival.color), arrival.predicted, arrival.status == Status.CANCELED)
+internal fun EtaBlock(arrival: ArrivalInfo, onClick: (() -> Unit)? = null) {
+    EtaContent(
+        arrival.eta, colorResource(arrival.color), arrival.predicted,
+        arrival.status == Status.CANCELED, onClick = onClick,
+    )
 }
 
 private fun strikeThroughIf(canceled: Boolean): TextDecoration =

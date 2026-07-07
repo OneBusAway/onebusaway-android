@@ -24,9 +24,16 @@ package org.onebusaway.android.map
  *
  * @property routeId the route to show.
  * @property directionStopId when non-null (the arrivals "show vehicles on map" launch), the stop whose
- *   direction the map narrows to; null shows the whole route.
+ *   direction the map narrows to; null shows the whole route. It's also the *originating stop* framed
+ *   alongside the vehicle by [focusTripId].
+ * @property focusTripId when non-null (the arrivals **ETA-pill** tap), the trip whose live vehicle the
+ *   map fits into view together with the originating stop ([directionStopId]) — a one-shot framing of the
+ *   vehicle↔stop relationship. When no live vehicle is running that trip, the map shows the route and
+ *   raises the "vehicle isn't on the map" toast. A plain arrival-row tap leaves this null (frame the whole
+ *   route); only the ETA pill sets it.
  */
 data class ShowRouteRequest(
     val routeId: String,
     val directionStopId: String? = null,
+    val focusTripId: String? = null,
 )

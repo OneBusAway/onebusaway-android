@@ -33,6 +33,8 @@ import java.net.HttpURLConnection
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.RouteMapStop
+import org.onebusaway.android.map.render.FramingIntent
+import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.RoutePolyline
@@ -130,22 +132,40 @@ class RouteMapController(
 
     private var vehicleJob: Job? = null
 
+    // A pending arrivals ETA-pill focus: fit trip [tripId]'s live vehicle together with the originating
+    // stop once the vehicle appears. Held until the first vehicle set arrives, then resolved once by
+    // [tryFocusVehicle]: if a marker for the trip is on the map the camera fits the vehicle↔stop box,
+    // otherwise it's dropped (the vehicle isn't running that trip right now) — we raise the
+    // [MapEffect.VehicleNotOnMap] toast so the tap isn't silently ignored, and, if [frameFallback], frame
+    // the whole route instead (the initial framing the launch deferred pending this decision). A pending
+    // focus only ever comes from the ETA-pill tap ([ShowRouteRequest.focusTripId]), so a DROP always maps
+    // to that toast. Held as one value (like [DirectionState]) so the id and the fallback flag can't drift.
+    private data class PendingFocus(val tripId: String, val frameFallback: Boolean)
+
+    private var pendingFocus: PendingFocus? = null
+
     /**
      * Show route [routeId]: load the route + header and start the vehicle poll. [zoomToRoute] frames
      * the shape once it loads (consumed once). [directionStopId], when non-null, narrows the overlay to
      * the single direction that serves that stop (the arrivals "show vehicles on map" launch); null
      * shows the whole route. [initialDirectionId] is a restore override (the user-selected direction
      * persisted across process death) that wins over the anchor stop when it's still a valid direction.
+     * [focusTripId], when non-null, asks the map to fit that trip's live vehicle together with the
+     * originating [directionStopId] once the vehicle appears; the on-load framing is deferred until that
+     * decision so a successful vehicle+stop fit isn't first yanked out to the whole-route extent, and a
+     * route frame is the fallback when no such vehicle exists.
      */
     fun start(
         routeId: String,
         zoomToRoute: Boolean,
         directionStopId: String? = null,
         initialDirectionId: Int? = null,
+        focusTripId: String? = null,
     ) {
         this.routeId = routeId
         this.directionStopId = directionStopId
         this.initialDirectionOverride = initialDirectionId
+        this.pendingFocus = focusTripId?.let { PendingFocus(it, frameFallback = zoomToRoute) }
         // A whole-route launch has no direction to wait for, so its vehicles show as soon as they poll;
         // a direction-anchored launch (an anchor stop or a restored direction) stays Pending until the
         // route load resolves the filter (below).
@@ -160,8 +180,55 @@ class RouteMapController(
         // route-id filter set is built once here, not per frame, since it's constant for this route;
         // directionState is read live since it's resolved only once the route loads.
         renderState.setVehiclesSampler { nowMs -> sampleVehicles(WallTime(nowMs)) }
-        loadRoute(zoomToRoute)
+        // Defer the on-load framing while a focus is pending: the focus decision (below, once the first
+        // set arrives) either fits the vehicle+stop box or, failing that, frames the route itself.
+        loadRoute(zoomToRoute && focusTripId == null)
         startVehiclePolling(0L)
+    }
+
+    /**
+     * Ask to fit trip [tripId]'s live vehicle + the originating stop on the already-shown route (the ETA
+     * pill tapped for an arrival whose route the map is already parked on). Resolves immediately against
+     * the current vehicle set: when the vehicle isn't there, [tryFocusVehicle] raises the "vehicle isn't on
+     * the map" toast; a vehicle that only appears on a later poll still frames then, via [publishVehicleSet].
+     * The map already shows the route here, so there's no fallback frame ([PendingFocus.frameFallback] is
+     * false) — we don't yank the camera to the whole-route extent just because a specific vehicle is missing.
+     */
+    fun requestFocus(tripId: String) {
+        pendingFocus = PendingFocus(tripId, frameFallback = false)
+        tryFocusVehicle(currentVehicleLayer())
+    }
+
+    // Resolve a pending focus against [layer] (the just-built vehicle set, threaded in so the poll path
+    // doesn't re-run the extrapolation), once we actually have vehicles to check. With a marker for the
+    // trip present, fit the vehicle together with the originating stop; absent, the pending focus is
+    // dropped — we raise the "vehicle isn't on the map" toast (the pill tap must not be silently ignored)
+    // and, when [PendingFocus.frameFallback], frame the route as the deferred fallback. A no-op until
+    // there's a resolved direction and a landed poll, so the decision waits for real data rather than
+    // firing on the empty pre-poll set.
+    private fun tryFocusVehicle(layer: MapVehicles?) {
+        val focus = pendingFocus ?: return
+        val marker = layer?.markers?.firstOrNull { it.activeTripId == focus.tripId }
+        when (resolveVehicleFocus(directionState is DirectionState.Resolved, latestPoll != null, marker != null)) {
+            FocusResolution.WAIT -> Unit
+            FocusResolution.FIT -> {
+                pendingFocus = null
+                // Fit the vehicle and its originating stop together (the stop is dropped only if it's
+                // somehow not in the loaded route, leaving the vehicle framed alone at a comfortable zoom).
+                host.frame(FramingIntent.Points(listOfNotNull(marker?.point, originatingStopPoint())))
+            }
+            FocusResolution.DROP -> {
+                pendingFocus = null
+                if (focus.frameFallback) host.frameRoute()
+                host.emitEffect(MapEffect.VehicleNotOnMap)
+            }
+        }
+    }
+
+    /** The originating stop's position ([directionStopId], looked up in the loaded route), or null. */
+    private fun originatingStopPoint(): GeoPoint? {
+        val stopId = directionStopId ?: return null
+        return routeStops.firstOrNull { it.stop.id == stopId }?.stop?.location?.toGeoPoint()
     }
 
     // Builds the vehicle markers for the current poll + direction filter at [nowMs]. Returns null while
@@ -186,9 +253,13 @@ class RouteMapController(
     // against (matching TripState.anchorLocalTimeMs); the next frame supersedes the seed either way.
     private fun currentVehicleLayer(): MapVehicles? = sampleVehicles(WallTime.now())
 
-    /** Recompute + push the vehicle set (the renderer reconciles markers from it). */
+    /** Recompute + push the vehicle set (the renderer reconciles markers from it), then resolve any pending focus. */
     private fun publishVehicleSet() {
-        renderState.setVehicleSet(currentVehicleLayer())
+        val layer = currentVehicleLayer()
+        renderState.setVehicleSet(layer)
+        // Resolve a pending arrivals-row focus against the same set — fitting the vehicle+stop the moment
+        // the vehicle first appears, whether that's the load-resolve republish or a subsequent poll.
+        tryFocusVehicle(layer)
     }
 
     /** Leave route mode: cancel the loads + poll and clear the route's shape, vehicle layer, and header. */
@@ -206,6 +277,7 @@ class RouteMapController(
         routeShape = null
         directionState = DirectionState.Resolved(null)
         latestPoll = null
+        pendingFocus = null
         renderState.clearRoutePolylines()
         // setVehicleSet(null) is what clears the vehicle markers (the renderer reconciles the empty set);
         // it must be nulled together with the motion sampler, which only moves already-reconciled markers.
@@ -319,8 +391,10 @@ class RouteMapController(
     fun selectDirection(directionId: Int?): Boolean {
         if (routeId == null || directionId == currentDirectionId) return false
         directionState = DirectionState.Resolved(directionId)
-        // A vehicle selected in the old direction is now filtered out — drop the selection.
+        // A vehicle selected in the old direction is now filtered out — drop the selection, and drop any
+        // still-pending vehicle+stop focus (the switch is a deliberate "show the other direction" action).
         renderState.setSelectedVehicle(null)
+        pendingFocus = null
         showDirectionStops()
         showDirectionPolylines()
         // Re-filter the vehicle set against the same poll and push it — the renderer reconciles markers on
@@ -372,6 +446,29 @@ class RouteMapController(
             fixTimeMs = fixTimeMs,
             bearing = bearing,
         )
+}
+
+/**
+ * The outcome of resolving a pending "fit this trip's vehicle + its stop" request against the current
+ * state: [WAIT] until there's real vehicle data to check, then [FIT] the vehicle+stop box if the vehicle
+ * is on the map or [DROP] it if not. Kept as an enum + [resolveVehicleFocus] pure function so the (subtle)
+ * "don't decide before a poll lands" rule is unit-tested without standing up the whole controller.
+ */
+internal enum class FocusResolution { WAIT, FIT, DROP }
+
+/**
+ * Decide a pending focus: hold ([WAIT]) until the route's direction has resolved *and* a vehicle poll
+ * has landed (so there's a real set to check, not the empty pre-poll one); once there is, [FIT] when a
+ * marker for the trip is present, else [DROP]. Pure so the decision table is testable in isolation.
+ */
+internal fun resolveVehicleFocus(
+    directionResolved: Boolean,
+    pollLanded: Boolean,
+    markerPresent: Boolean,
+): FocusResolution = when {
+    !directionResolved || !pollLanded -> FocusResolution.WAIT
+    markerPresent -> FocusResolution.FIT
+    else -> FocusResolution.DROP
 }
 
 /** The latest trips-for-route [response] and the device clock ([loadNanos]) when it landed. */

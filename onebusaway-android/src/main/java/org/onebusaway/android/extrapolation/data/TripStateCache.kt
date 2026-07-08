@@ -17,6 +17,7 @@ package org.onebusaway.android.extrapolation.data
 
 import androidx.annotation.VisibleForTesting
 import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.time.ServiceDate
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.Polyline
 
@@ -72,8 +73,8 @@ internal class TripStateCache {
         }
     }
 
-    fun putServiceDate(tripId: String?, serviceDate: Long) {
-        if (tripId != null && serviceDate > 0) {
+    fun putServiceDate(tripId: String?, serviceDate: ServiceDate?) {
+        if (tripId != null && serviceDate != null) {
             update(tripId) { it.withServiceDate(serviceDate) }
         }
     }

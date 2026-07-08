@@ -32,7 +32,6 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.MathUtils
-import java.util.concurrent.TimeUnit
 
 /**
  * Flavor-neutral generation of vehicle marker bitmaps. Lives in `src/main` so both the Google flavor
@@ -120,7 +119,7 @@ object VehicleBitmaps {
 
     /** The schedule-deviation color (realtime) or the scheduled color — constant between polls. */
     private fun colorResource(vehicle: VehicleMarker): Int {
-        val deviationMin = TimeUnit.SECONDS.toMinutes(vehicle.status.scheduleDeviation)
+        val deviationMin = vehicle.status.scheduleDeviation.inWholeMinutes
         return ArrivalInfoUtils.statusColor(vehicle.isRealtime, deviationMin)
     }
 

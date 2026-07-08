@@ -15,8 +15,10 @@
  */
 package org.onebusaway.android.extrapolation.data
 
+import org.onebusaway.android.time.ScheduleTime
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
+import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.api.adapters.StopTimeData
 import org.onebusaway.android.api.adapters.TripScheduleData
 import org.junit.Assert.assertEquals
@@ -526,8 +528,8 @@ class TripStateTest {
             val (dist, arrive, depart) = stops[i]
             StopTimeData(
                 stopId = "stop_$i",
-                arrivalTime = arrive,
-                departureTime = depart,
+                arrivalTime = ScheduleTime(arrive.seconds),
+                departureTime = ScheduleTime(depart.seconds),
                 distanceAlongTrip = dist,
             )
         }

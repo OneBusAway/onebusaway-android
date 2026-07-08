@@ -33,20 +33,26 @@ class ScheduleTimeTest {
     @Test
     fun `subtraction yields the scheduled interval`() {
         // 08:20:00 minus 08:15:00 into the service day = 5 minutes of scheduled run time.
-        assertEquals(5.minutes, ScheduleTime(30_000L) - ScheduleTime(29_700L))
+        assertEquals(5.minutes, ScheduleTime(30_000.seconds) - ScheduleTime(29_700.seconds))
+    }
+
+    @Test
+    fun `the group action shifts a schedule point and stays in-domain`() {
+        assertEquals(ScheduleTime(30_030.seconds), ScheduleTime(30_000.seconds) + 30.seconds)
+        assertEquals(ScheduleTime(29_970.seconds), ScheduleTime(30_000.seconds) - 30.seconds)
     }
 
     @Test
     fun `Comparable orders schedule times`() {
-        assertTrue(ScheduleTime(29_700L) < ScheduleTime(30_000L))
-        assertEquals(ScheduleTime(30_000L), ScheduleTime(30_000L))
+        assertTrue(ScheduleTime(29_700.seconds) < ScheduleTime(30_000.seconds))
+        assertEquals(ScheduleTime(30_000.seconds), ScheduleTime(30_000.seconds))
     }
 
     @Test
     fun `resolve lands on the server clock at day-anchor plus offset`() {
         val day = ServiceDate(1_700_000_000_000L)
         // 3600 s into the service day = one hour of millis after the anchor.
-        assertEquals(ServerTime(1_700_000_000_000L + 3_600_000L), ScheduleTime(3_600L).resolve(day))
+        assertEquals(ServerTime(1_700_000_000_000L + 3_600_000L), ScheduleTime(3_600.seconds).resolve(day))
     }
 
     @Test
@@ -60,7 +66,7 @@ class ScheduleTimeTest {
     fun `resolve composes with the ServerTime group action`() {
         // The TripDetailsRepository path: resolve a scheduled stop, then shift by schedule deviation.
         val day = ServiceDate(1_700_000_000_000L)
-        val scheduled = ScheduleTime(3_600L).resolve(day)
+        val scheduled = ScheduleTime(3_600.seconds).resolve(day)
         val withDeviation = scheduled + 90.seconds // 90 s late
         assertEquals(90.seconds, withDeviation - scheduled)
         assertEquals(ServerTime(1_700_000_000_000L + 3_600_000L + 90_000L), withDeviation)

@@ -15,8 +15,12 @@
  */
 package org.onebusaway.android.extrapolation.test
 
+import org.onebusaway.android.time.ScheduleTime
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.ServiceDate
 import org.onebusaway.android.time.WallTime
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.api.adapters.StopTimeData
 import org.onebusaway.android.api.adapters.TripScheduleData
 
@@ -270,7 +274,7 @@ class TripStateCacheTest {
                         longArrayOf(100, 300)
                 )
         cache.putSchedule("trip1", schedule)
-        cache.putServiceDate("trip1", serviceDate)
+        cache.putServiceDate("trip1", ServiceDate(serviceDate))
 
         val status1 = createStatus("v1", "trip1", 47.0, -122.0, 100.0, 100.0, 5000.0, 170_000L)
         val status2 = createStatus("v1", "trip1", 47.001, -122.0, 400.0, 400.0, 5000.0, queryTime)
@@ -312,7 +316,7 @@ class TripStateCacheTest {
                         longArrayOf(0, 500, 1000)
                 )
         cache.putSchedule("trip1", schedule)
-        cache.putServiceDate("trip1", serviceDate)
+        cache.putServiceDate("trip1", ServiceDate(serviceDate))
 
         // Record 5 position updates, each 30 seconds apart, 300m apart (~10 m/s)
         for (i in 0 until 5) {
@@ -359,7 +363,7 @@ class TripStateCacheTest {
                             status.activeTripId!!,
                             status,
                             ServerTime(serverTimeMs),
-                            serviceDate = 0,
+                            serviceDate = null,
                             routeType = null
                     ),
                     WallTime(localTimeMs)
@@ -409,8 +413,8 @@ class TripStateCacheTest {
             Array<ObaTripSchedule.StopTime>(distances.size) { i ->
                 StopTimeData(
                     stopId = "stop_$i",
-                    arrivalTime = arrivalTimes[i],
-                    departureTime = departureTimes[i],
+                    arrivalTime = ScheduleTime(arrivalTimes[i].seconds),
+                    departureTime = ScheduleTime(departureTimes[i].seconds),
                     distanceAlongTrip = distances[i],
                 )
             },
@@ -434,7 +438,7 @@ private class TestTripStatus(
 ) : ObaTripStatus {
     override val serviceDate: Long = 0L
     override val isPredicted: Boolean = predicted
-    override val scheduleDeviation: Long = scheduleDeviation
+    override val scheduleDeviation: Duration = scheduleDeviation.seconds
     override val vehicleId: String? = vehicleId
     override val closestStop: String? = null
     override val closestStopTimeOffset: Long = 0L

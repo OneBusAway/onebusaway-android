@@ -15,7 +15,9 @@
  */
 package org.onebusaway.android.extrapolation
 
+import org.onebusaway.android.time.ScheduleTime
 import org.onebusaway.android.time.WallTime
+import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.api.adapters.StopTimeData
 import org.onebusaway.android.api.adapters.TripScheduleData
 
@@ -147,8 +149,8 @@ class ScheduleReplayExtrapolatorTest {
             val (dist, arrive, depart) = stops[i]
             StopTimeData(
                 stopId = "stop_$i",
-                arrivalTime = arrive,
-                departureTime = depart,
+                arrivalTime = ScheduleTime(arrive.seconds),
+                departureTime = ScheduleTime(depart.seconds),
                 distanceAlongTrip = dist,
             )
         }

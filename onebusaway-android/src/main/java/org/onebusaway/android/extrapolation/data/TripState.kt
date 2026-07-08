@@ -24,6 +24,7 @@ import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.ServiceDate
 import org.onebusaway.android.util.Polyline
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -74,8 +75,8 @@ data class TripState(
          */
         val anchorLocalTimeMs: WallTime = WallTime(0L),
         val schedule: ObaTripSchedule? = null,
-        /** Service date in ms since the epoch, or 0 when not yet known. */
-        val serviceDate: Long = 0L,
+        /** The trip's service day, or null when not yet known. */
+        val serviceDate: ServiceDate? = null,
         val polyline: Polyline? = null,
         val routeType: Int? = null,
         /**
@@ -161,9 +162,9 @@ data class TripState(
                     .withServiceDate(observation.serviceDate)
                     .withRouteType(observation.routeType)
 
-    /** Returns the state with [serviceDate] applied, or `this` when it is unknown or unchanged. */
-    fun withServiceDate(serviceDate: Long): TripState =
-            if (serviceDate > 0 && serviceDate != this.serviceDate) copy(serviceDate = serviceDate)
+    /** Returns the state with [serviceDate] applied, or `this` when it is null (unknown) or unchanged. */
+    fun withServiceDate(serviceDate: ServiceDate?): TripState =
+            if (serviceDate != null && serviceDate != this.serviceDate) copy(serviceDate = serviceDate)
             else this
 
     /**

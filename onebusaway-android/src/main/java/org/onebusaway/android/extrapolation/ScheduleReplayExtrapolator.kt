@@ -18,8 +18,9 @@ package org.onebusaway.android.extrapolation
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.DiracDistribution
 import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.time.ScheduleTime
 import org.onebusaway.android.time.WallTime
-import kotlin.time.DurationUnit
+import kotlin.time.Duration
 
 /**
  * Per-trip extrapolator for grade-separated transit (rail, subway) that replays the schedule
@@ -60,9 +61,9 @@ fun replaySchedule(
         lastTime: WallTime,
         queryTime: WallTime
 ): Double? {
-    val dtSec = (queryTime - lastTime).toDouble(DurationUnit.SECONDS)
+    val dt: Duration = queryTime - lastTime
     val stopTimes = schedule.stopTimes
-    if (stopTimes.size < 2 || dtSec < 0) return null
+    if (stopTimes.size < 2 || dt < Duration.ZERO) return null
 
     val segIdx =
             try {
@@ -74,25 +75,25 @@ fun replaySchedule(
     val segEnd = stopTimes[segIdx + 1]
 
     val segDist = segEnd.distanceAlongTrip - segStart.distanceAlongTrip
-    val travelTimeSec = (segEnd.arrivalTime - segStart.departureTime).toDouble()
-    if (segDist <= 0 || travelTimeSec <= 0) return null
+    val travelTime: Duration = segEnd.arrivalTime - segStart.departureTime
+    if (segDist <= 0 || travelTime <= Duration.ZERO) return null
 
-    // Interpolate the schedule time at startDist within this segment
+    // Interpolate the schedule time at startDist within this segment, then advance it by the
+    // wall-clock elapsed interval (the schedule-time group action).
     val fraction = (startDist - segStart.distanceAlongTrip) / segDist
-    val schedTimeAtStart = segStart.departureTime + fraction * travelTimeSec
-    val targetSchedTime = schedTimeAtStart + dtSec
+    val targetSchedTime: ScheduleTime = segStart.departureTime + travelTime * fraction + dt
 
     return walkForward(stopTimes, segIdx, targetSchedTime)
 }
 
 /**
  * Walks the schedule timeline forward from segment [startSegIdx] to find the distance corresponding
- * to [targetTime] (in seconds since service date).
+ * to [targetTime] (a schedule time).
  */
 private fun walkForward(
         stopTimes: Array<ObaTripSchedule.StopTime>,
         startSegIdx: Int,
-        targetTime: Double
+        targetTime: ScheduleTime
 ): Double {
     // Check if still within the starting segment's travel phase
     val segEnd = stopTimes[startSegIdx + 1]
@@ -126,11 +127,11 @@ private fun walkForward(
 private fun interpolateInSegment(
         from: ObaTripSchedule.StopTime,
         to: ObaTripSchedule.StopTime,
-        targetTime: Double
+        targetTime: ScheduleTime
 ): Double {
-    val travelTime = to.arrivalTime - from.departureTime
-    if (travelTime <= 0) return to.distanceAlongTrip
-    val elapsed = targetTime - from.departureTime
+    val travelTime: Duration = to.arrivalTime - from.departureTime
+    if (travelTime <= Duration.ZERO) return to.distanceAlongTrip
+    val elapsed: Duration = targetTime - from.departureTime
     val fraction = (elapsed / travelTime).coerceIn(0.0, 1.0)
     val segDist = to.distanceAlongTrip - from.distanceAlongTrip
     return from.distanceAlongTrip + fraction * segDist

@@ -17,19 +17,19 @@ package org.onebusaway.android.ui.dataview
 
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.data.TripState
-import org.onebusaway.android.time.ScheduleTime
-import org.onebusaway.android.time.ServiceDate
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
+import kotlin.time.Duration.Companion.seconds
 
-/** A plotted point: distance along the trip (meters) at a server-clock time (ms since epoch). */
-data class TrajectoryPoint(val distanceMeters: Double, val timeMs: Long)
+/** A plotted point: distance along the trip (meters) at a server-clock time. */
+data class TrajectoryPoint(val distanceMeters: Double, val timeMs: ServerTime)
 
 /** One scheduled stop: its distance, plus arrival/departure server-clock times (the dwell bar). */
 data class ScheduleStop(
     val distanceMeters: Double,
-    val arrivalMs: Long,
-    val departureMs: Long,
+    val arrivalMs: ServerTime,
+    val departureMs: ServerTime,
     val stopId: String?,
 )
 
@@ -38,38 +38,38 @@ data class PdfBin(val distanceMeters: Double, val normalizedHeight: Double)
 
 /**
  * The extrapolation overlay at [nowMs]: the median estimate and the 80% CI bounds projected from the
- * [anchor], plus the position PDF histogram. Distances in meters, times in server-clock ms.
+ * [anchor], plus the position PDF histogram. Distances in meters, times on the server clock.
  *
  * [scheduleAtMedianMs] is the server-clock time the schedule says the vehicle should reach the
- * median distance — the schedule-deviation reference. 0 when the median falls outside the schedule's
- * interpolatable span (no deviation to draw).
+ * median distance — the schedule-deviation reference. Null when the median falls outside the
+ * schedule's interpolatable span (no deviation to draw).
  */
 data class ExtrapolationSeries(
     val anchor: TrajectoryPoint,
-    val nowMs: Long,
+    val nowMs: ServerTime,
     val medianMeters: Double,
     val lowMeters: Double,
     val highMeters: Double,
     val pdf: List<PdfBin>,
-    val scheduleAtMedianMs: Long = 0L,
+    val scheduleAtMedianMs: ServerTime? = null,
 )
 
 /** The full data extent of a trajectory, for the viewport's initial fit. */
-data class DataBounds(val minDist: Double, val maxDist: Double, val minTime: Long, val maxTime: Long)
+data class DataBounds(val minDist: Double, val maxDist: Double, val minTime: ServerTime, val maxTime: ServerTime)
 
 /** Everything the trajectory graph plots for one trip at one instant. All distance-vs-time. */
 data class TripTrajectory(
     val observations: List<TrajectoryPoint> = emptyList(),
     val schedule: List<ScheduleStop> = emptyList(),
     val extrapolation: ExtrapolationSeries? = null,
-    val bounds: DataBounds = DataBounds(0.0, 0.0, 0L, 0L),
+    val bounds: DataBounds = DataBounds(0.0, 0.0, ServerTime(0L), ServerTime(0L)),
     /**
      * "Now" the graph was built at — the horizontal now line, rising over time. Already in the
      * server-clock domain the time axis is laid out in: [buildTrajectory] converts the caller's
      * local clock using the anchor's server/local skew, so the now line tracks the latest
      * observation even when the device clock drifts from the server's.
      */
-    val nowMs: Long = 0L,
+    val nowMs: ServerTime = ServerTime(0L),
 )
 
 /** Lower bound of the position-PDF histogram window (quantile). */
@@ -116,13 +116,13 @@ fun pdfBins(
  * the outermost points aren't drawn on the axes. Pure. A degenerate (empty or zero-extent) input
  * yields a unit-extent box so the viewport never divides by zero.
  */
-fun dataBounds(distances: List<Double>, times: List<Long>, padFraction: Double = 0.05): DataBounds {
+fun dataBounds(distances: List<Double>, times: List<ServerTime>, padFraction: Double = 0.05): DataBounds {
     val minD = distances.minOrNull() ?: 0.0
     val maxD = distances.maxOrNull() ?: 0.0
-    val minT = times.minOrNull() ?: 0L
-    val maxT = times.maxOrNull() ?: 0L
+    val minT = times.minOrNull() ?: ServerTime(0L)
+    val maxT = times.maxOrNull() ?: ServerTime(0L)
     val distPad = ((maxD - minD) * padFraction).coerceAtLeast(1.0)
-    val timePad = ((maxT - minT) * padFraction).toLong().coerceAtLeast(1_000L)
+    val timePad = ((maxT - minT) * padFraction).coerceAtLeast(1.seconds)
     return DataBounds(minD - distPad, maxD + distPad, minT - timePad, maxT + timePad)
 }
 
@@ -138,26 +138,25 @@ fun dataBounds(distances: List<Double>, times: List<Long>, padFraction: Double =
  * local clock).
  */
 fun buildTrajectory(state: TripState, nowMs: WallTime): TripTrajectory {
-    // Plot on the server-clock axis; unwrap to raw Long for the graph's time coordinates.
-    val serverNowMs = state.toServerClock(nowMs).epochMs
+    // Plot on the server-clock axis: reconcile the caller's local "now" via the anchor skew.
+    val serverNow = state.toServerClock(nowMs)
 
     val observations = state.history.mapNotNull { entry ->
         val dist = entry.status.distanceAlongTrip ?: return@mapNotNull null
-        val time = entry.status.lastUpdateTime.takeIf { it > 0 } ?: entry.serverTimeMs.epochMs
+        val time = entry.status.lastUpdateTime.takeIf { it > 0 }?.let { ServerTime(it) } ?: entry.serverTimeMs
         TrajectoryPoint(dist, time)
     }
 
-    // serviceDate defaults to 0 (unknown); resolving against it would plot every stop near the 1970
-    // epoch. Skip the schedule overlay until a real date arrives rather than draw that decoy.
-    val serviceDate = state.serviceDate.takeIf { it > 0 }?.let { ServiceDate(it) }
-    val schedule = serviceDate?.let { day ->
+    // The schedule overlay needs a concrete service day to resolve its stop times onto the server
+    // clock. Skip it while the date is unknown (null) rather than plot a decoy — the type makes the
+    // unknown case impossible to forget.
+    val schedule = state.serviceDate?.let { day ->
         state.schedule?.stopTimes.orEmpty().map { st ->
             ScheduleStop(
                 distanceMeters = st.distanceAlongTrip,
-                // Resolve each recurring schedule offset onto the server-clock axis, then unwrap to the
-                // raw Long the graph's time coordinates use.
-                arrivalMs = ScheduleTime(st.arrivalTime).resolve(day).epochMs,
-                departureMs = ScheduleTime(st.departureTime).resolve(day).epochMs,
+                // Resolve each recurring schedule offset onto the server-clock axis.
+                arrivalMs = st.arrivalTime.resolve(day),
+                departureMs = st.departureTime.resolve(day),
                 stopId = st.stopId,
             )
         }
@@ -171,13 +170,13 @@ fun buildTrajectory(state: TripState, nowMs: WallTime): TripTrajectory {
         extrapolation?.let { add(it.anchor.distanceMeters); add(it.medianMeters); add(it.highMeters) }
     }
     val times = buildList {
-        add(serverNowMs) // keep the now line in-bounds even before any extrapolation exists
+        add(serverNow) // keep the now line in-bounds even before any extrapolation exists
         observations.forEach { add(it.timeMs) }
         schedule.forEach { add(it.arrivalMs); add(it.departureMs) }
         extrapolation?.let { add(it.anchor.timeMs); add(it.nowMs) }
     }
 
-    return TripTrajectory(observations, schedule, extrapolation, dataBounds(distances, times), serverNowMs)
+    return TripTrajectory(observations, schedule, extrapolation, dataBounds(distances, times), serverNow)
 }
 
 private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, nowMs: WallTime): ExtrapolationSeries? {
@@ -188,8 +187,8 @@ private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, 
     val high = distribution.quantile(CI_HIGH_QUANTILE)
     if (!median.isFinite() || !low.isFinite() || !high.isFinite()) return null
     return ExtrapolationSeries(
-        anchor = TrajectoryPoint(anchorDist, state.anchorTimeMs.epochMs),
-        nowMs = state.toServerClock(nowMs).epochMs,
+        anchor = TrajectoryPoint(anchorDist, state.anchorTimeMs),
+        nowMs = state.toServerClock(nowMs),
         medianMeters = median,
         lowMeters = low,
         highMeters = high,
@@ -203,7 +202,7 @@ private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, 
  * arrival time [t1] at [d1]. Boundary ownership (which segment claims a distance exactly on [d0]/[d1])
  * is not a property of the segment — it lives in [interpolateScheduleTime].
  */
-internal data class ScheduleSegment(val d0: Double, val d1: Double, val t0: Long, val t1: Long) {
+internal data class ScheduleSegment(val d0: Double, val d1: Double, val t0: ServerTime, val t1: ServerTime) {
     init {
         require(d1 > d0) { "ScheduleSegment requires strictly increasing distance, got d0=$d0 d1=$d1" }
     }
@@ -233,27 +232,27 @@ internal fun scheduleSegments(schedule: List<ScheduleStop>): List<ScheduleSegmen
 /**
  * The server-clock time the [schedule] says the vehicle reaches [distanceMeters], linearly
  * interpolated within the bracketing stop pair (previous stop's departure to next stop's arrival).
- * Pure, so it is unit-testable. Returns 0 when fewer than two stops exist or the distance falls
+ * Pure, so it is unit-testable. Returns null when fewer than two stops exist or the distance falls
  * outside every interpolatable segment.
  *
  * Each segment is half-open `[d0, d1)`, so a distance exactly on a stop boundary lands in a single
  * segment (the next one) instead of being ambiguously claimed by both. The trip's final distance,
  * which every half-open span excludes, is mapped after the scan to the last segment's arrival so the
- * end of the trip still resolves rather than dropping to the 0 sentinel. Operating on
+ * end of the trip still resolves rather than dropping to null. Operating on
  * [scheduleSegments] (strictly increasing by construction) means there is no degenerate case left to
  * handle here.
  */
-fun interpolateScheduleTime(schedule: List<ScheduleStop>, distanceMeters: Double): Long {
+fun interpolateScheduleTime(schedule: List<ScheduleStop>, distanceMeters: Double): ServerTime? {
     val segments = scheduleSegments(schedule)
     for (s in segments) {
         if (distanceMeters >= s.d0 && distanceMeters < s.d1) {
             val fraction = (distanceMeters - s.d0) / (s.d1 - s.d0)
-            return s.t0 + (fraction * (s.t1 - s.t0)).toLong()
+            return s.t0 + (s.t1 - s.t0) * fraction
         }
     }
     // Half-open spans exclude the trip's final distance; map that exact endpoint to the last arrival.
-    val last = segments.lastOrNull() ?: return 0L
-    return if (distanceMeters == last.d1) last.t1 else 0L
+    val last = segments.lastOrNull() ?: return null
+    return if (distanceMeters == last.d1) last.t1 else null
 }
 
 /**

@@ -24,6 +24,7 @@ import org.onebusaway.android.extrapolation.math.prob.GammaMixtureDistribution
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.time.WallTime
+import kotlin.time.Duration
 import kotlin.time.DurationUnit
 
 // H34 two-gamma mixture parameters, fitted on span-weighted King County Metro data (in mph).
@@ -135,9 +136,11 @@ private fun ObaTripSchedule.speedAtDistance(distanceAlongTrip: Double): Double? 
 
     val distDelta =
         stopTimes[segmentStart + 1].distanceAlongTrip - stopTimes[segmentStart].distanceAlongTrip
-    val timeDelta = stopTimes[segmentStart + 1].arrivalTime - stopTimes[segmentStart].departureTime
+    val timeDelta: Duration = stopTimes[segmentStart + 1].arrivalTime - stopTimes[segmentStart].departureTime
 
-    return if (distDelta > 0 && timeDelta > 0) distDelta / timeDelta else null
+    return if (distDelta > 0 && timeDelta > Duration.ZERO)
+        distDelta / timeDelta.toDouble(DurationUnit.SECONDS)
+    else null
 }
 
 private fun sigmoid(x: Double): Double = 1.0 / (1.0 + exp(-x))

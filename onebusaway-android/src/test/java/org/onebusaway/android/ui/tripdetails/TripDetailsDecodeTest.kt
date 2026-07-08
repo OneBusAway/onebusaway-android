@@ -87,6 +87,8 @@ class TripDetailsDecodeTest {
 
         assertEquals(2, entry.schedule!!.stopTimes.size)
         assertEquals("1_s1", entry.schedule.stopTimes[0].stopId)
+        // Wire DTO stays a raw Long of seconds-since-service-day (60180 = 16:43); the domain mint to
+        // ScheduleTime happens later, in TripAdapters.toObaTripSchedule.
         assertEquals(60180L, entry.schedule.stopTimes[0].arrivalTime)
 
         // Trip ref uses the wire names tripHeadsign / tripShortName.

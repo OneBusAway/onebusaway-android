@@ -23,9 +23,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import java.util.Calendar
 import java.util.GregorianCalendar
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
@@ -36,8 +34,8 @@ import org.onebusaway.android.models.ObaTrip
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Status
-import org.onebusaway.android.time.ScheduleTime
 import org.onebusaway.android.time.ServiceDate
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -175,7 +173,7 @@ class DefaultTripDetailsRepository @Inject constructor(
 
         // Time base: real-time service date + deviation, or (schedule-only) an approximate device
         // midnight — minted through the named factory so the off-contract provenance stays visible.
-        val deviation = (status?.scheduleDeviation ?: 0L).seconds
+        val deviation = status?.scheduleDeviation ?: Duration.ZERO
         val serviceDate = status?.serviceDate?.let { ServiceDate(it) }
             ?: ServiceDate.approximateFromDeviceMidnight(midnightToday())
         val canceled = status != null && status.status == Status.CANCELED
@@ -185,7 +183,7 @@ class DefaultTripDetailsRepository @Inject constructor(
             val stop = td.stop(stopTime.stopId)
             // Resolve the scheduled stop time onto the server clock, then shift by the live schedule
             // deviation (a server-clock ServerTime + Duration group action).
-            val millis = (ScheduleTime(stopTime.arrivalTime).resolve(serviceDate) + deviation).epochMs
+            val millis = (stopTime.arrivalTime.resolve(serviceDate) + deviation).epochMs
             TripStopItem(
                 stopId = stopTime.stopId,
                 name = MyTextUtils.formatDisplayText(stop?.name).orEmpty(),
@@ -225,11 +223,11 @@ class DefaultTripDetailsRepository @Inject constructor(
         status: ObaTripStatus?,
         isRealtime: Boolean
     ): TripHeader {
-        val deviation = status?.scheduleDeviation ?: 0L
+        val deviation = status?.scheduleDeviation ?: Duration.ZERO
         val statusColor = when {
             status == null || !status.isPredicted -> R.color.stop_info_scheduled_time
             else -> {
-                val c = ArrivalInfoUtils.computeColorFromDeviation(TimeUnit.SECONDS.toMinutes(deviation))
+                val c = ArrivalInfoUtils.computeColorFromDeviation(deviation.inWholeMinutes)
                 if (c == R.color.stop_info_ontime) R.color.theme_primary else c
             }
         }
@@ -247,7 +245,7 @@ class DefaultTripDetailsRepository @Inject constructor(
 
     private fun headerStatusText(
         status: ObaTripStatus?,
-        deviation: Long
+        deviation: Duration
     ): String = when {
         status == null -> context.getString(R.string.trip_details_scheduled_data)
         !status.isPredicted ->
@@ -255,15 +253,16 @@ class DefaultTripDetailsRepository @Inject constructor(
             else context.getString(R.string.trip_details_scheduled_data)
 
         else -> {
-            val minutes = abs(deviation) / 60
-            val seconds = abs(deviation) % 60
+            val absDev = deviation.absoluteValue
+            val minutes = absDev.inWholeMinutes
+            val seconds = absDev.inWholeSeconds % 60
             val lastUpdate = DisplayFormat.formatTime(context, status.lastUpdateTime)
             when {
-                deviation >= 0 && deviation < 60 ->
+                deviation >= Duration.ZERO && deviation < 60.seconds ->
                     context.resources.getQuantityString(R.plurals.trip_details_real_time_sec_late, seconds.toInt(), seconds, lastUpdate)
-                deviation >= 0 ->
+                deviation >= Duration.ZERO ->
                     context.resources.getQuantityString(R.plurals.trip_details_real_time_min_sec_late, seconds.toInt(), minutes, seconds, lastUpdate)
-                deviation > -60 ->
+                deviation > -(60.seconds) ->
                     context.resources.getQuantityString(R.plurals.trip_details_real_time_sec_early, seconds.toInt(), seconds, lastUpdate)
                 else ->
                     context.resources.getQuantityString(R.plurals.trip_details_real_time_min_sec_early, seconds.toInt(), minutes, seconds, lastUpdate)

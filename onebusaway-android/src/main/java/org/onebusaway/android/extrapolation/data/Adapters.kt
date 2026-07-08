@@ -21,6 +21,7 @@ import org.onebusaway.android.models.ObaTrip
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.ServiceDate
 
 /*
  * The adapter between a trips-for-route / trip-details fetch and the trip store's standard
@@ -32,22 +33,31 @@ import org.onebusaway.android.time.ServerTime
 
 /**
  * What one API response said about one trip's vehicle: the standard object the trip store
- * records. [serviceDate] is 0 and [routeType] null when the response doesn't carry them.
+ * records. [serviceDate] and [routeType] are null when the response doesn't carry them.
  */
 data class TripObservation(
         val tripId: String,
         val status: ObaTripStatus,
         /** The server's currentTime when the status was fetched. */
         val serverTimeMs: ServerTime,
-        val serviceDate: Long,
+        val serviceDate: ServiceDate?,
         val routeType: Int?
 )
+
+/**
+ * Decodes the OBA service-date wire sentinel — 0 means "the response didn't carry one" — into the
+ * domain type. The wire convention lives here in the data layer, not on [ServiceDate] itself, which
+ * stays a pure domain wrapper (CLAUDE.md: unit/sentinel normalization belongs at the wire boundary).
+ */
+internal fun serviceDateOrNull(epochMs: Long): ServiceDate? =
+        epochMs.takeIf { it > 0 }?.let(::ServiceDate)
 
 /** One observation per active trip in the route's vehicles (one for a single trip-details poll). */
 fun RouteTrips.toObservations(): List<TripObservation> = buildList {
     forEachActiveTrip { tripId, status, _ ->
-        // currentTimeMs is the server's currentTime, already epoch millis.
-        add(TripObservation(tripId, status, ServerTime(currentTimeMs), status.serviceDate, routeTypeForTrip(tripId)))
+        // currentTimeMs is the server's currentTime, already epoch millis. Decode the service-date
+        // sentinel (0 = absent) into ServiceDate? exactly here, at the mint boundary.
+        add(TripObservation(tripId, status, ServerTime(currentTimeMs), serviceDateOrNull(status.serviceDate), routeTypeForTrip(tripId)))
     }
 }
 

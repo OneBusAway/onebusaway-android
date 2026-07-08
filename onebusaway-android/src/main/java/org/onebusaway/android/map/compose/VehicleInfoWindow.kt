@@ -77,7 +77,7 @@ fun VehicleInfoWindow(status: ObaTripStatus, isRealtime: Boolean, response: Rout
     // guard the unreachable null instead of dereferencing (the legacy getTrip/getRoute would NPE).
     val trip = response.trip(status.activeTripId) ?: return
     val route = response.route(trip.routeId) ?: return
-    val deviationMin = TimeUnit.SECONDS.toMinutes(status.scheduleDeviation)
+    val deviationMin = status.scheduleDeviation.inWholeMinutes
 
     // [isRealtime] is the drawn marker's live-vs-scheduled flag (from the renderer), so the window can't
     // disagree with the icon; the arrival listings share the scheduled-vs-deviation coloring via ArrivalInfoUtils.

@@ -16,7 +16,6 @@
 package org.onebusaway.android.time
 
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 /*
  * Civil (schedule) time — the third kind of time, distinct from the clock instants in TypedTime.kt.
@@ -26,10 +25,10 @@ import kotlin.time.Duration.Companion.seconds
  * has no clock domain until it is resolved against a concrete service day — it is the recurring civil
  * label, the service day is the interpretation context, and [ScheduleTime.resolve] is the one place
  * that pairs them to land on the [ServerTime] timeline. (This is the same split java.time draws between
- * `LocalTime` and `Instant`, specialized to GTFS's "seconds since the service day start".)
+ * `LocalTime` and `Instant`, specialized to GTFS's "time since the service day start".)
  *
  * These are pure domain wrappers, mirroring TypedTime.kt: mint at the boundary, unwrap only at a
- * platform edge (formatting, a plotting coordinate). The seconds↔millis and DST conventions live in
+ * platform edge (formatting, a plotting coordinate). The offset→millis and DST conventions live in
  * exactly one place — [ScheduleTime.resolve] — so no other site re-derives them.
  */
 
@@ -62,30 +61,40 @@ value class ServiceDate(val epochMs: Long) {
 }
 
 /**
- * A **schedule time**: a whole-second offset from a [ServiceDate], i.e. GTFS "seconds since the service
- * day start" (`ObaTripSchedule.StopTime.arrivalTime`/`departureTime`). Recurring civil time, not an
- * instant — it carries no clock domain until [resolve]d against a concrete service day.
+ * A **schedule time**: the offset from a [ServiceDate] to a scheduled event, i.e. GTFS "time since the
+ * service day start" (`ObaTripSchedule.StopTime.arrivalTime`/`departureTime`). Recurring civil time,
+ * not an instant — it carries no clock domain until [resolve]d against a concrete service day.
  *
- * Same-domain subtraction yields the **scheduled interval** between two schedule points (e.g. a stop's
- * dwell, or the run time between two stops) as a [Duration]. There is deliberately no addition of two
- * schedule times and no comparison against any clock instant — the only bridge to the timeline is
- * [resolve].
+ * Unlike the clock instants (torsors, with no canonical zero), schedule time has a real origin — the
+ * service-day start — so it is represented literally as its [Duration] offset from that origin. That
+ * choice also buys the interpolation algebra for free: [Duration] scales by a `Double` and divides to
+ * a `Double`, exactly the two operations walking a fractional point between whole-second stop times
+ * needs (see `ScheduleReplayExtrapolator`). Same-domain subtraction yields the **scheduled interval**
+ * between two points; the group action ([plus]/[minus] a [Duration]) shifts a point by an elapsed
+ * interval. There is deliberately no addition of two schedule times and no comparison against any clock
+ * instant — the only bridge to the timeline is [resolve].
  */
 @JvmInline
-value class ScheduleTime(val secondsIntoServiceDay: Long) : Comparable<ScheduleTime> {
+value class ScheduleTime(val sinceServiceDayStart: Duration) : Comparable<ScheduleTime> {
 
     override fun compareTo(other: ScheduleTime): Int =
-        secondsIntoServiceDay.compareTo(other.secondsIntoServiceDay)
+        sinceServiceDayStart.compareTo(other.sinceServiceDayStart)
 
     /** The scheduled interval from [other] to this schedule point. Same-domain only. */
     operator fun minus(other: ScheduleTime): Duration =
-        (secondsIntoServiceDay - other.secondsIntoServiceDay).seconds
+        sinceServiceDayStart - other.sinceServiceDayStart
+
+    /** This schedule point shifted later by [elapsed] (the group action); still schedule time. */
+    operator fun plus(elapsed: Duration): ScheduleTime = ScheduleTime(sinceServiceDayStart + elapsed)
+
+    /** This schedule point shifted earlier by [elapsed]. Distinct from `minus(ScheduleTime)` by type. */
+    operator fun minus(elapsed: Duration): ScheduleTime = ScheduleTime(sinceServiceDayStart - elapsed)
 
     /**
      * Resolves this recurring schedule time to a concrete server-clock instant on [day].
      *
      * The single sanctioned schedule→instant adapter — the civil-time analogue of the API layer's
-     * `situationEpochToMillis`. `day.epochMs + seconds` is DST-correct **only** because the OBA server
+     * `situationEpochToMillis`. `day.epochMs + offset` is DST-correct **only** because the OBA server
      * defines the service date as the GTFS noon-minus-12h anchor and has already done the timezone
      * arithmetic upstream, so a fixed 86 400-second day plus the raw offset lands on the right wall
      * instant even across a DST transition. The client trusts that server convention here rather than
@@ -94,5 +103,5 @@ value class ScheduleTime(val secondsIntoServiceDay: Long) : Comparable<ScheduleT
      * always compared against the server's "now", never the device clock (CLAUDE.md "Time domains").
      */
     fun resolve(day: ServiceDate): ServerTime =
-        ServerTime(day.epochMs + secondsIntoServiceDay * 1000L)
+        ServerTime(day.epochMs + sinceServiceDayStart.inWholeMilliseconds)
 }

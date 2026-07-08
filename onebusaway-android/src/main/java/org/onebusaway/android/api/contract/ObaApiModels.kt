@@ -276,8 +276,10 @@ data class TripSchedule(
 )
 
 /**
- * One scheduled stop on a trip; [arrivalTime]/[departureTime] are epoch millis and
- * [distanceAlongTrip] is meters (used by the schedule-replay extrapolator).
+ * One scheduled stop on a trip; [arrivalTime]/[departureTime] are **seconds since the service day
+ * start** (verified against sample payloads — e.g. 60180 = 16:43, not epoch millis; contrast the
+ * epoch-millis [ScheduleStopTime] below) and [distanceAlongTrip] is meters. The adapter mints these
+ * into the domain-typed `ObaTripSchedule.StopTime.arrivalTime` (a `ScheduleTime`).
  */
 @Serializable
 data class StopTime(
@@ -413,7 +415,12 @@ data class DirectionSchedule(
     val scheduleStopTimes: List<ScheduleStopTime> = emptyList(),
 )
 
-/** One scheduled visit of a trip to the stop; [arrivalTime]/[departureTime] are epoch millis. */
+/**
+ * One scheduled visit of a trip to the stop; [arrivalTime]/[departureTime] are **epoch millis**
+ * (verified against sample payloads — e.g. 1343663220000 = 2012-07-30, genuinely millis here, unlike
+ * the seconds-based [StopTime] above). Not yet domain-typed — this schedule-for-stop cluster has no
+ * ScheduleTime/ServerTime consumer yet; mint at its adapter when one lands.
+ */
 @Serializable
 data class ScheduleStopTime(
     val tripId: String = "",

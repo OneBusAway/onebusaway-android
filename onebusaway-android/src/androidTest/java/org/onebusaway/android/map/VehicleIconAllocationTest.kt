@@ -17,6 +17,8 @@ package org.onebusaway.android.map
 
 import org.onebusaway.android.time.WallTime
 import android.content.Context
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
@@ -271,7 +273,7 @@ class VehicleIconAllocationTest {
             isRealtime = true,
             bearing = 0f,
             status = object : ObaTripStatus by vehicle.status {
-                override val scheduleDeviation: Long = deviationSeconds
+                override val scheduleDeviation: Duration = deviationSeconds.seconds
             },
         )
 

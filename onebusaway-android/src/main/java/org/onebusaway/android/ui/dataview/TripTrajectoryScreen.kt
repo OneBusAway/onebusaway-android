@@ -173,7 +173,7 @@ private fun TrajectoryGraph(trajectory: TripTrajectory, modifier: Modifier) {
         invalidations // read so gesture mutations recompose this draw
         viewport.setDataBounds(
             trajectory.bounds.minDist, trajectory.bounds.maxDist,
-            trajectory.bounds.minTime, trajectory.bounds.maxTime,
+            trajectory.bounds.minTime.epochMs, trajectory.bounds.maxTime.epochMs,
         )
         if (!viewport.setupVisibleWindow(size.width, size.height)) return@Canvas
 
@@ -181,7 +181,7 @@ private fun TrajectoryGraph(trajectory: TripTrajectory, modifier: Modifier) {
         drawSchedule(viewport, trajectory.schedule)
         drawObservations(viewport, trajectory.observations)
         trajectory.extrapolation?.let { drawExtrapolation(viewport, it, labelPaint, deviationLabelPaint) }
-        drawNowLine(viewport, trajectory.nowMs, nowLabelPaint, timeFormat)
+        drawNowLine(viewport, trajectory.nowMs.epochMs, nowLabelPaint, timeFormat)
     }
 }
 
@@ -205,8 +205,8 @@ private fun DrawScope.drawSchedule(viewport: GraphViewport, schedule: List<Sched
     if (schedule.isEmpty()) return
     var prev: Offset? = null
     schedule.forEach { stop ->
-        val arrival = Offset(viewport.toPixelX(stop.distanceMeters), viewport.toPixelY(stop.arrivalMs))
-        val departure = Offset(viewport.toPixelX(stop.distanceMeters), viewport.toPixelY(stop.departureMs))
+        val arrival = Offset(viewport.toPixelX(stop.distanceMeters), viewport.toPixelY(stop.arrivalMs.epochMs))
+        val departure = Offset(viewport.toPixelX(stop.distanceMeters), viewport.toPixelY(stop.departureMs.epochMs))
         prev?.let { drawLine(ScheduleColor, it, arrival, 4f) }
         if (stop.departureMs != stop.arrivalMs) {
             drawLine(ScheduleColor, arrival, departure, 8f, cap = StrokeCap.Round) // dwell
@@ -219,7 +219,7 @@ private fun DrawScope.drawSchedule(viewport: GraphViewport, schedule: List<Sched
 private fun DrawScope.drawObservations(viewport: GraphViewport, observations: List<TrajectoryPoint>) {
     var prev: Offset? = null
     observations.forEach { point ->
-        val p = Offset(viewport.toPixelX(point.distanceMeters), viewport.toPixelY(point.timeMs))
+        val p = Offset(viewport.toPixelX(point.distanceMeters), viewport.toPixelY(point.timeMs.epochMs))
         prev?.let { drawLine(TrajectoryColor, it, p, 6f) }
         drawCircle(TrajectoryColor, radius = 6f, center = p)
         prev = p
@@ -232,12 +232,12 @@ private fun DrawScope.drawExtrapolation(
     labelPaint: Paint,
     deviationLabelPaint: Paint,
 ) {
-    val anchor = Offset(viewport.toPixelX(series.anchor.distanceMeters), viewport.toPixelY(series.anchor.timeMs))
-    val median = Offset(viewport.toPixelX(series.medianMeters), viewport.toPixelY(series.nowMs))
+    val anchor = Offset(viewport.toPixelX(series.anchor.distanceMeters), viewport.toPixelY(series.anchor.timeMs.epochMs))
+    val median = Offset(viewport.toPixelX(series.medianMeters), viewport.toPixelY(series.nowMs.epochMs))
 
     // 80% CI: dashed lines from the anchor to the low/high bounds at "now".
-    val low = Offset(viewport.toPixelX(series.lowMeters), viewport.toPixelY(series.nowMs))
-    val high = Offset(viewport.toPixelX(series.highMeters), viewport.toPixelY(series.nowMs))
+    val low = Offset(viewport.toPixelX(series.lowMeters), viewport.toPixelY(series.nowMs.epochMs))
+    val high = Offset(viewport.toPixelX(series.highMeters), viewport.toPixelY(series.nowMs.epochMs))
     drawLine(ConfidenceColor, anchor, low, 3f, pathEffect = CiDashes)
     drawLine(ConfidenceColor, anchor, high, 3f, pathEffect = CiDashes)
 
@@ -271,11 +271,11 @@ private fun DrawScope.drawExtrapolation(
 
     // Schedule deviation: an orange marker at the time the schedule says the vehicle reaches the
     // median distance, linked up to "now" by a dashed line; the gap is how early/late it's running.
-    if (series.scheduleAtMedianMs > 0L) {
-        val schedY = viewport.toPixelY(series.scheduleAtMedianMs)
+    series.scheduleAtMedianMs?.let { scheduleAtMedian ->
+        val schedY = viewport.toPixelY(scheduleAtMedian.epochMs)
         drawLine(DeviationColor, Offset(median.x, schedY), median, 3f, pathEffect = DeviationDashes)
         drawCircle(DeviationColor, radius = 10f, center = Offset(median.x, schedY))
-        val devLabel = formatDeviationLabel((series.nowMs - series.scheduleAtMedianMs) / 1000)
+        val devLabel = formatDeviationLabel((series.nowMs - scheduleAtMedian).inWholeSeconds)
         drawContext.canvas.nativeCanvas.drawText(
             devLabel,
             median.x + 5f,

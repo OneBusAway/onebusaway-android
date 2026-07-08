@@ -253,10 +253,11 @@ class MapViewModel @Inject constructor(
         zoomToRoute: Boolean,
         directionStopId: String?,
         initialDirectionId: Int? = null,
+        focusTripId: String? = null,
     ) {
         leaveCurrentView()
         persistRoute(routeId, directionStopId, initialDirectionId)
-        routeController.start(routeId, zoomToRoute, directionStopId, initialDirectionId)
+        routeController.start(routeId, zoomToRoute, directionStopId, initialDirectionId, focusTripId)
         bikeController.start(directions = false, selectedBikeStationIds = null)
     }
 
@@ -342,16 +343,32 @@ class MapViewModel @Inject constructor(
      * Enters route mode (loading its shape, stops, and live vehicles) and frames the route's bounding
      * box. Re-frames even when the map is already parked on that route + direction: re-tapping it in the
      * recent-routes list snaps the camera back to the route's extent instead of no-op'ing.
+     *
+     * When [request] carries a [ShowRouteRequest.focusTripId] (the arrivals ETA-pill tap), the map fits
+     * that trip's live vehicle together with the originating stop instead of framing the whole route, and
+     * raises the "vehicle isn't on the map" toast when no live vehicle is running that trip. A plain row
+     * tap carries no [ShowRouteRequest.focusTripId] and just frames the whole route.
      */
     fun toRoute(request: ShowRouteRequest) {
-        // Same route AND same direction anchor: just reframe (the recent-routes re-tap). A different
-        // route, or the same route from a different-direction stop, re-enters with the new filter.
+        // Same route AND same direction anchor: a plain re-tap (no focus) just reframes (the recent-routes
+        // re-tap); an ETA-pill focus instead fits the vehicle+stop against the already-loaded vehicles (or
+        // toasts, without reframing, when the vehicle isn't there). A different route, or the same route
+        // from a different-direction stop, re-enters with the new filter (which resolves the focus on first poll).
         if (routeController.routeId == request.routeId &&
             routeController.directionStopId == request.directionStopId
         ) {
-            mapHost.frameRoute()
+            if (request.focusTripId == null) {
+                mapHost.frameRoute()
+            } else {
+                routeController.requestFocus(request.focusTripId)
+            }
         } else {
-            enterRoute(request.routeId, zoomToRoute = true, directionStopId = request.directionStopId)
+            enterRoute(
+                request.routeId,
+                zoomToRoute = true,
+                directionStopId = request.directionStopId,
+                focusTripId = request.focusTripId,
+            )
         }
     }
 

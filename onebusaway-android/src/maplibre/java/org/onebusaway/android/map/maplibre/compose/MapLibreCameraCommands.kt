@@ -26,6 +26,9 @@ import org.onebusaway.android.map.maplibre.MapHelpMapLibre
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.POINTS_FRAMING_PADDING_DP
+import org.onebusaway.android.map.render.framingCorners
+import org.onebusaway.android.util.ViewUtils
 import kotlin.math.abs
 
 // The same default zoom the imperative MapLibreMapHost used for these camera moves.
@@ -105,6 +108,17 @@ fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: Map
         is FramingIntent.Point -> map.moveCamera(
             CameraUpdateFactory.newLatLngZoom(LatLng(intent.lat, intent.lon), intent.zoom.toDouble())
         )
+
+        is FramingIntent.Points -> {
+            val (sw, ne) = framingCorners(intent.points) ?: return
+            val bounds = LatLngBounds.Builder()
+                .include(LatLng(sw.latitude, sw.longitude))
+                .include(LatLng(ne.latitude, ne.longitude))
+                .build()
+            map.animateCamera(
+                CameraUpdateFactory.newLatLngBounds(bounds, ViewUtils.dpToPixels(context, POINTS_FRAMING_PADDING_DP))
+            )
+        }
     }
 }
 

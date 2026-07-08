@@ -42,4 +42,42 @@ sealed interface FramingIntent {
 
     /** Center on a fixed point at a fixed zoom (the degenerate directions itinerary: start == end). */
     data class Point(val lat: Double, val lon: Double, val zoom: Float) : FramingIntent
+
+    /**
+     * Fit the bounds enclosing an explicit set of [points] with the default padding — the arrivals-row
+     * tap fitting a route's live vehicle together with its originating stop, so the map frames the
+     * relationship between the two. Self-contained (unlike [Route]/[Region], it carries its own points),
+     * so a replay to a re-created adapter just re-fits the same box. The adapter expands a degenerate box
+     * (a vehicle sitting on its stop) to a minimum span so it doesn't zoom to the rooftops
+     * (see [framingCorners]).
+     */
+    data class Points(val points: List<GeoPoint>) : FramingIntent
+}
+
+/** The smallest lat/lon span a [FramingIntent.Points] box is fit to, so near-coincident points don't over-zoom. */
+const val MIN_FRAMING_SPAN_DEG: Double = 0.004
+
+/**
+ * Padding (dp) between a [FramingIntent.Points] box and the map edges — breathing room around the fit
+ * pair. Flavor-neutral so both map adapters frame the vehicle+stop identically (each converts to pixels).
+ */
+const val POINTS_FRAMING_PADDING_DP: Float = 48.0f
+
+/**
+ * The SW and NE corners enclosing [points], each side widened to at least [minSpanDeg] around the box's
+ * center so a degenerate/tiny box (a vehicle on top of its stop) frames at a comfortable zoom instead of
+ * the maximum. Null when [points] is empty. Flavor-neutral so both map adapters share the same box math.
+ */
+fun framingCorners(
+    points: List<GeoPoint>,
+    minSpanDeg: Double = MIN_FRAMING_SPAN_DEG,
+): Pair<GeoPoint, GeoPoint>? {
+    if (points.isEmpty()) return null
+    val minLat = points.minOf { it.latitude }
+    val maxLat = points.maxOf { it.latitude }
+    val minLon = points.minOf { it.longitude }
+    val maxLon = points.maxOf { it.longitude }
+    val latPad = ((minSpanDeg - (maxLat - minLat)) / 2).coerceAtLeast(0.0)
+    val lonPad = ((minSpanDeg - (maxLon - minLon)) / 2).coerceAtLeast(0.0)
+    return GeoPoint(minLat - latPad, minLon - lonPad) to GeoPoint(maxLat + latPad, maxLon + lonPad)
 }

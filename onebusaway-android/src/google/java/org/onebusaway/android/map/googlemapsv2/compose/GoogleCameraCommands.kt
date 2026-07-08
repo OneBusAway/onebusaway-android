@@ -28,6 +28,8 @@ import org.onebusaway.android.map.googlemapsv2.MapHelpV2
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.POINTS_FRAMING_PADDING_DP
+import org.onebusaway.android.map.render.framingCorners
 import org.onebusaway.android.util.ViewUtils
 import kotlin.math.abs
 
@@ -148,6 +150,14 @@ fun applyFramingIntent(
         is FramingIntent.Point -> map.moveCamera(
             CameraUpdateFactory.newLatLngZoom(LatLng(intent.lat, intent.lon), intent.zoom)
         )
+
+        is FramingIntent.Points -> {
+            val (sw, ne) = framingCorners(intent.points) ?: return
+            val bounds = LatLngBounds(LatLng(sw.latitude, sw.longitude), LatLng(ne.latitude, ne.longitude))
+            map.animateCamera(
+                CameraUpdateFactory.newLatLngBounds(bounds, ViewUtils.dpToPixels(context, POINTS_FRAMING_PADDING_DP))
+            )
+        }
     }
 }
 

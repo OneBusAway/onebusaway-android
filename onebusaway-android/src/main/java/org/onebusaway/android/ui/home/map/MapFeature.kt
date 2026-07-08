@@ -205,6 +205,9 @@ fun MapFeature(
                 MapEffect.WaitingForLocation -> Toast.makeText(
                     context, R.string.main_waiting_for_location, Toast.LENGTH_SHORT
                 ).show()
+                MapEffect.VehicleNotOnMap -> Toast.makeText(
+                    context, R.string.stop_info_vehicle_not_on_map, Toast.LENGTH_SHORT
+                ).show()
                 is MapEffect.ShowError -> Toast.makeText(
                     context, ObaRequestErrors.getMapErrorString(context, effect.code), Toast.LENGTH_LONG
                 ).show()

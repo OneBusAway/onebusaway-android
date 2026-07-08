@@ -262,6 +262,8 @@ private fun PeekRow(
         onFavorite = { actions?.let { callbacks.onRouteFavorite(it) } },
         onMore = { expanded = true },
         onAlertClick = alertClick(actions, callbacks),
+        onRowClick = { callbacks.onShowVehiclesOnMap(arrival) },
+        onEtaClick = { callbacks.onEtaClick(arrival) },
         etaModifier = etaModifier,
         starModifier = starModifier,
         menu = {
@@ -273,7 +275,8 @@ private fun PeekRow(
 /**
  * A peek arrival that morphs between its two formats in lockstep with the drawer's open fraction
  * [progress]: the compact [PeekRow] at 0 and the full [ArrivalRowStyleA] card at 1. The seekable
- * crossfade/size morph lives in [MorphByProgress]; this just binds the two arrival layouts to it.
+ * crossfade/size morph — and the "only the visible layer is hit-testable at rest" behavior that keeps the
+ * peek's ETA pill from being shadowed by the invisible card twin — both live in [MorphByProgress].
  */
 @Composable
 private fun MorphingArrivalRow(
@@ -311,10 +314,17 @@ private fun PeekRowVisual(
     etaModifier: Modifier = Modifier,
     starModifier: Modifier = Modifier,
     onAlertClick: (() -> Unit)? = null,
+    // Tapping the row body frames the whole route; tapping the ETA pill focuses this trip's vehicle +
+    // stop (null in previews). The pill is a Surface(onClick) and the star/overflow are IconButtons, so
+    // each nested target reliably wins over the row-body click in its own bounds.
+    onRowClick: (() -> Unit)? = null,
+    onEtaClick: (() -> Unit)? = null,
     menu: @Composable () -> Unit = {}
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (onRowClick != null) Modifier.clickable(onClick = onRowClick) else Modifier),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onFavorite, modifier = starModifier) {
@@ -345,7 +355,7 @@ private fun PeekRowVisual(
             ArrivalAlertIndicator(onClick = onAlertClick)
         }
         Spacer(Modifier.width(8.dp))
-        EtaPill(eta, etaColor, predicted, modifier = etaModifier)
+        EtaPill(eta, etaColor, predicted, modifier = etaModifier, onClick = onEtaClick)
         Box {
             IconButton(onClick = onMore) {
                 Icon(
@@ -371,10 +381,14 @@ internal fun EtaPill(
     predicted: Boolean,
     modifier: Modifier = Modifier,
     canceled: Boolean = false,
+    // When non-null (the drawer peek row), the whole pill is a tap target — focus this trip's vehicle +
+    // stop. A Surface(onClick) gives it a solid, ripple-backed hit area (the legend dialog leaves it null).
+    onClick: (() -> Unit)? = null,
 ) {
     val decoration = if (canceled) TextDecoration.LineThrough else null
-    Surface(modifier = modifier, shape = RoundedCornerShape(8.dp), color = color) {
-        // Fixed height + centered content so "NOW" and "21 min" pills render the same height.
+    val shape = RoundedCornerShape(8.dp)
+    // Fixed height + centered content so "NOW" and "21 min" pills render the same height.
+    val body: @Composable () -> Unit = {
         Box(
             modifier = Modifier
                 .height(32.dp)
@@ -414,6 +428,11 @@ internal fun EtaPill(
                 }
             }
         }
+    }
+    if (onClick != null) {
+        Surface(onClick = onClick, modifier = modifier, shape = shape, color = color, content = body)
+    } else {
+        Surface(modifier = modifier, shape = shape, color = color, content = body)
     }
 }
 

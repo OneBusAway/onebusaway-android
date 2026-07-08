@@ -27,10 +27,13 @@ import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.directions.model.ItineraryDescription
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.directions.util.OTPConstants
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.ui.tripplan.toRequestBuilder
 import org.onebusaway.android.util.PreferenceUtils
 import org.opentripplanner.api.model.Itinerary
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Entry point + scheduler for the trip-plan-change monitor. Replaces the WorkManager/AlarmManager poll
@@ -107,15 +110,18 @@ object TripPlanMonitor {
             return
         }
 
-        // The itinerary's departure (origin start), used to stop monitoring once travel begins — a
-        // warning is moot after that. 0 if unparseable; the service then falls back to the end-time guard.
-        val itineraryDepartureMillis = ConversionUtils.parseOtpDate(itinerary.startTime)?.toEpochMilli() ?: 0L
+        // The itinerary's departure (origin start) is a server-provided instant; mint it into ServerTime
+        // at the read so the clock domain travels with it. Used to stop monitoring once travel begins — a
+        // warning is moot after that. null if unparseable; the service then falls back to the end-time guard.
+        val itineraryDeparture: ServerTime? =
+            ConversionUtils.parseOtpDate(itinerary.startTime)?.let { ServerTime(it.toEpochMilli()) }
 
         val builder = params.toRequestBuilder(app)
         val bundle = Bundle().apply {
             builder.copyIntoBundleSimple(this)
             putStringArray(EXTRA_ITINERARY_DESC, tripIds.toTypedArray())
-            putLong(EXTRA_ITINERARY_START_DATE, itineraryDepartureMillis)
+            // Unwrap to a bare Long only here, at the Bundle boundary (0 = unknown departure).
+            putLong(EXTRA_ITINERARY_START_DATE, itineraryDeparture?.epochMs ?: 0L)
             putLong(EXTRA_ITINERARY_END_DATE, endDate.toEpochMilli())
             putString(OTPConstants.NOTIFICATION_TARGET, notificationTarget.name)
         }
@@ -124,14 +130,15 @@ object TripPlanMonitor {
         cancelScheduledStart(app)
 
         // The deferral is based on the request's date/time (the legacy rescheduleRealtimeUpdates basis),
-        // which is the departure for a "depart at" trip; the stop-at-departure guard uses the itinerary's
-        // actual start time.
-        val requestTimeMillis = builder.dateTime?.toEpochMilli()
-        if (requestTimeMillis != null && !TripMonitorWindow.shouldStartNow(
-                requestTimeMillis, System.currentTimeMillis(), OTPConstants.REALTIME_SERVICE_QUERY_WINDOW
+        // which is the departure for a "depart at" trip; the user picks it against the device clock, so
+        // it's a WallTime measured against WallTime.now(). (The stop-at-departure guard uses the
+        // itinerary's actual server-provided start time.)
+        val requestTime: WallTime? = builder.dateTime?.let { WallTime(it.toEpochMilli()) }
+        if (requestTime != null && !TripMonitorWindow.shouldStartNow(
+                requestTime, WallTime.now(), OTPConstants.REALTIME_SERVICE_QUERY_WINDOW.milliseconds
             )
         ) {
-            scheduleStart(app, bundle, requestTimeMillis - OTPConstants.REALTIME_SERVICE_QUERY_WINDOW)
+            scheduleStart(app, bundle, requestTime.epochMs - OTPConstants.REALTIME_SERVICE_QUERY_WINDOW)
         } else {
             startServiceNow(app, bundle)
         }

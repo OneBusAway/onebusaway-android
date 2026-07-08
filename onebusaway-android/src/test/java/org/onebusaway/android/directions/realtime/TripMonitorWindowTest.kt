@@ -18,31 +18,36 @@ package org.onebusaway.android.directions.realtime
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.util.concurrent.TimeUnit
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /** JVM unit tests for [TripMonitorWindow] — the monitor's start/stop timing boundaries. */
 class TripMonitorWindowTest {
 
-    private val window = TimeUnit.HOURS.toMillis(1)
-    private val now = TimeUnit.HOURS.toMillis(100) // arbitrary fixed "now"
+    private val window = 1.hours
+    private val nowMs = 100.hours.inWholeMilliseconds // arbitrary fixed "now"
+    private val now = WallTime(nowMs)
 
     // -- shouldStartNow: begin polling once inside the pre-departure window --------------------
 
     @Test
     fun shouldStartNow_farBeforeWindow_false() {
-        val departure = now + TimeUnit.HOURS.toMillis(3)
+        val departure = WallTime(nowMs + 3.hours.inWholeMilliseconds)
         assertFalse(TripMonitorWindow.shouldStartNow(departure, now, window))
     }
 
     @Test
     fun shouldStartNow_insideWindow_true() {
-        val departure = now + TimeUnit.MINUTES.toMillis(30)
+        val departure = WallTime(nowMs + 30.minutes.inWholeMilliseconds)
         assertTrue(TripMonitorWindow.shouldStartNow(departure, now, window))
     }
 
     @Test
     fun shouldStartNow_departurePassed_true() {
-        val departure = now - TimeUnit.MINUTES.toMillis(5)
+        val departure = WallTime(nowMs - 5.minutes.inWholeMilliseconds)
         assertTrue(TripMonitorWindow.shouldStartNow(departure, now, window))
     }
 
@@ -50,19 +55,19 @@ class TripMonitorWindowTest {
 
     @Test
     fun hasDeparted_beforeDeparture_false() {
-        val departure = now + TimeUnit.MINUTES.toMillis(10)
+        val departure = ServerTime(nowMs + 10.minutes.inWholeMilliseconds)
         assertFalse(TripMonitorWindow.hasDeparted(departure, now))
     }
 
     @Test
     fun hasDeparted_afterDeparture_true() {
-        val departure = now - TimeUnit.SECONDS.toMillis(1)
+        val departure = ServerTime(nowMs - 1.seconds.inWholeMilliseconds)
         assertTrue(TripMonitorWindow.hasDeparted(departure, now))
     }
 
     @Test
     fun hasDeparted_unknownDeparture_false() {
-        // 0 = departure time couldn't be parsed; don't bound on it (fall back to the trip-end guard).
-        assertFalse(TripMonitorWindow.hasDeparted(0L, now))
+        // null = departure time couldn't be parsed; don't bound on it (fall back to the trip-end guard).
+        assertFalse(TripMonitorWindow.hasDeparted(null, now))
     }
 }

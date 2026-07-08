@@ -16,8 +16,11 @@
 package org.onebusaway.android.directions.realtime
 
 import org.onebusaway.android.directions.model.ItineraryDescription
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import org.opentripplanner.api.model.Itinerary
 import kotlin.math.abs
+import kotlin.time.Duration
 
 /**
  * The outcome of comparing the itinerary the user is monitoring against a freshly-planned set of
@@ -87,37 +90,30 @@ object TripMonitorDecider {
     }
 }
 
-/**
- * Pure timing helper for the monitor's start/stop boundaries (extracted for JVM testing).
- *
- * These take plain epoch-milli `Long`s rather than the domain-tagged `ServerTime`/`WallTime` value
- * classes on purpose: they compute coarse foreground-service *lifecycle* booleans ("has this moment
- * passed?"), not user-facing durations, so a few seconds of device-clock skew is immaterial — and the
- * sibling [org.onebusaway.android.directions.model.ItineraryDescription.isExpired] compares a
- * server-provided end time against a plain device `Instant` the same way. [hasDeparted] is the one
- * deliberate server-time (itinerary start) vs device-clock ("now") comparison; it is intentionally
- * coarse.
- */
+/** Pure timing helper for the monitor's start/stop boundaries (extracted for JVM testing). */
 object TripMonitorWindow {
 
     /**
      * Whether monitoring should start polling immediately rather than being deferred. True once we're
-     * inside the pre-departure query window (or the departure has already passed); false for a trip
-     * far enough out that the foreground service should be scheduled to start later.
-     *
-     * @param windowMillis how long before departure monitoring should begin
-     *   ([org.onebusaway.android.directions.util.OTPConstants.REALTIME_SERVICE_QUERY_WINDOW]).
+     * inside the pre-departure query [window] (or the departure has already passed); false for a trip
+     * far enough out that the foreground service should be scheduled to start later. [departure] (the
+     * user-picked request time) and [now] are both on the device wall clock, so this is a same-domain
+     * comparison ([window] = [org.onebusaway.android.directions.util.OTPConstants.REALTIME_SERVICE_QUERY_WINDOW]).
      */
     @JvmStatic
-    fun shouldStartNow(departureMillis: Long, nowMillis: Long, windowMillis: Long): Boolean =
-        nowMillis >= departureMillis - windowMillis
+    fun shouldStartNow(departure: WallTime, now: WallTime, window: Duration): Boolean =
+        departure - now <= window
 
     /**
      * Whether the monitored trip has already departed, so warning the user is moot and the foreground
-     * service should stop. [departureMillis] of 0 means the departure time is unknown (couldn't be
+     * service should stop. A null [departure] means the itinerary's start time was unknown (couldn't be
      * parsed), in which case we don't bound on it and fall back to the trip-end guard.
+     *
+     * This is the monitor's one deliberate server-clock ([departure], the itinerary start) vs
+     * device-clock ([now]) crossing, done on raw `epochMs` — it's a coarse foreground-service lifecycle
+     * bound ("has this moment passed?"), not a user-facing duration, so device-clock skew is immaterial.
      */
     @JvmStatic
-    fun hasDeparted(departureMillis: Long, nowMillis: Long): Boolean =
-        departureMillis != 0L && nowMillis >= departureMillis
+    fun hasDeparted(departure: ServerTime?, now: WallTime): Boolean =
+        departure != null && now.epochMs >= departure.epochMs
 }

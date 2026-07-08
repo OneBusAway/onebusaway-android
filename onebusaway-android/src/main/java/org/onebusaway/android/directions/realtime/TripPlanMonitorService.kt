@@ -46,6 +46,8 @@ import org.onebusaway.android.directions.model.ItineraryDescription
 import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.onebusaway.android.notifications.NotificationChannels
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.tripplan.TripPlanRepository
 import org.opentripplanner.api.model.Itinerary
@@ -89,11 +91,13 @@ class TripPlanMonitorService : Service() {
         // Must promote to the foreground promptly after startForegroundService(); do it synchronously.
         startForegroundMonitoring(target)
 
-        val departureMillis = extras.getLong(TripPlanMonitor.EXTRA_ITINERARY_START_DATE)
+        // The stored departure is a server-provided instant (0 = unknown); mint it back into ServerTime.
+        val departureMs = extras.getLong(TripPlanMonitor.EXTRA_ITINERARY_START_DATE)
+        val itineraryDeparture: ServerTime? = if (departureMs != 0L) ServerTime(departureMs) else null
 
         // A fresh start supersedes any in-flight loop (re-selected option / redelivered intent).
         monitorJob?.cancel()
-        monitorJob = serviceScope.launch { runMonitorLoop(extras, desc, target, departureMillis) }
+        monitorJob = serviceScope.launch { runMonitorLoop(extras, desc, target, itineraryDeparture) }
 
         // Redeliver the monitoring state if the service is killed and restarted mid-window.
         return Service.START_REDELIVER_INTENT
@@ -103,13 +107,13 @@ class TripPlanMonitorService : Service() {
         extras: Bundle,
         desc: ItineraryDescription,
         target: Class<*>,
-        departureMillis: Long,
+        departure: ServerTime?,
     ) {
         try {
             while (coroutineContext.isActive) {
                 // Stop once the trip departs — a delay/change warning is moot once travel has begun.
                 // (isExpired, the trip-end guard, is the fallback when the departure time is unknown.)
-                if (TripMonitorWindow.hasDeparted(departureMillis, System.currentTimeMillis())) {
+                if (TripMonitorWindow.hasDeparted(departure, WallTime.now())) {
                     Log.d(TAG, "Monitored trip has departed - stopping")
                     break
                 }

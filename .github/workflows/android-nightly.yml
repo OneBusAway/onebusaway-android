@@ -1,0 +1,43 @@
+name: Android Nightly (all brands)
+
+# The PR/push workflow (android.yml) only exercises the shipping `oba` brand's tests to keep the
+# grid small (see the beforeVariants filter in onebusaway-android/build.gradle). This nightly job
+# restores the full brand × platform grid via -PbuildAllBrands=true so that a change breaking the
+# sample white-label brands (agencyX/agencyY) or the third-party `kiedybus` brand is still caught —
+# just off the PR critical path. Unit tests + `check` are JVM-only, so no emulator is needed here;
+# instrumented tests remain oba-only in android.yml.
+
+on:
+  schedule:
+    # 07:00 UTC daily (~midnight US Pacific)
+    - cron: '0 7 * * *'
+  # Allow manual runs from the Actions tab
+  workflow_dispatch:
+
+# One nightly run at a time: if a run is still going when the next cron fires (or a manual
+# dispatch overlaps), cancel the stale one so they don't race on the shared Gradle cache.
+concurrency:
+  group: nightly-all-brands
+  cancel-in-progress: true
+
+jobs:
+  all-brands:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          # This job only runs tests; it never pushes, so don't leave the token in git config.
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Full-grid tests + check (all brands)
+        run: ./gradlew test check -PbuildAllBrands=true --build-cache -x lint -PwarningsAsErrors=true --stacktrace

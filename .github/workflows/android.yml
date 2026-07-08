@@ -39,7 +39,11 @@ jobs:
       # compile + API-33 tests can't see (#1692). Runs on the host before the emulator so it
       # fails fast; `check` below keeps skipping lint (-x lint) to avoid running it twice.
       - name: Android Lint
-        run: ./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true --stacktrace
+        # --build-cache: store the obaGoogleDebug compile outputs this step produces in the Gradle
+        # build cache so the "run tests" step below reuses them (and setup-gradle persists the cache
+        # across CI runs). Build cache is enabled per-invocation here, NOT in gradle.properties, to
+        # avoid arming a stale-R.jar footgun for local multi-worktree dev (which shares ~/.gradle).
+        run: ./gradlew :onebusaway-android:lintObaGoogleDebug --build-cache -PwarningsAsErrors=true --stacktrace
 
       - name: AVD cache
         uses: actions/cache@v4
@@ -71,4 +75,4 @@ jobs:
           target: google_apis
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: ./gradlew test check connectedObaGoogleDebugAndroidTest -x lint -PwarningsAsErrors=true --stacktrace
+          script: ./gradlew test check connectedObaGoogleDebugAndroidTest --build-cache -x lint -PwarningsAsErrors=true --stacktrace

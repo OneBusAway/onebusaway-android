@@ -31,4 +31,4 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Full-grid tests + check (all brands)
-        run: ./gradlew test check -PbuildAllBrands=true -x lint -PwarningsAsErrors=true --stacktrace
+        run: ./gradlew test check -PbuildAllBrands=true --build-cache -x lint -PwarningsAsErrors=true --stacktrace

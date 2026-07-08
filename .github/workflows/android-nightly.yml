@@ -14,15 +14,24 @@ on:
   # Allow manual runs from the Actions tab
   workflow_dispatch:
 
+# One nightly run at a time: if a run is still going when the next cron fires (or a manual
+# dispatch overlaps), cancel the stale one so they don't race on the shared Gradle cache.
+concurrency:
+  group: nightly-all-brands
+  cancel-in-progress: true
+
 jobs:
   all-brands:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          # This job only runs tests; it never pushes, so don't leave the token in git config.
+          persist-credentials: false
 
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: 'temurin'

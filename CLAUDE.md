@@ -196,6 +196,16 @@ follow that pattern when adding server-domain time math.
 - The one deliberate server↔device crossing (measuring skew from a paired response) is done on raw
   `.epochMs` with an explicit comment — see `TripState.withStatus`/`toServerClock`. Verified by
   `TypedTimeTest`.
+- **Lint-enforced.** Two custom checks in module `:lint-rules` give the app a phobia of bare time
+  `Long`s: `RawClockArithmetic` fails the build when a raw time reading — `System.currentTimeMillis()`,
+  `SystemClock.elapsedRealtime()`, `Location.getTime()`, `Instant.toEpochMilli()`, … — feeds arithmetic
+  or a comparison; `UnwrappedClockValue` fails it when a reading comes to **rest in a bare `Long`/`Int`**
+  (a local, field, return, or default parameter) instead of a domain type. The value classes make
+  cross-domain math a *compile* error; these checks close the complementary gap where a producer reading
+  never got minted. A reading passed straight through to a consuming API (DAO/prefs write, alarm, a
+  domain mint) is not flagged — it never rests, so no domain is lost. Pre-existing sites are grandfathered
+  in the lint baseline; a genuinely-sanctioned boundary mints into `WallTime`/`ElapsedTime` (domain made
+  explicit) or suppresses the issue with a one-line rationale. See `lint-rules/README.md`.
 
 ## No unsanctioned heuristics
 

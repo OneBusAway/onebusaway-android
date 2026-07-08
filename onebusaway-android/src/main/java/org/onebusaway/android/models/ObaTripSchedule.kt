@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.models
 
+import org.onebusaway.android.time.ScheduleTime
+
 /**
  * The schedule for a trip: the ordered stop times plus the neighboring trips in the block. The
  * concrete holder lives in `api`; the schedule-geometry logic lives in `extrapolation`.
@@ -42,11 +44,11 @@ interface ObaTripSchedule {
         /** The passenger-facing headsign at this stop, or null. */
         val headsign: String?
 
-        /** The scheduled arrival time, in seconds since the service start date. */
-        val arrivalTime: Long
+        /** The scheduled arrival time, as an offset from the service day start. */
+        val arrivalTime: ScheduleTime
 
-        /** The scheduled departure time, in seconds since the service start date. */
-        val departureTime: Long
+        /** The scheduled departure time, as an offset from the service day start. */
+        val departureTime: ScheduleTime
 
         /** The average historical occupancy when the vehicle arrives at this stop, or null. */
         val historicalOccupancy: Occupancy?

@@ -15,8 +15,11 @@
  */
 package org.onebusaway.android.ui.dataview
 
+import org.onebusaway.android.time.ScheduleTime
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.ServiceDate
 import org.onebusaway.android.time.WallTime
+import kotlin.time.Duration.Companion.seconds
 import kotlin.math.sqrt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -97,11 +100,11 @@ class TripTrajectoryTest {
 
     @Test
     fun `data bounds pad the extent of the points`() {
-        val bounds = dataBounds(distances = listOf(100.0, 500.0, 300.0), times = listOf(1_000L, 5_000L))
+        val bounds = dataBounds(distances = listOf(100.0, 500.0, 300.0), times = listOf(ServerTime(1_000L), ServerTime(5_000L)))
         assertEquals(80.0, bounds.minDist, 1e-9) // 100 - 5% of 400
         assertEquals(520.0, bounds.maxDist, 1e-9) // 500 + 5% of 400
-        assertEquals(0L, bounds.minTime) // 1000 - max(5% of 4000, 1000) = 1000 - 1000
-        assertEquals(6_000L, bounds.maxTime) // 5000 + 1000
+        assertEquals(ServerTime(0L), bounds.minTime) // 1000 - max(5% of 4000, 1000) = 1000 - 1000
+        assertEquals(ServerTime(6_000L), bounds.maxTime) // 5000 + 1000
     }
 
     @Test
@@ -127,7 +130,7 @@ class TripTrajectoryTest {
     fun `the now line is left on the local clock when no anchor skew is known`() {
         // No anchor yet (anchorLocalTimeMs == 0) -> no measurable skew -> nowMs unshifted.
         val trajectory = buildTrajectory(TripState("trip1"), nowMs = WallTime(10_000L))
-        assertEquals(10_000L, trajectory.nowMs)
+        assertEquals(ServerTime(10_000L), trajectory.nowMs)
     }
 
     @Test
@@ -136,7 +139,28 @@ class TripTrajectoryTest {
         val state = TripState("trip1").copy(anchorTimeMs = ServerTime(1_005_000L), anchorLocalTimeMs = WallTime(1_000_000L))
         val trajectory = buildTrajectory(state, nowMs = WallTime(1_002_000L))
         // The local "now" (1_002_000) is plotted at its server-clock equivalent (+5s skew).
-        assertEquals(1_007_000L, trajectory.nowMs)
+        assertEquals(ServerTime(1_007_000L), trajectory.nowMs)
+    }
+
+    @Test
+    fun `the schedule overlay is withheld while the service date is unknown`() {
+        // The rail state carries a schedule but no service date (null). With no day to resolve stop
+        // times against, the overlay is skipped rather than drawn.
+        val state = skewedRailState(anchorServerTime = 105_000L, anchorLocalMs = 100_000L)
+        assertNull(state.serviceDate)
+        assertTrue(buildTrajectory(state, nowMs = WallTime(102_000L)).schedule.isEmpty())
+    }
+
+    @Test
+    fun `a known service date resolves schedule stops onto the server clock`() {
+        val day = 1_700_000_000_000L
+        val state = skewedRailState(anchorServerTime = 105_000L, anchorLocalMs = 100_000L)
+            .withServiceDate(ServiceDate(day))
+        val schedule = buildTrajectory(state, nowMs = WallTime(102_000L)).schedule
+        // railSchedule's stops arrive at 0s / 100s / 330s into the service day.
+        assertEquals(3, schedule.size)
+        assertEquals(ServerTime(day), schedule.first().arrivalMs)
+        assertEquals(ServerTime(day + 330L * 1000L), schedule.last().arrivalMs)
     }
 
     // --- buildTrajectory: extrapolation-overlay now line (clock skew) ---
@@ -172,7 +196,7 @@ class TripTrajectoryTest {
     private fun makeSchedule(vararg stops: Triple<Double, Long, Long>): ObaTripSchedule {
         val stopTimes: Array<ObaTripSchedule.StopTime> = Array(stops.size) { i ->
             val (dist, arrive, depart) = stops[i]
-            StopTimeData(stopId = "stop_$i", arrivalTime = arrive, departureTime = depart, distanceAlongTrip = dist)
+            StopTimeData(stopId = "stop_$i", arrivalTime = ScheduleTime(arrive.seconds), departureTime = ScheduleTime(depart.seconds), distanceAlongTrip = dist)
         }
         return TripScheduleData(stopTimes)
     }
@@ -188,7 +212,7 @@ class TripTrajectoryTest {
         }
         // Local "now" (102_000) plotted at its server-clock equivalent (+5s skew). Reverting the
         // toServerClock lift in extrapolationSeries() to `nowMs = nowMs` would leave this at 102_000.
-        assertEquals(107_000L, extrapolation.nowMs)
+        assertEquals(ServerTime(107_000L), extrapolation.nowMs)
     }
 
     @Test
@@ -212,46 +236,46 @@ class TripTrajectoryTest {
 
         val extrapolation = requireNotNull(trajectory.extrapolation)
         // toServerClock(102_000) = 102_000 + (97_000 - 100_000) = 99_000.
-        assertEquals(99_000L, extrapolation.nowMs)
+        assertEquals(ServerTime(99_000L), extrapolation.nowMs)
     }
 
     // --- interpolateScheduleTime ---
 
     private fun stop(dist: Double, arriveMs: Long, departMs: Long = arriveMs) =
-        ScheduleStop(distanceMeters = dist, arrivalMs = arriveMs, departureMs = departMs, stopId = null)
+        ScheduleStop(distanceMeters = dist, arrivalMs = ServerTime(arriveMs), departureMs = ServerTime(departMs), stopId = null)
 
     @Test
     fun `schedule time interpolates linearly within the bracketing stops`() {
         val schedule = listOf(stop(0.0, 1_000L), stop(100.0, 3_000L))
         // 75% of the way to the next stop -> 75% of the way through the time span.
-        assertEquals(2_500L, interpolateScheduleTime(schedule, 75.0))
+        assertEquals(ServerTime(2_500L), interpolateScheduleTime(schedule, 75.0))
     }
 
     @Test
     fun `schedule time interpolates from the prior departure across a dwell`() {
         val schedule = listOf(stop(0.0, 1_000L, departMs = 2_000L), stop(100.0, 6_000L))
         // Segment runs from stop0's departure (2000) to stop1's arrival (6000).
-        assertEquals(4_000L, interpolateScheduleTime(schedule, 50.0))
+        assertEquals(ServerTime(4_000L), interpolateScheduleTime(schedule, 50.0))
     }
 
     @Test
-    fun `schedule time is zero outside the interpolatable span or with too few stops`() {
+    fun `schedule time is null outside the interpolatable span or with too few stops`() {
         val schedule = listOf(stop(0.0, 1_000L), stop(100.0, 3_000L))
-        assertEquals(0L, interpolateScheduleTime(schedule, 150.0))
-        assertEquals(0L, interpolateScheduleTime(listOf(stop(0.0, 1_000L)), 0.0))
-        assertEquals(0L, interpolateScheduleTime(emptyList(), 0.0))
+        assertNull(interpolateScheduleTime(schedule, 150.0))
+        assertNull(interpolateScheduleTime(listOf(stop(0.0, 1_000L)), 0.0))
+        assertNull(interpolateScheduleTime(emptyList(), 0.0))
     }
 
     @Test
-    fun `a distance below the first stop returns the sentinel, not a negative-fraction time`() {
+    fun `a distance below the first stop returns null, not a negative-fraction time`() {
         // Guards the lower-bound check: without it, -10 on a [0,100] schedule would compute a negative
-        // fraction and return a time before the first departure instead of the 0 sentinel.
+        // fraction and return a time before the first departure instead of null.
         val schedule = listOf(stop(0.0, 1_000L), stop(100.0, 3_000L))
-        assertEquals(0L, interpolateScheduleTime(schedule, -10.0))
+        assertNull(interpolateScheduleTime(schedule, -10.0))
 
         // Same below-origin case when the first stop is not at distance 0.
         val offsetSchedule = listOf(stop(50.0, 1_000L), stop(150.0, 3_000L))
-        assertEquals(0L, interpolateScheduleTime(offsetSchedule, 40.0))
+        assertNull(interpolateScheduleTime(offsetSchedule, 40.0))
     }
 
     @Test
@@ -264,7 +288,7 @@ class TripTrajectoryTest {
         // Exactly at the middle stop, the half-open [d0, d1) segments give it to the *next* segment,
         // so it reads the departure (7000) deterministically rather than ambiguously matching the
         // prior segment's arrival (6000).
-        assertEquals(7_000L, interpolateScheduleTime(schedule, 100.0))
+        assertEquals(ServerTime(7_000L), interpolateScheduleTime(schedule, 100.0))
     }
 
     @Test
@@ -275,8 +299,8 @@ class TripTrajectoryTest {
             stop(200.0, 10_000L),
         )
         // The trip's end distance is excluded by the half-open segments, so it's mapped to the last
-        // segment's arrival (the final stop, 10000) rather than falling through to the 0 sentinel.
-        assertEquals(10_000L, interpolateScheduleTime(schedule, 200.0))
+        // segment's arrival (the final stop, 10000) rather than falling through to null.
+        assertEquals(ServerTime(10_000L), interpolateScheduleTime(schedule, 200.0))
     }
 
     @Test
@@ -287,16 +311,16 @@ class TripTrajectoryTest {
             stop(100.0, 10_000L), // trailing zero-length pair (shared shape_dist_traveled)
         )
         // The last *interpolatable* pair is 0 -> 100 (the trailing 100 -> 100 pair forms no segment),
-        // so the max distance maps to that segment's arrival (6000) instead of falling through to 0.
-        assertEquals(6_000L, interpolateScheduleTime(schedule, 100.0))
+        // so the max distance maps to that segment's arrival (6000) instead of falling through to null.
+        assertEquals(ServerTime(6_000L), interpolateScheduleTime(schedule, 100.0))
     }
 
     @Test
     fun `a distance exactly at the first stop interpolates to the start time`() {
         val schedule = listOf(stop(0.0, 1_000L, departMs = 2_000L), stop(100.0, 6_000L))
         // The span is lower-inclusive, so the trip origin resolves to the first segment's start
-        // (stop0's departure, 2000) rather than the sentinel.
-        assertEquals(2_000L, interpolateScheduleTime(schedule, 0.0))
+        // (stop0's departure, 2000) rather than null.
+        assertEquals(ServerTime(2_000L), interpolateScheduleTime(schedule, 0.0))
     }
 
     @Test
@@ -309,7 +333,7 @@ class TripTrajectoryTest {
         )
         // 150 lands in the 100 -> 200 segment (departure 8000 to arrival 12000), proving the loop
         // advances past the degenerate middle pair.
-        assertEquals(10_000L, interpolateScheduleTime(schedule, 150.0))
+        assertEquals(ServerTime(10_000L), interpolateScheduleTime(schedule, 150.0))
     }
 
     @Test
@@ -323,20 +347,20 @@ class TripTrajectoryTest {
             stop(150.0, 12_000L),
         )
         // 75 lies in both segments; first-match gives it to (0 -> 100): 2000 + 0.75 * (6000 - 2000).
-        assertEquals(5_000L, interpolateScheduleTime(schedule, 75.0))
+        assertEquals(ServerTime(5_000L), interpolateScheduleTime(schedule, 75.0))
         // 120 lies only in (50 -> 150), so the later overlapping segment is still reachable:
         // 9000 + 0.7 * (12000 - 9000).
-        assertEquals(11_100L, interpolateScheduleTime(schedule, 120.0))
+        assertEquals(ServerTime(11_100L), interpolateScheduleTime(schedule, 120.0))
     }
 
     @Test
-    fun `a non-finite distance degrades to the sentinel rather than the divide`() {
+    fun `a non-finite distance degrades to null rather than the divide`() {
         // The production caller guards finiteness, but the function itself must not feed NaN/Infinity
-        // into the fraction: each fails every half-open comparison and the endpoint check, so 0L.
+        // into the fraction: each fails every half-open comparison and the endpoint check, so null.
         val schedule = listOf(stop(0.0, 1_000L), stop(100.0, 3_000L))
-        assertEquals(0L, interpolateScheduleTime(schedule, Double.NaN))
-        assertEquals(0L, interpolateScheduleTime(schedule, Double.POSITIVE_INFINITY))
-        assertEquals(0L, interpolateScheduleTime(schedule, Double.NEGATIVE_INFINITY))
+        assertNull(interpolateScheduleTime(schedule, Double.NaN))
+        assertNull(interpolateScheduleTime(schedule, Double.POSITIVE_INFINITY))
+        assertNull(interpolateScheduleTime(schedule, Double.NEGATIVE_INFINITY))
     }
 
     // --- scheduleSegments ---
@@ -344,7 +368,7 @@ class TripTrajectoryTest {
     @Test
     fun `segments span each stop pair from the prior departure to the next arrival`() {
         val schedule = listOf(stop(0.0, 1_000L, departMs = 2_000L), stop(100.0, 6_000L))
-        assertEquals(listOf(ScheduleSegment(0.0, 100.0, 2_000L, 6_000L)), scheduleSegments(schedule))
+        assertEquals(listOf(ScheduleSegment(0.0, 100.0, ServerTime(2_000L), ServerTime(6_000L))), scheduleSegments(schedule))
     }
 
     @Test
@@ -357,7 +381,7 @@ class TripTrajectoryTest {
     fun `a trailing zero-length stop pair is dropped`() {
         val schedule = listOf(stop(0.0, 1_000L), stop(100.0, 6_000L), stop(100.0, 10_000L))
         // The degenerate 100 -> 100 pair produces no segment; the real 0 -> 100 segment remains the last.
-        assertEquals(listOf(ScheduleSegment(0.0, 100.0, 1_000L, 6_000L)), scheduleSegments(schedule))
+        assertEquals(listOf(ScheduleSegment(0.0, 100.0, ServerTime(1_000L), ServerTime(6_000L))), scheduleSegments(schedule))
     }
 
     @Test
@@ -370,8 +394,8 @@ class TripTrajectoryTest {
         )
         assertEquals(
             listOf(
-                ScheduleSegment(0.0, 100.0, 1_000L, 6_000L),
-                ScheduleSegment(100.0, 200.0, 8_000L, 12_000L),
+                ScheduleSegment(0.0, 100.0, ServerTime(1_000L), ServerTime(6_000L)),
+                ScheduleSegment(100.0, 200.0, ServerTime(8_000L), ServerTime(12_000L)),
             ),
             scheduleSegments(schedule),
         )
@@ -386,15 +410,15 @@ class TripTrajectoryTest {
             stop(0.0, 3_000L, departMs = 4_000L),
             stop(100.0, 8_000L),
         )
-        assertEquals(listOf(ScheduleSegment(0.0, 100.0, 4_000L, 8_000L)), scheduleSegments(schedule))
+        assertEquals(listOf(ScheduleSegment(0.0, 100.0, ServerTime(4_000L), ServerTime(8_000L))), scheduleSegments(schedule))
     }
 
     @Test
     fun `a ScheduleSegment rejects non-increasing distance`() {
         // The factory never emits a degenerate segment, but the guard catches any future
         // out-of-factory construction with d1 <= d0 loudly instead of dividing by zero downstream.
-        assertThrows(IllegalArgumentException::class.java) { ScheduleSegment(100.0, 100.0, 0L, 1L) }
-        assertThrows(IllegalArgumentException::class.java) { ScheduleSegment(100.0, 50.0, 0L, 1L) }
+        assertThrows(IllegalArgumentException::class.java) { ScheduleSegment(100.0, 100.0, ServerTime(0L), ServerTime(1L)) }
+        assertThrows(IllegalArgumentException::class.java) { ScheduleSegment(100.0, 50.0, ServerTime(0L), ServerTime(1L)) }
     }
 
     // --- formatDeviationLabel ---

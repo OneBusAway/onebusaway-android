@@ -17,6 +17,7 @@ package org.onebusaway.android.extrapolation.test
 
 import org.onebusaway.android.time.WallTime
 import android.location.Location
+import kotlin.time.Duration
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -59,7 +60,7 @@ class TripExtrapolationBuilderTest {
         object : ObaTripStatus {
             override val serviceDate = 0L
             override val isPredicted = true
-            override val scheduleDeviation = 0L
+            override val scheduleDeviation = Duration.ZERO
             override val vehicleId: String? = null
             override val closestStop: String? = null
             override val closestStopTimeOffset = 0L

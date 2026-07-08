@@ -16,6 +16,7 @@
 package org.onebusaway.android.models
 
 import android.location.Location
+import kotlin.time.Duration
 
 interface ObaTripStatus {
 
@@ -29,10 +30,11 @@ interface ObaTripStatus {
     val isPredicted: Boolean
 
     /**
-     * If real-time arrival info is available, the deviation from the schedule in seconds (positive =
-     * running late, negative = early); zero if no real-time info is available.
+     * If real-time arrival info is available, the deviation from the schedule (positive = running
+     * late, negative = early); zero when no real-time info is available. Minted from the wire's raw
+     * seconds in the adapter.
      */
-    val scheduleDeviation: Long
+    val scheduleDeviation: Duration
 
     /** If real-time info is available, the id of the transit vehicle currently running the trip. */
     val vehicleId: String?

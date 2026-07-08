@@ -28,6 +28,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.time.ServiceDate
 import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.util.SingleFlight
 
@@ -64,7 +65,7 @@ interface TripObservationFetcher {
 data class TripDetails(
     val observations: List<TripObservation>,
     val schedule: ObaTripSchedule?,
-    val serviceDate: Long,
+    val serviceDate: ServiceDate?,
     val vehicleActiveTripId: String?,
     val shapeId: String?,
 )
@@ -104,7 +105,7 @@ class DefaultTripObservationFetcher @Inject constructor(
                 TripDetails(
                     observations = routeTrips.toObservations(),
                     schedule = details?.schedule,
-                    serviceDate = details?.status?.serviceDate ?: 0,
+                    serviceDate = serviceDateOrNull(details?.status?.serviceDate ?: 0),
                     vehicleActiveTripId = details?.status?.activeTripId,
                     shapeId = routeTrips.trip(tripId)?.shapeId?.takeIf { it.isNotEmpty() },
                 )

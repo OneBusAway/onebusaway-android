@@ -16,6 +16,7 @@
 package org.onebusaway.android.extrapolation.data
 
 import org.onebusaway.android.api.data.asRouteTrips
+import org.onebusaway.android.time.ServiceDate
 
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -46,7 +47,7 @@ class TripDetailsObservationsTest {
         assertEquals(1, observations.size)
         val observation = observations[0]
         assertEquals("Hillsborough Area Regional Transit_1389962", observation.tripId)
-        assertEquals(1545886800000L, observation.serviceDate)
+        assertEquals(ServiceDate(1545886800000L), observation.serviceDate)
         // Resolved through the refs: trip 1389962 -> route 16 -> type 3 (bus).
         assertEquals(3, observation.routeType)
     }

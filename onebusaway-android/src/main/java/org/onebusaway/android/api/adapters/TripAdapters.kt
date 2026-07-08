@@ -27,7 +27,10 @@ import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
+import org.onebusaway.android.time.ScheduleTime
 import org.onebusaway.android.util.LocationUtils
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /*
  * Adapters that present the api/ trip DTOs as the `models` domain interfaces
@@ -42,7 +45,8 @@ private fun Position.toLocation(): Location = LocationUtils.makeLocation(lat, lo
 internal class DtoTripStatus(private val dto: TripStatus) : ObaTripStatus {
     override val serviceDate: Long get() = dto.serviceDate
     override val isPredicted: Boolean get() = dto.predicted
-    override val scheduleDeviation: Long get() = dto.scheduleDeviation
+    // Wire sends schedule deviation as raw seconds; mint the domain Duration here.
+    override val scheduleDeviation: Duration get() = dto.scheduleDeviation.seconds
     override val vehicleId: String? get() = dto.vehicleId
     override val closestStop: String? get() = dto.closestStop
     override val closestStopTimeOffset: Long get() = dto.closestStopTimeOffset
@@ -92,8 +96,11 @@ fun TripSchedule.toObaTripSchedule(): ObaTripSchedule {
         StopTimeData(
             it.stopId,
             it.stopHeadsign,
-            it.arrivalTime,
-            it.departureTime,
+            // Wire units: the trip-details schedule sends stop times as seconds since the service day
+            // start (verified against sample payloads — NOT epoch millis, despite the sibling
+            // ScheduleStopTime DTO). Mint the domain here, once.
+            ScheduleTime(it.arrivalTime.seconds),
+            ScheduleTime(it.departureTime.seconds),
             Occupancy.fromString(it.historicalOccupancy),
             Occupancy.fromString(it.predictedOccupancy),
             it.distanceAlongTrip,
@@ -124,8 +131,8 @@ class TripScheduleData(
 class StopTimeData(
     override val stopId: String = "",
     override val headsign: String? = null,
-    override val arrivalTime: Long = 0,
-    override val departureTime: Long = 0,
+    override val arrivalTime: ScheduleTime = ScheduleTime(Duration.ZERO),
+    override val departureTime: ScheduleTime = ScheduleTime(Duration.ZERO),
     override val historicalOccupancy: Occupancy? = null,
     override val predictedOccupancy: Occupancy? = null,
     override val distanceAlongTrip: Double = 0.0,

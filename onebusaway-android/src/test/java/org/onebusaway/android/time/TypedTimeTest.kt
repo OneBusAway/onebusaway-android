@@ -20,6 +20,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Guards the domain-tagged time types: same-domain arithmetic yields a [kotlin.time.Duration] and stays
@@ -47,5 +48,31 @@ class TypedTimeTest {
         assertTrue(ServerTime(1_000L) < ServerTime(2_000L))
         assertTrue(WallTime(2_000L) > WallTime(1_000L))
         assertEquals(ServerTime(1_000L), ServerTime(1_000L))
+    }
+
+    @Test
+    fun `group action shifts an instant and stays in-domain`() {
+        assertEquals(ServerTime(360_000L), ServerTime(300_000L) + 1.minutes)
+        assertEquals(WallTime(240_000L), WallTime(300_000L) - 1.minutes)
+        assertEquals(ElapsedTime(360_000L), ElapsedTime(300_000L) + 1.minutes)
+    }
+
+    @Test
+    fun `affine laws hold`() {
+        val p = ServerTime(1_000_000L)
+        val d = 90.seconds
+        // (p + d) − p == d : the group action is the inverse of subtraction.
+        assertEquals(d, (p + d) - p)
+        // p + d − d == p : plus and minus by the same vector cancel.
+        assertEquals(p, (p + d) - d)
+    }
+
+    @Test
+    fun `both minus overloads coexist by argument type`() {
+        // minus(Point) yields a Duration; minus(Duration) yields a Point — resolved by argument type.
+        val elapsed: kotlin.time.Duration = ServerTime(5_000L) - ServerTime(2_000L)
+        val shifted: ServerTime = ServerTime(5_000L) - 3.seconds
+        assertEquals(3.seconds, elapsed)
+        assertEquals(ServerTime(2_000L), shifted)
     }
 }

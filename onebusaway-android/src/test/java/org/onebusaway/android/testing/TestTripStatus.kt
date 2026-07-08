@@ -17,6 +17,7 @@ package org.onebusaway.android.testing
 
 import android.location.Location
 import org.onebusaway.android.models.ObaTripStatus
+import kotlin.time.Duration
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
 
@@ -59,7 +60,7 @@ private class TestTripStatus(
 ) : ObaTripStatus {
     override val serviceDate: Long = 0L
     override val isPredicted: Boolean = predicted
-    override val scheduleDeviation: Long = 0L
+    override val scheduleDeviation: Duration = Duration.ZERO
     override val vehicleId: String? = vehicleId
     override val closestStop: String? = null
     override val closestStopTimeOffset: Long = 0L

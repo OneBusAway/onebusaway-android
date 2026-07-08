@@ -27,6 +27,7 @@ import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.PreferenceUtils
 import org.opentripplanner.api.model.Itinerary
 import org.opentripplanner.routing.core.TraverseMode
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -90,9 +91,9 @@ object ConversionUtils {
                     OTPConstants.PREFERENCE_KEY_API_VERSION, OTPConstants.API_VERSION_V1
                 ) == OTPConstants.API_VERSION_V1
             ) {
-                (endTime.toEpochMilli() - startTime.toEpochMilli()).toDouble()
+                Duration.between(startTime, endTime).toMillis().toDouble()
             } else {
-                ((endTime.toEpochMilli() - startTime.toEpochMilli()) / 1000).toDouble()
+                (Duration.between(startTime, endTime).toMillis() / 1000).toDouble()
             }
         }
         return duration

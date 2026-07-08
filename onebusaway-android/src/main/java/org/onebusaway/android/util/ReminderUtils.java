@@ -75,15 +75,21 @@ public class ReminderUtils {
     }
 
     /**
-     * Returns the valid reminder times based on the provided departure time.
-     * @param context the application context
-     * @param departTime the departure time in milliseconds
+     * Returns the valid reminder lead-times for a departure.
+     *
+     * @param context      the application context
+     * @param departTimeMs the departure time, epoch millis
+     * @param nowMs        "now", epoch millis, in the SAME clock domain as departTimeMs — the server
+     *                     clock for a live arrival's predicted/scheduled departure, or the device clock
+     *                     for a locally-reconstructed scheduled time. Measuring the two on one clock
+     *                     keeps device clock skew out of the offsets (#1612); this helper never reads a
+     *                     clock itself, so the domain choice stays with the caller.
      * @return the valid reminder times
      */
-    public static String[] getReminderTimes(Context context, long departTime) {
+    public static String[] getReminderTimes(Context context, long departTimeMs, long nowMs) {
         Integer[] times = {3, 5, 10, 15, 20, 25, 30};
-        // Convert milliseconds to minutes and calculate the time until departure
-        long departTimeInMinutes = (long) Math.ceil((departTime - System.currentTimeMillis()) / 60000.0);
+        // Same-domain subtraction — both operands are epoch millis on the caller's chosen clock.
+        long departTimeInMinutes = (long) Math.ceil((departTimeMs - nowMs) / 60000.0);
         String[] allTimes = context.getResources().getStringArray(R.array.reminder_time);
         List<String> validTimes = new ArrayList<>();
 

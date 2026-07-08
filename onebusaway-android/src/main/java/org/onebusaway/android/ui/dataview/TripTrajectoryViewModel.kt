@@ -51,8 +51,8 @@ class TripTrajectoryViewModel @Inject constructor(
         viewModelScope.launch { repository.tripDetailsStream(tripId).collect { /* recorded by the repo */ } }
     }
 
-    /** Rebuilds the graph from the latest store snapshot at [nowMs]. The screen ticks this ~1×/sec. */
-    fun refresh(nowMs: Long = System.currentTimeMillis()) {
+    /** Rebuilds the graph from the latest store snapshot at [now]. The screen ticks this ~1×/sec. */
+    fun refresh(now: WallTime = WallTime.now()) {
         val snapshot = repository.lookupTripState(tripId) ?: run {
             _state.value = TripTrajectoryUiState.empty(tripId)
             return
@@ -62,7 +62,7 @@ class TripTrajectoryViewModel @Inject constructor(
             vehicleId = snapshot.anchor?.vehicleId,
             sampleCount = snapshot.history.size,
             tripEnded = snapshot.vehicleActiveTripId != null && snapshot.vehicleActiveTripId != tripId,
-            trajectory = buildTrajectory(snapshot, WallTime(nowMs)),
+            trajectory = buildTrajectory(snapshot, now),
         )
     }
 }

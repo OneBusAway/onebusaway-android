@@ -18,6 +18,7 @@ package org.onebusaway.android.directions.model
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.opentripplanner.api.model.Itinerary
 import org.opentripplanner.routing.core.TraverseMode
+import java.time.Duration
 import java.time.Instant
 
 /**
@@ -68,8 +69,8 @@ class ItineraryDescription {
     fun getDelay(other: ItineraryDescription): Long? {
         val otherEnd = other.endDate ?: return null
         val thisEnd = endDate ?: return null
-        // Both are server-provided instants; same-domain subtraction is safe.
-        return (otherEnd.toEpochMilli() - thisEnd.toEpochMilli()) / 1000
+        // Both are server-provided instants; measure the span with java.time rather than raw epoch millis.
+        return Duration.between(thisEnd, otherEnd).toMillis() / 1000
     }
 
     /**

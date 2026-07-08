@@ -110,7 +110,7 @@ class TripTrajectoryViewModelTest {
         val vm = viewModel(FakeRepo(TripState("trip1")))
         runCurrent()
 
-        vm.refresh(nowMs = 10_000L)
+        vm.refresh(now = WallTime(10_000L))
 
         val state = vm.state.value
         assertEquals("trip1", state.tripId)
@@ -124,7 +124,7 @@ class TripTrajectoryViewModelTest {
         val vm = viewModel(FakeRepo(null))
         runCurrent()
 
-        vm.refresh(nowMs = 10_000L)
+        vm.refresh(now = WallTime(10_000L))
 
         assertEquals(0, vm.state.value.sampleCount)
     }
@@ -136,7 +136,7 @@ class TripTrajectoryViewModelTest {
         runCurrent() // init's collector subscribes to the details stream
 
         // Nothing recorded yet: the store is empty, so refresh reflects an empty trajectory.
-        vm.refresh(nowMs = 10_000L)
+        vm.refresh(now = WallTime(10_000L))
         assertEquals(0, vm.state.value.sampleCount)
 
         // A poll records a vehicle status into the store via the collected stream.
@@ -150,7 +150,7 @@ class TripTrajectoryViewModelTest {
         runCurrent()
 
         // refresh now rebuilds the ui state from the hydrated snapshot.
-        vm.refresh(nowMs = 10_000L)
+        vm.refresh(now = WallTime(10_000L))
         val state = vm.state.value
         assertEquals("trip1", state.tripId)
         assertEquals("bus7", state.vehicleId)

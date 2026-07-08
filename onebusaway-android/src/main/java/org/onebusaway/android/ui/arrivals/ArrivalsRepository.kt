@@ -273,7 +273,6 @@ class DefaultArrivalsRepository @Inject constructor(
         routeFilter: Set<String>?
     ): Result<ArrivalsData> = withContext(Dispatchers.IO) {
         importGate.awaitReady()
-        val now = System.currentTimeMillis()
         val filter = routeFilter ?: stopRouteFilterDao.routeIdsForStop(stopId).toSet()
         var minutes = minutesAfter
         // Widen the window while the fetch is empty (or failing), matching the legacy loader.
@@ -290,7 +289,7 @@ class DefaultArrivalsRepository @Inject constructor(
                 // Record the stop once per session so favoriting persists (setFavorite is an
                 // UPDATE — it needs the row to exist) and the stop shows in Recent stops.
                 if (!stopRecorded) {
-                    snapshot.stop?.let { recordStop(it, now); stopRecorded = true }
+                    snapshot.stop?.let { recordStop(it, System.currentTimeMillis()); stopRecorded = true }
                 }
                 Result.success(toData(snapshot, filter, isStale = false, now = snapshot.currentTime))
             },
@@ -300,6 +299,7 @@ class DefaultArrivalsRepository @Inject constructor(
                     // No fresh server time; project the last good server clock forward by the elapsed
                     // device time so stale ETAs/countdowns keep advancing (legacy behavior) without
                     // reintroducing device clock skew (#1612).
+                    @Suppress("RawClockArithmetic") // both operands are ElapsedTime (monotonic); sanctioned skew-free crossing
                     val now = stale.snapshot.currentTime +
                         (SystemClock.elapsedRealtime() - stale.elapsedMs)
                     Result.success(toData(stale.snapshot, filter, isStale = true, now = now))

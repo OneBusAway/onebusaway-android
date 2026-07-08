@@ -53,6 +53,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapHost
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.map.compose.BikeInfoWindow
 import org.onebusaway.android.map.compose.ObaComposeMapAdapter
 import org.onebusaway.android.map.compose.ObaMapCallbacks
@@ -228,8 +229,10 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                                 continue
                             }
                             lastNanos = frameNanos
-                            val now = System.currentTimeMillis()
-                            activeRenderer.renderDynamic(tripSampler?.invoke(now), vehiclesSampler?.invoke(now), now)
+                            val now = WallTime.now()
+                            activeRenderer.renderDynamic(
+                                tripSampler?.invoke(now.epochMs), vehiclesSampler?.invoke(now.epochMs), now.epochMs
+                            )
                         }
                     }
             }

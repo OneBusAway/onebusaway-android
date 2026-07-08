@@ -68,6 +68,8 @@ import java.util.Locale
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
+import org.onebusaway.android.time.ElapsedTime
 
 /**
  * Implements the "destination reminders" feature in the app that notifies the user as they
@@ -100,10 +102,14 @@ class NavigationService : Service() {
     private var navProvider: NavigationServiceProvider? = null
     private var logFile: File? = null
 
-    private var finishedTime: Long = 0
+    // Monotonic anchor for the 30s trip-end debounce (null = trip not yet finished). Elapsed-realtime,
+    // not wall clock: the debounce measures a real interval and must survive NTP/user clock changes.
+    private var finishedTime: ElapsedTime? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "Starting Service")
+        // Device-clock timestamp for this nav session's path links; not compared against a server clock.
+        @Suppress("UnwrappedClockValue")
         val currentTime = System.currentTimeMillis()
         // The nav-stop read/write is now Room-backed (suspend), so the setup runs on the service scope
         // after the one-time import gate. Dispatchers.Main.immediate keeps startForeground on the main
@@ -241,9 +247,10 @@ class NavigationService : Service() {
 
         // Is trip is finished? If so end service.
         if (provider.getFinished()) {
-            if (finishedTime == 0L) {
-                finishedTime = System.currentTimeMillis()
-            } else if (System.currentTimeMillis() - finishedTime >= 30000) {
+            val finished = finishedTime
+            if (finished == null) {
+                finishedTime = ElapsedTime.now()
+            } else if (ElapsedTime.now() - finished >= 30.seconds) {
                 obaAnalytics.reportUiEvent(
                     PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL,
                     getString(R.string.analytics_label_destination_reminder),

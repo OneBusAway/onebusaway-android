@@ -604,7 +604,8 @@ private fun reportPlanAnalytics(
  * [Intent] for the caller to set on the host (so a config change doesn't re-restore), or null when
  * there was nothing to restore.
  */
-@Suppress("UNCHECKED_CAST", "DEPRECATION")
+// UnwrappedClockValue: the trip-plan time defaults to device "now" when the intent carries none.
+@Suppress("UNCHECKED_CAST", "DEPRECATION", "UnwrappedClockValue")
 private fun maybeRestoreFromIntent(
     viewModel: TripPlanViewModel,
     context: Context,

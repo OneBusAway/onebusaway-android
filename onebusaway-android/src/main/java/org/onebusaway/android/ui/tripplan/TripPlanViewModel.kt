@@ -114,7 +114,9 @@ class TripPlanViewModel @Inject constructor(
                 } else {
                     _planState.value = PlanResult.Loading
                     planRepository.plan(params).fold(
-                        onSuccess = { _planState.value = PlanResult.Success(it) },
+                        // Carry the request that produced the results so the host can arm the
+                        // trip-plan-change monitor to re-plan it (see PlanResult.Success.params).
+                        onSuccess = { _planState.value = PlanResult.Success(it, params) },
                         onFailure = { _planState.value = PlanResult.Error(it.message.orEmpty()) }
                     )
                 }
@@ -202,7 +204,7 @@ class TripPlanViewModel @Inject constructor(
     }
 
     /**
-     * Seeds the form and results from a re-entry (e.g. a RealtimeChecker trip-update notification)
+     * Seeds the form and results from a re-entry (e.g. a trip-plan monitor trip-update notification)
      * without re-planning, so the user lands back on the trip they were watching.
      */
     fun restoreFrom(

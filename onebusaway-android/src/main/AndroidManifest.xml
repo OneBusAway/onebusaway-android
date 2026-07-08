@@ -296,16 +296,24 @@
             android:enabled="true">
         </receiver>
 
-        <!-- Only receives the app's own realtime-check broadcasts (RealtimeChecker), so
-             it needs no cross-app access. The intent-filter still matches the same-app broadcast. -->
-        <receiver android:name=".directions.realtime.RealtimeReceiver"
-            android:exported="false">
-            <intent-filter>
-                <!-- Should match constants for actions defined in OTPConstants -->
-                <action android:name="${applicationId}.directions.action.START_CHECKS"/>
-                <action android:name="${applicationId}.directions.action.CHECK"/>
-            </intent-filter>
-        </receiver>
+        <!-- Trip-plan-change monitor: a foreground service running a coroutine poll loop while the
+             user is within the pre-departure window. No platform foregroundServiceType fits "watch a
+             planned trip for changes"; specialUse is the sanctioned catch-all (subtype documents it
+             for Play review). -->
+        <service
+            android:name=".directions.realtime.TripPlanMonitorService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="trip_plan_change_monitoring" />
+        </service>
+
+        <!-- Fires once at (departure − query window) to start TripPlanMonitorService for a trip
+             planned further out; app-internal, so not exported and targeted explicitly. -->
+        <receiver
+            android:name=".directions.realtime.TripPlanMonitorAlarmReceiver"
+            android:exported="false" />
 
         <meta-data
             android:name="com.google.android.gms.version"

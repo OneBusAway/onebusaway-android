@@ -42,7 +42,7 @@ interface TripPlanRepository {
 
     /**
      * Blocking OTP plan for a caller that is already on a background thread and has assembled its
-     * own [TripRequestBuilder] — the RealtimeChecker background worker, which replaced the legacy
+     * own [TripRequestBuilder] — the trip-plan monitor background worker, which replaced the legacy
      * `TripRequest` AsyncTask. Returns the itineraries, or an empty list on any failure (mirroring
      * the old callback's failure path, which only logged and disabled updates). Kept non-suspend and
      * Result-free so it stays cleanly callable from the Java service.
@@ -75,16 +75,7 @@ class DefaultTripPlanRepository @Inject constructor(
 
     /** Assembles a [TripRequestBuilder] from the UI-supplied [params]. */
     private fun builderFor(params: TripPlanParams): TripRequestBuilder =
-        TripRequestBuilder(context, Bundle()).apply {
-            setFrom(params.from.toCustomAddress())
-            setTo(params.to.toCustomAddress())
-            val instant = Instant.ofEpochMilli(params.dateTimeMillis)
-            if (params.arriving) setArrivalTime(instant) else setDepartureTime(instant)
-            setModeSetById(params.modeId)
-            setWheelchairAccessible(params.wheelchair)
-            setOptimizeTransfers(params.optimizeTransfers)
-            params.maxWalkMeters?.let { setMaxWalkDistance(it) }
-        }
+        params.toRequestBuilder(context)
 
     /**
      * Runs the OTP request for an already-assembled [builder] on the calling thread. Throws
@@ -187,25 +178,6 @@ class DefaultTripPlanRepository @Inject constructor(
         return parsed
     }
 
-    private fun TripEndpoint.toCustomAddress(): CustomAddress {
-        val address = CustomAddress.getEmptyAddress()
-        val lat = lat
-        val lon = lon
-        if (lat != null && lon != null) {
-            address.latitude = lat
-            address.longitude = lon
-        }
-        address.setAddressLine(0, addressLine())
-        return address
-    }
-
-    /** The string the OTP server geocodes (or just labels the request); fixed kinds resolve a resource. */
-    private fun TripEndpoint.addressLine(): String = displayText ?: when (this) {
-        is TripEndpoint.MapPoint -> context.getString(R.string.trip_plan_map_location)
-        // Only the fixed-label kinds (CurrentLocation/MapPoint) have a null displayText.
-        else -> context.getString(R.string.tripplanner_current_location)
-    }
-
     private fun errorMessage(errorCode: Int): String = when (errorCode) {
         Message.SYSTEM_ERROR.id -> context.getString(R.string.tripplanner_error_system)
         Message.OUTSIDE_BOUNDS.id -> context.getString(R.string.tripplanner_error_outside_bounds)
@@ -256,3 +228,43 @@ internal fun otpPlanUrl(baseUrl: String, query: String, oldServer: Boolean): Str
     } else {
         "$baseUrl$OTP_ROUTERS_SEGMENT$OTP_PLAN_LOCATION$query"
     }
+
+/**
+ * Assembles a [TripRequestBuilder] from these [TripPlanParams]. Shared by the UI plan path
+ * ([DefaultTripPlanRepository]) and the trip-plan-change monitor, so the request that produced the
+ * results is re-planned identically (same modes / wheelchair / optimize / max-walk).
+ */
+internal fun TripPlanParams.toRequestBuilder(context: Context): TripRequestBuilder {
+    val params = this
+    // Inside the apply{} the receiver is the TripRequestBuilder (whose own `from`/`to` getters would
+    // otherwise shadow the params), so read every field through `params`.
+    return TripRequestBuilder(context, Bundle()).apply {
+        setFrom(params.from.toCustomAddress(context))
+        setTo(params.to.toCustomAddress(context))
+        val instant = Instant.ofEpochMilli(params.dateTimeMillis)
+        if (params.arriving) setArrivalTime(instant) else setDepartureTime(instant)
+        setModeSetById(params.modeId)
+        setWheelchairAccessible(params.wheelchair)
+        setOptimizeTransfers(params.optimizeTransfers)
+        params.maxWalkMeters?.let { setMaxWalkDistance(it) }
+    }
+}
+
+private fun TripEndpoint.toCustomAddress(context: Context): CustomAddress {
+    val address = CustomAddress.getEmptyAddress()
+    val lat = lat
+    val lon = lon
+    if (lat != null && lon != null) {
+        address.latitude = lat
+        address.longitude = lon
+    }
+    address.setAddressLine(0, addressLine(context))
+    return address
+}
+
+/** The string the OTP server geocodes (or just labels the request); fixed kinds resolve a resource. */
+private fun TripEndpoint.addressLine(context: Context): String = displayText ?: when (this) {
+    is TripEndpoint.MapPoint -> context.getString(R.string.trip_plan_map_location)
+    // Only the fixed-label kinds (CurrentLocation/MapPoint) have a null displayText.
+    else -> context.getString(R.string.tripplanner_current_location)
+}

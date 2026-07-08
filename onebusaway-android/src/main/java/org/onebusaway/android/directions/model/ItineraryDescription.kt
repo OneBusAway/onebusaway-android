@@ -75,7 +75,7 @@ class ItineraryDescription {
     /**
      * An ID for this ItineraryDescription.
      * The notification requires an ID so it does not create duplicates. Right now, sending a
-     * notification cancels out the RealtimeChecker, so we do not send multiple notifications,
+     * notification cancels out the trip-plan monitor, so we do not send multiple notifications,
      * but we may in future.
      * Use the hash code of the trips array. Not guaranteed to be unique.
      */

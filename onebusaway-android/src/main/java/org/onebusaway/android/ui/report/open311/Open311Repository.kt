@@ -277,8 +277,12 @@ class DefaultOpen311Repository(
 
             val timeFormat = SimpleDateFormat("hh:mm a", Locale.US)
             if (arrival.predicted) {
-                sb.append(res.getString(R.string.ri_append_arrival_time, timeFormat.format(Date(arrival.predictedArrivalTime))))
-                sb.append(res.getString(R.string.ri_append_departure_time, timeFormat.format(Date(arrival.predictedDepartureTime))))
+                // predicted=true implies a real predicted instant; fall back to the scheduled time
+                // rather than ever formatting Date(0) (1969) if it is somehow absent.
+                val arr = arrival.predictedArrivalTime ?: arrival.scheduledArrivalTime
+                val dep = arrival.predictedDepartureTime ?: arrival.scheduledDepartureTime
+                sb.append(res.getString(R.string.ri_append_arrival_time, timeFormat.format(Date(arr))))
+                sb.append(res.getString(R.string.ri_append_departure_time, timeFormat.format(Date(dep))))
             } else {
                 sb.append(res.getString(R.string.ri_append_arrival_time, timeFormat.format(Date(arrival.scheduledArrivalTime))))
                 sb.append(res.getString(R.string.ri_append_departure_time, timeFormat.format(Date(arrival.scheduledDepartureTime))))

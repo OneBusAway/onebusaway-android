@@ -27,13 +27,16 @@ import org.onebusaway.android.time.ServerTime
 internal fun ArrivalDeparture.asArrivalData(): ArrivalData = DtoArrivalData(this)
 
 /**
- * A closed (or otherwise suppressed) stop keeps `predicted:true` but replaces the near-term
- * prediction with a non-positive sentinel — observed `-1` and `0` for stop `1_82673` in issue #1687.
- * Collapse any non-positive predicted instant to the single canonical "no prediction" value `0`
- * here at the wire→domain boundary, so downstream `!= 0` / `> 0` guards all see one sentinel and a
- * `-1` can never be treated as a real epoch-millis timestamp.
+ * A closed (or otherwise suppressed) stop keeps `predicted:true` but replaces the near-term prediction
+ * with a non-positive sentinel — observed `-1` and `0` for stop `1_82673` in issue #1687. Decode any
+ * non-positive predicted instant to `null` ("no prediction") here at the wire→domain boundary, so the
+ * domain model carries absence as a nullable [ServerTime] rather than a `0`/`-1` epoch a consumer could
+ * mistake for a real timestamp (parse, don't validate).
  */
-private fun predictedOrAbsent(epochMs: Long): Long = if (epochMs > 0L) epochMs else 0L
+// `internal`, not `private`: a same-file class getter reads it, and a private top-level function would
+// force a synthetic accessor (SyntheticAccessor lint) — internal is accessed directly.
+internal fun predictedServerTimeOrNull(epochMs: Long): ServerTime? =
+    epochMs.takeIf { it > 0L }?.let { ServerTime(it) }
 
 private class DtoArrivalData(private val d: ArrivalDeparture) : ArrivalData {
     override val routeId get() = d.routeId
@@ -48,9 +51,9 @@ private class DtoArrivalData(private val d: ArrivalDeparture) : ArrivalData {
     override val predicted get() = d.predicted
     // Wire→server mint: these are the server clock, already epoch millis.
     override val scheduledArrivalTime get() = ServerTime(d.scheduledArrivalTime)
-    override val predictedArrivalTime get() = ServerTime(predictedOrAbsent(d.predictedArrivalTime))
+    override val predictedArrivalTime get() = predictedServerTimeOrNull(d.predictedArrivalTime)
     override val scheduledDepartureTime get() = ServerTime(d.scheduledDepartureTime)
-    override val predictedDepartureTime get() = ServerTime(predictedOrAbsent(d.predictedDepartureTime))
+    override val predictedDepartureTime get() = predictedServerTimeOrNull(d.predictedDepartureTime)
     override val status get() = d.tripStatus?.status?.let { Status.fromString(it) }
     override val situationIds get() = d.situationIds
     override val frequency

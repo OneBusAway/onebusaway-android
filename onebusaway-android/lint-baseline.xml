@@ -378,27 +378,7 @@
             column="30"/>
     </issue>
 
-    <issue
-        id="SyntheticAccessor"
-        message="Access to `private` method `predictedOrAbsent` of class `ArrivalAdaptersKt` requires synthetic accessor"
-        errorLine1="    override val predictedArrivalTime get() = ServerTime(predictedOrAbsent(d.predictedArrivalTime))"
-        errorLine2="                                                         ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/api/adapters/ArrivalAdapters.kt"
-            line="51"
-            column="58"/>
-    </issue>
 
-    <issue
-        id="SyntheticAccessor"
-        message="Access to `private` method `predictedOrAbsent` of class `ArrivalAdaptersKt` requires synthetic accessor"
-        errorLine1="    override val predictedDepartureTime get() = ServerTime(predictedOrAbsent(d.predictedDepartureTime))"
-        errorLine2="                                                           ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/api/adapters/ArrivalAdapters.kt"
-            line="53"
-            column="60"/>
-    </issue>
 
     <issue
         id="SyntheticAccessor"

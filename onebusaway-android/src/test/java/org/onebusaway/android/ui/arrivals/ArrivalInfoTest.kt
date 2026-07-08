@@ -50,7 +50,8 @@ class ArrivalInfoTest {
         scheduledArrivalTime: Long = scheduledArrival,
     ): ArrivalData = FakeArrivalData(
         predicted = predicted,
-        predictedArrivalTime = ServerTime(predictedArrivalTime),
+        // Mirror the adapter's wire→domain mint: a non-positive predicted instant decodes to null.
+        predictedArrivalTime = predictedArrivalTime.takeIf { it > 0L }?.let { ServerTime(it) },
         scheduledArrivalTime = ServerTime(scheduledArrivalTime),
     )
 
@@ -67,7 +68,7 @@ class ArrivalInfoTest {
         val info = infoFor(arrival(predicted = true, predictedArrivalTime = -1L))
 
         assertFalse("a -1 predicted sentinel is not a real prediction", info.predicted)
-        assertEquals("displayTime falls back to the scheduled instant", scheduledArrival, info.displayTime)
+        assertEquals("displayTime falls back to the scheduled instant", scheduledArrival, info.displayTime.epochMs)
         // ETA is scheduled - now (~50 min), never the ~ -29,718,596 min garbage.
         assertEquals(scheduledArrival / 60_000 - now.epochMs / 60_000, info.eta)
         assertTrue("ETA is a sane near-future value", info.eta in 0..120)
@@ -78,7 +79,7 @@ class ArrivalInfoTest {
         val info = infoFor(arrival(predicted = true, predictedArrivalTime = 0L))
 
         assertFalse("a 0 predicted sentinel is not a real prediction", info.predicted)
-        assertEquals(scheduledArrival, info.displayTime)
+        assertEquals(scheduledArrival, info.displayTime.epochMs)
         assertEquals(scheduledArrival / 60_000 - now.epochMs / 60_000, info.eta)
         assertTrue("ETA is a sane near-future value", info.eta in 0..120)
     }
@@ -89,7 +90,7 @@ class ArrivalInfoTest {
         val info = infoFor(arrival(predicted = true, predictedArrivalTime = predictedArrival))
 
         assertTrue(info.predicted)
-        assertEquals(predictedArrival, info.displayTime)
+        assertEquals(predictedArrival, info.displayTime.epochMs)
         assertEquals(predictedArrival / 60_000 - now.epochMs / 60_000, info.eta)
     }
 
@@ -98,7 +99,7 @@ class ArrivalInfoTest {
         val info = infoFor(arrival(predicted = false, predictedArrivalTime = 0L))
 
         assertFalse(info.predicted)
-        assertEquals(scheduledArrival, info.displayTime)
+        assertEquals(scheduledArrival, info.displayTime.epochMs)
         assertEquals(scheduledArrival / 60_000 - now.epochMs / 60_000, info.eta)
     }
 
@@ -123,7 +124,7 @@ class ArrivalInfoTest {
 /** Minimal [ArrivalData] stub; only the arrival-time fields matter for these ETA assertions. */
 private data class FakeArrivalData(
     override val predicted: Boolean,
-    override val predictedArrivalTime: ServerTime,
+    override val predictedArrivalTime: ServerTime?,
     override val scheduledArrivalTime: ServerTime,
     override val routeId: String = "1_100",
     override val tripId: String = "1_trip",
@@ -135,7 +136,7 @@ private data class FakeArrivalData(
     override val serviceDate: Long = 0L,
     override val vehicleId: String? = null,
     override val scheduledDepartureTime: ServerTime = ServerTime(0L),
-    override val predictedDepartureTime: ServerTime = ServerTime(0L),
+    override val predictedDepartureTime: ServerTime? = null,
     override val status: Status? = null,
     override val frequency: FrequencyWindow? = null,
     override val situationIds: List<String> = emptyList(),

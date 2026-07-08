@@ -120,8 +120,9 @@ object TripPlanMonitor {
         val bundle = Bundle().apply {
             builder.copyIntoBundleSimple(this)
             putStringArray(EXTRA_ITINERARY_DESC, tripIds.toTypedArray())
-            // Unwrap to a bare Long only here, at the Bundle boundary (0 = unknown departure).
-            putLong(EXTRA_ITINERARY_START_DATE, itineraryDeparture?.epochMs ?: 0L)
+            // Only store a real departure; an absent one is the reader's getLong default, never a 0
+            // (1970) instant. The unwrap is passed straight to the putLong sink.
+            itineraryDeparture?.epochMs?.let { putLong(EXTRA_ITINERARY_START_DATE, it) }
             putLong(EXTRA_ITINERARY_END_DATE, endDate.toEpochMilli())
             putString(OTPConstants.NOTIFICATION_TARGET, notificationTarget.name)
         }
@@ -138,7 +139,10 @@ object TripPlanMonitor {
                 requestTime, WallTime.now(), OTPConstants.REALTIME_SERVICE_QUERY_WINDOW.milliseconds
             )
         ) {
-            scheduleStart(app, bundle, requestTime.epochMs - OTPConstants.REALTIME_SERVICE_QUERY_WINDOW)
+            scheduleStart(
+                app, bundle,
+                (requestTime - OTPConstants.REALTIME_SERVICE_QUERY_WINDOW.milliseconds).epochMs,
+            )
         } else {
             startServiceNow(app, bundle)
         }

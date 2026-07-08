@@ -185,13 +185,14 @@ class DefaultTripDetailsRepository @Inject constructor(
         val stops = stopTimes.mapIndexed { i, stopTime ->
             val stop = td.stop(stopTime.stopId)
             // Resolve the scheduled stop time onto the server clock, then shift by the live schedule
-            // deviation (a server-clock ServerTime + Duration group action).
-            val millis = (stopTime.arrivalTime.resolve(serviceDate) + deviation).epochMs
+            // deviation (a server-clock ServerTime + Duration group action). Stays typed; the epoch
+            // millis is unwrapped only at the formatting sink below.
+            val stopTimeOnServerClock = stopTime.arrivalTime.resolve(serviceDate) + deviation
             TripStopItem(
                 stopId = stopTime.stopId,
                 name = MyTextUtils.formatDisplayText(stop?.name).orEmpty(),
                 direction = stop?.direction,
-                timeText = DisplayFormat.formatTime(context, millis),
+                timeText = DisplayFormat.formatTime(context, stopTimeOnServerClock.epochMs),
                 canceled = canceled,
                 isPassed = nextStopIndex != null && i < nextStopIndex,
                 linePosition = when (i) {

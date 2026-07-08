@@ -43,7 +43,7 @@ class ArrivalInfo(
 
     val eta: Long
 
-    val displayTime: Long
+    val displayTime: ServerTime
 
     val statusText: String
 
@@ -105,9 +105,8 @@ class ArrivalInfo(
     val situationIds: List<String> get() = data.situationIds
 
     /** The departure time to set a reminder for: the predicted time if known, else the scheduled. */
-    val reminderDepartureTime: Long
-        get() = if (data.predictedDepartureTime.epochMs > 0L) data.predictedDepartureTime.epochMs
-        else data.scheduledDepartureTime.epochMs
+    val reminderDepartureTime: ServerTime
+        get() = data.predictedDepartureTime ?: data.scheduledDepartureTime
 
     /** Flattens this arrival into the report flow's scalar context (was ObaArrivalInfo-based). */
     fun toTripReportContext(): TripReportContext = TripReportContext(
@@ -124,8 +123,8 @@ class ArrivalInfo(
         // instants to 0 (issue #1687), and the report builder branches on this to pick the
         // predicted vs scheduled times — the raw flag would format Date(0) as a 1969 garbage time.
         predicted = predicted,
-        predictedArrivalTime = data.predictedArrivalTime.epochMs,
-        predictedDepartureTime = data.predictedDepartureTime.epochMs,
+        predictedArrivalTime = data.predictedArrivalTime?.epochMs,
+        predictedDepartureTime = data.predictedDepartureTime?.epochMs,
         scheduledArrivalTime = data.scheduledArrivalTime.epochMs,
         scheduledDepartureTime = data.scheduledDepartureTime.epochMs,
         hasTripStatus = data.hasTripStatus,
@@ -141,7 +140,7 @@ class ArrivalInfo(
         // the subtraction stays same-domain.
         val nowMins = now.epochMs / MS_IN_MINS
         val scheduled: ServerTime
-        val predictedTime: ServerTime
+        val predictedTime: ServerTime?
         // If this is the first stop in the sequence, show the departure time.
         if (data.stopSequence != 0) {
             scheduled = data.scheduledArrivalTime
@@ -155,22 +154,23 @@ class ArrivalInfo(
         }
 
         val scheduledMins = scheduled.epochMs / MS_IN_MINS
-        val predictedMins = predictedTime.epochMs / MS_IN_MINS
+        // 0 when there's no prediction, preserving the prior sentinel behavior into computeColor below.
+        val predictedMins = predictedTime?.let { it.epochMs / MS_IN_MINS } ?: 0L
 
-        // A prediction is only usable when the server actually gave us a positive instant. A closed
-        // stop keeps `predicted:true` but suppresses the near-term prediction to a non-positive
-        // sentinel (normalized to 0 at the wire→domain boundary, issue #1687); keying the ETA off the
-        // boolean alone would subtract a 0 timestamp from "now" and render garbage (~ -29,718,596 min).
-        val hasPrediction = data.predicted && predictedTime.epochMs > 0L
+        // A prediction is only usable when the server actually gave us one. A closed stop keeps
+        // `predicted:true` but suppresses the near-term prediction (decoded to a null instant at the
+        // wire→domain boundary, issue #1687); keying the ETA off the boolean alone would subtract a 0
+        // timestamp from "now" and render garbage (~ -29,718,596 min).
+        val hasPrediction = data.predicted && predictedTime != null
 
         if (hasPrediction) {
             predicted = true
             eta = predictedMins - nowMins
-            displayTime = predictedTime.epochMs
+            displayTime = predictedTime
         } else {
             predicted = false
             eta = scheduledMins - nowMins
-            displayTime = scheduled.epochMs
+            displayTime = scheduled
         }
 
         color = ArrivalInfoUtils.computeColor(scheduledMins, predictedMins)
@@ -319,7 +319,7 @@ class ArrivalInfo(
             return ""
         }
 
-        val displayTimeText = DisplayFormat.formatTime(context, displayTime)
+        val displayTimeText = DisplayFormat.formatTime(context, displayTime.epochMs)
 
         return if (eta >= 0) {
             // Bus hasn't yet arrived

@@ -51,9 +51,6 @@ sealed interface CameraCommand {
         val animate: Boolean,
     ) : CameraCommand
 
-    /** Center on a tapped stop, bumping to the default zoom only if currently zoomed out past it. */
-    data class CenterOnStopTap(val lat: Double, val lon: Double) : CameraCommand
-
     /** Set the zoom level (preserving the current center). */
     data class SetZoom(val zoom: Float) : CameraCommand
 

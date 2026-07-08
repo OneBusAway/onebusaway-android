@@ -74,16 +74,6 @@ fun applyCameraCommand(
             if (cmd.animate) map.animateCamera(update) else map.moveCamera(update)
         }
 
-        is CameraCommand.CenterOnStopTap -> {
-            val pos = LatLng(cmd.lat, cmd.lon)
-            val update = if (map.cameraPosition.zoom < CAMERA_DEFAULT_ZOOM) {
-                CameraUpdateFactory.newLatLngZoom(pos, CAMERA_DEFAULT_ZOOM)
-            } else {
-                CameraUpdateFactory.newLatLng(pos)
-            }
-            map.animateCamera(update)
-        }
-
         is CameraCommand.SetZoom -> map.moveCamera(CameraUpdateFactory.zoomTo(cmd.zoom))
 
         CameraCommand.ZoomIn -> map.animateCamera(CameraUpdateFactory.zoomIn())

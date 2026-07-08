@@ -233,15 +233,17 @@ class StopsMapController(
     }
 
     // ----- Focus -----
-    // This owns only the *render* focus (the 1.5x icon, via renderState.focusedStopId) and the camera
-    // move. The home-side focus (the arrivals sheet + analytics) is driven directly by the owner's tap
-    // callback, so a re-tap of the same stop isn't swallowed by state-dedup.
+    // This owns only the *render* focus (the 1.5x icon, via renderState.focusedStopId). The home-side
+    // focus (the arrivals sheet + analytics) is driven directly by the owner's tap callback, so a re-tap
+    // of the same stop isn't swallowed by state-dedup.
 
-    /** A stop marker was tapped: render-focus it + center on it (the old GoogleMapHost.onStopClick). */
+    /**
+     * A stop marker was tapped: render-focus it (the old GoogleMapHost.onStopClick). Deliberately does
+     * *not* move the camera — a tapped marker is already on screen, so recentering/zooming would only
+     * throw away the user's pre-tap view with no way back.
+     */
     fun onStopTapped(stop: ObaStop) {
         setFocusedStopId(stop.id)
-        val loc = stop.location
-        host.dispatchGesture(CameraCommand.CenterOnStopTap(loc.latitude, loc.longitude))
     }
 
     /** A tap away from any marker clears the stop render focus (the old onMapClick). */

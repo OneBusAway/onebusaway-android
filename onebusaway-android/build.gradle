@@ -251,6 +251,8 @@ configurations {
 }
 
 dependencies {
+    // Custom lint checks (see :lint-rules) — RawClockArithmetic enforces the typed-time discipline.
+    lintChecks project(':lint-rules')
     // Core library desugaring: backports java.time.* to minSdk 23 (issue #1693)
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
     // Firebase Analytics

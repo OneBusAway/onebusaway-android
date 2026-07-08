@@ -9303,4 +9303,220 @@
             column="53"/>
     </issue>
 
+    <issue
+        id="RawClockArithmetic"
+        message="Arithmetic on a raw clock reading — mint it into the matching `ServerTime` / `WallTime` / `ElapsedTime` (org.onebusaway.android.time) at the boundary and do the math through the typed API, rather than on an unwrapped `Long`.">
+        <location
+            file="src/main/java/org/onebusaway/android/directions/model/ItineraryDescription.kt"
+            line="72"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="RawClockArithmetic"
+        message="Arithmetic on a raw clock reading — mint it into the matching `ServerTime` / `WallTime` / `ElapsedTime` (org.onebusaway.android.time) at the boundary and do the math through the typed API, rather than on an unwrapped `Long`.">
+        <location
+            file="src/main/java/org/onebusaway/android/directions/util/ConversionUtils.kt"
+            line="93"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="RawClockArithmetic"
+        message="Arithmetic on a raw clock reading — mint it into the matching `ServerTime` / `WallTime` / `ElapsedTime` (org.onebusaway.android.time) at the boundary and do the math through the typed API, rather than on an unwrapped `Long`.">
+        <location
+            file="src/main/java/org/onebusaway/android/directions/util/ConversionUtils.kt"
+            line="95"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="RawClockArithmetic"
+        message="Arithmetic on a raw clock reading — mint it into the matching `ServerTime` / `WallTime` / `ElapsedTime` (org.onebusaway.android.time) at the boundary and do the math through the typed API, rather than on an unwrapped `Long`.">
+        <location
+            file="src/main/java/org/onebusaway/android/donations/DonationsManager.java"
+            line="123"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="RawClockArithmetic"
+        message="Arithmetic on a raw clock reading — mint it into `WallTime` (org.onebusaway.android.time) at the boundary and do the math through the typed API, rather than on an unwrapped `Long`.">
+        <location
+            file="src/main/java/org/onebusaway/android/nav/NavigationService.kt"
+            line="246"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="RawClockArithmetic"
+        message="Arithmetic on a raw clock reading — mint it into `ElapsedTime` (org.onebusaway.android.time) at the boundary and do the math through the typed API, rather than on an unwrapped `Long`.">
+        <location
+            file="src/main/java/org/onebusaway/android/ui/arrivals/ArrivalsRepository.kt"
+            line="304"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="RawClockArithmetic"
+        message="Arithmetic on a raw clock reading — mint it into `WallTime` (org.onebusaway.android.time) at the boundary and do the math through the typed API, rather than on an unwrapped `Long`.">
+        <location
+            file="src/main/java/org/onebusaway/android/ui/arrivals/ArrivalsScreen.kt"
+            line="118"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="RawClockArithmetic"
+        message="Arithmetic on a raw clock reading — mint it into `WallTime` (org.onebusaway.android.time) at the boundary and do the math through the typed API, rather than on an unwrapped `Long`.">
+        <location
+            file="src/main/java/org/onebusaway/android/ui/mylists/MyListRepository.kt"
+            line="83"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="RawClockArithmetic"
+        message="Arithmetic on a raw clock reading — mint it into `WallTime` (org.onebusaway.android.time) at the boundary and do the math through the typed API, rather than on an unwrapped `Long`.">
+        <location
+            file="src/main/java/org/onebusaway/android/ui/tripdetails/TripDetailsScreen.kt"
+            line="90"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="RawClockArithmetic"
+        message="Arithmetic on a raw clock reading — mint it into `WallTime` (org.onebusaway.android.time) at the boundary and do the math through the typed API, rather than on an unwrapped `Long`.">
+        <location
+            file="src/main/java/org/onebusaway/android/util/LocationUtils.java"
+            line="97"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="RawClockArithmetic"
+        message="Arithmetic on a raw clock reading — mint it into `WallTime` (org.onebusaway.android.time) at the boundary and do the math through the typed API, rather than on an unwrapped `Long`.">
+        <location
+            file="src/main/java/org/onebusaway/android/util/LocationUtils.java"
+            line="122"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="RawClockArithmetic"
+        message="Arithmetic on a raw clock reading — mint it into `ElapsedTime` (org.onebusaway.android.time) at the boundary and do the math through the typed API, rather than on an unwrapped `Long`.">
+        <location
+            file="src/main/java/org/onebusaway/android/util/LocationUtils.java"
+            line="222"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="RawClockArithmetic"
+        message="Arithmetic on a raw clock reading — mint it into `WallTime` (org.onebusaway.android.time) at the boundary and do the math through the typed API, rather than on an unwrapped `Long`.">
+        <location
+            file="src/main/java/org/onebusaway/android/util/ReminderUtils.java"
+            line="86"
+            column="54"/>
+    </issue>
+
+    <issue
+        id="UnwrappedClockValue"
+        message="A raw time reading comes to rest in a local variable as a bare `Long` — mint it into `WallTime` (org.onebusaway.android.time) at the read so the clock domain travels with the value, instead of letting an untyped time escape into the code.">
+        <location
+            file="src/google/java/org/onebusaway/android/map/googlemapsv2/compose/GoogleComposeAdapter.kt"
+            line="231"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="UnwrappedClockValue"
+        message="A raw time reading comes to rest in a return value as a bare `Long` — mint it into the matching `ServerTime` / `WallTime` / `ElapsedTime` (org.onebusaway.android.time) at the read so the clock domain travels with the value, instead of letting an untyped time escape into the code.">
+        <location
+            file="src/main/java/org/onebusaway/android/database/oba/TripDepartureTime.kt"
+            line="46"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnwrappedClockValue"
+        message="A raw time reading comes to rest in an assignment as a bare `Long` — mint it into `ElapsedTime` (org.onebusaway.android.time) at the read so the clock domain travels with the value, instead of letting an untyped time escape into the code.">
+        <location
+            file="src/main/java/org/onebusaway/android/map/compose/VehicleInfoWindow.kt"
+            line="276"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="UnwrappedClockValue"
+        message="A raw time reading comes to rest in a return value as a bare `Long` — mint it into `ElapsedTime` (org.onebusaway.android.time) at the read so the clock domain travels with the value, instead of letting an untyped time escape into the code.">
+        <location
+            file="src/main/java/org/onebusaway/android/map/compose/VehicleInfoWindow.kt"
+            line="294"
+            column="50"/>
+    </issue>
+
+    <issue
+        id="UnwrappedClockValue"
+        message="A raw time reading comes to rest in a local variable as a bare `Long` — mint it into `WallTime` (org.onebusaway.android.time) at the read so the clock domain travels with the value, instead of letting an untyped time escape into the code.">
+        <location
+            file="src/main/java/org/onebusaway/android/nav/NavigationService.kt"
+            line="107"
+            column="27"/>
+    </issue>
+
+    <issue
+        id="UnwrappedClockValue"
+        message="A raw time reading comes to rest in an assignment as a bare `Long` — mint it into `WallTime` (org.onebusaway.android.time) at the read so the clock domain travels with the value, instead of letting an untyped time escape into the code.">
+        <location
+            file="src/main/java/org/onebusaway/android/nav/NavigationService.kt"
+            line="245"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="UnwrappedClockValue"
+        message="A raw time reading comes to rest in a local variable as a bare `Long` — mint it into `WallTime` (org.onebusaway.android.time) at the read so the clock domain travels with the value, instead of letting an untyped time escape into the code.">
+        <location
+            file="src/main/java/org/onebusaway/android/ui/arrivals/ArrivalsRepository.kt"
+            line="276"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="UnwrappedClockValue"
+        message="A raw time reading comes to rest in an assignment as a bare `Long` — mint it into `WallTime` (org.onebusaway.android.time) at the read so the clock domain travels with the value, instead of letting an untyped time escape into the code.">
+        <location
+            file="src/main/java/org/onebusaway/android/ui/arrivals/ArrivalsViewModel.kt"
+            line="130"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="UnwrappedClockValue"
+        message="A raw time reading comes to rest in a default parameter value as a bare `Long` — mint it into `WallTime` (org.onebusaway.android.time) at the read so the clock domain travels with the value, instead of letting an untyped time escape into the code.">
+        <location
+            file="src/main/java/org/onebusaway/android/ui/dataview/TripTrajectoryViewModel.kt"
+            line="55"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="UnwrappedClockValue"
+        message="A raw time reading comes to rest in an assignment as a bare `Long` — mint it into `WallTime` (org.onebusaway.android.time) at the read so the clock domain travels with the value, instead of letting an untyped time escape into the code.">
+        <location
+            file="src/main/java/org/onebusaway/android/ui/tripdetails/TripDetailsViewModel.kt"
+            line="68"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="UnwrappedClockValue"
+        message="A raw time reading comes to rest in a local variable as a bare `Long` — mint it into the matching `ServerTime` / `WallTime` / `ElapsedTime` (org.onebusaway.android.time) at the read so the clock domain travels with the value, instead of letting an untyped time escape into the code.">
+        <location
+            file="src/main/java/org/onebusaway/android/ui/tripplan/TripPlanScreen.kt"
+            line="622"
+            column="26"/>
+    </issue>
+
 </issues>

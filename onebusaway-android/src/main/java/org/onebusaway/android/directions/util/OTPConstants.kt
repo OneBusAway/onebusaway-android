@@ -16,17 +16,10 @@
 package org.onebusaway.android.directions.util
 
 import androidx.core.graphics.toColorInt
-import org.onebusaway.android.BuildConfig
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 object OTPConstants {
-
-    @JvmField
-    val INTENT_CHECK_TRIP_TIME = BuildConfig.APPLICATION_ID + ".directions.action.CHECK"
-
-    @JvmField
-    val INTENT_START_CHECKS = BuildConfig.APPLICATION_ID + ".directions.action.START_CHECKS"
 
     const val PREFERENCE_KEY_LIVE_UPDATES = "live_updates"
 

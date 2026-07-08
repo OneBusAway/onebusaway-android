@@ -138,6 +138,15 @@ data class TripPlanFormState(
 sealed interface PlanResult {
     data object Idle : PlanResult
     data object Loading : PlanResult
-    data class Success(val itineraries: List<Itinerary>) : PlanResult
+
+    /**
+     * [params] are the request that produced these [itineraries], carried so the trip-plan-change
+     * monitor can re-plan the same request. Null when the results were restored from a notification
+     * re-entry (the full request isn't reconstructed there), in which case monitoring isn't re-armed.
+     */
+    data class Success(
+        val itineraries: List<Itinerary>,
+        val params: TripPlanParams? = null,
+    ) : PlanResult
     data class Error(val message: String) : PlanResult
 }

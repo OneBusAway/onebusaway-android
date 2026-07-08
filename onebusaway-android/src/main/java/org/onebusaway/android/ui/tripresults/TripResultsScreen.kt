@@ -60,19 +60,18 @@ import android.app.Activity
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
-import android.os.Bundle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.app.di.PreferencesEntryPoint
-import org.onebusaway.android.directions.realtime.RealtimeChecker
-import org.onebusaway.android.directions.util.OTPConstants
+import org.onebusaway.android.directions.realtime.TripPlanMonitor
 import org.onebusaway.android.map.DirectionsMapViewModel
 import org.onebusaway.android.map.compose.NoOpObaMapCallbacks
 import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.opentripplanner.api.model.Itinerary
 
 /**
@@ -187,6 +186,7 @@ fun TripResultsList(state: TripResultsUiState, modifier: Modifier = Modifier) {
 @Composable
 fun TripResultsSheet(
     itineraries: List<Itinerary>,
+    params: TripPlanParams?,
     resultsViewModel: TripResultsViewModel,
     mapViewModel: DirectionsMapViewModel,
     modifier: Modifier = Modifier,
@@ -198,19 +198,21 @@ fun TripResultsSheet(
     LaunchedEffect(itineraries) {
         resultsViewModel.setItineraries(itineraries, initialIndex = 0)
         itineraries.firstOrNull()?.let { mapViewModel.showItinerary(it) }
-        maybeStartTripUpdates(activity, itineraries, index = 0)
+        maybeStartTripUpdates(activity, params, itineraries, index = 0)
     }
 
-    // Follow the selected option onto the map (the old observeSelection). Read [itineraries] through
-    // rememberUpdatedState so the long-lived collector always sees the latest list — keying the effect on
-    // resultsViewModel alone would pin the first snapshot, so a later selection could start trip updates
-    // for a stale plan after new results arrive (selectedItinerary is a no-replay SharedFlow, so keeping
-    // one collector — rather than restarting it — also can't drop a concurrent emission).
+    // Follow the selected option onto the map (the old observeSelection). Read [itineraries] and
+    // [params] through rememberUpdatedState so the long-lived collector always sees the latest plan —
+    // keying the effect on resultsViewModel alone would pin the first snapshot, so a later selection
+    // could arm trip updates with a stale itinerary list *or* a stale request after new results arrive
+    // (selectedItinerary is a no-replay SharedFlow, so keeping one collector — rather than restarting it
+    // — also can't drop a concurrent emission).
     val currentItineraries by rememberUpdatedState(itineraries)
+    val currentParams by rememberUpdatedState(params)
     LaunchedEffect(resultsViewModel) {
         resultsViewModel.selectedItinerary.collect { (index, itinerary) ->
             mapViewModel.showItinerary(itinerary)
-            maybeStartTripUpdates(activity, currentItineraries, index)
+            maybeStartTripUpdates(activity, currentParams, currentItineraries, index)
         }
     }
 
@@ -242,26 +244,34 @@ fun TripResultsMap(
 }
 
 /**
- * Starts the background trip-update poller for the selected itinerary when trip-update notifications are
- * enabled — ported verbatim from the former `TripResultsFragment.maybeStartRealtimeUpdates`.
+ * Arms the trip-plan-change monitor ([TripPlanMonitor]) for the selected itinerary when trip-update
+ * notifications are enabled. [params] is the request that produced [itineraries]; it's null when the
+ * results were restored from a notification re-entry (the request isn't reconstructed there), in which
+ * case there is nothing to re-plan, so monitoring isn't re-armed.
  */
-private fun maybeStartTripUpdates(activity: Activity, itineraries: List<Itinerary>, index: Int) {
-    val bundle = Bundle().apply {
-        putSerializable(OTPConstants.ITINERARIES, ArrayList(itineraries))
-        putInt(OTPConstants.SELECTED_ITINERARY, index)
-    }
+private fun maybeStartTripUpdates(
+    activity: Activity,
+    params: TripPlanParams?,
+    itineraries: List<Itinerary>,
+    index: Int,
+) {
+    val itinerary = itineraries.getOrNull(index) ?: return
+    if (params == null) return
+
     val context = activity.applicationContext
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    val notificationsEnabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channel = manager.getNotificationChannel(NotificationChannels.TRIP_PLAN_UPDATES_ID)
-        if (channel != null && channel.importance != NotificationManager.IMPORTANCE_NONE) {
-            RealtimeChecker.start(activity, bundle)
-        }
-    } else if (PreferencesEntryPoint.get(context)
+        channel != null && channel.importance != NotificationManager.IMPORTANCE_NONE
+    } else {
+        PreferencesEntryPoint.get(context)
             .getBoolean(R.string.preference_key_trip_plan_notifications, true)
-    ) {
-        RealtimeChecker.start(activity, bundle)
     }
+    if (!notificationsEnabled) return
+
+    // The notification re-opens the activity that launched monitoring (HomeActivity, which hosts the
+    // trip-plan destination) tagged with the TRIP_PLAN route — see TripPlanMonitorService.notifyChange.
+    TripPlanMonitor.start(activity, params, itinerary, activity.javaClass)
 }
 
 @Composable

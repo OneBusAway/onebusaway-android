@@ -50,9 +50,11 @@ fun buildTripExtrapolation(
         fastEstimatePoint = distribution?.let { polyline.pointAtDistance(it.quantile(FAST_ESTIMATE_QUANTILE)) },
         band = distribution?.let { weightedBandSegments(it, polyline) } ?: emptyList(),
         dataAge = dataAgeMarker(state, nowMs),
-        // The anchor's instant is constant between fixes; a change means fresh AVL data arrived.
-        // Unwrapped to a raw Long for the renderer's animation clock (out of the typed-time slice).
-        fixTimeMs = state.anchorLocalTimeMs.epochMs,
+        // A domain-agnostic *change token*, not a displayed instant: the renderer only compares it for
+        // `!=` (a change means fresh AVL data) — never formats or subtracts it. 0 is the token's own
+        // "no fix" value (matching the `TripOverlay`/`MapRenderState` field default), not a coerced
+        // 1970 timestamp, so the `?: 0L` here is safe where a display-path one would be a bug.
+        fixTimeMs = state.anchorLocalTimeMs?.epochMs ?: 0L,
     )
 }
 
@@ -126,8 +128,7 @@ fun extrapolatedVehicles(
             point = point,
             // The path tangent off the shape; NaN off-shape, so the marker falls back to the orientation.
             bearing = projection?.bearing ?: Float.NaN,
-            fixTimeMs = state?.let { it.anchorLocalTimeMs.epochMs.takeIf { ms -> ms > 0L } }
-                ?: status.lastUpdateTime,
+            fixTimeMs = state?.anchorLocalTimeMs?.epochMs ?: status.lastUpdateTime,
             status = status,
             isRealtime = isRealtime,
         )
@@ -148,7 +149,7 @@ private fun weightedBandSegments(distribution: ProbDistribution, polyline: Polyl
 
 private fun dataAgeMarker(state: TripState, nowMs: WallTime): DataAgeMarker? {
     val anchor = state.anchor ?: return null
-    if (state.anchorLocalTimeMs.epochMs <= 0) return null
+    val anchorLocal = state.anchorLocalTimeMs ?: return null
     // Plot the dot at the extrapolation's own anchor: the anchor's distanceAlongTrip — the exact value
     // the glide is seeded from (TripState.extrapolate) — projected onto the shape. This keeps the "data
     // received" dot pinned to the glide's origin so it can never float ahead of the glide. Drawing it at
@@ -161,7 +162,7 @@ private fun dataAgeMarker(state: TripState, nowMs: WallTime): DataAgeMarker? {
         ?: return null
     // Shown whenever there's a last fix, like the original (no max-age hide); the label is its age.
     // now − anchor is a same-domain (device) Duration; unwrap to raw Long ms for the marker.
-    val ageMs = (nowMs - state.anchorLocalTimeMs).inWholeMilliseconds.coerceAtLeast(0L)
+    val ageMs = (nowMs - anchorLocal).inWholeMilliseconds.coerceAtLeast(0L)
     return DataAgeMarker(point, ageMs)
 }
 

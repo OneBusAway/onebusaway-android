@@ -35,9 +35,11 @@ interface ArrivalData {
     val vehicleId: String?
     val predicted: Boolean
     val scheduledArrivalTime: ServerTime
-    val predictedArrivalTime: ServerTime
+    /** The real-time predicted arrival, or null when the server gave no usable prediction (#1687). */
+    val predictedArrivalTime: ServerTime?
     val scheduledDepartureTime: ServerTime
-    val predictedDepartureTime: ServerTime
+    /** The real-time predicted departure, or null when the server gave no usable prediction (#1687). */
+    val predictedDepartureTime: ServerTime?
     val status: Status?
     val frequency: FrequencyWindow?
     /** Ids of the service alerts (situations) that reference this specific arrival, resolved against

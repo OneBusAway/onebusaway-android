@@ -182,12 +182,13 @@ fun buildTrajectory(state: TripState, nowMs: WallTime): TripTrajectory {
 private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, nowMs: WallTime): ExtrapolationSeries? {
     val distribution = (state.extrapolate(nowMs) as? ExtrapolationResult.Success)?.distribution ?: return null
     val anchorDist = state.anchor?.distanceAlongTrip ?: return null
+    val anchorTime = state.anchorTimeMs ?: return null
     val median = distribution.median()
     val low = distribution.quantile(CI_LOW_QUANTILE)
     val high = distribution.quantile(CI_HIGH_QUANTILE)
     if (!median.isFinite() || !low.isFinite() || !high.isFinite()) return null
     return ExtrapolationSeries(
-        anchor = TrajectoryPoint(anchorDist, state.anchorTimeMs),
+        anchor = TrajectoryPoint(anchorDist, anchorTime),
         nowMs = state.toServerClock(nowMs),
         medianMeters = median,
         lowMeters = low,

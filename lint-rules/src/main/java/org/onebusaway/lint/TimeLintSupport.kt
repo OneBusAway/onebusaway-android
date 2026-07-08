@@ -109,7 +109,10 @@ internal object TimeLintSupport {
     fun restingSlot(read: UExpression): Slot? =
         when (val parent = skipParenthesizedExprUp(read.getQualifiedParentOrThis().uastParent)) {
             is UParameter -> Slot.PARAMETER.takeIf { isBareTimeType(parent.type) }
-            is ULocalVariable -> Slot.LOCAL.takeIf { isBareTimeType(parent.type) }
+            // A `?.` safe-call desugars into a *synthetic* local in UAST (`x?.epochMs` → a temp), which
+            // is not a resting slot — the value is still on its way to whatever consumes the safe-call
+            // (a nullable field/arg, or a sink). Only a real source-level local (has sourcePsi) rests.
+            is ULocalVariable -> Slot.LOCAL.takeIf { isBareTimeType(parent.type) && parent.sourcePsi != null }
             is UField -> Slot.FIELD.takeIf { isBareTimeType(parent.type) }
             is UReturnExpression ->
                 Slot.RETURN.takeIf { isBareTimeType(read.getParentOfType<UMethod>()?.returnType) }

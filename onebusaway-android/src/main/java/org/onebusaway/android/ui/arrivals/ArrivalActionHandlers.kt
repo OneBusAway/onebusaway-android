@@ -124,7 +124,7 @@ fun createArrivalActionHandler(
                 routeName = arrival.shortName,
                 stopName = currentContent()?.header?.name.orEmpty(),
                 headsign = arrival.headsign,
-                departTime = arrival.reminderDepartureTime,
+                departTime = arrival.reminderDepartureTime.epochMs,
                 stopSequence = arrival.stopSequence,
                 serviceDate = arrival.serviceDate,
                 vehicleId = arrival.vehicleId,

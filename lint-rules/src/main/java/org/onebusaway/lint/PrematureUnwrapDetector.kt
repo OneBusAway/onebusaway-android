@@ -61,8 +61,14 @@ class PrematureUnwrapDetector : Detector(), SourceCodeScanner {
     override fun getApplicableUastTypes(): List<Class<out UElement>> =
         listOf(UBinaryExpression::class.java, UQualifiedReferenceExpression::class.java)
 
-    override fun createUastHandler(context: JavaContext): UElementHandler =
-        object : UElementHandler() {
+    override fun createUastHandler(context: JavaContext): UElementHandler {
+        // The domain package is where the instant types *define* their own algebra, which necessarily
+        // touches the backing field (`minus` is `(epochMs - other.epochMs).milliseconds`). Unwrapping
+        // to define the typed API is not "premature unwrap into app logic" — the whole region the check
+        // guards is downstream of these definitions — so the check does not apply to the domain's own
+        // source. (The introduction door, RawTimeDetector, still guards mints made here.)
+        if (context.uastFile?.packageName == TIME_DOMAIN_PACKAGE) return UElementHandler.NONE
+        return object : UElementHandler() {
             // Arithmetic / comparison with an unwrapped-instant operand.
             override fun visitBinaryExpression(node: UBinaryExpression) {
                 if (node.operator !in TimeLintSupport.FLAGGED_OPERATORS) return
@@ -93,6 +99,7 @@ class PrematureUnwrapDetector : Detector(), SourceCodeScanner {
                 )
             }
         }
+    }
 
     /**
      * The instant domain [expr] unwraps (an `x.epochMs` / `x.ms` accessor read on an instant type,
@@ -103,6 +110,9 @@ class PrematureUnwrapDetector : Detector(), SourceCodeScanner {
             ?.let { DOMAIN_ESCAPES[TimeLintSupport.propertyKey(it, ACCESSOR_NAMES)] }
 
     companion object {
+        /** The package that defines the instant types; exempt because it implements their own algebra. */
+        private const val TIME_DOMAIN_PACKAGE = "org.onebusaway.android.time"
+
         /** Instant accessor `owner#property` -> the domain name (for the message). */
         private val DOMAIN_ESCAPES: Map<String, String> = mapOf(
             "org.onebusaway.android.time.ServerTime#epochMs" to "ServerTime",

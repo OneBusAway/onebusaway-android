@@ -349,7 +349,7 @@ class TripStateTest {
                                 localTimeMs = WallTime(4000L)
                         )
         assertEquals(600.0, state.anchor!!.distanceAlongTrip!!, 0.0)
-        assertEquals(3000L, state.anchorTimeMs.epochMs)
+        assertEquals(3000L, state.anchorTimeMs!!.epochMs)
     }
 
     @Test
@@ -391,7 +391,7 @@ class TripStateTest {
                                 localTimeMs = WallTime(10_000L)
                         )
         // effectiveTime = lastUpdateTime = 5000
-        assertEquals(5000L, state.anchorTimeMs.epochMs)
+        assertEquals(5000L, state.anchorTimeMs!!.epochMs)
     }
 
     @Test
@@ -404,7 +404,7 @@ class TripStateTest {
                                 localTimeMs = WallTime(10_000L)
                         )
         // effectiveTime = serverTimeMs = 10000
-        assertEquals(10_000L, state.anchorTimeMs.epochMs)
+        assertEquals(10_000L, state.anchorTimeMs!!.epochMs)
     }
 
     @Test
@@ -419,7 +419,7 @@ class TripStateTest {
                         )
         // serverLocalOffset = 12000 - 10000 = 2000
         // anchorLocalTimeMs = effectiveTime - offset = 5000 - 2000 = 3000
-        assertEquals(3000L, state.anchorLocalTimeMs.epochMs)
+        assertEquals(3000L, state.anchorLocalTimeMs!!.epochMs)
     }
 
     @Test

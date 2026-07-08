@@ -56,6 +56,11 @@ Scoped to the **instant** types only. `ScheduleTime`'s accessor already returns 
 Kotlin-ecosystem-wide concern, not this app's clock-domain discipline. Enrolling stdlib eliminators is a
 **deliberate non-goal**: it would be noise far beyond that discipline, and is not to be re-litigated.
 
+The check does **not** fire inside the domain package (`org.onebusaway.android.time`): that is where the
+instant types *define* their own algebra, which necessarily touches the backing field (`minus` is
+`(epochMs - other.epochMs).milliseconds`). Unwrapping to define the typed API is not "premature unwrap
+into app logic" — the whole region the check guards is downstream of these definitions.
+
 Implementation note: a Kotlin value-class property read (`serverTime.epochMs`) is a
 `UQualifiedReferenceExpression`, not a getter call, and its receiver's UAST *type* is the inlined
 `long` — so detection resolves the read and keys on the owner's `#property` (see
@@ -108,10 +113,13 @@ Wired into the app via `lintChecks project(':lint-rules')` in `onebusaway-androi
   device-clock timers or conversion helpers; one, `ReminderUtils.java:86`
   (`departTime − System.currentTimeMillis()`, a scheduled/predicted departure minus device now), is a
   genuine #1612 candidate flagged for a dedicated fix (it needs a server clock threaded to the call site).
-- **18** `PrematureUnwrap` — the sanctioned kernel: the `TypedTime` instant operators themselves (which
-  must unwrap to *define* subtraction), the one `TripState` server↔device skew bridge, the `.epochMs > 0`
-  "is this instant set" sentinel guards, and the `ArrivalInfo` / directions trip-plan-monitor ETA sites
-  the migration didn't retype. No new code debt — every unwrap the migration introduced lands at a sink.
+- **0** `PrematureUnwrap` — a skeptical pass retired every one of the 18 initial findings rather than
+  baselining them: the `TypedTime` operators are now rule-exempt (the domain defining its own algebra);
+  the `.epochMs > 0` "is this instant set / did the server predict" sentinels became **nullable**
+  instants (`TripState.anchorTimeMs`/`anchorLocalTimeMs`, `ArrivalData.predicted*Time`) decoded at the
+  boundary; and only the genuinely-irreducible server↔device crossings (the `TripState` skew bridge,
+  `TripMonitorDecider.hasDeparted`) remain, as inline `@Suppress("PrematureUnwrap")` with a rationale —
+  visible at the site, not hidden in this file. Keep it empty.
 - **0** `WireTimeEscape` — the migration left no wire-field read in app logic; the check starts empty and
   exists to keep it that way.
 

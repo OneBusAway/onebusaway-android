@@ -113,6 +113,9 @@ object TripMonitorWindow {
      * device-clock ([now]) crossing, done on raw `epochMs` — it's a coarse foreground-service lifecycle
      * bound ("has this moment passed?"), not a user-facing duration, so device-clock skew is immaterial.
      */
+    // Sanctioned server↔device crossing (see KDoc): the typed API forbids ServerTime vs WallTime by
+    // design; here the coarse "has this moment passed?" lifecycle bound accepts the device-clock skew.
+    @Suppress("PrematureUnwrap")
     @JvmStatic
     fun hasDeparted(departure: ServerTime?, now: WallTime): Boolean =
         departure != null && now.epochMs >= departure.epochMs

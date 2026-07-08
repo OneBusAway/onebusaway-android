@@ -93,6 +93,24 @@ class PrematureUnwrapDetectorTest {
         ).expectWarningCount(1)
     }
 
+    /**
+     * A nullable unwrap flowing onward (`x?.epochMs` into a nullable field/arg) is not a resting slot:
+     * the `?.` desugars to a synthetic temp, which must not be mistaken for a real local. The
+     * `?: 0L`-coercion-to-1970 bug is prevented structurally instead — the domain sinks are nullable, so
+     * absence can't be silently defaulted to epoch 0 (see the arrivals/report path).
+     */
+    @Test
+    fun doesNotFlagNullableUnwrapFlowingOnward() {
+        lintKotlin(
+            """
+            package test
+            import org.onebusaway.android.time.ServerTime
+            class Box(val ms: Long?)
+            fun box(t: ServerTime?) = Box(t?.epochMs)
+            """,
+        ).expectClean()
+    }
+
     /** Passed straight through to a platform sink (a call argument) — the correct place to unwrap. */
     @Test
     fun doesNotFlagUnwrapPassedToSink() {
@@ -104,6 +122,26 @@ class PrematureUnwrapDetectorTest {
             fun label(t: ServerTime): String = format(t.epochMs)
             """,
         ).expectClean()
+    }
+
+    /** The domain package defines its own algebra by unwrapping its backing field — exempt. */
+    @Test
+    fun doesNotFlagUnwrapInsideTheDomainPackage() {
+        lint()
+            .files(
+                kotlin(
+                    """
+                    package org.onebusaway.android.time
+                    @JvmInline value class ServerTime(val epochMs: Long) {
+                        operator fun minus(other: ServerTime): Long = epochMs - other.epochMs
+                    }
+                    """,
+                ).indented(),
+            )
+            .issues(PrematureUnwrapDetector.ISSUE)
+            .allowMissingSdk()
+            .run()
+            .expectClean()
     }
 
     /** Typed same-domain subtraction carries no accessor read, so it's not flagged. */

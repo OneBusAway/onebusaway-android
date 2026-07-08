@@ -27,7 +27,12 @@ import com.android.tools.lint.detector.api.Issue
 class TimeDomainIssueRegistry : IssueRegistry() {
 
     override val issues: List<Issue> =
-        listOf(RawTimeDetector.ISSUE, RawTimeDetector.ISSUE_VALUE)
+        listOf(
+            RawTimeDetector.ISSUE,
+            RawTimeDetector.ISSUE_VALUE,
+            PrematureUnwrapDetector.ISSUE,
+            WireTimeEscapeDetector.ISSUE,
+        )
 
     override val api: Int = CURRENT_API
 

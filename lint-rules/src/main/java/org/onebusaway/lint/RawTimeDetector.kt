@@ -25,21 +25,11 @@ import com.android.tools.lint.detector.api.Scope
 import com.android.tools.lint.detector.api.Severity
 import com.android.tools.lint.detector.api.SourceCodeScanner
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
 import org.jetbrains.uast.UBinaryExpression
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UField
-import org.jetbrains.uast.ULocalVariable
-import org.jetbrains.uast.UMethod
-import org.jetbrains.uast.UParameter
-import org.jetbrains.uast.UReturnExpression
-import org.jetbrains.uast.UastBinaryOperator
-import org.jetbrains.uast.getParentOfType
-import org.jetbrains.uast.getQualifiedParentOrThis
 import org.jetbrains.uast.getUCallExpression
-import org.jetbrains.uast.skipParenthesizedExprUp
 
 /**
  * Gives the app a phobia of bare time `Long`s. A raw time reading — a call to a known time producer
@@ -71,7 +61,7 @@ class RawTimeDetector : Detector(), SourceCodeScanner {
     override fun createUastHandler(context: JavaContext): UElementHandler =
         object : UElementHandler() {
             override fun visitBinaryExpression(node: UBinaryExpression) {
-                if (node.operator !in FLAGGED_OPERATORS) return
+                if (node.operator !in TimeLintSupport.FLAGGED_OPERATORS) return
                 // Report against whichever operand is the raw clock read (left wins if both are).
                 val key = producerKeyOf(node.leftOperand) ?: producerKeyOf(node.rightOperand) ?: return
                 context.report(
@@ -91,7 +81,7 @@ class RawTimeDetector : Detector(), SourceCodeScanner {
 
     override fun visitMethodCall(context: JavaContext, node: UCallExpression, method: PsiMethod) {
         val key = producerKey(method) ?: return
-        val slot = restingSlot(node) ?: return
+        val slot = TimeLintSupport.restingSlot(node) ?: return
         context.report(
             ISSUE_VALUE,
             node,
@@ -103,39 +93,11 @@ class RawTimeDetector : Detector(), SourceCodeScanner {
         )
     }
 
-    /**
-     * The kind of bare-`Long`/`Int` slot [call]'s result comes to rest in, or null when it doesn't rest
-     * untyped — passed on to another call (a DAO write, an alarm, a domain mint), used in arithmetic
-     * (that's [ISSUE]'s job), or bound to a non-time-shaped type.
-     */
-    private fun restingSlot(call: UCallExpression): Slot? =
-        when (val parent = skipParenthesizedExprUp(call.getQualifiedParentOrThis().uastParent)) {
-            is UParameter -> Slot.PARAMETER.takeIf { isBareTimeType(parent.type) }
-            is ULocalVariable -> Slot.LOCAL.takeIf { isBareTimeType(parent.type) }
-            is UField -> Slot.FIELD.takeIf { isBareTimeType(parent.type) }
-            is UReturnExpression ->
-                Slot.RETURN.takeIf { isBareTimeType(call.getParentOfType<UMethod>()?.returnType) }
-            is UBinaryExpression -> Slot.ASSIGNMENT.takeIf {
-                parent.operator == UastBinaryOperator.ASSIGN &&
-                    isBareTimeType(parent.leftOperand.getExpressionType())
-            }
-            else -> null
-        }
-
     /** The `CLOCK_SOURCES` key of [expr] if it (unwrapping receiver/parens) is a known producer call. */
     private fun producerKeyOf(expr: UExpression?): String? =
         producerKey(expr?.getUCallExpression()?.resolve())
 
     companion object {
-        /** A bare `Long`/`Int` slot a raw time can come to rest in; [phrase] is its user-message noun. */
-        private enum class Slot(val phrase: String) {
-            LOCAL("a local variable"),
-            FIELD("a field"),
-            RETURN("a return value"),
-            PARAMETER("a default parameter value"),
-            ASSIGNMENT("an assignment"),
-        }
-
         /** `owner#method` key into [CLOCK_SOURCES], or null if [method] isn't a known producer. */
         private fun producerKey(method: PsiMethod?): String? {
             method ?: return null
@@ -146,26 +108,6 @@ class RawTimeDetector : Detector(), SourceCodeScanner {
         private fun mintPhrase(domain: String?): String =
             if (domain != null) "mint it into `$domain`"
             else "mint it into the matching `ServerTime` / `WallTime` / `ElapsedTime`"
-
-        /** A `Long`/`Int` (boxed or primitive) — a slot a raw time can hide in domainless. */
-        private fun isBareTimeType(type: PsiType?): Boolean =
-            type != null && type.canonicalText in BARE_TIME_TYPES
-
-        private val BARE_TIME_TYPES =
-            setOf("long", "int", "java.lang.Long", "java.lang.Integer")
-
-        // Additive arithmetic + ordering comparison only — the shape of the bug class
-        // (`serverTimestamp − deviceNow`, `now > deadline`). Multiply/divide/mod and equality/
-        // compound-assign are intentionally out of scope (not clock-mixing operations); don't widen
-        // this without re-checking the baseline, whose entries key on the emitted message.
-        private val FLAGGED_OPERATORS = setOf(
-            UastBinaryOperator.PLUS,
-            UastBinaryOperator.MINUS,
-            UastBinaryOperator.GREATER,
-            UastBinaryOperator.LESS,
-            UastBinaryOperator.GREATER_OR_EQUALS,
-            UastBinaryOperator.LESS_OR_EQUALS,
-        )
 
         // Known time producers (fully-qualified owner#method) -> the domain the reading belongs to,
         // or null when it's context-dependent (an epoch-from-object source could be any clock). The

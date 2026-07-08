@@ -41,16 +41,81 @@ Fix at each site by minting (`WallTime.now()`, `ElapsedTime.now()`, `ServerTime(
 math through the typed API — or, for a genuinely sanctioned device-clock local timer, wrap it anyway so
 the domain is explicit, or suppress with a rationale.
 
+### `PrematureUnwrap` (warning)
+The **elimination door** of the typed-time region, and the mirror of `UnwrappedClockValue`. After the
+type-first migration the compiler owns everything *inside* the region — a cross-domain subtraction won't
+compile — so the remaining job is to keep values from leaving the region too early. Fires when a
+**domain-instant accessor read** — `ServerTime.epochMs` / `WallTime.epochMs` / `ElapsedTime.ms` — either
+feeds arithmetic/comparison or comes to rest in a bare `Long`/`Int` slot, and stays silent when the read
+is **passed straight through** as a call argument to a platform sink (formatting, `toPixelY`, an alarm) —
+which is exactly where unwrapping is correct.
+
+Scoped to the **instant** types only. `ScheduleTime`'s accessor already returns a typed
+`kotlin.time.Duration`; schedule time reaches a bare `Long` only through `Duration`'s own eliminators
+(`inWholeMilliseconds`, …), a domain-free stdlib quantity whose only hazard is units — a
+Kotlin-ecosystem-wide concern, not this app's clock-domain discipline. Enrolling stdlib eliminators is a
+**deliberate non-goal**: it would be noise far beyond that discipline, and is not to be re-litigated.
+
+Implementation note: a Kotlin value-class property read (`serverTime.epochMs`) is a
+`UQualifiedReferenceExpression`, not a getter call, and its receiver's UAST *type* is the inlined
+`long` — so detection resolves the read and keys on the owner's `#property` (see
+`TimeLintSupport.propertyKey`).
+
+### `WireTimeEscape` (warning)
+A virtual `internal` on the **wire→domain boundary**. The serialization DTOs in
+`org.onebusaway.android.api.contract` keep their time fields as bare `Long`s by design; the adapter layer
+mints them into the domain types (`ScheduleTime` / `ServerTime` / `Duration`) exactly once, at the one
+place that knows which endpoint it is adapting. Fires when a curated wire time-field getter (e.g.
+`StopTime.arrivalTime`, `TripStatus.serviceDate`, `ArrivalDeparture.predictedArrivalTime`) is read from a
+file **outside** the adapter allowlist (`org.onebusaway.android.api.adapters`, `…api.data`). Read the
+domain-typed model instead. New wire time fields are one line in `WIRE_TIME_FIELDS`.
+
+Unlike the two clock checks there is deliberately **no pass-through exemption**: for a clock reading the
+domain is a property of the *clock*, so minting can happen wherever it's read; for a wire field the *unit*
+is a property of the *endpoint* — the two same-named `StopTime` (seconds) and `ScheduleStopTime` (epoch
+millis) DTOs are the proof — so only the endpoint-aware adapter can mint correctly, and reading the raw
+field elsewhere, even to pass it straight on, is the escape.
+
+## Lifecycle
+
+Each check names its reason to exist and its reason to die. Regenerate the baseline after landing a
+check, then only ever shrink it.
+
+| Check                 | Guards                                    | Dies when                                             |
+| --------------------- | ----------------------------------------- | ----------------------------------------------------- |
+| `RawClockArithmetic`  | foreign clock namespace, in math          | never (can't own `java.lang`)                         |
+| `UnwrappedClockValue` | foreign clock namespace, coming to rest   | never (can't forbid `Long`)                           |
+| `PrematureUnwrap`     | the elimination door of the typed region  | a real module boundary makes `.epochMs` cross-module  |
+| `WireTimeEscape`      | adapter-only consumption of wire DTOs     | `:api` becomes a Gradle module with `internal` DTOs   |
+
+**Enrollment sweep — nothing left to enroll.** The plan anticipated adding the legacy Jackson
+`io/elements` getters (`ObaArrivalInfo#getScheduledArrivalTime`, …) to `CLOCK_SOURCES`. That surface has
+already been retired by the api-modernization (there is no `io/elements`), so its demolition condition is
+already met; the wire DTOs it became are covered by `WireTimeEscape`, not `CLOCK_SOURCES`.
+
+**Governance.** Suppressing any of these time checks (`@Suppress` / lint `//noinspection` / a baseline
+entry added by hand) requires the same one-line-rationale-plus-tracking-issue standard as `@Suppress` in
+CLAUDE.md. The checks are a latch discipline, not a suggestion.
+
 ## Status: enforced
 
 Wired into the app via `lintChecks project(':lint-rules')` in `onebusaway-android/build.gradle`, so a
-**new** violation of either issue fails the build under the strict `-PwarningsAsErrors` gate (verified).
-The pre-existing sites present when the checks landed are grandfathered in
-`onebusaway-android/lint-baseline.xml` — **13** `RawClockArithmetic` + **11** `UnwrappedClockValue`.
-Nearly all are same-domain / sanctioned device-clock timers or conversion helpers; one —
-`ReminderUtils.java:86` (`departTime − System.currentTimeMillis()`, a scheduled/predicted departure
-minus device now) — is a genuine #1612 candidate flagged for a dedicated fix (it needs a server clock
-threaded to the call site). Drive the baseline down by minting each site; don't add new entries.
+**new** violation of any of the four issues fails the build under the strict `-PwarningsAsErrors` gate
+(verified). The pre-existing sites present when each check landed are grandfathered in
+`onebusaway-android/lint-baseline.xml`:
+
+- **13** `RawClockArithmetic` + **11** `UnwrappedClockValue` — nearly all same-domain / sanctioned
+  device-clock timers or conversion helpers; one, `ReminderUtils.java:86`
+  (`departTime − System.currentTimeMillis()`, a scheduled/predicted departure minus device now), is a
+  genuine #1612 candidate flagged for a dedicated fix (it needs a server clock threaded to the call site).
+- **18** `PrematureUnwrap` — the sanctioned kernel: the `TypedTime` instant operators themselves (which
+  must unwrap to *define* subtraction), the one `TripState` server↔device skew bridge, the `.epochMs > 0`
+  "is this instant set" sentinel guards, and the `ArrivalInfo` / directions trip-plan-monitor ETA sites
+  the migration didn't retype. No new code debt — every unwrap the migration introduced lands at a sink.
+- **0** `WireTimeEscape` — the migration left no wire-field read in app logic; the check starts empty and
+  exists to keep it that way.
+
+Drive the baseline down by minting each site; don't add new entries.
 
 ## Develop
 

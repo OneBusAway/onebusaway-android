@@ -17,6 +17,8 @@ package org.onebusaway.android.ui.dataview
 
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.data.TripState
+import org.onebusaway.android.time.ScheduleTime
+import org.onebusaway.android.time.ServiceDate
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 
@@ -145,14 +147,21 @@ fun buildTrajectory(state: TripState, nowMs: WallTime): TripTrajectory {
         TrajectoryPoint(dist, time)
     }
 
-    val schedule = state.schedule?.stopTimes.orEmpty().map { st ->
-        ScheduleStop(
-            distanceMeters = st.distanceAlongTrip,
-            arrivalMs = state.serviceDate + st.arrivalTime * 1000L,
-            departureMs = state.serviceDate + st.departureTime * 1000L,
-            stopId = st.stopId,
-        )
-    }
+    // serviceDate defaults to 0 (unknown); resolving against it would plot every stop near the 1970
+    // epoch. Skip the schedule overlay until a real date arrives rather than draw that decoy.
+    val serviceDate = state.serviceDate.takeIf { it > 0 }?.let { ServiceDate(it) }
+    val schedule = serviceDate?.let { day ->
+        state.schedule?.stopTimes.orEmpty().map { st ->
+            ScheduleStop(
+                distanceMeters = st.distanceAlongTrip,
+                // Resolve each recurring schedule offset onto the server-clock axis, then unwrap to the
+                // raw Long the graph's time coordinates use.
+                arrivalMs = ScheduleTime(st.arrivalTime).resolve(day).epochMs,
+                departureMs = ScheduleTime(st.departureTime).resolve(day).epochMs,
+                stopId = st.stopId,
+            )
+        }
+    }.orEmpty()
 
     val extrapolation = extrapolationSeries(state, schedule, nowMs)
 

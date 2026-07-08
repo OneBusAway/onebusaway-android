@@ -139,6 +139,27 @@ class TripTrajectoryTest {
         assertEquals(1_007_000L, trajectory.nowMs)
     }
 
+    @Test
+    fun `the schedule overlay is withheld while the service date is unknown`() {
+        // The rail state carries a schedule but no service date (defaults to 0). Resolving against 0
+        // would plot every stop near the 1970 epoch, so the overlay is skipped rather than drawn.
+        val state = skewedRailState(anchorServerTime = 105_000L, anchorLocalMs = 100_000L)
+        assertEquals(0L, state.serviceDate)
+        assertTrue(buildTrajectory(state, nowMs = WallTime(102_000L)).schedule.isEmpty())
+    }
+
+    @Test
+    fun `a known service date resolves schedule stops onto the server clock`() {
+        val day = 1_700_000_000_000L
+        val state = skewedRailState(anchorServerTime = 105_000L, anchorLocalMs = 100_000L)
+            .withServiceDate(day)
+        val schedule = buildTrajectory(state, nowMs = WallTime(102_000L)).schedule
+        // railSchedule's stops arrive at 0s / 100s / 330s into the service day.
+        assertEquals(3, schedule.size)
+        assertEquals(day, schedule.first().arrivalMs)
+        assertEquals(day + 330L * 1000L, schedule.last().arrivalMs)
+    }
+
     // --- buildTrajectory: extrapolation-overlay now line (clock skew) ---
     //
     // The now-line tests above only exercise TripTrajectory.nowMs. These drive a real anchor so

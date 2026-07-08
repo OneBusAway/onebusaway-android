@@ -36,6 +36,9 @@ import org.onebusaway.android.models.ObaTrip
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Status
+import org.onebusaway.android.time.ScheduleTime
+import org.onebusaway.android.time.ServiceDate
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.onebusaway.android.app.di.AppScope
@@ -170,15 +173,19 @@ class DefaultTripDetailsRepository @Inject constructor(
         val stopIndex = findIndexForStop(stopTimes, stopId)
         val destinationIndex = findIndexForStop(stopTimes, destinationId)
 
-        // Time base: real-time service date + deviation, or midnight today for schedule-only.
-        val deviation = status?.scheduleDeviation ?: 0L
-        val serviceDate = status?.serviceDate ?: midnightToday()
+        // Time base: real-time service date + deviation, or (schedule-only) an approximate device
+        // midnight — minted through the named factory so the off-contract provenance stays visible.
+        val deviation = (status?.scheduleDeviation ?: 0L).seconds
+        val serviceDate = status?.serviceDate?.let { ServiceDate(it) }
+            ?: ServiceDate.approximateFromDeviceMidnight(midnightToday())
         val canceled = status != null && status.status == Status.CANCELED
 
         val lastIndex = stopTimes.lastIndex
         val stops = stopTimes.mapIndexed { i, stopTime ->
             val stop = td.stop(stopTime.stopId)
-            val millis = serviceDate + stopTime.arrivalTime * 1000 + deviation * 1000
+            // Resolve the scheduled stop time onto the server clock, then shift by the live schedule
+            // deviation (a server-clock ServerTime + Duration group action).
+            val millis = (ScheduleTime(stopTime.arrivalTime).resolve(serviceDate) + deviation).epochMs
             TripStopItem(
                 stopId = stopTime.stopId,
                 name = MyTextUtils.formatDisplayText(stop?.name).orEmpty(),

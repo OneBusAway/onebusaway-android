@@ -31,6 +31,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -117,40 +118,51 @@ class TripPlanMonitorService : Service() {
                     break
                 }
 
-                val builder = TripRequestBuilder.initFromBundleSimple(this@TripPlanMonitorService, extras)
-                val itineraries = withContext(Dispatchers.IO) {
-                    tripPlanRepository.planBlocking(builder)
-                }
-
-                val result = TripMonitorDecider.decide(
-                    desc, itineraries, OTPConstants.REALTIME_SERVICE_DELAY_THRESHOLD
-                )
-                if (BuildConfig.DEBUG) Log.d(TAG, "Monitor check result: $result")
-                when (result) {
-                    is MonitorResult.Deviation -> {
-                        notifyChange(
-                            desc, target, builder, itineraries,
-                            titleRes = if (result.delaySeconds > 0) {
-                                R.string.trip_plan_delay
-                            } else {
-                                R.string.trip_plan_early
-                            },
-                            messageRes = R.string.trip_plan_notification_new_plan_text,
-                        )
-                        break
+                // A single cycle's work is wrapped so a transient failure (a malformed plan response
+                // that trips initFromBundleSimple/decide, say) logs and retries next tick rather than
+                // escaping the Main-dispatched coroutine and crashing the app. planBlocking itself never
+                // throws (it maps failures to an empty list, which decide() turns into a graceful Stop).
+                // CancellationException must propagate so job cancellation / service teardown still works.
+                try {
+                    val builder = TripRequestBuilder.initFromBundleSimple(this@TripPlanMonitorService, extras)
+                    val itineraries = withContext(Dispatchers.IO) {
+                        tripPlanRepository.planBlocking(builder)
                     }
 
-                    MonitorResult.ItineraryChanged -> {
-                        notifyChange(
-                            desc, target, builder, itineraries,
-                            titleRes = R.string.trip_plan_notification_new_plan_title,
-                            messageRes = R.string.trip_plan_notification_new_plan_text,
-                        )
-                        break
-                    }
+                    val result = TripMonitorDecider.decide(
+                        desc, itineraries, OTPConstants.REALTIME_SERVICE_DELAY_THRESHOLD
+                    )
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Monitor check result: $result")
+                    when (result) {
+                        is MonitorResult.Deviation -> {
+                            notifyChange(
+                                desc, target, builder, itineraries,
+                                titleRes = if (result.delaySeconds > 0) {
+                                    R.string.trip_plan_delay
+                                } else {
+                                    R.string.trip_plan_early
+                                },
+                                messageRes = R.string.trip_plan_notification_new_plan_text,
+                            )
+                            break
+                        }
 
-                    MonitorResult.Stop -> break
-                    MonitorResult.KeepMonitoring -> Unit // fall through to the delay
+                        MonitorResult.ItineraryChanged -> {
+                            notifyChange(
+                                desc, target, builder, itineraries,
+                                titleRes = R.string.trip_plan_notification_new_plan_title,
+                                messageRes = R.string.trip_plan_notification_new_plan_text,
+                            )
+                            break
+                        }
+
+                        MonitorResult.Stop -> break
+                        MonitorResult.KeepMonitoring -> Unit // fall through to the delay
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "Monitor check failed - will retry next cycle", e)
                 }
 
                 delay(OTPConstants.DEFAULT_UPDATE_INTERVAL_TRIP_TIME)

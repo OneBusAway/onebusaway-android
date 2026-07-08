@@ -87,7 +87,17 @@ object TripMonitorDecider {
     }
 }
 
-/** Pure timing helper for the monitor's start/stop boundaries (extracted for JVM testing). */
+/**
+ * Pure timing helper for the monitor's start/stop boundaries (extracted for JVM testing).
+ *
+ * These take plain epoch-milli `Long`s rather than the domain-tagged `ServerTime`/`WallTime` value
+ * classes on purpose: they compute coarse foreground-service *lifecycle* booleans ("has this moment
+ * passed?"), not user-facing durations, so a few seconds of device-clock skew is immaterial — and the
+ * sibling [org.onebusaway.android.directions.model.ItineraryDescription.isExpired] compares a
+ * server-provided end time against a plain device `Instant` the same way. [hasDeparted] is the one
+ * deliberate server-time (itinerary start) vs device-clock ("now") comparison; it is intentionally
+ * coarse.
+ */
 object TripMonitorWindow {
 
     /**

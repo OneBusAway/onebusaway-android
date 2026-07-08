@@ -201,16 +201,18 @@ fun TripResultsSheet(
         maybeStartTripUpdates(activity, params, itineraries, index = 0)
     }
 
-    // Follow the selected option onto the map (the old observeSelection). Read [itineraries] through
-    // rememberUpdatedState so the long-lived collector always sees the latest list — keying the effect on
-    // resultsViewModel alone would pin the first snapshot, so a later selection could start trip updates
-    // for a stale plan after new results arrive (selectedItinerary is a no-replay SharedFlow, so keeping
-    // one collector — rather than restarting it — also can't drop a concurrent emission).
+    // Follow the selected option onto the map (the old observeSelection). Read [itineraries] and
+    // [params] through rememberUpdatedState so the long-lived collector always sees the latest plan —
+    // keying the effect on resultsViewModel alone would pin the first snapshot, so a later selection
+    // could arm trip updates with a stale itinerary list *or* a stale request after new results arrive
+    // (selectedItinerary is a no-replay SharedFlow, so keeping one collector — rather than restarting it
+    // — also can't drop a concurrent emission).
     val currentItineraries by rememberUpdatedState(itineraries)
+    val currentParams by rememberUpdatedState(params)
     LaunchedEffect(resultsViewModel) {
         resultsViewModel.selectedItinerary.collect { (index, itinerary) ->
             mapViewModel.showItinerary(itinerary)
-            maybeStartTripUpdates(activity, params, currentItineraries, index)
+            maybeStartTripUpdates(activity, currentParams, currentItineraries, index)
         }
     }
 

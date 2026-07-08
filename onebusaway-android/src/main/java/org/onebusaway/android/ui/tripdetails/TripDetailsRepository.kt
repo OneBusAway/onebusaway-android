@@ -33,6 +33,7 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaTrip
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.extrapolation.data.serviceDateOrNull
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServiceDate
 import kotlin.time.Duration
@@ -171,10 +172,12 @@ class DefaultTripDetailsRepository @Inject constructor(
         val stopIndex = findIndexForStop(stopTimes, stopId)
         val destinationIndex = findIndexForStop(stopTimes, destinationId)
 
-        // Time base: real-time service date + deviation, or (schedule-only) an approximate device
-        // midnight — minted through the named factory so the off-contract provenance stays visible.
+        // Time base: real-time service date + deviation, or an approximate device midnight when the
+        // server sent none. Decode the "0 = absent" sentinel through the one shared decoder so a
+        // present-but-zero serviceDate falls through to the fallback instead of resolving to 1970,
+        // matching the observation path (rather than a second, divergent inline decode).
         val deviation = status?.scheduleDeviation ?: Duration.ZERO
-        val serviceDate = status?.serviceDate?.let { ServiceDate(it) }
+        val serviceDate = serviceDateOrNull(status?.serviceDate ?: 0)
             ?: ServiceDate.approximateFromDeviceMidnight(midnightToday())
         val canceled = status != null && status.status == Status.CANCELED
 

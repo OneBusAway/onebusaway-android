@@ -128,6 +128,7 @@ fun createArrivalActionHandler(
                 stopSequence = arrival.stopSequence,
                 serviceDate = arrival.serviceDate,
                 vehicleId = arrival.vehicleId,
+                serverNowMs = arrival.serverNow.epochMs,
             )
         )
     }

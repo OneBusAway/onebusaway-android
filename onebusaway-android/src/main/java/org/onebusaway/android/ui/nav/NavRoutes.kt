@@ -35,6 +35,8 @@ data class ReminderEditorArgs(
     val stopSequence: Int = 0,
     val serviceDate: Long = 0L,
     val vehicleId: String? = null,
+    /** Server "now" (epoch millis) the arrival was observed on; same clock domain as [departTime]. */
+    val serverNowMs: Long = 0L,
 ) {
     init {
         // Fail fast at this construction site (the arrival "set reminder" path) rather than letting a
@@ -245,11 +247,12 @@ object NavRoutes {
     const val ARG_STOP_SEQUENCE = "stopSequence"
     const val ARG_SERVICE_DATE = "serviceDate"
     const val ARG_VEHICLE_ID = "vehicleId"
+    const val ARG_SERVER_NOW = "serverNow"
     const val TRIP_INFO = "tripInfo/{$ARG_TRIP_ID}/{$ARG_STOP_ID}" +
         "?$ARG_ROUTE_ID={$ARG_ROUTE_ID}&$ARG_ROUTE_NAME={$ARG_ROUTE_NAME}&$ARG_STOP_NAME={$ARG_STOP_NAME}" +
         "&$ARG_HEADSIGN={$ARG_HEADSIGN}&$ARG_DEPART_TIME={$ARG_DEPART_TIME}" +
         "&$ARG_STOP_SEQUENCE={$ARG_STOP_SEQUENCE}&$ARG_SERVICE_DATE={$ARG_SERVICE_DATE}" +
-        "&$ARG_VEHICLE_ID={$ARG_VEHICLE_ID}"
+        "&$ARG_VEHICLE_ID={$ARG_VEHICLE_ID}&$ARG_SERVER_NOW={$ARG_SERVER_NOW}"
 
     /** Builds a navigable [TRIP_INFO] route; omitted/zero context args fall back to nav-arg defaults. */
     fun tripInfo(
@@ -263,6 +266,7 @@ object NavRoutes {
         stopSequence: Int = 0,
         serviceDate: Long = 0L,
         vehicleId: String? = null,
+        serverNowMs: Long = 0L,
     ): String {
         val query = buildList {
             if (routeId != null) add("$ARG_ROUTE_ID=${Uri.encode(routeId)}")
@@ -273,6 +277,7 @@ object NavRoutes {
             if (stopSequence != 0) add("$ARG_STOP_SEQUENCE=$stopSequence")
             if (serviceDate != 0L) add("$ARG_SERVICE_DATE=$serviceDate")
             if (vehicleId != null) add("$ARG_VEHICLE_ID=${Uri.encode(vehicleId)}")
+            if (serverNowMs != 0L) add("$ARG_SERVER_NOW=$serverNowMs")
         }.joinToString("&")
         return "tripInfo/${Uri.encode(tripId)}/${Uri.encode(stopId)}" +
             if (query.isNotEmpty()) "?$query" else ""
@@ -290,6 +295,7 @@ object NavRoutes {
         stopSequence = args.stopSequence,
         serviceDate = args.serviceDate,
         vehicleId = args.vehicleId,
+        serverNowMs = args.serverNowMs,
     )
 
     // --- Feedback ---

@@ -97,6 +97,7 @@ import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.RadioOptionList
+import org.onebusaway.android.time.WallTime
 
 /** Refresh interval matching the legacy ArrivalsListFragment (fixed 60s, not the server value). */
 private const val REFRESH_PERIOD_MS = 60_000L
@@ -115,7 +116,7 @@ internal fun ArrivalsPolling(viewModel: ArrivalsViewModel) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(viewModel) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            val sinceLast = System.currentTimeMillis() - viewModel.lastResponseTimeMs
+            val sinceLast = (WallTime.now() - viewModel.lastResponseTime).inWholeMilliseconds
             delay((REFRESH_PERIOD_MS - sinceLast).coerceIn(0L, REFRESH_PERIOD_MS))
             while (isActive) {
                 viewModel.refresh()

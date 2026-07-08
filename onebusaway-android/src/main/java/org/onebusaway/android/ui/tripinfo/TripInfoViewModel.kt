@@ -56,6 +56,7 @@ class TripInfoViewModel @Inject constructor(
         stopSequence = savedState.get<Int>(NavRoutes.ARG_STOP_SEQUENCE) ?: 0,
         serviceDate = savedState.get<Long>(NavRoutes.ARG_SERVICE_DATE) ?: 0,
         vehicleId = savedState.get<String>(NavRoutes.ARG_VEHICLE_ID),
+        serverNowMs = savedState.get<Long>(NavRoutes.ARG_SERVER_NOW) ?: 0,
     )
 
     private val _state = MutableStateFlow<TripInfoUiState>(TripInfoUiState.Loading)

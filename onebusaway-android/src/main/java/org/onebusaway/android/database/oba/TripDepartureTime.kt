@@ -41,6 +41,9 @@ object TripDepartureTime {
         fromEpochMillis(epochMillis, ZoneId.systemDefault())
 
     /** [toEpochMillis] with an explicit [zone] (test seam; avoids DST flakiness from the device zone). */
+    // Storage-encoding boundary: decodes the persisted "minutes after midnight" into an epoch-millis
+    // departure time. The raw Long is the encoding's contract, consumed straight by callers/formatters.
+    @Suppress("UnwrappedClockValue")
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     internal fun toEpochMillis(minutesAfterMidnight: Int, zone: ZoneId): Long =
         LocalDate.now(zone)

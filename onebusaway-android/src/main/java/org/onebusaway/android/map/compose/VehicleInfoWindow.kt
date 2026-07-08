@@ -270,6 +270,7 @@ private fun lastUpdatedText(res: Resources, realtime: Boolean, status: ObaTripSt
  * interval against it is immune to NTP corrections / the user changing the device clock.
  */
 @Composable
+@Suppress("UnwrappedClockValue") // monotonic elapsed-realtime ticker — ElapsedTime by construction, feeds #1612 extrapolation
 internal fun rememberElapsedRealtimeMs(): Long {
     val now by produceState(SystemClock.elapsedRealtime()) {
         while (true) {
@@ -290,6 +291,7 @@ internal fun rememberElapsedRealtimeMs(): Long {
  * in real elapsed device time.
  */
 @Composable
+@Suppress("UnwrappedClockValue") // monotonic elapsed anchor for the server-clock extrapolation (#1612)
 internal fun rememberServerNowMs(serverTimeMs: Long): Long {
     val deviceStartMs = remember(serverTimeMs) { SystemClock.elapsedRealtime() }
     val deviceNowMs = rememberElapsedRealtimeMs()

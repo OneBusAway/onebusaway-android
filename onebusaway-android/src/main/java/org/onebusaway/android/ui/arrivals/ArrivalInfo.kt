@@ -108,6 +108,14 @@ class ArrivalInfo(
     val reminderDepartureTime: ServerTime
         get() = data.predictedDepartureTime ?: data.scheduledDepartureTime
 
+    /**
+     * The server clock this arrival's ETA was computed against (the response's `currentTime`). Carried
+     * to the reminder editor so its lead-time filter measures [reminderDepartureTime] against the same
+     * clock that stamped it, keeping device clock skew out of the offsets (#1612). Kept typed; unwrapped
+     * to a bare `Long` only at the nav-route serialization boundary.
+     */
+    val serverNow: ServerTime = now
+
     /** Flattens this arrival into the report flow's scalar context (was ObaArrivalInfo-based). */
     fun toTripReportContext(): TripReportContext = TripReportContext(
         tripId = data.tripId,

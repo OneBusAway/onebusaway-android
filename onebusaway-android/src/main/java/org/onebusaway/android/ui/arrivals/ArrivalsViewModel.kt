@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.onebusaway.android.time.WallTime
 
 /**
  * Collapses a route-filter selection to "show all" (empty) when every route is selected, matching
@@ -116,7 +117,7 @@ class ArrivalsViewModel @AssistedInject constructor(
     private var filterLoaded = ignorePersistedFilter
 
     /** Wall-clock time of the last completed load, read by the screen's polling loop. */
-    var lastResponseTimeMs: Long = 0L
+    var lastResponseTime: WallTime = WallTime(0L)
         private set
 
     /**
@@ -127,7 +128,7 @@ class ArrivalsViewModel @AssistedInject constructor(
      */
     suspend fun refresh() {
         val result = repository.getArrivals(stopId, minutesAfter, routeFilter.takeIf { filterLoaded })
-        lastResponseTimeMs = System.currentTimeMillis()
+        lastResponseTime = WallTime.now()
         result.fold(
             onSuccess = { data ->
                 minutesAfter = data.minutesAfter

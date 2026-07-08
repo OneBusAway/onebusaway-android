@@ -80,6 +80,8 @@ const val SORT_BY_FREQUENCY = 1
 /** "Recently used" = accessed within the last 7 days, or used at least once; newest first, capped at 20. */
 private val RECENT_WINDOW_MS = 7 * DateUtils.DAY_IN_MILLIS
 
+// Device-clock recent-window cutoff, compared against locally-stamped access times (same clock).
+@Suppress("RawClockArithmetic")
 private fun recentCutoff(): Long = System.currentTimeMillis() - RECENT_WINDOW_MS
 
 private fun StopListRow.toStopItem(context: Context): StopListItem {

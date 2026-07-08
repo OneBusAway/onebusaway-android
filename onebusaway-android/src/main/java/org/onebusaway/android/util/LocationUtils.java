@@ -94,6 +94,8 @@ public class LocationUtils {
      * @return true if Location a is "better" than b, or false if b is "better" than a
      */
     public static boolean compareLocationsByTime(Location a, Location b) {
+        // Both are device-stamped location fix times (same clock); comparing them mixes no domains.
+        //noinspection RawClockArithmetic
         return (a != null && (b == null || a.getTime() > b.getTime()));
     }
 
@@ -119,6 +121,8 @@ public class LocationUtils {
 
         // If the last location is older than TIME_THRESHOLD minutes, and the new location is more recent,
         // save the new location, even if the accuracy for new location is worse
+        // Device wall clock vs a device-stamped fix time — same clock domain (location age).
+        //noinspection RawClockArithmetic
         if (System.currentTimeMillis() - b.getTime() > TIME_THRESHOLD
                 && compareLocationsByTime(a, b)) {
             return true;
@@ -219,6 +223,8 @@ public class LocationUtils {
             return "";
         }
 
+        // Both operands are the monotonic elapsed-realtime clock (ElapsedTime); a real elapsed interval.
+        //noinspection RawClockArithmetic
         long timeDiff = SystemClock.elapsedRealtimeNanos() - loc.getElapsedRealtimeNanos();
         // Convert to seconds
         double timeDiffSec = timeDiff / 1E9;

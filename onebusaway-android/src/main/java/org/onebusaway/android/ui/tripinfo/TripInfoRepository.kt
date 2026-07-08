@@ -32,6 +32,7 @@ import org.onebusaway.android.database.oba.TripRecord
 import org.onebusaway.android.database.oba.TripDepartureTime
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.reminders.ReminderRepository
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ReminderUtils
@@ -54,7 +55,15 @@ data class TripInfoArgs(
     val departTime: Long = 0,
     val stopSequence: Int = 0,
     val serviceDate: Long = 0,
-    val vehicleId: String? = null
+    val vehicleId: String? = null,
+    /**
+     * The server clock ("now", epoch millis) at which a live arrival's [departTime] was observed, or 0
+     * when unknown. The arrivals "set reminder" launch supplies it so the reminder-lead-time math is
+     * measured against the same clock that stamped the departure (#1612); the edit-from-storage path
+     * leaves it 0 and the device clock is used, which is the right reference for a locally-reconstructed
+     * scheduled time.
+     */
+    val serverNowMs: Long = 0
 )
 
 /**
@@ -135,7 +144,8 @@ class DefaultTripInfoRepository @Inject constructor(
             vehicleId = args.vehicleId ?: stored.vehicleId,
             tripName = stored.name,
             reminderMinutes = stored.reminder,
-            isNewTrip = false
+            isNewTrip = false,
+            reminderNowMs = args.reminderNowMs()
         )
     }
 
@@ -152,8 +162,18 @@ class DefaultTripInfoRepository @Inject constructor(
         reminderMinutes = PreferenceUtils.getInt(
             context.getString(R.string.preference_key_default_reminder_time), DEFAULT_REMINDER_MINUTES
         ),
-        isNewTrip = true
+        isNewTrip = true,
+        reminderNowMs = args.reminderNowMs()
     )
+
+    /**
+     * "Now" for the reminder lead-time filter: the server clock the arrival was observed on when the
+     * launcher supplied it (same domain as a live [TripInfoArgs.departTime]), else the device wall clock
+     * — the correct reference for an edit-from-storage departure, which is a locally-reconstructed
+     * scheduled time rather than a server timestamp.
+     */
+    private fun TripInfoArgs.reminderNowMs(): Long =
+        serverNowMs.takeIf { it != 0L } ?: WallTime.now().epochMs
 
     private fun toTripInfoData(
         routeId: String?,
@@ -166,7 +186,9 @@ class DefaultTripInfoRepository @Inject constructor(
         vehicleId: String?,
         tripName: String,
         reminderMinutes: Int,
-        isNewTrip: Boolean
+        isNewTrip: Boolean,
+        // "Now" against which the reminder lead-times are filtered, same clock domain as [departTime].
+        reminderNowMs: Long,
     ) = TripInfoData(
         routeId = routeId,
         headsign = headsign,
@@ -187,7 +209,7 @@ class DefaultTripInfoRepository @Inject constructor(
                 DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_NO_NOON or DateUtils.FORMAT_NO_MIDNIGHT
             )
         ),
-        reminderOptions = ReminderUtils.getReminderTimes(context, departTime).toList()
+        reminderOptions = ReminderUtils.getReminderTimes(context, departTime, reminderNowMs).toList()
     )
 
     override suspend fun save(

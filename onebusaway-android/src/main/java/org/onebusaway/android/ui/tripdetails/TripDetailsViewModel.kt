@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.time.WallTime
 
 /**
  * ViewModel for the trip details screen. The 60-second polling loop lives in the screen (driven by
@@ -55,7 +56,7 @@ class TripDetailsViewModel @Inject constructor(
     private var destinationId: String? = savedState.get<String>(NavRoutes.ARG_DEST_ID)
 
     /** Wall-clock time of the last completed load, read by the screen's polling loop. */
-    var lastResponseTimeMs: Long = 0L
+    var lastResponseTime: WallTime = WallTime(0L)
         private set
 
     /**
@@ -65,7 +66,7 @@ class TripDetailsViewModel @Inject constructor(
      */
     suspend fun refresh() {
         val result = repository.getTripDetails(tripId, stopId, scrollMode, destinationId)
-        lastResponseTimeMs = System.currentTimeMillis()
+        lastResponseTime = WallTime.now()
         result.fold(
             onSuccess = { data -> _state.value = data.toContent() },
             onFailure = { error ->

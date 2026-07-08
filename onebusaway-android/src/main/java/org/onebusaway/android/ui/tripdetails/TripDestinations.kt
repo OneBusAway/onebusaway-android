@@ -145,6 +145,9 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
             navArgument(NavRoutes.ARG_VEHICLE_ID) {
                 type = NavType.StringType; nullable = true; defaultValue = null
             },
+            navArgument(NavRoutes.ARG_SERVER_NOW) {
+                type = NavType.LongType; defaultValue = 0L
+            },
         ),
     ) { backStackEntry ->
         val activity = LocalContext.current.findActivity()

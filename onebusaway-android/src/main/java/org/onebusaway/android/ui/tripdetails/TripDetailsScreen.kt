@@ -77,6 +77,7 @@ import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.time.WallTime
 
 /** Refresh interval matching the legacy TripDetailsListFragment (fixed 60s). */
 private const val REFRESH_PERIOD_MS = 60_000L
@@ -87,7 +88,7 @@ private fun TripDetailsPolling(viewModel: TripDetailsViewModel) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(viewModel) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            val sinceLast = System.currentTimeMillis() - viewModel.lastResponseTimeMs
+            val sinceLast = (WallTime.now() - viewModel.lastResponseTime).inWholeMilliseconds
             delay((REFRESH_PERIOD_MS - sinceLast).coerceIn(0L, REFRESH_PERIOD_MS))
             while (isActive) {
                 viewModel.refresh()

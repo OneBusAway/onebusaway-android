@@ -120,6 +120,8 @@ public class DonationsManager {
      */
     public void remindUserLater() {
         long twoWeeksInMilliseconds = 86400 * 14 * 1000; // Seconds in a day * 14 days * 1000 milliseconds
+        // Device-clock reminder date = now + a fixed offset; no cross-clock comparison.
+        //noinspection RawClockArithmetic
         Date futureDate = new Date((new Date()).getTime() + twoWeeksInMilliseconds);
         setDonationRequestReminderDate(futureDate);
     }

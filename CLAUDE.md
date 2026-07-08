@@ -25,6 +25,19 @@ OneBusAway for Android is a real-time transit information app providing bus arri
 adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.ui.HomeActivity
 ```
 
+### Variant grid: `check`/`test` only exercise the `oba` brand by default
+
+The app has two flavor dimensions — **brand** (`oba`, `agencyX`, `agencyY`, `kiedybus`) × **platform**
+(`google`, `maplibre`) — so `test`/`check` would otherwise fan out `testXUnitTest` across all 8 debug
+variants. Only `oba` ships; `agencyX`/`agencyY` are sample white-label rebrands and `kiedybus` is a
+third-party brand, all sharing identical code (they differ only in resources/manifest/appId). So a
+`beforeVariants` filter in `onebusaway-android/build.gradle` **disables unit + Android tests for every
+non-`oba` brand**, shrinking the routine grid to `obaGoogle` + `obaMaplibre`.
+
+- The brand **main** variants stay enabled — `./gradlew assembleAgencyXGoogleDebug` (etc.) still builds
+  on demand to verify rebranding compiles.
+- To run the full 8-variant test grid (nightly / pre-release), pass **`-PbuildAllBrands=true`**.
+
 ### CI is strict — warnings fail the build
 
 CI passes `-PwarningsAsErrors=true`, so **every Kotlin compiler warning (`w:`) is a hard error** in CI —

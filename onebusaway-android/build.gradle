@@ -200,6 +200,23 @@ android {
  * content:// stop/route deep-link authority) — historically the ObaProvider ContentProvider authority.
  */
 androidComponents {
+    // Routine `check`/`test` builds only exercise the shipping `oba` brand's test suites. The sample
+    // white-label brands (agencyX/agencyY) and the third-party `kiedybus` brand share identical code —
+    // they differ only in resources/manifest/appId — so running their unit + Android tests on every
+    // build multiplies the KSP + Hilt + compile + test grid ~4x for no added signal. Their MAIN
+    // variants stay enabled, so `assembleAgencyXGoogleDebug` (etc.) still builds on demand to verify
+    // rebranding compiles. Pass -PbuildAllBrands=true (nightly / pre-release) to restore the full grid.
+    def buildAllBrands = providers.gradleProperty("buildAllBrands")
+            .map { it.toBoolean() }.orElse(false).get()
+    if (!buildAllBrands) {
+        beforeVariants(selector().all(), { variantBuilder ->
+            if (!variantBuilder.productFlavors.any { it.second == "oba" }) {
+                variantBuilder.enableUnitTest = false
+                variantBuilder.enableAndroidTest = false
+            }
+        })
+    }
+
     onVariants(selector().all(), { variant ->
         def authority
         // Check if the primary flavor is "oba"

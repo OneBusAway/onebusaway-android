@@ -123,7 +123,8 @@ class Polyline(points: List<Location>) {
         // Query point in the local frame.
         val px = longitude * cosLat
         val py = latitude
-        var best: Location? = null
+        var bestLat = 0.0
+        var bestLon = 0.0
         var bestDist2 = Double.MAX_VALUE
         for (i in 0 until points.size - 1) {
             val a = points[i]
@@ -141,13 +142,11 @@ class Polyline(points: List<Location>) {
             val dist2 = ex * ex + ey * ey
             if (dist2 < bestDist2) {
                 bestDist2 = dist2
-                best = Location("").apply {
-                    this.latitude = projLat
-                    this.longitude = projLon
-                }
+                bestLat = projLat
+                bestLon = projLon
             }
         }
-        return best
+        return LocationUtils.makeLocation(bestLat, bestLon)
     }
 
     /** Returns the sub-polyline between two distances, with interpolated endpoints. */

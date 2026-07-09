@@ -83,13 +83,8 @@ object MarkerRendering {
         pin.setBounds(0, 0, contentPx, contentPx)
         drawOutlined(canvas, pin, outline, pinColor)
 
-        val glyph = ContextCompat.getDrawable(context, glyphRes)!!.mutate()
-        val half = glyphSize / 2f
-        glyph.setBounds(
-            ((HEAD_CX - half) * scale).toInt(), ((HEAD_CY - half) * scale).toInt(),
-            ((HEAD_CX + half) * scale).toInt(), ((HEAD_CY + half) * scale).toInt(),
-        )
-        drawOutlined(canvas, glyph, outline, glyphColor)
+        // Glyph centered on the pin head.
+        drawGlyph(canvas, context, glyphRes, HEAD_CX * scale, HEAD_CY * scale, glyphSize / 2f * scale, outline, glyphColor)
     }
 
     /**
@@ -112,23 +107,38 @@ object MarkerRendering {
     ) {
         val center = contentPx / 2f
         val radius = center - outline
+        // One Paint, filled (the default style); recolored between the ring and the fill.
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         if (outline > 0f) {
             // Black disc slightly larger than the fill, so an `outline`-wide black ring shows around it.
-            canvas.drawCircle(center, center, radius, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.BLACK
-                style = Paint.Style.FILL
-            })
+            paint.color = Color.BLACK
+            canvas.drawCircle(center, center, radius, paint)
         }
-        canvas.drawCircle(center, center, radius - outline, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = fillColor
-            style = Paint.Style.FILL
-        })
+        paint.color = fillColor
+        canvas.drawCircle(center, center, radius - outline, paint)
 
+        // Glyph centered on the disc.
+        drawGlyph(canvas, context, glyphRes, center, center, glyphSize / 2f * scale, outline, glyphColor)
+    }
+
+    /**
+     * Draws [glyphRes] tinted [glyphColor], centered at ([cxPx], [cyPx]) with half-extent [halfPx] (all
+     * in pixels), outlined when [outline] > 0. The shared tail of [drawPinAndGlyph] and [drawCircleAndGlyph].
+     */
+    private fun drawGlyph(
+        canvas: Canvas,
+        context: Context,
+        @DrawableRes glyphRes: Int,
+        cxPx: Float,
+        cyPx: Float,
+        halfPx: Float,
+        outline: Float,
+        glyphColor: Int,
+    ) {
         val glyph = ContextCompat.getDrawable(context, glyphRes)!!.mutate()
-        val halfPx = glyphSize / 2f * scale
         glyph.setBounds(
-            (center - halfPx).toInt(), (center - halfPx).toInt(),
-            (center + halfPx).toInt(), (center + halfPx).toInt(),
+            (cxPx - halfPx).toInt(), (cyPx - halfPx).toInt(),
+            (cxPx + halfPx).toInt(), (cyPx + halfPx).toInt(),
         )
         drawOutlined(canvas, glyph, outline, glyphColor)
     }

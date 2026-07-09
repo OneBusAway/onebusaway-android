@@ -376,7 +376,8 @@ class RouteMapController(
     private fun projectStopsOntoShape(stops: List<ObaStop>): Map<String, GeoPoint> {
         val route = routeShape ?: return emptyMap()
         val shapes = route.shapeForDirection(currentDirectionId).polylines
-            .mapNotNull { line -> line.takeIf { it.size >= 2 }?.let { Polyline(it.map(GeoPoint::toLocation)) } }
+            .filter { it.size >= 2 }
+            .map { line -> Polyline(line.map(GeoPoint::toLocation)) }
         if (shapes.isEmpty()) return emptyMap()
         return stops.associate { stop ->
             val loc = stop.location

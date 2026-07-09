@@ -17,6 +17,7 @@ package org.onebusaway.android.util
 
 import android.location.Location
 import java.util.Arrays
+import kotlin.math.cos
 
 /**
  * An ordered sequence of geographic points with fast distance-based interpolation. Cumulative
@@ -105,6 +106,48 @@ class Polyline(points: List<Location>) {
     fun bearingAt(seg: Int): Float {
         if (seg < 0) return Float.NaN
         return (points[seg].bearingTo(points[seg + 1]) + 360) % 360
+    }
+
+    /**
+     * The point on this polyline closest to ([latitude], [longitude]), or null if the polyline is
+     * empty. Each segment is projected in a local equirectangular frame (longitude scaled by
+     * cos(latitude), which keeps the two axes to the same metric scale near the query point), the
+     * projection parameter clamped to the segment, and the true closest projected point returned. Used
+     * to sit a route stop on the route centerline (#1752). This is an exact geometric projection, not a
+     * magnitude guess; the planar approximation is negligible at the stop-to-line distances involved.
+     */
+    fun nearestPoint(latitude: Double, longitude: Double): Location? {
+        if (points.isEmpty()) return null
+        if (points.size == 1) return points.first()
+        val cosLat = cos(Math.toRadians(latitude))
+        // Query point in the local frame.
+        val px = longitude * cosLat
+        val py = latitude
+        var best: Location? = null
+        var bestDist2 = Double.MAX_VALUE
+        for (i in 0 until points.size - 1) {
+            val a = points[i]
+            val b = points[i + 1]
+            val ax = a.longitude * cosLat
+            val ay = a.latitude
+            val dx = b.longitude * cosLat - ax
+            val dy = b.latitude - ay
+            val segLen2 = dx * dx + dy * dy
+            val t = if (segLen2 <= 0.0) 0.0 else (((px - ax) * dx + (py - ay) * dy) / segLen2).coerceIn(0.0, 1.0)
+            val projLat = a.latitude + t * (b.latitude - a.latitude)
+            val projLon = a.longitude + t * (b.longitude - a.longitude)
+            val ex = projLon * cosLat - px
+            val ey = projLat - py
+            val dist2 = ex * ex + ey * ey
+            if (dist2 < bestDist2) {
+                bestDist2 = dist2
+                best = Location("").apply {
+                    this.latitude = projLat
+                    this.longitude = projLon
+                }
+            }
+        }
+        return best
     }
 
     /** Returns the sub-polyline between two distances, with interpolated endpoints. */

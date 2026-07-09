@@ -31,8 +31,10 @@ import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.time.WallTime
 import java.net.HttpURLConnection
 import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.RouteMapStop
+import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
@@ -360,7 +362,29 @@ class RouteMapController(
         // showStops accumulates while a route is active, so drop the prior direction's route stops
         // first — otherwise the map would show the union of both directions. (Keeps a focused stop.)
         stopsController.clearStops(false)
-        stopsController.showStops(routeStops.stopsForDirection(currentDirectionId), routeStopRoutes)
+        val stops = routeStops.stopsForDirection(currentDirectionId)
+        // Project each stop onto the drawn shape so it sits on the route centerline as a trip-style
+        // circle (#1752); the stops stay tappable StopMarkers, so tapping one still opens its arrivals.
+        stopsController.showStops(stops, routeStopRoutes, projectStopsOntoShape(stops))
+    }
+
+    /**
+     * The [stops]' positions projected onto the current direction's drawn shape, keyed by stop id. Each
+     * stop is snapped to the nearest point across the direction's polyline segments; a stop that can't be
+     * placed (no drawable shape) falls back to its own location, so it still shows (just off the line).
+     */
+    private fun projectStopsOntoShape(stops: List<ObaStop>): Map<String, GeoPoint> {
+        val route = routeShape ?: return emptyMap()
+        val shapes = route.shapeForDirection(currentDirectionId).polylines
+            .mapNotNull { line -> line.takeIf { it.size >= 2 }?.let { Polyline(it.map(GeoPoint::toLocation)) } }
+        if (shapes.isEmpty()) return emptyMap()
+        return stops.associate { stop ->
+            val loc = stop.location
+            val nearest = shapes
+                .mapNotNull { it.nearestPoint(loc.latitude, loc.longitude) }
+                .minByOrNull { loc.distanceTo(it) }
+            stop.id to (nearest?.toGeoPoint() ?: loc.toGeoPoint())
+        }
     }
 
     /**

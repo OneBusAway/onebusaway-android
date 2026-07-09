@@ -225,7 +225,7 @@ class MapLibreRenderer(
             }
         }
         for (stop in stops) {
-            val kind = stopIconKind(stop.id == focusedStopId, band, stop.favorite)
+            val kind = stopIconKind(stop.id == focusedStopId, band, stop.favorite, stop.routeStop)
             val existing = stopMarkersByStopId[stop.id]
             if (existing == null) {
                 val marker = map.addMarker(
@@ -237,6 +237,7 @@ class MapLibreRenderer(
                     stop.id == renderedFocusedStopId,
                     renderedStopBand,
                     stop.id in renderedFavoriteStopIds,
+                    stop.routeStop,
                 ) != kind
             ) {
                 // Only the markers whose icon kind changed need a new icon (maplibre centers the icon
@@ -258,6 +259,10 @@ class MapLibreRenderer(
         StopIconKind.FAVORITE_FOCUSED -> MapLibreStopIcons.focusedFavoriteIcon(context, stop.direction)
         StopIconKind.FAVORITE_DOT -> MapLibreStopIcons.favoriteDotIcon(context)
         StopIconKind.FAVORITE_DOT_FOCUSED -> MapLibreStopIcons.focusedFavoriteDotIcon(context)
+        // Route stops reuse the trip map's centerline circle (focused = filled center) so the overview
+        // map's route matches the trip map (#1752).
+        StopIconKind.ROUTE_CIRCLE -> tripStopIcon
+        StopIconKind.ROUTE_CIRCLE_FOCUSED -> tripStopSelectedIcon
     }
 
     /**

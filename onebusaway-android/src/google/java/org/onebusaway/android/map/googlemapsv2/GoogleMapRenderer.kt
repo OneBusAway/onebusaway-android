@@ -284,7 +284,7 @@ class GoogleMapRenderer(
             }
         }
         for (stop in stops) {
-            val kind = stopIconKind(stop.id == focusedStopId, band, stop.favorite)
+            val kind = stopIconKind(stop.id == focusedStopId, band, stop.favorite, stop.routeStop)
             val existing = stopMarkersByStopId[stop.id]
             if (existing == null) {
                 val (anchorX, anchorY) = stopAnchor(stop, kind)
@@ -303,6 +303,7 @@ class GoogleMapRenderer(
                     stop.id == renderedFocusedStopId,
                     renderedStopBand,
                     stop.id in renderedFavoriteStopIds,
+                    stop.routeStop,
                 ) != kind
             ) {
                 // Only the markers whose icon kind changed need a new icon (and matching anchor: the
@@ -327,6 +328,10 @@ class GoogleMapRenderer(
         StopIconKind.FAVORITE_FOCUSED -> StopIconFactory.focusedFavoriteStopIcon(context, stop.direction)
         StopIconKind.FAVORITE_DOT -> StopIconFactory.favoriteDotStopIcon(context)
         StopIconKind.FAVORITE_DOT_FOCUSED -> StopIconFactory.focusedFavoriteDotStopIcon(context)
+        // Route stops reuse the trip map's centerline circle (focused = filled center) so the overview
+        // map's route matches the trip map (#1752).
+        StopIconKind.ROUTE_CIRCLE -> tripStopIcon(selected = false)
+        StopIconKind.ROUTE_CIRCLE_FOCUSED -> tripStopIcon(selected = true)
     }
 
     private fun stopAnchor(stop: StopMarker, kind: StopIconKind): Pair<Float, Float> =

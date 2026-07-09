@@ -137,6 +137,11 @@ data class BikeMarker(
  * decided by [MapRenderSnapshot.focusedStopId], not stored here, so focusing is a one-field change.
  * [favorite] is stored here (it's a per-stop property that changes as the user stars/unstars), driving
  * the distinctive star icon + tap preference (#1680).
+ *
+ * [routeStop] marks a stop belonging to the route currently shown on the map: its [point] is projected
+ * onto the route centerline and it renders as the trip-map-style circle instead of the direction-anchored
+ * icon, so the overview map's route reads the same as the trip map (#1752). It stays a full tappable
+ * [StopMarker] (unlike the trip map's non-interactive dots) so tapping still opens the stop's arrivals.
  */
 data class StopMarker(
     val id: String,
@@ -145,6 +150,7 @@ data class StopMarker(
     val routeType: Int,
     val stop: ObaStop,
     val favorite: Boolean = false,
+    val routeStop: Boolean = false,
 )
 
 /** Immutable snapshot of everything the map should render. Grows one overlay per phase. */

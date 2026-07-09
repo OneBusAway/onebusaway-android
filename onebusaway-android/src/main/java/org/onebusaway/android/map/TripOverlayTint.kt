@@ -27,13 +27,19 @@ import org.onebusaway.android.map.render.TripOverlay
 // map's selected-vehicle overlay ([RouteMapController]).
 
 /**
- * Shifts hue by 180° to produce a color that contrasts with [color] (the route line's color), so the
- * uncertainty band reads against the shape it's drawn over.
+ * Produces a color that contrasts with [color] (the route line's color), so the uncertainty band reads
+ * against the shape it's drawn over. Rotating the hue 180° works for a saturated line, but a
+ * near-grayscale line (gray/black/white) has no meaningful hue to rotate — there we flip the value
+ * (dark→white, light→black) instead so the band still stands out.
  */
 internal fun contrastingColor(color: Int): Int {
     val hsv = FloatArray(3)
     Color.colorToHSV(color or 0xFF000000.toInt(), hsv)
-    hsv[0] = (hsv[0] + 180f) % 360f
+    if (hsv[1] < 0.1f) {
+        hsv[2] = if (hsv[2] < 0.5f) 1f else 0f
+    } else {
+        hsv[0] = (hsv[0] + 180f) % 360f
+    }
     return Color.HSVToColor(hsv)
 }
 

@@ -192,6 +192,9 @@ class RouteMapController(
         renderState.setVehiclesSampler { nowMs -> sampleVehicles(WallTime(nowMs)) }
         // A tapped vehicle enters a focused state that shows its extrapolation band + fast-estimate
         // marker; react to the selection state here (a tap sets it, a map/background tap clears it).
+        // Cancel any collector from a prior start() so a re-entered session doesn't leak one that
+        // stop() can no longer reach.
+        selectionJob?.cancel()
         selectionJob = scope.launch {
             renderState.selectedVehicleTripId.collect { tripId -> showSelectionOverlay(tripId) }
         }

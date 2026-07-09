@@ -224,19 +224,23 @@ class MapLibreRenderer(
                 )
                 stopMarkersByStopId[stop.id] = marker
                 stopByMarker[marker] = stop
-            } else if (stopIconKind(
+            } else {
+                val previousKind = stopIconKind(
                     stop.id == renderedFocusedStopId,
                     renderedStopBand,
                     stop.id in renderedFavoriteStopIds,
                     stop.id in renderedRouteStopIds,
-                ) != kind
-            ) {
+                )
                 // Only the markers whose icon kind changed need a new icon (maplibre centers the icon
-                // on the position, so the dot/star/circle lands on the stop with no anchor change). The
-                // position follows too, so a stop that switched between its own location and its projected
-                // on-route point (a mode switch) lands correctly.
-                existing.icon = stopIcon(stop, kind)
+                // on the position, so the dot/star/circle lands on the stop with no anchor change).
+                // Position and the backing StopMarker are refreshed unconditionally, since a projected
+                // route stop can keep the same kind (ROUTE_CIRCLE) while its on-route point moves —
+                // gating those on the kind change would strand the marker at a stale coordinate.
+                if (previousKind != kind) {
+                    existing.icon = stopIcon(stop, kind)
+                }
                 existing.position = stop.point.toLatLng()
+                stopByMarker[existing] = stop
             }
         }
         renderedFocusedStopId = focusedStopId

@@ -283,22 +283,26 @@ class GoogleMapRenderer(
                 )!!
                 stopMarkersByStopId[stop.id] = marker
                 stopByMarker[marker] = stop
-            } else if (stopIconKind(
+            } else {
+                val previousKind = stopIconKind(
                     stop.id == renderedFocusedStopId,
                     renderedStopBand,
                     stop.id in renderedFavoriteStopIds,
                     stop.id in renderedRouteStopIds,
-                ) != kind
-            ) {
+                )
                 // Only the markers whose icon kind changed need a new icon (and matching anchor: the
                 // full icon is anchored on its circle per direction, the dot/star/circle at the marker
-                // center). The position follows too, so a stop that switched between its own location and
-                // its projected on-route point (a mode switch) lands correctly.
-                existing.setIcon(stopIcon(stop, kind))
-                val (anchorX, anchorY) = stopAnchor(stop, kind)
-                existing.setAnchor(anchorX, anchorY)
+                // center). Position and the backing StopMarker are refreshed unconditionally, since a
+                // projected route stop can keep the same kind (ROUTE_CIRCLE) while its on-route point
+                // moves — gating those on the kind change would strand the marker at a stale coordinate.
+                if (previousKind != kind) {
+                    existing.setIcon(stopIcon(stop, kind))
+                    val (anchorX, anchorY) = stopAnchor(stop, kind)
+                    existing.setAnchor(anchorX, anchorY)
+                }
                 existing.position = stop.point.toLatLng()
                 existing.zIndex = if (stop.favorite) FAVORITE_STOP_Z_INDEX else 0f
+                stopByMarker[existing] = stop
             }
         }
         renderedFocusedStopId = focusedStopId

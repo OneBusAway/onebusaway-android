@@ -17,7 +17,6 @@ package org.onebusaway.android.ui.arrivals
 
 import org.onebusaway.android.api.data.StopArrivalsDataSource
 import org.onebusaway.android.api.data.StopArrivals
-import org.onebusaway.android.api.data.RouteDataSource
 
 import android.content.Context
 import android.os.SystemClock
@@ -33,7 +32,6 @@ import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.database.oba.ImportGate
-import org.onebusaway.android.database.oba.RouteDao
 import org.onebusaway.android.database.oba.RouteFavoritesRepository
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
@@ -240,12 +238,10 @@ data class AlertDetails(
 class DefaultArrivalsRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
-    private val routeRepository: RouteDataSource,
     private val stopArrivals: StopArrivalsDataSource,
     private val stopRouteFilterDao: StopRouteFilterDao,
     private val serviceAlertDao: ServiceAlertDao,
     private val stopDao: StopDao,
-    private val routeDao: RouteDao,
     private val routeFavorites: RouteFavoritesRepository,
     private val importGate: ImportGate,
     private val preferences: PreferencesRepository,
@@ -424,28 +420,9 @@ class DefaultArrivalsRepository @Inject constructor(
         favorite: Boolean
     ) {
         // The shared write ensures the row (no URL in hand yet — leaves any existing one), flips the
-        // flag, gates on the import, and reports analytics.
+        // flag, gates on the import, reports analytics, and backfills the full details from the network
+        // on a star so the long name shows in the folder.
         routeFavorites.setFavorite(routeId, shortName, longName, url = null, favorite = favorite)
-        // Backfill the full route details (incl. URL) so the long name can be shown later.
-        fetchAndStoreRouteDetails(routeId, regionRepository.region.value?.id)
-    }
-
-    /** Route-details fetch via the modernized client; writes name/url back. */
-    private suspend fun fetchAndStoreRouteDetails(routeId: String, regionId: Long?) {
-        val route = routeRepository.getRoute(routeId).getOrNull() ?: return
-
-        var shortName = route.shortName
-        var longName = route.longName
-        if (shortName.isNullOrEmpty()) {
-            shortName = longName
-        }
-        if (longName.isNullOrEmpty() || shortName == longName) {
-            longName = route.description
-        }
-
-        // Backfilling details for a just-starred route is part of the favorite action, not a view, so
-        // ensure the row without bumping use_count / access_time (#1727 review).
-        routeDao.ensureRouteDetails(route.id, shortName, longName, route.url, regionId)
     }
 
     override suspend fun setRouteFilter(stopId: String, filter: Set<String>) {

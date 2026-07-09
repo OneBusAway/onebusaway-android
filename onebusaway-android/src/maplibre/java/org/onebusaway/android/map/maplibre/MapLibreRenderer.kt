@@ -20,6 +20,11 @@
 package org.onebusaway.android.map.maplibre
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 import java.util.concurrent.TimeUnit
 import org.maplibre.android.annotations.Annotation
 import org.maplibre.android.annotations.Icon
@@ -38,7 +43,9 @@ import org.onebusaway.android.map.render.BikeBitmaps
 import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.StopIconKind
@@ -50,6 +57,7 @@ import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
 import org.onebusaway.android.map.render.stopIconKind
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.getRouteDisplayName
 
@@ -81,7 +89,7 @@ class MapLibreRenderer(
     private val map: MapLibreMap,
     private val context: Context,
     private val renderState: MapRenderState,
-) {
+) : PingTarget {
     private val stopByMarker = HashMap<Marker, StopMarker>()
 
     // Stop markers tracked by stop id so [reconcileStopMarkers] can diff them in place (add new,
@@ -138,6 +146,19 @@ class MapLibreRenderer(
     private var dotAgeSeconds: Long = -1L
 
     private val iconFactory = IconFactory.getInstance(context)
+
+    // The one-shot "ping" ripple (#1764): a ring-bitmap marker grown + faded over [MapPing.DURATION],
+    // recentered each frame on trip [pingTripId]'s vehicle marker so it follows the icon as it settles (the
+    // classic annotation API has no circle). [pingStart] is null until the first tick stamps it; null id = no ping.
+    private var pingMarker: Marker? = null
+    private var pingTripId: String? = null
+    private var pingStart: WallTime? = null
+    private val pingColor by lazy { ContextCompat.getColor(context, R.color.theme_primary) }
+    private val density = context.resources.displayMetrics.density
+    // Reused across the ripple's frames — redrawn in place rather than reallocated each frame (the ring
+    // is a bitmap because the classic annotation API has no circle). Freed with the ping in clearPing.
+    private var pingBitmap: Bitmap? = null
+    private val pingPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE } }
 
     /** Redraw the static layer (everything but the live vehicles + trip-focus overlay). */
     fun renderStatic() {
@@ -272,6 +293,58 @@ class MapLibreRenderer(
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
         moveVehicles(vehicles, nowMs)
         updateTripOverlay(overlay, nowMs)
+    }
+
+    /** Start a one-shot ping ripple on trip [tripId]'s vehicle; the driver calls [tickPing] to animate it (#1764). */
+    override fun startPing(tripId: String) {
+        clearPing()
+        pingTripId = tripId
+        pingStart = null // stamped on the first tick
+    }
+
+    /** Remove any in-flight ping ripple (a superseded/cancelled ping). */
+    override fun cancelPing() = clearPing()
+
+    // Advance the ping ripple one frame: recenter on the vehicle marker's live position (so it follows the
+    // icon as it settles onto its shape-projected spot), regrow the ring bitmap (bigger radius, fading
+    // color) and re-set the marker icon. Returns false — and removes the marker — when the ripple completes
+    // or the vehicle is gone. Driven by the driver's own full-rate frame loop so the ripple is smooth. The
+    // bitmap is a constant max-size square so the ring stays centered as it grows inside it.
+    override fun tickPing(now: WallTime): Boolean {
+        val tripId = pingTripId ?: return false
+        val center = vehicleMarkersByTripId[tripId]?.position ?: run { clearPing(); return false }
+        val start = pingStart ?: now.also { pingStart = it }
+        val elapsed = now - start
+        if (MapPing.isDone(elapsed)) {
+            clearPing()
+            return false
+        }
+        val progress = MapPing.progress(elapsed)
+        val maxRadiusPx = (MapPing.MAX_RADIUS_DP * density).toInt()
+        val radiusPx = maxRadiusPx * MapPing.radiusFraction(progress)
+        val size = maxRadiusPx * 2
+        val bitmap = pingBitmap?.takeIf { it.width == size } ?: createBitmap(size, size).also { pingBitmap = it }
+        bitmap.eraseColor(0)
+        pingPaint.color = MapPing.withAlpha(pingColor, MapPing.alpha(progress))
+        pingPaint.strokeWidth = MapPing.STROKE_DP * density
+        Canvas(bitmap).drawCircle(size / 2f, size / 2f, radiusPx.coerceAtLeast(0f), pingPaint)
+        val icon = iconFactory.fromBitmap(bitmap)
+        val existing = pingMarker
+        if (existing == null) {
+            pingMarker = map.addMarker(MarkerOptions().position(center).icon(icon))
+        } else {
+            existing.position = center
+            existing.icon = icon
+        }
+        return true
+    }
+
+    private fun clearPing() {
+        pingMarker?.let { map.removeAnnotation(it) }
+        pingMarker = null
+        pingTripId = null
+        pingStart = null
+        pingBitmap = null
     }
 
     /**
@@ -499,6 +572,15 @@ class MapLibreRenderer(
     fun bikeForMarker(marker: Marker): BikeMarker? = bikeByMarker[marker]
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
+
+    /**
+     * If [marker] is the ping ripple, the vehicle marker it's centered on (else null) — so a tap on the
+     * ripple selects the vehicle underneath rather than being swallowed. maplibre's classic Marker has no
+     * `clickable(false)` (Google draws the ping as a non-clickable Circle), so the click listener routes a
+     * ping tap through to its vehicle via this (#1764).
+     */
+    fun vehicleMarkerUnderPing(marker: Marker): Marker? =
+        if (marker == pingMarker) pingTripId?.let { vehicleMarkersByTripId[it] } else null
 
     /** The current trips-for-route response, needed to render a vehicle's info window. */
     fun vehicleResponse(): RouteTrips? = lastVehicleResponse

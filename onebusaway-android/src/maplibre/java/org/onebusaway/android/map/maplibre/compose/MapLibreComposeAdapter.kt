@@ -54,6 +54,7 @@ import org.onebusaway.android.map.compose.ObaComposeMapAdapter
 import org.onebusaway.android.map.compose.ObaMapCallbacks
 import org.onebusaway.android.map.compose.VehicleInfoWindow
 import org.onebusaway.android.map.maplibre.MapLibreRenderer
+import org.onebusaway.android.map.compose.drivePings
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
@@ -201,6 +202,11 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                         }
                     }
             }
+            // One-shot vehicle pings — the flavor-neutral driver waits for the pan to settle then animates
+            // the ripple at the full display rate (#1764).
+            LaunchedEffect(activeRenderer) {
+                drivePings(renderState.mapPings, host.camera, activeRenderer)
+            }
             val myLocationEnabled by host.myLocationEnabled.collectAsState()
             val map = mapLibreMap
             val style = loadedStyle
@@ -249,7 +255,10 @@ private fun wireClicks(
         callbacks.onMapClick(null)
         false
     }
-    map.setOnMarkerClickListener { marker ->
+    map.setOnMarkerClickListener { tapped ->
+        // A tap on the ping ripple routes through to the vehicle it's centered on (maplibre classic markers
+        // can't be made non-interactive like Google's Circle), so it doesn't swallow the vehicle tap (#1764).
+        val marker = renderer.vehicleMarkerUnderPing(tapped) ?: tapped
         val stop = renderer.stopForMarker(marker)
         if (stop != null) {
             infoWindows.clear()

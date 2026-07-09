@@ -57,6 +57,7 @@ import org.onebusaway.android.map.compose.ObaComposeMapAdapter
 import org.onebusaway.android.map.compose.ObaMapCallbacks
 import org.onebusaway.android.map.compose.VehicleInfoWindow
 import org.onebusaway.android.map.googlemapsv2.GoogleMapRenderer
+import org.onebusaway.android.map.compose.drivePings
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapProjector
@@ -230,6 +231,11 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                             )
                         }
                     }
+            }
+            // One-shot vehicle pings — the flavor-neutral driver waits for the pan to settle then animates
+            // the ripple at the full display rate (#1764).
+            LaunchedEffect(activeRenderer) {
+                drivePings(renderState.mapPings, host.camera, activeRenderer)
             }
         }
 

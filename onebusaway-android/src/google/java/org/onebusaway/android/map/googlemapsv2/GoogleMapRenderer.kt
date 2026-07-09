@@ -18,9 +18,14 @@ package org.onebusaway.android.map.googlemapsv2
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
+import androidx.core.content.ContextCompat
+import kotlin.math.cos
+import kotlin.math.pow
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.Circle
+import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
@@ -40,8 +45,10 @@ import org.onebusaway.android.map.render.BikeBand
 import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MarkerRendering
+import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.StopIconKind
@@ -53,6 +60,7 @@ import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
 import org.onebusaway.android.map.render.stopIconKind
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.getRouteDisplayName
 import java.util.concurrent.TimeUnit
@@ -80,7 +88,7 @@ class GoogleMapRenderer(
     private val map: GoogleMap,
     private val context: Context,
     private val renderState: MapRenderState,
-) {
+) : PingTarget {
     private val stopByMarker = HashMap<Marker, StopMarker>()
 
     // Stop markers tracked by stop id so [reconcileStopMarkers] can diff them in place (add new,
@@ -144,6 +152,14 @@ class GoogleMapRenderer(
     // live estimate was last corrected from), shown while a vehicle is selected, with a "Most recent
     // data" + fix-age info window (the SDK's default title/snippet). Null when nothing is selected.
     private var mostRecentDataMarker: Marker? = null
+
+    // The one-shot "ping" ripple (#1764): a native Circle grown + faded over [MapPing.DURATION], centered
+    // each frame on trip [pingTripId]'s vehicle marker (so it follows the icon as it settles). [pingStart]
+    // is null until the first tick stamps it (the animation clock is the frame's wall clock); null id = no ping.
+    private var pingCircle: Circle? = null
+    private var pingTripId: String? = null
+    private var pingStart: WallTime? = null
+    private val pingColor by lazy { ContextCompat.getColor(context, R.color.theme_primary) }
 
     private val bikeIcons by lazy { BikeIcons(context) }
 
@@ -363,6 +379,8 @@ class GoogleMapRenderer(
         mostRecentDataMarker?.remove()
         mostRecentDataMarker = null
 
+        clearPing()
+
         fastEstimate.dispose()
 
         // Drop our wrapped descriptors so their native textures are released once the markers using them
@@ -379,6 +397,64 @@ class GoogleMapRenderer(
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
         moveVehicles(vehicles, nowMs)
         updateTripOverlay(overlay, nowMs)
+    }
+
+    /** Start a one-shot ping ripple on trip [tripId]'s vehicle; the driver calls [tickPing] to animate it (#1764). */
+    override fun startPing(tripId: String) {
+        clearPing()
+        pingTripId = tripId
+        pingStart = null // stamped on the first tick
+    }
+
+    /** Remove any in-flight ping ripple (a superseded/cancelled ping). */
+    override fun cancelPing() = clearPing()
+
+    // Advance the ping ripple one frame: recenter on the vehicle marker's live position (so it follows the
+    // icon as it slides from its raw fallback onto its shape-projected spot), grow the Circle's radius (from
+    // a target screen size via the current zoom, so it reads at a consistent on-screen size), and fade its
+    // stroke. Returns false — and removes the Circle — when the ripple completes or the vehicle is gone.
+    // Driven by the driver's own full-rate frame loop (not the 20Hz vehicle loop) so the ripple is smooth.
+    // Circles draw beneath all markers in gms, so the vehicle icon stays crisp on top.
+    override fun tickPing(now: WallTime): Boolean {
+        val tripId = pingTripId ?: return false
+        val center = vehicleMarkersByTripId[tripId]?.position ?: run { clearPing(); return false }
+        val start = pingStart ?: now.also { pingStart = it }
+        val elapsed = now - start
+        if (MapPing.isDone(elapsed)) {
+            clearPing()
+            return false
+        }
+        val progress = MapPing.progress(elapsed)
+        val radiusPx = MapPing.MAX_RADIUS_DP * density * MapPing.radiusFraction(progress)
+        val metersPerPx =
+            156543.03392 * cos(Math.toRadians(center.latitude)) / 2.0.pow(map.cameraPosition.zoom.toDouble())
+        val radiusMeters = radiusPx * metersPerPx
+        val color = MapPing.withAlpha(pingColor, MapPing.alpha(progress))
+        val existing = pingCircle
+        if (existing == null) {
+            pingCircle = map.addCircle(
+                CircleOptions()
+                    .center(center)
+                    .radius(radiusMeters)
+                    .strokeColor(color)
+                    .strokeWidth(MapPing.STROKE_DP * density)
+                    .fillColor(Color.TRANSPARENT)
+                    .clickable(false)
+                    .zIndex(PING_Z_INDEX)
+            )
+        } else {
+            existing.center = center
+            existing.radius = radiusMeters
+            existing.strokeColor = color
+        }
+        return true
+    }
+
+    private fun clearPing() {
+        pingCircle?.remove()
+        pingCircle = null
+        pingTripId = null
+        pingStart = null
     }
 
     /**
@@ -649,6 +725,10 @@ class GoogleMapRenderer(
         // The uncertainty band draws above the static route line; the fast-estimate marker above the band.
         private const val TRIP_BAND_Z_INDEX = 2f
         private const val FAST_ESTIMATE_Z_INDEX = 4f
+
+        // The ping ripple draws above the route line/band (gms always draws Circles beneath markers, so it
+        // never covers the vehicle icon regardless of this value).
+        private const val PING_Z_INDEX = 3f
 
         // The (arbitrary, constant) ease key for a TripEstimateMarker's single-marker easer.
         private const val ESTIMATE_EASE_KEY = "estimate"

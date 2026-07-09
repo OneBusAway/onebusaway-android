@@ -286,8 +286,8 @@ class RouteMapController(
         }
         val bandColor = contrastingColor(currentRouteColor())
         renderState.setTripOverlaySampler { nowMs ->
-            extrapolationFromState(tripObservationRepository.lookupTripState(tripId), WallTime(nowMs))
-                ?.toTripOverlay(bandColor, includeMarkers = false)
+            extrapolationFromState(tripObservationRepository.lookupTripState(tripId), WallTime(nowMs), includeMarkers = false)
+                ?.toTripOverlay(bandColor)
         }
     }
 

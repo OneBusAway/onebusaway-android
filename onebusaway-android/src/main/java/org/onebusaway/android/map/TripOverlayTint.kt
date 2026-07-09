@@ -39,26 +39,17 @@ internal fun contrastingColor(color: Int): Int {
 
 /**
  * Composites the display [bandColorArgb] onto this color-free [TripExtrapolation] to produce the render
- * [TripOverlay]: each band slice's model weight becomes the hue's alpha.
- *
- * [includeMarkers] false drops the best-estimate marker and the data-age dot, which the route map
- * already draws itself (the live vehicle disc, and the most-recent-data dot it shows on selection), so a
- * selected vehicle there gains only the band + fast-estimate marker (#1752). The trip-focus map keeps
- * them (the default).
+ * [TripOverlay]: each band slice's model weight becomes the hue's alpha. Only the band + fast-estimate
+ * marker are carried — the route map draws the live vehicle disc and the most-recent-data dot itself (#1752).
  */
-internal fun TripExtrapolation.toTripOverlay(
-    bandColorArgb: Int,
-    includeMarkers: Boolean = true,
-): TripOverlay {
+internal fun TripExtrapolation.toTripOverlay(bandColorArgb: Int): TripOverlay {
     val baseRgb = bandColorArgb and 0x00FFFFFF
     return TripOverlay(
-        vehiclePoint = if (includeMarkers) vehiclePoint else null,
         fastEstimatePoint = fastEstimatePoint,
         band = band.map { slice ->
             val alpha = (slice.weight.coerceIn(0f, 1f) * 255f).roundToInt()
             BandSegment(slice.points, (alpha shl 24) or baseRgb)
         },
-        dataAge = if (includeMarkers) dataAge else null,
         fixTimeMs = fixTimeMs,
     )
 }

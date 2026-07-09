@@ -109,7 +109,6 @@ class TripDetailsViewModel @Inject constructor(
         header = header,
         stops = stops,
         scrollToIndex = scrollToIndex,
-        routeId = routeId,
         lineColorArgb = lineColorArgb
     )
 }

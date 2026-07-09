@@ -64,7 +64,7 @@ import org.onebusaway.android.util.getRouteDisplayName
  *    trip-stop dots) and reconciles the stop markers in place ([reconcileStopMarkers], so unchanged
  *    stops don't blink), driven by snapshot/trip-stop changes (viewport loads, the vehicle poll,
  *    focus) — a bounded cost.
- *  - [renderDynamic] (the live vehicle markers + the trip-focus band/estimate markers) is pulled each
+ *  - [renderDynamic] (the live vehicle markers + the selected vehicle's band/fast-estimate marker) is pulled each
  *    display frame by the adapter's vsync loop. It updates marker positions **in place** (so an open
  *    info window survives and there's no per-frame flicker) and only adds/removes annotations as the
  *    identity set changes; the band's polylines, which carry no interaction state, are remove+re-added.
@@ -255,8 +255,8 @@ class MapLibreRenderer(
 
     /**
      * Update the dynamic layer for one display frame: the route's live [vehicles] (null off route mode)
-     * and the trip-focus [overlay] (null off trip-focus). Markers move in place (smoothed across a fresh
-     * fix via [nowMs]); the band is re-added.
+     * and the selected vehicle's [overlay] (null when nothing is selected). Markers move in place (smoothed
+     * across a fresh fix via [nowMs]); the band is re-added.
      */
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
         moveVehicles(vehicles, nowMs)
@@ -438,20 +438,10 @@ class MapLibreRenderer(
         while (bandPolylines.size > band.size) {
             map.removeAnnotation(bandPolylines.removeAt(bandPolylines.size - 1))
         }
-        // Estimate markers move in place (keeping any open info window); the data-age title ticks each
-        // second, so refresh it when it changes. The fix instant drives the smoother's correction.
-        val fixTimeMs = overlay?.fixTimeMs ?: 0L
-        updateTripMarker("vehicle", overlay?.vehiclePoint, vehicleEstimateIcon, "Best estimate", fixTimeMs, nowMs)
-        updateTripMarker("fast", overlay?.fastEstimatePoint, fastEstimateIcon, "Fast estimate", fixTimeMs, nowMs)
-        updateTripMarker(
-            "dataAge",
-            overlay?.dataAge?.point,
-            dataAgeIcon,
-            overlay?.dataAge?.let { "${it.ageMillis / 1000}s ago" } ?: "",
-            fixTimeMs,
-            nowMs,
-        )
-        // Drop smoother state for any role whose marker is gone (overlay went null off trip-focus).
+        // The fast-estimate marker moves in place (keeping any open info window); the fix instant drives
+        // the smoother's correction.
+        updateTripMarker("fast", overlay?.fastEstimatePoint, fastEstimateIcon, "Fast estimate", overlay?.fixTimeMs ?: 0L, nowMs)
+        // Drop smoother state for the marker's role once it's gone (overlay went null on deselect).
         tripSmoother.retainOnly(tripMarkersByRole.keys)
     }
 
@@ -481,13 +471,10 @@ class MapLibreRenderer(
         }
     }
 
-    private val vehicleEstimateIcon: Icon by lazy {
-        iconFactory.fromBitmap(TripMarkerBitmaps.circle(context, R.drawable.ic_vehicle_position))
-    }
     private val fastEstimateIcon: Icon by lazy {
         iconFactory.fromBitmap(TripMarkerBitmaps.circle(context, R.drawable.ic_fast_estimate))
     }
-    // The signal glyph is light, so tint it gray to read on the white disc (createDataReceivedIcon).
+    // The signal glyph is light, so tint it gray to read on the white disc (the most-recent-data dot).
     private val dataAgeIcon: Icon by lazy {
         iconFactory.fromBitmap(
             TripMarkerBitmaps.circle(context, R.drawable.ic_signal_indicator, TripMarkerBitmaps.STROKE_COLOR)

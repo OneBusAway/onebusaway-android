@@ -325,16 +325,6 @@ class MapRenderState {
 
     val selectedVehicleTripId: StateFlow<String?> = _selectedVehicleTripId.asStateFlow()
 
-    // The trip-focus estimate marker whose tap label is open ("best"/"fast"/"dataAge"), or null. Set by
-    // a marker tap, cleared by a map tap — the trip map's only UI selection.
-    private val _selectedTripMarker = MutableStateFlow<String?>(null)
-
-    val selectedTripMarker: StateFlow<String?> = _selectedTripMarker.asStateFlow()
-
-    fun setSelectedTripMarker(marker: String?) {
-        _selectedTripMarker.value = marker
-    }
-
     // --- Bike stations (the old BikeStationOverlay): the per-zoom icon band is chosen by the ---
     // --- renderer; [bikeshareVisible] carries the layer/directions-mode gate. ---
 

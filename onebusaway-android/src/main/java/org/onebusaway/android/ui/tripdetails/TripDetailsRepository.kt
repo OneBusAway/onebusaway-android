@@ -56,7 +56,6 @@ data class TripDetailsData(
     val header: TripHeader,
     val stops: List<TripStopItem>,
     val scrollToIndex: Int,
-    val routeId: String,
     val lineColorArgb: Int
 )
 
@@ -215,7 +214,6 @@ class DefaultTripDetailsRepository @Inject constructor(
             header = buildHeader(td, trip, route, status, isRealtime),
             stops = stops,
             scrollToIndex = resolveScrollIndex(scrollMode, stopIndex, destinationIndex, nextStopIndex),
-            routeId = trip?.routeId.orEmpty(),
             lineColorArgb = lineColorArgb
         )
     }

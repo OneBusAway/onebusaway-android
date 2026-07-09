@@ -68,7 +68,7 @@ import java.util.concurrent.TimeUnit
  *    trip-stop dots) and reconciles the stop markers in place ([reconcileStopMarkers], so unchanged
  *    stops don't blink), driven by snapshot/trip-stop changes (viewport loads, the vehicle poll,
  *    focus) — a bounded cost.
- *  - [renderDynamic] (the live route vehicles + the trip-focus band/estimate markers) is pulled at
+ *  - [renderDynamic] (the live route vehicles + the selected vehicle's band/fast-estimate marker) is pulled at
  *    ~20Hz by the adapter's frame loop. It moves native markers **in place** to their freshly
  *    extrapolated positions (so the icons glide with the map, an open info window survives, and there's
  *    no recomposition/projection-overlay jitter) and only adds/removes annotations as the identity set
@@ -112,7 +112,7 @@ class GoogleMapRenderer(
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route vehicles
     // keyed by active trip id, and the band's (interaction-free) polylines re-added each frame. The
-    // trip-focus estimate markers are self-contained [TripEstimateMarker]s.
+    // selected vehicle's fast-estimate marker is a self-contained [TripEstimateMarker].
     private val vehicleMarkersByTripId = HashMap<String, Marker>()
     private val bandPolylines = mutableListOf<Polyline>()
 
@@ -125,14 +125,10 @@ class GoogleMapRenderer(
     // dead-reckon glide), then tracks the live target between fixes. Keyed by trip id.
     private val vehicleSmoother = CorrectionSmoother()
 
-    // The trip-focus estimate markers (best estimate, fast estimate, data-age dot): each owns its native
-    // marker + ease state, a fixed info-window title, and a distinct z-index, and glides to a fresh fix.
-    // Distinct z-indexes are load-bearing: these markers overlap and extrapolate every frame, so a shared
-    // z-index lets gms re-order them by latitude per frame — the overlapping icons' alpha then flickers.
-    // The data-age dot also carries a live "N ago" body. Icons resolve lazily on first show.
-    private val vehicleEstimate = TripEstimateMarker({ vehicleEstimateIcon() }, "Best estimate", VEHICLE_ESTIMATE_Z_INDEX)
+    // The selected vehicle's fast-estimate marker: it owns its native marker + ease state, a fixed
+    // info-window title, and a z-index above the band, and glides to a fresh fix. Icon resolves lazily
+    // on first show.
     private val fastEstimate = TripEstimateMarker({ fastEstimateIcon() }, "Fast estimate", FAST_ESTIMATE_Z_INDEX)
-    private val dataAgeEstimate = TripEstimateMarker({ dataAgeIcon() }, MOST_RECENT_DATA_TITLE, DATA_AGE_Z_INDEX)
     // Smooths the most-recent-data dot to a fresh fix (it's static between fixes). Tracks the dot's current
     // selection + fix so we only move / refresh on an actual change or while settling — never while its
     // bubble is open longer than the settle.
@@ -356,9 +352,7 @@ class GoogleMapRenderer(
         mostRecentDataMarker?.remove()
         mostRecentDataMarker = null
 
-        vehicleEstimate.dispose()
         fastEstimate.dispose()
-        dataAgeEstimate.dispose()
 
         // Drop our wrapped descriptors so their native textures are released once the markers using them
         // are gone. (The source bitmaps are owned by the shared static caches and are deliberately not
@@ -368,8 +362,8 @@ class GoogleMapRenderer(
 
     /**
      * Update the dynamic layer for one dynamic tick: the route's live [vehicles] (null off route mode)
-     * and the trip-focus [overlay] (null off trip-focus). Moving markers smooth across a fresh fix (a
-     * decaying correction on the dead-reckon glide); the band is re-added.
+     * and the selected vehicle's [overlay] (null when nothing is selected). Moving markers smooth across a
+     * fresh fix (a decaying correction on the dead-reckon glide); the band is re-added.
      */
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
         moveVehicles(vehicles, nowMs)
@@ -556,26 +550,16 @@ class GoogleMapRenderer(
         while (bandPolylines.size > band.size) {
             bandPolylines.removeAt(bandPolylines.size - 1).remove()
         }
-        // Each estimate marker owns its smoothing + fixed title; hand it the fresh fix, the tick clock,
-        // and (for the data-age dot) its live age body.
-        val fixTimeMs = overlay?.fixTimeMs ?: 0L
-        vehicleEstimate.update(overlay?.vehiclePoint, fixTimeMs, nowMs)
-        fastEstimate.update(overlay?.fastEstimatePoint, fixTimeMs, nowMs)
-        dataAgeEstimate.update(
-            overlay?.dataAge?.point,
-            fixTimeMs,
-            nowMs,
-            body = overlay?.dataAge?.let { "${it.ageMillis / 1000}s ago" },
-        )
+        // The fast-estimate marker owns its smoothing + fixed title; hand it the fresh fix + tick clock.
+        fastEstimate.update(overlay?.fastEstimatePoint, overlay?.fixTimeMs ?: 0L, nowMs)
     }
 
     /**
-     * One trip-focus estimate marker (best estimate, fast estimate, or the data-age dot): owns its native
-     * [Marker] and its own [CorrectionSmoother], with a fixed info-window [title] set at creation. [update]
-     * creates it on the first non-null point, removes it on null, smooths it across a fresh fix, and
-     * refreshes the optional [body] (info-window snippet — only the data-age dot uses it). The icon
-     * resolves lazily on first show via [iconProvider] (so the trip-focus icons aren't built in plain
-     * route mode). Driven every tick (the overlay sampler runs each frame), so the decay just progresses.
+     * The selected vehicle's fast-estimate marker: owns its native [Marker] and its own
+     * [CorrectionSmoother], with a fixed info-window [title] set at creation. [update] creates it on the
+     * first non-null point, removes it on null, and smooths it across a fresh fix. The icon resolves lazily
+     * on first show via [iconProvider] (so it isn't built until a vehicle is selected). Driven every tick
+     * (the overlay sampler runs each frame), so the decay just progresses.
      */
     private inner class TripEstimateMarker(
         private val iconProvider: () -> BitmapDescriptor,
@@ -585,7 +569,7 @@ class GoogleMapRenderer(
         private var marker: Marker? = null
         private val smoother = CorrectionSmoother()
 
-        fun update(point: GeoPoint?, fixTimeMs: Long, nowMs: Long, body: String? = null) {
+        fun update(point: GeoPoint?, fixTimeMs: Long, nowMs: Long) {
             val existing = marker
             if (point == null) {
                 existing?.remove()
@@ -599,16 +583,12 @@ class GoogleMapRenderer(
                         .position(point.toLatLng())
                         .icon(iconProvider())
                         .title(title)
-                        .snippet(body)
                         .anchor(0.5f, 0.5f)
                         .zIndex(zIndex)
                 )!!
                 smoother.prime(ESTIMATE_EASE_KEY, point, fixTimeMs)
                 return
             }
-            // Refresh the body only while the bubble is closed: the SDK info window is one bitmap, so
-            // re-setting the snippet while shown redraws/flickers it.
-            if (body != existing.snippet && !existing.isInfoWindowShown) existing.snippet = body
             existing.position =
                 smoother.displayPosition(ESTIMATE_EASE_KEY, point, fixTimeMs, nowMs).toLatLng()
         }
@@ -617,13 +597,11 @@ class GoogleMapRenderer(
         fun dispose() = update(null, 0L, 0L)
     }
 
-    // The trip-focus icons, cached through [descriptorCache] by a stable per-icon key so each resolves
+    // The overlay/dot icons, cached through [descriptorCache] by a stable per-icon key so each resolves
     // lazily on first show and reuses one descriptor thereafter (released, with the rest, in [dispose]).
-    private fun vehicleEstimateIcon(): BitmapDescriptor = tripCircleIcon(R.drawable.ic_vehicle_position)
-
     private fun fastEstimateIcon(): BitmapDescriptor = tripCircleIcon(R.drawable.ic_fast_estimate)
 
-    // The signal glyph is light, so tint it gray to read on the white disc.
+    // The signal glyph is light, so tint it gray to read on the white disc (used by the most-recent-data dot).
     private fun dataAgeIcon(): BitmapDescriptor =
         tripCircleIcon(R.drawable.ic_signal_indicator, TripMarkerBitmaps.STROKE_COLOR)
 
@@ -657,13 +635,9 @@ class GoogleMapRenderer(
         // an overlapping-marker click to the highest z-index marker.
         private const val FAVORITE_STOP_Z_INDEX = 0.5f
 
-        // The uncertainty band draws above the static route line; the estimate markers above the band,
-        // each at a distinct z-index so overlapping ones keep a stable draw order (no per-frame alpha
-        // flicker). Best estimate on top, then fast estimate, then the data-age dot.
+        // The uncertainty band draws above the static route line; the fast-estimate marker above the band.
         private const val TRIP_BAND_Z_INDEX = 2f
-        private const val DATA_AGE_Z_INDEX = 3f
         private const val FAST_ESTIMATE_Z_INDEX = 4f
-        private const val VEHICLE_ESTIMATE_Z_INDEX = 5f
 
         // The (arbitrary, constant) ease key for a TripEstimateMarker's single-marker easer.
         private const val ESTIMATE_EASE_KEY = "estimate"
@@ -671,7 +645,7 @@ class GoogleMapRenderer(
         private const val MOST_RECENT_DATA_TITLE = "Most recent data"
 
         // Comfortably covers a busy route's live working set — a vehicle type's 8 heading octants across a
-        // handful of schedule-deviation colors, times a few route types, plus the 5 fixed trip-focus icons
+        // handful of schedule-deviation colors, times a few route types, plus the fast-estimate + dot icons
         // — so descriptors are reused as vehicles turn, not thrashed. Bounded so a long, varied session
         // can't grow it without limit (evicting a still-shown icon just re-wraps it on next request).
         private const val DESCRIPTOR_CACHE_SIZE = 256

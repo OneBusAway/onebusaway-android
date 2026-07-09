@@ -41,15 +41,20 @@ fun buildTripExtrapolation(
     state: TripState,
     result: ExtrapolationResult,
     nowMs: WallTime,
+    includeMarkers: Boolean = true,
 ): TripExtrapolation? {
     val polyline = state.polyline ?: return null
     val distribution = (result as? ExtrapolationResult.Success)?.distribution
 
     return TripExtrapolation(
-        vehiclePoint = distribution?.let { polyline.pointAtDistance(it.median()) },
+        // The median estimate + data-age marker are only wanted by a caller that draws them itself; the
+        // route map's selected-vehicle overlay (the sole production caller) passes includeMarkers=false —
+        // it draws the live vehicle disc + most-recent-data dot separately — so we skip the extra
+        // projection + allocation on its ~20–120Hz path (#1752).
+        vehiclePoint = if (includeMarkers) distribution?.let { polyline.pointAtDistance(it.median()) } else null,
         fastEstimatePoint = distribution?.let { polyline.pointAtDistance(it.quantile(FAST_ESTIMATE_QUANTILE)) },
         band = distribution?.let { weightedBandSegments(it, polyline) } ?: emptyList(),
-        dataAge = dataAgeMarker(state, nowMs),
+        dataAge = if (includeMarkers) dataAgeMarker(state, nowMs) else null,
         // A domain-agnostic *change token*, not a displayed instant: the renderer only compares it for
         // `!=` (a change means fresh AVL data) — never formats or subtracts it. 0 is the token's own
         // "no fix" value (matching the `TripOverlay`/`MapRenderState` field default), not a coerced
@@ -59,8 +64,8 @@ fun buildTripExtrapolation(
 }
 
 /** Composes [TripState.extrapolate] with [buildTripExtrapolation] — the per-frame producer the driver runs. */
-internal fun extrapolationFromState(state: TripState?, nowMs: WallTime): TripExtrapolation? =
-    state?.let { buildTripExtrapolation(it, it.extrapolate(nowMs), nowMs) }
+internal fun extrapolationFromState(state: TripState?, nowMs: WallTime, includeMarkers: Boolean = true): TripExtrapolation? =
+    state?.let { buildTripExtrapolation(it, it.extrapolate(nowMs), nowMs, includeMarkers) }
 
 /** The extrapolated (median) vehicle [point] along the trip shape and its forward [bearing] there. */
 private data class VehicleProjection(val point: GeoPoint, val bearing: Float)

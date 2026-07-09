@@ -68,11 +68,14 @@ private val CHIP_V_PADDING = 2.dp
 // in HCT (a perceptual space) at a fixed tone + capped chroma, so the agency can't hand us an
 // over-saturated or too-dark/too-light color — every chip lands at a consistent, legible brightness,
 // and the tone flips lighter for dark theme. Fidget with these to taste.
-private const val CHIP_TONE_LIGHT = 42.0        // container tone in light theme (0=black … 100=white)
-private const val CHIP_TONE_DARK = 78.0         // lighter container tone for dark theme
-private const val CHIP_ON_TONE_LIGHT = 100.0    // text tone on the light-theme chip (→ white)
+private const val CHIP_TONE_LIGHT = 80.0        // container tone in light theme (0=black … 100=white)
+private const val CHIP_TONE_DARK = 78.0         // container tone for dark theme
+private const val CHIP_ON_TONE_LIGHT = 30.0     // text tone on the light-theme (pastel) chip (→ dark)
 private const val CHIP_ON_TONE_DARK = 20.0      // text tone on the dark-theme chip (→ near-black)
-private const val CHIP_MAX_CHROMA = 40.0        // cap the saturation the agency color can reach
+private const val CHIP_MAX_CHROMA_LIGHT = 30.0  // saturation cap in light theme (soft pastel)
+private const val CHIP_MAX_CHROMA_DARK = 60.0   // saturation cap in dark theme
+                                                // (each hue still clamps to its own sRGB gamut limit;
+                                                //  low caps mute vivid hues — e.g. orange → brown)
 private const val ACHROMATIC_CHROMA = 5.0       // below this the source is grey/black/white (no hue)
 
 /**
@@ -94,7 +97,7 @@ fun rememberRouteBadgeColors(routeColor: Int?): Pair<Color, Color> {
         if (source == null || source.chroma < ACHROMATIC_CHROMA) {
             neutralContainer to neutralContent
         } else {
-            val chroma = min(source.chroma, CHIP_MAX_CHROMA)
+            val chroma = min(source.chroma, if (dark) CHIP_MAX_CHROMA_DARK else CHIP_MAX_CHROMA_LIGHT)
             val containerTone = if (dark) CHIP_TONE_DARK else CHIP_TONE_LIGHT
             val contentTone = if (dark) CHIP_ON_TONE_DARK else CHIP_ON_TONE_LIGHT
             Color(Hct.from(source.hue, chroma, containerTone).toInt()) to

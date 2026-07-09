@@ -98,6 +98,9 @@ class MapLibreRenderer(
     // maplibre markers carry no z-index, so the #1680 tap-preference is icon-only here — a starred stop
     // can't be given draw/tap priority over an overlapping plain stop on this flavor.)
     private var renderedFavoriteStopIds: Set<String> = emptySet()
+    // The stop ids drawn as route-mode circles last reconcile, so entering/leaving route mode restyles a
+    // *retained* (focused) stop whose route-circle vs nearby icon flips while focus + band stay the same.
+    private var renderedRouteStopIds: Set<String> = emptySet()
 
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
@@ -225,17 +228,21 @@ class MapLibreRenderer(
                     stop.id == renderedFocusedStopId,
                     renderedStopBand,
                     stop.id in renderedFavoriteStopIds,
-                    stop.routeStop,
+                    stop.id in renderedRouteStopIds,
                 ) != kind
             ) {
                 // Only the markers whose icon kind changed need a new icon (maplibre centers the icon
-                // on the position, so the dot/star lands on the stop with no anchor change).
+                // on the position, so the dot/star/circle lands on the stop with no anchor change). The
+                // position follows too, so a stop that switched between its own location and its projected
+                // on-route point (a mode switch) lands correctly.
                 existing.icon = stopIcon(stop, kind)
+                existing.position = stop.point.toLatLng()
             }
         }
         renderedFocusedStopId = focusedStopId
         renderedStopBand = band
         renderedFavoriteStopIds = buildSet { for (s in stops) if (s.favorite) add(s.id) }
+        renderedRouteStopIds = buildSet { for (s in stops) if (s.routeStop) add(s.id) }
     }
 
     private fun stopIcon(stop: StopMarker, kind: StopIconKind): Icon = when (kind) {

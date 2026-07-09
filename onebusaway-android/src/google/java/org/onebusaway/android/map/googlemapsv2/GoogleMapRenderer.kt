@@ -94,6 +94,9 @@ class GoogleMapRenderer(
     // The stop ids drawn as starred (favorite) last reconcile, so a star/unstar flips the icon (+ tap
     // z-index) even when focus and band are unchanged; see [reconcileStopMarkers].
     private var renderedFavoriteStopIds: Set<String> = emptySet()
+    // The stop ids drawn as route-mode circles last reconcile, so entering/leaving route mode restyles a
+    // *retained* (focused) stop whose route-circle vs nearby icon flips while focus + band stay the same.
+    private var renderedRouteStopIds: Set<String> = emptySet()
 
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
@@ -284,20 +287,24 @@ class GoogleMapRenderer(
                     stop.id == renderedFocusedStopId,
                     renderedStopBand,
                     stop.id in renderedFavoriteStopIds,
-                    stop.routeStop,
+                    stop.id in renderedRouteStopIds,
                 ) != kind
             ) {
                 // Only the markers whose icon kind changed need a new icon (and matching anchor: the
-                // full icon is anchored on its circle per direction, the dot/star at the marker center).
+                // full icon is anchored on its circle per direction, the dot/star/circle at the marker
+                // center). The position follows too, so a stop that switched between its own location and
+                // its projected on-route point (a mode switch) lands correctly.
                 existing.setIcon(stopIcon(stop, kind))
                 val (anchorX, anchorY) = stopAnchor(stop, kind)
                 existing.setAnchor(anchorX, anchorY)
+                existing.position = stop.point.toLatLng()
                 existing.zIndex = if (stop.favorite) FAVORITE_STOP_Z_INDEX else 0f
             }
         }
         renderedFocusedStopId = focusedStopId
         renderedStopBand = band
         renderedFavoriteStopIds = buildSet { for (s in stops) if (s.favorite) add(s.id) }
+        renderedRouteStopIds = buildSet { for (s in stops) if (s.routeStop) add(s.id) }
     }
 
     private fun stopIcon(stop: StopMarker, kind: StopIconKind): BitmapDescriptor = when (kind) {

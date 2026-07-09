@@ -30,12 +30,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
-import org.onebusaway.android.analytics.ObaAnalytics
-import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteDao
+import org.onebusaway.android.database.oba.RouteFavoritesRepository
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.StopRouteFilterDao
@@ -169,6 +168,13 @@ interface ArrivalsRepository {
     suspend fun setArrivalStyle(style: Int)
 
     /**
+     * The starred route ids, live — the ViewModel overlays this onto the loaded arrivals so a row's
+     * star + the drawer-header promotion re-flag on any star toggle (an arrival row, the route-map
+     * header) with no re-fetch. Mirrors [alertHideState]'s reactive-overlay pattern (#1751).
+     */
+    fun favoriteRouteIds(): Flow<Set<String>>
+
+    /**
      * The explicit hide/show decisions recorded in the store, re-emitting on every service-alert
      * change. This is the single source of truth for hidden state: the ViewModel derives the
      * shown/hidden split from it (plus the per-load preference), and a hide/un-hide from any surface
@@ -240,9 +246,9 @@ class DefaultArrivalsRepository @Inject constructor(
     private val serviceAlertDao: ServiceAlertDao,
     private val stopDao: StopDao,
     private val routeDao: RouteDao,
+    private val routeFavorites: RouteFavoritesRepository,
     private val importGate: ImportGate,
     private val preferences: PreferencesRepository,
-    private val obaAnalytics: ObaAnalytics,
 ) : ArrivalsRepository {
 
     /** The last good snapshot paired with the monotonic device time it was received, so the
@@ -320,14 +326,11 @@ class DefaultArrivalsRepository @Inject constructor(
         val style = BuildFlavorUtils.getArrivalInfoStyleFromPreferences(context)
         // Style B includes the arrival/departure word in the status label; Style A does not.
         val includeArrivalDepartureLabel = style == BuildFlavorUtils.ARRIVAL_INFO_STYLE_B
-        // One favorite-route query for the whole list; each arrival's star resolves from the set in
-        // memory. A route star is wholesale now (#1751) — headsign/stop no longer matter.
-        val favoriteRouteIds = routeDao.favoriteRouteIds().toHashSet()
+        // Favorite state is a live overlay applied in the ViewModel (from the reactive starred-route
+        // set), not baked here — so a star toggle re-flags the list without this re-fetch.
         val arrivals = convertArrivals(
             context, snapshot.arrivals, routeFilter, ServerTime(now), includeArrivalDepartureLabel
-        ) { routeId, _, _ ->
-            routeId in favoriteRouteIds
-        }
+        )
         val stop = snapshot.stop
         val userInfo = stopDao.userInfo(snapshot.stopId)
         val header = StopHeader(
@@ -389,7 +392,6 @@ class DefaultArrivalsRepository @Inject constructor(
             scheduleUrl = route?.url,
             agencyName = route?.agencyId?.let { snapshot.agencyName(it) },
             blockId = snapshot.trip(arrival.tripId)?.blockId,
-            isRouteFavorite = arrival.isRouteFavorite,
             alertSituationId = activeAlertFor(arrival.situationIds, activeSituationIds)
         )
     }
@@ -420,27 +422,11 @@ class DefaultArrivalsRepository @Inject constructor(
         longName: String?,
         favorite: Boolean
     ) {
-        importGate.awaitReady()
-        val regionId = regionRepository.region.value?.id
-        // Ensure the route row exists (stamped with the current region) before marking the favorite —
-        // the starred-routes folder JOINs it for the display name/URL.
-        routeDao.markRouteUsed(routeId, shortName, longName, regionId, System.currentTimeMillis())
-        routeDao.setFavorite(routeId, if (favorite) 1 else 0)
-        reportBookmarkAnalytics(routeId, favorite)
-
-        // Backfill the full route details so the long name can be shown later (was an AsyncTaskLoader).
-        fetchAndStoreRouteDetails(routeId, regionId)
-    }
-
-    private fun reportBookmarkAnalytics(routeId: String, favorite: Boolean) {
-        val event = context.getString(
-            if (favorite) R.string.analytics_label_star_route else R.string.analytics_label_unstar_route
-        )
-        obaAnalytics.reportUiEvent(
-            PlausibleAnalytics.REPORT_BOOKMARK_EVENT_URL,
-            event,
-            routeId,
-        )
+        // The shared write ensures the row (no URL in hand yet — leaves any existing one), flips the
+        // flag, gates on the import, and reports analytics.
+        routeFavorites.setFavorite(routeId, shortName, longName, url = null, favorite = favorite)
+        // Backfill the full route details (incl. URL) so the long name can be shown later.
+        fetchAndStoreRouteDetails(routeId, regionRepository.region.value?.id)
     }
 
     /** Route-details fetch via the modernized client; writes name/url back. */
@@ -456,9 +442,9 @@ class DefaultArrivalsRepository @Inject constructor(
             longName = route.description
         }
 
-        routeDao.storeRouteDetails(
-            route.id, shortName, longName, route.url, regionId, System.currentTimeMillis()
-        )
+        // Backfilling details for a just-starred route is part of the favorite action, not a view, so
+        // ensure the row without bumping use_count / access_time (#1727 review).
+        routeDao.ensureRouteDetails(route.id, shortName, longName, route.url, regionId)
     }
 
     override suspend fun setRouteFilter(stopId: String, filter: Set<String>) {
@@ -471,6 +457,8 @@ class DefaultArrivalsRepository @Inject constructor(
             BuildFlavorUtils.setArrivalInfoStyle(context, style)
         }
     }
+
+    override fun favoriteRouteIds(): Flow<Set<String>> = routeFavorites.favoriteRouteIds()
 
     override fun alertHideState(): Flow<AlertHideState> =
         serviceAlertDao.hideDecisions()

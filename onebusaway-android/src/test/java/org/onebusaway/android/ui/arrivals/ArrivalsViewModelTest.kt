@@ -62,6 +62,10 @@ private class FakeArrivalsRepository(
      *  mutate it directly to stand in for a hide/un-hide from another surface (the alert dialog). */
     val hideState = MutableStateFlow(initialHideState)
 
+    /** The starred route ids the ViewModel overlays onto the arrivals; a test mutates it to stand in
+     *  for a star toggle from any surface. */
+    val favoriteRoutes = MutableStateFlow<Set<String>>(emptySet())
+
     override suspend fun getArrivals(
         stopId: String,
         minutesAfter: Int,
@@ -97,6 +101,8 @@ private class FakeArrivalsRepository(
     override suspend fun setArrivalStyle(style: Int) {
         lastSetStyle = style
     }
+
+    override fun favoriteRouteIds(): Flow<Set<String>> = favoriteRoutes
 
     override fun alertHideState(): Flow<AlertHideState> = hideState
 
@@ -239,7 +245,7 @@ class ArrivalsViewModelTest {
         assertEquals("1_100" to true, repository.lastFavoriteSet)
     }
 
-    private fun routeActions(isRouteFavorite: Boolean) = ArrivalActions(
+    private val routeActions = ArrivalActions(
         tripId = "t1",
         routeId = "1_5",
         routeShortName = "5",
@@ -247,41 +253,38 @@ class ArrivalsViewModelTest {
         scheduleUrl = null,
         agencyName = null,
         blockId = null,
-        isRouteFavorite = isRouteFavorite
     )
 
     @Test
-    fun `toggleRouteFavorite stars an unstarred route wholesale and reloads`() = runTest {
+    fun `toggleRouteFavorite stars an unstarred route wholesale`() = runTest {
         val repository = FakeArrivalsRepository(Result.success(data()))
         val viewModel = ArrivalsViewModel("1_100", false, repository)
         viewModel.refresh()
+        // Route not in the live favorite set -> toggling stars it.
 
-        val actions = routeActions(isRouteFavorite = false)
-
-        viewModel.toggleRouteFavorite(actions)
+        viewModel.toggleRouteFavorite(routeActions)
         advanceUntilIdle()
 
-        // Wholesale star (#1751): route id + names, favorite = !isRouteFavorite.
+        // Wholesale star (#1751): route id + names, favorite = true.
         assertEquals(
             FavoriteRouteCall("1_5", "5", "Fifth Ave", true),
             repository.lastFavoriteRoute
         )
-        // The write is followed by a reload (initial load + the post-favorite refresh).
-        assertEquals(2, repository.requestedMinutesAfter.size)
+        // No reload — the star re-flags reactively from the favorite overlay (only the initial load).
+        assertEquals(1, repository.requestedMinutesAfter.size)
     }
 
     @Test
     fun `toggleRouteFavorite unstars a starred route`() = runTest {
         val repository = FakeArrivalsRepository(Result.success(data()))
+        repository.favoriteRoutes.value = setOf("1_5")   // already starred (from any surface)
         val viewModel = ArrivalsViewModel("1_100", false, repository)
         viewModel.refresh()
 
-        val actions = routeActions(isRouteFavorite = true)
-
-        viewModel.toggleRouteFavorite(actions)
+        viewModel.toggleRouteFavorite(routeActions)
         advanceUntilIdle()
 
-        // Already starred => unstar (favorite = false).
+        // Already in the live set => unstar (favorite = false).
         assertEquals(
             FavoriteRouteCall("1_5", "5", "Fifth Ave", false),
             repository.lastFavoriteRoute

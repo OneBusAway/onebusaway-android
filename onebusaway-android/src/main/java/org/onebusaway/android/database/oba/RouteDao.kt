@@ -50,9 +50,17 @@ interface RouteDao {
     @Query("UPDATE routes SET favorite = :favorite WHERE _id = :routeId")
     suspend fun setFavorite(routeId: String, favorite: Int)
 
-    /** The ids of every starred (favorite) route, for the arrivals drawer-header promotion (#1751). */
+    /**
+     * The ids of every starred (favorite) route, live — the arrivals list overlays this to star rows +
+     * promote favorited routes to the drawer header (#1751), reacting to a star toggle from any surface
+     * (an arrival row, the route-map header) without a re-fetch.
+     */
     @Query("SELECT _id FROM routes WHERE favorite = 1")
-    suspend fun favoriteRouteIds(): List<String>
+    fun favoriteRouteIds(): Flow<List<String>>
+
+    /** Whether [routeId] is starred, live — drives the route-map header star toggle (#1727). */
+    @Query("SELECT EXISTS(SELECT 1 FROM routes WHERE _id = :routeId AND favorite = 1)")
+    fun isFavorite(routeId: String): Flow<Boolean>
 
     // --- Usage/metadata writes (the legacy partial upsert; see RoutesStore) ---
 
@@ -114,6 +122,40 @@ interface RouteDao {
                 url = url,
                 useCount = 1,
                 accessTime = now,
+                regionId = regionId,
+            )
+        )
+    }
+
+    /**
+     * Ensures the route row exists with its display name/URL/region (so the Starred Routes folder can
+     * JOIN it) **without counting a use** — `use_count` and `access_time` are left untouched, and a new
+     * row starts at `use_count = 0`. Favoriting/unfavoriting a route is not a "view", so it must not
+     * bump the recents (`access_time`) or the frequency sort (`use_count`) (#1727 review). Null name/URL
+     * arguments preserve any existing value rather than clobbering it (the arrivals path stars first,
+     * with no URL in hand, then backfills the details from the network).
+     */
+    @Transaction
+    suspend fun ensureRouteDetails(
+        routeId: String,
+        shortName: String?,
+        longName: String?,
+        url: String?,
+        regionId: Long?,
+    ) {
+        val existing = getRoute(routeId)
+        upsert(
+            existing?.copy(
+                shortName = shortName?.takeIf { it.isNotEmpty() } ?: existing.shortName,
+                longName = longName ?: existing.longName,
+                url = url ?: existing.url,
+                regionId = regionId ?: existing.regionId,
+            ) ?: RouteRecord(
+                id = routeId,
+                shortName = shortName.orEmpty(),
+                longName = longName,
+                url = url,
+                useCount = 0,
                 regionId = regionId,
             )
         )

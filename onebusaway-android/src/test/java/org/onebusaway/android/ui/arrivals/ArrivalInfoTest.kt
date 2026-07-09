@@ -60,7 +60,6 @@ class ArrivalInfoTest {
         data = data,
         now = now,
         includeArrivalDepartureInStatusLabel = false,
-        favorite = false,
     )
 
     @Test

@@ -239,6 +239,7 @@ internal fun ArrivalRowContent(
 fun ArrivalRowStyleA(
     arrival: ArrivalInfo,
     actions: ArrivalActions?,
+    isFavorite: Boolean,
     filterActive: Boolean,
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier
@@ -246,14 +247,15 @@ fun ArrivalRowStyleA(
     var expanded by remember { mutableStateOf(false) }
     StyleACard(
         modifier = modifier,
-        isFavorite = actions?.isRouteFavorite,
+        // Null omits the star entirely when there's no actions to favorite against (defensive).
+        isFavorite = isFavorite.takeIf { actions != null },
         onFavorite = { actions?.let { callbacks.onRouteFavorite(it) } },
         onMore = { expanded = true },
         // Tapping the row body frames the whole route; the ETA pill (below) instead focuses this trip's
         // vehicle + stop, and the overflow icon opens the menu.
         onContentClick = { callbacks.onShowVehiclesOnMap(arrival) },
         overflow = {
-            ArrivalActionsMenu(expanded, { expanded = false }, arrival, actions, filterActive, callbacks)
+            ArrivalActionsMenu(expanded, { expanded = false }, arrival, actions, isFavorite, filterActive, callbacks)
         }
     ) {
         ArrivalRowContent(
@@ -349,6 +351,7 @@ private fun CornerIcon(
 fun ArrivalCardStyleB(
     group: List<ArrivalInfo>,
     actions: ArrivalActions?,
+    isFavorite: Boolean,
     filterActive: Boolean,
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier
@@ -377,7 +380,7 @@ fun ArrivalCardStyleB(
                             contentDescription = stringResource(R.string.stop_info_item_options_title)
                         )
                     }
-                    ArrivalActionsMenu(expanded, { expanded = false }, first, actions, filterActive, callbacks)
+                    ArrivalActionsMenu(expanded, { expanded = false }, first, actions, isFavorite, filterActive, callbacks)
                 }
             }
             group.forEachIndexed { index, arrival ->
@@ -410,12 +413,13 @@ internal fun ArrivalActionsMenu(
     onDismiss: () -> Unit,
     arrival: ArrivalInfo,
     actions: ArrivalActions?,
+    isFavorite: Boolean,
     filterActive: Boolean,
     callbacks: ArrivalRowCallbacks
 ) {
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
         if (actions != null) {
-            val favLabel = if (actions.isRouteFavorite) {
+            val favLabel = if (isFavorite) {
                 R.string.bus_options_menu_remove_star
             } else {
                 R.string.bus_options_menu_add_star

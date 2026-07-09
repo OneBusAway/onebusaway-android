@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
@@ -38,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import org.onebusaway.android.R
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.models.RouteMapDirection
+import org.onebusaway.android.ui.compose.components.FavoriteStarButton
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.RadioOptionList
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -55,18 +58,24 @@ import org.onebusaway.android.ui.compose.theme.ObaTheme
 /**
  * The route-mode header overlay (the Compose replacement for the legacy `route_info_head.xml` /
  * `RouteMapController.RoutePopup`). Renders the route short/long name + agency (or a spinner while the
- * route loads), the current direction's headsign, a switch-direction affordance (when the route has
- * more than one direction), and a cancel button that exits route mode. It reports its measured height
- * via [onHeight] so the host can set the map's top padding (keeping vehicle markers visible under it).
+ * route loads), the current direction's headsign, a favorite (star) toggle, a switch-direction
+ * affordance (when the route has more than one direction), and a cancel button that exits route mode. It
+ * reports its measured height via [onHeight] so the host can set the map's top padding (keeping vehicle
+ * markers visible under it).
  *
  * [onSelectDirection] switches which direction of the route is shown (the id is one of
  * [RouteHeader.directions]).
+ *
+ * [isFavorite] drives the star's filled/outline state and [onToggleFavorite] toggles the route's star
+ * (a wholesale `routes.favorite` bit, #1751/#1727), kept in sync with the arrival-row star.
  */
 @Composable
 fun RouteHeaderOverlay(
     header: RouteHeader,
     onCancel: () -> Unit,
     onSelectDirection: (Int) -> Unit,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
     onHeight: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -92,56 +101,70 @@ fun RouteHeaderOverlay(
             val directionLabel = header.directions
                 .firstOrNull { it.directionId == header.currentDirectionId }
                 ?.labelOr(unnamed)
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // Auto-shrinks (and wraps) a long route short name to fit a fixed slot rather than
-                // crowding out the long-name/agency column — the shared route-badge style.
-                LineBadge(
-                    text = header.shortName,
-                    maxFontSize = 45.sp,
-                    width = 96.dp,
-                    modifier = Modifier.padding(horizontal = 10.dp),
+            Box(Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // Auto-shrinks (and wraps) a long route short name to fit a fixed slot rather than
+                    // crowding out the long-name/agency column — the shared route-badge style.
+                    LineBadge(
+                        text = header.shortName,
+                        maxFontSize = 45.sp,
+                        width = 96.dp,
+                        modifier = Modifier.padding(horizontal = 10.dp),
+                    )
+                    Column(Modifier.weight(1f)) {
+                        if (header.longName.isNotEmpty()) {
+                            Text(
+                                text = header.longName,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        if (directionLabel != null) {
+                            Text(
+                                text = directionLabel,
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        if (header.agency.isNotEmpty()) {
+                            Text(text = header.agency)
+                        }
+                    }
+                    // A route with a single direction has nothing to switch to — the affordance is hidden.
+                    if (header.directions.size >= 2) {
+                        SwitchDirectionAction(
+                            directions = header.directions,
+                            currentDirectionId = header.currentDirectionId,
+                            onSelectDirection = onSelectDirection,
+                        )
+                    }
+                    IconButton(onClick = onCancel) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_navigation_close),
+                            contentDescription = stringResource(android.R.string.cancel),
+                        )
+                    }
+                }
+                // Favorites star, floated over the banner's upper-left so it occupies no layout space
+                // (it won't shift the badge). The negative offset cancels most of the IconButton's built-in
+                // inset so the star tucks up into the corner.
+                FavoriteStarButton(
+                    isFavorite = isFavorite,
+                    onClick = onToggleFavorite,
+                    // Match the arrival-row star's outline color so the two read as the same control.
+                    tint = colorResource(R.color.navdrawer_icon_tint),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = (-8).dp, y = (-8).dp),
                 )
-                Column(Modifier.weight(1f)) {
-                    if (header.longName.isNotEmpty()) {
-                        Text(
-                            text = header.longName,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    if (directionLabel != null) {
-                        Text(
-                            text = directionLabel,
-                            color = MaterialTheme.colorScheme.primary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    if (header.agency.isNotEmpty()) {
-                        Text(text = header.agency)
-                    }
-                }
-                // A route with a single direction has nothing to switch to — the affordance is hidden.
-                if (header.directions.size >= 2) {
-                    SwitchDirectionAction(
-                        directions = header.directions,
-                        currentDirectionId = header.currentDirectionId,
-                        onSelectDirection = onSelectDirection,
-                    )
-                }
-                IconButton(onClick = onCancel) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_navigation_close),
-                        contentDescription = stringResource(android.R.string.cancel),
-                    )
-                }
             }
         }
     }
@@ -220,6 +243,8 @@ private fun RouteHeaderOverlayPreview() {
                 ),
                 onCancel = {},
                 onSelectDirection = {},
+                isFavorite = true,
+                onToggleFavorite = {},
                 onHeight = {},
             )
             Spacer(Modifier.size(12.dp))
@@ -238,6 +263,8 @@ private fun RouteHeaderOverlayPreview() {
                 ),
                 onCancel = {},
                 onSelectDirection = {},
+                isFavorite = false,
+                onToggleFavorite = {},
                 onHeight = {},
             )
             Spacer(Modifier.size(12.dp))
@@ -257,6 +284,8 @@ private fun RouteHeaderOverlayPreview() {
                 ),
                 onCancel = {},
                 onSelectDirection = {},
+                isFavorite = false,
+                onToggleFavorite = {},
                 onHeight = {},
             )
             Spacer(Modifier.size(12.dp))
@@ -270,6 +299,8 @@ private fun RouteHeaderOverlayPreview() {
                 ),
                 onCancel = {},
                 onSelectDirection = {},
+                isFavorite = false,
+                onToggleFavorite = {},
                 onHeight = {},
             )
             Spacer(Modifier.size(12.dp))
@@ -278,6 +309,8 @@ private fun RouteHeaderOverlayPreview() {
                 header = RouteHeader(loading = true, shortName = "", longName = "", agency = ""),
                 onCancel = {},
                 onSelectDirection = {},
+                isFavorite = false,
+                onToggleFavorite = {},
                 onHeight = {},
             )
         }

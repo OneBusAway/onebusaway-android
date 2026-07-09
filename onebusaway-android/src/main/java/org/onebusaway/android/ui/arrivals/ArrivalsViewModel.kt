@@ -82,9 +82,11 @@ class ArrivalsViewModel @AssistedInject constructor(
      * See #1593.
      */
     val state: StateFlow<ArrivalsUiState> =
-        combine(loaded, repository.alertHideState(), fatalError) { data, hideState, error ->
+        combine(
+            loaded, repository.alertHideState(), repository.favoriteRouteIds(), fatalError
+        ) { data, hideState, favoriteRouteIds, error ->
             when {
-                data != null -> data.toContent(hideState)
+                data != null -> data.toContent(hideState, favoriteRouteIds)
                 error != null -> ArrivalsUiState.Error(error)
                 else -> ArrivalsUiState.Loading
             }
@@ -170,18 +172,20 @@ class ArrivalsViewModel @AssistedInject constructor(
     }
 
     /**
-     * Toggles the route star wholesale (#1751): stars the route if it isn't already (else unstars),
-     * backfills the route details, then reloads.
+     * Toggles the route star wholesale (#1751): stars the route if it isn't already (else unstars) and
+     * backfills the route details. No reload — the star + drawer promotion re-flag reactively from the
+     * repository's [ArrivalsRepository.favoriteRouteIds] overlay.
      */
     fun toggleRouteFavorite(actions: ArrivalActions) {
+        val starred = (state.value as? ArrivalsUiState.Content)
+            ?.favoriteRouteIds?.contains(actions.routeId) == true
         viewModelScope.launch {
             repository.favoriteRoute(
                 routeId = actions.routeId,
                 shortName = actions.routeShortName,
                 longName = actions.routeLongName,
-                favorite = !actions.isRouteFavorite
+                favorite = !starred
             )
-            refresh()
         }
     }
 
@@ -264,7 +268,10 @@ class ArrivalsViewModel @AssistedInject constructor(
         viewModelScope.launch { repository.hideAllRecordedAlerts() }
     }
 
-    private fun ArrivalsData.toContent(hideState: AlertHideState): ArrivalsUiState.Content {
+    private fun ArrivalsData.toContent(
+        hideState: AlertHideState,
+        favoriteRouteIds: Set<String>,
+    ): ArrivalsUiState.Content {
         val shown = activeAlerts.filterNot { hideState.isHidden(it, hideAlertsByDefault) }
         val hiddenCount = activeAlerts.size - shown.size
         return ArrivalsUiState.Content(
@@ -274,6 +281,7 @@ class ArrivalsViewModel @AssistedInject constructor(
             style = style,
             isStale = isStale,
             actions = actions,
+            favoriteRouteIds = favoriteRouteIds,
             alerts = shown,
             hiddenAlertCount = hiddenCount,
             routeFilterOptions = routeFilterOptions,

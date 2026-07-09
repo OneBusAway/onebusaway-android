@@ -38,7 +38,6 @@ class ArrivalInfo(
     private val data: ArrivalData,
     now: ServerTime,
     includeArrivalDepartureInStatusLabel: Boolean,
-    favorite: Boolean,
 ) {
 
     val eta: Long
@@ -65,11 +64,6 @@ class ArrivalInfo(
      * True if this arrival info is for an arrival time, false if it is for a departure time.
      */
     val isArrival: Boolean
-
-    /**
-     * True if this route is a user-designated favorite, false if it is not.
-     */
-    val isRouteFavorite: Boolean
 
     /**
      * The average historical occupancy of the vehicle when it arrives at this stop, or null if the
@@ -188,10 +182,6 @@ class ArrivalInfo(
             includeArrivalDepartureInStatusLabel
         )
         timeText = computeTimeLabel(context)
-
-        // Whether the user starred this route (precomputed by the caller from the favorite-route id
-        // set — a route star is wholesale now, #1751).
-        isRouteFavorite = favorite
 
         notifyText = computeNotifyText(context)
 

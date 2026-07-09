@@ -239,17 +239,13 @@ public class UIUtilTest extends ObaTestCase {
                 ArrivalsFixtures.load(targetContext, "arrivals_and_departures_for_stop_hart_6497");
         String stopId = "Hillsborough Area Regional Transit_6497";
 
-        // Two arrivals marked favorite. Favorite state is supplied to convert() directly (the favorites
-        // store is no longer a ContentProvider); this exercises findPreferredArrivalIndexes' header
-        // promotion regardless of how the boolean was computed. The set below is keyed on route+headsign
-        // purely to pick out two specific rows in the fixture.
-        java.util.Set<String> favorites = new java.util.HashSet<>(java.util.Arrays.asList(
-                "Hillsborough Area Regional Transit_6|North to University Area TC",
-                "Hillsborough Area Regional Transit_6|South to Downtown/MTC"));
+        // Star route 6 (wholesale, #1751): every route-6 arrival is promoted. Favorite state is a live
+        // overlay keyed by route id now, so it's passed straight to findPreferredArrivalIndexes.
+        java.util.Set<String> favoriteRouteIds =
+                new java.util.HashSet<>(java.util.Arrays.asList("Hillsborough Area Regional Transit_6"));
 
-        // Project the fixture's arrivals via the production path, with those two marked favorite.
-        ArrayList<ArrivalInfo> arrivalInfo = ArrivalsFixtures.convert(targetContext, env, true,
-                (routeId, headsign, sid) -> favorites.contains(routeId + "|" + headsign));
+        // Project the fixture's arrivals via the production path.
+        ArrayList<ArrivalInfo> arrivalInfo = ArrivalsFixtures.convert(targetContext, env, true);
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
         validateUatcArrivalInfo(arrivalInfo);
@@ -259,15 +255,15 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(5, firstNonNegativeArrivalIndex);
 
         ArrayList<Integer> preferredArrivalIndexes = ArrivalInfoUtils
-                .findPreferredArrivalIndexes(arrivalInfo);
+                .findPreferredArrivalIndexes(arrivalInfo, favoriteRouteIds);
 
-        // Indexes 11 and 13 should hold the favorites
+        // Indexes 11 and 13 should hold the route-6 favorites
         assertEquals(11, preferredArrivalIndexes.get(0).intValue());
         assertEquals(13, preferredArrivalIndexes.get(1).intValue());
 
         // With no favorites, the first two non-negative arrival times are returned - indexes 5 and 6.
-        arrivalInfo = ArrivalsFixtures.convert(targetContext, env, true);
-        preferredArrivalIndexes = ArrivalInfoUtils.findPreferredArrivalIndexes(arrivalInfo);
+        preferredArrivalIndexes = ArrivalInfoUtils.findPreferredArrivalIndexes(
+                arrivalInfo, java.util.Collections.emptySet());
         assertEquals(5, preferredArrivalIndexes.get(0).intValue());
         assertEquals(6, preferredArrivalIndexes.get(1).intValue());
     }

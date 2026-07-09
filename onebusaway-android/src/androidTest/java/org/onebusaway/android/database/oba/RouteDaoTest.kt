@@ -18,10 +18,13 @@ package org.onebusaway.android.database.oba
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -74,6 +77,45 @@ class RouteDaoTest {
         assertEquals(1L, r.regionId)             // regionId = null keeps the existing region
         assertEquals("10", r.shortName)          // short/long names refreshed
         assertEquals("Route 10 renamed", r.longName)
+    }
+
+    @Test
+    fun isFavorite_reflectsTheFavoriteBit() = runBlocking {
+        // No row yet -> not a favorite (the route-map header's default before a star lands).
+        assertFalse(dao.isFavorite("r4").first())
+
+        dao.storeRouteDetails("r4", "40", "Route 40", "http://u", regionId = 4L, now = 100)
+        assertFalse(dao.isFavorite("r4").first())   // row exists, favorite still unset
+
+        dao.setFavorite("r4", 1)
+        assertTrue(dao.isFavorite("r4").first())
+
+        dao.setFavorite("r4", 0)
+        assertFalse(dao.isFavorite("r4").first())
+    }
+
+    @Test
+    fun ensureRouteDetails_doesNotCountAsAUse() = runBlocking {
+        // A route the user has actually viewed twice.
+        dao.storeRouteDetails("r5", "50", "Route 50", "http://u", regionId = 5L, now = 100)
+        dao.markRouteUsed("r5", "50", "Route 50", regionId = 5L, now = 200)
+        assertEquals(2, dao.getRoute("r5")!!.useCount)
+
+        // Favoriting ensures the row but must not bump use_count / access_time (#1727 review).
+        dao.ensureRouteDetails("r5", "50", "Route 50", url = null, regionId = null)
+
+        val r = dao.getRoute("r5")!!
+        assertEquals(2, r.useCount)               // unchanged — a favorite toggle is not a view
+        assertEquals(200L, r.accessTime)          // unchanged
+        assertEquals("http://u", r.url)           // null url preserves the existing one
+        assertEquals(5L, r.regionId)
+
+        // A brand-new (never-viewed) route starts at use_count 0, so it sorts last by frequency.
+        dao.ensureRouteDetails("r6", "60", "Route 60", url = "http://v", regionId = 6L)
+        val fresh = dao.getRoute("r6")!!
+        assertEquals(0, fresh.useCount)
+        assertNull(fresh.accessTime)
+        assertEquals("http://v", fresh.url)
     }
 
     @Test

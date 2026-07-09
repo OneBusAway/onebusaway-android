@@ -489,6 +489,7 @@ internal fun ArrivalsList(
                     ArrivalCardStyleB(
                         group = group,
                         actions = content.actions[group.first().tripId],
+                        isFavorite = group.first().routeId in content.favoriteRouteIds,
                         filterActive = filterActive,
                         callbacks = rowCallbacks
                     )
@@ -504,6 +505,7 @@ internal fun ArrivalsList(
                     ArrivalRowStyleA(
                         arrival = arrival,
                         actions = content.actions[arrival.tripId],
+                        isFavorite = arrival.routeId in content.favoriteRouteIds,
                         filterActive = filterActive,
                         callbacks = rowCallbacks
                     )

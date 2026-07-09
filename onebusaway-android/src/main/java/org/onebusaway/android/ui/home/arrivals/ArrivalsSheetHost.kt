@@ -59,8 +59,8 @@ import org.onebusaway.android.ui.tutorial.tutorialAnchor
  *
  * Polling lifecycle is owned by `ArrivalsPanel` itself (`ArrivalsPolling` → `repeatOnLifecycle`), so
  * it also pauses with the screen. Loaded responses are forwarded to the host via [onArrivalsLoaded]
- * (the map recenter / focus marker / tutorials), and the preview size drives the peek height via
- * [onPreferredHeight]. Expand/collapse is driven by the sheet's drag handle (in the host scaffold).
+ * (the map recenter / focus marker / tutorials), and the panel's measured collapsed-peek height drives
+ * the sheet peek via [onPeekContentHeight]. Expand/collapse is driven by the sheet's drag handle (in the host scaffold).
  */
 @Composable
 internal fun ArrivalsSheetHost(
@@ -76,7 +76,7 @@ internal fun ArrivalsSheetHost(
     onShowRouteOnMap: (ShowRouteRequest) -> Unit,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (args: ReminderEditorArgs) -> Unit,
-    onPreferredHeight: (previewCount: Int, filtering: Boolean) -> Unit,
+    onPeekContentHeight: (heightPx: Int) -> Unit,
     // Tapping the drawer's stop-name title — the host recenters the map on the focused stop.
     onTitleClick: () -> Unit,
     showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit,
@@ -127,7 +127,7 @@ internal fun ArrivalsSheetHost(
                     expandProgress = expandProgress,
                     initialTitle = stop.name.orEmpty(),
                     handler = handler,
-                    onPreferredHeight = onPreferredHeight,
+                    onPeekContentHeight = onPeekContentHeight,
                     onTitleClick = onTitleClick,
                     etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
                     starAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_STAR),

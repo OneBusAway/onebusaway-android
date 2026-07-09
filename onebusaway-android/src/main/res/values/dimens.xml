@@ -33,10 +33,6 @@
 
     <!-- Collapsed drawer peek heights = drag handle (~20dp) + N peek rows (~48dp each) + the stop
          header (~40dp). Sized so the panel ends at the header; the full list stays hidden below. -->
-    <dimen name="arrival_header_height_no_arrivals">60dp</dimen>
-    <dimen name="arrival_header_height_one_arrival">108dp</dimen>
-    <dimen name="arrival_header_height_two_arrivals">158dp</dimen>
-    <dimen name="arrival_header_height_offset_filter_routes">25dp</dimen>
 
     <!-- Arrivals Style A -->
 

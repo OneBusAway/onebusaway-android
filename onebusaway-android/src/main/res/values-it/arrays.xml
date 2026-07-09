@@ -41,14 +41,6 @@
         <item>Arrivo stimato</item>
         <item>Linea</item>
     </string-array>
-    <string-array name="search_stop_options">
-        <item>Mostra arrivi</item>
-        <item>Mostra sulla mappa</item>
-    </string-array>
-    <string-array name="search_route_options">
-        <item>Mostra lista fermate</item>
-        <item>Mostra sulla mappa</item>
-    </string-array>
     <string-array name="reminder_time">
         <item>1 minuto</item>
         <item>3 minuti</item>

@@ -42,14 +42,6 @@
         <item>Estimated arrival</item>
         <item>Route</item>
     </string-array>
-    <string-array name="search_stop_options">
-        <item>Show arrivals</item>
-        <item>Show on map</item>
-    </string-array>
-    <string-array name="search_route_options">
-        <item>Show list of stops</item>
-        <item>Show on map</item>
-    </string-array>
     <string-array name="reminder_time">
         <item>1 minute</item>
         <item>3 minutes</item>

@@ -37,6 +37,7 @@ import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
+import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.VehicleMarker
 
@@ -366,7 +367,8 @@ class RouteMapController(
      * Re-draw the route shape for [currentDirectionId]: the selected direction's own travel-ordered
      * shape (with direction arrows), or the whole-route merged shape drawn undirected when none is
      * selected. Passes the route's raw GTFS color through; the render layer picks the fallback when
-     * it's absent. Called on load and on every direction switch.
+     * it's absent. Drawn at the shared [ROUTE_LINE_WIDTH_DP] so the overview map's route reads the same
+     * as the trip-focus map (#1752). Called on load and on every direction switch.
      */
     private fun showDirectionPolylines() {
         val route = routeShape ?: return
@@ -376,7 +378,7 @@ class RouteMapController(
         val shape = route.shapeForDirection(currentDirectionId)
         renderState.setRoutePolylines(
             shape.polylines.map { points ->
-                RoutePolyline(route.route?.color, points, directional = shape.directional)
+                RoutePolyline(route.route?.color, points, widthDp = ROUTE_LINE_WIDTH_DP, directional = shape.directional)
             }
         )
     }

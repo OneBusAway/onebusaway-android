@@ -38,9 +38,11 @@ import org.onebusaway.android.util.MathUtils
  * (wrapping each Bitmap in a `BitmapDescriptor`) and the maplibre flavor (wrapping it in an `Icon`)
  * share one implementation + the LRU cache. This is the icon half of the old `VehicleOverlay`.
  *
- * The marker is composed at draw time — a [pin_base][R.drawable.pin_base] teardrop filled with the
- * schedule-deviation color, a white mode glyph (bus/rail/…) centered in the head, and a white heading
- * arrow — rather than decoding one of the ~225 pre-composited `ic_marker_with_*` rasters.
+ * The marker is composed at draw time — a disc filled with the schedule-deviation color, a white mode
+ * glyph (bus/rail/…) centered on it, and a white heading arrow at the rim — rather than decoding one of
+ * the ~225 pre-composited `ic_marker_with_*` rasters. It's a **centered** badge (anchored at its center,
+ * not a teardrop tip) so a vehicle sits on the route centerline like the trip map's estimate marker,
+ * rather than floating off the line as a pin (#1752).
  */
 object VehicleBitmaps {
 
@@ -55,18 +57,16 @@ object VehicleBitmaps {
     /** The composited marker fills a square this many dp on a side (the former raster's size). */
     private const val MARKER_SIZE_DP = 40f
 
-    /** Transparent padding (grid units) around the pin so the black outline halo isn't clipped. */
+    /** Transparent padding (grid units) around the disc so the black outline halo isn't clipped. */
     private const val PAD_GRID = 0.6f
 
-    /**
-     * Marker anchor as a fraction of the padded bitmap: horizontally centered, vertically at the pin
-     * tip (grid y=24). Consumers anchor here so the tip — not the padded bitmap edge — sits on the
-     * vehicle's location.
-     */
-    const val ANCHOR_U = 0.5f
-    val ANCHOR_V = (MarkerRendering.GRID + PAD_GRID) / (MarkerRendering.GRID + 2f * PAD_GRID)
-
     private const val GLYPH_SIZE = 10.8f // the glyph's 24-grid box (its artwork fills ~70% of this)
+
+    // Heading-arrow chevron geometry, in 24-grid units: tip just inside the disc's top rim, pointing
+    // outward, then rotated about the disc center by the heading octant. Mirrors the former pin arrow.
+    private const val ARROW_TIP_GRID = 1f
+    private const val ARROW_HALF_WIDTH_GRID = 2.16f
+    private const val ARROW_HEIGHT_GRID = 2.34f
 
     /** Hairline black outline width, in 24-grid units (scales with the marker); ~1px on screen. */
     private const val OUTLINE_GRID = 0.25f
@@ -162,10 +162,10 @@ object VehicleBitmaps {
         renderMarker(context, vehicleType, halfWind, color)
 
     /**
-     * Composites the pin frame, white mode glyph, and (unless undirected) white heading arrow — each
+     * Composites the colored disc, white mode glyph, and (unless undirected) white heading arrow — each
      * with a hairline black outline (a cheap 8-way dilate: the element stamped black at [OUTLINE_GRID]
-     * offsets, then the fill on top) so the frame, glyph, and arrow read distinctly against each other
-     * and the map.
+     * offsets, then the fill on top) so the disc, glyph, and arrow read distinctly against each other
+     * and the map. The disc is centered in the padded bitmap, so consumers anchor it at its center.
      */
     private fun renderMarker(context: Context, vehicleType: Int, halfWind: Int, color: Int): Bitmap {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
@@ -180,19 +180,18 @@ object VehicleBitmaps {
         // this translated content origin.
         canvas.translate(pad, pad)
 
-        // Pin frame (schedule-deviation color) + white mode glyph, each outlined.
-        MarkerRendering.drawPinAndGlyph(canvas, context, contentPx, scale, color, glyphRes(type), Color.WHITE, GLYPH_SIZE, outline)
+        // Colored disc (schedule-deviation color) + white mode glyph, each outlined.
+        MarkerRendering.drawCircleAndGlyph(canvas, context, contentPx, scale, color, glyphRes(type), Color.WHITE, GLYPH_SIZE, outline)
 
-        // Heading arrow, white, rotated about the head center by the octant (undirected = no arrow).
+        // Heading arrow, white, rotated about the disc center by the octant (undirected = no arrow).
         if (halfWind != UNDIRECTED) {
-            canvas.withRotation(
-                halfWind * 45f, MarkerRendering.HEAD_CX * scale, MarkerRendering.HEAD_CY * scale
-            ) {
+            val center = MarkerRendering.GRID / 2f
+            canvas.withRotation(halfWind * 45f, center * scale, center * scale) {
                 val arrow = Path().apply {
-                    // Wide chevron, tip grazing the head edge; scaled 0.9 about the tip.
-                    moveTo(12f * scale, 0.1f * scale)
-                    lineTo(14.16f * scale, 2.44f * scale)
-                    lineTo(9.84f * scale, 2.44f * scale)
+                    // Chevron with its tip just inside the disc's top rim, pointing outward.
+                    moveTo(center * scale, ARROW_TIP_GRID * scale)
+                    lineTo((center + ARROW_HALF_WIDTH_GRID) * scale, (ARROW_TIP_GRID + ARROW_HEIGHT_GRID) * scale)
+                    lineTo((center - ARROW_HALF_WIDTH_GRID) * scale, (ARROW_TIP_GRID + ARROW_HEIGHT_GRID) * scale)
                     close()
                 }
                 MarkerRendering.stampOffsets(canvas, outline) { canvas.drawPath(arrow, blackPaint) }

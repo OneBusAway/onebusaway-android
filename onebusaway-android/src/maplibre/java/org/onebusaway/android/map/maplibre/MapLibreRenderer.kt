@@ -20,8 +20,6 @@
 package org.onebusaway.android.map.maplibre
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import java.util.concurrent.TimeUnit
 import org.maplibre.android.annotations.Annotation
 import org.maplibre.android.annotations.Icon
@@ -397,16 +395,11 @@ class MapLibreRenderer(
         }
     }
 
+    // The vehicle disc badge is centered in its bitmap, and maplibre's classic Marker centers an icon on
+    // the point, so the badge lands on the route centerline with no anchor adjustment (#1752).
     private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): Icon =
-        iconFactory.fromBitmap(
-            bottomAnchored(VehicleBitmaps.vehicleBitmap(context, vehicle, response))
-        )
+        iconFactory.fromBitmap(VehicleBitmaps.vehicleBitmap(context, vehicle, response))
 
-    /**
-     * maplibre's classic [Marker] centers an icon bitmap on the point, but the vehicle pin's tip is its
-     * bottom-center (matching the Google flavor's default 0.5/1.0 anchor). Pad [bitmap] below by its own
-     * height so the doubled bitmap's center lands on the original bottom-center — i.e. a bottom anchor.
-     */
     /**
      * Move this marker to [latLng] and, if its info window is open, reposition it to follow — maplibre
      * repositions an open window on camera moves but not when a marker's position changes between them,
@@ -415,15 +408,6 @@ class MapLibreRenderer(
     private fun Marker.moveTo(latLng: LatLng) {
         position = latLng
         if (isInfoWindowShown) getInfoWindow()?.update()
-    }
-
-    private fun bottomAnchored(bitmap: Bitmap): Bitmap {
-        // MapLibre icons are center-anchored; pad below so the center lands on the pin tip
-        // ([VehicleBitmaps.ANCHOR_V] of the height), not the padded bitmap's bottom edge.
-        val tipY = VehicleBitmaps.ANCHOR_V * bitmap.height
-        val out = Bitmap.createBitmap(bitmap.width, (2f * tipY).toInt(), Bitmap.Config.ARGB_8888)
-        Canvas(out).drawBitmap(bitmap, 0f, 0f, null)
-        return out
     }
 
     private fun vehicleTitle(vehicle: VehicleMarker, response: RouteTrips): String {

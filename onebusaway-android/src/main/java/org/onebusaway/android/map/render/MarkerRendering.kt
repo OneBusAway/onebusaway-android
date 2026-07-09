@@ -19,6 +19,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withTranslation
@@ -87,6 +88,47 @@ object MarkerRendering {
         glyph.setBounds(
             ((HEAD_CX - half) * scale).toInt(), ((HEAD_CY - half) * scale).toInt(),
             ((HEAD_CX + half) * scale).toInt(), ((HEAD_CY + half) * scale).toInt(),
+        )
+        drawOutlined(canvas, glyph, outline, glyphColor)
+    }
+
+    /**
+     * Draws a filled disc tinted [fillColor] centered in `[0,contentPx]` on [canvas], then a [glyphRes]
+     * glyph tinted [glyphColor] centered on it at [glyphSize] grid units. When [outline] > 0 the disc
+     * gets a black hairline ring of that width and the glyph a matching outline. The circular counterpart
+     * of [drawPinAndGlyph]: the route/trip maps center a vehicle badge on the route line rather than
+     * floating a teardrop pin off it (#1752). The heading arrow (vehicles) is layered on top by the caller.
+     */
+    fun drawCircleAndGlyph(
+        canvas: Canvas,
+        context: Context,
+        contentPx: Int,
+        scale: Float,
+        fillColor: Int,
+        @DrawableRes glyphRes: Int,
+        glyphColor: Int,
+        glyphSize: Float,
+        outline: Float,
+    ) {
+        val center = contentPx / 2f
+        val radius = center - outline
+        if (outline > 0f) {
+            // Black disc slightly larger than the fill, so an `outline`-wide black ring shows around it.
+            canvas.drawCircle(center, center, radius, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.BLACK
+                style = Paint.Style.FILL
+            })
+        }
+        canvas.drawCircle(center, center, radius - outline, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = fillColor
+            style = Paint.Style.FILL
+        })
+
+        val glyph = ContextCompat.getDrawable(context, glyphRes)!!.mutate()
+        val halfPx = glyphSize / 2f * scale
+        glyph.setBounds(
+            (center - halfPx).toInt(), (center - halfPx).toInt(),
+            (center + halfPx).toInt(), (center + halfPx).toInt(),
         )
         drawOutlined(canvas, glyph, outline, glyphColor)
     }

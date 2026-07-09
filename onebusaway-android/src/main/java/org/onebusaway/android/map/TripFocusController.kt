@@ -27,6 +27,7 @@ import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.map.render.BandSegment
 import org.onebusaway.android.map.render.FramingIntent
+import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.TripStopDot
@@ -84,7 +85,7 @@ class TripFocusController(
                     RoutePolyline(
                         color = routeColorArgb,
                         points = shape.points.map { it.toGeoPoint() },
-                        widthDp = TRIP_LINE_WIDTH_DP,
+                        widthDp = ROUTE_LINE_WIDTH_DP,
                         // A single trip shape runs one way; keep its travel-direction chevrons.
                         directional = true,
                     )
@@ -151,10 +152,6 @@ class TripFocusController(
     }
 
     companion object {
-        // The trip-focus map's single-trip line — thicker than a route-mode line to read as a focused
-        // view. The matching band/markers draw on top of it.
-        private const val TRIP_LINE_WIDTH_DP = 8f
-
         // Poll the store for this trip's shape every interval until it hydrates, capped so a permanently
         // missing shapeId can't poll forever. 120 × 500ms ≈ 60s — generous for a slow details fetch.
         private const val SHAPE_POLL_INTERVAL_MS = 500L

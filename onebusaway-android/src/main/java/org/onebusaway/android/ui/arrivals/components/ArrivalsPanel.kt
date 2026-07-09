@@ -279,8 +279,7 @@ private fun PeekRow(
     etaModifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val (badgeContainer, badgeContent) =
-        rememberRouteBadgeColors(actions?.routeColor, actions?.routeTextColor)
+    val (badgeContainer, badgeContent) = rememberRouteBadgeColors(actions?.routeColor)
     // Wrap the peek row in the same surfaceContainer box as the expanded Style-A card it morphs into,
     // so the box is present at rest and the morph is a pure size change (see MorphingArrivalRow).
     ArrivalCard {

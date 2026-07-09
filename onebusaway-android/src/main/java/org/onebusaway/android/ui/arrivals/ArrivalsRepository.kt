@@ -390,7 +390,6 @@ class DefaultArrivalsRepository @Inject constructor(
             routeShortName = route?.shortName,
             routeLongName = arrival.routeLongName,
             routeColor = route?.color,
-            routeTextColor = route?.textColor,
             scheduleUrl = route?.url,
             agencyName = route?.agencyId?.let { snapshot.agencyName(it) },
             blockId = snapshot.trip(arrival.tripId)?.blockId,

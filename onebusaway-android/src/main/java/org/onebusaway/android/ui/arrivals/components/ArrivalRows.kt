@@ -254,8 +254,7 @@ fun ArrivalRowStyleA(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val (badgeContainer, badgeContent) =
-        rememberRouteBadgeColors(actions?.routeColor, actions?.routeTextColor)
+    val (badgeContainer, badgeContent) = rememberRouteBadgeColors(actions?.routeColor)
     StyleACard(
         modifier = modifier,
         onMore = { expanded = true },

@@ -15,11 +15,13 @@
  */
 package org.onebusaway.android.ui.compose.components
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -47,6 +49,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
+import com.google.android.material.color.utilities.Hct
+import kotlin.math.min
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 
 /** Line height as a multiple of the font size, so multi-line badges shrink with the font. */
@@ -60,25 +64,42 @@ private val CHIP_SHAPE = RoundedCornerShape(8.dp)
 private val CHIP_H_PADDING = 8.dp
 private val CHIP_V_PADDING = 2.dp
 
+// Route-badge color tokens. We take only the *hue* of the agency's GTFS color and re-derive the chip
+// in HCT (a perceptual space) at a fixed tone + capped chroma, so the agency can't hand us an
+// over-saturated or too-dark/too-light color — every chip lands at a consistent, legible brightness,
+// and the tone flips lighter for dark theme. Fidget with these to taste.
+private const val CHIP_TONE_LIGHT = 42.0        // container tone in light theme (0=black … 100=white)
+private const val CHIP_TONE_DARK = 78.0         // lighter container tone for dark theme
+private const val CHIP_ON_TONE_LIGHT = 100.0    // text tone on the light-theme chip (→ white)
+private const val CHIP_ON_TONE_DARK = 20.0      // text tone on the dark-theme chip (→ near-black)
+private const val CHIP_MAX_CHROMA = 40.0        // cap the saturation the agency color can reach
+private const val ACHROMATIC_CHROMA = 5.0       // below this the source is grey/black/white (no hue)
+
 /**
- * Resolves the (container, content) colors for a route badge chip from the route's GTFS colors. When
- * the route carries a color it fills the chip, with the GTFS text color if present or an auto black/
- * white for legibility; a route with no color falls back to a neutral theme chip. Callers pass the
- * pair straight to [LineBadge]'s `containerColor` / `color`.
+ * Resolves the (container, content) colors for a route-badge chip from the route's GTFS color. We keep
+ * only its hue and regenerate the chip at a fixed HCT tone + capped chroma (see the tokens above), so
+ * the result is a consistent brightness in the active theme regardless of what the agency picked; the
+ * text tone is paired to the container for guaranteed contrast. An achromatic source (grey/black/white)
+ * or a route with no color falls back to a neutral theme chip. Callers pass the pair straight to
+ * [LineBadge]'s `containerColor` / `color`.
  */
+@SuppressLint("RestrictedApi") // Hct is Material Components' vendored color-science util (LIBRARY_GROUP)
 @Composable
-fun rememberRouteBadgeColors(routeColor: Int?, routeTextColor: Int?): Pair<Color, Color> {
+fun rememberRouteBadgeColors(routeColor: Int?): Pair<Color, Color> {
     val neutralContainer = MaterialTheme.colorScheme.surfaceVariant
     val neutralContent = MaterialTheme.colorScheme.onSurfaceVariant
-    return remember(routeColor, routeTextColor, neutralContainer, neutralContent) {
-        val container = routeColor?.let { Color(it or 0xFF000000.toInt()) } ?: neutralContainer
-        val content = when {
-            routeColor == null -> neutralContent
-            routeTextColor != null -> Color(routeTextColor or 0xFF000000.toInt())
-            container.luminance() > 0.5f -> Color.Black
-            else -> Color.White
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    return remember(routeColor, dark, neutralContainer, neutralContent) {
+        val source = routeColor?.let { Hct.fromInt(it or 0xFF000000.toInt()) }
+        if (source == null || source.chroma < ACHROMATIC_CHROMA) {
+            neutralContainer to neutralContent
+        } else {
+            val chroma = min(source.chroma, CHIP_MAX_CHROMA)
+            val containerTone = if (dark) CHIP_TONE_DARK else CHIP_TONE_LIGHT
+            val contentTone = if (dark) CHIP_ON_TONE_DARK else CHIP_ON_TONE_LIGHT
+            Color(Hct.from(source.hue, chroma, containerTone).toInt()) to
+                Color(Hct.from(source.hue, chroma, contentTone).toInt())
         }
-        container to content
     }
 }
 
@@ -168,8 +189,9 @@ fun LineBadge(
             )
         }
         if (containerColor.isSpecified) {
-            // A rounded chip that hugs the text (wraps content), centered in the fixed-width slot.
-            Surface(color = containerColor, shape = CHIP_SHAPE) {
+            // A rounded chip filling the badge's fixed-width slot (a standard size across rows, not
+            // hugging each name), with the text centered inside.
+            Surface(color = containerColor, shape = CHIP_SHAPE, modifier = Modifier.fillMaxWidth()) {
                 Box(
                     Modifier.padding(horizontal = CHIP_H_PADDING, vertical = CHIP_V_PADDING),
                     contentAlignment = Alignment.Center,
@@ -204,10 +226,10 @@ private fun LineBadgePreview() {
                 // the fixed-width slot. First a GTFS-colored route, then the neutral no-color fallback.
                 Text("On a route-color chip:", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    val (green, onGreen) = rememberRouteBadgeColors(0x00A651, null)
+                    val (green, onGreen) = rememberRouteBadgeColors(0x00A651)
                     LineBadge("40", containerColor = green, color = onGreen)
                     Spacer(Modifier.width(12.dp))
-                    val (neutral, onNeutral) = rememberRouteBadgeColors(null, null)
+                    val (neutral, onNeutral) = rememberRouteBadgeColors(null)
                     LineBadge("RapidRide A", containerColor = neutral, color = onNeutral)
                 }
                 Spacer(Modifier.height(16.dp))

@@ -306,7 +306,7 @@ class MapLibreRenderer(
                 }
             }
         }
-        updateMostRecentDataDot(markers, nowMs)
+        updateMostRecentDataDot(nowMs)
     }
 
     /**
@@ -320,9 +320,12 @@ class MapLibreRenderer(
      * settling — never an unconditional per-tick set, which would redraw an open bubble; the age is
      * refreshed only while the bubble is closed.
      */
-    private fun updateMostRecentDataDot(markers: List<VehicleMarker>, nowMs: Long) {
+    private fun updateMostRecentDataDot(nowMs: Long) {
         val selectedId = renderState.selectedVehicleTripId.value
-        val selected = selectedId?.let { id -> markers.firstOrNull { it.activeTripId == id } }
+        // Read the dot's inputs from the reconciled (per-poll) set, not the per-frame motion samples:
+        // the fix point + age are discrete, changing only when a new poll lands, and the set is where the
+        // shape-projected [VehicleMarker.dataFixPoint] is carried (the motion samples leave it null).
+        val selected = selectedId?.let { id -> vehicleMarkersByTripId[id]?.let { vehicleByMarker[it] } }
         // The dot marks the last fix at the glide's origin: the shape-projected anchor point when we
         // have it (so it coincides with the uncertainty band's origin), falling back to the raw reported
         // lat/lng for a vehicle we aren't extrapolating on a shape (#1752).

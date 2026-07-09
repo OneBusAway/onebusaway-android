@@ -104,6 +104,11 @@ fun extrapolatedVehicles(
     nowMs: WallTime,
     directionId: Int? = null,
     lookupState: (String?) -> TripState?,
+    // Whether to project each vehicle's last fix onto the shape ([dataFixPoint]). Only the discrete,
+    // once-per-poll set needs it (the renderer reads the selected vehicle's dot from there); the ~20–120Hz
+    // motion sampler leaves it null so the projection stays off the per-frame path — it's constant between
+    // fixes and read only for the one selected vehicle, so computing it every frame is pure waste.
+    includeDataFixPoint: Boolean = false,
 ): List<ExtrapolatedVehicle> =
     routeTrips.trips.mapNotNull { trip ->
         val status = trip.status ?: return@mapNotNull null
@@ -132,8 +137,9 @@ fun extrapolatedVehicles(
             status = status,
             isRealtime = isRealtime,
             // The last real fix's position on the shape (the glide's seed), so the most-recent-data dot
-            // sits at the band's origin rather than at the raw off-shape reported lat/lng (#1752).
-            dataFixPoint = state?.let(::anchorFixPoint),
+            // sits at the band's origin rather than at the raw off-shape reported lat/lng (#1752). Only
+            // the discrete set path asks for it; the per-frame path leaves it null (see the param).
+            dataFixPoint = if (includeDataFixPoint) state?.let(::anchorFixPoint) else null,
         )
     }
 

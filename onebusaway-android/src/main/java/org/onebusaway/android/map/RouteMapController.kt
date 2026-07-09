@@ -249,15 +249,17 @@ class RouteMapController(
     // Builds the vehicle markers for the current poll + direction filter at [nowMs]. Returns null while
     // the direction is still [DirectionState.Pending] (a direction launch holds the layer back until the
     // route load resolves the filter, so it never flashes the opposite-direction vehicles) or before the
-    // first poll lands. Shared by the per-frame motion sampler and the discrete [currentVehicleLayer] push.
-    private fun sampleVehicles(now: WallTime): MapVehicles? {
+    // first poll lands. Shared by the per-frame motion sampler and the discrete [currentVehicleLayer] push;
+    // [includeDataFixPoint] is set only on the latter, so the selected vehicle's most-recent-data dot is
+    // projected onto the shape once per poll rather than every frame (the renderer reads it from the set).
+    private fun sampleVehicles(now: WallTime, includeDataFixPoint: Boolean = false): MapVehicles? {
         val id = routeId ?: return null
         val resolved = directionState as? DirectionState.Resolved ?: return null
         val poll = latestPoll ?: return null
         return MapVehicles(
             markers = extrapolatedVehicles(
                 poll.response, setOf(id), now, resolved.directionId,
-                tripObservationRepository::lookupTripState,
+                tripObservationRepository::lookupTripState, includeDataFixPoint,
             ).map { it.toMarker() },
             response = poll.response,
         )
@@ -265,8 +267,9 @@ class RouteMapController(
 
     // The vehicle set to push whenever it changes (a poll, a direction switch, the load resolving the
     // filter). Seeds marker positions at the device wall clock the per-frame sampler extrapolates
-    // against (matching TripState.anchorLocalTimeMs); the next frame supersedes the seed either way.
-    private fun currentVehicleLayer(): MapVehicles? = sampleVehicles(WallTime.now())
+    // against (matching TripState.anchorLocalTimeMs); the next frame supersedes the seed either way. This
+    // is the discrete set the renderer keeps, so it carries the shape-projected most-recent-data point.
+    private fun currentVehicleLayer(): MapVehicles? = sampleVehicles(WallTime.now(), includeDataFixPoint = true)
 
     /**
      * Install (or clear) the selected vehicle's trip overlay. When a vehicle is selected ([tripId]
@@ -284,7 +287,7 @@ class RouteMapController(
         val bandColor = contrastingColor(currentRouteColor())
         renderState.setTripOverlaySampler { nowMs ->
             extrapolationFromState(tripObservationRepository.lookupTripState(tripId), WallTime(nowMs))
-                ?.toTripOverlay(bandColor, includeVehiclePoint = false, includeDataAge = false)
+                ?.toTripOverlay(bandColor, includeMarkers = false)
         }
     }
 

@@ -21,12 +21,10 @@ import org.onebusaway.android.extrapolation.TripExtrapolation
 import org.onebusaway.android.map.render.BandSegment
 import org.onebusaway.android.map.render.TripOverlay
 
-/**
- * The display tint applied to the color-free extrapolation when it's drawn as a [TripOverlay]. The
- * producer ([TripExtrapolation]) knows nothing about color; choosing the band hue and baking each
- * slice's model weight into its alpha is a display decision, so it lives here, shared by the trip-focus
- * map ([TripFocusController]) and the route map's selected-vehicle overlay ([RouteMapController]).
- */
+// The display tint applied to the color-free extrapolation when it's drawn as a [TripOverlay]. The
+// producer ([TripExtrapolation]) knows nothing about color; choosing the band hue and baking each
+// slice's model weight into its alpha is a display decision, so it lives here, shared by the trip-focus
+// map ([TripFocusController]) and the route map's selected-vehicle overlay ([RouteMapController]).
 
 /**
  * Shifts hue by 180° to produce a color that contrasts with [color] (the route line's color), so the
@@ -43,25 +41,24 @@ internal fun contrastingColor(color: Int): Int {
  * Composites the display [bandColorArgb] onto this color-free [TripExtrapolation] to produce the render
  * [TripOverlay]: each band slice's model weight becomes the hue's alpha.
  *
- * [includeVehiclePoint] and [includeDataAge] let the route map drop the best-estimate marker and the
- * data-age dot, which it already draws itself (the live vehicle disc, and the most-recent-data dot it
- * shows on selection), so a selected vehicle there gains only the band + fast-estimate marker (#1752).
- * The trip-focus map keeps them (both default true).
+ * [includeMarkers] false drops the best-estimate marker and the data-age dot, which the route map
+ * already draws itself (the live vehicle disc, and the most-recent-data dot it shows on selection), so a
+ * selected vehicle there gains only the band + fast-estimate marker (#1752). The trip-focus map keeps
+ * them (the default).
  */
 internal fun TripExtrapolation.toTripOverlay(
     bandColorArgb: Int,
-    includeVehiclePoint: Boolean = true,
-    includeDataAge: Boolean = true,
+    includeMarkers: Boolean = true,
 ): TripOverlay {
     val baseRgb = bandColorArgb and 0x00FFFFFF
     return TripOverlay(
-        vehiclePoint = if (includeVehiclePoint) vehiclePoint else null,
+        vehiclePoint = if (includeMarkers) vehiclePoint else null,
         fastEstimatePoint = fastEstimatePoint,
         band = band.map { slice ->
             val alpha = (slice.weight.coerceIn(0f, 1f) * 255f).roundToInt()
             BandSegment(slice.points, (alpha shl 24) or baseRgb)
         },
-        dataAge = if (includeDataAge) dataAge else null,
+        dataAge = if (includeMarkers) dataAge else null,
         fixTimeMs = fixTimeMs,
     )
 }

@@ -31,6 +31,8 @@ class Polyline(points: List<Location>) {
     private val cumulativeDistances: DoubleArray =
             points
                     .zipWithNext { prev, cur ->
+                        // haversineDistance is a same-package top-level fn (util/SphericalGeometry.kt),
+                        // formerly LocationUtils.haversineDistance before that grab-bag was decomposed.
                         haversineDistance(
                                 prev.latitude,
                                 prev.longitude,

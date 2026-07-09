@@ -35,6 +35,9 @@ data class ArrivalActions(
     val routeId: String,
     val routeShortName: String?,
     val routeLongName: String?,
+    /** The route's GTFS color (ARGB), or null when the agency didn't set one — we take its hue to
+     *  derive the route-badge chip. */
+    val routeColor: Int? = null,
     /** Route schedule URL; null/blank hides the "show route schedule" menu item. */
     val scheduleUrl: String?,
     val agencyName: String?,

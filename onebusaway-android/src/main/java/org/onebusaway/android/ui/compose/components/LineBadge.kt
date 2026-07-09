@@ -15,15 +15,18 @@
  */
 package org.onebusaway.android.ui.compose.components
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,6 +35,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -44,6 +49,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
+import com.google.android.material.color.utilities.Hct
+import kotlin.math.min
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 
 /** Line height as a multiple of the font size, so multi-line badges shrink with the font. */
@@ -51,6 +58,53 @@ private const val LINE_HEIGHT_RATIO = 1.1f
 
 /** Each shrink step multiplies the font size by this until the text fits. */
 private const val SHRINK_STEP = 0.9f
+
+/** The chip's corner radius + inner padding when the badge is drawn on a colored surface. */
+private val CHIP_SHAPE = RoundedCornerShape(8.dp)
+private val CHIP_H_PADDING = 8.dp
+private val CHIP_V_PADDING = 2.dp
+
+// Route-badge color tokens. We take only the *hue* of the agency's GTFS color and re-derive the chip
+// in HCT (a perceptual space) at a fixed tone + capped chroma, so the agency can't hand us an
+// over-saturated or too-dark/too-light color — every chip lands at a consistent, legible brightness,
+// and the tone flips lighter for dark theme. Fidget with these to taste.
+private const val CHIP_TONE_LIGHT = 80.0        // container tone in light theme (0=black … 100=white)
+private const val CHIP_TONE_DARK = 78.0         // container tone for dark theme
+private const val CHIP_ON_TONE_LIGHT = 30.0     // text tone on the light-theme (pastel) chip (→ dark)
+private const val CHIP_ON_TONE_DARK = 20.0      // text tone on the dark-theme chip (→ near-black)
+private const val CHIP_MAX_CHROMA_LIGHT = 30.0  // saturation cap in light theme (soft pastel)
+private const val CHIP_MAX_CHROMA_DARK = 60.0   // saturation cap in dark theme
+                                                // (each hue still clamps to its own sRGB gamut limit;
+                                                //  low caps mute vivid hues — e.g. orange → brown)
+private const val ACHROMATIC_CHROMA = 5.0       // below this the source is grey/black/white (no hue)
+
+/**
+ * Resolves the (container, content) colors for a route-badge chip from the route's GTFS color. We keep
+ * only its hue and regenerate the chip at a fixed HCT tone + capped chroma (see the tokens above), so
+ * the result is a consistent brightness in the active theme regardless of what the agency picked; the
+ * text tone is paired to the container for guaranteed contrast. An achromatic source (grey/black/white)
+ * or a route with no color falls back to a neutral theme chip. Callers pass the pair straight to
+ * [LineBadge]'s `containerColor` / `color`.
+ */
+@SuppressLint("RestrictedApi") // Hct is Material Components' vendored color-science util (LIBRARY_GROUP)
+@Composable
+fun rememberRouteBadgeColors(routeColor: Int?): Pair<Color, Color> {
+    val neutralContainer = MaterialTheme.colorScheme.surfaceVariant
+    val neutralContent = MaterialTheme.colorScheme.onSurfaceVariant
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    return remember(routeColor, dark, neutralContainer, neutralContent) {
+        val source = routeColor?.let { Hct.fromInt(it or 0xFF000000.toInt()) }
+        if (source == null || source.chroma < ACHROMATIC_CHROMA) {
+            neutralContainer to neutralContent
+        } else {
+            val chroma = min(source.chroma, if (dark) CHIP_MAX_CHROMA_DARK else CHIP_MAX_CHROMA_LIGHT)
+            val containerTone = if (dark) CHIP_TONE_DARK else CHIP_TONE_LIGHT
+            val contentTone = if (dark) CHIP_ON_TONE_DARK else CHIP_ON_TONE_LIGHT
+            Color(Hct.from(source.hue, chroma, containerTone).toInt()) to
+                Color(Hct.from(source.hue, chroma, contentTone).toInt())
+        }
+    }
+}
 
 /**
  * A transit "line" identifier badge (a route short name) shown in a fixed-width rectangle: centered,
@@ -64,7 +118,10 @@ private const val SHRINK_STEP = 0.9f
  * frame (no flash) and resolves even in a static @Preview — an onTextLayout shrink loop would not.
  *
  * Drop it anywhere a route short name sits in a constrained slot (list rows, headers, map callouts).
- * [color] defaults to [Color.Unspecified] so the badge inherits the ambient content color.
+ * [color] defaults to [Color.Unspecified] so the badge inherits the ambient content color. Pass a
+ * [containerColor] (e.g. from [rememberRouteBadgeColors]) to draw the name on a rounded colored chip
+ * that hugs the text and stays centered in the fixed-width slot (so neighboring columns still align);
+ * leave it unspecified for the bare-text badge.
  *
  * @param width the fixed width of the badge rectangle
  * @param maxHeight the height cap for the rectangle; the text also shrinks to fit it (in addition to
@@ -85,10 +142,14 @@ fun LineBadge(
     minFontSize: TextUnit = 12.sp,
     maxLines: Int = 2,
     color: Color = Color.Unspecified,
+    containerColor: Color = Color.Unspecified,
     textDecoration: TextDecoration = TextDecoration.None
 ) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
+    // On a chip the text sits inside horizontal padding, so shrink-fit against the reduced width so the
+    // chip never grows past the fixed slot (which would collide with the neighboring column).
+    val textWidth = if (containerColor.isSpecified) width - CHIP_H_PADDING * 2 else width
     // Bold and centered; line height tracks the font (a fixed line height would keep two lines the
     // same height as the font shrinks, so a multi-line block could never fit maxHeight).
     val titleLarge = MaterialTheme.typography.titleLarge
@@ -100,12 +161,12 @@ fun LineBadge(
 
     // Largest font in [minFontSize, maxFontSize] whose measured text fits the width × maxHeight /
     // maxLines box; measured here (not via onTextLayout) so it's right on the first frame and in @Preview.
-    val fontSize = remember(text, width, maxHeight, maxFontSize, minFontSize, maxLines, density, baseStyle) {
+    val fontSize = remember(text, textWidth, maxHeight, maxFontSize, minFontSize, maxLines, density, baseStyle) {
         with(density) {
             val constraints = if (maxHeight.isSpecified) {
-                Constraints(maxWidth = width.roundToPx(), maxHeight = maxHeight.roundToPx())
+                Constraints(maxWidth = textWidth.roundToPx(), maxHeight = maxHeight.roundToPx())
             } else {
-                Constraints(maxWidth = width.roundToPx())
+                Constraints(maxWidth = textWidth.roundToPx())
             }
             var size = maxFontSize
             while (size.value > minFontSize.value &&
@@ -121,13 +182,27 @@ fun LineBadge(
         .width(width)
         .let { if (maxHeight.isSpecified) it.heightIn(max = maxHeight) else it }
     Box(boxModifier, contentAlignment = Alignment.Center) {
-        Text(
-            text = text,
-            color = color,
-            style = styleAt(fontSize),
-            maxLines = maxLines,
-            textDecoration = textDecoration
-        )
+        val label = @Composable {
+            Text(
+                text = text,
+                color = color,
+                style = styleAt(fontSize),
+                maxLines = maxLines,
+                textDecoration = textDecoration
+            )
+        }
+        if (containerColor.isSpecified) {
+            // A rounded chip filling the badge's fixed-width slot (a standard size across rows, not
+            // hugging each name), with the text centered inside.
+            Surface(color = containerColor, shape = CHIP_SHAPE, modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    Modifier.padding(horizontal = CHIP_H_PADDING, vertical = CHIP_V_PADDING),
+                    contentAlignment = Alignment.Center,
+                ) { label() }
+            }
+        } else {
+            label()
+        }
     }
 }
 
@@ -148,6 +223,17 @@ private fun LineBadgePreview() {
                         Spacer(Modifier.width(16.dp))
                         Text("\"$label\"", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                }
+                Spacer(Modifier.height(16.dp))
+                // On a colored chip: the name hugs the text inside a rounded surface, still centered in
+                // the fixed-width slot. First a GTFS-colored route, then the neutral no-color fallback.
+                Text("On a route-color chip:", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    val (green, onGreen) = rememberRouteBadgeColors(0x00A651)
+                    LineBadge("40", containerColor = green, color = onGreen)
+                    Spacer(Modifier.width(12.dp))
+                    val (neutral, onNeutral) = rememberRouteBadgeColors(null)
+                    LineBadge("RapidRide A", containerColor = neutral, color = onNeutral)
                 }
                 Spacer(Modifier.height(16.dp))
                 // The same name forced into shorter rectangles shrinks further to fit the height.

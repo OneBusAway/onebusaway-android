@@ -78,6 +78,7 @@ import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
 import org.onebusaway.android.ui.compose.MorphByProgress
 import org.onebusaway.android.ui.compose.components.LineBadge
+import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -278,6 +279,7 @@ private fun PeekRow(
     etaModifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val (badgeContainer, badgeContent) = rememberRouteBadgeColors(actions?.routeColor)
     // Wrap the peek row in the same surfaceContainer box as the expanded Style-A card it morphs into,
     // so the box is present at rest and the morph is a pure size change (see MorphingArrivalRow).
     ArrivalCard {
@@ -287,6 +289,8 @@ private fun PeekRow(
             eta = arrival.eta,
             etaColor = colorResource(arrival.color),
             predicted = arrival.predicted,
+            badgeContainer = badgeContainer,
+            badgeContent = badgeContent,
             onMore = { expanded = true },
             onAlertClick = alertClick(actions, callbacks),
             onRowClick = { callbacks.onShowVehiclesOnMap(arrival) },
@@ -337,6 +341,8 @@ private fun PeekRowVisual(
     onMore: () -> Unit,
     modifier: Modifier = Modifier,
     etaModifier: Modifier = Modifier,
+    badgeContainer: Color = Color.Unspecified,
+    badgeContent: Color = Color.Unspecified,
     onAlertClick: (() -> Unit)? = null,
     // Tapping the row body frames the whole route; tapping the ETA pill focuses this trip's vehicle +
     // stop (null in previews). The pill is a Surface(onClick) and the overflow is an IconButton, so
@@ -352,9 +358,14 @@ private fun PeekRowVisual(
             .padding(start = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // The shared auto-shrinking route badge (sized down for the condensed peek), so a long short
-        // name fits its slot instead of crowding out the headsign.
-        LineBadge(text = shortName, maxFontSize = 28.sp)
+        // The shared auto-shrinking route badge (sized down for the condensed peek), on its GTFS-colored
+        // chip, so a long short name fits its slot instead of crowding out the headsign.
+        LineBadge(
+            text = shortName,
+            maxFontSize = 28.sp,
+            color = badgeContent,
+            containerColor = badgeContainer,
+        )
         Spacer(Modifier.width(10.dp))
         Text(
             text = headsign,

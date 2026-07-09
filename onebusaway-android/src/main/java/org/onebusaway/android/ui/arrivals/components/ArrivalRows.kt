@@ -67,6 +67,7 @@ import org.onebusaway.android.models.Status
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.compose.components.LineBadge
+import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.util.comparators.AlphanumComparator
 
@@ -153,6 +154,8 @@ private fun ArrivalRowVisual(
     predicted: Boolean,
     canceled: Boolean,
     modifier: Modifier = Modifier,
+    badgeContainer: Color = Color.Unspecified,
+    badgeContent: Color = Color.Unspecified,
     onAlertClick: (() -> Unit)? = null,
     onEtaClick: (() -> Unit)? = null,
 ) {
@@ -161,6 +164,8 @@ private fun ArrivalRowVisual(
         LineBadge(
             text = shortName,
             maxFontSize = 36.sp,
+            color = badgeContent,
+            containerColor = badgeContainer,
             textDecoration = decoration
         )
         Spacer(Modifier.width(12.dp))
@@ -213,6 +218,8 @@ internal fun ArrivalAlertIndicator(onClick: () -> Unit, modifier: Modifier = Mod
 internal fun ArrivalRowContent(
     arrival: ArrivalInfo,
     modifier: Modifier = Modifier,
+    badgeContainer: Color = Color.Unspecified,
+    badgeContent: Color = Color.Unspecified,
     onAlertClick: (() -> Unit)? = null,
     onEtaClick: (() -> Unit)? = null,
 ) {
@@ -226,6 +233,8 @@ internal fun ArrivalRowContent(
         predicted = arrival.predicted,
         canceled = arrival.status == Status.CANCELED,
         modifier = modifier,
+        badgeContainer = badgeContainer,
+        badgeContent = badgeContent,
         onAlertClick = onAlertClick,
         onEtaClick = onEtaClick,
     )
@@ -245,6 +254,7 @@ fun ArrivalRowStyleA(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val (badgeContainer, badgeContent) = rememberRouteBadgeColors(actions?.routeColor)
     StyleACard(
         modifier = modifier,
         onMore = { expanded = true },
@@ -258,6 +268,8 @@ fun ArrivalRowStyleA(
         ArrivalRowContent(
             arrival,
             Modifier.fillMaxWidth(),
+            badgeContainer = badgeContainer,
+            badgeContent = badgeContent,
             onAlertClick = alertClick(actions, callbacks),
             onEtaClick = { callbacks.onEtaClick(arrival) },
         )

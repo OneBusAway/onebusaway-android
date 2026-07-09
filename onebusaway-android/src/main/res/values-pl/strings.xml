@@ -751,9 +751,6 @@
     <string name="tutorial_arrival_header_sliding_panel_text">Dotknij strzałki i przesuń panel do góry
         by zobaczyć więcej przyjazdów na tym przystanku.
     </string>
-    <string name="tutorial_arrival_header_star_route_title">Dodaj do ulubionych swoje trasy</string>
-    <string name="tutorial_arrival_header_star_route_text">Dotknij gwiazdki by zaznaczyć Twoje ulubione trasy
-    </string>
     <string name="tutorial_recent_stops_routes_title">Ostatnie przystanki i trasy</string>
     <string name="tutorial_recent_stops_routes_text">Znajdź przystanki i trasy które ostatnio
         przeglądając klikając przycisk \"Więcej\" u góry ekranu.

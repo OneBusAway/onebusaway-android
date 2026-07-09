@@ -247,12 +247,9 @@ fun ArrivalRowStyleA(
     var expanded by remember { mutableStateOf(false) }
     StyleACard(
         modifier = modifier,
-        // Null omits the star entirely when there's no actions to favorite against (defensive).
-        isFavorite = isFavorite.takeIf { actions != null },
-        onFavorite = { actions?.let { callbacks.onRouteFavorite(it) } },
         onMore = { expanded = true },
         // Tapping the row body frames the whole route; the ETA pill (below) instead focuses this trip's
-        // vehicle + stop, and the overflow icon opens the menu.
+        // vehicle + stop, and the overflow icon opens the menu (which hosts the favorite toggle).
         onContentClick = { callbacks.onShowVehiclesOnMap(arrival) },
         overflow = {
             ArrivalActionsMenu(expanded, { expanded = false }, arrival, actions, isFavorite, filterActive, callbacks)
@@ -272,18 +269,16 @@ internal fun alertClick(actions: ArrivalActions?, callbacks: ArrivalRowCallbacks
     actions?.alertSituationId?.let { id -> { callbacks.onShowAlert(id) } }
 
 /**
- * The Style A card scaffold: the row content with a small favorite star tucked into the top-left
- * corner and a horizontal-overflow into the top-right (legacy `route_favorite` / `more_horizontal`).
- * Shared by the live row and its @Preview so the corner layout and padding can't drift apart.
+ * The Style A card scaffold: the row content with a horizontal-overflow into the top-right (legacy
+ * `more_horizontal`). Shared by the live row and its @Preview so the corner layout and padding can't
+ * drift apart. Favoriting a route lives in the overflow menu + the route-map header now, not a per-row
+ * star.
  *
- * @param isFavorite the star's state, or null to omit the star (e.g. when there are no actions)
  * @param onContentClick tap handler for the row body, or null for a non-interactive body (preview)
  * @param overflow the dropdown menu anchored to the top-right overflow icon
  */
 @Composable
 private fun StyleACard(
-    isFavorite: Boolean?,
-    onFavorite: () -> Unit,
     onMore: () -> Unit,
     onContentClick: (() -> Unit)?,
     overflow: @Composable () -> Unit,
@@ -296,22 +291,10 @@ private fun StyleACard(
                 Modifier
                     .fillMaxWidth()
                     .then(if (onContentClick != null) Modifier.clickable(onClick = onContentClick) else Modifier)
-                    // A little top room so the 36sp route/ETA clear the overlaid corner icons
+                    // A little top room so the 36sp route/ETA clear the overlaid overflow icon
                     .padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 6.dp)
             ) {
                 content()
-            }
-            if (isFavorite != null) {
-                CornerIcon(
-                    iconRes = if (isFavorite) R.drawable.star else R.drawable.star_outline,
-                    contentDescription = stringResource(
-                        if (isFavorite) R.string.bus_options_menu_remove_star
-                        else R.string.bus_options_menu_add_star
-                    ),
-                    tint = colorResource(R.color.navdrawer_icon_tint),
-                    onClick = onFavorite,
-                    modifier = Modifier.align(Alignment.TopStart)
-                )
             }
             Box(Modifier.align(Alignment.TopEnd)) {
                 CornerIcon(
@@ -597,12 +580,12 @@ private fun canceledDecoration(arrival: ArrivalInfo): TextDecoration =
 private fun ArrivalRowStyleAPreview() {
     ObaTheme {
         Column(Modifier.padding(vertical = 8.dp)) {
-            PreviewStyleACard("8", "Capitol Hill", "2 min late", R.color.stop_info_delayed, "Departing at 4:32 PM", 5, predicted = true, favorite = true)
-            PreviewStyleACard("12", "Downtown Seattle", "On time", R.color.stop_info_ontime, "Departing at 4:27 PM", 0, predicted = true, favorite = false)
-            PreviewStyleACard("40", "Northgate", "3 min early", R.color.stop_info_early, "Arriving at 4:39 PM", 12, predicted = true, favorite = false)
-            PreviewStyleACard("550", "Bellevue Transit Center", "Scheduled", R.color.stop_info_scheduled_time, "Departing at 4:49 PM", 22, predicted = false, favorite = false)
-            PreviewStyleACard("7", "Rainier Beach", "Departed 1 min late", R.color.stop_info_delayed, "Departed at 4:25 PM", -2, predicted = true, favorite = false)
-            PreviewStyleACard("49", "University District", "Canceled", R.color.stop_info_scheduled_time, "", 8, predicted = false, favorite = false, canceled = true)
+            PreviewStyleACard("8", "Capitol Hill", "2 min late", R.color.stop_info_delayed, "Departing at 4:32 PM", 5, predicted = true)
+            PreviewStyleACard("12", "Downtown Seattle", "On time", R.color.stop_info_ontime, "Departing at 4:27 PM", 0, predicted = true)
+            PreviewStyleACard("40", "Northgate", "3 min early", R.color.stop_info_early, "Arriving at 4:39 PM", 12, predicted = true)
+            PreviewStyleACard("550", "Bellevue Transit Center", "Scheduled", R.color.stop_info_scheduled_time, "Departing at 4:49 PM", 22, predicted = false)
+            PreviewStyleACard("7", "Rainier Beach", "Departed 1 min late", R.color.stop_info_delayed, "Departed at 4:25 PM", -2, predicted = true)
+            PreviewStyleACard("49", "University District", "Canceled", R.color.stop_info_scheduled_time, "", 8, predicted = false, canceled = true)
         }
     }
 }
@@ -617,12 +600,9 @@ private fun PreviewStyleACard(
     timeText: String,
     eta: Long,
     predicted: Boolean,
-    favorite: Boolean,
     canceled: Boolean = false
 ) {
     StyleACard(
-        isFavorite = favorite,
-        onFavorite = {},
         onMore = {},
         onContentClick = null,
         overflow = {}

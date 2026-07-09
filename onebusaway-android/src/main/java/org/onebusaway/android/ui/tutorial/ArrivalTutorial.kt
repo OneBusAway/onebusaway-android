@@ -21,8 +21,8 @@ import org.onebusaway.android.preferences.PreferencesRepository
 /**
  * The arrivals-panel onboarding sequence — the Compose successor to the legacy ShowcaseView
  * "arrival header" tutorial chain (which spotlighted XML views removed in the Compose migration).
- * Spotlights, in order, the ETA pill, the slide-up chevron, and the favorite star of the focused
- * stop's peek (see the [Modifier.tutorialAnchor] call sites in `ArrivalsPanel`). Shown once the first
+ * Spotlights, in order, the ETA pill, the slide-up chevron, and the top-bar overflow (see the
+ * [Modifier.tutorialAnchor] call sites in `ArrivalsPanel` / the sheet host). Shown once the first
  * time a stop's arrivals load, gated by [pendingSteps]; "show tutorials again" re-arms it by clearing
  * the [resetKeys] (see `TutorialPrefs.resetAllTutorials`).
  *
@@ -39,9 +39,6 @@ object ArrivalTutorial {
     /** Slide-up chevron — pull the panel up for the full arrivals list. */
     const val KEY_PANEL = ".tutorial_compose_arrival_panel"
 
-    /** Favorite star — pin a route to the top of the panel. */
-    const val KEY_STAR = ".tutorial_compose_arrival_star"
-
     /** Top-bar overflow (⋮) — find recently viewed stops and routes. */
     const val KEY_MORE_MENU = ".tutorial_compose_more_menu"
 
@@ -57,11 +54,6 @@ object ArrivalTutorial {
             id = KEY_PANEL,
             title = R.string.tutorial_arrival_header_sliding_panel_title,
             body = R.string.tutorial_arrival_header_sliding_panel_text,
-        ),
-        TutorialStep(
-            id = KEY_STAR,
-            title = R.string.tutorial_arrival_header_star_route_title,
-            body = R.string.tutorial_arrival_header_star_route_text,
         ),
         TutorialStep(
             id = KEY_MORE_MENU,

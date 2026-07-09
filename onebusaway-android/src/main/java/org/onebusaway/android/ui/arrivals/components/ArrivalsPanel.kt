@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// This panel threads named per-element anchor modifiers (etaAnchor/starAnchor) a host attaches to
-// specific sub-elements for the onboarding spotlight — several per composable, none being the root
-// `modifier` — so ModifierParameter's "name it modifier" rule doesn't apply here.
+// This panel threads a named per-element anchor modifier (etaAnchor) a host attaches to a specific
+// sub-element for the onboarding spotlight — not the root `modifier` — so ModifierParameter's "name it
+// modifier" rule doesn't apply here.
 @file:Suppress("ModifierParameter")
 
 package org.onebusaway.android.ui.arrivals.components
@@ -109,10 +109,9 @@ fun ArrivalsPanel(
     // Tapping the pinned stop-name header invokes this (null = not tappable); the drawer host wires it
     // to an animated map recenter on the focused stop.
     onTitleClick: (() -> Unit)? = null,
-    // Opaque anchor modifiers a host may attach to the first peek row's ETA pill + favorite star (e.g.
-    // for an onboarding spotlight). The panel stays ignorant of what they're for.
+    // An opaque anchor modifier a host may attach to the first peek row's ETA pill (e.g. for an
+    // onboarding spotlight). The panel stays ignorant of what it's for.
     etaAnchor: Modifier = Modifier,
-    starAnchor: Modifier = Modifier,
 ) {
     // The system navigation-bar inset (height varies by handset); see the list contentPadding below.
     val navBarInset = navigationBarBottomPadding()
@@ -210,9 +209,8 @@ fun ArrivalsPanel(
                             previewArrivals,
                             key = { index, arrival -> "peek:${arrival.tripId}#$index" }
                         ) { index, arrival ->
-                            // The host's anchors apply to the first peek row only.
+                            // The host's ETA anchor applies to the first peek row only.
                             val etaModifier = if (index == 0) etaAnchor else Modifier
-                            val starModifier = if (index == 0) starAnchor else Modifier
                             val isFavorite = arrival.routeId in content.favoriteRouteIds
                             val row: @Composable () -> Unit = {
                                 if (styleA) {
@@ -224,7 +222,6 @@ fun ArrivalsPanel(
                                         callbacks = rowCallbacks,
                                         progress = expandProgress,
                                         etaModifier = etaModifier,
-                                        starModifier = starModifier,
                                     )
                                 } else {
                                     PeekRow(
@@ -234,7 +231,6 @@ fun ArrivalsPanel(
                                         filterActive = filtering,
                                         callbacks = rowCallbacks,
                                         etaModifier = etaModifier,
-                                        starModifier = starModifier,
                                     )
                                 }
                             }
@@ -270,7 +266,8 @@ private fun ColumnScope.PeekDivider() {
 }
 
 
-/** Adapts an [ArrivalInfo] onto [PeekRowVisual], wiring the favorite star and per-arrival menu. */
+/** Adapts an [ArrivalInfo] onto [PeekRowVisual], wiring the per-arrival overflow menu (which hosts the
+ *  favorite toggle). [isFavorite] drives the menu's star label. */
 @Composable
 private fun PeekRow(
     arrival: ArrivalInfo,
@@ -279,7 +276,6 @@ private fun PeekRow(
     filterActive: Boolean,
     callbacks: ArrivalRowCallbacks,
     etaModifier: Modifier = Modifier,
-    starModifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
     // Wrap the peek row in the same surfaceContainer box as the expanded Style-A card it morphs into,
@@ -291,14 +287,11 @@ private fun PeekRow(
             eta = arrival.eta,
             etaColor = colorResource(arrival.color),
             predicted = arrival.predicted,
-            isFavorite = isFavorite,
-            onFavorite = { actions?.let { callbacks.onRouteFavorite(it) } },
             onMore = { expanded = true },
             onAlertClick = alertClick(actions, callbacks),
             onRowClick = { callbacks.onShowVehiclesOnMap(arrival) },
             onEtaClick = { callbacks.onEtaClick(arrival) },
             etaModifier = etaModifier,
-            starModifier = starModifier,
             menu = {
                 ArrivalActionsMenu(expanded, { expanded = false }, arrival, actions, isFavorite, filterActive, callbacks)
             }
@@ -321,11 +314,10 @@ private fun MorphingArrivalRow(
     callbacks: ArrivalRowCallbacks,
     progress: () -> Float,
     etaModifier: Modifier = Modifier,
-    starModifier: Modifier = Modifier,
 ) {
     MorphByProgress(
         progress = progress,
-        start = { PeekRow(arrival, actions, isFavorite, filterActive, callbacks, etaModifier, starModifier) },
+        start = { PeekRow(arrival, actions, isFavorite, filterActive, callbacks, etaModifier) },
         end = { ArrivalRowStyleA(arrival, actions, isFavorite, filterActive, callbacks) },
     )
 }
@@ -342,15 +334,12 @@ private fun PeekRowVisual(
     eta: Long,
     etaColor: Color,
     predicted: Boolean,
-    isFavorite: Boolean,
-    onFavorite: () -> Unit,
     onMore: () -> Unit,
     modifier: Modifier = Modifier,
     etaModifier: Modifier = Modifier,
-    starModifier: Modifier = Modifier,
     onAlertClick: (() -> Unit)? = null,
     // Tapping the row body frames the whole route; tapping the ETA pill focuses this trip's vehicle +
-    // stop (null in previews). The pill is a Surface(onClick) and the star/overflow are IconButtons, so
+    // stop (null in previews). The pill is a Surface(onClick) and the overflow is an IconButton, so
     // each nested target reliably wins over the row-body click in its own bounds.
     onRowClick: (() -> Unit)? = null,
     onEtaClick: (() -> Unit)? = null,
@@ -359,22 +348,10 @@ private fun PeekRowVisual(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (onRowClick != null) Modifier.clickable(onClick = onRowClick) else Modifier),
+            .then(if (onRowClick != null) Modifier.clickable(onClick = onRowClick) else Modifier)
+            .padding(start = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onFavorite, modifier = starModifier) {
-            Icon(
-                painter = painterResource(
-                    if (isFavorite) R.drawable.star else R.drawable.star_outline
-                ),
-                contentDescription = stringResource(
-                    if (isFavorite) R.string.bus_options_menu_remove_star
-                    else R.string.bus_options_menu_add_star
-                ),
-                tint = colorResource(R.color.navdrawer_icon_tint),
-                modifier = Modifier.size(28.dp)
-            )
-        }
         // The shared auto-shrinking route badge (sized down for the condensed peek), so a long short
         // name fits its slot instead of crowding out the headsign.
         LineBadge(text = shortName, maxFontSize = 28.sp)
@@ -565,8 +542,6 @@ private fun DrawerCollapsedPreview() {
                         eta = 19,
                         etaColor = colorResource(R.color.stop_info_delayed),
                         predicted = true,
-                        isFavorite = false,
-                        onFavorite = {},
                         onMore = {}
                     )
                 }
@@ -577,8 +552,6 @@ private fun DrawerCollapsedPreview() {
                         eta = 21,
                         etaColor = colorResource(R.color.stop_info_delayed),
                         predicted = true,
-                        isFavorite = false,
-                        onFavorite = {},
                         onMore = {}
                     )
                 }
@@ -604,11 +577,11 @@ private fun DrawerPeekRowPreview() {
     ObaTheme {
         Surface(color = MaterialTheme.colorScheme.surface) {
             Column(Modifier.fillMaxWidth()) {
-                ArrivalCard { PeekRowVisual("8", "Mount Baker Transit Center", 1, colorResource(R.color.stop_info_delayed), true, true, {}, {}) }
-                ArrivalCard { PeekRowVisual("40", "Downtown Seattle", 0, colorResource(R.color.stop_info_ontime), true, false, {}, {}) }
-                ArrivalCard { PeekRowVisual("550", "Bellevue Transit Center", 28, colorResource(R.color.stop_info_scheduled_time), false, false, {}, {}) }
+                ArrivalCard { PeekRowVisual("8", "Mount Baker Transit Center", 1, colorResource(R.color.stop_info_delayed), true, {}) }
+                ArrivalCard { PeekRowVisual("40", "Downtown Seattle", 0, colorResource(R.color.stop_info_ontime), true, {}) }
+                ArrivalCard { PeekRowVisual("550", "Bellevue Transit Center", 28, colorResource(R.color.stop_info_scheduled_time), false, {}) }
                 // A long route short name: it should ellipsize at the capped width, not crowd the headsign.
-                ArrivalCard { PeekRowVisual("Mount Si. Trailhead", "North Bend", 12, colorResource(R.color.stop_info_ontime), true, false, {}, {}) }
+                ArrivalCard { PeekRowVisual("Mount Si. Trailhead", "North Bend", 12, colorResource(R.color.stop_info_ontime), true, {}) }
             }
         }
     }

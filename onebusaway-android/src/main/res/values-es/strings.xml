@@ -800,10 +800,6 @@
     <string name="tutorial_arrival_header_sliding_panel_text">Toca sobre la flecha o desliza el panel hacia arriba
         para ver mas llegadas de buses en esta parada.
     </string>
-    <string name="tutorial_arrival_header_star_route_title">Agrega rutas a favoritos</string>
-    <string name="tutorial_arrival_header_star_route_text">Toca sobre la estrella para que tus rutas
-        favoritas aparezcan en la parte superior del panel deslizante.
-    </string>
     <string name="tutorial_recent_stops_routes_title">Paradas y rutas recientes</string>
     <string name="tutorial_recent_stops_routes_text">Encuentra las paradas y rutas que recientemente has mirado
         accediendo por medio del botón \"Más\" en la parte superior derecha de la pantalla.

@@ -32,8 +32,11 @@ import org.onebusaway.android.time.WallTime
 @RunWith(AndroidJUnit4::class)
 class LocationFixesTest {
 
-    private val time = 1_700_000_000_000L
-    private val now = WallTime(time)
+    // NOT named `time`: inside a `Location(...).apply { }` block the receiver is the Location, so an
+    // unqualified `time` would resolve to `Location.getTime()` (0 on a fresh fix), not this constant —
+    // silently zeroing every timestamp the cases build. `baseTime` has no such collision.
+    private val baseTime = 1_700_000_000_000L
+    private val now = WallTime(baseTime)
     private val timeThresholdMs = LocationFixes.TIME_THRESHOLD.inWholeMilliseconds
 
     @Test
@@ -59,50 +62,50 @@ class LocationFixesTest {
         assertFalse(LocationFixes.compareLocations(null, Location("test"), now))
 
         // We always want the newer location
-        var a = Location("test").apply { this.time = time + 1 }
-        var b = Location("test").apply { this.time = time }
+        var a = Location("test").apply { this.time = baseTime + 1 }
+        var b = Location("test").apply { this.time = baseTime }
         assertTrue(LocationFixes.compareLocations(a, b, now))
 
-        a.time = time
-        b.time = time + 1
+        a.time = baseTime
+        b.time = baseTime + 1
         assertFalse(LocationFixes.compareLocations(a, b, now))
 
         // The new location is saved if the old location is older than the time threshold, even if
         // its accuracy is worse
         a = Location("test").apply {
-            this.time = time // A is newer
+            this.time = baseTime // A is newer
             accuracy = LocationFixes.ACC_THRESHOLD_METERS + 1 // 1 meter worse than threshold
         }
         b = Location("test").apply {
             accuracy = LocationFixes.ACC_THRESHOLD_METERS - 1 // 1 meter better than threshold
-            this.time = time - timeThresholdMs - 1 // older than time threshold
+            this.time = baseTime - timeThresholdMs - 1 // older than time threshold
         }
         assertTrue(LocationFixes.compareLocations(a, b, now))
 
         // A is older, so this should fail, since we never want an older location
         a = Location("test").apply {
-            this.time = time - timeThresholdMs - 2 // A is older
+            this.time = baseTime - timeThresholdMs - 2 // A is older
             accuracy = LocationFixes.ACC_THRESHOLD_METERS + 1 // 1 meter worse than threshold
         }
         b = Location("test").apply {
             accuracy = LocationFixes.ACC_THRESHOLD_METERS - 1 // 1 meter better than threshold
-            this.time = time - timeThresholdMs - 1 // older than time threshold
+            this.time = baseTime - timeThresholdMs - 1 // older than time threshold
         }
         assertFalse(LocationFixes.compareLocations(a, b, now))
 
         // A newer location is preferred, as long as it has a reasonable accuracy
         a = Location("test").apply {
-            this.time = time + 1 // A is newer
+            this.time = baseTime + 1 // A is newer
             accuracy = LocationFixes.ACC_THRESHOLD_METERS - 1 // 1 meter better than threshold
         }
-        b = Location("test").apply { this.time = time }
+        b = Location("test").apply { this.time = baseTime }
         assertTrue(LocationFixes.compareLocations(a, b, now))
 
         a = Location("test").apply {
-            this.time = time + 1 // A is newer
+            this.time = baseTime + 1 // A is newer
             accuracy = LocationFixes.ACC_THRESHOLD_METERS + 1 // 1 meter worse than threshold
         }
-        b = Location("test").apply { this.time = time }
+        b = Location("test").apply { this.time = baseTime }
         assertFalse(LocationFixes.compareLocations(a, b, now))
     }
 

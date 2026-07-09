@@ -16,14 +16,21 @@
 package org.onebusaway.android.ui.tripplan
 
 import android.content.Context
+import android.location.Geocoder
 import dagger.hilt.android.qualifiers.ApplicationContext
+import edu.usf.cutr.pelias.AutocompleteRequest
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.onebusaway.android.BuildConfig
+import org.onebusaway.android.R
 import org.onebusaway.android.directions.util.CustomAddress
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.region.span
 import org.onebusaway.android.util.BuildFlavorUtils
-import org.onebusaway.android.util.LocationUtils
+import org.onebusaway.android.util.RegionUtils
+import org.onebusaway.android.util.locationOf
 
 /** Address-autocomplete suggestions for the trip-plan endpoints. */
 interface GeocodeRepository {
@@ -33,10 +40,15 @@ interface GeocodeRepository {
 /**
  * Address suggestions for the trip-plan endpoints. Prefers Pelias (real autocomplete, with
  * `transport:public` results flagged as transit), but falls back to the on-device
- * [android.location.Geocoder] when no Pelias API key is configured — so key-free dev builds still
- * geocode. Both paths reuse the existing [LocationUtils] geocoders (which handle the region bbox
- * biasing/filtering); the Geocoder fallback has no typeahead/transit categories, so it's degraded only.
- * Runs the blocking work on the IO thread and projects onto the JVM-pure [TripEndpoint.Geocoded].
+ * [Geocoder] when no Pelias API key is configured — so key-free dev builds still geocode. Both paths
+ * bias/limit results to the current region's bounding box; the Geocoder fallback has no
+ * typeahead/transit categories, so it's degraded only. Runs the blocking work on the IO thread and
+ * projects onto the JVM-pure [TripEndpoint.Geocoded].
+ *
+ * This is the sole caller of what used to be `LocationUtils.processPeliasGeocoding` /
+ * `processGeocoding`; it always passes a bare user-typed query (no reference lat/lng, not
+ * "geocoding for a marker"), so the collapsed pipeline here drops the dead varargs/lat-lng,
+ * closest-marker, and "current location" branches those methods carried.
  */
 class DefaultGeocodeRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -46,17 +58,48 @@ class DefaultGeocodeRepository @Inject constructor(
     override suspend fun suggest(query: String): Result<List<TripEndpoint.Geocoded>> =
         withContext(Dispatchers.IO) {
             runCatching {
+                if (query.isBlank()) return@runCatching emptyList()
                 val region = regionRepository.region.value
                 val addresses = if (BuildFlavorUtils.isPeliasApiKeyDefined()) {
-                    LocationUtils.processPeliasGeocoding(context, region, query)
+                    peliasSuggestions(query, region)
                 } else {
-                    // No-key fallback: the platform Geocoder, region-biased + filtered — the same helper
-                    // the legacy trip planner already geocodes its endpoint addresses with.
-                    LocationUtils.processGeocoding(context, region, false, query)
+                    platformSuggestions(query, region)
                 }
-                addresses.orEmpty().map { it.toGeocoded() }
+                addresses.withinRegion(region).map { it.toGeocoded() }
             }
         }
+
+    /** Pelias autocomplete, biased to the region's bounding box. Throws IOException on failure. */
+    private fun peliasSuggestions(query: String, region: Region?): List<CustomAddress> {
+        val requestBuilder = AutocompleteRequest.Builder(BuildConfig.PELIAS_API_KEY, query)
+            .setApiEndpoint(context.getString(R.string.pelias_api_url))
+        region?.span()?.let { requestBuilder.setBoundaryRect(it.minLat, it.minLon, it.maxLat, it.maxLon) }
+        // Empty categories string still asks for categories, so transit results are flagged.
+        requestBuilder.setCategories("")
+        return requestBuilder.build().call().features.map { CustomAddress(it) }
+    }
+
+    /** On-device [Geocoder] fallback (no Pelias key), limited to the region's bounding box. */
+    private fun platformSuggestions(query: String, region: Region?): List<CustomAddress> {
+        val geocoder = Geocoder(context)
+        // Sync getFromLocationName is deprecated in API 33, but its async GeocodeListener replacement
+        // *requires* API 33 while minSdk is 23 — and minSdk reaching 33 isn't foreseeable — so the sync
+        // call is retained deliberately (this key-free fallback path is already degraded/best-effort).
+        @Suppress("DEPRECATION")
+        val results = region?.span()?.let {
+            geocoder.getFromLocationName(query, GEOCODER_MAX_RESULTS, it.minLat, it.minLon, it.maxLat, it.maxLon)
+        } ?: geocoder.getFromLocationName(query, GEOCODER_MAX_RESULTS)
+        return results.orEmpty().map { CustomAddress(it) }
+    }
+
+    /** Drops results outside the region's server limits (empty region = no filtering). */
+    private fun List<CustomAddress>.withinRegion(region: Region?): List<CustomAddress> =
+        if (region == null) this
+        else filter { RegionUtils.isLocationWithinRegion(locationOf(it.latitude, it.longitude), region) }
+
+    private companion object {
+        const val GEOCODER_MAX_RESULTS = 5
+    }
 }
 
 /** Mints the domain [TripEndpoint.Geocoded] from a geocoder [CustomAddress] result (the wire boundary). */

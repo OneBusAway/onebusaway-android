@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.region.Region;
 import org.onebusaway.android.mock.MockRegion;
-import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.Locations;
 import org.onebusaway.android.util.RegionUtils;
 
 import android.content.Context;
@@ -68,12 +68,12 @@ public class RegionUtilTest {
         mTampaRegion = MockRegion.getTampa(mTargetContext);
 
         // Region locations
-        mSeattleLoc = LocationUtils.makeLocation(47.6097, -122.3331);
-        mTampaLoc = LocationUtils.makeLocation(27.9681, -82.4764);
+        mSeattleLoc = Locations.locationOf(47.6097, -122.3331);
+        mTampaLoc = Locations.locationOf(27.9681, -82.4764);
 
         // Far locations
-        mLondonLoc = LocationUtils.makeLocation(51.5072, -0.1275);
-        mZeroZeroLoc = LocationUtils.makeLocation(0, 0);
+        mLondonLoc = Locations.locationOf(51.5072, -0.1275);
+        mZeroZeroLoc = Locations.locationOf(0, 0);
     }
 
     @Test

@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.tripplan
 
+import android.location.Location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import org.onebusaway.android.location.SearchCenter
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.TimeProvider
 import org.opentripplanner.api.model.Itinerary
@@ -51,9 +53,16 @@ class TripPlanViewModel @Inject constructor(
     private val geocode: GeocodeRepository,
     private val planRepository: TripPlanRepository,
     private val regionRepository: RegionRepository,
+    private val searchCenter: SearchCenter,
     timeProvider: TimeProvider,
     settingsRepository: AdvancedSettingsRepository,
 ) : ViewModel() {
+
+    /**
+     * Fallback center for the map-pick screen when the chosen endpoint has no coordinates yet:
+     * the device's last known location, else the region center, else null.
+     */
+    fun mapPickerCenter(): Location? = searchCenter.current()
 
     private val initialDateTimeMillis = timeProvider.now()
     private val initialSettings = settingsRepository.load()

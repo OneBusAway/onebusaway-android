@@ -24,13 +24,13 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.onebusaway.android.util.LocationUtils
+import org.onebusaway.android.util.locationOf
 import org.onebusaway.android.util.Polyline
 
 @RunWith(AndroidJUnit4::class)
 class InterpolateAlongPolylineTest {
 
-    private fun loc(lat: Double, lng: Double): Location = LocationUtils.makeLocation(lat, lng)
+    private fun loc(lat: Double, lng: Double): Location = locationOf(lat, lng)
 
     // Three points along the equator, each ~111km apart
     private val poly = Polyline(listOf(loc(0.0, 0.0), loc(0.0, 1.0), loc(0.0, 2.0)))

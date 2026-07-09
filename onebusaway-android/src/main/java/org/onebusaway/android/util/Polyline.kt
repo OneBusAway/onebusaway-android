@@ -31,7 +31,7 @@ class Polyline(points: List<Location>) {
     private val cumulativeDistances: DoubleArray =
             points
                     .zipWithNext { prev, cur ->
-                        LocationUtils.haversineDistance(
+                        haversineDistance(
                                 prev.latitude,
                                 prev.longitude,
                                 cur.latitude,

@@ -42,8 +42,8 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.LocationHelper
-import org.onebusaway.android.util.LocationUtils
 
 /**
  * The observable last-known device location and the single owner of location *production* for the app.
@@ -103,7 +103,7 @@ interface LocationSink {
 
     /**
      * Offers a raw location from the device listener. Publishes it (as a fresh copy) iff it is "better"
-     * than the current value per [LocationUtils.compareLocations]; returns whether it was accepted.
+     * than the current value per [LocationFixes.compareLocations]; returns whether it was accepted.
      */
     fun update(raw: Location?): Boolean
 }
@@ -215,7 +215,7 @@ class DefaultLocationRepository @Inject constructor(
     override fun update(raw: Location?): Boolean {
         // compareLocations already rejects a null candidate; the explicit check also lets `raw`
         // smart-cast to non-null for the copy below.
-        if (raw == null || !LocationUtils.compareLocations(raw, _location.value)) {
+        if (raw == null || !LocationFixes.compareLocations(raw, _location.value, WallTime.now())) {
             return false
         }
         // A fresh copy: the StateFlow dedupes by reference (Location has no value equality).
@@ -242,7 +242,7 @@ class DefaultLocationRepository @Inject constructor(
             }
         }
         val apiV1 = pollApiV1()
-        return if (LocationUtils.compareLocationsByTime(playServices, apiV1)) {
+        return if (LocationFixes.compareLocationsByTime(playServices, apiV1)) {
             Log.d(TAG, "Using location from Google Play Services")
             playServices
         } else {
@@ -262,7 +262,7 @@ class DefaultLocationRepository @Inject constructor(
                 null
             }
             // Keep this provider's location if we have none yet, or it is newer than what we have.
-            if (LocationUtils.compareLocationsByTime(loc, last)) {
+            if (LocationFixes.compareLocationsByTime(loc, last)) {
                 last = loc
             }
         }

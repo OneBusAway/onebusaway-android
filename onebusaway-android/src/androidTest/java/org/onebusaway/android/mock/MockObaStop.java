@@ -20,7 +20,7 @@ import android.location.Location;
 
 import org.onebusaway.android.models.ObaRoute;
 import org.onebusaway.android.models.ObaStop;
-import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.Locations;
 
 import java.util.HashMap;
 
@@ -60,7 +60,7 @@ public class MockObaStop {
 
         @Override
         public Location getLocation() {
-            return LocationUtils.makeLocation(getLatitude(), getLongitude());
+            return Locations.locationOf(getLatitude(), getLongitude());
         }
 
         @Override

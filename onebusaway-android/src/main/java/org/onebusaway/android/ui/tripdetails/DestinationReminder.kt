@@ -56,7 +56,7 @@ import org.onebusaway.android.nav.NavigationService
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.compose.components.OptOutInfoDialog
 import org.onebusaway.android.ui.compose.findActivity
-import org.onebusaway.android.util.LocationUtils
+import org.onebusaway.android.location.isLocationEnabled
 import org.onebusaway.android.util.PermissionUtils.NOTIFICATION_PERMISSION_REQUEST
 
 /**
@@ -152,19 +152,14 @@ internal fun rememberDestinationReminderAction(
     }
 
     fun onDestinationReminderConfirmed(position: Int) {
-        if (!LocationUtils.isLocationEnabled(context)) {
+        if (!isLocationEnabled(context)) {
             // Still build the pending service intent so the location-settings result can start it.
             if (setUpNavigationService(position) == null) return
             askUserToTurnLocationOn()
             return
         }
-        // LOCATION_MODE_HIGH_ACCURACY: Android's location "modes" were deprecated in API 28 (collapsed
-        // to a simple on/off + per-app precision). Reworking this high-accuracy nudge is a UX decision
-        // (tracked in #1728); the legacy setting still reads on devices, so keep it for now.
-        @Suppress("DEPRECATION")
-        val highAccuracyMode = Settings.Secure.LOCATION_MODE_HIGH_ACCURACY
         if (!prefsRepository.getBoolean(R.string.preference_key_never_show_change_location_mode_dialog, false) &&
-            LocationUtils.getLocationMode(context) != highAccuracyMode
+            !isHighAccuracyLocationMode(context)
         ) {
             dialogForLocationModeChanges()
         }
@@ -261,3 +256,17 @@ internal fun rememberDestinationReminderAction(
 
     return { stopIndex -> confirmDestinationReminder(stopIndex) }
 }
+
+/**
+ * Whether the device's location mode is "high accuracy". Android's location "modes" were deprecated
+ * in API 28 (collapsed to a simple on/off + per-app precision); reworking this high-accuracy nudge is
+ * a UX decision (tracked in #1728), and the legacy setting still reads on devices, so keep it for now.
+ */
+@Suppress("DEPRECATION")
+private fun isHighAccuracyLocationMode(context: Context): Boolean =
+    try {
+        Settings.Secure.getInt(context.contentResolver, Settings.Secure.LOCATION_MODE) ==
+            Settings.Secure.LOCATION_MODE_HIGH_ACCURACY
+    } catch (e: Settings.SettingNotFoundException) {
+        false
+    }

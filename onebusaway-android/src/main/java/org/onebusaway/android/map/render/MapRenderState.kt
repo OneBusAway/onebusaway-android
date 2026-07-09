@@ -207,7 +207,10 @@ class MapRenderState {
     val snapshot: StateFlow<MapRenderSnapshot> = _snapshot.asStateFlow()
 
     // Map content padding (route-header top + arrivals-sheet bottom), in its own flow so a padding
-    // change doesn't redraw the overlay content. The renderer applies it (both flavors: map.setPadding).
+    // change doesn't redraw the overlay content. The Google adapter applies it globally via
+    // map.setPadding (which its newLatLngBounds framing then honors); maplibre's newLatLngBounds ignores
+    // persistent padding, so its Points framing reads this value and folds the insets into the fit
+    // directly (see MapLibreCameraCommands.applyFramingIntent).
     private val _padding = MutableStateFlow(MapPadding())
 
     val padding: StateFlow<MapPadding> = _padding.asStateFlow()

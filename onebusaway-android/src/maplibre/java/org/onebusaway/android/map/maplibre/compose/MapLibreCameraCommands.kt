@@ -105,8 +105,15 @@ fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: Map
                 .include(LatLng(sw.latitude, sw.longitude))
                 .include(LatLng(ne.latitude, ne.longitude))
                 .build()
+            // maplibre's newLatLngBounds fits the box against *only* the padding passed here — unlike the
+            // Google flavor it does NOT consult the map's persistent setPadding (its CameraBoundsUpdate
+            // fits against its own padding array). So the route-header (top) + arrivals-sheet (bottom)
+            // insets have to be folded into the fit explicitly, on top of the symmetric breathing room,
+            // or the vehicle+stop pair lands under one of the two overlays that are open after an ETA tap.
+            val pad = ViewUtils.dpToPixels(context, POINTS_FRAMING_PADDING_DP)
+            val overlay = renderState.padding.value
             map.animateCamera(
-                CameraUpdateFactory.newLatLngBounds(bounds, ViewUtils.dpToPixels(context, POINTS_FRAMING_PADDING_DP))
+                CameraUpdateFactory.newLatLngBounds(bounds, pad, overlay.topPx + pad, pad, overlay.bottomPx + pad)
             )
         }
     }

@@ -183,18 +183,18 @@ class HomeViewModel @Inject constructor(
     fun onSheetSettled(state: ArrivalsSheetState, peekPx: Int) {
         val previous = settledSheet
         settledSheet = state
-        // The FAB lift is computed locally in HomeScreen now; this method only drives the map's bottom
-        // padding + the on-expand recenter. The initial reveal (from Hidden) is skipped.
-        if (previous == ArrivalsSheetState.Hidden) {
-            return
+        // The FAB lift is computed locally in HomeScreen now; this method drives the map's bottom padding
+        // + the on-expand recenter. The map inset must track the sheet's resting height on *every* settle,
+        // including the initial reveal (from Hidden) — otherwise an ETA tap right after focusing a stop
+        // (the sheet's first appearance) frames the vehicle+stop against a stale 0 inset and lands them
+        // under the drawer. Only the on-expand recenter is skipped on that initial reveal (matching the
+        // legacy behavior: don't yank the camera onto the focused stop just because the sheet appeared).
+        _mapBottomPadding.value = when (state) {
+            ArrivalsSheetState.Expanded, ArrivalsSheetState.Collapsed -> peekPx
+            ArrivalsSheetState.Hidden -> 0
         }
-        when (state) {
-            ArrivalsSheetState.Expanded -> {
-                _mapBottomPadding.value = peekPx
-                recenterOnFocusedStop()
-            }
-            ArrivalsSheetState.Collapsed -> _mapBottomPadding.value = peekPx
-            ArrivalsSheetState.Hidden -> _mapBottomPadding.value = 0
+        if (state == ArrivalsSheetState.Expanded && previous != ArrivalsSheetState.Hidden) {
+            recenterOnFocusedStop()
         }
     }
 

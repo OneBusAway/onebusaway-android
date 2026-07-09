@@ -242,7 +242,7 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
             }
             // Declarative map padding (route-header top + arrivals-sheet bottom).
             LaunchedEffect(map) {
-                renderState.padding.collect { map.setPadding(0, it.topPx, 0, it.bottomPx) }
+                renderState.padding.collect { map.applyMapPadding(it) }
             }
             // Declarative camera. Transient gestures apply as they arrive (dropped if none pending when
             // the map wasn't subscribed). The retained framing intent is replayed to this collector when

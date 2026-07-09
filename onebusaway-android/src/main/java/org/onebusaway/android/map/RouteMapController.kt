@@ -259,7 +259,7 @@ class RouteMapController(
         return MapVehicles(
             markers = extrapolatedVehicles(
                 poll.response, setOf(id), now, resolved.directionId,
-                tripObservationRepository::lookupTripState, includeDataFixPoint,
+                includeDataFixPoint, tripObservationRepository::lookupTripState,
             ).map { it.toMarker() },
             response = poll.response,
         )

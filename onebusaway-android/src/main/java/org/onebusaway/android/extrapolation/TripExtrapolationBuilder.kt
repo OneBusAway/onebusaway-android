@@ -108,12 +108,13 @@ fun extrapolatedVehicles(
     routeIds: Set<String>,
     nowMs: WallTime,
     directionId: Int? = null,
-    lookupState: (String?) -> TripState?,
     // Whether to project each vehicle's last fix onto the shape ([dataFixPoint]). Only the discrete,
     // once-per-poll set needs it (the renderer reads the selected vehicle's dot from there); the ~20–120Hz
     // motion sampler leaves it null so the projection stays off the per-frame path — it's constant between
-    // fixes and read only for the one selected vehicle, so computing it every frame is pure waste.
+    // fixes and read only for the one selected vehicle, so computing it every frame is pure waste. Placed
+    // before [lookupState] so the callback stays last (trailing-lambda call sites keep working).
     includeDataFixPoint: Boolean = false,
+    lookupState: (String?) -> TripState?,
 ): List<ExtrapolatedVehicle> =
     routeTrips.trips.mapNotNull { trip ->
         val status = trip.status ?: return@mapNotNull null

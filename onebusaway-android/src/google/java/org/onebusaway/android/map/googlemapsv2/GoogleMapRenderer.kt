@@ -659,4 +659,6 @@ class GoogleMapRenderer(
     }
 }
 
-private fun GeoPoint.toLatLng() = LatLng(latitude, longitude)
+// Internal (not private) so the inner marker/overlay classes call it without a synthetic accessor
+// (lint SyntheticAccessor); it's a trivial converter used only within this file.
+internal fun GeoPoint.toLatLng() = LatLng(latitude, longitude)

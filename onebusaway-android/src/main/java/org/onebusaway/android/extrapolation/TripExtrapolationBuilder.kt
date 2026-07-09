@@ -131,6 +131,9 @@ fun extrapolatedVehicles(
             fixTimeMs = state?.anchorLocalTimeMs?.epochMs ?: status.lastUpdateTime,
             status = status,
             isRealtime = isRealtime,
+            // The last real fix's position on the shape (the glide's seed), so the most-recent-data dot
+            // sits at the band's origin rather than at the raw off-shape reported lat/lng (#1752).
+            dataFixPoint = state?.let(::anchorFixPoint),
         )
     }
 
@@ -147,19 +150,25 @@ private fun weightedBandSegments(distribution: ProbDistribution, polyline: Polyl
         WeightedBandSegment(points.map(Location::toGeoPoint), slice.alpha.coerceIn(0f, 1f))
     }
 
-private fun dataAgeMarker(state: TripState, nowMs: WallTime): DataAgeMarker? {
+/**
+ * The last real fix's position on the route shape: the anchor's distanceAlongTrip — the exact value the
+ * glide is seeded from ([TripState.extrapolate]) — projected onto the shape. This keeps the "most recent
+ * data" marker pinned to the glide's origin so it can never float ahead of (or off) the glide. Drawing it
+ * at the anchor's raw `position` instead (a different, server-extrapolated field than distanceAlongTrip)
+ * let the two disagree, so the dot appeared ahead of the glide when they diverged — the regression from
+ * a821321a8 ("Remove bestLocation — always use position for display"). Falls back to the reported position
+ * only when the fix carries no distance or the shape can't place it. Shared by the trip map's data-age
+ * marker and the route map's most-recent-data dot so both draw the dot from one source (#1752).
+ */
+internal fun anchorFixPoint(state: TripState): GeoPoint? {
     val anchor = state.anchor ?: return null
-    val anchorLocal = state.anchorLocalTimeMs ?: return null
-    // Plot the dot at the extrapolation's own anchor: the anchor's distanceAlongTrip — the exact value
-    // the glide is seeded from (TripState.extrapolate) — projected onto the shape. This keeps the "data
-    // received" dot pinned to the glide's origin so it can never float ahead of the glide. Drawing it at
-    // the anchor's raw `position` instead (a different, server-extrapolated field than distanceAlongTrip)
-    // let the two disagree, so the dot appeared ahead of the glide when they diverged — the regression
-    // from a821321a8 ("Remove bestLocation — always use position for display"). Fall back to the reported
-    // position only when the fix carries no distance or the shape can't place it.
-    val point = anchor.distanceAlongTrip?.let { dist -> state.polyline?.pointAtDistance(dist) }
+    return anchor.distanceAlongTrip?.let { dist -> state.polyline?.pointAtDistance(dist) }
         ?: anchor.position?.toGeoPoint()
-        ?: return null
+}
+
+private fun dataAgeMarker(state: TripState, nowMs: WallTime): DataAgeMarker? {
+    val anchorLocal = state.anchorLocalTimeMs ?: return null
+    val point = anchorFixPoint(state) ?: return null
     // Shown whenever there's a last fix, like the original (no max-age hide); the label is its age.
     // now − anchor is a same-domain (device) Duration; unwrap to raw Long ms for the marker.
     val ageMs = (nowMs - anchorLocal).inWholeMilliseconds.coerceAtLeast(0L)

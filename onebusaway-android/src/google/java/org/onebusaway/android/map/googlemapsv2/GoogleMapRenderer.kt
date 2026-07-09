@@ -442,8 +442,12 @@ class GoogleMapRenderer(
     private fun updateMostRecentDataDot(markers: List<VehicleMarker>, nowMs: Long) {
         val selectedId = renderState.selectedVehicleTripId.value
         val selected = selectedId?.let { id -> markers.firstOrNull { it.activeTripId == id } }
+        // The dot marks the last fix at the glide's origin: the shape-projected anchor point when we
+        // have it (so it coincides with the uncertainty band's origin), falling back to the raw reported
+        // lat/lng for a vehicle we aren't extrapolating on a shape (#1752).
         val reported = selected?.let { it.status.lastKnownLocation ?: it.status.position }
-        if (selected == null || reported == null) {
+        val target = selected?.dataFixPoint ?: reported?.let { GeoPoint(it.latitude, it.longitude) }
+        if (selected == null || target == null) {
             mostRecentDataMarker?.remove()
             mostRecentDataMarker = null
             dotSmoother.retainOnly(emptySet())
@@ -451,7 +455,6 @@ class GoogleMapRenderer(
             dotAgeSeconds = -1L
             return
         }
-        val target = GeoPoint(reported.latitude, reported.longitude)
         val ageSeconds = TimeUnit.MILLISECONDS.toSeconds(nowMs - selected.fixTimeMs)
         val existing = mostRecentDataMarker
         if (existing == null) {

@@ -512,6 +512,7 @@ class RouteMapController(
             status = status,
             fixTimeMs = fixTimeMs,
             bearing = bearing,
+            dataFixPoint = dataFixPoint,
         )
 }
 

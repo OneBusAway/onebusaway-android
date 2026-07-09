@@ -42,14 +42,6 @@
         <item>Szacowany przyjazd</item>
         <item>Linia</item>
     </string-array>
-    <string-array name="search_stop_options">
-        <item>Pokaż przyjazdy</item>
-        <item>Pokaż na mapie</item>
-    </string-array>
-    <string-array name="search_route_options">
-        <item>Pokaż listę przystanków</item>
-        <item>Pokaż na mapie</item>
-    </string-array>
     <string-array name="reminder_time">
         <item>1 minuta</item>
         <item>3 minuty</item>

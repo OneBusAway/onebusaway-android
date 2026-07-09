@@ -240,6 +240,22 @@ class MapRenderState {
         _cameraGestures.tryEmit(command)
     }
 
+    // Transient one-shot "ping" ripples: a circle radiating out from a point, played once to draw the eye
+    // to a just-focused vehicle (#1764). Transient like [cameraGestures] — replay=0 so a ping emitted with
+    // no map subscribed is discarded (it carries no lasting intent), buffered so the synchronous emit never
+    // suspends or drops under a burst. The renderer animates each over a fixed short duration off its
+    // per-frame clock.
+    private val _mapPings = MutableSharedFlow<GeoPoint>(
+        extraBufferCapacity = 8,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
+    val mapPings: SharedFlow<GeoPoint> = _mapPings.asSharedFlow()
+
+    fun emitPing(point: GeoPoint) {
+        _mapPings.tryEmit(point)
+    }
+
     // The map's retained framing intent (fit route / itinerary / region / a fixed point), or null for no
     // framing. A replay=1 SharedFlow rather than a StateFlow, for two reasons a plain StateFlow can't
     // serve at once: (1) a fresh adapter — a config-change or process-restore recompose, or the map

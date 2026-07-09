@@ -231,6 +231,10 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                         }
                     }
             }
+            // One-shot vehicle pings: hand each to the renderer, which animates it over the frame loop above.
+            LaunchedEffect(activeRenderer) {
+                renderState.mapPings.collect { activeRenderer.startPing(it) }
+            }
         }
 
         val map = googleMap

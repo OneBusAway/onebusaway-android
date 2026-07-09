@@ -20,6 +20,7 @@
 package org.onebusaway.android.map.maplibre
 
 import android.content.Context
+import androidx.core.content.ContextCompat
 import java.util.concurrent.TimeUnit
 import org.maplibre.android.annotations.Annotation
 import org.maplibre.android.annotations.Icon
@@ -38,6 +39,7 @@ import org.onebusaway.android.map.render.BikeBitmaps
 import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.StopBand
@@ -138,6 +140,15 @@ class MapLibreRenderer(
     private var dotAgeSeconds: Long = -1L
 
     private val iconFactory = IconFactory.getInstance(context)
+
+    // The one-shot "ping" ripple (#1764): a ring-bitmap marker grown + faded over [MapPing.DURATION_MS]
+    // from a just-focused vehicle (the classic annotation API has no circle). [pingStartMs] is 0 until the
+    // first frame stamps it; null marker means no ping in flight.
+    private var pingMarker: Marker? = null
+    private var pingPoint: GeoPoint? = null
+    private var pingStartMs: Long = 0L
+    private val pingColor by lazy { ContextCompat.getColor(context, R.color.theme_primary) }
+    private val density = context.resources.displayMetrics.density
 
     /** Redraw the static layer (everything but the live vehicles + trip-focus overlay). */
     fun renderStatic() {
@@ -272,6 +283,47 @@ class MapLibreRenderer(
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
         moveVehicles(vehicles, nowMs)
         updateTripOverlay(overlay, nowMs)
+        updatePing(nowMs)
+    }
+
+    /** Start a one-shot ping ripple at [point]; the frame loop animates it (#1764). */
+    fun startPing(point: GeoPoint) {
+        clearPing()
+        pingPoint = point
+        pingStartMs = 0L // stamped on the first frame that draws it
+    }
+
+    // Advance the ping ripple: regrow the ring bitmap (bigger radius, fading color) and re-set the marker
+    // icon each frame, removing it when the ripple completes. The bitmap is a constant max-size square so
+    // the marker stays centered on the vehicle as the ring grows inside it.
+    private fun updatePing(nowMs: Long) {
+        val point = pingPoint ?: return
+        if (pingStartMs == 0L) pingStartMs = nowMs
+        val elapsed = nowMs - pingStartMs
+        if (MapPing.isDone(elapsed)) {
+            clearPing()
+            return
+        }
+        val progress = MapPing.progress(elapsed)
+        val maxRadiusPx = (MapPing.MAX_RADIUS_DP * density).toInt()
+        val radiusPx = maxRadiusPx * MapPing.radiusFraction(progress)
+        val color = MapPing.withAlpha(pingColor, MapPing.alpha(progress))
+        val icon = iconFactory.fromBitmap(
+            MapPing.ringBitmap(maxRadiusPx, radiusPx, MapPing.STROKE_DP * density, color)
+        )
+        val existing = pingMarker
+        if (existing == null) {
+            pingMarker = map.addMarker(MarkerOptions().position(point.toLatLng()).icon(icon))
+        } else {
+            existing.icon = icon
+        }
+    }
+
+    private fun clearPing() {
+        pingMarker?.let { map.removeAnnotation(it) }
+        pingMarker = null
+        pingPoint = null
+        pingStartMs = 0L
     }
 
     /**

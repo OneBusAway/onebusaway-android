@@ -234,6 +234,8 @@ class RouteMapController(
                 // Fit the vehicle and its originating stop together (the stop is dropped only if it's
                 // somehow not in the loaded route, leaving the vehicle framed alone at a comfortable zoom).
                 host.frame(FramingIntent.Points(listOfNotNull(marker?.point, originatingStopPoint())))
+                // Radiate a ping from the vehicle so it's clear which one this arrival is querying (#1764).
+                marker?.point?.let { renderState.emitPing(it) }
             }
             FocusResolution.DROP -> {
                 pendingFocus = null

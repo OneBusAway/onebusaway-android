@@ -291,8 +291,6 @@
     <string name="my_no_starred_stops">Non hai fermate preferite.\n\nAggiungi una fermata ai preferiti dalla schermata degli arrivi toccando la stella vicino al nome della fermata.</string>
     <string name="my_no_recent_routes">Non hai linee recenti.</string>
     <string name="my_no_starred_routes">Non hai linee preferite.\n\nPuoi aggiungere una linea ai preferiti dalla schermata degli arrivi toccando la stella vicino al numero della linea.</string>
-    <string name="route_favorite_options_title_star">Aggiungi linea \&quot;%s\&quot; ai preferiti per:</string>
-    <string name="route_favorite_options_title_unstar">Rimuovi \&quot;%s\&quot; dai preferiti per:</string>
 
     <string name="my_option_clear_recent_stops">Cancella fermate recenti</string>
     <string name="my_option_clear_recent_routes">Cancella linee recenti</string>

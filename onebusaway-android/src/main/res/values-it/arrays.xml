@@ -29,10 +29,6 @@
         <item>Enti supportati</item>
         <item>Feed di Twitter</item>
     </string-array>
-    <string-array name="route_favorite_options">
-        <item>Questa fermata</item>
-        <item>Tutte le fermate</item>
-    </string-array>
     <string-array name="sort_stops">
         <item>Nome</item>
         <item>Più utilizzati</item>

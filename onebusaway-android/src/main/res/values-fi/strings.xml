@@ -299,8 +299,6 @@
     </string>
     <string name="my_no_recent_routes">Sinulla ei ole aiempia reittejä.</string>
     <!-- <string name="my_no_starred_routes">Sinulla ei ole suosikkireittejä.</string>-->
-    <string name="route_favorite_options_title_star">Lisää suosikki \"%s\":</string>
-    <string name="route_favorite_options_title_unstar">Poista suosikki \"%s\":</string>
 
     <string name="my_option_clear_recent_stops">Tyhjennä aiemmat pysäkit</string>
     <string name="my_option_clear_recent_routes">Tyhjennä aiemmat reitit</string>

@@ -24,7 +24,7 @@ import org.onebusaway.android.database.survey.entity.Study
 import org.onebusaway.android.database.survey.entity.Survey
 import org.onebusaway.android.database.widealerts.entity.AlertEntity
 
-/** The 11 legacy tables' rows, read from the legacy ContentProvider DB, ready to insert into Room. */
+/** The legacy tables' rows, read from the legacy ContentProvider DB, ready to insert into Room. */
 data class LegacyData(
     val stops: List<StopRecord>,
     val routes: List<RouteRecord>,
@@ -35,7 +35,6 @@ data class LegacyData(
     val regions: List<RegionRecord>,
     val regionBounds: List<RegionBoundRecord>,
     val open311Servers: List<Open311ServerRecord>,
-    val routeHeadsignFavorites: List<RouteHeadsignFavoriteRecord>,
     val navStops: List<NavStopRecord>,
 )
 
@@ -88,9 +87,6 @@ interface LegacyImportDao {
     suspend fun insertOpen311Servers(rows: List<Open311ServerRecord>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertRouteHeadsignFavorites(rows: List<RouteHeadsignFavoriteRecord>)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNavStops(rows: List<NavStopRecord>)
 
     // Survey + wide-alert tables — only present in a full Room-format backup (see [replaceAll]).
@@ -112,7 +108,6 @@ interface LegacyImportDao {
     @Query("DELETE FROM region_bounds") suspend fun clearRegionBounds()
     @Query("DELETE FROM open311_servers") suspend fun clearOpen311Servers()
     @Query("DELETE FROM regions") suspend fun clearRegions()
-    @Query("DELETE FROM route_headsign_favorites") suspend fun clearRouteHeadsignFavorites()
     @Query("DELETE FROM nav_stops") suspend fun clearNavStops()
     @Query("DELETE FROM surveys") suspend fun clearSurveys()
     @Query("DELETE FROM studies") suspend fun clearStudies()
@@ -152,7 +147,6 @@ interface LegacyImportDao {
         clearStopRouteFilters()
         clearTripAlerts()
         clearServiceAlerts()
-        clearRouteHeadsignFavorites()
         clearNavStops()
 
         insertRegions(data.regions)
@@ -164,7 +158,6 @@ interface LegacyImportDao {
         insertStopRouteFilters(data.stopRouteFilters)
         insertTripAlerts(data.tripAlerts)
         insertServiceAlerts(data.serviceAlerts)
-        insertRouteHeadsignFavorites(data.routeHeadsignFavorites)
         insertNavStops(data.navStops)
     }
 }

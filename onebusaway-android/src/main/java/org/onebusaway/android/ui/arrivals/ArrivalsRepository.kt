@@ -36,12 +36,9 @@ import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteDao
-import org.onebusaway.android.database.oba.RouteHeadsignFavoriteDao
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.StopRouteFilterDao
-import org.onebusaway.android.database.oba.applyRouteHeadsignFavorite
-import org.onebusaway.android.database.oba.computeRouteHeadsignFavorite
 import org.onebusaway.android.database.oba.markStopUsed
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
@@ -155,14 +152,11 @@ interface ArrivalsRepository {
     suspend fun setStopFavorite(stopId: String, favorite: Boolean)
 
     /**
-     * Stars (or unstars) a route/headsign favorite, then backfills the route's full details
-     * (short/long name, URL) from the API so the long name can be shown later. [stopId] null means
-     * "all stops". Replaces the legacy QueryUtils write + AsyncTaskLoader route-info fetch.
+     * Stars (or unstars) a route wholesale (#1751), then backfills the route's full details
+     * (short/long name, URL) from the API so the long name can be shown later.
      */
     suspend fun favoriteRoute(
         routeId: String,
-        headsign: String?,
-        stopId: String?,
         shortName: String?,
         longName: String?,
         favorite: Boolean
@@ -246,7 +240,6 @@ class DefaultArrivalsRepository @Inject constructor(
     private val serviceAlertDao: ServiceAlertDao,
     private val stopDao: StopDao,
     private val routeDao: RouteDao,
-    private val routeHeadsignFavoriteDao: RouteHeadsignFavoriteDao,
     private val importGate: ImportGate,
     private val preferences: PreferencesRepository,
     private val obaAnalytics: ObaAnalytics,
@@ -327,13 +320,13 @@ class DefaultArrivalsRepository @Inject constructor(
         val style = BuildFlavorUtils.getArrivalInfoStyleFromPreferences(context)
         // Style B includes the arrival/departure word in the status label; Style A does not.
         val includeArrivalDepartureLabel = style == BuildFlavorUtils.ARRIVAL_INFO_STYLE_B
-        // One favorites query for the whole list; ArrivalInfo's favorite state resolves from it in
-        // memory (the legacy per-row ContentProvider lookup is gone).
-        val favoriteRows = routeHeadsignFavoriteDao.favoritesForStopOrAll(snapshot.stopId)
+        // One favorite-route query for the whole list; each arrival's star resolves from the set in
+        // memory. A route star is wholesale now (#1751) — headsign/stop no longer matter.
+        val favoriteRouteIds = routeDao.favoriteRouteIds().toHashSet()
         val arrivals = convertArrivals(
             context, snapshot.arrivals, routeFilter, ServerTime(now), includeArrivalDepartureLabel
-        ) { routeId, headsign, stopId ->
-            computeRouteHeadsignFavorite(favoriteRows, routeId, headsign, stopId)
+        ) { routeId, _, _ ->
+            routeId in favoriteRouteIds
         }
         val stop = snapshot.stop
         val userInfo = stopDao.userInfo(snapshot.stopId)
@@ -391,14 +384,12 @@ class DefaultArrivalsRepository @Inject constructor(
         arrival.tripId to ArrivalActions(
             tripId = arrival.tripId,
             routeId = arrival.routeId,
-            headsign = arrival.headsign.orEmpty(),
-            stopId = arrival.stopId,
             routeShortName = route?.shortName,
             routeLongName = arrival.routeLongName,
             scheduleUrl = route?.url,
             agencyName = route?.agencyId?.let { snapshot.agencyName(it) },
             blockId = snapshot.trip(arrival.tripId)?.blockId,
-            isRouteFavorite = arrival.isRouteAndHeadsignFavorite,
+            isRouteFavorite = arrival.isRouteFavorite,
             alertSituationId = activeAlertFor(arrival.situationIds, activeSituationIds)
         )
     }
@@ -425,50 +416,30 @@ class DefaultArrivalsRepository @Inject constructor(
 
     override suspend fun favoriteRoute(
         routeId: String,
-        headsign: String?,
-        stopId: String?,
         shortName: String?,
         longName: String?,
         favorite: Boolean
     ) {
         importGate.awaitReady()
         val regionId = regionRepository.region.value?.id
-        // Ensure the route row exists (stamped with the current region) before marking the favorite.
+        // Ensure the route row exists (stamped with the current region) before marking the favorite —
+        // the starred-routes folder JOINs it for the display name/URL.
         routeDao.markRouteUsed(routeId, shortName, longName, regionId, System.currentTimeMillis())
-        setRouteHeadsignFavorite(routeId, headsign, stopId, favorite)
+        routeDao.setFavorite(routeId, if (favorite) 1 else 0)
+        reportBookmarkAnalytics(routeId, favorite)
 
         // Backfill the full route details so the long name can be shown later (was an AsyncTaskLoader).
         fetchAndStoreRouteDetails(routeId, regionId)
     }
 
-    /**
-     * Marks (or unmarks) a route/headsign/stop combination a favorite (delegating the DB-semantic
-     * reconciliation to [applyRouteHeadsignFavorite]), then reports bookmark analytics.
-     */
-    private suspend fun setRouteHeadsignFavorite(
-        routeId: String,
-        headsign: String?,
-        stopId: String?,
-        favorite: Boolean
-    ) {
-        applyRouteHeadsignFavorite(routeHeadsignFavoriteDao, routeDao, routeId, headsign, stopId, favorite)
-        reportBookmarkAnalytics(routeId, headsign, stopId, favorite)
-    }
-
-    private fun reportBookmarkAnalytics(
-        routeId: String,
-        headsign: String?,
-        stopId: String?,
-        favorite: Boolean
-    ) {
+    private fun reportBookmarkAnalytics(routeId: String, favorite: Boolean) {
         val event = context.getString(
             if (favorite) R.string.analytics_label_star_route else R.string.analytics_label_unstar_route
         )
-        val param = "${routeId}_$headsign for ${stopId ?: "all stops"}"
         obaAnalytics.reportUiEvent(
             PlausibleAnalytics.REPORT_BOOKMARK_EVENT_URL,
             event,
-            param,
+            routeId,
         )
     }
 

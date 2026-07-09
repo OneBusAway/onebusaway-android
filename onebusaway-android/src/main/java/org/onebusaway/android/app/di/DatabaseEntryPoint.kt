@@ -24,7 +24,6 @@ import org.onebusaway.android.database.AppDatabase
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.LegacyDataImporter
 import org.onebusaway.android.database.oba.RouteDao
-import org.onebusaway.android.database.oba.RouteHeadsignFavoriteDao
 import org.onebusaway.android.database.oba.RouteRecorder
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.TripDao
@@ -48,8 +47,6 @@ interface DatabaseEntryPoint {
     fun routeDao(): RouteDao
 
     fun tripDao(): TripDao
-
-    fun routeHeadsignFavoriteDao(): RouteHeadsignFavoriteDao
 
     fun importGate(): ImportGate
 

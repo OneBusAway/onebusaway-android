@@ -30,10 +30,6 @@
         <item>Agencias Soportadas</item>
         <item>Twitter</item>
     </string-array>
-    <string-array name="route_favorite_options">
-        <item>Esta parada</item>
-        <item>Todas las paradas</item>
-    </string-array>
     <string-array name="sort_stops">
         <item>Nombre</item>
         <item>Usadas mas frecuentemente</item>

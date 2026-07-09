@@ -98,10 +98,6 @@ class ArrivalsViewModel @AssistedInject constructor(
     private val _arrivalsLoaded = MutableSharedFlow<ArrivalsLoaded>(extraBufferCapacity = 1)
     val arrivalsLoaded: SharedFlow<ArrivalsLoaded> = _arrivalsLoaded.asSharedFlow()
 
-    /** The pending route-favorite dialog request (the route the user tapped "favorite" on), or null. */
-    private val _favoriteRequest = MutableStateFlow<ArrivalActions?>(null)
-    val favoriteRequest: StateFlow<ArrivalActions?> = _favoriteRequest.asStateFlow()
-
     /** Whether the stop-details dialog (the overflow "show stop details" action) is showing. */
     private val _stopDetailsVisible = MutableStateFlow(false)
     val stopDetailsVisible: StateFlow<Boolean> = _stopDetailsVisible.asStateFlow()
@@ -163,16 +159,6 @@ class ArrivalsViewModel @AssistedInject constructor(
         viewModelScope.launch { repository.setStopFavorite(content.header.stopId, newValue) }
     }
 
-    /** Opens the route-favorite dialog for [actions] (the per-arrival "favorite route" tap). */
-    fun requestRouteFavorite(actions: ArrivalActions) {
-        _favoriteRequest.value = actions
-    }
-
-    /** Dismisses the route-favorite dialog without changing anything. */
-    fun dismissRouteFavorite() {
-        _favoriteRequest.value = null
-    }
-
     /** Opens the stop-details dialog (the overflow "show stop details" action). */
     fun requestStopDetails() {
         _stopDetailsVisible.value = true
@@ -184,16 +170,13 @@ class ArrivalsViewModel @AssistedInject constructor(
     }
 
     /**
-     * Applies the route-favorite choice: stars/unstars the route/headsign (scoped to this stop, or
-     * all stops when [allStops]), backfills the route details, then reloads. Closes the dialog.
+     * Toggles the route star wholesale (#1751): stars the route if it isn't already (else unstars),
+     * backfills the route details, then reloads.
      */
-    fun favoriteRoute(actions: ArrivalActions, allStops: Boolean) {
-        _favoriteRequest.value = null
+    fun toggleRouteFavorite(actions: ArrivalActions) {
         viewModelScope.launch {
             repository.favoriteRoute(
                 routeId = actions.routeId,
-                headsign = actions.headsign,
-                stopId = if (allStops) null else actions.stopId,
                 shortName = actions.routeShortName,
                 longName = actions.routeLongName,
                 favorite = !actions.isRouteFavorite

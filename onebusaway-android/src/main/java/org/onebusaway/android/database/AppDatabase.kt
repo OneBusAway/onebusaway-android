@@ -7,7 +7,6 @@ import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.NavStopRecord
 import org.onebusaway.android.database.oba.RegionDao
 import org.onebusaway.android.database.oba.RouteDao
-import org.onebusaway.android.database.oba.RouteHeadsignFavoriteDao
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.StopRouteFilterDao
@@ -15,7 +14,6 @@ import org.onebusaway.android.database.oba.TripDao
 import org.onebusaway.android.database.oba.Open311ServerRecord
 import org.onebusaway.android.database.oba.RegionBoundRecord
 import org.onebusaway.android.database.oba.RegionRecord
-import org.onebusaway.android.database.oba.RouteHeadsignFavoriteRecord
 import org.onebusaway.android.database.oba.RouteRecord
 import org.onebusaway.android.database.oba.ServiceAlertRecord
 import org.onebusaway.android.database.oba.StopRecord
@@ -30,12 +28,16 @@ import org.onebusaway.android.database.widealerts.dao.AlertDao
 import org.onebusaway.android.database.widealerts.entity.AlertEntity
 
 /**
- * The app's single Room database. Holds the survey + wide-alert tables and — as of v3 — the 11 tables
+ * The app's single Room database. Holds the survey + wide-alert tables and — as of v3 — the tables
  * migrated from the legacy `ObaProvider` ContentProvider (storage-modernization). The dead recentStops
  * module (its own `stops`/`regions` tables) was removed in the same change; v3's migration drops those
  * and creates the legacy-schema tables in their place. These tables are now the authoritative store:
  * the ContentProvider has been removed and any pre-existing data is imported once via
  * [org.onebusaway.android.database.oba.LegacyDataImporter].
+ *
+ * v4 retires the two-tier route-favorite model (#1751): the `route_headsign_favorites` table is dropped
+ * and `routes.favorite` becomes the single source of truth, matching `stops.favorite`. It also adds the
+ * missing foreign-key child index on `surveys.study_id` (#1739).
  */
 @Database(
     entities = [
@@ -51,10 +53,9 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
         RegionRecord::class,
         RegionBoundRecord::class,
         Open311ServerRecord::class,
-        RouteHeadsignFavoriteRecord::class,
         NavStopRecord::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -74,7 +75,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun stopDao(): StopDao
     abstract fun routeDao(): RouteDao
     abstract fun tripDao(): TripDao
-    abstract fun routeHeadsignFavoriteDao(): RouteHeadsignFavoriteDao
     abstract fun regionDao(): RegionDao
     abstract fun navStopDao(): NavStopDao
 

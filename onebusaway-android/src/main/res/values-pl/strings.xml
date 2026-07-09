@@ -314,8 +314,6 @@
     <string name="my_no_recent_routes">Nie masz ostatnich linii.</string>
     <string name="my_no_starred_routes">Nie masz ulubionych linii.\n\nMożesz dodać linię do ulubionych na ekranie przyjazdów, dotykając gwiazdki obok numeru linii.
     </string>
-    <string name="route_favorite_options_title_star">Dodaj do ulubionych \"%s\" do:</string>
-    <string name="route_favorite_options_title_unstar">Usuń ulubione od \"%s\" do:</string>
 
     <string name="my_option_clear_recent_stops">Wyczyść ostatnie przystanki</string>
     <string name="my_option_clear_recent_routes">Wyczyść ostatnie trasy</string>

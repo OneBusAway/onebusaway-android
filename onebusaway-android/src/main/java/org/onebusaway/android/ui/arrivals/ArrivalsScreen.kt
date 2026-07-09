@@ -91,7 +91,6 @@ import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowStyleA
 import org.onebusaway.android.ui.arrivals.components.MenuRow
 import org.onebusaway.android.ui.arrivals.components.groupForStyleB
-import org.onebusaway.android.ui.arrivals.dialogs.RouteFavoriteHost
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.DisplayFormat
@@ -187,7 +186,6 @@ fun ArrivalsRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     ArrivalsPolling(viewModel)
-    RouteFavoriteHost(viewModel)
     StopDetailsHost(viewModel)
     val rowCallbacks = rememberArrivalRowCallbacks(handler, viewModel)
     ArrivalsScreen(

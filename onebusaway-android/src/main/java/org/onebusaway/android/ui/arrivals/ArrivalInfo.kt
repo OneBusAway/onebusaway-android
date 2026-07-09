@@ -69,7 +69,7 @@ class ArrivalInfo(
     /**
      * True if this route is a user-designated favorite, false if it is not.
      */
-    val isRouteAndHeadsignFavorite: Boolean
+    val isRouteFavorite: Boolean
 
     /**
      * The average historical occupancy of the vehicle when it arrives at this stop, or null if the
@@ -189,9 +189,9 @@ class ArrivalInfo(
         )
         timeText = computeTimeLabel(context)
 
-        // Whether the user marked this routeId/headsign/stopId a favorite (precomputed by the caller
-        // from one favorites query, replacing the legacy per-row ContentProvider lookup).
-        isRouteAndHeadsignFavorite = favorite
+        // Whether the user starred this route (precomputed by the caller from the favorite-route id
+        // set — a route star is wholesale now, #1751).
+        isRouteFavorite = favorite
 
         notifyText = computeNotifyText(context)
 

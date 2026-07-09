@@ -72,7 +72,6 @@ import org.onebusaway.android.ui.arrivals.ArrivalsList
 import org.onebusaway.android.ui.arrivals.ArrivalsPolling
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
-import org.onebusaway.android.ui.arrivals.dialogs.RouteFavoriteHost
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
 import org.onebusaway.android.ui.compose.MorphByProgress
@@ -115,7 +114,6 @@ fun ArrivalsPanel(
     val navBarInset = navigationBarBottomPadding()
     val state by viewModel.state.collectAsStateWithLifecycle()
     ArrivalsPolling(viewModel)
-    RouteFavoriteHost(viewModel)
     StopDetailsHost(viewModel)
     val rowCallbacks = rememberArrivalRowCallbacks(handler, viewModel)
     val content = state as? ArrivalsUiState.Content

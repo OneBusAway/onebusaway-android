@@ -77,7 +77,7 @@ public class ArrivalInfoUtils {
         ArrayList<Integer> preferredIndexes = new ArrayList<>();
         for (int i = firstIndex; i < infoList.size(); i++) {
             ArrivalInfo info = infoList.get(i);
-            if (info.isRouteAndHeadsignFavorite()) {
+            if (info.isRouteFavorite()) {
                 preferredIndexes.add(i);
             }
         }

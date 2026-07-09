@@ -26,6 +26,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.onebusaway.android.extrapolation.ExtrapolatedVehicle
 import org.onebusaway.android.extrapolation.extrapolatedVehicles
+import org.onebusaway.android.extrapolation.extrapolationFromState
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.time.WallTime
@@ -35,6 +36,7 @@ import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.RouteMapStop
 import org.onebusaway.android.util.Polyline
+import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
@@ -135,6 +137,11 @@ class RouteMapController(
 
     private var vehicleJob: Job? = null
 
+    // Drives the selected vehicle's trip overlay (the uncertainty band + fast-estimate marker). A tap
+    // selects a vehicle (renderState.selectedVehicleTripId); this collector installs a per-frame overlay
+    // sampler for that trip and clears it on deselect. Cancelled with the route session in [stop].
+    private var selectionJob: Job? = null
+
     // A pending arrivals ETA-pill focus: fit trip [tripId]'s live vehicle together with the originating
     // stop once the vehicle appears. Held until the first vehicle set arrives, then resolved once by
     // [tryFocusVehicle]: if a marker for the trip is on the map the camera fits the vehicle↔stop box,
@@ -183,6 +190,11 @@ class RouteMapController(
         // route-id filter set is built once here, not per frame, since it's constant for this route;
         // directionState is read live since it's resolved only once the route loads.
         renderState.setVehiclesSampler { nowMs -> sampleVehicles(WallTime(nowMs)) }
+        // A tapped vehicle enters a focused state that shows its extrapolation band + fast-estimate
+        // marker; react to the selection state here (a tap sets it, a map/background tap clears it).
+        selectionJob = scope.launch {
+            renderState.selectedVehicleTripId.collect { tripId -> showSelectionOverlay(tripId) }
+        }
         // Defer the on-load framing while a focus is pending: the focus decision (below, once the first
         // set arrives) either fits the vehicle+stop box or, failing that, frames the route itself.
         loadRoute(zoomToRoute && focusTripId == null)
@@ -256,6 +268,30 @@ class RouteMapController(
     // against (matching TripState.anchorLocalTimeMs); the next frame supersedes the seed either way.
     private fun currentVehicleLayer(): MapVehicles? = sampleVehicles(WallTime.now())
 
+    /**
+     * Install (or clear) the selected vehicle's trip overlay. When a vehicle is selected ([tripId]
+     * non-null), drive a per-frame sampler that extrapolates its trip and draws the uncertainty band +
+     * fast-estimate marker, tinted to contrast the route line. The live vehicle disc is already the
+     * best (median) estimate and route mode already shows the most-recent-data dot on selection, so the
+     * overlay's own vehicle-point and data-age markers are suppressed — a focused vehicle gains only the
+     * band + fast marker (#1752). Null (a deselect) clears the sampler.
+     */
+    private fun showSelectionOverlay(tripId: String?) {
+        if (tripId == null) {
+            renderState.setTripOverlaySampler(null)
+            return
+        }
+        val bandColor = contrastingColor(currentRouteColor())
+        renderState.setTripOverlaySampler { nowMs ->
+            extrapolationFromState(tripObservationRepository.lookupTripState(tripId), WallTime(nowMs))
+                ?.toTripOverlay(bandColor, includeVehiclePoint = false, includeDataAge = false)
+        }
+    }
+
+    /** The shown route's GTFS color (the band tint's basis), or the default when it carries none. */
+    private fun currentRouteColor(): Int =
+        (_loadedRoute.value as? LoadedRoute.Loaded)?.route?.color ?: DEFAULT_ROUTE_LINE_COLOR
+
     /** Recompute + push the vehicle set (the renderer reconciles markers from it), then resolve any pending focus. */
     private fun publishVehicleSet() {
         val layer = currentVehicleLayer()
@@ -269,8 +305,10 @@ class RouteMapController(
     fun stop() {
         routeJob?.cancel()
         vehicleJob?.cancel()
+        selectionJob?.cancel()
         routeJob = null
         vehicleJob = null
+        selectionJob = null
         routeId = null
         directionStopId = null
         initialDirectionOverride = null
@@ -287,6 +325,8 @@ class RouteMapController(
         renderState.setVehicleSet(null)
         renderState.setVehiclesSampler(null)
         renderState.setSelectedVehicle(null)
+        // The selection collector is cancelled above, so clear its overlay sampler explicitly.
+        renderState.setTripOverlaySampler(null)
         _loadedRoute.value = null
     }
 

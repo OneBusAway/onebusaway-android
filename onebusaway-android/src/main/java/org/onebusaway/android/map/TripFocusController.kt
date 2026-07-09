@@ -15,21 +15,16 @@
  */
 package org.onebusaway.android.map
 
-import android.graphics.Color
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
-import org.onebusaway.android.extrapolation.TripExtrapolation
 import org.onebusaway.android.extrapolation.extrapolationFromState
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
-import org.onebusaway.android.map.render.BandSegment
 import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
 import org.onebusaway.android.map.render.RoutePolyline
-import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.TripStopDot
 import org.onebusaway.android.util.Polyline
 
@@ -65,7 +60,7 @@ class TripFocusController(
         // here with a color that contrasts the line, so it reads against the trip shape.
         val bandColor = contrastingColor(routeColorArgb)
         renderState.setTripOverlaySampler { nowMs ->
-            extrapolationFromState(tripObservationRepository.lookupTripState(tripId), WallTime(nowMs))?.toOverlay(bandColor)
+            extrapolationFromState(tripObservationRepository.lookupTripState(tripId), WallTime(nowMs))?.toTripOverlay(bandColor)
         }
         job = scope.launch {
             // Keep this trip's volatile status fresh while the overlay is on screen; the repository
@@ -104,14 +99,6 @@ class TripFocusController(
         renderState.clearTripStops()
     }
 
-    /** Shifts hue by 180° to produce a color that contrasts with [color] (the trip line's color). */
-    private fun contrastingColor(color: Int): Int {
-        val hsv = FloatArray(3)
-        Color.colorToHSV(color or 0xFF000000.toInt(), hsv)
-        hsv[0] = (hsv[0] + 180f) % 360f
-        return Color.HSVToColor(hsv)
-    }
-
     /**
      * Resolves this trip's shape, returning the cached [Polyline] if present, otherwise polling the
      * store until the details response carries the trip's shapeId and then fetching it. Cancellation-
@@ -130,25 +117,6 @@ class TripFocusController(
         // The shape never resolved (bad/missing shapeId). Give up instead of polling the store every
         // SHAPE_POLL_INTERVAL_MS for the rest of the session; the trip-focus view just won't draw a line.
         return null
-    }
-
-    /**
-     * Composites the display [bandColorArgb] onto a color-free [TripExtrapolation] to produce the
-     * render [TripOverlay]: each band slice's model weight becomes the hue's alpha. The contrasting
-     * hue is a display decision; the extrapolation knows nothing about it.
-     */
-    private fun TripExtrapolation.toOverlay(bandColorArgb: Int): TripOverlay {
-        val baseRgb = bandColorArgb and 0x00FFFFFF
-        return TripOverlay(
-            vehiclePoint = vehiclePoint,
-            fastEstimatePoint = fastEstimatePoint,
-            band = band.map { slice ->
-                val alpha = (slice.weight.coerceIn(0f, 1f) * 255f).roundToInt()
-                BandSegment(slice.points, (alpha shl 24) or baseRgb)
-            },
-            dataAge = dataAge,
-            fixTimeMs = fixTimeMs,
-        )
     }
 
     companion object {

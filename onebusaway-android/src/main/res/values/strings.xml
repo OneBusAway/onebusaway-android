@@ -822,10 +822,6 @@
     <string name="tutorial_arrival_header_sliding_panel_text">Drag the panel up
         to see more arrivals for this stop.
     </string>
-    <string name="tutorial_arrival_header_star_route_title">Star your favorite routes</string>
-    <string name="tutorial_arrival_header_star_route_text">Tap on the star to pin your favorite
-        routes to the top of the sliding panel.
-    </string>
     <string name="tutorial_recent_stops_routes_title">Recent stops and routes</string>
     <string name="tutorial_recent_stops_routes_text">Find the stops and routes that you\'ve recently
         looked at via the \"More\" button at the top right of the screen.

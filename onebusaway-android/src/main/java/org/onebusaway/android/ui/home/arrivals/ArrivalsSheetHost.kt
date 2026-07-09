@@ -130,7 +130,6 @@ internal fun ArrivalsSheetHost(
                     onPeekContentHeight = onPeekContentHeight,
                     onTitleClick = onTitleClick,
                     etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
-                    starAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_STAR),
                     // The onboarding "slide up to see more" spotlight (KEY_PANEL) anchors on the sheet's
                     // drag handle in the host scaffold, not the panel — see ArrivalsDragHandle.
                 )

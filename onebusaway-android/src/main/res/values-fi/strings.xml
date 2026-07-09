@@ -638,10 +638,6 @@
     <string name="tutorial_arrival_header_sliding_panel_text">Napsauta nuolta tai liikuta paneelia ylöspäin
         nähdäksesi lisää tälle pysäkille saapuvia vuoroja.
     </string>
-    <string name="tutorial_arrival_header_star_route_title">Merkkaa suosikkireittisi</string>
-    <string name="tutorial_arrival_header_star_route_text">Napsauta tähteä liittääksesi suosikkireittisi
-        liukupaneelin yläosaan.
-    </string>
     <string name="tutorial_recent_stops_routes_title">Viimeisimmät pysäkit ja reitit</string>
     <string name="tutorial_recent_stops_routes_text">Ruudun oikeasta laidasta löytyvän \"Lisää\" napin 
         avulla löydät pysäkit ja reitit joita olet viimeksi katsellut.

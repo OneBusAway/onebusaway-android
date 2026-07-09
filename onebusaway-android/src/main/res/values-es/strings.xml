@@ -349,8 +349,6 @@
     </string>
     <string name="my_no_recent_routes">No tienes rutas recientes.</string>
     <!-- <string name="my_no_starred_routes">No tienes rutas favoritas.</string>-->
-    <string name="route_favorite_options_title_star">Marcar como favorito a \"%s\" para:</string>
-    <string name="route_favorite_options_title_unstar">Remover de favoritos a \"%s\" para:</string>
 
     <string name="my_option_clear_recent_stops">Limpiar paradas recientes</string>
     <string name="my_option_clear_recent_routes">Limpiar rutas recientes</string>

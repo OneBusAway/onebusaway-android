@@ -220,7 +220,6 @@ class StarredRoutesRepository(private val context: Context) : MyListRepository<R
 
     private val entryPoint = DatabaseEntryPoint.get(context)
     private val routeDao = entryPoint.routeDao()
-    private val headsignDao = entryPoint.routeHeadsignFavoriteDao()
     private val importGate = entryPoint.importGate()
     private val region = RegionEntryPoint.get(context).region
     private val sort = MutableStateFlow(PreferenceUtils.getStopSortOrderFromPreferences(context))
@@ -243,17 +242,14 @@ class StarredRoutesRepository(private val context: Context) : MyListRepository<R
             .map { rows -> rows.map { it.toRouteItem() } }
             .flowOn(Dispatchers.IO)
 
-    // Unstarring a whole route removes all its headsign favorites and clears the route's favorite flag
-    // (the all-stops unfavorite path creates no exclusion records).
+    // Unstarring a route just clears its single favorite bit (#1751).
     override suspend fun remove(id: String) {
         importGate.awaitReady()
-        headsignDao.deleteForRoute(id, null)
         routeDao.setFavorite(id, 0)
     }
 
     override suspend fun clearAll() {
         importGate.awaitReady()
-        headsignDao.clearAll()
         routeDao.clearAllFavorites()
     }
 }

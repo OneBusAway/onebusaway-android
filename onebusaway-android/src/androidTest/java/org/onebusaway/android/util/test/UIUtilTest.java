@@ -239,9 +239,10 @@ public class UIUtilTest extends ObaTestCase {
                 ArrivalsFixtures.load(targetContext, "arrivals_and_departures_for_stop_hart_6497");
         String stopId = "Hillsborough Area Regional Transit_6497";
 
-        // The two favorited route/headsign combos. Favorite state is supplied to convert() directly
-        // now (the favorites store is no longer a ContentProvider); the favorite precedence itself is
-        // unit-tested in RouteHeadsignFavoriteLogicTest.
+        // Two arrivals marked favorite. Favorite state is supplied to convert() directly (the favorites
+        // store is no longer a ContentProvider); this exercises findPreferredArrivalIndexes' header
+        // promotion regardless of how the boolean was computed. The set below is keyed on route+headsign
+        // purely to pick out two specific rows in the fixture.
         java.util.Set<String> favorites = new java.util.HashSet<>(java.util.Arrays.asList(
                 "Hillsborough Area Regional Transit_6|North to University Area TC",
                 "Hillsborough Area Regional Transit_6|South to Downtown/MTC"));

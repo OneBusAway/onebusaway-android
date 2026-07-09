@@ -30,8 +30,8 @@ import androidx.room.PrimaryKey
  * Nullability deliberately mirrors the loose legacy schema: columns added by `ALTER TABLE ADD COLUMN`
  * (favorites, custom names, access times, URLs, later region fields) are nullable and frequently NULL
  * in the wild, with computed helpers preserving the legacy "NULL reads as false/absent" semantics.
- * Two legacy tables (stop_routes_filter, route_headsign_favorites) had no primary key — duplicate rows
- * are allowed by design — so they get a synthetic auto-increment row id that is behaviorally inert.
+ * The legacy stop_routes_filter table had no primary key — duplicate rows are allowed by design — so
+ * it gets a synthetic auto-increment row id that is behaviorally inert.
  */
 
 @Entity(tableName = "stops")
@@ -178,15 +178,6 @@ data class Open311ServerRecord(
     @ColumnInfo(name = "jurisdiction") val jurisdiction: String? = null,
     @ColumnInfo(name = "api_key") val apiKey: String,
     @ColumnInfo(name = "open311_base_url") val baseUrl: String,
-)
-
-@Entity(tableName = "route_headsign_favorites")
-data class RouteHeadsignFavoriteRecord(
-    @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "_id") val id: Long = 0,
-    @ColumnInfo(name = "route_id") val routeId: String,
-    @ColumnInfo(name = "headsign") val headsign: String,
-    @ColumnInfo(name = "stop_id") val stopId: String,
-    @ColumnInfo(name = "exclude") val exclude: Int,
 )
 
 @Entity(tableName = "nav_stops")

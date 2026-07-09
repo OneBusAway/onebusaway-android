@@ -145,7 +145,15 @@ class LegacyDataImporter(
         return studies to surveys
     }
 
-    private fun readAll(db: SQLiteDatabase) = LegacyData(
+    private fun readAll(db: SQLiteDatabase): LegacyData {
+        // Routes with an active (non-excluded) legacy route/headsign favorite — the authoritative state
+        // `routes.favorite` mirrors. Collapsed to the plain route id (#1751): a route is starred if it
+        // had any non-excluded favorite. OR'd into `routes.favorite` below so a drifted source mirror
+        // (or an older backup) can't drop a star. The `route_headsign_favorites` table itself is gone.
+        val favoriteRouteIds = db.read("route_headsign_favorites") {
+            if ((int("exclude") ?: 0) == 0) str("route_id") else null
+        }.toHashSet()
+        return LegacyData(
         stops = db.read("stops") {
         StopRecord(
             id = str("_id") ?: return@read null,
@@ -162,14 +170,15 @@ class LegacyDataImporter(
         )
         },
         routes = db.read("routes") {
+        val id = str("_id") ?: return@read null
         RouteRecord(
-            id = str("_id") ?: return@read null,
+            id = id,
             shortName = str("short_name").orEmpty(),
             longName = str("long_name"),
             useCount = int("use_count") ?: 0,
             userName = str("user_name"),
             accessTime = long("access_time"),
-            favorite = int("favorite"),
+            favorite = if (id in favoriteRouteIds) 1 else int("favorite"),
             url = str("url"),
             regionId = long("region_id"),
         )
@@ -258,14 +267,6 @@ class LegacyDataImporter(
             baseUrl = str("open311_base_url").orEmpty(),
         )
         },
-        routeHeadsignFavorites = db.read("route_headsign_favorites") {
-        RouteHeadsignFavoriteRecord(
-            routeId = str("route_id") ?: return@read null,
-            headsign = str("headsign").orEmpty(),
-            stopId = str("stop_id").orEmpty(),
-            exclude = int("exclude") ?: 0,
-        )
-        },
         navStops = db.read("nav_stops") {
         NavStopRecord(
             id = long("_id") ?: 0,
@@ -279,6 +280,7 @@ class LegacyDataImporter(
         )
         },
     )
+    }
 
     private companion object {
         val LEGACY_DB_NAME = "${BuildConfig.APPLICATION_ID}.db"

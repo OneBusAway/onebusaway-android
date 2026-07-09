@@ -26,6 +26,7 @@ import javax.inject.Singleton
 import org.onebusaway.android.database.AppDatabase
 import org.onebusaway.android.database.MIGRATION_1_2
 import org.onebusaway.android.database.MIGRATION_2_3
+import org.onebusaway.android.database.MIGRATION_3_4
 import org.onebusaway.android.database.oba.DefaultImportGate
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.LegacyDataImporter
@@ -33,7 +34,6 @@ import org.onebusaway.android.database.oba.LegacyImportDao
 import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.RegionDao
 import org.onebusaway.android.database.oba.RouteDao
-import org.onebusaway.android.database.oba.RouteHeadsignFavoriteDao
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.StopRouteFilterDao
@@ -61,7 +61,7 @@ object DatabaseModule {
             context.applicationContext,
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
-        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
+        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
 
     @Provides
     fun provideLegacyImportDao(db: AppDatabase): LegacyImportDao = db.legacyImportDao()
@@ -80,10 +80,6 @@ object DatabaseModule {
 
     @Provides
     fun provideTripDao(db: AppDatabase): TripDao = db.tripDao()
-
-    @Provides
-    fun provideRouteHeadsignFavoriteDao(db: AppDatabase): RouteHeadsignFavoriteDao =
-        db.routeHeadsignFavoriteDao()
 
     @Provides
     fun provideRegionDao(db: AppDatabase): RegionDao = db.regionDao()

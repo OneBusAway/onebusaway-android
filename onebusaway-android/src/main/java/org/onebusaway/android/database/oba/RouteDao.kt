@@ -50,6 +50,10 @@ interface RouteDao {
     @Query("UPDATE routes SET favorite = :favorite WHERE _id = :routeId")
     suspend fun setFavorite(routeId: String, favorite: Int)
 
+    /** The ids of every starred (favorite) route, for the arrivals drawer-header promotion (#1751). */
+    @Query("SELECT _id FROM routes WHERE favorite = 1")
+    suspend fun favoriteRouteIds(): List<String>
+
     // --- Usage/metadata writes (the legacy partial upsert; see RoutesStore) ---
 
     /**

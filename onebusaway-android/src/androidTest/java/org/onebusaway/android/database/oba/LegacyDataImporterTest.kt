@@ -74,11 +74,13 @@ class LegacyDataImporterTest {
         assertEquals(1, count("regions"))
         assertEquals(1, count("region_bounds"))
         assertEquals(1, count("open311_servers"))
-        assertEquals(1, count("route_headsign_favorites"))
         assertEquals(1, count("nav_stops"))
 
         // Load-bearing user state survives.
         assertEquals(1, scalarInt("SELECT favorite FROM stops WHERE _id='1_100'"))
+        // The route star is reconciled onto routes.favorite from the legacy route_headsign_favorites
+        // row (which the source seeds with favorite=0), then that legacy table is gone (#1751).
+        assertEquals(1, scalarInt("SELECT favorite FROM routes WHERE _id='1_10'"))
         assertEquals("My Stop", scalarStr("SELECT user_name FROM stops WHERE _id='1_100'"))
         assertEquals(5, scalarInt("SELECT reminder FROM trips WHERE _id='trip1'"))
         assertEquals(1, scalarInt("SELECT hidden FROM service_alerts WHERE _id='sit1'"))
@@ -247,7 +249,8 @@ class LegacyDataImporterTest {
 
         assertEquals(1, count("stops"))
         assertEquals(1, count("stop_routes_filter"))
-        assertEquals(1, count("route_headsign_favorites"))
+        assertEquals(1, count("routes"))
+        assertEquals(1, scalarInt("SELECT favorite FROM routes WHERE _id='1_10'"))
     }
 
     private fun count(table: String): Int = scalarInt("SELECT count(*) FROM $table")
@@ -279,7 +282,9 @@ class LegacyDataImporterTest {
                     "url VARCHAR, region_id INTEGER)"
             )
             db.execSQL(
-                "INSERT INTO routes VALUES ('1_10','10','Downtown',3,NULL,2000,1,'http://r',1)"
+                // favorite=0 here on purpose: the star lives only in route_headsign_favorites below, so
+                // the importer must reconcile routes.favorite back to 1 from it (#1751).
+                "INSERT INTO routes VALUES ('1_10','10','Downtown',3,NULL,2000,0,'http://r',1)"
             )
             db.execSQL(
                 "CREATE TABLE trips (_id VARCHAR, stop_id VARCHAR, route_id VARCHAR, departure INTEGER, " +

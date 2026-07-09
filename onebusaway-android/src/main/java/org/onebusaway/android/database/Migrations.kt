@@ -96,3 +96,29 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         )
     }
 }
+
+/**
+ * Two schema changes that both landed at v4:
+ *
+ * 1. #1751 — retire the two-tier route-favorite model: `routes.favorite` becomes the single source of
+ *    truth (matching `stops.favorite`) and the authoritative `route_headsign_favorites` table is
+ *    dropped. First reconcile the mirror from the authoritative table — set `favorite = 1` for any
+ *    route with an active (non-excluded) headsign favorite — so a drifted mirror can't silently drop a
+ *    star, then drop the table.
+ *
+ * 2. #1739 — add the missing foreign-key child index on `surveys.study_id` so a parent-table write
+ *    doesn't full-scan `surveys`.
+ *
+ * `stops`/`routes`/`surveys` columns are otherwise untouched, so the v4 schema differs from v3 only by
+ * the dropped table and the new index.
+ */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "UPDATE `routes` SET `favorite` = 1 WHERE `_id` IN " +
+                "(SELECT DISTINCT `route_id` FROM `route_headsign_favorites` WHERE `exclude` = 0)"
+        )
+        db.execSQL("DROP TABLE IF EXISTS `route_headsign_favorites`")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_surveys_study_id` ON `surveys` (`study_id`)")
+    }
+}

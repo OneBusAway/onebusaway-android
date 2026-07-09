@@ -18,7 +18,6 @@ package org.onebusaway.android.ui.arrivals
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.tripinfo.TripInfoLauncher
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
-import org.onebusaway.android.ui.arrivals.dialogs.RouteFavoriteHost
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.ui.arrivals.dialogs.showSituationDialog
 import android.widget.Toast
@@ -63,9 +62,9 @@ fun createArrivalActionHandler(
 ): ArrivalActionHandler = object : ArrivalActionHandler {
 
     override fun onRouteFavorite(actions: ArrivalActions) {
-        // Pure ViewModel operation now: the dialog is Compose ([RouteFavoriteHost]) and the
-        // favoriting write + route-details fetch live in the repository. We just raise the request.
-        viewModel.requestRouteFavorite(actions)
+        // A plain wholesale toggle now (no this-stop/all-stops dialog): the star write +
+        // route-details fetch live in the repository. Star the route if it isn't already.
+        viewModel.toggleRouteFavorite(actions)
     }
 
     override fun onShowVehiclesOnMap(arrival: ArrivalInfo) {

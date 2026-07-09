@@ -30,10 +30,6 @@
         <item>@string/agencies_title</item>
         <item>Twitter Feed</item>
     </string-array>
-    <string-array name="route_favorite_options">
-        <item>This stop</item>
-        <item>All stops</item>
-    </string-array>
     <string-array name="sort_stops">
         <item>Name</item>
         <item>Most frequently used</item>

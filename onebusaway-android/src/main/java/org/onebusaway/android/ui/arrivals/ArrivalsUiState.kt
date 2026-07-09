@@ -33,8 +33,6 @@ data class StopHeader(
 data class ArrivalActions(
     val tripId: String,
     val routeId: String,
-    val headsign: String,
-    val stopId: String,
     val routeShortName: String?,
     val routeLongName: String?,
     /** Route schedule URL; null/blank hides the "show route schedule" menu item. */

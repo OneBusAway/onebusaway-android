@@ -29,10 +29,6 @@
         <item>Tuetut liikennöitsijät</item>
         <item>Uutta?</item>
     </string-array>
-    <string-array name="route_favorite_options">
-        <item>Tämä pysäkki</item>
-        <item>Kaikki pysäkit</item>
-    </string-array>
     <string-array name="sort_stops">
         <item>Nimi</item>
         <item>Useiten käytetty</item>

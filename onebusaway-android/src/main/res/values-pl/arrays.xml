@@ -30,10 +30,6 @@
         <item>Obsługiwani przewoźnicy</item>
         <item>Twitter</item>
     </string-array>
-    <string-array name="route_favorite_options">
-        <item>Ten przystanek</item>
-        <item>Wszystkie przystanki</item>
-    </string-array>
     <string-array name="sort_stops">
         <item>Nazwa</item>
         <item>Najczęsciej używane</item>

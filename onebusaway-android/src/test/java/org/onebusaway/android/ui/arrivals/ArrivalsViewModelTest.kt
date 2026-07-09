@@ -32,8 +32,6 @@ import org.onebusaway.android.testing.MainDispatcherRule
 /** The arguments of a single [ArrivalsRepository.favoriteRoute] call, for assertions. */
 private data class FavoriteRouteCall(
     val routeId: String,
-    val headsign: String?,
-    val stopId: String?,
     val shortName: String?,
     val longName: String?,
     val favorite: Boolean
@@ -82,13 +80,11 @@ private class FakeArrivalsRepository(
 
     override suspend fun favoriteRoute(
         routeId: String,
-        headsign: String?,
-        stopId: String?,
         shortName: String?,
         longName: String?,
         favorite: Boolean
     ) {
-        lastFavoriteRoute = FavoriteRouteCall(routeId, headsign, stopId, shortName, longName, favorite)
+        lastFavoriteRoute = FavoriteRouteCall(routeId, shortName, longName, favorite)
     }
 
     override suspend fun setRouteFilter(stopId: String, filter: Set<String>) {
@@ -246,8 +242,6 @@ class ArrivalsViewModelTest {
     private fun routeActions(isRouteFavorite: Boolean) = ArrivalActions(
         tripId = "t1",
         routeId = "1_5",
-        headsign = "Downtown",
-        stopId = "1_100",
         routeShortName = "5",
         routeLongName = "Fifth Ave",
         scheduleUrl = null,
@@ -257,24 +251,19 @@ class ArrivalsViewModelTest {
     )
 
     @Test
-    fun `requestRouteFavorite opens the dialog and favoriteRoute applies the choice and reloads`() = runTest {
+    fun `toggleRouteFavorite stars an unstarred route wholesale and reloads`() = runTest {
         val repository = FakeArrivalsRepository(Result.success(data()))
         val viewModel = ArrivalsViewModel("1_100", false, repository)
         viewModel.refresh()
 
         val actions = routeActions(isRouteFavorite = false)
 
-        viewModel.requestRouteFavorite(actions)
-        assertEquals(actions, viewModel.favoriteRequest.value)
-
-        viewModel.favoriteRoute(actions, allStops = true)
+        viewModel.toggleRouteFavorite(actions)
         advanceUntilIdle()
 
-        // The dialog request is cleared as soon as a choice is applied.
-        assertEquals(null, viewModel.favoriteRequest.value)
-        // "All stops" => null stopId, and favorite = !isRouteFavorite (starring an unstarred route).
+        // Wholesale star (#1751): route id + names, favorite = !isRouteFavorite.
         assertEquals(
-            FavoriteRouteCall("1_5", "Downtown", null, "5", "Fifth Ave", true),
+            FavoriteRouteCall("1_5", "5", "Fifth Ave", true),
             repository.lastFavoriteRoute
         )
         // The write is followed by a reload (initial load + the post-favorite refresh).
@@ -282,19 +271,19 @@ class ArrivalsViewModelTest {
     }
 
     @Test
-    fun `favoriteRoute scoped to this stop keeps the stop id`() = runTest {
+    fun `toggleRouteFavorite unstars a starred route`() = runTest {
         val repository = FakeArrivalsRepository(Result.success(data()))
         val viewModel = ArrivalsViewModel("1_100", false, repository)
         viewModel.refresh()
 
         val actions = routeActions(isRouteFavorite = true)
 
-        viewModel.favoriteRoute(actions, allStops = false)
+        viewModel.toggleRouteFavorite(actions)
         advanceUntilIdle()
 
-        // This-stop only => the stop id is kept, and favorite = false (unstarring a starred route).
+        // Already starred => unstar (favorite = false).
         assertEquals(
-            FavoriteRouteCall("1_5", "Downtown", "1_100", "5", "Fifth Ave", false),
+            FavoriteRouteCall("1_5", "5", "Fifth Ave", false),
             repository.lastFavoriteRoute
         )
     }

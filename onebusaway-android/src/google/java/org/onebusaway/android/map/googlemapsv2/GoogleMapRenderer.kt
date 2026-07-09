@@ -218,21 +218,6 @@ class GoogleMapRenderer(
             staticPolylines.add(map.addPolyline(options))
         }
 
-        // Trip-focus scheduled-stop dots (static for the trip), drawn over the line but under the live
-        // overlay markers.
-        for (stop in renderState.tripStops.value) {
-            staticMarkers.add(
-                map.addMarker(
-                    MarkerOptions()
-                        .position(stop.point.toLatLng())
-                        .icon(tripStopIcon(stop.selected))
-                        .anchor(0.5f, 0.5f)
-                        .flat(true)
-                        .zIndex(1f)
-                )!!
-            )
-        }
-
         reconcileStopMarkers(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
 
         if (snapshot.bikeshareVisible) {

@@ -23,8 +23,8 @@ import org.onebusaway.android.map.render.TripOverlay
 
 // The display tint applied to the color-free extrapolation when it's drawn as a [TripOverlay]. The
 // producer ([TripExtrapolation]) knows nothing about color; choosing the band hue and baking each
-// slice's model weight into its alpha is a display decision, so it lives here, shared by the trip-focus
-// map ([TripFocusController]) and the route map's selected-vehicle overlay ([RouteMapController]).
+// slice's model weight into its alpha is a display decision, so it lives here, applied by the route
+// map's selected-vehicle overlay ([RouteMapController]).
 
 /**
  * Shifts hue by 180° to produce a color that contrasts with [color] (the route line's color), so the

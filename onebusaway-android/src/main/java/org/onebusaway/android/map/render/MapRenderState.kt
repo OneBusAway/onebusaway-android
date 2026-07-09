@@ -87,13 +87,6 @@ data class RoutePolyline(
 }
 
 /**
- * A scheduled-stop dot on the trip-focus map: a small disc placed at a stop's position along the trip
- * shape (distinct from the route-mode [StopMarker]'s direction-anchored icon). [selected] draws the
- * filled-center variant.
- */
-data class TripStopDot(val point: GeoPoint, val selected: Boolean = false)
-
-/**
  * A generic pin added by code outside the map package (trip-plan start/end, the report location
  * picker). [hue] is a Google `BitmapDescriptorFactory` hue in [0, 360), or null for the default pin.
  */
@@ -384,19 +377,5 @@ class MapRenderState {
 
     fun setTripOverlaySampler(sampler: FrameSampler<TripOverlay>?) {
         _tripOverlaySampler.value = sampler
-    }
-
-    // The trip-focus map's scheduled-stop dots — static for the trip (set once on entry), so they sit
-    // in their own flow rather than the ~20Hz tripOverlay.
-    private val _tripStops = MutableStateFlow<List<TripStopDot>>(emptyList())
-
-    val tripStops: StateFlow<List<TripStopDot>> = _tripStops.asStateFlow()
-
-    fun setTripStops(stops: List<TripStopDot>) {
-        _tripStops.value = stops
-    }
-
-    fun clearTripStops() {
-        _tripStops.value = emptyList()
     }
 }

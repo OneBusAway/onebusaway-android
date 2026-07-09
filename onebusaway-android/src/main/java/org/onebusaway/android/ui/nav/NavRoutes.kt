@@ -227,16 +227,6 @@ object NavRoutes {
         "tripTrajectory/${Uri.encode(tripId)}" +
             if (stopId != null) "?$ARG_STOP_ID=${Uri.encode(stopId)}" else ""
 
-    // --- Trip map (the speed-estimation single-trip live view; drives the shared MapViewModel) ---
-    // tripId in the path; the resolved line color (for the band tint) as a query arg. The trip's own
-    // shape is resolved from the trip store, so no routeId is needed.
-    const val ARG_LINE_COLOR = "lineColor"
-    const val TRIP_MAP = "tripMap/{$ARG_TRIP_ID}?$ARG_LINE_COLOR={$ARG_LINE_COLOR}"
-
-    /** Builds a navigable [TRIP_MAP] route for [tripId], tinting the band with [lineColorArgb]. */
-    fun tripMap(tripId: String, lineColorArgb: Int): String =
-        "tripMap/${Uri.encode(tripId)}?$ARG_LINE_COLOR=$lineColorArgb"
-
     // --- Trip info / reminder editor (TripInfo) ---
     // The reminder editor takes the full trip context so a brand-new reminder (from the arrivals
     // "set reminder" action) needs no DB round-trip; the edit path passes only tripId/stopId. ids in

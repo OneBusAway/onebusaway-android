@@ -49,8 +49,6 @@ import com.google.android.gms.maps.model.Marker
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapHost
 import org.onebusaway.android.time.WallTime
@@ -178,13 +176,10 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
         val activeRenderer = renderer
         val activeInfoWindows = infoWindows
         if (activeRenderer != null && activeInfoWindows != null) {
-            // Static layer (stops / routes / bikes / generics / trip-stop dots): redraw only when the
-            // snapshot or trip-stop dots change (viewport loads, the vehicle poll, focus) — bounded cost.
+            // Static layer (stops / routes / bikes / generics): redraw only when the snapshot changes
+            // (viewport loads, the vehicle poll, focus) — a bounded cost.
             LaunchedEffect(activeRenderer) {
-                merge(
-                    renderState.snapshot.map { },
-                    renderState.tripStops.map { },
-                ).collect { activeRenderer.renderStatic() }
+                renderState.snapshot.collect { activeRenderer.renderStatic() }
             }
             // The vehicle set (which vehicles exist + their icons): reconcile the markers whenever it's
             // pushed — a poll, a direction switch, or leaving route mode (null). Discrete, so it's reactive

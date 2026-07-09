@@ -157,18 +157,6 @@ class MapLibreRenderer(
             staticAnnotations.add(map.addPolyline(options))
         }
 
-        // Trip-focus scheduled-stop dots (static for the trip), drawn over the line but under the
-        // live overlay markers.
-        for (stop in renderState.tripStops.value) {
-            staticAnnotations.add(
-                map.addMarker(
-                    MarkerOptions()
-                        .position(stop.point.toLatLng())
-                        .icon(if (stop.selected) tripStopSelectedIcon else tripStopIcon)
-                )
-            )
-        }
-
         reconcileStopMarkers(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
 
         if (snapshot.bikeshareVisible) {

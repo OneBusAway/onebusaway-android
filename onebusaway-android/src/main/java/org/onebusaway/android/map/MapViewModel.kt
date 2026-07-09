@@ -74,8 +74,7 @@ data class RouteHeader(
  * The **home map** view model: the coordinator that composes the shared [MapHost] (the flavor-neutral
  * map surface — render state, camera, padding, my-location/region framing) with the use-case
  * controllers the home map needs — [StopsMapController] (nearby stops), [RouteMapController] (a route +
- * its vehicles), [BikeLayerController] (the bikeshare overlay), and [TripFocusController] (the
- * speed-estimation trip map, which reuses this host). [showNearbyStops] / [showRoute] start the
+ * its vehicles), and [BikeLayerController] (the bikeshare overlay). [showNearbyStops] / [showRoute] start the
  * matching controller (the route controller is the single source of truth for whether a route is
  * shown — there is no separate "mode" state); the controllers react to the live camera
  * ([MapHost.onCameraIdle]) on [viewModelScope], so there is no imperative host — a flavor adapter only
@@ -321,7 +320,7 @@ class MapViewModel @Inject constructor(
     /**
      * Tears down whatever the map is currently showing: stops the loaders (each controller clears its
      * own overlays) and drops the accumulated stops (keeping the focused one). Shared by the transitions
-     * above and [enterTripFocus].
+     * above.
      */
     private fun leaveCurrentView() {
         stopsController.stop()
@@ -427,32 +426,6 @@ class MapViewModel @Inject constructor(
         if (!routeController.selectDirection(directionId)) return
         savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID] = null
         savedStateHandle[MapParams.ROUTE_DIRECTION_ID] = directionId
-    }
-
-    // ----- Trip-focus mode (the speed-estimation trip map) -----
-
-    // The single-trip live view. Drives the shared host (so the trip map reuses the home map surface);
-    // the home VM just leaves its prior mode on entry and restores stop mode on exit.
-    private val tripFocusController =
-        TripFocusController(mapHost, tripObservationRepository, viewModelScope)
-
-    /**
-     * Enters the trip-focus map: a dedicated **single-trip live view**, distinct from the route view.
-     * Leaves whatever the map was doing (no route-wide shape, vehicles, or stops — just the single
-     * trip) and hands off to [tripFocusController]. Call [exitTripFocus] on leave.
-     */
-    fun enterTripFocus(tripId: String, routeColorArgb: Int) {
-        // Leaving the current view stops the route controller, so isActive becomes false — no separate
-        // "mode" to reset. The trip map shows only the single trip (no route/stops/bikes).
-        leaveCurrentView()
-        renderState.clearBikeStations()
-        tripFocusController.enter(tripId, routeColorArgb)
-    }
-
-    /** Leaves trip-focus: stops the frame loop, clears the trip line + overlay, restores nearby stops. */
-    fun exitTripFocus() {
-        tripFocusController.exit()
-        showNearbyStops()
     }
 
     // ----- My-location / styling / permission (delegated to [mapHost]) -----

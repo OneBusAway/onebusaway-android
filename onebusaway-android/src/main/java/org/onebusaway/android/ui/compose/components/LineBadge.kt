@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,6 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -52,6 +55,33 @@ private const val LINE_HEIGHT_RATIO = 1.1f
 /** Each shrink step multiplies the font size by this until the text fits. */
 private const val SHRINK_STEP = 0.9f
 
+/** The chip's corner radius + inner padding when the badge is drawn on a colored surface. */
+private val CHIP_SHAPE = RoundedCornerShape(8.dp)
+private val CHIP_H_PADDING = 8.dp
+private val CHIP_V_PADDING = 2.dp
+
+/**
+ * Resolves the (container, content) colors for a route badge chip from the route's GTFS colors. When
+ * the route carries a color it fills the chip, with the GTFS text color if present or an auto black/
+ * white for legibility; a route with no color falls back to a neutral theme chip. Callers pass the
+ * pair straight to [LineBadge]'s `containerColor` / `color`.
+ */
+@Composable
+fun rememberRouteBadgeColors(routeColor: Int?, routeTextColor: Int?): Pair<Color, Color> {
+    val neutralContainer = MaterialTheme.colorScheme.surfaceVariant
+    val neutralContent = MaterialTheme.colorScheme.onSurfaceVariant
+    return remember(routeColor, routeTextColor, neutralContainer, neutralContent) {
+        val container = routeColor?.let { Color(it or 0xFF000000.toInt()) } ?: neutralContainer
+        val content = when {
+            routeColor == null -> neutralContent
+            routeTextColor != null -> Color(routeTextColor or 0xFF000000.toInt())
+            container.luminance() > 0.5f -> Color.Black
+            else -> Color.White
+        }
+        container to content
+    }
+}
+
 /**
  * A transit "line" identifier badge (a route short name) shown in a fixed-width rectangle: centered,
  * bold, wrapping to at most [maxLines] lines, and auto-shrunk just enough to fit. So a multi-word
@@ -64,7 +94,10 @@ private const val SHRINK_STEP = 0.9f
  * frame (no flash) and resolves even in a static @Preview — an onTextLayout shrink loop would not.
  *
  * Drop it anywhere a route short name sits in a constrained slot (list rows, headers, map callouts).
- * [color] defaults to [Color.Unspecified] so the badge inherits the ambient content color.
+ * [color] defaults to [Color.Unspecified] so the badge inherits the ambient content color. Pass a
+ * [containerColor] (e.g. from [rememberRouteBadgeColors]) to draw the name on a rounded colored chip
+ * that hugs the text and stays centered in the fixed-width slot (so neighboring columns still align);
+ * leave it unspecified for the bare-text badge.
  *
  * @param width the fixed width of the badge rectangle
  * @param maxHeight the height cap for the rectangle; the text also shrinks to fit it (in addition to
@@ -85,10 +118,14 @@ fun LineBadge(
     minFontSize: TextUnit = 12.sp,
     maxLines: Int = 2,
     color: Color = Color.Unspecified,
+    containerColor: Color = Color.Unspecified,
     textDecoration: TextDecoration = TextDecoration.None
 ) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
+    // On a chip the text sits inside horizontal padding, so shrink-fit against the reduced width so the
+    // chip never grows past the fixed slot (which would collide with the neighboring column).
+    val textWidth = if (containerColor.isSpecified) width - CHIP_H_PADDING * 2 else width
     // Bold and centered; line height tracks the font (a fixed line height would keep two lines the
     // same height as the font shrinks, so a multi-line block could never fit maxHeight).
     val titleLarge = MaterialTheme.typography.titleLarge
@@ -100,12 +137,12 @@ fun LineBadge(
 
     // Largest font in [minFontSize, maxFontSize] whose measured text fits the width × maxHeight /
     // maxLines box; measured here (not via onTextLayout) so it's right on the first frame and in @Preview.
-    val fontSize = remember(text, width, maxHeight, maxFontSize, minFontSize, maxLines, density, baseStyle) {
+    val fontSize = remember(text, textWidth, maxHeight, maxFontSize, minFontSize, maxLines, density, baseStyle) {
         with(density) {
             val constraints = if (maxHeight.isSpecified) {
-                Constraints(maxWidth = width.roundToPx(), maxHeight = maxHeight.roundToPx())
+                Constraints(maxWidth = textWidth.roundToPx(), maxHeight = maxHeight.roundToPx())
             } else {
-                Constraints(maxWidth = width.roundToPx())
+                Constraints(maxWidth = textWidth.roundToPx())
             }
             var size = maxFontSize
             while (size.value > minFontSize.value &&
@@ -121,13 +158,26 @@ fun LineBadge(
         .width(width)
         .let { if (maxHeight.isSpecified) it.heightIn(max = maxHeight) else it }
     Box(boxModifier, contentAlignment = Alignment.Center) {
-        Text(
-            text = text,
-            color = color,
-            style = styleAt(fontSize),
-            maxLines = maxLines,
-            textDecoration = textDecoration
-        )
+        val label = @Composable {
+            Text(
+                text = text,
+                color = color,
+                style = styleAt(fontSize),
+                maxLines = maxLines,
+                textDecoration = textDecoration
+            )
+        }
+        if (containerColor.isSpecified) {
+            // A rounded chip that hugs the text (wraps content), centered in the fixed-width slot.
+            Surface(color = containerColor, shape = CHIP_SHAPE) {
+                Box(
+                    Modifier.padding(horizontal = CHIP_H_PADDING, vertical = CHIP_V_PADDING),
+                    contentAlignment = Alignment.Center,
+                ) { label() }
+            }
+        } else {
+            label()
+        }
     }
 }
 
@@ -148,6 +198,17 @@ private fun LineBadgePreview() {
                         Spacer(Modifier.width(16.dp))
                         Text("\"$label\"", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                }
+                Spacer(Modifier.height(16.dp))
+                // On a colored chip: the name hugs the text inside a rounded surface, still centered in
+                // the fixed-width slot. First a GTFS-colored route, then the neutral no-color fallback.
+                Text("On a route-color chip:", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    val (green, onGreen) = rememberRouteBadgeColors(0x00A651, null)
+                    LineBadge("40", containerColor = green, color = onGreen)
+                    Spacer(Modifier.width(12.dp))
+                    val (neutral, onNeutral) = rememberRouteBadgeColors(null, null)
+                    LineBadge("RapidRide A", containerColor = neutral, color = onNeutral)
                 }
                 Spacer(Modifier.height(16.dp))
                 // The same name forced into shorter rectangles shrinks further to fit the height.

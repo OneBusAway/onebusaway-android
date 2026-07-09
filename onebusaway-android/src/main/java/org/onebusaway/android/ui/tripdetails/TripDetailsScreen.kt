@@ -103,7 +103,6 @@ private fun TripDetailsPolling(viewModel: TripDetailsViewModel) {
 fun TripDetailsRoute(
     viewModel: TripDetailsViewModel,
     onBack: () -> Unit,
-    onShowOnMap: (routeId: String) -> Unit,
     onStopClick: (stopId: String, name: String, direction: String?) -> Unit,
     onSetDestinationReminder: (stopIndex: Int) -> Unit,
     onShowTrajectory: () -> Unit = {},
@@ -116,7 +115,6 @@ fun TripDetailsRoute(
         refreshing = refreshing,
         onBack = onBack,
         onRefresh = viewModel::manualRefresh,
-        onShowOnMap = { viewModel.routeId()?.let(onShowOnMap) },
         onStopClick = onStopClick,
         onSetDestinationReminder = onSetDestinationReminder,
         onShowTrajectory = onShowTrajectory,
@@ -130,7 +128,6 @@ fun TripDetailsScreen(
     refreshing: Boolean = false,
     onBack: () -> Unit,
     onRefresh: () -> Unit,
-    onShowOnMap: () -> Unit,
     onStopClick: (String, String, String?) -> Unit,
     onSetDestinationReminder: (Int) -> Unit,
     onShowTrajectory: () -> Unit = {},
@@ -154,14 +151,6 @@ fun TripDetailsScreen(
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
-                    }
-                    // "Show on map" from a trip opens the single-trip live view (not the route map).
-                    IconButton(onClick = onShowOnMap) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_action_location_map),
-                            contentDescription = stringResource(R.string.stop_info_option_showonmap),
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
                     }
                     // Speed-estimation trajectory graph (debug).
                     IconButton(onClick = onShowTrajectory) {

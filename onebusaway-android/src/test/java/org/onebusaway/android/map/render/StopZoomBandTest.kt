@@ -80,4 +80,34 @@ class StopZoomBandTest {
         assertEquals(StopIconKind.FULL, stopIconKind(focused = false, band = StopBand.FULL))
         assertEquals(StopIconKind.DOT, stopIconKind(focused = false, band = StopBand.DOT))
     }
+
+    @Test
+    fun `a route stop gets the centerline circle, focus filling its center`() {
+        assertEquals(
+            StopIconKind.ROUTE_CIRCLE,
+            stopIconKind(focused = false, band = StopBand.FULL, routeStop = true)
+        )
+        assertEquals(
+            StopIconKind.ROUTE_CIRCLE_FOCUSED,
+            stopIconKind(focused = true, band = StopBand.FULL, routeStop = true)
+        )
+    }
+
+    @Test
+    fun `a route stop stays a circle regardless of zoom band or favorite`() {
+        // routeStop wins over both, so a route's stops read uniformly at every zoom and a starred
+        // route stop isn't singled out with the star while the route is shown.
+        assertEquals(
+            StopIconKind.ROUTE_CIRCLE,
+            stopIconKind(focused = false, band = StopBand.DOT, routeStop = true)
+        )
+        assertEquals(
+            StopIconKind.ROUTE_CIRCLE,
+            stopIconKind(focused = false, band = StopBand.DOT, favorite = true, routeStop = true)
+        )
+        assertEquals(
+            StopIconKind.ROUTE_CIRCLE_FOCUSED,
+            stopIconKind(focused = true, band = StopBand.FULL, favorite = true, routeStop = true)
+        )
+    }
 }

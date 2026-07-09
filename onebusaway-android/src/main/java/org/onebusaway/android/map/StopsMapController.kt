@@ -37,6 +37,7 @@ import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
+import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.primaryRouteType
 import org.onebusaway.android.map.render.stopZoomBand
@@ -275,15 +276,27 @@ class StopsMapController(
 
     // ----- Stops -----
 
-    fun showStops(stops: List<ObaStop>, routes: List<ObaRoute>) {
+    /**
+     * Accumulate + publish [stops]. [projectedPoints], when non-null, marks these as **route stops**:
+     * each renders as the on-centerline trip-map-style circle (#1752) at its projected point (the route
+     * controller projects the stop onto the shown shape and passes the result here, keeping the route
+     * geometry out of this generic controller). Null (the nearby-stops loader) keeps the normal
+     * direction-anchored icons at the stop's own location.
+     */
+    fun showStops(stops: List<ObaStop>, routes: List<ObaRoute>, projectedPoints: Map<String, GeoPoint>? = null) {
         cacheRoutes(routes)
         for (stop in stops) {
-            // getOrPut's get() on a hit bumps the entry to most-recently-used (access order) while
-            // keeping the same StopMarker instance, so a stationary re-poll of the same set yields an
-            // equal list the StateFlow conflates and the renderer never runs (reordering only breaks
-            // that equality when the accumulation holds more than the fetch; either way the renderer's
-            // reconcileStopMarkers keeps unchanged stops from blinking). A miss inserts a fresh marker.
-            stopAccum.getOrPut(stop.id) { toStopMarker(stop) }
+            val marker = toStopMarker(stop, projectedPoints)
+            val existing = stopAccum[stop.id]
+            // Reuse the existing instance when its style + position are unchanged, so a stationary re-poll
+            // of the same set yields an equal list the StateFlow conflates and the renderer never runs
+            // (a hit bumps the entry to most-recently-used under access order, same as before). Replace it
+            // when a mode switch flipped the stop's route-circle vs nearby style/point — otherwise a
+            // retained (focused) stop would keep its pre-switch icon. (Favorites are re-synced separately
+            // by applyFavorites, so they're not part of this reuse test.)
+            stopAccum[stop.id] =
+                if (existing != null && existing.routeStop == marker.routeStop && existing.point == marker.point) existing
+                else marker
         }
         // Route mode feeds the whole route's stops in one batch, so don't evict them against each
         // other; the viewport loader (the only capped accumulator) is stopped while a route shows.
@@ -331,13 +344,18 @@ class StopsMapController(
         }
     }
 
-    private fun toStopMarker(stop: ObaStop): StopMarker {
+    private fun toStopMarker(stop: ObaStop, projectedPoints: Map<String, GeoPoint>? = null): StopMarker {
         val routeType = primaryRouteType(stop.routeIds, routeTypeById)
         // ObaStop.getDirection() is "N".."NW" or the literal "null" string for no direction.
         val direction = stop.direction ?: "null"
+        // A route stop sits on the route centerline (the projected point) and renders as the trip-style
+        // circle; a nearby stop keeps its own location and direction-anchored icon.
+        val routeStop = projectedPoints != null
+        val point = projectedPoints?.get(stop.id) ?: stop.location.toGeoPoint()
         return StopMarker(
-            stop.id, stop.location.toGeoPoint(), direction, routeType, stop,
+            stop.id, point, direction, routeType, stop,
             favorite = stop.id in favoriteIds,
+            routeStop = routeStop,
         )
     }
 

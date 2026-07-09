@@ -26,17 +26,22 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.onebusaway.android.extrapolation.ExtrapolatedVehicle
 import org.onebusaway.android.extrapolation.extrapolatedVehicles
+import org.onebusaway.android.extrapolation.extrapolationFromState
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.time.WallTime
 import java.net.HttpURLConnection
 import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.RouteMapStop
+import org.onebusaway.android.util.Polyline
+import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
+import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.VehicleMarker
 
@@ -132,6 +137,11 @@ class RouteMapController(
 
     private var vehicleJob: Job? = null
 
+    // Drives the selected vehicle's trip overlay (the uncertainty band + fast-estimate marker). A tap
+    // selects a vehicle (renderState.selectedVehicleTripId); this collector installs a per-frame overlay
+    // sampler for that trip and clears it on deselect. Cancelled with the route session in [stop].
+    private var selectionJob: Job? = null
+
     // A pending arrivals ETA-pill focus: fit trip [tripId]'s live vehicle together with the originating
     // stop once the vehicle appears. Held until the first vehicle set arrives, then resolved once by
     // [tryFocusVehicle]: if a marker for the trip is on the map the camera fits the vehicle↔stop box,
@@ -180,6 +190,14 @@ class RouteMapController(
         // route-id filter set is built once here, not per frame, since it's constant for this route;
         // directionState is read live since it's resolved only once the route loads.
         renderState.setVehiclesSampler { nowMs -> sampleVehicles(WallTime(nowMs)) }
+        // A tapped vehicle enters a focused state that shows its extrapolation band + fast-estimate
+        // marker; react to the selection state here (a tap sets it, a map/background tap clears it).
+        // Cancel any collector from a prior start() so a re-entered session doesn't leak one that
+        // stop() can no longer reach.
+        selectionJob?.cancel()
+        selectionJob = scope.launch {
+            renderState.selectedVehicleTripId.collect { tripId -> showSelectionOverlay(tripId) }
+        }
         // Defer the on-load framing while a focus is pending: the focus decision (below, once the first
         // set arrives) either fits the vehicle+stop box or, failing that, frames the route itself.
         loadRoute(zoomToRoute && focusTripId == null)
@@ -234,15 +252,17 @@ class RouteMapController(
     // Builds the vehicle markers for the current poll + direction filter at [nowMs]. Returns null while
     // the direction is still [DirectionState.Pending] (a direction launch holds the layer back until the
     // route load resolves the filter, so it never flashes the opposite-direction vehicles) or before the
-    // first poll lands. Shared by the per-frame motion sampler and the discrete [currentVehicleLayer] push.
-    private fun sampleVehicles(now: WallTime): MapVehicles? {
+    // first poll lands. Shared by the per-frame motion sampler and the discrete [currentVehicleLayer] push;
+    // [includeDataFixPoint] is set only on the latter, so the selected vehicle's most-recent-data dot is
+    // projected onto the shape once per poll rather than every frame (the renderer reads it from the set).
+    private fun sampleVehicles(now: WallTime, includeDataFixPoint: Boolean = false): MapVehicles? {
         val id = routeId ?: return null
         val resolved = directionState as? DirectionState.Resolved ?: return null
         val poll = latestPoll ?: return null
         return MapVehicles(
             markers = extrapolatedVehicles(
                 poll.response, setOf(id), now, resolved.directionId,
-                tripObservationRepository::lookupTripState,
+                includeDataFixPoint, tripObservationRepository::lookupTripState,
             ).map { it.toMarker() },
             response = poll.response,
         )
@@ -250,8 +270,33 @@ class RouteMapController(
 
     // The vehicle set to push whenever it changes (a poll, a direction switch, the load resolving the
     // filter). Seeds marker positions at the device wall clock the per-frame sampler extrapolates
-    // against (matching TripState.anchorLocalTimeMs); the next frame supersedes the seed either way.
-    private fun currentVehicleLayer(): MapVehicles? = sampleVehicles(WallTime.now())
+    // against (matching TripState.anchorLocalTimeMs); the next frame supersedes the seed either way. This
+    // is the discrete set the renderer keeps, so it carries the shape-projected most-recent-data point.
+    private fun currentVehicleLayer(): MapVehicles? = sampleVehicles(WallTime.now(), includeDataFixPoint = true)
+
+    /**
+     * Install (or clear) the selected vehicle's trip overlay. When a vehicle is selected ([tripId]
+     * non-null), drive a per-frame sampler that extrapolates its trip and draws the uncertainty band +
+     * fast-estimate marker, tinted to contrast the route line. The live vehicle disc is already the
+     * best (median) estimate and route mode already shows the most-recent-data dot on selection, so the
+     * overlay's own vehicle-point and data-age markers are suppressed — a focused vehicle gains only the
+     * band + fast marker (#1752). Null (a deselect) clears the sampler.
+     */
+    private fun showSelectionOverlay(tripId: String?) {
+        if (tripId == null) {
+            renderState.setTripOverlaySampler(null)
+            return
+        }
+        val bandColor = contrastingColor(currentRouteColor())
+        renderState.setTripOverlaySampler { nowMs ->
+            extrapolationFromState(tripObservationRepository.lookupTripState(tripId), WallTime(nowMs), includeMarkers = false)
+                ?.toTripOverlay(bandColor)
+        }
+    }
+
+    /** The shown route's GTFS color (the band tint's basis), or the default when it carries none. */
+    private fun currentRouteColor(): Int =
+        (_loadedRoute.value as? LoadedRoute.Loaded)?.route?.color ?: DEFAULT_ROUTE_LINE_COLOR
 
     /** Recompute + push the vehicle set (the renderer reconciles markers from it), then resolve any pending focus. */
     private fun publishVehicleSet() {
@@ -266,8 +311,10 @@ class RouteMapController(
     fun stop() {
         routeJob?.cancel()
         vehicleJob?.cancel()
+        selectionJob?.cancel()
         routeJob = null
         vehicleJob = null
+        selectionJob = null
         routeId = null
         directionStopId = null
         initialDirectionOverride = null
@@ -284,6 +331,8 @@ class RouteMapController(
         renderState.setVehicleSet(null)
         renderState.setVehiclesSampler(null)
         renderState.setSelectedVehicle(null)
+        // The selection collector is cancelled above, so clear its overlay sampler explicitly.
+        renderState.setTripOverlaySampler(null)
         _loadedRoute.value = null
     }
 
@@ -359,14 +408,38 @@ class RouteMapController(
         // showStops accumulates while a route is active, so drop the prior direction's route stops
         // first — otherwise the map would show the union of both directions. (Keeps a focused stop.)
         stopsController.clearStops(false)
-        stopsController.showStops(routeStops.stopsForDirection(currentDirectionId), routeStopRoutes)
+        val stops = routeStops.stopsForDirection(currentDirectionId)
+        // Project each stop onto the drawn shape so it sits on the route centerline as a trip-style
+        // circle (#1752); the stops stay tappable StopMarkers, so tapping one still opens its arrivals.
+        stopsController.showStops(stops, routeStopRoutes, projectStopsOntoShape(stops))
+    }
+
+    /**
+     * The [stops]' positions projected onto the current direction's drawn shape, keyed by stop id. Each
+     * stop is snapped to the nearest point across the direction's polyline segments; a stop that can't be
+     * placed (no drawable shape) falls back to its own location, so it still shows (just off the line).
+     */
+    private fun projectStopsOntoShape(stops: List<ObaStop>): Map<String, GeoPoint> {
+        val route = routeShape ?: return emptyMap()
+        val shapes = route.shapeForDirection(currentDirectionId).polylines
+            .filter { it.size >= 2 }
+            .map { line -> Polyline(line.map(GeoPoint::toLocation)) }
+        if (shapes.isEmpty()) return emptyMap()
+        return stops.associate { stop ->
+            val loc = stop.location
+            val nearest = shapes
+                .mapNotNull { it.nearestPoint(loc.latitude, loc.longitude) }
+                .minByOrNull { loc.distanceTo(it) }
+            stop.id to (nearest?.toGeoPoint() ?: loc.toGeoPoint())
+        }
     }
 
     /**
      * Re-draw the route shape for [currentDirectionId]: the selected direction's own travel-ordered
      * shape (with direction arrows), or the whole-route merged shape drawn undirected when none is
      * selected. Passes the route's raw GTFS color through; the render layer picks the fallback when
-     * it's absent. Called on load and on every direction switch.
+     * it's absent. Drawn at the shared [ROUTE_LINE_WIDTH_DP] so the overview map's route reads the same
+     * as the trip-focus map (#1752). Called on load and on every direction switch.
      */
     private fun showDirectionPolylines() {
         val route = routeShape ?: return
@@ -376,7 +449,7 @@ class RouteMapController(
         val shape = route.shapeForDirection(currentDirectionId)
         renderState.setRoutePolylines(
             shape.polylines.map { points ->
-                RoutePolyline(route.route?.color, points, directional = shape.directional)
+                RoutePolyline(route.route?.color, points, widthDp = ROUTE_LINE_WIDTH_DP, directional = shape.directional)
             }
         )
     }
@@ -445,6 +518,7 @@ class RouteMapController(
             status = status,
             fixTimeMs = fixTimeMs,
             bearing = bearing,
+            dataFixPoint = dataFixPoint,
         )
 }
 

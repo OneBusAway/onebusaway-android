@@ -26,6 +26,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.directions.util.TripRequestBuilder
+import org.onebusaway.android.location.FakeLocationRepository
+import org.onebusaway.android.location.SearchCenter
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.region
@@ -82,7 +84,11 @@ class TripPlanViewModelTest {
         geocode: GeocodeRepository = FakeGeocodeRepository(Result.success(emptyList())),
         plan: TripPlanRepository = FakeTripPlanRepository(Result.success(listOf(Itinerary()))),
         region: RegionRepository = FakeRegionRepository()
-    ) = TripPlanViewModel(geocode, plan, region, TimeProvider { 0L }, FakeAdvancedSettingsRepository())
+    ) = TripPlanViewModel(
+        geocode, plan, region,
+        SearchCenter(FakeLocationRepository(), region),
+        TimeProvider { 0L }, FakeAdvancedSettingsRepository()
+    )
 
     /** Sets both resolved endpoints (which auto-submits a plan once both have coordinates). */
     private fun setBothEndpoints(vm: TripPlanViewModel) {

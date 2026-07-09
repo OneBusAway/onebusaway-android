@@ -28,7 +28,7 @@ import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ScheduleTime
-import org.onebusaway.android.util.LocationUtils
+import org.onebusaway.android.util.locationOf
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -39,7 +39,7 @@ import kotlin.time.Duration.Companion.seconds
  * one-DTO-implements-the-interface pattern the map boundary uses for stops/routes.
  */
 
-private fun Position.toLocation(): Location = LocationUtils.makeLocation(lat, lon)
+private fun Position.toLocation(): Location = locationOf(lat, lon)
 
 /** Presents a [TripStatus] DTO as an [ObaTripStatus]. */
 internal class DtoTripStatus(private val dto: TripStatus) : ObaTripStatus {

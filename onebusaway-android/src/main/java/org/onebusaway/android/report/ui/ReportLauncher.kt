@@ -47,10 +47,11 @@ import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.report.types.ReportAction
 import org.onebusaway.android.ui.report.types.ReportTypeListRoute
+import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.ExternalIntents
-import org.onebusaway.android.util.LocationUtils
 import org.onebusaway.android.util.PreferenceUtils
+import org.onebusaway.android.util.describeLocation
 
 /**
  * Launcher facade for the report flow (former Activity). The screen is now the
@@ -92,7 +93,7 @@ object ReportLauncher {
         lon: Double
     ): Intent {
         val locationString = LocationEntryPoint.get(context).lastKnownLocation()
-            ?.let { LocationUtils.printLocationDetails(it) }
+            ?.let { describeLocation(it, ElapsedTime.now()) }
         val reportContext = ReportContext(
             stopId = focusId,
             stopName = stopName,

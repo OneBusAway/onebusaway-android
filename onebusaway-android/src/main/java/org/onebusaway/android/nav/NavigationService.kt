@@ -54,11 +54,11 @@ import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.NavStopRecord
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.StopLocationRow
+import org.onebusaway.android.location.LocationFixes
 import org.onebusaway.android.nav.model.Path
 import org.onebusaway.android.nav.model.PathLink
 import org.onebusaway.android.ui.feedback.FeedbackLauncher
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
-import org.onebusaway.android.util.LocationUtils
 import org.onebusaway.android.util.PreferenceUtils
 import java.io.File
 import java.io.IOException
@@ -236,7 +236,7 @@ class NavigationService : Service() {
         val last = lastLocation
         if (last == null) {
             provider.locationUpdated(location)
-        } else if (!LocationUtils.isDuplicate(last, location)) {
+        } else if (!LocationFixes.isDuplicate(last, location)) {
             provider.locationUpdated(location)
         }
 

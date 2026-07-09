@@ -21,7 +21,7 @@ import androidx.lifecycle.SavedStateHandle
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
-import org.onebusaway.android.util.LocationUtils
+import org.onebusaway.android.util.locationOf
 import org.onebusaway.android.util.PreferenceUtils
 import java.util.concurrent.TimeUnit
 
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit
 internal const val STOP_LOAD_DEBOUNCE_MS = 250L
 
 /** A flavor-neutral [GeoPoint] as an Android [Location], for the repositories' lat/lon span queries. */
-internal fun GeoPoint.toLocation(): Location = LocationUtils.makeLocation(latitude, longitude)
+internal fun GeoPoint.toLocation(): Location = locationOf(latitude, longitude)
 
 /** An Android [Location] (shape/interpolation point) as a flavor-neutral [GeoPoint] (inverse of [toLocation]). */
 internal fun Location.toGeoPoint(): GeoPoint = GeoPoint(latitude, longitude)
@@ -130,7 +130,7 @@ internal fun trimStopCache(
 
 /**
  * The pure decision branches behind [MapViewModel]'s location/region behavior, split out from the
- * `Application`/`LocationUtils`/`PermissionUtils` reads (which stay at the call site) so the branch
+ * `Application`/location-settings/`PermissionUtils` reads (which stay at the call site) so the branch
  * logic — the historically error-prone permission/location flow ported from the flavor hosts — can be
  * unit-tested on the JVM. Same pattern as [zoomFulfills] / [stopRequestFulfilled] /
  * [org.onebusaway.android.map.bike.bikeAction] / [nextVehicleDelay].

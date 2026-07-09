@@ -90,10 +90,12 @@ import org.onebusaway.android.map.DirectionsMapViewModel
 import org.onebusaway.android.ui.tripresults.TripResultsMap
 import org.onebusaway.android.ui.tripresults.TripResultsSheet
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
+import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.ExternalIntents
-import org.onebusaway.android.util.LocationUtils
 import org.onebusaway.android.util.PreferenceUtils
+import org.onebusaway.android.util.describeLocation
+import org.onebusaway.android.util.locationOf
 import org.opentripplanner.api.model.Itinerary
 
 
@@ -136,9 +138,9 @@ fun TripPlanDestination(navController: NavHostController, onBack: () -> Unit) {
     var mapPickTarget by rememberSaveable { mutableStateOf<String?>(null) }
     val launchMapPicker: (String, TripEndpoint?) -> Unit = { endpoint, initial ->
         val center = if (initial?.hasCoordinates == true) {
-            LocationUtils.makeLocation(initial.lat!!, initial.lon!!)
+            locationOf(initial.lat!!, initial.lon!!)
         } else {
-            LocationUtils.getSearchCenter(activity.applicationContext)
+            viewModel.mapPickerCenter()
         }
         mapPickTarget = endpoint
         navController.navigate(
@@ -582,7 +584,7 @@ private fun reportProblem(
         return
     }
     val location = LocationEntryPoint.get(activity.applicationContext).lastKnownLocation()
-    val locationString = location?.let { LocationUtils.printLocationDetails(it) }
+    val locationString = location?.let { describeLocation(it, ElapsedTime.now()) }
     ExternalIntents.sendEmail(activity, contactEmail, locationString, null, true)
     AnalyticsEntryPoint.get(activity).reportUiEvent(
         PlausibleAnalytics.REPORT_TRIP_PLANNER_EVENT_URL,

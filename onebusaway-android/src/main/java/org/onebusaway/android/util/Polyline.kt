@@ -32,7 +32,7 @@ class Polyline(points: List<Location>) {
     private val cumulativeDistances: DoubleArray =
             points
                     .zipWithNext { prev, cur ->
-                        LocationUtils.haversineDistance(
+                        haversineDistance(
                                 prev.latitude,
                                 prev.longitude,
                                 cur.latitude,
@@ -146,7 +146,7 @@ class Polyline(points: List<Location>) {
                 bestLon = projLon
             }
         }
-        return LocationUtils.makeLocation(bestLat, bestLon)
+        return locationOf(bestLat, bestLon)
     }
 
     /** Returns the sub-polyline between two distances, with interpolated endpoints. */

@@ -68,7 +68,7 @@ object PolylineDecoder {
             lon += dlon
 
             // The polyline encodes in degrees * 1E5, we need decimal degrees
-            array.add(LocationUtils.makeLocation(lat / 1E5, lon / 1E5))
+            array.add(locationOf(lat / 1E5, lon / 1E5))
         }
 
         return array

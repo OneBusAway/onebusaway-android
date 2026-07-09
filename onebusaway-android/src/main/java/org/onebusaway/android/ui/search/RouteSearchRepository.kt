@@ -17,10 +17,10 @@ package org.onebusaway.android.ui.search
 
 import org.onebusaway.android.api.data.LocationSearchDataSource
 
-import android.content.Context
 import android.util.Log
+import java.io.IOException
+import org.onebusaway.android.location.SearchCenter
 import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.util.LocationUtils
 import org.onebusaway.android.util.routeDisplayNames
 
 /**
@@ -46,27 +46,28 @@ interface RouteSearchRepository {
 /**
  * Default implementation over the api [LocationSearchDataSource]: queries around the user's
  * location first and falls back to a wide-radius search around the region's default center when that
- * returns nothing usable (the legacy route-search behavior). [context] is still needed for the
- * in-memory location lookups; [search] is constructor-injected (resolved at the Compose call site)
- * so this repository declares its dependency and is swappable in tests.
+ * returns nothing usable (the legacy route-search behavior). [searchCenter] resolves the "near me"
+ * origin; [search] is constructor-injected (resolved at the Compose call site) so this repository
+ * declares its dependencies and is swappable in tests.
  *
  * A transport/parse failure surfaces as [Result.failure] (so the UI can show an error); a server
  * error *code* is treated as no results (via [LocationSearchDataSource.routesNearOrEmpty]).
  */
 class DefaultRouteSearchRepository(
-    private val context: Context,
+    private val searchCenter: SearchCenter,
     private val search: LocationSearchDataSource,
 ) : RouteSearchRepository {
 
     override suspend fun search(query: String): Result<List<RouteSearchResult>> = runCatching {
-        val center = LocationUtils.getSearchCenter(context)
+        val center = searchCenter.current()
+            ?: throw IOException("No search location available")
         var routes = search.routesNearOrEmpty(center.latitude, center.longitude, query, null)
             .getOrThrow()
         if (routes.isEmpty()) {
-            LocationUtils.getDefaultSearchCenter(context)?.let { fallback ->
+            searchCenter.regionCenter()?.let { fallback ->
                 routes = search.routesNearOrEmpty(
                     fallback.latitude, fallback.longitude,
-                    query, LocationUtils.DEFAULT_SEARCH_RADIUS
+                    query, SearchCenter.DEFAULT_SEARCH_RADIUS_METERS
                 ).getOrThrow()
             }
         }

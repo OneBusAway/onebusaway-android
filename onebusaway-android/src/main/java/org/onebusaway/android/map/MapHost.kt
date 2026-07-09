@@ -33,10 +33,10 @@ import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.location.isLocationEnabled
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
-import org.onebusaway.android.util.LocationUtils
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
 
@@ -259,7 +259,7 @@ class MapHost(
         // granted, or the region never changed so frameCurrentRegion never polled).
         val last = locationRepository.lastKnownLocation()
         val action = myLocationAction(
-            locationEnabled = LocationUtils.isLocationEnabled(app),
+            locationEnabled = isLocationEnabled(app),
             neverShowLocationDialog =
                 prefsRepository.getBoolean(R.string.preference_key_never_show_location_dialog, false),
             hasLastKnownLocation = last != null,

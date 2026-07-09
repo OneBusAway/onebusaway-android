@@ -39,7 +39,7 @@ import org.onebusaway.android.mock.Resources;
 import org.onebusaway.android.nav.NavigationServiceProvider;
 import org.onebusaway.android.nav.model.Path;
 import org.onebusaway.android.nav.model.PathLink;
-import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.location.LocationFixes;
 import org.onebusaway.android.util.RegionUtils;
 
 import java.io.IOException;
@@ -967,7 +967,7 @@ public class NavigationTest extends ObaTestCase {
                 }
 
                 // Code added to check for duplicate locations in the .csv log files
-                if (prevLocation == null || !LocationUtils.isDuplicate(prevLocation, l)) {
+                if (prevLocation == null || !LocationFixes.isDuplicate(prevLocation, l)) {
                     provider.locationUpdated(l);
                 }
                 prevLocation = l;
@@ -999,7 +999,7 @@ public class NavigationTest extends ObaTestCase {
                 }
 
                 // Code added to check for duplicate locations in the .csv log files
-                if (prevLocation == null || !LocationUtils.isDuplicate(prevLocation, l)) {
+                if (prevLocation == null || !LocationFixes.isDuplicate(prevLocation, l)) {
                     provider.locationUpdated(l);
                 }
                 prevLocation = l;

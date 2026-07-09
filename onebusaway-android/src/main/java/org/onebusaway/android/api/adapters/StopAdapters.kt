@@ -19,7 +19,7 @@ package org.onebusaway.android.api.adapters
 import android.location.Location
 import org.onebusaway.android.api.contract.StopReference
 import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.util.LocationUtils
+import org.onebusaway.android.util.locationOf
 
 /**
  * Presents a [StopReference] DTO as the [ObaStop] model interface, so consumers that work through
@@ -31,7 +31,7 @@ internal class DtoStop(private val ref: StopReference) : ObaStop {
     override val id: String get() = ref.id
     override val stopCode: String? get() = ref.code
     override val name: String? get() = ref.name
-    override val location: Location get() = LocationUtils.makeLocation(ref.lat, ref.lon)
+    override val location: Location get() = locationOf(ref.lat, ref.lon)
     override val latitude: Double get() = ref.lat
     override val longitude: Double get() = ref.lon
     override val direction: String? get() = ref.direction
@@ -55,7 +55,7 @@ class ObaStopElement @JvmOverloads constructor(
 
     override val stopCode: String get() = code
 
-    override val location: Location get() = LocationUtils.makeLocation(lat, lon)
+    override val location: Location get() = locationOf(lat, lon)
 
     override val latitude: Double get() = lat
 

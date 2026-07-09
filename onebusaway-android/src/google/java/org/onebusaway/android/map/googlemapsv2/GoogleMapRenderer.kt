@@ -152,11 +152,11 @@ class GoogleMapRenderer(
     // data" + fix-age info window (the SDK's default title/snippet). Null when nothing is selected.
     private var mostRecentDataMarker: Marker? = null
 
-    // The one-shot "ping" ripple (#1764): a native Circle grown + faded over [MapPing.DURATION_MS] from a
-    // just-focused vehicle. [pingStartMs] is 0 until the first frame stamps it (so the animation clock is
-    // the renderer's own frame clock); null circle means no ping in flight.
+    // The one-shot "ping" ripple (#1764): a native Circle grown + faded over [MapPing.DURATION_MS], centered
+    // each frame on trip [pingTripId]'s vehicle marker (so it follows the icon as it settles). [pingStartMs]
+    // is 0 until the first tick stamps it (the animation clock is the frame clock); null id means no ping.
     private var pingCircle: Circle? = null
-    private var pingPoint: GeoPoint? = null
+    private var pingTripId: String? = null
     private var pingStartMs: Long = 0L
     private val pingColor by lazy { ContextCompat.getColor(context, R.color.theme_primary) }
 
@@ -398,20 +398,22 @@ class GoogleMapRenderer(
         updateTripOverlay(overlay, nowMs)
     }
 
-    /** Start a one-shot ping ripple at [point]; the driver calls [tickPing] to animate it (#1764). */
-    override fun startPing(point: GeoPoint) {
+    /** Start a one-shot ping ripple on trip [tripId]'s vehicle; the driver calls [tickPing] to animate it (#1764). */
+    override fun startPing(tripId: String) {
         clearPing()
-        pingPoint = point
+        pingTripId = tripId
         pingStartMs = 0L // stamped on the first tick
     }
 
-    // Advance the ping ripple one frame: grow the Circle's radius (from a target screen size via the current
-    // zoom, so it reads at a consistent on-screen size) and fade its stroke. Returns false — and removes the
-    // Circle — when the ripple completes. Driven by the adapter's own full-rate frame loop (not the 20Hz
-    // vehicle loop) so the ripple is smooth. Circles draw beneath all markers in gms, so the vehicle icon
-    // stays crisp on top.
+    // Advance the ping ripple one frame: recenter on the vehicle marker's live position (so it follows the
+    // icon as it slides from its raw fallback onto its shape-projected spot), grow the Circle's radius (from
+    // a target screen size via the current zoom, so it reads at a consistent on-screen size), and fade its
+    // stroke. Returns false — and removes the Circle — when the ripple completes or the vehicle is gone.
+    // Driven by the driver's own full-rate frame loop (not the 20Hz vehicle loop) so the ripple is smooth.
+    // Circles draw beneath all markers in gms, so the vehicle icon stays crisp on top.
     override fun tickPing(nowMs: Long): Boolean {
-        val point = pingPoint ?: return false
+        val tripId = pingTripId ?: return false
+        val center = vehicleMarkersByTripId[tripId]?.position ?: run { clearPing(); return false }
         if (pingStartMs == 0L) pingStartMs = nowMs
         val elapsed = nowMs - pingStartMs
         if (MapPing.isDone(elapsed)) {
@@ -421,14 +423,14 @@ class GoogleMapRenderer(
         val progress = MapPing.progress(elapsed)
         val radiusPx = MapPing.MAX_RADIUS_DP * density * MapPing.radiusFraction(progress)
         val metersPerPx =
-            156543.03392 * cos(Math.toRadians(point.latitude)) / 2.0.pow(map.cameraPosition.zoom.toDouble())
+            156543.03392 * cos(Math.toRadians(center.latitude)) / 2.0.pow(map.cameraPosition.zoom.toDouble())
         val radiusMeters = radiusPx * metersPerPx
         val color = MapPing.withAlpha(pingColor, MapPing.alpha(progress))
         val existing = pingCircle
         if (existing == null) {
             pingCircle = map.addCircle(
                 CircleOptions()
-                    .center(point.toLatLng())
+                    .center(center)
                     .radius(radiusMeters)
                     .strokeColor(color)
                     .strokeWidth(MapPing.STROKE_DP * density)
@@ -437,6 +439,7 @@ class GoogleMapRenderer(
                     .zIndex(PING_Z_INDEX)
             )
         } else {
+            existing.center = center
             existing.radius = radiusMeters
             existing.strokeColor = color
         }
@@ -446,7 +449,7 @@ class GoogleMapRenderer(
     private fun clearPing() {
         pingCircle?.remove()
         pingCircle = null
-        pingPoint = null
+        pingTripId = null
         pingStartMs = 0L
     }
 

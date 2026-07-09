@@ -16,12 +16,13 @@
 package org.onebusaway.android.map.render
 
 /**
- * A renderer that can play a one-shot ping ripple (#1764). [startPing] arms a ripple at [point];
- * [tickPing] advances it one frame (at the frame's [nowMs]) and returns false once the ripple is done.
- * Each flavor's map renderer implements this so the flavor-neutral `drivePings` loop can drive the
- * animation without knowing the SDK draw primitive.
+ * A renderer that can play a one-shot ping ripple on a vehicle (#1764). [startPing] arms a ripple for the
+ * vehicle on trip [tripId]; [tickPing] advances it one frame (at the frame's [nowMs]), centering it on that
+ * vehicle's live marker position, and returns false once the ripple is done (or the vehicle is gone). Each
+ * flavor's map renderer implements this so the flavor-neutral `drivePings` loop can drive the animation
+ * without knowing the SDK draw primitive.
  */
 interface PingTarget {
-    fun startPing(point: GeoPoint)
+    fun startPing(tripId: String)
     fun tickPing(nowMs: Long): Boolean
 }

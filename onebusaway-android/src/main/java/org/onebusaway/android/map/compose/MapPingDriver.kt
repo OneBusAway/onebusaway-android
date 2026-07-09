@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.onebusaway.android.map.render.CameraSnapshot
-import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.time.WallTime
@@ -37,13 +36,13 @@ import org.onebusaway.android.time.WallTime
  * so a newer ping supersedes one still waiting/animating. Call from each adapter's `LaunchedEffect`.
  */
 suspend fun drivePings(
-    pings: SharedFlow<GeoPoint>,
+    pings: SharedFlow<String>,
     camera: StateFlow<CameraSnapshot?>,
     target: PingTarget,
 ) {
-    pings.collectLatest { point ->
+    pings.collectLatest { tripId ->
         withTimeoutOrNull(MapPing.SETTLE_TIMEOUT_MS) { camera.drop(1).first() }
-        target.startPing(point)
+        target.startPing(tripId)
         while (target.tickPing(WallTime.now().epochMs)) {
             withFrameNanos { }
         }

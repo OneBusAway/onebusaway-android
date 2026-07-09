@@ -146,11 +146,11 @@ class MapLibreRenderer(
 
     private val iconFactory = IconFactory.getInstance(context)
 
-    // The one-shot "ping" ripple (#1764): a ring-bitmap marker grown + faded over [MapPing.DURATION_MS]
-    // from a just-focused vehicle (the classic annotation API has no circle). [pingStartMs] is 0 until the
-    // first frame stamps it; null marker means no ping in flight.
+    // The one-shot "ping" ripple (#1764): a ring-bitmap marker grown + faded over [MapPing.DURATION_MS],
+    // recentered each frame on trip [pingTripId]'s vehicle marker so it follows the icon as it settles (the
+    // classic annotation API has no circle). [pingStartMs] is 0 until the first tick stamps it; null id = no ping.
     private var pingMarker: Marker? = null
-    private var pingPoint: GeoPoint? = null
+    private var pingTripId: String? = null
     private var pingStartMs: Long = 0L
     private val pingColor by lazy { ContextCompat.getColor(context, R.color.theme_primary) }
     private val density = context.resources.displayMetrics.density
@@ -294,19 +294,21 @@ class MapLibreRenderer(
         updateTripOverlay(overlay, nowMs)
     }
 
-    /** Start a one-shot ping ripple at [point]; the driver calls [tickPing] to animate it (#1764). */
-    override fun startPing(point: GeoPoint) {
+    /** Start a one-shot ping ripple on trip [tripId]'s vehicle; the driver calls [tickPing] to animate it (#1764). */
+    override fun startPing(tripId: String) {
         clearPing()
-        pingPoint = point
+        pingTripId = tripId
         pingStartMs = 0L // stamped on the first tick
     }
 
-    // Advance the ping ripple one frame: regrow the ring bitmap (bigger radius, fading color) and re-set the
-    // marker icon. Returns false — and removes the marker — when the ripple completes. Driven by the
-    // driver's own full-rate frame loop (not the vehicle loop) so the ripple is smooth. The bitmap is a
-    // constant max-size square so the marker stays centered on the vehicle as the ring grows inside it.
+    // Advance the ping ripple one frame: recenter on the vehicle marker's live position (so it follows the
+    // icon as it settles onto its shape-projected spot), regrow the ring bitmap (bigger radius, fading
+    // color) and re-set the marker icon. Returns false — and removes the marker — when the ripple completes
+    // or the vehicle is gone. Driven by the driver's own full-rate frame loop so the ripple is smooth. The
+    // bitmap is a constant max-size square so the ring stays centered as it grows inside it.
     override fun tickPing(nowMs: Long): Boolean {
-        val point = pingPoint ?: return false
+        val tripId = pingTripId ?: return false
+        val center = vehicleMarkersByTripId[tripId]?.position ?: run { clearPing(); return false }
         if (pingStartMs == 0L) pingStartMs = nowMs
         val elapsed = nowMs - pingStartMs
         if (MapPing.isDone(elapsed)) {
@@ -316,8 +318,6 @@ class MapLibreRenderer(
         val progress = MapPing.progress(elapsed)
         val maxRadiusPx = (MapPing.MAX_RADIUS_DP * density).toInt()
         val radiusPx = maxRadiusPx * MapPing.radiusFraction(progress)
-        // A constant max-size square (so the marker stays centered as the ring grows inside it), reused
-        // and redrawn in place each frame.
         val size = maxRadiusPx * 2
         val bitmap = pingBitmap?.takeIf { it.width == size } ?: createBitmap(size, size).also { pingBitmap = it }
         bitmap.eraseColor(0)
@@ -327,8 +327,9 @@ class MapLibreRenderer(
         val icon = iconFactory.fromBitmap(bitmap)
         val existing = pingMarker
         if (existing == null) {
-            pingMarker = map.addMarker(MarkerOptions().position(point.toLatLng()).icon(icon))
+            pingMarker = map.addMarker(MarkerOptions().position(center).icon(icon))
         } else {
+            existing.position = center
             existing.icon = icon
         }
         return true
@@ -337,7 +338,7 @@ class MapLibreRenderer(
     private fun clearPing() {
         pingMarker?.let { map.removeAnnotation(it) }
         pingMarker = null
-        pingPoint = null
+        pingTripId = null
         pingStartMs = 0L
         pingBitmap = null
     }

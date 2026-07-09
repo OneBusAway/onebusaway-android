@@ -63,6 +63,9 @@ data class RouteHeader(
     val shortName: String,
     val longName: String,
     val agency: String,
+    /** The route's GTFS color (ARGB), or null when the agency didn't set one — the header's route
+     *  badge chip takes its hue, matching the arrival rows. */
+    val routeColor: Int? = null,
     val directions: List<RouteMapDirection> = emptyList(),
     val currentDirectionId: Int? = null,
 )
@@ -260,6 +263,7 @@ class MapViewModel @Inject constructor(
             shortName = MyTextUtils.formatDisplayText(getRouteDisplayName(route))!!,
             longName = MyTextUtils.formatDisplayText(getRouteDescription(route))!!,
             agency = agencyName ?: "",
+            routeColor = route.color,
             directions = directions,
             currentDirectionId = currentDirectionId,
         )

@@ -15,12 +15,12 @@
  */
 package org.onebusaway.android.ui.home.map
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
@@ -53,7 +53,14 @@ import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.ui.compose.components.FavoriteStarButton
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.RadioOptionList
+import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+
+// The route-header action icons (favorite / switch-direction / cancel) share one size + tint so they
+// read as one control group: a larger-than-default 36dp icon in a deliberately tightened 40dp touch box
+// (below Material's 48dp default — a conscious trade-off for a compact header banner).
+private val HEADER_ICON_SIZE = 36.dp
+private val HEADER_ICON_BUTTON_SIZE = 40.dp
 
 /**
  * The route-mode header overlay (the Compose replacement for the legacy `route_info_head.xml` /
@@ -101,72 +108,91 @@ fun RouteHeaderOverlay(
             val directionLabel = header.directions
                 .firstOrNull { it.directionId == header.currentDirectionId }
                 ?.labelOr(unnamed)
-            Box(Modifier.fillMaxWidth()) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    // Auto-shrinks (and wraps) a long route short name to fit a fixed slot rather than
-                    // crowding out the long-name/agency column — the shared route-badge style.
-                    LineBadge(
-                        text = header.shortName,
-                        maxFontSize = 45.sp,
-                        width = 96.dp,
-                        modifier = Modifier.padding(horizontal = 10.dp),
-                    )
-                    Column(Modifier.weight(1f)) {
-                        if (header.longName.isNotEmpty()) {
-                            Text(
-                                text = header.longName,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                        if (directionLabel != null) {
-                            Text(
-                                text = directionLabel,
-                                color = MaterialTheme.colorScheme.primary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                        if (header.agency.isNotEmpty()) {
-                            Text(text = header.agency)
-                        }
-                    }
-                    // A route with a single direction has nothing to switch to — the affordance is hidden.
-                    if (header.directions.size >= 2) {
-                        SwitchDirectionAction(
-                            directions = header.directions,
-                            currentDirectionId = header.currentDirectionId,
-                            onSelectDirection = onSelectDirection,
-                        )
-                    }
-                    IconButton(onClick = onCancel) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_navigation_close),
-                            contentDescription = stringResource(android.R.string.cancel),
-                        )
-                    }
-                }
-                // Favorites star, floated over the banner's upper-left so it occupies no layout space
-                // (it won't shift the badge). The negative offset cancels most of the IconButton's built-in
-                // inset so the star tucks up into the corner.
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // The favorite star, inline and to the left of the badge — the first of the shared-style
+                // header action icons (larger icon, tightened touch box).
                 FavoriteStarButton(
                     isFavorite = isFavorite,
                     onClick = onToggleFavorite,
-                    // Match the arrival-row star's outline color so the two read as the same control.
                     tint = colorResource(R.color.navdrawer_icon_tint),
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .offset(x = (-8).dp, y = (-8).dp),
+                    iconSize = HEADER_ICON_SIZE,
+                    modifier = Modifier.size(HEADER_ICON_BUTTON_SIZE),
+                )
+                // A square route roundel: the short name shrinks to fit inside the tile, on the same
+                // HCT-normalized GTFS-color chip as the arrival rows.
+                val (badgeContainer, badgeContent) = rememberRouteBadgeColors(header.routeColor)
+                LineBadge(
+                    text = header.shortName,
+                    maxFontSize = 45.sp,
+                    width = 64.dp,
+                    square = true,
+                    color = badgeContent,
+                    containerColor = badgeContainer,
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                )
+                Column(Modifier.weight(1f)) {
+                    if (header.longName.isNotEmpty()) {
+                        Text(
+                            text = header.longName,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    if (directionLabel != null) {
+                        Text(
+                            text = directionLabel,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    if (header.agency.isNotEmpty()) {
+                        Text(text = header.agency)
+                    }
+                }
+                // A route with a single direction has nothing to switch to — the affordance is hidden.
+                if (header.directions.size >= 2) {
+                    SwitchDirectionAction(
+                        directions = header.directions,
+                        currentDirectionId = header.currentDirectionId,
+                        onSelectDirection = onSelectDirection,
+                    )
+                }
+                HeaderIconButton(
+                    iconRes = R.drawable.ic_navigation_close,
+                    contentDescription = stringResource(android.R.string.cancel),
+                    onClick = onCancel,
                 )
             }
         }
+    }
+}
+
+/**
+ * A route-header action icon button in the shared header style: the [HEADER_ICON_SIZE] icon tinted with
+ * the nav-drawer icon color, in the tightened [HEADER_ICON_BUTTON_SIZE] box. Used by the switch-direction
+ * and cancel actions; the favorite star ([FavoriteStarButton]) matches these but stays its own toggle.
+ */
+@Composable
+private fun HeaderIconButton(
+    @DrawableRes iconRes: Int,
+    contentDescription: String,
+    onClick: () -> Unit,
+) {
+    IconButton(onClick = onClick, modifier = Modifier.size(HEADER_ICON_BUTTON_SIZE)) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = contentDescription,
+            tint = colorResource(R.color.navdrawer_icon_tint),
+            modifier = Modifier.size(HEADER_ICON_SIZE),
+        )
     }
 }
 
@@ -182,20 +208,17 @@ private fun SwitchDirectionAction(
     onSelectDirection: (Int) -> Unit,
 ) {
     var showPicker by remember { mutableStateOf(false) }
-    IconButton(
+    HeaderIconButton(
+        iconRes = R.drawable.ic_swap_direction,
+        contentDescription = stringResource(R.string.route_header_switch_direction),
         onClick = {
             if (directions.size == 2) {
                 onSelectDirection(directions.first { it.directionId != currentDirectionId }.directionId)
             } else {
                 showPicker = true
             }
-        }
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_swap_direction),
-            contentDescription = stringResource(R.string.route_header_switch_direction),
-        )
-    }
+        },
+    )
     if (showPicker) {
         val unnamed = stringResource(R.string.route_direction_unnamed)
         AlertDialog(

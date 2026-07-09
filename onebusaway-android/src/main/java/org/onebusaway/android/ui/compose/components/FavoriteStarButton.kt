@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.compose.components
 
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -23,11 +24,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 
 /**
  * A star toggle button for favoriting/unfavoriting a route: a filled star when [isFavorite], an outline
- * otherwise, with the matching add/remove-star content description. [onClick] fires on tap.
+ * otherwise, with the matching add/remove-star content description. [onClick] fires on tap. [iconSize]
+ * sizes the star (the Material default 24dp when unset).
  *
  * The shared form of the filled-vs-outline star that several screens (arrivals rows/panel, search
  * results) currently spell out inline; new call sites should use this rather than repeat the ternary.
@@ -38,6 +42,7 @@ fun FavoriteStarButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     tint: Color = LocalContentColor.current,
+    iconSize: Dp = 24.dp,
 ) {
     IconButton(onClick = onClick, modifier = modifier) {
         Icon(
@@ -49,6 +54,7 @@ fun FavoriteStarButton(
                 else R.string.bus_options_menu_add_star
             ),
             tint = tint,
+            modifier = Modifier.size(iconSize),
         )
     }
 }

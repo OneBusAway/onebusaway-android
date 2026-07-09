@@ -395,26 +395,27 @@ class GoogleMapRenderer(
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
         moveVehicles(vehicles, nowMs)
         updateTripOverlay(overlay, nowMs)
-        updatePing(nowMs)
     }
 
-    /** Start a one-shot ping ripple at [point]; the frame loop animates it (#1764). */
+    /** Start a one-shot ping ripple at [point]; the adapter drives [tickPing] to animate it (#1764). */
     fun startPing(point: GeoPoint) {
         clearPing()
         pingPoint = point
-        pingStartMs = 0L // stamped on the first frame that draws it
+        pingStartMs = 0L // stamped on the first tick
     }
 
-    // Advance the ping ripple: grow the Circle's radius (from a target screen size via the current zoom, so
-    // it reads at a consistent on-screen size) and fade its stroke, removing it when the ripple completes.
-    // Circles draw beneath all markers in gms, so the vehicle icon stays crisp on top.
-    private fun updatePing(nowMs: Long) {
-        val point = pingPoint ?: return
+    // Advance the ping ripple one frame: grow the Circle's radius (from a target screen size via the current
+    // zoom, so it reads at a consistent on-screen size) and fade its stroke. Returns false — and removes the
+    // Circle — when the ripple completes. Driven by the adapter's own full-rate frame loop (not the 20Hz
+    // vehicle loop) so the ripple is smooth. Circles draw beneath all markers in gms, so the vehicle icon
+    // stays crisp on top.
+    fun tickPing(nowMs: Long): Boolean {
+        val point = pingPoint ?: return false
         if (pingStartMs == 0L) pingStartMs = nowMs
         val elapsed = nowMs - pingStartMs
         if (MapPing.isDone(elapsed)) {
             clearPing()
-            return
+            return false
         }
         val progress = MapPing.progress(elapsed)
         val radiusPx = MapPing.MAX_RADIUS_DP * density * MapPing.radiusFraction(progress)
@@ -438,6 +439,7 @@ class GoogleMapRenderer(
             existing.radius = radiusMeters
             existing.strokeColor = color
         }
+        return true
     }
 
     private fun clearPing() {

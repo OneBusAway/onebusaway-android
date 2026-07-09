@@ -31,6 +31,12 @@ object MapPing {
     /** How long a single ping ripple lasts. */
     const val DURATION_MS = 700L
 
+    /**
+     * The most the ping waits for the framing pan to settle (the next camera idle) before playing anyway.
+     * A fallback for a fit that doesn't actually move the camera (already framed); a real pan settles first.
+     */
+    const val SETTLE_TIMEOUT_MS = 1500L
+
     /** The ring's maximum radius (dp) at the end of the ripple. */
     const val MAX_RADIUS_DP = 44f
 

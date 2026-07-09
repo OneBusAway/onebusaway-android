@@ -283,26 +283,26 @@ class MapLibreRenderer(
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
         moveVehicles(vehicles, nowMs)
         updateTripOverlay(overlay, nowMs)
-        updatePing(nowMs)
     }
 
-    /** Start a one-shot ping ripple at [point]; the frame loop animates it (#1764). */
+    /** Start a one-shot ping ripple at [point]; the adapter drives [tickPing] to animate it (#1764). */
     fun startPing(point: GeoPoint) {
         clearPing()
         pingPoint = point
-        pingStartMs = 0L // stamped on the first frame that draws it
+        pingStartMs = 0L // stamped on the first tick
     }
 
-    // Advance the ping ripple: regrow the ring bitmap (bigger radius, fading color) and re-set the marker
-    // icon each frame, removing it when the ripple completes. The bitmap is a constant max-size square so
-    // the marker stays centered on the vehicle as the ring grows inside it.
-    private fun updatePing(nowMs: Long) {
-        val point = pingPoint ?: return
+    // Advance the ping ripple one frame: regrow the ring bitmap (bigger radius, fading color) and re-set the
+    // marker icon. Returns false — and removes the marker — when the ripple completes. Driven by the
+    // adapter's own full-rate frame loop (not the vehicle loop) so the ripple is smooth. The bitmap is a
+    // constant max-size square so the marker stays centered on the vehicle as the ring grows inside it.
+    fun tickPing(nowMs: Long): Boolean {
+        val point = pingPoint ?: return false
         if (pingStartMs == 0L) pingStartMs = nowMs
         val elapsed = nowMs - pingStartMs
         if (MapPing.isDone(elapsed)) {
             clearPing()
-            return
+            return false
         }
         val progress = MapPing.progress(elapsed)
         val maxRadiusPx = (MapPing.MAX_RADIUS_DP * density).toInt()
@@ -317,6 +317,7 @@ class MapLibreRenderer(
         } else {
             existing.icon = icon
         }
+        return true
     }
 
     private fun clearPing() {

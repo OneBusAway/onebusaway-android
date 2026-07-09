@@ -56,11 +56,15 @@ import org.onebusaway.android.map.compose.VehicleInfoWindow
 import org.onebusaway.android.map.maplibre.MapLibreRenderer
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.ThemeUtils
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.abs
 
 private const val STYLE_URL_LIGHT = "https://tiles.openfreemap.org/styles/liberty"
@@ -201,9 +205,17 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                         }
                     }
             }
-            // One-shot vehicle pings: hand each to the renderer, which animates it over the frame loop above.
+            // One-shot vehicle pings: fire strictly after the framing pan settles (await the next camera
+            // idle, bounded in case the fit didn't move the camera), then animate at the full display rate
+            // so the ripple is smooth (#1764).
             LaunchedEffect(activeRenderer) {
-                renderState.mapPings.collect { activeRenderer.startPing(it) }
+                renderState.mapPings.collectLatest { point ->
+                    withTimeoutOrNull(MapPing.SETTLE_TIMEOUT_MS) { host.camera.drop(1).first() }
+                    activeRenderer.startPing(point)
+                    while (activeRenderer.tickPing(System.currentTimeMillis())) {
+                        withFrameNanos { }
+                    }
+                }
             }
             val myLocationEnabled by host.myLocationEnabled.collectAsState()
             val map = mapLibreMap

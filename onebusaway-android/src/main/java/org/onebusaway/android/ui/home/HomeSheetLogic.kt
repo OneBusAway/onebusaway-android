@@ -46,12 +46,3 @@ internal fun sheetBackAction(current: ArrivalsSheetState): SheetBackAction = whe
     ArrivalsSheetState.Collapsed -> SheetBackAction.CLEAR_FOCUS  // peek -> clear focus (then hides)
     ArrivalsSheetState.Hidden -> SheetBackAction.NONE            // let the system handle back
 }
-
-/** The collapsed-peek size tier for the previewed arrival count (maps to the header-height dimens). */
-enum class ArrivalsPeekTier { NONE, ONE, TWO_OR_MORE }
-
-internal fun arrivalsPeekTier(arrivalCount: Int): ArrivalsPeekTier = when {
-    arrivalCount >= 2 -> ArrivalsPeekTier.TWO_OR_MORE
-    arrivalCount == 1 -> ArrivalsPeekTier.ONE
-    else -> ArrivalsPeekTier.NONE
-}

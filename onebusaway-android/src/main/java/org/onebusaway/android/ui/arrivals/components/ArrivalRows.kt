@@ -127,9 +127,9 @@ internal fun ArrivalCard(
 ) {
     val base = modifier
         .fillMaxWidth()
-        .padding(horizontal = 12.dp, vertical = 6.dp)
+        .padding(horizontal = 12.dp, vertical = 3.dp)
     val shape = MaterialTheme.shapes.medium
-    val color = MaterialTheme.colorScheme.surfaceContainerLow
+    val color = MaterialTheme.colorScheme.surfaceContainer
     if (onClick != null) {
         Surface(onClick = onClick, modifier = base, shape = shape, color = color, content = content)
     } else {
@@ -358,13 +358,7 @@ fun ArrivalCardStyleB(
 ) {
     val first = group.first()
     var expanded by remember { mutableStateOf(false) }
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerLow
-    ) {
+    ArrivalCard(modifier) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.Top) {
                 Column(Modifier.weight(1f)) {

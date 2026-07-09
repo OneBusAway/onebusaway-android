@@ -55,16 +55,4 @@ class HomeSheetLogicTest {
         assertEquals(SheetBackAction.CLEAR_FOCUS, sheetBackAction(ArrivalsSheetState.Collapsed))
         assertEquals(SheetBackAction.NONE, sheetBackAction(ArrivalsSheetState.Hidden))
     }
-
-    // --- arrivalsPeekTier ---
-
-    @Test
-    fun `peek tier follows the previewed arrival count`() {
-        assertEquals(ArrivalsPeekTier.NONE, arrivalsPeekTier(0))
-        assertEquals(ArrivalsPeekTier.ONE, arrivalsPeekTier(1))
-        assertEquals(ArrivalsPeekTier.TWO_OR_MORE, arrivalsPeekTier(2))
-        assertEquals(ArrivalsPeekTier.TWO_OR_MORE, arrivalsPeekTier(5))
-        // Defensive: a negative count falls back to the no-arrivals tier.
-        assertEquals(ArrivalsPeekTier.NONE, arrivalsPeekTier(-1))
-    }
 }

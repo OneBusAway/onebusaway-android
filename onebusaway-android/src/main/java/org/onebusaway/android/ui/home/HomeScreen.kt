@@ -58,9 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -233,30 +231,28 @@ fun HomeScreen(
             { scope.launch { runCatching { sheetState.partialExpand() } } }
         }
 
-        // The arrivals sheet's measurement state, reported by the panel via onPreferredHeight — local to
-        // the screen, since the panel and the sheet both live here (no need to round-trip the VM). Seeded
-        // at the two-arrivals height so the first reveal doesn't flash undersized (legacy default), and
-        // arrivalsReady gates the peek open until the focused stop's arrivals load (reset on focus change).
-        var peekArrivalCount by remember { mutableIntStateOf(2) }
-        var routeFiltering by remember { mutableStateOf(false) }
+        // The collapsed peek's content height (px), measured by the panel and reported via onPeekMetrics:
+        // the pinned header plus rowCount boxed peek rows. Sizing the peek from real layout (instead of a
+        // hand-tuned dimen table) auto-adapts to content, padding, and font scale. Seeded at 0; the sheet
+        // stays hidden until the first real measurement lands (arrivalsReady), so it never reveals at 0.
+        // arrivalsReady also gates the peek open until the focused stop's arrivals load (reset on focus change).
+        var peekContentPx by remember { mutableIntStateOf(0) }
         var arrivalsReady by remember { mutableStateOf(false) }
         LaunchedEffect(state.focusedStop?.id) { arrivalsReady = false }
 
-        // The arrivals header height for the current preview count + filter offset (no drag handle).
-        val peekHeaderDp = arrivalsPeekHeight(peekArrivalCount, routeFiltering)
-        val peekHeaderPx = with(density) { peekHeaderDp.roundToPx() }
+        // The measured collapsed-peek content (header + boxed peek rows), as dp (no drag handle) for the
+        // peek anchor below. The raw px goes to the activity as the map's bottom padding (onSheetSettled).
+        val peekContentDp = with(density) { peekContentPx.toDp() }
 
         // Grow the sheet peek by the system navigation-bar inset (height varies by handset) so the
         // collapsed peek's pinned header clears the bottom chrome. The panel matches this with its own
         // content inset (see ArrivalsPanel), so the revealed gap is empty rather than clipped content.
         val peekBottomPadding = navigationBarBottomPadding()
 
-        // The full collapsed-sheet peek: the reported header (less the phantom in-panel-handle budget its
-        // dimens still bake in — see LEGACY_IN_PANEL_HANDLE_BUDGET), plus the real scaffold drag handle
-        // above it, plus the navigation-bar inset below. Both the scaffold's peek height and the FAB lift
-        // use this, so the FABs clear the whole collapsed sheet (handle included), not just the header.
-        val collapsedPeekDp =
-            peekHeaderDp - LEGACY_IN_PANEL_HANDLE_BUDGET + DRAG_HANDLE_HEIGHT + peekBottomPadding
+        // The full collapsed-sheet peek: the measured header+rows content, plus the real scaffold drag
+        // handle above it, plus the navigation-bar inset below. Both the scaffold's peek height and the FAB
+        // lift use this, so the FABs clear the whole collapsed sheet (handle included), not just the content.
+        val collapsedPeekDp = peekContentDp + DRAG_HANDLE_HEIGHT + peekBottomPadding
 
         // The drawer's live open fraction (0 = collapsed peek, 1 = fully expanded), read each frame by
         // the arrivals panel to morph the peek rows in lockstep with the drag. measureModifier feeds it
@@ -306,7 +302,7 @@ fun HomeScreen(
             snapshotFlow {
                 if (!sheetShown) ArrivalsSheetState.Hidden else sheetState.currentValue.toArrivalsSheetState()
             }.collect { value ->
-                onSheetSettled(value, peekHeaderPx)
+                onSheetSettled(value, peekContentPx)
             }
         }
 
@@ -418,9 +414,8 @@ fun HomeScreen(
                             },
                             onShowTrip = onShowTrip,
                             onEditReminder = onEditReminder,
-                            onPreferredHeight = { count, filtering ->
-                                peekArrivalCount = count
-                                routeFiltering = filtering
+                            onPeekContentHeight = { px ->
+                                peekContentPx = px
                                 arrivalsReady = true
                             },
                             onTitleClick = homeViewModel::recenterOnFocusedStop,
@@ -624,35 +619,12 @@ private fun SheetValue.toArrivalsSheetState() = when (this) {
     SheetValue.Expanded -> ArrivalsSheetState.Expanded
 }
 
-/** Maps the arrivals preview count + route-filter flag to the collapsed peek header height. */
-@Composable
-private fun arrivalsPeekHeight(arrivalCount: Int, filtering: Boolean): Dp {
-    val base = dimensionResource(
-        when (arrivalsPeekTier(arrivalCount)) {
-            ArrivalsPeekTier.TWO_OR_MORE -> R.dimen.arrival_header_height_two_arrivals
-            ArrivalsPeekTier.ONE -> R.dimen.arrival_header_height_one_arrival
-            ArrivalsPeekTier.NONE -> R.dimen.arrival_header_height_no_arrivals
-        }
-    )
-    val offset = if (filtering) {
-        dimensionResource(R.dimen.arrival_header_height_offset_filter_routes)
-    } else {
-        0.dp
-    }
-    return base + offset
-}
-
 // The custom drag handle's geometry — the visible bar plus the vertical padding above and below it.
 // Shared by [ArrivalsDragHandle] (what it draws) and the peek-height math (how much room it needs), so
 // the two can't drift apart.
 private val DRAG_HANDLE_BAR_HEIGHT = 4.dp
 private val DRAG_HANDLE_VERTICAL_PADDING = 9.dp
 private val DRAG_HANDLE_HEIGHT = DRAG_HANDLE_BAR_HEIGHT + DRAG_HANDLE_VERTICAL_PADDING * 2
-
-// The reported arrivals-header dimens (arrival_header_height_*) still bake in this much room for the
-// legacy in-panel handle the scaffold drag handle replaced; collapsedPeekDp subtracts it back out and
-// adds the real DRAG_HANDLE_HEIGHT instead.
-private val LEGACY_IN_PANEL_HANDLE_BUDGET = 20.dp
 
 /**
  * The arrivals sheet's drag handle: a short grab bar tinted to sit on the panel surface (paired with

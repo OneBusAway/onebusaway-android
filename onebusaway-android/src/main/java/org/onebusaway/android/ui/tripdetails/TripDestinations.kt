@@ -79,10 +79,6 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
             TripDetailsRoute(
                 viewModel = tripVm,
                 onBack = { navController.popBackStack() },
-                // "Show on map" from a trip opens the single-trip live view (not the route map).
-                onShowOnMap = {
-                    navController.navigate(NavRoutes.tripMap(tripId, tripVm.lineColorArgb()))
-                },
                 onStopClick = { sid, name, _ ->
                     navController.navigate(NavRoutes.arrivals(sid, name))
                 },

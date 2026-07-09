@@ -54,7 +54,6 @@ import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.map.MapViewModel
-import org.onebusaway.android.map.compose.TripMapScreen
 import org.onebusaway.android.report.ui.reportGraph
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
@@ -209,24 +208,6 @@ fun HomeNavHost(
                 arrivalsViewModelFactory = home.arrivalsViewModelFactory,
                 callbacks = callbacks,
             )
-        }
-        // Trip-focus map (speed estimation): drives the shared MapViewModel, so it's registered here
-        // where home.mapViewModel is in scope (rather than in a findActivity-based graph).
-        composable(
-            NavRoutes.TRIP_MAP,
-            arguments = listOf(
-                navArgument(NavRoutes.ARG_TRIP_ID) { type = NavType.StringType },
-                navArgument(NavRoutes.ARG_LINE_COLOR) { type = NavType.IntType; defaultValue = 0 },
-            ),
-        ) { entry ->
-            ObaTheme {
-                TripMapScreen(
-                    mapViewModel = home.mapViewModel,
-                    tripId = entry.arguments?.getString(NavRoutes.ARG_TRIP_ID).orEmpty(),
-                    lineColorArgb = entry.arguments?.getInt(NavRoutes.ARG_LINE_COLOR) ?: 0,
-                    onBack = { navController.popBackStack() },
-                )
-            }
         }
         // The rest of the graph, grouped by feature (each a NavGraphBuilder extension near its
         // feature; they recover the host via findActivity rather than threading dependencies).

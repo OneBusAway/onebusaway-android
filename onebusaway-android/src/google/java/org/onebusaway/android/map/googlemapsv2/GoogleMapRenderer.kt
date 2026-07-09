@@ -68,7 +68,7 @@ import java.util.concurrent.TimeUnit
  *    trip-stop dots) and reconciles the stop markers in place ([reconcileStopMarkers], so unchanged
  *    stops don't blink), driven by snapshot/trip-stop changes (viewport loads, the vehicle poll,
  *    focus) — a bounded cost.
- *  - [renderDynamic] (the live route vehicles + the trip-focus band/estimate markers) is pulled at
+ *  - [renderDynamic] (the live route vehicles + the selected vehicle's band/fast-estimate marker) is pulled at
  *    ~20Hz by the adapter's frame loop. It moves native markers **in place** to their freshly
  *    extrapolated positions (so the icons glide with the map, an open info window survives, and there's
  *    no recomposition/projection-overlay jitter) and only adds/removes annotations as the identity set
@@ -94,6 +94,9 @@ class GoogleMapRenderer(
     // The stop ids drawn as starred (favorite) last reconcile, so a star/unstar flips the icon (+ tap
     // z-index) even when focus and band are unchanged; see [reconcileStopMarkers].
     private var renderedFavoriteStopIds: Set<String> = emptySet()
+    // The stop ids drawn as route-mode circles last reconcile, so entering/leaving route mode restyles a
+    // *retained* (focused) stop whose route-circle vs nearby icon flips while focus + band stay the same.
+    private var renderedRouteStopIds: Set<String> = emptySet()
 
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
@@ -112,7 +115,7 @@ class GoogleMapRenderer(
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route vehicles
     // keyed by active trip id, and the band's (interaction-free) polylines re-added each frame. The
-    // trip-focus estimate markers are self-contained [TripEstimateMarker]s.
+    // selected vehicle's fast-estimate marker is a self-contained [TripEstimateMarker].
     private val vehicleMarkersByTripId = HashMap<String, Marker>()
     private val bandPolylines = mutableListOf<Polyline>()
 
@@ -125,14 +128,10 @@ class GoogleMapRenderer(
     // dead-reckon glide), then tracks the live target between fixes. Keyed by trip id.
     private val vehicleSmoother = CorrectionSmoother()
 
-    // The trip-focus estimate markers (best estimate, fast estimate, data-age dot): each owns its native
-    // marker + ease state, a fixed info-window title, and a distinct z-index, and glides to a fresh fix.
-    // Distinct z-indexes are load-bearing: these markers overlap and extrapolate every frame, so a shared
-    // z-index lets gms re-order them by latitude per frame — the overlapping icons' alpha then flickers.
-    // The data-age dot also carries a live "N ago" body. Icons resolve lazily on first show.
-    private val vehicleEstimate = TripEstimateMarker({ vehicleEstimateIcon() }, "Best estimate", VEHICLE_ESTIMATE_Z_INDEX)
+    // The selected vehicle's fast-estimate marker: it owns its native marker + ease state, a fixed
+    // info-window title, and a z-index above the band, and glides to a fresh fix. Icon resolves lazily
+    // on first show.
     private val fastEstimate = TripEstimateMarker({ fastEstimateIcon() }, "Fast estimate", FAST_ESTIMATE_Z_INDEX)
-    private val dataAgeEstimate = TripEstimateMarker({ dataAgeIcon() }, MOST_RECENT_DATA_TITLE, DATA_AGE_Z_INDEX)
     // Smooths the most-recent-data dot to a fresh fix (it's static between fixes). Tracks the dot's current
     // selection + fix so we only move / refresh on an actual change or while settling — never while its
     // bubble is open longer than the settle.
@@ -218,21 +217,6 @@ class GoogleMapRenderer(
             staticPolylines.add(map.addPolyline(options))
         }
 
-        // Trip-focus scheduled-stop dots (static for the trip), drawn over the line but under the live
-        // overlay markers.
-        for (stop in renderState.tripStops.value) {
-            staticMarkers.add(
-                map.addMarker(
-                    MarkerOptions()
-                        .position(stop.point.toLatLng())
-                        .icon(tripStopIcon(stop.selected))
-                        .anchor(0.5f, 0.5f)
-                        .flat(true)
-                        .zIndex(1f)
-                )!!
-            )
-        }
-
         reconcileStopMarkers(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
 
         if (snapshot.bikeshareVisible) {
@@ -284,7 +268,7 @@ class GoogleMapRenderer(
             }
         }
         for (stop in stops) {
-            val kind = stopIconKind(stop.id == focusedStopId, band, stop.favorite)
+            val kind = stopIconKind(stop.id == focusedStopId, band, stop.favorite, stop.routeStop)
             val existing = stopMarkersByStopId[stop.id]
             if (existing == null) {
                 val (anchorX, anchorY) = stopAnchor(stop, kind)
@@ -299,23 +283,32 @@ class GoogleMapRenderer(
                 )!!
                 stopMarkersByStopId[stop.id] = marker
                 stopByMarker[marker] = stop
-            } else if (stopIconKind(
+            } else {
+                val previousKind = stopIconKind(
                     stop.id == renderedFocusedStopId,
                     renderedStopBand,
                     stop.id in renderedFavoriteStopIds,
-                ) != kind
-            ) {
+                    stop.id in renderedRouteStopIds,
+                )
                 // Only the markers whose icon kind changed need a new icon (and matching anchor: the
-                // full icon is anchored on its circle per direction, the dot/star at the marker center).
-                existing.setIcon(stopIcon(stop, kind))
-                val (anchorX, anchorY) = stopAnchor(stop, kind)
-                existing.setAnchor(anchorX, anchorY)
+                // full icon is anchored on its circle per direction, the dot/star/circle at the marker
+                // center). Position and the backing StopMarker are refreshed unconditionally, since a
+                // projected route stop can keep the same kind (ROUTE_CIRCLE) while its on-route point
+                // moves — gating those on the kind change would strand the marker at a stale coordinate.
+                if (previousKind != kind) {
+                    existing.setIcon(stopIcon(stop, kind))
+                    val (anchorX, anchorY) = stopAnchor(stop, kind)
+                    existing.setAnchor(anchorX, anchorY)
+                }
+                existing.position = stop.point.toLatLng()
                 existing.zIndex = if (stop.favorite) FAVORITE_STOP_Z_INDEX else 0f
+                stopByMarker[existing] = stop
             }
         }
         renderedFocusedStopId = focusedStopId
         renderedStopBand = band
         renderedFavoriteStopIds = buildSet { for (s in stops) if (s.favorite) add(s.id) }
+        renderedRouteStopIds = buildSet { for (s in stops) if (s.routeStop) add(s.id) }
     }
 
     private fun stopIcon(stop: StopMarker, kind: StopIconKind): BitmapDescriptor = when (kind) {
@@ -327,6 +320,10 @@ class GoogleMapRenderer(
         StopIconKind.FAVORITE_FOCUSED -> StopIconFactory.focusedFavoriteStopIcon(context, stop.direction)
         StopIconKind.FAVORITE_DOT -> StopIconFactory.favoriteDotStopIcon(context)
         StopIconKind.FAVORITE_DOT_FOCUSED -> StopIconFactory.focusedFavoriteDotStopIcon(context)
+        // Route stops reuse the trip map's centerline circle (focused = filled center) so the overview
+        // map's route matches the trip map (#1752).
+        StopIconKind.ROUTE_CIRCLE -> tripStopIcon(selected = false)
+        StopIconKind.ROUTE_CIRCLE_FOCUSED -> tripStopIcon(selected = true)
     }
 
     private fun stopAnchor(stop: StopMarker, kind: StopIconKind): Pair<Float, Float> =
@@ -366,9 +363,7 @@ class GoogleMapRenderer(
         mostRecentDataMarker?.remove()
         mostRecentDataMarker = null
 
-        vehicleEstimate.dispose()
         fastEstimate.dispose()
-        dataAgeEstimate.dispose()
 
         // Drop our wrapped descriptors so their native textures are released once the markers using them
         // are gone. (The source bitmaps are owned by the shared static caches and are deliberately not
@@ -378,8 +373,8 @@ class GoogleMapRenderer(
 
     /**
      * Update the dynamic layer for one dynamic tick: the route's live [vehicles] (null off route mode)
-     * and the trip-focus [overlay] (null off trip-focus). Moving markers smooth across a fresh fix (a
-     * decaying correction on the dead-reckon glide); the band is re-added.
+     * and the selected vehicle's [overlay] (null when nothing is selected). Moving markers smooth across a
+     * fresh fix (a decaying correction on the dead-reckon glide); the band is re-added.
      */
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
         moveVehicles(vehicles, nowMs)
@@ -418,7 +413,7 @@ class GoogleMapRenderer(
                 }
             }
         }
-        updateMostRecentDataDot(markers, nowMs)
+        updateMostRecentDataDot(nowMs)
     }
 
     /**
@@ -434,11 +429,18 @@ class GoogleMapRenderer(
      * and refresh the age only while closed (it's current when reopened, frozen while open — like every
      * other info window here).
      */
-    private fun updateMostRecentDataDot(markers: List<VehicleMarker>, nowMs: Long) {
+    private fun updateMostRecentDataDot(nowMs: Long) {
         val selectedId = renderState.selectedVehicleTripId.value
-        val selected = selectedId?.let { id -> markers.firstOrNull { it.activeTripId == id } }
+        // Read the dot's inputs from the reconciled (per-poll) set, not the per-frame motion samples:
+        // the fix point + age are discrete, changing only when a new poll lands, and the set is where the
+        // shape-projected [VehicleMarker.dataFixPoint] is carried (the motion samples leave it null).
+        val selected = selectedId?.let { id -> vehicleMarkersByTripId[id]?.let { vehicleByMarker[it] } }
+        // The dot marks the last fix at the glide's origin: the shape-projected anchor point when we
+        // have it (so it coincides with the uncertainty band's origin), falling back to the raw reported
+        // lat/lng for a vehicle we aren't extrapolating on a shape (#1752).
         val reported = selected?.let { it.status.lastKnownLocation ?: it.status.position }
-        if (selected == null || reported == null) {
+        val target = selected?.dataFixPoint ?: reported?.let { GeoPoint(it.latitude, it.longitude) }
+        if (selected == null || target == null) {
             mostRecentDataMarker?.remove()
             mostRecentDataMarker = null
             dotSmoother.retainOnly(emptySet())
@@ -446,7 +448,6 @@ class GoogleMapRenderer(
             dotAgeSeconds = -1L
             return
         }
-        val target = GeoPoint(reported.latitude, reported.longitude)
         val ageSeconds = TimeUnit.MILLISECONDS.toSeconds(nowMs - selected.fixTimeMs)
         val existing = mostRecentDataMarker
         if (existing == null) {
@@ -506,8 +507,9 @@ class GoogleMapRenderer(
                     MarkerOptions()
                         .position(vehicle.point.toLatLng())
                         .icon(vehicleIcon(vehicle, response))
-                        // Anchor the pin tip (not the padded bitmap edge) on the vehicle location.
-                        .anchor(VehicleBitmaps.ANCHOR_U, VehicleBitmaps.ANCHOR_V)
+                        // Center the disc badge on the vehicle location, so it sits on the route
+                        // centerline like the trip map's estimate marker rather than floating off it (#1752).
+                        .anchor(0.5f, 0.5f)
                         .title(vehicleTitle(vehicle, response))
                         .zIndex(VEHICLE_Z_INDEX)
                 )!!
@@ -559,26 +561,16 @@ class GoogleMapRenderer(
         while (bandPolylines.size > band.size) {
             bandPolylines.removeAt(bandPolylines.size - 1).remove()
         }
-        // Each estimate marker owns its smoothing + fixed title; hand it the fresh fix, the tick clock,
-        // and (for the data-age dot) its live age body.
-        val fixTimeMs = overlay?.fixTimeMs ?: 0L
-        vehicleEstimate.update(overlay?.vehiclePoint, fixTimeMs, nowMs)
-        fastEstimate.update(overlay?.fastEstimatePoint, fixTimeMs, nowMs)
-        dataAgeEstimate.update(
-            overlay?.dataAge?.point,
-            fixTimeMs,
-            nowMs,
-            body = overlay?.dataAge?.let { "${it.ageMillis / 1000}s ago" },
-        )
+        // The fast-estimate marker owns its smoothing + fixed title; hand it the fresh fix + tick clock.
+        fastEstimate.update(overlay?.fastEstimatePoint, overlay?.fixTimeMs ?: 0L, nowMs)
     }
 
     /**
-     * One trip-focus estimate marker (best estimate, fast estimate, or the data-age dot): owns its native
-     * [Marker] and its own [CorrectionSmoother], with a fixed info-window [title] set at creation. [update]
-     * creates it on the first non-null point, removes it on null, smooths it across a fresh fix, and
-     * refreshes the optional [body] (info-window snippet — only the data-age dot uses it). The icon
-     * resolves lazily on first show via [iconProvider] (so the trip-focus icons aren't built in plain
-     * route mode). Driven every tick (the overlay sampler runs each frame), so the decay just progresses.
+     * The selected vehicle's fast-estimate marker: owns its native [Marker] and its own
+     * [CorrectionSmoother], with a fixed info-window [title] set at creation. [update] creates it on the
+     * first non-null point, removes it on null, and smooths it across a fresh fix. The icon resolves lazily
+     * on first show via [iconProvider] (so it isn't built until a vehicle is selected). Driven every tick
+     * (the overlay sampler runs each frame), so the decay just progresses.
      */
     private inner class TripEstimateMarker(
         private val iconProvider: () -> BitmapDescriptor,
@@ -588,7 +580,7 @@ class GoogleMapRenderer(
         private var marker: Marker? = null
         private val smoother = CorrectionSmoother()
 
-        fun update(point: GeoPoint?, fixTimeMs: Long, nowMs: Long, body: String? = null) {
+        fun update(point: GeoPoint?, fixTimeMs: Long, nowMs: Long) {
             val existing = marker
             if (point == null) {
                 existing?.remove()
@@ -602,16 +594,12 @@ class GoogleMapRenderer(
                         .position(point.toLatLng())
                         .icon(iconProvider())
                         .title(title)
-                        .snippet(body)
                         .anchor(0.5f, 0.5f)
                         .zIndex(zIndex)
                 )!!
                 smoother.prime(ESTIMATE_EASE_KEY, point, fixTimeMs)
                 return
             }
-            // Refresh the body only while the bubble is closed: the SDK info window is one bitmap, so
-            // re-setting the snippet while shown redraws/flickers it.
-            if (body != existing.snippet && !existing.isInfoWindowShown) existing.snippet = body
             existing.position =
                 smoother.displayPosition(ESTIMATE_EASE_KEY, point, fixTimeMs, nowMs).toLatLng()
         }
@@ -620,13 +608,11 @@ class GoogleMapRenderer(
         fun dispose() = update(null, 0L, 0L)
     }
 
-    // The trip-focus icons, cached through [descriptorCache] by a stable per-icon key so each resolves
+    // The overlay/dot icons, cached through [descriptorCache] by a stable per-icon key so each resolves
     // lazily on first show and reuses one descriptor thereafter (released, with the rest, in [dispose]).
-    private fun vehicleEstimateIcon(): BitmapDescriptor = tripCircleIcon(R.drawable.ic_vehicle_position)
-
     private fun fastEstimateIcon(): BitmapDescriptor = tripCircleIcon(R.drawable.ic_fast_estimate)
 
-    // The signal glyph is light, so tint it gray to read on the white disc.
+    // The signal glyph is light, so tint it gray to read on the white disc (used by the most-recent-data dot).
     private fun dataAgeIcon(): BitmapDescriptor =
         tripCircleIcon(R.drawable.ic_signal_indicator, TripMarkerBitmaps.STROKE_COLOR)
 
@@ -660,13 +646,9 @@ class GoogleMapRenderer(
         // an overlapping-marker click to the highest z-index marker.
         private const val FAVORITE_STOP_Z_INDEX = 0.5f
 
-        // The uncertainty band draws above the static route line; the estimate markers above the band,
-        // each at a distinct z-index so overlapping ones keep a stable draw order (no per-frame alpha
-        // flicker). Best estimate on top, then fast estimate, then the data-age dot.
+        // The uncertainty band draws above the static route line; the fast-estimate marker above the band.
         private const val TRIP_BAND_Z_INDEX = 2f
-        private const val DATA_AGE_Z_INDEX = 3f
         private const val FAST_ESTIMATE_Z_INDEX = 4f
-        private const val VEHICLE_ESTIMATE_Z_INDEX = 5f
 
         // The (arbitrary, constant) ease key for a TripEstimateMarker's single-marker easer.
         private const val ESTIMATE_EASE_KEY = "estimate"
@@ -674,11 +656,13 @@ class GoogleMapRenderer(
         private const val MOST_RECENT_DATA_TITLE = "Most recent data"
 
         // Comfortably covers a busy route's live working set — a vehicle type's 8 heading octants across a
-        // handful of schedule-deviation colors, times a few route types, plus the 5 fixed trip-focus icons
+        // handful of schedule-deviation colors, times a few route types, plus the fast-estimate + dot icons
         // — so descriptors are reused as vehicles turn, not thrashed. Bounded so a long, varied session
         // can't grow it without limit (evicting a still-shown icon just re-wraps it on next request).
         private const val DESCRIPTOR_CACHE_SIZE = 256
     }
 }
 
-private fun GeoPoint.toLatLng() = LatLng(latitude, longitude)
+// Internal (not private) so the inner marker/overlay classes call it without a synthetic accessor
+// (lint SyntheticAccessor); it's a trivial converter used only within this file.
+internal fun GeoPoint.toLatLng() = LatLng(latitude, longitude)

@@ -20,8 +20,6 @@
 package org.onebusaway.android.map.maplibre
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import java.util.concurrent.TimeUnit
 import org.maplibre.android.annotations.Annotation
 import org.maplibre.android.annotations.Icon
@@ -66,7 +64,7 @@ import org.onebusaway.android.util.getRouteDisplayName
  *    trip-stop dots) and reconciles the stop markers in place ([reconcileStopMarkers], so unchanged
  *    stops don't blink), driven by snapshot/trip-stop changes (viewport loads, the vehicle poll,
  *    focus) — a bounded cost.
- *  - [renderDynamic] (the live vehicle markers + the trip-focus band/estimate markers) is pulled each
+ *  - [renderDynamic] (the live vehicle markers + the selected vehicle's band/fast-estimate marker) is pulled each
  *    display frame by the adapter's vsync loop. It updates marker positions **in place** (so an open
  *    info window survives and there's no per-frame flicker) and only adds/removes annotations as the
  *    identity set changes; the band's polylines, which carry no interaction state, are remove+re-added.
@@ -100,6 +98,9 @@ class MapLibreRenderer(
     // maplibre markers carry no z-index, so the #1680 tap-preference is icon-only here — a starred stop
     // can't be given draw/tap priority over an overlapping plain stop on this flavor.)
     private var renderedFavoriteStopIds: Set<String> = emptySet()
+    // The stop ids drawn as route-mode circles last reconcile, so entering/leaving route mode restyles a
+    // *retained* (focused) stop whose route-circle vs nearby icon flips while focus + band stay the same.
+    private var renderedRouteStopIds: Set<String> = emptySet()
 
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
@@ -159,18 +160,6 @@ class MapLibreRenderer(
             staticAnnotations.add(map.addPolyline(options))
         }
 
-        // Trip-focus scheduled-stop dots (static for the trip), drawn over the line but under the
-        // live overlay markers.
-        for (stop in renderState.tripStops.value) {
-            staticAnnotations.add(
-                map.addMarker(
-                    MarkerOptions()
-                        .position(stop.point.toLatLng())
-                        .icon(if (stop.selected) tripStopSelectedIcon else tripStopIcon)
-                )
-            )
-        }
-
         reconcileStopMarkers(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
 
         if (snapshot.bikeshareVisible) {
@@ -227,7 +216,7 @@ class MapLibreRenderer(
             }
         }
         for (stop in stops) {
-            val kind = stopIconKind(stop.id == focusedStopId, band, stop.favorite)
+            val kind = stopIconKind(stop.id == focusedStopId, band, stop.favorite, stop.routeStop)
             val existing = stopMarkersByStopId[stop.id]
             if (existing == null) {
                 val marker = map.addMarker(
@@ -235,20 +224,29 @@ class MapLibreRenderer(
                 )
                 stopMarkersByStopId[stop.id] = marker
                 stopByMarker[marker] = stop
-            } else if (stopIconKind(
+            } else {
+                val previousKind = stopIconKind(
                     stop.id == renderedFocusedStopId,
                     renderedStopBand,
                     stop.id in renderedFavoriteStopIds,
-                ) != kind
-            ) {
+                    stop.id in renderedRouteStopIds,
+                )
                 // Only the markers whose icon kind changed need a new icon (maplibre centers the icon
-                // on the position, so the dot/star lands on the stop with no anchor change).
-                existing.icon = stopIcon(stop, kind)
+                // on the position, so the dot/star/circle lands on the stop with no anchor change).
+                // Position and the backing StopMarker are refreshed unconditionally, since a projected
+                // route stop can keep the same kind (ROUTE_CIRCLE) while its on-route point moves —
+                // gating those on the kind change would strand the marker at a stale coordinate.
+                if (previousKind != kind) {
+                    existing.icon = stopIcon(stop, kind)
+                }
+                existing.position = stop.point.toLatLng()
+                stopByMarker[existing] = stop
             }
         }
         renderedFocusedStopId = focusedStopId
         renderedStopBand = band
         renderedFavoriteStopIds = buildSet { for (s in stops) if (s.favorite) add(s.id) }
+        renderedRouteStopIds = buildSet { for (s in stops) if (s.routeStop) add(s.id) }
     }
 
     private fun stopIcon(stop: StopMarker, kind: StopIconKind): Icon = when (kind) {
@@ -260,12 +258,16 @@ class MapLibreRenderer(
         StopIconKind.FAVORITE_FOCUSED -> MapLibreStopIcons.focusedFavoriteIcon(context, stop.direction)
         StopIconKind.FAVORITE_DOT -> MapLibreStopIcons.favoriteDotIcon(context)
         StopIconKind.FAVORITE_DOT_FOCUSED -> MapLibreStopIcons.focusedFavoriteDotIcon(context)
+        // Route stops reuse the trip map's centerline circle (focused = filled center) so the overview
+        // map's route matches the trip map (#1752).
+        StopIconKind.ROUTE_CIRCLE -> tripStopIcon
+        StopIconKind.ROUTE_CIRCLE_FOCUSED -> tripStopSelectedIcon
     }
 
     /**
      * Update the dynamic layer for one display frame: the route's live [vehicles] (null off route mode)
-     * and the trip-focus [overlay] (null off trip-focus). Markers move in place (smoothed across a fresh
-     * fix via [nowMs]); the band is re-added.
+     * and the selected vehicle's [overlay] (null when nothing is selected). Markers move in place (smoothed
+     * across a fresh fix via [nowMs]); the band is re-added.
      */
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
         moveVehicles(vehicles, nowMs)
@@ -303,7 +305,7 @@ class MapLibreRenderer(
                 }
             }
         }
-        updateMostRecentDataDot(markers, nowMs)
+        updateMostRecentDataDot(nowMs)
     }
 
     /**
@@ -317,11 +319,18 @@ class MapLibreRenderer(
      * settling — never an unconditional per-tick set, which would redraw an open bubble; the age is
      * refreshed only while the bubble is closed.
      */
-    private fun updateMostRecentDataDot(markers: List<VehicleMarker>, nowMs: Long) {
+    private fun updateMostRecentDataDot(nowMs: Long) {
         val selectedId = renderState.selectedVehicleTripId.value
-        val selected = selectedId?.let { id -> markers.firstOrNull { it.activeTripId == id } }
+        // Read the dot's inputs from the reconciled (per-poll) set, not the per-frame motion samples:
+        // the fix point + age are discrete, changing only when a new poll lands, and the set is where the
+        // shape-projected [VehicleMarker.dataFixPoint] is carried (the motion samples leave it null).
+        val selected = selectedId?.let { id -> vehicleMarkersByTripId[id]?.let { vehicleByMarker[it] } }
+        // The dot marks the last fix at the glide's origin: the shape-projected anchor point when we
+        // have it (so it coincides with the uncertainty band's origin), falling back to the raw reported
+        // lat/lng for a vehicle we aren't extrapolating on a shape (#1752).
         val reported = selected?.let { it.status.lastKnownLocation ?: it.status.position }
-        if (selected == null || reported == null) {
+        val target = selected?.dataFixPoint ?: reported?.let { GeoPoint(it.latitude, it.longitude) }
+        if (selected == null || target == null) {
             mostRecentDataMarker?.let { map.removeAnnotation(it) }
             mostRecentDataMarker = null
             dotSmoother.retainOnly(emptySet())
@@ -329,7 +338,6 @@ class MapLibreRenderer(
             dotAgeSeconds = -1L
             return
         }
-        val target = GeoPoint(reported.latitude, reported.longitude)
         val ageSeconds = TimeUnit.MILLISECONDS.toSeconds(nowMs - selected.fixTimeMs)
         val existing = mostRecentDataMarker
         if (existing == null) {
@@ -397,16 +405,11 @@ class MapLibreRenderer(
         }
     }
 
+    // The vehicle disc badge is centered in its bitmap, and maplibre's classic Marker centers an icon on
+    // the point, so the badge lands on the route centerline with no anchor adjustment (#1752).
     private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): Icon =
-        iconFactory.fromBitmap(
-            bottomAnchored(VehicleBitmaps.vehicleBitmap(context, vehicle, response))
-        )
+        iconFactory.fromBitmap(VehicleBitmaps.vehicleBitmap(context, vehicle, response))
 
-    /**
-     * maplibre's classic [Marker] centers an icon bitmap on the point, but the vehicle pin's tip is its
-     * bottom-center (matching the Google flavor's default 0.5/1.0 anchor). Pad [bitmap] below by its own
-     * height so the doubled bitmap's center lands on the original bottom-center — i.e. a bottom anchor.
-     */
     /**
      * Move this marker to [latLng] and, if its info window is open, reposition it to follow — maplibre
      * repositions an open window on camera moves but not when a marker's position changes between them,
@@ -415,15 +418,6 @@ class MapLibreRenderer(
     private fun Marker.moveTo(latLng: LatLng) {
         position = latLng
         if (isInfoWindowShown) getInfoWindow()?.update()
-    }
-
-    private fun bottomAnchored(bitmap: Bitmap): Bitmap {
-        // MapLibre icons are center-anchored; pad below so the center lands on the pin tip
-        // ([VehicleBitmaps.ANCHOR_V] of the height), not the padded bitmap's bottom edge.
-        val tipY = VehicleBitmaps.ANCHOR_V * bitmap.height
-        val out = Bitmap.createBitmap(bitmap.width, (2f * tipY).toInt(), Bitmap.Config.ARGB_8888)
-        Canvas(out).drawBitmap(bitmap, 0f, 0f, null)
-        return out
     }
 
     private fun vehicleTitle(vehicle: VehicleMarker, response: RouteTrips): String {
@@ -455,20 +449,10 @@ class MapLibreRenderer(
         while (bandPolylines.size > band.size) {
             map.removeAnnotation(bandPolylines.removeAt(bandPolylines.size - 1))
         }
-        // Estimate markers move in place (keeping any open info window); the data-age title ticks each
-        // second, so refresh it when it changes. The fix instant drives the smoother's correction.
-        val fixTimeMs = overlay?.fixTimeMs ?: 0L
-        updateTripMarker("vehicle", overlay?.vehiclePoint, vehicleEstimateIcon, "Best estimate", fixTimeMs, nowMs)
-        updateTripMarker("fast", overlay?.fastEstimatePoint, fastEstimateIcon, "Fast estimate", fixTimeMs, nowMs)
-        updateTripMarker(
-            "dataAge",
-            overlay?.dataAge?.point,
-            dataAgeIcon,
-            overlay?.dataAge?.let { "${it.ageMillis / 1000}s ago" } ?: "",
-            fixTimeMs,
-            nowMs,
-        )
-        // Drop smoother state for any role whose marker is gone (overlay went null off trip-focus).
+        // The fast-estimate marker moves in place (keeping any open info window); the fix instant drives
+        // the smoother's correction.
+        updateTripMarker("fast", overlay?.fastEstimatePoint, fastEstimateIcon, "Fast estimate", overlay?.fixTimeMs ?: 0L, nowMs)
+        // Drop smoother state for the marker's role once it's gone (overlay went null on deselect).
         tripSmoother.retainOnly(tripMarkersByRole.keys)
     }
 
@@ -498,13 +482,10 @@ class MapLibreRenderer(
         }
     }
 
-    private val vehicleEstimateIcon: Icon by lazy {
-        iconFactory.fromBitmap(TripMarkerBitmaps.circle(context, R.drawable.ic_vehicle_position))
-    }
     private val fastEstimateIcon: Icon by lazy {
         iconFactory.fromBitmap(TripMarkerBitmaps.circle(context, R.drawable.ic_fast_estimate))
     }
-    // The signal glyph is light, so tint it gray to read on the white disc (createDataReceivedIcon).
+    // The signal glyph is light, so tint it gray to read on the white disc (the most-recent-data dot).
     private val dataAgeIcon: Icon by lazy {
         iconFactory.fromBitmap(
             TripMarkerBitmaps.circle(context, R.drawable.ic_signal_indicator, TripMarkerBitmaps.STROKE_COLOR)

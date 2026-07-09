@@ -41,15 +41,20 @@ fun buildTripExtrapolation(
     state: TripState,
     result: ExtrapolationResult,
     nowMs: WallTime,
+    includeMarkers: Boolean = true,
 ): TripExtrapolation? {
     val polyline = state.polyline ?: return null
     val distribution = (result as? ExtrapolationResult.Success)?.distribution
 
     return TripExtrapolation(
-        vehiclePoint = distribution?.let { polyline.pointAtDistance(it.median()) },
+        // The median estimate + data-age marker are only wanted by a caller that draws them itself; the
+        // route map's selected-vehicle overlay (the sole production caller) passes includeMarkers=false —
+        // it draws the live vehicle disc + most-recent-data dot separately — so we skip the extra
+        // projection + allocation on its ~20–120Hz path (#1752).
+        vehiclePoint = if (includeMarkers) distribution?.let { polyline.pointAtDistance(it.median()) } else null,
         fastEstimatePoint = distribution?.let { polyline.pointAtDistance(it.quantile(FAST_ESTIMATE_QUANTILE)) },
         band = distribution?.let { weightedBandSegments(it, polyline) } ?: emptyList(),
-        dataAge = dataAgeMarker(state, nowMs),
+        dataAge = if (includeMarkers) dataAgeMarker(state, nowMs) else null,
         // A domain-agnostic *change token*, not a displayed instant: the renderer only compares it for
         // `!=` (a change means fresh AVL data) — never formats or subtracts it. 0 is the token's own
         // "no fix" value (matching the `TripOverlay`/`MapRenderState` field default), not a coerced
@@ -59,8 +64,8 @@ fun buildTripExtrapolation(
 }
 
 /** Composes [TripState.extrapolate] with [buildTripExtrapolation] — the per-frame producer the driver runs. */
-internal fun extrapolationFromState(state: TripState?, nowMs: WallTime): TripExtrapolation? =
-    state?.let { buildTripExtrapolation(it, it.extrapolate(nowMs), nowMs) }
+internal fun extrapolationFromState(state: TripState?, nowMs: WallTime, includeMarkers: Boolean = true): TripExtrapolation? =
+    state?.let { buildTripExtrapolation(it, it.extrapolate(nowMs), nowMs, includeMarkers) }
 
 /** The extrapolated (median) vehicle [point] along the trip shape and its forward [bearing] there. */
 private data class VehicleProjection(val point: GeoPoint, val bearing: Float)
@@ -103,6 +108,12 @@ fun extrapolatedVehicles(
     routeIds: Set<String>,
     nowMs: WallTime,
     directionId: Int? = null,
+    // Whether to project each vehicle's last fix onto the shape ([dataFixPoint]). Only the discrete,
+    // once-per-poll set needs it (the renderer reads the selected vehicle's dot from there); the ~20–120Hz
+    // motion sampler leaves it null so the projection stays off the per-frame path — it's constant between
+    // fixes and read only for the one selected vehicle, so computing it every frame is pure waste. Placed
+    // before [lookupState] so the callback stays last (trailing-lambda call sites keep working).
+    includeDataFixPoint: Boolean = false,
     lookupState: (String?) -> TripState?,
 ): List<ExtrapolatedVehicle> =
     routeTrips.trips.mapNotNull { trip ->
@@ -131,6 +142,10 @@ fun extrapolatedVehicles(
             fixTimeMs = state?.anchorLocalTimeMs?.epochMs ?: status.lastUpdateTime,
             status = status,
             isRealtime = isRealtime,
+            // The last real fix's position on the shape (the glide's seed), so the most-recent-data dot
+            // sits at the band's origin rather than at the raw off-shape reported lat/lng (#1752). Only
+            // the discrete set path asks for it; the per-frame path leaves it null (see the param).
+            dataFixPoint = if (includeDataFixPoint) state?.let(::anchorFixPoint) else null,
         )
     }
 
@@ -147,19 +162,25 @@ private fun weightedBandSegments(distribution: ProbDistribution, polyline: Polyl
         WeightedBandSegment(points.map(Location::toGeoPoint), slice.alpha.coerceIn(0f, 1f))
     }
 
-private fun dataAgeMarker(state: TripState, nowMs: WallTime): DataAgeMarker? {
+/**
+ * The last real fix's position on the route shape: the anchor's distanceAlongTrip — the exact value the
+ * glide is seeded from ([TripState.extrapolate]) — projected onto the shape. This keeps the "most recent
+ * data" marker pinned to the glide's origin so it can never float ahead of (or off) the glide. Drawing it
+ * at the anchor's raw `position` instead (a different, server-extrapolated field than distanceAlongTrip)
+ * let the two disagree, so the dot appeared ahead of the glide when they diverged — the regression from
+ * a821321a8 ("Remove bestLocation — always use position for display"). Falls back to the reported position
+ * only when the fix carries no distance or the shape can't place it. Shared by the trip map's data-age
+ * marker and the route map's most-recent-data dot so both draw the dot from one source (#1752).
+ */
+internal fun anchorFixPoint(state: TripState): GeoPoint? {
     val anchor = state.anchor ?: return null
-    val anchorLocal = state.anchorLocalTimeMs ?: return null
-    // Plot the dot at the extrapolation's own anchor: the anchor's distanceAlongTrip — the exact value
-    // the glide is seeded from (TripState.extrapolate) — projected onto the shape. This keeps the "data
-    // received" dot pinned to the glide's origin so it can never float ahead of the glide. Drawing it at
-    // the anchor's raw `position` instead (a different, server-extrapolated field than distanceAlongTrip)
-    // let the two disagree, so the dot appeared ahead of the glide when they diverged — the regression
-    // from a821321a8 ("Remove bestLocation — always use position for display"). Fall back to the reported
-    // position only when the fix carries no distance or the shape can't place it.
-    val point = anchor.distanceAlongTrip?.let { dist -> state.polyline?.pointAtDistance(dist) }
+    return anchor.distanceAlongTrip?.let { dist -> state.polyline?.pointAtDistance(dist) }
         ?: anchor.position?.toGeoPoint()
-        ?: return null
+}
+
+private fun dataAgeMarker(state: TripState, nowMs: WallTime): DataAgeMarker? {
+    val anchorLocal = state.anchorLocalTimeMs ?: return null
+    val point = anchorFixPoint(state) ?: return null
     // Shown whenever there's a last fix, like the original (no max-age hide); the label is its age.
     // now − anchor is a same-domain (device) Duration; unwrap to raw Long ms for the marker.
     val ageMs = (nowMs - anchorLocal).inWholeMilliseconds.coerceAtLeast(0L)

@@ -92,8 +92,8 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
         }
     }
     // Search results (system ACTION_SEARCH + the home top-bar search field). The query is a
-    // nav-arg; result taps route to the in-NavHost destinations (route info / arrivals) or
-    // the map. Re-search when the query arg changes (a fresh search reuses this entry).
+    // nav-arg; tapping a result reveals it on the map. Re-search when the query arg changes
+    // (a fresh search reuses this entry).
     composable(
         NavRoutes.SEARCH,
         arguments = listOf(
@@ -116,18 +116,10 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
             SearchResultsRoute(
                 viewModel = searchVm,
                 onBack = { navController.popBackStack() },
-                onRouteListStops = { route ->
-                    DatabaseEntryPoint.get(activity).routeRecorder()
-                        .recordDetails(route.id, route.shortName, route.longName, route.url)
-                    navController.navigate(NavRoutes.routeInfo(route.id))
-                },
                 onRouteShowOnMap = { route ->
                     DatabaseEntryPoint.get(activity).routeRecorder()
                         .recordDetails(route.id, route.shortName, route.longName, route.url)
                     navController.revealRouteOnMap(route.id)
-                },
-                onStopArrivals = { stop ->
-                    navController.navigate(NavRoutes.arrivals(stop.id))
                 },
                 onStopShowOnMap = { stop ->
                     navController.revealStopOnMap(stop.id, stop.latitude, stop.longitude)

@@ -31,23 +31,28 @@ fun stopZoomBand(zoom: Float): StopBand =
 
 /**
  * The icon variants a stop marker can show: the full directional icon or the far-zoom dot (each
- * normal/focused), plus the distinctive star a starred (favorite) stop gets in place of either
- * (#1680), likewise normal/focused.
+ * normal/focused), the distinctive star a starred (favorite) stop gets in place of either (#1680),
+ * likewise normal/focused, and — while a route is shown — the on-centerline circle that matches the
+ * trip map's stop styling (#1752), normal/focused.
  */
 enum class StopIconKind {
     FULL, FULL_FOCUSED, DOT, DOT_FOCUSED,
     FAVORITE, FAVORITE_FOCUSED, FAVORITE_DOT, FAVORITE_DOT_FOCUSED,
+    ROUTE_CIRCLE, ROUTE_CIRCLE_FOCUSED,
 }
 
 /**
  * The icon a stop marker should show given whether it's the [focused] stop, whether it's a
- * [favorite] (starred) stop, and the current zoom [band]. A starred stop gets a distinctive star
- * (full-size close up, smaller in the dot band) instead of its directional icon/dot, so it's easy to
- * pick out and navigate to (#1680); the focused stop always gets a distinct (enlarged/accent) variant
- * so a selection stays visible at every zoom. Pure, so the renderers' "did this marker's icon change?"
- * decision is unit-testable and identical across both map flavors.
+ * [favorite] (starred) stop, whether it's a [routeStop] on the shown route, and the current zoom
+ * [band]. A [routeStop] always draws the on-centerline circle (matching the trip map, #1752) — it
+ * ignores the star and the zoom band so a route's stops read uniformly at every zoom. Otherwise a
+ * starred stop gets a distinctive star (full-size close up, smaller in the dot band) instead of its
+ * directional icon/dot, so it's easy to pick out and navigate to (#1680); the focused stop always gets
+ * a distinct (enlarged/accent) variant so a selection stays visible at every zoom. Pure, so the
+ * renderers' "did this marker's icon change?" decision is unit-testable and identical across both map flavors.
  */
-fun stopIconKind(focused: Boolean, band: StopBand, favorite: Boolean = false): StopIconKind = when {
+fun stopIconKind(focused: Boolean, band: StopBand, favorite: Boolean = false, routeStop: Boolean = false): StopIconKind = when {
+    routeStop -> if (focused) StopIconKind.ROUTE_CIRCLE_FOCUSED else StopIconKind.ROUTE_CIRCLE
     favorite && band == StopBand.DOT ->
         if (focused) StopIconKind.FAVORITE_DOT_FOCUSED else StopIconKind.FAVORITE_DOT
     favorite -> if (focused) StopIconKind.FAVORITE_FOCUSED else StopIconKind.FAVORITE

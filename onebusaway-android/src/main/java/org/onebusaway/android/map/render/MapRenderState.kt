@@ -56,6 +56,13 @@ data class MapPadding(val topPx: Int = 0, val bottomPx: Int = 0)
 const val DEFAULT_ROUTE_LINE_COLOR: Int = 0xFF0000FF.toInt()
 
 /**
+ * The width (dp) a route line draws at on the home map when a route is shown (#1752). Passed as
+ * [RoutePolyline.widthDp]; lines that carry no width (a directions itinerary) keep the renderer's
+ * thinner default.
+ */
+const val ROUTE_LINE_WIDTH_DP: Float = 10f
+
+/**
  * One route/itinerary polyline: an ordered list of points and an optional [color]. A null [color]
  * means "use the [DEFAULT_ROUTE_LINE_COLOR]" — choosing the fallback is a display decision, so producers
  * can pass a route's raw (possibly absent) GTFS color straight through and renderers draw [resolvedColor].
@@ -77,13 +84,6 @@ data class RoutePolyline(
     /** The [color] to draw, applying the [DEFAULT_ROUTE_LINE_COLOR] fallback in one place for every renderer. */
     val resolvedColor: Int get() = color ?: DEFAULT_ROUTE_LINE_COLOR
 }
-
-/**
- * A scheduled-stop dot on the trip-focus map: a small disc placed at a stop's position along the trip
- * shape (distinct from the route-mode [StopMarker]'s direction-anchored icon). [selected] draws the
- * filled-center variant.
- */
-data class TripStopDot(val point: GeoPoint, val selected: Boolean = false)
 
 /**
  * A generic pin added by code outside the map package (trip-plan start/end, the report location
@@ -109,6 +109,10 @@ data class VehicleMarker(
     // The vehicle's movement bearing along the route shape at [point] (compass degrees, 0°=N), so the
     // direction arrow tracks the glide. [Float.NaN] off-shape: the renderer falls back to the orientation.
     val bearing: Float = Float.NaN,
+    // The last real fix's position on the route shape (the glide's seed), where the selected vehicle's
+    // most-recent-data dot is drawn — so the dot sits at the band's origin, not the raw off-shape reported
+    // lat/lng. Null when there's no shape/anchor; the renderer then falls back to the reported location.
+    val dataFixPoint: GeoPoint? = null,
 )
 
 /**
@@ -129,6 +133,11 @@ data class BikeMarker(
  * decided by [MapRenderSnapshot.focusedStopId], not stored here, so focusing is a one-field change.
  * [favorite] is stored here (it's a per-stop property that changes as the user stars/unstars), driving
  * the distinctive star icon + tap preference (#1680).
+ *
+ * [routeStop] marks a stop belonging to the route currently shown on the map: its [point] is projected
+ * onto the route centerline and it renders as the trip-map-style circle instead of the direction-anchored
+ * icon, so the overview map's route reads the same as the trip map (#1752). It stays a full tappable
+ * [StopMarker] (unlike the trip map's non-interactive dots) so tapping still opens the stop's arrivals.
  */
 data class StopMarker(
     val id: String,
@@ -137,6 +146,7 @@ data class StopMarker(
     val routeType: Int,
     val stop: ObaStop,
     val favorite: Boolean = false,
+    val routeStop: Boolean = false,
 )
 
 /** Immutable snapshot of everything the map should render. Grows one overlay per phase. */
@@ -314,16 +324,6 @@ class MapRenderState {
 
     val selectedVehicleTripId: StateFlow<String?> = _selectedVehicleTripId.asStateFlow()
 
-    // The trip-focus estimate marker whose tap label is open ("best"/"fast"/"dataAge"), or null. Set by
-    // a marker tap, cleared by a map tap — the trip map's only UI selection.
-    private val _selectedTripMarker = MutableStateFlow<String?>(null)
-
-    val selectedTripMarker: StateFlow<String?> = _selectedTripMarker.asStateFlow()
-
-    fun setSelectedTripMarker(marker: String?) {
-        _selectedTripMarker.value = marker
-    }
-
     // --- Bike stations (the old BikeStationOverlay): the per-zoom icon band is chosen by the ---
     // --- renderer; [bikeshareVisible] carries the layer/directions-mode gate. ---
 
@@ -366,19 +366,5 @@ class MapRenderState {
 
     fun setTripOverlaySampler(sampler: FrameSampler<TripOverlay>?) {
         _tripOverlaySampler.value = sampler
-    }
-
-    // The trip-focus map's scheduled-stop dots — static for the trip (set once on entry), so they sit
-    // in their own flow rather than the ~20Hz tripOverlay.
-    private val _tripStops = MutableStateFlow<List<TripStopDot>>(emptyList())
-
-    val tripStops: StateFlow<List<TripStopDot>> = _tripStops.asStateFlow()
-
-    fun setTripStops(stops: List<TripStopDot>) {
-        _tripStops.value = stops
-    }
-
-    fun clearTripStops() {
-        _tripStops.value = emptyList()
     }
 }

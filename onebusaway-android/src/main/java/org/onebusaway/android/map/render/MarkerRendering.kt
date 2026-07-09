@@ -19,6 +19,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withTranslation
@@ -82,11 +83,62 @@ object MarkerRendering {
         pin.setBounds(0, 0, contentPx, contentPx)
         drawOutlined(canvas, pin, outline, pinColor)
 
+        // Glyph centered on the pin head.
+        drawGlyph(canvas, context, glyphRes, HEAD_CX * scale, HEAD_CY * scale, glyphSize / 2f * scale, outline, glyphColor)
+    }
+
+    /**
+     * Draws a filled disc tinted [fillColor] centered in `[0,contentPx]` on [canvas], then a [glyphRes]
+     * glyph tinted [glyphColor] centered on it at [glyphSize] grid units. When [outline] > 0 the disc
+     * gets a black hairline ring of that width and the glyph a matching outline. The circular counterpart
+     * of [drawPinAndGlyph]: the route/trip maps center a vehicle badge on the route line rather than
+     * floating a teardrop pin off it (#1752). The heading arrow (vehicles) is layered on top by the caller.
+     */
+    fun drawCircleAndGlyph(
+        canvas: Canvas,
+        context: Context,
+        contentPx: Int,
+        scale: Float,
+        fillColor: Int,
+        @DrawableRes glyphRes: Int,
+        glyphColor: Int,
+        glyphSize: Float,
+        outline: Float,
+    ) {
+        val center = contentPx / 2f
+        val radius = center - outline
+        // One Paint, filled (the default style); recolored between the ring and the fill.
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        if (outline > 0f) {
+            // Black disc slightly larger than the fill, so an `outline`-wide black ring shows around it.
+            paint.color = Color.BLACK
+            canvas.drawCircle(center, center, radius, paint)
+        }
+        paint.color = fillColor
+        canvas.drawCircle(center, center, radius - outline, paint)
+
+        // Glyph centered on the disc.
+        drawGlyph(canvas, context, glyphRes, center, center, glyphSize / 2f * scale, outline, glyphColor)
+    }
+
+    /**
+     * Draws [glyphRes] tinted [glyphColor], centered at ([cxPx], [cyPx]) with half-extent [halfPx] (all
+     * in pixels), outlined when [outline] > 0. The shared tail of [drawPinAndGlyph] and [drawCircleAndGlyph].
+     */
+    private fun drawGlyph(
+        canvas: Canvas,
+        context: Context,
+        @DrawableRes glyphRes: Int,
+        cxPx: Float,
+        cyPx: Float,
+        halfPx: Float,
+        outline: Float,
+        glyphColor: Int,
+    ) {
         val glyph = ContextCompat.getDrawable(context, glyphRes)!!.mutate()
-        val half = glyphSize / 2f
         glyph.setBounds(
-            ((HEAD_CX - half) * scale).toInt(), ((HEAD_CY - half) * scale).toInt(),
-            ((HEAD_CX + half) * scale).toInt(), ((HEAD_CY + half) * scale).toInt(),
+            (cxPx - halfPx).toInt(), (cyPx - halfPx).toInt(),
+            (cxPx + halfPx).toInt(), (cyPx + halfPx).toInt(),
         )
         drawOutlined(canvas, glyph, outline, glyphColor)
     }

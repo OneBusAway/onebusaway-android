@@ -68,4 +68,9 @@ data class ExtrapolatedVehicle(
     // when [point] is extrapolated, else the current status), so the icon/info-window can't disagree
     // with the position the marker is actually drawn at. See #1621.
     val isRealtime: Boolean,
+    // The last real fix's position projected onto the route shape (the glide's seed = the anchor's
+    // distanceAlongTrip), so the selected vehicle's most-recent-data dot sits on the centerline at the
+    // band's origin instead of the raw off-shape reported lat/lng. Null when there's no shape/anchor to
+    // place it (the renderer then falls back to the reported location).
+    val dataFixPoint: GeoPoint? = null,
 )

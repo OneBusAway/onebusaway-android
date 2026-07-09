@@ -64,14 +64,12 @@ sealed interface TripDetailsUiState {
     /**
      * @param stops the trip's stops in order
      * @param scrollToIndex the stop to scroll to on first load (vehicle/focused/destination), or -1
-     * @param routeId the trip's route, for the "show on map" action
      * @param lineColorArgb the resolved transit-line color (route color, or the theme default)
      */
     data class Content(
         val header: TripHeader,
         val stops: List<TripStopItem>,
         val scrollToIndex: Int,
-        val routeId: String,
         val lineColorArgb: Int
     ) : TripDetailsUiState
 

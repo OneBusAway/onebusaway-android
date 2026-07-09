@@ -59,7 +59,7 @@ class TripDetailsViewModelTest {
     private fun handle(tripId: String = "t") =
         SavedStateHandle(mapOf(NavRoutes.ARG_TRIP_ID to tripId))
 
-    private fun data(routeId: String = "1_8") = TripDetailsData(
+    private fun data() = TripDetailsData(
         header = TripHeader(
             routeShortName = "8",
             headsign = "Capitol Hill",
@@ -72,7 +72,6 @@ class TripDetailsViewModelTest {
         ),
         stops = emptyList(),
         scrollToIndex = -1,
-        routeId = routeId,
         lineColorArgb = 0
     )
 
@@ -91,7 +90,7 @@ class TripDetailsViewModelTest {
 
         val state = viewModel.state.value
         assertTrue(state is TripDetailsUiState.Content)
-        assertEquals("1_8", (state as TripDetailsUiState.Content).routeId)
+        assertEquals("Capitol Hill", (state as TripDetailsUiState.Content).header.headsign)
     }
 
     @Test

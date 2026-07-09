@@ -30,28 +30,24 @@ data class BandSegment(val points: List<GeoPoint>, val colorArgb: Int)
 data class DataAgeMarker(val point: GeoPoint, val ageMillis: Long)
 
 /**
- * The per-frame trip-focus overlay: a single vehicle's extrapolated position estimate and its
- * uncertainty, rendered over the route shape. Built ~20×/second by the map view-model from the
- * driver's color-free `TripExtrapolation` (applying the band hue) and pushed into
- * [MapRenderState.tripOverlay] — its own flow, so a per-frame update doesn't recompose the rest of
- * the map (stops, routes, the route-mode vehicles).
+ * The per-frame overlay for the selected vehicle: its uncertainty band + optimistic "fast" estimate,
+ * rendered over the route shape. Built ~20×/second by [org.onebusaway.android.map.RouteMapController]
+ * from the color-free `TripExtrapolation` (applying the band hue) and pushed into [MapRenderState]'s
+ * trip-overlay flow — its own flow, so a per-frame update doesn't recompose the rest of the map (stops,
+ * routes, the route-mode vehicles). The live vehicle disc and the most-recent-data dot are drawn
+ * separately by the route map, so this overlay carries only the band + fast marker (#1752).
  *
  * Flavor-neutral: every field is a plain [GeoPoint]/[BandSegment], so both the Google and maplibre
- * renderers draw the same overlay (the feature originally implemented it for Google only). On a
- * frame where extrapolation has no usable estimate, [vehiclePoint]/[fastEstimatePoint] are null and
- * [band] is empty, but [dataAge] still shows the last server fix.
+ * renderers draw the same overlay. On a frame with no usable estimate [fastEstimatePoint] is null and
+ * [band] is empty.
  *
- * @property vehiclePoint the best (median) position estimate, or null when there is no estimate
  * @property fastEstimatePoint the optimistic (high-quantile) "best case" position, or null
  * @property band the graded uncertainty band over the route shape (empty when no estimate)
- * @property dataAge the last server-reported position + its age, or null when stale/absent
  * @property fixTimeMs the latest AVL fix's timestamp — constant between fixes, so a change signals
- *   fresh data; the renderer animates the markers to their new positions when it changes
+ *   fresh data; the renderer animates the marker to its new position when it changes
  */
 data class TripOverlay(
-    val vehiclePoint: GeoPoint? = null,
     val fastEstimatePoint: GeoPoint? = null,
     val band: List<BandSegment> = emptyList(),
-    val dataAge: DataAgeMarker? = null,
     val fixTimeMs: Long = 0L,
 )

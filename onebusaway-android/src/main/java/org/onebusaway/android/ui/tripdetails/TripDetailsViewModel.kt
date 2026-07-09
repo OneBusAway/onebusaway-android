@@ -90,12 +90,6 @@ class TripDetailsViewModel @Inject constructor(
         }
     }
 
-    /** The trip's route id, for the host's "show on map" action (null until the first load). */
-    fun routeId(): String? = (_state.value as? TripDetailsUiState.Content)?.routeId
-
-    /** The resolved transit-line color, for tinting the trip-map uncertainty band (0 until loaded). */
-    fun lineColorArgb(): Int = (_state.value as? TripDetailsUiState.Content)?.lineColorArgb ?: 0
-
     /** Resolves (and persists) the before/destination stops for [position], for the reminder flow. */
     fun destinationStops(position: Int) = repository.destinationStops(position)
 
@@ -115,7 +109,6 @@ class TripDetailsViewModel @Inject constructor(
         header = header,
         stops = stops,
         scrollToIndex = scrollToIndex,
-        routeId = routeId,
         lineColorArgb = lineColorArgb
     )
 }

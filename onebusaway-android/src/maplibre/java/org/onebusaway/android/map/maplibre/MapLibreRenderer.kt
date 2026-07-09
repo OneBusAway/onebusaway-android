@@ -20,7 +20,11 @@
 package org.onebusaway.android.map.maplibre
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 import java.util.concurrent.TimeUnit
 import org.maplibre.android.annotations.Annotation
 import org.maplibre.android.annotations.Icon
@@ -41,6 +45,7 @@ import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.StopIconKind
@@ -83,7 +88,7 @@ class MapLibreRenderer(
     private val map: MapLibreMap,
     private val context: Context,
     private val renderState: MapRenderState,
-) {
+) : PingTarget {
     private val stopByMarker = HashMap<Marker, StopMarker>()
 
     // Stop markers tracked by stop id so [reconcileStopMarkers] can diff them in place (add new,
@@ -149,6 +154,10 @@ class MapLibreRenderer(
     private var pingStartMs: Long = 0L
     private val pingColor by lazy { ContextCompat.getColor(context, R.color.theme_primary) }
     private val density = context.resources.displayMetrics.density
+    // Reused across the ripple's frames — redrawn in place rather than reallocated each frame (the ring
+    // is a bitmap because the classic annotation API has no circle). Freed with the ping in clearPing.
+    private var pingBitmap: Bitmap? = null
+    private val pingPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE } }
 
     /** Redraw the static layer (everything but the live vehicles + trip-focus overlay). */
     fun renderStatic() {
@@ -285,8 +294,8 @@ class MapLibreRenderer(
         updateTripOverlay(overlay, nowMs)
     }
 
-    /** Start a one-shot ping ripple at [point]; the adapter drives [tickPing] to animate it (#1764). */
-    fun startPing(point: GeoPoint) {
+    /** Start a one-shot ping ripple at [point]; the driver calls [tickPing] to animate it (#1764). */
+    override fun startPing(point: GeoPoint) {
         clearPing()
         pingPoint = point
         pingStartMs = 0L // stamped on the first tick
@@ -294,9 +303,9 @@ class MapLibreRenderer(
 
     // Advance the ping ripple one frame: regrow the ring bitmap (bigger radius, fading color) and re-set the
     // marker icon. Returns false — and removes the marker — when the ripple completes. Driven by the
-    // adapter's own full-rate frame loop (not the vehicle loop) so the ripple is smooth. The bitmap is a
+    // driver's own full-rate frame loop (not the vehicle loop) so the ripple is smooth. The bitmap is a
     // constant max-size square so the marker stays centered on the vehicle as the ring grows inside it.
-    fun tickPing(nowMs: Long): Boolean {
+    override fun tickPing(nowMs: Long): Boolean {
         val point = pingPoint ?: return false
         if (pingStartMs == 0L) pingStartMs = nowMs
         val elapsed = nowMs - pingStartMs
@@ -307,10 +316,15 @@ class MapLibreRenderer(
         val progress = MapPing.progress(elapsed)
         val maxRadiusPx = (MapPing.MAX_RADIUS_DP * density).toInt()
         val radiusPx = maxRadiusPx * MapPing.radiusFraction(progress)
-        val color = MapPing.withAlpha(pingColor, MapPing.alpha(progress))
-        val icon = iconFactory.fromBitmap(
-            MapPing.ringBitmap(maxRadiusPx, radiusPx, MapPing.STROKE_DP * density, color)
-        )
+        // A constant max-size square (so the marker stays centered as the ring grows inside it), reused
+        // and redrawn in place each frame.
+        val size = maxRadiusPx * 2
+        val bitmap = pingBitmap?.takeIf { it.width == size } ?: createBitmap(size, size).also { pingBitmap = it }
+        bitmap.eraseColor(0)
+        pingPaint.color = MapPing.withAlpha(pingColor, MapPing.alpha(progress))
+        pingPaint.strokeWidth = MapPing.STROKE_DP * density
+        Canvas(bitmap).drawCircle(size / 2f, size / 2f, radiusPx.coerceAtLeast(0f), pingPaint)
+        val icon = iconFactory.fromBitmap(bitmap)
         val existing = pingMarker
         if (existing == null) {
             pingMarker = map.addMarker(MarkerOptions().position(point.toLatLng()).icon(icon))
@@ -325,6 +339,7 @@ class MapLibreRenderer(
         pingMarker = null
         pingPoint = null
         pingStartMs = 0L
+        pingBitmap = null
     }
 
     /**

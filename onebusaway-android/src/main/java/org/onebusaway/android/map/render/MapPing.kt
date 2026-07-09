@@ -15,16 +15,11 @@
  */
 package org.onebusaway.android.map.render
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import androidx.core.graphics.createBitmap
-
 /**
- * The animation model for a one-shot map "ping" — a ring that radiates out from a point and fades, played
- * once to draw the eye to a just-focused vehicle (#1764). The timing/easing is pure (unit-tested); the
- * ring bitmap (for the maplibre flavor, whose classic annotation API has no circle) lives here too so both
- * flavors share the geometry. The Google flavor draws a native `Circle` from the same fractions.
+ * The pure animation model for a one-shot map "ping" — a ring that radiates out from a point and fades,
+ * played once to draw the eye to a just-focused vehicle (#1764). Just timing/easing/color (unit-tested);
+ * each flavor's renderer draws with its own SDK primitive from these fractions (Google a native `Circle`,
+ * maplibre a stroked-ring bitmap marker).
  */
 object MapPing {
 
@@ -64,21 +59,4 @@ object MapPing {
     /** Applies [alpha01] (`0..1`) to the low 24 bits of [baseColor], producing an ARGB color. */
     fun withAlpha(baseColor: Int, alpha01: Float): Int =
         ((alpha01.coerceIn(0f, 1f) * 255f).toInt() shl 24) or (baseColor and 0x00FFFFFF)
-
-    /**
-     * A stroked ring of [radiusPx] in [colorArgb], centered in a `2*[maxRadiusPx]` square — the maplibre
-     * ping marker's icon. The square is a constant size (the max) so the marker stays centered on the
-     * point as the ring grows inside it; the caller regenerates it each frame with a larger radius.
-     */
-    fun ringBitmap(maxRadiusPx: Int, radiusPx: Float, strokeWidthPx: Float, colorArgb: Int): Bitmap {
-        val size = (maxRadiusPx * 2).coerceAtLeast(1)
-        val bitmap = createBitmap(size, size)
-        val center = size / 2f
-        Canvas(bitmap).drawCircle(center, center, radiusPx.coerceAtLeast(0f), Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = strokeWidthPx
-            color = colorArgb
-        })
-        return bitmap
-    }
 }

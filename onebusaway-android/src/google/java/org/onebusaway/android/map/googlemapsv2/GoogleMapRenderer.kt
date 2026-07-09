@@ -48,6 +48,7 @@ import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MarkerRendering
+import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.StopIconKind
@@ -86,7 +87,7 @@ class GoogleMapRenderer(
     private val map: GoogleMap,
     private val context: Context,
     private val renderState: MapRenderState,
-) {
+) : PingTarget {
     private val stopByMarker = HashMap<Marker, StopMarker>()
 
     // Stop markers tracked by stop id so [reconcileStopMarkers] can diff them in place (add new,
@@ -397,8 +398,8 @@ class GoogleMapRenderer(
         updateTripOverlay(overlay, nowMs)
     }
 
-    /** Start a one-shot ping ripple at [point]; the adapter drives [tickPing] to animate it (#1764). */
-    fun startPing(point: GeoPoint) {
+    /** Start a one-shot ping ripple at [point]; the driver calls [tickPing] to animate it (#1764). */
+    override fun startPing(point: GeoPoint) {
         clearPing()
         pingPoint = point
         pingStartMs = 0L // stamped on the first tick
@@ -409,7 +410,7 @@ class GoogleMapRenderer(
     // Circle — when the ripple completes. Driven by the adapter's own full-rate frame loop (not the 20Hz
     // vehicle loop) so the ripple is smooth. Circles draw beneath all markers in gms, so the vehicle icon
     // stays crisp on top.
-    fun tickPing(nowMs: Long): Boolean {
+    override fun tickPing(nowMs: Long): Boolean {
         val point = pingPoint ?: return false
         if (pingStartMs == 0L) pingStartMs = nowMs
         val elapsed = nowMs - pingStartMs

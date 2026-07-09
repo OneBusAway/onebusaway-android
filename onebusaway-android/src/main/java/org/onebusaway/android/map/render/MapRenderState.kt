@@ -56,12 +56,11 @@ data class MapPadding(val topPx: Int = 0, val bottomPx: Int = 0)
 const val DEFAULT_ROUTE_LINE_COLOR: Int = 0xFF0000FF.toInt()
 
 /**
- * The width (dp) of a **focused** route line — the single-trip trip-focus shape and a route narrowed to
- * one direction on the home map both draw at this width, so a route reads the same whether you're looking
- * at it on the overview map or the trip map (#1752). Passed as [RoutePolyline.widthDp]; lines that carry
- * no width (a directions itinerary) keep the renderer's thinner default.
+ * The width (dp) a route line draws at on the home map when a route is shown (#1752). Passed as
+ * [RoutePolyline.widthDp]; lines that carry no width (a directions itinerary) keep the renderer's
+ * thinner default.
  */
-const val ROUTE_LINE_WIDTH_DP: Float = 8f
+const val ROUTE_LINE_WIDTH_DP: Float = 10f
 
 /**
  * One route/itinerary polyline: an ordered list of points and an optional [color]. A null [color]

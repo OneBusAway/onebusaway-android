@@ -95,6 +95,30 @@ class RouteDaoTest {
     }
 
     @Test
+    fun ensureRouteDetails_doesNotCountAsAUse() = runBlocking {
+        // A route the user has actually viewed twice.
+        dao.storeRouteDetails("r5", "50", "Route 50", "http://u", regionId = 5L, now = 100)
+        dao.markRouteUsed("r5", "50", "Route 50", regionId = 5L, now = 200)
+        assertEquals(2, dao.getRoute("r5")!!.useCount)
+
+        // Favoriting ensures the row but must not bump use_count / access_time (#1727 review).
+        dao.ensureRouteDetails("r5", "50", "Route 50", url = null, regionId = null)
+
+        val r = dao.getRoute("r5")!!
+        assertEquals(2, r.useCount)               // unchanged — a favorite toggle is not a view
+        assertEquals(200L, r.accessTime)          // unchanged
+        assertEquals("http://u", r.url)           // null url preserves the existing one
+        assertEquals(5L, r.regionId)
+
+        // A brand-new (never-viewed) route starts at use_count 0, so it sorts last by frequency.
+        dao.ensureRouteDetails("r6", "60", "Route 60", url = "http://v", regionId = 6L)
+        val fresh = dao.getRoute("r6")!!
+        assertEquals(0, fresh.useCount)
+        assertNull(fresh.accessTime)
+        assertEquals("http://v", fresh.url)
+    }
+
+    @Test
     fun refreshRouteShortName_onlyTouchesShortName() = runBlocking {
         dao.storeRouteDetails("r3", "30", "Route 30", "http://u", regionId = 3L, now = 100)
 

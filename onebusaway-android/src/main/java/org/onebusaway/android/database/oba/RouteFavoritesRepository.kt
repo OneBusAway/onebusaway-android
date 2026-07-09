@@ -72,12 +72,9 @@ class RouteFavoritesRepository @Inject constructor(
     ) {
         importGate.awaitReady()
         val regionId = regionRepository.region.value?.id
-        // now passed straight to the DAO write (a consuming API), so it never rests in a bare Long.
-        if (url != null) {
-            routeDao.storeRouteDetails(routeId, shortName, longName, url, regionId, System.currentTimeMillis())
-        } else {
-            routeDao.markRouteUsed(routeId, shortName, longName, regionId, System.currentTimeMillis())
-        }
+        // Ensure the row for the folder JOIN without counting a "use" — a favorite toggle must not bump
+        // the recents / frequency ordering (#1727 review). Passing url=null preserves any existing URL.
+        routeDao.ensureRouteDetails(routeId, shortName, longName, url, regionId)
         routeDao.setFavorite(routeId, if (favorite) 1 else 0)
         reportBookmarkAnalytics(routeId, favorite)
     }

@@ -442,9 +442,9 @@ class DefaultArrivalsRepository @Inject constructor(
             longName = route.description
         }
 
-        routeDao.storeRouteDetails(
-            route.id, shortName, longName, route.url, regionId, System.currentTimeMillis()
-        )
+        // Backfilling details for a just-starred route is part of the favorite action, not a view, so
+        // ensure the row without bumping use_count / access_time (#1727 review).
+        routeDao.ensureRouteDetails(route.id, shortName, longName, route.url, regionId)
     }
 
     override suspend fun setRouteFilter(stopId: String, filter: Set<String>) {

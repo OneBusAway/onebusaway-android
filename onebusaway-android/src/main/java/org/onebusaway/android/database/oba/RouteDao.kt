@@ -127,6 +127,40 @@ interface RouteDao {
         )
     }
 
+    /**
+     * Ensures the route row exists with its display name/URL/region (so the Starred Routes folder can
+     * JOIN it) **without counting a use** — `use_count` and `access_time` are left untouched, and a new
+     * row starts at `use_count = 0`. Favoriting/unfavoriting a route is not a "view", so it must not
+     * bump the recents (`access_time`) or the frequency sort (`use_count`) (#1727 review). Null name/URL
+     * arguments preserve any existing value rather than clobbering it (the arrivals path stars first,
+     * with no URL in hand, then backfills the details from the network).
+     */
+    @Transaction
+    suspend fun ensureRouteDetails(
+        routeId: String,
+        shortName: String?,
+        longName: String?,
+        url: String?,
+        regionId: Long?,
+    ) {
+        val existing = getRoute(routeId)
+        upsert(
+            existing?.copy(
+                shortName = shortName?.takeIf { it.isNotEmpty() } ?: existing.shortName,
+                longName = longName ?: existing.longName,
+                url = url ?: existing.url,
+                regionId = regionId ?: existing.regionId,
+            ) ?: RouteRecord(
+                id = routeId,
+                shortName = shortName.orEmpty(),
+                longName = longName,
+                url = url,
+                useCount = 0,
+                regionId = regionId,
+            )
+        )
+    }
+
     /** Refreshes only a route's short name (does not mark it used; leaves other columns untouched). */
     @Transaction
     suspend fun refreshRouteShortName(routeId: String, shortName: String?) {

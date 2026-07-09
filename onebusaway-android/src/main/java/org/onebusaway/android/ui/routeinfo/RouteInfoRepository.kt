@@ -88,8 +88,14 @@ class DefaultRouteInfoRepository @Inject constructor(
     /** Records the route in the recents/search table so it appears in recents and search (legacy parity). */
     private suspend fun registerRouteUsage(route: RouteDetails) {
         importGate.awaitReady()
+        // Persist the resolved display names (short→long; long→description fallback), not the raw fields
+        // — legacy DBUtil resolved at store time, and many agencies (e.g. KC Metro) ship an empty
+        // long_name with the real name in description. Storing raw would leave the recents/starred folder
+        // showing only the short-name badge. Uses the same shared resolver as toRouteInfo and the
+        // favorites backfill so every routes-cache write agrees on the display names.
+        val names = routeDisplayNames(route.shortName, route.longName, route.description)
         routeDao.storeRouteDetails(
-            route.id, route.shortName, route.longName, route.url,
+            route.id, names.shortName, names.longName, route.url,
             regionRepository.region.value?.id, System.currentTimeMillis()
         )
     }

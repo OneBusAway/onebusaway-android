@@ -131,9 +131,10 @@ interface RouteDao {
      * Ensures the route row exists with its display name/URL/region (so the Starred Routes folder can
      * JOIN it) **without counting a use** — `use_count` and `access_time` are left untouched, and a new
      * row starts at `use_count = 0`. Favoriting/unfavoriting a route is not a "view", so it must not
-     * bump the recents (`access_time`) or the frequency sort (`use_count`) (#1727 review). Null name/URL
-     * arguments preserve any existing value rather than clobbering it (the arrivals path stars first,
-     * with no URL in hand, then backfills the details from the network).
+     * bump the recents (`access_time`) or the frequency sort (`use_count`) (#1727 review). Null **or
+     * empty** name/URL arguments preserve any existing value rather than clobbering it — a star from a
+     * surface that only has a bare short name (e.g. the route-map header, whose loaded route may carry
+     * an empty long name) must not wipe a good long name; the network backfill fills it in afterward.
      */
     @Transaction
     suspend fun ensureRouteDetails(
@@ -147,8 +148,8 @@ interface RouteDao {
         upsert(
             existing?.copy(
                 shortName = shortName?.takeIf { it.isNotEmpty() } ?: existing.shortName,
-                longName = longName ?: existing.longName,
-                url = url ?: existing.url,
+                longName = longName?.takeIf { it.isNotEmpty() } ?: existing.longName,
+                url = url?.takeIf { it.isNotEmpty() } ?: existing.url,
                 regionId = regionId ?: existing.regionId,
             ) ?: RouteRecord(
                 id = routeId,

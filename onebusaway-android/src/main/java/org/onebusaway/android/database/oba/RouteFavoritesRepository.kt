@@ -19,14 +19,19 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
+import org.onebusaway.android.api.data.RouteDataSource
+import org.onebusaway.android.app.di.AppScope
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.util.routeDisplayNames
 
 /**
  * The single owner of route-favorite membership — a wholesale `routes.favorite` bit (#1751). Every
@@ -38,9 +43,11 @@ import org.onebusaway.android.region.RegionRepository
 @Singleton
 class RouteFavoritesRepository @Inject constructor(
     private val routeDao: RouteDao,
+    private val routeDataSource: RouteDataSource,
     private val regionRepository: RegionRepository,
     private val importGate: ImportGate,
     private val obaAnalytics: ObaAnalytics,
+    @param:AppScope private val appScope: CoroutineScope,
     @param:ApplicationContext private val context: Context,
 ) {
 
@@ -59,9 +66,10 @@ class RouteFavoritesRepository @Inject constructor(
     /**
      * Stars (or unstars) [routeId] wholesale. Ensures the `routes` row exists (so the Starred Routes
      * folder can JOIN it for its display name/URL) before flipping the flag, gated on the one-time
-     * import, and reports the bookmark event. Pass [url] when the caller already has the loaded route
-     * (it's stored); pass null to leave any existing URL untouched (the arrivals path backfills the
-     * full details from the network afterward).
+     * import, and reports the bookmark event. Pass whatever [shortName]/[longName]/[url] the caller has
+     * in hand (null/empty values leave any existing value untouched); on a **star** the full details are
+     * then backfilled from the network so the folder always shows a proper long name — regardless of
+     * which surface starred it (the route-map header's loaded route often carries an empty long name).
      */
     suspend fun setFavorite(
         routeId: String,
@@ -73,10 +81,28 @@ class RouteFavoritesRepository @Inject constructor(
         importGate.awaitReady()
         val regionId = regionRepository.region.value?.id
         // Ensure the row for the folder JOIN without counting a "use" — a favorite toggle must not bump
-        // the recents / frequency ordering (#1727 review). Passing url=null preserves any existing URL.
+        // the recents / frequency ordering (#1727 review).
         routeDao.ensureRouteDetails(routeId, shortName, longName, url, regionId)
         routeDao.setFavorite(routeId, if (favorite) 1 else 0)
         reportBookmarkAnalytics(routeId, favorite)
+        // Backfill the full details off the star action's scope, so it completes even if the user
+        // navigates away immediately. Only on a star — an unstar drops the row from the folder anyway.
+        if (favorite) {
+            appScope.launch { backfillRouteDetails(routeId, regionId) }
+        }
+    }
+
+    /**
+     * Fetches the route's full details from the network and writes name/URL back, so a starred route
+     * shows a proper long name in the folder even when the starring surface only had a bare short name.
+     * A no-op if the fetch fails (the row keeps whatever it had). Does not count a "use".
+     */
+    private suspend fun backfillRouteDetails(routeId: String, regionId: Long?) {
+        val route = routeDataSource.getRoute(routeId).getOrNull() ?: return
+        // Resolve the display short/long names with the shared fallbacks (short→long; long→description)
+        // so the folder shows a real name even when the agency ships an empty long_name (e.g. KC Metro).
+        val names = routeDisplayNames(route.shortName, route.longName, route.description)
+        routeDao.ensureRouteDetails(route.id, names.shortName, names.longName, route.url, regionId)
     }
 
     private fun reportBookmarkAnalytics(routeId: String, favorite: Boolean) {

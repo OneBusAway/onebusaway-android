@@ -27,6 +27,7 @@ import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.FramingIntent
+import org.onebusaway.android.map.render.MapPadding
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.POINTS_FRAMING_PADDING_DP
 import org.onebusaway.android.map.render.framingCorners
@@ -144,12 +145,27 @@ fun applyFramingIntent(
         is FramingIntent.Points -> {
             val (sw, ne) = framingCorners(intent.points) ?: return
             val bounds = LatLngBounds(LatLng(sw.latitude, sw.longitude), LatLng(ne.latitude, ne.longitude))
+            // Google's newLatLngBounds fits the box inside the map's content padding, so this fit must see
+            // the current route-header (top) + arrivals-sheet (bottom) insets. The padding collector
+            // (GoogleComposeAdapter) is a *separate* coroutine with no ordering guarantee against this
+            // framing collector: an ETA tap emits the padding update and the framing intent together, and
+            // if this runs first the box is fit against the map's stale padding and lands under the
+            // overlays that are open right after the tap. Apply the current padding here so the fit is
+            // self-sufficient (idempotent with the collector — setPadding is absolute, not additive).
+            map.applyMapPadding(renderState.padding.value)
             map.animateCamera(
                 CameraUpdateFactory.newLatLngBounds(bounds, ViewUtils.dpToPixels(context, POINTS_FRAMING_PADDING_DP))
             )
         }
     }
 }
+
+/**
+ * Push a [MapPadding] onto the [GoogleMap] as content padding — the single place the top/bottom insets
+ * map onto `setPadding`'s slots (left/right stay 0). Shared by the [GoogleComposeAdapter] padding
+ * collector and the Points framing, so both agree on the mapping.
+ */
+internal fun GoogleMap.applyMapPadding(padding: MapPadding) = setPadding(0, padding.topPx, 0, padding.bottomPx)
 
 /** Bounds enclosing the current route/itinerary polylines, or null if there are no points. */
 private fun routePolylineBounds(renderState: MapRenderState): LatLngBounds? {

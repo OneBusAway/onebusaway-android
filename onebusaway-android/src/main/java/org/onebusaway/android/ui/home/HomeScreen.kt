@@ -241,7 +241,7 @@ fun HomeScreen(
         LaunchedEffect(state.focusedStop?.id) { arrivalsReady = false }
 
         // The measured collapsed-peek content (header + boxed peek rows), as dp (no drag handle) for the
-        // peek anchor below. The raw px goes to the activity as the map's bottom padding (onSheetSettled).
+        // peek anchor below.
         val peekContentDp = with(density) { peekContentPx.toDp() }
 
         // Grow the sheet peek by the system navigation-bar inset (height varies by handset) so the
@@ -250,9 +250,15 @@ fun HomeScreen(
         val peekBottomPadding = navigationBarBottomPadding()
 
         // The full collapsed-sheet peek: the measured header+rows content, plus the real scaffold drag
-        // handle above it, plus the navigation-bar inset below. Both the scaffold's peek height and the FAB
-        // lift use this, so the FABs clear the whole collapsed sheet (handle included), not just the content.
+        // handle above it, plus the navigation-bar inset below. The scaffold's peek height, the FAB
+        // lift, and the map's bottom inset all use this, so the FABs and the map-framed content clear the
+        // whole collapsed sheet (handle + nav-bar inset included), not just the header+rows content.
         val collapsedPeekDp = peekContentDp + DRAG_HANDLE_HEIGHT + peekBottomPadding
+
+        // The full collapsed peek in px — the map's bottom inset (onSheetSettled). Must match the sheet's
+        // on-screen height, or map-framed content (the ETA-tap vehicle+stop fit) lands under the handle +
+        // nav-bar strip the header+rows px alone omits.
+        val collapsedPeekPx = with(density) { collapsedPeekDp.roundToPx() }
 
         // The drawer's live open fraction (0 = collapsed peek, 1 = fully expanded), read each frame by
         // the arrivals panel to morph the peek rows in lockstep with the drag. measureModifier feeds it
@@ -297,12 +303,14 @@ fun HomeScreen(
 
         // Report the resting position back to the activity (map padding / recenter / arrivals preview).
         // While hidden the sheet still rests at `PartiallyExpanded` (just with a 0 peek), so fold the
-        // shown flag in: a hidden sheet reports `Hidden` (map padding 0), else its live expansion.
-        LaunchedEffect(sheetState) {
+        // shown flag in: a hidden sheet reports `Hidden` (map padding 0), else its live expansion. Keyed
+        // on collapsedPeekPx too so a late peek measurement (or nav-bar inset resolving) re-emits the
+        // resting state with the corrected map inset rather than sticking at the stale height.
+        LaunchedEffect(sheetState, collapsedPeekPx) {
             snapshotFlow {
                 if (!sheetShown) ArrivalsSheetState.Hidden else sheetState.currentValue.toArrivalsSheetState()
             }.collect { value ->
-                onSheetSettled(value, peekContentPx)
+                onSheetSettled(value, collapsedPeekPx)
             }
         }
 

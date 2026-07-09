@@ -48,19 +48,17 @@ object ArrivalsFixtures {
 
     /**
      * The fixture's arrivals projected to display [ArrivalInfo] via the production [convertArrivals].
-     * [favorite] supplies each row's route/headsign favorite state (defaults to none); the favorite
-     * store is no longer a ContentProvider, so tests pass the favorites in directly.
+     * Favorite state is no longer baked into [ArrivalInfo] — it's a live overlay keyed by route id — so
+     * promotion tests pass a favorite-route-id set straight to `findPreferredArrivalIndexes`.
      */
     @JvmStatic
-    @JvmOverloads
     fun convert(
         context: Context,
         env: ObaEnvelope<EntryWithReferences<ArrivalsForStop>>,
         includeArriveDepartLabels: Boolean,
-        favorite: (routeId: String, headsign: String?, stopId: String) -> Boolean = { _, _, _ -> false },
     ): ArrayList<ArrivalInfo> = ArrayList(
         convertArrivals(
-            context, snapshot(env).arrivals, null, ServerTime(env.currentTime), includeArriveDepartLabels, favorite
+            context, snapshot(env).arrivals, null, ServerTime(env.currentTime), includeArriveDepartLabels
         )
     )
 

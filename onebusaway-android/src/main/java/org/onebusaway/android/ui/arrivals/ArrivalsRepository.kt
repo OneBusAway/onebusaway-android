@@ -169,6 +169,13 @@ interface ArrivalsRepository {
     suspend fun setArrivalStyle(style: Int)
 
     /**
+     * The starred route ids, live — the ViewModel overlays this onto the loaded arrivals so a row's
+     * star + the drawer-header promotion re-flag on any star toggle (an arrival row, the route-map
+     * header) with no re-fetch. Mirrors [alertHideState]'s reactive-overlay pattern (#1751).
+     */
+    fun favoriteRouteIds(): Flow<Set<String>>
+
+    /**
      * The explicit hide/show decisions recorded in the store, re-emitting on every service-alert
      * change. This is the single source of truth for hidden state: the ViewModel derives the
      * shown/hidden split from it (plus the per-load preference), and a hide/un-hide from any surface
@@ -320,14 +327,11 @@ class DefaultArrivalsRepository @Inject constructor(
         val style = BuildFlavorUtils.getArrivalInfoStyleFromPreferences(context)
         // Style B includes the arrival/departure word in the status label; Style A does not.
         val includeArrivalDepartureLabel = style == BuildFlavorUtils.ARRIVAL_INFO_STYLE_B
-        // One favorite-route query for the whole list; each arrival's star resolves from the set in
-        // memory. A route star is wholesale now (#1751) — headsign/stop no longer matter.
-        val favoriteRouteIds = routeDao.favoriteRouteIds().toHashSet()
+        // Favorite state is a live overlay applied in the ViewModel (from the reactive starred-route
+        // set), not baked here — so a star toggle re-flags the list without this re-fetch.
         val arrivals = convertArrivals(
             context, snapshot.arrivals, routeFilter, ServerTime(now), includeArrivalDepartureLabel
-        ) { routeId, _, _ ->
-            routeId in favoriteRouteIds
-        }
+        )
         val stop = snapshot.stop
         val userInfo = stopDao.userInfo(snapshot.stopId)
         val header = StopHeader(
@@ -389,7 +393,6 @@ class DefaultArrivalsRepository @Inject constructor(
             scheduleUrl = route?.url,
             agencyName = route?.agencyId?.let { snapshot.agencyName(it) },
             blockId = snapshot.trip(arrival.tripId)?.blockId,
-            isRouteFavorite = arrival.isRouteFavorite,
             alertSituationId = activeAlertFor(arrival.situationIds, activeSituationIds)
         )
     }
@@ -471,6 +474,11 @@ class DefaultArrivalsRepository @Inject constructor(
             BuildFlavorUtils.setArrivalInfoStyle(context, style)
         }
     }
+
+    override fun favoriteRouteIds(): Flow<Set<String>> =
+        routeDao.favoriteRouteIds()
+            .onStart { importGate.awaitReady() }
+            .map { it.toSet() }
 
     override fun alertHideState(): Flow<AlertHideState> =
         serviceAlertDao.hideDecisions()

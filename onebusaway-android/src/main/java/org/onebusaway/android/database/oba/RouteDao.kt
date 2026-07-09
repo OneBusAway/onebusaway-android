@@ -50,9 +50,13 @@ interface RouteDao {
     @Query("UPDATE routes SET favorite = :favorite WHERE _id = :routeId")
     suspend fun setFavorite(routeId: String, favorite: Int)
 
-    /** The ids of every starred (favorite) route, for the arrivals drawer-header promotion (#1751). */
+    /**
+     * The ids of every starred (favorite) route, live — the arrivals list overlays this to star rows +
+     * promote favorited routes to the drawer header (#1751), reacting to a star toggle from any surface
+     * (an arrival row, the route-map header) without a re-fetch.
+     */
     @Query("SELECT _id FROM routes WHERE favorite = 1")
-    suspend fun favoriteRouteIds(): List<String>
+    fun favoriteRouteIds(): Flow<List<String>>
 
     /** Whether [routeId] is starred, live — drives the route-map header star toggle (#1727). */
     @Query("SELECT EXISTS(SELECT 1 FROM routes WHERE _id = :routeId AND favorite = 1)")

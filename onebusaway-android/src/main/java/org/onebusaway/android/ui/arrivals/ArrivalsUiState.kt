@@ -39,7 +39,6 @@ data class ArrivalActions(
     val scheduleUrl: String?,
     val agencyName: String?,
     val blockId: String?,
-    val isRouteFavorite: Boolean,
     /** The representative *active* service-alert id affecting this arrival, or null when none —
      *  drives the per-row alert indicator and the situation it opens on tap (issue #1687 Bug 2). */
     val alertSituationId: String? = null
@@ -95,6 +94,9 @@ sealed interface ArrivalsUiState {
         val style: Int,
         val isStale: Boolean,
         val actions: Map<String, ArrivalActions> = emptyMap(),
+        /** The starred route ids, live — a row's star + the drawer-header promotion read from this, so a
+         *  toggle from any surface re-flags the list without a re-fetch (#1751). */
+        val favoriteRouteIds: Set<String> = emptySet(),
         val alerts: List<AlertItem> = emptyList(),
         val hiddenAlertCount: Int = 0,
         val routeFilterOptions: List<RouteFilterOption> = emptyList(),

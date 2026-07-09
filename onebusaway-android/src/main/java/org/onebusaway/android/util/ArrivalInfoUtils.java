@@ -19,12 +19,15 @@ package org.onebusaway.android.util;
 import android.content.Context;
 import android.content.res.Resources;
 
+import androidx.annotation.NonNull;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.ui.arrivals.ArrivalInfo;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 public class ArrivalInfoUtils {
 
@@ -56,18 +59,20 @@ public class ArrivalInfoUtils {
     }
 
     /**
-     * Returns the indexes in the provided infoList for the preferred route/headsign combinations
-     * to be prioritized for displayed in the header, or null if no non-negative ETAs exist in the
-     * list.  If no route/headsign combinations are favorited, the indexes returned may simply be
-     * the indexes of the first (and second, if it exists) non-negative arrival times.
+     * Returns the indexes in the provided infoList for the preferred arrivals to be prioritized in the
+     * header, or null if no non-negative ETAs exist in the list. An arrival is preferred when its route
+     * is starred ({@code favoriteRouteIds} contains its route id — a route star is wholesale now, #1751).
+     * If none are favorited, the indexes returned may simply be the indexes of the first (and second,
+     * if it exists) non-negative arrival times.
      *
      * @param infoList list to search for non-negative arrival times, ordered by relative ETA from
      *                 negative infinity to positive infinity
-     * @return the indexes in the provided infoList for the preferred route/headsign combinations
-     * to be prioritized for displayed in the header, or null if no non-negative ETAs exist in the
-     * list
+     * @param favoriteRouteIds the ids of the user's starred routes
+     * @return the indexes in the provided infoList for the preferred arrivals to be prioritized in the
+     * header, or null if no non-negative ETAs exist in the list
      */
-    public static ArrayList<Integer> findPreferredArrivalIndexes(ArrayList<ArrivalInfo> infoList) {
+    public static ArrayList<Integer> findPreferredArrivalIndexes(
+            ArrayList<ArrivalInfo> infoList, @NonNull Set<String> favoriteRouteIds) {
         // Start by getting the index of the first non-negative arrival time
         int firstIndex = findFirstNonNegativeArrival(infoList);
         if (firstIndex == -1) {
@@ -77,7 +82,7 @@ public class ArrivalInfoUtils {
         ArrayList<Integer> preferredIndexes = new ArrayList<>();
         for (int i = firstIndex; i < infoList.size(); i++) {
             ArrivalInfo info = infoList.get(i);
-            if (info.isRouteFavorite()) {
+            if (favoriteRouteIds.contains(info.getRouteId())) {
                 preferredIndexes.add(i);
             }
         }

@@ -123,9 +123,9 @@ fun ArrivalsPanel(
     // widens ("load more arrivals"); the collapsed peek only has room for two rows, so cap here. Kept
     // as indexes (not just the arrivals) so the list below can drop these exact rows — when expanded
     // they morph into the pinned cards and listing them again would duplicate them.
-    val previewIndexes = remember(content?.arrivals) {
+    val previewIndexes = remember(content?.arrivals, content?.favoriteRouteIds) {
         val arrivals = content?.arrivals ?: return@remember emptyList<Int>()
-        ArrivalInfoUtils.findPreferredArrivalIndexes(ArrayList(arrivals))
+        ArrivalInfoUtils.findPreferredArrivalIndexes(ArrayList(arrivals), content.favoriteRouteIds)
             ?.take(2)
             ?.filter { it in arrivals.indices }
             .orEmpty()
@@ -199,10 +199,12 @@ fun ArrivalsPanel(
                             // The host's anchors apply to the first peek row only.
                             val etaModifier = if (index == 0) etaAnchor else Modifier
                             val starModifier = if (index == 0) starAnchor else Modifier
+                            val isFavorite = arrival.routeId in content.favoriteRouteIds
                             if (styleA) {
                                 MorphingArrivalRow(
                                     arrival = arrival,
                                     actions = content.actions[arrival.tripId],
+                                    isFavorite = isFavorite,
                                     filterActive = filtering,
                                     callbacks = rowCallbacks,
                                     progress = expandProgress,
@@ -213,6 +215,7 @@ fun ArrivalsPanel(
                                 PeekRow(
                                     arrival = arrival,
                                     actions = content.actions[arrival.tripId],
+                                    isFavorite = isFavorite,
                                     filterActive = filtering,
                                     callbacks = rowCallbacks,
                                     etaModifier = etaModifier,
@@ -244,6 +247,7 @@ private fun ColumnScope.PeekDivider() {
 private fun PeekRow(
     arrival: ArrivalInfo,
     actions: ArrivalActions?,
+    isFavorite: Boolean,
     filterActive: Boolean,
     callbacks: ArrivalRowCallbacks,
     etaModifier: Modifier = Modifier,
@@ -256,7 +260,7 @@ private fun PeekRow(
         eta = arrival.eta,
         etaColor = colorResource(arrival.color),
         predicted = arrival.predicted,
-        isFavorite = actions?.isRouteFavorite == true,
+        isFavorite = isFavorite,
         onFavorite = { actions?.let { callbacks.onRouteFavorite(it) } },
         onMore = { expanded = true },
         onAlertClick = alertClick(actions, callbacks),
@@ -265,7 +269,7 @@ private fun PeekRow(
         etaModifier = etaModifier,
         starModifier = starModifier,
         menu = {
-            ArrivalActionsMenu(expanded, { expanded = false }, arrival, actions, filterActive, callbacks)
+            ArrivalActionsMenu(expanded, { expanded = false }, arrival, actions, isFavorite, filterActive, callbacks)
         }
     )
 }
@@ -280,6 +284,7 @@ private fun PeekRow(
 private fun MorphingArrivalRow(
     arrival: ArrivalInfo,
     actions: ArrivalActions?,
+    isFavorite: Boolean,
     filterActive: Boolean,
     callbacks: ArrivalRowCallbacks,
     progress: () -> Float,
@@ -288,8 +293,8 @@ private fun MorphingArrivalRow(
 ) {
     MorphByProgress(
         progress = progress,
-        start = { PeekRow(arrival, actions, filterActive, callbacks, etaModifier, starModifier) },
-        end = { ArrivalRowStyleA(arrival, actions, filterActive, callbacks) },
+        start = { PeekRow(arrival, actions, isFavorite, filterActive, callbacks, etaModifier, starModifier) },
+        end = { ArrivalRowStyleA(arrival, actions, isFavorite, filterActive, callbacks) },
     )
 }
 

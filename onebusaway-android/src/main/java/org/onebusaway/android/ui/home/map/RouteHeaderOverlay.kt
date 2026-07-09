@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -158,6 +159,8 @@ fun RouteHeaderOverlay(
                 FavoriteStarButton(
                     isFavorite = isFavorite,
                     onClick = onToggleFavorite,
+                    // Match the arrival-row star's outline color so the two read as the same control.
+                    tint = colorResource(R.color.navdrawer_icon_tint),
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .offset(x = (-8).dp, y = (-8).dp),

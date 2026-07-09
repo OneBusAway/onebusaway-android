@@ -248,7 +248,7 @@ fun ArrivalRowStyleA(
     StyleACard(
         modifier = modifier,
         // Null omits the star entirely when there's no actions to favorite against (defensive).
-        isFavorite = actions?.let { isFavorite },
+        isFavorite = isFavorite.takeIf { actions != null },
         onFavorite = { actions?.let { callbacks.onRouteFavorite(it) } },
         onMore = { expanded = true },
         // Tapping the row body frames the whole route; the ETA pill (below) instead focuses this trip's

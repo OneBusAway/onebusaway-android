@@ -30,12 +30,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
-import org.onebusaway.android.analytics.ObaAnalytics
-import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteDao
+import org.onebusaway.android.database.oba.RouteFavoritesRepository
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.StopRouteFilterDao
@@ -247,9 +246,9 @@ class DefaultArrivalsRepository @Inject constructor(
     private val serviceAlertDao: ServiceAlertDao,
     private val stopDao: StopDao,
     private val routeDao: RouteDao,
+    private val routeFavorites: RouteFavoritesRepository,
     private val importGate: ImportGate,
     private val preferences: PreferencesRepository,
-    private val obaAnalytics: ObaAnalytics,
 ) : ArrivalsRepository {
 
     /** The last good snapshot paired with the monotonic device time it was received, so the
@@ -423,27 +422,11 @@ class DefaultArrivalsRepository @Inject constructor(
         longName: String?,
         favorite: Boolean
     ) {
-        importGate.awaitReady()
-        val regionId = regionRepository.region.value?.id
-        // Ensure the route row exists (stamped with the current region) before marking the favorite —
-        // the starred-routes folder JOINs it for the display name/URL.
-        routeDao.markRouteUsed(routeId, shortName, longName, regionId, System.currentTimeMillis())
-        routeDao.setFavorite(routeId, if (favorite) 1 else 0)
-        reportBookmarkAnalytics(routeId, favorite)
-
-        // Backfill the full route details so the long name can be shown later (was an AsyncTaskLoader).
-        fetchAndStoreRouteDetails(routeId, regionId)
-    }
-
-    private fun reportBookmarkAnalytics(routeId: String, favorite: Boolean) {
-        val event = context.getString(
-            if (favorite) R.string.analytics_label_star_route else R.string.analytics_label_unstar_route
-        )
-        obaAnalytics.reportUiEvent(
-            PlausibleAnalytics.REPORT_BOOKMARK_EVENT_URL,
-            event,
-            routeId,
-        )
+        // The shared write ensures the row (no URL in hand yet — leaves any existing one), flips the
+        // flag, gates on the import, and reports analytics.
+        routeFavorites.setFavorite(routeId, shortName, longName, url = null, favorite = favorite)
+        // Backfill the full route details (incl. URL) so the long name can be shown later.
+        fetchAndStoreRouteDetails(routeId, regionRepository.region.value?.id)
     }
 
     /** Route-details fetch via the modernized client; writes name/url back. */
@@ -475,10 +458,7 @@ class DefaultArrivalsRepository @Inject constructor(
         }
     }
 
-    override fun favoriteRouteIds(): Flow<Set<String>> =
-        routeDao.favoriteRouteIds()
-            .onStart { importGate.awaitReady() }
-            .map { it.toSet() }
+    override fun favoriteRouteIds(): Flow<Set<String>> = routeFavorites.favoriteRouteIds()
 
     override fun alertHideState(): Flow<AlertHideState> =
         serviceAlertDao.hideDecisions()

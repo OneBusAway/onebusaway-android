@@ -22,7 +22,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,13 +31,12 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.api.data.MapDataSource
-import org.onebusaway.android.database.oba.RouteDao
+import org.onebusaway.android.database.oba.RouteFavoritesRepository
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.models.ObaTripStatus
@@ -107,7 +105,7 @@ class MapViewModel @Inject constructor(
     private val prefsRepository: PreferencesRepository,
     private val tripObservationRepository: TripObservationRepository,
     private val stopDao: StopDao,
-    private val routeDao: RouteDao,
+    private val routeFavorites: RouteFavoritesRepository,
     @param:ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -222,32 +220,29 @@ class MapViewModel @Inject constructor(
      * Flat-maps the loaded route's id into the reactive `routes.favorite` query, so starring/unstarring
      * (here or from an arrival row) re-flags the header immediately. False while no route is loaded.
      */
+    // WhileSubscribed, not Eagerly (unlike the routeHeader sibling above): this flat-maps into a live
+    // Room query, so keeping it collected while nothing observes it (route mode not shown) would hold a
+    // DB invalidation observer for no reason. The 5s window rides out config changes / brief detaches.
     @OptIn(ExperimentalCoroutinesApi::class)
     val isRouteFavorite: StateFlow<Boolean> =
         routeController.loadedRoute
             .flatMapLatest { loaded ->
                 val id = (loaded as? LoadedRoute.Loaded)?.route?.id
-                if (id == null) flowOf(false) else routeDao.isFavorite(id)
+                if (id == null) flowOf(false) else routeFavorites.isFavorite(id)
             }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     /**
      * Toggle the shown route's star (the route-mode header star, #1727) — a wholesale single
-     * `routes.favorite` bit (#1751). No-op until the route has loaded. Ensures the route row exists
-     * (name/URL + region, so the Starred Routes folder can list it) before flipping the flag; the route
-     * is already loaded, so no network backfill is needed.
+     * `routes.favorite` bit (#1751), through the shared [RouteFavoritesRepository] so it gets the same
+     * import gating + analytics as the arrival-row star. No-op until the route has loaded; passes the
+     * loaded route's URL so no network backfill is needed.
      */
     fun toggleRouteFavorite() {
         val route = (routeController.loadedRoute.value as? LoadedRoute.Loaded)?.route ?: return
         val favorite = !isRouteFavorite.value
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                routeDao.storeRouteDetails(
-                    route.id, route.shortName, route.longName, route.url,
-                    regionRepo.region.value?.id, System.currentTimeMillis(),
-                )
-                routeDao.setFavorite(route.id, if (favorite) 1 else 0)
-            }
+            routeFavorites.setFavorite(route.id, route.shortName, route.longName, route.url, favorite)
         }
     }
 

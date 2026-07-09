@@ -15,22 +15,26 @@
  */
 package org.onebusaway.android.map.render
 
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+
 /**
  * The pure animation model for a one-shot map "ping" — a ring that radiates out from a point and fades,
  * played once to draw the eye to a just-focused vehicle (#1764). Just timing/easing/color (unit-tested);
  * each flavor's renderer draws with its own SDK primitive from these fractions (Google a native `Circle`,
- * maplibre a stroked-ring bitmap marker).
+ * maplibre a stroked-ring bitmap marker). Timing is expressed as a [Duration] elapsed since the ping
+ * started (the renderer subtracts two `WallTime`s), so no raw-millis time math leaks in.
  */
 object MapPing {
 
     /** How long a single ping ripple lasts. */
-    const val DURATION_MS = 700L
+    val DURATION: Duration = 700.milliseconds
 
     /**
      * The most the ping waits for the framing pan to settle (the next camera idle) before playing anyway.
      * A fallback for a fit that doesn't actually move the camera (already framed); a real pan settles first.
      */
-    const val SETTLE_TIMEOUT_MS = 1500L
+    val SETTLE_TIMEOUT: Duration = 1500.milliseconds
 
     /** The ring's maximum radius (dp) at the end of the ripple. */
     const val MAX_RADIUS_DP = 44f
@@ -38,11 +42,11 @@ object MapPing {
     /** The ring stroke width (dp). */
     const val STROKE_DP = 3f
 
-    /** Animation progress in `0..1` for [elapsedMs] since the ping started (clamped). */
-    fun progress(elapsedMs: Long): Float = (elapsedMs.toFloat() / DURATION_MS).coerceIn(0f, 1f)
+    /** Animation progress in `0..1` for [elapsed] since the ping started (clamped). */
+    fun progress(elapsed: Duration): Float = (elapsed / DURATION).toFloat().coerceIn(0f, 1f)
 
     /** Whether the ping has run its course (so the renderer can remove it). */
-    fun isDone(elapsedMs: Long): Boolean = elapsedMs >= DURATION_MS
+    fun isDone(elapsed: Duration): Boolean = elapsed >= DURATION
 
     /**
      * The ring radius as a fraction (`0..1`) of the max, easing out (decelerating) so it shoots out then

@@ -255,7 +255,10 @@ private fun wireClicks(
         callbacks.onMapClick(null)
         false
     }
-    map.setOnMarkerClickListener { marker ->
+    map.setOnMarkerClickListener { tapped ->
+        // A tap on the ping ripple routes through to the vehicle it's centered on (maplibre classic markers
+        // can't be made non-interactive like Google's Circle), so it doesn't swallow the vehicle tap (#1764).
+        val marker = renderer.vehicleMarkerUnderPing(tapped) ?: tapped
         val stop = renderer.stopForMarker(marker)
         if (stop != null) {
             infoWindows.clear()

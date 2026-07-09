@@ -41,10 +41,16 @@ suspend fun drivePings(
     target: PingTarget,
 ) {
     pings.collectLatest { tripId ->
-        withTimeoutOrNull(MapPing.SETTLE_TIMEOUT_MS) { camera.drop(1).first() }
-        target.startPing(tripId)
-        while (target.tickPing(WallTime.now().epochMs)) {
-            withFrameNanos { }
+        // collectLatest cancels this block when a newer ping arrives; clear any in-flight ripple in the
+        // finally so a superseded ping doesn't linger frozen on screen through the next one's settle wait.
+        try {
+            withTimeoutOrNull(MapPing.SETTLE_TIMEOUT) { camera.drop(1).first() }
+            target.startPing(tripId)
+            while (target.tickPing(WallTime.now())) {
+                withFrameNanos { }
+            }
+        } finally {
+            target.cancelPing()
         }
     }
 }

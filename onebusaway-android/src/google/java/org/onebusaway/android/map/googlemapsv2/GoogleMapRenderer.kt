@@ -60,6 +60,7 @@ import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
 import org.onebusaway.android.map.render.stopIconKind
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.getRouteDisplayName
 import java.util.concurrent.TimeUnit
@@ -152,12 +153,12 @@ class GoogleMapRenderer(
     // data" + fix-age info window (the SDK's default title/snippet). Null when nothing is selected.
     private var mostRecentDataMarker: Marker? = null
 
-    // The one-shot "ping" ripple (#1764): a native Circle grown + faded over [MapPing.DURATION_MS], centered
-    // each frame on trip [pingTripId]'s vehicle marker (so it follows the icon as it settles). [pingStartMs]
-    // is 0 until the first tick stamps it (the animation clock is the frame clock); null id means no ping.
+    // The one-shot "ping" ripple (#1764): a native Circle grown + faded over [MapPing.DURATION], centered
+    // each frame on trip [pingTripId]'s vehicle marker (so it follows the icon as it settles). [pingStart]
+    // is null until the first tick stamps it (the animation clock is the frame's wall clock); null id = no ping.
     private var pingCircle: Circle? = null
     private var pingTripId: String? = null
-    private var pingStartMs: Long = 0L
+    private var pingStart: WallTime? = null
     private val pingColor by lazy { ContextCompat.getColor(context, R.color.theme_primary) }
 
     private val bikeIcons by lazy { BikeIcons(context) }
@@ -402,8 +403,11 @@ class GoogleMapRenderer(
     override fun startPing(tripId: String) {
         clearPing()
         pingTripId = tripId
-        pingStartMs = 0L // stamped on the first tick
+        pingStart = null // stamped on the first tick
     }
+
+    /** Remove any in-flight ping ripple (a superseded/cancelled ping). */
+    override fun cancelPing() = clearPing()
 
     // Advance the ping ripple one frame: recenter on the vehicle marker's live position (so it follows the
     // icon as it slides from its raw fallback onto its shape-projected spot), grow the Circle's radius (from
@@ -411,11 +415,11 @@ class GoogleMapRenderer(
     // stroke. Returns false — and removes the Circle — when the ripple completes or the vehicle is gone.
     // Driven by the driver's own full-rate frame loop (not the 20Hz vehicle loop) so the ripple is smooth.
     // Circles draw beneath all markers in gms, so the vehicle icon stays crisp on top.
-    override fun tickPing(nowMs: Long): Boolean {
+    override fun tickPing(now: WallTime): Boolean {
         val tripId = pingTripId ?: return false
         val center = vehicleMarkersByTripId[tripId]?.position ?: run { clearPing(); return false }
-        if (pingStartMs == 0L) pingStartMs = nowMs
-        val elapsed = nowMs - pingStartMs
+        val start = pingStart ?: now.also { pingStart = it }
+        val elapsed = now - start
         if (MapPing.isDone(elapsed)) {
             clearPing()
             return false
@@ -450,7 +454,7 @@ class GoogleMapRenderer(
         pingCircle?.remove()
         pingCircle = null
         pingTripId = null
-        pingStartMs = 0L
+        pingStart = null
     }
 
     /**

@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.map.render
 
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -25,18 +27,18 @@ class MapPingTest {
 
     @Test
     fun `progress runs 0 to 1 and clamps past the duration`() {
-        assertEquals(0f, MapPing.progress(0L), 1e-6f)
-        assertEquals(0.5f, MapPing.progress(MapPing.DURATION_MS / 2), 1e-3f)
-        assertEquals(1f, MapPing.progress(MapPing.DURATION_MS), 1e-6f)
-        assertEquals(1f, MapPing.progress(MapPing.DURATION_MS * 5), 1e-6f)
+        assertEquals(0f, MapPing.progress(Duration.ZERO), 1e-6f)
+        assertEquals(0.5f, MapPing.progress(MapPing.DURATION / 2), 1e-3f)
+        assertEquals(1f, MapPing.progress(MapPing.DURATION), 1e-6f)
+        assertEquals(1f, MapPing.progress(MapPing.DURATION * 5), 1e-6f)
     }
 
     @Test
     fun `isDone flips at the duration`() {
-        assertFalse(MapPing.isDone(0L))
-        assertFalse(MapPing.isDone(MapPing.DURATION_MS - 1))
-        assertTrue(MapPing.isDone(MapPing.DURATION_MS))
-        assertTrue(MapPing.isDone(MapPing.DURATION_MS + 100))
+        assertFalse(MapPing.isDone(Duration.ZERO))
+        assertFalse(MapPing.isDone(MapPing.DURATION - 1.milliseconds))
+        assertTrue(MapPing.isDone(MapPing.DURATION))
+        assertTrue(MapPing.isDone(MapPing.DURATION + 100.milliseconds))
     }
 
     @Test

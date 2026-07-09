@@ -15,14 +15,18 @@
  */
 package org.onebusaway.android.map.render
 
+import org.onebusaway.android.time.WallTime
+
 /**
  * A renderer that can play a one-shot ping ripple on a vehicle (#1764). [startPing] arms a ripple for the
- * vehicle on trip [tripId]; [tickPing] advances it one frame (at the frame's [nowMs]), centering it on that
- * vehicle's live marker position, and returns false once the ripple is done (or the vehicle is gone). Each
- * flavor's map renderer implements this so the flavor-neutral `drivePings` loop can drive the animation
- * without knowing the SDK draw primitive.
+ * vehicle on trip [tripId]; [tickPing] advances it one frame (at the frame's wall-clock [now]), centering
+ * it on that vehicle's live marker position, and returns false once the ripple is done (or the vehicle is
+ * gone); [cancelPing] removes any in-flight ripple (so a superseded ping doesn't linger). Each flavor's map
+ * renderer implements this so the flavor-neutral `drivePings` loop can drive the animation without knowing
+ * the SDK draw primitive.
  */
 interface PingTarget {
     fun startPing(tripId: String)
-    fun tickPing(nowMs: Long): Boolean
+    fun tickPing(now: WallTime): Boolean
+    fun cancelPing()
 }

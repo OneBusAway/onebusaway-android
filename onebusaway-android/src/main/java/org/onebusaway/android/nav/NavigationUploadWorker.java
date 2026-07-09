@@ -80,11 +80,9 @@ public class NavigationUploadWorker extends Worker {
                 Log.d(TAG, "Location : " + response + logFileName);
 
                 String sCurrentLine, feedbackText = "";
-                ;
                 try {
                     BufferedReader br = new BufferedReader(new FileReader(lFile.getAbsolutePath()));
                     while ((sCurrentLine = br.readLine()) != null) {
-                        System.out.println(sCurrentLine);
                         feedbackText = sCurrentLine;
                     }
                 } catch (IOException e) {

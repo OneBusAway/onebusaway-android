@@ -47,12 +47,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -88,9 +90,11 @@ import org.onebusaway.android.util.ArrivalInfoUtils
  * supplies the drag handle above this content; tapping/dragging it drives expand/collapse (the header
  * no longer carries a chevron or tap-to-toggle).
  *
- * The peek height is driven by the host: this composable reports the preferred-arrival count +
- * filter state via [onPreferredHeight] so the host can size the collapsed panel. Polling, callbacks,
- * the per-arrival menu, and the expanded list are shared with the standalone screen.
+ * The peek height is driven by the host, sized from real layout rather than hand-tuned dimens: this
+ * composable measures its own collapsed peek (the pinned header plus the leading peek rows) and reports
+ * the total height in px via [onPeekContentHeight], so the host sizes the sheet's peek without knowing
+ * what the peek is made of. Polling, callbacks, the per-arrival menu, and the expanded list are
+ * shared with the standalone screen.
  */
 @Composable
 fun ArrivalsPanel(
@@ -101,7 +105,7 @@ fun ArrivalsPanel(
     expandProgress: () -> Float,
     initialTitle: String,
     handler: ArrivalActionHandler,
-    onPreferredHeight: (previewCount: Int, filtering: Boolean) -> Unit,
+    onPeekContentHeight: (heightPx: Int) -> Unit,
     // Tapping the pinned stop-name header invokes this (null = not tappable); the drawer host wires it
     // to an animated map recenter on the focused stop.
     onTitleClick: (() -> Unit)? = null,
@@ -142,15 +146,23 @@ fun ArrivalsPanel(
     // slides into view with the drag instead of popping in at the settle; at rest it stays hidden so
     // nothing bleeds through the collapsed fold.
     val revealList by remember(expandProgress) { derivedStateOf { expandProgress() > 0f } }
-    // Only report the peek size once arrivals have actually loaded. Reporting the loading skeleton's
-    // 0-count first would shrink the sheet's peek anchor and then grow it when arrivals arrive; that
-    // anchor move, landing mid-open-animation, strands the BottomSheetScaffold's AnchoredDraggable so
-    // the sheet sticks partway up. Holding the peek steady (at its prior/default height) until real
-    // content lands keeps the anchor stable through the open.
-    if (content != null) {
-        LaunchedEffect(previewArrivals.size, filtering) {
-            onPreferredHeight(previewArrivals.size, filtering)
-        }
+    // The collapsed peek's measured pieces (px): the pinned header's height and one peek row's *rest*
+    // height. The host sizes the sheet's peek from these (header + rowCount × row) instead of a
+    // hand-tuned dimen table, so it auto-adapts to content, padding, and font scale.
+    var headerHeightPx by remember { mutableIntStateOf(0) }
+    var peekRowHeightPx by remember { mutableIntStateOf(0) }
+
+    val previewCount = previewArrivals.size
+    // Only report once arrivals have loaded AND the pieces are actually measured — a 0 (loading skeleton,
+    // or a not-yet-laid-out row) would shrink the peek anchor and then grow it when the real height lands.
+    // That anchor move, mid-open-animation, strands the BottomSheetScaffold's AnchoredDraggable so the
+    // sheet sticks partway up. Gating readiness on a real measurement keeps the anchor stable through the
+    // open (the host only reveals the sheet once the height arrives). Peek rows are uniform height, so one
+    // sampled row height sizes them all; the panel owns this "header + rows" formula so the host doesn't.
+    val metricsMeasured = headerHeightPx > 0 && (previewCount == 0 || peekRowHeightPx > 0)
+    if (content != null && metricsMeasured) {
+        val peekContentPx = headerHeightPx + previewCount * peekRowHeightPx
+        LaunchedEffect(peekContentPx) { onPeekContentHeight(peekContentPx) }
     }
 
     Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxSize()) {
@@ -167,6 +179,8 @@ fun ArrivalsPanel(
                 filtering = filtering,
                 onToggleFavorite = viewModel::toggleFavorite,
                 onTitleClick = onTitleClick,
+                // Feed the pinned header's measured height into the collapsed-peek metrics.
+                modifier = Modifier.onSizeChanged { headerHeightPx = it.height },
             )
             if (content == null) {
                 LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -199,25 +213,39 @@ fun ArrivalsPanel(
                             // The host's anchors apply to the first peek row only.
                             val etaModifier = if (index == 0) etaAnchor else Modifier
                             val starModifier = if (index == 0) starAnchor else Modifier
-                            if (styleA) {
-                                MorphingArrivalRow(
-                                    arrival = arrival,
-                                    actions = content.actions[arrival.tripId],
-                                    filterActive = filtering,
-                                    callbacks = rowCallbacks,
-                                    progress = expandProgress,
-                                    etaModifier = etaModifier,
-                                    starModifier = starModifier,
-                                )
+                            val row: @Composable () -> Unit = {
+                                if (styleA) {
+                                    MorphingArrivalRow(
+                                        arrival = arrival,
+                                        actions = content.actions[arrival.tripId],
+                                        filterActive = filtering,
+                                        callbacks = rowCallbacks,
+                                        progress = expandProgress,
+                                        etaModifier = etaModifier,
+                                        starModifier = starModifier,
+                                    )
+                                } else {
+                                    PeekRow(
+                                        arrival = arrival,
+                                        actions = content.actions[arrival.tripId],
+                                        filterActive = filtering,
+                                        callbacks = rowCallbacks,
+                                        etaModifier = etaModifier,
+                                        starModifier = starModifier,
+                                    )
+                                }
+                            }
+                            // Measure only the first peek row's *rest* height for the collapsed-peek metrics
+                            // (peek rows are uniform height, so one sample sizes them all). The measuring Box
+                            // wraps just that row; the rest attach to the list item directly. Gate on the
+                            // sheet sitting at its collapsed anchor (expandProgress <= 0) so the peek→card
+                            // morph's growth never inflates the measured rest height.
+                            if (index == 0) {
+                                Box(Modifier.onSizeChanged {
+                                    if (expandProgress() <= 0f) peekRowHeightPx = it.height
+                                }) { row() }
                             } else {
-                                PeekRow(
-                                    arrival = arrival,
-                                    actions = content.actions[arrival.tripId],
-                                    filterActive = filtering,
-                                    callbacks = rowCallbacks,
-                                    etaModifier = etaModifier,
-                                    starModifier = starModifier,
-                                )
+                                row()
                             }
                         }
                     },
@@ -250,24 +278,28 @@ private fun PeekRow(
     starModifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    PeekRowVisual(
-        shortName = arrival.shortName.orEmpty(),
-        headsign = arrival.headsign.orEmpty(),
-        eta = arrival.eta,
-        etaColor = colorResource(arrival.color),
-        predicted = arrival.predicted,
-        isFavorite = actions?.isRouteFavorite == true,
-        onFavorite = { actions?.let { callbacks.onRouteFavorite(it) } },
-        onMore = { expanded = true },
-        onAlertClick = alertClick(actions, callbacks),
-        onRowClick = { callbacks.onShowVehiclesOnMap(arrival) },
-        onEtaClick = { callbacks.onEtaClick(arrival) },
-        etaModifier = etaModifier,
-        starModifier = starModifier,
-        menu = {
-            ArrivalActionsMenu(expanded, { expanded = false }, arrival, actions, filterActive, callbacks)
-        }
-    )
+    // Wrap the peek row in the same surfaceContainer box as the expanded Style-A card it morphs into,
+    // so the box is present at rest and the morph is a pure size change (see MorphingArrivalRow).
+    ArrivalCard {
+        PeekRowVisual(
+            shortName = arrival.shortName.orEmpty(),
+            headsign = arrival.headsign.orEmpty(),
+            eta = arrival.eta,
+            etaColor = colorResource(arrival.color),
+            predicted = arrival.predicted,
+            isFavorite = actions?.isRouteFavorite == true,
+            onFavorite = { actions?.let { callbacks.onRouteFavorite(it) } },
+            onMore = { expanded = true },
+            onAlertClick = alertClick(actions, callbacks),
+            onRowClick = { callbacks.onShowVehiclesOnMap(arrival) },
+            onEtaClick = { callbacks.onEtaClick(arrival) },
+            etaModifier = etaModifier,
+            starModifier = starModifier,
+            menu = {
+                ArrivalActionsMenu(expanded, { expanded = false }, arrival, actions, filterActive, callbacks)
+            }
+        )
+    }
 }
 
 /**
@@ -453,10 +485,11 @@ private fun ArrivalsPanelHeader(
     onToggleFavorite: () -> Unit,
     onTitleClick: (() -> Unit)? = null,
     starSize: Dp = 20.dp,
+    modifier: Modifier = Modifier,
 ) {
     val name = if (!direction.isNullOrBlank()) "$title (${direction.trim()})" else title
     Box(
-        Modifier
+        modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 10.dp)
     ) {
@@ -520,27 +553,30 @@ private fun DrawerCollapsedPreview() {
     ObaTheme {
         Surface(color = MaterialTheme.colorScheme.surface) {
             Column(Modifier.fillMaxWidth()) {
-                PeekRowVisual(
-                    shortName = "12",
-                    headsign = "Interlaken Park Via 19th Ave E",
-                    eta = 19,
-                    etaColor = colorResource(R.color.stop_info_delayed),
-                    predicted = true,
-                    isFavorite = false,
-                    onFavorite = {},
-                    onMore = {}
-                )
-                PeekDivider()
-                PeekRowVisual(
-                    shortName = "12",
-                    headsign = "Interlaken Park Via 19th Ave E",
-                    eta = 21,
-                    etaColor = colorResource(R.color.stop_info_delayed),
-                    predicted = true,
-                    isFavorite = false,
-                    onFavorite = {},
-                    onMore = {}
-                )
+                ArrivalCard {
+                    PeekRowVisual(
+                        shortName = "12",
+                        headsign = "Interlaken Park Via 19th Ave E",
+                        eta = 19,
+                        etaColor = colorResource(R.color.stop_info_delayed),
+                        predicted = true,
+                        isFavorite = false,
+                        onFavorite = {},
+                        onMore = {}
+                    )
+                }
+                ArrivalCard {
+                    PeekRowVisual(
+                        shortName = "12",
+                        headsign = "Interlaken Park Via 19th Ave E",
+                        eta = 21,
+                        etaColor = colorResource(R.color.stop_info_delayed),
+                        predicted = true,
+                        isFavorite = false,
+                        onFavorite = {},
+                        onMore = {}
+                    )
+                }
                 ArrivalsPanelHeader(
                     title = "19th Ave E & E Republican St",
                     direction = "N",
@@ -563,14 +599,11 @@ private fun DrawerPeekRowPreview() {
     ObaTheme {
         Surface(color = MaterialTheme.colorScheme.surface) {
             Column(Modifier.fillMaxWidth()) {
-                PeekRowVisual("8", "Mount Baker Transit Center", 1, colorResource(R.color.stop_info_delayed), true, true, {}, {})
-                PeekDivider()
-                PeekRowVisual("40", "Downtown Seattle", 0, colorResource(R.color.stop_info_ontime), true, false, {}, {})
-                PeekDivider()
-                PeekRowVisual("550", "Bellevue Transit Center", 28, colorResource(R.color.stop_info_scheduled_time), false, false, {}, {})
-                PeekDivider()
+                ArrivalCard { PeekRowVisual("8", "Mount Baker Transit Center", 1, colorResource(R.color.stop_info_delayed), true, true, {}, {}) }
+                ArrivalCard { PeekRowVisual("40", "Downtown Seattle", 0, colorResource(R.color.stop_info_ontime), true, false, {}, {}) }
+                ArrivalCard { PeekRowVisual("550", "Bellevue Transit Center", 28, colorResource(R.color.stop_info_scheduled_time), false, false, {}, {}) }
                 // A long route short name: it should ellipsize at the capped width, not crowd the headsign.
-                PeekRowVisual("Mount Si. Trailhead", "North Bend", 12, colorResource(R.color.stop_info_ontime), true, false, {}, {})
+                ArrivalCard { PeekRowVisual("Mount Si. Trailhead", "North Bend", 12, colorResource(R.color.stop_info_ontime), true, false, {}, {}) }
             }
         }
     }

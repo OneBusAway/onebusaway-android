@@ -44,7 +44,6 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.models.contentKey
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
-import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.SituationUtils
@@ -108,10 +107,11 @@ data class AlertHideState(val decisions: Map<String, Boolean> = emptyMap()) {
 /** A loaded snapshot of a stop's arrivals plus the header, actions, alerts, and filter data. */
 data class ArrivalsData(
     val arrivals: List<ArrivalInfo>,
+    /** [arrivals] grouped into one row per (route, direction), ordered by earliest ETA. */
+    val routeGroups: List<RouteRowGroup>,
     val header: StopHeader,
     /** The effective time window after the loader's empty-result expansion. */
     val minutesAfter: Int,
-    val style: Int,
     val isStale: Boolean,
     /** The route filter actually applied (loaded from the provider when the caller passed null). */
     val effectiveRouteFilter: Set<String>,
@@ -122,8 +122,8 @@ data class ArrivalsData(
      *  (and picks up a hide/un-hide from any other surface for free). */
     val activeAlerts: List<AlertItem>,
     /** The "hide all alerts" preference at load time — the default for alerts the rider hasn't
-     *  explicitly hidden or shown. Carried in the snapshot (like [style]) so the shown/hidden split
-     *  is a pure function of the snapshot plus [ArrivalsRepository.alertHideState]. */
+     *  explicitly hidden or shown. Carried in the snapshot so the shown/hidden split is a pure
+     *  function of the snapshot plus [ArrivalsRepository.alertHideState]. */
     val hideAlertsByDefault: Boolean,
     val routeFilterOptions: List<RouteFilterOption>,
     val filteredRouteCount: Int,
@@ -161,9 +161,6 @@ interface ArrivalsRepository {
 
     /** Persists the per-stop route filter (empty == show all). */
     suspend fun setRouteFilter(stopId: String, filter: Set<String>)
-
-    /** Persists the arrival-info display style (the legacy "sort by" view-mode toggle). */
-    suspend fun setArrivalStyle(style: Int)
 
     /**
      * The starred route ids, live — the ViewModel overlays this onto the loaded arrivals so a row's
@@ -319,9 +316,11 @@ class DefaultArrivalsRepository @Inject constructor(
         // clock projected forward by elapsed device time (#1612).
         now: Long
     ): ArrivalsData {
-        val style = BuildFlavorUtils.getArrivalInfoStyleFromPreferences(context)
-        // Style B includes the arrival/departure word in the status label; Style A does not.
-        val includeArrivalDepartureLabel = style == BuildFlavorUtils.ARRIVAL_INFO_STYLE_B
+        // The unified route row shows lateness via the ETA pill's color, not a verbose status label,
+        // so we don't fold the arrival/departure word in. Every production caller now passes false
+        // (the classic short form, e.g. "2 min late"); the arrive/depart long form remains available
+        // on ArrivalInfo and is still covered by UIUtilTest.
+        val includeArrivalDepartureLabel = false
         // Favorite state is a live overlay applied in the ViewModel (from the reactive starred-route
         // set), not baked here — so a star toggle re-flags the list without this re-fetch.
         val arrivals = convertArrivals(
@@ -347,9 +346,9 @@ class DefaultArrivalsRepository @Inject constructor(
         val activeSituationIds = situations.filter(isActive).mapTo(HashSet()) { it.id }
         return ArrivalsData(
             arrivals = arrivals,
+            routeGroups = groupArrivalsByRouteDirection(arrivals),
             header = header,
             minutesAfter = snapshot.minutesAfter,
-            style = style,
             isStale = isStale,
             effectiveRouteFilter = routeFilter,
             actions = buildActions(snapshot, arrivals, activeSituationIds),
@@ -428,12 +427,6 @@ class DefaultArrivalsRepository @Inject constructor(
     override suspend fun setRouteFilter(stopId: String, filter: Set<String>) {
         importGate.awaitReady()
         stopRouteFilterDao.replaceForStop(stopId, filter.toList())
-    }
-
-    override suspend fun setArrivalStyle(style: Int) {
-        withContext(Dispatchers.IO) {
-            BuildFlavorUtils.setArrivalInfoStyle(context, style)
-        }
     }
 
     override fun favoriteRouteIds(): Flow<Set<String>> = routeFavorites.favoriteRouteIds()

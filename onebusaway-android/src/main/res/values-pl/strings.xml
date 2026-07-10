@@ -98,7 +98,6 @@
 
     <string name="bus_options_menu_add_star">Dodaj trasę do ulubionych</string>
     <string name="bus_options_menu_remove_star">Usuń linię z ulubionych</string>
-    <string name="bus_options_menu_show_vehicles_on_map">Pokaż pojazdy na mapie</string>
     <string name="bus_options_menu_show_trip_details">Pokaż status kursu</string>
     <string name="bus_options_menu_set_reminder">Ustaw przypomnienie</string>
     <string name="bus_options_menu_show_only_this_route">Pokaż tylko tę linię</string>
@@ -562,8 +561,6 @@
     <string name="preferences_left_hand_mode_summary">Przenosi niektóre przyciski na lewą stronę ekranu
     </string>
 
-    <string name="preferences_arrival_info_style_options_a">%1$s klasyczny</string>
-    <string name="preferences_arrival_info_style_options_b">Karty</string>
 
     <string name="preferences_oba_api_servername_title">Serwer API %1$s</string>
     <string name="preferences_oba_api_servername_summary">Określa serwer używany w wywołaniach API %1$s</string>

@@ -38,10 +38,6 @@
         <item>Nombre</item>
         <item>Tiempo</item>
     </string-array>
-    <string-array name="sort_arrivals">
-        <item>Llegada estimada</item>
-        <item>Ruta</item>
-    </string-array>
     <string-array name="reminder_time">
         <item>1 minuto</item>
         <item>3 minutos</item>

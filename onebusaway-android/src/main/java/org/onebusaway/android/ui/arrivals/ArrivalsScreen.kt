@@ -86,16 +86,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.nightlight.NightLightLauncher
-import org.onebusaway.android.ui.arrivals.components.ArrivalCardStyleB
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
-import org.onebusaway.android.ui.arrivals.components.ArrivalRowStyleA
 import org.onebusaway.android.ui.arrivals.components.MenuRow
-import org.onebusaway.android.ui.arrivals.components.groupForStyleB
+import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
-import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.ui.compose.components.LoadingContent
-import org.onebusaway.android.ui.compose.components.RadioOptionList
 import org.onebusaway.android.time.WallTime
 
 /** Refresh interval matching the legacy ArrivalsListFragment (fixed 60s, not the server value). */
@@ -198,7 +194,6 @@ fun ArrivalsRoute(
         rowCallbacks = rowCallbacks,
         handler = handler,
         onSetRouteFilter = viewModel::setRouteFilter,
-        onSetArrivalStyle = viewModel::setArrivalStyle,
         onShowAllRoutes = viewModel::showAllRoutes,
         onHideAllAlerts = viewModel::hideAllAlerts,
         onShowHiddenAlerts = viewModel::showHiddenAlerts,
@@ -219,7 +214,6 @@ fun ArrivalsScreen(
     rowCallbacks: ArrivalRowCallbacks,
     handler: ArrivalActionHandler,
     onSetRouteFilter: (Set<String>) -> Unit,
-    onSetArrivalStyle: (Int) -> Unit,
     onShowAllRoutes: () -> Unit,
     onHideAllAlerts: () -> Unit,
     onShowHiddenAlerts: () -> Unit,
@@ -228,7 +222,6 @@ fun ArrivalsScreen(
 ) {
     val content = state as? ArrivalsUiState.Content
     var showFilterDialog by remember { mutableStateOf(false) }
-    var showSortDialog by remember { mutableStateOf(false) }
     Scaffold(
         snackbarHost = { snackbarHostState?.let { SnackbarHost(it) } },
         topBar = {
@@ -266,13 +259,6 @@ fun ArrivalsScreen(
                         )
                     }
                     if (content != null) {
-                        IconButton(onClick = { showSortDialog = true }) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_action_content_sort),
-                                contentDescription = stringResource(R.string.menu_option_sort_by),
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
                         OverflowMenu(
                             onFilter = { showFilterDialog = true },
                             onStopDetails = handler::onShowStopDetails,
@@ -323,38 +309,6 @@ fun ArrivalsScreen(
             }
         )
     }
-    if (showSortDialog && content != null) {
-        SortByDialog(
-            selected = content.style,
-            onDismiss = { showSortDialog = false },
-            onSelect = {
-                onSetArrivalStyle(it)
-                showSortDialog = false
-            }
-        )
-    }
-}
-
-/**
- * The legacy "Sort by" single-choice dialog: it doesn't reorder but switches the display style —
- * "Estimated arrival" (the flat Style A list) vs "Route" (the route-grouped Style B cards).
- * Selecting an option applies it immediately (legacy behavior).
- */
-@Composable
-private fun SortByDialog(
-    selected: Int,
-    onDismiss: () -> Unit,
-    onSelect: (Int) -> Unit
-) {
-    val options = stringArrayResource(R.array.sort_arrivals)
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.menu_option_sort_by)) },
-        text = { RadioOptionList(options = options, selectedIndex = selected, onSelect = onSelect) },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-        }
-    )
 }
 
 @Composable
@@ -404,10 +358,9 @@ internal fun ArrivalsList(
     showDirection: Boolean = true,
     /** Inset for the scrollable content (e.g. a top inset so the list clears the collapsed peek fold). */
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    /** Original indexes into [content.arrivals] to omit from the Style-A list (the home sheet hoists
-     *  these to the top as morphing peek rows via [leadingContent], so listing them again would
-     *  duplicate them). */
-    excludedArrivalIndexes: Set<Int> = emptySet(),
+    /** Indexes into [content.routeGroups] to omit from the list (the home sheet hoists these to the
+     *  top as peek rows via [leadingContent], so listing them again would duplicate them). */
+    excludedGroupIndexes: Set<Int> = emptySet(),
     /** Extra items emitted at the very top of the list (above alerts), e.g. the home sheet's morphing
      *  peek rows so the whole drawer is one scrollable list under a pinned header. */
     leadingContent: (LazyListScope.() -> Unit)? = null,
@@ -416,15 +369,10 @@ internal fun ArrivalsList(
      *  fraction (full list once the drawer leaves its resting peek). */
     showFullList: Boolean = true
 ) {
-    val useCards = content.style == BuildFlavorUtils.ARRIVAL_INFO_STYLE_B
-    // Sorting/grouping is non-trivial; keep it off the recomposition path
-    val groups = remember(content.arrivals, useCards) {
-        if (useCards) groupForStyleB(content.arrivals) else emptyList()
-    }
-    // The Style-A rows minus the pinned peek rows, paired with their original index so keys stay
-    // stable (tripId alone isn't unique — see below).
-    val visibleArrivals = remember(content.arrivals, excludedArrivalIndexes) {
-        content.arrivals.withIndex().filterNot { it.index in excludedArrivalIndexes }
+    // The route rows minus any hoisted into the peek (paired with their original index so the peek's
+    // excludedGroupIndexes line up); each group carries a stable key already.
+    val visibleGroups = remember(content.routeGroups, excludedGroupIndexes) {
+        content.routeGroups.filterIndexed { index, _ -> index !in excludedGroupIndexes }
     }
     val filterActive = content.filteredRouteCount > 0
     LazyColumn(state = listState, modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
@@ -482,30 +430,14 @@ internal fun ArrivalsList(
                     item(key = "direction") { DirectionLine(direction) }
                 }
             }
-            if (content.arrivals.isEmpty()) {
+            if (content.routeGroups.isEmpty()) {
                 item(key = "empty") { EmptyArrivals(content.minutesAfter) }
-            } else if (useCards) {
-                items(groups, key = { it.first().run { "$routeId:$headsign" } }) { group ->
-                    ArrivalCardStyleB(
-                        group = group,
-                        actions = content.actions[group.first().tripId],
-                        isFavorite = group.first().routeId in content.favoriteRouteIds,
-                        filterActive = filterActive,
-                        callbacks = rowCallbacks
-                    )
-                }
             } else {
-                // tripId alone isn't unique (the same trip can appear twice, e.g. frequency-based
-                // service), so disambiguate the key by original index to satisfy LazyColumn's
-                // unique-key rule.
-                items(
-                    visibleArrivals,
-                    key = { (index, arrival) -> "${arrival.tripId}#$index" }
-                ) { (_, arrival) ->
-                    ArrivalRowStyleA(
-                        arrival = arrival,
-                        actions = content.actions[arrival.tripId],
-                        isFavorite = arrival.routeId in content.favoriteRouteIds,
+                items(visibleGroups, key = { it.key }) { group ->
+                    RouteArrivalRow(
+                        group = group,
+                        actionsFor = { content.actions[it.tripId] },
+                        isFavorite = group.routeId in content.favoriteRouteIds,
                         filterActive = filterActive,
                         callbacks = rowCallbacks
                     )

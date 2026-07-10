@@ -347,7 +347,7 @@ class GoogleMapRenderer(
             // The full directional icon is anchored on its circle per direction. The dot and every star
             // (its star is centered, with the arrow drawn symmetrically around it) are centered.
             StopIconKind.FULL, StopIconKind.FULL_FOCUSED ->
-                StopIconFactory.anchorX(stop.direction) to StopIconFactory.anchorY(stop.direction)
+                StopIconFactory.anchorX(context, stop.direction) to StopIconFactory.anchorY(context, stop.direction)
             else -> 0.5f to 0.5f
         }
 

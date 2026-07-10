@@ -65,6 +65,7 @@ import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.MapEffect
 import org.onebusaway.android.map.MapNavigation
 import org.onebusaway.android.map.MapViewModel
+import org.onebusaway.android.map.StopsBanner
 import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.map.compose.ObaMapCallbacks
 import org.onebusaway.android.map.render.GeoPoint
@@ -280,9 +281,10 @@ fun MapFeature(
         initialZoom = seed.zoom,
     )
 
-    // "Zoom in to see more stops" — shown when the viewport stop load was truncated (the API's
-    // limitExceeded), i.e. more stops match the viewport than were returned. Driven purely by map state.
-    val moreStops by mapViewModel.moreStopsAvailable.collectAsStateWithLifecycle()
+    // The nearby-stops info strip: "zoom in to see more stops" when the load was truncated (the API's
+    // limitExceeded), or "showing saved stops" when a load failed with cached stops on screen (offline,
+    // #1754). Driven purely by map state.
+    val stopsBanner by mapViewModel.stopsBanner.collectAsStateWithLifecycle()
     // The map sits below HomeTopBar (which already consumes the status-bar inset), so the banner is
     // flush at the map's top edge — no extra inset. clipToBounds clips the upward slide at that edge so
     // the bar tucks up behind the title bar instead of drawing over it.
@@ -291,8 +293,8 @@ fun MapFeature(
             .fillMaxSize()
             .clipToBounds()
     ) {
-        MoreStopsBanner(
-            visible = moreStops,
+        StopsInfoBanner(
+            banner = stopsBanner,
             modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(),
         )
     }
@@ -355,16 +357,25 @@ fun MapFeature(
 }
 
 /**
- * The "zoom in to see more stops" hint: a full-width, text-height bar at the top edge of the map that
- * slides down to appear and up (tucking behind the home top bar) to disappear. Shown while the last
- * viewport stop load was truncated by the API; purely state-driven, no dismiss button. The status-bar
- * inset is already consumed by HomeTopBar above the map, so the caller's slot adds no inset — only the
- * slide clipping (clipToBounds).
+ * The nearby-stops info strip: a full-width, text-height bar at the top edge of the map that slides
+ * down to appear and up (tucking behind the home top bar) to disappear. Shows either "zoom in to see
+ * more stops" (a truncated load) or "showing saved stops" (a failed load with cached stops on screen,
+ * #1754); hidden on [StopsBanner.None]. Purely state-driven, no dismiss button. The status-bar inset is
+ * already consumed by HomeTopBar above the map, so the caller's slot adds no inset — only the slide
+ * clipping (clipToBounds).
  */
 @Composable
-private fun MoreStopsBanner(visible: Boolean, modifier: Modifier = Modifier) {
+private fun StopsInfoBanner(banner: StopsBanner, modifier: Modifier = Modifier) {
+    // Retain the last shown banner so its label stays put during the slide-out (when banner -> None),
+    // instead of blanking mid-animation. Seeded with the more-stops case; only ever set to a real one.
+    var lastShown by remember { mutableStateOf<StopsBanner>(StopsBanner.MoreStopsAvailable) }
+    if (banner != StopsBanner.None) lastShown = banner
+    val labelRes = when (lastShown) {
+        StopsBanner.ShowingSavedStops -> R.string.map_showing_cached_stops
+        else -> R.string.map_zoom_in_for_more_stops
+    }
     AnimatedVisibility(
-        visible = visible,
+        visible = banner != StopsBanner.None,
         modifier = modifier,
         enter = slideInVertically(initialOffsetY = { -it }),
         exit = slideOutVertically(targetOffsetY = { -it }),
@@ -381,7 +392,7 @@ private fun MoreStopsBanner(visible: Boolean, modifier: Modifier = Modifier) {
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)),
         ) {
             Text(
-                text = stringResource(R.string.map_zoom_in_for_more_stops),
+                text = stringResource(labelRes),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),

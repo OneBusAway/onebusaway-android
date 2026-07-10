@@ -122,3 +122,37 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_surveys_study_id` ON `surveys` (`study_id`)")
     }
 }
+
+/**
+ * Adds the map stop cache (#1754): `cached_stops` (a region-scoped spatial cache of nearby-stops loads,
+ * separate from the user-state `stops` table) + `cached_route_types` (the icon-colour lookup). Purely
+ * additive — no v4 table is touched (v4 is a frozen, released schema). The CREATE statements must match
+ * the exported `5.json` verbatim or Room's identity validation fails (see AppDatabaseMigrationTest).
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `cached_stops` (`_id` TEXT NOT NULL, `code` TEXT, " +
+                "`name` TEXT, `direction` TEXT, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, " +
+                "`location_type` INTEGER NOT NULL, `route_ids` TEXT NOT NULL, " +
+                "`region_id` INTEGER NOT NULL, `last_seen` INTEGER NOT NULL, PRIMARY KEY(`_id`))"
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_cached_stops_region_id_latitude_longitude` " +
+                "ON `cached_stops` (`region_id`, `latitude`, `longitude`)"
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_cached_stops_region_id_last_seen` " +
+                "ON `cached_stops` (`region_id`, `last_seen`)"
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `cached_route_types` (`_id` TEXT NOT NULL, " +
+                "`type` INTEGER NOT NULL, `region_id` INTEGER NOT NULL, `last_seen` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`_id`))"
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_cached_route_types_region_id_last_seen` " +
+                "ON `cached_route_types` (`region_id`, `last_seen`)"
+        )
+    }
+}

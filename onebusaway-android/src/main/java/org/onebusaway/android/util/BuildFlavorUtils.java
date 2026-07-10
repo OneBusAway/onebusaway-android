@@ -15,12 +15,7 @@
  */
 package org.onebusaway.android.util;
 
-import android.content.Context;
-import android.content.res.Resources;
-
 import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.di.PreferencesEntryPoint;
 
 /**
  * Constants and utilities used in the build.gradle build flavors to define certain features per
@@ -31,97 +26,8 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint;
 public class BuildFlavorUtils {
 
     public static final String OBA_FLAVOR_BRAND = "oba";
-    
+
     public static final String AGENCYY_FLAVOR_BRAND = "agencyY";
-
-    public static final int ARRIVAL_INFO_STYLE_A = 0; // Original OBA style
-
-    public static final int ARRIVAL_INFO_STYLE_B = 1; // Style used by York Region Transit
-
-    /**
-     * Returns the preference option string for the provided build flavor style integer constant
-     * for arrival info styles.  This translation is used to help decide if we should use the
-     * arrival info style defined in the BuildConfig (via build.gradle), or the one selected by
-     * the user.  User provided options always override BuildConfig defaults, but to do this we
-     * need to store BuildConfig defaults initially as a preference.
-     *
-     * @param buildFlavorStyle arrival info style as defined in build.gradle - must be one of the
-     *                         ARRIVAL_INFO_STYLE_* contants defined in this class
-     * @return preference options string for the provided arrival info style build flavor integer
-     */
-    public static String getPreferenceOptionForArrivalInfoBuildFlavorStyle(Context context, int buildFlavorStyle) {
-        Resources r = context.getResources();
-        String appName = r.getString(R.string.app_name);
-        switch (buildFlavorStyle) {
-            case ARRIVAL_INFO_STYLE_A:
-                // OBA Classic
-                return r.getString(R.string.preferences_arrival_info_style_options_a, appName);
-            case ARRIVAL_INFO_STYLE_B:
-                // Use a card-styled footer
-                return r.getString(R.string.preferences_arrival_info_style_options_b);
-            default:
-                return r.getString(R.string.preferences_arrival_info_style_options_b);
-        }
-    }
-
-    /**
-     * On first run — when no arrival-info-style preference has been set yet — seeds the default style
-     * from this build flavor's {@link BuildConfig#ARRIVAL_INFO_STYLE}. User selections always override
-     * this, so it only writes when the preference is unset. (Extracted from {@code Application.onCreate}.)
-     */
-    public static void applyDefaultArrivalInfoStyleIfUnset(Context context) {
-        if (PreferencesEntryPoint.get(context)
-                .getString(R.string.preference_key_arrival_info_style, null) != null) {
-            return;
-        }
-        // Only STYLE_A maps to A; STYLE_B and any other value default to B (matches the legacy switch).
-        int style = BuildConfig.ARRIVAL_INFO_STYLE == ARRIVAL_INFO_STYLE_A
-                ? ARRIVAL_INFO_STYLE_A : ARRIVAL_INFO_STYLE_B;
-        PreferencesEntryPoint.get(context).setString(
-                R.string.preference_key_arrival_info_style,
-                getPreferenceOptionForArrivalInfoBuildFlavorStyle(context, style));
-    }
-
-    /**
-     * Returns the current Arrival Info Style saved in the preferences, represented using the
-     * ARRIVAL_INFO_STYLE_* constants in this class
-     * @return the current Arrival Info Style saved in the preferences, which will be one of the
-     * ARRIVAL_INFO_STYLE_* constants in this class
-     */
-    public static int getArrivalInfoStyleFromPreferences(Context context) {
-        Resources r = context.getResources();
-
-        String arrivalInfoStylePref = PreferencesEntryPoint.get(context)
-                .getString(R.string.preference_key_arrival_info_style, null);
-
-        String appName = r.getString(R.string.app_name);
-        String arrivalInfoStyleOptionA = r.getString(
-                R.string.preferences_arrival_info_style_options_a, appName);
-        String arrivalInfoStyleOptionB = r.getString(
-                R.string.preferences_arrival_info_style_options_b);
-
-        if (arrivalInfoStylePref.equalsIgnoreCase(arrivalInfoStyleOptionA)) {
-            return ARRIVAL_INFO_STYLE_A;
-        }
-        if (arrivalInfoStylePref.equalsIgnoreCase(arrivalInfoStyleOptionB)) {
-            return ARRIVAL_INFO_STYLE_B;
-        }
-        // Return style A by default
-        return ARRIVAL_INFO_STYLE_A;
-    }
-
-    /**
-     * Persists the user's arrival info style selection (the legacy "sort by" view-mode toggle),
-     * stored as the same preference option string that {@link #getArrivalInfoStyleFromPreferences()}
-     * reads back — keeping the option-string format in a single place.
-     *
-     * @param style one of the ARRIVAL_INFO_STYLE_* constants in this class
-     */
-    public static void setArrivalInfoStyle(Context context, int style) {
-        PreferencesEntryPoint.get(context).setString(
-                R.string.preference_key_arrival_info_style,
-                getPreferenceOptionForArrivalInfoBuildFlavorStyle(context, style));
-    }
 
     /**
      * Returns true if the Pelias API key is non-empty, false if it is not

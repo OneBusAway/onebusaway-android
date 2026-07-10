@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,10 +34,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -48,41 +45,33 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.ArrivalActionHandler
-import org.onebusaway.android.ui.arrivals.ArrivalActions
-import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.ArrivalsList
 import org.onebusaway.android.ui.arrivals.ArrivalsPolling
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
-import org.onebusaway.android.ui.compose.MorphByProgress
-import org.onebusaway.android.ui.compose.components.LineBadge
-import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
-import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.ui.compose.theme.ObaTheme
-import org.onebusaway.android.util.ArrivalInfoUtils
+
+/** How many route rows the collapsed drawer peek shows (the top of the ordered list). */
+private const val PEEK_ROW_COUNT = 2
 
 /**
  * The arrivals content for HomeActivity's map slide-up panel. Unlike the standalone screen, the
@@ -122,54 +111,46 @@ fun ArrivalsPanel(
     val rowCallbacks = rememberArrivalRowCallbacks(handler, viewModel)
     val content = state as? ArrivalsUiState.Content
 
-    // The original indexes (into content.arrivals) of the rows shown in the peek.
-    // findPreferredArrivalIndexes returns *every* favorited match, which grows as the time window
-    // widens ("load more arrivals"); the collapsed peek only has room for two rows, so cap here. Kept
-    // as indexes (not just the arrivals) so the list below can drop these exact rows — when expanded
-    // they morph into the pinned cards and listing them again would duplicate them.
-    val previewIndexes = remember(content?.arrivals, content?.favoriteRouteIds) {
-        val arrivals = content?.arrivals ?: return@remember emptyList<Int>()
-        ArrivalInfoUtils.findPreferredArrivalIndexes(ArrayList(arrivals), content.favoriteRouteIds)
-            ?.take(2)
-            ?.filter { it in arrivals.indices }
-            .orEmpty()
-    }
-    val previewArrivals = remember(content?.arrivals, previewIndexes) {
-        val arrivals = content?.arrivals ?: return@remember emptyList<ArrivalInfo>()
-        previewIndexes.mapNotNull { arrivals.getOrNull(it) }
+    // The collapsed peek shows the top rows of the already-ordered list (starred first, then by
+    // departure — see orderRouteGroupsByFavorite), capped to what fits. It's always the contiguous
+    // prefix, so the list below just drops that many leading rows (listing them again would dup them).
+    val previewGroups = remember(content?.routeGroups) {
+        content?.routeGroups?.take(PEEK_ROW_COUNT).orEmpty()
     }
     val filtering = (content?.filteredRouteCount ?: 0) > 0
-    // The morph + peek/list de-dup only applies to the flat Style-A list (the default). Style B groups
-    // arrivals into route cards, which a single peek row can't morph into, so it stays as-is.
-    val styleA = content?.style == BuildFlavorUtils.ARRIVAL_INFO_STYLE_A
     // Reveal the below-peek list as soon as the drawer leaves its resting peek (progress > 0), so it
     // slides into view with the drag instead of popping in at the settle; at rest it stays hidden so
     // nothing bleeds through the collapsed fold.
     val revealList by remember(expandProgress) { derivedStateOf { expandProgress() > 0f } }
-    // The collapsed peek's measured pieces (px): the pinned header's height and one peek row's *rest*
-    // height. The host sizes the sheet's peek from these (header + rowCount × row) instead of a
+    // The collapsed peek's measured pieces (px): the pinned header's height plus each promoted row's
+    // *rest* height. The host sizes the sheet's peek from these (header + Σ rows) instead of a
     // hand-tuned dimen table, so it auto-adapts to content, padding, and font scale.
     var headerHeightPx by remember { mutableIntStateOf(0) }
-    var peekRowHeightPx by remember { mutableIntStateOf(0) }
+    // Per-row rest heights, keyed by peek index. Reset whenever the promoted set changes so a stale
+    // height from a since-removed row can't linger in the sum. Peek rows can differ in height (a
+    // longer pill strip is no taller, but font scale / a wrapped headsign can), so we sum the real
+    // rows rather than assume a uniform height.
+    val rowHeights = remember(previewGroups) { mutableStateMapOf<Int, Int>() }
 
-    val previewCount = previewArrivals.size
-    // Only report once arrivals have loaded AND the pieces are actually measured — a 0 (loading skeleton,
-    // or a not-yet-laid-out row) would shrink the peek anchor and then grow it when the real height lands.
-    // That anchor move, mid-open-animation, strands the BottomSheetScaffold's AnchoredDraggable so the
-    // sheet sticks partway up. Gating readiness on a real measurement keeps the anchor stable through the
-    // open (the host only reveals the sheet once the height arrives). Peek rows are uniform height, so one
-    // sampled row height sizes them all; the panel owns this "header + rows" formula so the host doesn't.
-    val metricsMeasured = headerHeightPx > 0 && (previewCount == 0 || peekRowHeightPx > 0)
+    val previewCount = previewGroups.size
+    // Only report once arrivals have loaded AND every piece is actually measured — a 0 (loading
+    // skeleton, or a not-yet-laid-out row) would shrink the peek anchor and then grow it when the real
+    // height lands. That anchor move, mid-open-animation, strands the BottomSheetScaffold's
+    // AnchoredDraggable so the sheet sticks partway up. Gating readiness on a real measurement of every
+    // promoted row keeps the anchor stable through the open (the host only reveals the sheet once the
+    // height arrives). The panel owns this "header + rows" formula so the host doesn't.
+    val metricsMeasured = headerHeightPx > 0 &&
+        (previewCount == 0 || (rowHeights.size == previewCount && rowHeights.values.all { it > 0 }))
     if (content != null && metricsMeasured) {
-        val peekContentPx = headerHeightPx + previewCount * peekRowHeightPx
+        val peekContentPx = headerHeightPx + rowHeights.values.sum()
         LaunchedEffect(peekContentPx) { onPeekContentHeight(peekContentPx) }
     }
 
     Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             // The stop header is pinned at the top of the drawer; everything below is a single
-            // scrollable arrivals list (the preferred rows ride at the top of that list and morph
-            // from peek to card as the drawer opens — see leadingContent below).
+            // scrollable arrivals list (the preferred rows ride at the top of that list as the
+            // collapsed peek — see leadingContent below).
             ArrivalsPanelHeader(
                 title = content?.header?.name?.takeIf { it.isNotEmpty() } ?: initialTitle,
                 direction = content?.header?.direction,
@@ -199,53 +180,34 @@ fun ArrivalsPanel(
                     // Header sits above the list now, so only inset the bottom (clearing the nav-bar
                     // chrome); the collapsed peek shows the header + the leading rows below it.
                     contentPadding = PaddingValues(bottom = navBarInset),
-                    // The preferred arrivals lead the list (as morphing peek rows); drop them from the
-                    // main arrivals so they aren't shown twice. (Style B groups arrivals, so no de-dup.)
-                    excludedArrivalIndexes = if (styleA) previewIndexes.toSet() else emptySet(),
+                    // The promoted route rows lead the list (as the peek); drop them from the main
+                    // list below so they aren't shown twice.
+                    excludedGroupIndexes = previewGroups.indices.toSet(),
                     // Until the drawer leaves its peek, show only the leading peek rows (no below-fold
                     // bleed-through); past that they reveal progressively with the drag.
                     showFullList = revealList,
                     leadingContent = {
                         itemsIndexed(
-                            previewArrivals,
-                            key = { index, arrival -> "peek:${arrival.tripId}#$index" }
-                        ) { index, arrival ->
-                            // The host's ETA anchor applies to the first peek row only.
-                            val etaModifier = if (index == 0) etaAnchor else Modifier
-                            val isFavorite = arrival.routeId in content.favoriteRouteIds
-                            val row: @Composable () -> Unit = {
-                                if (styleA) {
-                                    MorphingArrivalRow(
-                                        arrival = arrival,
-                                        actions = content.actions[arrival.tripId],
-                                        isFavorite = isFavorite,
-                                        filterActive = filtering,
-                                        callbacks = rowCallbacks,
-                                        progress = expandProgress,
-                                        etaModifier = etaModifier,
-                                    )
-                                } else {
-                                    PeekRow(
-                                        arrival = arrival,
-                                        actions = content.actions[arrival.tripId],
-                                        isFavorite = isFavorite,
-                                        filterActive = filtering,
-                                        callbacks = rowCallbacks,
-                                        etaModifier = etaModifier,
-                                    )
-                                }
-                            }
-                            // Measure only the first peek row's *rest* height for the collapsed-peek metrics
-                            // (peek rows are uniform height, so one sample sizes them all). The measuring Box
-                            // wraps just that row; the rest attach to the list item directly. Gate on the
-                            // sheet sitting at its collapsed anchor (expandProgress <= 0) so the peek→card
-                            // morph's growth never inflates the measured rest height.
-                            if (index == 0) {
-                                Box(Modifier.onSizeChanged {
-                                    if (expandProgress() <= 0f) peekRowHeightPx = it.height
-                                }) { row() }
-                            } else {
-                                row()
+                            previewGroups,
+                            key = { index, group -> "peek:${group.key}#$index" }
+                        ) { index, group ->
+                            // Peek and expanded share one route-row format now, so the peek row IS the
+                            // expanded row — no peek→card morph, hence a constant height regardless of
+                            // the drawer's open fraction. Record it unconditionally: a guard on
+                            // expandProgress would skip a row that first lays out while the sheet is
+                            // already open (e.g. restored expanded after a rotation), leaving its height
+                            // unrecorded and the peek anchor stale. Since the height never changes with
+                            // the drag, unconditional recording can't inflate the anchor mid-open. The
+                            // host's ETA anchor applies to the first peek row only.
+                            Box(Modifier.onSizeChanged { rowHeights[index] = it.height }) {
+                                RouteArrivalRow(
+                                    group = group,
+                                    actionsFor = { content.actions[it.tripId] },
+                                    isFavorite = group.routeId in content.favoriteRouteIds,
+                                    filterActive = filtering,
+                                    callbacks = rowCallbacks,
+                                    etaAnchor = if (index == 0) etaAnchor else Modifier,
+                                )
                             }
                         }
                     },
@@ -266,198 +228,6 @@ private fun ColumnScope.PeekDivider() {
     )
 }
 
-
-/** Adapts an [ArrivalInfo] onto [PeekRowVisual], wiring the per-arrival overflow menu (which hosts the
- *  favorite toggle). [isFavorite] drives the menu's star label. */
-@Composable
-private fun PeekRow(
-    arrival: ArrivalInfo,
-    actions: ArrivalActions?,
-    isFavorite: Boolean,
-    filterActive: Boolean,
-    callbacks: ArrivalRowCallbacks,
-    etaModifier: Modifier = Modifier,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val (badgeContainer, badgeContent) = rememberRouteBadgeColors(actions?.routeColor)
-    // Wrap the peek row in the same surfaceContainer box as the expanded Style-A card it morphs into,
-    // so the box is present at rest and the morph is a pure size change (see MorphingArrivalRow).
-    ArrivalCard {
-        PeekRowVisual(
-            shortName = arrival.shortName.orEmpty(),
-            headsign = arrival.headsign.orEmpty(),
-            eta = arrival.eta,
-            etaColor = colorResource(arrival.color),
-            predicted = arrival.predicted,
-            badgeContainer = badgeContainer,
-            badgeContent = badgeContent,
-            onMore = { expanded = true },
-            onAlertClick = alertClick(actions, callbacks),
-            onRowClick = { callbacks.onShowVehiclesOnMap(arrival) },
-            onEtaClick = { callbacks.onEtaClick(arrival) },
-            etaModifier = etaModifier,
-            menu = {
-                ArrivalActionsMenu(expanded, { expanded = false }, arrival, actions, isFavorite, filterActive, callbacks)
-            }
-        )
-    }
-}
-
-/**
- * A peek arrival that morphs between its two formats in lockstep with the drawer's open fraction
- * [progress]: the compact [PeekRow] at 0 and the full [ArrivalRowStyleA] card at 1. The seekable
- * crossfade/size morph — and the "only the visible layer is hit-testable at rest" behavior that keeps the
- * peek's ETA pill from being shadowed by the invisible card twin — both live in [MorphByProgress].
- */
-@Composable
-private fun MorphingArrivalRow(
-    arrival: ArrivalInfo,
-    actions: ArrivalActions?,
-    isFavorite: Boolean,
-    filterActive: Boolean,
-    callbacks: ArrivalRowCallbacks,
-    progress: () -> Float,
-    etaModifier: Modifier = Modifier,
-) {
-    MorphByProgress(
-        progress = progress,
-        start = { PeekRow(arrival, actions, isFavorite, filterActive, callbacks, etaModifier) },
-        end = { ArrivalRowStyleA(arrival, actions, isFavorite, filterActive, callbacks) },
-    )
-}
-
-/**
- * A single drawer peek row, driven by primitives so it's previewable: a full-height favorite star,
- * the route short name and destination in line, a white-on-lateness ETA pill, and a full-size
- * overflow menu — matching the legacy ArrivalsListHeader eta rows.
- */
-@Composable
-private fun PeekRowVisual(
-    shortName: String,
-    headsign: String,
-    eta: Long,
-    etaColor: Color,
-    predicted: Boolean,
-    onMore: () -> Unit,
-    modifier: Modifier = Modifier,
-    etaModifier: Modifier = Modifier,
-    badgeContainer: Color = Color.Unspecified,
-    badgeContent: Color = Color.Unspecified,
-    onAlertClick: (() -> Unit)? = null,
-    // Tapping the row body frames the whole route; tapping the ETA pill focuses this trip's vehicle +
-    // stop (null in previews). The pill is a Surface(onClick) and the overflow is an IconButton, so
-    // each nested target reliably wins over the row-body click in its own bounds.
-    onRowClick: (() -> Unit)? = null,
-    onEtaClick: (() -> Unit)? = null,
-    menu: @Composable () -> Unit = {}
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (onRowClick != null) Modifier.clickable(onClick = onRowClick) else Modifier)
-            .padding(start = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // The shared auto-shrinking route badge (sized down for the condensed peek), on its GTFS-colored
-        // chip, so a long short name fits its slot instead of crowding out the headsign.
-        LineBadge(
-            text = shortName,
-            maxFontSize = 28.sp,
-            color = badgeContent,
-            containerColor = badgeContainer,
-        )
-        Spacer(Modifier.width(10.dp))
-        Text(
-            text = headsign,
-            style = MaterialTheme.typography.bodyLarge,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
-        )
-        if (onAlertClick != null) {
-            ArrivalAlertIndicator(onClick = onAlertClick)
-        }
-        Spacer(Modifier.width(8.dp))
-        EtaPill(eta, etaColor, predicted, modifier = etaModifier, onClick = onEtaClick)
-        Box {
-            IconButton(onClick = onMore) {
-                Icon(
-                    painter = painterResource(R.drawable.more_vert),
-                    contentDescription = stringResource(R.string.stop_info_item_options_title),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            menu()
-        }
-    }
-}
-
-/**
- * The prominent white-on-lateness ETA pill shown in each drawer peek row (the "above-the-peek" ETA
- * style — white text on the deviation color). Also reused by the Home legend dialog so its samples match
- * the real peek; [canceled] strikes the text through for the legend's canceled row.
- */
-@Composable
-internal fun EtaPill(
-    eta: Long,
-    color: Color,
-    predicted: Boolean,
-    modifier: Modifier = Modifier,
-    canceled: Boolean = false,
-    // When non-null (the drawer peek row), the whole pill is a tap target — focus this trip's vehicle +
-    // stop. A Surface(onClick) gives it a solid, ripple-backed hit area (the legend dialog leaves it null).
-    onClick: (() -> Unit)? = null,
-) {
-    val decoration = if (canceled) TextDecoration.LineThrough else null
-    val shape = RoundedCornerShape(8.dp)
-    // Fixed height + centered content so "NOW" and "21 min" pills render the same height.
-    val body: @Composable () -> Unit = {
-        Box(
-            modifier = Modifier
-                .height(32.dp)
-                .padding(horizontal = 6.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                if (eta != 0L) {
-                    Text(
-                        text = eta.toString(),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        textDecoration = decoration
-                    )
-                }
-                // The trailing label ("min" / "Now") with the radiating real-time indicator at its
-                // upper-right: top-aligning this inner row floats the small indicator to the label's
-                // top. The Box is always present so the pill width is stable whether or not it's live.
-                Row(verticalAlignment = Alignment.Top) {
-                    Text(
-                        text = if (eta == 0L) {
-                            stringResource(R.string.stop_info_eta_now)
-                        } else {
-                            " " + stringResource(R.string.minutes_abbreviation)
-                        },
-                        fontSize = if (eta == 0L) 22.sp else 14.sp,
-                        fontWeight = if (eta == 0L) FontWeight.Bold else FontWeight.Normal,
-                        color = Color.White,
-                        textDecoration = decoration
-                    )
-                    Box(Modifier.padding(start = 2.dp).size(8.dp)) {
-                        if (predicted) {
-                            RealtimeIndicator(color = Color.White, modifier = Modifier.fillMaxSize())
-                        }
-                    }
-                }
-            }
-        }
-    }
-    if (onClick != null) {
-        Surface(onClick = onClick, modifier = modifier, shape = shape, color = color, content = body)
-    } else {
-        Surface(modifier = modifier, shape = shape, color = color, content = body)
-    }
-}
 
 /**
  * The stop header pinned at the top of the panel: the favorite star and stop name (with a
@@ -538,65 +308,8 @@ private fun ArrivalsPanelHeader(
 }
 
 // ---------------------------------------------------------------------------------------------
-// Previews — the collapsed drawer and its peek row, rendered from primitives.
-
-@Preview(showBackground = true, widthDp = 380)
-@Composable
-private fun DrawerCollapsedPreview() {
-    ObaTheme {
-        Surface(color = MaterialTheme.colorScheme.surface) {
-            Column(Modifier.fillMaxWidth()) {
-                ArrivalCard {
-                    PeekRowVisual(
-                        shortName = "12",
-                        headsign = "Interlaken Park Via 19th Ave E",
-                        eta = 19,
-                        etaColor = colorResource(R.color.stop_info_delayed),
-                        predicted = true,
-                        onMore = {}
-                    )
-                }
-                ArrivalCard {
-                    PeekRowVisual(
-                        shortName = "12",
-                        headsign = "Interlaken Park Via 19th Ave E",
-                        eta = 21,
-                        etaColor = colorResource(R.color.stop_info_delayed),
-                        predicted = true,
-                        onMore = {}
-                    )
-                }
-                ArrivalsPanelHeader(
-                    title = "19th Ave E & E Republican St",
-                    direction = "N",
-                    isFavorite = false,
-                    showActions = true,
-                    hasAlerts = false,
-                    filtering = false,
-                    onToggleFavorite = {},
-                    // Tune this in the preview to dial in the star sizing
-                    starSize = 20.dp,
-                )
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true, widthDp = 380)
-@Composable
-private fun DrawerPeekRowPreview() {
-    ObaTheme {
-        Surface(color = MaterialTheme.colorScheme.surface) {
-            Column(Modifier.fillMaxWidth()) {
-                ArrivalCard { PeekRowVisual("8", "Mount Baker Transit Center", 1, colorResource(R.color.stop_info_delayed), true, {}) }
-                ArrivalCard { PeekRowVisual("40", "Downtown Seattle", 0, colorResource(R.color.stop_info_ontime), true, {}) }
-                ArrivalCard { PeekRowVisual("550", "Bellevue Transit Center", 28, colorResource(R.color.stop_info_scheduled_time), false, {}) }
-                // A long route short name: it should ellipsize at the capped width, not crowd the headsign.
-                ArrivalCard { PeekRowVisual("Mount Si. Trailhead", "North Bend", 12, colorResource(R.color.stop_info_ontime), true, {}) }
-            }
-        }
-    }
-}
+// Previews — the pinned stop header. (The peek rows are RouteArrivalRow now, which needs the
+// un-previewable ArrivalInfo model; the pill strip is covered by EtaPillStripPreview.)
 
 @Preview(showBackground = true, widthDp = 380)
 @Composable

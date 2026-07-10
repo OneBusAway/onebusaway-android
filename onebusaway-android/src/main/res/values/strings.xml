@@ -131,7 +131,6 @@
 
     <string name="bus_options_menu_add_star">Add star to route</string>
     <string name="bus_options_menu_remove_star">Remove star from route</string>
-    <string name="bus_options_menu_show_vehicles_on_map">Show vehicles on map</string>
     <string name="stop_info_vehicle_not_on_map">This trip&#8217;s vehicle isn&#8217;t on the map right now</string>
     <string name="bus_options_menu_show_trip_details">Show trip status</string>
     <string name="bus_options_menu_set_reminder">Set a reminder</string>
@@ -624,8 +623,6 @@
     </string>
 
     <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="preferences_arrival_info_style_options_a">%1$s classic</string>
-    <string name="preferences_arrival_info_style_options_b">Cards</string>
 
     <string name="preferences_otp_api_servername_title">OpenTripPlanner API Server</string>
     <string name="preferences_otp_api_servername_summary">Determines the server used in OpenTripPlanner

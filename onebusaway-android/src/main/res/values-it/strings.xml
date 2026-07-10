@@ -89,7 +89,6 @@
 
     <string name="bus_options_menu_add_star">Aggiungi linea ai preferiti</string>
     <string name="bus_options_menu_remove_star">Rimuovi linea dai preferiti</string>
-    <string name="bus_options_menu_show_vehicles_on_map">Mostra veicoli sulla mappa</string>
     <string name="bus_options_menu_show_trip_details">Mostra stato viaggio</string>
     <string name="bus_options_menu_set_reminder">Imposta un promemoria</string>
     <string name="bus_options_menu_show_only_this_route">Mostra solo questa linea</string>
@@ -490,8 +489,6 @@
     <string name="preferences_left_hand_mode_title">Modalità mano sinistra</string>
     <string name="preferences_left_hand_mode_summary">Sposta alcuni pulsanti sul lato sinistro dello schermo</string>
 
-    <string name="preferences_arrival_info_style_options_a">%1$s classico</string>
-    <string name="preferences_arrival_info_style_options_b">Schede</string>
 
     <string name="preferences_otp_api_servername_title">Server API di OpenTripPlanner</string>
     <string name="preferences_otp_api_servername_summary">Determina il server per le chiamate API di OpenTripPlanner</string>

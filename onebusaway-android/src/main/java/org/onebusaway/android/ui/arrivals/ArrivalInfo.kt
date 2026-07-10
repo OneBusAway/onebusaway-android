@@ -38,9 +38,9 @@ class ArrivalInfo(
     private val data: ArrivalData,
     now: ServerTime,
     includeArrivalDepartureInStatusLabel: Boolean,
-) {
+) : RouteDirectionItem {
 
-    val eta: Long
+    override val eta: Long
 
     val displayTime: ServerTime
 
@@ -85,10 +85,10 @@ class ArrivalInfo(
     // Identity/display fields the UI and repository read directly, delegating to the [ArrivalData]
     // abstraction — so the same display model serves both the legacy fetch (My Lists) and the
     // modernized arrivals fetch, depending on which adapter produced the [data].
-    val routeId: String get() = data.routeId
+    override val routeId: String get() = data.routeId
     val tripId: String get() = data.tripId
     val stopId: String get() = data.stopId
-    val headsign: String? get() = data.headsign
+    override val headsign: String? get() = data.headsign
     val shortName: String? get() = data.shortName
     val routeLongName: String? get() = data.routeLongName
     val stopSequence: Int get() = data.stopSequence

@@ -12,7 +12,6 @@ android.productFlavors {
         dimension "brand"
         applicationId "org.agencyy.android" // Unique listing of this brand on app store
         manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
-        buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants
         buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
         buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
         buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey("agencyY") + "\""

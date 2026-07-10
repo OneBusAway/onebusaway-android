@@ -12,7 +12,6 @@ android.productFlavors {
         isDefault = true
         applicationId "com.joulespersecond.seattlebusbot"
         manifestPlaceholders = [databaseAuthority: "com.joulespersecond.oba"]
-        buildConfigField "int", "ARRIVAL_INFO_STYLE", "0" // Defined in BuildFlavorConstants
         buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
         buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
         buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey("oba") + "\""

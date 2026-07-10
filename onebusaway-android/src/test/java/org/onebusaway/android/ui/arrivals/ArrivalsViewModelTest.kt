@@ -96,12 +96,6 @@ private class FakeArrivalsRepository(
         persistedFilter = filter
     }
 
-    var lastSetStyle: Int? = null
-
-    override suspend fun setArrivalStyle(style: Int) {
-        lastSetStyle = style
-    }
-
     override fun favoriteRouteIds(): Flow<Set<String>> = favoriteRoutes
 
     override fun alertHideState(): Flow<AlertHideState> = hideState
@@ -146,9 +140,9 @@ class ArrivalsViewModelTest {
     ) =
         ArrivalsData(
             arrivals = emptyList(),
+            routeGroups = emptyList(),
             header = header(favorite),
             minutesAfter = minutesAfter,
-            style = 0,
             isStale = isStale,
             effectiveRouteFilter = emptySet(),
             actions = emptyMap(),

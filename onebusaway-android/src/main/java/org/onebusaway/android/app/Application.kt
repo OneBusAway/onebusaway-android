@@ -27,7 +27,6 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.region.RegionSubsystems
-import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.CustomApiUrlLabel
 import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.ThemeUtils
@@ -48,8 +47,7 @@ class Application : android.app.Application() {
             PreferenceUtils.saveString(ObaApi.APP_UID, UUID.randomUUID().toString())
         }
 
-        // Seed first-run OBA defaults: the build-flavor arrival-info style, and apply the saved theme.
-        BuildFlavorUtils.applyDefaultArrivalInfoStyleIfUnset(this)
+        // Apply the saved theme.
         ThemeUtils.applyPersistedTheme(this)
 
         // Kick the one-time legacy ContentProvider -> Room data import (fire-and-forget) so it overlaps

@@ -82,7 +82,8 @@ sealed interface ArrivalsUiState {
 
     /**
      * @param arrivals the existing [ArrivalInfo] display model, already filtered and sorted
-     * @param style one of BuildFlavorUtils.ARRIVAL_INFO_STYLE_*
+     * @param routeGroups [arrivals] grouped into one row per (route, direction), ordered by earliest
+     *                    ETA — the unit the list and the drawer peek both render
      * @param isStale true when showing the last good data after a refresh failed
      * @param actions per-arrival navigation/dialog data, keyed by trip id
      * @param alerts active, non-hidden service alerts for the stop
@@ -93,8 +94,8 @@ sealed interface ArrivalsUiState {
     data class Content(
         val header: StopHeader,
         val arrivals: List<ArrivalInfo>,
+        val routeGroups: List<RouteRowGroup>,
         val minutesAfter: Int,
-        val style: Int,
         val isStale: Boolean,
         val actions: Map<String, ArrivalActions> = emptyMap(),
         /** The starred route ids, live — a row's star + the drawer-header promotion read from this, so a

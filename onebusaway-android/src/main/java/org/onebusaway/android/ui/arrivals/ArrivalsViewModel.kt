@@ -189,14 +189,6 @@ class ArrivalsViewModel @AssistedInject constructor(
         }
     }
 
-    /** Switches the arrival-info display style (the legacy "sort by" view-mode toggle) and reloads. */
-    fun setArrivalStyle(style: Int) {
-        viewModelScope.launch {
-            repository.setArrivalStyle(style)
-            refresh()
-        }
-    }
-
     /** Replaces the route filter (empty == show all), persists it, and reloads. */
     fun setRouteFilter(filter: Set<String>) {
         routeFilter = filter
@@ -277,8 +269,10 @@ class ArrivalsViewModel @AssistedInject constructor(
         return ArrivalsUiState.Content(
             header = header,
             arrivals = arrivals,
+            // Lift starred routes to the top (each partition stays in departure order). Done here, off
+            // the live favorite set, so a star toggle re-orders the list with no re-fetch (#1707/#1751).
+            routeGroups = orderRouteGroupsByFavorite(routeGroups, favoriteRouteIds),
             minutesAfter = minutesAfter,
-            style = style,
             isStale = isStale,
             actions = actions,
             favoriteRouteIds = favoriteRouteIds,

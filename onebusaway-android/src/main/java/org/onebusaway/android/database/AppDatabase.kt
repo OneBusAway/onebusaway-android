@@ -2,7 +2,10 @@ package org.onebusaway.android.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import org.onebusaway.android.database.oba.CachedRouteTypeRecord
+import org.onebusaway.android.database.oba.CachedStopRecord
 import org.onebusaway.android.database.oba.LegacyImportDao
+import org.onebusaway.android.database.oba.MapStopCacheDao
 import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.NavStopRecord
 import org.onebusaway.android.database.oba.RegionDao
@@ -38,6 +41,10 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
  * v4 retires the two-tier route-favorite model (#1751): the `route_headsign_favorites` table is dropped
  * and `routes.favorite` becomes the single source of truth, matching `stops.favorite`. It also adds the
  * missing foreign-key child index on `surveys.study_id` (#1739).
+ *
+ * v5 adds the map stop cache (#1754): `cached_stops` + `cached_route_types`, a region-scoped spatial
+ * cache of nearby-stops loads (separate from the user-state `stops` table) so the map renders stops
+ * instantly on a slow/cold-start load.
  */
 @Database(
     entities = [
@@ -54,8 +61,10 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
         RegionBoundRecord::class,
         Open311ServerRecord::class,
         NavStopRecord::class,
+        CachedStopRecord::class,
+        CachedRouteTypeRecord::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -77,6 +86,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun tripDao(): TripDao
     abstract fun regionDao(): RegionDao
     abstract fun navStopDao(): NavStopDao
+
+    // Map stop cache (#1754).
+    abstract fun mapStopCacheDao(): MapStopCacheDao
 
     companion object {
         /** The Room database filename (also the backup target). */

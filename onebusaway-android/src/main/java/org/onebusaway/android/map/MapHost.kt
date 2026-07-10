@@ -40,6 +40,18 @@ import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
 
+/** The informational strip shown across the top of the nearby-stops map (see [MapHost.stopsBanner]). */
+sealed interface StopsBanner {
+    /** No banner. */
+    data object None : StopsBanner
+
+    /** The load was truncated (the API's `limitExceeded`): prompt the user to zoom in for more stops. */
+    data object MoreStopsAvailable : StopsBanner
+
+    /** A load failed with cached stops on screen (offline, #1754): the map is showing saved stops. */
+    data object ShowingSavedStops : StopsBanner
+}
+
 /**
  * The flavor-neutral **map surface**: everything a map screen needs regardless of *what* it shows.
  * It owns the shared [MapRenderState], the live camera read-back + seed + cross-process persistence,
@@ -120,18 +132,19 @@ class MapHost(
         _progress.value = inProgress
     }
 
-    private val _moreStopsAvailable = MutableStateFlow(false)
+    private val _stopsBanner = MutableStateFlow<StopsBanner>(StopsBanner.None)
 
     /**
-     * Whether the last viewport stop load was truncated (the API's `limitExceeded`): more stops match
-     * the viewport than were returned, so the UI can prompt the user to zoom in. Set by the stop
+     * The informational strip across the top of the nearby-stops map: prompt to zoom in when the load
+     * was truncated ([StopsBanner.MoreStopsAvailable]), or a "showing saved stops" notice when a load
+     * failed with cached stops on screen ([StopsBanner.ShowingSavedStops], #1754). Set by the stop
      * loader on each load; cleared when leaving the nearby-stops view.
      */
-    val moreStopsAvailable: StateFlow<Boolean> = _moreStopsAvailable.asStateFlow()
+    val stopsBanner: StateFlow<StopsBanner> = _stopsBanner.asStateFlow()
 
-    /** Set by the stop loader to the last response's `limitExceeded`; cleared on view changes. */
-    fun setMoreStopsAvailable(available: Boolean) {
-        _moreStopsAvailable.value = available
+    /** Set by the stop loader per load; cleared ([StopsBanner.None]) on view changes. */
+    fun setStopsBanner(banner: StopsBanner) {
+        _stopsBanner.value = banner
     }
 
     private val _effects = MutableSharedFlow<MapEffect>(extraBufferCapacity = 8)

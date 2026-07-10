@@ -37,6 +37,7 @@ import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.database.oba.RouteFavoritesRepository
+import org.onebusaway.android.database.oba.StopCacheRepository
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.models.ObaTripStatus
@@ -107,6 +108,7 @@ class MapViewModel @Inject constructor(
     private val prefsRepository: PreferencesRepository,
     private val tripObservationRepository: TripObservationRepository,
     private val stopDao: StopDao,
+    private val stopCache: StopCacheRepository,
     private val routeFavorites: RouteFavoritesRepository,
     @param:ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -149,6 +151,9 @@ class MapViewModel @Inject constructor(
         // The home map stars the user's favorite stops (#1680). Room runs the query off the main thread
         // and re-emits on any favorite change, so starring a stop updates the map immediately.
         favoriteStopIds = stopDao.favoriteStopIds().map { it.toSet() },
+        // The home map reads through the persistent stop cache (#1754) so stops appear instantly on a
+        // slow/cold-start load.
+        stopCache = stopCache,
     )
 
     // ----- Map-host surface (delegated) -----
@@ -163,8 +168,8 @@ class MapViewModel @Inject constructor(
     /** Whether a viewport/route load is in flight (the old `Callback.showProgress`). */
     val progress: StateFlow<Boolean> get() = mapHost.progress
 
-    /** Whether the last nearby-stops load was truncated (drives the "zoom in to see more stops" banner). */
-    val moreStopsAvailable: StateFlow<Boolean> get() = mapHost.moreStopsAvailable
+    /** The nearby-stops info banner state — "zoom in for more stops" or "showing saved stops" (#1754). */
+    val stopsBanner: StateFlow<StopsBanner> get() = mapHost.stopsBanner
 
     /** One-shot events that need an Activity (e.g. the out-of-range prompt). */
     val effects: SharedFlow<MapEffect> get() = mapHost.effects
@@ -328,7 +333,7 @@ class MapViewModel @Inject constructor(
         bikeController.stop()
         stopsController.clearStops(false)
         mapHost.setProgress(false)
-        mapHost.setMoreStopsAvailable(false)
+        mapHost.setStopsBanner(StopsBanner.None)
         // Drop any retained framing (route/itinerary/region fit) so it isn't replayed onto the next view
         // — e.g. a stale route fit re-applied when a re-created adapter re-subscribes in nearby-stops
         // mode. The view we enter next sets its own framing (or none, for nearby stops).

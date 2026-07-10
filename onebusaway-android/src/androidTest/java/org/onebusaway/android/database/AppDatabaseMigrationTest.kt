@@ -112,6 +112,35 @@ class AppDatabaseMigrationTest {
         db.close()
     }
 
+    @Test
+    fun migrate4To5_createsCacheTables() {
+        helper.createDatabase(TEST_DB, 4).close()
+
+        // runMigrationsAndValidate asserts the resulting schema matches the exported 5.json.
+        val db = helper.runMigrationsAndValidate(TEST_DB, 5, true, MIGRATION_4_5)
+
+        // Both cache tables exist and are empty.
+        for (table in listOf("cached_stops", "cached_route_types")) {
+            db.query("SELECT count(*) FROM $table").use { c ->
+                c.moveToFirst()
+                assertEquals("expected empty $table", 0, c.getInt(0))
+            }
+        }
+        // And accept a row each (columns resolve).
+        db.execSQL(
+            "INSERT INTO cached_stops " +
+                "(_id, code, name, direction, latitude, longitude, location_type, route_ids, region_id, last_seen) " +
+                "VALUES ('1_1', '1', 'A', 'N', 47.6, -122.3, 0, '', 1, 123)"
+        )
+        db.execSQL(
+            "INSERT INTO cached_route_types (_id, type, region_id, last_seen) VALUES ('r1', 3, 1, 123)"
+        )
+        db.query("SELECT count(*) FROM cached_stops").use { c ->
+            c.moveToFirst(); assertEquals(1, c.getInt(0))
+        }
+        db.close()
+    }
+
     private fun favoriteOf(
         db: androidx.sqlite.db.SupportSQLiteDatabase,
         routeId: String

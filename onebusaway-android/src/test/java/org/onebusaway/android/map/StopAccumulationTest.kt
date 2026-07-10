@@ -25,69 +25,75 @@ import org.onebusaway.android.map.render.StopMarker
 
 /**
  * Unit tests for the stop-accumulation logic [StopsMapController.showStops] / [StopsMapController.clearStops]
- * delegate to — the easily-broken part of the data-shaping: the LRU trim evicts least-recently-used
- * stops down to the 200-cap *but never the focused stop*, and the same focus-retention drives
- * `clearStops(false)`. Split into pure functions ([trimStopCache] / [retainOnlyFocusedStop]) over
- * plain [StopMarker]s so it runs on the JVM — the per-stop marker build (which touches an Android
- * `Location`) is exercised on device.
+ * delegate to — the easily-broken part of the data-shaping: [trimToNearest] bounds the accumulation to
+ * the stops nearest the viewport centre (never the focused stop), [evictStaleInViewport] cache-busts
+ * stops a complete response omitted (#1754), and the same focus-retention drives `clearStops(false)`.
+ * Split into pure functions over plain [StopMarker]s so it runs on the JVM — the per-stop marker build
+ * (which touches an Android `Location`) is exercised on device.
  */
 class StopAccumulationTest {
 
-    private fun marker(id: String): StopMarker =
-        StopMarker(id, GeoPoint(0.0, 0.0), "null", ObaRoute.TYPE_BUS, ObaStopElement(id, 0.0, 0.0, id, id))
+    private fun marker(id: String, lat: Double = 0.0, lon: Double = 0.0): StopMarker =
+        StopMarker(id, GeoPoint(lat, lon), "null", ObaRoute.TYPE_BUS, ObaStopElement(id, lat, lon, id, id))
 
     private fun accumOf(vararg ids: String): LinkedHashMap<String, StopMarker> =
         LinkedHashMap<String, StopMarker>().apply { ids.forEach { put(it, marker(it)) } }
 
+    private fun accumOf(vararg markers: StopMarker): LinkedHashMap<String, StopMarker> =
+        LinkedHashMap<String, StopMarker>().apply { markers.forEach { put(it.id, it) } }
+
     private fun LinkedHashMap<String, StopMarker>.ids() = keys.toSet()
 
-    // --- trimStopCache (the LRU eviction; accumOf is insertion- = eldest-first order) ---
+    // --- trimToNearest (bound to the cap nearest the viewport centre) ---
 
     @Test
     fun `at or below the cap is a no-op`() {
         val accum = accumOf("a", "b", "c")
-        trimStopCache(accum, focusedId = "a", cap = 3)
+        trimToNearest(accum, GeoPoint(0.0, 0.0), cap = 3, focusedId = "a")
         assertEquals(setOf("a", "b", "c"), accum.ids())
     }
 
     @Test
-    fun `over the cap evicts eldest-first down to the cap`() {
-        val accum = accumOf("a", "b", "c", "d")
-        trimStopCache(accum, focusedId = null, cap = 2)
-        assertEquals(setOf("c", "d"), accum.ids())
+    fun `over the cap keeps the stops nearest the center`() {
+        // center at (0,0): near < mid < far by longitude distance.
+        val accum = accumOf(marker("near", 0.0, 1.0), marker("mid", 0.0, 3.0), marker("far", 0.0, 9.0))
+        trimToNearest(accum, GeoPoint(0.0, 0.0), cap = 2, focusedId = null)
+        assertEquals(setOf("near", "mid"), accum.ids())   // the farthest is dropped
     }
 
     @Test
-    fun `over the cap never evicts the focused stop`() {
-        val accum = accumOf("a", "b", "c", "d")
-        // "a" is the eldest, but being focused it's skipped; the next-eldest evict instead.
-        trimStopCache(accum, focusedId = "a", cap = 2)
-        assertEquals(setOf("a", "d"), accum.ids())
+    fun `over the cap never evicts the focused stop even when it is farthest`() {
+        val accum = accumOf(marker("near", 0.0, 1.0), marker("mid", 0.0, 3.0), marker("far", 0.0, 9.0))
+        // "far" would be dropped by distance, but being focused it's kept and counts toward the cap.
+        trimToNearest(accum, GeoPoint(0.0, 0.0), cap = 2, focusedId = "far")
+        assertEquals(setOf("near", "far"), accum.ids())
+    }
+
+    // --- evictStaleInViewport (the complete-response cache-bust) ---
+
+    @Test
+    fun `evicts in-viewport stops the complete response omitted`() {
+        val accum = accumOf(marker("kept", 0.0, 0.0), marker("stale", 1.0, 1.0))
+        // Viewport covers both; the response only carried "kept" — "stale" is dropped.
+        evictStaleInViewport(
+            accum, southWest = GeoPoint(-2.0, -2.0), northEast = GeoPoint(2.0, 2.0),
+            present = setOf("kept"), focusedId = null,
+        )
+        assertEquals(setOf("kept"), accum.ids())
     }
 
     @Test
-    fun `over the cap with no focus evicts pure eldest`() {
-        val accum = accumOf("a", "b", "c")
-        trimStopCache(accum, focusedId = null, cap = 1)
-        assertEquals(setOf("c"), accum.ids())
-    }
-
-    @Test
-    fun `the access-ordered LRU bumps a re-seen stop so it outlives an untouched eldest`() {
-        // The eviction is only "least-recently-USED" because stopAccum is access-ordered and showStops
-        // re-touches each fetched stop. Build the map exactly as StopsMapController.stopAccum (access
-        // order) and re-see the insertion-eldest "a" the way showStops does (getOrPut's get() on a hit
-        // bumps it to most-recently-used), leaving "b" the eldest.
-        val accum = LinkedHashMap<String, StopMarker>(16, 0.75f, true)
-        listOf("a", "b", "c").forEach { accum[it] = marker(it) }
-        accum.getOrPut("a") { marker("a") }
-
-        trimStopCache(accum, focusedId = null, cap = 2)
-
-        // LRU: the now-eldest "b" is evicted and the bumped "a" survives. A plain (insertion-ordered)
-        // map — or dropping the getOrPut bump — would instead evict the first-inserted "a" and keep "b",
-        // so this test fails if stopAccum loses its access-order config or showStops stops re-touching.
-        assertEquals(setOf("a", "c"), accum.ids())
+    fun `keeps omitted stops outside the viewport, and the focused stop`() {
+        val accum = accumOf(
+            marker("outside", 10.0, 10.0),   // omitted but out of the box → not the response's concern
+            marker("focused", 1.0, 1.0),     // omitted + in the box, but focused → kept
+            marker("stale", 0.5, 0.5),       // omitted + in the box → dropped
+        )
+        evictStaleInViewport(
+            accum, southWest = GeoPoint(-2.0, -2.0), northEast = GeoPoint(2.0, 2.0),
+            present = emptySet(), focusedId = "focused",
+        )
+        assertEquals(setOf("outside", "focused"), accum.ids())
     }
 
     // --- retainOnlyFocusedStop (the clearStops(false) path) ---

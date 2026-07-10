@@ -21,6 +21,7 @@ import androidx.lifecycle.SavedStateHandle
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.util.locationOf
 import org.onebusaway.android.util.PreferenceUtils
 import java.util.concurrent.TimeUnit
@@ -110,21 +111,55 @@ internal fun retainOnlyFocusedStop(accum: LinkedHashMap<String, StopMarker>, foc
 }
 
 /**
- * The stop-accumulation LRU trim: evicts least-recently-used stops until [accum] holds at most [cap],
- * in place. [accum] is access-ordered, so its iterator walks eldest (least-recently-used) first; the
- * entry for [focusedId] is always skipped so the focused stop is never evicted. No-op at/under the
- * cap. Replaces the old clear-everything cap; pure, so the keep-the-focused-stop eviction is
- * unit-testable.
+ * Bounds the stop accumulation to the [cap] markers nearest [center], removing the rest in place;
+ * [focusedId] (when present) is always kept and counts toward the cap. No-op at/under the cap.
+ *
+ * Proximity, not recency (the old LRU): so a stop load that returns an incomplete sample over the whole
+ * viewport can never evict the centred "core" the user is looking at (#1754) — only far-edge stops are
+ * dropped. Pure, so the keep-nearest eviction is unit-testable.
  */
-internal fun trimStopCache(
+internal fun trimToNearest(
     accum: LinkedHashMap<String, StopMarker>,
-    focusedId: String?,
+    center: GeoPoint,
     cap: Int,
+    focusedId: String?,
 ) {
     if (accum.size <= cap) return
+    val keep = LinkedHashSet<String>()
+    if (focusedId != null && accum.containsKey(focusedId)) keep.add(focusedId)
+    // Precompute each marker's distance once (sortedBy's comparator would otherwise recompute it per
+    // comparison). haversineMeters ranks correctly at any latitude, unlike a raw degree-plane metric.
+    val byDistance = accum.values
+        .map { it.id to haversineMeters(it.point, center) }
+        .sortedBy { it.second }
+    for ((id, _) in byDistance) {
+        if (keep.size >= cap) break
+        keep.add(id)
+    }
+    accum.keys.retainAll(keep)
+}
+
+/**
+ * The authoritative-response cache-bust (#1754): removes accumulated stops inside the viewport
+ * [southWest]..[northEast] that a **complete** load omitted ([present] = the load's stop ids), in place;
+ * [focusedId] is never removed. Only safe for a complete response — an incomplete one is a sample and
+ * says nothing about which stops are absent, so it must not remove anything.
+ */
+internal fun evictStaleInViewport(
+    accum: LinkedHashMap<String, StopMarker>,
+    southWest: GeoPoint,
+    northEast: GeoPoint,
+    present: Set<String>,
+    focusedId: String?,
+) {
     val it = accum.entries.iterator()
-    while (accum.size > cap && it.hasNext()) {
-        if (it.next().key != focusedId) it.remove()
+    while (it.hasNext()) {
+        val (id, marker) = it.next()
+        if (id == focusedId || id in present) continue
+        val p = marker.point
+        val inside = p.latitude in southWest.latitude..northEast.latitude &&
+            p.longitude in southWest.longitude..northEast.longitude
+        if (inside) it.remove()
     }
 }
 

@@ -16,6 +16,7 @@
 package org.onebusaway.android.map
 
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -31,6 +32,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.api.data.MapDataSource
+import org.onebusaway.android.database.oba.CachedViewport
+import org.onebusaway.android.database.oba.StopCacheRepository
 import org.onebusaway.android.models.NearbyStops
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
@@ -42,6 +45,7 @@ import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.primaryRouteType
 import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.RegionUtils
 
 /**
@@ -64,20 +68,29 @@ class StopsMapController(
     private val locationRepository: LocationRepository,
     private val scope: CoroutineScope,
     private val routeActive: () -> Boolean = { false },
-    // The LRU cache size, read on each load so a change in advanced settings applies on the next pan.
+    // The in-memory stop cap, read on each load so a change in advanced settings applies on the next pan.
     private val cacheSize: () -> Int = { DEFAULT_STOP_CACHE_SIZE },
     // The ids of the user's starred (favorite) stops, live: starring/unstarring re-flags the drawn
     // markers so their star icon + tap preference appear immediately (#1680). Defaults to no favorites
     // for the slim stop maps (the report/picker) that don't surface starred stops.
     private val favoriteStopIds: Flow<Set<String>> = flowOf(emptySet()),
+    // The persistent stop cache (#1754): each viewport renders cached stops first, then reconciles
+    // with the network. Null disables read-through (the slim report/picker maps, which are transient
+    // and would only add write churn), mirroring the favoriteStopIds no-op default.
+    private val stopCache: StopCacheRepository? = null,
+    // The device wall clock for the cache TTL (a purely local timer). Read once per load; injectable so
+    // tests pin it. The default is the sanctioned WallTime.now() mint (inert for the slim maps, whose
+    // cache is disabled so it's never read).
+    private val now: () -> WallTime = { WallTime.now() },
 ) {
 
     private val renderState get() = host.renderState
 
-    // Stop accumulation across pans, as an access-ordered LRU (a re-seen stop bumps to most-recently-
-    // used; once over the configured [cacheSize] the least-recently-seen non-focused stops evict) + the
-    // routes cache used to resolve a stop's icon route type and to report a stop's routes to listeners.
-    private val stopAccum = LinkedHashMap<String, StopMarker>(16, 0.75f, true)
+    // Stop accumulation across pans: bounded to the [cacheSize] stops nearest the viewport centre (see
+    // trimToNearest), never by recency — so an incomplete load can't evict the centred core. Plain
+    // insertion order; nothing consumes access order. Alongside the routes cache used to resolve a
+    // stop's icon route type and to report a stop's routes to listeners.
+    private val stopAccum = LinkedHashMap<String, StopMarker>()
 
     private val cachedRoutes = HashMap<String, ObaRoute>()
 
@@ -157,11 +170,37 @@ class StopsMapController(
             .filterNot { next -> stopRequestFulfilled(lastLoad, lastHadResponse, lastLimitExceeded, next) }
             .flatMapLatest { snapshot ->
                 // flatMapLatest cancels an in-flight load when a newer viewport arrives, matching the
-                // controller's `loadJob?.cancel()`; a cancelled load leaves lastLoad untouched.
+                // controller's `loadJob?.cancel()`; a cancelled load leaves lastLoad untouched (and
+                // skips a superseded viewport's cache save).
                 flow {
+                    val regionId = regionRepo.region.value?.id
+                    // Read the (prefs-backed) cache size and clock once — the cache read, the network
+                    // request, and the cache save all share the same viewport's values.
+                    val maxStops = cacheSize()
+                    val loadTime = now()
+
+                    // 1. Serve the cache first so stops render before (or without) the network. Skipped
+                    // when there's no cache (slim maps) or no region resolved yet (cold start); never a
+                    // region-less query, which would mix feeds. Best-effort: a cache read failure must
+                    // fall through to the network, not kill the loader (guardCache below).
+                    var servedCache = false
+                    if (stopCache != null && regionId != null) {
+                        val cached = guardCache("read") {
+                            stopCache.stopsFor(
+                                snapshot.center.latitude, snapshot.center.longitude,
+                                snapshot.latSpan, snapshot.lonSpan, regionId, loadTime, maxStops,
+                            )
+                        }
+                        if (cached != null && cached.stops.isNotEmpty()) {
+                            servedCache = true
+                            emit(StopLoad.Cached(cached, snapshot))
+                        }
+                    }
+
+                    // 2. Network — the unchanged request + fulfillment-gate update.
                     host.setProgress(true)
                     val result = mapDataSource
-                        .nearbyStops(snapshot.center.latitude, snapshot.center.longitude, snapshot.latSpan, snapshot.lonSpan, cacheSize())
+                        .nearbyStops(snapshot.center.latitude, snapshot.center.longitude, snapshot.latSpan, snapshot.lonSpan, maxStops)
                     // Only a usable load updates the fulfillment gate: a success — OK stops, or a null
                     // no-op (e.g. no stops endpoint, which intentionally fulfills future same-center
                     // viewports). A failure (error code / transport) showed no stops, so leave the gate
@@ -172,23 +211,89 @@ class StopsMapController(
                         lastHadResponse = nearby != null
                         lastLimitExceeded = nearby?.limitExceeded ?: false
                     }
-                    emit(result)
+
+                    // 3. Persist a usable, in-range, non-empty result (upsert + evict) for next time.
+                    // Best-effort: a save failure must not abort the flow (leaving the spinner stuck).
+                    if (stopCache != null && regionId != null) {
+                        result.getOrNull()?.let { nearby ->
+                            if (!nearby.outOfRange && nearby.stops.isNotEmpty()) {
+                                guardCache("save") { stopCache.save(nearby, regionId, loadTime) }
+                            }
+                        }
+                    }
+
+                    emit(StopLoad.Network(result, servedCache, snapshot))
                 }
             }
-            .collect { result ->
-                host.setProgress(false)
-                onStopsLoaded(result)
+            .collect { load ->
+                when (load) {
+                    // A cache emission renders immediately and deliberately bypasses onStopsLoaded, so
+                    // the out-of-range / limit-exceeded / progress machinery stays network-only.
+                    is StopLoad.Cached -> showCachedStops(load.viewport, load.snapshot)
+                    is StopLoad.Network -> {
+                        host.setProgress(false)
+                        onStopsLoaded(load.result, load.servedCache, load.snapshot)
+                    }
+                }
             }
     }
 
-    private fun onStopsLoaded(result: Result<NearbyStops?>) {
-        // Default the "more stops" banner off for this load; only a successful in-region result with
-        // limitExceeded turns it back on below. Clearing once up front means every early-out (error,
-        // null, out-of-range) leaves it cleared without having to remember to — the class of bug that
-        // previously left the banner stuck on after a truncated load was followed by a null one.
-        host.setMoreStopsAvailable(false)
+    /**
+     * Runs a persistent-cache [block] best-effort: a Room/SQLite failure is logged and swallowed
+     * (returning null) so it can't escape the loader flow and cancel future viewport loads — the cache
+     * is a nice-to-have, the network path is authoritative. Cancellation is rethrown so flatMapLatest
+     * can still abandon a superseded viewport.
+     */
+    private suspend fun <T> guardCache(op: String, block: suspend () -> T): T? =
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "Stop cache $op failed", e)
+            null
+        }
+
+    /**
+     * One viewport's emission: a [Cached] render (served instantly from the persistent cache) followed
+     * by the [Network] result. The two are keyed by stop id in [stopAccum], so the network render
+     * merges/replaces the cached markers automatically (no separate reconciliation).
+     */
+    private sealed interface StopLoad {
+        data class Cached(val viewport: CachedViewport, val snapshot: CameraSnapshot) : StopLoad
+
+        /** [servedCache] = whether a [Cached] render preceded this in the same viewport load. */
+        data class Network(
+            val result: Result<NearbyStops?>,
+            val servedCache: Boolean,
+            val snapshot: CameraSnapshot,
+        ) : StopLoad
+    }
+
+    /**
+     * Render cached stops immediately: seed only the icon route-type lookup (never [cachedRoutes],
+     * which feeds stop-tap route reporting and must reflect real loaded routes), then accumulate + publish
+     * like [showStops]. A cache render is provisional (no cache-bust, [complete] = false); it deliberately
+     * skips the out-of-range / limit-exceeded handling in [onStopsLoaded] — a cache render makes no claim
+     * about the region or truncation.
+     */
+    private fun showCachedStops(cached: CachedViewport, snapshot: CameraSnapshot) {
+        routeTypeById.putAll(cached.routeTypes)
+        accumulateAndPublish(cached.stops, viewport = snapshot, complete = false)
+    }
+
+    private fun onStopsLoaded(result: Result<NearbyStops?>, servedCache: Boolean, snapshot: CameraSnapshot) {
+        // Default the banner off for this load; the branches below turn it back on. Clearing once up
+        // front means every early-out (error, null, out-of-range) leaves it cleared without having to
+        // remember to — the class of bug that previously left the banner stuck on after a truncated
+        // load was followed by a null one.
+        host.setStopsBanner(StopsBanner.None)
         val nearby = result.getOrElse {
-            host.emitEffect(MapEffect.ShowError.from(it))
+            // The load failed. If the cache already rendered stops for this viewport (offline), show the
+            // "showing saved stops" banner instead of the generic error toast — the user has stops on
+            // screen, and a per-pan toast would spam. A genuine failure with nothing cached still toasts.
+            if (servedCache) host.setStopsBanner(StopsBanner.ShowingSavedStops)
+            else host.emitEffect(MapEffect.ShowError.from(it))
             return
         }
         if (nearby == null) {
@@ -223,13 +328,17 @@ class StopsMapController(
             }
         }
 
-        // More stops match the viewport than the API returned: prompt the user to zoom in.
-        host.setMoreStopsAvailable(nearby.limitExceeded)
-        showStops(nearby.stops, nearby.routes)
+        // More stops match the viewport than the API returned: prompt the user to zoom in, and treat
+        // the response as an incomplete sample — merge it in (bounded to the nearest to centre) but do
+        // NOT let it evict the cached stops it omitted. A complete response is authoritative, so it also
+        // cache-busts stale stops the response dropped inside the viewport (#1754).
+        val complete = !nearby.limitExceeded
+        if (!complete) host.setStopsBanner(StopsBanner.MoreStopsAvailable)
+        showStops(nearby.stops, nearby.routes, viewport = snapshot, complete = complete)
     }
 
     private fun notifyOutOfRange() {
-        host.setMoreStopsAvailable(false)
+        host.setStopsBanner(StopsBanner.None)
         host.emitEffect(MapEffect.OutOfRange)
     }
 
@@ -283,26 +392,60 @@ class StopsMapController(
      * geometry out of this generic controller). Null (the nearby-stops loader) keeps the normal
      * direction-anchored icons at the stop's own location.
      */
-    fun showStops(stops: List<ObaStop>, routes: List<ObaRoute>, projectedPoints: Map<String, GeoPoint>? = null) {
+    fun showStops(
+        stops: List<ObaStop>,
+        routes: List<ObaRoute>,
+        projectedPoints: Map<String, GeoPoint>? = null,
+        viewport: CameraSnapshot? = null,
+        complete: Boolean = false,
+    ) {
         cacheRoutes(routes)
+        accumulateAndPublish(stops, projectedPoints, viewport, complete)
+    }
+
+    /**
+     * Merge [stops] into [stopAccum], reconcile against [viewport], and publish — the tail shared by the
+     * nearby-stops loader ([showStops]) and the cache render ([showCachedStops]); the caller seeds the
+     * route lookup first.
+     *
+     * [viewport], when non-null (the nearby-stops modes), bounds the accumulation to the stops nearest its
+     * centre. [complete] additionally marks an authoritative response: stops it omitted inside the viewport
+     * are cache-busted. Route mode passes `viewport = null` — the whole route's stops arrive in one batch
+     * and aren't capped against each other. (`complete` is a no-op without a viewport.)
+     */
+    private fun accumulateAndPublish(
+        stops: List<ObaStop>,
+        projectedPoints: Map<String, GeoPoint>? = null,
+        viewport: CameraSnapshot? = null,
+        complete: Boolean = false,
+    ) {
         for (stop in stops) {
             val marker = toStopMarker(stop, projectedPoints)
             val existing = stopAccum[stop.id]
             // Reuse the existing instance when its style + position are unchanged, so a stationary re-poll
-            // of the same set yields an equal list the StateFlow conflates and the renderer never runs
-            // (a hit bumps the entry to most-recently-used under access order, same as before). Replace it
-            // when a mode switch flipped the stop's route-circle vs nearby style/point — otherwise a
-            // retained (focused) stop would keep its pre-switch icon. (Favorites are re-synced separately
-            // by applyFavorites, so they're not part of this reuse test.)
+            // of the same set yields an equal list the StateFlow conflates and the renderer never runs.
+            // Replace it when a mode switch flipped the stop's route-circle vs nearby style/point —
+            // otherwise a retained (focused) stop would keep its pre-switch icon. (Favorites are re-synced
+            // separately by applyFavorites, so they're not part of this reuse test.)
             stopAccum[stop.id] =
                 if (existing != null && existing.routeStop == marker.routeStop && existing.point == marker.point) existing
                 else marker
         }
-        // Route mode feeds the whole route's stops in one batch, so don't evict them against each
-        // other; the viewport loader (the only capped accumulator) is stopped while a route shows.
-        if (!routeActive()) {
-            trimStopCache(stopAccum, renderState.snapshot.value.focusedStopId, cacheSize())
+        if (viewport == null) {
+            // Route mode: the whole batch stays; just publish.
+            renderState.setStops(ArrayList(stopAccum.values))
+            return
         }
+        val focusedId = renderState.snapshot.value.focusedStopId
+        // An authoritative (complete) response drops stops it omitted inside the viewport. An incomplete
+        // one is a sample, so it evicts nothing (#1754).
+        if (complete) {
+            evictStaleInViewport(
+                stopAccum, viewport.southWest, viewport.northEast, stops.mapTo(HashSet()) { it.id }, focusedId,
+            )
+        }
+        // Bound to the nearest to centre (never evicting the centred core against an incomplete sample).
+        trimToNearest(stopAccum, viewport.center, cacheSize(), focusedId)
         renderState.setStops(ArrayList(stopAccum.values))
     }
 
@@ -362,7 +505,7 @@ class StopsMapController(
     companion object {
         private const val TAG = "StopsMapController"
 
-        /** Default map stop LRU cache size; overridable via the advanced settings cache-size option. */
+        /** Default in-memory stop cap (nearest-to-centre); overridable via the advanced cache-size option. */
         const val DEFAULT_STOP_CACHE_SIZE = 200
     }
 }

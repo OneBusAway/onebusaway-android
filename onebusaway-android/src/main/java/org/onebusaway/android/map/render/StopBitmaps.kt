@@ -19,9 +19,12 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Rect
 import android.graphics.Shader
+import android.graphics.drawable.Drawable
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withRotation
 import kotlin.math.ceil
@@ -65,23 +68,6 @@ object StopBitmaps {
         Bitmap.createScaledBitmap(
             bitmap, (bitmap.width * factor).toInt(), (bitmap.height * factor).toInt(), true
         )
-
-    /**
-     * Clockwise degrees from north for a stop [direction] string ("N".."NW"), used to rotate the star's
-     * direction arrow ([favoriteMarker]). "null"/unknown map to 0° — the caller passes `hasArrow=false`
-     * for a directionless stop, so the angle is unused there. Shared so the table lives in one place.
-     */
-    @JvmStatic
-    fun compassAngle(direction: String): Float = when (direction) {
-        "NE" -> 45f
-        "E" -> 90f
-        "SE" -> 135f
-        "S" -> 180f
-        "SW" -> 225f
-        "W" -> 270f
-        "NW" -> 315f
-        else -> 0f // N (and "null", unused since it has no arrow)
-    }
 
     /**
      * A filled circle in [fillColor] with a thin white outline for contrast against the map, sized
@@ -265,5 +251,264 @@ object StopBitmaps {
         }
         path.close()
         return path
+    }
+
+    /**
+     * The fraction to shift a directional stop marker's anchor off-center (anchor = `0.5 ± this`) so the
+     * pin tip lands on the circle center, for a base icon size of [baseIconPx]. Derived from the same
+     * arrow overhang [directionalStopMarker] draws — the arrow's `/3` height minus its `/10` tuck — so a
+     * flavor's anchors track any change to that geometry instead of re-deriving the ratios themselves.
+     */
+    @JvmStatic
+    fun anchorPercentOffset(baseIconPx: Int): Float {
+        val buffer = baseIconPx / 3f - baseIconPx / 10f
+        return buffer / (baseIconPx + buffer) * 0.5f
+    }
+
+    /**
+     * Draws a directional bus-stop marker: the [shape] circle drawable with a gradient direction arrow
+     * ([arrowTipColor] at the tip → [arrowBaseColor] at the base) pointing [direction], onto a bitmap
+     * sized [circlePx] plus the arrow's overhang. [StopDirection.NONE] draws the bare circle with no
+     * arrow. Shared by both map flavors' stop-icon factories — the Google flavor passes a glyph-scaled
+     * [circlePx] and stamps a route glyph via [onCircle]; maplibre uses it as-is.
+     *
+     * [onCircle], if given, is invoked once the circle + arrow are drawn, with the same [Canvas] and the
+     * circle's bounds within the bitmap — so a caller can draw on top (e.g. Google's centered route
+     * glyph) without relying on reading back the mutated [shape]'s bounds after this returns.
+     */
+    @JvmStatic
+    fun directionalStopMarker(
+        shape: Drawable,
+        direction: StopDirection,
+        circlePx: Int,
+        arrowTipColor: Int,
+        arrowBaseColor: Int,
+        onCircle: ((Canvas, Rect) -> Unit)? = null,
+    ): Bitmap {
+        val arrowWidthPx = circlePx / 2f
+        val arrowHeightPx = circlePx / 3f
+        val arrowSpacingReductionPx = circlePx / 10f
+        val buffer = arrowHeightPx - arrowSpacingReductionPx
+
+        val arrowPaintFill = Paint().apply {
+            style = Paint.Style.FILL
+            isAntiAlias = true
+        }
+
+        val bm: Bitmap
+        val c: Canvas
+        val directionAngle: Float // 0-360 degrees
+        val rotationX: Float // Point around which to rotate the arrow
+        val rotationY: Float
+
+        when (direction) {
+            StopDirection.NONE -> {
+                // Don't draw the arrow
+                bm = createBitmap(circlePx, circlePx)
+                c = Canvas(bm)
+                shape.setBounds(0, 0, bm.width, bm.height)
+                shape.draw(c)
+                onCircle?.invoke(c, shape.bounds)
+                return bm
+            }
+
+            StopDirection.NORTH -> {
+                directionAngle = 0f
+                bm = createBitmap(circlePx, (circlePx + buffer).toInt())
+                c = Canvas(bm)
+                shape.setBounds(0, buffer.toInt(), circlePx, bm.height)
+                // Shade with darkest color at tip of arrow
+                arrowPaintFill.shader = LinearGradient(
+                    (bm.width / 2).toFloat(), 0f, (bm.width / 2).toFloat(), arrowHeightPx,
+                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                )
+                // For NORTH, no rotation occurs - use center of image anyway so we have some value
+                rotationX = bm.width / 2f
+                rotationY = bm.height / 2f
+            }
+
+            StopDirection.NORTH_WEST -> {
+                directionAngle = 315f // Arrow is drawn N, rotate 315 degrees
+                bm = createBitmap((circlePx + buffer).toInt(), (circlePx + buffer).toInt())
+                c = Canvas(bm)
+                shape.setBounds(buffer.toInt(), buffer.toInt(), bm.width, bm.height)
+                // Shade with darkest color at tip of arrow
+                arrowPaintFill.shader = LinearGradient(
+                    0f, 0f, buffer, buffer,
+                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                )
+                // Rotate around below coordinates (trial and error)
+                rotationX = circlePx / 2f + buffer / 2f
+                rotationY = bm.height / 2f - buffer / 2f
+            }
+
+            StopDirection.WEST -> {
+                directionAngle = 0f // Arrow is drawn pointing West, so no rotation
+                bm = createBitmap((circlePx + buffer).toInt(), circlePx)
+                c = Canvas(bm)
+                shape.setBounds(buffer.toInt(), 0, bm.width, bm.height)
+                arrowPaintFill.shader = LinearGradient(
+                    0f, (bm.height / 2).toFloat(), arrowHeightPx, (bm.height / 2).toFloat(),
+                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                )
+                // For WEST
+                rotationX = bm.height / 2f
+                rotationY = bm.height / 2f
+            }
+
+            StopDirection.SOUTH_WEST -> {
+                directionAngle = 225f // Arrow is drawn N, rotate 225 degrees
+                bm = createBitmap((circlePx + buffer).toInt(), (circlePx + buffer).toInt())
+                c = Canvas(bm)
+                shape.setBounds(buffer.toInt(), 0, bm.width, circlePx)
+                arrowPaintFill.shader = LinearGradient(
+                    0f, bm.height.toFloat(), buffer, bm.height - buffer,
+                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                )
+                // Rotate around below coordinates (trial and error)
+                rotationX = bm.width / 2f - buffer / 4f
+                rotationY = circlePx / 2f + buffer / 4f
+            }
+
+            StopDirection.SOUTH -> {
+                directionAngle = 180f // Arrow is drawn N, rotate 180 degrees
+                bm = createBitmap(circlePx, (circlePx + buffer).toInt())
+                c = Canvas(bm)
+                shape.setBounds(0, 0, bm.width, (bm.height - buffer).toInt())
+                arrowPaintFill.shader = LinearGradient(
+                    (bm.width / 2).toFloat(), bm.height.toFloat(), (bm.width / 2).toFloat(),
+                    bm.height - arrowHeightPx,
+                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                )
+                rotationX = bm.width / 2f
+                rotationY = bm.height / 2f
+            }
+
+            StopDirection.SOUTH_EAST -> {
+                directionAngle = 135f // Arrow is drawn N, rotate 135 degrees
+                bm = createBitmap((circlePx + buffer).toInt(), (circlePx + buffer).toInt())
+                c = Canvas(bm)
+                shape.setBounds(0, 0, circlePx, circlePx)
+                arrowPaintFill.shader = LinearGradient(
+                    bm.width.toFloat(), bm.height.toFloat(), bm.width - buffer, bm.height - buffer,
+                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                )
+                // Rotate around below coordinates (trial and error)
+                rotationX = (circlePx + buffer / 2) / 2f
+                rotationY = bm.height / 2f
+            }
+
+            StopDirection.EAST -> {
+                directionAngle = 180f // Arrow is drawn pointing West, so rotate 180
+                bm = createBitmap((circlePx + buffer).toInt(), circlePx)
+                c = Canvas(bm)
+                shape.setBounds(0, 0, circlePx, bm.height)
+                arrowPaintFill.shader = LinearGradient(
+                    bm.width.toFloat(), (bm.height / 2).toFloat(),
+                    bm.width - arrowHeightPx, (bm.height / 2).toFloat(),
+                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                )
+                rotationX = bm.width / 2f
+                rotationY = bm.height / 2f
+            }
+
+            StopDirection.NORTH_EAST -> {
+                directionAngle = 45f // Arrow is drawn pointing N, so rotate 45 degrees
+                bm = createBitmap((circlePx + buffer).toInt(), (circlePx + buffer).toInt())
+                c = Canvas(bm)
+                shape.setBounds(0, buffer.toInt(), circlePx, bm.height)
+                // Shade with darkest color at tip of arrow
+                arrowPaintFill.shader = LinearGradient(
+                    bm.width.toFloat(), 0f, bm.width - buffer, buffer,
+                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                )
+                // Rotate around middle of circle
+                rotationX = circlePx / 2f
+                rotationY = bm.height - circlePx / 2f
+            }
+        }
+
+        shape.draw(c)
+
+        /*
+         * Draw the arrow - all dimensions should be relative to circlePx so the arrow is drawn the same
+         * size for all orientations
+         */
+        // Height of the cutout in the bottom of the triangle that makes it an arrow (0=triangle)
+        val cutoutHeight = circlePx / 12f
+        var x1 = 0f // Tip of arrow
+        var y1 = 0f
+        var x2 = 0f // lower left
+        var y2 = 0f
+        var x3 = 0f // cutout in arrow bottom
+        var y3 = 0f
+        var x4 = 0f // lower right
+        var y4 = 0f
+
+        when (direction) {
+            StopDirection.NORTH, StopDirection.SOUTH, StopDirection.NORTH_EAST,
+            StopDirection.SOUTH_EAST, StopDirection.NORTH_WEST, StopDirection.SOUTH_WEST -> {
+                // Arrow is drawn pointing NORTH
+                // Tip of arrow
+                x1 = circlePx / 2f
+                y1 = 0f
+                // lower left
+                x2 = (circlePx / 2f) - (arrowWidthPx / 2)
+                y2 = arrowHeightPx
+                // cutout in arrow bottom
+                x3 = circlePx / 2f
+                y3 = arrowHeightPx - cutoutHeight
+                // lower right
+                x4 = (circlePx / 2f) + (arrowWidthPx / 2)
+                y4 = arrowHeightPx
+            }
+
+            StopDirection.EAST, StopDirection.WEST -> {
+                // Arrow is drawn pointing WEST
+                // Tip of arrow
+                x1 = 0f
+                y1 = circlePx / 2f
+                // lower left
+                x2 = arrowHeightPx
+                y2 = (circlePx / 2f) - (arrowWidthPx / 2)
+                // cutout in arrow bottom
+                x3 = arrowHeightPx - cutoutHeight
+                y3 = circlePx / 2f
+                // lower right
+                x4 = arrowHeightPx
+                y4 = (circlePx / 2f) + (arrowWidthPx / 2)
+            }
+
+            StopDirection.NONE -> Unit // handled above (returns early); unreachable here
+        }
+
+        val path = Path().apply {
+            fillType = Path.FillType.EVEN_ODD
+            moveTo(x1, y1)
+            lineTo(x2, y2)
+            lineTo(x3, y3)
+            lineTo(x4, y4)
+            lineTo(x1, y1)
+            close()
+        }
+
+        // Rotate arrow around (rotationX, rotationY) point
+        val matrix = Matrix()
+        matrix.postRotate(directionAngle, rotationX, rotationY)
+        path.transform(matrix)
+
+        c.drawPath(path, arrowPaintFill)
+        c.drawPath(path, arrowStrokePaint)
+
+        onCircle?.invoke(c, shape.bounds)
+        return bm
+    }
+
+    /** White outline stroked around the direction arrow for contrast against the map. */
+    private val arrowStrokePaint = Paint().apply {
+        color = Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = 1.0f
+        isAntiAlias = true
     }
 }

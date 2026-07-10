@@ -161,7 +161,11 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                         }
                     }
                     map.addOnCameraIdleListener {
-                        map.cameraPosition.target?.let { host.onCameraIdle(snapshot(map, it)) }
+                        // Always settle the gesture gate on idle; publish a snapshot only when the camera
+                        // has a resolved target (MapLibre can momentarily report a null target). Skipping
+                        // the settle on a null target would leave the loader gate stuck shut.
+                        val target = map.cameraPosition.target
+                        if (target != null) host.onCameraIdle(snapshot(map, target)) else host.onCameraSettled()
                     }
                     r.renderStatic()
                 }

@@ -111,15 +111,24 @@ class MapHost(
 
     val cameraInteracting: StateFlow<Boolean> = _cameraInteracting.asStateFlow()
 
-    /** The flavor adapter reports the start of a user camera gesture; cleared by the next [onCameraIdle]. */
+    /** The flavor adapter reports the start of a user camera gesture; cleared by the next [onCameraSettled]. */
     fun onCameraGestureStarted() {
         _cameraInteracting.value = true
     }
 
+    /**
+     * The camera has come to rest, so any in-flight gesture has settled — reopen the loader gate. Its own
+     * method (not just folded into [onCameraIdle]) so an adapter that can't build a snapshot for a given
+     * idle — MapLibre can momentarily report a null camera target — still clears the gate rather than
+     * leaving it stuck true and blocking every future load.
+     */
+    fun onCameraSettled() {
+        _cameraInteracting.value = false
+    }
+
     fun onCameraIdle(snapshot: CameraSnapshot) {
         _camera.value = snapshot
-        // The camera has come to rest, so any in-flight gesture has settled — reopen the loader gate.
-        _cameraInteracting.value = false
+        onCameraSettled()
         // Persist the live viewport so a process-death restore (and MapLibre, which has no rememberSaveable
         // backstop) re-seeds here via [cameraSeed]. Same keys as the intent extras, so they interoperate.
         savedStateHandle[MapParams.CENTER_LAT] = snapshot.center.latitude

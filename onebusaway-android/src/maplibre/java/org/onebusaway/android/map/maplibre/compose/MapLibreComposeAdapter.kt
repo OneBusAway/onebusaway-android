@@ -152,6 +152,14 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                     val windows = MapLibreInfoWindows(activity, container, map)
                     map.setInfoWindowAdapter(windows)
                     wireClicks(map, r, windows, cb)
+                    map.addOnCameraMoveStartedListener { reason ->
+                        // A user gesture (pan/fling/pinch) started: gate the stop/bike loaders until it
+                        // settles. Programmatic animations emit only their terminating idle, so they're
+                        // left ungated (nothing mid-move to suppress).
+                        if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
+                            host.onCameraGestureStarted()
+                        }
+                    }
                     map.addOnCameraIdleListener {
                         map.cameraPosition.target?.let { host.onCameraIdle(snapshot(map, it)) }
                     }

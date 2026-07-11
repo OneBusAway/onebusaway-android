@@ -60,6 +60,43 @@ data class OtpErrorDto(
     val missing: List<String> = emptyList(),
 )
 
+/**
+ * Mirrors OTP1's `org.opentripplanner.api.ws.Message` wire error-id vocabulary exactly — the legal
+ * values of [OtpErrorDto.id] — ids verified against the vendored jar's enum constructor arguments
+ * (`Message(String, int)`), not guessed. Only the codes
+ * [org.onebusaway.android.ui.tripplan.DefaultTripPlanRepository]'s `errorMessage` maps to a
+ * user-facing string are included; the vendored enum also has a `PLAN_OK` (200) success code this app
+ * never needs to name.
+ */
+internal enum class OtpErrorId(val id: Int) {
+    SYSTEM_ERROR(500),
+    OUTSIDE_BOUNDS(400),
+    PATH_NOT_FOUND(404),
+    NO_TRANSIT_TIMES(406),
+    REQUEST_TIMEOUT(408),
+    BOGUS_PARAMETER(413),
+    GEOCODE_FROM_NOT_FOUND(440),
+    GEOCODE_TO_NOT_FOUND(450),
+    GEOCODE_FROM_TO_NOT_FOUND(460),
+    TOO_CLOSE(409),
+    LOCATION_NOT_ACCESSIBLE(470),
+    GEOCODE_FROM_AMBIGUOUS(340),
+    GEOCODE_TO_AMBIGUOUS(350),
+    GEOCODE_FROM_TO_AMBIGUOUS(360),
+    UNDERSPECIFIED_TRIANGLE(370),
+    TRIANGLE_NOT_AFFINE(371),
+    TRIANGLE_OPTIMIZE_TYPE_NOT_SET(372),
+    TRIANGLE_VALUES_NOT_SET(373),
+}
+
+/**
+ * The app-owned replacement for the vendored `org.opentripplanner.api.ws.Request` — an OTP `/plan`
+ * query-parameter map. [parameters]' keys match the wire names the vendored `Request` pushed via its
+ * own setters exactly (verified against the vendored jar's `paramPush` calls): `fromPlace`/`toPlace`/
+ * `optimize`/`wheelchair`/`arriveBy`/`date`/`time`/`mode`/`maxWalkDistance`/`showIntermediateStops`.
+ */
+data class TripPlanRequest(val parameters: Map<String, String>)
+
 @Serializable
 data class OtpItineraryDto(
     val duration: Double? = null,

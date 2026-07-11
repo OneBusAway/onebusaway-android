@@ -26,15 +26,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.api.adapters.toTripItinerary
+import org.onebusaway.android.api.contract.OtpErrorId
 import org.onebusaway.android.api.contract.OtpPlanParser
 import org.onebusaway.android.api.contract.OtpResponseDto
 import org.onebusaway.android.api.contract.OtpWebService
+import org.onebusaway.android.api.contract.TripPlanRequest
 import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.util.CustomAddress
 import org.onebusaway.android.directions.util.TripRequestBuilder
-import org.opentripplanner.api.ws.Message
-import org.opentripplanner.api.ws.Request
-import org.opentripplanner.routing.core.TraverseMode
 import org.onebusaway.android.preferences.PreferencesRepository
 
 /** Plans a trip against the region's OpenTripPlanner server. */
@@ -116,7 +116,7 @@ class DefaultTripPlanRepository @Inject constructor(
      * the bike layer and reset on region change) so later plans skip the probe.
      */
     private fun requestPlan(
-        request: Request,
+        request: TripPlanRequest,
         baseUrl: String,
         oldServer: Boolean
     ): OtpResponseDto {
@@ -132,10 +132,15 @@ class DefaultTripPlanRepository @Inject constructor(
                 first = false
             }
         }.let { params ->
-            if (request.bikeRental) {
+            // Read from the built mode string, not TripRequestBuilder.mModeId: mModeId is unset after
+            // initFromBundleSimple (the trip-plan-monitor restore path never repopulates it), and even
+            // on the direct path TRANSIT_AND_BIKE only actually requests bike rental when bikeshare is
+            // enabled — the mode string is the one place both facts are already resolved.
+            val bikeRentalToken = context.getString(R.string.traverse_mode_bicycle_rent)
+            if (modeStringRequestsBikeRental(request.parameters["mode"], bikeRentalToken)) {
                 // Pre-1.0 servers spell bike rental as "BICYCLE, WALK"; modern ones as "BICYCLE_RENT".
-                val bicycle = TraverseMode.BICYCLE.toString()
-                val rental = if (ancientServer) "$bicycle, ${TraverseMode.WALK}"
+                val bicycle = TripMode.BICYCLE.name
+                val rental = if (ancientServer) "$bicycle, ${TripMode.WALK.name}"
                              else bicycle + OTP_RENTAL_QUALIFIER
                 params.replace(bicycle, rental)
             } else {
@@ -150,7 +155,7 @@ class DefaultTripPlanRepository @Inject constructor(
         } catch (e: IOException) {
             // Transport failure / timeout (SocketTimeoutException is an IOException) — mirror the legacy
             // catch-all mapping to the request-timeout message.
-            throw IOException(errorMessage(Message.REQUEST_TIMEOUT.id), e)
+            throw IOException(errorMessage(OtpErrorId.REQUEST_TIMEOUT.id), e)
         }
 
         // A server-root base we assumed was modern but that failed at the HTTP layer is a pre-1.0
@@ -169,7 +174,7 @@ class DefaultTripPlanRepository @Inject constructor(
             }
             body.use { OtpPlanParser.parse(it.byteStream()) }
         } catch (e: IOException) {
-            throw IOException(errorMessage(Message.REQUEST_TIMEOUT.id), e)
+            throw IOException(errorMessage(OtpErrorId.REQUEST_TIMEOUT.id), e)
         }
 
         // Record a discovered pre-1.0 server so later plans (and the bike layer) skip the probe.
@@ -180,29 +185,29 @@ class DefaultTripPlanRepository @Inject constructor(
     }
 
     private fun errorMessage(errorCode: Int): String = when (errorCode) {
-        Message.SYSTEM_ERROR.id -> context.getString(R.string.tripplanner_error_system)
-        Message.OUTSIDE_BOUNDS.id -> context.getString(R.string.tripplanner_error_outside_bounds)
-        Message.PATH_NOT_FOUND.id -> context.getString(R.string.tripplanner_error_path_not_found)
-        Message.NO_TRANSIT_TIMES.id -> context.getString(R.string.tripplanner_error_no_transit_times)
-        Message.REQUEST_TIMEOUT.id -> context.getString(R.string.tripplanner_error_request_timeout)
-        Message.BOGUS_PARAMETER.id -> context.getString(R.string.tripplanner_error_bogus_parameter)
-        Message.GEOCODE_FROM_NOT_FOUND.id ->
+        OtpErrorId.SYSTEM_ERROR.id -> context.getString(R.string.tripplanner_error_system)
+        OtpErrorId.OUTSIDE_BOUNDS.id -> context.getString(R.string.tripplanner_error_outside_bounds)
+        OtpErrorId.PATH_NOT_FOUND.id -> context.getString(R.string.tripplanner_error_path_not_found)
+        OtpErrorId.NO_TRANSIT_TIMES.id -> context.getString(R.string.tripplanner_error_no_transit_times)
+        OtpErrorId.REQUEST_TIMEOUT.id -> context.getString(R.string.tripplanner_error_request_timeout)
+        OtpErrorId.BOGUS_PARAMETER.id -> context.getString(R.string.tripplanner_error_bogus_parameter)
+        OtpErrorId.GEOCODE_FROM_NOT_FOUND.id ->
             context.getString(R.string.tripplanner_error_geocode_from_not_found)
-        Message.GEOCODE_TO_NOT_FOUND.id ->
+        OtpErrorId.GEOCODE_TO_NOT_FOUND.id ->
             context.getString(R.string.tripplanner_error_geocode_to_not_found)
-        Message.GEOCODE_FROM_TO_NOT_FOUND.id ->
+        OtpErrorId.GEOCODE_FROM_TO_NOT_FOUND.id ->
             context.getString(R.string.tripplanner_error_geocode_from_to_not_found)
-        Message.TOO_CLOSE.id -> context.getString(R.string.tripplanner_error_too_close)
-        Message.LOCATION_NOT_ACCESSIBLE.id ->
+        OtpErrorId.TOO_CLOSE.id -> context.getString(R.string.tripplanner_error_too_close)
+        OtpErrorId.LOCATION_NOT_ACCESSIBLE.id ->
             context.getString(R.string.tripplanner_error_location_not_accessible)
-        Message.GEOCODE_FROM_AMBIGUOUS.id ->
+        OtpErrorId.GEOCODE_FROM_AMBIGUOUS.id ->
             context.getString(R.string.tripplanner_error_geocode_from_ambiguous)
-        Message.GEOCODE_TO_AMBIGUOUS.id ->
+        OtpErrorId.GEOCODE_TO_AMBIGUOUS.id ->
             context.getString(R.string.tripplanner_error_geocode_to_ambiguous)
-        Message.GEOCODE_FROM_TO_AMBIGUOUS.id ->
+        OtpErrorId.GEOCODE_FROM_TO_AMBIGUOUS.id ->
             context.getString(R.string.tripplanner_error_geocode_from_to_ambiguous)
-        Message.UNDERSPECIFIED_TRIANGLE.id, Message.TRIANGLE_NOT_AFFINE.id,
-        Message.TRIANGLE_OPTIMIZE_TYPE_NOT_SET.id, Message.TRIANGLE_VALUES_NOT_SET.id ->
+        OtpErrorId.UNDERSPECIFIED_TRIANGLE.id, OtpErrorId.TRIANGLE_NOT_AFFINE.id,
+        OtpErrorId.TRIANGLE_OPTIMIZE_TYPE_NOT_SET.id, OtpErrorId.TRIANGLE_VALUES_NOT_SET.id ->
             context.getString(R.string.tripplanner_error_triangle)
         else -> context.getString(R.string.tripplanner_error_not_defined)
     }
@@ -229,6 +234,15 @@ internal fun otpPlanUrl(baseUrl: String, query: String, oldServer: Boolean): Str
     } else {
         "$baseUrl$OTP_ROUTERS_SEGMENT$OTP_PLAN_LOCATION$query"
     }
+
+/**
+ * True when [modeString] (the OTP `mode` query value built by
+ * [org.onebusaway.android.directions.util.TripRequestBuilder.setModeSetById]) includes the bike-rental
+ * wire token — pulled out as a standalone, `Context`-free function so this (previously never-true —
+ * see #1778) derivation is unit-testable.
+ */
+internal fun modeStringRequestsBikeRental(modeString: String?, bikeRentalToken: String): Boolean =
+    modeString?.contains(bikeRentalToken) == true
 
 /**
  * Assembles a [TripRequestBuilder] from these [TripPlanParams]. Shared by the UI plan path

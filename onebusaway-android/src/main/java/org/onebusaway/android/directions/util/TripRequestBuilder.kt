@@ -21,14 +21,13 @@ import androidx.core.os.BundleCompat
 import android.text.TextUtils
 import android.util.Log
 import org.onebusaway.android.R
+import org.onebusaway.android.api.contract.TripPlanRequest
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
+import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.ui.tripplan.TripModes
 import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.RegionUtils
-import org.opentripplanner.api.ws.Request
-import org.opentripplanner.routing.core.OptimizeType
-import org.opentripplanner.routing.core.TraverseMode
 import java.io.UnsupportedEncodingException
 import java.net.MalformedURLException
 import java.net.URL
@@ -84,10 +83,12 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
 
     fun getOptimizeTransfers(): Boolean = mBundle.getBoolean(OPTIMIZE_TRANSFERS)
 
-    /** The OTP1 wire enum, derived from [getOptimizeTransfers] only where [buildRequest] needs it —
-     * never itself persisted, so it never has to cross a Bundle/Intent serialization boundary. */
-    private fun getOptimizeType(): OptimizeType =
-        if (getOptimizeTransfers()) OptimizeType.TRANSFERS else OptimizeType.QUICK
+    /** The OTP `optimize` wire value, derived from [getOptimizeTransfers] only where [buildRequest]
+     * needs it — never itself persisted, so it never has to cross a Bundle/Intent serialization
+     * boundary. Mirrors OTP1's `OptimizeType.TRANSFERS`/`QUICK` wire names exactly (verified against
+     * the vendored jar); the other five `OptimizeType` values are never requested by this app. */
+    private fun getOptimizeType(): String =
+        if (getOptimizeTransfers()) "TRANSFERS" else "QUICK"
 
     fun setWheelchairAccessible(wheelchair: Boolean): TripRequestBuilder {
         mBundle.putBoolean(WHEELCHAIR_ACCESSIBLE, wheelchair)
@@ -117,27 +118,27 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
         val modes: List<String> = when (id) {
             // Transit only
             TripModes.TRANSIT_ONLY ->
-                listOf(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString())
+                listOf(TripMode.TRANSIT.name, TripMode.WALK.name)
             // Transit & bikeshare
             TripModes.TRANSIT_AND_BIKE ->
                 if (BikeshareAvailability.isEnabled(mContext)) {
                     listOf(
-                        TraverseMode.TRANSIT.toString(),
-                        TraverseMode.WALK.toString(),
+                        TripMode.TRANSIT.name,
+                        TripMode.WALK.name,
                         mContext.getString(R.string.traverse_mode_bicycle_rent)
                     )
                 } else {
-                    listOf(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString())
+                    listOf(TripMode.TRANSIT.name, TripMode.WALK.name)
                 }
 
             TripModes.BUS_ONLY ->
-                listOf(TraverseMode.BUS.toString(), TraverseMode.WALK.toString())
+                listOf(TripMode.BUS.name, TripMode.WALK.name)
 
             TripModes.RAIL_ONLY ->
                 listOf(
-                    TraverseMode.RAIL.toString(),
-                    TraverseMode.TRAM.toString(),
-                    TraverseMode.WALK.toString()
+                    TripMode.RAIL.name,
+                    TripMode.TRAM.name,
+                    TripMode.WALK.name
                 )
 
             TripModes.BIKESHARE ->
@@ -146,7 +147,7 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
             else -> {
                 Log.e(TAG, "Invalid mode set ID")
                 mModeId = -1
-                listOf(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString())
+                listOf(TripMode.TRANSIT.name, TripMode.WALK.name)
             }
         }
 
@@ -167,45 +168,41 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
     private fun getModeString(): String? = mBundle.getString(MODE_SET)
 
     /**
-     * Builds the OTP [Request] from the current bundle state. Consumed by the coroutine
+     * Builds the OTP [TripPlanRequest] from the current bundle state. Consumed by the coroutine
      * trip-plan repository (both the UI plan path and the trip-plan monitor background plan).
      *
      * @throws IllegalArgumentException if the origin or destination is missing
      */
-    fun buildRequest(): Request {
+    fun buildRequest(): TripPlanRequest {
         val fromParam = getAddressString(from)
         val toParam = getAddressString(to)
 
-        if (TextUtils.isEmpty(fromParam) || TextUtils.isEmpty(toParam)) {
+        if (fromParam.isNullOrEmpty() || toParam.isNullOrEmpty()) {
             throw IllegalArgumentException("Must supply start and end to route between.")
         }
-
-        val request = Request()
-        request.setArriveBy(arriveBy)
-        request.setFrom(fromParam)
-        request.setTo(toParam)
-        request.setOptimize(getOptimizeType())
-        request.setWheelchair(getWheelchairAccessible())
-
-        getMaxWalkDistance()?.let { request.setMaxWalkDistance(it) }
 
         val d = dateTime
             ?: throw IllegalArgumentException("Must supply a date/time to route at.")
 
         // OTP expects date/time in this format
         val zoned = d.atZone(ZoneId.systemDefault())
-        request.setDateTime(DATE_FORMATTER.format(zoned), TIME_FORMATTER.format(zoned))
 
+        val parameters = mutableMapOf(
+            "fromPlace" to fromParam,
+            "toPlace" to toParam,
+            "optimize" to getOptimizeType(),
+            "wheelchair" to getWheelchairAccessible().toString(),
+            "arriveBy" to arriveBy.toString(),
+            "date" to DATE_FORMATTER.format(zoned),
+            "time" to TIME_FORMATTER.format(zoned),
+            // Our default. This could be configurable.
+            "showIntermediateStops" to true.toString(),
+        )
+        getMaxWalkDistance()?.let { parameters["maxWalkDistance"] = it.toString() }
         // Request mode set does not work properly
-        val modeString = mBundle.getString(MODE_SET)
-        if (modeString != null) {
-            request.parameters["mode"] = modeString
-        }
+        mBundle.getString(MODE_SET)?.let { parameters["mode"] = it }
 
-        // Our default. This could be configurable.
-        request.setShowIntermediateStops(true)
-
-        return request
+        return TripPlanRequest(parameters)
     }
 
     /**

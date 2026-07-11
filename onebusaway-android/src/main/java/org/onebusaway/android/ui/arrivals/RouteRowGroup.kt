@@ -49,6 +49,11 @@ data class RouteRowGroup(val trips: List<ArrivalInfo>) {
     /** The soonest trip; source of the row's route badge, headsign, and route-level actions/color. */
     val representative: ArrivalInfo get() = trips.first()
 
+    /** Index of the soonest *upcoming* (first non-negative ETA) trip — the ETA the row is sorted by
+     *  (see [departureSortEta]) — or null when every trip is recent-past. Lets a row justify that pill
+     *  to the leading edge so the recent-past pills overflow before it. */
+    val firstUpcomingIndex: Int? get() = trips.indexOfFirst { it.eta >= 0 }.takeIf { it >= 0 }
+
     val routeId: String get() = representative.routeId
 
     /** The direction name shown on top of the row (may be blank). */

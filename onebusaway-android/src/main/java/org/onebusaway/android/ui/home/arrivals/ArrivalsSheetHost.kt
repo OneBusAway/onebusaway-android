@@ -59,8 +59,8 @@ import org.onebusaway.android.ui.tutorial.tutorialAnchor
  *
  * Polling lifecycle is owned by `ArrivalsPanel` itself (`ArrivalsPolling` → `repeatOnLifecycle`), so
  * it also pauses with the screen. Loaded responses are forwarded to the host via [onArrivalsLoaded]
- * (the map recenter / focus marker / tutorials), and the panel's measured collapsed-peek height drives
- * the sheet peek via [onPeekContentHeight]. Expand/collapse is driven by the sheet's drag handle (in the host scaffold).
+ * (the map recenter / focus marker / tutorials), and the panel's measured content height drives the
+ * sheet peek fit via [onContentHeight]. Expand/collapse is driven by the sheet's drag handle (in the host scaffold).
  */
 @Composable
 internal fun ArrivalsSheetHost(
@@ -68,15 +68,12 @@ internal fun ArrivalsSheetHost(
     // The sheet is actually on screen (not hidden) — gates the onboarding spotlight so it can't fire
     // over a hidden panel.
     sheetVisible: Boolean,
-    // The drawer's live open fraction (0 = collapsed peek, 1 = fully expanded), read each frame to
-    // drive the peek→card row morph in lockstep with the drag.
-    expandProgress: () -> Float,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     onArrivalsLoaded: (ArrivalsLoaded) -> Unit,
     onShowRouteOnMap: (ShowRouteRequest) -> Unit,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (args: ReminderEditorArgs) -> Unit,
-    onPeekContentHeight: (heightPx: Int) -> Unit,
+    onContentHeight: (heightPx: Int) -> Unit,
     // Tapping the drawer's stop-name title — the host recenters the map on the focused stop.
     onTitleClick: () -> Unit,
     showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit,
@@ -124,10 +121,9 @@ internal fun ArrivalsSheetHost(
                 ArrivalsPanel(
                     viewModel = viewModel,
                     listState = listState,
-                    expandProgress = expandProgress,
                     initialTitle = stop.name.orEmpty(),
                     handler = handler,
-                    onPeekContentHeight = onPeekContentHeight,
+                    onContentHeight = onContentHeight,
                     onTitleClick = onTitleClick,
                     etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
                     // The onboarding "slide up to see more" spotlight (KEY_PANEL) anchors on the sheet's
@@ -156,7 +152,7 @@ internal fun ArrivalsSheetHost(
 /**
  * Starts the [ArrivalTutorial] spotlight sequence the first time a focused stop's arrivals load, gated
  * so it shows at most once: nothing if a tutorial is already up, the stop has no arrivals (the ETA/star
- * spotlights need a peek row), or every step is already shown / tutorials are off ([ArrivalTutorial.pendingSteps]).
+ * spotlights need a route row to anchor on), or every step is already shown / tutorials are off ([ArrivalTutorial.pendingSteps]).
  *
  * Before starting, it [awaitSheetVisible]s — the bottom sheet opens with an animation, so its "visible"
  * state lags the focus by a few hundred ms and the (often cached) arrivals response beats it. The old

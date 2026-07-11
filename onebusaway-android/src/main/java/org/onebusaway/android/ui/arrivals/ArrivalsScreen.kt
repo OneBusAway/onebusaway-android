@@ -32,9 +32,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -354,93 +353,78 @@ internal fun ArrivalsList(
     /** Hosts that show the stop's direction elsewhere (e.g. in their own header) set this false to
      *  avoid duplicating it as a list item. */
     showDirection: Boolean = true,
-    /** Inset for the scrollable content (e.g. a top inset so the list clears the collapsed peek fold). */
+    /** Inset for the scrollable content (e.g. a bottom inset so the list clears the nav-bar chrome). */
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    /** Indexes into [content.routeGroups] to omit from the list (the home sheet hoists these to the
-     *  top as peek rows via [leadingContent], so listing them again would duplicate them). */
-    excludedGroupIndexes: Set<Int> = emptySet(),
-    /** Extra items emitted at the very top of the list (above alerts), e.g. the home sheet's morphing
-     *  peek rows so the whole drawer is one scrollable list under a pinned header. */
-    leadingContent: (LazyListScope.() -> Unit)? = null,
-    /** When false, only [leadingContent] is emitted — the rest of the list stays out of composition so
-     *  it can't peek through the collapsed sheet fold. The home sheet drives this from the drawer's open
-     *  fraction (full list once the drawer leaves its resting peek). */
-    showFullList: Boolean = true
+    /** An opaque anchor modifier applied to the first route row's ETA pill (e.g. the home sheet's
+     *  onboarding spotlight); default is a no-op for hosts that don't spotlight. */
+    etaAnchor: Modifier = Modifier
 ) {
-    // The route rows minus any hoisted into the peek (paired with their original index so the peek's
-    // excludedGroupIndexes line up); each group carries a stable key already.
-    val visibleGroups = remember(content.routeGroups, excludedGroupIndexes) {
-        content.routeGroups.filterIndexed { index, _ -> index !in excludedGroupIndexes }
-    }
     val filterActive = content.filteredRouteCount > 0
     LazyColumn(state = listState, modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
-        leadingContent?.invoke(this)
-        // Until the drawer leaves its peek, emit only the leading peek rows; the rest stays out of
-        // composition so it can't peek through the collapsed sheet fold, then reveals with the drag.
-        if (showFullList) {
-            if (content.alerts.isNotEmpty()) {
-                item(key = "alerts") {
-                    AlertList(
-                        alerts = content.alerts,
-                        onShowAlert = handler::onShowAlert,
-                        onHideAlert = handler::onHideAlert
+        if (content.alerts.isNotEmpty()) {
+            item(key = "alerts") {
+                AlertList(
+                    alerts = content.alerts,
+                    onShowAlert = handler::onShowAlert,
+                    onHideAlert = handler::onHideAlert
+                )
+            }
+        }
+        if (content.hiddenAlertCount > 0) {
+            item(key = "hidden_alerts") {
+                // A muted, secondary footnote (not a peer to the alert list's "more" button):
+                // the eye-off icon conveys "hidden", tapping reveals them again.
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .clickable(onClick = onShowHiddenAlerts)
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_visibility_off),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = pluralStringResource(
+                            R.plurals.alert_filter_text,
+                            content.hiddenAlertCount,
+                            content.hiddenAlertCount
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-            if (content.hiddenAlertCount > 0) {
-                item(key = "hidden_alerts") {
-                    // A muted, secondary footnote (not a peer to the alert list's "more" button):
-                    // the eye-off icon conveys "hidden", tapping reveals them again.
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .clickable(onClick = onShowHiddenAlerts)
-                            .padding(horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_visibility_off),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = pluralStringResource(
-                                R.plurals.alert_filter_text,
-                                content.hiddenAlertCount,
-                                content.hiddenAlertCount
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+        }
+        if (content.filteredRouteCount in 1 until content.header.routeCount) {
+            item(key = "filter_indicator") {
+                FilterIndicator(content.filteredRouteCount, content.header.routeCount, onShowAllRoutes)
             }
-            if (content.filteredRouteCount in 1 until content.header.routeCount) {
-                item(key = "filter_indicator") {
-                    FilterIndicator(content.filteredRouteCount, content.header.routeCount, onShowAllRoutes)
-                }
+        }
+        if (showDirection) {
+            content.header.direction?.let { direction ->
+                item(key = "direction") { DirectionLine(direction) }
             }
-            if (showDirection) {
-                content.header.direction?.let { direction ->
-                    item(key = "direction") { DirectionLine(direction) }
-                }
-            }
-            if (content.routeGroups.isEmpty()) {
-                item(key = "empty") { EmptyArrivals(content.minutesAfter) }
-            } else {
-                items(visibleGroups, key = { it.key }) { group ->
-                    RouteArrivalRow(
-                        group = group,
-                        dataVersion = content.dataVersion,
-                        actionsFor = { content.actions[it.tripId] },
-                        isFavorite = group.routeId in content.favoriteRouteIds,
-                        filterActive = filterActive,
-                        callbacks = rowCallbacks
-                    )
-                }
+        }
+        if (content.routeGroups.isEmpty()) {
+            item(key = "empty") { EmptyArrivals(content.minutesAfter) }
+        } else {
+            itemsIndexed(content.routeGroups, key = { _, group -> group.key }) { index, group ->
+                RouteArrivalRow(
+                    group = group,
+                    dataVersion = content.dataVersion,
+                    actionsFor = { content.actions[it.tripId] },
+                    isFavorite = group.routeId in content.favoriteRouteIds,
+                    filterActive = filterActive,
+                    callbacks = rowCallbacks,
+                    // The onboarding ETA spotlight anchors on the first route row's pill only.
+                    etaAnchor = if (index == 0) etaAnchor else Modifier
+                )
             }
         }
     }

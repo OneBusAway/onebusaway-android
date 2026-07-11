@@ -94,9 +94,9 @@ import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.PreferenceUtils
+import org.onebusaway.android.directions.model.toTripItineraries
 import org.onebusaway.android.util.describeLocation
 import org.onebusaway.android.util.locationOf
-import org.opentripplanner.api.model.Itinerary
 
 
 /**
@@ -607,7 +607,7 @@ private fun reportPlanAnalytics(
  * there was nothing to restore.
  */
 // UnwrappedClockValue: the trip-plan time defaults to device "now" when the intent carries none.
-@Suppress("UNCHECKED_CAST", "DEPRECATION", "UnwrappedClockValue")
+@Suppress("DEPRECATION", "UnwrappedClockValue")
 private fun maybeRestoreFromIntent(
     viewModel: TripPlanViewModel,
     context: Context,
@@ -615,8 +615,7 @@ private fun maybeRestoreFromIntent(
 ): Intent? {
     val extras = intent?.extras ?: return null
     if (extras.getSerializable(OTPConstants.INTENT_SOURCE) == null) return null
-    val itineraries =
-        (extras.getSerializable(OTPConstants.ITINERARIES) as? ArrayList<Itinerary>).orEmpty()
+    val itineraries = extras.getString(OTPConstants.ITINERARIES)?.toTripItineraries().orEmpty()
     if (itineraries.isEmpty()) return null
 
     val builder = TripRequestBuilder.initFromBundleSimple(context, extras)

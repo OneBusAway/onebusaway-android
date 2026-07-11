@@ -25,20 +25,21 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
+import org.onebusaway.android.api.adapters.toTripItinerary
 import org.onebusaway.android.api.contract.OtpPlanParser
+import org.onebusaway.android.api.contract.OtpResponseDto
 import org.onebusaway.android.api.contract.OtpWebService
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.CustomAddress
 import org.onebusaway.android.directions.util.TripRequestBuilder
-import org.opentripplanner.api.model.Itinerary
 import org.opentripplanner.api.ws.Message
 import org.opentripplanner.api.ws.Request
-import org.opentripplanner.api.ws.Response
 import org.opentripplanner.routing.core.TraverseMode
 import org.onebusaway.android.preferences.PreferencesRepository
 
 /** Plans a trip against the region's OpenTripPlanner server. */
 interface TripPlanRepository {
-    suspend fun plan(params: TripPlanParams): Result<List<Itinerary>>
+    suspend fun plan(params: TripPlanParams): Result<List<TripItinerary>>
 
     /**
      * Blocking OTP plan for a caller that is already on a background thread and has assembled its
@@ -48,7 +49,7 @@ interface TripPlanRepository {
      * Result-free so it stays cleanly callable from the Java service.
      */
     @WorkerThread
-    fun planBlocking(builder: TripRequestBuilder): List<Itinerary>
+    fun planBlocking(builder: TripRequestBuilder): List<TripItinerary>
 }
 
 /**
@@ -64,13 +65,13 @@ class DefaultTripPlanRepository @Inject constructor(
     private val otpWebService: OtpWebService,
 ) : TripPlanRepository {
 
-    override suspend fun plan(params: TripPlanParams): Result<List<Itinerary>> =
+    override suspend fun plan(params: TripPlanParams): Result<List<TripItinerary>> =
         withContext(Dispatchers.IO) {
             runCatching { planInternal(builderFor(params)) }
         }
 
     @WorkerThread
-    override fun planBlocking(builder: TripRequestBuilder): List<Itinerary> =
+    override fun planBlocking(builder: TripRequestBuilder): List<TripItinerary> =
         runCatching { planInternal(builder) }.getOrDefault(emptyList())
 
     /** Assembles a [TripRequestBuilder] from the UI-supplied [params]. */
@@ -81,7 +82,7 @@ class DefaultTripPlanRepository @Inject constructor(
      * Runs the OTP request for an already-assembled [builder] on the calling thread. Throws
      * [IOException] with a user-facing message when no server is selected or the plan is empty/errored.
      */
-    private fun planInternal(builder: TripRequestBuilder): List<Itinerary> {
+    private fun planInternal(builder: TripRequestBuilder): List<TripItinerary> {
         val request = builder.buildRequest()
         val baseUrl = builder.formattedOtpBaseUrl
             ?: throw IOException(context.getString(R.string.tripplanner_no_server_selected_error))
@@ -91,7 +92,7 @@ class DefaultTripPlanRepository @Inject constructor(
             baseUrl,
             oldServer = prefs.getBoolean(R.string.preference_key_otp_api_url_version, false),
         )
-        val itineraries = response.plan?.itinerary
+        val itineraries = response.plan?.itineraries?.map { it.toTripItinerary() }
         if (itineraries.isNullOrEmpty()) {
             throw IOException(errorMessage(response.error?.id ?: -1))
         }
@@ -118,7 +119,7 @@ class DefaultTripPlanRepository @Inject constructor(
         request: Request,
         baseUrl: String,
         oldServer: Boolean
-    ): Response {
+    ): OtpResponseDto {
         val routerRooted = baseUrl.contains(OTP_ROUTERS_SEGMENT)
         // A router-rooted base is unambiguously a modern server, so it can never be the pre-1.0 kind
         // the `oldServer` fallback exists for; force it modern even if a stale flag says otherwise.
@@ -161,7 +162,7 @@ class DefaultTripPlanRepository @Inject constructor(
             return requestPlan(request, baseUrl, oldServer = true)
         }
 
-        val parsed: Response = try {
+        val parsed: OtpResponseDto = try {
             val body = response.body()
             if (!response.isSuccessful || body == null) {
                 throw IOException("OTP /plan returned HTTP ${response.code()}")

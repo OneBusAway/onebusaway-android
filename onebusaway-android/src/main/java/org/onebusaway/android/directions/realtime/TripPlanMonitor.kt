@@ -25,14 +25,13 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.directions.model.ItineraryDescription
-import org.onebusaway.android.directions.util.ConversionUtils
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.ui.tripplan.toRequestBuilder
 import org.onebusaway.android.util.PreferenceUtils
-import org.opentripplanner.api.model.Itinerary
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -80,7 +79,7 @@ object TripPlanMonitor {
     fun start(
         context: Context,
         params: TripPlanParams,
-        itinerary: Itinerary,
+        itinerary: TripItinerary,
         notificationTarget: Class<*>,
     ) {
         val app = context.applicationContext
@@ -110,19 +109,15 @@ object TripPlanMonitor {
             return
         }
 
-        // The itinerary's departure (origin start) is a server-provided instant; mint it into ServerTime
-        // at the read so the clock domain travels with it. Used to stop monitoring once travel begins — a
-        // warning is moot after that. null if unparseable; the service then falls back to the end-time guard.
-        val itineraryDeparture: ServerTime? =
-            ConversionUtils.parseOtpDate(itinerary.startTime)?.let { ServerTime(it.toEpochMilli()) }
+        // The itinerary's departure (origin start) is a server-provided instant, already ServerTime —
+        // used to stop monitoring once travel begins (a warning is moot after that).
+        val itineraryDeparture: ServerTime = itinerary.startTime
 
         val builder = params.toRequestBuilder(app)
         val bundle = Bundle().apply {
             builder.copyIntoBundleSimple(this)
             putStringArray(EXTRA_ITINERARY_DESC, tripIds.toTypedArray())
-            // Only store a real departure; an absent one is the reader's getLong default, never a 0
-            // (1970) instant. The unwrap is passed straight to the putLong sink.
-            itineraryDeparture?.epochMs?.let { putLong(EXTRA_ITINERARY_START_DATE, it) }
+            putLong(EXTRA_ITINERARY_START_DATE, itineraryDeparture.epochMs)
             putLong(EXTRA_ITINERARY_END_DATE, endDate.toEpochMilli())
             putString(OTPConstants.NOTIFICATION_TARGET, notificationTarget.name)
         }

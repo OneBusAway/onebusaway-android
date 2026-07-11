@@ -64,6 +64,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.app.di.PreferencesEntryPoint
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.realtime.TripPlanMonitor
 import org.onebusaway.android.map.DirectionsMapViewModel
 import org.onebusaway.android.map.compose.NoOpObaMapCallbacks
@@ -72,7 +73,6 @@ import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.tripplan.TripPlanParams
-import org.opentripplanner.api.model.Itinerary
 
 /**
  * The results header: the (1–3) itinerary option cards. Shown above the directions list, pinned at the
@@ -185,7 +185,7 @@ fun TripResultsList(state: TripResultsUiState, modifier: Modifier = Modifier) {
  */
 @Composable
 fun TripResultsSheet(
-    itineraries: List<Itinerary>,
+    itineraries: List<TripItinerary>,
     params: TripPlanParams?,
     resultsViewModel: TripResultsViewModel,
     mapViewModel: DirectionsMapViewModel,
@@ -252,7 +252,7 @@ fun TripResultsMap(
 private fun maybeStartTripUpdates(
     activity: Activity,
     params: TripPlanParams?,
-    itineraries: List<Itinerary>,
+    itineraries: List<TripItinerary>,
     index: Int,
 ) {
     val itinerary = itineraries.getOrNull(index) ?: return

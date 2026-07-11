@@ -24,13 +24,13 @@ import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.directions.model.Direction
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.directions.util.DirectionsGenerator
 import org.onebusaway.android.directions.util.OTPConstants
-import org.opentripplanner.api.model.Itinerary
 
 /**
- * Projects OpenTripPlanner [Itinerary] objects onto the Compose results model. Reuses the legacy
+ * Projects [TripItinerary] objects onto the Compose results model. Reuses the legacy
  * [DirectionsGenerator]/[ConversionUtils] (which need a [Context] for resources/formatting) and the
  * card interval formatting ported from the old TripResultsFragment, all on the IO thread so
  * [TripResultsViewModel] stays JVM-testable.
@@ -38,32 +38,32 @@ import org.opentripplanner.api.model.Itinerary
 interface TripResultsRepository {
 
     /** Summarizes each itinerary into an option card (title, duration, time interval). */
-    suspend fun summarize(itineraries: List<Itinerary>): Result<List<ItineraryOption>>
+    suspend fun summarize(itineraries: List<TripItinerary>): Result<List<ItineraryOption>>
 
     /** Builds the turn-by-turn directions for a single itinerary. */
-    suspend fun directionsFor(itinerary: Itinerary): Result<List<DirectionItem>>
+    suspend fun directionsFor(itinerary: TripItinerary): Result<List<DirectionItem>>
 }
 
 class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext private val context: Context) : TripResultsRepository {
 
     override suspend fun summarize(
-        itineraries: List<Itinerary>
+        itineraries: List<TripItinerary>
     ): Result<List<ItineraryOption>> = withContext(Dispatchers.IO) {
         runCatching {
             itineraries.map { itinerary ->
-                val durationSec = itinerary.duration
+                val durationSec = itinerary.duration.inWholeSeconds
                 ItineraryOption(
                     title = DirectionsGenerator(itinerary.legs, context).itineraryTitle,
                     durationText = ConversionUtils
                         .getFormattedDurationTextNoSeconds(durationSec, false, context),
-                    intervalText = formatTimeString(itinerary.startTime.toString(), durationSec * 1000)
+                    intervalText = formatTimeString(itinerary.startTime.epochMs, durationSec * 1000)
                 )
             }
         }
     }
 
     override suspend fun directionsFor(
-        itinerary: Itinerary
+        itinerary: TripItinerary
     ): Result<List<DirectionItem>> = withContext(Dispatchers.IO) {
         runCatching {
             DirectionsGenerator(itinerary.legs, context).directions.map { it.toItem() }
@@ -102,10 +102,8 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
     private fun CharSequence?.orEmptyString(): String = this?.toString().orEmpty()
 
     // Ported verbatim from the legacy TripResultsFragment (e.g. "3:45p - 4:30p").
-    private fun formatTimeString(startMs: String, durationMs: Long): String {
-        val start = startMs.toLong()
-        return "${toDateFmt(start)} - ${toDateFmt(start + durationMs)}"
-    }
+    private fun formatTimeString(startMs: Long, durationMs: Long): String =
+        "${toDateFmt(startMs)} - ${toDateFmt(startMs + durationMs)}"
 
     private fun toDateFmt(ms: Long): String {
         val s = SimpleDateFormat(OTPConstants.TRIP_RESULTS_TIME_STRING_FORMAT_SUMMARY, Locale.getDefault())

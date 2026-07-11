@@ -18,8 +18,10 @@ package org.onebusaway.android.directions.realtime
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onebusaway.android.directions.model.ItineraryDescription
-import org.opentripplanner.api.model.Itinerary
-import org.opentripplanner.api.model.Leg
+import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.directions.model.TripLeg
+import org.onebusaway.android.directions.model.TripMode
+import org.onebusaway.android.time.ServerTime
 import java.util.concurrent.TimeUnit
 
 /**
@@ -31,14 +33,14 @@ class TripMonitorDeciderTest {
     private val thresholdSeconds = TimeUnit.MINUTES.toSeconds(2)
 
     /** Builds a single-transit-leg itinerary with the given trip id and end time (epoch millis). */
-    private fun itinerary(tripId: String, endTimeMillis: Long): Itinerary {
-        val leg = Leg().apply {
-            mode = "BUS"
-            realTime = true
-            this.tripId = tripId
-            endTime = endTimeMillis.toString()
-        }
-        return Itinerary().apply { legs = arrayListOf(leg) }
+    private fun itinerary(tripId: String, endTimeMillis: Long): TripItinerary {
+        val leg = TripLeg(
+            mode = TripMode.BUS,
+            realTime = true,
+            tripId = tripId,
+            endTime = ServerTime(endTimeMillis),
+        )
+        return TripItinerary(legs = listOf(leg))
     }
 
     private fun monitoring(tripId: String, endTimeMillis: Long): ItineraryDescription =

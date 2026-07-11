@@ -28,26 +28,14 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.jsonPrimitive
-import org.opentripplanner.api.model.AbsoluteDirection
-import org.opentripplanner.api.model.EncodedPolylineBean
-import org.opentripplanner.api.model.Itinerary
-import org.opentripplanner.api.model.Leg
-import org.opentripplanner.api.model.Place
-import org.opentripplanner.api.model.RelativeDirection
-import org.opentripplanner.api.model.TripPlan
-import org.opentripplanner.api.model.VertexType
-import org.opentripplanner.api.model.WalkStep
-import org.opentripplanner.api.model.error.PlannerError
-import org.opentripplanner.api.ws.Response
 
 /**
  * kotlinx.serialization models for the OpenTripPlanner `/plan` response — the replacement for the
- * old Jackson `JacksonConfig`/`ObjectReader` path (the app's last Jackson consumer). Trip planning
- * still flows through the OTP library POJOs (`Itinerary`, `Leg`, `Place`, …) that the directions/
- * UI code reads, so — exactly like [BikeRentalStationsDto] — the DTOs here decode the wire and the
- * `to…()` mappers project onto those POJOs (public fields + no-arg ctors), leaving every downstream
- * consumer untouched. Only the fields the app actually reads are modeled; the rest are dropped via
- * `ignoreUnknownKeys`.
+ * old Jackson `JacksonConfig`/`ObjectReader` path (the app's last Jackson consumer). These DTOs are a
+ * pure mirror of the wire JSON; [org.onebusaway.android.api.adapters.toTripItinerary] (in
+ * `api/adapters/TripPlanAdapters.kt`) maps them onto the app-owned trip-plan domain model
+ * (`directions/model/TripItinerary.kt`) that the rest of the app actually consumes. Only the fields the
+ * app reads are modeled here; the rest are dropped via `ignoreUnknownKeys`.
  *
  * Parse both call sites (the legacy `TripRequest` AsyncTask and `DefaultTripPlanRepository`) through
  * [OtpPlanParser].
@@ -124,7 +112,6 @@ data class OtpWalkStepDto(
     val streetName: String? = null,
     val exit: String? = null,
     val stayOn: Boolean? = null,
-    val bogusName: Boolean? = null,
     val lon: Double? = null,
     val lat: Double? = null,
 )
@@ -132,7 +119,6 @@ data class OtpWalkStepDto(
 @Serializable
 data class OtpLegGeometryDto(
     val points: String? = null,
-    val levels: String? = null,
     val length: Double? = null,
 )
 
@@ -153,88 +139,14 @@ private object WireStringSerializer : KSerializer<String> {
     override fun serialize(encoder: Encoder, value: String) = encoder.encodeString(value)
 }
 
-/** Projects the decoded `/plan` response onto the OTP library [Response] the callers expect. */
-fun OtpResponseDto.toResponse(): Response = Response().also {
-    it.setPlan(plan?.toTripPlan())
-    it.setError(error?.toPlannerError())
-}
-
-private fun OtpTripPlanDto.toTripPlan(): TripPlan = TripPlan().also {
-    it.itineraries = itineraries.map { itinerary -> itinerary.toItinerary() }
-}
-
-private fun OtpErrorDto.toPlannerError(): PlannerError = PlannerError().also {
-    it.id = id
-    it.msg = msg ?: message
-    it.setNoPath(noPath)
-    it.setMissing(missing)
-}
-
-private fun OtpItineraryDto.toItinerary(): Itinerary = Itinerary().also {
-    it.duration = duration?.toLong() ?: 0L
-    it.startTime = startTime
-    it.legs = legs.map { leg -> leg.toLeg() }
-}
-
-private fun OtpLegDto.toLeg(): Leg = Leg().also {
-    it.mode = mode
-    it.route = route
-    it.routeId = routeId
-    it.routeShortName = routeShortName
-    it.routeLongName = routeLongName
-    it.routeColor = routeColor
-    it.agencyName = agencyName
-    it.agencyTimeZoneOffset = agencyTimeZoneOffset?.toInt() ?: 0
-    it.headsign = headsign
-    it.tripId = tripId
-    it.realTime = realTime
-    it.distance = distance
-    it.duration = duration?.toLong() ?: 0L
-    it.departureDelay = departureDelay?.toInt() ?: 0
-    it.arrivalDelay = arrivalDelay?.toInt() ?: 0
-    it.startTime = startTime
-    it.endTime = endTime
-    it.from = from?.toPlace()
-    it.to = to?.toPlace()
-    it.intermediateStops = intermediateStops?.map { place -> place.toPlace() }
-    it.stop = stop?.map { place -> place.toPlace() }
-    it.steps = steps.map { step -> step.toWalkStep() }
-    it.legGeometry = legGeometry?.toBean()
-}
-
-private fun OtpPlaceDto.toPlace(): Place = Place().also {
-    it.name = name
-    it.stopCode = stopCode
-    it.lat = lat
-    it.lon = lon
-    it.vertexType = vertexType.toEnum<VertexType>()
-    it.bikeShareId = bikeShareId
-}
-
-private fun OtpWalkStepDto.toWalkStep(): WalkStep = WalkStep().also {
-    it.distance = distance ?: 0.0
-    it.relativeDirection = relativeDirection.toEnum<RelativeDirection>()
-    it.absoluteDirection = absoluteDirection.toEnum<AbsoluteDirection>()
-    it.streetName = streetName
-    it.exit = exit
-    it.stayOn = stayOn ?: false
-    it.bogusName = bogusName ?: false
-    it.lon = lon ?: 0.0
-    it.lat = lat ?: 0.0
-}
-
-private fun OtpLegGeometryDto.toBean(): EncodedPolylineBean =
-    EncodedPolylineBean(points, levels, length?.toInt() ?: 0)
-
-/** Decodes an OTP enum name, degrading an unknown/absent value to null rather than throwing. */
-private inline fun <reified E : Enum<E>> String?.toEnum(): E? =
-    this?.let { runCatching { enumValueOf<E>(it) }.getOrNull() }
-
 /**
  * The single OTP `/plan` JSON entry point, shared by the legacy Java `TripRequest` AsyncTask and the
  * coroutine [org.onebusaway.android.ui.tripplan.DefaultTripPlanRepository]. Configured like the rest
  * of the modernized stack (`ignoreUnknownKeys` + `coerceInputValues`, mirroring `NetworkModule`), and
- * exposed as a `@JvmStatic` so the remaining Java caller can invoke it directly.
+ * exposed as a `@JvmStatic` so the remaining Java caller can invoke it directly. Returns the decoded
+ * [OtpResponseDto] as-is — callers map `.plan?.itineraries` through
+ * [org.onebusaway.android.api.adapters.toTripItinerary] themselves; there's no OTP-library envelope
+ * type to project onto anymore.
  *
  * A malformed body is rethrown as [IOException] rather than the unchecked
  * [SerializationException] `decodeFromString` raises, so both call sites route it through the same
@@ -250,18 +162,18 @@ object OtpPlanParser {
 
     @JvmStatic
     @Throws(IOException::class)
-    fun parse(body: String): Response =
+    fun parse(body: String): OtpResponseDto =
         try {
-            json.decodeFromString<OtpResponseDto>(body).toResponse()
+            json.decodeFromString<OtpResponseDto>(body)
         } catch (e: SerializationException) {
             throw IOException("Malformed OTP /plan response", e)
         }
 
     /**
-     * Reads [input] fully as UTF-8 and [parse]s it — the single stream→[Response] entry point, so
-     * callers don't each hand-roll the read (and its charset choice).
+     * Reads [input] fully as UTF-8 and [parse]s it — the single stream→[OtpResponseDto] entry point,
+     * so callers don't each hand-roll the read (and its charset choice).
      */
     @JvmStatic
     @Throws(IOException::class)
-    fun parse(input: InputStream): Response = parse(input.readBytes().toString(Charsets.UTF_8))
+    fun parse(input: InputStream): OtpResponseDto = parse(input.readBytes().toString(Charsets.UTF_8))
 }

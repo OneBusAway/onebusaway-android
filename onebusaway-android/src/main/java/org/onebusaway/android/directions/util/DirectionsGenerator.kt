@@ -22,13 +22,12 @@ import android.text.TextUtils
 import android.util.Log
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.Direction
-import org.onebusaway.android.util.PreferenceUtils
-import org.opentripplanner.api.model.AbsoluteDirection
-import org.opentripplanner.api.model.Leg
-import org.opentripplanner.api.model.Place
-import org.opentripplanner.api.model.RelativeDirection
-import org.opentripplanner.routing.core.TraverseMode
-import org.opentripplanner.routing.core.TraverseModeSet
+import org.onebusaway.android.directions.model.TripAbsoluteDirection
+import org.onebusaway.android.directions.model.TripLeg
+import org.onebusaway.android.directions.model.TripMode
+import org.onebusaway.android.directions.model.TripPlace
+import org.onebusaway.android.directions.model.TripRelativeDirection
+import org.onebusaway.android.time.ServerTime
 
 /**
  * Generates a set of step-by-step directions that can be shown to the user from a list of trip
@@ -37,7 +36,7 @@ import org.opentripplanner.routing.core.TraverseModeSet
  * @author Khoa Tran
  */
 class DirectionsGenerator(
-    private val legs: List<Leg>,
+    private val legs: List<TripLeg>,
     private val applicationContext: Context,
 ) {
 
@@ -50,8 +49,6 @@ class DirectionsGenerator(
      * @return the totalDistance
      */
     var totalDistance = 0.0
-
-    private var totalTimeTraveled = 0.0
 
     init {
         convertToDirectionList()
@@ -67,8 +64,7 @@ class DirectionsGenerator(
             index++
             totalDistance += leg.distance
 
-            val traverseMode = TraverseMode.valueOf(leg.mode)
-            if (traverseMode.isOnStreetNonTransit) {
+            if (leg.mode?.isOnStreetNonTransit == true) {
                 val dir = generateNonTransitDirections(leg)
                 dir.directionIndex = index
                 addDirection(dir)
@@ -83,17 +79,17 @@ class DirectionsGenerator(
         }
     }
 
-    private fun generateNonTransitDirections(leg: Leg): Direction {
+    private fun generateNonTransitDirections(leg: TripLeg): Direction {
         val direction = Direction()
 
         // Get appropriate action and icon
         var action =
             applicationContext.getString(R.string.step_by_step_non_transit_mode_walk_action)
-        val mode = TraverseMode.valueOf(leg.mode)
-        val icon = getModeIcon(TraverseModeSet(mode))
-        if (mode == TraverseMode.BICYCLE) {
+        val mode = leg.mode
+        val icon = getModeIcon(mode)
+        if (mode == TripMode.BICYCLE) {
             action = applicationContext.getString(R.string.step_by_step_non_transit_mode_bicycle_action)
-        } else if (mode == TraverseMode.CAR) {
+        } else if (mode == TripMode.CAR) {
             action = applicationContext.getString(R.string.step_by_step_non_transit_mode_car_action)
         }
 
@@ -116,14 +112,7 @@ class DirectionsGenerator(
                 " " + getLocalizedStreetName(toPlace.name, applicationContext.resources)
         }
         val extraStopInformation = toPlace.stopCode
-        val legDuration = if (PreferenceUtils.getInt(
-                OTPConstants.PREFERENCE_KEY_API_VERSION, OTPConstants.API_VERSION_V1
-            ) == OTPConstants.API_VERSION_V1
-        ) {
-            leg.duration
-        } else {
-            leg.duration / 1000
-        }
+        val legDuration = leg.duration.inWholeSeconds
         if (!TextUtils.isEmpty(extraStopInformation)) {
             mainDirectionText += " ($extraStopInformation)"
         }
@@ -134,7 +123,7 @@ class DirectionsGenerator(
         direction.directionText = mainDirectionText
 
         // Sub-direction
-        val walkSteps = leg.steps ?: return direction
+        val walkSteps = leg.steps
 
         val subDirections = ArrayList<Direction>(walkSteps.size)
         // Loop-invariant default; only the roundabout branch overrides it per step.
@@ -160,20 +149,18 @@ class DirectionsGenerator(
                 subDirectionText += "$absoluteDirString "
             } else {
                 // (Turn left)/(Continue)
-                val rDir = RelativeDirection.valueOf(relativeDir.name)
-
-                subdirectionIcon = getRelativeDirectionIcon(rDir, applicationContext.resources)
+                subdirectionIcon = getRelativeDirectionIcon(relativeDir, applicationContext.resources)
 
                 // Do not need TURN Continue
-                if (rDir == RelativeDirection.RIGHT || rDir == RelativeDirection.LEFT) {
+                if (relativeDir == TripRelativeDirection.RIGHT || relativeDir == TripRelativeDirection.LEFT) {
                     subDirectionText += applicationContext
                         .getString(R.string.step_by_step_non_transit_turn) + " "
                 }
 
                 subDirectionText += "$relativeDirString "
 
-                if (rDir == RelativeDirection.CIRCLE_CLOCKWISE ||
-                    rDir == RelativeDirection.CIRCLE_COUNTERCLOCKWISE
+                if (relativeDir == TripRelativeDirection.CIRCLE_CLOCKWISE ||
+                    relativeDir == TripRelativeDirection.CIRCLE_COUNTERCLOCKWISE
                 ) {
                     if (step.exit != null) {
                         try {
@@ -219,25 +206,25 @@ class DirectionsGenerator(
         return direction
     }
 
-    private fun generateTransitDirections(leg: Leg): ArrayList<Direction> {
+    private fun generateTransitDirections(leg: TripLeg): ArrayList<Direction> {
         val directions = ArrayList<Direction>(2)
         directions.add(generateTransitSubdirection(leg, true))
         directions.add(generateTransitSubdirection(leg, false))
         return directions
     }
 
-    fun generateTransitSubdirection(leg: Leg, isOnDirection: Boolean): Direction {
+    fun generateTransitSubdirection(leg: TripLeg, isOnDirection: Boolean): Direction {
         val direction = Direction()
         direction.isRealTimeInfo = leg.realTime
 
         // Set icon
-        val mode = getLocalizedMode(TraverseMode.valueOf(leg.mode), applicationContext.resources)
+        val mode = getLocalizedMode(leg.mode, applicationContext.resources)
         val modeIcon: Int
         val agencyName = leg.agencyName
         val from = leg.from
         val to = leg.to
-        var newTimeMillis = 0L
-        var oldTimeMillis = 0L
+        var newTimeMillis = ServerTime(0L)
+        var oldTimeMillis = ServerTime(0L)
 
         // As a work-around for #662, we always use routeShortName and not tripShortName
         val shortName = leg.routeShortName
@@ -255,20 +242,19 @@ class DirectionsGenerator(
         if (isOnDirection) {
             action = applicationContext.getString(R.string.step_by_step_transit_get_on)
             placeAndHeadsign = from.name
-            val modeSet = TraverseModeSet(leg.mode)
-            modeIcon = getModeIcon(modeSet)
-            newTimeMillis = leg.startTime.toLong()
-            oldTimeMillis = newTimeMillis - leg.departureDelay * 1000L
+            modeIcon = getModeIcon(leg.mode)
+            newTimeMillis = leg.startTime
+            oldTimeMillis = newTimeMillis - leg.departureDelay
 
             // Only onDirection has subdirection (list of stops in between)
-            val stopsInBetween = ArrayList<Place>()
+            val stopsInBetween = ArrayList<TripPlace>()
             if (leg.intermediateStops != null && !leg.intermediateStops.isEmpty()) {
                 stopsInBetween.addAll(leg.intermediateStops)
             } else if (leg.stop != null && !leg.stop.isEmpty()) {
                 stopsInBetween.addAll(leg.stop)
             }
             // sub-direction
-            val stopIcon = getStopIcon(modeSet)
+            val stopIcon = getStopIcon(leg.mode)
             val subDirections = ArrayList<Direction>()
             for (i in stopsInBetween.indices) {
                 val subDirection = Direction()
@@ -304,8 +290,8 @@ class DirectionsGenerator(
             action = applicationContext.getString(R.string.step_by_step_transit_get_off)
             placeAndHeadsign = to.name
             modeIcon = -1
-            newTimeMillis = leg.endTime.toLong()
-            oldTimeMillis = newTimeMillis - leg.arrivalDelay * 1000L
+            newTimeMillis = leg.endTime
+            oldTimeMillis = newTimeMillis - leg.arrivalDelay
         }
 
         direction.icon = modeIcon
@@ -317,14 +303,14 @@ class DirectionsGenerator(
 
         if (leg.realTime) {
             val newTimeString = ConversionUtils.getTimeUpdated(
-                applicationContext, leg.agencyTimeZoneOffset, oldTimeMillis, newTimeMillis
+                applicationContext, leg.agencyTimeZoneOffset, oldTimeMillis.epochMs, newTimeMillis.epochMs
             )
             direction.newTime = newTimeString
         }
 
         val oldTimeString = SpannableString(
             ConversionUtils.getTimeWithContext(
-                applicationContext, leg.agencyTimeZoneOffset, oldTimeMillis, true
+                applicationContext, leg.agencyTimeZoneOffset, oldTimeMillis.epochMs, true
             )
         )
         direction.oldTime = oldTimeString
@@ -332,27 +318,9 @@ class DirectionsGenerator(
         return direction
     }
 
-    /**
-     * @return the totalTimeTraveled
-     */
-    fun getTotalTimeTraveled(context: Context): Double {
-        if (legs.isEmpty()) {
-            return 0.0
-        }
-
-        val legStart = legs[0]
-        val startTimeText = legStart.startTime
-        val legEnd = legs[legs.size - 1]
-        val endTimeText = legEnd.endTime
-
-        totalTimeTraveled = ConversionUtils.getDuration(startTimeText, endTimeText, context)
-
-        return totalTimeTraveled
-    }
-
     /* Added for Trip Plan titles */
 
-    private fun getTransitTitle(leg: Leg): String? {
+    private fun getTransitTitle(leg: TripLeg): String? {
         // As a work-around for #662, we don't use leg.tripShortName
         return arrayOf(leg.routeShortName, leg.route, leg.routeId).firstOrNull { !it.isNullOrEmpty() }
     }
@@ -360,8 +328,8 @@ class DirectionsGenerator(
     val itineraryTitle: String
         get() {
             if (legs.size == 1) {
-                val mode = TraverseMode.valueOf(legs[0].mode)
-                if (!mode.isTransit) {
+                val mode = legs[0].mode
+                if (mode == null || !mode.isTransit) {
                     // getLocalizedMode only names transit modes and WALK; for a lone bicycle/car leg
                     // it returns null, so fall through to the general labeling below (which tags a
                     // bicycle leg with the bikeshare label) rather than crashing.
@@ -372,11 +340,11 @@ class DirectionsGenerator(
             val tokens = ArrayList<String?>()
 
             for (leg in legs) {
-                val traverseMode = TraverseMode.valueOf(leg.mode)
-                if (traverseMode.isTransit) {
+                val mode = leg.mode
+                if (mode?.isTransit == true) {
                     tokens.add(getTransitTitle(leg))
                 } else {
-                    if (traverseMode == TraverseMode.BICYCLE) {
+                    if (mode == TripMode.BICYCLE) {
                         tokens.add(applicationContext.getString(R.string.transit_directions_bikeshare_label))
                     }
                 }
@@ -436,34 +404,34 @@ class DirectionsGenerator(
         }
 
         @JvmStatic
-        fun getLocalizedRelativeDir(relDir: RelativeDirection?, resources: Resources): String? {
+        fun getLocalizedRelativeDir(relDir: TripRelativeDirection?, resources: Resources): String? {
             if (relDir != null) {
                 return when (relDir) {
-                    RelativeDirection.CIRCLE_CLOCKWISE ->
+                    TripRelativeDirection.CIRCLE_CLOCKWISE ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_circle_clockwise)
-                    RelativeDirection.CIRCLE_COUNTERCLOCKWISE ->
+                    TripRelativeDirection.CIRCLE_COUNTERCLOCKWISE ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_circle_counterclockwise)
-                    RelativeDirection.CONTINUE ->
+                    TripRelativeDirection.CONTINUE ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_continue)
-                    RelativeDirection.DEPART ->
+                    TripRelativeDirection.DEPART ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_depart)
-                    RelativeDirection.ELEVATOR ->
+                    TripRelativeDirection.ELEVATOR ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_elevator)
-                    RelativeDirection.HARD_LEFT ->
+                    TripRelativeDirection.HARD_LEFT ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_hard_left)
-                    RelativeDirection.HARD_RIGHT ->
+                    TripRelativeDirection.HARD_RIGHT ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_hard_right)
-                    RelativeDirection.LEFT ->
+                    TripRelativeDirection.LEFT ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_left)
-                    RelativeDirection.RIGHT ->
+                    TripRelativeDirection.RIGHT ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_right)
-                    RelativeDirection.SLIGHTLY_LEFT ->
+                    TripRelativeDirection.SLIGHTLY_LEFT ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_slightly_left)
-                    RelativeDirection.SLIGHTLY_RIGHT ->
+                    TripRelativeDirection.SLIGHTLY_RIGHT ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_slightly_right)
-                    RelativeDirection.UTURN_LEFT ->
+                    TripRelativeDirection.UTURN_LEFT ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_uturn_left)
-                    RelativeDirection.UTURN_RIGHT ->
+                    TripRelativeDirection.UTURN_RIGHT ->
                         resources.getString(R.string.step_by_step_non_transit_dir_relative_uturn_right)
                 }
             }
@@ -471,24 +439,24 @@ class DirectionsGenerator(
         }
 
         @JvmStatic
-        fun getLocalizedAbsoluteDir(absDir: AbsoluteDirection?, resources: Resources): String? {
+        fun getLocalizedAbsoluteDir(absDir: TripAbsoluteDirection?, resources: Resources): String? {
             if (absDir != null) {
                 return when (absDir) {
-                    AbsoluteDirection.EAST ->
+                    TripAbsoluteDirection.EAST ->
                         resources.getString(R.string.step_by_step_non_transit_dir_absolute_east)
-                    AbsoluteDirection.NORTH ->
+                    TripAbsoluteDirection.NORTH ->
                         resources.getString(R.string.step_by_step_non_transit_dir_absolute_north)
-                    AbsoluteDirection.NORTHEAST ->
+                    TripAbsoluteDirection.NORTHEAST ->
                         resources.getString(R.string.step_by_step_non_transit_dir_absolute_northeast)
-                    AbsoluteDirection.NORTHWEST ->
+                    TripAbsoluteDirection.NORTHWEST ->
                         resources.getString(R.string.step_by_step_non_transit_dir_absolute_northwest)
-                    AbsoluteDirection.SOUTH ->
+                    TripAbsoluteDirection.SOUTH ->
                         resources.getString(R.string.step_by_step_non_transit_dir_absolute_south)
-                    AbsoluteDirection.SOUTHEAST ->
+                    TripAbsoluteDirection.SOUTHEAST ->
                         resources.getString(R.string.step_by_step_non_transit_dir_absolute_southeast)
-                    AbsoluteDirection.SOUTHWEST ->
+                    TripAbsoluteDirection.SOUTHWEST ->
                         resources.getString(R.string.step_by_step_non_transit_dir_absolute_southwest)
-                    AbsoluteDirection.WEST ->
+                    TripAbsoluteDirection.WEST ->
                         resources.getString(R.string.step_by_step_non_transit_dir_absolute_west)
                 }
             }
@@ -496,21 +464,21 @@ class DirectionsGenerator(
         }
 
         @JvmStatic
-        fun getLocalizedMode(mode: TraverseMode?, resources: Resources): String? {
+        fun getLocalizedMode(mode: TripMode?, resources: Resources): String? {
             if (mode != null) {
                 return when (mode) {
-                    TraverseMode.TRAM -> resources.getString(R.string.step_by_step_transit_mode_tram)
-                    TraverseMode.SUBWAY -> resources.getString(R.string.step_by_step_transit_mode_subway)
-                    TraverseMode.RAIL -> resources.getString(R.string.step_by_step_transit_mode_rail)
-                    TraverseMode.BUS -> resources.getString(R.string.step_by_step_transit_mode_bus)
-                    TraverseMode.FERRY -> resources.getString(R.string.step_by_step_transit_mode_ferry)
-                    TraverseMode.CABLE_CAR ->
+                    TripMode.TRAM -> resources.getString(R.string.step_by_step_transit_mode_tram)
+                    TripMode.SUBWAY -> resources.getString(R.string.step_by_step_transit_mode_subway)
+                    TripMode.RAIL -> resources.getString(R.string.step_by_step_transit_mode_rail)
+                    TripMode.BUS -> resources.getString(R.string.step_by_step_transit_mode_bus)
+                    TripMode.FERRY -> resources.getString(R.string.step_by_step_transit_mode_ferry)
+                    TripMode.CABLE_CAR ->
                         resources.getString(R.string.step_by_step_transit_mode_cable_car)
-                    TraverseMode.GONDOLA ->
+                    TripMode.GONDOLA ->
                         resources.getString(R.string.step_by_step_transit_mode_gondola)
-                    TraverseMode.FUNICULAR ->
+                    TripMode.FUNICULAR ->
                         resources.getString(R.string.step_by_step_transit_mode_funicular)
-                    TraverseMode.WALK ->
+                    TripMode.WALK ->
                         resources.getString(R.string.step_by_step_non_transit_mode_walk_action)
                     else -> null
                 }
@@ -524,20 +492,19 @@ class DirectionsGenerator(
          * @return the mode icon for the given mode
          */
         @JvmStatic
-        fun getModeIcon(mode: TraverseModeSet): Int {
-            // Order matters: the first matching mode wins (e.g. a SUBWAY+TRAM set resolves to
-            // subway, not railway), so SUBWAY must stay ahead of TRAM.
-            return when {
-                mode.contains(TraverseMode.BUS) -> R.drawable.ic_bus
-                mode.contains(TraverseMode.RAIL) -> R.drawable.ic_directions_railway
-                mode.contains(TraverseMode.FERRY) || mode.contains(TraverseMode.GONDOLA) ->
-                    R.drawable.ic_directions_boat
-                mode.contains(TraverseMode.SUBWAY) -> R.drawable.ic_directions_subway
-                mode.contains(TraverseMode.TRAM) -> R.drawable.ic_directions_railway
-                mode.contains(TraverseMode.WALK) -> R.drawable.ic_directions_walk
-                mode.contains(TraverseMode.BICYCLE) -> R.drawable.ic_directions_bike
+        fun getModeIcon(mode: TripMode?): Int {
+            // Order matters: the first matching mode wins, matching the legacy TraverseModeSet
+            // priority (e.g. a SUBWAY+TRAM set resolved to subway, not railway).
+            return when (mode) {
+                TripMode.BUS -> R.drawable.ic_bus
+                TripMode.RAIL -> R.drawable.ic_directions_railway
+                TripMode.FERRY, TripMode.GONDOLA -> R.drawable.ic_directions_boat
+                TripMode.SUBWAY -> R.drawable.ic_directions_subway
+                TripMode.TRAM -> R.drawable.ic_directions_railway
+                TripMode.WALK -> R.drawable.ic_directions_walk
+                TripMode.BICYCLE -> R.drawable.ic_directions_bike
                 else -> {
-                    Log.d(TAG, "No icon for mode set: $mode")
+                    Log.d(TAG, "No icon for mode: $mode")
                     -1
                 }
             }
@@ -549,8 +516,8 @@ class DirectionsGenerator(
          * @return the transit stop icon for the given mode
          */
         @JvmStatic
-        fun getStopIcon(mode: TraverseModeSet): Int {
-            if (mode.contains(TraverseMode.BUS) || mode.contains(TraverseMode.RAIL)) {
+        fun getStopIcon(mode: TripMode?): Int {
+            if (mode == TripMode.BUS || mode == TripMode.RAIL) {
                 return R.drawable.stop_flag
             }
             // Just use the mode icon
@@ -558,22 +525,22 @@ class DirectionsGenerator(
         }
 
         @JvmStatic
-        fun getRelativeDirectionIcon(relDir: RelativeDirection, resources: Resources): Int {
+        fun getRelativeDirectionIcon(relDir: TripRelativeDirection, resources: Resources): Int {
             return when (relDir) {
-                RelativeDirection.CIRCLE_CLOCKWISE -> R.drawable.ic_rotary_clockwise
-                RelativeDirection.CIRCLE_COUNTERCLOCKWISE -> R.drawable.ic_rotary_counterclockwise
-                RelativeDirection.CONTINUE -> R.drawable.ic_continue
-                RelativeDirection.DEPART -> R.drawable.ic_depart
-                RelativeDirection.ELEVATOR -> R.drawable.ic_elevator
-                RelativeDirection.HARD_LEFT -> R.drawable.ic_turn_sharp_left
-                RelativeDirection.HARD_RIGHT -> R.drawable.ic_turn_sharp_right
-                RelativeDirection.LEFT -> R.drawable.ic_turn_left
-                RelativeDirection.RIGHT -> R.drawable.ic_turn_right
-                RelativeDirection.SLIGHTLY_LEFT -> R.drawable.ic_turn_slight_left
-                RelativeDirection.SLIGHTLY_RIGHT -> R.drawable.ic_turn_slight_right
-                RelativeDirection.UTURN_LEFT -> R.drawable.ic_uturn_left
-                RelativeDirection.UTURN_RIGHT -> R.drawable.ic_uturn_right
-                // No else: the when is exhaustive over RelativeDirection, so a future OTP enum
+                TripRelativeDirection.CIRCLE_CLOCKWISE -> R.drawable.ic_rotary_clockwise
+                TripRelativeDirection.CIRCLE_COUNTERCLOCKWISE -> R.drawable.ic_rotary_counterclockwise
+                TripRelativeDirection.CONTINUE -> R.drawable.ic_continue
+                TripRelativeDirection.DEPART -> R.drawable.ic_depart
+                TripRelativeDirection.ELEVATOR -> R.drawable.ic_elevator
+                TripRelativeDirection.HARD_LEFT -> R.drawable.ic_turn_sharp_left
+                TripRelativeDirection.HARD_RIGHT -> R.drawable.ic_turn_sharp_right
+                TripRelativeDirection.LEFT -> R.drawable.ic_turn_left
+                TripRelativeDirection.RIGHT -> R.drawable.ic_turn_right
+                TripRelativeDirection.SLIGHTLY_LEFT -> R.drawable.ic_turn_slight_left
+                TripRelativeDirection.SLIGHTLY_RIGHT -> R.drawable.ic_turn_slight_right
+                TripRelativeDirection.UTURN_LEFT -> R.drawable.ic_uturn_left
+                TripRelativeDirection.UTURN_RIGHT -> R.drawable.ic_uturn_right
+                // No else: the when is exhaustive over TripRelativeDirection, so a future OTP enum
                 // addition surfaces as a compile error here rather than a silent missing icon.
                 // (The caller's -1 initializer still covers the "icon not set" case.)
             }

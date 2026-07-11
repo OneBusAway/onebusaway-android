@@ -22,11 +22,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.bike.BikeStationsRepository
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
-import org.opentripplanner.api.model.Itinerary
 
 /**
  * The map view model for the **trip-plan directions** screen (trip results). It owns a [MapHost] + a
@@ -72,7 +72,7 @@ class DirectionsMapViewModel @Inject constructor(
     )
 
     /** Draw [itinerary]'s legs + start/end pins and load its bike-share stations. */
-    fun showItinerary(itinerary: Itinerary) {
+    fun showItinerary(itinerary: TripItinerary) {
         directionsController.clear()
         mapHost.renderState.clearRoutePolylines()
         directionsController.start(itinerary)

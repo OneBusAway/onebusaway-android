@@ -62,6 +62,11 @@ class ArrivalInfoTest {
         includeArrivalDepartureInStatusLabel = false,
     )
 
+    /** A predicted arrival ~50min out (slightly later than [scheduledArrival]), shared by the
+     *  liveEta tests below — they only care about eta/liveEta, not this scenario's specifics. */
+    private val genuinePrediction
+        get() = infoFor(arrival(predicted = true, predictedArrivalTime = 1_783_119_500_000L))
+
     @Test
     fun `predicted true with a minus-one sentinel falls back to the scheduled time`() {
         val info = infoFor(arrival(predicted = true, predictedArrivalTime = -1L))
@@ -117,6 +122,27 @@ class ArrivalInfoTest {
         val info = infoFor(arrival(predicted = true, predictedArrivalTime = 1_783_119_500_000L))
 
         assertTrue("a genuine prediction stays real-time in the report", info.toTripReportContext().predicted)
+    }
+
+    @Test
+    fun `liveEta matches eta at the constructor's own now (issue #1781)`() {
+        val info = genuinePrediction
+
+        assertEquals(info.eta, info.liveEta(now))
+    }
+
+    @Test
+    fun `liveEta counts down as the ticking now advances past a minute boundary`() {
+        val info = genuinePrediction
+
+        assertEquals(info.eta - 1, info.liveEta(ServerTime(now.epochMs + 60_000L)))
+    }
+
+    @Test
+    fun `liveEta does not move within the same minute as now`() {
+        val info = genuinePrediction
+
+        assertEquals(info.eta, info.liveEta(ServerTime(now.epochMs + 30_000L)))
     }
 }
 

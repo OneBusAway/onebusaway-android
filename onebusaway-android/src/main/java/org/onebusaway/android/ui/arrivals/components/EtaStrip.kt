@@ -24,6 +24,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -41,6 +42,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -79,13 +81,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -100,6 +106,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.models.Status
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.rememberLiveServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -149,6 +157,12 @@ internal fun EtaStrip(
 ) {
     val canScrollForward by remember { derivedStateOf { scrollState.canScrollForward } }
     val canScrollBackward by remember { derivedStateOf { scrollState.canScrollBackward } }
+
+    // All of this strip's trips share one poll (one route/direction group from a single
+    // ConvertArrivals pass), so their serverNow is identical — tick ONE shared clock here rather than
+    // a redundant per-pill ticker/coroutine (issue #1781). ServerTime(0) is an inert placeholder for
+    // the (pill-less) empty-trips case; nothing reads it since the pill loop below never runs.
+    val liveNow = rememberLiveServerTime(trips.firstOrNull()?.serverNow ?: ServerTime(0L))
 
     // Justify the `start` pill to the leading edge: capture its content-x (positionInParent is
     // scroll-independent, so it's the offset from the content's start) once, then scroll there. One-shot
@@ -344,6 +358,7 @@ internal fun EtaStrip(
                     }
                     EtaPillWithMenu(
                         trip = trip,
+                        liveNow = liveNow,
                         actions = actionsFor(trip),
                         callbacks = callbacks,
                         modifier = pillModifier,
@@ -470,21 +485,31 @@ private fun LoadMorePullChip(
 }
 
 /** A single ETA pill with its long-press per-trip menu. Tap focuses the vehicle; long-press opens
- *  the menu (trip details / reminder / report). */
+ *  the menu (trip details / reminder / report). [liveNow] is the strip's one shared ticking clock
+ *  (issue #1781) — counts this pill down between polls rather than freezing at the poll-time eta. */
 @Composable
 private fun EtaPillWithMenu(
     trip: ArrivalInfo,
+    liveNow: ServerTime,
     actions: ArrivalActions?,
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    // trip.displayTime only changes on a fresh poll, but liveNow (and so this composable) recomposes
+    // every second (issue #1781's ticker) — memoize so the locale-aware format call doesn't re-run on
+    // every tick.
+    val context = LocalContext.current
+    val clockTime = remember(trip.displayTime, context) {
+        DisplayFormat.formatTime(context, trip.displayTime.epochMs)
+    }
     Box(modifier) {
         EtaPill(
-            eta = trip.eta,
+            eta = trip.liveEta(liveNow),
             color = colorResource(trip.color),
             predicted = trip.predicted,
             canceled = trip.status == Status.CANCELED,
+            clockTime = clockTime,
             onClick = { callbacks.onEtaClick(trip) },
             onLongClick = { expanded = true },
         )
@@ -518,12 +543,30 @@ internal fun TripActionsMenu(
 }
 
 /**
+ * [base] with Android's default font-metrics padding (extra ascent/descent space reserved beyond a
+ * glyph's visible ink) trimmed to [size]'s true line height. Without this, every gap in a small
+ * pill/badge — row-to-row, row-to-edge — is a function of opaque per-font-size padding instead of the
+ * caller's own explicit spacing.
+ */
+private fun tightLineStyle(base: TextStyle, size: TextUnit) = base.copy(
+    lineHeight = size,
+    platformStyle = PlatformTextStyle(includeFontPadding = false),
+    lineHeightStyle = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.Both
+    )
+)
+
+/**
  * The prominent white-on-lateness ETA pill — one per trip in a route row's strip (and the Home legend
  * dialog, which passes no clicks). [onClick] taps focus that trip's vehicle + stop; [onLongClick]
- * opens the trip menu; [canceled] strikes the text through.
+ * opens the trip menu; [canceled] strikes the text through. [clockTime] is the small "1:10pm"-style
+ * clock time shown below the ETA (issue #1786); null omits that line (e.g. the Home legend's
+ * illustrative pills, which aren't tied to a real arrival time).
  *
- * A recent-past (negative-ETA) trip renders **compact** — 75% of the size — to de-emphasize it against
- * the upcoming arrivals, while the strip bottom-aligns so its digits still sit on the shared baseline.
+ * Every pill renders at the same size regardless of [eta] — a recent-past (negative-ETA) trip is
+ * distinguished from upcoming ones by the strip's own scroll position (it's justified off the leading
+ * edge, reachable via the left chevron) rather than a smaller pill.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -533,18 +576,23 @@ internal fun EtaPill(
     predicted: Boolean,
     modifier: Modifier = Modifier,
     canceled: Boolean = false,
+    clockTime: String? = null,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
 ) {
     val decoration = if (canceled) TextDecoration.LineThrough else null
     val shape = RoundedCornerShape(8.dp)
-    // Recent-past arrivals (negative ETA) shrink to 75% so the upcoming "big numbers" dominate the strip.
-    val compact = eta < 0
-    val pillHeight = if (compact) 24.dp else 32.dp
-    val numberSize = if (compact) 21.sp else 28.sp
-    val labelSize = if (compact) 11.sp else 14.sp
-    val nowSize = if (compact) 17.sp else 22.sp
-    val indicatorSize = if (compact) 6.dp else 8.dp
+    val numberSize = 28.sp
+    val labelSize = 14.sp
+    val nowSize = 22.sp
+    val indicatorSize = 8.dp
+    val clockTimeSize = 10.sp
+    val topPadding = 3.dp
+    val bottomPadding = 3.5.dp
+    // Negative: tightLineStyle's trim gets the ETA row and clock-time line close but not flush (some
+    // residual line-box slack survives it), so this pulls them the rest of the way — tuned by eye
+    // against a device screenshot, not derived from the other constants above.
+    val clockTimeGap = (-2).dp
     // A single combinedClickable serves both tap (focus vehicle) and long-press (trip menu). Placed on
     // the modifier the Surface clips, so the ripple stays inside the pill.
     val interaction = if (onClick != null || onLongClick != null) {
@@ -556,14 +604,21 @@ internal fun EtaPill(
     // ["1", "hr", " 30", "min"] past it — every number stays bold-sized, only the unit letters
     // shrink, so the leftover minutes stay as legible as the hour count (#1777).
     val etaParts = if (eta != 0L) DisplayFormat.formatEtaParts(LocalContext.current, eta) else null
+    // See tightLineStyle's doc: keyed to each Text's own (dominant) size, so the padding/gap values
+    // below are the actual on-screen spacing rather than a guess fighting Android's hidden font padding.
+    val baseTextStyle = LocalTextStyle.current
     Surface(modifier = modifier.then(interaction), shape = shape, color = color) {
-        // Bottom-centers the whole (baseline-aligned) content block, so pills of different sizes in
-        // the strip still share a common bottom edge.
-        Box(
-            modifier = Modifier
-                .height(pillHeight)
-                .padding(horizontal = 6.dp),
-            contentAlignment = Alignment.BottomCenter
+        // Sized to its own content (no fixed height) so the optional clock-time line simply adds to
+        // the pill's height rather than being clipped by — or leaving a gap below it in — a height
+        // guessed independently of the actual text metrics. Pills of different heights (with vs.
+        // without a clock line) still share a bottom edge via the strip's own
+        // `verticalAlignment = Alignment.Bottom` (EtaStrip's Row).
+        Column(
+            modifier = Modifier.padding(
+                start = 6.dp, end = 6.dp, top = topPadding, bottom = bottomPadding
+            ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(clockTimeGap)
         ) {
             Row {
                 if (etaParts == null) {
@@ -572,7 +627,8 @@ internal fun EtaPill(
                         fontSize = nowSize,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
-                        textDecoration = decoration
+                        textDecoration = decoration,
+                        style = remember(baseTextStyle, nowSize) { tightLineStyle(baseTextStyle, nowSize) }
                     )
                 } else {
                     // A single AnnotatedString (not separate Text composables) so the text shaper kerns
@@ -592,7 +648,10 @@ internal fun EtaPill(
                                 }
                             }
                         },
-                        textDecoration = decoration
+                        textDecoration = decoration,
+                        // Keyed to numberSize (the line's dominant glyph) — the smaller labelSize span
+                        // rides the same trimmed line box rather than getting one of its own.
+                        style = remember(baseTextStyle, numberSize) { tightLineStyle(baseTextStyle, numberSize) }
                     )
                 }
                 // The radiating real-time indicator floats above the trailing unit ("min" / "Now"); it
@@ -603,6 +662,15 @@ internal fun EtaPill(
                         RealtimeIndicator(color = Color.White, modifier = Modifier.fillMaxSize())
                     }
                 }
+            }
+            if (clockTime != null) {
+                Text(
+                    text = clockTime,
+                    fontSize = clockTimeSize,
+                    color = Color.White.copy(alpha = 0.8f),
+                    textDecoration = decoration,
+                    style = remember(baseTextStyle, clockTimeSize) { tightLineStyle(baseTextStyle, clockTimeSize) }
+                )
             }
         }
     }
@@ -667,29 +735,32 @@ private fun EtaStripFitsPreview() {
     )
 }
 
-/** A gallery of individual [EtaPill] states (not the strip): compact recent-past, "Now", the
- *  lateness colors, a canceled pill, and the past-an-hour "Xhr Ymin" form. */
+/** A gallery of individual [EtaPill] states (not the strip): recent-past, "Now", the lateness
+ *  colors, a canceled pill, and the past-an-hour "Xhr Ymin" form. */
 @Preview(showBackground = true)
 @Composable
 private fun EtaPillVariantsPreview() {
     ObaTheme {
         Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
-            // Bottom-aligned like the real strip, so the compact past pill shares the baseline.
             Row(
                 Modifier.padding(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.Bottom
             ) {
-                // A recent-past arrival: renders at 75% size.
-                EtaPill(-3, colorResource(R.color.stop_info_delayed), predicted = true)
-                EtaPill(0, colorResource(R.color.stop_info_ontime), predicted = true)
-                EtaPill(5, colorResource(R.color.stop_info_delayed), predicted = true)
-                EtaPill(12, colorResource(R.color.stop_info_early), predicted = true)
-                EtaPill(22, colorResource(R.color.stop_info_scheduled_time), predicted = false)
-                EtaPill(8, colorResource(R.color.stop_info_scheduled_time), predicted = false, canceled = true)
+                // A recent-past arrival: same size as the upcoming ones — negative ETAs are
+                // distinguished by strip scroll position, not pill size.
+                EtaPill(-3, colorResource(R.color.stop_info_delayed), predicted = true, clockTime = "2:57pm")
+                EtaPill(0, colorResource(R.color.stop_info_ontime), predicted = true, clockTime = "3:00pm")
+                EtaPill(5, colorResource(R.color.stop_info_delayed), predicted = true, clockTime = "3:05pm")
+                EtaPill(12, colorResource(R.color.stop_info_early), predicted = true, clockTime = "3:12pm")
+                EtaPill(22, colorResource(R.color.stop_info_scheduled_time), predicted = false, clockTime = "3:22pm")
+                EtaPill(
+                    8, colorResource(R.color.stop_info_scheduled_time), predicted = false, canceled = true,
+                    clockTime = "3:08pm"
+                )
                 // Past an hour: the number switches to hours, the leftover minutes fold into the label (#1777).
-                EtaPill(83, colorResource(R.color.stop_info_scheduled_time), predicted = true)
-                EtaPill(125, colorResource(R.color.stop_info_early), predicted = false)
+                EtaPill(83, colorResource(R.color.stop_info_scheduled_time), predicted = true, clockTime = "4:23pm")
+                EtaPill(125, colorResource(R.color.stop_info_early), predicted = false, clockTime = "5:05pm")
             }
         }
     }

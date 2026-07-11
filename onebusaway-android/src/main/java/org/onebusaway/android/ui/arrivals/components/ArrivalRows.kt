@@ -663,7 +663,7 @@ private fun RouteArrivalRowPreview() {
                     filterActive = false,
                     callbacks = callbacks,
                 )
-                // A single-arrival route with a just-departed (recent-past, compact) pill leading.
+                // A single-arrival route with a just-departed (recent-past) pill leading.
                 RouteArrivalRow(
                     group = RouteRowGroup(
                         listOf(

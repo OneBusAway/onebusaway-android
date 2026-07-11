@@ -100,6 +100,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.models.Status
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.rememberLiveServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -149,6 +151,12 @@ internal fun EtaStrip(
 ) {
     val canScrollForward by remember { derivedStateOf { scrollState.canScrollForward } }
     val canScrollBackward by remember { derivedStateOf { scrollState.canScrollBackward } }
+
+    // All of this strip's trips share one poll (one route/direction group from a single
+    // ConvertArrivals pass), so their serverNow is identical — tick ONE shared clock here rather than
+    // a redundant per-pill ticker/coroutine (issue #1781). ServerTime(0) is an inert placeholder for
+    // the (pill-less) empty-trips case; nothing reads it since the pill loop below never runs.
+    val liveNow = rememberLiveServerTime(trips.firstOrNull()?.serverNow ?: ServerTime(0L))
 
     // Justify the `start` pill to the leading edge: capture its content-x (positionInParent is
     // scroll-independent, so it's the offset from the content's start) once, then scroll there. One-shot
@@ -344,6 +352,7 @@ internal fun EtaStrip(
                     }
                     EtaPillWithMenu(
                         trip = trip,
+                        liveNow = liveNow,
                         actions = actionsFor(trip),
                         callbacks = callbacks,
                         modifier = pillModifier,
@@ -470,10 +479,12 @@ private fun LoadMorePullChip(
 }
 
 /** A single ETA pill with its long-press per-trip menu. Tap focuses the vehicle; long-press opens
- *  the menu (trip details / reminder / report). */
+ *  the menu (trip details / reminder / report). [liveNow] is the strip's one shared ticking clock
+ *  (issue #1781) — counts this pill down between polls rather than freezing at the poll-time eta. */
 @Composable
 private fun EtaPillWithMenu(
     trip: ArrivalInfo,
+    liveNow: ServerTime,
     actions: ArrivalActions?,
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier,
@@ -481,7 +492,7 @@ private fun EtaPillWithMenu(
     var expanded by remember { mutableStateOf(false) }
     Box {
         EtaPill(
-            eta = trip.eta,
+            eta = trip.liveEta(liveNow),
             color = colorResource(trip.color),
             predicted = trip.predicted,
             modifier = modifier,

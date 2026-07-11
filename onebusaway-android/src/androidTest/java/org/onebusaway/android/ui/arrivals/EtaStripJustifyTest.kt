@@ -22,7 +22,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.ui.arrivals.components.EtaStrip
@@ -37,6 +36,12 @@ import org.onebusaway.android.ui.arrivals.components.previewRowCallbacks
  */
 class EtaStripJustifyTest {
 
+    // The suggested androidx.compose.ui.test.junit4.v2.createComposeRule runs composition on a
+    // StandardTestDispatcher instead of Unconfined; under it, this composable's Modifier.onGloballyPositioned
+    // callback never fires at all (confirmed via on-device logcat — composition reaches the pill, but the
+    // callback never runs within a 5s poll), not just the expected LaunchedEffect timing shift. Tracked in
+    // https://github.com/OneBusAway/onebusaway-android/issues/1792.
+    @Suppress("DEPRECATION")
     @get:Rule
     val composeRule = createComposeRule()
 
@@ -67,12 +72,10 @@ class EtaStripJustifyTest {
             }
         }
 
-        composeRule.waitForIdle()
-
-        assertTrue(
-            "expected the strip to scroll the recent-past pills off the left edge, " +
-                "but scrollState.value was ${scrollState.value}",
-            scrollState.value > 0,
-        )
+        // The measure -> onGloballyPositioned -> justifyOffsetPx write -> LaunchedEffect -> scrollTo chain
+        // spans a recomposition, so a single waitForIdle() can return before scrollTo has actually run.
+        // Poll instead of asserting on the first idle point; this throws (failing the test) if the strip
+        // never scrolls off the recent-past pills within the timeout.
+        composeRule.waitUntil(timeoutMillis = 5_000) { scrollState.value > 0 }
     }
 }

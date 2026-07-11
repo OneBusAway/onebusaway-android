@@ -163,6 +163,14 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                 map.setInfoWindowAdapter(windows)
                 wireClicks(map, r, windows, cb)
 
+                map.setOnCameraMoveStartedListener { reason ->
+                    // A user gesture (pan/fling/pinch) started: gate the stop/bike loaders until it settles.
+                    // Programmatic camera animations (recenter, zoom-to-route) don't gate — they emit only
+                    // their terminating idle, so there's nothing mid-move to suppress.
+                    if (reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE) {
+                        host.onCameraGestureStarted()
+                    }
+                }
                 map.setOnCameraIdleListener { host.onCameraIdle(snapshot(map)) }
 
                 r.renderStatic()

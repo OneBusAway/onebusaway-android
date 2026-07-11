@@ -18,16 +18,19 @@ package org.onebusaway.android.map
 import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -167,6 +170,12 @@ class StopsMapController(
         host.camera
             .filterNotNull()
             .debounce(STOP_LOAD_DEBOUNCE_MS)
+            // Settle on drag-end: if the debounce elapses while a gesture is still in flight (the user is
+            // mid-pan, or a fling that emitted an intermediate idle is still going), drop this viewport —
+            // the gesture's terminating camera-idle re-arms the debounce and fires one load at the true
+            // drag-end. Combined with the debounce this keeps a whole pan to a single load + redraw
+            // instead of one per intermediate settle, killing the mid-pan jank.
+            .filter { !host.cameraInteracting.value }
             .filterNot { next -> stopRequestFulfilled(lastLoad, lastHadResponse, lastLimitExceeded, next) }
             .flatMapLatest { snapshot ->
                 // flatMapLatest cancels an in-flight load when a newer viewport arrives, matching the
@@ -224,6 +233,11 @@ class StopsMapController(
 
                     emit(StopLoad.Network(result, servedCache, snapshot))
                 }
+                    // Run the query pipeline (cache read + row mapping, network, cache save) off the main
+                    // thread; only the emitted results cross back to the collector, which does the (cheap,
+                    // main-confined) stopAccum merge + publish. flatMapLatest still cancels this on a newer
+                    // viewport.
+                    .flowOn(Dispatchers.Default)
             }
             .collect { load ->
                 when (load) {

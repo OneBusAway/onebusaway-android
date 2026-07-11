@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
@@ -77,7 +78,10 @@ class BikeLayerController(
         loadJob?.cancel()
         loadJob = scope.launch {
             combine(
-                host.camera.filterNotNull().debounce(STOP_LOAD_DEBOUNCE_MS),
+                // Settle on drag-end, matching the stop loader: hold the station load until the gesture
+                // settles so a pan fires one load at drag-end, not one per intermediate camera-idle.
+                host.camera.filterNotNull().debounce(STOP_LOAD_DEBOUNCE_MS)
+                    .filter { !host.cameraInteracting.value },
                 _bikeshareVisible,
             ) { camera, layerVisible -> camera to layerVisible }
                 // collectLatest so a newer viewport cancels an in-flight station load (the old loadJob?.cancel()).

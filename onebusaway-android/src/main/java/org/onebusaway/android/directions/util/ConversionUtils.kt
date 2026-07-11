@@ -25,8 +25,6 @@ import androidx.core.content.ContextCompat
 import org.onebusaway.android.R
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.PreferenceUtils
-import org.opentripplanner.api.model.Itinerary
-import org.opentripplanner.routing.core.TraverseMode
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -53,51 +51,6 @@ object ConversionUtils {
      * zero-offset zone, so [ZoneOffset.UTC] is equivalent for the day/hour/minute/second fields.
      */
     private val GMT: ZoneId = ZoneOffset.UTC
-
-    /**
-     * Given a date string from an OTP server, parse it into an [Instant].
-     *
-     * @param text string from OTP (epoch milliseconds)
-     * @return parsed instant, or null if there is an error with parsing.
-     */
-    @JvmStatic
-    fun parseOtpDate(text: String): Instant? {
-        return try {
-            Instant.ofEpochMilli(text.toLong())
-        } catch (ex: NumberFormatException) {
-            Log.e(TAG, "Error processing OTP response time text: $text")
-            null
-        }
-    }
-
-    /**
-     * Given start time and end time strings, compute the delta between them.
-     * Strings should be in the OTP server return format, specified in OTPConstants
-     *
-     * @param startTimeText start time
-     * @param endTimeText end time
-     * @param applicationContext context to look up resources
-     * @return duration
-     */
-    @JvmStatic
-    fun getDuration(startTimeText: String, endTimeText: String, applicationContext: Context): Double {
-        var duration = 0.0
-
-        val startTime = parseOtpDate(startTimeText)
-        val endTime = parseOtpDate(endTimeText)
-
-        if (startTime != null && endTime != null) {
-            duration = if (PreferenceUtils.getInt(
-                    OTPConstants.PREFERENCE_KEY_API_VERSION, OTPConstants.API_VERSION_V1
-                ) == OTPConstants.API_VERSION_V1
-            ) {
-                Duration.between(startTime, endTime).toMillis().toDouble()
-            } else {
-                (Duration.between(startTime, endTime).toMillis() / 1000).toDouble()
-            }
-        }
-        return duration
-    }
 
     /**
      * Return a formatted String for a distance. Should be in proper units according to
@@ -198,50 +151,6 @@ object ConversionUtils {
             }
         }
         return text
-    }
-
-    @JvmStatic
-    fun fixTimezoneOffsets(
-        itineraries: List<Itinerary>?,
-        useDeviceTimezone: Boolean,
-    ): List<Itinerary>? {
-        var agencyTimeZoneOffset = 0
-        var containsTransitLegs = false
-
-        if (!itineraries.isNullOrEmpty()) {
-            val itinerariesFixed = ArrayList(itineraries)
-
-            for (it in itinerariesFixed) {
-                for (leg in it.legs) {
-                    if (TraverseMode.valueOf(leg.mode).isTransit) {
-                        containsTransitLegs = true
-                    }
-                    if (leg.agencyTimeZoneOffset != 0) {
-                        agencyTimeZoneOffset = leg.agencyTimeZoneOffset
-                        // If agencyTimeZoneOffset is different from 0, route contains transit legs
-                        containsTransitLegs = true
-                        break
-                    }
-                }
-            }
-
-            if (useDeviceTimezone || !containsTransitLegs) {
-                agencyTimeZoneOffset =
-                    TimeZone.getDefault().getOffset(itinerariesFixed[0].startTime.toLong())
-            }
-
-            if (agencyTimeZoneOffset != 0) {
-                for (it in itinerariesFixed) {
-                    for (leg in it.legs) {
-                        leg.agencyTimeZoneOffset = agencyTimeZoneOffset
-                    }
-                }
-            }
-
-            return itinerariesFixed
-        } else {
-            return itineraries
-        }
     }
 
     @JvmStatic

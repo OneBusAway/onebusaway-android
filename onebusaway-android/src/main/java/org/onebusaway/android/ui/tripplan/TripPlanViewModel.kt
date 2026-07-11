@@ -35,10 +35,10 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.SearchCenter
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.TimeProvider
-import org.opentripplanner.api.model.Itinerary
 
 /**
  * Owns the trip-plan form ([formState]) and plan submission ([planState]). Address autocomplete runs
@@ -221,7 +221,7 @@ class TripPlanViewModel @Inject constructor(
         to: TripEndpoint?,
         dateTimeMillis: Long,
         arriving: Boolean,
-        itineraries: List<Itinerary>
+        itineraries: List<TripItinerary>
     ) {
         _formState.update {
             it.copy(

@@ -26,7 +26,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.testing.MainDispatcherRule
-import org.opentripplanner.api.model.Itinerary
+import org.onebusaway.android.directions.model.TripItinerary
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TripResultsViewModelTest {
@@ -44,15 +44,15 @@ class TripResultsViewModelTest {
         var summary: Result<List<ItineraryOption>>,
         var directions: Result<List<DirectionItem>> = Result.success(emptyList())
     ) : TripResultsRepository {
-        val directionsForCalls = mutableListOf<Itinerary>()
-        override suspend fun summarize(itineraries: List<Itinerary>) = summary
-        override suspend fun directionsFor(itinerary: Itinerary): Result<List<DirectionItem>> {
+        val directionsForCalls = mutableListOf<TripItinerary>()
+        override suspend fun summarize(itineraries: List<TripItinerary>) = summary
+        override suspend fun directionsFor(itinerary: TripItinerary): Result<List<DirectionItem>> {
             directionsForCalls.add(itinerary)
             return directions
         }
     }
 
-    private fun itineraries(count: Int): List<Itinerary> = List(count) { Itinerary() }
+    private fun itineraries(count: Int): List<TripItinerary> = List(count) { TripItinerary() }
 
     @Test
     fun `initial state is Loading before itineraries are set`() = runTest {

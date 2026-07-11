@@ -78,18 +78,16 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
     }
 
     fun setOptimizeTransfers(set: Boolean): TripRequestBuilder {
-        mBundle.putSerializable(
-            OPTIMIZE_TRANSFERS, if (set) OptimizeType.TRANSFERS else OptimizeType.QUICK
-        )
+        mBundle.putBoolean(OPTIMIZE_TRANSFERS, set)
         return this
     }
 
-    private fun getOptimizeType(): OptimizeType {
-        val type = BundleCompat.getSerializable(mBundle, OPTIMIZE_TRANSFERS, OptimizeType::class.java)
-        return type ?: OptimizeType.QUICK
-    }
+    fun getOptimizeTransfers(): Boolean = mBundle.getBoolean(OPTIMIZE_TRANSFERS)
 
-    fun getOptimizeTransfers(): Boolean = getOptimizeType() == OptimizeType.TRANSFERS
+    /** The OTP1 wire enum, derived from [getOptimizeTransfers] only where [buildRequest] needs it —
+     * never itself persisted, so it never has to cross a Bundle/Intent serialization boundary. */
+    private fun getOptimizeType(): OptimizeType =
+        if (getOptimizeTransfers()) OptimizeType.TRANSFERS else OptimizeType.QUICK
 
     fun setWheelchairAccessible(wheelchair: Boolean): TripRequestBuilder {
         mBundle.putBoolean(WHEELCHAIR_ACCESSIBLE, wheelchair)
@@ -280,7 +278,7 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
         target.putBoolean(ARRIVE_BY, arriveBy)
         target.putParcelable(FROM_ADDRESS, from)
         target.putParcelable(TO_ADDRESS, to)
-        target.putSerializable(OPTIMIZE_TRANSFERS, getOptimizeType())
+        target.putBoolean(OPTIMIZE_TRANSFERS, getOptimizeTransfers())
         target.putBoolean(WHEELCHAIR_ACCESSIBLE, getWheelchairAccessible())
         getMaxWalkDistance()?.let { target.putDouble(MAX_WALK_DISTANCE, it) }
         target.putString(MODE_SET, getModeString())
@@ -302,7 +300,7 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
         target.putDouble(TO_LAT, toAddr!!.latitude)
         target.putDouble(TO_LON, toAddr.longitude)
         target.putString(TO_NAME, toAddr.toString())
-        target.putString(OPTIMIZE_TRANSFERS, getOptimizeType().toString())
+        target.putBoolean(OPTIMIZE_TRANSFERS, getOptimizeTransfers())
         target.putBoolean(WHEELCHAIR_ACCESSIBLE, getWheelchairAccessible())
         getMaxWalkDistance()?.let { target.putDouble(MAX_WALK_DISTANCE, it) }
         target.putString(MODE_SET, getModeString())
@@ -366,11 +364,7 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
             target.putParcelable(FROM_ADDRESS, from)
             target.putParcelable(TO_ADDRESS, to)
 
-            val optName = bundle.getString(OPTIMIZE_TRANSFERS)
-            if (optName != null) {
-                target.putSerializable(OPTIMIZE_TRANSFERS, OptimizeType.valueOf(optName))
-            }
-
+            target.putBoolean(OPTIMIZE_TRANSFERS, bundle.getBoolean(OPTIMIZE_TRANSFERS))
             target.putBoolean(WHEELCHAIR_ACCESSIBLE, bundle.getBoolean(WHEELCHAIR_ACCESSIBLE))
             target.putDouble(MAX_WALK_DISTANCE, bundle.getDouble(MAX_WALK_DISTANCE))
 

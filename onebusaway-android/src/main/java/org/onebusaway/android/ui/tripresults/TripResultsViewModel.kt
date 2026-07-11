@@ -26,13 +26,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.opentripplanner.api.model.Itinerary
+import org.onebusaway.android.directions.model.TripItinerary
 
 /**
  * Holds the trip-planning results: the option cards, which one is selected, and the selected
- * itinerary's directions. The OTP [Itinerary] objects are kept as opaque tokens (they aren't
- * JVM-pure) and handed back to the repository to re-summarize/re-generate directions on selection.
- * [selectedItinerary] drives a re-point of the declarative map when a different option is selected.
+ * itinerary's directions. The [TripItinerary] objects are kept as opaque tokens and handed back to
+ * the repository to re-summarize/re-generate directions on selection. [selectedItinerary] drives a
+ * re-point of the declarative map when a different option is selected.
  */
 @HiltViewModel
 class TripResultsViewModel @Inject constructor(
@@ -43,14 +43,14 @@ class TripResultsViewModel @Inject constructor(
     val state: StateFlow<TripResultsUiState> = _state.asStateFlow()
 
     /** Emits the selected index (and its itinerary) so the screen can re-point the map. */
-    private val _selectedItinerary = MutableSharedFlow<Pair<Int, Itinerary>>(extraBufferCapacity = 1)
-    val selectedItinerary: SharedFlow<Pair<Int, Itinerary>> = _selectedItinerary.asSharedFlow()
+    private val _selectedItinerary = MutableSharedFlow<Pair<Int, TripItinerary>>(extraBufferCapacity = 1)
+    val selectedItinerary: SharedFlow<Pair<Int, TripItinerary>> = _selectedItinerary.asSharedFlow()
 
-    private var itineraries: List<Itinerary> = emptyList()
+    private var itineraries: List<TripItinerary> = emptyList()
     private var selectedIndex: Int = 0
 
     /** Seeds the results from a completed plan. [initialIndex] restores the prior option selection. */
-    fun setItineraries(itineraries: List<Itinerary>, initialIndex: Int) {
+    fun setItineraries(itineraries: List<TripItinerary>, initialIndex: Int) {
         this.itineraries = itineraries
         this.selectedIndex = initialIndex.coerceIn(0, (itineraries.size - 1).coerceAtLeast(0))
         load()

@@ -15,9 +15,6 @@
  */
 package org.onebusaway.android.directions.model
 
-import org.onebusaway.android.directions.util.ConversionUtils
-import org.opentripplanner.api.model.Itinerary
-import org.opentripplanner.routing.core.TraverseMode
 import java.time.Duration
 import java.time.Instant
 
@@ -30,18 +27,12 @@ class ItineraryDescription {
 
     val endDate: Instant?
 
-    constructor(itinerary: Itinerary) {
-        val ids = ArrayList<String>()
-        for (leg in itinerary.legs) {
-            val traverseMode = TraverseMode.valueOf(leg.mode)
-            if (traverseMode.isTransit) {
-                ids.add(leg.tripId)
-            }
-        }
-        tripIds = ids
+    constructor(itinerary: TripItinerary) {
+        tripIds = itinerary.legs
+            .filter { it.mode?.isTransit == true }
+            .mapNotNull { it.tripId }
 
-        val last = itinerary.legs[itinerary.legs.size - 1]
-        endDate = ConversionUtils.parseOtpDate(last.endTime)
+        endDate = itinerary.legs.lastOrNull()?.endTime?.let { Instant.ofEpochMilli(it.epochMs) }
     }
 
     constructor(tripIds: List<String>, endDate: Instant?) {

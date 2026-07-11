@@ -16,32 +16,37 @@
 package org.onebusaway.android.api
 
 import java.io.IOException
+import kotlin.time.Duration.Companion.seconds
+import org.onebusaway.android.api.adapters.toTripItinerary
 import org.onebusaway.android.api.contract.OtpPlanParser
+import org.onebusaway.android.directions.model.TripMode
+import org.onebusaway.android.directions.model.TripRelativeDirection
+import org.onebusaway.android.directions.model.TripVertexType
+import org.onebusaway.android.time.ServerTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.opentripplanner.api.model.RelativeDirection
-import org.opentripplanner.api.model.VertexType
 
 /**
- * Covers the OTP `/plan` decode + the mapping onto the OTP library POJOs (`Response`/`TripPlan`/
- * `Itinerary`/`Leg`/…) that the directions + trip-planner UI read — the kotlinx.serialization
- * replacement for the retired Jackson `JacksonConfig` path.
+ * Covers the OTP `/plan` decode ([OtpPlanParser]) and the mapping onto the app-owned trip-plan domain
+ * model ([org.onebusaway.android.directions.model.TripItinerary]/`TripLeg`/…) via
+ * [org.onebusaway.android.api.adapters.toTripItinerary] — the kotlinx.serialization replacement for the
+ * retired Jackson `JacksonConfig` path, now targeting our own domain model instead of the vendored OTP1
+ * POJOs.
  *
- * The pinned case is the epoch-millis timestamps: OTP emits `startTime`/`endTime` as JSON *numbers*,
- * but the POJOs store them as `String` and callers do `Long.parseLong(...)`. Jackson used to coerce
- * number→String; [org.onebusaway.android.api.contract.OtpResponseDto] must preserve that so both a
- * bare number and a quoted string decode to the same literal text.
+ * The pinned case is the epoch-millis timestamps: OTP emits `startTime`/`endTime` as JSON *numbers*, but
+ * some servers quote them as strings; [org.onebusaway.android.api.contract.OtpResponseDto] must preserve
+ * both forms so they decode to the same [ServerTime].
  */
 class OtpPlanDecodeTest {
 
     @Test
     fun decodesAndMapsPlan() {
         // startTime is a bare number (as OTP emits it); the bus leg's endTime is a quoted string —
-        // both must survive as numeric-millis text. `debugOutput` is an unmodeled key that must be
-        // ignored, not rejected.
+        // both must decode to the same Instant. `debugOutput` is an unmodeled key that must be
+        // ignored, not rejected. duration/departureDelay are seconds on the wire.
         val body = """
             {
               "debugOutput": { "totalTime": 42 },
@@ -91,44 +96,49 @@ class OtpPlanDecodeTest {
         val response = OtpPlanParser.parse(body)
         assertNull(response.error)
 
-        val itineraries = response.plan.itinerary
+        val itineraries = response.plan!!.itineraries.map { it.toTripItinerary() }
         assertEquals(1, itineraries.size)
         val itinerary = itineraries[0]
-        assertEquals(1500L, itinerary.duration)
-        // number startTime coerced to its literal millis text
-        assertEquals("1699999999000", itinerary.startTime)
+        assertEquals(1500L, itinerary.duration.inWholeSeconds)
+        assertEquals(ServerTime(1699999999000), itinerary.startTime)
         assertEquals(2, itinerary.legs.size)
 
         val walk = itinerary.legs[0]
-        assertEquals("WALK", walk.mode)
-        assertEquals(123.4, walk.distance!!, 1e-6)
-        assertEquals("1699999999000", walk.startTime)
-        assertEquals("1700000100000", walk.endTime)
-        assertEquals("Origin", walk.from.name)
-        assertEquals(47.6, walk.from.lat!!, 1e-6)
-        assertEquals("1001", walk.to.stopCode)
-        assertEquals(VertexType.TRANSIT, walk.to.vertexType)
-        // legGeometry + walk steps flow through the getter-backed fields
-        assertEquals("abc_def", walk.legGeometry.points)
-        assertEquals(2, walk.legGeometry.length)
+        assertEquals(TripMode.WALK, walk.mode)
+        assertEquals(123.4, walk.distance, 1e-6)
+        assertEquals(ServerTime(1699999999000), walk.startTime)
+        assertEquals(ServerTime(1700000100000), walk.endTime)
+        val walkFrom = walk.from
+        val walkTo = walk.to
+        val walkGeometry = walk.legGeometry!!
+        assertEquals("Origin", walkFrom.name)
+        assertEquals(47.6, walkFrom.lat!!, 1e-6)
+        assertEquals("1001", walkTo.stopCode)
+        assertEquals(TripVertexType.TRANSIT, walkTo.vertexType)
+        // legGeometry + walk steps flow through the mapped fields
+        assertEquals("abc_def", walkGeometry.points)
+        assertEquals(2, walkGeometry.length)
         assertEquals(1, walk.steps.size)
-        assertEquals(RelativeDirection.LEFT, walk.steps[0].relativeDirection)
+        assertEquals(TripRelativeDirection.LEFT, walk.steps[0].relativeDirection)
         assertEquals("Main St", walk.steps[0].streetName)
 
         val bus = itinerary.legs[1]
-        assertEquals("BUS", bus.mode)
+        assertEquals(TripMode.BUS, bus.mode)
         assertTrue(bus.realTime)
         assertEquals(-14400, bus.agencyTimeZoneOffset)
         assertEquals("5", bus.routeShortName)
         assertEquals("0000FF", bus.routeColor)
-        assertEquals(30, bus.departureDelay)
+        assertEquals(30L, bus.departureDelay.inWholeSeconds)
+        assertEquals(30.seconds, bus.departureDelay)
         assertEquals("trip_5", bus.tripId)
-        // quoted-string endTime survives unchanged
-        assertEquals("1700000700000", bus.endTime)
-        assertEquals(VertexType.BIKESHARE, bus.from.vertexType)
-        assertEquals("bs_9", bus.from.bikeShareId)
-        assertEquals(1, bus.intermediateStops.size)
-        assertEquals("Stop Mid", bus.intermediateStops[0].name)
+        // quoted-string endTime decodes the same as a bare number
+        assertEquals(ServerTime(1700000700000), bus.endTime)
+        val busFrom = bus.from
+        val intermediateStops = bus.intermediateStops!!
+        assertEquals(TripVertexType.BIKESHARE, busFrom.vertexType)
+        assertEquals("bs_9", busFrom.bikeShareId)
+        assertEquals(1, intermediateStops.size)
+        assertEquals("Stop Mid", intermediateStops[0].name)
     }
 
     @Test
@@ -137,8 +147,9 @@ class OtpPlanDecodeTest {
 
         val response = OtpPlanParser.parse(body)
         assertNull(response.plan)
-        assertEquals(404, response.error.id)
-        assertEquals("Path not found", response.error.msg)
+        val error = response.error!!
+        assertEquals(404, error.id)
+        assertEquals("Path not found", error.msg)
     }
 
     /** An unknown enum string must degrade to null rather than blow up the whole parse. */
@@ -146,13 +157,31 @@ class OtpPlanDecodeTest {
     fun toleratesUnknownVertexType() {
         val body = """
             { "plan": { "itineraries": [ { "startTime": 1, "legs": [
-              { "mode": "WALK", "from": { "name": "X", "vertexType": "WHO_KNOWS" }, "to": { "name": "Y" } }
+              { "mode": "WALK", "startTime": 1, "endTime": 2,
+                "from": { "name": "X", "vertexType": "WHO_KNOWS" }, "to": { "name": "Y" } }
             ] } ] } }
         """.trimIndent()
 
         val response = OtpPlanParser.parse(body)
-        val leg = response.plan.itinerary[0].legs[0]
+        val leg = response.plan!!.itineraries[0].toTripItinerary().legs[0]
         assertNull(leg.from.vertexType)
+    }
+
+    /**
+     * A leg missing a field every well-formed OTP leg carries (here, `startTime`) must fail loudly at
+     * the adapter boundary rather than silently defaulting — this is the one place that knows the
+     * response is malformed, so every downstream consumer can treat these fields as non-null.
+     */
+    @Test
+    fun missingRequiredLegFieldThrows() {
+        val body = """
+            { "plan": { "itineraries": [ { "startTime": 1, "legs": [
+              { "mode": "WALK", "endTime": 2, "from": { "name": "X" }, "to": { "name": "Y" } }
+            ] } ] } }
+        """.trimIndent()
+
+        val itinerary = OtpPlanParser.parse(body).plan!!.itineraries[0]
+        assertThrows(IllegalStateException::class.java) { itinerary.toTripItinerary() }
     }
 
     /**

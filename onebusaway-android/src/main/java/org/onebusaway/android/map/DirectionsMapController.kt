@@ -18,16 +18,16 @@ package org.onebusaway.android.map
 import android.graphics.Color
 import android.location.Location
 import android.util.Log
+import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.directions.model.TripLeg
+import org.onebusaway.android.directions.model.TripLegGeometry
+import org.onebusaway.android.directions.model.TripMode
+import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.models.ObaShape
 import org.onebusaway.android.util.PolylineDecoder
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.RoutePolyline
-import org.opentripplanner.api.model.EncodedPolylineBean
-import org.opentripplanner.api.model.Itinerary
-import org.opentripplanner.api.model.Leg
-import org.opentripplanner.routing.core.TraverseMode
-import org.opentripplanner.api.model.VertexType
 
 /**
  * The trip-plan directions use case (the legacy `DirectionsMapController`): draws an itinerary's legs
@@ -50,22 +50,25 @@ class DirectionsMapController(private val host: MapHost) {
     private var directionsStart: GeoPoint? = null
 
     /** Draw [itinerary]'s leg polylines + start/end pins and frame it. */
-    fun start(itinerary: Itinerary) {
+    fun start(itinerary: TripItinerary) {
         val legs = itinerary.legs
         if (legs.isEmpty()) {
             return
         }
         val firstLeg = legs.first()
         val lastLeg = legs.last()
-        val startLat = firstLeg.from.lat
-        val startLon = firstLeg.from.lon
-        val endLat = lastLeg.to.lat
-        val endLon = lastLeg.to.lon
+        val startPlace = firstLeg.from
+        val endPlace = lastLeg.to
+        val startLat = startPlace.lat!!
+        val startLon = startPlace.lon!!
+        val endLat = endPlace.lat!!
+        val endLon = endPlace.lon!!
 
         // Build every leg's polyline (each in its own mode color), then append them in one write —
         // matching the legacy per-leg append but without rebuilding the polyline list n times.
         val legPolylines = legs.mapNotNull { leg ->
-            val shape = LegShape(leg.legGeometry)
+            val geometry = leg.legGeometry ?: return@mapNotNull null
+            val shape = LegShape(geometry)
             if (shape.length > 0) {
                 // An itinerary leg is traversed one way; keep its travel-direction chevrons.
                 RoutePolyline(
@@ -110,9 +113,9 @@ class DirectionsMapController(private val host: MapHost) {
         directionsMarkerIds.clear()
     }
 
-    private fun resolveLegColor(leg: Leg): Int {
+    private fun resolveLegColor(leg: TripLeg): Int {
         // Color for transit routes when planning a trip.
-        if (TraverseMode.valueOf(leg.mode).isTransit) {
+        if (leg.mode?.isTransit == true) {
             return OTPConstants.OTP_TRANSIT_COLOR
         }
         // Use the route's custom color if available.
@@ -127,11 +130,12 @@ class DirectionsMapController(private val host: MapHost) {
         return Color.GRAY
     }
 
-    /** An [ObaShape] over an OTP [EncodedPolylineBean] leg geometry (ported from DirectionsMapController). */
-    private class LegShape(private val bean: EncodedPolylineBean) : ObaShape {
-        override val length: Int get() = bean.length
-        override val points: List<Location> get() = PolylineDecoder.decodeLine(bean.points, bean.length)
-        override val rawPoints: String get() = bean.points
+    /** An [ObaShape] over a [TripLegGeometry] (ported from the legacy DirectionsMapController). */
+    private class LegShape(private val geometry: TripLegGeometry) : ObaShape {
+        override val length: Int get() = geometry.length
+        override val points: List<Location> get() =
+            PolylineDecoder.decodeLine(geometry.points.orEmpty(), geometry.length)
+        override val rawPoints: String get() = geometry.points.orEmpty()
     }
 
     companion object {
@@ -147,15 +151,15 @@ class DirectionsMapController(private val host: MapHost) {
          * The bike-share stations an itinerary references, to filter the bike overlay to the trip's own
          * stations (ported from the legacy DirectionsMapController; passed to the bike loader).
          */
-        fun bikeStationIdsFromItinerary(itinerary: Itinerary): List<String> {
+        fun bikeStationIdsFromItinerary(itinerary: TripItinerary): List<String> {
             val ids = ArrayList<String>()
             for (leg in itinerary.legs) {
-                if (TraverseMode.BICYCLE.toString() == leg.mode) {
-                    if (VertexType.BIKESHARE == leg.from.vertexType) {
-                        ids.add(leg.from.bikeShareId)
+                if (leg.mode == TripMode.BICYCLE) {
+                    if (leg.from.vertexType == TripVertexType.BIKESHARE) {
+                        leg.from.bikeShareId?.let { ids.add(it) }
                     }
-                    if (VertexType.BIKESHARE == leg.to.vertexType) {
-                        ids.add(leg.to.bikeShareId)
+                    if (leg.to.vertexType == TripVertexType.BIKESHARE) {
+                        leg.to.bikeShareId?.let { ids.add(it) }
                     }
                 }
             }

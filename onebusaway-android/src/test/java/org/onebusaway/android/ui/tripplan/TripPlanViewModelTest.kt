@@ -33,7 +33,7 @@ import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.util.TimeProvider
-import org.opentripplanner.api.model.Itinerary
+import org.onebusaway.android.directions.model.TripItinerary
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TripPlanViewModelTest {
@@ -53,27 +53,27 @@ class TripPlanViewModelTest {
         }
     }
 
-    private class FakeTripPlanRepository(var result: Result<List<Itinerary>>) : TripPlanRepository {
+    private class FakeTripPlanRepository(var result: Result<List<TripItinerary>>) : TripPlanRepository {
         var calls = 0
-        override suspend fun plan(params: TripPlanParams): Result<List<Itinerary>> {
+        override suspend fun plan(params: TripPlanParams): Result<List<TripItinerary>> {
             calls++
             return result
         }
 
-        override fun planBlocking(builder: TripRequestBuilder): List<Itinerary> =
+        override fun planBlocking(builder: TripRequestBuilder): List<TripItinerary> =
             result.getOrDefault(emptyList())
     }
 
     /** A plan repository whose call suspends until [gate] is completed, to exercise the in-flight race. */
     private class GatedTripPlanRepository : TripPlanRepository {
-        val gate = CompletableDeferred<Result<List<Itinerary>>>()
+        val gate = CompletableDeferred<Result<List<TripItinerary>>>()
         var calls = 0
-        override suspend fun plan(params: TripPlanParams): Result<List<Itinerary>> {
+        override suspend fun plan(params: TripPlanParams): Result<List<TripItinerary>> {
             calls++
             return gate.await()
         }
 
-        override fun planBlocking(builder: TripRequestBuilder): List<Itinerary> = emptyList()
+        override fun planBlocking(builder: TripRequestBuilder): List<TripItinerary> = emptyList()
     }
 
     private inner class FakeAdvancedSettingsRepository : AdvancedSettingsRepository {
@@ -82,7 +82,7 @@ class TripPlanViewModelTest {
 
     private fun viewModel(
         geocode: GeocodeRepository = FakeGeocodeRepository(Result.success(emptyList())),
-        plan: TripPlanRepository = FakeTripPlanRepository(Result.success(listOf(Itinerary()))),
+        plan: TripPlanRepository = FakeTripPlanRepository(Result.success(listOf(TripItinerary()))),
         region: RegionRepository = FakeRegionRepository()
     ) = TripPlanViewModel(
         geocode, plan, region,
@@ -139,7 +139,7 @@ class TripPlanViewModelTest {
 
     @Test
     fun `clearFrom resets the origin to empty FreeText and does not submit`() = runTest {
-        val plan = FakeTripPlanRepository(Result.success(listOf(Itinerary())))
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
         val vm = viewModel(plan = plan)
         setBothEndpoints(vm)
         advanceUntilIdle()
@@ -155,7 +155,7 @@ class TripPlanViewModelTest {
 
     @Test
     fun `setting both endpoints with coordinates auto-submits the plan`() = runTest {
-        val plan = FakeTripPlanRepository(Result.success(listOf(Itinerary())))
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
         val vm = viewModel(plan = plan)
 
         vm.setFrom(origin)
@@ -207,7 +207,7 @@ class TripPlanViewModelTest {
         advanceUntilIdle()
         assertEquals(PlanResult.Idle, vm.planState.value)
 
-        plan.gate.complete(Result.success(listOf(Itinerary()))) // late completion of the stale plan
+        plan.gate.complete(Result.success(listOf(TripItinerary()))) // late completion of the stale plan
         advanceUntilIdle()
         assertEquals(PlanResult.Idle, vm.planState.value)
     }
@@ -231,7 +231,7 @@ class TripPlanViewModelTest {
 
     @Test
     fun `an endpoint without coordinates does not enable submit`() = runTest {
-        val plan = FakeTripPlanRepository(Result.success(listOf(Itinerary())))
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
         val vm = viewModel(plan = plan)
 
         vm.setFrom(TripEndpoint.AddressBook("Contact A", lat = null, lon = null))

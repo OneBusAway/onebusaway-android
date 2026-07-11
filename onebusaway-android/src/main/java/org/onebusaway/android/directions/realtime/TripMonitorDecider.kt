@@ -16,9 +16,9 @@
 package org.onebusaway.android.directions.realtime
 
 import org.onebusaway.android.directions.model.ItineraryDescription
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
-import org.opentripplanner.api.model.Itinerary
 import kotlin.math.abs
 import kotlin.time.Duration
 
@@ -63,7 +63,7 @@ object TripMonitorDecider {
     @JvmStatic
     fun decide(
         current: ItineraryDescription,
-        results: List<Itinerary>,
+        results: List<TripItinerary>,
         thresholdSeconds: Long,
     ): MonitorResult {
         if (results.isEmpty()) {

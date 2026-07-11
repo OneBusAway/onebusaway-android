@@ -43,6 +43,8 @@ import kotlinx.coroutines.withContext
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.ItineraryDescription
+import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.directions.model.toJson
 import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.onebusaway.android.notifications.NotificationChannels
@@ -50,7 +52,6 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.tripplan.TripPlanRepository
-import org.opentripplanner.api.model.Itinerary
 import java.time.Instant
 import kotlin.coroutines.coroutineContext
 
@@ -222,7 +223,7 @@ class TripPlanMonitorService : Service() {
         desc: ItineraryDescription,
         target: Class<*>,
         builder: TripRequestBuilder,
-        itineraries: List<Itinerary>,
+        itineraries: List<TripItinerary>,
         @StringRes titleRes: Int,
         @StringRes messageRes: Int,
     ) {
@@ -230,10 +231,13 @@ class TripPlanMonitorService : Service() {
 
         // Reopen the trip-plan screen with enough state to rehydrate the form + fresh results
         // (matches TripPlanScreen.maybeRestoreFromIntent, which reads the simplified request bundle).
+        // The itinerary list is JSON-encoded (kotlinx.serialization), not passed via
+        // Intent.putExtra(String, Serializable) — TripItinerary has no reason to implement
+        // java.io.Serializable itself, unlike the OTP1 POJOs this domain model replaced.
         val requestExtras = Bundle().also { builder.copyIntoBundleSimple(it) }
         val openIntent = Intent(applicationContext, target).apply {
             putExtras(requestExtras)
-            putExtra(OTPConstants.ITINERARIES, ArrayList(itineraries))
+            putExtra(OTPConstants.ITINERARIES, itineraries.toJson())
             putExtra(OTPConstants.INTENT_SOURCE, OTPConstants.Source.NOTIFICATION)
             putExtra(NavRoutes.EXTRA_NAV_ROUTE, NavRoutes.TRIP_PLAN)
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP

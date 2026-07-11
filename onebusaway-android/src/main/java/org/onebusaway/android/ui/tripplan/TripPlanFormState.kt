@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.ui.tripplan
 
-import org.opentripplanner.api.model.Itinerary
+import org.onebusaway.android.directions.model.TripItinerary
 
 /**
  * A JVM-pure projection of a trip-plan endpoint (a [org.onebusaway.android.directions.util.CustomAddress]),
@@ -145,7 +145,7 @@ sealed interface PlanResult {
      * re-entry (the full request isn't reconstructed there), in which case monitoring isn't re-armed.
      */
     data class Success(
-        val itineraries: List<Itinerary>,
+        val itineraries: List<TripItinerary>,
         val params: TripPlanParams? = null,
     ) : PlanResult
     data class Error(val message: String) : PlanResult

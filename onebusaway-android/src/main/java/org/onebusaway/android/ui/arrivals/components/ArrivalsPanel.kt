@@ -170,7 +170,6 @@ fun ArrivalsPanel(
                     content = content,
                     rowCallbacks = rowCallbacks,
                     handler = handler,
-                    onLoadMore = viewModel::loadMore,
                     onShowAllRoutes = viewModel::showAllRoutes,
                     onShowHiddenAlerts = viewModel::showHiddenAlerts,
                     modifier = Modifier.weight(1f),
@@ -202,6 +201,7 @@ fun ArrivalsPanel(
                             Box(Modifier.onSizeChanged { rowHeights[index] = it.height }) {
                                 RouteArrivalRow(
                                     group = group,
+                                    dataVersion = content.dataVersion,
                                     actionsFor = { content.actions[it.tripId] },
                                     isFavorite = group.routeId in content.favoriteRouteIds,
                                     filterActive = filtering,

@@ -136,7 +136,9 @@ internal fun rememberArrivalRowCallbacks(
         onShowOnlyRoute = viewModel::showOnlyRoute,
         onShowRouteSchedule = handler::onShowRouteSchedule,
         onReportArrivalProblem = handler::onReportArrivalProblem,
-        onShowAlert = handler::onShowAlert
+        onShowAlert = handler::onShowAlert,
+        onLoadMore = viewModel::loadMore,
+        loadMoreState = viewModel.loadMoreState
     )
 }
 
@@ -190,7 +192,6 @@ fun ArrivalsRoute(
         onBack = onBack,
         onRefresh = viewModel::manualRefresh,
         onToggleFavorite = viewModel::toggleFavorite,
-        onLoadMore = viewModel::loadMore,
         rowCallbacks = rowCallbacks,
         handler = handler,
         onSetRouteFilter = viewModel::setRouteFilter,
@@ -210,7 +211,6 @@ fun ArrivalsScreen(
     onBack: () -> Unit,
     onRefresh: () -> Unit,
     onToggleFavorite: () -> Unit,
-    onLoadMore: () -> Unit,
     rowCallbacks: ArrivalRowCallbacks,
     handler: ArrivalActionHandler,
     onSetRouteFilter: (Set<String>) -> Unit,
@@ -283,7 +283,6 @@ fun ArrivalsScreen(
                     content = state,
                     rowCallbacks = rowCallbacks,
                     handler = handler,
-                    onLoadMore = onLoadMore,
                     onShowAllRoutes = onShowAllRoutes,
                     onShowHiddenAlerts = onShowHiddenAlerts
                 )
@@ -348,7 +347,6 @@ internal fun ArrivalsList(
     content: ArrivalsUiState.Content,
     rowCallbacks: ArrivalRowCallbacks,
     handler: ArrivalActionHandler,
-    onLoadMore: () -> Unit,
     onShowAllRoutes: () -> Unit,
     onShowHiddenAlerts: () -> Unit,
     modifier: Modifier = Modifier,
@@ -436,21 +434,12 @@ internal fun ArrivalsList(
                 items(visibleGroups, key = { it.key }) { group ->
                     RouteArrivalRow(
                         group = group,
+                        dataVersion = content.dataVersion,
                         actionsFor = { content.actions[it.tripId] },
                         isFavorite = group.routeId in content.favoriteRouteIds,
                         filterActive = filterActive,
                         callbacks = rowCallbacks
                     )
-                }
-            }
-            item(key = "load_more") {
-                TextButton(
-                    onClick = onLoadMore,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text(stringResource(R.string.stop_info_load_more_arrivals))
                 }
             }
         }

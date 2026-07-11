@@ -65,16 +65,10 @@ public class LocationHelper implements android.location.LocationListener {
 
     private static final int MILLISECONDS_PER_SECOND = 1000;
 
-    private static final int UPDATE_INTERVAL_IN_SECONDS = 5;
-
     private static final int FASTEST_INTERVAL_IN_SECONDS = 1;
 
     private static final long FASTEST_INTERVAL =
             MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
-
-    public LocationHelper(Context context) {
-        this(context, UPDATE_INTERVAL_IN_SECONDS);
-    }
 
     /**
      *
@@ -131,28 +125,6 @@ public class LocationHelper implements android.location.LocationListener {
                 // permissions after the listener was registered
                 Log.w(TAG, "User may have denied location permission - " + e);
             }
-        }
-    }
-
-    public synchronized void onResume() {
-        try {
-            registerAllProviders();
-        } catch (SecurityException e) {
-            // If we resume after the user has denied location permissions, log the warning and continue
-            Log.w(TAG, "User may have denied location permission - " + e);
-        }
-    }
-
-    public synchronized void onPause() {
-        try {
-            mLocationManager.removeUpdates(this);
-
-            // Tear down fused provider updates
-            removeFusedLocationUpdates();
-        } catch (SecurityException e) {
-            // We're just unregistering listeners here, so just log exception if user revoked
-            // permissions after the listener was registered
-            Log.w(TAG, "User may have denied location permission - " + e);
         }
     }
 

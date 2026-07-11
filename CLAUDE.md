@@ -51,8 +51,12 @@ only prints them. The codebase is kept at **zero** compiler warnings (#1692); do
   and then always add a one-line rationale **and a tracking-issue link** at the suppression site.
 - **Android Lint is gated the same way.** Lint *errors* always fail the build (`abortOnError`) —
   notably `NewApi`/minSdk violations the API-33 tests can't catch. Under `-PwarningsAsErrors=true`,
-  lint *warnings* fail too (`warningsAsErrors`), so keep lint clean. Reproduce locally with
-  `./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true`.
+  lint *warnings* fail too (`warningsAsErrors`), so keep lint clean.
+  - **Don't run lint locally just to pre-empt a CI failure.** `lintObaGoogleDebug` takes ~5–15 minutes
+    (worse when other builds are contending for the machine), which stalls the loop for little gain.
+    Compile clean locally (the command above), then **let CI run lint** and react to its report.
+    Reproduce lint locally *only* when you're specifically iterating on a lint finding CI already flagged,
+    or regenerating the baseline (below): `./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true`.
   - Lint runs the **full catalog** (`checkAllWarnings true`), and the ~760 pre-existing findings are
     grandfathered in `onebusaway-android/lint-baseline.xml`. Only **new** issues (not in the baseline)
     are reported — so don't introduce new ones, and prefer fixing over baselining.

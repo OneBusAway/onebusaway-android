@@ -31,6 +31,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.models.TripRouteInfo
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.testing.MainDispatcherRule
@@ -61,6 +62,8 @@ class TripTrajectoryViewModelTest {
             emptyFlow()
 
         override suspend fun ensureShape(tripId: String, shapeId: String): Polyline? = null
+
+        override suspend fun resolveNeighborTrip(tripId: String): TripRouteInfo? = null
     }
 
     /**
@@ -90,6 +93,8 @@ class TripTrajectoryViewModelTest {
             emptyFlow()
 
         override suspend fun ensureShape(tripId: String, shapeId: String): Polyline? = null
+
+        override suspend fun resolveNeighborTrip(tripId: String): TripRouteInfo? = null
     }
 
     private fun viewModel(repo: TripObservationRepository) = TripTrajectoryViewModel(

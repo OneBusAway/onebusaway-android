@@ -26,6 +26,8 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.Circle
 import com.google.android.gms.maps.model.CircleOptions
+import com.google.android.gms.maps.model.Dash
+import com.google.android.gms.maps.model.Gap
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
@@ -43,6 +45,8 @@ import org.onebusaway.android.map.compose.formatDataAge
 import org.onebusaway.android.map.googlemapsv2.compose.BikeIcons
 import org.onebusaway.android.map.render.BikeBand
 import org.onebusaway.android.map.render.BikeMarker
+import org.onebusaway.android.map.render.ContinuationBadge
+import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapPing
@@ -50,6 +54,8 @@ import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.map.render.MapVehicles
+import org.onebusaway.android.map.render.RouteContinuation
+import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.StopIconKind
 import org.onebusaway.android.map.render.StopMarker
@@ -109,6 +115,10 @@ class GoogleMapRenderer(
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
+
+    // The route-continuation badge marker's tap target (#1691) — at most one at a time (the trigger is
+    // the single selected vehicle), but kept as a map like the other *ByMarker lookups for symmetry.
+    private val continuationBadgeByMarker = HashMap<Marker, ContinuationBadge>()
 
     // The latest trips-for-route poll, published as it changes (after the markers are reconciled). The
     // change-detector for the vehicle reconcile, the source a vehicle info window reads its content from,
@@ -211,6 +221,7 @@ class GoogleMapRenderer(
         staticPolylines.forEach { it.remove() }
         staticPolylines.clear()
         bikeByMarker.clear()
+        continuationBadgeByMarker.clear()
     }
 
     /** Redraw the static layer (everything but the live vehicles + trip-focus overlay). */
@@ -220,16 +231,15 @@ class GoogleMapRenderer(
         val snapshot = renderState.snapshot.value
 
         for (polyline in snapshot.routePolylines) {
-            val width = polyline.widthDp?.let { it * density } ?: DEFAULT_ROUTE_WIDTH_PX
             // Stamp travel-direction chevrons only when the line asked for them (a single trip/leg or a
             // route narrowed to one direction); an undirected whole-route shape draws a plain stroke.
             val stroke = StrokeStyle.colorBuilder(polyline.resolvedColor)
                 .apply { if (polyline.directional) stamp(arrowStamp) }
                 .build()
             val options = PolylineOptions()
-                .width(width)
+                .width(widthPx(polyline))
                 .addSpan(StyleSpan(stroke))
-            for (point in polyline.points) options.add(point.toLatLng())
+                .addPoints(polyline.points)
             staticPolylines.add(map.addPolyline(options))
         }
 
@@ -263,6 +273,66 @@ class GoogleMapRenderer(
             generic.hue?.let { options.icon(BitmapDescriptorFactory.defaultMarker(it)) }
             staticMarkers.add(map.addMarker(options)!!)
         }
+
+        snapshot.routeContinuation?.let { continuation -> renderContinuation(continuation) }
+    }
+
+    /**
+     * Draws the selected vehicle's route continuation (#1691): a dashed line in the neighbor route's
+     * own color (so it reads clearly against a busy basemap instead of blending into a gray street), an
+     * arrowhead marker at its end oriented along the shape's travel direction, and a tappable pill badge
+     * halfway along the line.
+     */
+    private fun renderContinuation(continuation: RouteContinuation) {
+        val polyline = continuation.polyline
+        val options = PolylineOptions().color(polyline.resolvedColor).width(widthPx(polyline))
+        if (polyline.dashed) options.pattern(listOf(Dash(CONTINUATION_DASH_LENGTH_PX), Gap(CONTINUATION_GAP_LENGTH_PX)))
+        options.addPoints(polyline.points)
+        staticPolylines.add(map.addPolyline(options))
+
+        val arrow = continuation.arrow
+        staticMarkers.add(
+            map.addMarker(
+                MarkerOptions()
+                    .position(arrow.point.toLatLng())
+                    .icon(continuationArrowIcon(polyline.resolvedColor))
+                    .anchor(0.5f, 1f)
+                    .rotation(arrow.bearing)
+                    .flat(true)
+                    .zIndex(CONTINUATION_BADGE_Z_INDEX)
+            )!!
+        )
+
+        val badge = continuation.badge
+        val marker = map.addMarker(
+            MarkerOptions()
+                .position(badge.point.toLatLng())
+                .icon(continuationBadgeIcon(badge.routeShortName, polyline.resolvedColor))
+                .anchor(0.5f, 0.5f)
+                .zIndex(CONTINUATION_BADGE_Z_INDEX)
+        )!!
+        staticMarkers.add(marker)
+        continuationBadgeByMarker[marker] = badge
+    }
+
+    private fun continuationBadgeIcon(routeShortName: String, color: Int): BitmapDescriptor =
+        descriptorCache.get("continuation-badge:$routeShortName:$color") {
+            ContinuationBadgeBitmaps.badge(routeShortName, color)
+        }
+
+    private fun continuationArrowIcon(color: Int): BitmapDescriptor =
+        descriptorCache.get("continuation-arrow:$color") {
+            ContinuationBadgeBitmaps.arrow(color)
+        }
+
+    /** [RoutePolyline.widthDp] scaled to screen pixels, or the shared default when it carries none. */
+    private fun widthPx(polyline: RoutePolyline): Float =
+        polyline.widthDp?.let { it * density } ?: DEFAULT_ROUTE_WIDTH_PX
+
+    /** Appends [points] to the receiver, shared by every static polyline draw. */
+    private fun PolylineOptions.addPoints(points: List<GeoPoint>): PolylineOptions {
+        for (point in points) add(point.toLatLng())
+        return this
     }
 
     /**
@@ -706,6 +776,9 @@ class GoogleMapRenderer(
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 
+    /** The route-continuation badge (#1691) tapped, or null if [marker] isn't that badge. */
+    fun continuationBadgeForMarker(marker: Marker): ContinuationBadge? = continuationBadgeByMarker[marker]
+
     /** The live route-vehicle marker for [tripId], or null if that vehicle isn't currently drawn. */
     fun vehicleMarkerForTripId(tripId: String): Marker? = vehicleMarkersByTripId[tripId]
 
@@ -729,6 +802,14 @@ class GoogleMapRenderer(
         // The ping ripple draws above the route line/band (gms always draws Circles beneath markers, so it
         // never covers the vehicle icon regardless of this value).
         private const val PING_Z_INDEX = 3f
+
+        // The route-continuation badge (#1691) draws above vehicles so it's always reliably tappable.
+        private const val CONTINUATION_BADGE_Z_INDEX = 1.5f
+
+        // The route-continuation line's dash pattern (#1691), in screen pixels like every other gms
+        // polyline dimension here.
+        private const val CONTINUATION_DASH_LENGTH_PX = 24f
+        private const val CONTINUATION_GAP_LENGTH_PX = 16f
 
         // The (arbitrary, constant) ease key for a TripEstimateMarker's single-marker easer.
         private const val ESTIMATE_EASE_KEY = "estimate"

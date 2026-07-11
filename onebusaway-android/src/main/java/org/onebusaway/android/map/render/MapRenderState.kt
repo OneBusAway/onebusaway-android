@@ -74,12 +74,17 @@ const val ROUTE_LINE_WIDTH_DP: Float = 10f
  * whose points aren't a single travel order, leaves it false so the line reads as undirected. Whether a
  * renderer can honor it is flavor-specific (Google stamps a chevron texture; the maplibre classic
  * annotation has no arrow support yet).
+ *
+ * [dashed] asks the renderer to draw a dashed stroke instead of solid — set it for a preview/hint line
+ * that should read as distinct from the primary route shown (the route-continuation line, #1691), so it
+ * doesn't blend into a busy basemap the way a plain solid stroke can.
  */
 data class RoutePolyline(
     val color: Int?,
     val points: List<GeoPoint>,
     val widthDp: Float? = null,
     val directional: Boolean = false,
+    val dashed: Boolean = false,
 ) {
     /** The [color] to draw, applying the [DEFAULT_ROUTE_LINE_COLOR] fallback in one place for every renderer. */
     val resolvedColor: Int get() = color ?: DEFAULT_ROUTE_LINE_COLOR
@@ -149,6 +154,36 @@ data class StopMarker(
     val routeStop: Boolean = false,
 )
 
+/**
+ * A tappable badge marking where the selected vehicle's block continues onto a different route
+ * (#1691): a small pill halfway along the continuation line showing [routeShortName]. Tapping it
+ * navigates the map to [routeId], preferring [directionId] (the neighbor trip's own direction) over the
+ * target route's default when the wire response resolved one (via
+ * [org.onebusaway.android.map.MapViewModel.toRoute]).
+ */
+data class ContinuationBadge(
+    val point: GeoPoint,
+    val routeId: String,
+    val routeShortName: String,
+    val directionId: Int?,
+)
+
+/**
+ * The arrowhead terminating a route-continuation line (#1691), at [point] oriented along [bearing]
+ * (compass degrees, 0°=N — the shape's travel direction at that point) so it visually points onward
+ * into the next route.
+ */
+data class ContinuationArrow(val point: GeoPoint, val bearing: Float)
+
+/**
+ * The selected vehicle's route continuation (#1691): a single optional overlay, not a list — the
+ * trigger is the one selected vehicle, so at most one is ever shown. [polyline] runs from the
+ * transition point to [arrow]'s point, with [badge] halfway between them. Absent (null on
+ * [MapRenderSnapshot.routeContinuation]) when nothing is selected, the block doesn't continue onto a
+ * different route, or the continuation data hasn't resolved yet.
+ */
+data class RouteContinuation(val polyline: RoutePolyline, val arrow: ContinuationArrow, val badge: ContinuationBadge)
+
 /** Immutable snapshot of everything the map should render. Grows one overlay per phase. */
 data class MapRenderSnapshot(
     val routePolylines: List<RoutePolyline> = emptyList(),
@@ -163,6 +198,10 @@ data class MapRenderSnapshot(
     // by StopsMapController and carried here so a pure zoom re-fires the renderer like any other
     // snapshot change — keeping the renderer a pure function of the snapshot (no live camera reads).
     val stopBand: StopBand = StopBand.FULL,
+    // The selected vehicle's route continuation (#1691), or null. A discrete, infrequently-changing
+    // annotation like the fields above, so it rides the same renderStatic() redraw path rather than
+    // the 20Hz vehicle-motion sampler.
+    val routeContinuation: RouteContinuation? = null,
 )
 
 /**
@@ -373,6 +412,11 @@ class MapRenderState {
     /** Selects (or deselects with null) a vehicle by trip id; the renderer shows its data marker. */
     fun setSelectedVehicle(tripId: String?) {
         _selectedVehicleTripId.value = tripId
+    }
+
+    /** Sets (or clears) the selected vehicle's route continuation (#1691); redrawn with the next snapshot. */
+    fun setRouteContinuation(continuation: RouteContinuation?) {
+        _snapshot.update { it.copy(routeContinuation = continuation) }
     }
 
     // --- Trip-focus overlay (the speed-estimation trip map): the renderer pulls the extrapolated ---

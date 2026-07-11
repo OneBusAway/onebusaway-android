@@ -25,6 +25,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.models.TripRouteInfo
 import org.onebusaway.android.util.Polyline
 import org.junit.Test
 
@@ -41,11 +42,15 @@ class TripObservationRepositoryTest {
     private class FakeFetcher(
             private val details: () -> TripDetails? = { null },
             /** Resolves a shapeId to its polyline; null (the default) means "no shape". */
-            private val shapeFor: (String) -> Polyline? = { null }
+            private val shapeFor: (String) -> Polyline? = { null },
+            /** Resolves a tripId to its route info; null (the default) means "not found". */
+            private val tripRouteInfoFor: (String) -> TripRouteInfo? = { null }
     ) : TripObservationFetcher {
         var tripDetailsCalls = 0
             private set
         var shapeCalls = 0
+            private set
+        var tripRouteInfoCalls = 0
             private set
 
         override suspend fun tripDetails(tripId: String): TripDetails? {
@@ -60,6 +65,11 @@ class TripObservationRepositoryTest {
         override suspend fun shape(shapeId: String): Polyline? {
             shapeCalls++
             return shapeFor(shapeId)
+        }
+
+        override suspend fun tripRouteInfo(tripId: String): TripRouteInfo? {
+            tripRouteInfoCalls++
+            return tripRouteInfoFor(tripId)
         }
     }
 
@@ -165,6 +175,36 @@ class TripObservationRepositoryTest {
         val second = repo.ensureShape("tripA", "shape1")
         assertEquals("the null result poisoned nothing, so the second call refetches", 2, fetcher.shapeCalls)
         assertSame("the second call resolves to the real polyline", shape, second)
+    }
+
+    @Test
+    fun `resolveNeighborTrip caches a successful resolution and skips the second fetch`() = runTest {
+        val info = TripRouteInfo("tripB", "route75", "shapeB", "75", null)
+        val fetcher = FakeFetcher(tripRouteInfoFor = { info })
+        val repo = DefaultTripObservationRepository(fetcher)
+
+        val first = repo.resolveNeighborTrip("tripB")
+        val second = repo.resolveNeighborTrip("tripB")
+
+        assertEquals("only the first call fetches", 1, fetcher.tripRouteInfoCalls)
+        assertSame("both calls resolve to the same cached instance", first, second)
+    }
+
+    @Test
+    fun `resolveNeighborTrip caches nothing on a null fetch and refetches later`() = runTest {
+        val info = TripRouteInfo("tripB", "route75", "shapeB", "75", null)
+        var next: TripRouteInfo? = null // first fetch yields null, then a real result
+        val fetcher = FakeFetcher(tripRouteInfoFor = { next })
+        val repo = DefaultTripObservationRepository(fetcher)
+
+        val first = repo.resolveNeighborTrip("tripB")
+        assertEquals("first call attempts the fetch", 1, fetcher.tripRouteInfoCalls)
+        assertEquals("a null fetch resolves to null", null, first)
+
+        next = info
+        val second = repo.resolveNeighborTrip("tripB")
+        assertEquals("the null result poisoned nothing, so the second call refetches", 2, fetcher.tripRouteInfoCalls)
+        assertSame("the second call resolves to the real result", info, second)
     }
 
     @Test

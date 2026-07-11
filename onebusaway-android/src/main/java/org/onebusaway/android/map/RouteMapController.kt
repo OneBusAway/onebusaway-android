@@ -22,12 +22,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.onebusaway.android.extrapolation.ExtrapolatedVehicle
 import org.onebusaway.android.extrapolation.extrapolatedVehicles
 import org.onebusaway.android.extrapolation.extrapolationFromState
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.models.TripRouteInfo
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.time.WallTime
 import java.net.HttpURLConnection
@@ -36,12 +38,15 @@ import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.RouteMapStop
 import org.onebusaway.android.util.Polyline
+import org.onebusaway.android.map.render.ContinuationArrow
+import org.onebusaway.android.map.render.ContinuationBadge
 import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
+import org.onebusaway.android.map.render.RouteContinuation
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.VehicleMarker
 
@@ -137,9 +142,12 @@ class RouteMapController(
 
     private var vehicleJob: Job? = null
 
-    // Drives the selected vehicle's trip overlay (the uncertainty band + fast-estimate marker). A tap
-    // selects a vehicle (renderState.selectedVehicleTripId); this collector installs a per-frame overlay
-    // sampler for that trip and clears it on deselect. Cancelled with the route session in [stop].
+    // Drives everything a tap-selected vehicle shows: the trip overlay (the uncertainty band +
+    // fast-estimate marker, [showSelectionOverlay]) and the route continuation (#1691, [showContinuation]).
+    // A tap selects a vehicle (renderState.selectedVehicleTripId); collectLatest so a fast reselect
+    // cancels an in-flight continuation resolution (a suspending network fetch) for the previous
+    // selection instead of racing it — [showSelectionOverlay] has no suspension point, so it's unaffected
+    // by collectLatest either way. Cancelled with the route session in [stop].
     private var selectionJob: Job? = null
 
     // A pending arrivals ETA-pill focus: fit trip [tripId]'s live vehicle together with the originating
@@ -191,12 +199,15 @@ class RouteMapController(
         // directionState is read live since it's resolved only once the route loads.
         renderState.setVehiclesSampler { nowMs -> sampleVehicles(WallTime(nowMs)) }
         // A tapped vehicle enters a focused state that shows its extrapolation band + fast-estimate
-        // marker; react to the selection state here (a tap sets it, a map/background tap clears it).
-        // Cancel any collector from a prior start() so a re-entered session doesn't leak one that
-        // stop() can no longer reach.
+        // marker, and resolves its route continuation (#1691); react to the selection state here (a tap
+        // sets it, a map/background tap clears it). Cancel any collector from a prior start() so a
+        // re-entered session doesn't leak one that stop() can no longer reach.
         selectionJob?.cancel()
         selectionJob = scope.launch {
-            renderState.selectedVehicleTripId.collect { tripId -> showSelectionOverlay(tripId) }
+            renderState.selectedVehicleTripId.collectLatest { tripId ->
+                showSelectionOverlay(tripId)
+                showContinuation(tripId)
+            }
         }
         // Defer the on-load framing while a focus is pending: the focus decision (below, once the first
         // set arrives) either fits the vehicle+stop box or, failing that, frames the route itself.
@@ -301,6 +312,68 @@ class RouteMapController(
     private fun currentRouteColor(): Int =
         (_loadedRoute.value as? LoadedRoute.Loaded)?.route?.color ?: DEFAULT_ROUTE_LINE_COLOR
 
+    /**
+     * Resolve (or clear) the selected vehicle's route continuation (#1691); driven by [selectionJob]'s
+     * collectLatest, so a slow fetch for a superseded selection is cancelled, not raced.
+     */
+    private suspend fun showContinuation(tripId: String?) {
+        renderState.setRouteContinuation(resolveContinuation(tripId))
+    }
+
+    /**
+     * Whether the selected vehicle's block continues onto a different route on its next scheduled trip,
+     * and if so, the dashed line + arrow + badge to draw for it. Returns null at any step that isn't
+     * (yet) available: no selection, no schedule, no neighbor trip, the neighbor is on the *same* route
+     * (an ordinary same-route direction reversal — see [isRouteContinuation]), or the neighbor's shape
+     * isn't resolvable.
+     */
+    private suspend fun resolveContinuation(tripId: String?): RouteContinuation? {
+        val currentRouteId = routeId ?: return null
+        val id = tripId ?: return null
+        val state = tripObservationRepository.lookupTripState(id) ?: return null
+        val anchor = state.polyline?.points?.lastOrNull()?.toGeoPoint() ?: return null
+        val nextTripId = state.schedule?.nextTripId ?: return null
+        val neighbor = tripObservationRepository.resolveNeighborTrip(nextTripId) ?: return null
+        if (!isRouteContinuation(currentRouteId, neighbor.routeId)) return null
+        val shapeId = neighbor.shapeId ?: return null
+        val neighborShape = tripObservationRepository.ensureShape(nextTripId, shapeId) ?: return null
+        return buildRouteContinuation(anchor, neighborShape, neighbor)
+    }
+
+    /**
+     * [anchor] is the selected trip's own shape's last point (its last stop — not the vehicle's live
+     * position, which hasn't started the next route yet). Draws a dashed line, in the neighbor route's
+     * own color, from [anchor] through the neighbor shape's first [CONTINUATION_LINE_LENGTH_METERS],
+     * terminated with an arrowhead oriented along the shape's travel direction there; the badge sits
+     * halfway between [anchor] and the arrowhead.
+     */
+    private fun buildRouteContinuation(
+        anchor: GeoPoint,
+        neighborShape: Polyline,
+        neighbor: TripRouteInfo,
+    ): RouteContinuation? {
+        val tail = neighborShape.subPolyline(0.0, CONTINUATION_LINE_LENGTH_METERS) ?: return null
+        val badgePoint = neighborShape.interpolate(CONTINUATION_LINE_LENGTH_METERS / 2) ?: return null
+        val endSeg = neighborShape.segmentIndex(CONTINUATION_LINE_LENGTH_METERS)
+        val arrowPoint = neighborShape.interpolate(CONTINUATION_LINE_LENGTH_METERS, endSeg) ?: return null
+        val lineColor = neighbor.routeColor ?: CONTINUATION_FALLBACK_LINE_COLOR
+        return RouteContinuation(
+            polyline = RoutePolyline(
+                color = lineColor,
+                points = listOf(anchor) + tail.map { it.toGeoPoint() },
+                widthDp = CONTINUATION_LINE_WIDTH_DP,
+                dashed = true,
+            ),
+            arrow = ContinuationArrow(arrowPoint.toGeoPoint(), neighborShape.bearingAt(endSeg)),
+            badge = ContinuationBadge(
+                badgePoint.toGeoPoint(),
+                neighbor.routeId,
+                neighbor.routeShortName.orEmpty(),
+                neighbor.directionId,
+            ),
+        )
+    }
+
     /** Recompute + push the vehicle set (the renderer reconciles markers from it), then resolve any pending focus. */
     private fun publishVehicleSet() {
         val layer = currentVehicleLayer()
@@ -334,8 +407,9 @@ class RouteMapController(
         renderState.setVehicleSet(null)
         renderState.setVehiclesSampler(null)
         renderState.setSelectedVehicle(null)
-        // The selection collector is cancelled above, so clear its overlay sampler explicitly.
+        // The selection collector is cancelled above, so clear its overlays explicitly.
         renderState.setTripOverlaySampler(null)
+        renderState.setRouteContinuation(null)
         _loadedRoute.value = null
     }
 
@@ -547,6 +621,34 @@ internal fun resolveVehicleFocus(
     markerPresent -> FocusResolution.FIT
     else -> FocusResolution.DROP
 }
+
+/**
+ * True when [neighborRouteId] genuinely differs from [currentRouteId] — the interlining continuation
+ * test (#1691). Deliberately just a routeId compare, not "does the block continue" (true at nearly
+ * every trip boundary — almost every trip has *a* next trip) and not a headsign/directionId change
+ * (also true at an ordinary same-route direction reversal): verified live against KCM block
+ * `1_8094451` that trip `1_664701340`'s `nextTripId` stays on route 45 with only a directionId flip
+ * 0→1 (not interlining), while its `previousTripId`'s routeId genuinely differs (75 vs 45) and is.
+ * [neighborRouteId] must come from the neighbor trip's own resolved record ([TripRouteInfo.routeId]),
+ * never guessed from headsign/direction.
+ */
+internal fun isRouteContinuation(currentRouteId: String, neighborRouteId: String): Boolean =
+    neighborRouteId.isNotEmpty() && neighborRouteId != currentRouteId
+
+// How far (meters) the route-continuation line (#1691) is drawn into the next route's shape before it
+// terminates in an arrowhead — a visual design choice (how much of the next route to preview), tunable
+// to taste. Not a data heuristic: it doesn't affect the interlining decision itself (that's the exact
+// routeId compare in [isRouteContinuation]) — only how much of an already-confirmed continuation is
+// drawn, no different from the existing ROUTE_LINE_WIDTH_DP constant.
+private const val CONTINUATION_LINE_LENGTH_METERS = 900.0
+
+// Drawn narrower than the shown route's own line ([ROUTE_LINE_WIDTH_DP]) so a continuation reads as a
+// preview/hint rather than as equally-weighted with the route the rider is actually looking at.
+private const val CONTINUATION_LINE_WIDTH_DP = ROUTE_LINE_WIDTH_DP * 0.7f
+
+// Used only when the neighbor route carries no GTFS color to draw the continuation line in its own
+// color with.
+private const val CONTINUATION_FALLBACK_LINE_COLOR = 0xFF9E9E9E.toInt() // opaque gray
 
 /** The latest trips-for-route [response] and the device clock ([loadNanos]) when it landed. */
 private data class VehiclePoll(val response: RouteTrips, val loadNanos: Long)

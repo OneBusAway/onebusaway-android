@@ -65,6 +65,7 @@ import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.MapEffect
 import org.onebusaway.android.map.MapNavigation
 import org.onebusaway.android.map.MapViewModel
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.StopsBanner
 import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.map.compose.ObaMapCallbacks
@@ -159,6 +160,10 @@ fun MapFeature(
 
             override fun onVehicleClick(status: ObaTripStatus) {
                 mapViewModel.onVehicleTapped(status)
+            }
+
+            override fun onRouteContinuationClick(routeId: String, directionId: Int?) {
+                mapViewModel.toRoute(ShowRouteRequest(routeId, initialDirectionId = directionId))
             }
 
             override fun onVehicleInfoWindowClick(status: ObaTripStatus) {

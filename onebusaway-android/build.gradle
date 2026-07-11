@@ -23,6 +23,7 @@ apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
 apply plugin: 'com.google.devtools.ksp'
 apply plugin: 'com.google.dagger.hilt.android'
 apply plugin: 'com.github.triplet.play'
+apply plugin: 'com.apollographql.apollo'
 
 repositories {
     maven {
@@ -263,6 +264,27 @@ configurations {
     }
 }
 
+// OTP 2.x GraphQL trip planning (#1780). Codegen source: src/main/graphql/otp2/
+// {schema.graphqls, Plan.graphql}. Schema is pinned to a specific OTP release tag (see the header
+// comment in schema.graphqls) rather than live introspection, per the issue's instructions.
+apollo {
+    service("otp2") {
+        packageName.set("org.onebusaway.android.api.graphql")
+        srcDir("src/main/graphql/otp2")
+        // These OTP2 custom scalars are all just strings on the wire (verified in schema.graphqls'
+        // own @specifiedBy annotations: ISO-8601 duration / offset-datetime / encoded polyline).
+        // Map them to String instead of Apollo's default `Any`, so parsing to java.time types stays
+        // explicit in Otp2PlanAdapters.kt rather than happening implicitly in generated code.
+        mapScalar("Duration", "kotlin.String")
+        mapScalar("OffsetDateTime", "kotlin.String")
+        mapScalar("Polyline", "kotlin.String")
+        mapScalar("CoordinateValue", "kotlin.Double")
+        // Long is a genuinely numeric custom scalar here (Itinerary.duration, in seconds) — not a
+        // string like the others above, so map straight to kotlin.Long instead.
+        mapScalar("Long", "kotlin.Long")
+    }
+}
+
 dependencies {
     // Custom lint checks (see :lint-rules) — RawClockArithmetic enforces the typed-time discipline.
     lintChecks project(':lint-rules')
@@ -305,6 +327,8 @@ dependencies {
     implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
     implementation 'com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3'
+    // OTP 2.x GraphQL trip planning (#1780), on top of the same OkHttp stack as the REST clients.
+    implementation 'com.apollographql.apollo:apollo-runtime:5.0.1'
     // For sorting alphanumeric route names
     implementation 'org.onebusaway.util:comparators:1.0.0'
     // Pelias for point-of-interest search and geocoding for trip planning origin and destination

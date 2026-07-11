@@ -23,6 +23,7 @@ import org.onebusaway.android.api.contract.RegionDto
 
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -52,6 +53,17 @@ class RegionsDecodeTest {
         val regions = decode("src/main/res/raw/regions_v3.json")
         assertTrue(regions.isNotEmpty())
         regions.forEach { assertNotNull(it.toObaRegion().name) }
+    }
+
+    /**
+     * #1780 is infra-only: no bundled region is flipped to OTP2 GraphQL by this change, so every
+     * region in the shipped directory must still default to OTP1 (the field is absent from the
+     * JSON entirely today). Guards against a future edit accidentally flipping one.
+     */
+    @Test
+    fun bundledRegionsDefaultToOtp1() {
+        val regions = decode("src/main/res/raw/regions_v3.json")
+        regions.forEach { assertFalse(it.toObaRegion().usesOtp2GraphQl) }
     }
 
     /** Ports testUmamiAnalyticsParsing: the nested umamiAnalytics object maps onto the region. */

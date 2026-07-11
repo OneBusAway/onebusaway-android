@@ -124,6 +124,7 @@ fun AdvancedSettingsRoute(
                 else -> true
             }
         },
+        onOtpUrlUsesGraphQlChange = viewModel::onCustomOtpApiUrlUsesGraphQlChanged,
         onMapStopCacheSizeChange = { value ->
             viewModel.onMapStopCacheSizeChanged(value).also { accepted ->
                 if (!accepted) {
@@ -151,6 +152,7 @@ fun AdvancedSettingsScreen(
     onDisplayTestAlerts: (Boolean) -> Unit,
     onObaUrlChange: (String) -> Boolean,
     onOtpUrlChange: (String) -> Boolean,
+    onOtpUrlUsesGraphQlChange: (Boolean) -> Unit,
     onMapStopCacheSizeChange: (String) -> Boolean,
     onResetDonationTimestamps: () -> Unit,
 ) {
@@ -208,6 +210,12 @@ fun AdvancedSettingsScreen(
                     currentValue = state.customOtpApiUrl,
                     hint = stringResource(R.string.preferences_otp_api_servername_hint),
                     onValueChange = onOtpUrlChange,
+                )
+                SwitchPreferenceItem(
+                    title = stringResource(R.string.preferences_otp_api_url_is_graphql_title),
+                    summary = stringResource(R.string.preferences_otp_api_url_is_graphql_summary),
+                    checked = state.customOtpApiUrlUsesGraphQl,
+                    onCheckedChange = onOtpUrlUsesGraphQlChange,
                 )
                 ClickPreferenceItem(
                     title = stringResource(R.string.preferences_reset_donation_timestamps_title),

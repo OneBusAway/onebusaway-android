@@ -44,6 +44,10 @@ data class Region(
     val otpBaseUrl: String? = "",
     val otpContactEmail: String? = "",
     val supportsOtpBikeshare: Boolean = false,
+    // Explicit protocol selection (#1780): false selects the OTP1 REST `/plan` path (the default,
+    // and the only path any bundled region uses today), true selects the OTP 2.x GraphQL
+    // `planConnection` path. Never sniffed/inferred from the URL or a failed request.
+    val usesOtp2GraphQl: Boolean = false,
     val supportsEmbeddedSocial: Boolean = false,
     val paymentAndroidAppId: String? = null,
     val paymentWarningTitle: String? = null,

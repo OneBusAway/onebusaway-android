@@ -129,6 +129,7 @@ class SettingsUiStateTest {
         displayTestAlerts = false,
         customObaApiUrl = null,
         customOtpApiUrl = null,
+        customOtpApiUrlUsesGraphQl = false,
         mapStopCacheSize = 200,
     )
 

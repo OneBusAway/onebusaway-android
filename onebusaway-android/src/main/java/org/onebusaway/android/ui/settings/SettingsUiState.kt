@@ -137,6 +137,9 @@ data class AdvancedPrefSnapshot(
     val displayTestAlerts: Boolean,
     val customObaApiUrl: String?,
     val customOtpApiUrl: String?,
+    // Manual OTP protocol override for the custom URL above (#1780) — mirrors Region.usesOtp2GraphQl
+    // for the no-region / custom-server case, where there's no Region to carry the flag.
+    val customOtpApiUrlUsesGraphQl: Boolean,
     val mapStopCacheSize: Int,
 )
 
@@ -161,6 +164,7 @@ data class AdvancedSettingsUiState(
     val displayTestAlerts: Boolean,
     val customObaApiUrl: String?,
     val customOtpApiUrl: String?,
+    val customOtpApiUrlUsesGraphQl: Boolean,
     val customObaApiUrlSummary: String,
     val customOtpApiUrlSummary: String,
     val currentRegionIsExperimental: Boolean,
@@ -191,6 +195,7 @@ fun buildAdvancedSettingsUiState(
         displayTestAlerts = prefs.displayTestAlerts,
         customObaApiUrl = prefs.customObaApiUrl,
         customOtpApiUrl = prefs.customOtpApiUrl,
+        customOtpApiUrlUsesGraphQl = prefs.customOtpApiUrlUsesGraphQl,
         customObaApiUrlSummary = obaSummary,
         customOtpApiUrlSummary = otpSummary,
         currentRegionIsExperimental = region?.isExperimental == true,

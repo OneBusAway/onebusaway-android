@@ -28,6 +28,7 @@ import org.onebusaway.android.database.MIGRATION_1_2
 import org.onebusaway.android.database.MIGRATION_2_3
 import org.onebusaway.android.database.MIGRATION_3_4
 import org.onebusaway.android.database.MIGRATION_4_5
+import org.onebusaway.android.database.MIGRATION_5_6
 import org.onebusaway.android.database.oba.DefaultImportGate
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.LegacyDataImporter
@@ -63,7 +64,8 @@ object DatabaseModule {
             context.applicationContext,
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
-        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
+        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+            .build()
 
     @Provides
     fun provideLegacyImportDao(db: AppDatabase): LegacyImportDao = db.legacyImportDao()

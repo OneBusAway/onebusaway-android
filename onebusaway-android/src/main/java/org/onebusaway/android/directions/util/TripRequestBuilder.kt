@@ -206,16 +206,24 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
     }
 
     /**
+     * The user's custom OTP API URL preference, or null if unset/blank — the shared "is a custom
+     * server configured" signal both [formattedOtpBaseUrl] and [usesOtp2] branch on.
+     */
+    private val customOtpApiUrl: String?
+        get() = PreferencesEntryPoint.get(mContext)
+            .getString(mContext.getString(R.string.preference_key_otp_api_url), null as String?)
+            ?.takeUnless { TextUtils.isEmpty(it) }
+
+    /**
      * Resolves and formats the OTP base URL (the user's custom URL if set, otherwise the current
      * region's), or null if neither is available.
      */
     val formattedOtpBaseUrl: String?
         get() {
             var otpBaseUrl: String?
-            val customOtpApiUrl = PreferencesEntryPoint.get(mContext)
-                .getString(mContext.getString(R.string.preference_key_otp_api_url), null as String?)
-            if (!TextUtils.isEmpty(customOtpApiUrl)) {
-                otpBaseUrl = customOtpApiUrl
+            val customUrl = customOtpApiUrl
+            if (customUrl != null) {
+                otpBaseUrl = customUrl
                 Log.d(TAG, "Using custom OTP API URL set by user '$otpBaseUrl'.")
             } else {
                 // No custom URL and no selected region: return null so the caller
@@ -231,6 +239,21 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
                 otpBaseUrl = mContext.getString(R.string.https_prefix) + otpBaseUrl
             }
             return if (otpBaseUrl != null) RegionUtils.formatOtpBaseUrl(otpBaseUrl) else null
+        }
+
+    /**
+     * Whether this request should go through the OTP 2.x GraphQL path rather than OTP1 REST
+     * (#1780). Resolved the same way as [formattedOtpBaseUrl] (custom-URL-or-region): with a
+     * custom OTP URL set, the manual override preference applies (there's no [Region] to carry
+     * the flag); otherwise the current region's `usesOtp2GraphQl` flag applies. Explicit, never
+     * sniffed from the URL shape or a failed request.
+     */
+    val usesOtp2: Boolean
+        get() = if (customOtpApiUrl != null) {
+            PreferencesEntryPoint.get(mContext)
+                .getBoolean(R.string.preference_key_otp_api_url_is_graphql, false)
+        } else {
+            RegionEntryPoint.get(mContext).currentRegion()?.usesOtp2GraphQl ?: false
         }
 
     private fun getAddressString(address: CustomAddress?): String? {

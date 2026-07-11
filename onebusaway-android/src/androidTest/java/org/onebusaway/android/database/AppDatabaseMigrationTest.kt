@@ -28,7 +28,8 @@ import org.junit.runner.RunWith
  * recentStops `stops`/`regions` tables are dropped and replaced with the legacy-schema tables (created
  * empty — the data import from the legacy ContentProvider DB is a separate slice); and that
  * [MIGRATION_3_4] reconciles `routes.favorite` from the authoritative `route_headsign_favorites` table
- * before dropping it (#1751) and adds the `surveys.study_id` foreign-key child index (#1739).
+ * before dropping it (#1751) and adds the `surveys.study_id` foreign-key child index (#1739); and that
+ * [MIGRATION_5_6] adds `regions.uses_otp2_graphql` defaulting existing rows to OTP1 (#1780).
  */
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseMigrationTest {
@@ -137,6 +138,26 @@ class AppDatabaseMigrationTest {
         )
         db.query("SELECT count(*) FROM cached_stops").use { c ->
             c.moveToFirst(); assertEquals(1, c.getInt(0))
+        }
+        db.close()
+    }
+
+    @Test
+    fun migrate5To6_addsUsesOtp2GraphQlColumn_defaultingExistingRowsToFalse() {
+        helper.createDatabase(TEST_DB, 5).use { db ->
+            db.execSQL(
+                "INSERT INTO regions (_id, name, oba_base_url, siri_base_url, lang, contact_email, " +
+                    "supports_api_discovery, supports_api_realtime, supports_siri_realtime) " +
+                    "VALUES (1, 'Puget Sound', '', '', '', '', 0, 0, 0)"
+            )
+        }
+
+        // runMigrationsAndValidate asserts the resulting schema matches the exported 6.json.
+        val db = helper.runMigrationsAndValidate(TEST_DB, 6, true, MIGRATION_5_6)
+
+        db.query("SELECT uses_otp2_graphql FROM regions WHERE _id = 1").use { c ->
+            c.moveToFirst()
+            assertEquals("pre-existing region should default to OTP1 (0)", 0, c.getInt(0))
         }
         db.close()
     }

@@ -96,11 +96,9 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -136,6 +134,11 @@ private val PULL_TO_LOAD_MAX = 72.dp
  * that reveals a trailing load-more affordance; releasing past [PULL_TO_LOAD_THRESHOLD] widens the
  * arrivals window via [ArrivalRowCallbacks.onLoadMore] — this replaced the drawer's footer button
  * (issue #1707 follow-up). A TalkBack custom action exposes the same load-more for non-drag users.
+ *
+ * The strip also keeps its soonest *upcoming* pill pinned to the leading edge over time: it snaps
+ * there instantly on first display (using [start]), then as the shared live clock ticks a trip's ETA
+ * past zero between polls, glides the strip left so the just-departed pill visibly slides into the
+ * left overflow instead of sitting there stale until the next poll.
  */
 @Composable
 internal fun EtaStrip(
@@ -164,13 +167,46 @@ internal fun EtaStrip(
     // the (pill-less) empty-trips case; nothing reads it since the pill loop below never runs.
     val liveNow = rememberLiveServerTime(trips.firstOrNull()?.serverNow ?: ServerTime(0L))
 
-    // Justify the `start` pill to the leading edge: capture its content-x (positionInParent is
-    // scroll-independent, so it's the offset from the content's start) once, then scroll there. One-shot
-    // — a later ETA update or a user scroll isn't yanked back.
+    // The pinned pill's own content-x (positionInParent is scroll-independent, so it's the offset from
+    // the content's start), -1 until measured. Only the currently-pinned pill is ever measured — see
+    // the pill loop below — so this holds one live value rather than a map of every pill's offset.
+    var pinnedOffsetPx by remember { mutableIntStateOf(-1) }
+
+    // The pill currently pinned to the strip's leading edge — earlier (recent-past) pills overflow off
+    // the left, reachable via the left chevron. Starts at the poll-time first-upcoming index (or 0,
+    // already the strip's start, when every trip is upcoming); only ever advances forward, from the
+    // BOOKKEEPER effect below — never yanked backward by an ordinary poll data reshuffle.
     val justifyIndex = start?.takeIf { it in 1..trips.lastIndex }
-    var justifyOffsetPx by remember { mutableIntStateOf(-1) }
-    LaunchedEffect(justifyOffsetPx) {
-        if (justifyOffsetPx > 0) scrollState.scrollTo(justifyOffsetPx)
+    var pinnedIndex by remember { mutableIntStateOf(justifyIndex ?: 0) }
+
+    // Bridges values that change across recompositions into the long-lived effect below, which
+    // otherwise would close over a stale snapshot the moment it first suspends — the same idiom as
+    // `versionState` a few lines down.
+    val tripsState = rememberUpdatedState(trips)
+    val liveNowState = rememberUpdatedState(liveNow)
+
+    // BOOKKEEPER: advances `pinnedIndex` as `liveNow` ticks a trip's countdown past zero between
+    // polls — a single long-lived collector (not re-launched per tick), so a departure is observed
+    // exactly once as a level change, not by polling a recomposition-derived key. Never backward, so
+    // an ordinary poll data reshuffle can't yank the pin; only a live departure moves it.
+    LaunchedEffect(Unit) {
+        snapshotFlow { tripsState.value.indexOfFirst { it.liveEta(liveNowState.value) >= 0 } }
+            .collect { current -> if (current > pinnedIndex) pinnedIndex = current }
+    }
+
+    // CHASER: keeps the strip's leading edge on whatever pill is currently pinned. Instant for the
+    // cold-start snap onto `justifyIndex` (so the strip never visibly slides on first display), then
+    // [glideTo] takes over for every later departure — the same self-correcting chase the load-more
+    // reveal transaction's FOLLOWER below uses, so a target that moves mid-glide (another departure
+    // landing before the previous glide finishes, or the pinned pill's own width shifting as its digit
+    // count changes) is simply chased again next iteration instead of overshooting/undershooting a
+    // stale pixel value.
+    LaunchedEffect(Unit) {
+        if (justifyIndex != null) {
+            val offsetPx = snapshotFlow { pinnedOffsetPx.takeIf { it >= 0 } }.filterNotNull().first()
+            scrollState.scrollTo(offsetPx)
+        }
+        scrollState.glideTo { pinnedOffsetPx.takeIf { it >= 0 } }
     }
     val density = LocalDensity.current
     val triggerPx = remember(density) { with(density) { PULL_TO_LOAD_THRESHOLD.toPx() } }
@@ -210,23 +246,13 @@ internal fun EtaStrip(
         if (token == NO_LOAD_REQUEST) return@LaunchedEffect
         try {
             coroutineScope {
-                // FOLLOWER: glides to the current end whenever there is one to reach. Each glide runs
-                // TO COMPLETION and the loop then re-evaluates against current state (never
-                // collectLatest: a change mid-glide is caught by the fresh level-triggered re-await,
-                // so there is no lost-update window).
+                // FOLLOWER: glides to the current end whenever there is one to reach — [glideTo] runs
+                // each glide to completion and then re-evaluates against current state (never
+                // collectLatest: a change mid-glide is caught by the fresh level-triggered re-await, so
+                // there is no lost-update window). A drag that actually travels ends the whole
+                // transaction via the nested-scroll hook, not this loop.
                 val follower = launch {
-                    while (true) {
-                        snapshotFlow { scrollState.maxValue > scrollState.value }.first { it }
-                        try {
-                            scrollState.animateScrollTo(scrollState.maxValue)
-                        } catch (cause: CancellationException) {
-                            currentCoroutineContext().ensureActive() // real teardown propagates
-                            // Lost the scrollable mutex to a touch. Never contest user input: resume
-                            // the chase only once the strip is fully at rest. (A drag that actually
-                            // travels ends the whole transaction via the nested-scroll hook.)
-                            snapshotFlow { scrollState.isScrollInProgress }.first { !it }
-                        }
-                    }
+                    scrollState.glideTo { scrollState.maxValue.takeIf { it > scrollState.value } }
                 }
                 // AWAIT RESULT: level-triggered on the VM's StateFlow — a Finished that landed before
                 // we started collecting is still observed (StateFlow replays its value).
@@ -343,19 +369,22 @@ internal fun EtaStrip(
                 verticalAlignment = Alignment.Bottom
             ) {
                 trips.forEachIndexed { index, trip ->
-                    val pillModifier = when {
-                        index == 0 -> firstPillModifier
-                        // Measure the justify pill's content offset once — attached only until captured,
-                        // so the callback self-detaches (writing justifyOffsetPx recomposes the strip).
-                        index == justifyIndex && justifyOffsetPx < 0 -> Modifier.onGloballyPositioned { coords ->
+                    // Only the currently-pinned pill measures its content-space offset — it's the one
+                    // pill CHASER (above) ever reads, and re-measuring continuously (not just once)
+                    // catches its own width shifting as its digit count changes. As `pinnedIndex`
+                    // advances, this modifier simply moves to the new pill on the next recomposition.
+                    val measureOffset = if (index == pinnedIndex) {
+                        Modifier.onGloballyPositioned { coords ->
                             // Offset within the scroll content Row (its direct parent), which is
                             // content-space and so scroll-independent.
                             coords.parentLayoutCoordinates?.let { parent ->
-                                justifyOffsetPx = parent.localPositionOf(coords, Offset.Zero).x.roundToInt()
+                                pinnedOffsetPx = parent.localPositionOf(coords, Offset.Zero).x.roundToInt()
                             }
                         }
-                        else -> Modifier
+                    } else {
+                        Modifier
                     }
+                    val pillModifier = if (index == 0) firstPillModifier.then(measureOffset) else measureOffset
                     EtaPillWithMenu(
                         trip = trip,
                         liveNow = liveNow,

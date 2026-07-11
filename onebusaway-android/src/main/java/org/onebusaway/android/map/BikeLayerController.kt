@@ -30,13 +30,13 @@ import org.onebusaway.android.R
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.map.bike.BikeAction
+import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.bike.BikeStationsRepository
 import org.onebusaway.android.map.bike.bikeAction
 import org.onebusaway.android.map.bike.filterStations
 import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.preferences.PreferencesRepository
-import org.opentripplanner.routing.bike_rental.BikeRentalStation
 
 /**
  * The bikeshare overlay (the legacy `BikeshareMapController`). It **overlays every view** rather than
@@ -114,9 +114,9 @@ class BikeLayerController(
         loadJob = null
     }
 
-    private fun showBikeStations(stations: List<BikeRentalStation>, bikeshareVisible: Boolean) {
+    private fun showBikeStations(stations: List<BikeStation>, bikeshareVisible: Boolean) {
         val markers = stations.map {
-            BikeMarker(it.id, GeoPoint(it.y, it.x), it.isFloatingBike, it)
+            BikeMarker(it.id, GeoPoint(it.latitude, it.longitude), it.isFloatingBike, it)
         }
         host.renderState.setBikeStations(markers, bikeshareVisible)
     }

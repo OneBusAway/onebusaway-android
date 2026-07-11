@@ -15,8 +15,8 @@
  */
 package org.onebusaway.android.api
 
+import org.onebusaway.android.api.adapters.toBikeStations
 import org.onebusaway.android.api.contract.BikeRentalStationsDto
-import org.onebusaway.android.api.contract.toBikeRentalStations
 
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -26,9 +26,10 @@ import org.junit.Test
 import java.io.File
 
 /**
- * Covers the OTP bike-rental decode + the mapping onto the OTP [BikeRentalStation] POJO the map
- * overlay consumes. The wire is plain JSON whose keys match the POJO field names; extra keys (e.g.
- * `networks`) must be ignored, not rejected.
+ * Covers the OTP bike-rental decode + the mapping onto the app-owned
+ * [org.onebusaway.android.map.bike.BikeStation] domain model the map overlay consumes. The wire is
+ * plain JSON whose keys match the DTO field names; extra keys (e.g. `networks`) must be ignored, not
+ * rejected.
  */
 class BikeStationsDecodeTest {
 
@@ -60,14 +61,14 @@ class BikeStationsDecodeTest {
         val dto = json.decodeFromString<BikeRentalStationsDto>(body)
         assertEquals(2, dto.stations.size)
 
-        val stations = dto.toBikeRentalStations()
+        val stations = dto.toBikeStations()
         assertEquals(2, stations.size)
 
         val first = stations[0]
         assertEquals("bike_1", first.id)
         assertEquals("Pine & 5th", first.name)
-        assertEquals(-122.334, first.x, 1e-6)
-        assertEquals(47.611, first.y, 1e-6)
+        assertEquals(-122.334, first.longitude, 1e-6)
+        assertEquals(47.611, first.latitude, 1e-6)
         assertEquals(4, first.bikesAvailable)
         assertEquals(6, first.spacesAvailable)
         assertTrue(first.allowDropoff)
@@ -78,14 +79,14 @@ class BikeStationsDecodeTest {
     }
 
     /**
-     * Decodes the real OTP Tampa bike-rental fixture and maps it onto [BikeRentalStation], porting
-     * the assertions from the retired live-network `BikeStationRequestTest`. Note the OTP server
-     * returns ids wrapped in literal quote characters (`"bike_3566"`), preserved verbatim.
+     * Decodes the real OTP Tampa bike-rental fixture and maps it onto [org.onebusaway.android.map.bike.BikeStation],
+     * porting the assertions from the retired live-network `BikeStationRequestTest`. Note the OTP
+     * server returns ids wrapped in literal quote characters (`"bike_3566"`), preserved verbatim.
      */
     @Test
     fun decodesTampaFixture() {
         val body = File("src/androidTest/res/raw/bike_rental_tampa_all.json").readText()
-        val stations = json.decodeFromString<BikeRentalStationsDto>(body).toBikeRentalStations()
+        val stations = json.decodeFromString<BikeRentalStationsDto>(body).toBikeStations()
 
         assertEquals(133, stations.size)
         stations.forEach { assertNotNull(it.name) }
@@ -94,8 +95,8 @@ class BikeStationsDecodeTest {
         val precision = 0.000001
         assertEquals("\"bike_3566\"", first.id)
         assertEquals("B-1165", first.name)
-        assertEquals(-82.40730666666667, first.x, precision)
-        assertEquals(28.066505, first.y, precision)
+        assertEquals(-82.40730666666667, first.longitude, precision)
+        assertEquals(28.066505, first.latitude, precision)
         assertEquals(1, first.bikesAvailable)
         assertEquals(0, first.spacesAvailable)
         assertEquals(false, first.allowDropoff)

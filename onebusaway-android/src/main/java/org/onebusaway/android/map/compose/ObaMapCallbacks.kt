@@ -17,8 +17,8 @@ package org.onebusaway.android.map.compose
 
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.render.GeoPoint
-import org.opentripplanner.routing.bike_rental.BikeRentalStation
 
 /**
  * Map interaction a flavor's [ObaComposeMapAdapter] reports back to its host. Flavor-neutral (no
@@ -34,7 +34,7 @@ interface ObaMapCallbacks {
 
     fun onMapClick(point: GeoPoint?)
 
-    fun onBikeClick(station: BikeRentalStation)
+    fun onBikeClick(station: BikeStation)
 
     /** A vehicle marker tap — the host selects it (e.g. to show its most-recent-data marker). */
     fun onVehicleClick(status: ObaTripStatus) {}
@@ -43,5 +43,5 @@ interface ObaMapCallbacks {
     fun onVehicleInfoWindowClick(status: ObaTripStatus)
 
     /** The bike info-window "more info" tap — the host navigates (e.g. the bikeshare deep link). */
-    fun onBikeInfoWindowClick(station: BikeRentalStation)
+    fun onBikeInfoWindowClick(station: BikeStation)
 }

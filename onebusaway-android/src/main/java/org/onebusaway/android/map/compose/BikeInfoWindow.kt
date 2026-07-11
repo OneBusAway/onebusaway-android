@@ -32,7 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.onebusaway.android.R
-import org.opentripplanner.routing.bike_rental.BikeRentalStation
+import org.onebusaway.android.map.bike.BikeStation
 
 // Info-window contents sit on a white bubble, so text uses fixed dark colors.
 private val BikePrimary = Color(0xDE000000)
@@ -45,7 +45,7 @@ private val BikeSecondary = Color(0x99000000)
  * a `ComposeView` wrapped in its own bubble.
  */
 @Composable
-fun BikeInfoWindow(station: BikeRentalStation) {
+fun BikeInfoWindow(station: BikeStation) {
     Column(modifier = Modifier.padding(8.dp)) {
         Text(
             text = station.name,

@@ -35,9 +35,6 @@
 # Keep all OneBusAway Android classes
 -keep class org.onebusaway.android.** { *; }
 
-# Keep all OpenTripPlanner POJO classes
--keep class org.opentripplanner.** { *; }
-
 # Keep all Pelias POJO classes for geocoding
 -keep class edu.usf.cutr.pelias.** { *; }
 

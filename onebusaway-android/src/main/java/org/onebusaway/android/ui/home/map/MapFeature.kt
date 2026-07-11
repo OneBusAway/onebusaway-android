@@ -66,6 +66,7 @@ import org.onebusaway.android.map.MapEffect
 import org.onebusaway.android.map.MapNavigation
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.StopsBanner
+import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.map.compose.ObaMapCallbacks
 import org.onebusaway.android.map.render.GeoPoint
@@ -77,7 +78,6 @@ import org.onebusaway.android.util.LayerUtils
 import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
-import org.opentripplanner.routing.bike_rental.BikeRentalStation
 
 /**
  * The self-wiring map feature module: renders [ObaMap] and owns everything that used to be map glue
@@ -139,7 +139,7 @@ fun MapFeature(
                 homeViewModel.onBikeStationFocused(null)
             }
 
-            override fun onBikeClick(station: BikeRentalStation) {
+            override fun onBikeClick(station: BikeStation) {
                 val bikeId = homeViewModel.uiState.value.focusedBikeStationId
                 if (bikeId == null || !bikeId.equals(station.id, ignoreCase = true)) {
                     homeViewModel.onBikeStationFocused(station.id)
@@ -167,7 +167,7 @@ fun MapFeature(
                 )
             }
 
-            override fun onBikeInfoWindowClick(station: BikeRentalStation) {
+            override fun onBikeInfoWindowClick(station: BikeStation) {
                 MapNavigation.openBikeDeepLink(context, station)
             }
         }

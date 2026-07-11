@@ -16,16 +16,15 @@
 package org.onebusaway.android.api.contract
 
 import kotlinx.serialization.Serializable
-import org.opentripplanner.routing.bike_rental.BikeRentalStation
 
 /**
  * Bike-rental response models for [BikeWebService]. These come from an OpenTripPlanner server
  * (`routers/default/bike_rental`), not the OBA `where` API, and are plain JSON.
  *
- * The map/overlay consumers (BikeLayerController, MapRenderState, BikeInfoWindow, …) all read the
- * OTP library's [BikeRentalStation] POJO, so rather than ripple a new type through them, the DTO
- * decodes the wire and [toBikeRentalStations] maps onto that POJO (its fields are public and it has
- * a no-arg constructor). Property names mirror the OTP field names so no `@SerialName` is needed.
+ * [org.onebusaway.android.api.adapters.toBikeStations] (in `api/adapters/BikeStationAdapters.kt`) maps
+ * these onto the app-owned [org.onebusaway.android.map.bike.BikeStation] domain model the map/overlay
+ * consumers (BikeLayerController, MapRenderState, BikeInfoWindow, …) actually read. Property names
+ * mirror the OTP field names so no `@SerialName` is needed.
  */
 @Serializable
 data class BikeRentalStationsDto(
@@ -44,19 +43,3 @@ data class BikeStationDto(
     val isFloatingBike: Boolean = false,
     val realTimeData: Boolean = false,
 )
-
-/** Maps the decoded stations onto the OTP [BikeRentalStation] POJO the map consumers expect. */
-fun BikeRentalStationsDto.toBikeRentalStations(): List<BikeRentalStation> =
-    stations.map { it.toBikeRentalStation() }
-
-private fun BikeStationDto.toBikeRentalStation(): BikeRentalStation = BikeRentalStation().also {
-    it.id = id
-    it.name = name
-    it.x = x
-    it.y = y
-    it.bikesAvailable = bikesAvailable
-    it.spacesAvailable = spacesAvailable
-    it.allowDropoff = allowDropoff
-    it.isFloatingBike = isFloatingBike
-    it.realTimeData = realTimeData
-}

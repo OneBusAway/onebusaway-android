@@ -328,6 +328,10 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1'
+    // Pin past the transitively-resolved 3.5.0 (2022): its InputManagerEventInjectionStrategy reflects
+    // for a hidden InputManager.getInstance() that Android 16 (API 36) removed, so Espresso.onIdle()
+    // throws NoSuchMethodException on current devices before any test body runs.
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
     // WorkManager (Java only)
     implementation 'androidx.work:work-runtime:2.9.1'
     implementation "androidx.concurrent:concurrent-futures:1.2.0"
@@ -360,6 +364,10 @@ dependencies {
     implementation 'androidx.compose.ui:ui'                     // 1.11.2 via BOM
     implementation 'androidx.compose.ui:ui-tooling-preview'     // @Preview support
     debugImplementation 'androidx.compose.ui:ui-tooling'        // preview renderer (debug only)
+    // Compose UI instrumented testing (createComposeRule): semantic tree assertions on real devices,
+    // per the "never tap raw screen coordinates" testing policy.
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
     implementation 'androidx.compose.material3:material3'      // 1.4.0 via BOM
     // Material icons (Icons.Filled.*, AutoMirrored ArrowBack). Deprecated and frozen at 1.7.8, and
     // no longer pulled transitively by material3 1.4.0, so pin explicitly. 1.7.8 runs fine on the

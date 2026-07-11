@@ -503,12 +503,11 @@ private fun EtaPillWithMenu(
     val clockTime = remember(trip.displayTime, context) {
         DisplayFormat.formatTime(context, trip.displayTime.epochMs)
     }
-    Box {
+    Box(modifier) {
         EtaPill(
             eta = trip.liveEta(liveNow),
             color = colorResource(trip.color),
             predicted = trip.predicted,
-            modifier = modifier,
             canceled = trip.status == Status.CANCELED,
             clockTime = clockTime,
             onClick = { callbacks.onEtaClick(trip) },

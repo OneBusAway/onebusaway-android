@@ -39,6 +39,9 @@ interface ObaMapCallbacks {
     /** A vehicle marker tap — the host selects it (e.g. to show its most-recent-data marker). */
     fun onVehicleClick(status: ObaTripStatus) {}
 
+    /** The route-continuation badge tap (#1691) — the host navigates the map to [routeId]'s [directionId]. */
+    fun onRouteContinuationClick(routeId: String, directionId: Int?) {}
+
     /** The vehicle info-window "more info" tap — the host navigates (e.g. to TripDetails). */
     fun onVehicleInfoWindowClick(status: ObaTripStatus)
 

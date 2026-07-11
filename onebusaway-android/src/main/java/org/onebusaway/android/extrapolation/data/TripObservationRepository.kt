@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.models.TripRouteInfo
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.Polyline
 
@@ -85,6 +86,15 @@ interface TripObservationRepository {
      * rather than its own copy.
      */
     suspend fun ensureShape(tripId: String, shapeId: String): Polyline?
+
+    /**
+     * Resolves [tripId]'s route identity + shapeId from the standalone `trip` endpoint — for a trip
+     * the current route's poll never fetched (the interlining continuation's neighbor trip, #1691).
+     * Tap-driven (called once per vehicle selection by [org.onebusaway.android.map.RouteMapController],
+     * not polled): a successful resolution is cached by trip id (a trip's route never changes), so
+     * re-selecting the same vehicle later is free; a failure isn't cached, so the next selection retries.
+     */
+    suspend fun resolveNeighborTrip(tripId: String): TripRouteInfo?
 }
 
 @Singleton
@@ -94,6 +104,7 @@ class DefaultTripObservationRepository @Inject constructor(
 
     private val cache = TripStateCache()
     private val shapeCache = ShapeCache()
+    private val neighborTripCache = NeighborTripCache()
 
     override fun lookupTripState(tripId: String?): TripState? = cache.lookupTripState(tripId)
 
@@ -141,6 +152,10 @@ class DefaultTripObservationRepository @Inject constructor(
                 ?: fetcher.shape(shapeId)?.also { shapeCache.put(shapeId, it) }
         return polyline?.also { cache.putPolyline(tripId, it) }
     }
+
+    override suspend fun resolveNeighborTrip(tripId: String): TripRouteInfo? =
+            neighborTripCache.get(tripId)
+                    ?: fetcher.tripRouteInfo(tripId)?.also { neighborTripCache.put(tripId, it) }
 
     /** Records everything a trip details poll carries: shapeId/active-trip, schedule, service date, observations. */
     private fun recordTripDetails(tripId: String, details: TripDetails) {

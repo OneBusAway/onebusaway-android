@@ -28,6 +28,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.models.TripRouteInfo
 import org.onebusaway.android.time.ServiceDate
 import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.util.SingleFlight
@@ -55,6 +56,13 @@ interface TripObservationFetcher {
     suspend fun tripSchedule(tripId: String): ObaTripSchedule?
 
     suspend fun shape(shapeId: String): Polyline?
+
+    /**
+     * A trip's route identity + shapeId, independent of the trip-details/trips-for-route polls above —
+     * for a trip that may be on a different route entirely (the interlining continuation's neighbor
+     * trip, #1691). Immutable like [tripSchedule]/[shape], so it's [SingleFlight]-coalesced too.
+     */
+    suspend fun tripRouteInfo(tripId: String): TripRouteInfo?
 }
 
 /**
@@ -94,6 +102,7 @@ class DefaultTripObservationFetcher @Inject constructor(
 
     private val scheduleFetches = SingleFlight<String, ObaTripSchedule>(fetchScope)
     private val shapeFetches = SingleFlight<String, Polyline>(fetchScope)
+    private val tripRouteInfoFetches = SingleFlight<String, TripRouteInfo>(fetchScope)
 
     override suspend fun tripDetails(tripId: String): TripDetails? =
             guarded("trip details for $tripId") {
@@ -150,6 +159,13 @@ class DefaultTripObservationFetcher @Inject constructor(
                     guarded("shape for $shapeId") { dataSource.shape(shapeId).getOrThrow() }
                 }.also {
                     if (it == null) Log.w(TAG, "Shape fetch for $shapeId yielded no polyline")
+                }
+            }
+
+    override suspend fun tripRouteInfo(tripId: String): TripRouteInfo? =
+            tripRouteInfoFetches.run(tripId) {
+                guarded("route info for trip $tripId") {
+                    dataSource.trip(tripId).getOrThrow()
                 }
             }
 }

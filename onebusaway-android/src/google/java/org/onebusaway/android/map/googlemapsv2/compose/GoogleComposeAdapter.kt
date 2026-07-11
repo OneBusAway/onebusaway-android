@@ -350,6 +350,11 @@ private fun routeMarkerTap(
         }
         return true
     }
+    val continuationBadge = renderer.continuationBadgeForMarker(marker)
+    if (continuationBadge != null) {
+        cb.onRouteContinuationClick(continuationBadge.routeId, continuationBadge.directionId)
+        return true
+    }
     // Trip-focus estimate markers + the most-recent-data dot (titled markers): the SDK's default
     // title/snippet info window, which dismisses any open custom bubble.
     infoWindows.clear()

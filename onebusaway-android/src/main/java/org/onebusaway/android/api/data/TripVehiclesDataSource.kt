@@ -16,6 +16,7 @@
 package org.onebusaway.android.api.data
 
 import org.onebusaway.android.api.adapters.toObaTripSchedule
+import org.onebusaway.android.api.adapters.colorArgb
 import org.onebusaway.android.api.adapters.DtoTripDetails
 import org.onebusaway.android.api.adapters.DtoRoute
 import org.onebusaway.android.api.adapters.DtoTrip
@@ -35,6 +36,7 @@ import org.onebusaway.android.models.ObaTrip
 import org.onebusaway.android.models.ObaTripDetails
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.models.TripRouteInfo
 import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.util.PolylineDecoder
 
@@ -119,6 +121,14 @@ interface TripVehiclesDataSource {
 
     /** The decoded shape polyline, or null when the response carries no usable points. */
     suspend fun shape(shapeId: String): Result<Polyline?>
+
+    /**
+     * The static route identity for an arbitrary [tripId], independent of trips-for-route — for a trip
+     * the current route's poll never fetched (the interlining continuation's neighbor trip, #1691, is
+     * on a different route than anything trips-for-route/tripDetails above have seen). Resolves the
+     * route's shortName/color from the same response's references, so one call is enough.
+     */
+    suspend fun trip(tripId: String): Result<TripRouteInfo?>
 }
 
 class DefaultTripVehiclesDataSource @Inject constructor(
@@ -143,6 +153,20 @@ class DefaultTripVehiclesDataSource @Inject constructor(
             .takeIf { it.isNotEmpty() }
             ?.let { Polyline(it) }
     }.onFailure { Log.e(TAG, "shape($shapeId) failed", it) }
+
+    override suspend fun trip(tripId: String): Result<TripRouteInfo?> = api.call {
+        val data = it.trip(tripId).requireData()
+        val entry = data.entry
+        val route = data.references.route(entry.routeId)
+        TripRouteInfo(
+            tripId = entry.id,
+            routeId = entry.routeId,
+            shapeId = entry.shapeId?.takeIf { s -> s.isNotEmpty() },
+            routeShortName = route?.shortName,
+            routeColor = route?.colorArgb(),
+            directionId = entry.directionId?.toIntOrNull(),
+        )
+    }.onFailure { Log.e(TAG, "trip($tripId) failed", it) }
 
     private companion object {
         const val TAG = "TripVehiclesDataSource"

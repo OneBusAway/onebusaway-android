@@ -402,6 +402,10 @@ class MapViewModel @Inject constructor(
         if (routeController.routeId == request.routeId &&
             routeController.directionStopId == request.directionStopId
         ) {
+            // Honor a requested direction override here too (not just in the re-entry branch below) so
+            // this branch is correct for any initialDirectionId-bearing request, not just the ones that
+            // happen not to hit it today (a no-op when null or already the shown direction).
+            request.initialDirectionId?.let { routeController.selectDirection(it) }
             if (request.focusTripId == null) {
                 mapHost.frameRoute()
             } else {
@@ -412,6 +416,7 @@ class MapViewModel @Inject constructor(
                 request.routeId,
                 zoomToRoute = true,
                 directionStopId = request.directionStopId,
+                initialDirectionId = request.initialDirectionId,
                 focusTripId = request.focusTripId,
             )
         }

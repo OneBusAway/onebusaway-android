@@ -211,12 +211,18 @@ fun AdvancedSettingsScreen(
                     hint = stringResource(R.string.preferences_otp_api_servername_hint),
                     onValueChange = onOtpUrlChange,
                 )
-                SwitchPreferenceItem(
-                    title = stringResource(R.string.preferences_otp_api_url_is_graphql_title),
-                    summary = stringResource(R.string.preferences_otp_api_url_is_graphql_summary),
-                    checked = state.customOtpApiUrlUsesGraphQl,
-                    onCheckedChange = onOtpUrlUsesGraphQlChange,
-                )
+                // Only meaningful once a custom OTP URL is set — TripRequestBuilder.usesOtp2 only
+                // reads this preference in that case, falling back to the region's own flag
+                // otherwise, so showing it unconditionally would suggest it does something it
+                // doesn't.
+                if (!state.customOtpApiUrl.isNullOrEmpty()) {
+                    SwitchPreferenceItem(
+                        title = stringResource(R.string.preferences_otp_api_url_is_graphql_title),
+                        summary = stringResource(R.string.preferences_otp_api_url_is_graphql_summary),
+                        checked = state.customOtpApiUrlUsesGraphQl,
+                        onCheckedChange = onOtpUrlUsesGraphQlChange,
+                    )
+                }
                 ClickPreferenceItem(
                     title = stringResource(R.string.preferences_reset_donation_timestamps_title),
                     summary = stringResource(R.string.preferences_reset_donation_timestamps_summary),

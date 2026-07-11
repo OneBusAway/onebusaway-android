@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.tripplan
 import android.content.Context
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.exception.ApolloException
+import com.apollographql.apollo.exception.ApolloNetworkException
 import com.apollographql.apollo.network.okHttpClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
@@ -64,7 +65,13 @@ class Otp2Planner @Inject constructor(
     private fun apolloClientFor(baseUrl: String): ApolloClient = synchronized(this) {
         cachedClient?.takeIf { it.first == baseUrl }?.second
             ?: ApolloClient.Builder().serverUrl(baseUrl).okHttpClient(okHttpClient).build()
-                .also { cachedClient = baseUrl to it }
+                .also {
+                    // Close the client this one replaces (e.g. a region/custom-URL switch) —
+                    // ApolloClient owns a coroutine scope that otherwise leaks until this
+                    // Otp2Planner itself is garbage collected.
+                    cachedClient?.second?.close()
+                    cachedClient = baseUrl to it
+                }
     }
 
     /**
@@ -77,8 +84,14 @@ class Otp2Planner @Inject constructor(
         val apolloClient = apolloClientFor(baseUrl)
         val data = try {
             runBlocking { apolloClient.query(query).execute() }.dataOrThrow()
-        } catch (e: ApolloException) {
+        } catch (e: ApolloNetworkException) {
+            // Transport failure (connect/read timeout, DNS, etc.) — the OTP1 path's own
+            // catch-all mapping to the request-timeout message.
             throw IOException(context.getString(R.string.tripplanner_error_request_timeout), e)
+        } catch (e: ApolloException) {
+            // A non-network ApolloException (HTTP status, parse failure, GraphQL-protocol
+            // error) isn't a timeout — don't tell the user it is.
+            throw IOException(context.getString(R.string.tripplanner_error_not_defined), e)
         }
 
         data.planConnection?.routingErrors?.firstOrNull()?.let {

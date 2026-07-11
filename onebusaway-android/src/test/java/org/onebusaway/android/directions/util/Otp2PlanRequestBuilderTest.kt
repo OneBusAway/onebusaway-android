@@ -25,10 +25,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Covers [Otp2PlanRequestBuilder.buildModes] — the OTP2 `PlanModesInput` sibling of
- * [TripRequestBuilder.setModeSetById]'s OTP1 mode-string mapping (#1780). A plain JVM unit test
- * (mirrors `ModeStringRequestsBikeRentalTest`'s style): `buildModes` takes `bikeshareEnabled`
- * directly rather than a `Context`, so no Robolectric/DI is needed.
+ * Covers [Otp2PlanRequestBuilder.buildModes]/[Otp2PlanRequestBuilder.buildPreferences] — the OTP2
+ * `PlanModesInput`/`PlanPreferencesInput` siblings of [TripRequestBuilder.setModeSetById]'s OTP1
+ * mode-string mapping and the wheelchair/`optimize=TRANSFERS` request params (#1780). A plain JVM
+ * unit test (mirrors `ModeStringRequestsBikeRentalTest`'s style): both take plain booleans rather
+ * than a `Context`, so no Robolectric/DI is needed.
  */
 class Otp2PlanRequestBuilderTest {
 
@@ -84,6 +85,38 @@ class Otp2PlanRequestBuilderTest {
     @Test
     fun invalidModeIdLeavesModesUnset() {
         assertEquals(Optional.Absent, Otp2PlanRequestBuilder.buildModes(-1, bikeshareEnabled = true))
+    }
+
+    @Test
+    fun preferencesCarryTheWheelchairFlagEitherWay() {
+        val enabled = requirePresent(
+            requirePresent(
+                Otp2PlanRequestBuilder.buildPreferences(wheelchairAccessible = true, optimizeTransfers = false).accessibility
+            ).wheelchair
+        ).enabled
+        assertEquals(true, requirePresent(enabled))
+
+        val disabled = requirePresent(
+            requirePresent(
+                Otp2PlanRequestBuilder.buildPreferences(wheelchairAccessible = false, optimizeTransfers = false).accessibility
+            ).wheelchair
+        ).enabled
+        assertEquals(false, requirePresent(disabled))
+    }
+
+    @Test
+    fun optimizeTransfersSetsTheHistoricalOtp1TransferCost() {
+        val prefs = Otp2PlanRequestBuilder.buildPreferences(wheelchairAccessible = false, optimizeTransfers = true)
+        val transferCost = requirePresent(requirePresent(requirePresent(prefs.transit).transfer).cost)
+        // 1800s (30 min) is what OTP1's optimize=TRANSFERS actually added to transferPenalty —
+        // see the sourced comment on Otp2PlanRequestBuilder.OPTIMIZE_TRANSFERS_COST_SECONDS.
+        assertEquals(1800, transferCost)
+    }
+
+    @Test
+    fun defaultTransfersLeaveTransitPreferencesUnset() {
+        val prefs = Otp2PlanRequestBuilder.buildPreferences(wheelchairAccessible = false, optimizeTransfers = false)
+        assertEquals(Optional.Absent, prefs.transit)
     }
 
     /** Unwraps an [Optional.Present]'s non-null value, failing the test on [Optional.Absent] or a

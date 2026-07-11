@@ -282,6 +282,9 @@ apollo {
         // Long is a genuinely numeric custom scalar here (Itinerary.duration, in seconds) — not a
         // string like the others above, so map straight to kotlin.Long instead.
         mapScalar("Long", "kotlin.Long")
+        // Cost (TransferPreferencesInput.cost) is seconds, per OTP's own
+        // TransferPreferences.cost()/withCost(int) — genuinely numeric, not a string.
+        mapScalar("Cost", "kotlin.Int")
     }
 }
 

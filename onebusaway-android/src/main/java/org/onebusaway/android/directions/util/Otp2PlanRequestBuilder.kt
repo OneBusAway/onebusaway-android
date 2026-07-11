@@ -20,6 +20,7 @@ import com.apollographql.apollo.api.Optional
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import org.onebusaway.android.api.graphql.PlanQuery
+import org.onebusaway.android.api.graphql.type.AccessibilityPreferencesInput
 import org.onebusaway.android.api.graphql.type.PlanAccessMode
 import org.onebusaway.android.api.graphql.type.PlanCoordinateInput
 import org.onebusaway.android.api.graphql.type.PlanDateTimeInput
@@ -28,9 +29,13 @@ import org.onebusaway.android.api.graphql.type.PlanEgressMode
 import org.onebusaway.android.api.graphql.type.PlanLabeledLocationInput
 import org.onebusaway.android.api.graphql.type.PlanLocationInput
 import org.onebusaway.android.api.graphql.type.PlanModesInput
+import org.onebusaway.android.api.graphql.type.PlanPreferencesInput
 import org.onebusaway.android.api.graphql.type.PlanTransitModePreferenceInput
 import org.onebusaway.android.api.graphql.type.PlanTransitModesInput
+import org.onebusaway.android.api.graphql.type.TransferPreferencesInput
 import org.onebusaway.android.api.graphql.type.TransitMode
+import org.onebusaway.android.api.graphql.type.TransitPreferencesInput
+import org.onebusaway.android.api.graphql.type.WheelchairPreferencesInput
 import org.onebusaway.android.ui.tripplan.TripModes
 import org.onebusaway.android.util.BikeshareAvailability
 
@@ -39,8 +44,9 @@ import org.onebusaway.android.util.BikeshareAvailability
  * state (#1780) — the GraphQL sibling of [TripRequestBuilder.buildRequest]. Reads the same
  * protocol-agnostic getters ([TripRequestBuilder.from]/[TripRequestBuilder.to]/
  * [TripRequestBuilder.dateTime]/[TripRequestBuilder.arriveBy]/
- * [TripRequestBuilder.getWheelchairAccessible]/[TripRequestBuilder.getModeSetId]) rather than
- * duplicating request state, so both protocols are driven from one shared bundle-backed builder.
+ * [TripRequestBuilder.getWheelchairAccessible]/[TripRequestBuilder.getOptimizeTransfers]/
+ * [TripRequestBuilder.getModeSetId]) rather than duplicating request state, so both protocols are
+ * driven from one shared bundle-backed builder.
  */
 object Otp2PlanRequestBuilder {
 
@@ -52,6 +58,19 @@ object Otp2PlanRequestBuilder {
     private const val NUM_ITINERARIES = 5
 
     private val DATE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+
+    /**
+     * The additional transfer cost (seconds) OTP1's `optimize=TRANSFERS` applied on top of the
+     * (always-0-here) base `transferPenalty`, verified against OTP1 1.5.0's own source
+     * (`api/common/RoutingResource.java`: `if (optimize == OptimizeType.TRANSFERS) { optimize =
+     * OptimizeType.QUICK; request.transferPenalty += 1800; }` — `OptimizeType.java` itself calls
+     * `TRANSFERS` "obsolete, replaced by the transferPenalty option"). OTP2's GraphQL API carries
+     * the same concept forward as `TransitPreferencesInput.transfer.cost` (confirmed via OTP2's own
+     * legacy-field mapper, `LegacyRouteRequestMapper`: `callWith.argument("transferPenalty",
+     * tx::withCost)` — same field, renamed). Not a guessed value: this is what `optimize=TRANSFERS`
+     * has always meant for every OTP1 region this app has talked to.
+     */
+    private const val OPTIMIZE_TRANSFERS_COST_SECONDS = 1800
 
     /**
      * @throws IllegalArgumentException if the origin/destination lack real coordinates or no
@@ -77,7 +96,9 @@ object Otp2PlanRequestBuilder {
             origin = PlanLabeledLocationInput(location = coordinateLocation(from.latitude, from.longitude)),
             destination = PlanLabeledLocationInput(location = coordinateLocation(to.latitude, to.longitude)),
             dateTime = Optional.present(planDateTime),
-            wheelchair = Optional.present(builder.getWheelchairAccessible()),
+            preferences = Optional.present(
+                buildPreferences(builder.getWheelchairAccessible(), builder.getOptimizeTransfers())
+            ),
             modes = buildModes(builder.getModeSetId(), BikeshareAvailability.isEnabled(context)),
             numItineraries = NUM_ITINERARIES,
         )
@@ -85,6 +106,35 @@ object Otp2PlanRequestBuilder {
 
     private fun coordinateLocation(lat: Double, lon: Double): PlanLocationInput =
         PlanLocationInput(coordinate = Optional.present(PlanCoordinateInput(lat, lon)))
+
+    /**
+     * @param optimizeTransfers mirrors [TripRequestBuilder.getOptimizeTransfers] — OTP1's
+     * `optimize=TRANSFERS` vs. the `QUICK` default; see [OPTIMIZE_TRANSFERS_COST_SECONDS].
+     */
+    internal fun buildPreferences(
+        wheelchairAccessible: Boolean,
+        optimizeTransfers: Boolean,
+    ): PlanPreferencesInput =
+        PlanPreferencesInput(
+            accessibility = Optional.present(
+                AccessibilityPreferencesInput(
+                    wheelchair = Optional.present(
+                        WheelchairPreferencesInput(enabled = Optional.present(wheelchairAccessible))
+                    )
+                )
+            ),
+            transit = if (optimizeTransfers) {
+                Optional.present(
+                    TransitPreferencesInput(
+                        transfer = Optional.present(
+                            TransferPreferencesInput(cost = Optional.present(OPTIMIZE_TRANSFERS_COST_SECONDS))
+                        )
+                    )
+                )
+            } else {
+                Optional.Absent
+            },
+        )
 
     /**
      * Maps [TripModes.*][TripModes] to OTP2's `modes` input, mirroring

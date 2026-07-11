@@ -20,8 +20,8 @@ query Plan(
     $origin: PlanLabeledLocationInput!
     $destination: PlanLabeledLocationInput!
     $dateTime: PlanDateTimeInput
-    $wheelchair: Boolean
     $modes: PlanModesInput
+    $preferences: PlanPreferencesInput
     $numItineraries: Int!
 ) {
     planConnection(
@@ -30,7 +30,7 @@ query Plan(
         dateTime: $dateTime
         first: $numItineraries
         modes: $modes
-        preferences: { accessibility: { wheelchair: { enabled: $wheelchair } } }
+        preferences: $preferences
     ) {
         searchDateTime
         routingErrors {

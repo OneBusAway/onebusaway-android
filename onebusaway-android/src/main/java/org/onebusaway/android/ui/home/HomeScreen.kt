@@ -57,10 +57,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
@@ -70,7 +70,6 @@ import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
-import org.onebusaway.android.ui.compose.rememberSheetExpandProgress
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
 import org.onebusaway.android.ui.home.chrome.HomeTopBar
@@ -231,39 +230,25 @@ fun HomeScreen(
             { scope.launch { runCatching { sheetState.partialExpand() } } }
         }
 
-        // The collapsed peek's content height (px), measured by the panel and reported via onPeekMetrics:
-        // the pinned header plus rowCount boxed peek rows. Sizing the peek from real layout (instead of a
-        // hand-tuned dimen table) auto-adapts to content, padding, and font scale. Seeded at 0; the sheet
-        // stays hidden until the first real measurement lands (arrivalsReady), so it never reveals at 0.
-        // arrivalsReady also gates the peek open until the focused stop's arrivals load (reset on focus change).
-        var peekContentPx by remember { mutableIntStateOf(0) }
-        var arrivalsReady by remember { mutableStateOf(false) }
-        LaunchedEffect(state.focusedStop?.id) { arrivalsReady = false }
-
-        // The measured collapsed-peek content (header + boxed peek rows), as dp (no drag handle) for the
-        // peek anchor below.
-        val peekContentDp = with(density) { peekContentPx.toDp() }
-
-        // Grow the sheet peek by the system navigation-bar inset (height varies by handset) so the
-        // collapsed peek's pinned header clears the bottom chrome. The panel matches this with its own
-        // content inset (see ArrivalsPanel), so the revealed gap is empty rather than clipped content.
+        // The system navigation-bar inset (height varies by handset) grows the peek so the collapsed
+        // sheet's content clears the bottom chrome; the panel matches this with its own content inset.
         val peekBottomPadding = navigationBarBottomPadding()
 
-        // The full collapsed-sheet peek: the measured header+rows content, plus the real scaffold drag
-        // handle above it, plus the navigation-bar inset below. The scaffold's peek height, the FAB
-        // lift, and the map's bottom inset all use this, so the FABs and the map-framed content clear the
-        // whole collapsed sheet (handle + nav-bar inset included), not just the header+rows content.
-        val collapsedPeekDp = peekContentDp + DRAG_HANDLE_HEIGHT + peekBottomPadding
+        // The collapsed peek is capped at a fixed fraction of the window height — a constant known up
+        // front, so the open slide has a stable target that can't strand the drag (unlike a measured
+        // height that grows as content loads). Short stops shrink below it to fit (see collapsedPeekDp).
+        // (containerSize, not Configuration.screenHeightDp — the latter is lint-flagged as unreliable.)
+        val capPeekDp = with(density) {
+            (LocalWindowInfo.current.containerSize.height * PEEK_HEIGHT_FRACTION).toDp()
+        }
 
-        // The full collapsed peek in px — the map's bottom inset (onSheetSettled). Must match the sheet's
-        // on-screen height, or map-framed content (the ETA-tap vehicle+stop fit) lands under the handle +
-        // nav-bar strip the header+rows px alone omits.
-        val collapsedPeekPx = with(density) { collapsedPeekDp.roundToPx() }
-
-        // The drawer's live open fraction (0 = collapsed peek, 1 = fully expanded), read each frame by
-        // the arrivals panel to morph the peek rows in lockstep with the drag. measureModifier feeds it
-        // the sheet's container height (attached to the scaffold below).
-        val sheetProgress = rememberSheetExpandProgress(sheetState, collapsedPeekDp)
+        // The panel's total content height (px: pinned header + fully-laid-out list), reported once
+        // measured (0 until then). Used only to shrink the peek below the cap for short stops. Not reset
+        // on focus change — the next stop's panel overwrites it once laid out, avoiding a cap-bounce.
+        var contentPx by remember { mutableIntStateOf(0) }
+        // That content height as the on-screen peek it implies: the measured content plus the drag handle
+        // above it and the nav-bar inset below (matching what the collapsed sheet actually shows).
+        val contentPeekDp = with(density) { contentPx.toDp() } + DRAG_HANDLE_HEIGHT + peekBottomPadding
 
         // Visibility is business state: the sheet is shown (its peek slid up) iff a stop is focused.
         // Because there's no `Hidden` drag anchor, "shown" is a plain flag that drives the animated peek
@@ -272,8 +257,7 @@ fun HomeScreen(
         var sheetShown by remember { mutableStateOf(false) }
         val showSheet = shouldShowSheet(state.focusedStop)
         val sheetKey = if (showSheet) state.focusedStop?.id else null
-        // Re-keyed on arrivalsReady so the peek slides up once the focused stop's arrivals load.
-        LaunchedEffect(sheetKey, arrivalsReady) {
+        LaunchedEffect(sheetKey) {
             if (sheetKey == null) {
                 // Hide: an expanded sheet is first collapsed to peek (so it then slides straight down as
                 // the peek retracts, rather than staying stuck at the top with no `Hidden` anchor to fall
@@ -283,22 +267,37 @@ fun HomeScreen(
                 }
                 sheetShown = false
             } else {
-                // Show only once the focused stop's arrivals have loaded, so the peek animates straight to
-                // its final height. Growing to a stale height and then resizing when the count resolves
-                // moves the peek anchor mid-animation, which strands the AnchoredDraggable (the sheet
-                // sticks partway up). The effect re-runs when arrivalsReady flips true (cancelling this
-                // wait); the timeout is a fallback so a stop whose arrivals are slow or fail still shows.
-                if (!arrivalsReady) delay(SHEET_OPEN_LOAD_TIMEOUT_MS)
+                // Show immediately on focus — a fixed-fraction peek can't strand the drag, so there's no
+                // need to wait for arrivals; the peek shows a loading spinner until they land.
                 sheetShown = true
             }
         }
 
+        // Whether the reveal slide (peek 0 -> cap) has finished at a resting peek. The peek only shrinks
+        // to fit short content once settled: retargeting mid-open would move the AnchoredDraggable anchor
+        // and strand the sheet, so we slide up to the constant cap first, then shrink (flipped by the
+        // animateDpAsState finished-listener below; reset when the sheet slides back to 0 on hide).
+        var openSettled by remember { mutableStateOf(false) }
+
+        // The full collapsed peek: the fixed cap while loading or still opening, then min(content, cap)
+        // once settled — fitting short stops without dead space, clipping tall ones at the cap. The
+        // scaffold peek, the FAB lift, and the map's bottom inset all use this.
+        val collapsedPeekDp =
+            if (contentPx > 0 && openSettled) minOf(contentPeekDp, capPeekDp) else capPeekDp
+
+        // The full collapsed peek in px — the map's bottom inset (onSheetSettled). Must match the sheet's
+        // on-screen height, or map-framed content (the ETA-tap vehicle+stop fit) lands under the handle +
+        // nav-bar strip.
+        val collapsedPeekPx = with(density) { collapsedPeekDp.roundToPx() }
+
         // The peek height actually handed to the scaffold: the real peek while shown, 0 while hidden.
         // Animating between the two slides the whole sheet up from / down past the bottom edge — the
-        // slide-in/out that the removed `Hidden` anchor used to provide.
+        // slide-in/out that the removed `Hidden` anchor used to provide. The finished-listener flips
+        // openSettled once the reveal lands at a non-zero peek, unlocking the fit-to-content shrink.
         val visiblePeekDp by animateDpAsState(
             targetValue = if (sheetShown) collapsedPeekDp else 0.dp,
             label = "sheetPeek",
+            finishedListener = { settled -> openSettled = sheetShown && settled > 0.dp },
         )
 
         // Report the resting position back to the activity (map padding / recenter / arrivals preview).
@@ -391,8 +390,7 @@ fun HomeScreen(
                 BottomSheetScaffold(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth()
-                        .then(sheetProgress.measureModifier),
+                        .fillMaxWidth(),
                     scaffoldState = scaffoldState,
                     snackbarHost = { SnackbarHost(snackbarHostState) },
                     // The animated peek: real peek while shown, 0 while hidden — slides the sheet in/out.
@@ -411,7 +409,6 @@ fun HomeScreen(
                         ArrivalsSheetHost(
                             focusedStop = state.focusedStop,
                             sheetVisible = sheetShown,
-                            expandProgress = sheetProgress.fraction,
                             arrivalsViewModelFactory = arrivalsViewModelFactory,
                             onArrivalsLoaded = onArrivalsLoaded,
                             // Showing vehicles on the map drags the sheet down to peek so the route is
@@ -422,10 +419,7 @@ fun HomeScreen(
                             },
                             onShowTrip = onShowTrip,
                             onEditReminder = onEditReminder,
-                            onPeekContentHeight = { px ->
-                                peekContentPx = px
-                                arrivalsReady = true
-                            },
+                            onContentHeight = { px -> contentPx = px },
                             onTitleClick = homeViewModel::recenterOnFocusedStop,
                             showUndoSnackbar = { messageRes, actionRes, onAction ->
                                 scope.launch {
@@ -634,6 +628,10 @@ private val DRAG_HANDLE_BAR_HEIGHT = 4.dp
 private val DRAG_HANDLE_VERTICAL_PADDING = 9.dp
 private val DRAG_HANDLE_HEIGHT = DRAG_HANDLE_BAR_HEIGHT + DRAG_HANDLE_VERTICAL_PADDING * 2
 
+// The collapsed drawer peek is capped at this fraction of the screen height (short stops shrink to
+// fit their content below it). A starting value to tune by eye.
+private const val PEEK_HEIGHT_FRACTION = 0.30f
+
 /**
  * The arrivals sheet's drag handle: a short grab bar tinted to sit on the panel surface (paired with
  * the scaffold's `sheetContainerColor`) so it reads as part of the panel, not a separate strip. Tapping
@@ -662,10 +660,3 @@ private fun ArrivalsDragHandle(onToggle: () -> Unit, modifier: Modifier = Modifi
         }
     }
 }
-
-/**
- * How long the sheet waits for a freshly-focused stop's arrivals to load before peeking open anyway.
- * The common path opens sooner — the open effect re-runs the instant arrivals load (arrivalsReady) —
- * so this only bounds the wait when a stop's arrivals are slow or fail, ensuring its sheet still shows.
- */
-private const val SHEET_OPEN_LOAD_TIMEOUT_MS = 800L

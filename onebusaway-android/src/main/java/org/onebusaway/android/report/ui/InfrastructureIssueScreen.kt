@@ -177,11 +177,11 @@ fun InfrastructureIssueDestination(
                 point?.let { viewModel.onMapFocusChanged(null, it.latitude, it.longitude) }
             }
 
-            override fun onBikeClick(station: org.opentripplanner.routing.bike_rental.BikeRentalStation) {}
+            override fun onBikeClick(station: org.onebusaway.android.map.bike.BikeStation) {}
 
             override fun onVehicleInfoWindowClick(status: org.onebusaway.android.models.ObaTripStatus) {}
 
-            override fun onBikeInfoWindowClick(station: org.opentripplanner.routing.bike_rental.BikeRentalStation) {}
+            override fun onBikeInfoWindowClick(station: org.onebusaway.android.map.bike.BikeStation) {}
         }
     }
 

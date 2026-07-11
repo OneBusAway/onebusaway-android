@@ -29,10 +29,6 @@ repositories {
         // OBA Releases - for comparator to sort alphanumeric routes
         url "https://repo.camsys-apps.com/releases"
     }
-    maven {
-        // CUTR Releases
-        url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
-    }
     mavenCentral()
     maven { url 'https://jitpack.io' }
 }
@@ -311,13 +307,6 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3'
     // For sorting alphanumeric route names
     implementation 'org.onebusaway.util:comparators:1.0.0'
-    // OpenTripPlanner POJOs — an unpublished, unpatchable 2017-era SNAPSHOT (#1778). The trip-itinerary
-    // path no longer reads these directly: the OTP `/plan` request is built and the response decoded
-    // via our own types (TripRequestBuilder / api/contract/OtpPlanModels.kt), mapped onto the app-owned
-    // domain model in directions/model/TripItinerary.kt. The only remaining consumer is the bikeshare
-    // `BikeRentalStation` path (BikeModels.kt, BikeLayerController.kt, map/bike/, map/compose/Bike*);
-    // once that's migrated too (#1779), this dependency can be removed entirely.
-    implementation 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
     // Pelias for point-of-interest search and geocoding for trip planning origin and destination
     implementation 'com.github.OneBusAway:pelias-client-library:v1.1.0'
     implementation 'androidx.appcompat:appcompat:1.7.0'

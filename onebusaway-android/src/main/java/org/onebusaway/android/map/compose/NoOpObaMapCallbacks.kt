@@ -17,8 +17,8 @@ package org.onebusaway.android.map.compose
 
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.render.GeoPoint
-import org.opentripplanner.routing.bike_rental.BikeRentalStation
 
 /**
  * A do-nothing [ObaMapCallbacks] for map screens that don't react to taps (the trip-plan location
@@ -30,9 +30,9 @@ object NoOpObaMapCallbacks : ObaMapCallbacks {
 
     override fun onMapClick(point: GeoPoint?) {}
 
-    override fun onBikeClick(station: BikeRentalStation) {}
+    override fun onBikeClick(station: BikeStation) {}
 
     override fun onVehicleInfoWindowClick(status: ObaTripStatus) {}
 
-    override fun onBikeInfoWindowClick(station: BikeRentalStation) {}
+    override fun onBikeInfoWindowClick(station: BikeStation) {}
 }

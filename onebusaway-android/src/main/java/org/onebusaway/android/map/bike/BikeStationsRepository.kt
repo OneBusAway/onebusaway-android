@@ -18,22 +18,21 @@ package org.onebusaway.android.map.bike
 import javax.inject.Inject
 import android.location.Location
 import org.onebusaway.android.R
+import org.onebusaway.android.api.adapters.toBikeStations
 import org.onebusaway.android.api.contract.BikeWebService
-import org.onebusaway.android.api.contract.toBikeRentalStations
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.RegionUtils
-import org.opentripplanner.routing.bike_rental.BikeRentalStation
 
 /**
  * Loads bike rental stations from OpenTripPlanner for a map bounding box. Replaces the
- * `BikeStationLoader` `AsyncTaskLoader` + `BikeLoaderCallbacks`; couriers the raw OTP
- * [BikeRentalStation] list for the bike overlay. The corners are passed in Google-Maps terms
- * (southWest / northEast); the request maps them to OTP's lowerLeft / upperRight.
+ * `BikeStationLoader` `AsyncTaskLoader` + `BikeLoaderCallbacks`; couriers the app-owned [BikeStation]
+ * list for the bike overlay. The corners are passed in Google-Maps terms (southWest / northEast); the
+ * request maps them to OTP's lowerLeft / upperRight.
  */
 interface BikeStationsRepository {
     suspend fun getStations(southWest: Location, northEast: Location):
-            Result<List<BikeRentalStation>>
+            Result<List<BikeStation>>
 }
 
 class DefaultBikeStationsRepository @Inject constructor(
@@ -43,7 +42,7 @@ class DefaultBikeStationsRepository @Inject constructor(
 ) : BikeStationsRepository {
 
     override suspend fun getStations(southWest: Location, northEast: Location):
-            Result<List<BikeRentalStation>> = runCatching {
+            Result<List<BikeStation>> = runCatching {
         val base = otpBaseUrl() ?: error("No OTP base URL for the current region")
 
         // OTP servers differ in how their base URL is rooted (see TripPlanRepository): the "new"
@@ -67,10 +66,10 @@ class DefaultBikeStationsRepository @Inject constructor(
         useOldUrlStructure: Boolean,
         southWest: Location,
         northEast: Location,
-    ): List<BikeRentalStation> = bikeService.getBikeStations(
+    ): List<BikeStation> = bikeService.getBikeStations(
         bikeRentalUrl(base, useOldUrlStructure, southWest.latitude, southWest.longitude,
             northEast.latitude, northEast.longitude)
-    ).toBikeRentalStations()
+    ).toBikeStations()
 
     /** The custom OTP url (advanced setting) or the region's `otpBaseUrl`, trailing slash stripped. */
     private fun otpBaseUrl(): String? {
@@ -109,9 +108,9 @@ internal fun bikeRentalUrl(
  *  - non-empty filter → only the stations whose id is in the filter
  */
 internal fun filterStations(
-    all: List<BikeRentalStation>,
+    all: List<BikeStation>,
     selectedIds: List<String>?,
-): List<BikeRentalStation>? = when {
+): List<BikeStation>? = when {
     selectedIds == null -> all
     selectedIds.isEmpty() -> null
     else -> all.filter { selectedIds.contains(it.id) }

@@ -23,10 +23,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
-import org.opentripplanner.routing.bike_rental.BikeRentalStation
 
 /** A geographic point, flavor-neutral (carries no Google/maplibre `LatLng` dependency). */
 data class GeoPoint(val latitude: Double, val longitude: Double)
@@ -116,15 +116,16 @@ data class VehicleMarker(
 )
 
 /**
- * One bike-rental marker. [station] is the raw OTP pojo (the renderer reads its name/availability for
- * the info window and its floating-vs-station flag for the icon). [bikeshareVisible] on the snapshot
- * is the layer/directions-mode gate; the per-zoom icon band is chosen live by the renderer.
+ * One bike-rental marker. [station] is the app-owned domain type (the renderer reads its
+ * name/availability for the info window and its floating-vs-station flag for the icon).
+ * [bikeshareVisible] on the snapshot is the layer/directions-mode gate; the per-zoom icon band is
+ * chosen live by the renderer.
  */
 data class BikeMarker(
     val id: String,
     val point: GeoPoint,
     val isFloatingBike: Boolean,
-    val station: BikeRentalStation,
+    val station: BikeStation,
 )
 
 /**

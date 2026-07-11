@@ -18,7 +18,6 @@ package org.onebusaway.android.map.bike
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import org.opentripplanner.routing.bike_rental.BikeRentalStation
 
 /**
  * Unit tests for [filterStations] — the directions-mode station filter ported from
@@ -27,8 +26,7 @@ import org.opentripplanner.routing.bike_rental.BikeRentalStation
  */
 class BikeStationFilterTest {
 
-    private fun station(id: String): BikeRentalStation =
-        BikeRentalStation().apply { this.id = id }
+    private fun station(id: String): BikeStation = BikeStation(id = id)
 
     private val all = listOf(station("a"), station("b"), station("c"))
 
@@ -51,7 +49,7 @@ class BikeStationFilterTest {
 
     @Test
     fun `filter ids not present yield an empty list`() {
-        assertEquals(emptyList<BikeRentalStation>(), filterStations(all, selectedIds = listOf("z")))
+        assertEquals(emptyList<BikeStation>(), filterStations(all, selectedIds = listOf("z")))
     }
 
     // --- bikeAction: the pure layer/mode gate from BikeshareMapController.updateData + showBikes ---

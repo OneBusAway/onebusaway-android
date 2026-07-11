@@ -20,11 +20,11 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
+import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.RegionUtils
-import org.opentripplanner.routing.bike_rental.BikeRentalStation
 
 /**
  * Navigation launched from a map info-window tap. Flavor-neutral (no map-SDK types), so both the
@@ -49,7 +49,7 @@ object MapNavigation {
      * region's Hopr app (preserved verbatim from the legacy BikeStationOverlay.onInfoWindowClick).
      */
     @JvmStatic
-    fun openBikeDeepLink(context: Context, station: BikeRentalStation) {
+    fun openBikeDeepLink(context: Context, station: BikeStation) {
         val region = RegionEntryPoint.get(context).currentRegion() ?: return
         if (region.id != RegionUtils.TAMPA_REGION_ID.toLong()) {
             return

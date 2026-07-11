@@ -479,12 +479,11 @@ private fun EtaPillWithMenu(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    Box {
+    Box(modifier) {
         EtaPill(
             eta = trip.eta,
             color = colorResource(trip.color),
             predicted = trip.predicted,
-            modifier = modifier,
             canceled = trip.status == Status.CANCELED,
             onClick = { callbacks.onEtaClick(trip) },
             onLongClick = { expanded = true },

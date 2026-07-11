@@ -687,6 +687,9 @@
     <string name="kilometers_abbreviation">km</string>
     <string name="minutes_abbreviation">min</string>
     <string name="minutes_full">minutes</string>
+    <!-- The ETA pill's hour unit — deliberately "hr" (not the single-letter hours_abbreviation used
+         elsewhere) to read friendlier alongside "min" in the "Xhr Ymin" format (#1777). -->
+    <string name="eta_hours_abbreviation">hr</string>
 
     <string name="preferences_preferred_vibration_title">Vibrate</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->

@@ -19,6 +19,8 @@ package org.onebusaway.android.util
 import android.content.Context
 import android.text.format.DateUtils
 import androidx.annotation.StringRes
+import androidx.annotation.VisibleForTesting
+import kotlin.math.abs
 import org.onebusaway.android.R
 
 /**
@@ -127,6 +129,48 @@ object DisplayFormat {
                         )
                 }
             }
+        }
+    }
+
+    /** One piece of an ETA pill's display — a bold number or a small unit abbreviation, rendered in
+     *  sequence — see [formatEtaParts]. */
+    data class EtaPart(val text: String, val emphasized: Boolean)
+
+    /**
+     * Splits a non-zero ETA in minutes into one consistent "Xhr Ymin" shape of alternating
+     * bold-number/small-unit parts, rather than switching formats by magnitude (#1777): under an
+     * hour it's just `["23", "min"]` (the "0hr" is omitted), and past an hour it's
+     * `["1", "hr", " 30", "min"]`. Every number stays bold-sized so the leftover minutes stay as
+     * legible as the hour count. [minutes] may be negative for a recent-past arrival; the sign
+     * stays on the leading number.
+     */
+    @JvmStatic
+    fun formatEtaParts(context: Context, minutes: Long): List<EtaPart> = formatEtaParts(
+        minutes = minutes,
+        minutesAbbrev = context.getString(R.string.minutes_abbreviation),
+        hoursAbbrev = context.getString(R.string.eta_hours_abbreviation)
+    )
+
+    /** Pure core of [formatEtaParts] — takes the localized abbreviations directly so the split/roundoff
+     *  logic is unit-testable without an Android [Context]. */
+    @VisibleForTesting
+    fun formatEtaParts(minutes: Long, minutesAbbrev: String, hoursAbbrev: String): List<EtaPart> {
+        val magnitude = abs(minutes)
+        val sign = if (minutes < 0) "-" else ""
+        val hours = magnitude / MINUTES_IN_HOUR
+        val remainderMinutes = magnitude % MINUTES_IN_HOUR
+        return if (hours == 0L) {
+            listOf(
+                EtaPart("$sign$remainderMinutes", emphasized = true),
+                EtaPart(minutesAbbrev, emphasized = false)
+            )
+        } else {
+            listOf(
+                EtaPart("$sign$hours", emphasized = true),
+                EtaPart(hoursAbbrev, emphasized = false),
+                EtaPart(" $remainderMinutes", emphasized = true),
+                EtaPart(minutesAbbrev, emphasized = false)
+            )
         }
     }
 

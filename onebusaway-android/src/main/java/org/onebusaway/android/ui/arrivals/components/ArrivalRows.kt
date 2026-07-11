@@ -82,6 +82,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.colorResource
@@ -90,10 +91,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
@@ -123,6 +127,7 @@ import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.util.DisplayFormat
 
 /**
  * The per-arrival menu actions (legacy `showListItemMenu`). Implemented by the host activity,
@@ -857,25 +862,25 @@ private fun EtaContent(
             )
             EtaRealtimeIndicator(predicted, color)
         } else {
+            // One consistent "Xhr Ymin" shape: ["23", "min"] under an hour (the "0hr" is omitted), or
+            // ["1", "hr", " 30", "min"] past it. All parts render as a single AnnotatedString (not
+            // separate Text composables) so the text shaper kerns across the number/unit boundary
+            // instead of gluing together independently-measured boxes — splitting them produced
+            // inconsistent gaps (e.g. "1hr" vs "4hr") since cross-Text kerning isn't a thing.
+            val etaParts = DisplayFormat.formatEtaParts(LocalContext.current, eta)
+            val emphasizedSpan = SpanStyle(fontSize = 36.sp, fontWeight = FontWeight.Bold, color = color)
+            val unemphasizedSpan = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = color)
             Text(
-                text = eta.toString(),
-                fontSize = 36.sp,
-                fontWeight = FontWeight.Bold,
-                color = color,
-                textDecoration = decoration,
-                modifier = Modifier.alignByBaseline()
+                text = buildAnnotatedString {
+                    etaParts.forEach { part ->
+                        withStyle(if (part.emphasized) emphasizedSpan else unemphasizedSpan) {
+                            append(part.text)
+                        }
+                    }
+                },
+                textDecoration = decoration
             )
-            // "min" shares the number's baseline; the indicator rides at its upper-right.
-            Row(modifier = Modifier.alignByBaseline(), verticalAlignment = Alignment.Top) {
-                Text(
-                    text = " " + stringResource(R.string.minutes_abbreviation),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = color,
-                    textDecoration = decoration,
-                    modifier = Modifier.alignByBaseline()
-                )
-                EtaRealtimeIndicator(predicted, color)
-            }
+            EtaRealtimeIndicator(predicted, color)
         }
     }
 }
@@ -955,44 +960,56 @@ internal fun EtaPill(
     } else {
         Modifier
     }
+    // One consistent "Xhr Ymin" shape: ["23", "min"] under an hour (the "0hr" is omitted), or
+    // ["1", "hr", " 30", "min"] past it — every number stays bold-sized, only the unit letters
+    // shrink, so the leftover minutes stay as legible as the hour count (#1777).
+    val etaParts = if (eta != 0L) DisplayFormat.formatEtaParts(LocalContext.current, eta) else null
     Surface(modifier = modifier.then(interaction), shape = shape, color = color) {
-        // Content bottom-aligned so that, with the strip bottom-aligning pills of different sizes, every
-        // pill's digits land on the same baseline (digits have no descender, so bottom ≈ baseline).
+        // Bottom-centers the whole (baseline-aligned) content block, so pills of different sizes in
+        // the strip still share a common bottom edge.
         Box(
             modifier = Modifier
                 .height(pillHeight)
                 .padding(horizontal = 6.dp),
             contentAlignment = Alignment.BottomCenter
         ) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                if (eta != 0L) {
+            Row {
+                if (etaParts == null) {
                     Text(
-                        text = eta.toString(),
-                        fontSize = numberSize,
+                        text = stringResource(R.string.stop_info_eta_now),
+                        fontSize = nowSize,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         textDecoration = decoration
                     )
-                }
-                // The trailing label ("min" / "Now") with the radiating real-time indicator at its
-                // upper-right: top-aligning this inner row floats the small indicator to the label's
-                // top. The Box is always present so the pill width is stable whether or not it's live.
-                Row(verticalAlignment = Alignment.Top) {
+                } else {
+                    // A single AnnotatedString (not separate Text composables) so the text shaper
+                    // kerns across the number/unit boundary instead of gluing together
+                    // independently-measured boxes — splitting them produced inconsistent gaps
+                    // (e.g. "1hr" vs "4hr") since cross-Text kerning isn't a thing.
                     Text(
-                        text = if (eta == 0L) {
-                            stringResource(R.string.stop_info_eta_now)
-                        } else {
-                            " " + stringResource(R.string.minutes_abbreviation)
+                        text = buildAnnotatedString {
+                            etaParts.forEach { part ->
+                                withStyle(
+                                    SpanStyle(
+                                        fontSize = if (part.emphasized) numberSize else labelSize,
+                                        fontWeight = if (part.emphasized) FontWeight.Bold else FontWeight.Normal,
+                                        color = Color.White
+                                    )
+                                ) {
+                                    append(part.text)
+                                }
+                            }
                         },
-                        fontSize = if (eta == 0L) nowSize else labelSize,
-                        fontWeight = if (eta == 0L) FontWeight.Bold else FontWeight.Normal,
-                        color = Color.White,
                         textDecoration = decoration
                     )
-                    Box(Modifier.padding(start = 2.dp).size(indicatorSize)) {
-                        if (predicted) {
-                            RealtimeIndicator(color = Color.White, modifier = Modifier.fillMaxSize())
-                        }
+                }
+                // The radiating real-time indicator floats above the trailing unit ("min" / "Now"); it
+                // isn't baseline-aligned, so it takes the Row's default top alignment instead. The Box
+                // is always present so the pill width is stable whether or not it's live.
+                Box(Modifier.padding(start = 2.dp).size(indicatorSize)) {
+                    if (predicted) {
+                        RealtimeIndicator(color = Color.White, modifier = Modifier.fillMaxSize())
                     }
                 }
             }
@@ -1170,6 +1187,9 @@ private fun EtaPillStripPreview() {
                 EtaPill(12, colorResource(R.color.stop_info_early), predicted = true)
                 EtaPill(22, colorResource(R.color.stop_info_scheduled_time), predicted = false)
                 EtaPill(8, colorResource(R.color.stop_info_scheduled_time), predicted = false, canceled = true)
+                // Past an hour: the number switches to hours, the leftover minutes fold into the label (#1777).
+                EtaPill(83, colorResource(R.color.stop_info_scheduled_time), predicted = true)
+                EtaPill(125, colorResource(R.color.stop_info_early), predicted = false)
             }
         }
     }

@@ -123,9 +123,15 @@ private val tripItineraryJson = Json { ignoreUnknownKeys = true }
 fun List<TripItinerary>.toJson(): String =
     tripItineraryJson.encodeToString(ListSerializer(TripItinerary.serializer()), this)
 
-/** The read side of [List.toJson]. */
+/**
+ * The read side of [List.toJson]. A corrupted/truncated extra degrades to an empty list — exactly how
+ * [TripPlanScreen.maybeRestoreFromIntent][org.onebusaway.android.ui.tripplan] already treats a missing
+ * extra — rather than crashing the activity on notification re-entry.
+ */
 fun String.toTripItineraries(): List<TripItinerary> =
-    tripItineraryJson.decodeFromString(ListSerializer(TripItinerary.serializer()), this)
+    runCatching {
+        tripItineraryJson.decodeFromString(ListSerializer(TripItinerary.serializer()), this)
+    }.getOrDefault(emptyList())
 
 private object ServerTimeSerializer : KSerializer<ServerTime> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("ServerTime", PrimitiveKind.LONG)

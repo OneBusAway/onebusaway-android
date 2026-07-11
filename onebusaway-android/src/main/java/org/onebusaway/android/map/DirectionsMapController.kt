@@ -57,12 +57,15 @@ class DirectionsMapController(private val host: MapHost) {
         }
         val firstLeg = legs.first()
         val lastLeg = legs.last()
+        // A place is required on every leg, but its coordinates aren't (e.g. a vertex with no
+        // geographic identity) — degrade to skipping the pin/start-framing for that endpoint rather
+        // than crashing map rendering; the leg polylines below don't depend on either.
         val startPlace = firstLeg.from
         val endPlace = lastLeg.to
-        val startLat = startPlace.lat!!
-        val startLon = startPlace.lon!!
-        val endLat = endPlace.lat!!
-        val endLon = endPlace.lon!!
+        val startLat = startPlace.lat
+        val startLon = startPlace.lon
+        val endLat = endPlace.lat
+        val endLon = endPlace.lon
 
         // Build every leg's polyline (each in its own mode color), then append them in one write —
         // matching the legacy per-leg append but without rebuilding the polyline list n times.
@@ -84,11 +87,15 @@ class DirectionsMapController(private val host: MapHost) {
             host.renderState.setRoutePolylines(host.renderState.getRoutePolylines() + legPolylines)
         }
 
-        directionsMarkerIds.add(host.addMarker(startLat, startLon, HUE_GREEN))
-        directionsMarkerIds.add(host.addMarker(endLat, endLon, HUE_RED))
+        if (startLat != null && startLon != null) {
+            directionsMarkerIds.add(host.addMarker(startLat, startLon, HUE_GREEN))
+        }
+        if (endLat != null && endLon != null) {
+            directionsMarkerIds.add(host.addMarker(endLat, endLon, HUE_RED))
+        }
 
         directionsHasRoute = legPolylines.isNotEmpty()
-        directionsStart = GeoPoint(startLat, startLon)
+        directionsStart = if (startLat != null && startLon != null) GeoPoint(startLat, startLon) else null
         frameDirections()
     }
 

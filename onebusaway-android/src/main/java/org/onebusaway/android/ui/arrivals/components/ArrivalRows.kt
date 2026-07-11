@@ -105,12 +105,17 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
+import org.onebusaway.android.models.ArrivalData
+import org.onebusaway.android.models.FrequencyWindow
+import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.LoadMoreState
@@ -169,8 +174,9 @@ internal fun ArrivalCard(
 }
 
 /**
- * The visual content of a flat arrival row, driven by primitives so it stays previewable and
- * testable (the [ArrivalInfo] model can't be built in a @Preview). [ArrivalRowContent] adapts the
+ * The visual content of a flat arrival row, driven by primitives so it stays trivially previewable and
+ * JVM-testable without the [ArrivalInfo] model (which needs a `Context`/wire data to build).
+ * [ArrivalRowContent] adapts the
  * model onto it; the colored status pill and ETA both take the lateness [statusColor].
  */
 @Composable
@@ -995,7 +1001,156 @@ internal fun EtaPill(
 }
 
 // ---------------------------------------------------------------------------------------------
-// Previews — the ETA pills from primitives (the ArrivalInfo model isn't previewable).
+// Previews.
+
+/**
+ * A minimal [ArrivalData] for previews — [ArrivalInfo] computes its display model from this interface,
+ * so implementing it (rather than the wire type) is enough to build a real row. Only the fields a row
+ * reads are meaningful; the rest default. Times are server-clock offsets from a zero "now" (see
+ * [previewArrival]), and `stopSequence` is non-zero so the arrival (not departure) times are used.
+ */
+private data class PreviewArrivalData(
+    override val routeId: String,
+    override val shortName: String?,
+    override val headsign: String?,
+    override val scheduledArrivalTime: ServerTime,
+    override val predictedArrivalTime: ServerTime?,
+    override val predicted: Boolean,
+    override val status: Status? = Status.DEFAULT,
+    override val tripId: String = "trip",
+    override val stopId: String = "stop",
+    override val routeLongName: String? = null,
+    override val stopSequence: Int = 1,
+    override val serviceDate: Long = 0L,
+    override val vehicleId: String? = null,
+    override val situationIds: List<String> = emptyList(),
+    override val frequency: FrequencyWindow? = null,
+    override val historicalOccupancy: Occupancy? = null,
+    override val predictedOccupancy: Occupancy? = null,
+    override val hasTripStatus: Boolean = false,
+    override val scheduleDeviation: Long = 0L,
+    override val lastKnownLat: Double? = null,
+    override val lastKnownLon: Double? = null,
+) : ArrivalData {
+    override val scheduledDepartureTime: ServerTime get() = scheduledArrivalTime
+    override val predictedDepartureTime: ServerTime? get() = predictedArrivalTime
+}
+
+private const val PREVIEW_MIN_MS = 60_000L
+
+/**
+ * Builds a real [ArrivalInfo] for a preview: [etaMinutes] from "now" (predicted when [predicted]),
+ * with the schedule offset by [scheduleDeviationMinutes] so the pill takes its on-time/late/early
+ * color. A null context is passed deliberately — the row shows only the badge, headsign, and pills, so
+ * the (context-dependent) status/time labels stay empty and no resources/app singletons are touched.
+ */
+private fun previewArrival(
+    shortName: String,
+    headsign: String,
+    etaMinutes: Long,
+    predicted: Boolean = true,
+    scheduleDeviationMinutes: Long = 0L,
+    status: Status = Status.DEFAULT,
+): ArrivalInfo {
+    val predictedMs = etaMinutes * PREVIEW_MIN_MS
+    val scheduledMs = (etaMinutes - scheduleDeviationMinutes) * PREVIEW_MIN_MS
+    return ArrivalInfo(
+        context = null,
+        data = PreviewArrivalData(
+            routeId = "route_$shortName",
+            shortName = shortName,
+            headsign = headsign,
+            scheduledArrivalTime = ServerTime(scheduledMs),
+            predictedArrivalTime = if (predicted) ServerTime(predictedMs) else null,
+            predicted = predicted,
+            status = status,
+        ),
+        now = ServerTime(0L),
+        includeArrivalDepartureInStatusLabel = false,
+    )
+}
+
+/** No-op [ArrivalRowCallbacks] for previews (nothing is interactive in a static preview). */
+private fun previewRowCallbacks() = ArrivalRowCallbacks(
+    onRouteFavorite = {},
+    onShowVehiclesOnMap = {},
+    onEtaClick = {},
+    onShowTripStatus = {},
+    onSetReminder = {},
+    onShowOnlyRoute = {},
+    onShowRouteSchedule = {},
+    onReportArrivalProblem = {},
+    onShowAlert = {},
+    onLoadMore = { NO_LOAD_REQUEST },
+    loadMoreState = MutableStateFlow(LoadMoreState.Idle),
+)
+
+@Preview(showBackground = true, widthDp = 400)
+@Composable
+private fun RouteArrivalRowPreview() {
+    val callbacks = previewRowCallbacks()
+    // Badge colors come from the representative trip's ArrivalActions (keyed by trip id).
+    val actions = remember {
+        mapOf(
+            "trip" to ArrivalActions(
+                tripId = "trip",
+                routeId = "route_40",
+                routeShortName = "40",
+                routeLongName = "Downtown Seattle",
+                routeColor = 0xFF0A5B3E.toInt(),
+                scheduleUrl = null,
+                agencyName = null,
+                blockId = null,
+            )
+        )
+    }
+    ObaTheme {
+        Surface(color = MaterialTheme.colorScheme.surface) {
+            Column(Modifier.padding(vertical = 8.dp)) {
+                // A busy route: an on-time next arrival, a couple of predicted-late trips, then scheduled.
+                RouteArrivalRow(
+                    group = RouteRowGroup(
+                        listOf(
+                            previewArrival("40", "Northgate", etaMinutes = 3),
+                            previewArrival("40", "Northgate", etaMinutes = 11, scheduleDeviationMinutes = 2),
+                            previewArrival("40", "Northgate", etaMinutes = 24, predicted = false),
+                        )
+                    ),
+                    dataVersion = 1L,
+                    actionsFor = { actions[it.tripId] },
+                    isFavorite = true,
+                    filterActive = false,
+                    callbacks = callbacks,
+                )
+                // A single-arrival route with a just-departed (recent-past, compact) pill leading.
+                RouteArrivalRow(
+                    group = RouteRowGroup(
+                        listOf(
+                            previewArrival("8", "Rainier Beach", etaMinutes = -2),
+                            previewArrival("8", "Rainier Beach", etaMinutes = 9, scheduleDeviationMinutes = -3),
+                        )
+                    ),
+                    dataVersion = 1L,
+                    actionsFor = {
+                        ArrivalActions(
+                            tripId = it.tripId,
+                            routeId = "route_8",
+                            routeShortName = "8",
+                            routeLongName = "MLK Jr Way",
+                            routeColor = 0xFF9C27B0.toInt(),
+                            scheduleUrl = null,
+                            agencyName = null,
+                            blockId = null,
+                        )
+                    },
+                    isFavorite = false,
+                    filterActive = false,
+                    callbacks = callbacks,
+                )
+            }
+        }
+    }
+}
 
 @Preview(showBackground = true)
 @Composable

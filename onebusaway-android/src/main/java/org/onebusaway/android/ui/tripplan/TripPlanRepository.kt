@@ -63,6 +63,7 @@ class DefaultTripPlanRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val prefs: PreferencesRepository,
     private val otpWebService: OtpWebService,
+    private val otp2Planner: Otp2Planner,
 ) : TripPlanRepository {
 
     override suspend fun plan(params: TripPlanParams): Result<List<TripItinerary>> =
@@ -81,12 +82,19 @@ class DefaultTripPlanRepository @Inject constructor(
     /**
      * Runs the OTP request for an already-assembled [builder] on the calling thread. Throws
      * [IOException] with a user-facing message when no server is selected or the plan is empty/errored.
+     * Dispatches on [TripRequestBuilder.usesOtp2] (#1780) — explicit per [builder]'s resolved
+     * region/custom-URL setting, never sniffed — to either the OTP2 GraphQL path ([Otp2Planner]) or
+     * the OTP1 REST path below, unchanged.
      */
     private fun planInternal(builder: TripRequestBuilder): List<TripItinerary> {
-        val request = builder.buildRequest()
         val baseUrl = builder.formattedOtpBaseUrl
             ?: throw IOException(context.getString(R.string.tripplanner_no_server_selected_error))
 
+        if (builder.usesOtp2) {
+            return otp2Planner.plan(builder, baseUrl)
+        }
+
+        val request = builder.buildRequest()
         val response = requestPlan(
             request,
             baseUrl,

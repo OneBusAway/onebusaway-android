@@ -1,0 +1,95 @@
+# OTP 2.x GraphQL trip-plan query (issue #1780). Field names verified against the vendored
+# schema.graphqls (pinned to OpenTripPlanner v2.9.0) in this directory. Deliberately avoids every
+# field marked @deprecated in that schema (e.g. Place.vertexType, Leg.arrivalDelay/departureDelay,
+# Itinerary.start/endTime) so Apollo's generated code stays warning-free under this repo's
+# -PwarningsAsErrors=true CI gate.
+#
+# PlaceFields is shared by Leg.from/Leg.to (both type Place) so Apollo generates one type — and
+# Otp2PlanAdapters.kt maps it with one function — instead of two structurally-identical copies.
+fragment PlaceFields on Place {
+    name
+    lat
+    lon
+    stop { gtfsId code }
+    rentalVehicle { vehicleId name }
+    vehicleParking { vehicleParkingId name }
+    vehicleRentalStation { stationId name }
+}
+
+query Plan(
+    $origin: PlanLabeledLocationInput!
+    $destination: PlanLabeledLocationInput!
+    $dateTime: PlanDateTimeInput
+    $modes: PlanModesInput
+    $preferences: PlanPreferencesInput
+    $numItineraries: Int!
+) {
+    planConnection(
+        origin: $origin
+        destination: $destination
+        dateTime: $dateTime
+        first: $numItineraries
+        modes: $modes
+        preferences: $preferences
+    ) {
+        searchDateTime
+        routingErrors {
+            code
+            description
+            inputField
+        }
+        edges {
+            node {
+                start
+                end
+                duration
+                numberOfTransfers
+                legs {
+                    mode
+                    duration
+                    distance
+                    realTime
+                    start {
+                        scheduledTime
+                        estimated { time delay }
+                    }
+                    end {
+                        scheduledTime
+                        estimated { time delay }
+                    }
+                    from {
+                        ...PlaceFields
+                    }
+                    to {
+                        ...PlaceFields
+                    }
+                    route {
+                        gtfsId
+                        shortName
+                        longName
+                        color
+                        agency { name timezone }
+                    }
+                    trip {
+                        gtfsId
+                        tripHeadsign
+                    }
+                    legGeometry {
+                        points
+                        length
+                    }
+                    steps {
+                        relativeDirection
+                        absoluteDirection
+                        streetName
+                        distance
+                        exit
+                        stayOn
+                        lat
+                        lon
+                    }
+                }
+            }
+        }
+    }
+}

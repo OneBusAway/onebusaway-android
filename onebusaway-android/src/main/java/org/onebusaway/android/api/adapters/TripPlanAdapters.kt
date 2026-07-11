@@ -79,9 +79,13 @@ fun OtpLegDto.toTripLeg(): TripLeg = TripLeg(
     legGeometry = legGeometry?.toTripLegGeometry(),
 )
 
-/** A field every well-formed OTP leg/itinerary carries; its absence means a malformed response. */
-private fun <T : Any> requireField(name: String, value: T?): T =
-    value ?: error("OTP /plan response missing required field: $name")
+/**
+ * A field every well-formed OTP leg/itinerary carries; its absence means a malformed response.
+ * `internal` (not `private`) so `Otp2PlanAdapters.kt` — the same "mint at the boundary" adapter
+ * discipline, for OTP2 GraphQL — shares this rather than re-declaring it.
+ */
+internal fun <T : Any> requireField(name: String, value: T?): T =
+    value ?: error("OTP response missing required field: $name")
 
 fun OtpPlaceDto.toTripPlace(): TripPlace = TripPlace(
     name = name,
@@ -106,6 +110,9 @@ fun OtpWalkStepDto.toTripStep(): TripStep = TripStep(
 fun OtpLegGeometryDto.toTripLegGeometry(): TripLegGeometry =
     TripLegGeometry(points = points, length = length?.toInt() ?: 0)
 
-/** Decodes an OTP wire enum name, degrading an unknown/absent value to null rather than throwing. */
-private inline fun <reified E : Enum<E>> String?.toEnum(): E? =
+/**
+ * Decodes an OTP wire enum name, degrading an unknown/absent value to null rather than throwing.
+ * `internal` so `Otp2PlanAdapters.kt` shares this too — see [requireField].
+ */
+internal inline fun <reified E : Enum<E>> String?.toEnum(): E? =
     this?.let { runCatching { enumValueOf<E>(it) }.getOrNull() }

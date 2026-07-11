@@ -458,6 +458,9 @@ data class RegionDto(
     val otpBaseUrl: String? = null,
     val otpContactEmail: String? = null,
     val supportsOtpBikeshare: Boolean = false,
+    // OTP protocol selection (#1780); absent in the regions directory today, so every region
+    // decodes to OTP1 REST (false) until explicitly set otherwise.
+    val usesOtp2GraphQl: Boolean = false,
     val supportsEmbeddedSocial: Boolean = false,
     val paymentAndroidAppId: String? = null,
     val paymentWarningTitle: String? = null,

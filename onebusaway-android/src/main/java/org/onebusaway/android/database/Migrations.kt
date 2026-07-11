@@ -156,3 +156,15 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         )
     }
 }
+
+/**
+ * Adds `regions.uses_otp2_graphql` (#1780): explicit per-region OTP protocol selection. Defaults
+ * every existing row to 0 (OTP1 REST) — purely additive, no other v5 table/column changes.
+ */
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE `regions` ADD COLUMN `uses_otp2_graphql` INTEGER DEFAULT 0"
+        )
+    }
+}

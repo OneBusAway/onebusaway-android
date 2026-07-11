@@ -83,6 +83,10 @@ class AdvancedSettingsViewModel @Inject constructor(
             displayTestAlerts = prefs.getBoolean(R.string.preferences_display_test_alerts, false),
             customObaApiUrl = prefs.getString(R.string.preference_key_oba_api_url, null),
             customOtpApiUrl = prefs.getString(R.string.preference_key_otp_api_url, null),
+            customOtpApiUrlUsesGraphQl = prefs.getBoolean(
+                R.string.preference_key_otp_api_url_is_graphql,
+                false,
+            ),
             mapStopCacheSize = prefs.getInt(
                 R.string.preference_key_map_stop_cache_size,
                 StopsMapController.DEFAULT_STOP_CACHE_SIZE,
@@ -157,6 +161,14 @@ class AdvancedSettingsViewModel @Inject constructor(
         prefs.setString(R.string.preference_key_otp_api_url, trimmed)
         return UrlChangeResult.Accepted
     }
+
+    /**
+     * Manual OTP protocol override for the custom URL (#1780) — there's no [Region] to carry
+     * [Region.usesOtp2GraphQl] when a custom OTP server is in use, so this is set explicitly by the
+     * user rather than inferred.
+     */
+    fun onCustomOtpApiUrlUsesGraphQlChanged(usesGraphQl: Boolean) =
+        prefs.setBoolean(R.string.preference_key_otp_api_url_is_graphql, usesGraphQl)
 
     fun onResetDonationTimestamps() {
         donationsManager.setDonationRequestReminderDate(null)

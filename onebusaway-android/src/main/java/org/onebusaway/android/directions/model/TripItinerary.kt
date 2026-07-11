@@ -33,13 +33,17 @@ import kotlinx.serialization.json.Json
  * that used to flow, largely unconverted, from the network layer all the way into Compose UI/ViewModel
  * signatures.
  *
- * Minted exactly once, in `api/adapters/TripPlanAdapters.kt`, from the OTP `/plan` wire DTOs
- * (`api/contract/OtpPlanModels.kt`) — consumers never re-parse a raw wire value (mode strings, epoch
- * timestamps, delay ints) themselves. `duration`/`departureDelay`/`arrivalDelay` are [Duration] rather
- * than a raw ms/seconds `Long`, and `startTime`/`endTime` are [ServerTime] (the OTP server's clock,
- * same "mint at the boundary" domain-typing `org.onebusaway.android.time.TypedTime` uses elsewhere)
- * rather than an epoch-ms string, so unit confusion between OTP protocol versions (OTP1 ms vs. OTP2
- * seconds) is no longer possible by construction — there's nothing left to disambiguate.
+ * Minted in exactly two places — `api/adapters/TripPlanAdapters.kt` (OTP1 REST, from
+ * `api/contract/OtpPlanModels.kt`'s wire DTOs) and `api/adapters/Otp2PlanAdapters.kt` (OTP2 GraphQL,
+ * #1780, from the Apollo-generated `PlanQuery.Data`) — both equally canonical, targeting this same
+ * model so the rest of the app (UI/ViewModels/the trip monitor) never needs to know which protocol
+ * produced a result. Consumers never re-parse a raw wire value (mode strings/enums, timestamps, delay
+ * values) themselves. `duration`/`departureDelay`/`arrivalDelay` are [Duration] rather than a raw
+ * ms/seconds `Long`, and `startTime`/`endTime` are [ServerTime] (the OTP server's clock, same "mint at
+ * the boundary" domain-typing `org.onebusaway.android.time.TypedTime` uses elsewhere) rather than an
+ * epoch-ms string or an ISO-8601 offset-datetime string, so unit/format confusion between OTP protocol
+ * versions (OTP1 epoch-ms vs. OTP2 `OffsetDateTime`/ISO-8601 `Duration` strings) is no longer possible
+ * by construction — there's nothing left to disambiguate.
  *
  * `from`/`to`/`startTime`/`endTime` are non-null: a well-formed OTP leg always has two endpoints and an
  * absolute start/end time (that's the point of a routing response), so the adapter — the one place that

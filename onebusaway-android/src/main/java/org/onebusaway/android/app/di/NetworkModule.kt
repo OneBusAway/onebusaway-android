@@ -122,18 +122,25 @@ object NetworkModule {
     /**
      * The OpenTripPlanner trip-planner client. Like [provideBikeWebService] it targets the region's OTP
      * host via absolute `@Url`, so it uses a plain client without [ApiParamsInterceptor] — but with the
-     * legacy 15s connect/read timeouts the OTP `/plan` call has always used (OTP servers can be slow),
-     * rather than OkHttp's shorter defaults.
+     * longer [otpTimeoutClient] timeouts (OTP servers can be slow).
      */
     @Provides
     @Singleton
-    fun provideOtpWebService(json: Json): OtpWebService {
-        val client = plainClient {
-            connectTimeout(OTP_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            readTimeout(OTP_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        }
-        return plainRetrofit(json, client).create(OtpWebService::class.java)
-    }
+    fun provideOtpWebService(json: Json): OtpWebService =
+        plainRetrofit(json, otpTimeoutClient()).create(OtpWebService::class.java)
+
+    /**
+     * The OTP 2.x GraphQL trip-planner client's transport (#1780). Like [provideOtpWebService] it
+     * targets the region's OTP host via an absolute URL resolved per call (Apollo's
+     * `ApolloClient.Builder.serverUrl` is fixed at construction, unlike Retrofit's `@Url`, so the
+     * OTP2 planner builds a lightweight [com.apollographql.apollo.ApolloClient] per call on top of
+     * this shared client rather than injecting a client bound to one URL) — same OTP timeouts, no
+     * [ApiParamsInterceptor].
+     */
+    @Provides
+    @Singleton
+    @Otp2HttpClient
+    fun provideOtp2OkHttpClient(): OkHttpClient = otpTimeoutClient()
 
     /** A plain OkHttp client (debug logging only, no [ApiParamsInterceptor]), optionally [configure]d. */
     private fun plainClient(configure: OkHttpClient.Builder.() -> Unit = {}): OkHttpClient =
@@ -147,6 +154,13 @@ object NetworkModule {
             }
             .apply(configure)
             .build()
+
+    /** A [plainClient] with the legacy 15s connect/read timeouts the OTP `/plan` and GraphQL calls have
+     * always used (OTP servers can be slow), rather than OkHttp's shorter defaults. */
+    private fun otpTimeoutClient(): OkHttpClient = plainClient {
+        connectTimeout(OTP_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        readTimeout(OTP_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    }
 
     /**
      * A Retrofit built on a plain [client] (defaults to [plainClient]) for services that pass an

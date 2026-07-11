@@ -633,6 +633,10 @@
     <string name="preferences_oba_api_servername_summary">Determines the server used in %1$s API calls</string>
     <string name="preferences_oba_api_servername_hint">example.onebusaway.org</string>
     <string name="preferences_otp_api_servername_hint">example.opentripplanner.org/otp</string>
+    <string name="preferences_otp_api_url_is_graphql_title">OTP server uses GraphQL (OTP 2.x)</string>
+    <string name="preferences_otp_api_url_is_graphql_summary">Enable if the custom OpenTripPlanner
+        server above only supports the OTP 2.x GraphQL API
+    </string>
     <string name="preferences_save_title">Save to storage</string>
     <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
     <string name="preferences_restore_title">Restore from storage</string>
@@ -920,6 +924,12 @@
     <string name="tripplanner_error_outside_bounds">Origin or destination is outside transportation network coverage</string>
     <string name="tripplanner_error_path_not_found">Couldn\'t find a matching route between origin and destination</string>
     <string name="tripplanner_error_no_transit_times">Transit times for selected date are not available</string>
+    <string name="tripplanner_error_outside_service_period">Selected date is outside the available
+        transit schedule
+    </string>
+    <string name="tripplanner_error_walking_better_than_transit">Walking is faster than transit for
+        this trip
+    </string>
     <string name="tripplanner_error_bogus_parameter">Something went wrong.  Change your trip options and try again.</string>
     <string name="tripplanner_error_geocode_from_not_found">Origin not found</string>
     <string name="tripplanner_error_geocode_to_not_found">Destination not found</string>

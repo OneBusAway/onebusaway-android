@@ -45,6 +45,9 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
  * v5 adds the map stop cache (#1754): `cached_stops` + `cached_route_types`, a region-scoped spatial
  * cache of nearby-stops loads (separate from the user-state `stops` table) so the map renders stops
  * instantly on a slow/cold-start load.
+ *
+ * v6 adds `regions.uses_otp2_graphql` (#1780): explicit per-region OTP protocol selection (OTP1 REST
+ * vs. OTP 2.x GraphQL). Defaults to 0 (OTP1) for every existing cached row.
  */
 @Database(
     entities = [
@@ -64,7 +67,7 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
         CachedStopRecord::class,
         CachedRouteTypeRecord::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {

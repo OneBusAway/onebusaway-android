@@ -110,6 +110,14 @@ class ArrivalInfo(
      */
     val serverNow: ServerTime = now
 
+    /**
+     * [eta] against an arbitrary [now] instead of the poll-time snapshot — [eta] itself is just
+     * `liveEta(now)` at construction time. A live countdown (issue #1781) calls this with a ticking
+     * [now], counting down between polls until a fresh poll (a brand-new [ArrivalInfo], with a fresh
+     * [serverNow]) supersedes it.
+     */
+    fun liveEta(now: ServerTime): Long = displayTime.epochMs / MS_IN_MINS - now.epochMs / MS_IN_MINS
+
     /** Flattens this arrival into the report flow's scalar context (was ObaArrivalInfo-based). */
     fun toTripReportContext(): TripReportContext = TripReportContext(
         tripId = data.tripId,
@@ -140,7 +148,6 @@ class ArrivalInfo(
         // server-clock ServerTime — the ETA baseline can't be a device clock (#1620). The minute values
         // are floored per-instant then subtracted (unchanged behavior); the typed instants guarantee
         // the subtraction stays same-domain.
-        val nowMins = now.epochMs / MS_IN_MINS
         val scheduled: ServerTime
         val predictedTime: ServerTime?
         // If this is the first stop in the sequence, show the departure time.
@@ -167,13 +174,15 @@ class ArrivalInfo(
 
         if (hasPrediction) {
             predicted = true
-            eta = predictedMins - nowMins
             displayTime = predictedTime
         } else {
             predicted = false
-            eta = scheduledMins - nowMins
             displayTime = scheduled
         }
+        // eta is liveEta at the constructor's own `now` — reusing it here (instead of re-deriving the
+        // displayTime-minus-now subtraction inline) is what keeps a later ticking countdown (issue
+        // #1781) exactly consistent with this poll-time value at t=0.
+        eta = liveEta(now)
 
         color = ArrivalInfoUtils.computeColor(scheduledMins, predictedMins)
 

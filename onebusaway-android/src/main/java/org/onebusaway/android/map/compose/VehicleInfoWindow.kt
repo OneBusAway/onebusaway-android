@@ -69,7 +69,7 @@ fun VehicleInfoWindow(status: ObaTripStatus, isRealtime: Boolean, response: Rout
     // "Now" in the server clock domain: the age is measured against the vehicle's last real-time fix
     // (status.lastLocationUpdateTime, falling back to lastUpdateTime) — both server AVL timestamps —
     // so a skewed device clock must not leak into it (#1612).
-    val nowMs = rememberLiveServerTime(ServerTime(response.currentTimeMs)).epochMs
+    val now = rememberLiveServerTime(ServerTime(response.currentTimeMs))
     // The window only opens for an already-rendered vehicle, so its trip/route are in the refs;
     // guard the unreachable null instead of dereferencing (the legacy getTrip/getRoute would NPE).
     val trip = response.trip(status.activeTripId) ?: return
@@ -89,7 +89,7 @@ fun VehicleInfoWindow(status: ObaTripStatus, isRealtime: Boolean, response: Rout
         },
         statusColor = colorResource(ArrivalInfoUtils.statusColor(isRealtime, deviationMin)),
         occupancyDots = if (isRealtime) occupancyDots(status.occupancyStatus) else 0,
-        lastUpdated = lastUpdatedText(res, isRealtime, status, nowMs),
+        lastUpdated = lastUpdatedText(res, isRealtime, status, now),
     )
 }
 
@@ -245,19 +245,21 @@ private fun occupancyDots(occupancy: Occupancy?): Int = when (occupancy) {
     Occupancy.CRUSHED_STANDING_ROOM_ONLY, Occupancy.FULL, Occupancy.NOT_ACCEPTING_PASSENGERS -> 3
 }
 
-private fun lastUpdatedText(res: Resources, realtime: Boolean, status: ObaTripStatus, nowMs: Long): String {
+private fun lastUpdatedText(res: Resources, realtime: Boolean, status: ObaTripStatus, now: ServerTime): String {
     if (!realtime) {
         return res.getString(R.string.vehicle_last_updated_scheduled)
     }
-    val last = if (status.lastLocationUpdateTime != 0L) {
-        status.lastLocationUpdateTime
-    } else {
-        status.lastUpdateTime
-    }
+    val last = ServerTime(
+        if (status.lastLocationUpdateTime != 0L) {
+            status.lastLocationUpdateTime
+        } else {
+            status.lastUpdateTime
+        }
+    )
     // The route-map marker is continuously extrapolated from the last fix, so it's a model
     // estimate, not the raw position — frame the age as "Estimate from data updated …" (legacy
     // VehicleOverlay behavior for an extrapolating marker).
-    return formatDataAge(res, TimeUnit.MILLISECONDS.toSeconds(nowMs - last), estimating = true)
+    return formatDataAge(res, (now - last).inWholeSeconds, estimating = true)
 }
 
 /**

@@ -308,8 +308,8 @@ private fun ArrivalsPanelHeader(
 }
 
 // ---------------------------------------------------------------------------------------------
-// Previews — the pinned stop header. (The peek rows are RouteArrivalRow now, which needs the
-// un-previewable ArrivalInfo model; the pill strip is covered by EtaPillStripPreview.)
+// Previews — the pinned stop header. (The peek rows are RouteArrivalRow, previewed in ArrivalRows.kt
+// via RouteArrivalRowPreview.)
 
 @Preview(showBackground = true, widthDp = 380)
 @Composable

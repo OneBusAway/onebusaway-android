@@ -20,10 +20,8 @@ package org.onebusaway.android.util
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.graphics.Matrix
 import android.os.Environment
-import androidx.core.graphics.createBitmap
 import androidx.exifinterface.media.ExifInterface
 import java.io.File
 import java.io.IOException
@@ -35,30 +33,6 @@ import java.util.Locale
  * A class containing utility methods related to bitmaps and image files.
  */
 object BitmapUtils {
-
-    /**
-     * Creates a new Bitmap, with the black color of the source image changed to the given color.
-     * The source Bitmap isn't modified.
-     *
-     * @param source the source Bitmap with a black background
-     * @param color  the color to change the black color to
-     * @return the resulting Bitmap that has the black changed to the color
-     */
-    @JvmStatic
-    fun colorBitmap(source: Bitmap, color: Int): Bitmap {
-        val width = source.width
-        val height = source.height
-        val pixels = IntArray(width * height)
-        source.getPixels(pixels, 0, width, 0, 0, width, height)
-
-        for (x in pixels.indices) {
-            pixels[x] = if (pixels[x] == Color.BLACK) color else pixels[x]
-        }
-
-        val out = createBitmap(width, height, source.config!!)
-        out.setPixels(pixels, 0, width, 0, 0, width, height)
-        return out
-    }
 
     /**
      * Creates a JPEG image file with the current date/time as the name

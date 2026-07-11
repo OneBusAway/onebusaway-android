@@ -22,9 +22,6 @@ package org.onebusaway.android.util;
  */
 public class MathUtils {
 
-    /** The number of half winds for boxing the compass. */
-    private static final int NUMBER_OF_HALF_WINDS = 16;
-
     /**
      * Calculates {@code a mod b} in a way that respects negative values (for example,
      * {@code mod(-1, 5) == 4}, rather than {@code -1}).
@@ -35,18 +32,6 @@ public class MathUtils {
      */
     public static float mod(float a, float b) {
         return (a % b + b) % b;
-    }
-
-    /**
-     * Converts the specified heading angle into an index between 0-15 that can be used to retrieve
-     * the direction name for that heading (known as "boxing the compass", down to the half-wind
-     * level).
-     *
-     * @param heading the heading angle
-     * @return the index of the direction name for the angle
-     */
-    public static int getHalfWindIndex(float heading) {
-        return getHalfWindIndex(heading, NUMBER_OF_HALF_WINDS);
     }
 
     /**

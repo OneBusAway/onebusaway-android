@@ -15,12 +15,10 @@
  */
 package org.onebusaway.android.ui.arrivals.components
 
-import androidx.compose.animation.core.animate
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -30,7 +28,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -50,7 +47,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -61,20 +57,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -90,18 +80,13 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.roundToInt
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
@@ -115,15 +100,9 @@ import org.onebusaway.android.util.DisplayFormat
 // row (the scroll + "there's more" chevron), each pill carrying its long-press menu, plus the
 // pull-past-the-end gesture that widens the arrivals window. Split out of ArrivalRows.kt so the strip
 // is a self-contained unit; RouteArrivalRow supplies the badge/divider/heading scaffold around it.
-
-// Pull-past-end-to-load tuning. The strip captures a drag that continues past its last pill and, once
-// it crosses [PULL_TO_LOAD_THRESHOLD], loads more arrivals on release (the old footer button's job).
-/** Finger travel maps to pull distance at this ratio, so the pull lags the finger for a rubber-band feel. */
-private const val PULL_RESISTANCE = 0.5f
-/** Pull distance (post-resistance) that arms the load-more trigger. */
-private val PULL_TO_LOAD_THRESHOLD = 48.dp
-/** Pull distance is clamped here so the strip can't be dragged arbitrarily far off its end. */
-private val PULL_TO_LOAD_MAX = 72.dp
+// The scroll/pull/glide gestures themselves live in SlideBox.kt (one scroll owner, issue #1801) —
+// this file declares WHAT the strip rests on (the pinned pill, or the trailing end during a
+// load-more reveal) and renders the pills.
 
 /**
  * The horizontally-scrollable strip of per-trip ETA pills below the direction name. When the pills
@@ -131,9 +110,9 @@ private val PULL_TO_LOAD_MAX = 72.dp
  * pure visual hint (no pointer handling) so it never blocks the strip's own drag-to-scroll.
  *
  * Dragging the strip past its last pill (once there's nothing more to scroll) builds a resistive pull
- * that reveals a trailing load-more affordance; releasing past [PULL_TO_LOAD_THRESHOLD] widens the
- * arrivals window via [ArrivalRowCallbacks.onLoadMore] — this replaced the drawer's footer button
- * (issue #1707 follow-up). A TalkBack custom action exposes the same load-more for non-drag users.
+ * ([SlideBox]'s gesture) that reveals a trailing load-more affordance; releasing once it's armed
+ * widens the arrivals window via [ArrivalRowCallbacks.onLoadMore] — this replaced the drawer's footer
+ * button (issue #1707 follow-up). A TalkBack custom action exposes the same load-more for non-drag users.
  *
  * The strip also keeps its soonest *upcoming* pill pinned to the leading edge over time: it snaps
  * there instantly on first display (using [start]), then as the shared live clock ticks a trip's ETA
@@ -199,31 +178,7 @@ internal fun EtaStrip(
             .collect { current -> if (current > pinnedIndex) pinnedIndex = current }
     }
 
-    // CHASER: keeps the strip's leading edge on whatever pill is currently pinned. Instant for the
-    // cold-start snap onto `justifyIndex` (so the strip never visibly slides on first display), then
-    // [glideTo] takes over for every later departure — the same self-correcting chase the load-more
-    // reveal transaction's FOLLOWER below uses, so a target that moves mid-glide (another departure
-    // landing before the previous glide finishes, or the pinned pill's own width shifting as its digit
-    // count changes) is simply chased again next iteration instead of overshooting/undershooting a
-    // stale pixel value.
-    LaunchedEffect(Unit) {
-        if (justifyIndex != null) {
-            val offsetPx = snapshotFlow { pinnedOffsetPx.takeIf { it >= 0 } }.filterNotNull().first()
-            scrollState.scrollTo(offsetPx)
-        }
-        scrollState.glideTo { pinnedOffsetPx.takeIf { it >= 0 } }
-    }
-    val density = LocalDensity.current
-    val triggerPx = remember(density) { with(density) { PULL_TO_LOAD_THRESHOLD.toPx() } }
-    val maxPullPx = remember(density) { with(density) { PULL_TO_LOAD_MAX.toPx() } }
-    // Current pull distance in px (post-resistance). Written from the nested-scroll callbacks and read
-    // in the layout/graphics phase, so growing it during a drag doesn't recompose the whole strip.
-    val pull = remember { mutableFloatStateOf(0f) }
-    // Whether the pull has crossed the arm threshold. A derivedState kept out of this composable's own
-    // read set so only its reader (the chip) recomposes when it flips — never the whole strip per frame.
-    val armed = remember(triggerPx) { derivedStateOf { pull.floatValue >= triggerPx } }
     val loadMoreLabel = stringResource(R.string.stop_info_load_more_arrivals)
-    val haptic = LocalHapticFeedback.current
 
     // The strip's active load-more request: the token returned at fire time, NO_LOAD_REQUEST at rest.
     // Saveable so a list eviction / recreation mid-load resumes (or cleanly ends) the transaction.
@@ -242,42 +197,33 @@ internal fun EtaStrip(
     val measuredVersion = remember { mutableLongStateOf(0L) }
     val versionState = rememberUpdatedState(dataVersion)
 
-    // The reveal transaction for this strip's request: keep the strip pinned to its (moving) right end
-    // — first the spinner slot, then the reloaded pills — and settle once the layout provably reflects
-    // the data that completed the request. Every wait is a level-triggered predicate over monotonic
-    // snapshot/StateFlow state, so a signal that fires before we start listening is still observed.
+    // The reveal transaction for this strip's request: while `request` is live, the SlideBox's
+    // followEnd regime (declared below) keeps the strip pinned to its (moving) right end — first the
+    // spinner slot, then the reloaded pills. This effect decides when that transaction ENDS: once the
+    // layout provably reflects the data that completed the request and the strip is at rest at the
+    // true end. Every wait is a level-triggered predicate over monotonic snapshot/StateFlow state, so
+    // a signal that fires before we start listening is still observed.
     LaunchedEffect(request.intValue) {
         val token = request.intValue
         if (token == NO_LOAD_REQUEST) return@LaunchedEffect
         try {
-            coroutineScope {
-                // FOLLOWER: glides to the current end whenever there is one to reach — [glideTo] runs
-                // each glide to completion and then re-evaluates against current state (never
-                // collectLatest: a change mid-glide is caught by the fresh level-triggered re-await, so
-                // there is no lost-update window). A drag that actually travels ends the whole
-                // transaction via the nested-scroll hook, not this loop.
-                val follower = launch {
-                    scrollState.glideTo { scrollState.maxValue.takeIf { it > scrollState.value } }
-                }
-                // AWAIT RESULT: level-triggered on the VM's StateFlow — a Finished that landed before
-                // we started collecting is still observed (StateFlow replays its value).
-                val landed = callbacks.loadMoreState
-                    .map { loadMoreOutcome(it, token) }
-                    .first { it !is LoadMoreOutcome.Pending }
-                if (landed is LoadMoreOutcome.Landed) {
-                    // SETTLE: wait until (a) layout reflects the completing data's version — which,
-                    // via the layout-ack modifier, also means maxValue is current for that data and
-                    // the spinner slot is gone (spinner and new pills swap in the same composition,
-                    // both keyed on dataVersion) — and (b) we are at rest at the true end. Success
-                    // with new pills, success with none for this row, and failure all take this one
-                    // path: the end is wherever layout says it is.
-                    snapshotFlow {
-                        measuredVersion.longValue >= landed.dataVersion &&
-                            scrollState.value == scrollState.maxValue &&
-                            !scrollState.isScrollInProgress
-                    }.first { it }
-                }
-                follower.cancel()
+            // AWAIT RESULT: level-triggered on the VM's StateFlow — a Finished that landed before
+            // we started collecting is still observed (StateFlow replays its value).
+            val landed = callbacks.loadMoreState
+                .map { loadMoreOutcome(it, token) }
+                .first { it !is LoadMoreOutcome.Pending }
+            if (landed is LoadMoreOutcome.Landed) {
+                // SETTLE: wait until (a) layout reflects the completing data's version — which,
+                // via the layout-ack modifier, also means maxValue is current for that data and
+                // the spinner slot is gone (spinner and new pills swap in the same composition,
+                // both keyed on dataVersion) — and (b) we are at rest at the true end. Success
+                // with new pills, success with none for this row, and failure all take this one
+                // path: the end is wherever layout says it is.
+                snapshotFlow {
+                    measuredVersion.longValue >= landed.dataVersion &&
+                        scrollState.value == scrollState.maxValue &&
+                        !scrollState.isScrollInProgress
+                }.first { it }
             }
         } finally {
             // Idempotent teardown; guarded so a user-takeover or a re-fire (which already moved
@@ -286,56 +232,7 @@ internal fun EtaStrip(
         }
     }
 
-    val pullConnection = remember(scrollState, callbacks, triggerPx, maxPullPx, haptic) {
-        object : NestedScrollConnection {
-            // Dragging back toward the pills unwinds an active pull before the strip itself scrolls.
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                // Programmatic glides dispatch as SideEffect; only real user input drives the pull and
-                // the take-over below.
-                if (source != NestedScrollSource.UserInput) return Offset.Zero
-                // A real user scroll on this strip while a reveal transaction is active ends it: the
-                // user wins, the transaction effect is cancelled (killing any in-flight glide via the
-                // scrollable mutex), and the spinner is dropped. The load itself continues in the
-                // ViewModel; its pills land unanimated.
-                if (request.intValue != NO_LOAD_REQUEST) request.intValue = NO_LOAD_REQUEST
-                // Dragging back toward the pills unwinds an active pull before the strip itself scrolls.
-                if (available.x > 0f && pull.floatValue > 0f) {
-                    val consumedFinger = (pull.floatValue / PULL_RESISTANCE).coerceAtMost(available.x)
-                    pull.floatValue -= consumedFinger * PULL_RESISTANCE
-                    return Offset(consumedFinger, 0f)
-                }
-                return Offset.Zero
-            }
-
-            // Past the strip's end, a further left-drag (negative x) builds the resistive pull; a light
-            // tick fires the instant it crosses the arm threshold (rising edge only).
-            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-                if (source == NestedScrollSource.UserInput && available.x < 0f && !scrollState.canScrollForward) {
-                    val before = pull.floatValue
-                    pull.floatValue = (before - available.x * PULL_RESISTANCE).coerceAtMost(maxPullPx)
-                    if (before < triggerPx && pull.floatValue >= triggerPx) {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    }
-                    return Offset(available.x, 0f)
-                }
-                return Offset.Zero
-            }
-
-            // Drag released: fire load-more if armed (the reveal transaction, keyed on the request
-            // token, then pins the strip to its end), then spring the pull back.
-            override suspend fun onPreFling(available: Velocity): Velocity {
-                if (pull.floatValue <= 0f) return Velocity.Zero
-                if (pull.floatValue >= triggerPx) {
-                    // The VM sets Loading(token) synchronously inside onLoadMore, so the spinner is
-                    // already visible in the composition this write lands in — no gap.
-                    request.intValue = callbacks.onLoadMore()
-                }
-                animate(pull.floatValue, 0f) { value, _ -> pull.floatValue = value }
-                // Swallow the fling — there's nothing left to scroll to at the strip's end.
-                return available
-            }
-        }
-    }
+    val slideBox = rememberSlideBoxState(scrollState)
 
     Row(
         modifier.semantics {
@@ -352,81 +249,88 @@ internal fun EtaStrip(
         // start. Reserved (like the right gutter) so toggling it never reflows the pills.
         ScrollChevronGutter(visible = canScrollBackward && !loadingMore, pointsRight = false)
 
-        // The scrollable pill content. An edge fade marks whichever end has more to scroll to, and the
-        // pull-to-load chip overlays the trailing edge; the pull gesture lives here (the gutters don't
-        // scroll).
-        Box(
-            Modifier
-                .weight(1f)
-                .clipToBounds()
-                .nestedScroll(pullConnection)
-        ) {
-            Row(
-                modifier = Modifier
-                    // Follow the pull so the pills slide aside, opening the gap the load-more chip fills.
-                    .offset { IntOffset(-pull.floatValue.roundToInt(), 0) }
-                    // The composition↔layout bridge: measure the scroll content, then record the data
-                    // version this layout reflects (see acknowledgeVersion).
-                    .acknowledgeVersion(versionState, measuredVersion)
-                    .horizontalScroll(scrollState),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                // Bottom-align so a smaller recent-past pill sits on the same baseline as the full-size ones.
-                verticalAlignment = Alignment.Bottom
-            ) {
-                trips.forEachIndexed { index, trip ->
-                    // Only the currently-pinned pill measures its content-space offset — it's the one
-                    // pill CHASER (above) ever reads, and re-measuring continuously (not just once)
-                    // catches its own width shifting as its digit count changes. As `pinnedIndex`
-                    // advances, this modifier simply moves to the new pill on the next recomposition.
-                    val measureOffset = if (index == pinnedIndex) {
-                        Modifier.onGloballyPositioned { coords ->
-                            // Offset within the scroll content Row (its direct parent), which is
-                            // content-space and so scroll-independent.
-                            coords.parentLayoutCoordinates?.let { parent ->
-                                pinnedOffsetPx = parent.localPositionOf(coords, Offset.Zero).x.roundToInt()
-                            }
-                        }
-                    } else {
-                        Modifier
-                    }
-                    val pillModifier = if (index == 0) firstPillModifier.then(measureOffset) else measureOffset
-                    EtaPillWithMenu(
-                        trip = trip,
-                        liveNow = liveNow,
-                        actions = actionsFor(trip),
-                        callbacks = callbacks,
-                        modifier = pillModifier,
+        // The scrollable pill content, inside the gesture-owning SlideBox: the strip DECLARES what it
+        // rests on — the pinned pill, or the trailing end while a load-more reveal is live — and the
+        // box does all scrolling/gliding itself with a single scroll owner (issue #1801). The pull
+        // gesture lives in the box too (the gutters don't scroll).
+        SlideBox(
+            state = slideBox,
+            anchorPx = { pinnedOffsetPx.takeIf { it >= 0 } },
+            followEnd = request.intValue != NO_LOAD_REQUEST,
+            onPullFired = {
+                // The VM sets Loading(token) synchronously inside onLoadMore, so the spinner is
+                // already visible in the composition this write lands in — no gap.
+                request.intValue = callbacks.onLoadMore()
+            },
+            onUserScroll = {
+                // A real user scroll on this strip while a reveal transaction is active ends it: the
+                // user wins — the SlideBox hands the scroll back and the spinner is dropped. The load
+                // itself continues in the ViewModel; its pills land unanimated.
+                if (request.intValue != NO_LOAD_REQUEST) request.intValue = NO_LOAD_REQUEST
+            },
+            modifier = Modifier.weight(1f),
+            // The composition↔layout bridge: measure the scroll content, then record the data
+            // version this layout reflects (see acknowledgeVersion).
+            contentModifier = Modifier.acknowledgeVersion(versionState, measuredVersion),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            // Bottom-align so a smaller recent-past pill sits on the same baseline as the full-size ones.
+            verticalAlignment = Alignment.Bottom,
+            overlay = {
+                // Fade the content out at whichever edge has more content sliding under it.
+                if (canScrollBackward && !loadingMore) EdgeFade(atStart = true)
+                if (canScrollForward && !loadingMore) EdgeFade(atStart = false)
+                // The pull-revealed load-more chip (invisible at rest, armed as the pull crosses the
+                // threshold). Hidden while loading — the inline spinner takes over then.
+                if (!loadingMore) {
+                    LoadMorePullChip(
+                        progress = { slideBox.pullProgress },
+                        armed = { slideBox.armed },
+                        contentDescription = loadMoreLabel,
+                        modifier = Modifier.align(Alignment.CenterEnd),
                     )
                 }
-                // While the reload is in flight, the spinner rides as a real tail item so it reserves its
-                // own slot to the right of the last pill (rather than overlaying it); when the completing
-                // data's composition lands it's dropped in the same frame the new pills appear, and the
-                // strip glides left to the new end.
-                if (loadingMore) {
-                    Box(
-                        modifier = Modifier.size(width = 28.dp, height = 32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+            },
+        ) {
+            trips.forEachIndexed { index, trip ->
+                // Only the currently-pinned pill measures its content-space offset — it's the one
+                // pill the SlideBox anchor ever reads, and re-measuring continuously (not just once)
+                // catches its own width shifting as its digit count changes. As `pinnedIndex`
+                // advances, this modifier simply moves to the new pill on the next recomposition.
+                val measureOffset = if (index == pinnedIndex) {
+                    Modifier.onGloballyPositioned { coords ->
+                        // Offset within the scroll content Row (its direct parent), which is
+                        // content-space and so scroll-independent.
+                        coords.parentLayoutCoordinates?.let { parent ->
+                            pinnedOffsetPx = parent.localPositionOf(coords, Offset.Zero).x.roundToInt()
+                        }
                     }
+                } else {
+                    Modifier
                 }
-            }
-            // Fade the content out at whichever edge has more content sliding under it.
-            if (canScrollBackward && !loadingMore) EdgeFade(atStart = true)
-            if (canScrollForward && !loadingMore) EdgeFade(atStart = false)
-            // The pull-revealed load-more chip (invisible at rest, armed as the pull crosses the
-            // threshold). Hidden while loading — the inline spinner above takes over then.
-            if (!loadingMore) {
-                LoadMorePullChip(
-                    progress = { (pull.floatValue / triggerPx).coerceIn(0f, 1f) },
-                    armed = { armed.value },
-                    contentDescription = loadMoreLabel,
-                    modifier = Modifier.align(Alignment.CenterEnd),
+                val pillModifier = if (index == 0) firstPillModifier.then(measureOffset) else measureOffset
+                EtaPillWithMenu(
+                    trip = trip,
+                    liveNow = liveNow,
+                    actions = actionsFor(trip),
+                    callbacks = callbacks,
+                    modifier = pillModifier,
                 )
+            }
+            // While the reload is in flight, the spinner rides as a real tail item so it reserves its
+            // own slot to the right of the last pill (rather than overlaying it); when the completing
+            // data's composition lands it's dropped in the same frame the new pills appear, and the
+            // strip glides left to the new end.
+            if (loadingMore) {
+                Box(
+                    modifier = Modifier.size(width = 28.dp, height = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
 

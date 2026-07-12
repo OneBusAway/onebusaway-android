@@ -15,17 +15,10 @@
  */
 package org.onebusaway.android.ui.arrivals.components
 
-import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.MutableLongState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
-import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import org.onebusaway.android.ui.arrivals.LoadMoreState
 
 /**
@@ -87,30 +80,3 @@ internal fun Modifier.acknowledgeVersion(version: State<Long>, into: MutableLong
         into.longValue = version.value
         layout(placeable.width, placeable.height) { placeable.place(0, 0) }
     }
-
-/**
- * Repeatedly glides toward whatever [target] currently evaluates to (null means "nothing to chase
- * right now"), re-deriving it fresh each iteration rather than animating once toward a value captured
- * before the glide started — so a moving target (a growing max, a newly-pinned pill) is chased rather
- * than over/undershot. [target] is read inside `snapshotFlow`, so it must be a plain synchronous read
- * of snapshot state, not a suspend function. Never contests a real user drag: losing the scrollable
- * mutex to one just waits for the strip to go idle before re-deriving the target on the next iteration
- * (the caller's own nested-scroll hook is what ends the chase for good, by cancelling this coroutine).
- *
- * Clamped to `[0, maxValue]` before comparing OR animating — `animateScrollTo` clamps internally, but
- * comparing against the raw (unclamped) target would keep re-firing forever once `value` settles at
- * `maxValue` for a target that's past the reachable end (e.g. the pinned pill sitting near the end of
- * a short strip).
- */
-internal suspend fun ScrollState.glideTo(target: () -> Int?) {
-    while (true) {
-        snapshotFlow { target()?.coerceIn(0, maxValue) }.filterNotNull().first { it != value }
-        val next = target()?.coerceIn(0, maxValue) ?: continue
-        try {
-            animateScrollTo(next)
-        } catch (cause: CancellationException) {
-            currentCoroutineContext().ensureActive() // real teardown propagates
-            snapshotFlow { isScrollInProgress }.first { !it }
-        }
-    }
-}

@@ -157,8 +157,13 @@ object Otp2PlanRequestBuilder {
                 PlanModesInput(
                     transit = Optional.present(
                         PlanTransitModesInput(
-                            access = Optional.present(listOf(PlanAccessMode.BICYCLE_RENTAL)),
-                            egress = Optional.present(listOf(PlanEgressMode.BICYCLE_RENTAL)),
+                            // WALK must accompany BICYCLE_RENTAL in the same access/egress list —
+                            // OTP2 rejects a bare BICYCLE_RENTAL leg ("BIKE_RENTAL needs to be
+                            // combined with WALK mode for the same leg", BadRequestError), since a
+                            // rental trip always walks to/from the vehicle. Verified against the
+                            // live OTP 2.x server. #1780.
+                            access = Optional.present(listOf(PlanAccessMode.WALK, PlanAccessMode.BICYCLE_RENTAL)),
+                            egress = Optional.present(listOf(PlanEgressMode.WALK, PlanEgressMode.BICYCLE_RENTAL)),
                         )
                     )
                 )
@@ -167,9 +172,10 @@ object Otp2PlanRequestBuilder {
             Optional.Absent
         }
 
+        // WALK must accompany BICYCLE_RENTAL here too (see the TRANSIT_AND_BIKE branch above).
         TripModes.BIKESHARE -> Optional.present(
             PlanModesInput(
-                direct = Optional.present(listOf(PlanDirectMode.BICYCLE_RENTAL)),
+                direct = Optional.present(listOf(PlanDirectMode.WALK, PlanDirectMode.BICYCLE_RENTAL)),
                 directOnly = Optional.present(true),
             )
         )

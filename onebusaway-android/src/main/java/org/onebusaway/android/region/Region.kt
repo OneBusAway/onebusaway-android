@@ -44,10 +44,12 @@ data class Region(
     val otpBaseUrl: String? = "",
     val otpContactEmail: String? = "",
     val supportsOtpBikeshare: Boolean = false,
-    // Explicit protocol selection (#1780): false selects the OTP1 REST `/plan` path (the default,
-    // and the only path any bundled region uses today), true selects the OTP 2.x GraphQL
-    // `planConnection` path. Never sniffed/inferred from the URL or a failed request.
-    val usesOtp2GraphQl: Boolean = false,
+    // OTP 2.x GraphQL endpoint (#1780). A non-blank value is the explicit protocol signal — trip
+    // planning routes through the OTP2 `planConnection` path against this URL; null/blank (the
+    // default, and every region but the OTP2-enabled ones) stays on OTP1 REST `/plan`. Distinct
+    // from [otpBaseUrl] because the GraphQL endpoint is a different host than the OTP1 REST server.
+    // Never sniffed/inferred from the URL shape or a failed request.
+    val otpBaseGraphqlUrl: String? = null,
     val supportsEmbeddedSocial: Boolean = false,
     val paymentAndroidAppId: String? = null,
     val paymentWarningTitle: String? = null,

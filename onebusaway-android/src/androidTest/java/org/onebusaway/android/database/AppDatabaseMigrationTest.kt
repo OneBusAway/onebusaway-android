@@ -19,6 +19,7 @@ import androidx.room.testing.MigrationTestHelper
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,7 +30,7 @@ import org.junit.runner.RunWith
  * empty — the data import from the legacy ContentProvider DB is a separate slice); and that
  * [MIGRATION_3_4] reconciles `routes.favorite` from the authoritative `route_headsign_favorites` table
  * before dropping it (#1751) and adds the `surveys.study_id` foreign-key child index (#1739); and that
- * [MIGRATION_5_6] adds `regions.uses_otp2_graphql` defaulting existing rows to OTP1 (#1780).
+ * [MIGRATION_5_6] adds `regions.otp_base_graphql_url` defaulting existing rows to OTP1 (#1780).
  */
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseMigrationTest {
@@ -143,7 +144,7 @@ class AppDatabaseMigrationTest {
     }
 
     @Test
-    fun migrate5To6_addsUsesOtp2GraphQlColumn_defaultingExistingRowsToFalse() {
+    fun migrate5To6_addsOtpBaseGraphqlUrlColumn_defaultingExistingRowsToNull() {
         helper.createDatabase(TEST_DB, 5).use { db ->
             db.execSQL(
                 "INSERT INTO regions (_id, name, oba_base_url, siri_base_url, lang, contact_email, " +
@@ -155,9 +156,9 @@ class AppDatabaseMigrationTest {
         // runMigrationsAndValidate asserts the resulting schema matches the exported 6.json.
         val db = helper.runMigrationsAndValidate(TEST_DB, 6, true, MIGRATION_5_6)
 
-        db.query("SELECT uses_otp2_graphql FROM regions WHERE _id = 1").use { c ->
+        db.query("SELECT otp_base_graphql_url FROM regions WHERE _id = 1").use { c ->
             c.moveToFirst()
-            assertEquals("pre-existing region should default to OTP1 (0)", 0, c.getInt(0))
+            assertTrue("pre-existing region should default to OTP1 (NULL GraphQL URL)", c.isNull(0))
         }
         db.close()
     }

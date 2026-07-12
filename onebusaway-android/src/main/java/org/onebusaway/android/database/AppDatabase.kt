@@ -46,8 +46,9 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
  * cache of nearby-stops loads (separate from the user-state `stops` table) so the map renders stops
  * instantly on a slow/cold-start load.
  *
- * v6 adds `regions.uses_otp2_graphql` (#1780): explicit per-region OTP protocol selection (OTP1 REST
- * vs. OTP 2.x GraphQL). Defaults to 0 (OTP1) for every existing cached row.
+ * v6 adds `regions.otp_base_graphql_url` (#1780): the per-region OTP 2.x GraphQL endpoint. A non-null
+ * value routes that region through the OTP2 `planConnection` path; NULL (every existing cached row)
+ * stays on OTP1 REST.
  */
 @Database(
     entities = [

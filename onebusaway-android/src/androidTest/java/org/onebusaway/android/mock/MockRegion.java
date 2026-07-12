@@ -89,7 +89,7 @@ public class MockRegion {
                 null,
                 null,
                 false,
-                false,
+                null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
                 false,
                 "co.bytemark.hart",
                 null,
@@ -131,7 +131,7 @@ public class MockRegion {
                 null,
                 null,
                 false,
-                false,
+                null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
                 false,
                 null,
                 null,
@@ -173,7 +173,7 @@ public class MockRegion {
                 null,
                 null,
                 false,
-                false,
+                null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
                 false,
                 "co.bytemark.hart",
                 null,
@@ -215,7 +215,7 @@ public class MockRegion {
                 null,
                 null,
                 false,
-                false,
+                null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
                 false,
                 "co.bytemark.hart",
                 null,
@@ -257,7 +257,7 @@ public class MockRegion {
                 null,
                 null,
                 false,
-                false,
+                null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
                 false,
                 "co.bytemark.hart",
                 null,
@@ -299,7 +299,7 @@ public class MockRegion {
                 null,
                 null,
                 false,
-                false,
+                null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
                 false,
                 "co.bytemark.hart",
                 null,
@@ -339,7 +339,7 @@ public class MockRegion {
                 null,
                 null,
                 false,
-                false,
+                null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
                 false,
                 "co.bytemark.hart",
                 null,
@@ -379,7 +379,7 @@ public class MockRegion {
                 null,
                 null,
                 false,
-                false,
+                null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
                 false,
                 "co.bytemark.hart",
                 null,

@@ -137,8 +137,9 @@ data class AdvancedPrefSnapshot(
     val displayTestAlerts: Boolean,
     val customObaApiUrl: String?,
     val customOtpApiUrl: String?,
-    // Manual OTP protocol override for the custom URL above (#1780) — mirrors Region.usesOtp2GraphQl
-    // for the no-region / custom-server case, where there's no Region to carry the flag.
+    // Manual OTP protocol override for the custom URL above (#1780) — the custom-server counterpart
+    // to a region's Region.otpBaseGraphqlUrl, for the no-region case where there's no Region to
+    // carry the setting.
     val customOtpApiUrlUsesGraphQl: Boolean,
     val mapStopCacheSize: Int,
 )

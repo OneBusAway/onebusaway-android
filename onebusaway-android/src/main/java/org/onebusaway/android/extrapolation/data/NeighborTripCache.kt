@@ -24,23 +24,18 @@ import org.onebusaway.android.models.TripRouteInfo
  * re-select the same vehicle. Sized like [ShapeCache] against the same [MAX_TRACKED_TRIPS] ceiling —
  * this is a much smaller, occasional cache (populated only on a vehicle selection, not every poll), so
  * eviction pressure here is negligible in practice.
+ *
+ * Backed by [BoundedLruCache], which covers the synchronization rationale.
  */
 internal class NeighborTripCache {
 
-    private val trips =
-            object : LinkedHashMap<String, TripRouteInfo>(16, 0.75f, /* accessOrder = */ true) {
-                override fun removeEldestEntry(
-                        eldest: MutableMap.MutableEntry<String, TripRouteInfo>
-                ): Boolean = size > MAX_TRACKED_TRIPS
-            }
+    private val trips = BoundedLruCache<String, TripRouteInfo>(MAX_TRACKED_TRIPS)
 
     /** The cached route info for [tripId], or null if never resolved (or evicted). */
-    @Synchronized
-    fun get(tripId: String): TripRouteInfo? = trips[tripId]
+    fun get(tripId: String): TripRouteInfo? = trips.get(tripId)
 
     /** Stores [info] under [tripId], promoting it in the retention order. */
-    @Synchronized
     fun put(tripId: String, info: TripRouteInfo) {
-        trips[tripId] = info
+        trips.put(tripId, info)
     }
 }

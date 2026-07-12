@@ -96,11 +96,16 @@ internal fun Modifier.acknowledgeVersion(version: State<Long>, into: MutableLong
  * of snapshot state, not a suspend function. Never contests a real user drag: losing the scrollable
  * mutex to one just waits for the strip to go idle before re-deriving the target on the next iteration
  * (the caller's own nested-scroll hook is what ends the chase for good, by cancelling this coroutine).
+ *
+ * Clamped to `[0, maxValue]` before comparing OR animating — `animateScrollTo` clamps internally, but
+ * comparing against the raw (unclamped) target would keep re-firing forever once `value` settles at
+ * `maxValue` for a target that's past the reachable end (e.g. the pinned pill sitting near the end of
+ * a short strip).
  */
 internal suspend fun ScrollState.glideTo(target: () -> Int?) {
     while (true) {
-        snapshotFlow { target() }.filterNotNull().first { it != value }
-        val next = target() ?: continue
+        snapshotFlow { target()?.coerceIn(0, maxValue) }.filterNotNull().first { it != value }
+        val next = target()?.coerceIn(0, maxValue) ?: continue
         try {
             animateScrollTo(next)
         } catch (cause: CancellationException) {

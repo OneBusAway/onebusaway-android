@@ -179,6 +179,11 @@ internal fun EtaStrip(
     val justifyIndex = start?.takeIf { it in 1..trips.lastIndex }
     var pinnedIndex by remember { mutableIntStateOf(justifyIndex ?: 0) }
 
+    // A later poll can SHRINK `trips` (recent-past trips aging out of the feed), which the
+    // forward-only ratchet above can't fix on its own — clamp back onto the new list's bounds so the
+    // pin always names a real pill instead of freezing `pinnedOffsetPx` on one that no longer exists.
+    pinnedIndex = pinnedIndex.coerceAtMost(trips.lastIndex.coerceAtLeast(0))
+
     // Bridges values that change across recompositions into the long-lived effect below, which
     // otherwise would close over a stale snapshot the moment it first suspends — the same idiom as
     // `versionState` a few lines down.

@@ -24,6 +24,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -52,8 +55,8 @@ class SlideBoxTest {
     private var followEnd by mutableStateOf(false)
     private lateinit var state: SlideBoxState
 
-    /** Ten 60dp boxes in a 150dp viewport, so there's plenty of content past both targets. */
-    private fun setSlideBoxContent() {
+    /** [boxCount] 60dp boxes in a 150dp viewport — ten leaves plenty of content past both targets. */
+    private fun setSlideBoxContent(boxCount: Int = 10, onPullFired: () -> Unit = {}) {
         composeRule.setContent {
             state = rememberSlideBoxState()
             Box(Modifier.width(150.dp)) {
@@ -61,10 +64,10 @@ class SlideBoxTest {
                     state = state,
                     anchorPx = { anchor.intValue.takeIf { it >= 0 } },
                     followEnd = followEnd,
-                    onPullFired = {},
+                    onPullFired = onPullFired,
                     onUserScroll = {},
                 ) {
-                    repeat(10) { Box(Modifier.size(60.dp)) }
+                    repeat(boxCount) { Box(Modifier.size(60.dp)) }
                 }
             }
         }
@@ -108,6 +111,21 @@ class SlideBoxTest {
         // Only the anchor's next MOVE re-engages the chase.
         composeRule.runOnIdle { anchor.intValue = ANCHOR_PX + 60 }
         composeRule.waitUntil(timeoutMillis = 5_000) { state.scroll.value == ANCHOR_PX + 60 }
+    }
+
+    @Test
+    fun pullingPastTheEndFiresOnRelease() {
+        // Content barely wider than the 150dp viewport (3 × 60dp), so one full-width swipe reaches
+        // the end (~30dp of scroll) and then builds ~55dp of post-resistance pull — past the 48dp
+        // arm threshold — before the release.
+        anchor.intValue = 0
+        var fired = 0
+        setSlideBoxContent(boxCount = 3, onPullFired = { fired++ })
+        composeRule.waitUntil(timeoutMillis = 5_000) { state.scroll.maxValue > 0 }
+
+        composeRule.onRoot().performTouchInput { swipeLeft() }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) { fired == 1 }
     }
 
     private companion object {

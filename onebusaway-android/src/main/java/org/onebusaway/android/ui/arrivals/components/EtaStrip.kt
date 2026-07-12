@@ -522,7 +522,6 @@ internal fun EtaPill(
     val shape = RoundedCornerShape(8.dp)
     val numberSize = 28.sp
     val labelSize = 14.sp
-    val nowSize = 22.sp
     val indicatorSize = 12.dp // 1.5× the base accent; overlaid, so the extra size overlaps, not widens
     val clockTimeSize = 10.sp
     val topPadding = 3.dp
@@ -565,11 +564,11 @@ internal fun EtaPill(
                 if (etaParts == null) {
                     Text(
                         text = stringResource(R.string.stop_info_eta_now),
-                        fontSize = nowSize,
+                        fontSize = numberSize,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         textDecoration = decoration,
-                        style = remember(baseTextStyle, nowSize) { tightLineStyle(baseTextStyle, nowSize) }
+                        style = remember(baseTextStyle, numberSize) { tightLineStyle(baseTextStyle, numberSize) }
                     )
                 } else {
                     // A single AnnotatedString (not separate Text composables) so the text shaper kerns

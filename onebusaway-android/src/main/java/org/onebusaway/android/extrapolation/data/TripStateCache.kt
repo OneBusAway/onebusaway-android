@@ -30,34 +30,22 @@ internal const val MAX_TRACKED_TRIPS = 100
  * them; consumers only read, via [lookupTripState] — a cheap map get, fine for per-frame loops.
  * Lookups and writes both promote, so actively watched trips are never the eviction victims.
  *
- * Backed by a plain access-order [LinkedHashMap] (not `android.util.LruCache`) so the data layer
- * carries no Android dependency and is exercisable in JVM unit tests. Every method is
- * `@Synchronized`: writes are get-transform-put rather than atomic, and the access-order map
- * mutates on read, so all access is serialized.
+ * Backed by [BoundedLruCache] (not `android.util.LruCache`) so the data layer carries no Android
+ * dependency and is exercisable in JVM unit tests.
  */
 internal class TripStateCache {
 
-    private val trips =
-            object : LinkedHashMap<String, TripState>(16, 0.75f, /* accessOrder = */ true) {
-                override fun removeEldestEntry(
-                        eldest: MutableMap.MutableEntry<String, TripState>
-                ): Boolean = size > MAX_TRACKED_TRIPS
-            }
+    private val trips = BoundedLruCache<String, TripState>(MAX_TRACKED_TRIPS)
 
     /**
      * The current snapshot for [tripId], or null if the trip has never been recorded (or has
      * been evicted). Promotes the trip in the retention order.
      */
-    @Synchronized
-    fun lookupTripState(tripId: String?): TripState? = tripId?.let { trips[it] }
+    fun lookupTripState(tripId: String?): TripState? = tripId?.let { trips.get(it) }
 
-    /**
-     * Applies [transform] to the current snapshot for [tripId] (or a fresh empty one) and stores
-     * the result — the compute-and-put that the map doesn't provide.
-     */
-    @Synchronized
+    /** Applies [transform] to the current snapshot for [tripId] (or a fresh empty one). */
     private fun update(tripId: String, transform: (TripState) -> TripState) {
-        trips[tripId] = transform(trips[tripId] ?: TripState.empty(tripId))
+        trips.compute(tripId, { TripState.empty(tripId) }, transform)
     }
 
     // --- Writes ---
@@ -101,11 +89,9 @@ internal class TripStateCache {
     // --- Introspection and cleanup ---
 
     /** IDs of the trips currently tracked (the eviction working set). */
-    @Synchronized
-    fun getTrackedTripIds(): Set<String> = trips.keys.toSet()
+    fun getTrackedTripIds(): Set<String> = trips.keys()
 
     /** Drops all tracked trips. For tests only. */
-    @Synchronized
     @VisibleForTesting
     fun clearAllTrips() {
         trips.clear()

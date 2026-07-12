@@ -37,26 +37,17 @@ internal const val MAX_CACHED_SHAPES = MAX_TRACKED_TRIPS
  * a single shared [Polyline] instance, deduplicating the (for rail, sizable) shapes across the up
  * to [MAX_TRACKED_TRIPS] trips the store tracks.
  *
- * Synchronized for the same reason [TripStateCache] is: lookups and writes both promote, so the
- * access-order map mutates on read, and callers arrive on arbitrary threads — all access must be
- * serialized.
+ * Backed by [BoundedLruCache], which covers the synchronization rationale.
  */
 internal class ShapeCache {
 
-    private val shapes =
-            object : LinkedHashMap<String, Polyline>(16, 0.75f, /* accessOrder = */ true) {
-                override fun removeEldestEntry(
-                        eldest: MutableMap.MutableEntry<String, Polyline>
-                ): Boolean = size > MAX_CACHED_SHAPES
-            }
+    private val shapes = BoundedLruCache<String, Polyline>(MAX_CACHED_SHAPES)
 
     /** The cached shape for [shapeId], or null if it was never cached (or has been evicted). */
-    @Synchronized
-    fun get(shapeId: String): Polyline? = shapes[shapeId]
+    fun get(shapeId: String): Polyline? = shapes.get(shapeId)
 
     /** Stores [polyline] under [shapeId], promoting it in the retention order. */
-    @Synchronized
     fun put(shapeId: String, polyline: Polyline) {
-        shapes[shapeId] = polyline
+        shapes.put(shapeId, polyline)
     }
 }

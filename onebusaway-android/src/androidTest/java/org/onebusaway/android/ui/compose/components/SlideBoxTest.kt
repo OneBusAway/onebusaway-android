@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.ui.arrivals
+package org.onebusaway.android.ui.compose.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -31,9 +31,6 @@ import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
-import org.onebusaway.android.ui.arrivals.components.SlideBox
-import org.onebusaway.android.ui.arrivals.components.SlideBoxState
-import org.onebusaway.android.ui.arrivals.components.rememberSlideBoxState
 
 /**
  * On-device tests for the SlideBox's single-owner glide regimes: the anchor chase, the follow-the-end
@@ -62,7 +59,7 @@ class SlideBoxTest {
             Box(Modifier.width(150.dp)) {
                 SlideBox(
                     state = state,
-                    anchorPx = { anchor.intValue.takeIf { it >= 0 } },
+                    anchorPx = { anchor.intValue },
                     followEnd = followEnd,
                     onPullFired = onPullFired,
                     onUserScroll = {},

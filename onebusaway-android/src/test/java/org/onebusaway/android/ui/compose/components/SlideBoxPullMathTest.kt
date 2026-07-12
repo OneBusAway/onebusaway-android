@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.ui.arrivals
+package org.onebusaway.android.ui.compose.components
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onebusaway.android.ui.arrivals.components.PullDelta
-import org.onebusaway.android.ui.arrivals.components.buildPull
-import org.onebusaway.android.ui.arrivals.components.crossesArmThreshold
-import org.onebusaway.android.ui.arrivals.components.unwindPull
 
 /** Truth tables for the SlideBox's pure pull-past-the-end arithmetic (see SlideBox.kt). */
 class SlideBoxPullMathTest {

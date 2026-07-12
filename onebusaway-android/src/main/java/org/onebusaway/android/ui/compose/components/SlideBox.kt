@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.ui.arrivals.components
+package org.onebusaway.android.ui.compose.components
 
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.ScrollState
@@ -56,13 +56,16 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-// SlideBox: the ETA strip's slide-box, extracted so ALL of its gestures — drag-to-scroll, the
-// programmatic glides, and the resistive pull-past-the-end that fires an action — live behind one
-// declarative surface. Callers declare where the box should REST (an anchor offset, or the trailing
-// end while a reveal is in flight); they never issue scroll commands. Internally exactly one
-// coroutine ever mutates the ScrollState, which makes the issue #1801 failure mode — two
-// Default-priority animateScrollTo mutations on one ScrollState cancelling each other at CPU speed
-// until the main thread ANRs — unrepresentable rather than merely guarded against.
+// SlideBox: a horizontally scrollable row that owns every gesture on its content — drag-to-scroll,
+// programmatic glides toward declared rest targets, and a resistive pull-past-the-end that fires an
+// action — behind one declarative surface. Callers declare where the box should REST (an anchor
+// offset, or the trailing end while a reveal is in flight); they never issue scroll commands.
+// Internally exactly one coroutine ever mutates the ScrollState, so the widget itself can never
+// re-create the issue #1801 failure mode it was extracted (from the arrivals ETA strip) to kill:
+// two Default-priority animateScrollTo mutations on one ScrollState cancelling each other at CPU
+// speed until the main thread ANRs. The ScrollState stays hoistable for OBSERVATION (fades,
+// chevrons, previews, tests); the single-owner guarantee holds as long as callers keep declaring
+// targets instead of driving it themselves.
 
 /** Finger travel maps to pull distance at this ratio, so the pull lags the finger for a rubber-band feel. */
 private const val PULL_RESISTANCE = 0.5f
@@ -75,10 +78,13 @@ private val PULL_MAX = 72.dp
  * The observable half of a [SlideBox]: its [scroll] position plus the live pull-past-the-end
  * progress, hoisted so callers can draw their own adornments (edge fades, chevrons, a release-to-act
  * chip) from the same state the gesture writes. The gesture internals — the nested-scroll
- * connection, resistance math, haptics — stay inside [SlideBox]; nothing here is writable.
+ * connection, resistance math, haptics — stay inside [SlideBox]; the pull state here is read-only.
  */
 @Stable
 internal class SlideBoxState(
+    /** The box's scroll position, exposed to OBSERVE (adornments, settle predicates, tests).
+     *  Driving it directly (`scrollTo`/`animateScrollTo`) would contest the box's single glide
+     *  owner — the exact two-mutator livelock [SlideBox] exists to prevent (issue #1801). */
     val scroll: ScrollState,
     internal val pullTriggerPx: Float,
     internal val maxPullPx: Float,
@@ -94,6 +100,14 @@ internal class SlideBoxState(
     /** Whether the pull has crossed the release-to-fire threshold. A derivedState so only its
      *  readers (e.g. the caller's chip) recompose when it flips — never the whole box per frame. */
     val armed: Boolean by derivedStateOf { pullPx.floatValue >= pullTriggerPx }
+
+    /** Whether the box is at rest at its true trailing end — the settled state of [SlideBox]'s
+     *  followEnd regime, defined once here (by the thing that owns the gliding) so callers waiting
+     *  for a reveal to finish don't re-derive it from raw scroll state and drift out of sync with
+     *  the widget's glide semantics. */
+    val isSettledAtEnd: Boolean by derivedStateOf {
+        scroll.value == scroll.maxValue && !scroll.isScrollInProgress
+    }
 }
 
 /** Remembers a [SlideBoxState] around [scroll], resolving the pull thresholds at current density. */
@@ -118,9 +132,10 @@ internal fun rememberSlideBoxState(scroll: ScrollState = rememberScrollState()):
  *   should rest on (null while there's nothing to chase); while [followEnd] is true the trailing
  *   end owns the scroll instead (a load-more reveal chasing its own growing content). The box
  *   glides itself; callers never call animateScrollTo.
- * - **One scroll owner, by construction.** A single effect runs one glide regime at a time,
- *   strictly sequentially, so two programmatic mutations can never contest the ScrollState and
- *   livelock the main thread (issue #1801).
+ * - **One scroll owner.** A single effect runs one glide regime at a time, strictly sequentially,
+ *   so two programmatic mutations can never contest the ScrollState from inside the widget and
+ *   livelock the main thread (issue #1801). Callers observe [SlideBoxState.scroll] but must not
+ *   drive it.
  * - **First alignment snaps, later motion glides.** The first time the anchor resolves the box
  *   jumps there instantly (no entry animation); every later anchor/end change animates.
  * - **Hand-back is edge-triggered.** When [followEnd] flips off, the anchor re-engages only on its
@@ -133,8 +148,8 @@ internal fun rememberSlideBoxState(scroll: ScrollState = rememberScrollState()):
  * [SlideBoxState] exposes as [SlideBoxState.pullProgress]/[SlideBoxState.armed]; releasing while
  * armed fires [onPullFired]. [contentModifier] is spliced between the pull offset and
  * `horizontalScroll` for caller layout hooks that must observe the scroll content's measure pass
- * (EtaStrip's version acknowledgement); [overlay] draws the caller's adornments over the scrolling
- * content, clipped to the box.
+ * (e.g. a layout-acknowledgement modifier like EtaStrip's `acknowledgeVersion`); [overlay] draws
+ * the caller's adornments over the scrolling content, clipped to the box.
  */
 @Composable
 internal fun SlideBox(
@@ -162,6 +177,15 @@ internal fun SlideBox(
     // starts, so overlap is structurally impossible.
     LaunchedEffect(state) {
         val scroll = state.scroll
+        // One glide regime at a time: launch the regime's glide, wait for `follow` to flip to
+        // [untilFollowIs], then cancel — and coroutineScope JOINS the cancelled glide before
+        // returning, so two regimes' mutations can never overlap. This is the single-owner
+        // invariant the whole widget exists for.
+        suspend fun glideRegime(untilFollowIs: Boolean, target: () -> Int?) = coroutineScope {
+            val glide = launch { scroll.glideTo(target) }
+            snapshotFlow { follow }.first { it == untilFollowIs }
+            glide.cancel()
+        }
         // First alignment: snap (don't animate) to the anchor's first resolution, so the box never
         // visibly slides on first display. Skipped if the end regime takes over before the anchor
         // ever resolves.
@@ -173,20 +197,10 @@ internal fun SlideBox(
             // ANCHOR regime: chase the declared anchor (a moving target — see glideTo) until the
             // end takes over. The gate inside the target lambda parks the chase should this loop
             // re-enter while followEnd is already true.
-            coroutineScope {
-                val chase = launch {
-                    scroll.glideTo { if (follow) null else currentAnchorPx() }
-                }
-                snapshotFlow { follow }.first { it }
-                chase.cancel()
-            }
+            glideRegime(untilFollowIs = true) { if (follow) null else currentAnchorPx() }
             // END regime: chase the (growing) trailing end until the caller hands the scroll back.
-            coroutineScope {
-                val glide = launch {
-                    scroll.glideTo { if (follow) scroll.maxValue.takeIf { it > scroll.value } else null }
-                }
-                snapshotFlow { follow }.first { !it }
-                glide.cancel()
+            glideRegime(untilFollowIs = false) {
+                if (follow) scroll.maxValue.takeIf { it > scroll.value } else null
             }
             // Hand-back: the end regime deliberately parked the box at whatever it revealed, so
             // re-engage the anchor only when it next MOVES — chasing its stale level here would
@@ -203,9 +217,13 @@ internal fun SlideBox(
             // Dragging back toward the content unwinds an active pull before the box itself scrolls.
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 // Programmatic glides dispatch as SideEffect; only real user input drives the pull
-                // and the caller's takeover hook.
+                // and the caller's takeover hook (which fires for ANY real drag, pull or not).
                 if (source != NestedScrollSource.UserInput) return Offset.Zero
                 currentOnUserScroll()
+                // Allocation-free exit for the common case (an ordinary scroll, no active pull):
+                // this runs per pointer delta of every drag, so the PullDelta below is only built
+                // while a pull is genuinely being unwound.
+                if (available.x <= 0f || state.pullPx.floatValue <= 0f) return Offset.Zero
                 val delta = unwindPull(state.pullPx.floatValue, available.x, PULL_RESISTANCE)
                 state.pullPx.floatValue = delta.pullPx
                 return Offset(delta.consumedX, 0f)
@@ -214,7 +232,9 @@ internal fun SlideBox(
             // Past the box's end, a further left-drag (negative x) builds the resistive pull; a
             // light tick fires the instant it crosses the arm threshold (rising edge only).
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-                if (source != NestedScrollSource.UserInput || state.scroll.canScrollForward) {
+                if (source != NestedScrollSource.UserInput || available.x >= 0f ||
+                    state.scroll.canScrollForward
+                ) {
                     return Offset.Zero
                 }
                 val before = state.pullPx.floatValue
@@ -256,8 +276,8 @@ internal fun SlideBox(
 /**
  * Repeatedly glides toward whatever [target] currently evaluates to (null means "nothing to chase
  * right now"), re-deriving it fresh each iteration rather than animating once toward a value captured
- * before the glide started — so a moving target (a growing max, a newly-pinned pill) is chased rather
- * than over/undershot. [target] is read inside `snapshotFlow`, so it must be a plain synchronous read
+ * before the glide started — so a moving target (a growing max, a newly-declared anchor) is chased
+ * rather than over/undershot. [target] is read inside `snapshotFlow`, so it must be a plain synchronous read
  * of snapshot state, not a suspend function. Never contests a real user drag: losing the scrollable
  * mutex to one just waits for the box to go idle before re-deriving the target on the next iteration
  * ([SlideBox]'s regime loop is what ends a chase for good, by cancelling this coroutine).

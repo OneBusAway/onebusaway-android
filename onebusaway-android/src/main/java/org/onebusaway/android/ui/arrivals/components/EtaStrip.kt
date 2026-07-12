@@ -93,6 +93,8 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.rememberLiveServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
+import org.onebusaway.android.ui.compose.components.SlideBox
+import org.onebusaway.android.ui.compose.components.rememberSlideBoxState
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.util.DisplayFormat
 
@@ -155,8 +157,7 @@ internal fun EtaStrip(
     // the left, reachable via the left chevron. Starts at the poll-time first-upcoming index (or 0,
     // already the strip's start, when every trip is upcoming); only ever advances forward, from the
     // BOOKKEEPER effect below — never yanked backward by an ordinary poll data reshuffle.
-    val justifyIndex = start?.takeIf { it in 1..trips.lastIndex }
-    var pinnedIndex by remember { mutableIntStateOf(justifyIndex ?: 0) }
+    var pinnedIndex by remember { mutableIntStateOf(start?.takeIf { it in 1..trips.lastIndex } ?: 0) }
 
     // A later poll can SHRINK `trips` (recent-past trips aging out of the feed), which the
     // forward-only ratchet above can't fix on its own — clamp back onto the new list's bounds so the
@@ -189,6 +190,8 @@ internal fun EtaStrip(
     // show. At rest, request is NO_LOAD_REQUEST, which reads as Superseded → no spinner.
     val loadingMore = spinnerVisible(loadMoreOutcome(loadMore, request.intValue), dataVersion)
 
+    val slideBox = rememberSlideBoxState(scrollState)
+
     // Layout acknowledgement: the highest dataVersion whose strip content has been MEASURED. Written in
     // the measure pass that wraps horizontalScroll — the same pass (and snapshot batch) in which
     // scrollState.maxValue is brought up to date — so `measuredVersion >= V` GUARANTEES maxValue is
@@ -216,13 +219,11 @@ internal fun EtaStrip(
                 // SETTLE: wait until (a) layout reflects the completing data's version — which,
                 // via the layout-ack modifier, also means maxValue is current for that data and
                 // the spinner slot is gone (spinner and new pills swap in the same composition,
-                // both keyed on dataVersion) — and (b) we are at rest at the true end. Success
-                // with new pills, success with none for this row, and failure all take this one
-                // path: the end is wherever layout says it is.
+                // both keyed on dataVersion) — and (b) the box reports itself at rest at the true
+                // end. Success with new pills, success with none for this row, and failure all take
+                // this one path: the end is wherever layout says it is.
                 snapshotFlow {
-                    measuredVersion.longValue >= landed.dataVersion &&
-                        scrollState.value == scrollState.maxValue &&
-                        !scrollState.isScrollInProgress
+                    measuredVersion.longValue >= landed.dataVersion && slideBox.isSettledAtEnd
                 }.first { it }
             }
         } finally {
@@ -231,8 +232,6 @@ internal fun EtaStrip(
             if (request.intValue == token) request.intValue = NO_LOAD_REQUEST
         }
     }
-
-    val slideBox = rememberSlideBoxState(scrollState)
 
     Row(
         modifier.semantics {
@@ -265,8 +264,9 @@ internal fun EtaStrip(
             onUserScroll = {
                 // A real user scroll on this strip while a reveal transaction is active ends it: the
                 // user wins — the SlideBox hands the scroll back and the spinner is dropped. The load
-                // itself continues in the ViewModel; its pills land unanimated.
-                if (request.intValue != NO_LOAD_REQUEST) request.intValue = NO_LOAD_REQUEST
+                // itself continues in the ViewModel; its pills land unanimated. (Unconditional: an
+                // equal-value write is a snapshot no-op under structural equality.)
+                request.intValue = NO_LOAD_REQUEST
             },
             modifier = Modifier.weight(1f),
             // The composition↔layout bridge: measure the scroll content, then record the data

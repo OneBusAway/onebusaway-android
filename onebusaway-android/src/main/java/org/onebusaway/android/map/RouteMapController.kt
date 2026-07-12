@@ -228,6 +228,22 @@ class RouteMapController(
         tryFocusVehicle(currentVehicleLayer())
     }
 
+    /**
+     * Re-apply [request] to the route this controller already has open (MapViewModel.toRoute's reframe
+     * branch — see its doc for the reframe-vs-reenter split). An instant, local-only reaction: must NOT
+     * call [start] (no network reload, no vehicle-poll reset). [selectDirection]'s no-op guard is fine
+     * here since reframing the already-shown direction is exactly the "not a real switch" case it exists
+     * to skip. [requestFocus] falls through into the same FIT/DROP resolution ([tryFocusVehicle]) the
+     * initial-load tail ([onRouteLoaded]) uses; absent a focus, reframes now via [MapHost.frameRoute] —
+     * the same call that tail makes when it isn't deferring to a focus. Takes the whole [request] rather
+     * than picking fields, so a new [ShowRouteRequest] field is at least reachable here — though [start]'s
+     * own parameter list still needs a matching update (#1797).
+     */
+    fun reframe(request: ShowRouteRequest) {
+        request.initialDirectionId?.let { selectDirection(it) }
+        request.focusTripId?.let { requestFocus(it) } ?: host.frameRoute()
+    }
+
     // Resolve a pending focus against [layer] (the just-built vehicle set, threaded in so the poll path
     // doesn't re-run the extrapolation), once we actually have vehicles to check. With a marker for the
     // trip present, fit the vehicle together with the originating stop; absent, the pending focus is

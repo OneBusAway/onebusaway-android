@@ -402,15 +402,10 @@ class MapViewModel @Inject constructor(
         if (routeController.routeId == request.routeId &&
             routeController.directionStopId == request.directionStopId
         ) {
-            // Honor a requested direction override here too (not just in the re-entry branch below) so
-            // this branch is correct for any initialDirectionId-bearing request, not just the ones that
-            // happen not to hit it today (a no-op when null or already the shown direction).
-            request.initialDirectionId?.let { routeController.selectDirection(it) }
-            if (request.focusTripId == null) {
-                mapHost.frameRoute()
-            } else {
-                routeController.requestFocus(request.focusTripId)
-            }
+            // Delegate the whole request to the controller (#1797) rather than hand-picking fields here,
+            // so a field added later to ShowRouteRequest is visible at reframe()'s one call site instead
+            // of silently unhandled by an independently-written branch.
+            routeController.reframe(request)
         } else {
             enterRoute(
                 request.routeId,

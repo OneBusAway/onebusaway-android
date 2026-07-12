@@ -619,7 +619,7 @@ internal fun EtaPill(
     val numberSize = 28.sp
     val labelSize = 14.sp
     val nowSize = 22.sp
-    val indicatorSize = 8.dp
+    val indicatorSize = 12.dp // 1.5× the base accent; overlaid, so the extra size overlaps, not widens
     val clockTimeSize = 10.sp
     val topPadding = 3.dp
     val bottomPadding = 3.5.dp
@@ -642,19 +642,22 @@ internal fun EtaPill(
     // below are the actual on-screen spacing rather than a guess fighting Android's hidden font padding.
     val baseTextStyle = LocalTextStyle.current
     Surface(modifier = modifier.then(interaction), shape = shape, color = color) {
-        // Sized to its own content (no fixed height) so the optional clock-time line simply adds to
-        // the pill's height rather than being clipped by — or leaving a gap below it in — a height
-        // guessed independently of the actual text metrics. Pills of different heights (with vs.
-        // without a clock line) still share a bottom edge via the strip's own
-        // `verticalAlignment = Alignment.Bottom` (EtaStrip's Row).
-        Column(
-            modifier = Modifier.padding(
-                start = 6.dp, end = 6.dp, top = topPadding, bottom = bottomPadding
-            ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(clockTimeGap)
-        ) {
-            Row {
+        // A Box so the live indicator can overlay the pill (below) instead of reserving layout width:
+        // live and scheduled pills stay identical widths, and the glyph is free to overlap the ETA
+        // text at the top-trailing corner rather than widening the pill.
+        Box {
+            // Sized to its own content (no fixed height) so the optional clock-time line simply adds to
+            // the pill's height rather than being clipped by — or leaving a gap below it in — a height
+            // guessed independently of the actual text metrics. Pills of different heights (with vs.
+            // without a clock line) still share a bottom edge via the strip's own
+            // `verticalAlignment = Alignment.Bottom` (EtaStrip's Row).
+            Column(
+                modifier = Modifier.padding(
+                    start = 6.dp, end = 6.dp, top = topPadding, bottom = bottomPadding
+                ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(clockTimeGap)
+            ) {
                 if (etaParts == null) {
                     Text(
                         text = stringResource(R.string.stop_info_eta_now),
@@ -688,22 +691,25 @@ internal fun EtaPill(
                         style = remember(baseTextStyle, numberSize) { tightLineStyle(baseTextStyle, numberSize) }
                     )
                 }
-                // The radiating real-time indicator floats above the trailing unit ("min" / "Now"); it
-                // isn't baseline-aligned, so it takes the Row's default top alignment. The Box is always
-                // present so the pill width is stable whether or not it's live.
-                Box(Modifier.padding(start = 2.dp).size(indicatorSize)) {
-                    if (predicted) {
-                        RealtimeIndicator(color = Color.White, modifier = Modifier.fillMaxSize())
-                    }
+                if (clockTime != null) {
+                    Text(
+                        text = clockTime,
+                        fontSize = clockTimeSize,
+                        color = Color.White.copy(alpha = 0.8f),
+                        textDecoration = decoration,
+                        style = remember(baseTextStyle, clockTimeSize) { tightLineStyle(baseTextStyle, clockTimeSize) }
+                    )
                 }
             }
-            if (clockTime != null) {
-                Text(
-                    text = clockTime,
-                    fontSize = clockTimeSize,
-                    color = Color.White.copy(alpha = 0.8f),
-                    textDecoration = decoration,
-                    style = remember(baseTextStyle, clockTimeSize) { tightLineStyle(baseTextStyle, clockTimeSize) }
+            // The live indicator, overlaid on the top-trailing corner so its 1.5× size overlaps the
+            // ETA text a little instead of widening the pill (drawn last = on top).
+            if (predicted) {
+                RealtimeIndicator(
+                    color = Color.White,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 1.dp, end = 1.dp)
+                        .size(indicatorSize),
                 )
             }
         }

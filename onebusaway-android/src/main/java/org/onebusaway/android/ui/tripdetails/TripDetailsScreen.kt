@@ -260,7 +260,7 @@ private fun TripHeaderSection(header: TripHeader) {
 
 /**
  * The lateness-colored status pill (white text on the deviation color). When the trip is real-time,
- * the radiating indicator sits inside the pill, right of the text, in the same white as the lettering.
+ * the real-time indicator sits inside the pill, right of the text, in the same white as the lettering.
  */
 @Composable
 private fun StatusPill(text: String, color: Color, isRealtime: Boolean) {

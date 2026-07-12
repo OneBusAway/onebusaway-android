@@ -15,13 +15,6 @@
  */
 package org.onebusaway.android.ui.arrivals.components
 
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,7 +48,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -501,7 +493,7 @@ private fun EtaContent(
     }
 }
 
-/** The real-time indicator's reserved column (so ETAs right-justify alike); animates when live. */
+/** The real-time indicator's reserved column (so ETAs right-justify alike); shown when live. */
 @Composable
 private fun EtaRealtimeIndicator(predicted: Boolean, color: Color) {
     Box(Modifier.padding(start = 2.dp).size(8.dp)) {
@@ -510,32 +502,22 @@ private fun EtaRealtimeIndicator(predicted: Boolean, color: Color) {
 }
 
 /**
- * The pulsing real-time "connectedness" indicator: concentric stroked circles expanding and
- * contracting at staggered durations (transparent fill, stroked outline, FastOutLinearIn, REVERSE
- * repeat). Shared by the standalone/list ETA and the map drawer's ETA pill.
+ * The real-time ("connectedness") indicator: a static Material `rss_feed` glyph marking an
+ * AVL-tracked arrival. Shared by the standalone/list ETA and the map drawer's ETA pill.
+ *
+ * Deliberately static: the previous concentric-rings version ran an infinite animation per
+ * indicator, and a stop with many live pills kept the whole arrivals screen re-rendering every
+ * vsync at 120Hz (main thread pegged ~30%, ~35% of frames missing the 8.3ms deadline). A glyph
+ * conveys the same "live" cue at zero steady-state cost.
  */
 @Composable
 internal fun RealtimeIndicator(color: Color, modifier: Modifier = Modifier) {
-    val transition = rememberInfiniteTransition(label = "realtime")
-    // Staggered durations make the rings radiate out of phase, matching the legacy 1500/1800/2000.
-    val rings = listOf(1500, 1800, 2000).map { duration ->
-        transition.animateFloat(
-            initialValue = 0f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = duration, easing = FastOutLinearInEasing),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "realtime-$duration"
-        )
-    }
-    Canvas(modifier) {
-        val maxRadius = size.minDimension / 2f
-        val stroke = Stroke(width = 1.2.dp.toPx())
-        rings.forEach { ring ->
-            drawCircle(color = color, radius = maxRadius * ring.value, style = stroke)
-        }
-    }
+    Icon(
+        painter = painterResource(R.drawable.ic_rss_feed),
+        contentDescription = null,
+        modifier = modifier,
+        tint = color,
+    )
 }
 
 private fun strikeThroughIf(canceled: Boolean): TextDecoration =

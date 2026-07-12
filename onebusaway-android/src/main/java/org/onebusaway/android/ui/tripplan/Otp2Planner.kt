@@ -53,8 +53,8 @@ class Otp2Planner @Inject constructor(
 ) {
 
     /**
-     * The last [ApolloClient] built, keyed by the base URL it targets. `TripPlanMonitorService`
-     * calls [plan] repeatedly (every 60s) against the *same* base URL for the life of one monitored
+     * The last [ApolloClient] built, keyed by the endpoint URL it targets. `TripPlanMonitorService`
+     * calls [plan] repeatedly (every 60s) against the *same* endpoint for the life of one monitored
      * trip, and only one URL is realistically in play per [Otp2Planner] instance — a single cached
      * slot avoids rebuilding the client (its own coroutine scope + interceptor chain) on every tick,
      * without needing a general-purpose cache.
@@ -62,15 +62,15 @@ class Otp2Planner @Inject constructor(
     @Volatile
     private var cachedClient: Pair<String, ApolloClient>? = null
 
-    private fun apolloClientFor(baseUrl: String): ApolloClient = synchronized(this) {
-        cachedClient?.takeIf { it.first == baseUrl }?.second
-            ?: ApolloClient.Builder().serverUrl(baseUrl).okHttpClient(okHttpClient).build()
+    private fun apolloClientFor(endpointUrl: String): ApolloClient = synchronized(this) {
+        cachedClient?.takeIf { it.first == endpointUrl }?.second
+            ?: ApolloClient.Builder().serverUrl(endpointUrl).okHttpClient(okHttpClient).build()
                 .also {
                     // Close the client this one replaces (e.g. a region/custom-URL switch) —
                     // ApolloClient owns a coroutine scope that otherwise leaks until this
                     // Otp2Planner itself is garbage collected.
                     cachedClient?.second?.close()
-                    cachedClient = baseUrl to it
+                    cachedClient = endpointUrl to it
                 }
     }
 
@@ -81,7 +81,7 @@ class Otp2Planner @Inject constructor(
      */
     fun plan(builder: TripRequestBuilder, baseUrl: String): List<TripItinerary> {
         val query = Otp2PlanRequestBuilder.build(builder, context)
-        val apolloClient = apolloClientFor(baseUrl)
+        val apolloClient = apolloClientFor(otp2GraphQlEndpoint(baseUrl))
         val data = try {
             runBlocking { apolloClient.query(query).execute() }.dataOrThrow()
         } catch (e: ApolloNetworkException) {
@@ -137,3 +137,17 @@ class Otp2Planner @Inject constructor(
         RoutingErrorCode.UNKNOWN__ -> context.getString(R.string.tripplanner_error_not_defined)
     }
 }
+
+/** OTP2's standard gtfs GraphQL mount, relative to the OTP base (`…/otp`). */
+private const val OTP2_GTFS_GRAPHQL_PATH = "/gtfs/v1"
+
+/**
+ * Resolves the OTP2 gtfs GraphQL endpoint from a region/custom OTP base URL. `otpBaseGraphqlUrl`
+ * (and the custom-URL setting) is the OTP mount base — e.g. `https://…/prod/otp` — mirroring the
+ * OTP1 REST path where the base is `…/otp/routers/default` and the client appends `/plan`; here the
+ * fixed gtfs GraphQL mount `/gtfs/v1` is appended. Not a heuristic: `/gtfs/v1` is OTP2's standard
+ * gtfs API path, identical across OTP2 servers (verified against the live endpoint). Trailing slash
+ * on the base is tolerated so `…/otp` and `…/otp/` both resolve to `…/otp/gtfs/v1`.
+ */
+internal fun otp2GraphQlEndpoint(otpBaseUrl: String): String =
+    otpBaseUrl.trimEnd('/') + OTP2_GTFS_GRAPHQL_PATH

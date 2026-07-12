@@ -437,7 +437,7 @@
       },
       {
         "tableName": "regions",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `oba_base_url` TEXT NOT NULL, `siri_base_url` TEXT NOT NULL, `lang` TEXT NOT NULL, `contact_email` TEXT NOT NULL, `supports_api_discovery` INTEGER NOT NULL, `supports_api_realtime` INTEGER NOT NULL, `supports_siri_realtime` INTEGER NOT NULL, `twitter_url` TEXT, `experimental` INTEGER, `stop_info_url` TEXT, `otp_base_url` TEXT, `otp_contact_email` TEXT, `supports_otp_bikeshare` INTEGER, `uses_otp2_graphql` INTEGER DEFAULT 0, `supports_embedded_social` INTEGER, `payment_android_app_id` TEXT, `payment_warning_title` TEXT, `payment_warning_body` TEXT, `sidecar_base_url` TEXT DEFAULT 'https://onebusaway.co', `plausible_analytics_server_url` TEXT, `umami_analytics_url` TEXT, `umami_analytics_id` TEXT, PRIMARY KEY(`_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `oba_base_url` TEXT NOT NULL, `siri_base_url` TEXT NOT NULL, `lang` TEXT NOT NULL, `contact_email` TEXT NOT NULL, `supports_api_discovery` INTEGER NOT NULL, `supports_api_realtime` INTEGER NOT NULL, `supports_siri_realtime` INTEGER NOT NULL, `twitter_url` TEXT, `experimental` INTEGER, `stop_info_url` TEXT, `otp_base_url` TEXT, `otp_contact_email` TEXT, `supports_otp_bikeshare` INTEGER, `otp_base_graphql_url` TEXT, `supports_embedded_social` INTEGER, `payment_android_app_id` TEXT, `payment_warning_title` TEXT, `payment_warning_body` TEXT, `sidecar_base_url` TEXT DEFAULT 'https://onebusaway.co', `plausible_analytics_server_url` TEXT, `umami_analytics_url` TEXT, `umami_analytics_id` TEXT, PRIMARY KEY(`_id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -524,10 +524,9 @@
             "affinity": "INTEGER"
           },
           {
-            "fieldPath": "usesOtp2GraphQl",
-            "columnName": "uses_otp2_graphql",
-            "affinity": "INTEGER",
-            "defaultValue": "0"
+            "fieldPath": "otpBaseGraphqlUrl",
+            "columnName": "otp_base_graphql_url",
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "supportsEmbeddedSocial",

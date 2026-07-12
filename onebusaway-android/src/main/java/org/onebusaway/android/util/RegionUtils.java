@@ -373,7 +373,7 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_OTP_BASE_URL,
                 BuildConfig.FIXED_REGION_OTP_CONTACT_EMAIL,
                 BuildConfig.FIXED_REGION_SUPPORTS_OTP_BIKESHARE,
-                false, // usesOtp2GraphQl: the fixed-region build flavor doesn't support OTP2 yet
+                null, // otpBaseGraphqlUrl: the fixed-region build flavor doesn't support OTP2 yet
                 false,
                 BuildConfig.FIXED_REGION_PAYMENT_ANDROID_APP_ID,
                 BuildConfig.FIXED_REGION_PAYMENT_WARNING_TITLE,

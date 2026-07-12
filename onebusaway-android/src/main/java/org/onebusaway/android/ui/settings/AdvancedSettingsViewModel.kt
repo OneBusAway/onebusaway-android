@@ -163,9 +163,9 @@ class AdvancedSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Manual OTP protocol override for the custom URL (#1780) — there's no [Region] to carry
-     * [Region.usesOtp2GraphQl] when a custom OTP server is in use, so this is set explicitly by the
-     * user rather than inferred.
+     * Manual OTP protocol override for the custom URL (#1780) — there's no [Region] to carry an
+     * [Region.otpBaseGraphqlUrl] when a custom OTP server is in use, so this is set explicitly by
+     * the user rather than inferred.
      */
     fun onCustomOtpApiUrlUsesGraphQlChanged(usesGraphQl: Boolean) =
         prefs.setBoolean(R.string.preference_key_otp_api_url_is_graphql, usesGraphQl)

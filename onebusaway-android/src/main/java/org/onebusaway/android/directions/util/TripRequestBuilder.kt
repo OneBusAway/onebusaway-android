@@ -206,31 +206,51 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
     }
 
     /**
-     * The user's custom OTP API URL preference, or null if unset/blank — the shared "is a custom
-     * server configured" signal both [formattedOtpBaseUrl] and [usesOtp2] branch on.
+     * The user's custom OTP API URL preference, or null if unset/blank — the "is a custom server
+     * configured" signal [otpTarget] branches on.
      */
     private val customOtpApiUrl: String?
         get() = PreferencesEntryPoint.get(mContext)
             .getString(mContext.getString(R.string.preference_key_otp_api_url), null as String?)
             ?.takeUnless { TextUtils.isEmpty(it) }
 
+    /** The OTP server a request targets: its [baseUrl] and whether it speaks OTP 2.x GraphQL. */
+    private data class OtpTarget(val baseUrl: String?, val usesOtp2: Boolean)
+
     /**
-     * Resolves and formats the OTP base URL (the user's custom URL if set, otherwise the current
-     * region's), or null if neither is available.
+     * Resolves the custom-URL-or-region branch once so [formattedOtpBaseUrl] and [usesOtp2] can't
+     * disagree (#1780). Protocol selection is explicit — a custom server's manual `..._is_graphql`
+     * preference, or a region publishing an `otpBaseGraphqlUrl` — never sniffed from the URL shape
+     * or a failed request. [baseUrl] is null when neither a custom URL nor a region is available.
+     */
+    private val otpTarget: OtpTarget
+        get() {
+            val customUrl = customOtpApiUrl
+            if (customUrl != null) {
+                Log.d(TAG, "Using custom OTP API URL set by user '$customUrl'.")
+                // No [Region] to carry the setting for a custom server, so the user sets it.
+                return OtpTarget(
+                    baseUrl = customUrl,
+                    usesOtp2 = PreferencesEntryPoint.get(mContext)
+                        .getBoolean(R.string.preference_key_otp_api_url_is_graphql, false),
+                )
+            }
+            // No custom URL and no selected region: baseUrl stays null so the caller
+            // (TripPlanRepository) surfaces a "no server selected" error instead of crashing.
+            val region = RegionEntryPoint.get(mContext).currentRegion() ?: return OtpTarget(null, false)
+            // An OTP2 region publishes its GraphQL endpoint separately (a different host than the
+            // OTP1 REST server); route to it when present, else the OTP1 REST base URL.
+            val graphqlBase = region.otpBaseGraphqlUrl?.takeUnless { it.isBlank() }
+            return OtpTarget(baseUrl = graphqlBase ?: region.otpBaseUrl, usesOtp2 = graphqlBase != null)
+        }
+
+    /**
+     * The [otpTarget] base URL with a scheme ensured and formatted, or null if no server is
+     * available.
      */
     val formattedOtpBaseUrl: String?
         get() {
-            var otpBaseUrl: String?
-            val customUrl = customOtpApiUrl
-            if (customUrl != null) {
-                otpBaseUrl = customUrl
-                Log.d(TAG, "Using custom OTP API URL set by user '$otpBaseUrl'.")
-            } else {
-                // No custom URL and no selected region: return null so the caller
-                // (TripPlanRepository) surfaces a "no server selected" error instead of crashing.
-                val region = RegionEntryPoint.get(mContext).currentRegion() ?: return null
-                otpBaseUrl = region.otpBaseUrl
-            }
+            var otpBaseUrl = otpTarget.baseUrl ?: return null
             try {
                 // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
                 URL(otpBaseUrl)
@@ -238,23 +258,12 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
                 // Assume HTTPS scheme, since without a scheme the Uri won't parse the authority
                 otpBaseUrl = mContext.getString(R.string.https_prefix) + otpBaseUrl
             }
-            return if (otpBaseUrl != null) RegionUtils.formatOtpBaseUrl(otpBaseUrl) else null
+            return RegionUtils.formatOtpBaseUrl(otpBaseUrl)
         }
 
-    /**
-     * Whether this request should go through the OTP 2.x GraphQL path rather than OTP1 REST
-     * (#1780). Resolved the same way as [formattedOtpBaseUrl] (custom-URL-or-region): with a
-     * custom OTP URL set, the manual override preference applies (there's no [Region] to carry
-     * the flag); otherwise the current region's `usesOtp2GraphQl` flag applies. Explicit, never
-     * sniffed from the URL shape or a failed request.
-     */
+    /** Whether this request goes through the OTP 2.x GraphQL path rather than OTP1 REST (#1780). */
     val usesOtp2: Boolean
-        get() = if (customOtpApiUrl != null) {
-            PreferencesEntryPoint.get(mContext)
-                .getBoolean(R.string.preference_key_otp_api_url_is_graphql, false)
-        } else {
-            RegionEntryPoint.get(mContext).currentRegion()?.usesOtp2GraphQl ?: false
-        }
+        get() = otpTarget.usesOtp2
 
     private fun getAddressString(address: CustomAddress?): String? {
         if (address == null) {

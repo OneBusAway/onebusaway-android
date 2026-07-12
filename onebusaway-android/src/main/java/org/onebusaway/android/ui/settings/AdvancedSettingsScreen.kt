@@ -212,9 +212,9 @@ fun AdvancedSettingsScreen(
                     onValueChange = onOtpUrlChange,
                 )
                 // Only meaningful once a custom OTP URL is set — TripRequestBuilder.usesOtp2 only
-                // reads this preference in that case, falling back to the region's own flag
-                // otherwise, so showing it unconditionally would suggest it does something it
-                // doesn't.
+                // reads this preference in that case, falling back to the region's own
+                // otpBaseGraphqlUrl otherwise, so showing it unconditionally would suggest it does
+                // something it doesn't.
                 if (!state.customOtpApiUrl.isNullOrEmpty()) {
                     SwitchPreferenceItem(
                         title = stringResource(R.string.preferences_otp_api_url_is_graphql_title),

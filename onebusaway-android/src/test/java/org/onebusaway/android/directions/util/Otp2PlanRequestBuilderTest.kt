@@ -62,8 +62,9 @@ class Otp2PlanRequestBuilderTest {
             Otp2PlanRequestBuilder.buildModes(TripModes.TRANSIT_AND_BIKE, bikeshareEnabled = true)
         )
         val transit = requirePresent(modes.transit)
-        assertEquals(listOf(PlanAccessMode.BICYCLE_RENTAL), requirePresent(transit.access))
-        assertEquals(listOf(PlanEgressMode.BICYCLE_RENTAL), requirePresent(transit.egress))
+        // WALK must accompany BICYCLE_RENTAL — OTP2 rejects a bare BICYCLE_RENTAL leg (#1780).
+        assertEquals(listOf(PlanAccessMode.WALK, PlanAccessMode.BICYCLE_RENTAL), requirePresent(transit.access))
+        assertEquals(listOf(PlanEgressMode.WALK, PlanEgressMode.BICYCLE_RENTAL), requirePresent(transit.egress))
     }
 
     @Test
@@ -78,7 +79,8 @@ class Otp2PlanRequestBuilderTest {
     @Test
     fun bikeshareRequestsDirectBicycleRentalOnly() {
         val modes = requirePresent(Otp2PlanRequestBuilder.buildModes(TripModes.BIKESHARE, bikeshareEnabled = true))
-        assertEquals(listOf(PlanDirectMode.BICYCLE_RENTAL), requirePresent(modes.direct))
+        // WALK must accompany BICYCLE_RENTAL — OTP2 rejects a bare BICYCLE_RENTAL leg (#1780).
+        assertEquals(listOf(PlanDirectMode.WALK, PlanDirectMode.BICYCLE_RENTAL), requirePresent(modes.direct))
         assertEquals(true, requirePresent(modes.directOnly))
     }
 

@@ -458,9 +458,12 @@ data class RegionDto(
     val otpBaseUrl: String? = null,
     val otpContactEmail: String? = null,
     val supportsOtpBikeshare: Boolean = false,
-    // OTP protocol selection (#1780); absent in the regions directory today, so every region
-    // decodes to OTP1 REST (false) until explicitly set otherwise.
-    val usesOtp2GraphQl: Boolean = false,
+    // OTP 2.x GraphQL endpoint (#1780). Its presence is the explicit protocol signal: a non-blank
+    // value routes trip planning through the OTP2 `planConnection` path against this URL; a null/
+    // absent value (every region but the OTP2-enabled ones) stays on the OTP1 REST `/plan` path.
+    // A distinct field because a region's GraphQL endpoint is a different host from its OTP1
+    // `otpBaseUrl` (e.g. Puget Sound), so the two URLs can't share one field.
+    val otpBaseGraphqlUrl: String? = null,
     val supportsEmbeddedSocial: Boolean = false,
     val paymentAndroidAppId: String? = null,
     val paymentWarningTitle: String? = null,

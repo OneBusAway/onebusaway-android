@@ -78,7 +78,7 @@ internal fun region(
         null,          // otpBaseUrl
         otpContactEmail, // otpContactEmail
         supportsOtpBikeshare, // supportsOtpBikeshare
-        false,         // usesOtp2GraphQl
+        null,          // otpBaseGraphqlUrl
         false,         // supportsEmbeddedSocial
         null,          // paymentAndroidAppId
         null,          // paymentWarningTitle

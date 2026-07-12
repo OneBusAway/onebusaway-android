@@ -129,6 +129,7 @@
         "stopInfoUrl": null,
         "open311Servers": [],
         "otpBaseUrl": "https://otp.prod.sound.obaweb.org/otp/routers/default/",
+        "otpBaseGraphqlUrl": "https://peq6qe6fei.execute-api.us-west-2.amazonaws.com/prod/otp",
         "otpContactEmail": "otp-pugetsound@onebusaway.org",
         "supportsEmbeddedSocial": false,
         "supportsOtpBikeshare": false,

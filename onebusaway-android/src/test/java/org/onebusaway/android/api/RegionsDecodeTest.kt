@@ -56,14 +56,21 @@ class RegionsDecodeTest {
     }
 
     /**
-     * #1780 is infra-only: no bundled region is flipped to OTP2 GraphQL by this change, so every
-     * region in the shipped directory must still default to OTP1 (the field is absent from the
-     * JSON entirely today). Guards against a future edit accidentally flipping one.
+     * OTP2 protocol selection (#1780) is carried by a region's `otpBaseGraphqlUrl` (the OTP mount
+     * base; the client appends `/gtfs/v1`). Puget Sound is pointed at its OTP2 GraphQL server;
+     * every other bundled region stays on OTP1 REST (null). Guards both the intended flip and
+     * against an accidental one elsewhere.
      */
     @Test
-    fun bundledRegionsDefaultToOtp1() {
-        val regions = decode("src/main/res/raw/regions_v3.json")
-        regions.forEach { assertFalse(it.toObaRegion().usesOtp2GraphQl) }
+    fun bundledRegionsSelectOtpProtocolByGraphqlUrl() {
+        val regions = decode("src/main/res/raw/regions_v3.json").map { it.toObaRegion() }
+        val pugetSound = regions.single { it.name == "Puget Sound" }
+        assertEquals(
+            "https://peq6qe6fei.execute-api.us-west-2.amazonaws.com/prod/otp",
+            pugetSound.otpBaseGraphqlUrl,
+        )
+        regions.filter { it.name != "Puget Sound" }
+            .forEach { assertNull(it.otpBaseGraphqlUrl) }
     }
 
     /** Ports testUmamiAnalyticsParsing: the nested umamiAnalytics object maps onto the region. */

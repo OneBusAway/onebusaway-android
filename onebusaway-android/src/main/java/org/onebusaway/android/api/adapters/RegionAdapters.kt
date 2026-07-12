@@ -46,7 +46,7 @@ fun RegionDto.toObaRegion(): Region = Region(
     otpBaseUrl,
     otpContactEmail,
     supportsOtpBikeshare,
-    usesOtp2GraphQl,
+    otpBaseGraphqlUrl,
     supportsEmbeddedSocial,
     paymentAndroidAppId,
     paymentWarningTitle,

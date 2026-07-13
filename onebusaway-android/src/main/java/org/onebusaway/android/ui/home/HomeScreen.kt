@@ -643,7 +643,7 @@ private fun ArrivalsDragHandle(onToggle: () -> Unit, modifier: Modifier = Modifi
         contentAlignment = Alignment.Center,
     ) {
         Surface(
-            // Same muted grey as the header's star/icon tint, so the handle matches the panel chrome.
+            // Same muted grey as the header's icon tint, so the handle matches the panel chrome.
             color = colorResource(R.color.navdrawer_icon_tint),
             shape = RoundedCornerShape(percent = 50),
         ) {

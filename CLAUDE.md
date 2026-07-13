@@ -296,6 +296,8 @@ This allows white-label brands to only override `app_name` instead of duplicatin
 
 ## Contributing
 
-- PRs should be single squashed commits
+- A PR branch may be a single squashed commit or a string of commits — either is fine. On merge to
+  `main` the PR is squashed, and the branch may be kept (archived) for an arbitrary period for future
+  git archeology.
 - ICLA signature required via CLA Assistant
 - Run tests before submitting: `./gradlew connectedObaGoogleDebugAndroidTest`

@@ -212,7 +212,14 @@ internal fun SlideBox(
         while (!follow) {
             val anchor = currentAnchorPx() ?: break
             scroll.scrollTo(anchor.coerceAtMost(scroll.maxValue))
-            if (anchor <= scroll.maxValue || scroll.maxValue <= snappedMax) break
+            // Stop re-snapping — and let the glide loop below take over at the clamped edge — once the
+            // anchor is reachable, maxValue has stopped climbing, or the floor that would lift maxValue
+            // has fully landed (or was never declared). The floor guarantees maxValue reaches at least
+            // minReachablePx; when maxValue already meets it, no further climb is coming. Without this
+            // last guard the default minReachablePx = { null } would leave a non-overflowing anchor
+            // waiting forever for a maxValue climb that never arrives.
+            val floorReach = minReachablePx() ?: 0
+            if (anchor <= scroll.maxValue || scroll.maxValue <= snappedMax || floorReach <= scroll.maxValue) break
             snappedMax = scroll.maxValue
             snapshotFlow { follow || currentAnchorPx() != anchor || scroll.maxValue != snappedMax }
                 .first { it }

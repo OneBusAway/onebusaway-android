@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -80,18 +79,18 @@ class RouteDaoTest {
     }
 
     @Test
-    fun isFavorite_reflectsTheFavoriteBit() = runBlocking {
-        // No row yet -> not a favorite (the route-map header's default before a star lands).
-        assertFalse(dao.isFavorite("r4").first())
+    fun favoriteRouteIds_reflectsTheFavoriteBit() = runBlocking {
+        // No row yet -> not in the favorites set.
+        assertTrue(dao.favoriteRouteIds().first().isEmpty())
 
         dao.storeRouteDetails("r4", "40", "Route 40", "http://u", regionId = 4L, now = 100)
-        assertFalse(dao.isFavorite("r4").first())   // row exists, favorite still unset
+        assertTrue(dao.favoriteRouteIds().first().isEmpty())   // row exists, favorite still unset
 
         dao.setFavorite("r4", 1)
-        assertTrue(dao.isFavorite("r4").first())
+        assertEquals(listOf("r4"), dao.favoriteRouteIds().first())
 
         dao.setFavorite("r4", 0)
-        assertFalse(dao.isFavorite("r4").first())
+        assertTrue(dao.favoriteRouteIds().first().isEmpty())
     }
 
     @Test

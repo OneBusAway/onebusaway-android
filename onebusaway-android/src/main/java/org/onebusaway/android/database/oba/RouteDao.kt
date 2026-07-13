@@ -52,15 +52,11 @@ interface RouteDao {
 
     /**
      * The ids of every starred (favorite) route, live — the arrivals list overlays this to star rows +
-     * promote favorited routes to the drawer header (#1751), reacting to a star toggle from any surface
-     * (an arrival row, the route-map header) without a re-fetch.
+     * promote favorited routes to the drawer header (#1751), reacting to a star toggle from an arrival
+     * row without a re-fetch.
      */
     @Query("SELECT _id FROM routes WHERE favorite = 1")
     fun favoriteRouteIds(): Flow<List<String>>
-
-    /** Whether [routeId] is starred, live — drives the route-map header star toggle (#1727). */
-    @Query("SELECT EXISTS(SELECT 1 FROM routes WHERE _id = :routeId AND favorite = 1)")
-    fun isFavorite(routeId: String): Flow<Boolean>
 
     // --- Usage/metadata writes (the legacy partial upsert; see RoutesStore) ---
 
@@ -133,8 +129,8 @@ interface RouteDao {
      * row starts at `use_count = 0`. Favoriting/unfavoriting a route is not a "view", so it must not
      * bump the recents (`access_time`) or the frequency sort (`use_count`) (#1727 review). Null **or
      * empty** name/URL arguments preserve any existing value rather than clobbering it — a star from a
-     * surface that only has a bare short name (e.g. the route-map header, whose loaded route may carry
-     * an empty long name) must not wipe a good long name; the network backfill fills it in afterward.
+     * surface that only has a bare short name (whose loaded route may carry an empty long name) must not
+     * wipe a good long name; the network backfill fills it in afterward.
      */
     @Transaction
     suspend fun ensureRouteDetails(

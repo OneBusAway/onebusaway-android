@@ -34,11 +34,11 @@ import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.routeDisplayNames
 
 /**
- * The single owner of route-favorite membership — a wholesale `routes.favorite` bit (#1751). Every
- * surface that stars a route (the per-arrival star, the route-map header) writes through [setFavorite]
- * so the import gating, the row-existence guarantee, and the bookmark analytics live in one place
- * instead of being re-implemented (and drifting) per surface; every surface that shows the star reads
- * one of the reactive flows below, so a toggle from any surface re-flags the others with no re-fetch.
+ * The single owner of route-favorite membership — a wholesale `routes.favorite` bit (#1751). The
+ * arrival-row star writes through [setFavorite] so the import gating, the row-existence guarantee, and
+ * the bookmark analytics live in one place instead of being re-implemented (and drifting) per surface;
+ * every surface that shows the star reads [favoriteRouteIds] below, so a toggle re-flags every row with
+ * no re-fetch.
  */
 @Singleton
 class RouteFavoritesRepository @Inject constructor(
@@ -59,17 +59,13 @@ class RouteFavoritesRepository @Inject constructor(
             .map { it.toSet() }
             .distinctUntilChanged()
 
-    /** Whether [routeId] is starred, live — deduped against unrelated `routes` writes. */
-    fun isFavorite(routeId: String): Flow<Boolean> =
-        routeDao.isFavorite(routeId).distinctUntilChanged()
-
     /**
      * Stars (or unstars) [routeId] wholesale. Ensures the `routes` row exists (so the Starred Routes
      * folder can JOIN it for its display name/URL) before flipping the flag, gated on the one-time
      * import, and reports the bookmark event. Pass whatever [shortName]/[longName]/[url] the caller has
      * in hand (null/empty values leave any existing value untouched); on a **star** the full details are
      * then backfilled from the network so the folder always shows a proper long name — regardless of
-     * which surface starred it (the route-map header's loaded route often carries an empty long name).
+     * which surface starred it (a starring surface's loaded route often carries an empty long name).
      */
     suspend fun setFavorite(
         routeId: String,

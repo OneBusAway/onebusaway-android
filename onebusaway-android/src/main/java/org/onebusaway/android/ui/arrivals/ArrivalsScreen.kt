@@ -17,6 +17,8 @@ package org.onebusaway.android.ui.arrivals
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
@@ -278,6 +280,8 @@ fun ArrivalsScreen(
             when (state) {
                 ArrivalsUiState.Loading -> LoadingContent(Modifier.align(Alignment.Center))
 
+                // The full screen isn't height-constrained like the drawer's peek, so it keeps
+                // alerts expanded (showAlerts defaults to true) rather than offering a collapse toggle.
                 is ArrivalsUiState.Content -> ArrivalsList(
                     content = state,
                     rowCallbacks = rowCallbacks,
@@ -355,49 +359,38 @@ internal fun ArrivalsList(
     showDirection: Boolean = true,
     /** Inset for the scrollable content (e.g. a bottom inset so the list clears the nav-bar chrome). */
     contentPadding: PaddingValues = PaddingValues(0.dp),
+    /** Whether to render the stop's service alerts (the alert list and the "show hidden" footnote) at
+     *  the head of the list. Hosts that own a collapse toggle pass its state so alerts stay hidden
+     *  until expanded; the default keeps them visible. Changes animate (see the "alerts" item). */
+    showAlerts: Boolean = true,
     /** An opaque anchor modifier applied to the first route row's ETA pill (e.g. the home sheet's
      *  onboarding spotlight); default is a no-op for hosts that don't spotlight. */
     etaAnchor: Modifier = Modifier
 ) {
     val filterActive = content.filteredRouteCount > 0
     LazyColumn(state = listState, modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
-        if (content.alerts.isNotEmpty()) {
+        if (content.hasAlerts) {
+            // One item for the whole alert section so it stays in the list and animates as a unit:
+            // toggling [showAlerts] slides it open/closed and the rows below glide up. Hosts that keep
+            // alerts visible pass showAlerts = true, so it's shown from the start without animating.
             item(key = "alerts") {
-                AlertList(
-                    alerts = content.alerts,
-                    onShowAlert = handler::onShowAlert,
-                    onHideAlert = handler::onHideAlert
-                )
-            }
-        }
-        if (content.hiddenAlertCount > 0) {
-            item(key = "hidden_alerts") {
-                // A muted, secondary footnote (not a peer to the alert list's "more" button):
-                // the eye-off icon conveys "hidden", tapping reveals them again.
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp)
-                        .clickable(onClick = onShowHiddenAlerts)
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                AnimatedVisibility(
+                    visible = showAlerts,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_visibility_off),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = pluralStringResource(
-                            R.plurals.alert_filter_text,
-                            content.hiddenAlertCount,
-                            content.hiddenAlertCount
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Column {
+                        if (content.alerts.isNotEmpty()) {
+                            AlertList(
+                                alerts = content.alerts,
+                                onShowAlert = handler::onShowAlert,
+                                onHideAlert = handler::onHideAlert
+                            )
+                        }
+                        if (content.hiddenAlertCount > 0) {
+                            HiddenAlertsRow(content.hiddenAlertCount, onShowHiddenAlerts)
+                        }
+                    }
                 }
             }
         }
@@ -427,6 +420,35 @@ internal fun ArrivalsList(
                 )
             }
         }
+    }
+}
+
+/**
+ * A muted, secondary footnote (not a peer to the alert list's "more" button): the eye-off icon
+ * conveys "hidden", tapping reveals the [count] user-hidden alerts again.
+ */
+@Composable
+private fun HiddenAlertsRow(count: Int, onShowHiddenAlerts: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(onClick = onShowHiddenAlerts)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_visibility_off),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = pluralStringResource(R.plurals.alert_filter_text, count, count),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

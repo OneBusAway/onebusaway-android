@@ -44,6 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -105,6 +106,9 @@ fun ArrivalsPanel(
     val content = state as? ArrivalsUiState.Content
 
     val filtering = (content?.filteredRouteCount ?: 0) > 0
+    // Service alerts are collapsed by default; the header's alert icon toggles them so they no longer
+    // crowd the head of the list. Resets to collapsed only when the panel leaves composition.
+    var alertsExpanded by remember { mutableStateOf(false) }
     // The pinned header's height (px). Added to the list's laid-out extent to report the whole
     // panel's content height, which the host fits the collapsed peek to (capping tall stops).
     var headerHeightPx by remember { mutableIntStateOf(0) }
@@ -141,6 +145,8 @@ fun ArrivalsPanel(
                 isFavorite = content?.header?.isFavorite == true,
                 showActions = content != null,
                 hasAlerts = content?.hasAlerts == true,
+                alertsExpanded = alertsExpanded,
+                onToggleAlerts = { alertsExpanded = !alertsExpanded },
                 filtering = filtering,
                 onToggleFavorite = viewModel::toggleFavorite,
                 onTitleClick = onTitleClick,
@@ -160,6 +166,8 @@ fun ArrivalsPanel(
                     listState = listState,
                     // The drawer header already shows the direction as a "(N)" tag.
                     showDirection = false,
+                    // Alerts stay collapsed until the header's alert icon is tapped.
+                    showAlerts = alertsExpanded,
                     // Header sits above the list now, so only inset the bottom (clearing the nav-bar
                     // chrome).
                     contentPadding = PaddingValues(bottom = navBarInset),
@@ -199,6 +207,8 @@ private fun ArrivalsPanelHeader(
     isFavorite: Boolean,
     showActions: Boolean,
     hasAlerts: Boolean,
+    alertsExpanded: Boolean,
+    onToggleAlerts: () -> Unit,
     filtering: Boolean,
     onToggleFavorite: () -> Unit,
     onTitleClick: (() -> Unit)? = null,
@@ -254,8 +264,15 @@ private fun ArrivalsPanelHeader(
             if (hasAlerts) {
                 Icon(
                     painter = painterResource(R.drawable.baseline_warning_24),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error
+                    contentDescription = stringResource(
+                        if (alertsExpanded) {
+                            R.string.stop_info_hide_alerts_toggle
+                        } else {
+                            R.string.stop_info_show_alerts
+                        }
+                    ),
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.clickable(onClick = onToggleAlerts)
                 )
             }
         }
@@ -279,6 +296,8 @@ private fun ArrivalsPanelHeaderPreview() {
                     isFavorite = true,
                     showActions = true,
                     hasAlerts = false,
+                    alertsExpanded = false,
+                    onToggleAlerts = {},
                     filtering = false,
                     onToggleFavorite = {}
                 )
@@ -290,6 +309,8 @@ private fun ArrivalsPanelHeaderPreview() {
                     isFavorite = false,
                     showActions = true,
                     hasAlerts = true,
+                    alertsExpanded = true,
+                    onToggleAlerts = {},
                     filtering = true,
                     onToggleFavorite = {}
                 )

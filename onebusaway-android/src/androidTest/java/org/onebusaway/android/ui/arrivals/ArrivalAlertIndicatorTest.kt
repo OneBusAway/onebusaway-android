@@ -62,7 +62,6 @@ class ArrivalAlertIndicatorTest {
         composeRule.setContent {
             RouteArrivalRow(
                 group = RouteRowGroup(listOf(trip)),
-                dataVersion = 1L,
                 actionsFor = { actions },
                 isFavorite = false,
                 callbacks = previewRowCallbacks(),

@@ -40,6 +40,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -77,6 +78,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.nightlight.NightLightLauncher
@@ -130,8 +132,6 @@ internal fun rememberArrivalRowCallbacks(
         onShowRouteSchedule = handler::onShowRouteSchedule,
         onReportArrivalProblem = handler::onReportArrivalProblem,
         onShowAlert = handler::onShowAlert,
-        onLoadMore = viewModel::loadMore,
-        loadMoreState = viewModel.loadMoreState
     )
 }
 
@@ -189,6 +189,10 @@ fun ArrivalsRoute(
         handler = handler,
         onHideAllAlerts = viewModel::hideAllAlerts,
         onShowHiddenAlerts = viewModel::showHiddenAlerts,
+        onLoadMore = viewModel::loadMore,
+        // Collected inside the list's footer item, not here — a load-more toggle should only
+        // recompose that one item, not this whole screen (and everything ArrivalsList contains).
+        loadingMore = viewModel.loadingMore,
         snackbarHostState = snackbarHostState,
         onNightLight = onNightLight
     )
@@ -206,6 +210,10 @@ fun ArrivalsScreen(
     handler: ArrivalActionHandler,
     onHideAllAlerts: () -> Unit,
     onShowHiddenAlerts: () -> Unit,
+    onLoadMore: () -> Unit,
+    // A StateFlow, not a collected Boolean: the list's footer item collects it itself, so a
+    // load-more toggle only recomposes that one item instead of this whole screen.
+    loadingMore: StateFlow<Boolean>,
     snackbarHostState: SnackbarHostState? = null,
     onNightLight: (() -> Unit)? = null
 ) {
@@ -272,7 +280,9 @@ fun ArrivalsScreen(
                     content = state,
                     rowCallbacks = rowCallbacks,
                     handler = handler,
-                    onShowHiddenAlerts = onShowHiddenAlerts
+                    onShowHiddenAlerts = onShowHiddenAlerts,
+                    onLoadMore = onLoadMore,
+                    loadingMore = loadingMore,
                 )
 
                 is ArrivalsUiState.Error -> Text(
@@ -324,6 +334,11 @@ internal fun ArrivalsList(
     rowCallbacks: ArrivalRowCallbacks,
     handler: ArrivalActionHandler,
     onShowHiddenAlerts: () -> Unit,
+    /** Widens the time window and reloads (the list's "load more trips" footer button). */
+    onLoadMore: () -> Unit,
+    /** Whether a load-more request is in flight, for the footer button's spinner. Collected only by
+     *  the footer item below, so a toggle recomposes just that item, not the whole list. */
+    loadingMore: StateFlow<Boolean>,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     /** Hosts that show the stop's direction elsewhere (e.g. in their own header) set this false to
@@ -376,7 +391,6 @@ internal fun ArrivalsList(
             itemsIndexed(content.routeGroups, key = { _, group -> group.key }) { index, group ->
                 RouteArrivalRow(
                     group = group,
-                    dataVersion = content.dataVersion,
                     actionsFor = { content.actions[it.tripId] },
                     isFavorite = group.routeId in content.favoriteRouteIds,
                     callbacks = rowCallbacks,
@@ -385,6 +399,33 @@ internal fun ArrivalsList(
                 )
             }
         }
+        item(key = "load_more") {
+            val loading by loadingMore.collectAsStateWithLifecycle()
+            LoadMoreButton(loading = loading, onClick = onLoadMore)
+        }
+    }
+}
+
+/**
+ * The list's "load more trips" footer button: widens the stop's arrivals time window and reloads —
+ * replaces the old per-strip pull-to-reload gesture, which was scoped to the whole stop (not just the
+ * route the gesture was fired from) and so surprised riders when it pulled in other routes' trips
+ * too. Shown below the arrivals (or the empty-list message) so it's always reachable.
+ */
+@Composable
+private fun LoadMoreButton(loading: Boolean, onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick,
+        enabled = !loading,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+    ) {
+        if (loading) {
+            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+            Spacer(Modifier.width(8.dp))
+        }
+        Text(stringResource(R.string.stop_info_load_more_arrivals))
     }
 }
 

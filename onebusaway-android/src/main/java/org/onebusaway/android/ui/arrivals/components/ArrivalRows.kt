@@ -64,8 +64,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FrequencyWindow
@@ -74,7 +72,6 @@ import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
-import org.onebusaway.android.ui.arrivals.LoadMoreState
 import org.onebusaway.android.ui.compose.components.FavoriteStarButton
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
@@ -97,13 +94,6 @@ class ArrivalRowCallbacks(
     val onReportArrivalProblem: (ArrivalActions) -> Unit,
     /** Opens the service-alert dialog for the given situation id (the per-row alert indicator). */
     val onShowAlert: (String) -> Unit,
-    /** Fires a widen-window reload — invoked by pulling an ETA strip past its end (replaces the old
-     *  "load more arrivals" footer button). Returns the request token whose lifecycle
-     *  [loadMoreState] reports. */
-    val onLoadMore: () -> Int,
-    /** The stop's shared load-more lifecycle; the strip that fired the matching token drives its
-     *  spinner/reveal from this. */
-    val loadMoreState: StateFlow<LoadMoreState>
 )
 
 /**
@@ -258,9 +248,6 @@ internal fun ArrivalRowContent(
 @Composable
 fun RouteArrivalRow(
     group: RouteRowGroup,
-    // The Content.dataVersion the group came from — MUST be read off the same Content object, so the
-    // ETA strip's load-more reveal can pair its pills with the data generation they render.
-    dataVersion: Long,
     actionsFor: (ArrivalInfo) -> ArrivalActions?,
     isFavorite: Boolean,
     callbacks: ArrivalRowCallbacks,
@@ -338,7 +325,6 @@ fun RouteArrivalRow(
                     }
                     EtaStrip(
                         trips = group.trips,
-                        dataVersion = dataVersion,
                         actionsFor = actionsFor,
                         callbacks = callbacks,
                         // Justify the soonest upcoming pill to the leading edge (the ETA the row is
@@ -653,8 +639,6 @@ internal fun previewRowCallbacks() = ArrivalRowCallbacks(
     onShowRouteSchedule = {},
     onReportArrivalProblem = {},
     onShowAlert = {},
-    onLoadMore = { NO_LOAD_REQUEST },
-    loadMoreState = MutableStateFlow(LoadMoreState.Idle),
 )
 
 @Preview(showBackground = true, widthDp = 400)
@@ -688,7 +672,6 @@ private fun RouteArrivalRowPreview() {
                             previewArrival("40", "Northgate", etaMinutes = 24, predicted = false),
                         )
                     ),
-                    dataVersion = 1L,
                     actionsFor = { actions[it.tripId] },
                     isFavorite = true,
                     callbacks = callbacks,
@@ -701,7 +684,6 @@ private fun RouteArrivalRowPreview() {
                             previewArrival("8", "Rainier Beach", etaMinutes = 9, scheduleDeviationMinutes = -3),
                         )
                     ),
-                    dataVersion = 1L,
                     actionsFor = {
                         ArrivalActions(
                             tripId = it.tripId,

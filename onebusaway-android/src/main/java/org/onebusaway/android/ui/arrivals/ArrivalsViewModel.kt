@@ -20,7 +20,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -31,26 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import org.onebusaway.android.time.WallTime
-
-/**
- * The lifecycle of a pull-to-load-more request (the ETA strip's pull-past-end gesture). One request
- * is tracked at a time — the load is global to the stop — and the [Loading.token] identifies which
- * strip fired it, so only that strip animates its spinner/reveal.
- */
-sealed interface LoadMoreState {
-    data object Idle : LoadMoreState
-    data class Loading(val token: Int) : LoadMoreState
-
-    /**
-     * [dataVersion] is the [ArrivalsUiState.Content.dataVersion] current when this request's load
-     * completed; the firing strip settles once its *layout* reflects a version >= this. [success]
-     * means a fresh network result landed (a stale fallback counts as failure — nothing new could
-     * have arrived).
-     */
-    data class Finished(val token: Int, val success: Boolean, val dataVersion: Long) : LoadMoreState
-}
 
 /**
  * ViewModel for the arrivals screen. The 60-second polling loop lives in the screen (driven by the
@@ -78,20 +58,8 @@ class ArrivalsViewModel @AssistedInject constructor(
     // --- Reactive state sources. The UI [state] is derived from these, so a user action updates the
     // screen by mutating a source rather than imperatively recomputing and assigning the state. -----
 
-    /**
-     * The loaded snapshot paired with a monotonically increasing revision. The revision is stamped
-     * into [ArrivalsUiState.Content.dataVersion] so the UI can tell, purely from state, whether a
-     * given load's data has reached its composition/layout yet. Paired in one object (not two flows)
-     * so the [state] combine can never emit new data with an old version.
-     */
-    private data class VersionedData(val data: ArrivalsData, val version: Long)
-
     /** The latest fetched snapshot (null until the first load). */
-    private val loaded = MutableStateFlow<VersionedData?>(null)
-
-    private fun publish(data: ArrivalsData) {
-        loaded.value = VersionedData(data, (loaded.value?.version ?: 0L) + 1L)
-    }
+    private val loaded = MutableStateFlow<ArrivalsData?>(null)
 
     /** Set only when a load fails with nothing to show; cleared by any successful load. */
     private val fatalError = MutableStateFlow<String?>(null)
@@ -108,7 +76,7 @@ class ArrivalsViewModel @AssistedInject constructor(
             loaded, repository.alertHideState(), repository.favoriteRouteIds(), fatalError
         ) { data, hideState, favoriteRouteIds, error ->
             when {
-                data != null -> data.data.toContent(hideState, favoriteRouteIds, data.version)
+                data != null -> data.toContent(hideState, favoriteRouteIds)
                 error != null -> ArrivalsUiState.Error(error)
                 else -> ArrivalsUiState.Loading
             }
@@ -149,7 +117,7 @@ class ArrivalsViewModel @AssistedInject constructor(
             onSuccess = { data ->
                 minutesAfter = data.minutesAfter
                 fatalError.value = null
-                publish(data)
+                loaded.value = data
                 repository.lastLoaded()?.let { _arrivalsLoaded.tryEmit(it) }
                 !data.isStale
             },
@@ -165,50 +133,30 @@ class ArrivalsViewModel @AssistedInject constructor(
         viewModelScope.launch { refresh() }
     }
 
-    private val _loadMoreState = MutableStateFlow<LoadMoreState>(LoadMoreState.Idle)
+    private val _loadingMore = MutableStateFlow(false)
 
-    /** The pull-to-load-more lifecycle; the ETA strip that fired the matching token drives its
-     *  spinner/reveal from this. */
-    val loadMoreState: StateFlow<LoadMoreState> = _loadMoreState.asStateFlow()
+    /** Whether a "load more trips" request is in flight, for the list footer button's spinner. */
+    val loadingMore: StateFlow<Boolean> = _loadingMore.asStateFlow()
 
-    private var nextLoadMoreToken = 0
-
-    /** The in-flight load-more refresh, cancelled when a newer load-more supersedes it. */
-    private var loadMoreJob: Job? = null
-
-    /**
-     * Widens the time window and reloads (the ETA strip's pull-past-end gesture). Returns the
-     * request token; [loadMoreState] reports the request's lifecycle under that token.
-     */
-    fun loadMore(): Int {
-        val token = ++nextLoadMoreToken
+    /** Widens the time window and reloads (the arrivals list's "load more trips" footer button). */
+    fun loadMore() {
+        if (_loadingMore.value) return
         minutesAfter += DefaultArrivalsRepository.MINUTES_AFTER_INCREMENT
-        _loadMoreState.value = LoadMoreState.Loading(token)
-        // Cancel any older load-more still in flight so its refresh() can't publish() after this one —
-        // an earlier (narrower-window) response resolving last would otherwise roll the arrivals back.
-        // A cancelled refresh dies on its (cooperative) network call before it reaches publish. Polls
-        // and other refreshes are separate intents and are left alone.
-        loadMoreJob?.cancel()
-        loadMoreJob = viewModelScope.launch {
-            // Safety guard ONLY (not happy-path logic): getArrivals is already bounded by OkHttp's
-            // connect/read timeouts; this caps a pathological trickling response so Finished always
-            // fires and a strip's spinner can't be pinned forever.
-            val fresh = withTimeoutOrNull(LOAD_MORE_SAFETY_TIMEOUT_MS) { refresh() } ?: false
-            // Publish completion only if a later loadMore hasn't superseded this request (its own
-            // Finished will follow; the superseded strip tears down on seeing Loading(other)).
-            if ((_loadMoreState.value as? LoadMoreState.Loading)?.token == token) {
-                _loadMoreState.value =
-                    LoadMoreState.Finished(token, fresh, loaded.value?.version ?: 0L)
+        _loadingMore.value = true
+        viewModelScope.launch {
+            try {
+                refresh()
+            } finally {
+                _loadingMore.value = false
             }
         }
-        return token
     }
 
     /** Toggles the stop favorite, updating the header optimistically and persisting. */
     fun toggleFavorite() {
         val content = state.value as? ArrivalsUiState.Content ?: return
         val newValue = !content.header.isFavorite
-        loaded.value?.let { publish(it.data.copy(header = content.header.copy(isFavorite = newValue))) }
+        loaded.value?.let { loaded.value = it.copy(header = content.header.copy(isFavorite = newValue)) }
         viewModelScope.launch { repository.setStopFavorite(content.header.stopId, newValue) }
     }
 
@@ -264,7 +212,7 @@ class ArrivalsViewModel @AssistedInject constructor(
 
     /** Every situation id across the currently loaded active alerts (all grouped ids, deduped). */
     private fun activeSituationIds(): List<String> =
-        loaded.value?.data?.activeAlerts.orEmpty().flatMapTo(mutableSetOf()) { it.situationIds }.toList()
+        loaded.value?.activeAlerts.orEmpty().flatMapTo(mutableSetOf()) { it.situationIds }.toList()
 
     /** The service-alert dialog's content for an alert id (read from the last good response). */
     fun alertDetails(id: String): AlertDetails? = repository.alertDetails(id)
@@ -292,13 +240,11 @@ class ArrivalsViewModel @AssistedInject constructor(
     private fun ArrivalsData.toContent(
         hideState: AlertHideState,
         favoriteRouteIds: Set<String>,
-        version: Long,
     ): ArrivalsUiState.Content {
         val shown = activeAlerts.filterNot { hideState.isHidden(it, hideAlertsByDefault) }
         val hiddenCount = activeAlerts.size - shown.size
         return ArrivalsUiState.Content(
             header = header,
-            dataVersion = version,
             arrivals = arrivals,
             // Lift starred routes to the top (each partition stays in departure order). Done here, off
             // the live favorite set, so a star toggle re-orders the list with no re-fetch (#1707/#1751).
@@ -315,11 +261,5 @@ class ArrivalsViewModel @AssistedInject constructor(
             stopLon = stopLon,
             stopUserName = stopUserName
         )
-    }
-
-    private companion object {
-        /** Backstop on a pathological trickling response so [LoadMoreState.Finished] always fires;
-         *  OkHttp's connect/read timeouts bound the normal failure paths well before this. */
-        const val LOAD_MORE_SAFETY_TIMEOUT_MS = 30_000L
     }
 }

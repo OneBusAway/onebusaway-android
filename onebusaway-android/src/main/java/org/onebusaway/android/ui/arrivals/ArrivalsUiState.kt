@@ -88,9 +88,6 @@ sealed interface ArrivalsUiState {
         val routeGroups: List<RouteRowGroup>,
         val minutesAfter: Int,
         val isStale: Boolean,
-        /** Monotonic revision of the loaded snapshot; pairs with [LoadMoreState.Finished.dataVersion]
-         *  so the ETA strip can await the layout of the data that completed its load-more request. */
-        val dataVersion: Long = 0,
         val actions: Map<String, ArrivalActions> = emptyMap(),
         /** The starred route ids, live — a row's star + the drawer-header promotion read from this, so a
          *  toggle from any surface re-flags the list without a re-fetch (#1751). */

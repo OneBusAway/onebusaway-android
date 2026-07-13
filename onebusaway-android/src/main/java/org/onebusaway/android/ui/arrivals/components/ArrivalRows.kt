@@ -73,6 +73,7 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.LoadMoreState
+import org.onebusaway.android.ui.compose.components.FavoriteStarButton
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
@@ -239,7 +240,8 @@ internal fun ArrivalRowContent(
  * - Tapping the row body frames the whole route/direction on the map ([ArrivalRowCallbacks.onShowVehiclesOnMap]).
  * - Tapping a pill focuses that specific trip's vehicle + stop ([ArrivalRowCallbacks.onEtaClick]).
  * - Long-pressing a pill opens that trip's menu (details / reminder / report).
- * - The top-right overflow ⋮ opens the route-level menu (star / show-only / schedule).
+ * - The top-left corner star toggles the route favorite ([ArrivalRowCallbacks.onRouteFavorite]).
+ * - The top-right overflow ⋮ opens the route-level menu (show-only / schedule).
  *
  * [actionsFor] resolves each trip's [ArrivalActions] (keyed by trip id upstream); the representative
  * trip's actions drive the badge color and the route menu. [etaAnchor] is attached to the first pill
@@ -314,6 +316,22 @@ fun RouteArrivalRow(
                     ArrivalAlertIndicator(onClick = onAlertClick)
                 }
             }
+            if (routeActions != null) {
+                // Own layer, overlaid on top of the row rather than laid out inline, so the star can
+                // sit in the corner without shifting the badge/pills (mirrors the overflow icon below).
+                Box(Modifier.align(Alignment.TopStart)) {
+                    FavoriteStarButton(
+                        isFavorite = isFavorite,
+                        onClick = { callbacks.onRouteFavorite(routeActions) },
+                        tint = colorResource(R.color.navdrawer_icon_tint),
+                        iconSize = 20.dp,
+                        // Tighten the button's touch box to the icon + a small margin, like the corner
+                        // overflow icon below, instead of Material's 48dp default — keeps the star flush
+                        // in the corner with no compensating offset.
+                        modifier = Modifier.size(28.dp),
+                    )
+                }
+            }
             Box(Modifier.align(Alignment.TopEnd)) {
                 CornerIcon(
                     iconRes = R.drawable.more_vert,
@@ -326,7 +344,6 @@ fun RouteArrivalRow(
                     onDismiss = { menuExpanded = false },
                     routeId = group.routeId,
                     actions = routeActions,
-                    isFavorite = isFavorite,
                     filterActive = filterActive,
                     callbacks = callbacks,
                 )
@@ -390,27 +407,19 @@ private fun CornerIcon(
     )
 }
 
-/** The route-level overflow menu (the row's ⋮): star the route, narrow the stop to this route, and
- *  open its schedule. Per-trip actions live on each pill's long-press menu ([TripActionsMenu]). */
+/** The route-level overflow menu (the row's ⋮): narrow the stop to this route and open its schedule.
+ *  The route's star now lives only as the row's own corner toggle ([FavoriteStarButton]) — no longer
+ *  duplicated here. Per-trip actions live on each pill's long-press menu ([TripActionsMenu]). */
 @Composable
 internal fun RouteActionsMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
     routeId: String,
     actions: ArrivalActions?,
-    isFavorite: Boolean,
     filterActive: Boolean,
     callbacks: ArrivalRowCallbacks
 ) {
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-        if (actions != null) {
-            val favLabel = if (isFavorite) {
-                R.string.bus_options_menu_remove_star
-            } else {
-                R.string.bus_options_menu_add_star
-            }
-            MenuRow(favLabel) { onDismiss(); callbacks.onRouteFavorite(actions) }
-        }
         val filterLabel = if (filterActive) {
             R.string.bus_options_menu_show_all_routes
         } else {

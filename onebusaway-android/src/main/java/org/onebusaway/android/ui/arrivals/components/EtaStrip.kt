@@ -191,6 +191,12 @@ internal fun EtaStrip(
         SlideBox(
             scroll = scrollState,
             anchorPx = { arrowOverridePx ?: pinnedOffsetPx.takeIf { it >= 0 } },
+            // Keep the pinned pill's offset scroll-reachable so the strip justifies to it even when
+            // the pills fit the viewport (horizontalScroll would otherwise cap maxValue below it and
+            // the justify would silently no-op, leaving the recent-past pills on screen). The
+            // persistent pinned offset, deliberately NOT the arrow override — a chevron jump should
+            // stop at the real content end, not stretch it.
+            minReachablePx = { pinnedOffsetPx.takeIf { it >= 0 } },
             // height(IntrinsicSize.Max) fixes the scrolling row to its tallest pill, so a shorter
             // pill — the single-line "NOW" pill, which has no clock subline — can fillMaxHeight up to
             // match its neighbours. The layout does the leveling; no pill guesses another's height.

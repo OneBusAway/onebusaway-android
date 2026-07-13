@@ -238,8 +238,12 @@ internal fun ArrivalsPanelHeader(
                     ),
                     contentDescription = stringResource(R.string.stop_info_favorite),
                     tint = colorResource(R.color.navdrawer_icon_tint),
+                    // Expand the star's tappable area to the 48dp accessibility minimum (the glyph
+                    // itself stays starSize). As with the alert toggle, clickable is the outer node so
+                    // its pointer region measures the reserved 48dp.
                     modifier = Modifier
                         .clickable(onClick = onToggleFavorite)
+                        .minimumInteractiveComponentSize()
                         .padding(end = 6.dp)
                         .size(starSize)
                 )

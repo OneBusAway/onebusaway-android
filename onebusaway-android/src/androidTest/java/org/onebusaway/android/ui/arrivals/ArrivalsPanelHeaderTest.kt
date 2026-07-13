@@ -73,6 +73,35 @@ class ArrivalsPanelHeaderTest {
     }
 
     @Test
+    fun favoriteStarMeetsMinimumTouchTarget() {
+        // The star is the header's other tappable glyph (toggles the favorite); it gets the same 48dp
+        // treatment as the alert toggle.
+        composeRule.setContent {
+            ArrivalsPanelHeader(
+                title = "Pine St & 3rd Ave",
+                direction = "N",
+                isFavorite = false,
+                showActions = true,
+                hasAlerts = false,
+                alertsExpanded = false,
+                onToggleAlerts = {},
+                filtering = false,
+                onToggleFavorite = {},
+            )
+        }
+
+        val star = context.getString(R.string.stop_info_favorite)
+        val bounds = composeRule.onNodeWithContentDescription(star)
+            .assertHasClickAction()
+            .getUnclippedBoundsInRoot()
+
+        val width = (bounds.right - bounds.left).value
+        val height = (bounds.bottom - bounds.top).value
+        assertTrue("star width ${width}dp < 48dp", width >= 48f - 0.5f)
+        assertTrue("star height ${height}dp < 48dp", height >= 48f - 0.5f)
+    }
+
+    @Test
     fun alertToggleContentDescriptionFollowsExpandedState() {
         // The same glyph carries a state-appropriate label so a screen reader announces the action it
         // will perform. Tapping is wired through onToggleAlerts (asserted clickable above); here we pin

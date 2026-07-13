@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import org.onebusaway.android.R
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.models.RouteMapDirection
+import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.RadioOptionList
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
@@ -131,15 +132,13 @@ fun RouteHeaderOverlay(
                         )
                     }
                     if (directionLabel != null) {
-                        Text(
-                            text = directionLabel,
-                            color = MaterialTheme.colorScheme.primary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        // The same arrow-glyph + tightened-monospace treatment as an arrivals row, so
+                        // the headsign reads identically on both surfaces (#1823).
+                        DirectionHeadsign(directionLabel)
                     }
                     if (header.agency.isNotEmpty()) {
-                        Text(text = header.agency)
+                        // One type-scale step below the direction line so it recedes as secondary info.
+                        Text(text = header.agency, style = MaterialTheme.typography.bodySmall)
                     }
                 }
                 // A route with a single direction has nothing to switch to — the affordance is hidden.

@@ -30,8 +30,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -55,10 +53,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -72,6 +68,7 @@ import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
+import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.FavoriteStarButton
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
@@ -320,7 +317,7 @@ fun RouteArrivalRow(
                         // (it sits right under it); the ETA strip below reaches the row's true end —
                         // its own trailing chevron gutter already reserves that room, and the pills
                         // sit low enough in the row to clear the icon vertically.
-                        DirectionHeader(direction, modifier = Modifier.padding(end = OVERFLOW_ICON_CLEARANCE))
+                        DirectionHeadsign(direction, modifier = Modifier.padding(end = OVERFLOW_ICON_CLEARANCE))
                         Spacer(Modifier.height(6.dp))
                     }
                     EtaStrip(
@@ -370,32 +367,6 @@ fun RouteArrivalRow(
                 }
             }
         }
-    }
-}
-
-/**
- * The "heading toward X" line above a route row's pill strip: a muted forward-arrow (reads as
- * "toward" without asserting a destination — a headsign can be a direction or loop name) followed by
- * the destination in a slightly-tightened monospace so it reads like the sign on the bus.
- */
-@Composable
-private fun DirectionHeader(direction: String, modifier: Modifier = Modifier) {
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(18.dp)
-        )
-        Spacer(Modifier.width(4.dp))
-        Text(
-            text = direction,
-            style = MaterialTheme.typography.bodyMedium,
-            fontFamily = FontFamily.Monospace,
-            letterSpacing = (-0.1).sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
     }
 }
 

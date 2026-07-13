@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.searchresults
 
 import org.onebusaway.android.api.data.LocationSearchDataSource
+import org.onebusaway.android.api.data.RoutesNearResult
 
 import javax.inject.Inject
 import android.location.Location
@@ -74,18 +75,20 @@ class DefaultSearchResultsRepository @Inject constructor(
         importGate.awaitReady()
         val userInfo = runCatching { stopDao.userInfoMap().toStopUserInfoMap() }.getOrDefault(emptyMap())
         val items = buildList {
-            routeResult.getOrNull()?.forEach { add(toRoute(it)) }
+            routeResult.getOrNull()?.let { result ->
+                result.routes.forEach { add(toRoute(it, result.agencyNames)) }
+            }
             stopResult.getOrNull()?.forEach { add(toStop(it, userInfo[it.id])) }
         }
         Result.success(items)
     }
 
     /** Searches around the user, widening to the region's default center when nothing matches. */
-    private suspend fun searchRoutes(query: String, center: Location): List<ObaRoute> {
+    private suspend fun searchRoutes(query: String, center: Location): RoutesNearResult {
         val near = search
             .routesNear(center.latitude, center.longitude, query, SearchCenter.DEFAULT_SEARCH_RADIUS_METERS)
             .getOrThrow()
-        if (near.isNotEmpty()) return near
+        if (near.routes.isNotEmpty()) return near
         val default = searchCenter.regionCenter() ?: return near
         return search
             .routesNear(default.latitude, default.longitude, query, SearchCenter.DEFAULT_SEARCH_RADIUS_METERS)
@@ -97,13 +100,16 @@ class DefaultSearchResultsRepository @Inject constructor(
             .stopsNear(center.latitude, center.longitude, query, SearchCenter.DEFAULT_SEARCH_RADIUS_METERS)
             .getOrThrow()
 
-    private fun toRoute(route: ObaRoute): SearchResultItem.Route {
+    private fun toRoute(route: ObaRoute, agencyNames: Map<String, String>): SearchResultItem.Route {
         val names = routeDisplayNames(route)
         return SearchResultItem.Route(
             id = route.id,
             shortName = names.shortName,
             longName = names.longName,
-            url = route.url?.takeIf { it.isNotEmpty() }
+            url = route.url?.takeIf { it.isNotEmpty() },
+            routeColor = route.color,
+            // A blank agency name renders as no line (RouteRowContent guards isNullOrBlank).
+            agency = agencyNames[route.agencyId]
         )
     }
 

@@ -89,21 +89,40 @@ fun StopRowContent(
 
 /**
  * The visual content of a route result row: the prominent short-name [LineBadge] on the left and
- * an optional description to its right, matching the legacy list. The caller supplies its own
- * click handling and padding via [modifier].
+ * an optional description (plus operating agency) to its right, matching the legacy list. The caller
+ * supplies its own click handling and padding via [modifier].
+ *
+ * The badge renders as the route-colored chip derived from [routeColor] (via [rememberRouteBadgeColors]),
+ * matching the arrivals row and map header; a null [routeColor] falls back to the neutral chip. The
+ * operating [agency] is shown one type step below the long name and omitted when null/blank.
  */
 @Composable
-fun RouteRowContent(shortName: String, longName: String?, modifier: Modifier = Modifier) {
+fun RouteRowContent(
+    shortName: String,
+    longName: String?,
+    modifier: Modifier = Modifier,
+    routeColor: Int? = null,
+    agency: String? = null
+) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
-        LineBadge(shortName)
+        val (containerColor, contentColor) = rememberRouteBadgeColors(routeColor)
+        LineBadge(shortName, containerColor = containerColor, color = contentColor)
         Spacer(Modifier.width(12.dp))
-        if (longName != null) {
-            Text(
-                text = longName,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f)
-            )
+        Column(Modifier.weight(1f)) {
+            if (longName != null) {
+                Text(
+                    text = longName,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (!agency.isNullOrBlank()) {
+                Text(
+                    text = agency,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -116,13 +135,20 @@ private fun RouteRowContentPreview() {
         .padding(horizontal = 16.dp, vertical = 12.dp)
     ObaTheme {
         Column {
-            RouteRowContent("8", "Seattle Center - Capitol Hill - Rainier Beach", rowModifier)
+            RouteRowContent(
+                "8", "Seattle Center - Capitol Hill - Rainier Beach", rowModifier,
+                routeColor = 0x00A651, agency = "King County Metro"
+            )
             HorizontalDivider()
-            RouteRowContent("12", "Interlaken Park - Capitol Hill - Downtown Seattle", rowModifier)
+            RouteRowContent(
+                "12", "Interlaken Park - Capitol Hill - Downtown Seattle", rowModifier,
+                routeColor = 0x0075BF, agency = "King County Metro"
+            )
             HorizontalDivider()
+            // No color → neutral chip; no agency → agency line omitted.
             RouteRowContent("225", "Sheridan Park", rowModifier)
             HorizontalDivider()
-            RouteRowContent("40", null, rowModifier)
+            RouteRowContent("40", null, rowModifier, routeColor = 0xE31837, agency = "Sound Transit")
         }
     }
 }

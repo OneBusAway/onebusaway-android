@@ -28,6 +28,16 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 
 /**
+ * Routes near a location together with the operating-agency display names resolved from the same
+ * response's references pool (agency id → name). The combined-search screen shows the agency under
+ * each route's long name; [agencyNames] is empty when the response carried no agency references.
+ */
+data class RoutesNearResult(
+    val routes: List<ObaRoute>,
+    val agencyNames: Map<String, String>,
+)
+
+/**
  * Fetches routes/stops near a location from the modernized OBA REST client, adapting the wire
  * references to the [ObaRoute]/[ObaStop] model interfaces so callers never see the DTOs.
  *
@@ -38,7 +48,7 @@ import org.onebusaway.android.models.ObaStop
  */
 interface LocationSearchDataSource {
 
-    suspend fun routesNear(lat: Double, lon: Double, query: String?, radius: Int?): Result<List<ObaRoute>>
+    suspend fun routesNear(lat: Double, lon: Double, query: String?, radius: Int?): Result<RoutesNearResult>
 
     suspend fun stopsNear(lat: Double, lon: Double, query: String?, radius: Int?): Result<List<ObaStop>>
 
@@ -54,8 +64,14 @@ class DefaultLocationSearchDataSource @Inject constructor(
 
     override suspend fun routesNear(
         lat: Double, lon: Double, query: String?, radius: Int?,
-    ): Result<List<ObaRoute>> = api.call {
-        it.routesForLocation(lat, lon, query, radius).requireData().list.map(::DtoRoute)
+    ): Result<RoutesNearResult> = api.call {
+        val data = it.routesForLocation(lat, lon, query, radius).requireData()
+        RoutesNearResult(
+            routes = data.list.map(::DtoRoute),
+            // Index the response's referenced agencies by id so the combined-search row can show the
+            // operating agency under each route's long name (mirrors the arrivals path's refs.agency).
+            agencyNames = data.references.agencies.associate { agency -> agency.id to agency.name },
+        )
     }.onFailure { Log.e(TAG, "routesNear failed", it) }
 
     override suspend fun stopsNear(

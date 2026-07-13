@@ -34,7 +34,8 @@ data class RouteSearchResult(
     val id: String,
     val shortName: String,
     val longName: String?,
-    val url: String?
+    val url: String?,
+    val routeColor: Int? = null
 )
 
 /** Searches routes by name/number near the user. */
@@ -80,7 +81,8 @@ class DefaultRouteSearchRepository(
             id = route.id,
             shortName = names.shortName,
             longName = names.longName,
-            url = route.url?.takeIf { it.isNotEmpty() }
+            url = route.url?.takeIf { it.isNotEmpty() },
+            routeColor = route.color
         )
     }
 

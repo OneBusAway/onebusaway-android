@@ -30,7 +30,8 @@ import org.junit.runner.RunWith
  * empty — the data import from the legacy ContentProvider DB is a separate slice); and that
  * [MIGRATION_3_4] reconciles `routes.favorite` from the authoritative `route_headsign_favorites` table
  * before dropping it (#1751) and adds the `surveys.study_id` foreign-key child index (#1739); and that
- * [MIGRATION_5_6] adds `regions.otp_base_graphql_url` defaulting existing rows to OTP1 (#1780).
+ * [MIGRATION_5_6] adds `regions.otp_base_graphql_url` defaulting existing rows to OTP1 (#1780); and
+ * that [MIGRATION_6_7] drops the retired `stop_routes_filter` table.
  */
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseMigrationTest {
@@ -160,6 +161,22 @@ class AppDatabaseMigrationTest {
             c.moveToFirst()
             assertTrue("pre-existing region should default to OTP1 (NULL GraphQL URL)", c.isNull(0))
         }
+        db.close()
+    }
+
+    @Test
+    fun migrate6To7_dropsStopRoutesFilterTable() {
+        helper.createDatabase(TEST_DB, 6).use { db ->
+            // A pre-existing filter row; the migration drops the whole table along with it.
+            db.execSQL("INSERT INTO stop_routes_filter (stop_id, route_id) VALUES ('1_100', '1_10')")
+        }
+
+        // validateDroppedTables = true asserts stop_routes_filter is gone; schema validated vs. 7.json.
+        val db = helper.runMigrationsAndValidate(TEST_DB, 7, true, MIGRATION_6_7)
+
+        db.query(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='stop_routes_filter'"
+        ).use { c -> assertEquals("stop_routes_filter should be dropped", 0, c.count) }
         db.close()
     }
 

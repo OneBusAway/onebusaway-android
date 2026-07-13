@@ -128,10 +128,8 @@
     <string name="bus_options_menu_remove_star">Poista reitti suosikeista</string>
     <string name="bus_options_menu_show_trip_details">Näytä matkan tilanne</string>
     <string name="bus_options_menu_set_reminder">Aseta muistutus</string>
-    <string name="bus_options_menu_show_only_this_route">Näytä vain tämä reitti</string>
     <string name="bus_options_menu_show_route_schedule">Näytä reitin aikataulu</string>
     <string name="bus_options_menu_report_trip_problem">Ilmoita matkan ongelmasta</string>
-    <string name="bus_options_menu_show_all_routes">Näytä kaikki linjat</string>
 
     <!--  Stop Info -->
     <string name="stop_info_ontime">Ajallaan</string>
@@ -221,7 +219,6 @@
     <string name="stop_info_option_showonmap">Näytä kartalla</string>
     <string name="menu_option_sort_by">Järjestä</string>
     <string name="stop_info_option_refresh">Päivitä</string>
-    <string name="stop_info_option_filter">Rajaa reittejä</string>
     <string name="stop_info_option_show_details">Pysäkin tiedot</string>
     <string name="stop_info_option_night_light">Yövalo</string>
     <string name="stop_info_option_hide_alerts">Piilota aktiiviset hälytykset</string>
@@ -266,8 +263,6 @@
     </plurals>
     <string name="stop_info_load_more_arrivals">Näytä lisää saapuvia</string>
     <string name="stop_info_item_options_title">Toiminnot</string>
-    <string name="stop_info_filter_title">Näytä ainoastaan nämä reitit</string>
-    <string name="stop_info_filter_header">Näyttää %1$d / %2$d reiteistä</string>
     <string name="stop_info_save">Tallenna</string>
     <string name="stop_info_cancel">Peruuta</string>
     <string name="stop_info_clear">Tyhjennä</string>

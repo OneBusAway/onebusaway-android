@@ -35,7 +35,6 @@ import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteFavoritesRepository
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
-import org.onebusaway.android.database.oba.StopRouteFilterDao
 import org.onebusaway.android.database.oba.markStopUsed
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
@@ -104,7 +103,7 @@ data class AlertHideState(val decisions: Map<String, Boolean> = emptyMap()) {
     }
 }
 
-/** A loaded snapshot of a stop's arrivals plus the header, actions, alerts, and filter data. */
+/** A loaded snapshot of a stop's arrivals plus the header, actions, and alerts. */
 data class ArrivalsData(
     val arrivals: List<ArrivalInfo>,
     /** [arrivals] grouped into one row per (route, direction), ordered by earliest ETA. */
@@ -113,8 +112,6 @@ data class ArrivalsData(
     /** The effective time window after the loader's empty-result expansion. */
     val minutesAfter: Int,
     val isStale: Boolean,
-    /** The route filter actually applied (loaded from the provider when the caller passed null). */
-    val effectiveRouteFilter: Set<String>,
     val actions: Map<String, ArrivalActions>,
     /** Every active, de-duplicated alert for the stop — *including* hidden ones. The ViewModel
      *  derives the shown list and hidden count by combining this with the repository's reactive
@@ -125,24 +122,20 @@ data class ArrivalsData(
      *  explicitly hidden or shown. Carried in the snapshot so the shown/hidden split is a pure
      *  function of the snapshot plus [ArrivalsRepository.alertHideState]. */
     val hideAlertsByDefault: Boolean,
-    val routeFilterOptions: List<RouteFilterOption>,
-    val filteredRouteCount: Int,
+    /** Display names of every route serving the stop, for the stop-details dialog. */
+    val routeDisplayNames: List<String>,
     val stopCode: String?,
     val stopLat: Double,
     val stopLon: Double,
     val stopUserName: String?
 )
 
-/** Loads real-time arrivals for a stop and persists the per-stop route filter / favorite. */
+/** Loads real-time arrivals for a stop and persists the stop / route favorites. */
 interface ArrivalsRepository {
 
-    /**
-     * @param routeFilter the routes to keep, or null to load the persisted filter for this stop
-     */
     suspend fun getArrivals(
         stopId: String,
-        minutesAfter: Int,
-        routeFilter: Set<String>?
+        minutesAfter: Int
     ): Result<ArrivalsData>
 
     /** Marks (or unmarks) the stop as a favorite in the provider. */
@@ -158,9 +151,6 @@ interface ArrivalsRepository {
         longName: String?,
         favorite: Boolean
     )
-
-    /** Persists the per-stop route filter (empty == show all). */
-    suspend fun setRouteFilter(stopId: String, filter: Set<String>)
 
     /**
      * The starred route ids, live — the ViewModel overlays this onto the loaded arrivals so a row's
@@ -224,9 +214,9 @@ data class AlertDetails(
 /**
  * Default implementation over the api [StopArrivalsDataSource]. Ports ArrivalsListLoader's
  * behavior: widen the time window until arrivals are found, and fall back to the last good response
- * when a refresh fails. Builds the [ArrivalInfo] display model plus the per-arrival actions, service
- * alerts, and route-filter options on the IO thread (their constructors read ContentProviders). All
- * Android statics are quarantined here so [ArrivalsViewModel] stays JVM-testable.
+ * when a refresh fails. Builds the [ArrivalInfo] display model plus the per-arrival actions and service
+ * alerts on the IO thread (their constructors read ContentProviders). All Android statics are
+ * quarantined here so [ArrivalsViewModel] stays JVM-testable.
  *
  * Note: this repo is **stateful** ([lastGood]) and 1:1 with its [ArrivalsViewModel], so its
  * `@Binds` is intentionally **unscoped** (a fresh instance per VM) — do NOT make it `@Singleton`,
@@ -236,7 +226,6 @@ class DefaultArrivalsRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
     private val stopArrivals: StopArrivalsDataSource,
-    private val stopRouteFilterDao: StopRouteFilterDao,
     private val serviceAlertDao: ServiceAlertDao,
     private val stopDao: StopDao,
     private val routeFavorites: RouteFavoritesRepository,
@@ -261,11 +250,9 @@ class DefaultArrivalsRepository @Inject constructor(
 
     override suspend fun getArrivals(
         stopId: String,
-        minutesAfter: Int,
-        routeFilter: Set<String>?
+        minutesAfter: Int
     ): Result<ArrivalsData> = withContext(Dispatchers.IO) {
         importGate.awaitReady()
-        val filter = routeFilter ?: stopRouteFilterDao.routeIdsForStop(stopId).toSet()
         var minutes = minutesAfter
         // Widen the window while the fetch is empty (or failing), matching the legacy loader.
         var result: Result<StopArrivals>
@@ -283,7 +270,7 @@ class DefaultArrivalsRepository @Inject constructor(
                 if (!stopRecorded) {
                     snapshot.stop?.let { recordStop(it, System.currentTimeMillis()); stopRecorded = true }
                 }
-                Result.success(toData(snapshot, filter, isStale = false, now = snapshot.currentTime))
+                Result.success(toData(snapshot, isStale = false, now = snapshot.currentTime))
             },
             // Refresh failed but we have prior data — keep showing it (legacy stale fallback).
             onFailure = { error ->
@@ -294,7 +281,7 @@ class DefaultArrivalsRepository @Inject constructor(
                     @Suppress("RawClockArithmetic") // both operands are ElapsedTime (monotonic); sanctioned skew-free crossing
                     val now = stale.snapshot.currentTime +
                         (SystemClock.elapsedRealtime() - stale.elapsedMs)
-                    Result.success(toData(stale.snapshot, filter, isStale = true, now = now))
+                    Result.success(toData(stale.snapshot, isStale = true, now = now))
                 }
                     ?: Result.failure(
                         IOException(
@@ -309,7 +296,6 @@ class DefaultArrivalsRepository @Inject constructor(
 
     private suspend fun toData(
         snapshot: StopArrivals,
-        routeFilter: Set<String>,
         isStale: Boolean,
         // Server clock as "now" so ETAs/countdowns and alert active-window checks cancel any device
         // clock skew — the fresh response's currentTime, or (on the stale path) the last good server
@@ -324,7 +310,7 @@ class DefaultArrivalsRepository @Inject constructor(
         // Favorite state is a live overlay applied in the ViewModel (from the reactive starred-route
         // set), not baked here — so a star toggle re-flags the list without this re-fetch.
         val arrivals = convertArrivals(
-            context, snapshot.arrivals, routeFilter, ServerTime(now), includeArrivalDepartureLabel
+            context, snapshot.arrivals, ServerTime(now), includeArrivalDepartureLabel
         )
         val stop = snapshot.stop
         val userInfo = stopDao.userInfo(snapshot.stopId)
@@ -332,13 +318,12 @@ class DefaultArrivalsRepository @Inject constructor(
             stopId = snapshot.stopId,
             name = MyTextUtils.formatDisplayText(stop?.name).orEmpty(),
             direction = stop?.direction,
-            isFavorite = userInfo?.favorite == 1,
-            routeCount = stop?.routeIds?.size ?: 0
+            isFavorite = userInfo?.favorite == 1
         )
-        val routeOptions = buildRouteFilterOptions(snapshot, stop, routeFilter)
+        val routeDisplayNames = buildRouteDisplayNames(snapshot, stop)
         // Pure grouping; no store write. Hidden state is derived in the ViewModel from [alertHideState]
         // plus [ArrivalsData.hideAlertsByDefault], so nothing on the load path can race the snapshot.
-        val situations = snapshot.situations(ArrayList(routeFilter))
+        val situations = snapshot.situations()
         val isActive = { s: ObaSituation -> SituationUtils.isActiveWindowForSituation(s, now) }
         val activeAlerts = planActiveAlerts(situations, isActive)
         // The situation ids that are active right now, so a per-arrival alert indicator lights up
@@ -350,13 +335,11 @@ class DefaultArrivalsRepository @Inject constructor(
             header = header,
             minutesAfter = snapshot.minutesAfter,
             isStale = isStale,
-            effectiveRouteFilter = routeFilter,
             actions = buildActions(snapshot, arrivals, activeSituationIds),
             activeAlerts = activeAlerts,
             hideAlertsByDefault =
                 preferences.getBoolean(R.string.preference_key_hide_alerts, false),
-            routeFilterOptions = routeOptions,
-            filteredRouteCount = routeFilter.size,
+            routeDisplayNames = routeDisplayNames,
             stopCode = stop?.stopCode,
             stopLat = stop?.latitude ?: 0.0,
             stopLon = stop?.longitude ?: 0.0,
@@ -392,19 +375,11 @@ class DefaultArrivalsRepository @Inject constructor(
         )
     }
 
-    private fun buildRouteFilterOptions(
-        snapshot: StopArrivals,
-        stop: ObaStop?,
-        routeFilter: Set<String>
-    ): List<RouteFilterOption> {
+    /** Display names of every route serving the stop, for the stop-details dialog's "Routes:" line. */
+    private fun buildRouteDisplayNames(snapshot: StopArrivals, stop: ObaStop?): List<String> {
         val routeIds = stop?.routeIds ?: return emptyList()
-        return routeIds.mapNotNull { snapshot.route(it) }.map { route ->
-            RouteFilterOption(
-                routeId = route.id,
-                displayName = getRouteDisplayName(route.shortName, route.longName),
-                checked = routeFilter.contains(route.id)
-            )
-        }
+        return routeIds.mapNotNull { snapshot.route(it) }
+            .map { getRouteDisplayName(it) }
     }
 
     override suspend fun setStopFavorite(stopId: String, favorite: Boolean) {
@@ -422,11 +397,6 @@ class DefaultArrivalsRepository @Inject constructor(
         // flag, gates on the import, reports analytics, and backfills the full details from the network
         // on a star so the long name shows in the folder.
         routeFavorites.setFavorite(routeId, shortName, longName, url = null, favorite = favorite)
-    }
-
-    override suspend fun setRouteFilter(stopId: String, filter: Set<String>) {
-        importGate.awaitReady()
-        stopRouteFilterDao.replaceForStop(stopId, filter.toList())
     }
 
     override fun favoriteRouteIds(): Flow<Set<String>> = routeFavorites.favoriteRouteIds()

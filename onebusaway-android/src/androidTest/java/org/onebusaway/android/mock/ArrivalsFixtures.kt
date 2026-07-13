@@ -58,7 +58,7 @@ object ArrivalsFixtures {
         includeArriveDepartLabels: Boolean,
     ): ArrayList<ArrivalInfo> = ArrayList(
         convertArrivals(
-            context, snapshot(env).arrivals, null, ServerTime(env.currentTime), includeArriveDepartLabels
+            context, snapshot(env).arrivals, ServerTime(env.currentTime), includeArriveDepartLabels
         )
     )
 
@@ -66,8 +66,7 @@ object ArrivalsFixtures {
     @JvmStatic
     fun allSituations(
         env: ObaEnvelope<EntryWithReferences<ArrivalsForStop>>,
-        filter: List<String>?,
-    ): List<ObaSituation> = snapshot(env).situations(filter)
+    ): List<ObaSituation> = snapshot(env).situations()
 
     /** Just the stop/agency-level situations the entry references directly (not route alerts). */
     @JvmStatic

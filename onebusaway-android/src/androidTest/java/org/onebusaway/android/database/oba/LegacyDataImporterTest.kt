@@ -68,7 +68,6 @@ class LegacyDataImporterTest {
         assertEquals(1, count("stops"))
         assertEquals(1, count("routes"))
         assertEquals(1, count("trips"))
-        assertEquals(1, count("stop_routes_filter"))
         assertEquals(1, count("trip_alerts"))
         assertEquals(1, count("service_alerts"))
         assertEquals(1, count("regions"))
@@ -248,7 +247,6 @@ class LegacyDataImporterTest {
         importer.importFrom(legacyFile)
 
         assertEquals(1, count("stops"))
-        assertEquals(1, count("stop_routes_filter"))
         assertEquals(1, count("routes"))
         assertEquals(1, scalarInt("SELECT favorite FROM routes WHERE _id='1_10'"))
     }
@@ -295,10 +293,6 @@ class LegacyDataImporterTest {
                 "INSERT INTO trips VALUES ('trip1','1_100','1_10',480,'Downtown','My Trip',5," +
                     "'/delete',123456,2,'trip1','veh1')"
             )
-            db.execSQL(
-                "CREATE TABLE stop_routes_filter (stop_id VARCHAR, route_id VARCHAR)"
-            )
-            db.execSQL("INSERT INTO stop_routes_filter VALUES ('1_100','1_10')")
             db.execSQL(
                 "CREATE TABLE trip_alerts (_id INTEGER PRIMARY KEY AUTOINCREMENT, trip_id VARCHAR, " +
                     "stop_id VARCHAR, start_time INTEGER, state INTEGER)"

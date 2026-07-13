@@ -104,7 +104,6 @@ fun ArrivalsPanel(
     val rowCallbacks = rememberArrivalRowCallbacks(handler, viewModel)
     val content = state as? ArrivalsUiState.Content
 
-    val filtering = (content?.filteredRouteCount ?: 0) > 0
     // The pinned header's height (px). Added to the list's laid-out extent to report the whole
     // panel's content height, which the host fits the collapsed peek to (capping tall stops).
     var headerHeightPx by remember { mutableIntStateOf(0) }
@@ -141,7 +140,6 @@ fun ArrivalsPanel(
                 isFavorite = content?.header?.isFavorite == true,
                 showActions = content != null,
                 hasAlerts = content?.hasAlerts == true,
-                filtering = filtering,
                 onToggleFavorite = viewModel::toggleFavorite,
                 onTitleClick = onTitleClick,
                 // Feed the pinned header's measured height into the reported content height.
@@ -154,7 +152,6 @@ fun ArrivalsPanel(
                     content = content,
                     rowCallbacks = rowCallbacks,
                     handler = handler,
-                    onShowAllRoutes = viewModel::showAllRoutes,
                     onShowHiddenAlerts = viewModel::showHiddenAlerts,
                     modifier = Modifier.weight(1f),
                     listState = listState,
@@ -186,8 +183,8 @@ private fun ColumnScope.PreviewDivider() {
 
 /**
  * The stop header pinned at the top of the panel: the favorite star and stop name (with a
- * compass-direction tag appended, e.g. "Pine St & 3rd Ave (N)") as one centered unit, any
- * filter/alert indicators right-justified. Expand/collapse is driven by the sheet's drag handle now,
+ * compass-direction tag appended, e.g. "Pine St & 3rd Ave (N)") as one centered unit, an
+ * alert indicator right-justified. Expand/collapse is driven by the sheet's drag handle now,
  * so the header no longer toggles on tap or shows a chevron. Tapping the stop name instead invokes
  * [onTitleClick] (null = not tappable), which the drawer host uses to recenter the map on the stop.
  * [starSize] is exposed so the star's sizing can be tuned in the preview.
@@ -199,7 +196,6 @@ private fun ArrivalsPanelHeader(
     isFavorite: Boolean,
     showActions: Boolean,
     hasAlerts: Boolean,
-    filtering: Boolean,
     onToggleFavorite: () -> Unit,
     onTitleClick: (() -> Unit)? = null,
     starSize: Dp = 20.dp,
@@ -239,25 +235,14 @@ private fun ArrivalsPanelHeader(
                 modifier = onTitleClick?.let { Modifier.clickable(onClick = it) } ?: Modifier
             )
         }
-        // Filter/alert indicators, right-justified.
-        Row(
-            modifier = Modifier.align(Alignment.CenterEnd),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (filtering) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_content_filter_list),
-                    contentDescription = stringResource(R.string.stop_info_option_filter),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            if (hasAlerts) {
-                Icon(
-                    painter = painterResource(R.drawable.baseline_warning_24),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
+        // Alert indicator, right-justified.
+        if (hasAlerts) {
+            Icon(
+                painter = painterResource(R.drawable.baseline_warning_24),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.align(Alignment.CenterEnd)
+            )
         }
     }
 }
@@ -279,7 +264,6 @@ private fun ArrivalsPanelHeaderPreview() {
                     isFavorite = true,
                     showActions = true,
                     hasAlerts = false,
-                    filtering = false,
                     onToggleFavorite = {}
                 )
                 PreviewDivider()
@@ -290,7 +274,6 @@ private fun ArrivalsPanelHeaderPreview() {
                     isFavorite = false,
                     showActions = true,
                     hasAlerts = true,
-                    filtering = true,
                     onToggleFavorite = {}
                 )
             }

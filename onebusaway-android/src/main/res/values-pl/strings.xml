@@ -100,10 +100,8 @@
     <string name="bus_options_menu_remove_star">Usuń linię z ulubionych</string>
     <string name="bus_options_menu_show_trip_details">Pokaż status kursu</string>
     <string name="bus_options_menu_set_reminder">Ustaw przypomnienie</string>
-    <string name="bus_options_menu_show_only_this_route">Pokaż tylko tę linię</string>
     <string name="bus_options_menu_show_route_schedule">Pokaż rozkład jazdy linii</string>
     <string name="bus_options_menu_report_trip_problem">Zgłoś problem z kursem</string>
-    <string name="bus_options_menu_show_all_routes">Pokaż wszystkie linie</string>
 
     <!--  Stop Info -->
     <string name="stop_info_ontime">Na czas</string>
@@ -200,7 +198,6 @@
     <string name="stop_info_option_showonmap">Pokaż na mapie</string>
     <string name="menu_option_sort_by">Sortuj</string>
     <string name="stop_info_option_refresh">Odśwież</string>
-    <string name="stop_info_option_filter">Filtr tras</string>
     <string name="stop_info_option_show_details">Pokaż szczegóły przystanku</string>
     <string name="stop_info_option_report_problem">Zgłoś problem z przystankiem</string>
     <string name="stop_info_option_night_light">Światło nocne</string>
@@ -241,8 +238,6 @@
     </plurals>
     <string name="stop_info_load_more_arrivals">Wczytaj więcej przyjazdów</string>
     <string name="stop_info_item_options_title">Opcje</string>
-    <string name="stop_info_filter_title">Pokaż tylko te trasy</string>
-    <string name="stop_info_filter_header">Pokazuje %1$d do %2$d tras</string>
     <string name="stop_info_save">Zapisz</string>
     <string name="stop_info_cancel">Anuluj</string>
     <string name="stop_info_clear">Wyczyść</string>

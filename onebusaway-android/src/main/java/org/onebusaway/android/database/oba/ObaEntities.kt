@@ -22,16 +22,14 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Room entities mirroring the 11 tables of the legacy `ObaProvider` ContentProvider, unified into the
- * app's single Room database (storage-modernization). Column names match the legacy SQLite schema (via
+ * Room entities mirroring the legacy `ObaProvider` ContentProvider tables, unified into the app's
+ * single Room database (storage-modernization). Column names match the legacy SQLite schema (via
  * [ColumnInfo]) so the one-time importer can copy rows faithfully and the names stay stable as the
  * intent/backup vocabulary.
  *
  * Nullability deliberately mirrors the loose legacy schema: columns added by `ALTER TABLE ADD COLUMN`
  * (favorites, custom names, access times, URLs, later region fields) are nullable and frequently NULL
  * in the wild, with computed helpers preserving the legacy "NULL reads as false/absent" semantics.
- * The legacy stop_routes_filter table had no primary key — duplicate rows are allowed by design — so
- * it gets a synthetic auto-increment row id that is behaviorally inert.
  */
 
 @Entity(tableName = "stops")
@@ -88,13 +86,6 @@ data class TripRecord(
     @ColumnInfo(name = "stop_sequence") val stopSequence: Int,
     @ColumnInfo(name = "trip_id") val tripId: String,
     @ColumnInfo(name = "vehicle_id") val vehicleId: String? = null,
-)
-
-@Entity(tableName = "stop_routes_filter")
-data class StopRouteFilterRecord(
-    @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "_id") val id: Long = 0,
-    @ColumnInfo(name = "stop_id") val stopId: String,
-    @ColumnInfo(name = "route_id") val routeId: String,
 )
 
 @Entity(tableName = "trip_alerts")

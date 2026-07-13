@@ -199,12 +199,6 @@ class LegacyDataImporter(
             vehicleId = str("vehicle_id"),
         )
         },
-        stopRouteFilters = db.read("stop_routes_filter") {
-        StopRouteFilterRecord(
-            stopId = str("stop_id") ?: return@read null,
-            routeId = str("route_id") ?: return@read null,
-        )
-        },
         tripAlerts = db.read("trip_alerts") {
         TripAlertRecord(
             id = long("_id") ?: 0,

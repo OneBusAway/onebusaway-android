@@ -65,7 +65,6 @@ class ArrivalAlertIndicatorTest {
                 dataVersion = 1L,
                 actionsFor = { actions },
                 isFavorite = false,
-                filterActive = false,
                 callbacks = previewRowCallbacks(),
             )
         }

@@ -321,7 +321,7 @@ private suspend fun fetchStopBadges(context: Context, stopId: String): List<Arri
             .getOrThrow()
         // Server clock as the ETA baseline so badges cancel device clock skew (#1612). These badge
         // rows don't render the favorite star.
-        convertArrivals(context, snapshot.arrivals, null, ServerTime(snapshot.currentTime), false)
+        convertArrivals(context, snapshot.arrivals, ServerTime(snapshot.currentTime), false)
             .take(MAX_ARRIVALS_PER_STOP)
             .map { it.toBadge(context) }
     }.getOrDefault(emptyList())

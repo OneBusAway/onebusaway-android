@@ -35,19 +35,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -62,7 +57,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -73,7 +67,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -132,7 +125,6 @@ internal fun rememberArrivalRowCallbacks(
         onEtaClick = handler::onFocusVehicleOnMap,
         onShowTripStatus = handler::onShowTripStatus,
         onSetReminder = handler::onSetReminder,
-        onShowOnlyRoute = viewModel::showOnlyRoute,
         onShowRouteSchedule = handler::onShowRouteSchedule,
         onReportArrivalProblem = handler::onReportArrivalProblem,
         onShowAlert = handler::onShowAlert,
@@ -193,8 +185,6 @@ fun ArrivalsRoute(
         onToggleFavorite = viewModel::toggleFavorite,
         rowCallbacks = rowCallbacks,
         handler = handler,
-        onSetRouteFilter = viewModel::setRouteFilter,
-        onShowAllRoutes = viewModel::showAllRoutes,
         onHideAllAlerts = viewModel::hideAllAlerts,
         onShowHiddenAlerts = viewModel::showHiddenAlerts,
         snackbarHostState = snackbarHostState,
@@ -212,15 +202,12 @@ fun ArrivalsScreen(
     onToggleFavorite: () -> Unit,
     rowCallbacks: ArrivalRowCallbacks,
     handler: ArrivalActionHandler,
-    onSetRouteFilter: (Set<String>) -> Unit,
-    onShowAllRoutes: () -> Unit,
     onHideAllAlerts: () -> Unit,
     onShowHiddenAlerts: () -> Unit,
     snackbarHostState: SnackbarHostState? = null,
     onNightLight: (() -> Unit)? = null
 ) {
     val content = state as? ArrivalsUiState.Content
-    var showFilterDialog by remember { mutableStateOf(false) }
     Scaffold(
         snackbarHost = { snackbarHostState?.let { SnackbarHost(it) } },
         topBar = {
@@ -259,7 +246,6 @@ fun ArrivalsScreen(
                     }
                     if (content != null) {
                         OverflowMenu(
-                            onFilter = { showFilterDialog = true },
                             onStopDetails = handler::onShowStopDetails,
                             onReportStopProblem = handler::onReportStopProblem,
                             onHideAlerts = onHideAllAlerts,
@@ -282,7 +268,6 @@ fun ArrivalsScreen(
                     content = state,
                     rowCallbacks = rowCallbacks,
                     handler = handler,
-                    onShowAllRoutes = onShowAllRoutes,
                     onShowHiddenAlerts = onShowHiddenAlerts
                 )
 
@@ -297,21 +282,10 @@ fun ArrivalsScreen(
             }
         }
     }
-    if (showFilterDialog && content != null) {
-        RouteFilterDialog(
-            options = content.routeFilterOptions,
-            onDismiss = { showFilterDialog = false },
-            onSave = {
-                onSetRouteFilter(it)
-                showFilterDialog = false
-            }
-        )
-    }
 }
 
 @Composable
 internal fun OverflowMenu(
-    onFilter: () -> Unit,
     onStopDetails: () -> Unit,
     onReportStopProblem: () -> Unit,
     onHideAlerts: () -> Unit,
@@ -329,7 +303,6 @@ internal fun OverflowMenu(
             )
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            MenuRow(R.string.stop_info_option_filter) { expanded = false; onFilter() }
             MenuRow(R.string.stop_info_option_show_details) { expanded = false; onStopDetails() }
             MenuRow(R.string.stop_info_option_report_problem) { expanded = false; onReportStopProblem() }
             MenuRow(R.string.stop_info_option_hide_alerts) { expanded = false; onHideAlerts() }
@@ -346,7 +319,6 @@ internal fun ArrivalsList(
     content: ArrivalsUiState.Content,
     rowCallbacks: ArrivalRowCallbacks,
     handler: ArrivalActionHandler,
-    onShowAllRoutes: () -> Unit,
     onShowHiddenAlerts: () -> Unit,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
@@ -359,7 +331,6 @@ internal fun ArrivalsList(
      *  onboarding spotlight); default is a no-op for hosts that don't spotlight. */
     etaAnchor: Modifier = Modifier
 ) {
-    val filterActive = content.filteredRouteCount > 0
     LazyColumn(state = listState, modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
         if (content.alerts.isNotEmpty()) {
             item(key = "alerts") {
@@ -401,11 +372,6 @@ internal fun ArrivalsList(
                 }
             }
         }
-        if (content.filteredRouteCount in 1 until content.header.routeCount) {
-            item(key = "filter_indicator") {
-                FilterIndicator(content.filteredRouteCount, content.header.routeCount, onShowAllRoutes)
-            }
-        }
         if (showDirection) {
             content.header.direction?.let { direction ->
                 item(key = "direction") { DirectionLine(direction) }
@@ -420,7 +386,6 @@ internal fun ArrivalsList(
                     dataVersion = content.dataVersion,
                     actionsFor = { content.actions[it.tripId] },
                     isFavorite = group.routeId in content.favoriteRouteIds,
-                    filterActive = filterActive,
                     callbacks = rowCallbacks,
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
                     etaAnchor = if (index == 0) etaAnchor else Modifier
@@ -538,71 +503,6 @@ private fun AlertRow(alert: AlertItem, onClick: () -> Unit) {
             Text(text = alert.summary, style = MaterialTheme.typography.bodyMedium)
         }
     }
-}
-
-@Composable
-private fun FilterIndicator(shown: Int, total: Int, onShowAll: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = stringResource(R.string.stop_info_filter_header, shown, total),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
-        )
-        TextButton(onClick = onShowAll) {
-            Text(stringResource(R.string.bus_options_menu_show_all_routes))
-        }
-    }
-}
-
-@Composable
-internal fun RouteFilterDialog(
-    options: List<RouteFilterOption>,
-    onDismiss: () -> Unit,
-    onSave: (Set<String>) -> Unit
-) {
-    val checked = remember(options) {
-        mutableStateListOf<Boolean>().apply { addAll(options.map { it.checked }) }
-    }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.stop_info_filter_title)) },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                options.forEachIndexed { index, option ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { checked[index] = !checked[index] }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(checked = checked[index], onCheckedChange = { checked[index] = it })
-                        Text(option.displayName)
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                val selected = options
-                    .filterIndexed { index, _ -> checked[index] }
-                    .map { it.routeId }
-                    .toSet()
-                onSave(collapseRouteFilter(selected, options.size))
-            }) {
-                Text(stringResource(R.string.stop_info_save))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.stop_info_cancel)) }
-        }
-    )
 }
 
 @Composable

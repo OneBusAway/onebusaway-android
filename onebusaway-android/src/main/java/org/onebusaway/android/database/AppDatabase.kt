@@ -12,7 +12,6 @@ import org.onebusaway.android.database.oba.RegionDao
 import org.onebusaway.android.database.oba.RouteDao
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
-import org.onebusaway.android.database.oba.StopRouteFilterDao
 import org.onebusaway.android.database.oba.TripDao
 import org.onebusaway.android.database.oba.Open311ServerRecord
 import org.onebusaway.android.database.oba.RegionBoundRecord
@@ -20,7 +19,6 @@ import org.onebusaway.android.database.oba.RegionRecord
 import org.onebusaway.android.database.oba.RouteRecord
 import org.onebusaway.android.database.oba.ServiceAlertRecord
 import org.onebusaway.android.database.oba.StopRecord
-import org.onebusaway.android.database.oba.StopRouteFilterRecord
 import org.onebusaway.android.database.oba.TripAlertRecord
 import org.onebusaway.android.database.oba.TripRecord
 import org.onebusaway.android.database.survey.dao.StudiesDao
@@ -49,6 +47,9 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
  * v6 adds `regions.otp_base_graphql_url` (#1780): the per-region OTP 2.x GraphQL endpoint. A non-null
  * value routes that region through the OTP2 `planConnection` path; NULL (every existing cached row)
  * stays on OTP1 REST.
+ *
+ * v7 retires the per-stop route filter (#1807-era arrivals cleanup): the `stop_routes_filter` table is
+ * dropped now that arrivals are grouped by route and the "show only this route" filter is gone.
  */
 @Database(
     entities = [
@@ -58,7 +59,6 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
         StopRecord::class,
         RouteRecord::class,
         TripRecord::class,
-        StopRouteFilterRecord::class,
         TripAlertRecord::class,
         ServiceAlertRecord::class,
         RegionRecord::class,
@@ -68,7 +68,7 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
         CachedStopRecord::class,
         CachedRouteTypeRecord::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -84,7 +84,6 @@ abstract class AppDatabase : RoomDatabase() {
 
     // Migrated legacy-table DAOs (storage-modernization).
     abstract fun serviceAlertDao(): ServiceAlertDao
-    abstract fun stopRouteFilterDao(): StopRouteFilterDao
     abstract fun stopDao(): StopDao
     abstract fun routeDao(): RouteDao
     abstract fun tripDao(): TripDao

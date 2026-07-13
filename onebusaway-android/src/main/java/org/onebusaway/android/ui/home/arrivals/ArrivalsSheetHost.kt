@@ -90,7 +90,7 @@ internal fun ArrivalsSheetHost(
             val viewModel: ArrivalsViewModel = viewModel(
                 factory = viewModelFactory {
                     initializer {
-                        arrivalsViewModelFactory.create(stop.id, ignorePersistedFilter = false)
+                        arrivalsViewModelFactory.create(stop.id)
                     }
                 }
             )

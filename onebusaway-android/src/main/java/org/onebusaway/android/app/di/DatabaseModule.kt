@@ -29,6 +29,7 @@ import org.onebusaway.android.database.MIGRATION_2_3
 import org.onebusaway.android.database.MIGRATION_3_4
 import org.onebusaway.android.database.MIGRATION_4_5
 import org.onebusaway.android.database.MIGRATION_5_6
+import org.onebusaway.android.database.MIGRATION_6_7
 import org.onebusaway.android.database.oba.DefaultImportGate
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.LegacyDataImporter
@@ -39,7 +40,6 @@ import org.onebusaway.android.database.oba.RegionDao
 import org.onebusaway.android.database.oba.RouteDao
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
-import org.onebusaway.android.database.oba.StopRouteFilterDao
 import org.onebusaway.android.database.oba.TripDao
 import org.onebusaway.android.database.survey.dao.StudiesDao
 import org.onebusaway.android.database.survey.dao.SurveysDao
@@ -64,17 +64,15 @@ object DatabaseModule {
             context.applicationContext,
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
-        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
-            .build()
+        ).addMigrations(
+            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7
+        ).build()
 
     @Provides
     fun provideLegacyImportDao(db: AppDatabase): LegacyImportDao = db.legacyImportDao()
 
     @Provides
     fun provideServiceAlertDao(db: AppDatabase): ServiceAlertDao = db.serviceAlertDao()
-
-    @Provides
-    fun provideStopRouteFilterDao(db: AppDatabase): StopRouteFilterDao = db.stopRouteFilterDao()
 
     @Provides
     fun provideStopDao(db: AppDatabase): StopDao = db.stopDao()

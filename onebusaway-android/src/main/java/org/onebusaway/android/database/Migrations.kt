@@ -169,3 +169,14 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         )
     }
 }
+
+/**
+ * Retires the per-stop route filter (#1807-era arrivals cleanup): drops the `stop_routes_filter` table
+ * now that arrivals are grouped by route and the "show only this route" filter is gone. Purely
+ * subtractive — no other v6 table/column changes. Verified by AppDatabaseMigrationTest.
+ */
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("DROP TABLE IF EXISTS `stop_routes_filter`")
+    }
+}

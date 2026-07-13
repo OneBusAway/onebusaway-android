@@ -559,7 +559,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(0, ArrivalsFixtures.stopSituations(env).size());
 
         // They do appear in the references and are referenced by each arrival; getAllSituations gathers them.
-        List<ObaSituation> allSituations = ArrivalsFixtures.allSituations(env, null);
+        List<ObaSituation> allSituations = ArrivalsFixtures.allSituations(env);
         HashSet<String> situationIds = new HashSet<>();
         for (ObaSituation situation : allSituations) {
             situationIds.add(situation.getId());
@@ -584,7 +584,7 @@ public class UIUtilTest extends ObaTestCase {
         // One stop alert in the entry; route alerts excluded - see #700.
         assertEquals(1, ArrivalsFixtures.stopSituations(env).size());
 
-        allSituations = ArrivalsFixtures.allSituations(env, null);
+        allSituations = ArrivalsFixtures.allSituations(env);
         situationIds = new HashSet<>();
         for (ObaSituation situation : allSituations) {
             situationIds.add(situation.getId());
@@ -599,36 +599,5 @@ public class UIUtilTest extends ObaTestCase {
         // The one stop alert is included.
         assertTrue(situationIds.contains("MTS_9c943ee8-d566-4cd8-8a89-a2a535ebe4fe"));
         assertTrue(situationIds.contains(ArrivalsFixtures.stopSituations(env).get(0).getId()));
-
-        /*
-        Test filtering routes alerts
-         */
-        env = ArrivalsFixtures.load(
-                targetContext, "arrivals_and_departures_for_stop_mts_11671_filter_route_alerts");
-
-        List<String> routeFilters = new ArrayList<>();
-        routeFilters.add("MTS_1");
-
-        List<ObaSituation> filteredSituations = ArrivalsFixtures.allSituations(env, routeFilters);
-
-        List<String> allIds = new ArrayList<>();
-        for (ObaSituation situation : ArrivalsFixtures.allSituations(env, null)) {
-            allIds.add(situation.getId());
-        }
-
-        List<String> filteredIds = new ArrayList<>();
-        for (ObaSituation situation : filteredSituations) {
-            filteredIds.add(situation.getId());
-        }
-
-        // Two alerts (routes 1 and 11) unfiltered; only the route-1 alert after filtering to MTS_1.
-        assertEquals(2, allIds.size());
-        assertEquals(1, filteredIds.size());
-        assertEquals(1, filteredSituations.size());
-
-        // The route-1 alert is kept; the route-11 alert is present unfiltered but filtered out.
-        assertTrue(filteredIds.contains("MTS_RTA:11569670"));
-        assertTrue(allIds.contains("MTS_RTA:11569666"));
-        assertFalse(filteredIds.contains("MTS_RTA:11569666"));
     }
 }

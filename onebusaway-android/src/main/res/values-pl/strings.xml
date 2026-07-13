@@ -238,8 +238,6 @@
     </plurals>
     <string name="stop_info_load_more_arrivals">Wczytaj więcej przyjazdów</string>
     <string name="stop_info_item_options_title">Opcje</string>
-    <string name="stop_info_save">Zapisz</string>
-    <string name="stop_info_cancel">Anuluj</string>
     <string name="stop_info_clear">Wyczyść</string>
     <string name="stop_info_favorite">Ulubiony przystanek</string>
     <string name="stop_info_route_ids_label">Trasy:</string>

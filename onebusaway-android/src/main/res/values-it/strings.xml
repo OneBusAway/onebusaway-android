@@ -217,8 +217,6 @@
     </plurals>
     <string name="stop_info_load_more_arrivals">Carica più arrivi</string>
     <string name="stop_info_item_options_title">Opzioni</string>
-    <string name="stop_info_save">Salva</string>
-    <string name="stop_info_cancel">Annulla</string>
     <string name="stop_info_clear">Cancella</string>
     <string name="stop_info_favorite">La mia fermata</string>
     <string name="stop_info_official_stop_name_label">Nome ufficiale: %1$s</string>

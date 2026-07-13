@@ -109,7 +109,7 @@ interface LegacyImportDao {
     @Query("DELETE FROM alerts") suspend fun clearAlerts()
 
     /**
-     * Replaces *every* table from a full Room-format backup atomically — the 11 legacy tables plus the
+     * Replaces *every* table from a full Room-format backup atomically — the legacy tables plus the
      * survey and wide-alert tables. Restoring a Room backup means "make the database match the backup",
      * so tables absent from an older backup end up empty. Runs in one transaction: any incompatibility
      * (unreadable file surfaced by the caller, or an FK violation here) rolls the whole thing back,

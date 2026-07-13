@@ -273,10 +273,6 @@
     <string name="stop_info_eta_strip_scroll_earlier">Show earlier arrivals</string>
     <string name="stop_info_eta_strip_scroll_later">Show later arrivals</string>
     <string name="stop_info_item_options_title">Bus options</string>
-    <!-- Not a plural candidate: "%2$d routes" is a ratio's denominator ("N of M"), not a count that
-         inflects on its own; getQuantityString would key off the wrong number. -->
-    <string name="stop_info_save">Save</string>
-    <string name="stop_info_cancel">Cancel</string>
     <string name="stop_info_clear">Clear</string>
     <string name="stop_info_favorite">Favorite stop</string>
     <string name="stop_info_official_stop_name_label">Official name: %1$s</string>

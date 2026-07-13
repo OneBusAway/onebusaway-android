@@ -312,8 +312,6 @@
     </plurals>
     <string name="stop_info_load_more_arrivals">Cargar más llegadas</string>
     <string name="stop_info_item_options_title">Opciones de bus</string>
-    <string name="stop_info_save">Guardar</string>
-    <string name="stop_info_cancel">Cancelar</string>
     <string name="stop_info_clear">Limpiar</string>
     <string name="stop_info_favorite">Parada Favorita</string>
     <string name="stop_info_official_stop_name_label">Nombre oficial: %1$s</string>

@@ -263,8 +263,6 @@
     </plurals>
     <string name="stop_info_load_more_arrivals">Näytä lisää saapuvia</string>
     <string name="stop_info_item_options_title">Toiminnot</string>
-    <string name="stop_info_save">Tallenna</string>
-    <string name="stop_info_cancel">Peruuta</string>
     <string name="stop_info_clear">Tyhjennä</string>
     <string name="stop_info_favorite">Suosikkipysäkki</string>
     <string name="stop_info_route_ids_label">Reitit:</string>

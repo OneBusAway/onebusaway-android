@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -60,6 +61,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -193,12 +195,17 @@ private fun ArrivalRowVisual(
 /** The tappable per-row service-alert indicator (issue #1687 Bug 2): the same warning glyph the
  *  header/banner uses, shown when this arrival is affected by an active alert; taps open its dialog. */
 @Composable
-internal fun ArrivalAlertIndicator(onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ArrivalAlertIndicator(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    iconSize: Dp = 24.dp,
+) {
     IconButton(onClick = onClick, modifier = modifier) {
         Icon(
             painter = painterResource(R.drawable.baseline_warning_24),
             contentDescription = stringResource(R.string.stop_info_arrival_service_alert),
-            tint = MaterialTheme.colorScheme.error
+            tint = MaterialTheme.colorScheme.error,
+            modifier = Modifier.size(iconSize),
         )
     }
 }
@@ -241,6 +248,8 @@ internal fun ArrivalRowContent(
  * - Tapping a pill focuses that specific trip's vehicle + stop ([ArrivalRowCallbacks.onEtaClick]).
  * - Long-pressing a pill opens that trip's menu (details / reminder / report).
  * - The top-left corner star toggles the route favorite ([ArrivalRowCallbacks.onRouteFavorite]).
+ * - The badge section's top-right corner (by the divider) shows a service-alert warning glyph when
+ *   any trip in the group is affected by an active alert; tapping it opens that alert ([ArrivalRowCallbacks.onShowAlert]).
  * - The top-right overflow ⋮ opens the route-level menu (show-only / schedule).
  *
  * [actionsFor] resolves each trip's [ArrivalActions] (keyed by trip id upstream); the representative
@@ -266,7 +275,7 @@ fun RouteArrivalRow(
     val (badgeContainer, badgeContent) = rememberRouteBadgeColors(routeActions?.routeColor)
     // Fall back to the route's long name when the feed gives no headsign for this direction.
     val direction = group.headsign?.takeIf { it.isNotBlank() } ?: routeActions?.routeLongName.orEmpty()
-    val onAlertClick = alertClick(routeActions, callbacks)
+    val onAlertClick = alertClick(group, actionsFor, callbacks)
     ArrivalCard(modifier) {
         Box(Modifier.fillMaxWidth()) {
             Row(
@@ -278,18 +287,46 @@ fun RouteArrivalRow(
                     // individual trips instead).
                     .clickable { callbacks.onShowVehiclesOnMap(representative) }
                     // A little top/end room so the badge and pills clear the overlaid overflow icon.
-                    .padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 8.dp),
+                    .padding(
+                        start = 10.dp,
+                        top = ROW_VERTICAL_PADDING,
+                        end = 10.dp,
+                        bottom = ROW_VERTICAL_PADDING
+                    ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                LineBadge(
-                    text = representative.shortName.orEmpty(),
-                    maxFontSize = 32.sp,
-                    color = badgeContent,
-                    containerColor = badgeContainer,
-                )
+                // The badge "section": the route chip plus its trailing gap, spanning the row's start
+                // to the divider and the full row height. The service-alert glyph is overlaid on this
+                // section's top-right corner (flush against the divider), on its own layer — like the
+                // corner star and overflow icons — so it never reflows the row. It may overlap the
+                // badge, which is acceptable for the rare alert case; same tight 28dp touch box / 20dp
+                // glyph footprint as the corner star.
+                Box(Modifier.fillMaxHeight()) {
+                    LineBadge(
+                        text = representative.shortName.orEmpty(),
+                        // The trailing padding is the gap to the divider — part of the badge section,
+                        // so the TopEnd-aligned alert glyph sits flush against the divider.
+                        modifier = Modifier.align(Alignment.Center).padding(end = 10.dp),
+                        maxFontSize = 32.sp,
+                        color = badgeContent,
+                        containerColor = badgeContainer,
+                    )
+                    if (onAlertClick != null) {
+                        ArrivalAlertIndicator(
+                            onClick = onAlertClick,
+                            iconSize = 20.dp,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(28.dp)
+                                // Cancel the row's vertical padding so the triangle's top lines up with
+                                // the corner star, which floats at the card's very top (above this
+                                // padding) rather than inside the row's content box.
+                                .offset(y = -ROW_VERTICAL_PADDING),
+                        )
+                    }
+                }
                 // A full-height thin divider sets the route chip apart from the ETA pills, so the two
                 // similar-looking rounded colored chips don't read as the same kind of thing.
-                Spacer(Modifier.width(10.dp))
                 VerticalDivider()
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
@@ -311,9 +348,6 @@ fun RouteArrivalRow(
                         start = group.firstUpcomingIndex,
                         firstPillModifier = etaAnchor,
                     )
-                }
-                if (onAlertClick != null) {
-                    ArrivalAlertIndicator(onClick = onAlertClick)
                 }
             }
             if (routeActions != null) {
@@ -394,14 +428,24 @@ private fun DirectionHeader(direction: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** The alert-indicator tap for a row: opens the arrival's active alert, or null when it has none. */
-internal fun alertClick(actions: ArrivalActions?, callbacks: ArrivalRowCallbacks): (() -> Unit)? =
-    actions?.alertSituationId?.let { id -> { callbacks.onShowAlert(id) } }
+/** The alert-indicator tap for a row: opens the first active alert affecting any trip in the group
+ *  ([RouteRowGroup.activeAlertSituationId]), or null when none is affected. */
+internal fun alertClick(
+    group: RouteRowGroup,
+    actionsFor: (ArrivalInfo) -> ArrivalActions?,
+    callbacks: ArrivalRowCallbacks
+): (() -> Unit)? =
+    group.activeAlertSituationId(actionsFor)?.let { id -> { callbacks.onShowAlert(id) } }
 
 /** Horizontal clearance [RouteArrivalRow] gives the direction header so it doesn't run under the
  *  overlaid corner icon below ([CornerIcon]'s own footprint is 18dp + 4dp padding on each side —
  *  this is a bit tighter, tuned by eye against a device screenshot rather than derived from it). */
 private val OVERFLOW_ICON_CLEARANCE = 20.dp
+
+/** The arrival row's top/bottom padding. The corner alert glyph offsets up by this amount to cancel
+ *  it, so its top lines up with the favorite star (which floats above this padding at the card top);
+ *  keep the two in sync via this single value rather than a bare literal on each side. */
+private val ROW_VERTICAL_PADDING = 8.dp
 
 /** A small tap target tucked into a card corner — the legacy overlaid star / overflow icons. */
 @Composable

@@ -56,6 +56,14 @@ data class RouteRowGroup(val trips: List<ArrivalInfo>) {
 
     val routeId: String get() = representative.routeId
 
+    /** The first active service-alert situation id affecting *any* trip in the group (scanned in ETA
+     *  order, representative first), or null when none is affected — so a row flags an alert whenever
+     *  any of its grouped trips is, not just the soonest. [actionsFor] supplies each trip's resolved
+     *  [ArrivalActions] (the group itself holds only [ArrivalInfo]), mirroring how the row looks up
+     *  per-trip actions elsewhere. */
+    fun activeAlertSituationId(actionsFor: (ArrivalInfo) -> ArrivalActions?): String? =
+        trips.firstNotNullOfOrNull { actionsFor(it)?.alertSituationId }
+
     /** The direction name shown on top of the row (may be blank). */
     val headsign: String? get() = representative.headsign
 

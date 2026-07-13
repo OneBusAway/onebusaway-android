@@ -19,7 +19,6 @@ import org.onebusaway.android.api.data.StopArrivalsDataSource
 import org.onebusaway.android.api.data.StopArrivals
 
 import android.content.Context
-import android.os.SystemClock
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
@@ -41,6 +40,7 @@ import org.onebusaway.android.database.oba.markStopUsed
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.models.contentKey
 import org.onebusaway.android.preferences.PreferencesRepository
@@ -246,7 +246,7 @@ class DefaultArrivalsRepository @Inject constructor(
      * Everything derived from the last good load, held as one unit so all three readers
      * ([alertDetails], [lastLoaded], and the stale-fallback path) see a mutually consistent set:
      * - [snapshot] — the raw response, for situation lookups and stale re-projection.
-     * - [elapsedMs] — the monotonic device time the snapshot was received, so the stale-fallback path
+     * - [receivedAt] — the monotonic device time the snapshot was received, so the stale-fallback path
      *   can project that server clock forward by elapsed device time (#1612).
      * - [loaded] — the map-relevant snapshot prebuilt from the *computed* [ArrivalsData] so its
      *   [ArrivalsLoaded.routeIds] matches the drawer's rows (see [ArrivalsLoaded]).
@@ -260,7 +260,7 @@ class DefaultArrivalsRepository @Inject constructor(
      */
     private data class LastGood(
         val snapshot: StopArrivals,
-        val elapsedMs: Long,
+        val receivedAt: ElapsedTime,
         val loaded: ArrivalsLoaded,
     )
 
@@ -289,14 +289,14 @@ class DefaultArrivalsRepository @Inject constructor(
             onSuccess = { snapshot ->
                 // Stamp the receipt time as close to the response as possible (before the DB reads in
                 // toData), then publish the whole consistent set with one write once [data] is built.
-                val receivedMs = SystemClock.elapsedRealtime()
+                val receivedAt = ElapsedTime.now()
                 // Record the stop once per session so favoriting persists (setFavorite is an
                 // UPDATE — it needs the row to exist) and the stop shows in Recent stops.
                 if (!stopRecorded) {
                     snapshot.stop?.let { recordStop(it, System.currentTimeMillis()); stopRecorded = true }
                 }
-                val data = toData(snapshot, isStale = false, now = snapshot.currentTime)
-                lastGood.set(LastGood(snapshot, receivedMs, loadedSnapshot(snapshot, data)))
+                val data = toData(snapshot, isStale = false, now = ServerTime(snapshot.currentTime))
+                lastGood.set(LastGood(snapshot, receivedAt, loadedSnapshot(snapshot, data)))
                 Result.success(data)
             },
             // Refresh failed but we have prior data — keep showing it (legacy stale fallback).
@@ -304,10 +304,10 @@ class DefaultArrivalsRepository @Inject constructor(
                 lastGood.get()?.let { stale ->
                     // No fresh server time; project the last good server clock forward by the elapsed
                     // device time so stale ETAs/countdowns keep advancing (legacy behavior) without
-                    // reintroducing device clock skew (#1612).
-                    @Suppress("RawClockArithmetic") // both operands are ElapsedTime (monotonic); sanctioned skew-free crossing
-                    val now = stale.snapshot.currentTime +
-                        (SystemClock.elapsedRealtime() - stale.elapsedMs)
+                    // reintroducing device clock skew (#1612) — a same-domain ElapsedTime subtraction,
+                    // so the typed API allows it directly.
+                    val now = ServerTime(stale.snapshot.currentTime) +
+                        (ElapsedTime.now() - stale.receivedAt)
                     val data = toData(stale.snapshot, isStale = true, now = now)
                     // Keep the same snapshot/receipt time; refresh only the derived map snapshot so its
                     // stale ETAs advance. CAS so this can't roll back a fresh snapshot a concurrent
@@ -332,7 +332,7 @@ class DefaultArrivalsRepository @Inject constructor(
         // Server clock as "now" so ETAs/countdowns and alert active-window checks cancel any device
         // clock skew — the fresh response's currentTime, or (on the stale path) the last good server
         // clock projected forward by elapsed device time (#1612).
-        now: Long
+        now: ServerTime
     ): ArrivalsData {
         // The unified route row shows lateness via the ETA pill's color, not a verbose status label,
         // so we don't fold the arrival/departure word in. Every production caller now passes false
@@ -342,7 +342,7 @@ class DefaultArrivalsRepository @Inject constructor(
         // Favorite state is a live overlay applied in the ViewModel (from the reactive starred-route
         // set), not baked here — so a star toggle re-flags the list without this re-fetch.
         val arrivals = convertArrivals(
-            context, snapshot.arrivals, ServerTime(now), includeArrivalDepartureLabel
+            context, snapshot.arrivals, now, includeArrivalDepartureLabel
         )
         val stop = snapshot.stop
         val userInfo = stopDao.userInfo(snapshot.stopId)
@@ -356,7 +356,9 @@ class DefaultArrivalsRepository @Inject constructor(
         // Pure grouping; no store write. Hidden state is derived in the ViewModel from [alertHideState]
         // plus [ArrivalsData.hideAlertsByDefault], so nothing on the load path can race the snapshot.
         val situations = snapshot.situations()
-        val isActive = { s: ObaSituation -> SituationUtils.isActiveWindowForSituation(s, now) }
+        // .epochMs unwrap: isActiveWindowForSituation is a legacy Long-taking helper (its "now" is
+        // documented as the server clock); the domain is re-asserted right here at the hand-off.
+        val isActive = { s: ObaSituation -> SituationUtils.isActiveWindowForSituation(s, now.epochMs) }
         val activeAlerts = planActiveAlerts(situations, isActive)
         // The situation ids that are active right now, so a per-arrival alert indicator lights up
         // only for currently-active alerts — matching the banner's active set (issue #1687 Bug 2).

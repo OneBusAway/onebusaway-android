@@ -55,6 +55,9 @@ jobs:
     # Boot the minSdk floor: install obaGoogleDebug on an API 23 emulator and run the @SmokeTest
     # subset. Independent of all-brands, so it runs in parallel. See the header for why this exists.
     runs-on: ubuntu-latest
+    # Cap the run so a wedged emulator boot / KVM stall can't hang the nightly and burn CI minutes.
+    # The whole leg (AVD boot + install + smoke subset) is well under this in the normal case.
+    timeout-minutes: 45
     steps:
       - name: checkout
         uses: actions/checkout@v4

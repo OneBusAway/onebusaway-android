@@ -31,8 +31,10 @@ package org.onebusaway.android
  * ```
  *
  * Keep the tagged set **small and stable** — this leg exists to catch a floor regression within a day,
- * not to re-run the whole suite. Device-flaky tests must stay out of it, and prefer tagging at the
- * class level so the whole class's methods are included.
+ * not to re-run the whole suite. Device-flaky tests must stay out of it. Tag at the **class** level when
+ * the class is small and cohesive (every method guards the same floor behaviour); for a large or
+ * mixed-concern class, tag only the focused method(s) that exercise the floor risk so the subset stays
+ * small — the runner's `annotation` filter selects method-level tags too.
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)

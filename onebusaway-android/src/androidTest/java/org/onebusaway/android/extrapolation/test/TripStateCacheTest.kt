@@ -45,7 +45,6 @@ import org.onebusaway.android.models.Status
 import org.onebusaway.android.util.Polyline
 
 /** Instrumented tests for the trip-state cache: recording, retention/eviction, and hydration. */
-@SmokeTest // API-23 floor smoke subset (#1818): exercises java.time/kotlin.time desugaring + core math
 @RunWith(AndroidJUnit4::class)
 class TripStateCacheTest {
 
@@ -264,6 +263,10 @@ class TripStateCacheTest {
 
     // --- GammaExtrapolator tests ---
 
+    // API-23 floor smoke subset (#1818): one deterministic method stands in for this large, mixed
+    // class — it exercises the kotlin.time Duration math and the extrapolation core on the floor
+    // runtime. The cache-eviction, polyline, and end-to-end tests stay out to keep the subset small.
+    @SmokeTest
     @Test
     fun testGammaExtrapolator_returnsDistanceDistribution() {
         val serviceDate = 1L

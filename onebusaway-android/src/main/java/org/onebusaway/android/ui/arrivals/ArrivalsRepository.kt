@@ -22,6 +22,7 @@ import android.content.Context
 import android.os.SystemClock
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -246,9 +247,12 @@ class DefaultArrivalsRepository @Inject constructor(
      * - [loaded] — the map-relevant snapshot prebuilt from the *computed* [ArrivalsData] so its
      *   [ArrivalsLoaded.routeIds] matches the drawer's rows (see [ArrivalsLoaded]).
      *
-     * Published through the single `@Volatile` [lastGood] with one write per load, so a concurrent
-     * getArrivals (e.g. a user refresh overlapping the poll loop) can't publish a new snapshot while
-     * [lastLoaded] still reflects the old one, or mix a new snapshot with an old receipt time.
+     * Published through the single [AtomicReference] [lastGood] with one write per load, so a
+     * concurrent getArrivals (e.g. a user refresh overlapping the poll loop) can't publish a new
+     * snapshot while [lastLoaded] still reflects the old one, or mix a new snapshot with an old
+     * receipt time. A fresh load publishes unconditionally (new data always wins); the stale-fallback
+     * path publishes with `compareAndSet` against the holder it read, so it can never roll a
+     * concurrently-published fresh snapshot back to the old one.
      */
     private data class LastGood(
         val snapshot: StopArrivals,
@@ -256,8 +260,7 @@ class DefaultArrivalsRepository @Inject constructor(
         val loaded: ArrivalsLoaded,
     )
 
-    @Volatile
-    private var lastGood: LastGood? = null
+    private val lastGood = AtomicReference<LastGood?>(null)
 
     // Whether the viewed stop has been recorded in the Stops table this session. Recording (a) creates
     // the row so the favorite toggle's UPDATE actually persists, and (b) marks it used so it appears in
@@ -289,12 +292,12 @@ class DefaultArrivalsRepository @Inject constructor(
                     snapshot.stop?.let { recordStop(it, System.currentTimeMillis()); stopRecorded = true }
                 }
                 val data = toData(snapshot, isStale = false, now = snapshot.currentTime)
-                lastGood = LastGood(snapshot, receivedMs, loadedSnapshot(snapshot, data))
+                lastGood.set(LastGood(snapshot, receivedMs, loadedSnapshot(snapshot, data)))
                 Result.success(data)
             },
             // Refresh failed but we have prior data — keep showing it (legacy stale fallback).
             onFailure = { error ->
-                lastGood?.let { stale ->
+                lastGood.get()?.let { stale ->
                     // No fresh server time; project the last good server clock forward by the elapsed
                     // device time so stale ETAs/countdowns keep advancing (legacy behavior) without
                     // reintroducing device clock skew (#1612).
@@ -303,8 +306,9 @@ class DefaultArrivalsRepository @Inject constructor(
                         (SystemClock.elapsedRealtime() - stale.elapsedMs)
                     val data = toData(stale.snapshot, isStale = true, now = now)
                     // Keep the same snapshot/receipt time; refresh only the derived map snapshot so its
-                    // stale ETAs advance. Still one volatile write, so readers stay consistent.
-                    lastGood = stale.copy(loaded = loadedSnapshot(stale.snapshot, data))
+                    // stale ETAs advance. CAS so this can't roll back a fresh snapshot a concurrent
+                    // successful load published while toData ran — if it did, its holder simply stands.
+                    lastGood.compareAndSet(stale, stale.copy(loaded = loadedSnapshot(stale.snapshot, data)))
                     Result.success(data)
                 }
                     ?: Result.failure(
@@ -464,11 +468,11 @@ class DefaultArrivalsRepository @Inject constructor(
     }
 
     override fun alertDetails(id: String): AlertDetails? =
-        lastGood?.snapshot?.situation(id)?.let {
+        lastGood.get()?.snapshot?.situation(id)?.let {
             AlertDetails(it.id, it.summary, it.description, it.url)
         }
 
-    override fun lastLoaded(): ArrivalsLoaded? = lastGood?.loaded
+    override fun lastLoaded(): ArrivalsLoaded? = lastGood.get()?.loaded
 
     /** Pairs the response's stop/routes/hasArrivals with the drawer-1:1 route set derived from the
      *  *computed* [data] (see [ArrivalsLoaded.routeIds]). */

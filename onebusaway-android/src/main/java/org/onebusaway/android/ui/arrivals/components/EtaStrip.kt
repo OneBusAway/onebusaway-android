@@ -60,11 +60,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -403,9 +401,8 @@ internal fun EtaPill(
     } else {
         Modifier
     }
-    // One consistent "Xhr Ymin" shape: ["23", "min"] under an hour (the "0hr" is omitted), or
-    // ["1", "hr", " 30", "min"] past it — every number stays bold-sized, only the unit letters
-    // shrink, so the leftover minutes stay as legible as the hour count (#1777).
+    // Numbers stay bold-sized, only the unit letters shrink (see formatEtaParts for the part shape;
+    // etaAnnotatedString for why they render as a single AnnotatedString).
     val etaParts = if (eta != 0L) DisplayFormat.formatEtaParts(LocalContext.current, eta) else null
     // See tightLineStyle's doc: keyed to each Text's own (dominant) size, so the padding/gap values
     // below are the actual on-screen spacing rather than a guess fighting Android's hidden font padding.
@@ -438,23 +435,20 @@ internal fun EtaPill(
                         style = remember(baseTextStyle, nowSize) { tightLineStyle(baseTextStyle, nowSize) }
                     )
                 } else {
-                    // A single AnnotatedString (not separate Text composables) so the text shaper kerns
-                    // across the number/unit boundary instead of gluing together independently-measured
-                    // boxes — splitting them produced inconsistent gaps (e.g. "1hr" vs "4hr").
                     Text(
-                        text = buildAnnotatedString {
-                            etaParts.forEach { part ->
-                                withStyle(
-                                    SpanStyle(
-                                        fontSize = if (part.emphasized) numberSize else labelSize,
-                                        fontWeight = if (part.emphasized) FontWeight.Bold else FontWeight.Normal,
-                                        color = Color.White
-                                    )
-                                ) {
-                                    append(part.text)
-                                }
-                            }
-                        },
+                        text = etaAnnotatedString(
+                            etaParts,
+                            emphasizedSpan = SpanStyle(
+                                fontSize = numberSize,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            ),
+                            unemphasizedSpan = SpanStyle(
+                                fontSize = labelSize,
+                                fontWeight = FontWeight.Normal,
+                                color = Color.White
+                            ),
+                        ),
                         textDecoration = decoration,
                         // Keyed to numberSize (the line's dominant glyph) — the smaller labelSize span
                         // rides the same trimmed line box rather than getting one of its own.

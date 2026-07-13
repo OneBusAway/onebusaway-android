@@ -51,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -477,22 +478,15 @@ private fun EtaContent(
             )
             EtaRealtimeIndicator(predicted, color)
         } else {
-            // One consistent "Xhr Ymin" shape: ["23", "min"] under an hour (the "0hr" is omitted), or
-            // ["1", "hr", " 30", "min"] past it. All parts render as a single AnnotatedString (not
-            // separate Text composables) so the text shaper kerns across the number/unit boundary
-            // instead of gluing together independently-measured boxes — splitting them produced
-            // inconsistent gaps (e.g. "1hr" vs "4hr") since cross-Text kerning isn't a thing.
+            // Numbers emphasized, unit letters not (see formatEtaParts for the part shape;
+            // etaAnnotatedString for why they render as a single AnnotatedString).
             val etaParts = DisplayFormat.formatEtaParts(LocalContext.current, eta)
-            val emphasizedSpan = SpanStyle(fontSize = 36.sp, fontWeight = FontWeight.Bold, color = color)
-            val unemphasizedSpan = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = color)
             Text(
-                text = buildAnnotatedString {
-                    etaParts.forEach { part ->
-                        withStyle(if (part.emphasized) emphasizedSpan else unemphasizedSpan) {
-                            append(part.text)
-                        }
-                    }
-                },
+                text = etaAnnotatedString(
+                    etaParts,
+                    emphasizedSpan = SpanStyle(fontSize = 36.sp, fontWeight = FontWeight.Bold, color = color),
+                    unemphasizedSpan = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = color),
+                ),
                 textDecoration = decoration
             )
             EtaRealtimeIndicator(predicted, color)
@@ -529,6 +523,28 @@ internal fun RealtimeIndicator(color: Color, modifier: Modifier = Modifier) {
 
 private fun strikeThroughIf(canceled: Boolean): TextDecoration =
     if (canceled) TextDecoration.LineThrough else TextDecoration.None
+
+/**
+ * Renders [DisplayFormat.formatEtaParts] output as a single [AnnotatedString] — not separate Text
+ * composables — so the text shaper kerns across the number/unit boundary instead of gluing together
+ * independently-measured boxes; splitting them produced inconsistent gaps (e.g. "1hr" vs "4hr") since
+ * cross-Text kerning isn't a thing (#1777).
+ *
+ * Numbers render with [emphasizedSpan], the trailing unit letters with [unemphasizedSpan]. Callers
+ * pass both spans because the two ETA surfaces style them differently — the drawer's [EtaPill] (white,
+ * its own sizes) vs. the arrival row's ETA (route color, Material type).
+ */
+internal fun etaAnnotatedString(
+    etaParts: List<DisplayFormat.EtaPart>,
+    emphasizedSpan: SpanStyle,
+    unemphasizedSpan: SpanStyle,
+): AnnotatedString = buildAnnotatedString {
+    etaParts.forEach { part ->
+        withStyle(if (part.emphasized) emphasizedSpan else unemphasizedSpan) {
+            append(part.text)
+        }
+    }
+}
 
 // ---------------------------------------------------------------------------------------------
 // Previews.

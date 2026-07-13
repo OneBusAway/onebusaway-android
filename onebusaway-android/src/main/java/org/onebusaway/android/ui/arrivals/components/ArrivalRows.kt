@@ -81,8 +81,7 @@ import org.onebusaway.android.util.DisplayFormat
 
 /**
  * The per-arrival menu actions (legacy `showListItemMenu`). Implemented by the host activity,
- * which has the Context needed to launch the targets. The route-filter toggle is
- * a ViewModel action; the rest are navigation/dialogs.
+ * which has the Context needed to launch the targets (navigation/dialogs).
  */
 class ArrivalRowCallbacks(
     val onRouteFavorite: (ArrivalActions) -> Unit,
@@ -91,7 +90,6 @@ class ArrivalRowCallbacks(
     val onEtaClick: (ArrivalInfo) -> Unit,
     val onShowTripStatus: (ArrivalInfo) -> Unit,
     val onSetReminder: (ArrivalInfo) -> Unit,
-    val onShowOnlyRoute: (String) -> Unit,
     val onShowRouteSchedule: (String) -> Unit,
     val onReportArrivalProblem: (ArrivalActions) -> Unit,
     /** Opens the service-alert dialog for the given situation id (the per-row alert indicator). */
@@ -240,7 +238,8 @@ internal fun ArrivalRowContent(
  * - The top-left corner star toggles the route favorite ([ArrivalRowCallbacks.onRouteFavorite]).
  * - The badge section's top-right corner (by the divider) shows a service-alert warning glyph when
  *   any trip in the group is affected by an active alert; tapping it opens that alert ([ArrivalRowCallbacks.onShowAlert]).
- * - The top-right overflow ⋮ opens the route-level menu (show-only / schedule).
+ * - The top-right overflow ⋮ opens the route-level menu (schedule), shown only when the route has a
+ *   schedule URL.
  *
  * [actionsFor] resolves each trip's [ArrivalActions] (keyed by trip id upstream); the representative
  * trip's actions drive the badge color and the route menu. [etaAnchor] is attached to the first pill
@@ -251,7 +250,6 @@ fun RouteArrivalRow(
     group: RouteRowGroup,
     actionsFor: (ArrivalInfo) -> ArrivalActions?,
     isFavorite: Boolean,
-    filterActive: Boolean,
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier,
     etaAnchor: Modifier = Modifier,
@@ -352,21 +350,24 @@ fun RouteArrivalRow(
                     )
                 }
             }
-            Box(Modifier.align(Alignment.TopEnd)) {
-                CornerIcon(
-                    iconRes = R.drawable.more_vert,
-                    contentDescription = stringResource(R.string.stop_info_item_options_title),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    onClick = { menuExpanded = true }
-                )
-                RouteActionsMenu(
-                    expanded = menuExpanded,
-                    onDismiss = { menuExpanded = false },
-                    routeId = group.routeId,
-                    actions = routeActions,
-                    filterActive = filterActive,
-                    callbacks = callbacks,
-                )
+            // The route-level overflow menu now offers only "show route schedule", so it appears only
+            // when the route has a schedule URL — no empty menu.
+            val scheduleUrl = routeActions?.scheduleUrl?.takeIf { it.isNotBlank() }
+            if (scheduleUrl != null) {
+                Box(Modifier.align(Alignment.TopEnd)) {
+                    CornerIcon(
+                        iconRes = R.drawable.more_vert,
+                        contentDescription = stringResource(R.string.stop_info_item_options_title),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        onClick = { menuExpanded = true }
+                    )
+                    RouteActionsMenu(
+                        expanded = menuExpanded,
+                        onDismiss = { menuExpanded = false },
+                        scheduleUrl = scheduleUrl,
+                        callbacks = callbacks,
+                    )
+                }
             }
         }
     }
@@ -437,30 +438,19 @@ private fun CornerIcon(
     )
 }
 
-/** The route-level overflow menu (the row's ⋮): narrow the stop to this route and open its schedule.
- *  The route's star now lives only as the row's own corner toggle ([FavoriteStarButton]) — no longer
- *  duplicated here. Per-trip actions live on each pill's long-press menu ([TripActionsMenu]). */
+/** The route-level overflow menu (the row's ⋮): open the route's schedule. The route's star lives as
+ *  the row's own corner toggle ([FavoriteStarButton]); per-trip actions live on each pill's long-press
+ *  menu ([TripActionsMenu]). Shown only when the route has a [scheduleUrl]. */
 @Composable
 internal fun RouteActionsMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
-    routeId: String,
-    actions: ArrivalActions?,
-    filterActive: Boolean,
+    scheduleUrl: String,
     callbacks: ArrivalRowCallbacks
 ) {
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-        val filterLabel = if (filterActive) {
-            R.string.bus_options_menu_show_all_routes
-        } else {
-            R.string.bus_options_menu_show_only_this_route
-        }
-        MenuRow(filterLabel) { onDismiss(); callbacks.onShowOnlyRoute(routeId) }
-        val url = actions?.scheduleUrl
-        if (!url.isNullOrBlank()) {
-            MenuRow(R.string.bus_options_menu_show_route_schedule) {
-                onDismiss(); callbacks.onShowRouteSchedule(url)
-            }
+        MenuRow(R.string.bus_options_menu_show_route_schedule) {
+            onDismiss(); callbacks.onShowRouteSchedule(scheduleUrl)
         }
     }
 }
@@ -646,7 +636,6 @@ internal fun previewRowCallbacks() = ArrivalRowCallbacks(
     onEtaClick = {},
     onShowTripStatus = {},
     onSetReminder = {},
-    onShowOnlyRoute = {},
     onShowRouteSchedule = {},
     onReportArrivalProblem = {},
     onShowAlert = {},
@@ -685,7 +674,6 @@ private fun RouteArrivalRowPreview() {
                     ),
                     actionsFor = { actions[it.tripId] },
                     isFavorite = true,
-                    filterActive = false,
                     callbacks = callbacks,
                 )
                 // A single-arrival route with a just-departed (recent-past) pill leading.
@@ -709,7 +697,6 @@ private fun RouteArrivalRowPreview() {
                         )
                     },
                     isFavorite = false,
-                    filterActive = false,
                     callbacks = callbacks,
                 )
             }

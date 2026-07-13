@@ -33,36 +33,26 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.time.WallTime
 
 /**
- * Collapses a route-filter selection to "show all" (empty) when every route is selected, matching
- * the legacy RoutesFilterDialog. Kept as a pure function so it's unit-testable.
- */
-internal fun collapseRouteFilter(selected: Set<String>, totalRoutes: Int): Set<String> =
-    if (selected.size >= totalRoutes) emptySet() else selected
-
-/**
  * ViewModel for the arrivals screen. The 60-second polling loop lives in the screen (driven by the
  * host lifecycle); this exposes [refresh] for it to call plus the user actions. The current time
- * window ([minutesAfter]) grows with "load more"; the route filter is seeded from the provider on
- * the first load and then held in memory.
+ * window ([minutesAfter]) grows with "load more".
  *
- * Assisted-injected: [repository] comes from Dagger, while [stopId]/[ignorePersistedFilter] are
- * runtime args supplied by each host via [Factory] — the NavHost destination passes the nav-arg
- * stop id, the home sheet passes the focused stop's (dynamic) id, and the report picker passes its
- * stop with `ignorePersistedFilter = true`. Plain `@AssistedInject` (not `@HiltViewModel`) so the
- * [Factory] can be `@Inject`ed into each host and used inside `viewModelFactory {}` — Hilt forbids
- * injecting a `@HiltViewModel`'s assisted factory, and the home sheet's per-stop cleared
- * `ViewModelStoreOwner` isn't Hilt-aware, so `hiltViewModel()` can't serve it either.
+ * Assisted-injected: [repository] comes from Dagger, while [stopId] is a runtime arg supplied by each
+ * host via [Factory] — the NavHost destination passes the nav-arg stop id, the home sheet passes the
+ * focused stop's (dynamic) id, and the report picker passes its stop. Plain `@AssistedInject` (not
+ * `@HiltViewModel`) so the [Factory] can be `@Inject`ed into each host and used inside
+ * `viewModelFactory {}` — Hilt forbids injecting a `@HiltViewModel`'s assisted factory, and the home
+ * sheet's per-stop cleared `ViewModelStoreOwner` isn't Hilt-aware, so `hiltViewModel()` can't serve it
+ * either.
  */
 class ArrivalsViewModel @AssistedInject constructor(
     @Assisted private val stopId: String,
-    /** When true, always show all routes (the report-flow picker), ignoring the saved filter. */
-    @Assisted ignorePersistedFilter: Boolean,
     private val repository: ArrivalsRepository,
 ) : ViewModel() {
 
     @AssistedFactory
     interface Factory {
-        fun create(stopId: String, ignorePersistedFilter: Boolean): ArrivalsViewModel
+        fun create(stopId: String): ArrivalsViewModel
     }
 
     // --- Reactive state sources. The UI [state] is derived from these, so a user action updates the
@@ -106,14 +96,6 @@ class ArrivalsViewModel @AssistedInject constructor(
 
     private var minutesAfter = DefaultArrivalsRepository.MINUTES_AFTER_DEFAULT
 
-    private var routeFilter: Set<String> = emptySet()
-
-    /**
-     * Until the first load, let the repository seed the filter from the provider — unless we're
-     * told to ignore it, in which case the empty (show-all) filter is used and never persisted.
-     */
-    private var filterLoaded = ignorePersistedFilter
-
     /** Wall-clock time of the last completed load, read by the screen's polling loop. */
     var lastResponseTime: WallTime = WallTime(0L)
         private set
@@ -129,13 +111,11 @@ class ArrivalsViewModel @AssistedInject constructor(
      * returns false. Consumed by [loadMore]; the poll loop ignores it.
      */
     suspend fun refresh(): Boolean {
-        val result = repository.getArrivals(stopId, minutesAfter, routeFilter.takeIf { filterLoaded })
+        val result = repository.getArrivals(stopId, minutesAfter)
         lastResponseTime = WallTime.now()
         return result.fold(
             onSuccess = { data ->
                 minutesAfter = data.minutesAfter
-                routeFilter = data.effectiveRouteFilter
-                filterLoaded = true
                 fatalError.value = null
                 loaded.value = data
                 repository.lastLoaded()?.let { _arrivalsLoaded.tryEmit(it) }
@@ -208,28 +188,6 @@ class ArrivalsViewModel @AssistedInject constructor(
         }
     }
 
-    /** Replaces the route filter (empty == show all), persists it, and reloads. */
-    fun setRouteFilter(filter: Set<String>) {
-        routeFilter = filter
-        filterLoaded = true
-        viewModelScope.launch {
-            repository.setRouteFilter(stopId, filter)
-            refresh()
-        }
-    }
-
-    /** The per-arrival "show only this route" toggle: select it, or clear if already narrowed. */
-    fun showOnlyRoute(routeId: String) {
-        val target = setOf(routeId)
-        // Legacy toggle: clear when already showing just this route, or when a broader filter is set
-        setRouteFilter(if (routeFilter == target || routeFilter.size > 1) emptySet() else target)
-    }
-
-    /** Clears the route filter (the header "show all" affordance). */
-    fun showAllRoutes() {
-        setRouteFilter(emptySet())
-    }
-
     /** Hides every currently active alert (the toolbar "hide alerts" action). The reactive [state]
      *  picks up the write with no refresh. */
     fun hideAllAlerts() {
@@ -297,8 +255,7 @@ class ArrivalsViewModel @AssistedInject constructor(
             favoriteRouteIds = favoriteRouteIds,
             alerts = shown,
             hiddenAlertCount = hiddenCount,
-            routeFilterOptions = routeFilterOptions,
-            filteredRouteCount = filteredRouteCount,
+            routeDisplayNames = routeDisplayNames,
             stopCode = stopCode,
             stopLat = stopLat,
             stopLon = stopLon,

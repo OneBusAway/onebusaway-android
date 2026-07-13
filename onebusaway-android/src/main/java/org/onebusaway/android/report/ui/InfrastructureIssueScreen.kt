@@ -438,7 +438,7 @@ private fun ArrivalsPickerInline(
         key = "picker:${stop.id}",
         factory = viewModelFactory {
             initializer {
-                ArrivalsViewModelFactoryEntryPoint.get(activity).create(stop.id, ignorePersistedFilter = true)
+                ArrivalsViewModelFactoryEntryPoint.get(activity).create(stop.id)
             }
         },
     )

@@ -91,8 +91,6 @@
     <string name="bus_options_menu_remove_star">Rimuovi linea dai preferiti</string>
     <string name="bus_options_menu_show_trip_details">Mostra stato viaggio</string>
     <string name="bus_options_menu_set_reminder">Imposta un promemoria</string>
-    <string name="bus_options_menu_show_only_this_route">Mostra solo questa linea</string>
-    <string name="bus_options_menu_show_all_routes">&quot;Mostra tutte le linee&quot;</string>
     <string name="bus_options_menu_show_route_schedule">Mostra orario linea</string>
     <string name="bus_options_menu_report_trip_problem">Segnala problema con orario d\'arrivo</string>
 
@@ -181,7 +179,6 @@
     <string name="stop_info_option_showonmap">Mostra sulla mappa</string>
     <string name="menu_option_sort_by">Ordina per</string>
     <string name="stop_info_option_refresh">Aggiorna</string>
-    <string name="stop_info_option_filter">Filtra linee</string>
     <string name="stop_info_option_show_details">Mostra dettagli fermata</string>
     <string name="stop_info_option_report_problem">Segnala problema con fermata</string>
     <string name="stop_info_option_night_light">Luce notturna</string>
@@ -220,10 +217,6 @@
     </plurals>
     <string name="stop_info_load_more_arrivals">Carica più arrivi</string>
     <string name="stop_info_item_options_title">Opzioni</string>
-    <string name="stop_info_filter_title">Mostra solo queste linee</string>
-    <string name="stop_info_filter_header">Visualizzate: %1$d di %2$d linee</string>
-    <string name="stop_info_save">Salva</string>
-    <string name="stop_info_cancel">Annulla</string>
     <string name="stop_info_clear">Cancella</string>
     <string name="stop_info_favorite">La mia fermata</string>
     <string name="stop_info_official_stop_name_label">Nome ufficiale: %1$s</string>

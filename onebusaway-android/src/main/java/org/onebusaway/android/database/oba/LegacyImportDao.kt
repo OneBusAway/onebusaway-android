@@ -29,7 +29,6 @@ data class LegacyData(
     val stops: List<StopRecord>,
     val routes: List<RouteRecord>,
     val trips: List<TripRecord>,
-    val stopRouteFilters: List<StopRouteFilterRecord>,
     val tripAlerts: List<TripAlertRecord>,
     val serviceAlerts: List<ServiceAlertRecord>,
     val regions: List<RegionRecord>,
@@ -39,7 +38,7 @@ data class LegacyData(
 )
 
 /**
- * Every table of a full Room-format backup: the 11 [legacy] tables plus the survey and wide-alert
+ * Every table of a full Room-format backup: the [legacy] tables plus the survey and wide-alert
  * tables that a Room backup carries but a legacy ContentProvider backup doesn't. Restoring one replaces
  * the whole database, so all three groups are cleared and re-inserted together (see [replaceAll]).
  */
@@ -67,9 +66,6 @@ interface LegacyImportDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTrips(rows: List<TripRecord>)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertStopRouteFilters(rows: List<StopRouteFilterRecord>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTripAlerts(rows: List<TripAlertRecord>)
@@ -102,7 +98,6 @@ interface LegacyImportDao {
     @Query("DELETE FROM stops") suspend fun clearStops()
     @Query("DELETE FROM routes") suspend fun clearRoutes()
     @Query("DELETE FROM trips") suspend fun clearTrips()
-    @Query("DELETE FROM stop_routes_filter") suspend fun clearStopRouteFilters()
     @Query("DELETE FROM trip_alerts") suspend fun clearTripAlerts()
     @Query("DELETE FROM service_alerts") suspend fun clearServiceAlerts()
     @Query("DELETE FROM region_bounds") suspend fun clearRegionBounds()
@@ -114,7 +109,7 @@ interface LegacyImportDao {
     @Query("DELETE FROM alerts") suspend fun clearAlerts()
 
     /**
-     * Replaces *every* table from a full Room-format backup atomically — the 11 legacy tables plus the
+     * Replaces *every* table from a full Room-format backup atomically — the legacy tables plus the
      * survey and wide-alert tables. Restoring a Room backup means "make the database match the backup",
      * so tables absent from an older backup end up empty. Runs in one transaction: any incompatibility
      * (unreadable file surfaced by the caller, or an FK violation here) rolls the whole thing back,
@@ -144,7 +139,6 @@ interface LegacyImportDao {
         clearStops()
         clearRoutes()
         clearTrips()
-        clearStopRouteFilters()
         clearTripAlerts()
         clearServiceAlerts()
         clearNavStops()
@@ -155,7 +149,6 @@ interface LegacyImportDao {
         insertStops(data.stops)
         insertRoutes(data.routes)
         insertTrips(data.trips)
-        insertStopRouteFilters(data.stopRouteFilters)
         insertTripAlerts(data.tripAlerts)
         insertServiceAlerts(data.serviceAlerts)
         insertNavStops(data.navStops)

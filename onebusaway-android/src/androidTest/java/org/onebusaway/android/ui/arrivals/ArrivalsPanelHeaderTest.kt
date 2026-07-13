@@ -54,7 +54,6 @@ class ArrivalsPanelHeaderTest {
                 hasAlerts = true,
                 alertsExpanded = false,
                 onToggleAlerts = {},
-                filtering = false,
                 onToggleFavorite = {},
             )
         }
@@ -85,7 +84,6 @@ class ArrivalsPanelHeaderTest {
                 hasAlerts = false,
                 alertsExpanded = false,
                 onToggleAlerts = {},
-                filtering = false,
                 onToggleFavorite = {},
             )
         }
@@ -115,7 +113,6 @@ class ArrivalsPanelHeaderTest {
                 hasAlerts = true,
                 alertsExpanded = true,
                 onToggleAlerts = {},
-                filtering = false,
                 onToggleFavorite = {},
             )
         }

@@ -2456,7 +2456,7 @@
 
     <issue
         id="DuplicateStrings"
-        message="Duplicate string value `Anuluj`, used in `cancel`, `destination_reminder_cancel`, `donation_dismiss_dialog_cancel_button`, `night_light_cancel` and `stop_info_cancel`"
+        message="Duplicate string value `Anuluj`, used in `cancel`, `destination_reminder_cancel`, `donation_dismiss_dialog_cancel_button` and `night_light_cancel`"
         errorLine1="    &lt;string name=&quot;cancel&quot;>Anuluj&lt;/string>"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -2465,22 +2465,112 @@
             column="5"/>
         <location
             file="src/main/res/values-pl/strings.xml"
-            line="248"
+            line="250"
             column="5"
             message="Duplicates value in `cancel`"/>
         <location
             file="src/main/res/values-pl/strings.xml"
-            line="258"
+            line="728"
             column="5"
             message="Duplicates value in `cancel`"/>
         <location
             file="src/main/res/values-pl/strings.xml"
-            line="740"
+            line="810"
+            column="5"
+            message="Duplicates value in `cancel`"/>
+    </issue>
+    <issue
+        id="DuplicateStrings"
+        message="Duplicate string value `Annulla`, used in `alert_hidden_snackbar_action`, `cancel`, `destination_reminder_cancel`, `donation_dismiss_dialog_cancel_button` and `night_light_cancel`. Use `android:inputType` or `android:capitalize` to treat these as the same and avoid string duplication."
+        errorLine1="    &lt;string name=&quot;destination_reminder_cancel&quot;>Annulla&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-it/strings.xml"
+            line="229"
+            column="5"/>
+        <location
+            file="src/main/res/values-it/strings.xml"
+            line="307"
+            column="5"
+            message="Duplicates value in `destination_reminder_cancel` (case varies, but you can use `android:inputType` or `android:capitalize` in the presentation)"/>
+        <location
+            file="src/main/res/values-it/strings.xml"
+            line="630"
+            column="5"
+            message="Duplicates value in `destination_reminder_cancel` (case varies, but you can use `android:inputType` or `android:capitalize` in the presentation)"/>
+        <location
+            file="src/main/res/values-it/strings.xml"
+            line="898"
+            column="5"
+            message="Duplicates value in `destination_reminder_cancel`"/>
+        <location
+            file="src/main/res/values-it/strings.xml"
+            line="911"
+            column="5"
+            message="Duplicates value in `destination_reminder_cancel`"/>
+    </issue>
+    <issue
+        id="DuplicateStrings"
+        message="Duplicate string value `Cancel`, used in `cancel`, `destination_reminder_cancel`, `donation_dismiss_dialog_cancel_button` and `night_light_cancel`"
+        errorLine1="    &lt;string name=&quot;destination_reminder_cancel&quot;>Cancel&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="285"
+            column="5"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="803"
+            column="5"
+            message="Duplicates value in `destination_reminder_cancel`"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="1120"
+            column="5"
+            message="Duplicates value in `destination_reminder_cancel`"/>
+        <location
+            file="src/main/res/values/strings.xml"
+            line="1135"
+            column="5"
+            message="Duplicates value in `destination_reminder_cancel`"/>
+    </issue>
+    <issue
+        id="DuplicateStrings"
+        message="Duplicate string value `Peruuta`, used in `cancel`, `destination_reminder_cancel`, `donation_dismiss_dialog_cancel_button` and `night_light_cancel`"
+        errorLine1="    &lt;string name=&quot;cancel&quot;>Peruuta&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fi/strings.xml"
+            line="453"
+            column="5"/>
+        <location
+            file="src/main/res/values-fi/strings.xml"
+            line="613"
             column="5"
             message="Duplicates value in `cancel`"/>
         <location
-            file="src/main/res/values-pl/strings.xml"
-            line="825"
+            file="src/main/res/values-fi/strings.xml"
+            line="693"
+            column="5"
+            message="Duplicates value in `cancel`"/>
+        <location
+            file="src/main/res/values-fi/strings.xml"
+            line="936"
+            column="5"
+            message="Duplicates value in `cancel`"/>
+    </issue>
+    <issue
+        id="DuplicateStrings"
+        message="Duplicate string value `Cancelar`, used in `cancel` and `donation_dismiss_dialog_cancel_button`"
+        errorLine1="    &lt;string name=&quot;cancel&quot;>Cancelar&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="557"
+            column="5"/>
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="1064"
             column="5"
             message="Duplicates value in `cancel`"/>
     </issue>
@@ -3065,57 +3155,7 @@
             message="Duplicates value in `stop_info_option_refresh`"/>
     </issue>
 
-    <issue
-        id="DuplicateStrings"
-        message="Duplicate string value `Salva`, used in `stop_info_save` and `trip_info_save`"
-        errorLine1="    &lt;string name=&quot;stop_info_save&quot;>Salva&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-it/strings.xml"
-            line="226"
-            column="5"/>
-        <location
-            file="src/main/res/values-it/strings.xml"
-            line="349"
-            column="5"
-            message="Duplicates value in `stop_info_save`"/>
-    </issue>
 
-    <issue
-        id="DuplicateStrings"
-        message="Duplicate string value `Annulla`, used in `alert_hidden_snackbar_action`, `cancel`, `destination_reminder_cancel`, `donation_dismiss_dialog_cancel_button`, `night_light_cancel` and `stop_info_cancel`. Use `android:inputType` or `android:capitalize` to treat these as the same and avoid string duplication."
-        errorLine1="    &lt;string name=&quot;stop_info_cancel&quot;>Annulla&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-it/strings.xml"
-            line="227"
-            column="5"/>
-        <location
-            file="src/main/res/values-it/strings.xml"
-            line="237"
-            column="5"
-            message="Duplicates value in `stop_info_cancel`"/>
-        <location
-            file="src/main/res/values-it/strings.xml"
-            line="317"
-            column="5"
-            message="Duplicates value in `stop_info_cancel` (case varies, but you can use `android:inputType` or `android:capitalize` in the presentation)"/>
-        <location
-            file="src/main/res/values-it/strings.xml"
-            line="642"
-            column="5"
-            message="Duplicates value in `stop_info_cancel` (case varies, but you can use `android:inputType` or `android:capitalize` in the presentation)"/>
-        <location
-            file="src/main/res/values-it/strings.xml"
-            line="912"
-            column="5"
-            message="Duplicates value in `stop_info_cancel`"/>
-        <location
-            file="src/main/res/values-it/strings.xml"
-            line="925"
-            column="5"
-            message="Duplicates value in `stop_info_cancel`"/>
-    </issue>
 
     <issue
         id="DuplicateStrings"
@@ -3244,21 +3284,6 @@
             message="Duplicates value in `stop_info_nodata_minutes_short_format`"/>
     </issue>
 
-    <issue
-        id="DuplicateStrings"
-        message="Duplicate string value `Zapisz`, used in `stop_info_save` and `trip_info_save`"
-        errorLine1="    &lt;string name=&quot;stop_info_save&quot;>Zapisz&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-pl/strings.xml"
-            line="247"
-            column="5"/>
-        <location
-            file="src/main/res/values-pl/strings.xml"
-            line="388"
-            column="5"
-            message="Duplicates value in `stop_info_save`"/>
-    </issue>
 
     <issue
         id="DuplicateStrings"
@@ -3366,52 +3391,7 @@
             message="Duplicates value in `stop_info_nodata_minutes_short_format`"/>
     </issue>
 
-    <issue
-        id="DuplicateStrings"
-        message="Duplicate string value `Tallenna`, used in `stop_info_save` and `trip_info_save`"
-        errorLine1="    &lt;string name=&quot;stop_info_save&quot;>Tallenna&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-fi/strings.xml"
-            line="272"
-            column="5"/>
-        <location
-            file="src/main/res/values-fi/strings.xml"
-            line="363"
-            column="5"
-            message="Duplicates value in `stop_info_save`"/>
-    </issue>
 
-    <issue
-        id="DuplicateStrings"
-        message="Duplicate string value `Peruuta`, used in `cancel`, `destination_reminder_cancel`, `donation_dismiss_dialog_cancel_button`, `night_light_cancel` and `stop_info_cancel`"
-        errorLine1="    &lt;string name=&quot;stop_info_cancel&quot;>Peruuta&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-fi/strings.xml"
-            line="273"
-            column="5"/>
-        <location
-            file="src/main/res/values-fi/strings.xml"
-            line="463"
-            column="5"
-            message="Duplicates value in `stop_info_cancel`"/>
-        <location
-            file="src/main/res/values-fi/strings.xml"
-            line="625"
-            column="5"
-            message="Duplicates value in `stop_info_cancel`"/>
-        <location
-            file="src/main/res/values-fi/strings.xml"
-            line="709"
-            column="5"
-            message="Duplicates value in `stop_info_cancel`"/>
-        <location
-            file="src/main/res/values-fi/strings.xml"
-            line="952"
-            column="5"
-            message="Duplicates value in `stop_info_cancel`"/>
-    </issue>
 
     <issue
         id="DuplicateStrings"
@@ -3429,52 +3409,7 @@
             message="Duplicates value in `feedback_action_reply_no` (case varies, but you can use `android:inputType` or `android:capitalize` in the presentation)"/>
     </issue>
 
-    <issue
-        id="DuplicateStrings"
-        message="Duplicate string value `Save`, used in `stop_info_save` and `trip_info_save`"
-        errorLine1="    &lt;string name=&quot;stop_info_save&quot;>Save&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="277"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="432"
-            column="5"
-            message="Duplicates value in `stop_info_save`"/>
-    </issue>
 
-    <issue
-        id="DuplicateStrings"
-        message="Duplicate string value `Cancel`, used in `cancel`, `destination_reminder_cancel`, `donation_dismiss_dialog_cancel_button`, `night_light_cancel` and `stop_info_cancel`"
-        errorLine1="    &lt;string name=&quot;stop_info_cancel&quot;>Cancel&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="278"
-            column="5"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="288"
-            column="5"
-            message="Duplicates value in `stop_info_cancel`"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="803"
-            column="5"
-            message="Duplicates value in `stop_info_cancel`"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="1116"
-            column="5"
-            message="Duplicates value in `stop_info_cancel`"/>
-        <location
-            file="src/main/res/values/strings.xml"
-            line="1131"
-            column="5"
-            message="Duplicates value in `stop_info_cancel`"/>
-    </issue>
 
     <issue
         id="DuplicateStrings"
@@ -3508,42 +3443,7 @@
             message="Duplicates value in `route_info_context_get_stop_info`"/>
     </issue>
 
-    <issue
-        id="DuplicateStrings"
-        message="Duplicate string value `Guardar`, used in `stop_info_save` and `trip_info_save`"
-        errorLine1="    &lt;string name=&quot;stop_info_save&quot;>Guardar&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-es/strings.xml"
-            line="321"
-            column="5"/>
-        <location
-            file="src/main/res/values-es/strings.xml"
-            line="422"
-            column="5"
-            message="Duplicates value in `stop_info_save`"/>
-    </issue>
 
-    <issue
-        id="DuplicateStrings"
-        message="Duplicate string value `Cancelar`, used in `cancel`, `donation_dismiss_dialog_cancel_button` and `stop_info_cancel`"
-        errorLine1="    &lt;string name=&quot;stop_info_cancel&quot;>Cancelar&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-es/strings.xml"
-            line="322"
-            column="5"/>
-        <location
-            file="src/main/res/values-es/strings.xml"
-            line="567"
-            column="5"
-            message="Duplicates value in `stop_info_cancel`"/>
-        <location
-            file="src/main/res/values-es/strings.xml"
-            line="1080"
-            column="5"
-            message="Duplicates value in `stop_info_cancel`"/>
-    </issue>
 
     <issue
         id="DuplicateStrings"

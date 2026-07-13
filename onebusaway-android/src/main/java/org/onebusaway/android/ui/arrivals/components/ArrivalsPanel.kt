@@ -107,7 +107,6 @@ fun ArrivalsPanel(
     val rowCallbacks = rememberArrivalRowCallbacks(handler, viewModel)
     val content = state as? ArrivalsUiState.Content
 
-    val filtering = (content?.filteredRouteCount ?: 0) > 0
     // Service alerts are collapsed by default; the header's alert icon toggles them so they no longer
     // crowd the head of the list. Resets to collapsed only when the panel leaves composition.
     var alertsExpanded by remember { mutableStateOf(false) }
@@ -149,7 +148,6 @@ fun ArrivalsPanel(
                 hasAlerts = content?.hasAlerts == true,
                 alertsExpanded = alertsExpanded,
                 onToggleAlerts = { alertsExpanded = !alertsExpanded },
-                filtering = filtering,
                 onToggleFavorite = viewModel::toggleFavorite,
                 onTitleClick = onTitleClick,
                 // Feed the pinned header's measured height into the reported content height.
@@ -162,7 +160,6 @@ fun ArrivalsPanel(
                     content = content,
                     rowCallbacks = rowCallbacks,
                     handler = handler,
-                    onShowAllRoutes = viewModel::showAllRoutes,
                     onShowHiddenAlerts = viewModel::showHiddenAlerts,
                     onLoadMore = viewModel::loadMore,
                     // Collected inside the list's footer item, not here — a load-more toggle should
@@ -200,8 +197,8 @@ private fun ColumnScope.PreviewDivider() {
 
 /**
  * The stop header pinned at the top of the panel: the favorite star and stop name (with a
- * compass-direction tag appended, e.g. "Pine St & 3rd Ave (N)") as one centered unit, any
- * filter/alert indicators right-justified. Expand/collapse is driven by the sheet's drag handle now,
+ * compass-direction tag appended, e.g. "Pine St & 3rd Ave (N)") as one centered unit, an
+ * alert indicator right-justified. Expand/collapse is driven by the sheet's drag handle now,
  * so the header no longer toggles on tap or shows a chevron. Tapping the stop name instead invokes
  * [onTitleClick] (null = not tappable), which the drawer host uses to recenter the map on the stop.
  * [starSize] is exposed so the star's sizing can be tuned in the preview.
@@ -216,7 +213,6 @@ internal fun ArrivalsPanelHeader(
     hasAlerts: Boolean,
     alertsExpanded: Boolean,
     onToggleAlerts: () -> Unit,
-    filtering: Boolean,
     onToggleFavorite: () -> Unit,
     onTitleClick: (() -> Unit)? = null,
     starSize: Dp = 20.dp,
@@ -260,37 +256,26 @@ internal fun ArrivalsPanelHeader(
                 modifier = onTitleClick?.let { Modifier.clickable(onClick = it) } ?: Modifier
             )
         }
-        // Filter/alert indicators, right-justified.
-        Row(
-            modifier = Modifier.align(Alignment.CenterEnd),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (filtering) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_content_filter_list),
-                    contentDescription = stringResource(R.string.stop_info_option_filter),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            if (hasAlerts) {
-                Icon(
-                    painter = painterResource(R.drawable.baseline_warning_24),
-                    contentDescription = stringResource(
-                        if (alertsExpanded) {
-                            R.string.stop_info_hide_alerts_toggle
-                        } else {
-                            R.string.stop_info_show_alerts
-                        }
-                    ),
-                    tint = MaterialTheme.colorScheme.error,
-                    // The warning glyph is 24dp; expand its tappable area to the 48dp
-                    // accessibility minimum without enlarging the icon. clickable must stay
-                    // the outer node so its pointer region measures the reserved 48dp.
-                    modifier = Modifier
-                        .clickable(onClick = onToggleAlerts)
-                        .minimumInteractiveComponentSize()
-                )
-            }
+        // Alert indicator, right-justified. Tapping it toggles the service-alert list.
+        if (hasAlerts) {
+            Icon(
+                painter = painterResource(R.drawable.baseline_warning_24),
+                contentDescription = stringResource(
+                    if (alertsExpanded) {
+                        R.string.stop_info_hide_alerts_toggle
+                    } else {
+                        R.string.stop_info_show_alerts
+                    }
+                ),
+                tint = MaterialTheme.colorScheme.error,
+                // The warning glyph is 24dp; expand its tappable area to the 48dp
+                // accessibility minimum without enlarging the icon. clickable must stay
+                // the outer node so its pointer region measures the reserved 48dp.
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .clickable(onClick = onToggleAlerts)
+                    .minimumInteractiveComponentSize()
+            )
         }
     }
 }
@@ -314,7 +299,6 @@ private fun ArrivalsPanelHeaderPreview() {
                     hasAlerts = false,
                     alertsExpanded = false,
                     onToggleAlerts = {},
-                    filtering = false,
                     onToggleFavorite = {}
                 )
                 PreviewDivider()
@@ -327,7 +311,6 @@ private fun ArrivalsPanelHeaderPreview() {
                     hasAlerts = true,
                     alertsExpanded = true,
                     onToggleAlerts = {},
-                    filtering = true,
                     onToggleFavorite = {}
                 )
             }

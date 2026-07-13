@@ -101,7 +101,7 @@ internal fun StopDetailsHost(viewModel: ArrivalsViewModel) {
             content.stopUserName,
             content.stopCode,
             content.header.direction,
-            content.routeFilterOptions
+            content.routeDisplayNames
         ) {
             createStopDetailsDialogText(
                 context,
@@ -109,7 +109,7 @@ internal fun StopDetailsHost(viewModel: ArrivalsViewModel) {
                 content.stopUserName,
                 content.stopCode,
                 content.header.direction,
-                content.routeFilterOptions.map { it.displayName }
+                content.routeDisplayNames
             )
         }
         AlertDialog(

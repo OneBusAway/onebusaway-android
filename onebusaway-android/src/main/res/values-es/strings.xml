@@ -132,10 +132,8 @@
     <string name="bus_options_menu_remove_star">Remover la ruta de favoritos</string>
     <string name="bus_options_menu_show_trip_details">Mostrar el estado del viaje</string>
     <string name="bus_options_menu_set_reminder">Adicionar un recordatorio</string>
-    <string name="bus_options_menu_show_only_this_route">Mostrar solamente esta ruta</string>
     <string name="bus_options_menu_show_route_schedule">Mostrar el horario de la ruta</string>
     <string name="bus_options_menu_report_trip_problem">Reportar un problema con el viaje</string>
-    <string name="bus_options_menu_show_all_routes">Mostrar todas las rutas</string>
 
     <!--  Stop Info -->
     <string name="stop_info_ontime">A tiempo</string>
@@ -259,7 +257,6 @@
     <string name="stop_info_option_showonmap">Mostrar sobre el Mapa</string>
     <string name="menu_option_sort_by">Ordenar por</string>
     <string name="stop_info_option_refresh">Refrescar</string>
-    <string name="stop_info_option_filter">Filtrar rutas</string>
     <string name="stop_info_option_show_details">Mostrar los detalles de la parada</string>
     <string name="stop_info_option_report_problem">Reportar un problema con la parada</string>
     <string name="stop_info_option_night_light">Iluminación de noche</string>
@@ -315,10 +312,6 @@
     </plurals>
     <string name="stop_info_load_more_arrivals">Cargar más llegadas</string>
     <string name="stop_info_item_options_title">Opciones de bus</string>
-    <string name="stop_info_filter_title">Mostrar sólo estas rutas</string>
-    <string name="stop_info_filter_header">Mostrando %1$d de %2$d rutas</string>
-    <string name="stop_info_save">Guardar</string>
-    <string name="stop_info_cancel">Cancelar</string>
     <string name="stop_info_clear">Limpiar</string>
     <string name="stop_info_favorite">Parada Favorita</string>
     <string name="stop_info_official_stop_name_label">Nombre oficial: %1$s</string>

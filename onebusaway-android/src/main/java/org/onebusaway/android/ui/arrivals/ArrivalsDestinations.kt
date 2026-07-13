@@ -101,7 +101,7 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
             factory = viewModelFactory {
                 initializer {
                     ArrivalsViewModelFactoryEntryPoint.get(context)
-                        .create(stopId, ignorePersistedFilter = false)
+                        .create(stopId)
                 }
             }
         )

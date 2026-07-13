@@ -134,8 +134,6 @@
     <string name="stop_info_vehicle_not_on_map">This trip&#8217;s vehicle isn&#8217;t on the map right now</string>
     <string name="bus_options_menu_show_trip_details">Show trip status</string>
     <string name="bus_options_menu_set_reminder">Set a reminder</string>
-    <string name="bus_options_menu_show_only_this_route">Show only this route</string>
-    <string name="bus_options_menu_show_all_routes">"Show all routes"</string>
     <string name="bus_options_menu_show_route_schedule">Show route schedule</string>
     <string name="bus_options_menu_report_trip_problem">Report arrival time problem</string>
 
@@ -230,7 +228,6 @@
     <string name="stop_info_option_showonmap">Show on map</string>
     <string name="menu_option_sort_by">Sort by</string>
     <string name="stop_info_option_refresh">Refresh</string>
-    <string name="stop_info_option_filter">Filter routes</string>
     <string name="stop_info_option_show_details">Show stop details</string>
     <string name="stop_info_option_report_problem">Report stop problem</string>
     <string name="stop_info_option_night_light">Night light</string>
@@ -276,12 +273,6 @@
     <string name="stop_info_eta_strip_scroll_earlier">Show earlier arrivals</string>
     <string name="stop_info_eta_strip_scroll_later">Show later arrivals</string>
     <string name="stop_info_item_options_title">Bus options</string>
-    <string name="stop_info_filter_title">Show only these routes</string>
-    <!-- Not a plural candidate: "%2$d routes" is a ratio's denominator ("N of M"), not a count that
-         inflects on its own; getQuantityString would key off the wrong number. -->
-    <string name="stop_info_filter_header" tools:ignore="PluralsCandidate">Showing %1$d of %2$d routes</string>
-    <string name="stop_info_save">Save</string>
-    <string name="stop_info_cancel">Cancel</string>
     <string name="stop_info_clear">Clear</string>
     <string name="stop_info_favorite">Favorite stop</string>
     <string name="stop_info_official_stop_name_label">Official name: %1$s</string>

@@ -64,7 +64,6 @@ class ArrivalAlertIndicatorTest {
                 group = RouteRowGroup(listOf(trip)),
                 actionsFor = { actions },
                 isFavorite = false,
-                filterActive = false,
                 callbacks = previewRowCallbacks(),
             )
         }

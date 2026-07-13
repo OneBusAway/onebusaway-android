@@ -23,9 +23,9 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.ArrivalInfoUtils
 
 /**
- * Builds the display [ArrivalInfo]s from [arrivals]: filters to [filter] routes (empty == all),
- * drops past arrivals unless the user opted in, and sorts by ETA. Callers feed it the [ArrivalData]
- * the api arrivals fetch ([org.onebusaway.android.api.data.StopArrivals.arrivals]) produces.
+ * Builds the display [ArrivalInfo]s from [arrivals]: drops past arrivals unless the user opted in, and
+ * sorts by ETA. Callers feed it the [ArrivalData] the api arrivals fetch
+ * ([org.onebusaway.android.api.data.StopArrivals.arrivals]) produces.
  *
  * Favorite state is not baked in here — it's a live overlay the arrivals UI applies from the reactive
  * starred-route set (so a star toggle from any surface re-flags rows without a re-fetch), keyed by
@@ -34,14 +34,12 @@ import org.onebusaway.android.util.ArrivalInfoUtils
 fun convertArrivals(
     context: Context,
     arrivals: List<ArrivalData>,
-    filter: Collection<String>?,
     ms: ServerTime,
     includeArrivalDepartureInStatusLabel: Boolean,
 ): List<ArrivalInfo> {
     val showNegativeArrivals = PreferencesEntryPoint.get(context)
         .getBoolean(R.string.preference_key_show_negative_arrivals, true)
-    val selected = if (!filter.isNullOrEmpty()) arrivals.filter { it.routeId in filter } else arrivals
-    return selected
+    return arrivals
         .map { ArrivalInfo(context, it, ms, includeArrivalDepartureInStatusLabel) }
         .filter { it.eta >= 0 || showNegativeArrivals }
         .sortedWith(ArrivalInfoUtils.InfoComparator())

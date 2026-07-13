@@ -21,8 +21,7 @@ data class StopHeader(
     val stopId: String,
     val name: String,
     val direction: String?,
-    val isFavorite: Boolean,
-    val routeCount: Int
+    val isFavorite: Boolean
 )
 
 /**
@@ -68,13 +67,6 @@ data class AlertItem(
 /** Maps ObaSituation severity onto the three banner styles, matching the legacy SituationAlert. */
 enum class AlertSeverity { INFO, WARNING, ERROR }
 
-/** One route serving the stop, for the route-filter dialog. */
-data class RouteFilterOption(
-    val routeId: String,
-    val displayName: String,
-    val checked: Boolean
-)
-
 /** UI state for the arrivals screen. */
 sealed interface ArrivalsUiState {
 
@@ -88,8 +80,7 @@ sealed interface ArrivalsUiState {
      * @param actions per-arrival navigation/dialog data, keyed by trip id
      * @param alerts active, non-hidden service alerts for the stop
      * @param hiddenAlertCount how many alerts the user has hidden (for the "show hidden" affordance)
-     * @param routeFilterOptions every route serving the stop, with current checked state
-     * @param filteredRouteCount how many routes the active filter keeps (0 == showing all)
+     * @param routeDisplayNames display names of every route serving the stop (for the stop-details dialog)
      */
     data class Content(
         val header: StopHeader,
@@ -103,8 +94,7 @@ sealed interface ArrivalsUiState {
         val favoriteRouteIds: Set<String> = emptySet(),
         val alerts: List<AlertItem> = emptyList(),
         val hiddenAlertCount: Int = 0,
-        val routeFilterOptions: List<RouteFilterOption> = emptyList(),
-        val filteredRouteCount: Int = 0,
+        val routeDisplayNames: List<String> = emptyList(),
         val stopCode: String? = null,
         val stopLat: Double = 0.0,
         val stopLon: Double = 0.0,

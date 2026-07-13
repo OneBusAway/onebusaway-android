@@ -63,7 +63,7 @@ class StopArrivals internal constructor(
         get() = entry.arrivalsAndDepartures.map { it.asArrivalData() }
             .collapseBlockIdPhantoms { tripId -> refs.trip(tripId)?.blockId }
 
-    /** Every referenced route (for the map overlay + the route-filter options). */
+    /** Every referenced route (for the map overlay). */
     val routes: List<ObaRoute> get() = refs.routes.map(::DtoRoute)
 
     val hasArrivals: Boolean get() = entry.arrivalsAndDepartures.isNotEmpty()
@@ -81,17 +81,13 @@ class StopArrivals internal constructor(
     fun situation(id: String): ObaSituation? = refs.situation(id)?.let(::DtoSituation)
 
     /**
-     * All situations (service alerts) specific to the stop, agency, and (filtered) routes — the
-     * stop/agency-level alerts the entry references directly, plus route-specific alerts for routes
-     * in [filter] (empty/null filter = all routes). De-duplicated by id, order preserved. (Ports the
-     * former `SituationUtils.getAllSituations`; see #700.)
+     * All situations (service alerts) for the stop: the stop/agency-level alerts the entry references
+     * directly, plus every route-specific alert referenced by an arrival. De-duplicated by id, order
+     * preserved. (Ports the former `SituationUtils.getAllSituations`; see #700.)
      */
-    fun situations(filter: List<String>?): List<ObaSituation> {
-        val filterIds = filter.orEmpty().toHashSet()
-        val arrivalSituationIds = entry.arrivalsAndDepartures
-            .filter { filterIds.isEmpty() || it.routeId in filterIds }
-            .flatMap { it.situationIds }
-        // Stop-level alerts first, then the (filtered) per-arrival alerts, de-duplicated by id.
+    fun situations(): List<ObaSituation> {
+        val arrivalSituationIds = entry.arrivalsAndDepartures.flatMap { it.situationIds }
+        // Stop-level alerts first, then the per-arrival alerts, de-duplicated by id.
         return (entry.situationIds + arrivalSituationIds)
             .distinct()
             .mapNotNull { refs.situation(it) }

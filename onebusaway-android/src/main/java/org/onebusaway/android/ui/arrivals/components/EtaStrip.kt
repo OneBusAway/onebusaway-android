@@ -25,17 +25,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
@@ -47,11 +42,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -59,16 +52,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.CustomAccessibilityAction
-import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -81,10 +69,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.roundToInt
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import org.onebusaway.android.R
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
@@ -92,17 +77,16 @@ import org.onebusaway.android.time.rememberLiveServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.compose.components.SlideBox
-import org.onebusaway.android.ui.compose.components.rememberSlideBoxState
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.util.DisplayFormat
 
 // The ETA strip: a route/direction's per-trip ETA pills in a horizontally-scrollable, overflow-aware
-// row (the scroll + "there's more" chevron), each pill carrying its long-press menu, plus the
-// pull-past-the-end gesture that widens the arrivals window. Split out of ArrivalRows.kt so the strip
-// is a self-contained unit; RouteArrivalRow supplies the badge/divider/heading scaffold around it.
-// The scroll/pull/glide gestures themselves live in SlideBox.kt (one scroll owner, issue #1801) —
-// this file declares WHAT the strip rests on (the pinned pill, or the trailing end during a
-// load-more reveal) and renders the pills.
+// row (the scroll + "there's more" chevron), each pill carrying its long-press menu. Split out of
+// ArrivalRows.kt so the strip is a self-contained unit; RouteArrivalRow supplies the
+// badge/divider/heading scaffold around it. The scroll/glide gestures themselves live in SlideBox.kt
+// (one scroll owner, issue #1801) — this file declares WHAT the strip rests on (the pinned pill) and
+// renders the pills. "Load more arrivals" is a footer button below the whole list (ArrivalsScreen),
+// not a gesture on this strip.
 
 /**
  * The horizontally-scrollable strip of per-trip ETA pills below the direction name. When the pills
@@ -110,11 +94,6 @@ import org.onebusaway.android.util.DisplayFormat
  * moves the strip one strip-width further that direction (or to the end, whichever is closer). The
  * chevron's own tap target is a narrow side gutter separate from the pills, so it never blocks the
  * strip's own drag-to-scroll.
- *
- * Dragging the strip past its last pill (once there's nothing more to scroll) builds a resistive pull
- * ([SlideBox]'s gesture) that reveals a trailing load-more affordance; releasing once it's armed
- * widens the arrivals window via [ArrivalRowCallbacks.onLoadMore] — this replaced the drawer's footer
- * button (issue #1707 follow-up). A TalkBack custom action exposes the same load-more for non-drag users.
  *
  * The strip also keeps its soonest *upcoming* pill pinned to the leading edge over time: it snaps
  * there instantly on first display (using [start]), then as the shared live clock ticks a trip's ETA
@@ -124,9 +103,6 @@ import org.onebusaway.android.util.DisplayFormat
 @Composable
 internal fun EtaStrip(
     trips: List<ArrivalInfo>,
-    // The Content.dataVersion this strip's trips came from. MUST come from the same Content object as
-    // the trips themselves, so the strip can never see a version ahead of its rendered pills.
-    dataVersion: Long,
     actionsFor: (ArrivalInfo) -> ArrivalActions?,
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier,
@@ -191,8 +167,6 @@ internal fun EtaStrip(
             }
     }
 
-    val loadMoreLabel = stringResource(R.string.stop_info_load_more_arrivals)
-
     // Jumps the strip one viewport toward the given direction (or to the end, whichever is
     // closer) by setting the one-shot arrow override above; SlideBox's own glide clamps the
     // result to [0, maxValue], so no clamping is needed here.
@@ -201,123 +175,29 @@ internal fun EtaStrip(
         arrowOverridePx = scrollState.value + delta
     }
 
-    // The strip's active load-more request: the token returned at fire time, NO_LOAD_REQUEST at rest.
-    // Saveable so a list eviction / recreation mid-load resumes (or cleanly ends) the transaction.
-    val request = rememberSaveable { mutableIntStateOf(NO_LOAD_REQUEST) }
-    val loadMore by callbacks.loadMoreState.collectAsStateWithLifecycle()
-    // The spinner shows from fire until the composition that carries the completing data's version, so
-    // the spinner and the new pills swap in the SAME composition — never a frame where both/neither
-    // show. At rest, request is NO_LOAD_REQUEST, which reads as Superseded → no spinner.
-    val loadingMore = spinnerVisible(loadMoreOutcome(loadMore, request.intValue), dataVersion)
-
-    val slideBox = rememberSlideBoxState(scrollState)
-
-    // Layout acknowledgement: the highest dataVersion whose strip content has been MEASURED. Written in
-    // the measure pass that wraps horizontalScroll — the same pass (and snapshot batch) in which
-    // scrollState.maxValue is brought up to date — so `measuredVersion >= V` GUARANTEES maxValue is
-    // consistent with data version V. Read only from snapshotFlow (never composition), so writing it
-    // per layout pass can't cause recomposition loops.
-    val measuredVersion = remember { mutableLongStateOf(0L) }
-    val versionState = rememberUpdatedState(dataVersion)
-
-    // The reveal transaction for this strip's request: while `request` is live, the SlideBox's
-    // followEnd regime (declared below) keeps the strip pinned to its (moving) right end — first the
-    // spinner slot, then the reloaded pills. This effect decides when that transaction ENDS: once the
-    // layout provably reflects the data that completed the request and the strip is at rest at the
-    // true end. Every wait is a level-triggered predicate over monotonic snapshot/StateFlow state, so
-    // a signal that fires before we start listening is still observed.
-    LaunchedEffect(request.intValue) {
-        val token = request.intValue
-        if (token == NO_LOAD_REQUEST) return@LaunchedEffect
-        try {
-            // AWAIT RESULT: level-triggered on the VM's StateFlow — a Finished that landed before
-            // we started collecting is still observed (StateFlow replays its value).
-            val landed = callbacks.loadMoreState
-                .map { loadMoreOutcome(it, token) }
-                .first { it !is LoadMoreOutcome.Pending }
-            if (landed is LoadMoreOutcome.Landed) {
-                // SETTLE: wait until (a) layout reflects the completing data's version — which,
-                // via the layout-ack modifier, also means maxValue is current for that data and
-                // the spinner slot is gone (spinner and new pills swap in the same composition,
-                // both keyed on dataVersion) — and (b) the box reports itself at rest at the true
-                // end. Success with new pills, success with none for this row, and failure all take
-                // this one path: the end is wherever layout says it is.
-                snapshotFlow {
-                    measuredVersion.longValue >= landed.dataVersion && slideBox.isSettledAtEnd
-                }.first { it }
-            }
-        } finally {
-            // Idempotent teardown; guarded so a user-takeover or a re-fire (which already moved
-            // `request`) isn't clobbered.
-            if (request.intValue == token) request.intValue = NO_LOAD_REQUEST
-        }
-    }
-
-    Row(
-        modifier.semantics {
-            customActions = listOf(
-                // The full transaction, so TalkBack users get the same spinner + reveal.
-                CustomAccessibilityAction(loadMoreLabel) {
-                    request.intValue = callbacks.onLoadMore(); true
-                }
-            )
-        },
-        verticalAlignment = Alignment.Bottom
-    ) {
+    Row(modifier, verticalAlignment = Alignment.Bottom) {
         // Left gutter: a chevron back toward earlier arrivals, shown once the strip is scrolled off its
         // start. Reserved (like the right gutter) so toggling it never reflows the pills.
         ScrollChevronGutter(
-            visible = canScrollBackward && !loadingMore,
+            visible = canScrollBackward,
             pointsRight = false,
             contentDescriptionRes = R.string.stop_info_eta_strip_scroll_earlier,
             onClick = { jumpArrow(forward = false) },
         )
 
         // The scrollable pill content, inside the gesture-owning SlideBox: the strip DECLARES what it
-        // rests on — the pinned pill, or the trailing end while a load-more reveal is live — and the
-        // box does all scrolling/gliding itself with a single scroll owner (issue #1801). The pull
-        // gesture lives in the box too (the gutters don't scroll).
+        // rests on (the pinned pill) and the box does all scrolling/gliding itself with a single
+        // scroll owner (issue #1801).
         SlideBox(
-            state = slideBox,
+            scroll = scrollState,
             anchorPx = { arrowOverridePx ?: pinnedOffsetPx.takeIf { it >= 0 } },
-            followEnd = request.intValue != NO_LOAD_REQUEST,
-            onPullFired = {
-                // The VM sets Loading(token) synchronously inside onLoadMore, so the spinner is
-                // already visible in the composition this write lands in — no gap.
-                request.intValue = callbacks.onLoadMore()
-            },
-            onUserScroll = {
-                // A real user scroll on this strip while a reveal transaction is active ends it: the
-                // user wins — the SlideBox hands the scroll back and the spinner is dropped. The load
-                // itself continues in the ViewModel; its pills land unanimated. (Unconditional: an
-                // equal-value write is a snapshot no-op under structural equality.)
-                request.intValue = NO_LOAD_REQUEST
-            },
-            modifier = Modifier.weight(1f),
-            // The composition↔layout bridge: measure the scroll content, then record the data
-            // version this layout reflects (see acknowledgeVersion).
-            //
             // height(IntrinsicSize.Max) fixes the scrolling row to its tallest pill, so a shorter
             // pill — the single-line "NOW" pill, which has no clock subline — can fillMaxHeight up to
             // match its neighbours. The layout does the leveling; no pill guesses another's height.
-            contentModifier = Modifier
-                .height(IntrinsicSize.Max)
-                .acknowledgeVersion(versionState, measuredVersion),
+            modifier = Modifier.weight(1f).height(IntrinsicSize.Max),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             // Bottom-align so a smaller recent-past pill sits on the same baseline as the full-size ones.
             verticalAlignment = Alignment.Bottom,
-            overlay = {
-                // The pull-revealed load-more chip (invisible at rest, armed as the pull crosses the
-                // threshold). Hidden while loading — the inline spinner takes over then.
-                if (!loadingMore) {
-                    LoadMorePullChip(
-                        progress = { slideBox.pullProgress },
-                        armed = { slideBox.armed },
-                        contentDescription = loadMoreLabel,
-                        modifier = Modifier.align(Alignment.CenterEnd),
-                    )
-                }
-            },
         ) {
             trips.forEachIndexed { index, trip ->
                 // Only the currently-pinned pill measures its content-space offset — it's the one
@@ -344,28 +224,11 @@ internal fun EtaStrip(
                     modifier = pillModifier,
                 )
             }
-            // While the reload is in flight, the spinner rides as a real tail item so it reserves its
-            // own slot to the right of the last pill (rather than overlaying it); when the completing
-            // data's composition lands it's dropped in the same frame the new pills appear, and the
-            // strip glides left to the new end.
-            if (loadingMore) {
-                Box(
-                    modifier = Modifier.size(width = 28.dp, height = 32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
         }
 
-        // Right gutter: a chevron forward toward later arrivals (the pull-past-the-end load affordance
-        // takes over inside the content box once you reach the end).
+        // Right gutter: a chevron forward toward later arrivals.
         ScrollChevronGutter(
-            visible = canScrollForward && !loadingMore,
+            visible = canScrollForward,
             pointsRight = true,
             contentDescriptionRes = R.string.stop_info_eta_strip_scroll_later,
             onClick = { jumpArrow(forward = true) },
@@ -408,45 +271,6 @@ private fun ScrollChevronGutter(
     }
 }
 
-/**
- * The circular load-more affordance uncovered as the ETA strip is pulled past its end. [progress]
- * (0..1, read in the graphics phase to avoid recomposing on every drag frame) fades and slides it in;
- * [armed] (progress has reached 1) flips it to the primary color so "release to load" reads at a glance.
- */
-@Composable
-private fun LoadMorePullChip(
-    progress: () -> Float,
-    armed: () -> Boolean,
-    contentDescription: String,
-    modifier: Modifier = Modifier,
-) {
-    val slidePx = with(LocalDensity.current) { 20.dp.toPx() }
-    // Reading the arm lambda here scopes threshold-crossing recomposition to just this small chip.
-    val isArmed = armed()
-    val container = if (isArmed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
-    val content = if (isArmed) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-    Surface(
-        modifier = modifier.graphicsLayer {
-            val p = progress()
-            alpha = p
-            // Slide in from the right edge as the pull grows (fully seated at p == 1).
-            translationX = (1f - p) * slidePx
-        },
-        shape = CircleShape,
-        color = container,
-        // Sets LocalContentColor, so the Icon below inherits it instead of an explicit tint.
-        contentColor = content,
-    ) {
-        Box(Modifier.size(30.dp), contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = contentDescription,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-    }
-}
-
 /** A single ETA pill with its long-press per-trip menu. Tap focuses the vehicle; long-press opens
  *  the menu (trip details / reminder / report). [liveNow] is the strip's one shared ticking clock
  *  (issue #1781) — counts this pill down between polls rather than freezing at the poll-time eta. */
@@ -467,7 +291,7 @@ private fun EtaPillWithMenu(
         DisplayFormat.formatTime(context, trip.displayTime.epochMs)
     }
     // fillMaxHeight here and on the pill so the colored Surface stretches to the strip's tallest pill
-    // (fixed by the row's IntrinsicSize.Max — see EtaStrip's contentModifier), levelling the shorter
+    // (fixed by the SlideBox's IntrinsicSize.Max modifier — see EtaStrip), levelling the shorter
     // single-line NOW pill up to its neighbours.
     Box(modifier.fillMaxHeight()) {
         EtaPill(
@@ -531,7 +355,7 @@ private fun tightLineStyle(base: TextStyle, size: TextUnit) = base.copy(
  * clock time shown below the ETA (issue #1786); null omits that line (e.g. the Home legend's
  * illustrative pills, which aren't tied to a real arrival time). The "NOW" pill ([eta] == 0) always
  * omits it too — it's a single centered label — so it's shorter by content; the strip levels it back
- * to its neighbours' height with fillMaxHeight (see EtaStrip's contentModifier / EtaPillWithMenu).
+ * to its neighbours' height with fillMaxHeight (see EtaStrip's SlideBox modifier / EtaPillWithMenu).
  *
  * Every pill renders at the same size regardless of [eta] — a recent-past (negative-ETA) trip is
  * distinguished from upcoming ones by the strip's own scroll position (it's justified off the leading
@@ -681,7 +505,6 @@ private fun EtaStripPreviewFrame(
             Box(Modifier.height(IntrinsicSize.Min).padding(8.dp)) {
                 EtaStrip(
                     trips = trips,
-                    dataVersion = 1L,
                     actionsFor = { null },
                     callbacks = previewRowCallbacks(),
                     scrollState = scrollState,

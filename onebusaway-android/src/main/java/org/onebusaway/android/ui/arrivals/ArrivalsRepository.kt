@@ -237,22 +237,27 @@ class DefaultArrivalsRepository @Inject constructor(
     private val preferences: PreferencesRepository,
 ) : ArrivalsRepository {
 
-    /** The last good snapshot paired with the monotonic device time it was received, so the
-     *  stale-fallback path can project that server clock forward by elapsed device time (#1612). The
-     *  two must be read as a consistent pair; held in one `@Volatile` reference so a concurrent
-     *  getArrivals (e.g. a user refresh overlapping the poll loop) can't mix a new snapshot with an
-     *  old receipt time. */
-    private data class LastGood(val snapshot: StopArrivals, val elapsedMs: Long)
+    /**
+     * Everything derived from the last good load, held as one unit so all three readers
+     * ([alertDetails], [lastLoaded], and the stale-fallback path) see a mutually consistent set:
+     * - [snapshot] — the raw response, for situation lookups and stale re-projection.
+     * - [elapsedMs] — the monotonic device time the snapshot was received, so the stale-fallback path
+     *   can project that server clock forward by elapsed device time (#1612).
+     * - [loaded] — the map-relevant snapshot prebuilt from the *computed* [ArrivalsData] so its
+     *   [ArrivalsLoaded.routeIds] matches the drawer's rows (see [ArrivalsLoaded]).
+     *
+     * Published through the single `@Volatile` [lastGood] with one write per load, so a concurrent
+     * getArrivals (e.g. a user refresh overlapping the poll loop) can't publish a new snapshot while
+     * [lastLoaded] still reflects the old one, or mix a new snapshot with an old receipt time.
+     */
+    private data class LastGood(
+        val snapshot: StopArrivals,
+        val elapsedMs: Long,
+        val loaded: ArrivalsLoaded,
+    )
 
     @Volatile
     private var lastGood: LastGood? = null
-
-    /** The map-relevant snapshot of the last good load, prebuilt from the *computed* [ArrivalsData] so
-     *  its [ArrivalsLoaded.routeIds] matches the drawer's rows (see [ArrivalsLoaded]). Held in one
-     *  `@Volatile` reference so [lastLoaded] reads stop/routes/routeIds as a consistent set — same
-     *  discipline as [lastGood]. */
-    @Volatile
-    private var lastLoadedSnapshot: ArrivalsLoaded? = null
 
     // Whether the viewed stop has been recorded in the Stops table this session. Recording (a) creates
     // the row so the favorite toggle's UPDATE actually persists, and (b) marks it used so it appears in
@@ -275,14 +280,16 @@ class DefaultArrivalsRepository @Inject constructor(
 
         result.fold(
             onSuccess = { snapshot ->
-                lastGood = LastGood(snapshot, SystemClock.elapsedRealtime())
+                // Stamp the receipt time as close to the response as possible (before the DB reads in
+                // toData), then publish the whole consistent set with one write once [data] is built.
+                val receivedMs = SystemClock.elapsedRealtime()
                 // Record the stop once per session so favoriting persists (setFavorite is an
                 // UPDATE — it needs the row to exist) and the stop shows in Recent stops.
                 if (!stopRecorded) {
                     snapshot.stop?.let { recordStop(it, System.currentTimeMillis()); stopRecorded = true }
                 }
                 val data = toData(snapshot, isStale = false, now = snapshot.currentTime)
-                lastLoadedSnapshot = loadedSnapshot(snapshot, data)
+                lastGood = LastGood(snapshot, receivedMs, loadedSnapshot(snapshot, data))
                 Result.success(data)
             },
             // Refresh failed but we have prior data — keep showing it (legacy stale fallback).
@@ -295,7 +302,9 @@ class DefaultArrivalsRepository @Inject constructor(
                     val now = stale.snapshot.currentTime +
                         (SystemClock.elapsedRealtime() - stale.elapsedMs)
                     val data = toData(stale.snapshot, isStale = true, now = now)
-                    lastLoadedSnapshot = loadedSnapshot(stale.snapshot, data)
+                    // Keep the same snapshot/receipt time; refresh only the derived map snapshot so its
+                    // stale ETAs advance. Still one volatile write, so readers stay consistent.
+                    lastGood = stale.copy(loaded = loadedSnapshot(stale.snapshot, data))
                     Result.success(data)
                 }
                     ?: Result.failure(
@@ -459,7 +468,7 @@ class DefaultArrivalsRepository @Inject constructor(
             AlertDetails(it.id, it.summary, it.description, it.url)
         }
 
-    override fun lastLoaded(): ArrivalsLoaded? = lastLoadedSnapshot
+    override fun lastLoaded(): ArrivalsLoaded? = lastGood?.loaded
 
     /** Pairs the response's stop/routes/hasArrivals with the drawer-1:1 route set derived from the
      *  *computed* [data] (see [ArrivalsLoaded.routeIds]). */

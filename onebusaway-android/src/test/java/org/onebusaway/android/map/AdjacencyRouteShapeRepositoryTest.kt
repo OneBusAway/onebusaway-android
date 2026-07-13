@@ -201,6 +201,9 @@ class AdjacencyRouteShapeRepositoryTest {
 
     companion object {
         /** A minimal [RouteMapData] with empty shapes (no [android.location.Location] built). */
+        // routeId is a call-site label documenting which route this fake data stands in for;
+        // RouteMapData carries no route-id field (the id is applied later by toAdjacencyShape), so
+        // the body has no use for it. Test-only helper; no tracking issue.
         private fun routeMapData(
             @Suppress("UNUSED_PARAMETER") routeId: String,
             stopIds: List<String> = emptyList(),

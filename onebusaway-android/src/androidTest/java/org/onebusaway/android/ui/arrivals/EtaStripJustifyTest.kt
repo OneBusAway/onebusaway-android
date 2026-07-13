@@ -63,7 +63,6 @@ class EtaStripJustifyTest {
             Box(Modifier.width(160.dp)) {
                 EtaStrip(
                     trips = trips,
-                    dataVersion = 1L,
                     actionsFor = { null },
                     callbacks = previewRowCallbacks(),
                     start = firstUpcomingIndex,

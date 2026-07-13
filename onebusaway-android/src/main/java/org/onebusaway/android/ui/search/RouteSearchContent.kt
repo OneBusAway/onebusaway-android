@@ -79,6 +79,7 @@ private fun RouteSearchRow(
         RouteRowContent(
             shortName = route.shortName,
             longName = route.longName,
+            routeColor = route.routeColor,
             modifier = Modifier
                 .fillMaxWidth()
                 .combinedClickable(

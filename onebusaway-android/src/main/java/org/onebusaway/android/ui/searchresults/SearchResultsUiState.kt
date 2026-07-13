@@ -24,12 +24,17 @@ sealed interface SearchResultItem {
     /**
      * @param longName secondary name (long name or description), or null when there is none
      * @param url the route's schedule page, used when registering the route in recents
+     * @param routeColor the route's GTFS color as an Android ARGB int, or null when unset; drives the
+     *   route-colored [LineBadge] chip (a null falls back to the neutral chip)
+     * @param agency the operating agency's display name, or null/blank when unknown (the row omits it)
      */
     data class Route(
         val id: String,
         val shortName: String,
         val longName: String?,
-        val url: String?
+        val url: String?,
+        val routeColor: Int? = null,
+        val agency: String? = null
     ) : SearchResultItem
 
     /** @param direction raw compass direction code ("N", "SW", ...); empty when unknown. */

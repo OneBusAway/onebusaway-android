@@ -20,6 +20,7 @@
 
 package org.onebusaway.android.ui.arrivals.components
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -200,8 +202,9 @@ private fun ColumnScope.PreviewDivider() {
  * [onTitleClick] (null = not tappable), which the drawer host uses to recenter the map on the stop.
  * [starSize] is exposed so the star's sizing can be tuned in the preview.
  */
+@VisibleForTesting
 @Composable
-private fun ArrivalsPanelHeader(
+internal fun ArrivalsPanelHeader(
     title: String,
     direction: String?,
     isFavorite: Boolean,
@@ -272,7 +275,12 @@ private fun ArrivalsPanelHeader(
                         }
                     ),
                     tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.clickable(onClick = onToggleAlerts)
+                    // The warning glyph is 24dp; expand its tappable area to the 48dp
+                    // accessibility minimum without enlarging the icon. clickable must stay
+                    // the outer node so its pointer region measures the reserved 48dp.
+                    modifier = Modifier
+                        .clickable(onClick = onToggleAlerts)
+                        .minimumInteractiveComponentSize()
                 )
             }
         }

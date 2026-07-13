@@ -1,11 +1,20 @@
-name: Android Nightly (all brands)
+name: Android Nightly
 
-# The PR/push workflow (android.yml) only exercises the shipping `oba` brand's tests to keep the
-# grid small (see the beforeVariants filter in onebusaway-android/build.gradle). This nightly job
-# restores the full brand × platform grid via -PbuildAllBrands=true so that a change breaking the
-# sample white-label brands (agencyX/agencyY) or the third-party `kiedybus` brand is still caught —
-# just off the PR critical path. Unit tests + `check` are JVM-only, so no emulator is needed here;
-# instrumented tests remain oba-only in android.yml.
+# Two nightly legs that both live off the PR critical path:
+#
+# 1. all-brands — the PR/push workflow (android.yml) only exercises the shipping `oba` brand's tests
+#    to keep the grid small (see the beforeVariants filter in onebusaway-android/build.gradle). This
+#    leg restores the full brand × platform grid via -PbuildAllBrands=true so a change breaking the
+#    sample white-label brands (agencyX/agencyY) or the third-party `kiedybus` brand is still caught.
+#    Unit tests + `check` are JVM-only, so it needs no emulator.
+#
+# 2. smoke-api23 — `minSdk` is 23 but no other job *launches* the app below API 33, so runtime-only
+#    floor risks (core-library desugaring, pre-26 platform shims, Compose on a 2015-era runtime,
+#    startup itself) go unbooted; a crash-on-boot at the floor would ship. This leg boots an API 23
+#    emulator, installs obaGoogleDebug, and runs the @SmokeTest-annotated subset of the instrumented
+#    suite (org.onebusaway.android.SmokeTest — see that annotation + issue #1818). Small and stable
+#    on purpose: it answers "does the app boot and do the core flows run on the floor?", not "re-run
+#    everything". Both instrumented suites otherwise remain oba-only in android.yml.
 
 on:
   schedule:
@@ -17,7 +26,7 @@ on:
 # One nightly run at a time: if a run is still going when the next cron fires (or a manual
 # dispatch overlaps), cancel the stale one so they don't race on the shared Gradle cache.
 concurrency:
-  group: nightly-all-brands
+  group: nightly
   cancel-in-progress: true
 
 jobs:
@@ -41,3 +50,69 @@ jobs:
 
       - name: Full-grid tests + check (all brands)
         run: ./gradlew test check -PbuildAllBrands=true --build-cache -x lint -PwarningsAsErrors=true --stacktrace
+
+  smoke-api23:
+    # Boot the minSdk floor: install obaGoogleDebug on an API 23 emulator and run the @SmokeTest
+    # subset. Independent of all-brands, so it runs in parallel. See the header for why this exists.
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          # This job only runs tests; it never pushes, so don't leave the token in git config.
+          persist-credentials: false
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: AVD cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-23
+
+      # API 23 (google_apis) ships only an x86 system image — no x86_64 at this level. If the 23 image
+      # proves too flaky on hosted runners, bump to 24/25 (still pre-26, so still exercises desugaring
+      # + the notification-channel shim floor) before giving up. See issue #1818.
+      - name: create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 23
+          force-avd-creation: false
+          arch: x86
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching."
+
+      - name: run smoke subset
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 23
+          force-avd-creation: false
+          arch: x86
+          target: google_apis
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          # Select only the @SmokeTest-annotated classes; -x lint keeps the ~10-min lint off this leg
+          # (android.yml already gates lint on the PR path).
+          script: >-
+            ./gradlew connectedObaGoogleDebugAndroidTest
+            -Pandroid.testInstrumentationRunnerArguments.annotation=org.onebusaway.android.SmokeTest
+            --build-cache -x lint -PwarningsAsErrors=true --stacktrace

@@ -34,6 +34,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onebusaway.android.SmokeTest
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.data.TripObservation
 import org.onebusaway.android.extrapolation.data.TripStateCache
@@ -44,6 +45,7 @@ import org.onebusaway.android.models.Status
 import org.onebusaway.android.util.Polyline
 
 /** Instrumented tests for the trip-state cache: recording, retention/eviction, and hydration. */
+@SmokeTest // API-23 floor smoke subset (#1818): exercises java.time/kotlin.time desugaring + core math
 @RunWith(AndroidJUnit4::class)
 class TripStateCacheTest {
 

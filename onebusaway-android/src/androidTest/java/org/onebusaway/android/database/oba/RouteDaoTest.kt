@@ -27,12 +27,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onebusaway.android.SmokeTest
 import org.onebusaway.android.database.AppDatabase
 
 /**
  * Verifies [RouteDao]'s `@Transaction` merge-on-write helpers against a real (in-memory) Room DB — the
  * classic silent-data-loss shape where re-recording a route must not clobber columns another path set.
  */
+@SmokeTest // API-23 floor smoke subset (#1818): exercises Room runtime CRUD/@Transaction on the floor
 @RunWith(AndroidJUnit4::class)
 class RouteDaoTest {
 

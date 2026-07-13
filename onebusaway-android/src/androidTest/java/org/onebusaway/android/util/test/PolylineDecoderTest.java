@@ -17,6 +17,7 @@ package org.onebusaway.android.util.test;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.onebusaway.android.SmokeTest;
 import org.onebusaway.android.util.PolylineDecoder;
 
 import android.location.Location;
@@ -31,6 +32,8 @@ import static junit.framework.Assert.assertNotNull;
 /**
  * Tests decoding the Google "encoded polyline" points and levels via {@link PolylineDecoder}.
  */
+// API-23 floor smoke subset (#1818): exercises a basic util/resource path on the floor.
+@SmokeTest
 @RunWith(AndroidJUnit4.class)
 public class PolylineDecoderTest {
 

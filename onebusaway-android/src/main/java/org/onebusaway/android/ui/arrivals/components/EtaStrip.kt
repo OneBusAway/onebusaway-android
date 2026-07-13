@@ -17,11 +17,10 @@ package org.onebusaway.android.ui.arrivals.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -59,7 +58,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -108,8 +106,10 @@ import org.onebusaway.android.util.DisplayFormat
 
 /**
  * The horizontally-scrollable strip of per-trip ETA pills below the direction name. When the pills
- * overflow the row, a right-edge fade + chevron appears to signal there's more to scroll to; it's a
- * pure visual hint (no pointer handling) so it never blocks the strip's own drag-to-scroll.
+ * overflow the row, a chevron appears at that edge to signal there's more to scroll to; tapping it
+ * moves the strip one strip-width further that direction (or to the end, whichever is closer). The
+ * chevron's own tap target is a narrow side gutter separate from the pills, so it never blocks the
+ * strip's own drag-to-scroll.
  *
  * Dragging the strip past its last pill (once there's nothing more to scroll) builds a resistive pull
  * ([SlideBox]'s gesture) that reveals a trailing load-more affordance; releasing once it's armed
@@ -159,6 +159,13 @@ internal fun EtaStrip(
     // BOOKKEEPER effect below — never yanked backward by an ordinary poll data reshuffle.
     var pinnedIndex by remember { mutableIntStateOf(start?.takeIf { it in 1..trips.lastIndex } ?: 0) }
 
+    // A one-shot scroll target (absolute, same units as pinnedOffsetPx) set by tapping an overflow
+    // chevron; takes priority over the pinned-pill anchor below. Left in place once reached — like an
+    // ordinary drag, an arrow tap should stick rather than snap back — and cleared only when the pin
+    // itself next advances (see the BOOKKEEPER effect), so live departure-tracking still wins over a
+    // stale manual position exactly as it already does against a plain drag.
+    var arrowOverridePx by remember { mutableStateOf<Int?>(null) }
+
     // A later poll can SHRINK `trips` (recent-past trips aging out of the feed), which the
     // forward-only ratchet above can't fix on its own — clamp back onto the new list's bounds so the
     // pin always names a real pill instead of freezing `pinnedOffsetPx` on one that no longer exists.
@@ -176,10 +183,23 @@ internal fun EtaStrip(
     // an ordinary poll data reshuffle can't yank the pin; only a live departure moves it.
     LaunchedEffect(Unit) {
         snapshotFlow { tripsState.value.indexOfFirst { it.liveEta(liveNowState.value) >= 0 } }
-            .collect { current -> if (current > pinnedIndex) pinnedIndex = current }
+            .collect { current ->
+                if (current > pinnedIndex) {
+                    pinnedIndex = current
+                    arrowOverridePx = null
+                }
+            }
     }
 
     val loadMoreLabel = stringResource(R.string.stop_info_load_more_arrivals)
+
+    // Jumps the strip one viewport toward the given direction (or to the end, whichever is
+    // closer) by setting the one-shot arrow override above; SlideBox's own glide clamps the
+    // result to [0, maxValue], so no clamping is needed here.
+    fun jumpArrow(forward: Boolean) {
+        val delta = if (forward) scrollState.viewportSize else -scrollState.viewportSize
+        arrowOverridePx = scrollState.value + delta
+    }
 
     // The strip's active load-more request: the token returned at fire time, NO_LOAD_REQUEST at rest.
     // Saveable so a list eviction / recreation mid-load resumes (or cleanly ends) the transaction.
@@ -246,7 +266,12 @@ internal fun EtaStrip(
     ) {
         // Left gutter: a chevron back toward earlier arrivals, shown once the strip is scrolled off its
         // start. Reserved (like the right gutter) so toggling it never reflows the pills.
-        ScrollChevronGutter(visible = canScrollBackward && !loadingMore, pointsRight = false)
+        ScrollChevronGutter(
+            visible = canScrollBackward && !loadingMore,
+            pointsRight = false,
+            contentDescriptionRes = R.string.stop_info_eta_strip_scroll_earlier,
+            onClick = { jumpArrow(forward = false) },
+        )
 
         // The scrollable pill content, inside the gesture-owning SlideBox: the strip DECLARES what it
         // rests on — the pinned pill, or the trailing end while a load-more reveal is live — and the
@@ -254,7 +279,7 @@ internal fun EtaStrip(
         // gesture lives in the box too (the gutters don't scroll).
         SlideBox(
             state = slideBox,
-            anchorPx = { pinnedOffsetPx.takeIf { it >= 0 } },
+            anchorPx = { arrowOverridePx ?: pinnedOffsetPx.takeIf { it >= 0 } },
             followEnd = request.intValue != NO_LOAD_REQUEST,
             onPullFired = {
                 // The VM sets Loading(token) synchronously inside onLoadMore, so the spinner is
@@ -276,9 +301,6 @@ internal fun EtaStrip(
             // Bottom-align so a smaller recent-past pill sits on the same baseline as the full-size ones.
             verticalAlignment = Alignment.Bottom,
             overlay = {
-                // Fade the content out at whichever edge has more content sliding under it.
-                if (canScrollBackward && !loadingMore) EdgeFade(atStart = true)
-                if (canScrollForward && !loadingMore) EdgeFade(atStart = false)
                 // The pull-revealed load-more chip (invisible at rest, armed as the pull crosses the
                 // threshold). Hidden while loading — the inline spinner takes over then.
                 if (!loadingMore) {
@@ -336,23 +358,41 @@ internal fun EtaStrip(
 
         // Right gutter: a chevron forward toward later arrivals (the pull-past-the-end load affordance
         // takes over inside the content box once you reach the end).
-        ScrollChevronGutter(visible = canScrollForward && !loadingMore, pointsRight = true)
+        ScrollChevronGutter(
+            visible = canScrollForward && !loadingMore,
+            pointsRight = true,
+            contentDescriptionRes = R.string.stop_info_eta_strip_scroll_later,
+            onClick = { jumpArrow(forward = true) },
+        )
     }
 }
 
 /**
  * A fixed-width trailing/leading gutter holding the "more to scroll" chevron, [visible] when that
  * direction has more content. [pointsRight] picks the direction; the left reuses the right chevron
- * drawable rotated 180°. The slot is reserved even when hidden so toggling it never reflows the pills.
+ * drawable rotated 180°. The slot is reserved even when hidden so toggling it never reflows the
+ * pills. Tapping it fires [onClick] (a one-page scroll toward that edge); only wired up while
+ * [visible], so a hidden gutter is never an invisible tap target.
  */
 @Composable
-private fun ScrollChevronGutter(visible: Boolean, pointsRight: Boolean) {
-    Box(Modifier.fillMaxHeight().width(20.dp), contentAlignment = Alignment.Center) {
+private fun ScrollChevronGutter(
+    visible: Boolean,
+    pointsRight: Boolean,
+    contentDescriptionRes: Int,
+    onClick: () -> Unit,
+) {
+    Box(
+        Modifier
+            .fillMaxHeight()
+            .width(20.dp)
+            .clickable(enabled = visible, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
         if (visible) {
             Icon(
                 painter = painterResource(R.drawable.ic_navigation_chevron_right),
-                // Decorative: a pure "there's more to scroll" hint, not an actionable control.
-                contentDescription = null,
+                // Resolved only while shown, since this composable recomposes on every liveNow tick.
+                contentDescription = stringResource(contentDescriptionRes),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .size(20.dp)
@@ -360,27 +400,6 @@ private fun ScrollChevronGutter(visible: Boolean, pointsRight: Boolean) {
             )
         }
     }
-}
-
-/**
- * A gradient over the strip's [atStart]/end edge that fades the content out as it slides under the
- * matching chevron gutter — solid (the card color) at that edge, transparent inward.
- */
-@Composable
-private fun BoxScope.EdgeFade(atStart: Boolean) {
-    val surface = MaterialTheme.colorScheme.surfaceContainer
-    val brush = remember(surface, atStart) {
-        Brush.horizontalGradient(
-            if (atStart) listOf(surface, Color.Transparent) else listOf(Color.Transparent, surface)
-        )
-    }
-    Box(
-        Modifier
-            .align(if (atStart) Alignment.CenterStart else Alignment.CenterEnd)
-            .fillMaxHeight()
-            .width(24.dp)
-            .background(brush)
-    )
 }
 
 /**
@@ -655,7 +674,7 @@ private fun EtaStripPreviewFrame(
 @Preview(showBackground = true, widthDp = 240, name = "EtaStrip · overflowing (chevron)")
 @Composable
 private fun EtaStripOverflowPreview() {
-    // Enough pills to exceed the 240dp width, so the right-edge fade + chevron hint appears.
+    // Enough pills to exceed the 240dp width, so the right-edge chevron hint appears.
     EtaStripPreviewFrame(trips = northgatePills(6))
 }
 
@@ -663,7 +682,7 @@ private fun EtaStripOverflowPreview() {
 @Composable
 private fun EtaStripScrolledPreview() {
     // Started part-way scrolled (content hanging off BOTH ends), so both the left- and right-edge
-    // chevrons/fades show. The initial offset clamps to the range after layout.
+    // chevrons show. The initial offset clamps to the range after layout.
     EtaStripPreviewFrame(trips = northgatePills(7), scrollState = rememberScrollState(initial = 300))
 }
 

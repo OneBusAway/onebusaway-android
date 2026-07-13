@@ -292,7 +292,11 @@ fun RouteArrivalRow(
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     if (direction.isNotBlank()) {
-                        DirectionHeader(direction)
+                        // Only the header needs its own clearance from the overlaid overflow icon
+                        // (it sits right under it); the ETA strip below reaches the row's true end —
+                        // its own trailing chevron gutter already reserves that room, and the pills
+                        // sit low enough in the row to clear the icon vertically.
+                        DirectionHeader(direction, modifier = Modifier.padding(end = OVERFLOW_ICON_CLEARANCE))
                         Spacer(Modifier.height(6.dp))
                     }
                     EtaStrip(
@@ -309,8 +313,6 @@ fun RouteArrivalRow(
                 if (onAlertClick != null) {
                     ArrivalAlertIndicator(onClick = onAlertClick)
                 }
-                // Reserve room on the right so the last pill never slides under the overflow icon.
-                Spacer(Modifier.width(20.dp))
             }
             Box(Modifier.align(Alignment.TopEnd)) {
                 CornerIcon(
@@ -339,8 +341,8 @@ fun RouteArrivalRow(
  * the destination in a slightly-tightened monospace so it reads like the sign on the bus.
  */
 @Composable
-private fun DirectionHeader(direction: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+private fun DirectionHeader(direction: String, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
             contentDescription = null,
@@ -362,6 +364,11 @@ private fun DirectionHeader(direction: String) {
 /** The alert-indicator tap for a row: opens the arrival's active alert, or null when it has none. */
 internal fun alertClick(actions: ArrivalActions?, callbacks: ArrivalRowCallbacks): (() -> Unit)? =
     actions?.alertSituationId?.let { id -> { callbacks.onShowAlert(id) } }
+
+/** Horizontal clearance [RouteArrivalRow] gives the direction header so it doesn't run under the
+ *  overlaid corner icon below ([CornerIcon]'s own footprint is 18dp + 4dp padding on each side —
+ *  this is a bit tighter, tuned by eye against a device screenshot rather than derived from it). */
+private val OVERFLOW_ICON_CLEARANCE = 20.dp
 
 /** A small tap target tucked into a card corner — the legacy overlaid star / overflow icons. */
 @Composable

@@ -17,8 +17,6 @@ package org.onebusaway.android.ui.arrivals
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
@@ -355,27 +353,23 @@ internal fun ArrivalsList(
     etaAnchor: Modifier = Modifier
 ) {
     LazyColumn(state = listState, modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
-        if (content.hasAlerts) {
-            // One item for the whole alert section so it stays in the list and animates as a unit:
-            // toggling [showAlerts] slides it open/closed and the rows below glide up. Hosts that keep
-            // alerts visible pass showAlerts = true, so it's shown from the start without animating.
+        if (content.hasAlerts && showAlerts) {
+            // The whole alert section is one item, present only while [showAlerts] is set. Toggling the
+            // header's alert icon adds/removes this item; Modifier.animateItem() fades it in/out and lets
+            // the route rows below glide into place. (An always-present item gated by AnimatedVisibility
+            // stranded the section at zero height in the collapsed peek — the lazy layout didn't remeasure
+            // it on toggle, so the alerts only appeared after a drag forced a relayout.)
             item(key = "alerts") {
-                AnimatedVisibility(
-                    visible = showAlerts,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut()
-                ) {
-                    Column {
-                        if (content.alerts.isNotEmpty()) {
-                            AlertList(
-                                alerts = content.alerts,
-                                onShowAlert = handler::onShowAlert,
-                                onHideAlert = handler::onHideAlert
-                            )
-                        }
-                        if (content.hiddenAlertCount > 0) {
-                            HiddenAlertsRow(content.hiddenAlertCount, onShowHiddenAlerts)
-                        }
+                Column(Modifier.animateItem()) {
+                    if (content.alerts.isNotEmpty()) {
+                        AlertList(
+                            alerts = content.alerts,
+                            onShowAlert = handler::onShowAlert,
+                            onHideAlert = handler::onHideAlert
+                        )
+                    }
+                    if (content.hiddenAlertCount > 0) {
+                        HiddenAlertsRow(content.hiddenAlertCount, onShowHiddenAlerts)
                     }
                 }
             }
@@ -395,7 +389,9 @@ internal fun ArrivalsList(
                     isFavorite = group.routeId in content.favoriteRouteIds,
                     callbacks = rowCallbacks,
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
-                    etaAnchor = if (index == 0) etaAnchor else Modifier
+                    etaAnchor = if (index == 0) etaAnchor else Modifier,
+                    // Glide up/down as the alert section above is toggled in/out.
+                    modifier = Modifier.animateItem()
                 )
             }
         }

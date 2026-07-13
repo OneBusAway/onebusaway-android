@@ -118,12 +118,12 @@ class HomeViewModel @Inject constructor(
     // host on each create from the restored focusedStop, so it needn't be persisted).
     private var pendingMapFocus: Boolean = false
 
-    // The routes with an upcoming arrival at the focused stop (the drawer's rows, 1:1) — the input to
-    // adjacency focus (#1827). Pure coordination state carried to the map in ShowStopAdjacency, not
-    // composed off, so it's a plain property like [settledSheet]; not saved-state (arrivals reload and
-    // repopulate it after a restore).
-    var focusedRouteIds: Set<String> = emptySet()
+    // The routes with an upcoming arrival at the focused stop, paired with those trips' directions.
+    // Pure coordination state carried to the map in ShowStopAdjacency; arrivals reload it after restore.
+    var focusedRouteDirections: Map<String, Set<Int>> = emptyMap()
         private set
+
+    val focusedRouteIds: Set<String> get() = focusedRouteDirections.keys
 
     /** Exact trip-pattern shapes for the focused stop; route ids remain separate for stop adjacency. */
     var focusedTripPatterns: Set<TripPatternGeometry> = emptySet()
@@ -136,7 +136,7 @@ class HomeViewModel @Inject constructor(
         // Clear the prior stop's adjacency session immediately; a fresh arrivals load starts the new
         // one. A same-stop re-selection is a no-op so it cannot discard a completed overlay.
         if (!sameStop || stop == null) {
-            focusedRouteIds = emptySet()
+            focusedRouteDirections = emptyMap()
             focusedTripPatterns = emptySet()
         }
         if (!sameStop) {
@@ -254,12 +254,12 @@ class HomeViewModel @Inject constructor(
     fun onArrivalsLoaded(
         stop: ObaStop,
         routes: List<ObaRoute>?,
-        routeIds: Set<String>,
+        routeDirections: Map<String, Set<Int>>,
         tripPatterns: Set<TripPatternGeometry> = emptySet(),
     ) {
         // Record the drawer's routes on every load (not just a pending restore focus) — adjacency focus
         // reads this whenever the map wants it (#1827).
-        focusedRouteIds = routeIds
+        focusedRouteDirections = routeDirections
         focusedTripPatterns = tripPatterns
         if (pendingMapFocus) {
             pendingMapFocus = false
@@ -272,7 +272,7 @@ class HomeViewModel @Inject constructor(
                 stopId = stop.id,
                 stopLat = stop.latitude,
                 stopLon = stop.longitude,
-                routeIds = focusedRouteIds,
+                routeDirections = focusedRouteDirections,
                 tripPatterns = focusedTripPatterns,
             )
         )
@@ -428,9 +428,11 @@ sealed interface MapDirective {
         val stopId: String,
         val stopLat: Double,
         val stopLon: Double,
-        val routeIds: Set<String>,
+        val routeDirections: Map<String, Set<Int>>,
         val tripPatterns: Set<TripPatternGeometry> = emptySet(),
-    ) : MapDirective
+    ) : MapDirective {
+        val routeIds: Set<String> get() = routeDirections.keys
+    }
 
     /** Clear an active adjacency overlay when the focused stop changes or is removed. */
     object ClearAdjacency : MapDirective

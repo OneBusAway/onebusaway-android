@@ -25,11 +25,15 @@ import kotlinx.coroutines.test.runTest
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.api.data.TripVehiclesDataSource
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.models.RouteMapData
+import org.onebusaway.android.models.RouteMapStop
 import org.onebusaway.android.models.TripPatternGeometry
 import org.onebusaway.android.models.TripRouteInfo
 import org.onebusaway.android.time.ElapsedTime
@@ -281,5 +285,29 @@ class AdjacencyRouteShapeRepositoryTest {
         assertEquals(0xFF336699.toInt(), shape.routeColor)
         assertTrue(shape.points.isEmpty())
         assertEquals(setOf("served-shape"), fake.callCounts.keys)
+    }
+
+    @Test
+    fun routeStopMappingPreservesDirectionMembershipWithoutGeometry() {
+        val data = RouteMapData(
+            route = null,
+            agencyName = null,
+            stops = listOf(
+                RouteMapStop(ObaStopElement(id = "outbound"), setOf(0)),
+                RouteMapStop(ObaStopElement(id = "inbound"), setOf(1)),
+                RouteMapStop(ObaStopElement(id = "shared"), setOf(0, 1)),
+            ),
+            routes = emptyList(),
+            directions = emptyList(),
+            polylines = emptyList(),
+            polylinesByDirection = emptyMap(),
+        )
+
+        val membership = data.toAdjacencyRouteStops()
+
+        assertEquals(setOf("outbound", "inbound", "shared"), membership.stopIds)
+        assertEquals(setOf("outbound", "shared"), membership.stopIdsByDirection[0])
+        assertEquals(setOf("inbound", "shared"), membership.stopIdsByDirection[1])
+        assertNull(membership.stopIdsByDirection[2])
     }
 }

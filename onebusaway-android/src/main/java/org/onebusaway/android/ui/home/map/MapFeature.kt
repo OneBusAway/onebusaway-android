@@ -223,7 +223,7 @@ fun MapFeature(
                         directive.stopId,
                         directive.stopLat,
                         directive.stopLon,
-                        directive.routeIds,
+                        directive.routeDirections,
                         directive.tripPatterns,
                     )
                 MapDirective.ClearAdjacency -> mapViewModel.clearAdjacency()

@@ -36,14 +36,26 @@ class AdjacencyMapControllerTest {
         val result: CompletableDeferred<AdjacencyShapes> = CompletableDeferred(),
     )
 
+    private data class StopRequest(
+        val routeIds: Set<String>,
+        val result: CompletableDeferred<AdjacencyRouteStops> = CompletableDeferred(),
+    )
+
     private class FakeRepository : AdjacencyRouteShapeRepository {
         val requests = mutableListOf<Request>()
+        val stopRequests = mutableListOf<StopRequest>()
 
         override suspend fun getShapes(
             tripPatterns: Set<TripPatternGeometry>
         ): AdjacencyShapes {
             val request = Request(LinkedHashSet(tripPatterns))
             requests += request
+            return request.result.await()
+        }
+
+        override suspend fun getRouteStops(routeIds: Set<String>): AdjacencyRouteStops {
+            val request = StopRequest(LinkedHashSet(routeIds))
+            stopRequests += request
             return request.result.await()
         }
     }
@@ -176,6 +188,51 @@ class AdjacencyMapControllerTest {
             lines.map { it.widthDp },
         )
         assertTrue(ADJACENCY_DOWNSTREAM_LINE_WIDTH_DP > ADJACENCY_UPSTREAM_LINE_WIDTH_DP)
+    }
+
+    @Test
+    fun `route membership applies upcoming directions independently and stop clears filter`() = runTest {
+        val state = MapRenderState()
+        val repository = FakeRepository()
+        val filterChanges = mutableListOf<AdjacencyStopFilter?>()
+        val controller = AdjacencyMapController(
+            state,
+            repository,
+            backgroundScope,
+            onStopFilterChanged = { filterChanges += it },
+        )
+
+        controller.start(
+            stopId = "focus",
+            stopPoint = GeoPoint(0.0, 0.0),
+            tripPatterns = patterns("shape"),
+            routeDirections = mapOf("route" to setOf(0)),
+        )
+        runCurrent()
+        repository.stopRequests.single().result.complete(
+            AdjacencyRouteStops(
+                routes = mapOf(
+                    "route" to AdjacencyRouteStopMembership(
+                        stopIds = setOf("outbound", "inbound"),
+                        stopIdsByDirection = mapOf(
+                            0 to setOf("outbound"),
+                            1 to setOf("inbound"),
+                        ),
+                    )
+                ),
+                failedRouteIds = emptySet(),
+            )
+        )
+        runCurrent()
+
+        assertEquals(
+            listOf(AdjacencyStopFilter(setOf("focus", "outbound"))),
+            filterChanges,
+        )
+
+        controller.stop()
+
+        assertEquals(listOf(AdjacencyStopFilter(setOf("focus", "outbound")), null), filterChanges)
     }
 
     private fun shapes(shapeId: String, points: List<GeoPoint>) = AdjacencyShapes(

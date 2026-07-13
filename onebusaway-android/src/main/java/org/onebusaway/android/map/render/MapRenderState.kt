@@ -152,6 +152,8 @@ data class BikeMarker(
  * decided by [MapRenderSnapshot.focusedStopId], not stored here, so focusing is a one-field change.
  * [favorite] is stored here (it's a per-stop property that changes as the user stars/unstars), driving
  * the distinctive star icon + tap preference (#1680).
+ * [dimmed] marks a stop outside the active adjacency route set. Renderers collapse it to the dot-band
+ * appearance regardless of zoom (while retaining the small favorite-star variant for starred stops).
  *
  * [routeStop] marks a stop belonging to the route currently shown on the map: its [point] is projected
  * onto the route centerline and it renders as the trip-map-style circle instead of the direction-anchored
@@ -166,6 +168,7 @@ data class StopMarker(
     val stop: ObaStop,
     val favorite: Boolean = false,
     val routeStop: Boolean = false,
+    val dimmed: Boolean = false,
 )
 
 /**

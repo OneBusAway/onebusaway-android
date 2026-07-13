@@ -43,18 +43,26 @@ enum class StopIconKind {
 
 /**
  * The icon a stop marker should show given whether it's the [focused] stop, whether it's a
- * [favorite] (starred) stop, whether it's a [routeStop] on the shown route, and the current zoom
- * [band]. A [routeStop] always draws the on-centerline circle (matching the trip map, #1752) — it
- * ignores the star and the zoom band so a route's stops read uniformly at every zoom. Otherwise a
- * starred stop gets a distinctive star (full-size close up, smaller in the dot band) instead of its
- * directional icon/dot, so it's easy to pick out and navigate to (#1680); the focused stop always gets
- * a distinct (enlarged/accent) variant so a selection stays visible at every zoom. Pure, so the
- * renderers' "did this marker's icon change?" decision is unit-testable and identical across both map flavors.
+ * [favorite] (starred) stop, whether it's a [routeStop] on the shown route, whether adjacency focus
+ * [dimmed] it, and the current zoom [band]. A [routeStop] always draws the on-centerline circle
+ * (matching the trip map, #1752) — it ignores the star, dimming, and zoom band so single-route mode's
+ * stops read uniformly. A dimmed stop is forced into the dot band regardless of zoom; starred dimmed
+ * stops keep the existing small favorite-star variant. Otherwise a starred stop gets its distinctive
+ * star instead of the directional icon/dot (#1680). The focused stop always gets the matching focused
+ * variant so a selection stays visible. Pure, so renderer icon-change decisions are unit-testable and
+ * identical across both map flavors.
  */
-fun stopIconKind(focused: Boolean, band: StopBand, favorite: Boolean = false, routeStop: Boolean = false): StopIconKind = when {
+fun stopIconKind(
+    focused: Boolean,
+    band: StopBand,
+    favorite: Boolean = false,
+    routeStop: Boolean = false,
+    dimmed: Boolean = false,
+): StopIconKind = when {
     routeStop -> if (focused) StopIconKind.ROUTE_CIRCLE_FOCUSED else StopIconKind.ROUTE_CIRCLE
-    favorite && band == StopBand.DOT ->
+    favorite && (dimmed || band == StopBand.DOT) ->
         if (focused) StopIconKind.FAVORITE_DOT_FOCUSED else StopIconKind.FAVORITE_DOT
+    dimmed -> if (focused) StopIconKind.DOT_FOCUSED else StopIconKind.DOT
     favorite -> if (focused) StopIconKind.FAVORITE_FOCUSED else StopIconKind.FAVORITE
     band == StopBand.DOT -> if (focused) StopIconKind.DOT_FOCUSED else StopIconKind.DOT
     focused -> StopIconKind.FULL_FOCUSED

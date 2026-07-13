@@ -69,9 +69,10 @@ data class RouteHeader(
 /**
  * The **home map** view model: the coordinator that composes the shared [MapHost] (the flavor-neutral
  * map surface — render state, camera, padding, my-location/region framing) with the use-case
- * controllers the home map needs — [StopsMapController] (nearby stops), [RouteMapController] (a route +
- * its vehicles), and [BikeLayerController] (the bikeshare overlay). [showNearbyStops] / [showRoute] start the
- * matching controller (the route controller is the single source of truth for whether a route is
+ * controllers the home map needs — [StopsMapController] (nearby stops), [AdjacencyMapController]
+ * (focused-stop route lines), [RouteMapController] (a route + its vehicles), and [BikeLayerController]
+ * (the bikeshare overlay). [showNearbyStops] / [showStopAdjacency] start the matching controller (the
+ * route controller is the single source of truth for whether a route is
  * shown — there is no separate "mode" state); the controllers react to the live camera
  * ([MapHost.onCameraIdle]) on [viewModelScope], so there is no imperative host — a flavor adapter only
  * binds to the host.
@@ -97,6 +98,7 @@ class MapViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val mapDataSource: MapDataSource,
     private val routeRepository: RouteMapRepository,
+    private val adjacencyRouteShapeRepository: AdjacencyRouteShapeRepository,
     private val bikeStationsRepository: BikeStationsRepository,
     private val regionRepo: RegionRepository,
     private val locationRepository: LocationRepository,
@@ -148,6 +150,15 @@ class MapViewModel @Inject constructor(
         // The home map reads through the persistent stop cache (#1754) so stops appear instantly on a
         // slow/cold-start load.
         stopCache = stopCache,
+    )
+
+    // The multi-route line overlay shown while a stop's arrivals drawer is focused. It shares the
+    // route-polyline render slot with route mode, so all view transitions stop it before another
+    // producer starts and its own stop() clears only while it holds an active session.
+    private val adjacencyController = AdjacencyMapController(
+        renderState = mapHost.renderState,
+        repository = adjacencyRouteShapeRepository,
+        scope = viewModelScope,
     )
 
     // ----- Map-host surface (delegated) -----
@@ -295,6 +306,7 @@ class MapViewModel @Inject constructor(
      * above.
      */
     private fun leaveCurrentView() {
+        adjacencyController.stop()
         stopsController.stop()
         routeController.stop()
         bikeController.stop()
@@ -314,6 +326,7 @@ class MapViewModel @Inject constructor(
 
     /** A tap away from any marker clears the stop focus + deselects any vehicle (the old onMapClick). */
     fun onMapTapped() {
+        adjacencyController.stop()
         stopsController.clearStopFocus()
         renderState.setSelectedVehicle(null)
     }
@@ -341,8 +354,26 @@ class MapViewModel @Inject constructor(
     fun focusStop(stop: ObaStop, routes: List<ObaRoute>?, overlayExpanded: Boolean) =
         stopsController.focusStop(stop, routes, overlayExpanded)
 
-    /** Clear the map's render focus (back-press from a peeking arrivals sheet; a Home map directive). */
-    fun clearFocus() = stopsController.clearFocus()
+    /** Clear the map's render focus and adjacency lines (back-press from the arrivals sheet). */
+    fun clearFocus() {
+        adjacencyController.stop()
+        stopsController.clearFocus()
+    }
+
+    /**
+     * Draw the routes with upcoming arrivals at [stopId] without moving the camera. Single-route mode
+     * has precedence, and the stop must still be the rendered focus so a stale arrivals result cannot
+     * restore an overlay after focus has moved.
+     */
+    fun showStopAdjacency(stopId: String, routeIds: Set<String>) {
+        if (routeController.isActive) return
+        val focusedStopId = renderState.snapshot.value.focusedStopId
+        if (focusedStopId == null || !focusedStopId.equals(stopId, ignoreCase = true)) return
+        adjacencyController.start(stopId, routeIds)
+    }
+
+    /** Clear only an active adjacency overlay, leaving any single-route line untouched. */
+    fun clearAdjacency() = adjacencyController.stop()
 
     /** The map's initial camera, read live from the host each time the adapter (re)composes. */
     val cameraSeed: MapCameraSeed get() = mapHost.cameraSeed

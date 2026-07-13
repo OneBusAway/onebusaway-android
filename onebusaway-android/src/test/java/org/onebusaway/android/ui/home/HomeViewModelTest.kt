@@ -52,6 +52,8 @@ private class MapDirectiveRecorder(private val vm: HomeViewModel) {
 
     val recenters get() = sent.filterIsInstance<MapDirective.RecenterOnFocusedStop>().map { it.lat to it.lon }
     val routesShown get() = sent.filterIsInstance<MapDirective.ShowRoute>().map { it.request.routeId }
+    val adjacencies get() = sent.filterIsInstance<MapDirective.ShowStopAdjacency>()
+    val clearAdjacencyCount get() = sent.count { it is MapDirective.ClearAdjacency }
     val clearFocusCount get() = sent.count { it is MapDirective.ClearFocus }
     val focusStops get() = sent.filterIsInstance<MapDirective.FocusStop>()
     val lastBottomPadding get() = vm.mapBottomPadding.value
@@ -286,12 +288,13 @@ class HomeViewModelTest {
         val job = launch { map.collect() }
         advanceUntilIdle()
 
-        // No pending focus: the load still records the routes but emits no map directive.
+        // No pending restored focus: the load still starts adjacency for the already-tapped stop.
         vm.onArrivalsLoaded(obaStop, null, setOf("40", "44"))
         advanceUntilIdle()
 
         assertEquals(setOf("40", "44"), vm.focusedRouteIds)
         assertEquals(0, map.focusStops.size)
+        assertEquals(listOf(setOf("40", "44")), map.adjacencies.map { it.routeIds })
         job.cancel()
     }
 
@@ -308,17 +311,25 @@ class HomeViewModelTest {
 
         assertEquals(setOf("7"), vm.focusedRouteIds)
         assertEquals(1, map.focusStops.size) // pending focus still dispatched
+        assertTrue(map.sent.indexOfFirst { it is MapDirective.FocusStop } <
+            map.sent.indexOfFirst { it is MapDirective.ShowStopAdjacency })
         job.cancel()
     }
 
     @Test
     fun `focusing a different stop resets the route set`() = runTest {
         val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
         vm.onArrivalsLoaded(obaStop, null, setOf("40"))
         assertEquals(setOf("40"), vm.focusedRouteIds)
 
         vm.onStopFocused(FocusedStop("2", "2nd Ave", "200", 47.6, -122.3))
+        advanceUntilIdle()
         assertEquals(emptySet<String>(), vm.focusedRouteIds)
+        assertEquals(1, map.clearAdjacencyCount)
+        job.cancel()
     }
 
     @Test
@@ -526,4 +537,3 @@ class HomeViewModelTest {
         assertEquals(0, region.refreshCount)
     }
 }
-

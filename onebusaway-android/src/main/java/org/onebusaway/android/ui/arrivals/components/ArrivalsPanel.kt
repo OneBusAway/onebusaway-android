@@ -164,6 +164,10 @@ fun ArrivalsPanel(
                     handler = handler,
                     onShowAllRoutes = viewModel::showAllRoutes,
                     onShowHiddenAlerts = viewModel::showHiddenAlerts,
+                    onLoadMore = viewModel::loadMore,
+                    // Collected inside the list's footer item, not here — a load-more toggle should
+                    // only recompose that one item, not this whole panel.
+                    loadingMore = viewModel.loadingMore,
                     modifier = Modifier.weight(1f),
                     listState = listState,
                     // The drawer header already shows the direction as a "(N)" tag.

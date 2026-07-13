@@ -15,29 +15,23 @@
  */
 package org.onebusaway.android.ui.compose.components
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.dp
-import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
 /**
- * On-device tests for the SlideBox's single-owner glide regimes: the anchor chase, the follow-the-end
- * reveal, and the edge-triggered hand-back between them. The follow-vs-anchor case is the regression
- * test for issue #1801 — under the old two-coroutine design (a CHASER and a FOLLOWER each driving the
- * same ScrollState), an anchor ≠ end situation livelocked in mutual animateScrollTo cancellation and
- * the scroll never converged, so the settle assertions below would time out.
+ * On-device tests for the SlideBox's single-owner anchor-chasing glide. This is the regression test
+ * for issue #1801 — under the old two-coroutine design (a CHASER and a FOLLOWER each driving the same
+ * ScrollState), a moving anchor could livelock in mutual animateScrollTo cancellation and the scroll
+ * never converged, so the settle assertions below would time out.
  */
 class SlideBoxTest {
 
@@ -47,23 +41,16 @@ class SlideBoxTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    /** The anchor offset the content declares, in px — mutated mid-test to drive the regimes. */
+    /** The anchor offset the content declares, in px — mutated mid-test to drive the glide. */
     private val anchor = mutableIntStateOf(ANCHOR_PX)
-    private var followEnd by mutableStateOf(false)
-    private lateinit var state: SlideBoxState
+    private lateinit var scroll: ScrollState
 
-    /** [boxCount] 60dp boxes in a 150dp viewport — ten leaves plenty of content past both targets. */
-    private fun setSlideBoxContent(boxCount: Int = 10, onPullFired: () -> Unit = {}) {
+    /** [boxCount] 60dp boxes in a 150dp viewport — ten leaves plenty of content past the target. */
+    private fun setSlideBoxContent(boxCount: Int = 10) {
         composeRule.setContent {
-            state = rememberSlideBoxState()
+            scroll = rememberScrollState()
             Box(Modifier.width(150.dp)) {
-                SlideBox(
-                    state = state,
-                    anchorPx = { anchor.intValue },
-                    followEnd = followEnd,
-                    onPullFired = onPullFired,
-                    onUserScroll = {},
-                ) {
+                SlideBox(scroll = scroll, anchorPx = { anchor.intValue }) {
                     repeat(boxCount) { Box(Modifier.size(60.dp)) }
                 }
             }
@@ -73,56 +60,18 @@ class SlideBoxTest {
     @Test
     fun restsOnTheDeclaredAnchor() {
         setSlideBoxContent()
-        composeRule.waitUntil(timeoutMillis = 5_000) { state.scroll.value == ANCHOR_PX }
+        composeRule.waitUntil(timeoutMillis = 5_000) { scroll.value == ANCHOR_PX }
     }
 
     @Test
-    fun followEndWinsOverTheAnchor_regression1801() {
+    fun glidesToALaterAnchor() {
         setSlideBoxContent()
-        composeRule.waitUntil(timeoutMillis = 5_000) { state.scroll.value == ANCHOR_PX }
+        composeRule.waitUntil(timeoutMillis = 5_000) { scroll.value == ANCHOR_PX }
 
-        // The #1801 shape: the reveal regime engages while the anchor still points mid-content.
-        composeRule.runOnIdle { followEnd = true }
-
-        // The old two-owner design never converged here (mutual cancellation at CPU speed); the
-        // single owner glides to the end and stays.
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            state.scroll.maxValue > ANCHOR_PX && state.scroll.value == state.scroll.maxValue
-        }
-    }
-
-    @Test
-    fun handBackKeepsTheRevealUntilTheAnchorNextMoves() {
-        setSlideBoxContent()
-        composeRule.waitUntil(timeoutMillis = 5_000) { state.scroll.value == ANCHOR_PX }
-        composeRule.runOnIdle { followEnd = true }
-        composeRule.waitUntil(timeoutMillis = 5_000) { state.scroll.value == state.scroll.maxValue }
-
-        // Hand the scroll back: the box must NOT chase the (stale) anchor — the reveal's result
-        // stays on screen. waitForIdle runs any wrongly-started glide to completion, so the assert
-        // catches a yank-back rather than racing it.
-        composeRule.runOnIdle { followEnd = false }
-        composeRule.waitForIdle()
-        assertEquals(state.scroll.maxValue, state.scroll.value)
-
-        // Only the anchor's next MOVE re-engages the chase.
+        // The #1801 shape: the anchor moves again while the box is already at rest.
         composeRule.runOnIdle { anchor.intValue = ANCHOR_PX + 60 }
-        composeRule.waitUntil(timeoutMillis = 5_000) { state.scroll.value == ANCHOR_PX + 60 }
-    }
 
-    @Test
-    fun pullingPastTheEndFiresOnRelease() {
-        // Content barely wider than the 150dp viewport (3 × 60dp), so one full-width swipe reaches
-        // the end (~30dp of scroll) and then builds ~55dp of post-resistance pull — past the 48dp
-        // arm threshold — before the release.
-        anchor.intValue = 0
-        var fired = 0
-        setSlideBoxContent(boxCount = 3, onPullFired = { fired++ })
-        composeRule.waitUntil(timeoutMillis = 5_000) { state.scroll.maxValue > 0 }
-
-        composeRule.onRoot().performTouchInput { swipeLeft() }
-
-        composeRule.waitUntil(timeoutMillis = 5_000) { fired == 1 }
+        composeRule.waitUntil(timeoutMillis = 5_000) { scroll.value == ANCHOR_PX + 60 }
     }
 
     private companion object {

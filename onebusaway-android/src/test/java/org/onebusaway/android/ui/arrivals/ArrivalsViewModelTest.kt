@@ -25,6 +25,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -232,114 +233,39 @@ class ArrivalsViewModelTest {
         assertEquals(listOf(65, 125), repository.requestedMinutesAfter)
     }
 
-    // --- Pull-to-load-more lifecycle (LoadMoreState) --------------------------------------------
-
-    private fun contentVersion(viewModel: ArrivalsViewModel) =
-        (viewModel.state.value as ArrivalsUiState.Content).dataVersion
+    // --- The "load more trips" footer button (loadingMore) -------------------------------------
 
     @Test
-    fun `loadMore emits Loading then Finished with success and a bumped dataVersion on a fresh load`() =
-        runTest {
-            val repository = FakeArrivalsRepository(Result.success(data()))
-            val viewModel = ArrivalsViewModel("1_100", false, repository)
-            viewModel.refresh()
-            val versionBefore = contentVersion(viewModel)
-            repository.gate = CompletableDeferred()
-
-            val token = viewModel.loadMore()
-            assertEquals(LoadMoreState.Loading(token), viewModel.loadMoreState.value)
-
-            repository.gate!!.complete(Unit)
-            advanceUntilIdle()
-
-            val finished = viewModel.loadMoreState.value as LoadMoreState.Finished
-            assertEquals(token, finished.token)
-            assertTrue(finished.success)
-            assertTrue(finished.dataVersion > versionBefore)
-            assertEquals(contentVersion(viewModel), finished.dataVersion)
-        }
-
-    @Test
-    fun `loadMore reports failure when the reload falls back to stale data`() = runTest {
+    fun `loadingMore is true while the request is in flight and false once it lands`() = runTest {
         val repository = FakeArrivalsRepository(Result.success(data()))
         val viewModel = ArrivalsViewModel("1_100", false, repository)
         viewModel.refresh()
-        // The repository's failure-with-content path: last good data flagged stale.
-        repository.result = Result.success(data(isStale = true))
-
-        val token = viewModel.loadMore()
-        advanceUntilIdle()
-
-        val finished = viewModel.loadMoreState.value as LoadMoreState.Finished
-        assertEquals(token, finished.token)
-        assertEquals(false, finished.success)
-    }
-
-    @Test
-    fun `loadMore reports failure with an unchanged dataVersion on a hard failure`() = runTest {
-        val repository = FakeArrivalsRepository(Result.success(data()))
-        val viewModel = ArrivalsViewModel("1_100", false, repository)
-        viewModel.refresh()
-        val versionBefore = contentVersion(viewModel)
-        repository.result = Result.failure(IOException("No network"))
+        repository.gate = CompletableDeferred()
 
         viewModel.loadMore()
+        assertTrue(viewModel.loadingMore.value)
+
+        repository.gate!!.complete(Unit)
         advanceUntilIdle()
 
-        val finished = viewModel.loadMoreState.value as LoadMoreState.Finished
-        assertEquals(false, finished.success)
-        assertEquals(versionBefore, finished.dataVersion)
+        assertFalse(viewModel.loadingMore.value)
     }
 
     @Test
-    fun `a second loadMore supersedes the first - only the second request's Finished is published`() =
-        runTest {
-            val repository = FakeArrivalsRepository(Result.success(data()))
-            val viewModel = ArrivalsViewModel("1_100", false, repository)
-            viewModel.refresh()
-            repository.gate = CompletableDeferred()
-
-            val first = viewModel.loadMore()
-            val second = viewModel.loadMore()
-            assertTrue(second > first)
-            assertEquals(LoadMoreState.Loading(second), viewModel.loadMoreState.value)
-
-            repository.gate!!.complete(Unit)
-            advanceUntilIdle()
-
-            // The first request's completion must not clobber the second's lifecycle.
-            val finished = viewModel.loadMoreState.value as LoadMoreState.Finished
-            assertEquals(second, finished.token)
-        }
-
-    @Test
-    fun `a superseded loadMore is cancelled so its refresh cannot publish stale content`() = runTest {
-        val repository = FakeArrivalsRepository(Result.success(data()))
+    fun `loadMore is ignored while a request is already in flight`() = runTest {
+        val repository = FakeArrivalsRepository(Result.success(data(minutesAfter = 65)))
         val viewModel = ArrivalsViewModel("1_100", false, repository)
-        viewModel.refresh() // dataVersion 1
-        repository.gate = CompletableDeferred() // hold the next getArrivals in flight
+        viewModel.refresh()
+        repository.gate = CompletableDeferred()
 
-        viewModel.loadMore()  // request A: blocks in getArrivals on the gate
-        viewModel.loadMore()  // request B: cancels A, then blocks on the same gate
+        viewModel.loadMore()
+        viewModel.loadMore() // ignored: a request is already in flight
 
-        repository.gate!!.complete(Unit) // release: A is cancelled, only B reaches publish()
+        repository.gate!!.complete(Unit)
         advanceUntilIdle()
 
-        // Exactly one further publish (B → version 2); the cancelled A never rolled the window back.
-        assertEquals(2L, contentVersion(viewModel))
-    }
-
-    @Test
-    fun `dataVersion increases on every refresh`() = runTest {
-        val repository = FakeArrivalsRepository(Result.success(data()))
-        val viewModel = ArrivalsViewModel("1_100", false, repository)
-
-        viewModel.refresh()
-        val v1 = contentVersion(viewModel)
-        viewModel.refresh()
-        val v2 = contentVersion(viewModel)
-
-        assertTrue(v2 > v1)
+        // Only one widen (65 -> 125), not two.
+        assertEquals(listOf(65, 125), repository.requestedMinutesAfter)
     }
 
     @Test

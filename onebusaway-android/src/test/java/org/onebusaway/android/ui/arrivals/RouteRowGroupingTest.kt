@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.arrivals
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.ui.arrivals.components.previewArrival
 
 /**
  * JVM unit tests for the pure route-row grouping/ordering functions. They key off the
@@ -168,5 +169,41 @@ class RouteRowGroupingTest {
             FakeItem("B", "East", 5),
         )
         assertEquals(listOf("A", "B"), order(items, setOf("A", "B")))
+    }
+
+    // Group-level active-alert resolution ---------------------------------------------------------
+
+    /** A minimal [ArrivalActions] carrying just the alert id under test — the row derivation reads
+     *  only [ArrivalActions.alertSituationId]. */
+    private fun actions(alertSituationId: String?) = ArrivalActions(
+        tripId = "trip",
+        routeId = "A",
+        routeShortName = "A",
+        routeLongName = "A Line",
+        scheduleUrl = null,
+        agencyName = null,
+        blockId = null,
+        alertSituationId = alertSituationId,
+    )
+
+    @Test
+    fun activeAlert_scansWholeGroup_notJustTheRepresentative() {
+        // Representative (soonest) trip is unaffected; a later trip in the same group carries an alert.
+        val group = RouteRowGroup(
+            listOf(
+                previewArrival("A", "North", etaMinutes = 3),   // representative, unaffected
+                previewArrival("A", "North", etaMinutes = 20),  // affected
+            )
+        )
+        val id = group.activeAlertSituationId { arrival ->
+            actions(alertSituationId = "s-1".takeIf { arrival.eta >= 10 })
+        }
+        assertEquals("s-1", id)
+    }
+
+    @Test
+    fun activeAlert_nullWhenNoTripAffected() {
+        val group = RouteRowGroup(listOf(previewArrival("A", "North", etaMinutes = 3)))
+        assertEquals(null, group.activeAlertSituationId { actions(alertSituationId = null) })
     }
 }

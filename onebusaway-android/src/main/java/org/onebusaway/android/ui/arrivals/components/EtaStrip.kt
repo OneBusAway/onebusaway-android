@@ -303,7 +303,13 @@ internal fun EtaStrip(
             modifier = Modifier.weight(1f),
             // The composition↔layout bridge: measure the scroll content, then record the data
             // version this layout reflects (see acknowledgeVersion).
-            contentModifier = Modifier.acknowledgeVersion(versionState, measuredVersion),
+            //
+            // height(IntrinsicSize.Max) fixes the scrolling row to its tallest pill, so a shorter
+            // pill — the single-line "NOW" pill, which has no clock subline — can fillMaxHeight up to
+            // match its neighbours. The layout does the leveling; no pill guesses another's height.
+            contentModifier = Modifier
+                .height(IntrinsicSize.Max)
+                .acknowledgeVersion(versionState, measuredVersion),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             // Bottom-align so a smaller recent-past pill sits on the same baseline as the full-size ones.
             verticalAlignment = Alignment.Bottom,
@@ -467,8 +473,12 @@ private fun EtaPillWithMenu(
     val clockTime = remember(trip.displayTime, context) {
         DisplayFormat.formatTime(context, trip.displayTime.epochMs)
     }
-    Box(modifier) {
+    // fillMaxHeight here and on the pill so the colored Surface stretches to the strip's tallest pill
+    // (fixed by the row's IntrinsicSize.Max — see EtaStrip's contentModifier), levelling the shorter
+    // single-line NOW pill up to its neighbours.
+    Box(modifier.fillMaxHeight()) {
         EtaPill(
+            modifier = Modifier.fillMaxHeight(),
             eta = trip.liveEta(liveNow),
             color = colorResource(trip.color),
             predicted = trip.predicted,
@@ -526,7 +536,9 @@ private fun tightLineStyle(base: TextStyle, size: TextUnit) = base.copy(
  * dialog, which passes no clicks). [onClick] taps focus that trip's vehicle + stop; [onLongClick]
  * opens the trip menu; [canceled] strikes the text through. [clockTime] is the small "1:10pm"-style
  * clock time shown below the ETA (issue #1786); null omits that line (e.g. the Home legend's
- * illustrative pills, which aren't tied to a real arrival time).
+ * illustrative pills, which aren't tied to a real arrival time). The "NOW" pill ([eta] == 0) always
+ * omits it too — it's a single centered label — so it's shorter by content; the strip levels it back
+ * to its neighbours' height with fillMaxHeight (see EtaStrip's contentModifier / EtaPillWithMenu).
  *
  * Every pill renders at the same size regardless of [eta] — a recent-past (negative-ETA) trip is
  * distinguished from upcoming ones by the strip's own scroll position (it's justified off the leading
@@ -547,6 +559,11 @@ internal fun EtaPill(
     val decoration = if (canceled) TextDecoration.LineThrough else null
     val shape = RoundedCornerShape(8.dp)
     val numberSize = 28.sp
+    // "NOW" reads a touch too urgent at the full number size, so its glyph is dialed back slightly —
+    // still clearly dominant, just not shouting (#1805 unified it to numberSize; this softens it). The
+    // pill has no clock subline, so it's shorter than its neighbours by content — the strip stretches
+    // it back to their height via fillMaxHeight (see EtaStrip), and the label is centered within it.
+    val nowSize = 26.sp
     val labelSize = 14.sp
     val indicatorSize = 12.dp // 1.5× the base accent; overlaid, so the extra size overlaps, not widens
     val clockTimeSize = 10.sp
@@ -574,12 +591,13 @@ internal fun EtaPill(
         // A Box so the live indicator can overlay the pill (below) instead of reserving layout width:
         // live and scheduled pills stay identical widths, and the glyph is free to overlap the ETA
         // text at the top-trailing corner rather than widening the pill.
-        Box {
+        // fillMaxHeight so the content box fills the (possibly stretched) Surface; Center so the
+        // single-line NOW label sits mid-pill when the Surface is taller than its own text. For a
+        // numeric pill the Surface already hugs its content, so centering is a no-op there.
+        Box(Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
             // Sized to its own content (no fixed height) so the optional clock-time line simply adds to
             // the pill's height rather than being clipped by — or leaving a gap below it in — a height
-            // guessed independently of the actual text metrics. Pills of different heights (with vs.
-            // without a clock line) still share a bottom edge via the strip's own
-            // `verticalAlignment = Alignment.Bottom` (EtaStrip's Row).
+            // guessed independently of the actual text metrics.
             Column(
                 modifier = Modifier.padding(
                     start = 6.dp, end = 6.dp, top = topPadding, bottom = bottomPadding
@@ -590,11 +608,11 @@ internal fun EtaPill(
                 if (etaParts == null) {
                     Text(
                         text = stringResource(R.string.stop_info_eta_now),
-                        fontSize = numberSize,
+                        fontSize = nowSize,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         textDecoration = decoration,
-                        style = remember(baseTextStyle, numberSize) { tightLineStyle(baseTextStyle, numberSize) }
+                        style = remember(baseTextStyle, nowSize) { tightLineStyle(baseTextStyle, nowSize) }
                     )
                 } else {
                     // A single AnnotatedString (not separate Text composables) so the text shaper kerns
@@ -620,7 +638,10 @@ internal fun EtaPill(
                         style = remember(baseTextStyle, numberSize) { tightLineStyle(baseTextStyle, numberSize) }
                     )
                 }
-                if (clockTime != null) {
+                // The NOW pill (etaParts == null) drops the clock subline — it's a single centered
+                // label, stretched to its neighbours' height by fillMaxHeight rather than by a second
+                // line of its own.
+                if (clockTime != null && etaParts != null) {
                     Text(
                         text = clockTime,
                         fontSize = clockTimeSize,

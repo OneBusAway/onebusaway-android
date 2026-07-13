@@ -366,22 +366,6 @@ fun RouteArrivalRow(
                     )
                 }
             }
-            if (routeActions != null) {
-                // Own layer, overlaid on top of the row rather than laid out inline, so the star can
-                // sit in the corner without shifting the badge/pills (mirrors the overflow icon below).
-                Box(Modifier.align(Alignment.TopStart)) {
-                    FavoriteStarButton(
-                        isFavorite = isFavorite,
-                        onClick = { callbacks.onRouteFavorite(routeActions) },
-                        tint = colorResource(R.color.navdrawer_icon_tint),
-                        iconSize = 20.dp,
-                        // Tighten the button's touch box to the icon + a small margin, like the corner
-                        // overflow icon below, instead of Material's 48dp default — keeps the star flush
-                        // in the corner with no compensating offset.
-                        modifier = Modifier.size(28.dp),
-                    )
-                }
-            }
             Box(Modifier.align(Alignment.TopEnd)) {
                 CornerIcon(
                     iconRes = R.drawable.more_vert,

@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -132,6 +133,13 @@ internal fun rememberSlideBoxState(scroll: ScrollState = rememberScrollState()):
  *   should rest on (null while there's nothing to chase); while [followEnd] is true the trailing
  *   end owns the scroll instead (a load-more reveal chasing its own growing content). The box
  *   glides itself; callers never call animateScrollTo.
+ * - **Anchors are always reachable.** `horizontalScroll` caps its scroll range at
+ *   `contentWidth - viewport`, so an anchor deeper than that (short content that doesn't overflow)
+ *   is otherwise unreachable and the glide silently stalls short of it. [minReachablePx] names an
+ *   offset the box must be able to scroll to regardless: the content is floored to that offset plus
+ *   one viewport, so `maxValue` always reaches it. It's `max(children, floor)`, so genuinely wider
+ *   content is untouched — no trailing void, no phantom forward-scroll. The floor is dropped while
+ *   [followEnd] is true, so it never fights the end regime's chase of the real content end.
  * - **One scroll owner.** A single effect runs one glide regime at a time, strictly sequentially,
  *   so two programmatic mutations can never contest the ScrollState from inside the widget and
  *   livelock the main thread (issue #1801). Callers observe [SlideBoxState.scroll] but must not
@@ -160,6 +168,10 @@ internal fun SlideBox(
     onUserScroll: () -> Unit,
     modifier: Modifier = Modifier,
     contentModifier: Modifier = Modifier,
+    // An offset the box must always be able to scroll to (null = no floor); the content is widened to
+    // this offset + one viewport so short content can't cap maxValue below it. Automatically
+    // suppressed while followEnd is true. See the KDoc above.
+    minReachablePx: () -> Int? = { null },
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     verticalAlignment: Alignment.Vertical = Alignment.Top,
     overlay: @Composable BoxScope.() -> Unit = {},
@@ -186,13 +198,25 @@ internal fun SlideBox(
             snapshotFlow { follow }.first { it == untilFollowIs }
             glide.cancel()
         }
-        // First alignment: snap (don't animate) to the anchor's first resolution, so the box never
-        // visibly slides on first display. Skipped if the end regime takes over before the anchor
-        // ever resolves.
-        val initialAnchor = snapshotFlow { currentAnchorPx() to follow }
-            .first { (anchor, following) -> anchor != null || following }
-            .first
-        if (initialAnchor != null) scroll.scrollTo(initialAnchor)
+        // First alignment SNAPS to the anchor — never animates — so the strip appears already
+        // justified on first display and when a row re-enters a LazyColumn (which composes it fresh).
+        // A minReachablePx floor can lift maxValue a frame or two after the anchor first resolves (the
+        // freshly measured pinned offset and viewport widen the content only on later layout passes),
+        // so a single snap would land on the clamped-short position and leave the real alignment to
+        // the gliding loop below — replaying the slide on every re-entry. Re-snap (all instantaneous
+        // scrollTo) as the floor lands, until the box sits on the true anchor or maxValue stops
+        // climbing toward it. Precondition: a non-follow anchor is expected to become reachable (via
+        // content width or minReachablePx); otherwise the box simply rests at the clamped edge.
+        snapshotFlow { currentAnchorPx() != null || follow }.first { it }
+        var snappedMax = -1
+        while (!follow) {
+            val anchor = currentAnchorPx() ?: break
+            scroll.scrollTo(anchor.coerceAtMost(scroll.maxValue))
+            if (anchor <= scroll.maxValue || scroll.maxValue <= snappedMax) break
+            snappedMax = scroll.maxValue
+            snapshotFlow { follow || currentAnchorPx() != anchor || scroll.maxValue != snappedMax }
+                .first { it }
+        }
         while (true) {
             // ANCHOR regime: chase the declared anchor (a moving target — see glideTo) until the
             // end takes over. The gate inside the target lambda parks the chase should this loop
@@ -257,6 +281,16 @@ internal fun SlideBox(
         }
     }
 
+    // The content-width floor for widthIn below: the reachable offset plus one viewport, so
+    // horizontalScroll's maxValue (= contentWidth - viewport) can reach that offset. Recomputed in
+    // composition — reads minReachablePx() and viewportSize as snapshot state — so the floor tracks
+    // both the pinned offset and viewport-size changes. 0 (no floor) when nothing must be reachable.
+    // Suppressed entirely while followEnd owns the scroll: the end regime chases maxValue, and a floor
+    // that inflated maxValue past the real content would let the reveal glide into a phantom void.
+    val minContentWidth = with(LocalDensity.current) {
+        if (followEnd) 0.dp else (minReachablePx()?.let { it + state.scroll.viewportSize } ?: 0).toDp()
+    }
+
     Box(modifier.clipToBounds().nestedScroll(connection)) {
         Row(
             modifier = Modifier
@@ -264,7 +298,12 @@ internal fun SlideBox(
                 // trailing affordance fills.
                 .offset { IntOffset(-state.pullPx.floatValue.roundToInt(), 0) }
                 .then(contentModifier)
-                .horizontalScroll(state.scroll),
+                .horizontalScroll(state.scroll)
+                // Floor the content width so a declared minReachablePx offset stays scroll-reachable
+                // even when the real content would fit the viewport. Applied INSIDE horizontalScroll
+                // (where the width constraint is infinite), so it only ever RAISES the min — content
+                // already wider than the floor is measured unchanged, adding no trailing void.
+                .widthIn(min = minContentWidth),
             horizontalArrangement = horizontalArrangement,
             verticalAlignment = verticalAlignment,
             content = content,

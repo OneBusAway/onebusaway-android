@@ -280,6 +280,13 @@ internal fun EtaStrip(
         SlideBox(
             state = slideBox,
             anchorPx = { arrowOverridePx ?: pinnedOffsetPx.takeIf { it >= 0 } },
+            // Keep the pinned pill's offset scroll-reachable so the strip justifies to it even when
+            // the pills fit the viewport (horizontalScroll would otherwise cap maxValue below it and
+            // the justify would silently no-op, leaving the recent-past pills on screen). The
+            // persistent pinned offset, deliberately NOT the arrow override — a chevron jump should
+            // stop at the real content end, not stretch it. (SlideBox suppresses this during a
+            // load-more reveal itself.)
+            minReachablePx = { pinnedOffsetPx.takeIf { it >= 0 } },
             followEnd = request.intValue != NO_LOAD_REQUEST,
             onPullFired = {
                 // The VM sets Loading(token) synchronously inside onLoadMore, so the spinner is

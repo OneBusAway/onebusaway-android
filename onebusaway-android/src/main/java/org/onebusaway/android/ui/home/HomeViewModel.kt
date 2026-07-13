@@ -117,8 +117,18 @@ class HomeViewModel @Inject constructor(
     // host on each create from the restored focusedStop, so it needn't be persisted).
     private var pendingMapFocus: Boolean = false
 
+    // The routes with an upcoming arrival at the focused stop (the drawer's rows, 1:1) — the input to
+    // adjacency focus (#1827). Pure coordination state consumed imperatively by the map (phase 2), not
+    // composed off, so it's a plain property like [settledSheet]; not saved-state (arrivals reload and
+    // repopulate it after a restore).
+    var focusedRouteIds: Set<String> = emptySet()
+        private set
+
     /** A map stop gained focus (non-null) or focus was cleared (null). Persists across process death. */
     fun onStopFocused(stop: FocusedStop?) {
+        // Reset the adjacency route set on any focus change (switch or clear) so the previous stop's
+        // routes don't leak; a fresh arrivals load repopulates it (#1827).
+        focusedRouteIds = emptySet()
         savedState[KEY_STOP_ID] = stop?.id
         savedState[KEY_STOP_NAME] = stop?.name
         savedState[KEY_STOP_CODE] = stop?.code
@@ -222,12 +232,16 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Arrivals loaded for the focused [stop]. If a restore/deep-link focus is pending, consume the latch
-     * and tell the map to focus it (recenter + add the marker) via [mapDirectives] — so the map reacts
-     * to a directive rather than the activity relaying one VM's decision into another's method. A fresh
-     * map tap already centered the stop and set no pending focus, so this is then a no-op.
+     * Arrivals loaded for the focused [stop]. Records the drawer's [routeIds] for adjacency focus
+     * (#1827) on every load. Then, if a restore/deep-link focus is pending, consume the latch and tell
+     * the map to focus it (recenter + add the marker) via [mapDirectives] — so the map reacts to a
+     * directive rather than the activity relaying one VM's decision into another's method. A fresh map
+     * tap already centered the stop and set no pending focus, so beyond recording the routes it's a no-op.
      */
-    fun onArrivalsLoaded(stop: ObaStop, routes: List<ObaRoute>?) {
+    fun onArrivalsLoaded(stop: ObaStop, routes: List<ObaRoute>?, routeIds: Set<String>) {
+        // Record the drawer's routes on every load (not just a pending restore focus) — adjacency focus
+        // reads this whenever the map wants it (#1827).
+        focusedRouteIds = routeIds
         if (!pendingMapFocus) {
             return
         }

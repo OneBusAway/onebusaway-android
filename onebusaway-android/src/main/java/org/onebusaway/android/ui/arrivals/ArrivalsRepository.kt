@@ -205,6 +205,10 @@ data class ArrivalsLoaded(
     val stop: ObaStop?,
     val routes: List<ObaRoute>?,
     val hasArrivals: Boolean,
+    /** The routes with an upcoming arrival — the drawer's rows, 1:1 (adjacency focus, #1827). Derived
+     *  from the computed [ArrivalsData.routeGroups] (which reflects the past-arrivals filter), not the
+     *  raw response, so it matches what the drawer shows. */
+    val routeIds: Set<String>,
 )
 
 /** The fields the service-alert dialog shows, decoupled from `ObaSituation`. */
@@ -247,6 +251,13 @@ class DefaultArrivalsRepository @Inject constructor(
     @Volatile
     private var lastGood: LastGood? = null
 
+    /** The map-relevant snapshot of the last good load, prebuilt from the *computed* [ArrivalsData] so
+     *  its [ArrivalsLoaded.routeIds] matches the drawer's rows (see [ArrivalsLoaded]). Held in one
+     *  `@Volatile` reference so [lastLoaded] reads stop/routes/routeIds as a consistent set — same
+     *  discipline as [lastGood]. */
+    @Volatile
+    private var lastLoadedSnapshot: ArrivalsLoaded? = null
+
     // Whether the viewed stop has been recorded in the Stops table this session. Recording (a) creates
     // the row so the favorite toggle's UPDATE actually persists, and (b) marks it used so it appears in
     // Recent stops. markAsUsed bumps USE_COUNT, so this is done once — not on every 60s poll/refresh.
@@ -274,7 +285,9 @@ class DefaultArrivalsRepository @Inject constructor(
                 if (!stopRecorded) {
                     snapshot.stop?.let { recordStop(it, System.currentTimeMillis()); stopRecorded = true }
                 }
-                Result.success(toData(snapshot, isStale = false, now = snapshot.currentTime))
+                val data = toData(snapshot, isStale = false, now = snapshot.currentTime)
+                lastLoadedSnapshot = loadedSnapshot(snapshot, data)
+                Result.success(data)
             },
             // Refresh failed but we have prior data — keep showing it (legacy stale fallback).
             onFailure = { error ->
@@ -285,7 +298,9 @@ class DefaultArrivalsRepository @Inject constructor(
                     @Suppress("RawClockArithmetic") // both operands are ElapsedTime (monotonic); sanctioned skew-free crossing
                     val now = stale.snapshot.currentTime +
                         (SystemClock.elapsedRealtime() - stale.elapsedMs)
-                    Result.success(toData(stale.snapshot, isStale = true, now = now))
+                    val data = toData(stale.snapshot, isStale = true, now = now)
+                    lastLoadedSnapshot = loadedSnapshot(stale.snapshot, data)
+                    Result.success(data)
                 }
                     ?: Result.failure(
                         IOException(
@@ -451,10 +466,17 @@ class DefaultArrivalsRepository @Inject constructor(
             AlertDetails(it.id, it.summary, it.description, it.url)
         }
 
-    override fun lastLoaded(): ArrivalsLoaded? {
-        val snapshot = lastGood?.snapshot ?: return null
-        return ArrivalsLoaded(snapshot.stop, snapshot.routes, snapshot.hasArrivals)
-    }
+    override fun lastLoaded(): ArrivalsLoaded? = lastLoadedSnapshot
+
+    /** Pairs the response's stop/routes/hasArrivals with the drawer-1:1 route set derived from the
+     *  *computed* [data] (see [ArrivalsLoaded.routeIds]). */
+    private fun loadedSnapshot(snapshot: StopArrivals, data: ArrivalsData): ArrivalsLoaded =
+        ArrivalsLoaded(
+            stop = snapshot.stop,
+            routes = snapshot.routes,
+            hasArrivals = snapshot.hasArrivals,
+            routeIds = focusedRouteIds(data.routeGroups),
+        )
 
     companion object {
 

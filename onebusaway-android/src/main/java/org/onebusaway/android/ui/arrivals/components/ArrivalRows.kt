@@ -610,19 +610,22 @@ internal fun previewArrival(
     predicted: Boolean = true,
     scheduleDeviationMinutes: Long = 0L,
     status: Status = Status.DEFAULT,
+    routeId: String = "route_$shortName",
+    routeLongName: String? = null,
 ): ArrivalInfo {
     val predictedMs = etaMinutes * PREVIEW_MIN_MS
     val scheduledMs = (etaMinutes - scheduleDeviationMinutes) * PREVIEW_MIN_MS
     return ArrivalInfo(
         context = null,
         data = PreviewArrivalData(
-            routeId = "route_$shortName",
+            routeId = routeId,
             shortName = shortName,
             headsign = headsign,
             scheduledArrivalTime = ServerTime(scheduledMs),
             predictedArrivalTime = if (predicted) ServerTime(predictedMs) else null,
             predicted = predicted,
             status = status,
+            routeLongName = routeLongName,
         ),
         now = ServerTime(0L),
         includeArrivalDepartureInStatusLabel = false,

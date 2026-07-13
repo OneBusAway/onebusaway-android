@@ -20,67 +20,28 @@ import org.junit.Test
 import org.onebusaway.android.ui.arrivals.components.previewArrival
 
 /**
- * JVM unit tests for the pure route-row grouping/ordering functions. They key off the
- * [RouteDirectionItem] interface, so a lightweight fake stands in for [ArrivalInfo] (which needs a
- * `Context`). Inputs mirror the real pipeline: already ETA-sorted (ascending, recent-past first).
+ * JVM unit tests for the pure route-row grouping/ordering functions. Grouping and the between-row
+ * (agency, line, headsign) sort (#1822) key off the [RouteDirectionItem] interface (which carries
+ * [RouteDirectionItem.lineName] intrinsically) plus an external agency-name accessor, so a
+ * lightweight fake stands in for [ArrivalInfo] (which needs a `Context`); [ArrivalInfo.lineName]'s
+ * own fallback chain is covered separately using [previewArrival]. Within-row trip order is
+ * untouched by any of this and stays whatever order the caller fed in (upstream: ETA-sorted,
+ * recent-past first).
  */
 class RouteRowGroupingTest {
 
     private data class FakeItem(
         override val routeId: String,
         override val headsign: String?,
-        override val eta: Long
+        override val eta: Long,
+        override val lineName: String = routeId,
+        val agencyName: String? = null,
     ) : RouteDirectionItem
 
-    // Grouping + departure ordering ---------------------------------------------------------------
+    /** [groupByRouteDirection] with the agency name read off [FakeItem] itself. */
+    private fun group(items: List<FakeItem>) = groupByRouteDirection(items) { it.agencyName }
 
-    @Test
-    fun grouping_ordersGroupsByDeparture_andKeepsTripsSorted() {
-        // ETA-sorted input interleaving two routes.
-        val items = listOf(
-            FakeItem("A", "North", 2),
-            FakeItem("B", "East", 5),
-            FakeItem("A", "North", 12),
-            FakeItem("B", "East", 20),
-            FakeItem("A", "North", 30),
-        )
-        val groups = groupByRouteDirection(items)
-
-        // Group order follows each group's soonest upcoming ETA: A (2) before B (5).
-        assertEquals(listOf("A", "B"), groups.map { it.first().routeId })
-        // Trips within a group stay ETA-sorted.
-        assertEquals(listOf(2L, 12L, 30L), groups[0].map { it.eta })
-        assertEquals(listOf(5L, 20L), groups[1].map { it.eta })
-    }
-
-    @Test
-    fun grouping_negativeEtaDoesNotCountTowardOrder() {
-        // Route A just departed (-2) but its next real arrival is far off (20); Route B is sooner (5).
-        // A must sort BELOW B — the departed trip doesn't pull A to the top.
-        val items = listOf(
-            FakeItem("A", "North", -2),
-            FakeItem("B", "East", 5),
-            FakeItem("A", "North", 20),
-        )
-        val groups = groupByRouteDirection(items)
-
-        assertEquals(listOf("B", "A"), groups.map { it.first().routeId })
-        // A still keeps its recent-past trip, shown first within the row.
-        assertEquals(listOf(-2L, 20L), groups.first { it.first().routeId == "A" }.map { it.eta })
-    }
-
-    @Test
-    fun grouping_allNegativeGroupSortsLast() {
-        // Route A has only departed trips; Route B has an upcoming one — B ranks first.
-        val items = listOf(
-            FakeItem("A", "North", -5),
-            FakeItem("A", "North", -2),
-            FakeItem("B", "East", 4),
-        )
-        val groups = groupByRouteDirection(items)
-
-        assertEquals(listOf("B", "A"), groups.map { it.first().routeId })
-    }
+    // Grouping (route, direction) into rows ---------------------------------------------------------
 
     @Test
     fun grouping_sameRouteTwoHeadsigns_producesTwoGroups() {
@@ -89,11 +50,11 @@ class RouteRowGroupingTest {
             FakeItem("A", "South", 6),
             FakeItem("A", "North", 15),
         )
-        val groups = groupByRouteDirection(items)
+        val groups = group(items)
 
         assertEquals(2, groups.size)
-        assertEquals(listOf("North", "North"), groups[0].map { it.headsign })
-        assertEquals(listOf("South"), groups[1].map { it.headsign })
+        assertEquals(listOf("North", "North"), groups.first { it.first().headsign == "North" }.map { it.headsign })
+        assertEquals(listOf("South"), groups.first { it.first().headsign == "South" }.map { it.headsign })
     }
 
     @Test
@@ -103,7 +64,7 @@ class RouteRowGroupingTest {
             FakeItem("A", "North", 4),
             FakeItem("A", "North", 4),
         )
-        val groups = groupByRouteDirection(items)
+        val groups = group(items)
 
         assertEquals(1, groups.size)
         assertEquals(2, groups[0].size)
@@ -115,12 +76,143 @@ class RouteRowGroupingTest {
             FakeItem("A", null, 1),
             FakeItem("A", "", 9),
         )
-        assertEquals(1, groupByRouteDirection(items).size)
+        assertEquals(1, group(items).size)
     }
 
     @Test
     fun grouping_empty_returnsEmpty() {
-        assertEquals(emptyList<List<FakeItem>>(), groupByRouteDirection(emptyList<FakeItem>()))
+        assertEquals(emptyList<List<FakeItem>>(), group(emptyList()))
+    }
+
+    @Test
+    fun grouping_keepsTripsInIncomingOrder() {
+        // Within-row trip order is untouched by the between-row sort (#1822) — it stays whatever order
+        // the caller fed in (upstream: ETA-sorted by ArrivalInfoUtils.InfoComparator).
+        val items = listOf(
+            FakeItem("A", "North", -2),
+            FakeItem("A", "North", 20),
+        )
+        assertEquals(listOf(-2L, 20L), group(items).single().map { it.eta })
+    }
+
+    // Between-row ordering: (agency, line, headsign) — stable, not ETA (#1822) -----------------------
+
+    @Test
+    fun ordering_sortsByLineNameNaturally_withinSameAgency() {
+        // Numeric-aware: "8" before "40" before "550", not lexicographic ("40" < "550" < "8").
+        val items = listOf(
+            FakeItem("r550", "X", eta = 1, agencyName = "Metro", lineName = "550"),
+            FakeItem("r8", "X", eta = 1, agencyName = "Metro", lineName = "8"),
+            FakeItem("r40", "X", eta = 1, agencyName = "Metro", lineName = "40"),
+        )
+        assertEquals(listOf("r8", "r40", "r550"), group(items).map { it.first().routeId })
+    }
+
+    @Test
+    fun ordering_sortsAlphanumericLineNames_viaAlphanumComparator() {
+        // Mixed numeric/alphanumeric short names ("8", "A Line", "RapidRide E") sort via
+        // AlphanumComparator (the same comparator RouteDisplay already uses for route short names):
+        // digit-led names sort before letter-led names, which then compare alphabetically.
+        val items = listOf(
+            FakeItem("rapidride", "X", eta = 1, agencyName = "Metro", lineName = "RapidRide E"),
+            FakeItem("aline", "X", eta = 1, agencyName = "Metro", lineName = "A Line"),
+            FakeItem("r8", "X", eta = 1, agencyName = "Metro", lineName = "8"),
+        )
+        assertEquals(listOf("r8", "aline", "rapidride"), group(items).map { it.first().routeId })
+    }
+
+    @Test
+    fun ordering_sortsByAgencyBeforeLineName() {
+        // Agency is the primary key: a numerically-later line in an earlier agency still sorts first.
+        val items = listOf(
+            FakeItem("r-zoo-8", "X", eta = 1, agencyName = "Zoo Transit", lineName = "8"),
+            FakeItem("r-metro-40", "X", eta = 1, agencyName = "Metro", lineName = "40"),
+        )
+        assertEquals(listOf("r-metro-40", "r-zoo-8"), group(items).map { it.first().routeId })
+    }
+
+    @Test
+    fun ordering_nullAgencySortsLast() {
+        val items = listOf(
+            FakeItem("named", "X", eta = 1, agencyName = "Metro", lineName = "1"),
+            FakeItem("unnamed", "X", eta = 1, agencyName = null, lineName = "1"),
+        )
+        assertEquals(listOf("named", "unnamed"), group(items).map { it.first().routeId })
+    }
+
+    @Test
+    fun ordering_blankAgencySortsLast_sameAsNull() {
+        val items = listOf(
+            FakeItem("blank", "X", eta = 1, agencyName = "", lineName = "1"),
+            FakeItem("named", "X", eta = 1, agencyName = "Metro", lineName = "1"),
+        )
+        assertEquals(listOf("named", "blank"), group(items).map { it.first().routeId })
+    }
+
+    @Test
+    fun ordering_tiesBrokenByHeadsign_deterministically() {
+        // Same (agency, line) serving two directions at the stop — order must not depend on input order.
+        val items = listOf(
+            FakeItem("r8", "West", eta = 1, agencyName = "Metro", lineName = "8"),
+            FakeItem("r8", "East", eta = 1, agencyName = "Metro", lineName = "8"),
+        )
+        assertEquals(listOf("East", "West"), group(items).map { it.first().headsign })
+    }
+
+    @Test
+    fun ordering_doesNotDependOnEta() {
+        // The whole point of #1822: a group with a far-off ETA can still sort above one with a near ETA,
+        // as long as its (agency, line) key sorts first.
+        val items = listOf(
+            FakeItem("r40", "X", eta = 1, agencyName = "Metro", lineName = "40"),
+            FakeItem("r8", "X", eta = 999, agencyName = "Metro", lineName = "8"),
+        )
+        assertEquals(listOf("r8", "r40"), group(items).map { it.first().routeId })
+    }
+
+    @Test
+    fun ordering_isStableAmongEqualKeys() {
+        // Equal (agency, line, headsign) keys keep first-seen order (frequency-style duplicate groups
+        // aside, this covers hypothetical equal-but-distinct groups).
+        val items = listOf(
+            FakeItem("first", "X", eta = 1, agencyName = "Metro", lineName = "8"),
+            FakeItem("second", "Y", eta = 1, agencyName = "Metro", lineName = "40"),
+        )
+        assertEquals(listOf("first", "second"), group(items).map { it.first().routeId })
+    }
+
+    // groupArrivalsByRouteDirection: line-name fallback chain on real ArrivalInfo (#1822) -------------
+
+    @Test
+    fun arrivalsGrouping_lineNameFallsBackToLongName_whenShortNameBlank() {
+        val arrivals = listOf(
+            previewArrival(shortName = "", headsign = "X", etaMinutes = 1, routeId = "blank-short", routeLongName = "Zephyr Line"),
+            previewArrival(shortName = "8", headsign = "X", etaMinutes = 1, routeId = "has-short"),
+        )
+        val groups = groupArrivalsByRouteDirection(arrivals) { null }
+        // "8" (numeric) sorts before "Zephyr Line" (non-numeric fallback) under natural ordering.
+        assertEquals(listOf("has-short", "blank-short"), groups.map { it.routeId })
+    }
+
+    @Test
+    fun arrivalsGrouping_lineNameFallsBackToRouteId_whenShortAndLongNameBlank() {
+        val arrivals = listOf(
+            previewArrival(shortName = "", headsign = "X", etaMinutes = 1, routeId = "aaa-fallback", routeLongName = null),
+        )
+        val groups = groupArrivalsByRouteDirection(arrivals) { null }
+        assertEquals("aaa-fallback", groups.single().representative.routeId)
+    }
+
+    @Test
+    fun arrivalsGrouping_usesSuppliedAgencyNameAccessor() {
+        val arrivals = listOf(
+            previewArrival(shortName = "8", headsign = "X", etaMinutes = 1, routeId = "zoo-route"),
+            previewArrival(shortName = "8", headsign = "X", etaMinutes = 1, routeId = "metro-route"),
+        )
+        val groups = groupArrivalsByRouteDirection(arrivals) { arrival ->
+            if (arrival.routeId == "metro-route") "Metro" else "Zoo Transit"
+        }
+        assertEquals(listOf("metro-route", "zoo-route"), groups.map { it.routeId })
     }
 
     // Favorite-first ordering ---------------------------------------------------------------------

@@ -91,6 +91,11 @@ class ArrivalInfo(
     override val headsign: String? get() = data.headsign
     val shortName: String? get() = data.shortName
     val routeLongName: String? get() = data.routeLongName
+
+    /** The route-row sort/display name (#1822): short name falling back to the long name (the same
+     *  [getRouteDisplayName] fallback used elsewhere for this route), then the route id — never
+     *  blank, so it's always a valid [RouteRowGroup] sort key. */
+    override val lineName: String get() = getRouteDisplayName(shortName, routeLongName).ifEmpty { routeId }
     val stopSequence: Int get() = data.stopSequence
     val serviceDate: Long get() = data.serviceDate
     val vehicleId: String? get() = data.vehicleId

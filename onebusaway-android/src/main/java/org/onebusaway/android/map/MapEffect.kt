@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.map
 
+import android.util.Log
+
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
 
@@ -59,9 +61,28 @@ sealed interface MapEffect {
      */
     data class ShowError(val code: Int) : MapEffect {
         companion object {
-            /** The status code a failed load reports: an [ObaApiException]'s code, else a generic I/O error. */
-            fun from(cause: Throwable): ShowError =
-                ShowError((cause as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION)
+            private const val TAG = "MapEffect"
+
+            /**
+             * The status code a failed load reports: an [ObaApiException]'s code, else a generic I/O error.
+             *
+             * This collapse is lossy — the user-facing toast is just a status code, so the underlying
+             * [cause] (which HTTP/app code, or the exact parse failure and offending field) is otherwise
+             * discarded here. Log it first, so a single-region load failure that reduces to the generic
+             * "Unable to get stops." toast (e.g. #1462) is diagnosable from logcat / crash reports rather
+             * than vanishing. An [ObaApiException] carries its own status, so the code is enough; any other
+             * throwable (a transport failure, or a kotlinx `SerializationException` naming a bad field) is
+             * logged with its full stack.
+             */
+            fun from(cause: Throwable): ShowError {
+                val code = (cause as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION
+                if (cause is ObaApiException) {
+                    Log.w(TAG, "Map load failed with OBA status code $code")
+                } else {
+                    Log.w(TAG, "Map load failed (reporting code $code); underlying cause:", cause)
+                }
+                return ShowError(code)
+            }
         }
     }
 }

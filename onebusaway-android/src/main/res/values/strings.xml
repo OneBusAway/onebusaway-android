@@ -335,6 +335,8 @@
     </string>
     <!-- Route map header: switch which direction of the route is shown -->
     <string name="route_header_switch_direction">Switch direction</string>
+    <!-- Route map header: tap the banner body to reframe the map to the route's full extent -->
+    <string name="route_header_frame_route">Frame route on map</string>
     <!-- Fallback label for a route direction whose headsign is missing -->
     <string name="route_direction_unnamed">Other direction</string>
 

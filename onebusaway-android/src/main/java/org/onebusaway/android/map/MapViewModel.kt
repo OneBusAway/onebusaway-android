@@ -384,6 +384,17 @@ class MapViewModel @Inject constructor(
     fun exitRouteMode() = showNearbyStops()
 
     /**
+     * Reframe the map to the shown route's full extent — the route header's tap-the-banner affordance.
+     * Re-issues the retained route framing (via [MapHost.frameRoute]), which re-fires even though it's
+     * already the current framing, snapping the camera back after the user has panned/zoomed away or
+     * switched direction. Guarded on an active route so a stray tap can't set a stale route fit outside
+     * route mode (the header only shows in route mode, so this is belt-and-suspenders).
+     */
+    fun frameRoute() {
+        if (routeController.isActive) mapHost.frameRoute()
+    }
+
+    /**
      * Switch the shown route to another of its directions (one of the header's [RouteHeader.directions]
      * ids) via the header's swap affordance. Re-filters the stops + vehicles in place (no reload /
      * reframe). On a real switch, persists the choice and retires the launch anchor

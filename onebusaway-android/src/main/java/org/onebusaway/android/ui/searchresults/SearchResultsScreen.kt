@@ -115,7 +115,7 @@ private fun RouteResultRow(
 ) {
     ResultRow(
         painter = painterResource(R.drawable.ic_route),
-        contentDescription = stringResource(R.string.search_result_type_route),
+        contentDescription = stringResource(R.string.route_shortcut),
         onClick = { onShowOnMap(route) }
     ) {
         RouteRowContent(
@@ -135,7 +135,7 @@ private fun StopResultRow(
 ) {
     ResultRow(
         painter = painterResource(R.drawable.stop_flag),
-        contentDescription = stringResource(R.string.search_result_type_stop),
+        contentDescription = stringResource(R.string.stop_shortcut),
         onClick = { onShowOnMap(stop) }
     ) {
         StopRowContent(

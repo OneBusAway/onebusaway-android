@@ -34,6 +34,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onebusaway.android.SmokeTest
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.data.TripObservation
 import org.onebusaway.android.extrapolation.data.TripStateCache
@@ -262,6 +263,10 @@ class TripStateCacheTest {
 
     // --- GammaExtrapolator tests ---
 
+    // API-23 floor smoke subset (#1818): one deterministic method stands in for this large, mixed
+    // class — it exercises the kotlin.time Duration math and the extrapolation core on the floor
+    // runtime. The cache-eviction, polyline, and end-to-end tests stay out to keep the subset small.
+    @SmokeTest
     @Test
     fun testGammaExtrapolator_returnsDistanceDistribution() {
         val serviceDate = 1L

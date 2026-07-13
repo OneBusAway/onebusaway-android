@@ -26,6 +26,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.SmokeTest
 
 /**
  * On-device tests for the SlideBox's single-owner anchor-chasing glide. This is the regression test
@@ -33,6 +34,7 @@ import org.junit.Test
  * ScrollState), a moving anchor could livelock in mutual animateScrollTo cancellation and the scroll
  * never converged, so the settle assertions below would time out.
  */
+@SmokeTest // API-23 floor smoke subset (#1818): exercises Compose rendering on a 2015-era runtime
 class SlideBoxTest {
 
     // See EtaStripJustifyTest for why the deprecated rule (Unconfined composition) is kept — under

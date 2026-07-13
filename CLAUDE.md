@@ -162,8 +162,14 @@ Tests are in `onebusaway-android/src/androidTest/java/`. Key test classes:
 - Region functionality tests (RegionsTest)
 - Utility tests (LocationUtilsTest, RegionUtilTest)
 
-CI runs on API level 33 emulator via GitHub Actions, and is **strict** — Kotlin warnings and Android
-Lint errors both fail the build (see "CI is strict" under Build Commands).
+The PR/push instrumented suite runs on an **API 33** emulator via GitHub Actions, and CI is **strict** —
+Kotlin warnings and Android Lint errors both fail the build (see "CI is strict" under Build Commands).
+
+Separately, a nightly **API 23 floor leg** (`smoke-api23` in `android-nightly.yml`, #1818) boots the
+`minSdk` floor — which the API-33 path never exercises at runtime — and runs the `@SmokeTest`-annotated
+subset (`org.onebusaway.android.SmokeTest`) to catch a crash-on-boot / desugaring / Compose-on-old-runtime
+regression the static checks can't see. Keep that subset **small and stable**; tag a new test with
+`@SmokeTest` only when it guards a core floor behaviour, and never tag a device-flaky one.
 
 ## Time domains: server clock vs device clock (#1612)
 

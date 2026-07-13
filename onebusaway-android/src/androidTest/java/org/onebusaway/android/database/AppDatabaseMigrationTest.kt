@@ -23,6 +23,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onebusaway.android.SmokeTest
 
 /**
  * Validates that [MIGRATION_2_3] produces a schema matching the exported `3.json` and that the dead
@@ -33,6 +34,7 @@ import org.junit.runner.RunWith
  * [MIGRATION_5_6] adds `regions.otp_base_graphql_url` defaulting existing rows to OTP1 (#1780); and
  * that [MIGRATION_6_7] drops the retired `stop_routes_filter` table.
  */
+@SmokeTest // API-23 floor smoke subset (#1818): exercises Room migrations + java.time desugaring
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseMigrationTest {
 

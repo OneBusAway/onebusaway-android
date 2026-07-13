@@ -50,14 +50,13 @@ import androidx.compose.ui.unit.sp
 import org.onebusaway.android.R
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.models.RouteMapDirection
-import org.onebusaway.android.ui.compose.components.FavoriteStarButton
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.RadioOptionList
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 
-// The route-header action icons (favorite / switch-direction / cancel) share one size + tint so they
-// read as one control group: a larger-than-default 36dp icon in a deliberately tightened 40dp touch box
+// The route-header action icons (switch-direction / cancel) share one size + tint so they read as
+// one control group: a larger-than-default 36dp icon in a deliberately tightened 40dp touch box
 // (below Material's 48dp default — a conscious trade-off for a compact header banner).
 private val HEADER_ICON_SIZE = 36.dp
 private val HEADER_ICON_BUTTON_SIZE = 40.dp
@@ -65,24 +64,19 @@ private val HEADER_ICON_BUTTON_SIZE = 40.dp
 /**
  * The route-mode header overlay (the Compose replacement for the legacy `route_info_head.xml` /
  * `RouteMapController.RoutePopup`). Renders the route short/long name + agency (or a spinner while the
- * route loads), the current direction's headsign, a favorite (star) toggle, a switch-direction
- * affordance (when the route has more than one direction), and a cancel button that exits route mode. It
- * reports its measured height via [onHeight] so the host can set the map's top padding (keeping vehicle
- * markers visible under it).
+ * route loads), the current direction's headsign, a switch-direction affordance (when the route has more
+ * than one direction), and a cancel button that exits route mode. It reports its measured height via
+ * [onHeight] so the host can set the map's top padding (keeping vehicle markers visible under it). The
+ * route's favorite star no longer lives here — it's the arrival row's own corner toggle.
  *
  * [onSelectDirection] switches which direction of the route is shown (the id is one of
  * [RouteHeader.directions]).
- *
- * [isFavorite] drives the star's filled/outline state and [onToggleFavorite] toggles the route's star
- * (a wholesale `routes.favorite` bit, #1751/#1727), kept in sync with the arrival-row star.
  */
 @Composable
 fun RouteHeaderOverlay(
     header: RouteHeader,
     onCancel: () -> Unit,
     onSelectDirection: (Int) -> Unit,
-    isFavorite: Boolean,
-    onToggleFavorite: () -> Unit,
     onHeight: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -114,15 +108,6 @@ fun RouteHeaderOverlay(
                     .padding(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // The favorite star, inline and to the left of the badge — the first of the shared-style
-                // header action icons (larger icon, tightened touch box).
-                FavoriteStarButton(
-                    isFavorite = isFavorite,
-                    onClick = onToggleFavorite,
-                    tint = colorResource(R.color.navdrawer_icon_tint),
-                    iconSize = HEADER_ICON_SIZE,
-                    modifier = Modifier.size(HEADER_ICON_BUTTON_SIZE),
-                )
                 // A square route roundel: the short name shrinks to fit inside the tile, on the same
                 // HCT-normalized GTFS-color chip as the arrival rows.
                 val (badgeContainer, badgeContent) = rememberRouteBadgeColors(header.routeColor)
@@ -178,7 +163,7 @@ fun RouteHeaderOverlay(
 /**
  * A route-header action icon button in the shared header style: the [HEADER_ICON_SIZE] icon tinted with
  * the nav-drawer icon color, in the tightened [HEADER_ICON_BUTTON_SIZE] box. Used by the switch-direction
- * and cancel actions; the favorite star ([FavoriteStarButton]) matches these but stays its own toggle.
+ * and cancel actions.
  */
 @Composable
 private fun HeaderIconButton(
@@ -266,8 +251,6 @@ private fun RouteHeaderOverlayPreview() {
                 ),
                 onCancel = {},
                 onSelectDirection = {},
-                isFavorite = true,
-                onToggleFavorite = {},
                 onHeight = {},
             )
             Spacer(Modifier.size(12.dp))
@@ -286,8 +269,6 @@ private fun RouteHeaderOverlayPreview() {
                 ),
                 onCancel = {},
                 onSelectDirection = {},
-                isFavorite = false,
-                onToggleFavorite = {},
                 onHeight = {},
             )
             Spacer(Modifier.size(12.dp))
@@ -307,8 +288,6 @@ private fun RouteHeaderOverlayPreview() {
                 ),
                 onCancel = {},
                 onSelectDirection = {},
-                isFavorite = false,
-                onToggleFavorite = {},
                 onHeight = {},
             )
             Spacer(Modifier.size(12.dp))
@@ -322,8 +301,6 @@ private fun RouteHeaderOverlayPreview() {
                 ),
                 onCancel = {},
                 onSelectDirection = {},
-                isFavorite = false,
-                onToggleFavorite = {},
                 onHeight = {},
             )
             Spacer(Modifier.size(12.dp))
@@ -332,8 +309,6 @@ private fun RouteHeaderOverlayPreview() {
                 header = RouteHeader(loading = true, shortName = "", longName = "", agency = ""),
                 onCancel = {},
                 onSelectDirection = {},
-                isFavorite = false,
-                onToggleFavorite = {},
                 onHeight = {},
             )
         }

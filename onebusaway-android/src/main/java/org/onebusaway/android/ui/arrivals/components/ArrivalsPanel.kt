@@ -20,6 +20,7 @@
 
 package org.onebusaway.android.ui.arrivals.components
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,11 +40,13 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -104,6 +107,9 @@ fun ArrivalsPanel(
     val rowCallbacks = rememberArrivalRowCallbacks(handler, viewModel)
     val content = state as? ArrivalsUiState.Content
 
+    // Service alerts are collapsed by default; the header's alert icon toggles them so they no longer
+    // crowd the head of the list. Resets to collapsed only when the panel leaves composition.
+    var alertsExpanded by remember { mutableStateOf(false) }
     // The pinned header's height (px). Added to the list's laid-out extent to report the whole
     // panel's content height, which the host fits the collapsed peek to (capping tall stops).
     var headerHeightPx by remember { mutableIntStateOf(0) }
@@ -140,6 +146,8 @@ fun ArrivalsPanel(
                 isFavorite = content?.header?.isFavorite == true,
                 showActions = content != null,
                 hasAlerts = content?.hasAlerts == true,
+                alertsExpanded = alertsExpanded,
+                onToggleAlerts = { alertsExpanded = !alertsExpanded },
                 onToggleFavorite = viewModel::toggleFavorite,
                 onTitleClick = onTitleClick,
                 // Feed the pinned header's measured height into the reported content height.
@@ -157,6 +165,8 @@ fun ArrivalsPanel(
                     listState = listState,
                     // The drawer header already shows the direction as a "(N)" tag.
                     showDirection = false,
+                    // Alerts stay collapsed until the header's alert icon is tapped.
+                    showAlerts = alertsExpanded,
                     // Header sits above the list now, so only inset the bottom (clearing the nav-bar
                     // chrome).
                     contentPadding = PaddingValues(bottom = navBarInset),
@@ -189,13 +199,16 @@ private fun ColumnScope.PreviewDivider() {
  * [onTitleClick] (null = not tappable), which the drawer host uses to recenter the map on the stop.
  * [starSize] is exposed so the star's sizing can be tuned in the preview.
  */
+@VisibleForTesting
 @Composable
-private fun ArrivalsPanelHeader(
+internal fun ArrivalsPanelHeader(
     title: String,
     direction: String?,
     isFavorite: Boolean,
     showActions: Boolean,
     hasAlerts: Boolean,
+    alertsExpanded: Boolean,
+    onToggleAlerts: () -> Unit,
     onToggleFavorite: () -> Unit,
     onTitleClick: (() -> Unit)? = null,
     starSize: Dp = 20.dp,
@@ -221,8 +234,12 @@ private fun ArrivalsPanelHeader(
                     ),
                     contentDescription = stringResource(R.string.stop_info_favorite),
                     tint = colorResource(R.color.navdrawer_icon_tint),
+                    // Expand the star's tappable area to the 48dp accessibility minimum (the glyph
+                    // itself stays starSize). As with the alert toggle, clickable is the outer node so
+                    // its pointer region measures the reserved 48dp.
                     modifier = Modifier
                         .clickable(onClick = onToggleFavorite)
+                        .minimumInteractiveComponentSize()
                         .padding(end = 6.dp)
                         .size(starSize)
                 )
@@ -235,13 +252,25 @@ private fun ArrivalsPanelHeader(
                 modifier = onTitleClick?.let { Modifier.clickable(onClick = it) } ?: Modifier
             )
         }
-        // Alert indicator, right-justified.
+        // Alert indicator, right-justified. Tapping it toggles the service-alert list.
         if (hasAlerts) {
             Icon(
                 painter = painterResource(R.drawable.baseline_warning_24),
-                contentDescription = null,
+                contentDescription = stringResource(
+                    if (alertsExpanded) {
+                        R.string.stop_info_hide_alerts_toggle
+                    } else {
+                        R.string.stop_info_show_alerts
+                    }
+                ),
                 tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.align(Alignment.CenterEnd)
+                // The warning glyph is 24dp; expand its tappable area to the 48dp
+                // accessibility minimum without enlarging the icon. clickable must stay
+                // the outer node so its pointer region measures the reserved 48dp.
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .clickable(onClick = onToggleAlerts)
+                    .minimumInteractiveComponentSize()
             )
         }
     }
@@ -264,6 +293,8 @@ private fun ArrivalsPanelHeaderPreview() {
                     isFavorite = true,
                     showActions = true,
                     hasAlerts = false,
+                    alertsExpanded = false,
+                    onToggleAlerts = {},
                     onToggleFavorite = {}
                 )
                 PreviewDivider()
@@ -274,6 +305,8 @@ private fun ArrivalsPanelHeaderPreview() {
                     isFavorite = false,
                     showActions = true,
                     hasAlerts = true,
+                    alertsExpanded = true,
+                    onToggleAlerts = {},
                     onToggleFavorite = {}
                 )
             }

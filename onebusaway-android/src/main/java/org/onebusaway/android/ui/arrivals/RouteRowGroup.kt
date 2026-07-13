@@ -152,3 +152,16 @@ fun orderRouteGroupsByFavorite(
     groups: List<RouteRowGroup>,
     favoriteRouteIds: Set<String>
 ): List<RouteRowGroup> = orderGroupsByFavorite(groups, favoriteRouteIds) { it.routeId }
+
+/**
+ * The distinct route ids of [groups], in first-seen order. Generic (over any `T` + a route-id
+ * selector) so it's unit-testable with lightweight fakes, mirroring [orderGroupsByFavorite].
+ */
+fun <T> routeIdSet(groups: List<T>, routeIdOf: (T) -> String): Set<String> =
+    groups.mapTo(LinkedHashSet()) { routeIdOf(it) }
+
+/**
+ * The set of routes with an upcoming arrival at the stop — every route the drawer shows a row for
+ * (adjacency focus draws these 1:1, scheduled or tracked; issue #1827). First-seen (departure) order.
+ */
+fun focusedRouteIds(groups: List<RouteRowGroup>): Set<String> = routeIdSet(groups) { it.routeId }

@@ -15,23 +15,47 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import org.onebusaway.util.comparators.AlphanumComparator
+
 /**
  * The minimal shape the route-row grouping and ordering need from an arrival: its route, its
- * direction (headsign), and its ETA in minutes. [ArrivalInfo] implements this, but the pure
- * grouping/ordering functions below key off the interface so they stay unit-testable without a
- * `Context` (which building an [ArrivalInfo] requires).
+ * direction (headsign), its ETA in minutes, and its natural-sort line name (#1822). [ArrivalInfo]
+ * implements this, but the pure grouping/ordering functions below key off the interface so they stay
+ * unit-testable without a `Context` (which building an [ArrivalInfo] requires).
  */
 interface RouteDirectionItem {
     val routeId: String
     val headsign: String?
     val eta: Long
+
+    /** The stable line-name sort/display key (#1822) — e.g. "8", "40", "A Line" — resolved by the
+     *  implementer to a never-blank value (see [ArrivalInfo.lineName]'s fallback chain), so a blank
+     *  short name can't collapse every unnamed route into one comparator bucket. Unlike [headsign] or
+     *  agency (the latter needs an external accessor — see [groupByRouteDirection]), the line name is
+     *  intrinsic to the item and needs no outside lookup. */
+    val lineName: String
 }
 
-/** A group's departure sort key: the soonest *upcoming* (non-negative) ETA, or [Long.MAX_VALUE] when
- *  every trip is already in the past. Negative (recent-past) ETAs deliberately don't count toward
- *  ordering (#1707) — a row sorts by its next real arrival, not a just-departed one. */
-private fun List<RouteDirectionItem>.departureSortEta(): Long =
-    firstOrNull { it.eta >= 0 }?.eta ?: Long.MAX_VALUE
+/** Numeric-aware ("natural") comparator for [RouteDirectionItem.lineName] — "8" sorts before "40"
+ *  before "550" — the same comparator [org.onebusaway.android.util.RouteDisplay] already uses for
+ *  route short names, reused here rather than re-implementing natural sort. */
+private val LINE_NAME_COMPARATOR = AlphanumComparator()
+
+/** Case-insensitive, blank/null-last comparator shared by the agency and headsign sort fields below —
+ *  unnamed/unknown data shouldn't get to dominate the top of the list. */
+private val BLANK_LAST_COMPARATOR: Comparator<String?> = nullsLast(String.CASE_INSENSITIVE_ORDER)
+
+/** Orders groups by (agency, line, headsign) (#1822): agency (from [agencyNameOf]) and headsign
+ *  compare via [BLANK_LAST_COMPARATOR]; line name uses [LINE_NAME_COMPARATOR]. The headsign tiebreak
+ *  makes a route serving two directions at the stop deterministic regardless of incoming order. Reads
+ *  each group's representative (first) item once per comparison. */
+private fun <T : RouteDirectionItem> routeSortComparator(
+    agencyNameOf: (T) -> String?
+): Comparator<List<T>> =
+    compareBy<List<T>, String?>(BLANK_LAST_COMPARATOR) {
+        agencyNameOf(it.first())?.takeIf(String::isNotBlank)
+    }.thenBy(LINE_NAME_COMPARATOR) { it.first().lineName }
+        .thenBy(BLANK_LAST_COMPARATOR) { it.first().headsign?.takeIf(String::isNotBlank) }
 
 /**
  * One arrivals row: all upcoming trips for a single (route, direction) at the stop, ETA-sorted
@@ -49,9 +73,9 @@ data class RouteRowGroup(val trips: List<ArrivalInfo>) {
     /** The soonest trip; source of the row's route badge, headsign, and route-level actions/color. */
     val representative: ArrivalInfo get() = trips.first()
 
-    /** Index of the soonest *upcoming* (first non-negative ETA) trip — the ETA the row is sorted by
-     *  (see [departureSortEta]) — or null when every trip is recent-past. Lets a row justify that pill
-     *  to the leading edge so the recent-past pills overflow before it. */
+    /** Index of the soonest *upcoming* (first non-negative ETA) trip within [trips], or null when every
+     *  trip is recent-past. Lets a row justify that pill to the leading edge so the recent-past pills
+     *  overflow before it. */
     val firstUpcomingIndex: Int? get() = trips.indexOfFirst { it.eta >= 0 }.takeIf { it >= 0 }
 
     val routeId: String get() = representative.routeId
@@ -75,23 +99,36 @@ data class RouteRowGroup(val trips: List<ArrivalInfo>) {
 private fun RouteDirectionItem.groupKey(): String = "$routeId\u0000${headsign.orEmpty()}"
 
 /**
- * Groups [items] into (route, direction) rows, then orders the rows by **departure** — each row's
- * soonest *upcoming* (non-negative) ETA, so a route whose next real arrival is far off sorts below a
- * sooner one even if it also has a just-departed trip (#1707). Items within a row keep their incoming
- * ETA order (recent-past first, then upcoming). Stable, so rows with equal departure keys keep
+ * Groups [items] into (route, direction) rows, then orders the rows by the **stable** (agency, line,
+ * headsign) key (#1822) — not by ETA, so a row's position doesn't drift as arrivals tick down or a
+ * poll refreshes; only the *within-row* trip order stays ETA-driven (unchanged, see
+ * [RouteRowGroup.trips]). [agencyNameOf] resolves a group's agency name from its representative
+ * (first) item — the one part of the key not intrinsic to [RouteDirectionItem] (see
+ * [groupArrivalsByRouteDirection]'s caller for why). Stable, so groups with an equal key keep
  * first-seen order. Generic over [RouteDirectionItem] so it's testable with lightweight fakes.
  */
-fun <T : RouteDirectionItem> groupByRouteDirection(items: List<T>): List<List<T>> {
+fun <T : RouteDirectionItem> groupByRouteDirection(
+    items: List<T>,
+    agencyNameOf: (T) -> String?
+): List<List<T>> {
     val groups = LinkedHashMap<String, MutableList<T>>()
     for (item in items) {
         groups.getOrPut(item.groupKey()) { mutableListOf() }.add(item)
     }
-    return groups.values.sortedBy { it.departureSortEta() }
+    return groups.values.sortedWith(routeSortComparator(agencyNameOf))
 }
 
-/** Builds the departure-ordered route rows for the arrivals list (see [groupByRouteDirection]). */
-fun groupArrivalsByRouteDirection(arrivals: List<ArrivalInfo>): List<RouteRowGroup> =
-    groupByRouteDirection(arrivals).map { RouteRowGroup(it) }
+/**
+ * Builds the (agency, line, headsign)-ordered route rows for the arrivals list (#1822; see
+ * [groupByRouteDirection]). [agencyNameOf] resolves an arrival's agency display name — not carried on
+ * [ArrivalInfo] itself, only resolvable from the loaded snapshot's route/agency refs (see
+ * `ArrivalsRepository.toData`, the sole production caller) — null/blank sorts the row last.
+ */
+fun groupArrivalsByRouteDirection(
+    arrivals: List<ArrivalInfo>,
+    agencyNameOf: (ArrivalInfo) -> String?
+): List<RouteRowGroup> =
+    groupByRouteDirection(arrivals, agencyNameOf).map { RouteRowGroup(it) }
 
 /**
  * Stable favorite-first ordering: items whose [routeIdOf] is in [favoriteRouteIds] move to the top,
@@ -105,10 +142,11 @@ fun <T> orderGroupsByFavorite(
 ): List<T> = groups.sortedByDescending { routeIdOf(it) in favoriteRouteIds }
 
 /**
- * The final display order (#1707): **starred routes first, then the rest, each in departure order.**
- * [groups] is already departure-ordered (see [groupArrivalsByRouteDirection]) and the sort is stable,
- * so this only lifts the starred rows to the top without disturbing the within-partition order. A star
- * is the wholesale `routes.favorite` bit (#1751), so it keys off the group's route id.
+ * The final display order (#1707, #1822): **starred routes first, then the rest, each in
+ * (agency, line, headsign) order.** [groups] is already sorted that way (see
+ * [groupArrivalsByRouteDirection]) and the sort is stable, so this only lifts the starred rows to the
+ * top without disturbing the within-partition order. A star is the wholesale `routes.favorite` bit
+ * (#1751), so it keys off the group's route id.
  */
 fun orderRouteGroupsByFavorite(
     groups: List<RouteRowGroup>,

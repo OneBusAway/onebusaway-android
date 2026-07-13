@@ -331,7 +331,9 @@ class DefaultArrivalsRepository @Inject constructor(
         val activeSituationIds = situations.filter(isActive).mapTo(HashSet()) { it.id }
         return ArrivalsData(
             arrivals = arrivals,
-            routeGroups = groupArrivalsByRouteDirection(arrivals),
+            // Stable (agency, line, headsign) row order (#1822), not ETA — a row's position shouldn't
+            // drift as arrivals tick down or a poll refreshes.
+            routeGroups = groupArrivalsByRouteDirection(arrivals) { agencyNameFor(snapshot, it.routeId) },
             header = header,
             minutesAfter = snapshot.minutesAfter,
             isStale = isStale,
@@ -355,6 +357,12 @@ class DefaultArrivalsRepository @Inject constructor(
         stopDao.markStopUsed(stop, regionRepository.region.value?.id, now)
     }
 
+    /** The operating agency's display name for a route, or null when either the route or its agency
+     *  reference is missing from the snapshot. Shared by the route-row sort key and [buildActions] so
+     *  the two don't independently reimplement the same route→agency lookup. */
+    private fun agencyNameFor(snapshot: StopArrivals, routeId: String): String? =
+        snapshot.route(routeId)?.agencyId?.let(snapshot::agencyName)
+
     /** Precomputes the navigation/dialog data for each arrival (legacy reads these on menu tap). */
     private fun buildActions(
         snapshot: StopArrivals,
@@ -369,7 +377,7 @@ class DefaultArrivalsRepository @Inject constructor(
             routeLongName = arrival.routeLongName,
             routeColor = route?.color,
             scheduleUrl = route?.url,
-            agencyName = route?.agencyId?.let { snapshot.agencyName(it) },
+            agencyName = agencyNameFor(snapshot, arrival.routeId),
             blockId = snapshot.trip(arrival.tripId)?.blockId,
             alertSituationId = activeAlertFor(arrival.situationIds, activeSituationIds)
         )

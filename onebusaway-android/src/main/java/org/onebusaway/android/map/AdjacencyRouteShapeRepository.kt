@@ -30,11 +30,13 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.api.data.TripVehiclesDataSource
 import org.onebusaway.android.extrapolation.data.BoundedLruCache
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.simplifyRoutePolyline
 import org.onebusaway.android.models.TripPatternGeometry
+import org.onebusaway.android.models.RouteMapData
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.SingleFlight
 
@@ -60,6 +62,18 @@ data class AdjacencyShapes(
     val failedShapeIds: Set<String>,
 )
 
+/** Stop membership for one route, kept separate from its exact trip-pattern render geometry. */
+data class AdjacencyRouteStopMembership(
+    val stopIds: Set<String>,
+    val stopIdsByDirection: Map<Int, Set<String>>,
+)
+
+/** Route stop memberships that resolved, plus routes requiring conservative whole-route fallback. */
+data class AdjacencyRouteStops(
+    val routes: Map<String, AdjacencyRouteStopMembership>,
+    val failedRouteIds: Set<String>,
+)
+
 /**
  * Fetches the exact shapes for the distinct trip patterns with an upcoming arrival at a tapped stop.
  * Tolerates partial failure: a shape that fails lands in [AdjacencyShapes.failedShapeIds] rather than
@@ -69,6 +83,10 @@ interface AdjacencyRouteShapeRepository {
 
     /** Fetches [tripPatterns] concurrently (bounded), cached, and de-duped; never throws per shape. */
     suspend fun getShapes(tripPatterns: Set<TripPatternGeometry>): AdjacencyShapes
+
+    /** Fetches direction-specific stop membership without coupling it to rendered route geometry. */
+    suspend fun getRouteStops(routeIds: Set<String>): AdjacencyRouteStops =
+        AdjacencyRouteStops(emptyMap(), routeIds)
 }
 
 private const val MAX_CONCURRENT_SHAPE_FETCHES = 2
@@ -80,6 +98,11 @@ private const val TAG = "AdjacencyRouteShapes"
 /** One successfully mapped shape and the monotonic time it entered the completed cache. */
 private data class CachedShapeGeometry(
     val points: List<GeoPoint>,
+    val storedAt: ElapsedTime,
+)
+
+private data class CachedRouteStops(
+    val membership: AdjacencyRouteStopMembership,
     val storedAt: ElapsedTime,
 )
 
@@ -105,6 +128,31 @@ private class ShapeGeometryCache(
     @Synchronized
     fun put(shapeId: String, points: List<GeoPoint>) {
         shapes.put(shapeId, CachedShapeGeometry(points, now()))
+    }
+}
+
+/** Thread-safe, success-only LRU for the much smaller route-to-stop membership payload. */
+private class RouteStopCache(
+    maxSize: Int,
+    private val ttl: Duration,
+    private val now: () -> ElapsedTime,
+) {
+    private val routes = BoundedLruCache<String, CachedRouteStops>(maxSize)
+
+    @Synchronized
+    fun get(routeId: String): AdjacencyRouteStopMembership? {
+        val cached = routes.get(routeId) ?: return null
+        return if (now() - cached.storedAt < ttl) {
+            cached.membership
+        } else {
+            routes.remove(routeId)
+            null
+        }
+    }
+
+    @Synchronized
+    fun put(routeId: String, membership: AdjacencyRouteStopMembership) {
+        routes.put(routeId, CachedRouteStops(membership, now()))
     }
 }
 
@@ -142,18 +190,26 @@ class DefaultAdjacencyRouteShapeRepository internal constructor(
     cacheSize: Int = MAX_CACHED_SHAPES,
     cacheTtl: Duration = SHAPE_CACHE_TTL,
     now: () -> ElapsedTime = ElapsedTime::now,
+    private val mapDataSource: MapDataSource? = null,
 ) : AdjacencyRouteShapeRepository {
 
     @Inject
-    constructor(tripVehiclesDataSource: TripVehiclesDataSource) : this(
+    constructor(
+        tripVehiclesDataSource: TripVehiclesDataSource,
+        mapDataSource: MapDataSource,
+    ) : this(
         tripVehiclesDataSource = tripVehiclesDataSource,
         fetchScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
         log = { Log.w(TAG, it) },
+        mapDataSource = mapDataSource,
     )
 
     private val permits = Semaphore(MAX_CONCURRENT_SHAPE_FETCHES)
     private val shapeFetches = SingleFlight<String, List<GeoPoint>>(fetchScope)
     private val shapeCache = ShapeGeometryCache(cacheSize, cacheTtl, now)
+    private val routeStopFetches =
+        SingleFlight<String, AdjacencyRouteStopMembership>(fetchScope)
+    private val routeStopCache = RouteStopCache(cacheSize, cacheTtl, now)
 
     override suspend fun getShapes(
         tripPatterns: Set<TripPatternGeometry>
@@ -179,6 +235,18 @@ class DefaultAdjacencyRouteShapeRepository internal constructor(
             }
         }
         AdjacencyShapes(shapes, failed)
+    }
+
+    override suspend fun getRouteStops(routeIds: Set<String>): AdjacencyRouteStops = coroutineScope {
+        val results = routeIds
+            .map { routeId -> async { routeId to fetchRouteStops(routeId) } }
+            .awaitAll()
+        val routes = LinkedHashMap<String, AdjacencyRouteStopMembership>()
+        val failed = LinkedHashSet<String>()
+        for ((routeId, membership) in results) {
+            if (membership != null) routes[routeId] = membership else failed += routeId
+        }
+        AdjacencyRouteStops(routes, failed)
     }
 
     /** Returns a fresh cache hit, or joins/starts a single-flight fetch; null on failure (no throw). */
@@ -212,4 +280,34 @@ class DefaultAdjacencyRouteShapeRepository internal constructor(
             }
             ?.also { shapeCache.put(shapeId, it) }
     }
+
+    private suspend fun fetchRouteStops(routeId: String): AdjacencyRouteStopMembership? =
+        routeStopCache.get(routeId) ?: routeStopFetches.run(routeId) {
+            routeStopCache.get(routeId) ?: fetchAndCacheRouteStops(routeId)
+        }
+
+    private suspend fun fetchAndCacheRouteStops(routeId: String): AdjacencyRouteStopMembership? {
+        val dataSource = mapDataSource ?: return null
+        val data = permits.withPermit {
+            dataSource.routeMap(routeId)
+                .onFailure { log("route stop fetch failed for $routeId: $it") }
+                .getOrNull()
+        }
+        return data
+            ?.let { withContext(Dispatchers.Default) { it.toAdjacencyRouteStops() } }
+            ?.also { routeStopCache.put(routeId, it) }
+    }
 }
+
+/** Maps only direction membership; whole-route polylines deliberately stay out of this pass-through. */
+internal fun RouteMapData.toAdjacencyRouteStops(): AdjacencyRouteStopMembership =
+    AdjacencyRouteStopMembership(
+        stopIds = stops.mapTo(LinkedHashSet()) { it.stop.id },
+        stopIdsByDirection = buildMap<Int, MutableSet<String>> {
+            for (routeStop in stops) {
+                for (directionId in routeStop.directionIds) {
+                    getOrPut(directionId) { LinkedHashSet() }.add(routeStop.stop.id)
+                }
+            }
+        },
+    )

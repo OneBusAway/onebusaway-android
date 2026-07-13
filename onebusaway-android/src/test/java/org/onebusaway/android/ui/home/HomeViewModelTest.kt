@@ -162,7 +162,7 @@ class HomeViewModelTest {
         val stop = FocusedStop("1", "Main St", "100", 47.6, -122.3)
         vm.applyInitialFocus(stop)
         assertEquals(stop, vm.uiState.value.focusedStop)
-        vm.onArrivalsLoaded(obaStop, null, emptySet())
+        vm.onArrivalsLoaded(obaStop, null, emptyMap())
         advanceUntilIdle()
         assertEquals(1, map.focusStops.size) // pending was marked -> focus dispatched to the map
         job.cancel()
@@ -179,7 +179,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
         vm.applyInitialFocus(null) // intent carries no stop
         assertEquals(restored, vm.uiState.value.focusedStop) // unchanged
-        vm.onArrivalsLoaded(obaStop, null, emptySet())
+        vm.onArrivalsLoaded(obaStop, null, emptyMap())
         advanceUntilIdle()
         assertEquals(1, map.focusStops.size) // pending was marked
         job.cancel()
@@ -193,7 +193,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
         vm.applyInitialFocus(null)
         assertNull(vm.uiState.value.focusedStop)
-        vm.onArrivalsLoaded(obaStop, null, emptySet())
+        vm.onArrivalsLoaded(obaStop, null, emptyMap())
         advanceUntilIdle()
         assertEquals(0, map.focusStops.size) // not pending -> nothing dispatched
         job.cancel()
@@ -209,11 +209,11 @@ class HomeViewModelTest {
         advanceUntilIdle()
         vm.markPendingMapFocus()
         // Pending -> dispatch FocusStop (sheet not expanded -> overlayExpanded false); latch then clears.
-        vm.onArrivalsLoaded(obaStop, null, emptySet())
+        vm.onArrivalsLoaded(obaStop, null, emptyMap())
         advanceUntilIdle()
         assertEquals(1, map.focusStops.size)
         assertEquals(false, map.focusStops.single().overlayExpanded)
-        vm.onArrivalsLoaded(obaStop, null, emptySet())         // latch cleared -> no further dispatch
+        vm.onArrivalsLoaded(obaStop, null, emptyMap())         // latch cleared -> no further dispatch
         advanceUntilIdle()
         assertEquals(1, map.focusStops.size)
         job.cancel()
@@ -225,7 +225,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onArrivalsLoaded(obaStop, null, emptySet())
+        vm.onArrivalsLoaded(obaStop, null, emptyMap())
         advanceUntilIdle()
         assertEquals(0, map.focusStops.size)
         job.cancel()
@@ -242,7 +242,7 @@ class HomeViewModelTest {
         vm.onSheetSettled(ArrivalsSheetState.Expanded, 120)
 
         vm.markPendingMapFocus()
-        vm.onArrivalsLoaded(obaStop, null, emptySet())
+        vm.onArrivalsLoaded(obaStop, null, emptyMap())
         advanceUntilIdle()
         assertEquals(true, map.focusStops.single().overlayExpanded)
         job.cancel()
@@ -294,7 +294,12 @@ class HomeViewModelTest {
             TripPatternGeometry("shape-40-express", "40", 0xFF112233.toInt()),
             TripPatternGeometry("shape-44-local", "44", null),
         )
-        vm.onArrivalsLoaded(obaStop, null, setOf("40", "44"), tripPatterns)
+        vm.onArrivalsLoaded(
+            obaStop,
+            null,
+            mapOf("40" to setOf(0), "44" to setOf(1)),
+            tripPatterns,
+        )
         advanceUntilIdle()
 
         assertEquals(setOf("40", "44"), vm.focusedRouteIds)
@@ -313,7 +318,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
         vm.markPendingMapFocus()
 
-        vm.onArrivalsLoaded(obaStop, null, setOf("7"))
+        vm.onArrivalsLoaded(obaStop, null, mapOf("7" to setOf(0)))
         advanceUntilIdle()
 
         assertEquals(setOf("7"), vm.focusedRouteIds)
@@ -329,7 +334,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onArrivalsLoaded(obaStop, null, setOf("40"))
+        vm.onArrivalsLoaded(obaStop, null, mapOf("40" to setOf(0)))
         assertEquals(setOf("40"), vm.focusedRouteIds)
 
         vm.onStopFocused(FocusedStop("2", "2nd Ave", "200", 47.6, -122.3))
@@ -342,7 +347,7 @@ class HomeViewModelTest {
     @Test
     fun `clearing map focus resets the route set`() = runTest {
         val vm = viewModel()
-        vm.onArrivalsLoaded(obaStop, null, setOf("40"))
+        vm.onArrivalsLoaded(obaStop, null, mapOf("40" to setOf(0)))
         assertEquals(setOf("40"), vm.focusedRouteIds)
 
         vm.requestClearMapFocus()

@@ -367,14 +367,21 @@ class MapViewModel @Inject constructor(
         stopId: String,
         stopLat: Double,
         stopLon: Double,
-        routeIds: Set<String>,
+        routeDirections: Map<String, Set<Int>>,
         tripPatterns: Set<TripPatternGeometry>,
     ) {
         if (routeController.isActive) return
         val focusedStopId = renderState.snapshot.value.focusedStopId
         if (focusedStopId == null || !focusedStopId.equals(stopId, ignoreCase = true)) return
-        val displayedPatterns = tripPatterns.filterTo(LinkedHashSet()) { it.routeId in routeIds }
-        adjacencyController.start(stopId, GeoPoint(stopLat, stopLon), displayedPatterns)
+        val displayedPatterns = tripPatterns.filterTo(LinkedHashSet()) {
+            it.routeId in routeDirections
+        }
+        adjacencyController.start(
+            stopId = stopId,
+            stopPoint = GeoPoint(stopLat, stopLon),
+            tripPatterns = displayedPatterns,
+            routeDirections = routeDirections,
+        )
     }
 
     /** Clear only an active adjacency overlay, leaving any single-route line untouched. */

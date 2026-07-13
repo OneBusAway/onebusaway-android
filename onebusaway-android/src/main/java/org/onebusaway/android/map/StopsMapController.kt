@@ -105,6 +105,10 @@ class StopsMapController(
     // thread only (all mutators here run there), so a plain field is safe.
     private var favoriteIds: Set<String> = emptySet()
 
+    // The direction-specific stop ids served by upcoming trips, plus conservative route fallbacks for
+    // incomplete route-map responses. Null while adjacency focus is inactive.
+    private var adjacencyStopFilter: AdjacencyStopFilter? = null
+
     private var loadJob: Job? = null
 
     init {
@@ -141,6 +145,25 @@ class StopsMapController(
             for ((id, marker) in stopAccum) {
                 val favorite = id in favoriteIds
                 if (marker.favorite != favorite) add(id to marker.copy(favorite = favorite))
+            }
+        }
+        if (updates.isEmpty()) return
+        for ((id, marker) in updates) stopAccum[id] = marker
+        renderState.setStops(ArrayList(stopAccum.values))
+    }
+
+    /**
+     * Apply (or clear with null) the active adjacency stop filter. Existing accumulated stops are
+     * re-flagged immediately; [toStopMarker] applies the same rule to subsequently loaded stops.
+     */
+    internal fun setAdjacencyStopFilter(filter: AdjacencyStopFilter?) {
+        if (adjacencyStopFilter == filter) return
+        adjacencyStopFilter = filter
+
+        val updates = buildList {
+            for ((id, marker) in stopAccum) {
+                val dimmed = isStopDimmed(marker.id, marker.stop.routeIds, filter)
+                if (marker.dimmed != dimmed) add(id to marker.copy(dimmed = dimmed))
             }
         }
         if (updates.isEmpty()) return
@@ -513,6 +536,7 @@ class StopsMapController(
             stop.id, point, direction, routeType, stop,
             favorite = stop.id in favoriteIds,
             routeStop = routeStop,
+            dimmed = isStopDimmed(stop.id, stop.routeIds, adjacencyStopFilter),
         )
     }
 
@@ -523,3 +547,18 @@ class StopsMapController(
         const val DEFAULT_STOP_CACHE_SIZE = 200
     }
 }
+
+/** The exact adjacent stops plus routes kept whole only when direction membership could not resolve. */
+internal data class AdjacencyStopFilter(
+    val stopIds: Set<String>,
+    val fallbackRouteIds: Set<String> = emptySet(),
+)
+
+/** True when a stop is outside both the exact direction-specific set and every safe fallback route. */
+internal fun isStopDimmed(
+    stopId: String,
+    stopRouteIds: Array<String>,
+    filter: AdjacencyStopFilter?,
+): Boolean = filter != null &&
+    stopId !in filter.stopIds &&
+    stopRouteIds.none(filter.fallbackRouteIds::contains)

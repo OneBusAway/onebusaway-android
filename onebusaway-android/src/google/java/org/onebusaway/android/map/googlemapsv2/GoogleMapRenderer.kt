@@ -113,6 +113,9 @@ class GoogleMapRenderer(
     // The stop ids drawn as route-mode circles last reconcile, so entering/leaving route mode restyles a
     // *retained* (focused) stop whose route-circle vs nearby icon flips while focus + band stay the same.
     private var renderedRouteStopIds: Set<String> = emptySet()
+    // The stop ids last forced into their dot-band appearance by adjacency focus. Tracking them makes
+    // an adjacency enter/exit re-icon retained markers even when focus, zoom, and favorites are stable.
+    private var renderedDimmedStopIds: Set<String> = emptySet()
 
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
@@ -374,7 +377,13 @@ class GoogleMapRenderer(
             }
         }
         for (stop in stops) {
-            val kind = stopIconKind(stop.id == focusedStopId, band, stop.favorite, stop.routeStop)
+            val kind = stopIconKind(
+                focused = stop.id == focusedStopId,
+                band = band,
+                favorite = stop.favorite,
+                routeStop = stop.routeStop,
+                dimmed = stop.dimmed,
+            )
             val existing = stopMarkersByStopId[stop.id]
             if (existing == null) {
                 val (anchorX, anchorY) = stopAnchor(stop, kind)
@@ -395,6 +404,7 @@ class GoogleMapRenderer(
                     renderedStopBand,
                     stop.id in renderedFavoriteStopIds,
                     stop.id in renderedRouteStopIds,
+                    stop.id in renderedDimmedStopIds,
                 )
                 // Only the markers whose icon kind changed need a new icon (and matching anchor: the
                 // full icon is anchored on its circle per direction, the dot/star/circle at the marker
@@ -420,6 +430,7 @@ class GoogleMapRenderer(
         renderedStopBand = band
         renderedFavoriteStopIds = buildSet { for (s in stops) if (s.favorite) add(s.id) }
         renderedRouteStopIds = buildSet { for (s in stops) if (s.routeStop) add(s.id) }
+        renderedDimmedStopIds = buildSet { for (s in stops) if (s.dimmed) add(s.id) }
     }
 
     private fun stopIcon(stop: StopMarker, kind: StopIconKind): BitmapDescriptor = when (kind) {
@@ -465,6 +476,8 @@ class GoogleMapRenderer(
         stopByMarker.clear()
         renderedFocusedStopId = null
         renderedFavoriteStopIds = emptySet()
+        renderedRouteStopIds = emptySet()
+        renderedDimmedStopIds = emptySet()
 
         vehicleMarkersByTripId.values.forEach { it.remove() }
         vehicleMarkersByTripId.clear()

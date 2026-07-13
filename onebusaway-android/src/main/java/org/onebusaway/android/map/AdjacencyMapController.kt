@@ -44,12 +44,14 @@ internal class AdjacencyMapController(
     private val renderState: MapRenderState,
     private val repository: AdjacencyRouteShapeRepository,
     private val scope: CoroutineScope,
+    private val onStopFilterChanged: (AdjacencyStopFilter?) -> Unit = {},
 ) {
 
     private data class Session(
         val stopId: String,
         val stopPoint: GeoPoint,
         val tripPatterns: Set<TripPatternGeometry>,
+        val routeDirections: Map<String, Set<Int>>,
     )
 
     private var session: Session? = null
@@ -65,22 +67,41 @@ internal class AdjacencyMapController(
         stopId: String,
         stopPoint: GeoPoint,
         tripPatterns: Set<TripPatternGeometry>,
+        routeDirections: Map<String, Set<Int>> =
+            tripPatterns.associate { it.routeId to emptySet() },
     ) {
-        if (tripPatterns.isEmpty()) {
+        if (tripPatterns.isEmpty() && routeDirections.isEmpty()) {
             stop()
             return
         }
-        val next = Session(stopId, stopPoint, LinkedHashSet(tripPatterns))
+        val next = Session(
+            stopId = stopId,
+            stopPoint = stopPoint,
+            tripPatterns = LinkedHashSet(tripPatterns),
+            routeDirections = routeDirections.mapValuesTo(LinkedHashMap()) { (_, ids) ->
+                LinkedHashSet(ids)
+            },
+        )
         if (session == next) return
 
         stop()
         session = next
         loadJob = scope.launch {
-            val result = repository.getShapes(next.tripPatterns)
-            // A repository fetch can outlive a cancelled join through SingleFlight. Only the session
-            // that is still current may publish into the shared route-polyline slot.
-            if (session == next) {
-                renderState.setRoutePolylines(result.toRoutePolylines(next.stopPoint))
+            // Exact shape geometry and route stop membership are independent pass-throughs: publish
+            // whichever resolves first instead of delaying lines behind route-map metadata.
+            launch {
+                val result = repository.getShapes(next.tripPatterns)
+                // A repository fetch can outlive a cancelled join through SingleFlight. Only the
+                // session that is still current may publish into the shared route-polyline slot.
+                if (session == next) {
+                    renderState.setRoutePolylines(result.toRoutePolylines(next.stopPoint))
+                }
+            }
+            launch {
+                val result = repository.getRouteStops(next.routeDirections.keys)
+                if (session == next) {
+                    onStopFilterChanged(result.toStopFilter(next.stopId, next.routeDirections))
+                }
             }
         }
     }
@@ -94,8 +115,36 @@ internal class AdjacencyMapController(
         session = null
         loadJob?.cancel()
         loadJob = null
+        onStopFilterChanged(null)
         renderState.clearRoutePolylines()
     }
+}
+
+/**
+ * Builds the visible-stop filter from direction membership fetched independently of exact geometry.
+ * Unknown trip directions keep a whole route. Missing direction metadata or a failed route falls back
+ * conservatively to route-id membership so incomplete API data never hides a valid adjacent stop.
+ */
+internal fun AdjacencyRouteStops.toStopFilter(
+    focusedStopId: String,
+    routeDirections: Map<String, Set<Int>>,
+): AdjacencyStopFilter {
+    val stopIds = linkedSetOf(focusedStopId)
+    val fallbackRouteIds = LinkedHashSet(failedRouteIds)
+    for ((routeId, membership) in routes) {
+        val directions = routeDirections[routeId].orEmpty()
+        if (directions.isEmpty()) {
+            stopIds += membership.stopIds
+            continue
+        }
+        val directionStops = directions.map { membership.stopIdsByDirection[it] }
+        if (directionStops.any { it == null }) {
+            fallbackRouteIds += routeId
+        } else {
+            directionStops.filterNotNull().forEach(stopIds::addAll)
+        }
+    }
+    return AdjacencyStopFilter(stopIds, fallbackRouteIds)
 }
 
 /**

@@ -203,14 +203,35 @@ data class ArrivalsLoaded(
     val stop: ObaStop?,
     val routes: List<ObaRoute>?,
     val hasArrivals: Boolean,
-    /** The routes with an upcoming arrival — the drawer's rows, 1:1 (adjacency focus, #1827). Derived
-     *  from the computed [ArrivalsData.routeGroups] (which reflects the past-arrivals filter), not the
-     *  raw response, so it matches what the drawer shows. */
-    val routeIds: Set<String>,
     /** The exact distinct GTFS shapes used by the displayed arrivals' trips. Unlike [routeIds], this
      *  does not expand a route into unrelated branches or variants. */
     val tripPatterns: Set<TripPatternGeometry>,
-)
+    /**
+     * The displayed routes paired with the GTFS directions of their actual upcoming trips. An empty
+     * direction set means trip metadata was incomplete and stop minimization must retain the route.
+     */
+    val routeDirections: Map<String, Set<Int>>,
+) {
+    val routeIds: Set<String> get() = routeDirections.keys
+}
+
+/**
+ * Collapses upcoming (route, trip-direction) pairs into one stable route -> direction-set map. If any
+ * arrival for a route lacks trip metadata, that route's empty set wins so adjacency never hides a
+ * potentially valid direction based on incomplete data.
+ */
+internal fun focusedRouteDirections(entries: List<Pair<String, Int?>>): Map<String, Set<Int>> {
+    val directions = LinkedHashMap<String, MutableSet<Int>?>()
+    for ((routeId, directionId) in entries) {
+        if (!directions.containsKey(routeId)) {
+            directions[routeId] = directionId?.let { linkedSetOf(it) }
+        } else {
+            val known = directions[routeId]
+            if (directionId == null) directions[routeId] = null else known?.add(directionId)
+        }
+    }
+    return directions.mapValuesTo(LinkedHashMap()) { (_, value) -> value?.toSet().orEmpty() }
+}
 
 /** The fields the service-alert dialog shows, decoupled from `ObaSituation`. */
 data class AlertDetails(
@@ -480,15 +501,18 @@ class DefaultArrivalsRepository @Inject constructor(
 
     override fun lastLoaded(): ArrivalsLoaded? = lastGood.get()?.loaded
 
-    /** Pairs the response's stop/routes/hasArrivals with the drawer-1:1 route set and exact trip
-     *  shapes derived from the *computed* [data] (see [ArrivalsLoaded.routeIds]). */
+    /** Pairs the response's map payload with exact trip shapes and directions from displayed arrivals. */
     private fun loadedSnapshot(snapshot: StopArrivals, data: ArrivalsData): ArrivalsLoaded =
         ArrivalsLoaded(
             stop = snapshot.stop,
             routes = snapshot.routes,
             hasArrivals = snapshot.hasArrivals,
-            routeIds = focusedRouteIds(data.routeGroups),
             tripPatterns = snapshot.tripPatternGeometries(data.arrivals.map { it.tripId }),
+            routeDirections = focusedRouteDirections(
+                data.arrivals.map { arrival ->
+                    arrival.routeId to snapshot.trip(arrival.tripId)?.directionId
+                }
+            ),
         )
 
     companion object {

@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.home.map
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,6 +43,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -71,13 +73,16 @@ private val HEADER_ICON_BUTTON_SIZE = 40.dp
  * route's favorite star no longer lives here — it's the arrival row's own corner toggle.
  *
  * [onSelectDirection] switches which direction of the route is shown (the id is one of
- * [RouteHeader.directions]).
+ * [RouteHeader.directions]). [onFrameRoute] reframes the map to the route's full extent — invoked by a tap
+ * on the banner body (the badge + name column), scoped to leave the switch-direction / cancel icons as
+ * their own separate tap targets.
  */
 @Composable
 fun RouteHeaderOverlay(
     header: RouteHeader,
     onCancel: () -> Unit,
     onSelectDirection: (Int) -> Unit,
+    onFrameRoute: () -> Unit,
     onHeight: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -109,36 +114,51 @@ fun RouteHeaderOverlay(
                     .padding(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // A square route roundel: the short name shrinks to fit inside the tile, on the same
-                // HCT-normalized GTFS-color chip as the arrival rows.
-                val (badgeContainer, badgeContent) = rememberRouteBadgeColors(header.routeColor)
-                LineBadge(
-                    text = header.shortName,
-                    maxFontSize = 45.sp,
-                    width = 64.dp,
-                    square = true,
-                    color = badgeContent,
-                    containerColor = badgeContainer,
-                    modifier = Modifier.padding(horizontal = 10.dp),
-                )
-                Column(Modifier.weight(1f)) {
-                    if (header.longName.isNotEmpty()) {
-                        Text(
-                            text = header.longName,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    if (directionLabel != null) {
-                        // The same arrow-glyph + tightened-monospace treatment as an arrivals row, so
-                        // the headsign reads identically on both surfaces (#1823).
-                        DirectionHeadsign(directionLabel)
-                    }
-                    if (header.agency.isNotEmpty()) {
-                        // One type-scale step below the direction line so it recedes as secondary info.
-                        Text(text = header.agency, style = MaterialTheme.typography.bodySmall)
+                // The badge + name column is one tap target that reframes the map to the route's extent.
+                // Scoped to this inner Row (given the outer Row's remaining width via weight) so it doesn't
+                // overlap the switch-direction / cancel icons, which consume their own taps as separate
+                // nodes; the click semantics announce the action for accessibility.
+                Row(
+                    Modifier
+                        .weight(1f)
+                        .clickable(
+                            onClickLabel = stringResource(R.string.route_header_frame_route),
+                            role = Role.Button,
+                            onClick = onFrameRoute,
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // A square route roundel: the short name shrinks to fit inside the tile, on the same
+                    // HCT-normalized GTFS-color chip as the arrival rows.
+                    val (badgeContainer, badgeContent) = rememberRouteBadgeColors(header.routeColor)
+                    LineBadge(
+                        text = header.shortName,
+                        maxFontSize = 45.sp,
+                        width = 64.dp,
+                        square = true,
+                        color = badgeContent,
+                        containerColor = badgeContainer,
+                        modifier = Modifier.padding(horizontal = 10.dp),
+                    )
+                    Column(Modifier.weight(1f)) {
+                        if (header.longName.isNotEmpty()) {
+                            Text(
+                                text = header.longName,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        if (directionLabel != null) {
+                            // The same arrow-glyph + tightened-monospace treatment as an arrivals row, so
+                            // the headsign reads identically on both surfaces (#1823).
+                            DirectionHeadsign(directionLabel)
+                        }
+                        if (header.agency.isNotEmpty()) {
+                            // One type-scale step below the direction line so it recedes as secondary info.
+                            Text(text = header.agency, style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
                 // A route with a single direction has nothing to switch to — the affordance is hidden.
@@ -250,6 +270,7 @@ private fun RouteHeaderOverlayPreview() {
                 ),
                 onCancel = {},
                 onSelectDirection = {},
+                onFrameRoute = {},
                 onHeight = {},
             )
             Spacer(Modifier.size(12.dp))
@@ -268,6 +289,7 @@ private fun RouteHeaderOverlayPreview() {
                 ),
                 onCancel = {},
                 onSelectDirection = {},
+                onFrameRoute = {},
                 onHeight = {},
             )
             Spacer(Modifier.size(12.dp))
@@ -287,6 +309,7 @@ private fun RouteHeaderOverlayPreview() {
                 ),
                 onCancel = {},
                 onSelectDirection = {},
+                onFrameRoute = {},
                 onHeight = {},
             )
             Spacer(Modifier.size(12.dp))
@@ -300,6 +323,7 @@ private fun RouteHeaderOverlayPreview() {
                 ),
                 onCancel = {},
                 onSelectDirection = {},
+                onFrameRoute = {},
                 onHeight = {},
             )
             Spacer(Modifier.size(12.dp))
@@ -308,6 +332,7 @@ private fun RouteHeaderOverlayPreview() {
                 header = RouteHeader(loading = true, shortName = "", longName = "", agency = ""),
                 onCancel = {},
                 onSelectDirection = {},
+                onFrameRoute = {},
                 onHeight = {},
             )
         }

@@ -461,6 +461,9 @@ fun HomeScreen(
                             // The switch-direction affordance calls straight into the map VM (which
                             // re-filters stops/vehicles + persists the choice), like the height report below.
                             onSelectRouteDirection = mapViewModel::selectRouteDirection,
+                            // Tapping the header body reframes the map to the route's full extent (VM
+                            // re-issues the retained route framing).
+                            onFrameRoute = mapViewModel::frameRoute,
                             onLearnMore = onLearnMore,
                             onOpenSurvey = onOpenSurvey,
                             // The route header reports its height straight to the map VM (which owns the
@@ -561,6 +564,7 @@ private fun BoxScope.HomeMapOverlays(
     routeHeader: RouteHeader?,
     onCancelRouteMode: () -> Unit,
     onSelectRouteDirection: (Int) -> Unit,
+    onFrameRoute: () -> Unit,
     onLearnMore: () -> Unit,
     onOpenSurvey: (url: String) -> Unit,
     onRouteHeaderHeight: (Int) -> Unit,
@@ -589,6 +593,7 @@ private fun BoxScope.HomeMapOverlays(
             header = routeHeader,
             onCancel = onCancelRouteMode,
             onSelectDirection = onSelectRouteDirection,
+            onFrameRoute = onFrameRoute,
             onHeight = onRouteHeaderHeight,
             modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(),
         )

@@ -176,7 +176,7 @@ class RouteRowGroupingTest {
         // aside, this covers hypothetical equal-but-distinct groups).
         val items = listOf(
             FakeItem("first", "X", eta = 1, agencyName = "Metro", lineName = "8"),
-            FakeItem("second", "Y", eta = 1, agencyName = "Metro", lineName = "40"),
+            FakeItem("second", "X", eta = 1, agencyName = "Metro", lineName = "8"),
         )
         assertEquals(listOf("first", "second"), group(items).map { it.first().routeId })
     }

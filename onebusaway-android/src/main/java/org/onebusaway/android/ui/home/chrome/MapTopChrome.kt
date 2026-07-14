@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -57,6 +58,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
@@ -117,6 +120,9 @@ private fun SearchField(
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
+    // Shown as the visual placeholder AND set as the field's accessibility label — decorationBox text
+    // alone isn't exposed to screen readers, so BasicTextField needs the label in semantics too.
+    val hint = stringResource(R.string.search_hint)
     Surface(
         modifier = modifier.height(TOP_CHROME_HEIGHT),
         shape = RoundedCornerShape(percent = 50),
@@ -146,12 +152,14 @@ private fun SearchField(
                 keyboardActions = KeyboardActions(
                     onSearch = { if (query.isNotBlank()) onSubmit(query.trim()) }
                 ),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .semantics { contentDescription = hint },
                 decorationBox = { innerTextField ->
                     Box(contentAlignment = Alignment.CenterStart) {
                         if (query.isEmpty()) {
                             Text(
-                                stringResource(R.string.search_hint),
+                                hint,
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = LocalContentColor.current.copy(alpha = 0.6f)
                             )
@@ -183,3 +191,11 @@ private val TOP_CHROME_HEIGHT = 50.dp
  * the menu FAB / search field — the single source of truth, so resizing the row re-clears every overlay.
  */
 internal val MAP_TOP_CHROME_CLEARANCE = TOP_CHROME_TOP_MARGIN + TOP_CHROME_HEIGHT + 8.dp
+
+/**
+ * Insets a top-of-map overlay layer to sit below the floating chrome: the status-bar inset plus
+ * [MAP_TOP_CHROME_CLEARANCE]. Both HomeScreen (its overlay container) and MapFeature (the stops-notice
+ * pill) apply this one modifier, so the status-bar + clearance handling can't drift between them.
+ */
+fun Modifier.mapTopChromeOverlayInset(): Modifier =
+    this.statusBarsPadding().padding(top = MAP_TOP_CHROME_CLEARANCE)

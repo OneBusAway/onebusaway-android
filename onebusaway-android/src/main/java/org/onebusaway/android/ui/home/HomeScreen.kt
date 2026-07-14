@@ -74,6 +74,7 @@ import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
 import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 import org.onebusaway.android.ui.home.chrome.MapTopChrome
+import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.drawer.HomeNavDrawerSheet
 import org.onebusaway.android.ui.home.drawer.NavDrawerViewModel
 import org.onebusaway.android.ui.home.donation.DonationFeature
@@ -446,18 +447,14 @@ fun HomeScreen(
                             fabBottomInset = fabInsetTarget,
                             modifier = Modifier.fillMaxSize(),
                         )
-                        // The floating top chrome + the map overlays share one status-bar-inset layer over
-                        // the (now edge-to-edge) map. MapTopChrome is drawn LAST so the menu + search FABs
-                        // stay on top of (and tappable above) every overlay — including the route-mode header,
-                        // which now floats as a card below the FAB row rather than covering it.
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .statusBarsPadding()
-                        ) {
-                            // Every top-of-map overlay sits below the chrome row via this one shared inset, so
-                            // no individual overlay has to know the FAB-row height.
-                            Box(Modifier.fillMaxSize().padding(top = MAP_TOP_CHROME_CLEARANCE)) {
+                        // The floating top chrome + the map overlays draw over the (now edge-to-edge) map.
+                        // MapTopChrome is drawn LAST so the menu + search FABs stay on top of (and tappable
+                        // above) every overlay — including the route-mode header, which now floats as a card
+                        // below the FAB row rather than covering it.
+                        Box(Modifier.fillMaxSize()) {
+                            // Every top-of-map overlay sits below the chrome row via one shared inset
+                            // (status bar + clearance), so no individual overlay has to know the FAB-row height.
+                            Box(Modifier.fillMaxSize().mapTopChromeOverlayInset()) {
                                 HomeMapOverlays(
                                     weatherViewModel = weatherViewModel,
                                     donationViewModel = donationViewModel,
@@ -477,12 +474,15 @@ fun HomeScreen(
                                     onRouteHeaderHeight = mapViewModel::setRouteHeaderHeight,
                                 )
                             }
+                            // The FAB row itself only takes the status-bar inset (no clearance) so it sits at
+                            // the very top; the overlay layer above adds the clearance below it.
                             MapTopChrome(
                                 onOpenDrawer = openDrawer,
                                 onSearch = onSearch,
                                 // Recent stops/routes lives in the drawer, so the onboarding spotlight points at
                                 // the menu FAB that opens it (was the retired overflow ⋮).
                                 menuModifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_MORE_MENU),
+                                modifier = Modifier.statusBarsPadding(),
                             )
                         }
                     }

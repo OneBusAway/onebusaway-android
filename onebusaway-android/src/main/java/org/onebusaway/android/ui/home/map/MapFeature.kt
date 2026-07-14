@@ -36,7 +36,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -84,7 +83,7 @@ import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.HomeViewModel
 import org.onebusaway.android.ui.home.MapDirective
-import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
+import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
 import org.onebusaway.android.util.LayerUtils
 import org.onebusaway.android.util.ObaRequestErrors
@@ -301,14 +300,14 @@ fun MapFeature(
     // limitExceeded), or "showing saved stops" when a load failed with cached stops on screen (offline,
     // #1754). Driven purely by map state.
     val stopsBanner by mapViewModel.stopsBanner.collectAsStateWithLifecycle()
-    // The map is now edge-to-edge (no solid top bar), so this notice applies its own status-bar inset and
-    // floats as a pill at the top-center. clipToBounds clips the upward slide so the pill tucks up out of
-    // view (behind the status bar) rather than drawing over it.
+    // The map is now edge-to-edge (no solid top bar), so this notice floats as a pill at the top-center,
+    // below the floating top chrome — the same shared inset (status bar + clearance) the HomeScreen
+    // overlays use, so the pill lines up with them and can't drift from the FAB-row height.
     Box(
         Modifier
             .fillMaxSize()
-            .statusBarsPadding()
             .clipToBounds()
+            .mapTopChromeOverlayInset()
     ) {
         StopsInfoBanner(
             banner = stopsBanner,
@@ -406,9 +405,6 @@ private fun StopsInfoBanner(banner: StopsBanner, modifier: Modifier = Modifier) 
         val pillShape = RoundedCornerShape(16.dp)
         Row(
             modifier = Modifier
-                // Drop below the floating top chrome (menu FAB + search field), which is drawn in a layer
-                // above this one and would otherwise occlude the pill at the very top edge.
-                .padding(top = MAP_TOP_CHROME_CLEARANCE)
                 .shadow(6.dp, pillShape)
                 .clip(pillShape)
                 // A neutral, informational tint (not a warning), alpha'd so the map shows through slightly.

@@ -38,7 +38,7 @@ lint = "32.2.0"
 # --- Libraries ---
 desugar = "2.1.5"
 firebaseCore = "21.1.1"
-firebaseAnalytics = "22.1.2"
+firebaseAnalytics = "23.2.0"
 firebaseFirestore = "25.1.0"
 firebaseAuth = "21.0.5"
 firebaseStorage = "21.0.1"

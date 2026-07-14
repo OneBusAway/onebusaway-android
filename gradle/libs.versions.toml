@@ -80,7 +80,7 @@ commonsIo = "2.4"
 commonsLang3 = "3.0"
 gtfsRealtime = "0.0.8"
 protoGoogleCommonProtos = "2.9.0"
-maplibre = "11.5.2"
+maplibre = "13.3.1"
 # Test-only
 androidxTestRunner = "1.6.2"
 androidxTestJunit = "1.2.1"

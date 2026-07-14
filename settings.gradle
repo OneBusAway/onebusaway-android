@@ -1,5 +1,19 @@
+pluginManagement {
+    // Where the plugins referenced from the `plugins {}` DSL (root + module scripts) are resolved.
+    // Replaces the old root `buildscript { repositories { ... } }` (#1819). gradlePluginPortal covers
+    // play-publisher / foojay; google() + mavenCentral() cover AGP, Kotlin, KSP, Hilt, Apollo, etc.
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
 plugins {
+    // Settings-scope plugin: it runs before the version catalog is available, so its version stays a
+    // literal here rather than a `libs.` reference.
     id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
+
 include ':onebusaway-android'
 include ':lint-rules'

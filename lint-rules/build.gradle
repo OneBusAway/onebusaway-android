@@ -4,12 +4,13 @@
  * A plain JVM (non-Android) module: lint checks are ordinary UAST detectors packaged into a jar and
  * consumed by the app module via `lintChecks project(':lint-rules')`. Nothing here runs on device.
  */
-apply plugin: 'java-library'
-apply plugin: 'org.jetbrains.kotlin.jvm'
+plugins {
+    id 'java-library'
+    alias(libs.plugins.kotlin.jvm)
+}
 
-// The lint tooling version tracks AGP: lintVersion == agpVersion + 23.0.0. AGP is 9.2.0 (root
-// buildscript), so the matching com.android.tools.lint artifacts are 32.2.0.
-ext.lintVersion = '32.2.0'
+// The lint tooling version tracks AGP (lintVersion == agpVersion + 23.0.0); both live in
+// gradle/libs.versions.toml.
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -22,13 +23,13 @@ kotlin {
 
 dependencies {
     // lint-api/lint-checks are provided by the lint runtime that loads this jar, so compileOnly.
-    compileOnly "com.android.tools.lint:lint-api:$lintVersion"
-    compileOnly "com.android.tools.lint:lint-checks:$lintVersion"
+    compileOnly libs.lint.api
+    compileOnly libs.lint.checks
 
-    testImplementation "com.android.tools.lint:lint-api:$lintVersion"
-    testImplementation "com.android.tools.lint:lint-checks:$lintVersion"
-    testImplementation "com.android.tools.lint:lint-tests:$lintVersion"
-    testImplementation 'junit:junit:4.13.2'
+    testImplementation libs.lint.api
+    testImplementation libs.lint.checks
+    testImplementation libs.lint.tests
+    testImplementation libs.junit
 }
 
 // Lint discovers the registry through this manifest attribute when the jar is loaded via lintChecks.

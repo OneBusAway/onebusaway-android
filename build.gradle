@@ -16,30 +16,30 @@
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-buildscript {
-    ext.kotlin_version = '2.3.20'
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:9.2.0'
-        classpath 'com.google.gms:google-services:4.4.4'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        // kotlinx.serialization compiler plugin; version tracks the Kotlin version. Backs the
-        // OBA REST stack in api/ (Retrofit + kotlinx.serialization).
-        classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
-        // Compose compiler plugin; version == Kotlin version. The Kotlin 2.x compiler is
-        // backward-compatible with the Compose 1.11.x runtime used in the app module.
-        classpath "org.jetbrains.kotlin:compose-compiler-gradle-plugin:$kotlin_version"
-        classpath "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:2.3.4"
-        classpath 'com.google.dagger:hilt-android-gradle-plugin:2.59.2'
-        // OTP 2.x GraphQL trip-planning client (#1780) — generates typed Kotlin from
-        // onebusaway-android/src/main/graphql/otp2/{schema.graphqls,Plan.graphql}.
-        classpath 'com.apollographql.apollo:apollo-gradle-plugin:5.0.1'
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.6'
-        classpath 'com.github.triplet.gradle:play-publisher:4.0.0'
-    }
+// Plugins are declared here (apply false) so their versions — sourced from gradle/libs.versions.toml —
+// are pinned build-wide and applied per-module. Replaces the old `buildscript { classpath ... }` block
+// (#1819); plugin resolution repositories now live in settings.gradle's pluginManagement.
+plugins {
+    alias(libs.plugins.android.application) apply false
+    // kotlin-android is applied transitively (the compose/serialization compiler plugins pull in KGP),
+    // not by id in the app module; declaring it here pins the Kotlin version on the classpath exactly
+    // as the old `classpath "kotlin-gradle-plugin"` did. kotlin-jvm is applied by :lint-rules.
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
+    // Compose compiler plugin; version == Kotlin version. The Kotlin 2.x compiler is backward-compatible
+    // with the Compose 1.11.x runtime used in the app module.
+    alias(libs.plugins.kotlin.compose) apply false
+    // kotlinx.serialization compiler plugin; version tracks the Kotlin version. Backs the OBA REST
+    // stack in api/ (Retrofit + kotlinx.serialization).
+    alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.hilt.android) apply false
+    // OTP 2.x GraphQL trip-planning client (#1780) — generates typed Kotlin from
+    // onebusaway-android/src/main/graphql/otp2/{schema.graphqls,Plan.graphql}.
+    alias(libs.plugins.apollo) apply false
+    alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
+    alias(libs.plugins.play.publisher) apply false
 }
 
 allprojects {

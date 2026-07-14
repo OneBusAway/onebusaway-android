@@ -138,7 +138,7 @@ fun MapTopChrome(
             SearchField(
                 recents = recents,
                 focused = searchFocused,
-                onFocusChanged = { searchFocused = it },
+                onFocusChange = { searchFocused = it },
                 // Leaving search (submit / recents tap) clears focus first, so the field collapses and
                 // returning to HOME doesn't strand it expanded.
                 onSubmit = { query ->
@@ -162,21 +162,21 @@ fun MapTopChrome(
 
 /**
  * The always-visible search field: a floating rounded pill with a leading search glyph, an inline query
- * field (never autofocused, so the keyboard only appears once the user taps it), and a clear button that
- * shows once there is text. Submitting via the IME "search" action forwards a non-blank, trimmed query to
- * [onSubmit].
+ * field (never autofocused, so the keyboard only appears once the user taps it), and a trailing X that
+ * clears the query when there's text and otherwise (on a focused, blank field) dismisses the search.
+ * Submitting via the IME "search" action forwards a non-blank, trimmed query to [onSubmit].
  *
  * When [focused] with matching [recents], the pill morphs into a connected rounded surface that hosts the
  * [SearchRecentsDropdown] beneath the query row (one surface, one shadow — so the field + dropdown read as
  * a single expanded control). Tapping a recent row fires [onRecentStop] / [onRecentRoute]; submitting runs
  * a full search (distinct from the recents). Focus is owned by the caller ([MapTopChrome]), which reports
- * changes via [onFocusChanged] and drives collapse (clearing focus) on submit / recents tap / tap-outside.
+ * changes via [onFocusChange] and drives collapse (clearing focus) on submit / recents tap / tap-outside.
  */
 @Composable
 private fun SearchField(
     recents: List<RecentItem>,
     focused: Boolean,
-    onFocusChanged: (Boolean) -> Unit,
+    onFocusChange: (Boolean) -> Unit,
     onSubmit: (String) -> Unit,
     onRecentStop: (id: String, name: String?) -> Unit,
     onRecentRoute: (routeId: String) -> Unit,
@@ -193,16 +193,14 @@ private fun SearchField(
     val shown = remember(recents, query) { filterRecents(recents, query) }
     val expanded = focused && shown.isNotEmpty()
 
-    // Morph the pill (fully rounded) into a rounded-top / less-rounded-bottom surface when it expands, so
-    // the field + dropdown read as one connected container rather than two stacked pills.
-    val shape = if (expanded) {
-        RoundedCornerShape(
-            topStart = TOP_CHROME_HEIGHT / 2, topEnd = TOP_CHROME_HEIGHT / 2,
-            bottomStart = 20.dp, bottomEnd = 20.dp,
-        )
-    } else {
-        RoundedCornerShape(percent = 50)
-    }
+    // Only the bottom corners morph: a full pill when collapsed, with its bottom squared slightly when it
+    // expands so it reads as one connected surface with the dropdown beneath it.
+    val pillRadius = TOP_CHROME_HEIGHT / 2
+    val bottomRadius = if (expanded) EXPANDED_BOTTOM_RADIUS else pillRadius
+    val shape = RoundedCornerShape(
+        topStart = pillRadius, topEnd = pillRadius,
+        bottomStart = bottomRadius, bottomEnd = bottomRadius,
+    )
 
     Surface(
         modifier = modifier,
@@ -237,7 +235,7 @@ private fun SearchField(
                     ),
                     modifier = Modifier
                         .weight(1f)
-                        .onFocusChanged { onFocusChanged(it.isFocused) }
+                        .onFocusChanged { onFocusChange(it.isFocused) }
                         .semantics { contentDescription = hint },
                     decorationBox = { innerTextField ->
                         Box(contentAlignment = Alignment.CenterStart) {
@@ -255,9 +253,16 @@ private fun SearchField(
                 // The X shows whenever the field is active — there's text, or the field is focused with the
                 // recents list showing. It clears the query when there's text; on an already-blank field
                 // (recents showing) the same X dismisses the search (clears focus, collapsing the dropdown).
+                // The glyph is the same either way (per design); the a11y label tracks the actual action.
                 if (query.isNotEmpty() || expanded) {
-                    IconButton(onClick = { if (query.isNotEmpty()) query = "" else onDismiss() }) {
-                        Icon(Icons.Default.Clear, stringResource(R.string.stop_info_clear))
+                    val hasText = query.isNotEmpty()
+                    IconButton(onClick = { if (hasText) query = "" else onDismiss() }) {
+                        Icon(
+                            Icons.Default.Clear,
+                            contentDescription = stringResource(
+                                if (hasText) R.string.stop_info_clear else R.string.search_close
+                            ),
+                        )
                     }
                 }
             }
@@ -279,6 +284,10 @@ private val TOP_CHROME_TOP_MARGIN = 8.dp
 // Both the menu FAB and the search field are sized to this height — ~90% of the default 56dp FAB, so the
 // top chrome sits a touch more compactly over the map.
 private val TOP_CHROME_HEIGHT = 50.dp
+
+// The search field's bottom-corner radius while expanded: squared off from the full pill so it connects
+// to the recents dropdown beneath it.
+private val EXPANDED_BOTTOM_RADIUS = 20.dp
 
 /**
  * Vertical footprint of the floating top chrome below the status-bar inset: its top margin + the row

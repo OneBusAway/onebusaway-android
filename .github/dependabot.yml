@@ -1,0 +1,41 @@
+# Dependabot configuration
+# Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Gradle dependency/plugin versions and the SDK/JDK levels resolve from the
+# version catalog at gradle/libs.versions.toml (see CLAUDE.md). Dependabot reads
+# the catalog and the Kotlin-DSL build scripts directly.
+version: 2
+updates:
+  # Gradle: app + plugin dependencies (via gradle/libs.versions.toml)
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    # Group low-risk updates into a single PR to cut review noise; keep major
+    # bumps as individual PRs since CI is strict (warnings-as-errors + lint) and
+    # they need careful, one-at-a-time review.
+    groups:
+      gradle-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+
+  # GitHub Actions used by the CI workflows under .github/workflows/
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      github-actions:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+      - github-actions

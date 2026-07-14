@@ -44,9 +44,11 @@ import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapPing
+import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.map.render.MapVehicles
+import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.StopIconKind
 import org.onebusaway.android.map.render.StopMarker
@@ -67,11 +69,12 @@ import org.onebusaway.android.util.getRouteDisplayName
  * `StopOverlay` used), keeping marker→data maps so the host can route taps back to focus/info-window
  * handlers.
  *
- * Two redraw paths, mirroring the Google flavor's two recomposition boundaries:
- *  - [renderStatic] clear-and-redraws the static annotations (route polylines / bikes / generics /
- *    trip-stop dots) and reconciles the stop markers in place ([reconcileStopMarkers], so unchanged
- *    stops don't blink), driven by snapshot/trip-stop changes (viewport loads, the vehicle poll,
- *    focus) — a bounded cost.
+ * Three redraw paths split by update cadence:
+ *  - [renderRoutePolylines] independently reconciles the infrequently-changing route layer, so
+ *    stop-only viewport updates retain every long native line.
+ *  - [renderStatic] clear-and-redraws the remaining static annotations (bikes / generics / trip-stop
+ *    dots) and reconciles stop markers in place ([reconcileStopMarkers], so unchanged stops neither
+ *    blink nor receive redundant native position writes).
  *  - [renderDynamic] (the live vehicle markers + the selected vehicle's band/fast-estimate marker) is pulled each
  *    display frame by the adapter's vsync loop. It updates marker positions **in place** (so an open
  *    info window survives and there's no per-frame flicker) and only adds/removes annotations as the
@@ -114,9 +117,15 @@ class MapLibreRenderer(
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
-    // The static annotations added by the last [renderStatic], removed (not map.clear()) on the next so
-    // the per-frame dynamic layer below survives a static redraw.
+    // The non-route static annotations added by the last [renderStatic], removed (not map.clear()) on
+    // the next so the retained route and per-frame dynamic layers survive a static redraw.
     private val staticAnnotations = mutableListOf<Annotation>()
+
+    // Whole-route lines are reconciled independently from the combined static snapshot: stop list,
+    // focus, or bike changes retain these native polylines. Snapshot copies keep the same List instance,
+    // making the common stop-only update an O(1) identity check; equal republished values are retained too.
+    private val routePolylines = mutableListOf<Polyline>()
+    private var renderedRoutePolylines: List<RoutePolyline> = emptyList()
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
     // vehicles keyed by active trip id, the trip-focus estimate markers keyed by role, and the band's
@@ -161,10 +170,9 @@ class MapLibreRenderer(
     private val pingPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE } }
 
     /** Redraw the static layer (everything but the live vehicles + trip-focus overlay). */
-    fun renderStatic() {
-        val snapshot = renderState.snapshot.value
-        // Remove only our own static annotations (not map.clear(), which would also wipe the per-frame
-        // dynamic layer), then redraw them from the snapshot. Classic annotations have no diffing.
+    fun renderStatic(snapshot: MapRenderSnapshot = renderState.snapshot.value) {
+        // Remove only our own non-route static annotations (not map.clear(), which would also wipe the
+        // retained route and per-frame dynamic layers), then redraw them from the snapshot.
         if (staticAnnotations.isNotEmpty()) {
             map.removeAnnotations(staticAnnotations)
             staticAnnotations.clear()
@@ -172,14 +180,6 @@ class MapLibreRenderer(
         // Stop markers are reconciled in place (not in staticAnnotations), so they survive this; only
         // the bike tap map is cleared here.
         bikeByMarker.clear()
-
-        for (polyline in snapshot.routePolylines) {
-            val options = PolylineOptions().color(polyline.resolvedColor).width(polyline.widthDp ?: ROUTE_WIDTH_DP)
-            for (point in polyline.points) {
-                options.add(point.toLatLng())
-            }
-            staticAnnotations.add(map.addPolyline(options))
-        }
 
         reconcileStopMarkers(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
 
@@ -215,6 +215,23 @@ class MapLibreRenderer(
                     MarkerOptions().position(generic.point.toLatLng())
                 )
             )
+        }
+    }
+
+    /** Reconcile the independently collected route layer, retaining equal native polylines. */
+    fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
+        if (renderedRoutePolylines === next || renderedRoutePolylines == next) return
+
+        if (routePolylines.isNotEmpty()) map.removeAnnotations(routePolylines)
+        routePolylines.clear()
+        renderedRoutePolylines = next
+
+        for (polyline in next) {
+            val options = PolylineOptions().color(polyline.resolvedColor).width(polyline.widthDp ?: ROUTE_WIDTH_DP)
+            for (point in polyline.points) {
+                options.add(point.toLatLng())
+            }
+            routePolylines.add(map.addPolyline(options))
         }
     }
 
@@ -254,13 +271,15 @@ class MapLibreRenderer(
                 )
                 // Only the markers whose icon kind changed need a new icon (maplibre centers the icon
                 // on the position, so the dot/star/circle lands on the stop with no anchor change).
-                // Position and the backing StopMarker are refreshed unconditionally, since a projected
-                // route stop can keep the same kind (ROUTE_CIRCLE) while its on-route point moves —
-                // gating those on the kind change would strand the marker at a stale coordinate.
+                // Geometry and tap data are compared with the previously rendered model below: a
+                // projected route stop can move without a kind change, but the common retained nearby
+                // stop now avoids a redundant native position write.
                 if (previousKind != kind) {
                     existing.icon = stopIcon(stop, kind)
                 }
-                existing.position = stop.point.toLatLng()
+                if (stopByMarker[existing]?.point != stop.point) {
+                    existing.position = stop.point.toLatLng()
+                }
                 stopByMarker[existing] = stop
             }
         }

@@ -38,7 +38,7 @@ To build a variant, you need to combine the platform flavor with the brand flavo
 
 ## Creating a New Brand
 
-Brand flavors are defined in separate files in the `onebusaway-android/flavors/` directory. This keeps the main `build.gradle` clean and makes it easy to add new brands.
+Brand flavors are defined in separate files in the `onebusaway-android/flavors/` directory. This keeps the main `build.gradle.kts` clean and makes it easy to add new brands.
 
 First, we recommend that you review the sample brands (`agencyX`, `agencyY`, `kiedybus`) to see how brands are implemented.
 

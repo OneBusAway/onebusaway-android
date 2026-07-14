@@ -30,10 +30,13 @@ adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.u
 All dependency and plugin coordinates resolve from the Gradle **version catalog** at
 `gradle/libs.versions.toml` (auto-imported; exposes `libs.*` accessors). Bump a version there, in one
 place — not in a build script. Plugins are applied via the `plugins {}` DSL (`alias(libs.plugins.…)`),
-with resolution repositories in `settings.gradle`'s `pluginManagement`; the root `build.gradle` declares
-them `apply false`. The scripts are still **Groovy** — the Kotlin DSL (`.kts`) conversion is a separate,
-later step of #1819. The catalog migration kept every version bit-identical (no upgrades rode along), so
-don't treat a bump as part of "the catalog work."
+with resolution repositories in `settings.gradle.kts`'s `pluginManagement`; the root `build.gradle.kts`
+declares them `apply false`. All the build scripts are **Kotlin DSL** (`.kts`) — root, `settings`, the
+app module (`onebusaway-android/build.gradle.kts`), and `:lint-rules`. The brand flavor files under
+`onebusaway-android/flavors/` stay Groovy `.gradle` (they're the white-label extension mechanism, applied
+via `apply(from = …)`), and `getPeliasKey` lives in `flavors/load-flavors.gradle` so those Groovy files
+can call it. The migration kept every version bit-identical (no upgrades rode along), so don't treat a
+bump as part of "the catalog work."
 
 ### Variant grid: `check`/`test` only exercise the `oba` brand by default
 
@@ -41,7 +44,7 @@ The app has two flavor dimensions — **brand** (`oba`, `agencyX`, `agencyY`, `k
 (`google`, `maplibre`) — so `test`/`check` would otherwise fan out `testXUnitTest` across all 8 debug
 variants. Only `oba` ships; `agencyX`/`agencyY` are sample white-label rebrands and `kiedybus` is a
 third-party brand, all sharing identical code (they differ only in resources/manifest/appId). So a
-`beforeVariants` filter in `onebusaway-android/build.gradle` **disables unit + Android tests for every
+`beforeVariants` filter in `onebusaway-android/build.gradle.kts` **disables unit + Android tests for every
 non-`oba` brand**, shrinking the routine grid to `obaGoogle` + `obaMaplibre`.
 
 - The brand **main** variants stay enabled — `./gradlew assembleAgencyXGoogleDebug` (etc.) still builds
@@ -100,7 +103,7 @@ Uses [gradle-play-publisher](https://github.com/Triple-T/gradle-play-publisher) 
 ./gradlew bootstrapObaGoogleReleaseListing
 ```
 
-Configuration is in the `play {}` block of `onebusaway-android/build.gradle`. Default: App Bundles to the **beta** (open testing) track with auto-incrementing `versionCode`.
+Configuration is in the `play {}` block of `onebusaway-android/build.gradle.kts`. Default: App Bundles to the **beta** (open testing) track with auto-incrementing `versionCode`.
 
 ## Build Variants
 

@@ -44,7 +44,7 @@ internal class AdjacencyMapController(
     private val renderState: MapRenderState,
     private val repository: AdjacencyRouteShapeRepository,
     private val scope: CoroutineScope,
-    private val onStopFilterChanged: (AdjacencyStopFilter?) -> Unit = {},
+    private val onStopFilterChanged: (AdjacencyStopFilter?) -> Unit,
 ) {
 
     private data class Session(

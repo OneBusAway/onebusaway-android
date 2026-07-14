@@ -40,4 +40,17 @@ class ArrivalsAdjacencyTest {
 
         assertEquals(mapOf("route" to emptySet<Int>()), result)
     }
+
+    @Test
+    fun `no upcoming trips falls back to every route serving the focused stop`() {
+        val result = focusedRouteDirections(
+            entries = emptyList(),
+            fallbackRouteIds = listOf("route", "other"),
+        )
+
+        assertEquals(
+            linkedMapOf("route" to emptySet<Int>(), "other" to emptySet()),
+            result,
+        )
+    }
 }

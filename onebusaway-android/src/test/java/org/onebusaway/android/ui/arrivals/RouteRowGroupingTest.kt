@@ -263,24 +263,6 @@ class RouteRowGroupingTest {
         assertEquals(listOf("A", "B"), order(items, setOf("A", "B")))
     }
 
-    // Route-id set (adjacency focus, #1827) -------------------------------------------------------
-
-    @Test
-    fun routeIdSet_dedupesRoutesAndKeepsFirstSeenOrder() {
-        // Two directions of route A, interleaved with B — one distinct id per route, first-seen order.
-        val items = listOf(
-            FakeItem("A", "North", 2),
-            FakeItem("B", "East", 5),
-            FakeItem("A", "South", 8),
-        )
-        assertEquals(listOf("A", "B"), routeIdSet(items) { it.routeId }.toList())
-    }
-
-    @Test
-    fun routeIdSet_empty_returnsEmpty() {
-        assertEquals(emptySet<String>(), routeIdSet(emptyList<FakeItem>()) { it.routeId })
-    }
-
     // Group-level active-alert resolution ---------------------------------------------------------
 
     /** A minimal [ArrivalActions] carrying just the alert id under test — the row derivation reads

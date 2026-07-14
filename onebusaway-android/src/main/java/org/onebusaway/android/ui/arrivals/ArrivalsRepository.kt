@@ -207,24 +207,27 @@ data class ArrivalsLoaded(
     val stop: ObaStop?,
     val routes: List<ObaRoute>?,
     val hasArrivals: Boolean,
-    /** The exact distinct GTFS shapes used by the displayed arrivals' trips. Unlike [routeIds], this
-     *  does not expand a route into unrelated branches or variants. */
+    /** The exact distinct GTFS shapes used by the displayed arrivals' trips, without expanding a
+     *  route into unrelated branches or variants. */
     val tripPatterns: Set<TripPatternGeometry>,
     /**
      * The displayed routes paired with the GTFS directions of their actual upcoming trips. An empty
      * direction set means trip metadata was incomplete and stop minimization must retain the route.
      */
     val routeDirections: Map<String, Set<Int>>,
-) {
-    val routeIds: Set<String> get() = routeDirections.keys
-}
+)
 
 /**
  * Collapses upcoming (route, trip-direction) pairs into one stable route -> direction-set map. If any
  * arrival for a route lacks trip metadata, that route's empty set wins so adjacency never hides a
- * potentially valid direction based on incomplete data.
+ * potentially valid direction based on incomplete data. When there are no upcoming arrivals, all
+ * routes serving the focused stop are returned with unknown direction so adjacency can still focus
+ * their stops.
  */
-internal fun focusedRouteDirections(entries: List<Pair<String, Int?>>): Map<String, Set<Int>> {
+internal fun focusedRouteDirections(
+    entries: List<Pair<String, Int?>>,
+    fallbackRouteIds: Iterable<String> = emptyList(),
+): Map<String, Set<Int>> {
     val directions = LinkedHashMap<String, MutableSet<Int>?>()
     for ((routeId, directionId) in entries) {
         if (!directions.containsKey(routeId)) {
@@ -234,6 +237,7 @@ internal fun focusedRouteDirections(entries: List<Pair<String, Int?>>): Map<Stri
             if (directionId == null) directions[routeId] = null else known?.add(directionId)
         }
     }
+    if (directions.isEmpty()) return fallbackRouteIds.associateWith { emptySet() }
     return directions.mapValuesTo(LinkedHashMap()) { (_, value) -> value?.toSet().orEmpty() }
 }
 
@@ -274,7 +278,7 @@ class DefaultArrivalsRepository @Inject constructor(
      * - [receivedAt] — the monotonic device time the snapshot was received, so the stale-fallback path
      *   can project that server clock forward by elapsed device time (#1612).
      * - [loaded] — the map-relevant snapshot prebuilt from the *computed* [ArrivalsData] so its
-     *   [ArrivalsLoaded.routeIds] matches the drawer's rows (see [ArrivalsLoaded]).
+     *   [ArrivalsLoaded.routeDirections] matches the drawer's rows (see [ArrivalsLoaded]).
      *
      * Published through the single [AtomicReference] [lastGood] with one write per load, so a
      * concurrent getArrivals (e.g. a user refresh overlapping the poll loop) can't publish a new
@@ -518,7 +522,8 @@ class DefaultArrivalsRepository @Inject constructor(
             routeDirections = focusedRouteDirections(
                 data.arrivals.map { arrival ->
                     arrival.routeId to snapshot.trip(arrival.tripId)?.directionId
-                }
+                },
+                fallbackRouteIds = snapshot.stop?.routeIds.orEmpty().asIterable(),
             ),
         )
 

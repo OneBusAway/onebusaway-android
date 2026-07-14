@@ -35,8 +35,8 @@ import org.onebusaway.android.api.data.TripVehiclesDataSource
 import org.onebusaway.android.extrapolation.data.BoundedLruCache
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.simplifyRoutePolyline
-import org.onebusaway.android.models.TripPatternGeometry
 import org.onebusaway.android.models.RouteMapData
+import org.onebusaway.android.models.TripPatternGeometry
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.SingleFlight
 
@@ -85,8 +85,7 @@ interface AdjacencyRouteShapeRepository {
     suspend fun getShapes(tripPatterns: Set<TripPatternGeometry>): AdjacencyShapes
 
     /** Fetches direction-specific stop membership without coupling it to rendered route geometry. */
-    suspend fun getRouteStops(routeIds: Set<String>): AdjacencyRouteStops =
-        AdjacencyRouteStops(emptyMap(), routeIds)
+    suspend fun getRouteStops(routeIds: Set<String>): AdjacencyRouteStops
 }
 
 private const val MAX_CONCURRENT_SHAPE_FETCHES = 2
@@ -95,64 +94,33 @@ private const val ADJACENCY_SHAPE_SIMPLIFICATION_METERS = 2.0
 private val SHAPE_CACHE_TTL = 10.minutes
 private const val TAG = "AdjacencyRouteShapes"
 
-/** One successfully mapped shape and the monotonic time it entered the completed cache. */
-private data class CachedShapeGeometry(
-    val points: List<GeoPoint>,
+private data class CachedValue<V>(
+    val value: V,
     val storedAt: ElapsedTime,
 )
 
-private data class CachedRouteStops(
-    val membership: AdjacencyRouteStopMembership,
-    val storedAt: ElapsedTime,
-)
-
-/** Thread-safe, success-only LRU with an age limit so GTFS shape changes eventually refresh. */
-private class ShapeGeometryCache(
+/** Thread-safe, success-only LRU with an age limit so server data eventually refreshes. */
+private class ExpiringLruCache<K : Any, V : Any>(
     maxSize: Int,
     private val ttl: Duration,
     private val now: () -> ElapsedTime,
 ) {
-    private val shapes = BoundedLruCache<String, CachedShapeGeometry>(maxSize)
+    private val values = BoundedLruCache<K, CachedValue<V>>(maxSize)
 
     @Synchronized
-    fun get(shapeId: String): List<GeoPoint>? {
-        val cached = shapes.get(shapeId) ?: return null
+    fun get(key: K): V? {
+        val cached = values.get(key) ?: return null
         return if (now() - cached.storedAt < ttl) {
-            cached.points
+            cached.value
         } else {
-            shapes.remove(shapeId)
+            values.remove(key)
             null
         }
     }
 
     @Synchronized
-    fun put(shapeId: String, points: List<GeoPoint>) {
-        shapes.put(shapeId, CachedShapeGeometry(points, now()))
-    }
-}
-
-/** Thread-safe, success-only LRU for the much smaller route-to-stop membership payload. */
-private class RouteStopCache(
-    maxSize: Int,
-    private val ttl: Duration,
-    private val now: () -> ElapsedTime,
-) {
-    private val routes = BoundedLruCache<String, CachedRouteStops>(maxSize)
-
-    @Synchronized
-    fun get(routeId: String): AdjacencyRouteStopMembership? {
-        val cached = routes.get(routeId) ?: return null
-        return if (now() - cached.storedAt < ttl) {
-            cached.membership
-        } else {
-            routes.remove(routeId)
-            null
-        }
-    }
-
-    @Synchronized
-    fun put(routeId: String, membership: AdjacencyRouteStopMembership) {
-        routes.put(routeId, CachedRouteStops(membership, now()))
+    fun put(key: K, value: V) {
+        values.put(key, CachedValue(value, now()))
     }
 }
 
@@ -206,10 +174,12 @@ class DefaultAdjacencyRouteShapeRepository internal constructor(
 
     private val permits = Semaphore(MAX_CONCURRENT_SHAPE_FETCHES)
     private val shapeFetches = SingleFlight<String, List<GeoPoint>>(fetchScope)
-    private val shapeCache = ShapeGeometryCache(cacheSize, cacheTtl, now)
+    private val shapeCache =
+        ExpiringLruCache<String, List<GeoPoint>>(cacheSize, cacheTtl, now)
     private val routeStopFetches =
         SingleFlight<String, AdjacencyRouteStopMembership>(fetchScope)
-    private val routeStopCache = RouteStopCache(cacheSize, cacheTtl, now)
+    private val routeStopCache =
+        ExpiringLruCache<String, AdjacencyRouteStopMembership>(cacheSize, cacheTtl, now)
 
     override suspend fun getShapes(
         tripPatterns: Set<TripPatternGeometry>

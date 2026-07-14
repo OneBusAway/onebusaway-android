@@ -27,7 +27,7 @@ If you want more info about building the other brands, please see the [Rebrandin
 
 1. Download, install, and run the latest version of [Android Studio](http://developer.android.com/sdk/installing/studio.html).
 1. At the welcome screen select `Import Project`, browse to the location of this repository and select it then select Ok.
-1. Open the Android SDK Manager (Tools->Android->SDK Manager) and add a checkmark for the necessary API level (see `compileSdkVersion` in [`onebusaway-android/build.gradle`](onebusaway-android/build.gradle)) then select OK.
+1. Open the Android SDK Manager (Tools->Android->SDK Manager) and add a checkmark for the necessary API level (see `compileSdk` in [`onebusaway-android/build.gradle.kts`](onebusaway-android/build.gradle.kts)) then select OK.
 1. Connect a [debugging enabled](https://developer.android.com/tools/device.html) Android device to your computer or setup an Android Virtual Device (Tools->Andorid->AVD Manager).
 1. Open the "Build Variants" window (it appears as a vertical button on left side of workspace by default) & choose **obaGoogleDebug** to select the Google Play version.
 1. Click the green play button (or Alt+Shift+F10) to build and run the project!
@@ -70,7 +70,7 @@ key.keypassword=<your_key_password>
 Note that the paths in these files always use the Unix path separator `/`, even on Windows. If you use the Windows path separator `\` you will get the error `No value has been specified for property 'signingConfig.keyAlias'.`
 
 Before doing each release build, you'll need to:
-1. Set `versionName` in `onebusaway-android/build.gradle` to the appropriate next semantic version name. If you are using the automated publishing workflow (see below), `versionCode` is auto-incremented. Otherwise, bump `versionCode` by 1 manually.
+1. Set `versionName` in `onebusaway-android/build.gradle.kts` to the appropriate next semantic version name. If you are using the automated publishing workflow (see below), `versionCode` is auto-incremented. Otherwise, bump `versionCode` by 1 manually.
 2. Check `onebusaway-android/src/main/res/values/strings.xml` element `main_help_whatsnew` to make sure that the latest changes we want to highlight for the user are entered there. After update, users see this in a dialog.
 
 Then, to build all flavors run:
@@ -115,7 +115,7 @@ This creates a `src/obaGoogleRelease/play/` directory with your listing text, gr
 
 #### Configuration
 
-The default configuration (in `onebusaway-android/build.gradle`) publishes App Bundles to the **beta** (open testing) track with auto-incrementing `versionCode`. To change the target track, update the `track` property in the `play {}` block to `"internal"`, `"alpha"`, or `"production"`.
+The default configuration (in `onebusaway-android/build.gradle.kts`) publishes App Bundles to the **beta** (open testing) track with auto-incrementing `versionCode`. To change the target track, update the `track` property in the `play {}` block to `"internal"`, `"alpha"`, or `"production"`.
 
 ### Release testing protocol
 

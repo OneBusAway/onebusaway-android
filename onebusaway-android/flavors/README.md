@@ -4,12 +4,12 @@ This directory contains modular Gradle configuration files for each white-label 
 
 ## Architecture
 
-Instead of a large `productFlavors {}` block in `build.gradle`, each brand has its own configuration file:
+Instead of a large `productFlavors {}` block in `build.gradle.kts`, each brand has its own configuration file:
 
 ```
 flavors/
 ├── README.md            # This file
-├── load-flavors.gradle  # Auto-loader script (applied from build.gradle)
+├── load-flavors.gradle  # Auto-loader script (applied from build.gradle.kts); also defines getPeliasKey
 ├── oba.gradle           # OneBusAway (original brand)
 ├── agencyX.gradle       # Sample multi-region brand
 ├── agencyY.gradle       # Sample fixed-region brand

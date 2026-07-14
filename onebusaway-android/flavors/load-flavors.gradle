@@ -13,6 +13,18 @@
  * infinite recursion.
  */
 
+/**
+ * Gets the Pelias geocoding API key for the given product flavor, from the -PPelias_<flavor>
+ * gradle property (empty string when unset). Defined here — a Groovy script applied ahead of the
+ * brand flavor files below — rather than in the (now Kotlin DSL) build.gradle.kts, so the Groovy
+ * flavor files can keep calling it by name (#1819). Exposed as an ext closure so it resolves as a
+ * project-level method from the flavor scripts' scope.
+ */
+ext.getPeliasKey = { productFlavor ->
+    def keyName = "Pelias" + "_" + productFlavor
+    project.hasProperty(keyName) ? project.property(keyName) : ""
+}
+
 def flavorsDir = file("flavors")
 def loaderFile = "load-flavors.gradle"
 

@@ -42,8 +42,8 @@ interface ObaMapCallbacks {
     /** The route-continuation badge tap (#1691) — the host navigates the map to [routeId]'s [directionId]. */
     fun onRouteContinuationClick(routeId: String, directionId: Int?) {}
 
-    /** An adjacency route badge tap (#1827) — the host enters whole-route mode for [routeId]. */
-    fun onRouteBadgeClick(routeId: String) {}
+    /** An adjacency route badge tap (#1827) — enter route mode on the badge's line direction. */
+    fun onRouteBadgeClick(routeId: String, directionId: Int?) {}
 
     /** The vehicle info-window "more info" tap — the host navigates (e.g. to TripDetails). */
     fun onVehicleInfoWindowClick(status: ObaTripStatus)

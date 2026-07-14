@@ -6,6 +6,7 @@
 package org.onebusaway.android.map
 
 import org.onebusaway.android.map.layout.RouteBadgeLayoutInput
+import org.onebusaway.android.map.layout.RouteBadgePath
 import org.onebusaway.android.map.layout.layoutRouteBadges
 import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
@@ -66,7 +67,10 @@ internal fun FocusedTripGeometry.toRouteBadges(routes: List<ObaRoute>): List<Rou
     }
     val placements = layoutRouteBadges(
         specs.map { spec ->
-            RouteBadgeLayoutInput(spec.route.id, spec.shapes.map(FocusedTripShape::points))
+            RouteBadgeLayoutInput(
+                spec.route.id,
+                spec.shapes.map { shape -> RouteBadgePath(shape.points, shape.directionId) },
+            )
         }
     ).associateBy { it.routeId }
     return buildList {
@@ -80,6 +84,7 @@ internal fun FocusedTripGeometry.toRouteBadges(routes: List<ObaRoute>): List<Rou
                         ?: spec.route.color
                         ?: DEFAULT_ROUTE_LINE_COLOR,
                     point = placement.point,
+                    directionId = placement.directionId,
                 )
             )
         }

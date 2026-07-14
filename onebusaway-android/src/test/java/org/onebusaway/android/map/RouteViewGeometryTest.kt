@@ -92,9 +92,13 @@ class RouteViewGeometryTest {
         val secondPath = listOf(GeoPoint(1.0, 0.0), GeoPoint(1.0, 1.0))
         val geometry = FocusedTripGeometry(
             linkedMapOf(
-                "b-shape" to FocusedTripShape("b-shape", "route-b", null, firstPath),
-                "a-shape-1" to FocusedTripShape("a-shape-1", "route-a", 0xFF123456.toInt(), firstPath),
-                "a-shape-2" to FocusedTripShape("a-shape-2", "route-a", 0xFF123456.toInt(), secondPath),
+                "b-shape" to FocusedTripShape("b-shape", "route-b", null, firstPath, directionId = 1),
+                "a-shape-1" to FocusedTripShape(
+                    "a-shape-1", "route-a", 0xFF123456.toInt(), firstPath, directionId = 0,
+                ),
+                "a-shape-2" to FocusedTripShape(
+                    "a-shape-2", "route-a", 0xFF123456.toInt(), secondPath, directionId = 1,
+                ),
             )
         )
 
@@ -106,6 +110,7 @@ class RouteViewGeometryTest {
         assertEquals(listOf("B", "A"), badges.map { it.routeShortName })
         assertEquals(0xFFABCDEF.toInt(), badges[0].color)
         assertEquals(0xFF123456.toInt(), badges[1].color)
+        assertEquals(listOf(1, 0), badges.map { it.directionId })
         assertEquals(GeoPoint(0.0, 0.5), badges[0].point)
         assertTrue(haversineMeters(badges[0].point, badges[1].point) >= 299.9)
     }

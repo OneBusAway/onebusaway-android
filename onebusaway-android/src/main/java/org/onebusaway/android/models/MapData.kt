@@ -31,6 +31,7 @@ data class FocusedTrip(
     val routeId: String,
     val shapeId: String?,
     val routeColor: Int?,
+    val directionId: Int? = null,
 )
 
 /**

@@ -27,13 +27,17 @@ class RouteBadgeLayoutTest {
             listOf(
                 RouteBadgeLayoutInput(
                     "route",
-                    listOf(path(0.0, 0.0, 0.01), path(1.0, 10.0, 14.0)),
+                    listOf(
+                        RouteBadgePath(path(0.0, 0.0, 0.01), 0),
+                        RouteBadgePath(path(1.0, 10.0, 14.0), 1),
+                    ),
                 )
             )
         ).single()
 
         assertEquals(1.0, placement.point.latitude, 0.001)
         assertEquals(12.0, placement.point.longitude, 0.000001)
+        assertEquals(1, placement.directionId)
     }
 
     @Test
@@ -81,7 +85,12 @@ class RouteBadgeLayoutTest {
             listOf(
                 RouteBadgeLayoutInput(
                     "route",
-                    listOf(listOf(GeoPoint(1.0, 1.0), GeoPoint(1.0, 1.0))),
+                    listOf(
+                        RouteBadgePath(
+                            listOf(GeoPoint(1.0, 1.0), GeoPoint(1.0, 1.0)),
+                            directionId = 1,
+                        )
+                    ),
                 )
             )
         )
@@ -89,8 +98,8 @@ class RouteBadgeLayoutTest {
         assertTrue(placements.isEmpty())
     }
 
-    private fun input(id: String, points: List<GeoPoint>) =
-        RouteBadgeLayoutInput(id, listOf(points))
+    private fun input(id: String, points: List<GeoPoint>, directionId: Int? = null) =
+        RouteBadgeLayoutInput(id, listOf(RouteBadgePath(points, directionId)))
 
     private fun path(latitude: Double, vararg longitudes: Double) =
         longitudes.map { longitude -> GeoPoint(latitude, longitude) }

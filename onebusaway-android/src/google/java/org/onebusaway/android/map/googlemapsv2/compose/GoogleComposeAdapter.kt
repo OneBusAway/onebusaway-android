@@ -371,7 +371,7 @@ private fun routeMarkerTap(
     }
     val routeBadge = renderer.routeBadgeForMarker(marker)
     if (routeBadge != null) {
-        cb.onRouteBadgeClick(routeBadge.routeId)
+        cb.onRouteBadgeClick(routeBadge.routeId, routeBadge.directionId)
         return true
     }
     // Trip-focus estimate markers + the most-recent-data dot (titled markers): the SDK's default

@@ -23,16 +23,23 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+/** One directional shape on which a route badge may be anchored. */
+data class RouteBadgePath(
+    val points: List<GeoPoint>,
+    val directionId: Int?,
+)
+
 /** One route and the already-loaded geographic shapes on which its badge may be anchored. */
 data class RouteBadgeLayoutInput(
     val routeId: String,
-    val paths: List<List<GeoPoint>>,
+    val paths: List<RouteBadgePath>,
 )
 
 /** A stable geographic badge anchor. Input order determines collision priority. */
 data class RouteBadgePlacement(
     val routeId: String,
     val point: GeoPoint,
+    val directionId: Int?,
     val overlaps: Boolean,
 )
 
@@ -67,7 +74,7 @@ fun layoutRouteBadges(
             }
             val overlaps = clear == null && occupied.isNotEmpty()
             occupied += point
-            add(RouteBadgePlacement(input.routeId, point, overlaps))
+            add(RouteBadgePlacement(input.routeId, point, path.directionId, overlaps))
         }
     }
 }
@@ -75,6 +82,7 @@ fun layoutRouteBadges(
 private data class MeasuredPath(
     val points: List<GeoPoint>,
     val cumulativeMeters: DoubleArray,
+    val directionId: Int?,
 ) {
     val lengthMeters: Double get() = cumulativeMeters.last()
 
@@ -91,13 +99,14 @@ private data class MeasuredPath(
     }
 }
 
-private fun measurePath(points: List<GeoPoint>): MeasuredPath? {
+private fun measurePath(path: RouteBadgePath): MeasuredPath? {
+    val points = path.points
     if (points.size < 2) return null
     val cumulative = DoubleArray(points.size)
     for (index in 1..points.lastIndex) {
         cumulative[index] = cumulative[index - 1] + haversineMeters(points[index - 1], points[index])
     }
-    return MeasuredPath(points, cumulative).takeIf { it.lengthMeters > 0.0 }
+    return MeasuredPath(points, cumulative, path.directionId).takeIf { it.lengthMeters > 0.0 }
 }
 
 private fun candidateDistances(lengthMeters: Double, separationMeters: Double, maxSteps: Int): List<Double> {

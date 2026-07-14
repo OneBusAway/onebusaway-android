@@ -45,6 +45,7 @@ data class FocusedTripShape(
     val routeId: String,
     val routeColor: Int?,
     val points: List<GeoPoint>,
+    val directionId: Int? = null,
 )
 
 data class FocusedTripGeometry(val shapes: Map<String, FocusedTripShape>)
@@ -133,7 +134,16 @@ class DefaultFocusedTripRepository internal constructor(
                 for ((trip, points) in resolved) {
                     if (points != null) {
                         val shapeId = checkNotNull(trip.shapeId)
-                        put(shapeId, FocusedTripShape(shapeId, trip.routeId, trip.routeColor, points))
+                        put(
+                            shapeId,
+                            FocusedTripShape(
+                                shapeId,
+                                trip.routeId,
+                                trip.routeColor,
+                                points,
+                                trip.directionId,
+                            )
+                        )
                     }
                 }
             }

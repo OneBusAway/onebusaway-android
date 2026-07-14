@@ -86,14 +86,15 @@ class FocusedTripRepositoryTest {
 
         val result = repository.getGeometry(
             setOf(
-                FocusedTrip("first", "route", "shared", 7),
-                FocusedTrip("second", "route", "shared", 7),
+                FocusedTrip("first", "route", "shared", 7, directionId = 1),
+                FocusedTrip("second", "route", "shared", 7, directionId = 1),
                 FocusedTrip("failed", "route", "missing", 8),
                 FocusedTrip("no-shape", "route", null, 9),
             )
         )
 
         assertEquals(setOf("shared"), result.shapes.keys)
+        assertEquals(1, result.shapes.getValue("shared").directionId)
         assertEquals(1, observations.shapeRequests.count { it.second == "shared" })
         assertEquals(1, observations.shapeRequests.count { it.second == "missing" })
         assertNull(result.shapes["missing"])

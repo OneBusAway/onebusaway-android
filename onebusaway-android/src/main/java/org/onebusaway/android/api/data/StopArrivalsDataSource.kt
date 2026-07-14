@@ -82,11 +82,13 @@ class StopArrivals internal constructor(
     fun focusedTrips(trips: Iterable<Pair<String, String>>): Set<FocusedTrip> =
         trips.mapNotNullTo(LinkedHashSet()) { (rawTripId, routeId) ->
             val tripId = rawTripId.takeIf(String::isNotBlank) ?: return@mapNotNullTo null
+            val trip = trip(tripId)
             FocusedTrip(
                 tripId = tripId,
                 routeId = routeId,
-                shapeId = trip(tripId)?.shapeId?.takeIf(String::isNotBlank),
+                shapeId = trip?.shapeId?.takeIf(String::isNotBlank),
                 routeColor = route(routeId)?.color,
+                directionId = trip?.directionId,
             )
         }
 

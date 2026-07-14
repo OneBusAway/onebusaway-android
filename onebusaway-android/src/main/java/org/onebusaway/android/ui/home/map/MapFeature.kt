@@ -182,8 +182,8 @@ fun MapFeature(
                 mapViewModel.toRoute(ShowRouteRequest(routeId, initialDirectionId = directionId))
             }
 
-            override fun onRouteBadgeClick(routeId: String) {
-                mapViewModel.toRoute(ShowRouteRequest(routeId))
+            override fun onRouteBadgeClick(routeId: String, directionId: Int?) {
+                mapViewModel.toRoute(ShowRouteRequest(routeId, initialDirectionId = directionId))
             }
 
             override fun onVehicleInfoWindowClick(status: ObaTripStatus) {

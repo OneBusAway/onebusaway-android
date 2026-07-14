@@ -34,8 +34,12 @@ class StopArrivalsTripPatternTest {
                 references = References(
                     routes = listOf(RouteReference(id = "route")),
                     trips = listOf(
-                        TripReference(id = "served-1", routeId = "route", shapeId = "served-shape"),
-                        TripReference(id = "served-2", routeId = "route", shapeId = "served-shape"),
+                        TripReference(
+                            id = "served-1", routeId = "route", shapeId = "served-shape", directionId = "1",
+                        ),
+                        TripReference(
+                            id = "served-2", routeId = "route", shapeId = "served-shape", directionId = "1",
+                        ),
                         TripReference(id = "other-branch", routeId = "route", shapeId = "other-shape"),
                         TripReference(id = "missing-shape", routeId = "route"),
                     ),
@@ -56,9 +60,9 @@ class StopArrivalsTripPatternTest {
 
         assertEquals(
             setOf(
-                FocusedTrip("served-1", "route", "served-shape", null),
-                FocusedTrip("served-2", "route", "served-shape", null),
-                FocusedTrip("missing-shape", "route", null, null),
+                FocusedTrip("served-1", "route", "served-shape", null, directionId = 1),
+                FocusedTrip("served-2", "route", "served-shape", null, directionId = 1),
+                FocusedTrip("missing-shape", "route", null, null, directionId = 0),
                 FocusedTrip("unknown-trip", "route", null, null),
             ),
             trips,

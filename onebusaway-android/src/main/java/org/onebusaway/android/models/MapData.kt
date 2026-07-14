@@ -26,6 +26,17 @@ data class NearbyStops(
 )
 
 /**
+ * One distinct trip pattern to draw for a focused stop. [shapeId] identifies the exact GTFS shape
+ * used by an upcoming trip, rather than the union of every branch belonging to [routeId]. Multiple
+ * arrivals that share a shape collapse to one instance before the map fetches or renders it.
+ */
+data class TripPatternGeometry(
+    val shapeId: String,
+    val routeId: String,
+    val routeColor: Int?,
+)
+
+/**
  * A route's stops, the serving routes (for stop-marker icons), the route + agency name, and its
  * decoded shape. Polylines are [Location] points (the neutral geo type); the map layer turns them
  * into its render `GeoPoint`s. Each [RouteMapStop] carries the direction(s) it serves, so the overlay

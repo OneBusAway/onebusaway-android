@@ -33,6 +33,7 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTrip
+import org.onebusaway.android.models.TripPatternGeometry
 
 /**
  * A resolved snapshot of a stop's arrivals-and-departures: the [arrivals] plus the references the
@@ -76,6 +77,22 @@ class StopArrivals internal constructor(
 
     /** Resolves a trip from the references pool by id (for its block id), or null. */
     fun trip(id: String): ObaTrip? = refs.trip(id)?.let(::DtoTrip)
+
+    /**
+     * Resolves the exact, distinct GTFS shapes used by [tripIds]. This deliberately starts from the
+     * displayed arrivals' trip ids instead of expanding their route ids through `stops-for-route`,
+     * which would include unrelated branches and variants of the same route.
+     */
+    fun tripPatternGeometries(tripIds: Iterable<String>): Set<TripPatternGeometry> =
+        tripIds.mapNotNullTo(LinkedHashSet()) { tripId ->
+            val trip = trip(tripId) ?: return@mapNotNullTo null
+            val shapeId = trip.shapeId?.takeIf(String::isNotBlank) ?: return@mapNotNullTo null
+            TripPatternGeometry(
+                shapeId = shapeId,
+                routeId = trip.routeId,
+                routeColor = route(trip.routeId)?.color,
+            )
+        }
 
     /** Resolves a situation (service alert) from the references pool by id, or null. */
     fun situation(id: String): ObaSituation? = refs.situation(id)?.let(::DtoSituation)

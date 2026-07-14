@@ -24,46 +24,52 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
-import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
-import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.TripPatternGeometry
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AdjacencyMapControllerTest {
 
     private data class Request(
-        val routeIds: Set<String>,
+        val tripPatterns: Set<TripPatternGeometry>,
         val result: CompletableDeferred<AdjacencyShapes> = CompletableDeferred(),
     )
 
     private class FakeRepository : AdjacencyRouteShapeRepository {
         val requests = mutableListOf<Request>()
 
-        override suspend fun getShapes(routeIds: Set<String>): AdjacencyShapes {
-            val request = Request(LinkedHashSet(routeIds))
+        override suspend fun getShapes(
+            tripPatterns: Set<TripPatternGeometry>
+        ): AdjacencyShapes {
+            val request = Request(LinkedHashSet(tripPatterns))
             requests += request
             return request.result.await()
         }
     }
 
     @Test
-    fun `resolved shapes publish colored whole-route lines and ignore invalid paths`() = runTest {
+    fun `resolved shapes publish colored downstream lines and ignore invalid paths`() = runTest {
         val state = MapRenderState()
         val repository = FakeRepository()
         val controller = AdjacencyMapController(state, repository, backgroundScope)
         val first = listOf(GeoPoint(47.60, -122.30), GeoPoint(47.61, -122.31))
         val second = listOf(GeoPoint(47.62, -122.32), GeoPoint(47.63, -122.33))
 
-        controller.start("stop", linkedSetOf("red", "fallback", "failed"))
+        controller.start(
+            "stop",
+            first.first(),
+            patterns("red", "invalid", "fallback", "failed"),
+        )
         runCurrent()
         repository.requests.single().result.complete(
             AdjacencyShapes(
                 shapes = linkedMapOf(
-                    "red" to shape("red", 0xFFCC0000.toInt(), listOf(first, listOf(first.first()))),
-                    "fallback" to shape("fallback", null, listOf(second)),
+                    "red" to shape("red", 0xFFCC0000.toInt(), first),
+                    "invalid" to shape("invalid", null, listOf(first.first())),
+                    "fallback" to shape("fallback", null, second),
                 ),
-                failedRouteIds = setOf("failed"),
+                failedShapeIds = setOf("failed"),
             )
         )
         runCurrent()
@@ -71,7 +77,11 @@ class AdjacencyMapControllerTest {
         val lines = state.snapshot.value.routePolylines
         assertEquals(listOf(first, second), lines.map { it.points })
         assertEquals(listOf(0xFFCC0000.toInt(), null), lines.map { it.color })
-        assertTrue(lines.all { it.widthDp == ROUTE_LINE_WIDTH_DP && !it.directional && !it.dashed })
+        assertTrue(
+            lines.all {
+                it.widthDp == ADJACENCY_DOWNSTREAM_LINE_WIDTH_DP && !it.directional && !it.dashed
+            }
+        )
         assertTrue(
             lines.all {
                 it.transforms == setOf(
@@ -89,18 +99,18 @@ class AdjacencyMapControllerTest {
         val controller = AdjacencyMapController(state, repository, backgroundScope)
         val oldLine = line(GeoPoint(1.0, 1.0), GeoPoint(2.0, 2.0))
 
-        controller.start("stop", setOf("a"))
+        controller.start("stop", oldLine.points.first(), patterns("a"))
         runCurrent()
         repository.requests.single().result.complete(shapes("a", oldLine.points))
         runCurrent()
-        controller.start("stop", setOf("a"))
+        controller.start("stop", oldLine.points.first(), patterns("a"))
         runCurrent()
         assertEquals(1, repository.requests.size)
 
-        controller.start("stop", setOf("a", "b"))
+        controller.start("stop", oldLine.points.first(), patterns("a", "b"))
         runCurrent()
         assertTrue(state.snapshot.value.routePolylines.isEmpty())
-        assertEquals(setOf("a", "b"), repository.requests.last().routeIds)
+        assertEquals(setOf("a", "b"), repository.requests.last().tripPatterns.map { it.shapeId }.toSet())
     }
 
     @Test
@@ -111,15 +121,15 @@ class AdjacencyMapControllerTest {
         val oldPoints = listOf(GeoPoint(1.0, 1.0), GeoPoint(2.0, 2.0))
         val newPoints = listOf(GeoPoint(3.0, 3.0), GeoPoint(4.0, 4.0))
 
-        controller.start("old", setOf("old-route"))
+        controller.start("old", oldPoints.first(), patterns("old-shape"))
         runCurrent()
         val oldRequest = repository.requests.single()
-        controller.start("new", setOf("new-route"))
+        controller.start("new", newPoints.first(), patterns("new-shape"))
         runCurrent()
         val newRequest = repository.requests.last()
 
-        oldRequest.result.complete(shapes("old-route", oldPoints))
-        newRequest.result.complete(shapes("new-route", newPoints))
+        oldRequest.result.complete(shapes("old-shape", oldPoints))
+        newRequest.result.complete(shapes("new-shape", newPoints))
         runCurrent()
 
         assertEquals(listOf(newPoints), state.snapshot.value.routePolylines.map { it.points })
@@ -136,31 +146,49 @@ class AdjacencyMapControllerTest {
         controller.stop()
         assertEquals(listOf(foreignLine), state.snapshot.value.routePolylines)
 
-        controller.start("stop", setOf("a"))
+        controller.start("stop", foreignLine.points.first(), patterns("a"))
         runCurrent()
-        controller.start("stop", emptySet())
+        controller.start("stop", foreignLine.points.first(), emptySet())
 
         assertTrue(state.snapshot.value.routePolylines.isEmpty())
         assertEquals(1, repository.requests.size)
     }
 
-    private fun shapes(routeId: String, points: List<GeoPoint>) = AdjacencyShapes(
-        shapes = mapOf(routeId to shape(routeId, null, listOf(points))),
-        failedRouteIds = emptySet(),
+    @Test
+    fun `shape is split at projected stop with thin upstream and wide downstream`() {
+        val start = GeoPoint(0.0, 0.0)
+        val middle = GeoPoint(0.0, 10.0)
+        val end = GeoPoint(0.0, 20.0)
+        val projectedStop = GeoPoint(0.0, 4.0)
+        val result = shapes("shape", listOf(start, middle, end))
+
+        val lines = result.toRoutePolylines(GeoPoint(1.0, 4.0))
+
+        assertEquals(
+            listOf(
+                listOf(start, projectedStop),
+                listOf(projectedStop, middle, end),
+            ),
+            lines.map { it.points },
+        )
+        assertEquals(
+            listOf(ADJACENCY_UPSTREAM_LINE_WIDTH_DP, ADJACENCY_DOWNSTREAM_LINE_WIDTH_DP),
+            lines.map { it.widthDp },
+        )
+        assertTrue(ADJACENCY_DOWNSTREAM_LINE_WIDTH_DP > ADJACENCY_UPSTREAM_LINE_WIDTH_DP)
+    }
+
+    private fun shapes(shapeId: String, points: List<GeoPoint>) = AdjacencyShapes(
+        shapes = mapOf(shapeId to shape(shapeId, null, points)),
+        failedShapeIds = emptySet(),
     )
 
-    private fun shape(routeId: String, color: Int?, polylines: List<List<GeoPoint>>) =
-        AdjacencyRouteShape(routeId, TestRoute(routeId, color), polylines, emptySet())
+    private fun shape(shapeId: String, color: Int?, points: List<GeoPoint>) =
+        AdjacencyRouteShape(shapeId, "route-$shapeId", color, points)
+
+    private fun patterns(vararg shapeIds: String): Set<TripPatternGeometry> =
+        shapeIds.mapTo(LinkedHashSet()) { TripPatternGeometry(it, "route-$it", null) }
 
     private fun line(vararg points: GeoPoint) = RoutePolyline(null, points.toList())
 
-    private data class TestRoute(override val id: String, override val color: Int?) : ObaRoute {
-        override val shortName: String = id
-        override val longName: String? = null
-        override val description: String? = null
-        override val type: Int = ObaRoute.TYPE_BUS
-        override val url: String? = null
-        override val textColor: Int? = null
-        override val agencyId: String = "agency"
-    }
 }

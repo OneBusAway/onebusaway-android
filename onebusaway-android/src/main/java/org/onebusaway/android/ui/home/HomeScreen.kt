@@ -55,6 +55,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -69,6 +70,8 @@ import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
+import org.onebusaway.android.ui.compose.ListUiState
+import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
@@ -84,6 +87,9 @@ import org.onebusaway.android.ui.home.help.HelpFeature
 import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.map.MapChrome
 import org.onebusaway.android.ui.home.map.MapFeature
+import org.onebusaway.android.ui.mylists.RecentItem
+import org.onebusaway.android.ui.mylists.SearchRecentsRepository
+import org.onebusaway.android.ui.mylists.rememberListVm
 import org.onebusaway.android.ui.home.map.RouteHeaderOverlay
 import org.onebusaway.android.ui.survey.SurveyFeature
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
@@ -120,6 +126,9 @@ class HomeCallbacks(
     val onSettings: () -> Unit,
     val onSearch: (String) -> Unit,
     val onRecentStopsRoutes: () -> Unit,
+    // Search-box recents dropdown: tapping a stop opens its arrivals; tapping a route reveals it on the map.
+    val onRecentStop: (id: String, name: String?) -> Unit,
+    val onRecentRoute: (routeId: String) -> Unit,
     // Wraps [HomeActivityActions.onHelpActionExternal] with the one branch that's a navigation (AGENCIES).
     val onHelpAction: (HelpAction) -> Unit,
     val onShowTrip: (tripId: String, stopId: String) -> Unit,
@@ -193,6 +202,14 @@ fun HomeScreen(
         val density = LocalDensity.current
         val resources = LocalResources.current
         val snackbarHostState = remember { SnackbarHostState() }
+        // The unified recent stops+routes list for the search field's dropdown. Hosted here (like the
+        // My-tab lists, via rememberListVm) so MapTopChrome stays a pure, VM-free chrome composable;
+        // empty until it resolves.
+        val app = LocalContext.current.findActivity().applicationContext
+        val searchRecents = rememberListVm("home.searchRecents") { SearchRecentsRepository(app) }
+        val recents: List<RecentItem> =
+            (searchRecents.state.collectAsStateWithLifecycle().value as? ListUiState.Success)?.items
+                .orEmpty()
         // Drives the arrivals-panel onboarding spotlight; provided to the sheet content (so the panel's
         // anchors can register) and read by [TutorialOverlay] below, which draws over the whole screen.
         val tutorialState = rememberTutorialState()
@@ -479,6 +496,9 @@ fun HomeScreen(
                             MapTopChrome(
                                 onOpenDrawer = openDrawer,
                                 onSearch = onSearch,
+                                recents = recents,
+                                onRecentStop = onRecentStop,
+                                onRecentRoute = onRecentRoute,
                                 // Recent stops/routes lives in the drawer, so the onboarding spotlight points at
                                 // the menu FAB that opens it (was the retired overflow ⋮).
                                 menuModifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_MORE_MENU),

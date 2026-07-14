@@ -60,6 +60,25 @@ data class RouteListItem(
 )
 
 /**
+ * One entry in the unified "recent stops AND routes" list (the search-box dropdown). Wraps either a
+ * [StopListItem] or a [RouteListItem] and carries the raw [accessTime] used to merge the two kinds into
+ * one newest-first order. [key] is a stable, type-tagged id for `LazyColumn` keying (a stop and a route
+ * could share the same underlying id).
+ */
+sealed interface RecentItem {
+    val accessTime: Long?
+    val key: String
+
+    data class Stop(val stop: StopListItem, override val accessTime: Long?) : RecentItem {
+        override val key: String get() = "stop:${stop.id}"
+    }
+
+    data class Route(val route: RouteListItem, override val accessTime: Long?) : RecentItem {
+        override val key: String get() = "route:${route.id}"
+    }
+}
+
+/**
  * A saved trip-reminder row (My Reminders). [tripId] + [stopId] identify the reminder; the display
  * strings ([name] with a "(no name)" fallback, formatted [headsign], "Route X" [routeText], and the
  * "Departs at …" [departureText]) are resolved in the repository.

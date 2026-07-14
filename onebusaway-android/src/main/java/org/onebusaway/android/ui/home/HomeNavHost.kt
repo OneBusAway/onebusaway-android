@@ -75,6 +75,7 @@ import org.onebusaway.android.ui.nav.consumeRouteReveal
 import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_ID
 import org.onebusaway.android.ui.nav.consumeStopReveal
 import org.onebusaway.android.ui.nav.navigateFromHome
+import org.onebusaway.android.ui.nav.revealRouteOnMap
 import org.onebusaway.android.ui.settings.settingsGraph
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
@@ -182,6 +183,10 @@ fun HomeNavHost(
                         PreferencesEntryPoint.get(context).setBoolean(ArrivalTutorial.KEY_MORE_MENU, true)
                         navController.navigateFromHome(NavRoutes.myRecent())
                     },
+                    // Recents dropdown taps mirror the My Recent screen: a stop opens its arrivals, a route
+                    // reveals on the map.
+                    onRecentStop = { id, name -> navController.navigateFromHome(NavRoutes.arrivals(id, name)) },
+                    onRecentRoute = { routeId -> navController.revealRouteOnMap(routeId) },
                     onHelpAction = { action ->
                         if (action == HelpAction.AGENCIES) navController.navigateFromHome(NavRoutes.AGENCIES)
                         else a.onHelpActionExternal(action)

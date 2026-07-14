@@ -41,7 +41,9 @@ import org.onebusaway.android.app.di.NetworkEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.database.oba.ReminderRow
 import org.onebusaway.android.database.oba.RouteListRow
+import org.onebusaway.android.database.oba.RouteRecentRow
 import org.onebusaway.android.database.oba.StopListRow
+import org.onebusaway.android.database.oba.StopRecentRow
 import org.onebusaway.android.database.oba.TripDepartureTime
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.time.ServerTime
@@ -105,6 +107,69 @@ private fun RouteListRow.toRouteItem() = RouteListItem(
     longName = longName?.takeIf { it.isNotEmpty() },
     url = url?.takeIf { it.isNotEmpty() },
 )
+
+// The recent-row variants embed the list row + access_time, so reuse the exact list-row mappers on the
+// embedded [row] and keep the display formatting in one place.
+private fun StopRecentRow.toRecentItem(context: Context) =
+    RecentItem.Stop(row.toStopItem(context), accessTime)
+
+private fun RouteRecentRow.toRecentItem() =
+    RecentItem.Route(row.toRouteItem(), accessTime)
+
+/** How many recents the search dropdown holds; ~4 are visible, the rest scroll (matches the list caps). */
+private const val RECENTS_LIMIT = 20
+
+/** Merge recent stops and routes into one newest-first list, capped at [limit]. Pure; unit-tested. */
+internal fun mergeRecents(
+    stops: List<RecentItem>,
+    routes: List<RecentItem>,
+    limit: Int,
+): List<RecentItem> =
+    (stops + routes)
+        .sortedByDescending { it.accessTime ?: Long.MIN_VALUE }
+        .take(limit)
+
+/**
+ * Filter [items] to those whose stop name / route short-or-long name contains [query] (case-insensitive).
+ * A blank query passes the list through unchanged. Pure; unit-tested.
+ */
+internal fun filterRecents(items: List<RecentItem>, query: String): List<RecentItem> {
+    val q = query.trim()
+    if (q.isEmpty()) return items
+    return items.filter { item ->
+        when (item) {
+            is RecentItem.Stop -> item.stop.name.contains(q, ignoreCase = true)
+            is RecentItem.Route ->
+                item.route.shortName.contains(q, ignoreCase = true) ||
+                    item.route.longName?.contains(q, ignoreCase = true) == true
+        }
+    }
+}
+
+/** The unified recent stops+routes list behind the search-box dropdown; read-only (no remove/clear). */
+class SearchRecentsRepository(private val context: Context) : MyListRepository<RecentItem> {
+
+    private val entryPoint = DatabaseEntryPoint.get(context)
+    private val stopDao = entryPoint.stopDao()
+    private val routeDao = entryPoint.routeDao()
+    private val region = RegionEntryPoint.get(context).region
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun observe(): Flow<List<RecentItem>> =
+        region.flatMapLatest { r ->
+            val cutoff = recentCutoff()
+            combine(
+                stopDao.recentsForSearch(cutoff, r?.id),
+                routeDao.recentsForSearch(cutoff, r?.id),
+            ) { stops, routes ->
+                mergeRecents(
+                    stops.map { it.toRecentItem(context) },
+                    routes.map { it.toRecentItem() },
+                    RECENTS_LIMIT,
+                )
+            }
+        }.flowOn(Dispatchers.IO)
+}
 
 /** Recently viewed stops, marked unused on removal/clear. */
 class RecentStopsRepository(private val context: Context) : MyListRepository<StopListItem> {

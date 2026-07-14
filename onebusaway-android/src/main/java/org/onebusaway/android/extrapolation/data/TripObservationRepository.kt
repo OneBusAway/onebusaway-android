@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.TripRouteInfo
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.Polyline
@@ -86,6 +87,9 @@ interface TripObservationRepository {
      * rather than its own copy.
      */
     suspend fun ensureShape(tripId: String, shapeId: String): Polyline?
+
+    /** Returns the immutable trip schedule, fetching and recording it on the first cache miss. */
+    suspend fun ensureSchedule(tripId: String): ObaTripSchedule?
 
     /**
      * Resolves [tripId]'s route identity + shapeId from the standalone `trip` endpoint — for a trip
@@ -151,6 +155,11 @@ class DefaultTripObservationRepository @Inject constructor(
         val polyline = shapeCache.get(shapeId)
                 ?: fetcher.shape(shapeId)?.also { shapeCache.put(shapeId, it) }
         return polyline?.also { cache.putPolyline(tripId, it) }
+    }
+
+    override suspend fun ensureSchedule(tripId: String): ObaTripSchedule? {
+        cache.lookupTripState(tripId)?.schedule?.let { return it }
+        return fetcher.tripSchedule(tripId)?.also { cache.putSchedule(tripId, it) }
     }
 
     override suspend fun resolveNeighborTrip(tripId: String): TripRouteInfo? =

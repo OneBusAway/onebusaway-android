@@ -22,12 +22,12 @@ import org.onebusaway.android.api.contract.EntryWithReferences
 import org.onebusaway.android.api.contract.References
 import org.onebusaway.android.api.contract.RouteReference
 import org.onebusaway.android.api.contract.TripReference
-import org.onebusaway.android.models.TripPatternGeometry
+import org.onebusaway.android.models.FocusedTrip
 
 class StopArrivalsTripPatternTest {
 
     @Test
-    fun `trip patterns include only shapes belonging to the supplied stop trips`() {
+    fun `focused trips preserve exact displayed trip identity`() {
         val snapshot = StopArrivals(
             data = EntryWithReferences(
                 entry = ArrivalsForStop(stopId = "stop"),
@@ -45,13 +45,23 @@ class StopArrivalsTripPatternTest {
             minutesAfter = 65,
         )
 
-        val patterns = snapshot.tripPatternGeometries(
-            listOf("served-1", "served-2", "missing-shape", "unknown-trip")
+        val trips = snapshot.focusedTrips(
+            listOf(
+                "served-1" to "route",
+                "served-2" to "route",
+                "missing-shape" to "route",
+                "unknown-trip" to "route",
+            )
         )
 
         assertEquals(
-            setOf(TripPatternGeometry("served-shape", "route", null)),
-            patterns,
+            setOf(
+                FocusedTrip("served-1", "route", "served-shape", null),
+                FocusedTrip("served-2", "route", "served-shape", null),
+                FocusedTrip("missing-shape", "route", null, null),
+                FocusedTrip("unknown-trip", "route", null, null),
+            ),
+            trips,
         )
     }
 }

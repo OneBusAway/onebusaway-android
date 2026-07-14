@@ -67,6 +67,8 @@ import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
 import org.onebusaway.android.map.render.stopIconKind
+import org.onebusaway.android.map.render.stopOpacity
+import org.onebusaway.android.map.render.stopZIndex
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.getRouteDisplayName
@@ -391,10 +393,10 @@ class GoogleMapRenderer(
                     MarkerOptions()
                         .position(stop.point.toLatLng())
                         .icon(stopIcon(stop, kind))
+                        .alpha(stopOpacity(stop.dimmed))
                         .flat(true)
                         .anchor(anchorX, anchorY)
-                        // A starred stop sits above its neighbours so it wins an overlapping tap (#1680).
-                        .zIndex(if (stop.favorite) FAVORITE_STOP_Z_INDEX else 0f)
+                        .zIndex(stopZIndex(stop.routeStop, stop.favorite))
                 )!!
                 stopMarkersByStopId[stop.id] = marker
                 stopByMarker[marker] = stop
@@ -420,8 +422,11 @@ class GoogleMapRenderer(
                 if (previous?.point != stop.point) {
                     existing.position = stop.point.toLatLng()
                 }
-                if (previous?.favorite != stop.favorite) {
-                    existing.zIndex = if (stop.favorite) FAVORITE_STOP_Z_INDEX else 0f
+                if (previous?.favorite != stop.favorite || previous.routeStop != stop.routeStop) {
+                    existing.zIndex = stopZIndex(stop.routeStop, stop.favorite)
+                }
+                if (previous?.dimmed != stop.dimmed) {
+                    existing.alpha = stopOpacity(stop.dimmed)
                 }
                 stopByMarker[existing] = stop
             }
@@ -830,11 +835,6 @@ class GoogleMapRenderer(
 
         // z-index used to show vehicle markers on top of stop markers (default marker z-index is 0).
         private const val VEHICLE_Z_INDEX = 1f
-
-        // A starred stop draws just above normal stops (default z-index 0) but below vehicles, so it wins
-        // an overlapping tap over a neighbouring plain stop — the "tap preference" of #1680. gms dispatches
-        // an overlapping-marker click to the highest z-index marker.
-        private const val FAVORITE_STOP_Z_INDEX = 0.5f
 
         // The uncertainty band draws above the static route line; the fast-estimate marker above the band.
         private const val TRIP_BAND_Z_INDEX = 2f

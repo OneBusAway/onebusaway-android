@@ -284,7 +284,7 @@ class MapLibreRenderer(
                 // Geometry and tap data are compared with the previously rendered model below: a
                 // projected route stop can move without a kind change, but the common retained nearby
                 // stop now avoids a redundant native position write.
-                if (previousKind != kind) {
+                if (previousKind != kind || stopByMarker[existing]?.dimmed != stop.dimmed) {
                     existing.icon = stopIcon(stop, kind)
                 }
                 if (stopByMarker[existing]?.point != stop.point) {
@@ -300,19 +300,28 @@ class MapLibreRenderer(
         renderedDimmedStopIds = buildSet { for (s in stops) if (s.dimmed) add(s.id) }
     }
 
-    private fun stopIcon(stop: StopMarker, kind: StopIconKind): Icon = when (kind) {
-        StopIconKind.FULL -> MapLibreStopIcons.iconForDirection(context, stop.direction)
-        StopIconKind.FULL_FOCUSED -> MapLibreStopIcons.focusedIconForDirection(context, stop.direction)
-        StopIconKind.DOT -> MapLibreStopIcons.dotIcon(context)
-        StopIconKind.DOT_FOCUSED -> MapLibreStopIcons.focusedDotIcon(context)
-        StopIconKind.FAVORITE -> MapLibreStopIcons.favoriteIcon(context, stop.direction)
-        StopIconKind.FAVORITE_FOCUSED -> MapLibreStopIcons.focusedFavoriteIcon(context, stop.direction)
-        StopIconKind.FAVORITE_DOT -> MapLibreStopIcons.favoriteDotIcon(context)
-        StopIconKind.FAVORITE_DOT_FOCUSED -> MapLibreStopIcons.focusedFavoriteDotIcon(context)
-        // Route stops reuse the trip map's centerline circle (focused = filled center) so the overview
-        // map's route matches the trip map (#1752).
-        StopIconKind.ROUTE_CIRCLE -> tripStopIcon
-        StopIconKind.ROUTE_CIRCLE_FOCUSED -> tripStopSelectedIcon
+    private fun stopIcon(stop: StopMarker, kind: StopIconKind): Icon {
+        if (stop.dimmed) return when (kind) {
+            StopIconKind.DOT -> MapLibreStopIcons.dimmedDotIcon(context, focused = false)
+            StopIconKind.DOT_FOCUSED -> MapLibreStopIcons.dimmedDotIcon(context, focused = true)
+            StopIconKind.FAVORITE_DOT -> MapLibreStopIcons.dimmedFavoriteDotIcon(context, focused = false)
+            StopIconKind.FAVORITE_DOT_FOCUSED -> MapLibreStopIcons.dimmedFavoriteDotIcon(context, focused = true)
+            else -> error("A dimmed stop must use a dot icon, not $kind")
+        }
+        return when (kind) {
+            StopIconKind.FULL -> MapLibreStopIcons.iconForDirection(context, stop.direction)
+            StopIconKind.FULL_FOCUSED -> MapLibreStopIcons.focusedIconForDirection(context, stop.direction)
+            StopIconKind.DOT -> MapLibreStopIcons.dotIcon(context)
+            StopIconKind.DOT_FOCUSED -> MapLibreStopIcons.focusedDotIcon(context)
+            StopIconKind.FAVORITE -> MapLibreStopIcons.favoriteIcon(context, stop.direction)
+            StopIconKind.FAVORITE_FOCUSED -> MapLibreStopIcons.focusedFavoriteIcon(context, stop.direction)
+            StopIconKind.FAVORITE_DOT -> MapLibreStopIcons.favoriteDotIcon(context)
+            StopIconKind.FAVORITE_DOT_FOCUSED -> MapLibreStopIcons.focusedFavoriteDotIcon(context)
+            // Route stops reuse the trip map's centerline circle (focused = filled center) so the
+            // overview map's route matches the trip map (#1752).
+            StopIconKind.ROUTE_CIRCLE -> tripStopIcon
+            StopIconKind.ROUTE_CIRCLE_FOCUSED -> tripStopSelectedIcon
+        }
     }
 
     /**

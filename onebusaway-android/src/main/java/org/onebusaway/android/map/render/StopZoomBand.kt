@@ -22,6 +22,22 @@ package org.onebusaway.android.map.render
  */
 const val STOP_DOT_ZOOM_THRESHOLD = 15f
 
+/** Alpha applied to a stop outside the focused trips, in addition to its dot-size treatment. */
+const val DIMMED_STOP_OPACITY = 0.35f
+
+/** Marker opacity for the active stop presentation. Pure so both renderers share the same policy. */
+fun stopOpacity(dimmed: Boolean): Float = if (dimmed) DIMMED_STOP_OPACITY else 1f
+
+/**
+ * Marker-group ordering. Native map SDKs always place markers above route polylines, but adjacent
+ * route stops must still win every marker overlap; favorites remain above ordinary nearby stops.
+ */
+fun stopZIndex(routeStop: Boolean, favorite: Boolean): Float = when {
+    routeStop -> 0.75f
+    favorite -> 0.5f
+    else -> 0f
+}
+
 /** Whether a stop renders as a small dot (distant zoom) or its full directional icon (close zoom). */
 enum class StopBand { DOT, FULL }
 

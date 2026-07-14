@@ -17,6 +17,7 @@ package org.onebusaway.android.map
 
 import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import org.onebusaway.android.extrapolation.ExtrapolatedVehicle
 import org.onebusaway.android.extrapolation.extrapolatedVehicles
 import org.onebusaway.android.extrapolation.extrapolationFromState
@@ -35,6 +37,7 @@ import org.onebusaway.android.time.WallTime
 import java.net.HttpURLConnection
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.RouteMapStop
 import org.onebusaway.android.util.Polyline
@@ -77,6 +80,7 @@ class RouteMapController(
     private val routeRepository: RouteMapRepository,
     private val stopsController: StopsMapController,
     private val tripObservationRepository: TripObservationRepository,
+    private val focusedTripRepository: FocusedTripRepository,
     private val scope: CoroutineScope,
 ) {
 
@@ -113,6 +117,25 @@ class RouteMapController(
     // The loaded route's shape (whole-route merged set + each direction's own travel-ordered shape),
     // retained so a direction switch re-narrows the drawn line without a reload. Null until first load.
     private var routeShape: RouteMap? = null
+
+    // The single-route presentation is retained even while a focused stop temporarily owns the
+    // geometry/stop layer, so closing the stop or changing directions restores it without a reload.
+    private var basePolylines: List<RoutePolyline> = emptyList()
+    private var baseStopPresentation: RouteStopPresentation? = null
+
+    private data class StopFocusSession(
+        val stopId: String,
+        val stopPoint: GeoPoint,
+        val trips: Set<FocusedTrip>,
+    )
+
+    private var stopFocusSession: StopFocusSession? = null
+    private var stopFocusJob: Job? = null
+    private var focusedGeometry = FocusedTripGeometry(emptyMap())
+    private var focusedStops = FocusedTripStops(emptyMap(), emptyMap())
+    private var focusedRoutes: List<ObaRoute> = emptyList()
+
+    val focusedStopId: String? get() = stopFocusSession?.stopId
 
     // The direction shown now (null = whole route). Derived from [directionState] rather than stored
     // separately, so the stop filter and the vehicle filter can never disagree. Meaningful only once
@@ -399,7 +422,7 @@ class RouteMapController(
         tryFocusVehicle(layer)
     }
 
-    /** Leave route mode: cancel the loads + poll and clear the route's shape, vehicle layer, and header. */
+    /** Leave single-route mode. A stop-focus layer, when present, remains visible. */
     fun stop() {
         routeJob?.cancel()
         vehicleJob?.cancel()
@@ -414,10 +437,12 @@ class RouteMapController(
         routeStopRoutes = emptyList()
         directions = emptyList()
         routeShape = null
+        basePolylines = emptyList()
+        baseStopPresentation = null
         directionState = DirectionState.Resolved(null)
         latestPoll = null
         pendingFocus = null
-        renderState.clearRoutePolylines()
+        publishMapPresentation()
         // setVehicleSet(null) is what clears the vehicle markers (the renderer reconciles the empty set);
         // it must be nulled together with the motion sampler, which only moves already-reconciled markers.
         renderState.setVehicleSet(null)
@@ -427,6 +452,117 @@ class RouteMapController(
         renderState.setTripOverlaySampler(null)
         renderState.setRouteContinuation(null)
         _loadedRoute.value = null
+    }
+
+    /**
+     * Show the exact trips currently displayed for a stop. Shape and schedule loading are deliberately
+     * independent: either result is useful on its own, and an empty trip set is a valid all-dimmed view.
+     */
+    fun focusStop(
+        stopId: String,
+        stopPoint: GeoPoint,
+        trips: Set<FocusedTrip>,
+        routes: List<ObaRoute>,
+    ) {
+        val next = StopFocusSession(stopId, stopPoint, LinkedHashSet(trips))
+        focusedRoutes = routes
+        if (stopFocusSession == next) {
+            // Route wrappers may be recreated on every arrivals poll; refresh marker metadata without
+            // restarting unchanged shape/schedule work.
+            publishMapPresentation()
+            return
+        }
+        stopFocusJob?.cancel()
+        stopFocusSession = next
+        focusedGeometry = FocusedTripGeometry(emptyMap())
+        focusedStops = FocusedTripStops(emptyMap(), emptyMap())
+        stopsController.start()
+        publishMapPresentation()
+        stopFocusJob = scope.launch {
+            supervisorScope {
+                launch {
+                    val geometry = runCatching { focusedTripRepository.getGeometry(next.trips) }
+                        .getOrElse {
+                            if (it is CancellationException) throw it
+                            FocusedTripGeometry(emptyMap())
+                        }
+                    if (stopFocusSession == next) {
+                        focusedGeometry = geometry
+                        publishMapPresentation()
+                    }
+                }
+                launch {
+                    val stops = runCatching { focusedTripRepository.getStops(next.trips) }
+                        .getOrElse {
+                            if (it is CancellationException) throw it
+                            FocusedTripStops(emptyMap(), emptyMap())
+                        }
+                    if (stopFocusSession == next) {
+                        focusedStops = stops
+                        publishMapPresentation()
+                    }
+                }
+            }
+        }
+    }
+
+    /** Clear focused-stop trips and reveal the base route (or ordinary nearby stops). */
+    fun clearStopFocus() {
+        if (stopFocusSession == null) return
+        stopFocusSession = null
+        stopFocusJob?.cancel()
+        stopFocusJob = null
+        focusedGeometry = FocusedTripGeometry(emptyMap())
+        focusedStops = FocusedTripStops(emptyMap(), emptyMap())
+        focusedRoutes = emptyList()
+        if (isActive) stopsController.stop() else stopsController.start()
+        publishMapPresentation()
+    }
+
+    private fun publishMapPresentation() {
+        val focus = stopFocusSession
+        if (focus == null) {
+            renderState.setRoutePolylines(basePolylines)
+            stopsController.setRoutePresentation(baseStopPresentation)
+            return
+        }
+        renderState.setRoutePolylines(focusedGeometry.toRoutePolylines(focus.stopPoint))
+        stopsController.setRoutePresentation(
+            RouteStopPresentation(
+                stops = focusedStops.stopIds.mapNotNull(focusedStops.stopsById::get),
+                routes = focusedRoutes,
+                routeStopIds = focusedStops.stopIds,
+                projectedPoints = projectFocusedStops(focus.trips, focusedGeometry, focusedStops),
+                includeNearbyStops = true,
+                dimNonRouteStops = true,
+            )
+        )
+    }
+
+    /** Snap each exact scheduled stop to the closest successful shape of a trip that serves it. */
+    private fun projectFocusedStops(
+        trips: Set<FocusedTrip>,
+        geometry: FocusedTripGeometry,
+        stops: FocusedTripStops,
+    ): Map<String, GeoPoint> {
+        val tripById = trips.associateBy(FocusedTrip::tripId)
+        val candidates = LinkedHashMap<String, MutableList<Polyline>>()
+        for ((tripId, stopIds) in stops.stopIdsByTripId) {
+            val shapeId = tripById[tripId]?.shapeId ?: continue
+            val points = geometry.shapes[shapeId]?.points ?: continue
+            if (points.size < 2) continue
+            val polyline = Polyline(points.map(GeoPoint::toLocation))
+            stopIds.forEach { candidates.getOrPut(it, ::mutableListOf).add(polyline) }
+        }
+        return buildMap {
+            for ((stopId, shapes) in candidates) {
+                val stop = stops.stopsById[stopId] ?: continue
+                val location = stop.location
+                val point = shapes.mapNotNull { it.nearestPoint(location.latitude, location.longitude) }
+                    .minByOrNull(location::distanceTo)
+                if (point != null) put(stopId, point.toGeoPoint())
+            }
+        }
     }
 
     /** Restart the vehicle poll if a route is shown and the poll isn't running (the host's onResume). */
@@ -496,15 +632,18 @@ class RouteMapController(
         }
     }
 
-    /** Re-render the route's stops narrowed to [currentDirectionId], replacing the prior direction's. */
+    /** Retain the route's stops narrowed to [currentDirectionId] as the base route presentation. */
     private fun showDirectionStops() {
-        // showStops accumulates while a route is active, so drop the prior direction's route stops
-        // first — otherwise the map would show the union of both directions. (Keeps a focused stop.)
-        stopsController.clearStops(false)
         val stops = routeStops.stopsForDirection(currentDirectionId)
-        // Project each stop onto the drawn shape so it sits on the route centerline as a trip-style
-        // circle (#1752); the stops stay tappable StopMarkers, so tapping one still opens its arrivals.
-        stopsController.showStops(stops, routeStopRoutes, projectStopsOntoShape(stops))
+        baseStopPresentation = RouteStopPresentation(
+            stops = stops,
+            routes = routeStopRoutes,
+            routeStopIds = stops.mapTo(LinkedHashSet(), ObaStop::id),
+            projectedPoints = projectStopsOntoShape(stops),
+            includeNearbyStops = false,
+            dimNonRouteStops = false,
+        )
+        publishMapPresentation()
     }
 
     /**
@@ -540,11 +679,33 @@ class RouteMapController(
         // when the selected direction's own travel-ordered shape is used — never on the whole-route
         // merged fallback (a direction that carried no shape on the wire).
         val shape = route.shapeForDirection(currentDirectionId)
-        renderState.setRoutePolylines(
+        val anchor = directionStopId
+            ?.takeIf { id -> routeStops.stopsForDirection(currentDirectionId).any { it.id == id } }
+            ?.let { id -> routeStops.firstOrNull { it.stop.id == id }?.stop?.location?.toGeoPoint() }
+        basePolylines = if (anchor == null) {
             shape.polylines.map { points ->
-                RoutePolyline(route.route?.color, points, widthDp = ROUTE_LINE_WIDTH_DP, directional = shape.directional)
+                RoutePolyline(
+                    route.route?.color,
+                    points,
+                    widthDp = ROUTE_LINE_WIDTH_DP,
+                    directional = shape.directional,
+                    transforms = ROUTE_VIEW_TRANSFORMS,
+                )
             }
-        )
+        } else buildList {
+            for (points in shape.polylines) {
+                val split = splitPolylineAtStop(points, anchor) ?: continue
+                split.upstream.takeIf { it.size >= 2 }?.let {
+                    add(RoutePolyline(route.route?.color, it, ROUTE_UPSTREAM_LINE_WIDTH_DP, shape.directional,
+                        transforms = ROUTE_VIEW_TRANSFORMS))
+                }
+                split.downstream.takeIf { it.size >= 2 }?.let {
+                    add(RoutePolyline(route.route?.color, it, ROUTE_DOWNSTREAM_LINE_WIDTH_DP, shape.directional,
+                        transforms = ROUTE_VIEW_TRANSFORMS))
+                }
+            }
+        }
+        publishMapPresentation()
     }
 
     /**

@@ -41,8 +41,8 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
-import org.onebusaway.android.map.AdjacencyRouteShapeRepository
-import org.onebusaway.android.map.DefaultAdjacencyRouteShapeRepository
+import org.onebusaway.android.map.FocusedTripRepository
+import org.onebusaway.android.map.DefaultFocusedTripRepository
 import org.onebusaway.android.map.DefaultRouteMapRepository
 import org.onebusaway.android.map.RouteMapRepository
 import org.onebusaway.android.map.bike.BikeStationsRepository
@@ -239,11 +239,10 @@ abstract class RepositoryModule {
         impl: DefaultTripObservationFetcher
     ): TripObservationFetcher
 
-    // Adjacency focus (#1827): @Singleton because it owns the SingleFlight de-dup state that coalesces
-    // concurrent/re-tap route-shape fetches (the trip-observation fetcher precedent above).
+    // Focused trips: shared caches and SingleFlight calls coalesce shape/schedule/route-stop fetches.
     @Binds
     @Singleton
-    abstract fun bindAdjacencyRouteShapeRepository(
-        impl: DefaultAdjacencyRouteShapeRepository
-    ): AdjacencyRouteShapeRepository
+    abstract fun bindFocusedTripRepository(
+        impl: DefaultFocusedTripRepository
+    ): FocusedTripRepository
 }

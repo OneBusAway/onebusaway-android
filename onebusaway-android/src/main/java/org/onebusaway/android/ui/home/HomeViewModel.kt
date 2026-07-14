@@ -25,7 +25,7 @@ import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.models.TripPatternGeometry
+import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionStatus
@@ -118,27 +118,21 @@ class HomeViewModel @Inject constructor(
     // host on each create from the restored focusedStop, so it needn't be persisted).
     private var pendingMapFocus: Boolean = false
 
-    // The routes with an upcoming arrival at the focused stop, paired with those trips' directions.
-    // Pure coordination state carried to the map in ShowStopAdjacency; arrivals reload it after restore.
-    var focusedRouteDirections: Map<String, Set<Int>> = emptyMap()
-        private set
-
-    /** Exact trip-pattern shapes for the focused stop; route ids remain separate for stop adjacency. */
-    var focusedTripPatterns: Set<TripPatternGeometry> = emptySet()
+    /** Exact displayed trips for the focused stop; arrivals reload it after restore and refreshes. */
+    var focusedTrips: Set<FocusedTrip> = emptySet()
         private set
 
     /** A map stop gained focus (non-null) or focus was cleared (null). Persists across process death. */
     fun onStopFocused(stop: FocusedStop?) {
         val previousId = _uiState.value.focusedStop?.id
         val sameStop = previousId?.equals(stop?.id, ignoreCase = true) ?: (stop == null)
-        // Clear the prior stop's adjacency session immediately; a fresh arrivals load starts the new
-        // one. A same-stop re-selection is a no-op so it cannot discard a completed overlay.
+        // Clear the prior stop's route-view session immediately; a fresh arrivals load starts the new
+        // one. A same-stop re-selection is a no-op so it cannot discard a completed view.
         if (!sameStop || stop == null) {
-            focusedRouteDirections = emptyMap()
-            focusedTripPatterns = emptySet()
+            focusedTrips = emptySet()
         }
         if (!sameStop) {
-            emitMapDirective(MapDirective.ClearAdjacency)
+            emitMapDirective(MapDirective.ClearStopRoutes)
         }
         savedState[KEY_STOP_ID] = stop?.id
         savedState[KEY_STOP_NAME] = stop?.name
@@ -243,22 +237,18 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Arrivals loaded for the focused [stop]. Records the drawer's [routeDirections] for adjacency focus
-     * (#1827) on every load. Then, if a restore/deep-link focus is pending, consume the latch and tell
+     * Arrivals loaded for the focused [stop]. Records the drawer's exact [trips] on every load. Then,
+     * if a restore/deep-link focus is pending, consume the latch and tell
      * the map to focus it (recenter + add the marker) via [mapDirectives]. Then activates adjacency for
      * the loaded route set; a fresh map tap already established the render focus, while a restore emits
-     * [MapDirective.FocusStop] first so the map can validate the adjacency request against that focus.
+     * [MapDirective.FocusStop] first so the map can validate the route-view request against that focus.
      */
     fun onArrivalsLoaded(
         stop: ObaStop,
         routes: List<ObaRoute>?,
-        routeDirections: Map<String, Set<Int>>,
-        tripPatterns: Set<TripPatternGeometry> = emptySet(),
+        trips: Set<FocusedTrip> = emptySet(),
     ) {
-        // Record the drawer's routes on every load (not just a pending restore focus) — adjacency focus
-        // reads this whenever the map wants it (#1827).
-        focusedRouteDirections = routeDirections
-        focusedTripPatterns = tripPatterns
+        focusedTrips = trips
         if (pendingMapFocus) {
             pendingMapFocus = false
             emitMapDirective(MapDirective.FocusStop(stop, routes, settledSheet == ArrivalsSheetState.Expanded))
@@ -266,12 +256,12 @@ class HomeViewModel @Inject constructor(
         // FocusStop must be dispatched first on restore so the map can validate this stop as the
         // current rendered focus before starting its adjacency session.
         emitMapDirective(
-            MapDirective.ShowStopAdjacency(
+            MapDirective.ShowStopRoutes(
                 stopId = stop.id,
                 stopLat = stop.latitude,
                 stopLon = stop.longitude,
-                routeDirections = focusedRouteDirections,
-                tripPatterns = focusedTripPatterns,
+                routes = routes.orEmpty(),
+                trips = focusedTrips,
             )
         )
     }
@@ -422,16 +412,16 @@ sealed interface MapDirective {
     data class ShowRoute(val request: ShowRouteRequest) : MapDirective
 
     /** Draw all upcoming routes for the currently focused stop, without reframing the camera. */
-    data class ShowStopAdjacency(
+    data class ShowStopRoutes(
         val stopId: String,
         val stopLat: Double,
         val stopLon: Double,
-        val routeDirections: Map<String, Set<Int>>,
-        val tripPatterns: Set<TripPatternGeometry> = emptySet(),
+        val routes: List<ObaRoute>,
+        val trips: Set<FocusedTrip> = emptySet(),
     ) : MapDirective
 
-    /** Clear an active adjacency overlay when the focused stop changes or is removed. */
-    object ClearAdjacency : MapDirective
+    /** Clear an active focused-stop route view when the focused stop changes or is removed. */
+    object ClearStopRoutes : MapDirective
 
     /** Clear the map's render focus (back-press from a peeking arrivals sheet). */
     object ClearFocus : MapDirective

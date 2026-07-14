@@ -25,14 +25,11 @@ data class NearbyStops(
     val limitExceeded: Boolean,
 )
 
-/**
- * One distinct trip pattern to draw for a focused stop. [shapeId] identifies the exact GTFS shape
- * used by an upcoming trip, rather than the union of every branch belonging to [routeId]. Multiple
- * arrivals that share a shape collapse to one instance before the map fetches or renders it.
- */
-data class TripPatternGeometry(
-    val shapeId: String,
+/** One displayed trip contributing exact geometry and stop reachability to a focused stop. */
+data class FocusedTrip(
+    val tripId: String,
     val routeId: String,
+    val shapeId: String?,
     val routeColor: Int?,
 )
 

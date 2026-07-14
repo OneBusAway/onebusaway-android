@@ -21,6 +21,12 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
 import org.onebusaway.android.map.render.RoutePolyline
+import org.onebusaway.android.map.render.RoutePolylineTransform
+
+private val ADJACENCY_ROUTE_TRANSFORMS = setOf(
+    RoutePolylineTransform.VIEWPORT_CLIP,
+    RoutePolylineTransform.ZOOM_SIMPLIFY,
+)
 
 /**
  * Draws the whole-route lines for the routes with upcoming arrivals at one focused stop. This is an
@@ -86,6 +92,7 @@ internal fun AdjacencyShapes.toRoutePolylines(): List<RoutePolyline> =
                     color = shape.route?.color,
                     points = points,
                     widthDp = ROUTE_LINE_WIDTH_DP,
+                    transforms = ADJACENCY_ROUTE_TRANSFORMS,
                 )
             }
     }

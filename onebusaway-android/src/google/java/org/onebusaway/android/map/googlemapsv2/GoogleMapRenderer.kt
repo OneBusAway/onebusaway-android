@@ -278,15 +278,21 @@ class GoogleMapRenderer(
         renderedRoutePolylines = next
 
         for (polyline in next) {
-            // Stamp travel-direction chevrons only when the line asked for them (a single trip/leg or a
-            // route narrowed to one direction); an undirected whole-route shape draws a plain stroke.
-            val stroke = StrokeStyle.colorBuilder(polyline.resolvedColor)
-                .apply { if (polyline.directional) stamp(arrowStamp) }
-                .build()
             val options = PolylineOptions()
                 .width(widthPx(polyline))
-                .addSpan(StyleSpan(stroke))
                 .addPoints(polyline.points)
+            if (polyline.directional) {
+                // Advanced spans are substantially more expensive for Maps to retessellate while
+                // zooming. Reserve that path for the lines that actually need repeated chevrons.
+                val stroke = StrokeStyle.colorBuilder(polyline.resolvedColor)
+                    .stamp(arrowStamp)
+                    .build()
+                options.addSpan(StyleSpan(stroke))
+            } else {
+                // Adjacency focus uses undirected whole-route shapes. The classic solid-color path is
+                // both the exact requested appearance and cheaper than an equivalent one-color span.
+                options.color(polyline.resolvedColor)
+            }
             routePolylines.add(map.addPolyline(options))
         }
     }

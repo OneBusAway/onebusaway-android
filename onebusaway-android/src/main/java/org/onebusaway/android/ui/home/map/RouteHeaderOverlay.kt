@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -88,9 +89,11 @@ fun RouteHeaderOverlay(
 ) {
     Surface(
         modifier = modifier.onSizeChanged { onHeight(it.height) },
+        // A floating rounded card (below the top chrome), rather than a full-width edge-to-edge bar.
+        shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         contentColor = MaterialTheme.colorScheme.onSurface,
-        shadowElevation = 3.dp,
+        shadowElevation = 6.dp,
     ) {
         if (header.loading) {
             Box(

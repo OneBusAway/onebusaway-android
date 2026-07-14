@@ -22,16 +22,25 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,12 +53,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -74,6 +84,7 @@ import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.HomeViewModel
 import org.onebusaway.android.ui.home.MapDirective
+import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
 import org.onebusaway.android.util.LayerUtils
 import org.onebusaway.android.util.ObaRequestErrors
@@ -286,21 +297,22 @@ fun MapFeature(
         initialZoom = seed.zoom,
     )
 
-    // The nearby-stops info strip: "zoom in to see more stops" when the load was truncated (the API's
+    // The nearby-stops info notice: "zoom in to see more stops" when the load was truncated (the API's
     // limitExceeded), or "showing saved stops" when a load failed with cached stops on screen (offline,
     // #1754). Driven purely by map state.
     val stopsBanner by mapViewModel.stopsBanner.collectAsStateWithLifecycle()
-    // The map sits below HomeTopBar (which already consumes the status-bar inset), so the banner is
-    // flush at the map's top edge — no extra inset. clipToBounds clips the upward slide at that edge so
-    // the bar tucks up behind the title bar instead of drawing over it.
+    // The map is now edge-to-edge (no solid top bar), so this notice applies its own status-bar inset and
+    // floats as a pill at the top-center. clipToBounds clips the upward slide so the pill tucks up out of
+    // view (behind the status bar) rather than drawing over it.
     Box(
         Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .clipToBounds()
     ) {
         StopsInfoBanner(
             banner = stopsBanner,
-            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(),
+            modifier = Modifier.align(Alignment.TopCenter),
         )
     }
 
@@ -362,12 +374,11 @@ fun MapFeature(
 }
 
 /**
- * The nearby-stops info strip: a full-width, text-height bar at the top edge of the map that slides
- * down to appear and up (tucking behind the home top bar) to disappear. Shows either "zoom in to see
- * more stops" (a truncated load) or "showing saved stops" (a failed load with cached stops on screen,
- * #1754); hidden on [StopsBanner.None]. Purely state-driven, no dismiss button. The status-bar inset is
- * already consumed by HomeTopBar above the map, so the caller's slot adds no inset — only the slide
- * clipping (clipToBounds).
+ * The nearby-stops info notice: an extended-FAB-style pill (leading icon + text) at the top-center of the
+ * map that slides down to appear and up to disappear. Shows either "zoom in to see more stops" (a
+ * truncated load) or "showing saved stops" (a failed load with cached stops on screen, #1754); hidden on
+ * [StopsBanner.None]. Purely state-driven and informational — no dismiss button, and no action on tap.
+ * The caller applies the status-bar inset and the slide clipping (clipToBounds).
  */
 @Composable
 private fun StopsInfoBanner(banner: StopsBanner, modifier: Modifier = Modifier) {
@@ -375,33 +386,45 @@ private fun StopsInfoBanner(banner: StopsBanner, modifier: Modifier = Modifier) 
     // instead of blanking mid-animation. Seeded with the more-stops case; only ever set to a real one.
     var lastShown by remember { mutableStateOf<StopsBanner>(StopsBanner.MoreStopsAvailable) }
     if (banner != StopsBanner.None) lastShown = banner
-    val labelRes = when (lastShown) {
-        StopsBanner.ShowingSavedStops -> R.string.map_showing_cached_stops
-        else -> R.string.map_zoom_in_for_more_stops
+    val (labelRes, iconRes) = when (lastShown) {
+        StopsBanner.ShowingSavedStops -> R.string.map_showing_cached_stops to R.drawable.history_24
+        else -> R.string.map_zoom_in_for_more_stops to R.drawable.ic_zoom_in
     }
     AnimatedVisibility(
         visible = banner != StopsBanner.None,
         modifier = modifier,
-        enter = slideInVertically(initialOffsetY = { -it }),
-        exit = slideOutVertically(targetOffsetY = { -it }),
+        // Pop into place (scale up from ~80% with a little spring), rather than sliding down from the edge.
+        enter = scaleIn(
+            initialScale = 0.8f,
+            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        ) + fadeIn(),
+        exit = scaleOut(targetScale = 0.8f) + fadeOut(),
     ) {
-        // A plain Box (not a Surface): a non-clickable Surface still consumes pointer events across its
-        // bounds, so a pan/tap/pinch that starts on the banner strip would be swallowed instead of
-        // reaching the map underneath. A Box with just background/shadow is not hit-testable, so gestures
-        // fall through to the map.
-        Box(
+        // A plain Row (not a Surface): a non-clickable Surface still consumes pointer events across its
+        // bounds, so a pan/tap/pinch that starts on the pill would be swallowed instead of reaching the
+        // map underneath. A Row with just background/shadow is not hit-testable, so gestures fall through.
+        val pillShape = RoundedCornerShape(16.dp)
+        Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .shadow(4.dp)
+                // Drop below the floating top chrome (menu FAB + search field), which is drawn in a layer
+                // above this one and would otherwise occlude the pill at the very top edge.
+                .padding(top = MAP_TOP_CHROME_CLEARANCE)
+                .shadow(6.dp, pillShape)
+                .clip(pillShape)
                 // A neutral, informational tint (not a warning), alpha'd so the map shows through slightly.
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)),
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f))
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
+            Icon(
+                painterResource(iconRes),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp),
+            )
             Text(
                 text = stringResource(labelRes),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

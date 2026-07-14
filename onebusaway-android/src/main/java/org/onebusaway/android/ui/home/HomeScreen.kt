@@ -20,10 +20,10 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetScaffold
@@ -72,7 +72,8 @@ import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
-import org.onebusaway.android.ui.home.chrome.HomeTopBar
+import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
+import org.onebusaway.android.ui.home.chrome.MapTopChrome
 import org.onebusaway.android.ui.home.drawer.HomeNavDrawerSheet
 import org.onebusaway.android.ui.home.drawer.NavDrawerViewModel
 import org.onebusaway.android.ui.home.donation.DonationFeature
@@ -148,9 +149,10 @@ class HomeActivityActions(
 )
 
 /**
- * The declarative home screen: a Compose `ModalNavigationDrawer` + [HomeTopBar] + Material3
- * `BottomSheetScaffold`, rendered from [HomeUiState] (state down) with taps dispatched through plain
- * lambda callbacks + [HomeViewModel] events (up). Replaces the imperative `HomeShellHost` bridge.
+ * The declarative home screen: a Compose `ModalNavigationDrawer` + an edge-to-edge Material3
+ * `BottomSheetScaffold` (the map) with the floating [MapTopChrome] (menu + search FABs) over its top,
+ * rendered from [HomeUiState] (state down) with taps dispatched through plain lambda callbacks +
+ * [HomeViewModel] events (up). Replaces the imperative `HomeShellHost` bridge.
  *
  * The arrivals sheet inverts to declarative: **visibility is business state** — the sheet peeks iff
  * a stop is focused on NEARBY — driven by a [LaunchedEffect] keyed on that derived flag, so it never
@@ -228,6 +230,12 @@ fun HomeScreen(
         // is already active for another route.
         val collapseSheet: () -> Unit = remember {
             { scope.launch { runCatching { sheetState.partialExpand() } } }
+        }
+
+        // Opening the nav drawer from the menu FAB — remembered so the frequently-recomposing screen body
+        // (it reads the animated sheet peek) doesn't hand MapTopChrome a fresh lambda each frame.
+        val openDrawer: () -> Unit = remember {
+            { scope.launch { drawerState.open() } }
         }
 
         // The system navigation-bar inset (height varies by handset) grows the peek so the collapsed
@@ -368,25 +376,15 @@ fun HomeScreen(
             onSendFeedback = onSendFeedback,
             onOpenSource = onOpenSource,
         ) {
-            // Provide the tutorial state to the whole screen (top bar, map, and sheet) so their spotlight
-            // anchors register; [TutorialOverlay] below draws from the same state.
+            // Provide the tutorial state to the whole screen (top chrome, map, and sheet) so their
+            // spotlight anchors register; [TutorialOverlay] below draws from the same state.
             CompositionLocalProvider(LocalTutorialState provides tutorialState) {
-            // The TopAppBar applies its own top window inset (status bar), so the Column doesn't.
-            Column(Modifier.fillMaxSize()) {
-                HomeTopBar(
-                    // HOME is always the map now; the list tabs are their own destinations with their own
-                    // top bars.
-                    title = stringResource(R.string.navdrawer_item_nearby),
-                    onOpenDrawer = { scope.launch { drawerState.open() } },
-                    onSearch = onSearch,
-                    // Recent stops/routes now lives in the drawer, so the onboarding spotlight points at the
-                    // hamburger that opens it (was the retired overflow ⋮).
-                    menuModifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_MORE_MENU),
-                )
+                // The map runs edge-to-edge (under the status bar): the scaffold fills the whole screen and
+                // the menu/search controls float over its top corners (see MapTopChrome below), replacing the
+                // old solid TopAppBar. The status-bar inset is applied to the floating chrome + overlays
+                // layer, not the map itself.
                 BottomSheetScaffold(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxSize(),
                     scaffoldState = scaffoldState,
                     snackbarHost = { SnackbarHost(snackbarHostState) },
                     // The animated peek: real peek while shown, 0 while hidden — slides the sheet in/out.
@@ -448,27 +446,47 @@ fun HomeScreen(
                             fabBottomInset = fabInsetTarget,
                             modifier = Modifier.fillMaxSize(),
                         )
-                        HomeMapOverlays(
-                            weatherViewModel = weatherViewModel,
-                            donationViewModel = donationViewModel,
-                            surveyViewModel = surveyViewModel,
-                            routeHeader = routeHeader,
-                            onCancelRouteMode = onCancelRouteMode,
-                            // The switch-direction affordance calls straight into the map VM (which
-                            // re-filters stops/vehicles + persists the choice), like the height report below.
-                            onSelectRouteDirection = mapViewModel::selectRouteDirection,
-                            // Tapping the header body reframes the map to the route's full extent (VM
-                            // re-issues the retained route framing).
-                            onFrameRoute = mapViewModel::frameRoute,
-                            onLearnMore = onLearnMore,
-                            onOpenSurvey = onOpenSurvey,
-                            // The route header reports its height straight to the map VM (which owns the
-                            // padding derivation), so the host isn't a relay between the two features.
-                            onRouteHeaderHeight = mapViewModel::setRouteHeaderHeight,
-                        )
+                        // The floating top chrome + the map overlays share one status-bar-inset layer over
+                        // the (now edge-to-edge) map. MapTopChrome is drawn LAST so the menu + search FABs
+                        // stay on top of (and tappable above) every overlay — including the route-mode header,
+                        // which now floats as a card below the FAB row rather than covering it.
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .statusBarsPadding()
+                        ) {
+                            // Every top-of-map overlay sits below the chrome row via this one shared inset, so
+                            // no individual overlay has to know the FAB-row height.
+                            Box(Modifier.fillMaxSize().padding(top = MAP_TOP_CHROME_CLEARANCE)) {
+                                HomeMapOverlays(
+                                    weatherViewModel = weatherViewModel,
+                                    donationViewModel = donationViewModel,
+                                    surveyViewModel = surveyViewModel,
+                                    routeHeader = routeHeader,
+                                    onCancelRouteMode = onCancelRouteMode,
+                                    // The switch-direction affordance calls straight into the map VM (which
+                                    // re-filters stops/vehicles + persists the choice), like the height report below.
+                                    onSelectRouteDirection = mapViewModel::selectRouteDirection,
+                                    // Tapping the header body reframes the map to the route's full extent (VM
+                                    // re-issues the retained route framing).
+                                    onFrameRoute = mapViewModel::frameRoute,
+                                    onLearnMore = onLearnMore,
+                                    onOpenSurvey = onOpenSurvey,
+                                    // The route header reports its height straight to the map VM (which owns the
+                                    // padding derivation), so the host isn't a relay between the two features.
+                                    onRouteHeaderHeight = mapViewModel::setRouteHeaderHeight,
+                                )
+                            }
+                            MapTopChrome(
+                                onOpenDrawer = openDrawer,
+                                onSearch = onSearch,
+                                // Recent stops/routes lives in the drawer, so the onboarding spotlight points at
+                                // the menu FAB that opens it (was the retired overflow ⋮).
+                                menuModifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_MORE_MENU),
+                            )
+                        }
                     }
                 }
-            }
             }
         }
 
@@ -498,8 +516,8 @@ fun HomeScreen(
 /**
  * The home screen's `ModalNavigationDrawer`: the nav-drawer sheet ([HomeNavDrawerSheet]) wrapping the
  * screen [content]. A tap closes the drawer and dispatches the selection up. The drawer is opened from
- * the toolbar hamburger (via the host-owned [drawerState]), so gestures are enabled only while it's
- * already open — a left-edge drag on the map must pan the map, not peel the drawer open.
+ * the menu FAB (via the host-owned [drawerState]), so gestures are enabled only while it's already
+ * open — a left-edge drag on the map must pan the map, not peel the drawer open.
  */
 @Composable
 private fun HomeDrawer(
@@ -567,11 +585,14 @@ private fun BoxScope.HomeMapOverlays(
     onOpenSurvey: (url: String) -> Unit,
     onRouteHeaderHeight: (Int) -> Unit,
 ) {
-    // The weather chip feature module: self-wiring from its ViewModel.
+    // The caller offsets this whole overlay layer below the top chrome (one shared inset), so the
+    // overlays only carry their own side margins here.
+    // The weather chip feature module: self-wiring from its ViewModel. Sits below the floating search
+    // field (which now occupies the top-end corner), not beside it.
     WeatherFeature(
         viewModel = weatherViewModel,
         onNearby = true,
-        modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+        modifier = Modifier.align(Alignment.TopEnd).padding(end = 16.dp),
     )
     // The donation feature module: the card (DonationsManager-gated) plus its dismiss dialog.
     DonationFeature(
@@ -581,23 +602,8 @@ private fun BoxScope.HomeMapOverlays(
         modifier = Modifier
             .align(Alignment.TopCenter)
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 62.dp)
+            .padding(start = 16.dp, end = 16.dp)
     )
-    // The route-mode header (Compose), top-aligned over the map — drawn above the weather/donation
-    // cards so its opaque bar + cancel button own the top in route mode. Reports its height for the
-    // map's top padding; clears it when dismissed.
-    if (routeHeader != null) {
-        RouteHeaderOverlay(
-            header = routeHeader,
-            onCancel = onCancelRouteMode,
-            onSelectDirection = onSelectRouteDirection,
-            onFrameRoute = onFrameRoute,
-            onHeight = onRouteHeaderHeight,
-            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(),
-        )
-    } else {
-        LaunchedEffect(Unit) { onRouteHeaderHeight(0) }
-    }
     // The map survey (Compose): hero card over the map + remaining-questions sheet. Self-wiring from
     // its ViewModel; self-triggers its request once a region has resolved.
     SurveyFeature(
@@ -606,6 +612,28 @@ private fun BoxScope.HomeMapOverlays(
         onOpenSurvey = onOpenSurvey,
         modifier = Modifier.align(Alignment.TopCenter),
     )
+    // The route-mode header, now a floating card centered below the top chrome (so the menu + search
+    // FABs stay clear and tappable in route mode). Drawn last of the overlays so it sits above the
+    // weather / donation / survey cards when a route is active. The layer is already offset by the
+    // clearance, but the map's top-padding derivation needs the full obstruction, so add the clearance
+    // back onto the reported card height; clears it when dismissed.
+    if (routeHeader != null) {
+        val density = LocalDensity.current
+        val clearancePx = remember(density) { with(density) { MAP_TOP_CHROME_CLEARANCE.roundToPx() } }
+        RouteHeaderOverlay(
+            header = routeHeader,
+            onCancel = onCancelRouteMode,
+            onSelectDirection = onSelectRouteDirection,
+            onFrameRoute = onFrameRoute,
+            onHeight = { h -> onRouteHeaderHeight(h + clearancePx) },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp),
+        )
+    } else {
+        LaunchedEffect(Unit) { onRouteHeaderHeight(0) }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

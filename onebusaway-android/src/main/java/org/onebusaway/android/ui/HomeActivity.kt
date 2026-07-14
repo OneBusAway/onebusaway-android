@@ -113,7 +113,7 @@ class HomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // The whole screen is Compose: a ModalNavigationDrawer + HomeTopBar + BottomSheetScaffold whose
+        // The whole screen is Compose: a ModalNavigationDrawer + an edge-to-edge BottomSheetScaffold whose
         // bottom sheet is the per-stop arrivals panel (ArrivalsSheetHost). No map-related View seam remains.
 
         val activityActions = buildActivityActions()

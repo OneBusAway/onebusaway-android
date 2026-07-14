@@ -113,8 +113,8 @@ jobs:
           target: google_apis
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          # Select only the @SmokeTest-annotated classes; -x lint keeps the ~10-min lint off this leg
-          # (android.yml already gates lint on the PR path).
+          # Select only the @SmokeTest-annotated classes; -x lint keeps the ~10-min lint off this leg.
+          # (Lint no longer runs on the PR path either — it's slated for its own nightly heavyweight run.)
           script: >-
             ./gradlew connectedObaGoogleDebugAndroidTest
             -Pandroid.testInstrumentationRunnerArguments.annotation=org.onebusaway.android.SmokeTest

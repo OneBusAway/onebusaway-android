@@ -26,6 +26,7 @@ import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
 import org.onebusaway.android.map.render.RoutePolyline
+import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.models.ObaRoute
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -71,6 +72,14 @@ class AdjacencyMapControllerTest {
         assertEquals(listOf(first, second), lines.map { it.points })
         assertEquals(listOf(0xFFCC0000.toInt(), null), lines.map { it.color })
         assertTrue(lines.all { it.widthDp == ROUTE_LINE_WIDTH_DP && !it.directional && !it.dashed })
+        assertTrue(
+            lines.all {
+                it.transforms == setOf(
+                    RoutePolylineTransform.VIEWPORT_CLIP,
+                    RoutePolylineTransform.ZOOM_SIMPLIFY,
+                )
+            }
+        )
     }
 
     @Test

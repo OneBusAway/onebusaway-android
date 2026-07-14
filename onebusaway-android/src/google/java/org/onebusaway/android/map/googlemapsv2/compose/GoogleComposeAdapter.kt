@@ -64,6 +64,7 @@ import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapProjector
 import org.onebusaway.android.map.render.ScreenOffset
+import org.onebusaway.android.map.render.routePolylineRenderFlow
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.ThemeUtils
@@ -175,7 +176,6 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                 }
                 map.setOnCameraIdleListener { host.onCameraIdle(snapshot(map)) }
 
-                r.renderRoutePolylines()
                 r.renderStatic()
                 createdRenderer = r
                 renderer = r
@@ -198,11 +198,10 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                     .collect { activeRenderer.renderStatic(it) }
             }
             // Route lines have their own change boundary: viewport stop updates retain the native
-            // Google polylines instead of removing/recreating every long adjacency shape.
+            // Google polylines instead of removing/recreating every long adjacency shape. Canonical
+            // route geometry stays in renderState for framing; only this renderer-bound copy is clipped.
             LaunchedEffect(activeRenderer) {
-                renderState.snapshot
-                    .map { it.routePolylines }
-                    .distinctUntilChanged()
+                routePolylineRenderFlow(renderState.snapshot, host.camera)
                     .collect { activeRenderer.renderRoutePolylines(it) }
             }
             // The vehicle set (which vehicles exist + their icons): reconcile the markers whenever it's

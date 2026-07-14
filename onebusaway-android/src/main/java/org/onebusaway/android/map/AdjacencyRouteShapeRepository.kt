@@ -33,6 +33,7 @@ import kotlin.time.Duration.Companion.minutes
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.extrapolation.data.BoundedLruCache
 import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.map.render.simplifyRoutePolyline
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteMapData
 import org.onebusaway.android.time.ElapsedTime
@@ -75,6 +76,7 @@ interface AdjacencyRouteShapeRepository {
 
 private const val MAX_CONCURRENT_ROUTE_FETCHES = 2
 private const val MAX_CACHED_ROUTE_SHAPES = 32
+private const val ADJACENCY_SHAPE_SIMPLIFICATION_METERS = 2.0
 private val ROUTE_SHAPE_CACHE_TTL = 10.minutes
 private const val TAG = "AdjacencyRouteShapes"
 
@@ -199,6 +201,15 @@ internal fun RouteMapData.toAdjacencyShape(routeId: String): AdjacencyRouteShape
     AdjacencyRouteShape(
         routeId = routeId,
         route = route,
-        polylines = polylines.map { line -> line.map(Location::toGeoPoint) },
+        // Simplify once in fetchAndCacheShape's Dispatchers.Default block. Google Maps otherwise has
+        // to retain and retessellate every GTFS shape vertex during a pinch zoom; caching the result
+        // keeps that work out of both the renderer and every later focus on the same route. A fixed
+        // world-space tolerance avoids swapping geometry as the camera crosses zoom levels.
+        polylines = polylines.map { line ->
+            simplifyRoutePolyline(
+                line.map(Location::toGeoPoint),
+                ADJACENCY_SHAPE_SIMPLIFICATION_METERS,
+            )
+        },
         stopIds = stops.mapTo(LinkedHashSet()) { it.stop.id },
     )

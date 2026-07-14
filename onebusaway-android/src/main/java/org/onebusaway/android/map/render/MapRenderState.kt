@@ -64,6 +64,12 @@ const val DEFAULT_ROUTE_LINE_COLOR: Int = 0xFF0000FF.toInt()
  */
 const val ROUTE_LINE_WIDTH_DP: Float = 10f
 
+/** Optional renderer-bound geometry transforms. Lines opt in explicitly; the default is pass-through. */
+enum class RoutePolylineTransform {
+    VIEWPORT_CLIP,
+    ZOOM_SIMPLIFY,
+}
+
 /**
  * One route/itinerary polyline: an ordered list of points and an optional [color]. A null [color]
  * means "use the [DEFAULT_ROUTE_LINE_COLOR]" — choosing the fallback is a display decision, so producers
@@ -80,6 +86,10 @@ const val ROUTE_LINE_WIDTH_DP: Float = 10f
  * [dashed] asks the renderer to draw a dashed stroke instead of solid — set it for a preview/hint line
  * that should read as distinct from the primary route shown (the route-continuation line, #1691), so it
  * doesn't blend into a busy basemap the way a plain solid stroke can.
+ *
+ * [transforms] opts this line into renderer-bound geometry processing. Canonical [points] stay intact in
+ * [MapRenderState] for framing and other consumers; both native adapters apply the requested transforms
+ * only to the list they render. An empty set is a strict pass-through.
  */
 data class RoutePolyline(
     val color: Int?,
@@ -87,6 +97,7 @@ data class RoutePolyline(
     val widthDp: Float? = null,
     val directional: Boolean = false,
     val dashed: Boolean = false,
+    val transforms: Set<RoutePolylineTransform> = emptySet(),
 ) {
     /** The [color] to draw, applying the [DEFAULT_ROUTE_LINE_COLOR] fallback in one place for every renderer. */
     val resolvedColor: Int get() = color ?: DEFAULT_ROUTE_LINE_COLOR

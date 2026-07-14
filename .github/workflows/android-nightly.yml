@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # This job only runs tests; it never pushes, so don't leave the token in git config.
           persist-credentials: false
@@ -60,7 +60,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # This job only runs tests; it never pushes, so don't leave the token in git config.
           persist-credentials: false

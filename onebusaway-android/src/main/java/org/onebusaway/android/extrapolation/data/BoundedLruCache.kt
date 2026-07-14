@@ -43,6 +43,10 @@ internal class BoundedLruCache<K : Any, V : Any>(private val maxSize: Int) {
         entries[key] = value
     }
 
+    /** Removes [key], returning its previous value when present. */
+    @Synchronized
+    fun remove(key: K): V? = entries.remove(key)
+
     /**
      * Atomically applies [transform] to the current value for [key] (or a fresh [default] if
      * absent), stores the result, and returns it — the compute-and-put that [get]+[put] can't

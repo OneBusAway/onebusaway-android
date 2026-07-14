@@ -28,10 +28,14 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import org.onebusaway.android.api.data.MapDataSource
+import org.onebusaway.android.extrapolation.data.BoundedLruCache
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteMapData
+import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.SingleFlight
 
 /**
@@ -65,15 +69,48 @@ data class AdjacencyShapes(
  */
 interface AdjacencyRouteShapeRepository {
 
-    /** Fetches [routeIds]'s shapes concurrently (bounded) and de-duped; never throws for a failed route. */
+    /** Fetches [routeIds]'s shapes concurrently (bounded), cached, and de-duped; never throws per-route. */
     suspend fun getShapes(routeIds: Set<String>): AdjacencyShapes
 }
 
 private const val MAX_CONCURRENT_ROUTE_FETCHES = 2
+private const val MAX_CACHED_ROUTE_SHAPES = 32
+private val ROUTE_SHAPE_CACHE_TTL = 10.minutes
 private const val TAG = "AdjacencyRouteShapes"
 
+/** One successfully mapped route shape and the monotonic time it entered the completed cache. */
+private data class CachedRouteShape(
+    val shape: AdjacencyRouteShape,
+    val storedAt: ElapsedTime,
+)
+
+/** Thread-safe, success-only LRU with an age limit so route-map changes eventually refresh. */
+private class RouteShapeCache(
+    maxSize: Int,
+    private val ttl: Duration,
+    private val now: () -> ElapsedTime,
+) {
+    private val shapes = BoundedLruCache<String, CachedRouteShape>(maxSize)
+
+    @Synchronized
+    fun get(routeId: String): AdjacencyRouteShape? {
+        val cached = shapes.get(routeId) ?: return null
+        return if (now() - cached.storedAt < ttl) {
+            cached.shape
+        } else {
+            shapes.remove(routeId)
+            null
+        }
+    }
+
+    @Synchronized
+    fun put(routeId: String, shape: AdjacencyRouteShape) {
+        shapes.put(routeId, CachedRouteShape(shape, now()))
+    }
+}
+
 /**
- * Fans out over [MapDataSource.routeMap], one request per route, with two safeguards against a
+ * Fans out over [MapDataSource.routeMap], one request per route, with three safeguards against a
  * fetch storm at a busy hub (a stop with many upcoming routes = many `stops-for-route` calls):
  *
  * - **Bounded concurrency** via a [Semaphore] of [MAX_CONCURRENT_ROUTE_FETCHES] permits, so at most N
@@ -85,20 +122,27 @@ private const val TAG = "AdjacencyRouteShapes"
  * - **In-flight de-dup** via [SingleFlight], so a route already being fetched (e.g. an immediate re-tap,
  *   or two routes sharing the set) is joined, not re-requested. The permit is acquired *inside* the
  *   coalesced block so joined callers consume none.
+ * - **Completed-result cache**: successful shapes live in a 32-entry access-ordered LRU for ten
+ *   minutes. This suppresses sequential re-fetches while users focus nearby stops that share routes,
+ *   bounds the potentially large polyline working set, and eventually refreshes server changes.
+ *   Failures are never cached, so a later focus can retry them.
  *
  * The coalesced fetch runs on the process-lifetime [fetchScope], so a caller that cancels mid-fetch
  * (tapping away) abandons its join immediately while the in-flight work completes for the next caller
- * to re-join — the desired de-dup across re-taps. No persistent shape cache yet (#1827 follow-up), so
- * a later tap re-fetches once the prior fetch has completed and cleared.
+ * to re-join — the desired de-dup across re-taps. A successful completion is then available to later
+ * callers through the repository-owned cache.
  *
- * `@Singleton` because it owns the [SingleFlight] de-dup state (the [org.onebusaway.android.extrapolation.data.DefaultTripObservationFetcher]
- * precedent).
+ * `@Singleton` because it owns both the [SingleFlight] de-dup state and the completed-result cache (the
+ * [org.onebusaway.android.extrapolation.data.DefaultTripObservationFetcher] precedent).
  */
 @Singleton
 class DefaultAdjacencyRouteShapeRepository internal constructor(
     private val mapDataSource: MapDataSource,
     fetchScope: CoroutineScope,
     private val log: (String) -> Unit,
+    cacheSize: Int = MAX_CACHED_ROUTE_SHAPES,
+    cacheTtl: Duration = ROUTE_SHAPE_CACHE_TTL,
+    now: () -> ElapsedTime = ElapsedTime::now,
 ) : AdjacencyRouteShapeRepository {
 
     @Inject
@@ -110,6 +154,7 @@ class DefaultAdjacencyRouteShapeRepository internal constructor(
 
     private val permits = Semaphore(MAX_CONCURRENT_ROUTE_FETCHES)
     private val shapeFetches = SingleFlight<String, AdjacencyRouteShape>(fetchScope)
+    private val shapeCache = RouteShapeCache(cacheSize, cacheTtl, now)
 
     override suspend fun getShapes(routeIds: Set<String>): AdjacencyShapes = coroutineScope {
         val results = routeIds
@@ -123,21 +168,30 @@ class DefaultAdjacencyRouteShapeRepository internal constructor(
         AdjacencyShapes(shapes, failed)
     }
 
-    /** Joins or starts the single-flight fetch for [routeId]; null on any failure (no throw). */
+    /** Returns a fresh cache hit, or joins/starts a single-flight fetch; null on failure (no throw). */
     private suspend fun fetchShape(routeId: String): AdjacencyRouteShape? =
-        shapeFetches.run(routeId) {
-            // The permit bounds in-flight network requests only; hold it just for the fetch. routeMap
-            // returns Result; a failure/absent endpoint resolves to null (drawn as a failed id) and
-            // never throws, so SingleFlight's own error path (its Log.e) never runs.
-            val data = permits.withPermit {
-                mapDataSource.routeMap(routeId)
-                    .onFailure { log("route shape fetch failed for $routeId: $it") }
-                    .getOrNull()
-            }
-            // Walking the shape into GeoPoints is CPU-bound; keep it off the main thread (as
-            // MapDataSource already does for the decode) so a busy hub's focus doesn't jank.
-            data?.let { withContext(Dispatchers.Default) { it.toAdjacencyShape(routeId) } }
+        shapeCache.get(routeId) ?: shapeFetches.run(routeId) {
+            // Re-check inside SingleFlight: a racing request may have populated the cache after this
+            // caller's first lookup but before its coalesced block started.
+            shapeCache.get(routeId) ?: fetchAndCacheShape(routeId)
         }
+
+    /** Fetches and maps one route, caching only a successful completed shape. */
+    private suspend fun fetchAndCacheShape(routeId: String): AdjacencyRouteShape? {
+        // The permit bounds in-flight network requests only; hold it just for the fetch. routeMap
+        // returns Result; a failure/absent endpoint resolves to null (drawn as a failed id) and
+        // never throws, so SingleFlight's own error path (its Log.e) never runs.
+        val data = permits.withPermit {
+            mapDataSource.routeMap(routeId)
+                .onFailure { log("route shape fetch failed for $routeId: $it") }
+                .getOrNull()
+        }
+        // Walking the shape into GeoPoints is CPU-bound; keep it off the main thread (as
+        // MapDataSource already does for the decode) so a busy hub's focus doesn't jank.
+        return data
+            ?.let { withContext(Dispatchers.Default) { it.toAdjacencyShape(routeId) } }
+            ?.also { shapeCache.put(routeId, it) }
+    }
 }
 
 /** Maps a wire [RouteMapData] to the slim adjacency shape, converting shape points to [GeoPoint]. */

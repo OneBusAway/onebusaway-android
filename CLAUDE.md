@@ -116,35 +116,6 @@ The project uses two flavor dimensions:
 
 Default variant: `obaGoogleDebug`
 
-## Architecture
-
-### Source Structure
-Main module: `onebusaway-android/src/main/java/org/onebusaway/android/`
-
-Key packages:
-- `app/` - Application class and lifecycle management
-- `ui/` - Activities and Fragments (HomeActivity is the main entry point)
-- `io/` - REST API integration using Jackson for JSON binding
-  - `elements/` - Response data models
-  - `request/` - API request classes (e.g., ObaArrivalInfoRequest)
-- `provider/` - Content provider (ObaProvider, ObaContract)
-- `map/` - Google Maps integration (Google flavor only)
-- `region/` - Multi-region support for different OBA server instances
-- `directions/` - OpenTripPlanner integration for trip planning
-- `tripservice/` - WorkManager-based arrival reminders
-- `util/` - Utility classes (LocationUtils, PreferenceUtils, RegionUtils)
-
-### API Layer Pattern
-- Requests extend base classes and return typed responses
-- Jackson handles JSON serialization/deserialization
-- ObaApi provides static singleton access to API constants
-- Multi-region architecture auto-discovers OBA servers based on device location
-
-### Data Persistence
-- Content Provider with ObaContract for data access
-- Room database for structured storage (schemas in `schemas/` directory)
-- SharedPreferences for user settings via PreferenceUtils
-
 ## Configuration
 
 ### Required for Trip Planning (Pelias Geocoding)

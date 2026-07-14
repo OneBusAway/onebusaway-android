@@ -35,15 +35,10 @@ jobs:
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
 
-      # Android Lint gate: catches minSdk (NewApi) regressions and other lint errors that
-      # compile + API-33 tests can't see (#1692). Runs on the host before the emulator so it
-      # fails fast; `check` below keeps skipping lint (-x lint) to avoid running it twice.
-      - name: Android Lint
-        # --build-cache: store the obaGoogleDebug compile outputs this step produces in the Gradle
-        # build cache so the "run tests" step below reuses them (and setup-gradle persists the cache
-        # across CI runs). Build cache is enabled per-invocation here, NOT in gradle.properties, to
-        # avoid arming a stale-R.jar footgun for local multi-worktree dev (which shares ~/.gradle).
-        run: ./gradlew :onebusaway-android:lintObaGoogleDebug --build-cache -PwarningsAsErrors=true --stacktrace
+      # NOTE: Android Lint intentionally does NOT run on the PR/push path. lintObaGoogleDebug is
+      # heavyweight (~7-15 min) and dominates this job's wall-clock; it's being moved to a dedicated
+      # nightly heavyweight run instead. The "run tests" step below keeps `-x lint` so `check` doesn't
+      # pull lint back in. (Kotlin `-PwarningsAsErrors` compile gating still runs here via `check`.)
 
       - name: AVD cache
         uses: actions/cache@v4

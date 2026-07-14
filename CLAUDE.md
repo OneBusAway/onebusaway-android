@@ -25,6 +25,16 @@ OneBusAway for Android is a real-time transit information app providing bus arri
 adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.ui.HomeActivity
 ```
 
+### Dependency + plugin versions live in `gradle/libs.versions.toml` (#1819)
+
+All dependency and plugin coordinates resolve from the Gradle **version catalog** at
+`gradle/libs.versions.toml` (auto-imported; exposes `libs.*` accessors). Bump a version there, in one
+place — not in a build script. Plugins are applied via the `plugins {}` DSL (`alias(libs.plugins.…)`),
+with resolution repositories in `settings.gradle`'s `pluginManagement`; the root `build.gradle` declares
+them `apply false`. The scripts are still **Groovy** — the Kotlin DSL (`.kts`) conversion is a separate,
+later step of #1819. The catalog migration kept every version bit-identical (no upgrades rode along), so
+don't treat a bump as part of "the catalog work."
+
 ### Variant grid: `check`/`test` only exercise the `oba` brand by default
 
 The app has two flavor dimensions — **brand** (`oba`, `agencyX`, `agencyY`, `kiedybus`) × **platform**
@@ -265,7 +275,7 @@ domain model is unambiguously millis. See `situationEpochToMillis` and `Situatio
 - **Application ID**: `com.joulespersecond.seattlebusbot` (historical, must keep for Google Play)
 - **Namespace**: `org.onebusaway.android`
 - **Java compatibility**: 17
-- **Kotlin version**: 1.9.21
+- **Kotlin version**: see `kotlin` in `gradle/libs.versions.toml` (2.3.20)
 
 ## Multi-Region Support
 

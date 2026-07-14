@@ -17,13 +17,19 @@
 
 import org.apache.tools.ant.filters.ConcatFilter
 
-apply plugin: 'com.android.application'
-apply plugin: 'org.jetbrains.kotlin.plugin.compose'
-apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
-apply plugin: 'com.google.devtools.ksp'
-apply plugin: 'com.google.dagger.hilt.android'
-apply plugin: 'com.github.triplet.play'
-apply plugin: 'com.apollographql.apollo'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.play.publisher)
+    alias(libs.plugins.apollo)
+    // Applied at the bottom of the old script; the plugins DSL requires it here. google-services
+    // reads google-services.json and crashlytics wires the mapping upload — both order-independent.
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
+}
 
 repositories {
     maven {
@@ -292,132 +298,129 @@ dependencies {
     // Custom lint checks (see :lint-rules) — RawClockArithmetic enforces the typed-time discipline.
     lintChecks project(':lint-rules')
     // Core library desugaring: backports java.time.* to minSdk 23 (issue #1693)
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+    coreLibraryDesugaring libs.desugar.jdk.libs
     // Firebase Analytics
-    implementation 'com.google.firebase:firebase-core:21.1.1'
-    implementation 'com.google.firebase:firebase-analytics:22.1.2'
+    implementation libs.firebase.core
+    implementation libs.firebase.analytics
     // Plausible Analytics
-    implementation 'com.github.OneBusAway:plausible-android-sdk:3.3'
+    implementation libs.plausible.android.sdk
     // Cloud Firestore (for storing destination alert test data)
-    implementation('com.google.firebase:firebase-firestore:25.1.0') {
+    implementation(libs.firebase.firestore) {
         // Exclude protobuf-lite and protolite-well-known-types to avoid conflicts with GTFS-realtime bindings
         // See https://github.com/firebase/firebase-android-sdk/issues/5997
         exclude group: 'com.google.firebase', module: 'protolite-well-known-types'
         exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
     }
-    implementation 'com.google.firebase:firebase-auth:21.0.5'
-    implementation 'com.google.firebase:firebase-storage:21.0.1'
+    implementation libs.firebase.auth
+    implementation libs.firebase.storage
     // Firebase Crashlytics
-    implementation 'com.google.firebase:firebase-crashlytics:19.2.0'
+    implementation libs.firebase.crashlytics
     // Google Play Services Location
-    implementation 'com.google.android.gms:play-services-location:21.3.0'
+    implementation libs.play.services.location
     // Support libraries
-    implementation 'androidx.activity:activity-ktx:1.13.0'
-    implementation 'androidx.fragment:fragment-ktx:1.8.4'
-    implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.exifinterface:exifinterface:1.3.7'
-    implementation 'commons-io:commons-io:2.4'
-    implementation 'org.apache.commons:commons-lang3:3.0'
+    implementation libs.androidx.activity.ktx
+    implementation libs.androidx.fragment.ktx
+    implementation libs.androidx.cardview
+    implementation libs.androidx.constraintlayout
+    implementation libs.androidx.exifinterface
+    implementation libs.commons.io
+    implementation libs.commons.lang3
     // Open311 client library
-    implementation 'com.github.OneBusAway:open311-client:1.0.10'
+    implementation libs.open311.client
     // The OBA REST stack (api/): Retrofit + OkHttp + kotlinx.serialization. Every OBA "where"
     // endpoint runs on this; the hand-rolled io/ client it replaced has been removed. The whole app
     // now parses JSON through this stack — the last Jackson consumer (the OTP `/plan` response) moved
     // to kotlinx.serialization in api/contract/OtpPlanModels.kt, so the Jackson dependency is gone.
-    implementation 'com.squareup.retrofit2:retrofit:2.11.0'
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
-    implementation 'com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3'
+    implementation libs.retrofit
+    implementation libs.okhttp
+    implementation libs.okhttp.logging.interceptor
+    implementation libs.retrofit.kotlinx.serialization.converter
+    implementation libs.kotlinx.serialization.json
     // OTP 2.x GraphQL trip planning (#1780), on top of the same OkHttp stack as the REST clients.
-    implementation 'com.apollographql.apollo:apollo-runtime:5.0.1'
+    implementation libs.apollo.runtime
     // For sorting alphanumeric route names
-    implementation 'org.onebusaway.util:comparators:1.0.0'
+    implementation libs.comparators
     // Pelias for point-of-interest search and geocoding for trip planning origin and destination
-    implementation 'com.github.OneBusAway:pelias-client-library:v1.1.0'
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'com.google.firebase:firebase-messaging:24.1.0'
+    implementation libs.pelias.client.library
+    implementation libs.androidx.appcompat
+    implementation libs.firebase.messaging
     // Google Play Services Maps (only for Google flavor). The Google flavor renders the map
     // imperatively — a MapView in an AndroidView driven by GoogleComposeAdapter/GoogleMapRenderer —
     // so there is no android-maps-compose dependency.
-    googleImplementation 'com.google.android.gms:play-services-maps:20.0.0'
+    googleImplementation libs.play.services.maps
     // MapLibre GL Native (only for MapLibre flavor)
-    maplibreImplementation 'org.maplibre.gl:android-sdk:11.5.2'
+    maplibreImplementation libs.maplibre.android.sdk
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)
-    googleImplementation 'com.google.android.libraries.places:places-compat:2.6.0'
+    googleImplementation libs.places.compat
     // Autocomplete text views with clear button for trip planning
-    implementation 'com.google.android.material:material:1.12.0'
+    implementation libs.material
     // Version pin: a transitive dependency pulls in Gson 2.8.5; this forces it up to 2.10.1.
     // (Gson is not used directly in app source.)
-    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation libs.gson
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
-    androidTestImplementation 'androidx.test:runner:1.6.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
-    androidTestImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1'
+    androidTestImplementation libs.androidx.test.runner
+    androidTestImplementation libs.androidx.test.ext.junit
+    androidTestImplementation libs.kotlinx.coroutines.test
     // Pin past the transitively-resolved 3.5.0 (2022): its InputManagerEventInjectionStrategy reflects
     // for a hidden InputManager.getInstance() that Android 16 (API 36) removed, so Espresso.onIdle()
     // throws NoSuchMethodException on current devices before any test body runs.
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
+    androidTestImplementation libs.espresso.core
     // WorkManager (Java only)
-    implementation 'androidx.work:work-runtime:2.9.1'
-    implementation "androidx.concurrent:concurrent-futures:1.2.0"
-    implementation "androidx.concurrent:concurrent-listenablefuture:1.0.0-beta01"
-    implementation "androidx.concurrent:concurrent-listenablefuture-callback:1.0.0-beta01"
-    implementation "androidx.core:core-ktx:1.13.1"
-    implementation "androidx.preference:preference:1.2.1"
+    implementation libs.androidx.work.runtime
+    implementation libs.androidx.concurrent.futures
+    implementation libs.androidx.concurrent.listenablefuture
+    implementation libs.androidx.concurrent.listenablefuture.callback
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.preference
     // Preferences DataStore — the backing store behind PreferencesRepository. 1.0.0 was the minSdk-21
     // pin; now that minSdk is 23 a newer DataStore is eligible to be adopted as a follow-up.
-    implementation "androidx.datastore:datastore-preferences:1.0.0"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation libs.androidx.datastore.preferences
+    implementation libs.kotlin.stdlib.jdk7
     // RoomDB
-    implementation "androidx.room:room-runtime:2.7.0"
-    ksp "androidx.room:room-compiler:2.7.0"
-    implementation "androidx.room:room-ktx:2.7.0"
-    androidTestImplementation "androidx.room:room-testing:2.7.0"
+    implementation libs.androidx.room.runtime
+    ksp libs.androidx.room.compiler
+    implementation libs.androidx.room.ktx
+    androidTestImplementation libs.androidx.room.testing
     // Hilt
-    implementation "com.google.dagger:hilt-android:2.59.2"
-    ksp "com.google.dagger:hilt-android-compiler:2.59.2"
+    implementation libs.hilt.android
+    ksp libs.hilt.android.compiler
     // GTFS Realtime bindings for parsing GTFS-realtime data
-    implementation "org.mobilitydata:gtfs-realtime-bindings:0.0.8"
-    implementation 'com.google.api.grpc:proto-google-common-protos:2.9.0'
+    implementation libs.gtfs.realtime.bindings
+    implementation libs.proto.google.common.protos
 
     // Jetpack Compose on the 1.11.x line (BOM 2026.05.00 -> compose-ui/foundation 1.11.2, material3
     // 1.4.0). This required the coordinated toolchain bump to compileSdk 37 + AGP 9.2.0 + Gradle 9.4.1.
     // The BOM manages compose-ui + material3 (no explicit versions).
-    def composeBom = platform('androidx.compose:compose-bom:2026.05.00')
+    def composeBom = platform(libs.compose.bom)
     implementation composeBom
     androidTestImplementation composeBom
-    implementation 'androidx.compose.ui:ui'                     // 1.11.2 via BOM
-    implementation 'androidx.compose.ui:ui-tooling-preview'     // @Preview support
-    debugImplementation 'androidx.compose.ui:ui-tooling'        // preview renderer (debug only)
+    implementation libs.compose.ui                     // 1.11.2 via BOM
+    implementation libs.compose.ui.tooling.preview     // @Preview support
+    debugImplementation libs.compose.ui.tooling        // preview renderer (debug only)
     // Compose UI instrumented testing (createComposeRule): semantic tree assertions on real devices,
     // per the "never tap raw screen coordinates" testing policy.
-    androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
-    debugImplementation 'androidx.compose.ui:ui-test-manifest'
-    implementation 'androidx.compose.material3:material3'      // 1.4.0 via BOM
+    androidTestImplementation libs.compose.ui.test.junit4
+    debugImplementation libs.compose.ui.test.manifest
+    implementation libs.compose.material3              // 1.4.0 via BOM
     // Material icons (Icons.Filled.*, AutoMirrored ArrowBack). Deprecated and frozen at 1.7.8, and
     // no longer pulled transitively by material3 1.4.0, so pin explicitly. 1.7.8 runs fine on the
     // 1.11.x Compose runtime; not managed by the BOM, hence the literal version.
-    implementation 'androidx.compose.material:material-icons-core:1.7.8'
-    implementation 'androidx.activity:activity-compose:1.13.0'  // matches activity-ktx 1.13.0
+    implementation libs.compose.material.icons.core
+    implementation libs.androidx.activity.compose      // matches activity-ktx 1.13.0
     // ViewModel + StateFlow for Compose screens (lifecycle 2.10.0; minSdk 23)
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.10.0'
+    implementation libs.androidx.lifecycle.viewmodel.ktx
+    implementation libs.androidx.lifecycle.viewmodel.compose
+    implementation libs.androidx.lifecycle.runtime.compose
     // Navigation-Compose backbone, on the 2.9.x line (minSdk 23).
     // hilt-navigation-compose bridges hiltViewModel() to @HiltViewModel + SavedStateHandle nav-args.
-    implementation 'androidx.navigation:navigation-compose:2.9.8'
-    implementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
+    implementation libs.androidx.navigation.compose
+    implementation libs.androidx.hilt.navigation.compose
     // Make the (previously transitive) coroutines dependency explicit; matches lifecycle 2.8.x
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+    implementation libs.kotlinx.coroutines.android
     // JVM unit tests (src/test)
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1'
+    testImplementation libs.junit
+    testImplementation libs.kotlinx.coroutines.test
 }
-
-apply plugin:'com.google.gms.google-services'
-apply plugin: 'com.google.firebase.crashlytics'
 
 play {
     // Path to the Google Play service account JSON key file.

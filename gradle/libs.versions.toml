@@ -1,0 +1,186 @@
+# Gradle version catalog — the single source of truth for dependency + plugin coordinates.
+#
+# Auto-imported by Gradle from this path (gradle/libs.versions.toml); exposes typed `libs.*`
+# accessors in the build scripts. Introduced in #1819 (build modernization). Bumps happen here,
+# in one place, and Dependabot/Renovate understand this format.
+#
+# NOTE: migrating to this catalog kept every version bit-identical — no upgrades rode along.
+
+[versions]
+# --- Build tooling / plugins ---
+agp = "9.2.0"
+# Kotlin Gradle plugin + its compiler plugins (serialization, compose) all track the Kotlin
+# version; kotlin-stdlib-jdk7 below pins to this too.
+kotlin = "2.3.20"
+# KSP version is Kotlin-version-coupled but published on its own cadence (kotlinVersion-kspVersion).
+ksp = "2.3.4"
+googleServices = "4.4.4"
+hilt = "2.59.2"
+# Apollo: the Gradle plugin and apollo-runtime share this version.
+apollo = "5.0.1"
+crashlyticsPlugin = "3.0.6"
+playPublisher = "4.0.0"
+# Lint tooling tracks AGP: lintVersion == agpVersion + 23.0.0 (AGP 9.2.0 -> 32.2.0). Consumed by
+# the :lint-rules module.
+lint = "32.2.0"
+
+# --- Libraries ---
+desugar = "2.1.5"
+firebaseCore = "21.1.1"
+firebaseAnalytics = "22.1.2"
+firebaseFirestore = "25.1.0"
+firebaseAuth = "21.0.5"
+firebaseStorage = "21.0.1"
+firebaseCrashlytics = "19.2.0"
+firebaseMessaging = "24.1.0"
+playServicesLocation = "21.3.0"
+playServicesMaps = "20.0.0"
+placesCompat = "2.6.0"
+plausible = "3.3"
+open311 = "1.0.10"
+pelias = "v1.1.0"
+comparators = "1.0.0"
+activity = "1.13.0"
+fragment = "1.8.4"
+cardview = "1.0.0"
+constraintlayout = "2.1.4"
+exifinterface = "1.3.7"
+appcompat = "1.7.0"
+coreKtx = "1.13.1"
+preference = "1.2.1"
+datastore = "1.0.0"
+work = "2.9.1"
+concurrentFutures = "1.2.0"
+concurrentListenablefuture = "1.0.0-beta01"
+room = "2.7.0"
+lifecycle = "2.10.0"
+navigationCompose = "2.9.8"
+hiltNavigationCompose = "1.2.0"
+composeBom = "2026.05.00"
+materialIcons = "1.7.8"
+retrofit = "2.11.0"
+okhttp = "4.12.0"
+retrofitKotlinxConverter = "1.0.0"
+kotlinxSerializationJson = "1.7.3"
+coroutines = "1.8.1"
+material = "1.12.0"
+gson = "2.10.1"
+commonsIo = "2.4"
+commonsLang3 = "3.0"
+gtfsRealtime = "0.0.8"
+protoGoogleCommonProtos = "2.9.0"
+maplibre = "11.5.2"
+# Test-only
+androidxTestRunner = "1.6.2"
+androidxTestJunit = "1.2.1"
+espresso = "3.7.0"
+junit = "4.13.2"
+
+[libraries]
+# --- Core library desugaring (backports java.time.* to minSdk 23, #1693) ---
+desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar" }
+
+# --- Firebase / Google Play services ---
+firebase-core = { module = "com.google.firebase:firebase-core", version.ref = "firebaseCore" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics", version.ref = "firebaseAnalytics" }
+firebase-firestore = { module = "com.google.firebase:firebase-firestore", version.ref = "firebaseFirestore" }
+firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
+firebase-storage = { module = "com.google.firebase:firebase-storage", version.ref = "firebaseStorage" }
+firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics", version.ref = "firebaseCrashlytics" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessaging" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
+play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
+places-compat = { module = "com.google.android.libraries.places:places-compat", version.ref = "placesCompat" }
+
+# --- OneBusAway / transit libraries ---
+plausible-android-sdk = { module = "com.github.OneBusAway:plausible-android-sdk", version.ref = "plausible" }
+open311-client = { module = "com.github.OneBusAway:open311-client", version.ref = "open311" }
+pelias-client-library = { module = "com.github.OneBusAway:pelias-client-library", version.ref = "pelias" }
+comparators = { module = "org.onebusaway.util:comparators", version.ref = "comparators" }
+gtfs-realtime-bindings = { module = "org.mobilitydata:gtfs-realtime-bindings", version.ref = "gtfsRealtime" }
+proto-google-common-protos = { module = "com.google.api.grpc:proto-google-common-protos", version.ref = "protoGoogleCommonProtos" }
+
+# --- AndroidX ---
+androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity" }
+androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragment" }
+androidx-cardview = { module = "androidx.cardview:cardview", version.ref = "cardview" }
+androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
+androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-preference = { module = "androidx.preference:preference", version.ref = "preference" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "work" }
+androidx-concurrent-futures = { module = "androidx.concurrent:concurrent-futures", version.ref = "concurrentFutures" }
+androidx-concurrent-listenablefuture = { module = "androidx.concurrent:concurrent-listenablefuture", version.ref = "concurrentListenablefuture" }
+androidx-concurrent-listenablefuture-callback = { module = "androidx.concurrent:concurrent-listenablefuture-callback", version.ref = "concurrentListenablefuture" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
+androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+kotlin-stdlib-jdk7 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk7", version.ref = "kotlin" }
+
+# --- Jetpack Compose (versions from the BOM unless noted) ---
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+# Material icons are frozen at 1.7.8 and no longer BOM-managed, so this one carries an explicit version.
+compose-material-icons-core = { module = "androidx.compose.material:material-icons-core", version.ref = "materialIcons" }
+
+# --- Hilt ---
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
+hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
+
+# --- Networking (OBA REST stack + OTP GraphQL) ---
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+okhttp-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
+retrofit-kotlinx-serialization-converter = { module = "com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter", version.ref = "retrofitKotlinxConverter" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+apollo-runtime = { module = "com.apollographql.apollo:apollo-runtime", version.ref = "apollo" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+
+# --- Misc ---
+material = { module = "com.google.android.material:material", version.ref = "material" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+commons-io = { module = "commons-io:commons-io", version.ref = "commonsIo" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commonsLang3" }
+maplibre-android-sdk = { module = "org.maplibre.gl:android-sdk", version.ref = "maplibre" }
+
+# --- Testing ---
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestJunit" }
+espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+junit = { module = "junit:junit", version.ref = "junit" }
+
+# --- :lint-rules module (compileOnly against the lint runtime) ---
+lint-api = { module = "com.android.tools.lint:lint-api", version.ref = "lint" }
+lint-checks = { module = "com.android.tools.lint:lint-checks", version.ref = "lint" }
+lint-tests = { module = "com.android.tools.lint:lint-tests", version.ref = "lint" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+# Kotlin Gradle plugin + compiler plugins. kotlin-android is declared (and put on the root classpath
+# via `apply false`) so KGP is pinned build-wide, mirroring the old buildscript classpath, even though
+# it's applied transitively rather than by id in the app module.
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+apollo = { id = "com.apollographql.apollo", version.ref = "apollo" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlyticsPlugin" }
+play-publisher = { id = "com.github.triplet.play", version.ref = "playPublisher" }

@@ -61,7 +61,9 @@ import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.ThemeUtils
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlin.math.abs
 
 private const val STYLE_URL_LIGHT = "https://tiles.openfreemap.org/styles/liberty"
@@ -74,10 +76,10 @@ private const val FRAME_INTERVAL_NANOS = 8_333_333L
  * maplibre flavor's [ObaComposeMapAdapter]: hosts the classic maplibre [MapView] inside an
  * [AndroidView] (there is no maplibre-compose), bridging the MapView's imperative lifecycle to Compose
  * via a [LifecycleEventObserver], and drives the [MapHost]: it sets the style, builds the
- * [MapLibreRenderer] and re-renders on every render-state change, wires map/marker/info-window clicks
- * to [callbacks], reports camera idles to [MapHost.onCameraIdle], applies the render state's camera
- * gestures + retained framing intent, and enables the location blue dot from the host's
- * permission-derived flag. There is no imperative host.
+ * [MapLibreRenderer] and collects its static and route layers independently, wires
+ * map/marker/info-window clicks to [callbacks], reports camera idles to [MapHost.onCameraIdle], applies
+ * the render state's camera gestures + retained framing intent, and enables the location blue dot from
+ * the host's permission-derived flag. There is no imperative host.
  *
  * Lifecycle note: `addObserver` on an already-STARTED/RESUMED lifecycle synchronously dispatches the
  * upward events, so the MapView still receives `onStart`/`onResume` when it enters composition late.
@@ -167,6 +169,7 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                         val target = map.cameraPosition.target
                         if (target != null) host.onCameraIdle(snapshot(map, target)) else host.onCameraSettled()
                     }
+                    r.renderRoutePolylines()
                     r.renderStatic()
                 }
             }
@@ -176,10 +179,22 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
         // Re-render the maplibre annotations, and enable the blue dot from the view model's permission flag.
         val activeRenderer = renderer
         if (activeRenderer != null) {
-            // Static layer (stops / routes / bikes / generics): redraw only when the snapshot changes
-            // (viewport loads, the vehicle poll, focus) — a bounded cost.
+            // Non-route static layer (stops / bikes / generics): strip route lines before distinctness
+            // so a route-only change never churns these annotations, and stop-only emissions cannot
+            // touch the independently collected native route layer below.
             LaunchedEffect(activeRenderer) {
-                renderState.snapshot.collect { activeRenderer.renderStatic() }
+                renderState.snapshot
+                    .map { it.copy(routePolylines = emptyList()) }
+                    .distinctUntilChanged()
+                    .collect { activeRenderer.renderStatic(it) }
+            }
+            // Route lines have their own change boundary: viewport stop updates retain the native
+            // maplibre polylines instead of removing/recreating every long adjacency shape.
+            LaunchedEffect(activeRenderer) {
+                renderState.snapshot
+                    .map { it.routePolylines }
+                    .distinctUntilChanged()
+                    .collect { activeRenderer.renderRoutePolylines(it) }
             }
             // The vehicle set (which vehicles exist + their icons): reconcile the markers whenever it's
             // pushed — a poll, a direction switch, or leaving route mode (null). Discrete, so it's reactive

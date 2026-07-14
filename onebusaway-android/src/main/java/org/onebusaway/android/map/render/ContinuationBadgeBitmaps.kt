@@ -32,6 +32,8 @@ import androidx.core.graphics.createBitmap
  */
 object ContinuationBadgeBitmaps {
 
+    data class BadgeDimensions(val width: Int, val height: Int)
+
     private const val TEXT_SIZE_PX = 38f
     private const val HORIZONTAL_PADDING_PX = 26f
     private const val VERTICAL_PADDING_PX = 16f
@@ -48,16 +50,11 @@ object ContinuationBadgeBitmaps {
      * with [color], so the badge stays legible across the full range of GTFS route colors.
      */
     fun badge(routeShortName: String, color: Int): Bitmap {
-        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            this.color = legibleTextColor(color)
-            textSize = TEXT_SIZE_PX
-            isFakeBoldText = true
-            textAlign = Paint.Align.CENTER
-        }
+        val textPaint = badgeTextPaint(legibleTextColor(color))
         val metrics = textPaint.fontMetrics
-        val textWidth = textPaint.measureText(routeShortName)
-        val width = (textWidth + HORIZONTAL_PADDING_PX * 2).coerceAtLeast(CORNER_RADIUS_PX * 2)
-        val height = (metrics.descent - metrics.ascent) + VERTICAL_PADDING_PX * 2
+        val dimensions = badgeDimensions(routeShortName)
+        val width = dimensions.width.toFloat()
+        val height = dimensions.height.toFloat()
 
         val bitmap = createBitmap(width.toInt(), height.toInt())
         val canvas = Canvas(bitmap)
@@ -73,6 +70,23 @@ object ContinuationBadgeBitmaps {
         val baseline = height / 2f - (metrics.ascent + metrics.descent) / 2f
         canvas.drawText(routeShortName, width / 2f, baseline, textPaint)
         return bitmap
+    }
+
+    /** Pixel dimensions of [badge] without allocating its bitmap, used by screen-space layout. */
+    fun badgeDimensions(routeShortName: String): BadgeDimensions {
+        val paint = badgeTextPaint(Color.BLACK)
+        val metrics = paint.fontMetrics
+        val width = (paint.measureText(routeShortName) + HORIZONTAL_PADDING_PX * 2)
+            .coerceAtLeast(CORNER_RADIUS_PX * 2)
+        val height = (metrics.descent - metrics.ascent) + VERTICAL_PADDING_PX * 2
+        return BadgeDimensions(width.toInt(), height.toInt())
+    }
+
+    private fun badgeTextPaint(textColor: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = textColor
+        textSize = TEXT_SIZE_PX
+        isFakeBoldText = true
+        textAlign = Paint.Align.CENTER
     }
 
     /** Black or white, whichever contrasts better against [background] by relative luminance. */

@@ -8,6 +8,7 @@ import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
 import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.models.FocusedTrip
+import org.onebusaway.android.models.ObaRoute
 
 class RouteViewGeometryTest {
 
@@ -82,5 +83,58 @@ class RouteViewGeometryTest {
 
         assertEquals(setOf("focus", "selected-stop"), stops.stopIdsForRoute(trips, "selected"))
         assertEquals(setOf("focus", "selected-stop", "other-stop"), stops.stopIdsForRoute(trips, null))
+    }
+
+    @Test
+    fun `route badges retain every drawn path and follow focused geometry order`() {
+        val firstPath = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0))
+        val secondPath = listOf(GeoPoint(1.0, 0.0), GeoPoint(1.0, 1.0))
+        val geometry = FocusedTripGeometry(
+            linkedMapOf(
+                "b-shape" to FocusedTripShape("b-shape", "route-b", null, firstPath),
+                "a-shape-1" to FocusedTripShape("a-shape-1", "route-a", 0xFF123456.toInt(), firstPath),
+                "a-shape-2" to FocusedTripShape("a-shape-2", "route-a", 0xFF123456.toInt(), secondPath),
+            )
+        )
+
+        val badges = geometry.toRouteBadges(
+            listOf(route("route-a", "A", 0xFF654321.toInt()), route("route-b", "B", 0xFFABCDEF.toInt()))
+        )
+
+        assertEquals(listOf("route-b", "route-a"), badges.map { it.routeId })
+        assertEquals(listOf("B", "A"), badges.map { it.routeShortName })
+        assertEquals(0xFFABCDEF.toInt(), badges[0].color)
+        assertEquals(0xFF123456.toInt(), badges[1].color)
+        assertEquals(listOf(firstPath, secondPath), badges[1].paths)
+    }
+
+    @Test
+    fun `route badge requires both drawable geometry and route metadata`() {
+        val points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0))
+        val geometry = FocusedTripGeometry(
+            linkedMapOf(
+                "known" to FocusedTripShape("known", "known-route", 1, points),
+                "missing-metadata" to FocusedTripShape("missing-metadata", "missing-route", 2, points),
+                "degenerate" to FocusedTripShape("degenerate", "degenerate-route", 3, listOf(points.first())),
+            )
+        )
+
+        val badges = geometry.toRouteBadges(
+            listOf(route("known-route", "Known"), route("degenerate-route", "Degenerate"))
+        )
+
+        assertEquals(listOf("known-route"), badges.map { it.routeId })
+    }
+
+    private fun route(id: String, shortName: String, routeColor: Int? = null) = object : ObaRoute {
+        override val id = id
+        override val shortName = shortName
+        override val longName: String? = null
+        override val description: String? = null
+        override val type = ObaRoute.TYPE_BUS
+        override val url: String? = null
+        override val color = routeColor
+        override val textColor: Int? = null
+        override val agencyId = "agency"
     }
 }

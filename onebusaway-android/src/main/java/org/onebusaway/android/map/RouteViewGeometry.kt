@@ -6,9 +6,13 @@
 package org.onebusaway.android.map
 
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
+import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
+import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.models.FocusedTrip
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.util.getRouteDisplayName
 
 internal val ROUTE_VIEW_TRANSFORMS = setOf(
     RoutePolylineTransform.VIEWPORT_CLIP,
@@ -42,6 +46,34 @@ internal fun FocusedTripGeometry.toRoutePolylines(
                 transforms = ROUTE_VIEW_TRANSFORMS,
             )
         )
+    }
+}
+
+/**
+ * One Google-first badge model per successfully drawn route, preserving the focused-trip/shape order
+ * that mirrors the arrivals drawer. Screen placement stays out of this producer: all successful paths
+ * for the route are retained so the renderer can lay the badge out against the live viewport.
+ */
+internal fun FocusedTripGeometry.toRouteBadges(routes: List<ObaRoute>): List<RouteBadge> {
+    val metadata = routes.associateBy(ObaRoute::id)
+    val shapesByRoute = shapes.values.groupBy(FocusedTripShape::routeId)
+    return buildList {
+        for ((routeId, routeShapes) in shapesByRoute) {
+            val route = metadata[routeId] ?: continue
+            val name = getRouteDisplayName(route).takeIf(String::isNotBlank) ?: continue
+            val paths = routeShapes.map(FocusedTripShape::points).filter { it.size >= 2 }.distinct()
+            if (paths.isEmpty()) continue
+            add(
+                RouteBadge(
+                    routeId = routeId,
+                    routeShortName = name,
+                    color = routeShapes.firstNotNullOfOrNull(FocusedTripShape::routeColor)
+                        ?: route.color
+                        ?: DEFAULT_ROUTE_LINE_COLOR,
+                    paths = paths,
+                )
+            )
+        }
     }
 }
 

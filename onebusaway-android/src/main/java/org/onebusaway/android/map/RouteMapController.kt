@@ -203,6 +203,9 @@ class RouteMapController(
         focusTripId: String? = null,
     ) {
         this.routeId = routeId
+        // A badge tap enters single-route mode; remove the adjacency choices immediately instead of
+        // leaving them tappable during the route load.
+        renderState.setRouteBadges(emptyList())
         this.directionStopId = directionStopId
         this.initialDirectionOverride = initialDirectionId
         this.pendingFocus = focusTripId?.let { PendingFocus(it, frameFallback = zoomToRoute) }
@@ -521,6 +524,7 @@ class RouteMapController(
         val focus = stopFocusSession
         if (focus == null) {
             renderState.setRoutePolylines(basePolylines)
+            renderState.setRouteBadges(emptyList())
             stopsController.setRoutePresentation(baseStopPresentation)
             return
         }
@@ -528,6 +532,10 @@ class RouteMapController(
         val visibleStopIds = focusedStops.stopIdsForRoute(focus.trips, emphasizedRouteId)
         renderState.setRoutePolylines(
             focusedGeometry.toRoutePolylines(emphasizedRouteId)
+        )
+        renderState.setRouteBadges(
+            if (emphasizedRouteId == null) focusedGeometry.toRouteBadges(focusedRoutes)
+            else emptyList()
         )
         stopsController.setRoutePresentation(
             RouteStopPresentation(

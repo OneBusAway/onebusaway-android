@@ -194,6 +194,19 @@ data class ContinuationBadge(
 )
 
 /**
+ * A tappable label for one route in focused-stop adjacency view (#1827). [paths] carries the route's
+ * already-loaded shapes so a flavor renderer can project them and run the shared screen-space layout
+ * against its live viewport. Google renders these in the first badge phase; MapLibre deliberately
+ * ignores the layer until its follow-up.
+ */
+data class RouteBadge(
+    val routeId: String,
+    val routeShortName: String,
+    val color: Int,
+    val paths: List<List<GeoPoint>>,
+)
+
+/**
  * The arrowhead terminating a route-continuation line (#1691), at [point] oriented along [bearing]
  * (compass degrees, 0°=N — the shape's travel direction at that point) so it visually points onward
  * into the next route.
@@ -212,6 +225,7 @@ data class RouteContinuation(val polyline: RoutePolyline, val arrow: Continuatio
 /** Immutable snapshot of everything the map should render. Grows one overlay per phase. */
 data class MapRenderSnapshot(
     val routePolylines: List<RoutePolyline> = emptyList(),
+    val routeBadges: List<RouteBadge> = emptyList(),
     val genericMarkers: Map<Int, GenericMarker> = emptyMap(),
     val bikeStations: List<BikeMarker> = emptyList(),
     val bikeshareVisible: Boolean = false,
@@ -374,6 +388,11 @@ class MapRenderState {
     }
 
     fun clearRoutePolylines() = setRoutePolylines(emptyList())
+
+    /** Sets the Google-first adjacency route badges (#1827); MapLibre currently ignores this layer. */
+    fun setRouteBadges(badges: List<RouteBadge>) {
+        _snapshot.update { it.copy(routeBadges = badges) }
+    }
 
     // --- Generic markers (the old SimpleMarkerOverlay): monotonic int IDs the caller keeps to ---
     // --- remove the marker later. Unlike the old overlay, these survive until the map renders, ---

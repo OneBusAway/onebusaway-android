@@ -18,7 +18,7 @@
 
 // Plugins are declared here (apply false) so their versions — sourced from gradle/libs.versions.toml —
 // are pinned build-wide and applied per-module. Replaces the old `buildscript { classpath ... }` block
-// (#1819); plugin resolution repositories now live in settings.gradle's pluginManagement.
+// (#1819); plugin resolution repositories now live in settings.gradle.kts's pluginManagement.
 plugins {
     alias(libs.plugins.android.application) apply false
     // kotlin-android is applied transitively (the compose/serialization compiler plugins pull in KGP),

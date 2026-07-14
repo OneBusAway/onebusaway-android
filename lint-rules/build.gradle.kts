@@ -5,7 +5,7 @@
  * consumed by the app module via `lintChecks project(':lint-rules')`. Nothing here runs on device.
  */
 plugins {
-    id 'java-library'
+    `java-library`
     alias(libs.plugins.kotlin.jvm)
 }
 
@@ -23,18 +23,18 @@ kotlin {
 
 dependencies {
     // lint-api/lint-checks are provided by the lint runtime that loads this jar, so compileOnly.
-    compileOnly libs.lint.api
-    compileOnly libs.lint.checks
+    compileOnly(libs.lint.api)
+    compileOnly(libs.lint.checks)
 
-    testImplementation libs.lint.api
-    testImplementation libs.lint.checks
-    testImplementation libs.lint.tests
-    testImplementation libs.junit
+    testImplementation(libs.lint.api)
+    testImplementation(libs.lint.checks)
+    testImplementation(libs.lint.tests)
+    testImplementation(libs.junit)
 }
 
 // Lint discovers the registry through this manifest attribute when the jar is loaded via lintChecks.
-jar {
+tasks.jar {
     manifest {
-        attributes('Lint-Registry-v2': 'org.onebusaway.lint.TimeDomainIssueRegistry')
+        attributes(mapOf("Lint-Registry-v2" to "org.onebusaway.lint.TimeDomainIssueRegistry"))
     }
 }

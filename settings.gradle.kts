@@ -12,8 +12,8 @@ pluginManagement {
 plugins {
     // Settings-scope plugin: it runs before the version catalog is available, so its version stays a
     // literal here rather than a `libs.` reference.
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-include ':onebusaway-android'
-include ':lint-rules'
+include(":onebusaway-android")
+include(":lint-rules")

@@ -21,11 +21,13 @@
 package org.onebusaway.android.ui.home.chrome
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -57,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -97,31 +100,62 @@ fun MapTopChrome(
     modifier: Modifier = Modifier,
 ) {
     val margin = dimensionResource(R.dimen.fab_margin_horizontal)
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = margin)
-            .padding(top = TOP_CHROME_TOP_MARGIN),
-        horizontalArrangement = Arrangement.spacedBy(margin),
-        // Top-aligned so the menu FAB stays put at the top of the row as the search field expands its
-        // dropdown downward (rather than re-centering against the taller field).
-        verticalAlignment = Alignment.Top,
-    ) {
-        FloatingActionButton(
-            onClick = onOpenDrawer,
-            containerColor = colorResource(R.color.theme_accent),
-            contentColor = Color.White,
-            modifier = menuModifier.size(TOP_CHROME_HEIGHT),
-        ) {
-            Icon(Icons.Default.Menu, stringResource(R.string.navigation_drawer_open))
+    val focusManager = LocalFocusManager.current
+    // The search field's focus is owned here so a full-screen tap-catcher can sit behind the chrome and
+    // dismiss the field/dropdown on any tap outside it.
+    var searchFocused by remember { mutableStateOf(false) }
+    // System back collapses the field (dismisses the keyboard + dropdown) instead of leaving the screen.
+    BackHandler(enabled = searchFocused) { focusManager.clearFocus() }
+
+    Box(modifier.fillMaxSize()) {
+        // While focused, an invisible full-screen catcher behind the chrome clears focus on any tap
+        // outside the field/dropdown (which are drawn above it) — defocusing collapses the dropdown.
+        if (searchFocused) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) { detectTapGestures { focusManager.clearFocus() } }
+            )
         }
-        SearchField(
-            recents = recents,
-            onSubmit = onSearch,
-            onRecentStop = onRecentStop,
-            onRecentRoute = onRecentRoute,
-            modifier = Modifier.weight(1f),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = margin)
+                .padding(top = TOP_CHROME_TOP_MARGIN),
+            horizontalArrangement = Arrangement.spacedBy(margin),
+            // Top-aligned so the menu FAB stays put at the top of the row as the search field expands its
+            // dropdown downward (rather than re-centering against the taller field).
+            verticalAlignment = Alignment.Top,
+        ) {
+            FloatingActionButton(
+                onClick = onOpenDrawer,
+                containerColor = colorResource(R.color.theme_accent),
+                contentColor = Color.White,
+                modifier = menuModifier.size(TOP_CHROME_HEIGHT),
+            ) {
+                Icon(Icons.Default.Menu, stringResource(R.string.navigation_drawer_open))
+            }
+            SearchField(
+                recents = recents,
+                focused = searchFocused,
+                onFocusChanged = { searchFocused = it },
+                // Leaving search (submit / recents tap) clears focus first, so the field collapses and
+                // returning to HOME doesn't strand it expanded.
+                onSubmit = { query ->
+                    focusManager.clearFocus()
+                    onSearch(query)
+                },
+                onRecentStop = { id, name ->
+                    focusManager.clearFocus()
+                    onRecentStop(id, name)
+                },
+                onRecentRoute = { routeId ->
+                    focusManager.clearFocus()
+                    onRecentRoute(routeId)
+                },
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }
 
@@ -131,22 +165,23 @@ fun MapTopChrome(
  * shows once there is text. Submitting via the IME "search" action forwards a non-blank, trimmed query to
  * [onSubmit].
  *
- * When focused with matching [recents], the pill morphs into a connected rounded surface that hosts the
+ * When [focused] with matching [recents], the pill morphs into a connected rounded surface that hosts the
  * [SearchRecentsDropdown] beneath the query row (one surface, one shadow — so the field + dropdown read as
- * a single expanded control). Tapping a recent row fires [onRecentStop] / [onRecentRoute] and collapses;
- * system back or losing focus collapses too. Submitting still runs a full search, distinct from the recents.
+ * a single expanded control). Tapping a recent row fires [onRecentStop] / [onRecentRoute]; submitting runs
+ * a full search (distinct from the recents). Focus is owned by the caller ([MapTopChrome]), which reports
+ * changes via [onFocusChanged] and drives collapse (clearing focus) on submit / recents tap / tap-outside.
  */
 @Composable
 private fun SearchField(
     recents: List<RecentItem>,
+    focused: Boolean,
+    onFocusChanged: (Boolean) -> Unit,
     onSubmit: (String) -> Unit,
     onRecentStop: (id: String, name: String?) -> Unit,
     onRecentRoute: (routeId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
-    var focused by remember { mutableStateOf(false) }
-    val focusManager = LocalFocusManager.current
     // Shown as the visual placeholder AND set as the field's accessibility label — decorationBox text
     // alone isn't exposed to screen readers, so BasicTextField needs the label in semantics too.
     val hint = stringResource(R.string.search_hint)
@@ -166,9 +201,6 @@ private fun SearchField(
     } else {
         RoundedCornerShape(percent = 50)
     }
-
-    // System back collapses the field (dismisses the keyboard + dropdown) instead of leaving the screen.
-    BackHandler(enabled = focused) { focusManager.clearFocus() }
 
     Surface(
         modifier = modifier,
@@ -199,16 +231,11 @@ private fun SearchField(
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(
-                        onSearch = {
-                            if (query.isNotBlank()) {
-                                focusManager.clearFocus()
-                                onSubmit(query.trim())
-                            }
-                        }
+                        onSearch = { if (query.isNotBlank()) onSubmit(query.trim()) }
                     ),
                     modifier = Modifier
                         .weight(1f)
-                        .onFocusChanged { focused = it.isFocused }
+                        .onFocusChanged { onFocusChanged(it.isFocused) }
                         .semantics { contentDescription = hint },
                     decorationBox = { innerTextField ->
                         Box(contentAlignment = Alignment.CenterStart) {
@@ -232,16 +259,8 @@ private fun SearchField(
             if (expanded) {
                 SearchRecentsDropdown(
                     recents = shown,
-                    // A tap leaves search: collapse (clear focus) before dispatching, so returning to HOME
-                    // doesn't strand the field expanded.
-                    onRecentStop = { id, name ->
-                        focusManager.clearFocus()
-                        onRecentStop(id, name)
-                    },
-                    onRecentRoute = { routeId ->
-                        focusManager.clearFocus()
-                        onRecentRoute(routeId)
-                    },
+                    onRecentStop = onRecentStop,
+                    onRecentRoute = onRecentRoute,
                 )
             }
         }

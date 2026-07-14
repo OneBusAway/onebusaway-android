@@ -5,8 +5,10 @@
  */
 package org.onebusaway.android.map
 
-import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
+import org.onebusaway.android.map.layout.RouteBadgeLayoutInput
+import org.onebusaway.android.map.layout.layoutRouteBadges
 import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
+import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
@@ -51,31 +53,44 @@ internal fun FocusedTripGeometry.toRoutePolylines(
 
 /**
  * One Google-first badge model per successfully drawn route, preserving the focused-trip/shape order
- * that mirrors the arrivals drawer. Screen placement stays out of this producer: all successful paths
- * for the route are retained so the renderer can lay the badge out against the live viewport.
+ * that mirrors the arrivals drawer. The shared layout chooses stable geographic line-center anchors;
+ * flavor renderers only draw them.
  */
 internal fun FocusedTripGeometry.toRouteBadges(routes: List<ObaRoute>): List<RouteBadge> {
     val metadata = routes.associateBy(ObaRoute::id)
     val shapesByRoute = shapes.values.groupBy(FocusedTripShape::routeId)
+    val specs = shapesByRoute.mapNotNull { (routeId, routeShapes) ->
+        val route = metadata[routeId] ?: return@mapNotNull null
+        val name = getRouteDisplayName(route).takeIf(String::isNotBlank) ?: return@mapNotNull null
+        RouteBadgeSpec(route, name, routeShapes)
+    }
+    val placements = layoutRouteBadges(
+        specs.map { spec ->
+            RouteBadgeLayoutInput(spec.route.id, spec.shapes.map(FocusedTripShape::points))
+        }
+    ).associateBy { it.routeId }
     return buildList {
-        for ((routeId, routeShapes) in shapesByRoute) {
-            val route = metadata[routeId] ?: continue
-            val name = getRouteDisplayName(route).takeIf(String::isNotBlank) ?: continue
-            val paths = routeShapes.map(FocusedTripShape::points).filter { it.size >= 2 }.distinct()
-            if (paths.isEmpty()) continue
+        for (spec in specs) {
+            val placement = placements[spec.route.id] ?: continue
             add(
                 RouteBadge(
-                    routeId = routeId,
-                    routeShortName = name,
-                    color = routeShapes.firstNotNullOfOrNull(FocusedTripShape::routeColor)
-                        ?: route.color
+                    routeId = spec.route.id,
+                    routeShortName = spec.name,
+                    color = spec.shapes.firstNotNullOfOrNull(FocusedTripShape::routeColor)
+                        ?: spec.route.color
                         ?: DEFAULT_ROUTE_LINE_COLOR,
-                    paths = paths,
+                    point = placement.point,
                 )
             )
         }
     }
 }
+
+private data class RouteBadgeSpec(
+    val route: ObaRoute,
+    val name: String,
+    val shapes: List<FocusedTripShape>,
+)
 
 /** Exact scheduled stop ids for all focused trips, or only those belonging to [routeId]. */
 internal fun FocusedTripStops.stopIdsForRoute(

@@ -18,11 +18,9 @@ package org.onebusaway.android.map.googlemapsv2
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.graphics.Point
 import androidx.core.content.ContextCompat
 import kotlin.math.cos
 import kotlin.math.pow
-import kotlin.math.roundToInt
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -52,7 +50,6 @@ import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapPing
-import org.onebusaway.android.map.render.MapPadding
 import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MarkerRendering
@@ -74,11 +71,6 @@ import org.onebusaway.android.map.render.routeOutlineColor
 import org.onebusaway.android.map.render.routeOutlineWidthPx
 import org.onebusaway.android.map.render.stopIconKind
 import org.onebusaway.android.map.render.stopZIndex
-import org.onebusaway.android.map.layout.RouteBadgeLayoutInput
-import org.onebusaway.android.map.layout.ScreenPoint
-import org.onebusaway.android.map.layout.ScreenRect
-import org.onebusaway.android.map.layout.ScreenSize
-import org.onebusaway.android.map.layout.layoutRouteBadges
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ThemeUtils
@@ -134,14 +126,9 @@ class GoogleMapRenderer(
     // the single selected vehicle), but kept as a map like the other *ByMarker lookups for symmetry.
     private val continuationBadgeByMarker = HashMap<Marker, ContinuationBadge>()
 
-    // Google-first adjacency route badges (#1827). Kept outside [staticMarkers] so a camera idle can
-    // re-run only their screen-space layout without churning stops, bikes, or continuation markers.
-    private val routeBadgeMarkers = mutableListOf<Marker>()
+    // Google-first adjacency route badge tap targets (#1827). Their geographic anchors are laid out
+    // once upstream; these markers then move naturally with the map through pan and zoom.
     private val routeBadgeByMarker = HashMap<Marker, RouteBadge>()
-    private var renderedRouteBadges: List<RouteBadge> = emptyList()
-    private var badgeViewportWidthPx = 0
-    private var badgeViewportHeightPx = 0
-    private var badgePadding = MapPadding()
 
     // The latest trips-for-route poll, published as it changes (after the markers are reconciled). The
     // change-detector for the vehicle reconcile, the source a vehicle info window reads its content from,
@@ -251,12 +238,6 @@ class GoogleMapRenderer(
         staticPolylines.clear()
         bikeByMarker.clear()
         continuationBadgeByMarker.clear()
-        clearRouteBadgeMarkers()
-    }
-
-    private fun clearRouteBadgeMarkers() {
-        routeBadgeMarkers.forEach { it.remove() }
-        routeBadgeMarkers.clear()
         routeBadgeByMarker.clear()
     }
 
@@ -296,58 +277,19 @@ class GoogleMapRenderer(
         }
 
         snapshot.routeContinuation?.let { continuation -> renderContinuation(continuation) }
-        renderedRouteBadges = snapshot.routeBadges
-        renderRouteBadges()
+        renderRouteBadges(snapshot.routeBadges)
     }
 
-    /**
-     * Re-project and greedily lay out adjacency route badges after a camera, size, or padding change.
-     * Route data stays declarative; only the screen-dependent placement lives in this flavor adapter.
-     */
-    fun relayoutRouteBadges(widthPx: Int, heightPx: Int, padding: MapPadding) {
-        badgeViewportWidthPx = widthPx
-        badgeViewportHeightPx = heightPx
-        badgePadding = padding
-        clearRouteBadgeMarkers()
-        renderRouteBadges()
-    }
-
-    private fun renderRouteBadges() {
-        if (renderedRouteBadges.isEmpty() || badgeViewportWidthPx <= 0 || badgeViewportHeightPx <= 0) return
-        val viewport = ScreenRect(
-            left = 0f,
-            top = badgePadding.topPx.toFloat(),
-            right = badgeViewportWidthPx.toFloat(),
-            bottom = (badgeViewportHeightPx - badgePadding.bottomPx).toFloat(),
-        )
-        if (viewport.width <= 0f || viewport.height <= 0f) return
-        val projection = map.projection
-        val inputs = renderedRouteBadges.map { badge ->
-            val dimensions = ContinuationBadgeBitmaps.badgeDimensions(badge.routeShortName)
-            RouteBadgeLayoutInput(
-                routeId = badge.routeId,
-                size = ScreenSize(dimensions.width.toFloat(), dimensions.height.toFloat()),
-                paths = badge.paths.map { path ->
-                    path.map { point ->
-                        projection.toScreenLocation(point.toLatLng()).let {
-                            ScreenPoint(it.x.toFloat(), it.y.toFloat())
-                        }
-                    }
-                },
-            )
-        }
-        val badgeByRouteId = renderedRouteBadges.associateBy(RouteBadge::routeId)
-        for (placement in layoutRouteBadges(viewport, inputs)) {
-            val badge = badgeByRouteId[placement.routeId] ?: continue
-            val point = Point(placement.center.x.roundToInt(), placement.center.y.roundToInt())
+    private fun renderRouteBadges(badges: List<RouteBadge>) {
+        for (badge in badges) {
             val marker = map.addMarker(
                 MarkerOptions()
-                    .position(projection.fromScreenLocation(point))
+                    .position(badge.point.toLatLng())
                     .icon(routeBadgeIcon(badge.routeShortName, badge.color))
                     .anchor(0.5f, 0.5f)
                     .zIndex(ROUTE_BADGE_Z_INDEX)
             )!!
-            routeBadgeMarkers += marker
+            staticMarkers += marker
             routeBadgeByMarker[marker] = badge
         }
     }

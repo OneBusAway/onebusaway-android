@@ -194,16 +194,15 @@ data class ContinuationBadge(
 )
 
 /**
- * A tappable label for one route in focused-stop adjacency view (#1827). [paths] carries the route's
- * already-loaded shapes so a flavor renderer can project them and run the shared screen-space layout
- * against its live viewport. Google renders these in the first badge phase; MapLibre deliberately
- * ignores the layer until its follow-up.
+ * A tappable label for one route in focused-stop adjacency view (#1827), anchored once in geographic
+ * space so the map SDK naturally carries it through pan and zoom. Google renders these in the first
+ * badge phase; MapLibre deliberately ignores the layer until its follow-up.
  */
 data class RouteBadge(
     val routeId: String,
     val routeShortName: String,
     val color: Int,
-    val paths: List<List<GeoPoint>>,
+    val point: GeoPoint,
 )
 
 /**

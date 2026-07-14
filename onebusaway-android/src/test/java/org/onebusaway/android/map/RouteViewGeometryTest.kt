@@ -7,6 +7,7 @@ import org.junit.Test
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
 import org.onebusaway.android.map.render.RoutePolylineTransform
+import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 
@@ -105,7 +106,8 @@ class RouteViewGeometryTest {
         assertEquals(listOf("B", "A"), badges.map { it.routeShortName })
         assertEquals(0xFFABCDEF.toInt(), badges[0].color)
         assertEquals(0xFF123456.toInt(), badges[1].color)
-        assertEquals(listOf(firstPath, secondPath), badges[1].paths)
+        assertEquals(GeoPoint(0.0, 0.5), badges[0].point)
+        assertTrue(haversineMeters(badges[0].point, badges[1].point) >= 299.9)
     }
 
     @Test

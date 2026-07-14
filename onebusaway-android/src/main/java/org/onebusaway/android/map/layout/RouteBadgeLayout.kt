@@ -3,184 +3,134 @@
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.onebusaway.android.map.layout
 
-import kotlin.math.ceil
-import kotlin.math.hypot
-import kotlin.math.max
-import kotlin.math.min
+import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.map.render.haversineMeters
+import org.onebusaway.android.util.EARTH_RADIUS_METERS
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
-/** Flavor-neutral screen geometry used by the route-badge layout. */
-data class ScreenPoint(val x: Float, val y: Float)
-
-data class ScreenSize(val width: Float, val height: Float)
-
-data class ScreenRect(val left: Float, val top: Float, val right: Float, val bottom: Float) {
-    val width: Float get() = right - left
-    val height: Float get() = bottom - top
-
-    fun inset(horizontal: Float, vertical: Float): ScreenRect? {
-        val result = ScreenRect(left + horizontal, top + vertical, right - horizontal, bottom - vertical)
-        return result.takeIf { it.width >= 0f && it.height >= 0f }
-    }
-}
-
-/** One badge and all projected screen-space paths that can anchor it. Input order is layout priority. */
+/** One route and the already-loaded geographic shapes on which its badge may be anchored. */
 data class RouteBadgeLayoutInput(
     val routeId: String,
-    val size: ScreenSize,
-    val paths: List<List<ScreenPoint>>,
+    val paths: List<List<GeoPoint>>,
 )
 
-/** The chosen badge center. [overlaps] is true only when every visible candidate conflicted. */
+/** A stable geographic badge anchor. Input order determines collision priority. */
 data class RouteBadgePlacement(
     val routeId: String,
-    val center: ScreenPoint,
+    val point: GeoPoint,
     val overlaps: Boolean,
 )
 
 /**
- * Places route badges greedily in [viewport]. Each route's candidates are sampled from its visible
- * path and ranked by distance to the viewport edge. The first non-overlapping candidate wins; when
- * none exists, the candidate with the least overlap wins so every visible route still gets a badge.
- *
- * This deliberately solves only the small real-time viewport problem, not global cartographic label
- * optimization: the general network-map labeling problem is NP-hard, while a ranked finite candidate
- * set + rectangle conflicts is cheap, deterministic, and independently testable.
+ * Places one badge per route in geographic space, following the line-center convention used for
+ * road shields. The midpoint by distance of the route's longest shape is preferred. When that is
+ * too close to an earlier route's badge, candidates alternate upstream and downstream by a fixed
+ * geographic distance; if none clears [minimumSeparationMeters], the least-conflicting candidate
+ * wins. The result is computed only when route geometry changes and remains fixed across pan/zoom.
  */
 fun layoutRouteBadges(
-    viewport: ScreenRect,
     inputs: List<RouteBadgeLayoutInput>,
-    edgeMarginPx: Float = 8f,
-    badgeGapPx: Float = 4f,
-    candidateSpacingPx: Float = 32f,
-    maxCandidatesPerRoute: Int = 256,
+    minimumSeparationMeters: Double = DEFAULT_BADGE_SEPARATION_METERS,
+    maxStaggerSteps: Int = DEFAULT_MAX_STAGGER_STEPS,
 ): List<RouteBadgePlacement> {
-    if (viewport.width <= 0f || viewport.height <= 0f) return emptyList()
-    val occupied = mutableListOf<ScreenRect>()
+    val separation = minimumSeparationMeters.coerceAtLeast(0.0)
+    val occupied = mutableListOf<GeoPoint>()
     return buildList {
         for (input in inputs) {
-            val centerBounds = viewport.inset(
-                input.size.width / 2f + edgeMarginPx,
-                input.size.height / 2f + edgeMarginPx,
-            ) ?: continue
-            val candidates = routeCandidates(
-                input.paths,
-                viewport,
-                centerBounds,
-                candidateSpacingPx.coerceAtLeast(1f),
-                maxCandidatesPerRoute.coerceAtLeast(1),
-            )
+            val path = input.paths.mapNotNull(::measurePath).maxByOrNull(MeasuredPath::lengthMeters)
+                ?: continue
+            val candidates = candidateDistances(path.lengthMeters, separation, maxStaggerSteps)
+                .map(path::pointAt)
             if (candidates.isEmpty()) continue
 
-            val ranked = candidates.sortedBy { distanceToEdge(it, centerBounds) }
-            val rectangles = ranked.map { badgeRect(it, input.size, badgeGapPx) }
-            var chosen = rectangles.indexOfFirst { candidate -> occupied.none(candidate::overlaps) }
-            val forcedOverlap = chosen < 0
-            if (forcedOverlap) {
-                chosen = rectangles.indices.minWithOrNull(
-                    compareBy<Int> { index ->
-                        occupied.sumOf { other -> rectangles[index].overlapArea(other).toDouble() }
-                    }.thenBy { index -> distanceToEdge(ranked[index], centerBounds) }
-                ) ?: continue
+            val clear = candidates.firstOrNull { candidate ->
+                occupied.all { other -> haversineMeters(candidate, other) >= separation }
             }
-            occupied += rectangles[chosen]
-            add(RouteBadgePlacement(input.routeId, ranked[chosen], forcedOverlap))
-        }
-    }
-}
-
-private fun routeCandidates(
-    paths: List<List<ScreenPoint>>,
-    viewport: ScreenRect,
-    centerBounds: ScreenRect,
-    spacing: Float,
-    limit: Int,
-): List<ScreenPoint> {
-    val result = ArrayList<ScreenPoint>(min(limit, 64))
-    fun addDistinct(point: ScreenPoint) {
-        if (result.size >= limit) return
-        if (result.none { hypot((it.x - point.x).toDouble(), (it.y - point.y).toDouble()) < 2.0 }) {
-            result += point
-        }
-    }
-    for (path in paths) {
-        for (index in 0 until path.lastIndex) {
-            val clipped = clipSegment(path[index], path[index + 1], viewport) ?: continue
-            val dx = clipped.second.x - clipped.first.x
-            val dy = clipped.second.y - clipped.first.y
-            val length = hypot(dx.toDouble(), dy.toDouble()).toFloat()
-            val pieces = max(1, ceil(length / spacing).toInt())
-            for (piece in 0..pieces) {
-                val fraction = piece.toFloat() / pieces
-                addDistinct(
-                    ScreenPoint(
-                        (clipped.first.x + dx * fraction).coerceIn(centerBounds.left, centerBounds.right),
-                        (clipped.first.y + dy * fraction).coerceIn(centerBounds.top, centerBounds.bottom),
-                    )
-                )
-                if (result.size >= limit) return result
+            val point = clear ?: candidates.maxBy { candidate ->
+                occupied.minOfOrNull { other -> haversineMeters(candidate, other) }
+                    ?: Double.POSITIVE_INFINITY
             }
+            val overlaps = clear == null && occupied.isNotEmpty()
+            occupied += point
+            add(RouteBadgePlacement(input.routeId, point, overlaps))
         }
     }
-    return result
 }
 
-/** Liang–Barsky clipping; returns the visible segment inside [bounds], including boundary points. */
-private fun clipSegment(
-    start: ScreenPoint,
-    end: ScreenPoint,
-    bounds: ScreenRect,
-): Pair<ScreenPoint, ScreenPoint>? {
-    val dx = end.x - start.x
-    val dy = end.y - start.y
-    var entry = 0f
-    var exit = 1f
+private data class MeasuredPath(
+    val points: List<GeoPoint>,
+    val cumulativeMeters: DoubleArray,
+) {
+    val lengthMeters: Double get() = cumulativeMeters.last()
 
-    fun clip(p: Float, q: Float): Boolean {
-        if (p == 0f) return q >= 0f
-        val ratio = q / p
-        if (p < 0f) {
-            if (ratio > exit) return false
-            entry = max(entry, ratio)
-        } else {
-            if (ratio < entry) return false
-            exit = min(exit, ratio)
-        }
-        return true
+    fun pointAt(distanceMeters: Double): GeoPoint {
+        val distance = distanceMeters.coerceIn(0.0, lengthMeters)
+        val upper = cumulativeMeters.binarySearch(distance).let { index ->
+            if (index >= 0) index else -index - 1
+        }.coerceIn(1, points.lastIndex)
+        val lower = upper - 1
+        val segmentLength = cumulativeMeters[upper] - cumulativeMeters[lower]
+        if (segmentLength <= 0.0) return points[lower]
+        val fraction = (distance - cumulativeMeters[lower]) / segmentLength
+        return interpolate(points[lower], points[upper], fraction)
     }
-
-    if (!clip(-dx, start.x - bounds.left) ||
-        !clip(dx, bounds.right - start.x) ||
-        !clip(-dy, start.y - bounds.top) ||
-        !clip(dy, bounds.bottom - start.y) ||
-        entry > exit
-    ) return null
-
-    return ScreenPoint(start.x + entry * dx, start.y + entry * dy) to
-        ScreenPoint(start.x + exit * dx, start.y + exit * dy)
 }
 
-private fun distanceToEdge(point: ScreenPoint, bounds: ScreenRect): Float = min(
-    min(point.x - bounds.left, bounds.right - point.x),
-    min(point.y - bounds.top, bounds.bottom - point.y),
-)
-
-private fun badgeRect(center: ScreenPoint, size: ScreenSize, gap: Float): ScreenRect {
-    val halfWidth = size.width / 2f + gap
-    val halfHeight = size.height / 2f + gap
-    return ScreenRect(
-        center.x - halfWidth,
-        center.y - halfHeight,
-        center.x + halfWidth,
-        center.y + halfHeight,
-    )
+private fun measurePath(points: List<GeoPoint>): MeasuredPath? {
+    if (points.size < 2) return null
+    val cumulative = DoubleArray(points.size)
+    for (index in 1..points.lastIndex) {
+        cumulative[index] = cumulative[index - 1] + haversineMeters(points[index - 1], points[index])
+    }
+    return MeasuredPath(points, cumulative).takeIf { it.lengthMeters > 0.0 }
 }
 
-private fun ScreenRect.overlaps(other: ScreenRect): Boolean =
-    left < other.right && right > other.left && top < other.bottom && bottom > other.top
+private fun candidateDistances(lengthMeters: Double, separationMeters: Double, maxSteps: Int): List<Double> {
+    val midpoint = lengthMeters / 2.0
+    if (separationMeters <= 0.0 || maxSteps <= 0) return listOf(midpoint)
+    return buildList {
+        add(midpoint)
+        for (step in 1..maxSteps) {
+            val offset = separationMeters * step
+            if (midpoint - offset >= 0.0) add(midpoint - offset)
+            if (midpoint + offset <= lengthMeters) add(midpoint + offset)
+        }
+    }
+}
 
-private fun ScreenRect.overlapArea(other: ScreenRect): Float =
-    max(0f, min(right, other.right) - max(left, other.left)) *
-        max(0f, min(bottom, other.bottom) - max(top, other.top))
+private fun interpolate(start: GeoPoint, end: GeoPoint, fraction: Double): GeoPoint {
+    val startLatitude = Math.toRadians(start.latitude)
+    val startLongitude = Math.toRadians(start.longitude)
+    val endLatitude = Math.toRadians(end.latitude)
+    val endLongitude = Math.toRadians(end.longitude)
+    val angle = haversineMeters(start, end) / EARTH_RADIUS_METERS
+    val sinAngle = sin(angle)
+    if (sinAngle < 1e-12) return start
+
+    val startWeight = sin((1.0 - fraction) * angle) / sinAngle
+    val endWeight = sin(fraction * angle) / sinAngle
+    val x = startWeight * cos(startLatitude) * cos(startLongitude) +
+        endWeight * cos(endLatitude) * cos(endLongitude)
+    val y = startWeight * cos(startLatitude) * sin(startLongitude) +
+        endWeight * cos(endLatitude) * sin(endLongitude)
+    val z = startWeight * sin(startLatitude) + endWeight * sin(endLatitude)
+    return GeoPoint(Math.toDegrees(atan2(z, sqrt(x * x + y * y))), Math.toDegrees(atan2(y, x)))
+}
+
+private const val DEFAULT_BADGE_SEPARATION_METERS = 300.0
+private const val DEFAULT_MAX_STAGGER_STEPS = 4

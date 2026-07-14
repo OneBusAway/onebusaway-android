@@ -33,10 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -140,7 +138,6 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
         // The map's top-left in root coordinates, so the published projector can report marker positions
         // in the composition's root space (not just map-view-local pixels).
         var mapRootOffset by remember { mutableStateOf(Offset.Zero) }
-        var mapSize by remember { mutableStateOf(IntSize.Zero) }
 
         DisposableEffect(mapView) {
             // Captured so onDispose can tear the renderer down (cancel in-flight marker eases + remove
@@ -177,13 +174,9 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                         host.onCameraGestureStarted()
                     }
                 }
-                map.setOnCameraIdleListener {
-                    host.onCameraIdle(snapshot(map))
-                    r.relayoutRouteBadges(mapView.width, mapView.height, renderState.padding.value)
-                }
+                map.setOnCameraIdleListener { host.onCameraIdle(snapshot(map)) }
 
                 r.renderStatic()
-                r.relayoutRouteBadges(mapView.width, mapView.height, renderState.padding.value)
                 createdRenderer = r
                 renderer = r
                 infoWindows = windows
@@ -195,13 +188,6 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
         val activeRenderer = renderer
         val activeInfoWindows = infoWindows
         if (activeRenderer != null && activeInfoWindows != null) {
-            LaunchedEffect(activeRenderer, mapSize) {
-                activeRenderer.relayoutRouteBadges(
-                    mapSize.width,
-                    mapSize.height,
-                    renderState.padding.value,
-                )
-            }
             // Non-route static layer (stops / bikes / generics): strip route lines before distinctness
             // so a route-only change never churns these annotations, and stop-only emissions cannot
             // touch the independently collected native route layer below.
@@ -283,11 +269,8 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                 applyMyLocation(map, context, myLocationEnabled)
             }
             // Declarative map padding (route-header top + arrivals-sheet bottom).
-            LaunchedEffect(map, activeRenderer) {
-                renderState.padding.collect { padding ->
-                    map.applyMapPadding(padding)
-                    activeRenderer?.relayoutRouteBadges(mapView.width, mapView.height, padding)
-                }
+            LaunchedEffect(map) {
+                renderState.padding.collect { map.applyMapPadding(it) }
             }
             // Declarative camera. Transient gestures apply as they arrive (dropped if none pending when
             // the map wasn't subscribed). The retained framing intent is replayed to this collector when
@@ -315,9 +298,7 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
 
         AndroidView(
             factory = { mapView },
-            modifier = modifier
-                .onSizeChanged { mapSize = it }
-                .onGloballyPositioned { mapRootOffset = it.positionInRoot() },
+            modifier = modifier.onGloballyPositioned { mapRootOffset = it.positionInRoot() },
         )
     }
 }

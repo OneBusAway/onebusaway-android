@@ -24,6 +24,7 @@ import org.maplibre.android.annotations.IconFactory
 import org.onebusaway.android.R
 import org.onebusaway.android.map.render.StopBitmaps
 import org.onebusaway.android.map.render.StopDirection
+import org.onebusaway.android.map.render.DIMMED_STOP_OPACITY
 import kotlin.math.roundToInt
 
 /**
@@ -57,6 +58,8 @@ object MapLibreStopIcons {
      * the selected stop stays visible and clearly larger than its neighbours far out.
      */
     private lateinit var dotStopIconFocused: Icon
+    private lateinit var dimmedDotStopIcon: Icon
+    private lateinit var dimmedDotStopIconFocused: Icon
 
     /**
      * The distinctive star shown for a starred (favorite) stop (#1680), in place of its directional
@@ -69,6 +72,8 @@ object MapLibreStopIcons {
 
     private lateinit var starDotStopIcon: Icon
     private lateinit var starDotStopIconFocused: Icon
+    private lateinit var dimmedStarDotStopIcon: Icon
+    private lateinit var dimmedStarDotStopIconFocused: Icon
 
     private const val FOCUS_ICON_SCALE = 1.5f
 
@@ -118,6 +123,12 @@ object MapLibreStopIcons {
         return dotStopIconFocused
     }
 
+    @Synchronized
+    fun dimmedDotIcon(context: Context, focused: Boolean): Icon {
+        ensureLoaded(context)
+        return if (focused) dimmedDotStopIconFocused else dimmedDotStopIcon
+    }
+
     /** The distinctive star (with the direction arrow) for a starred stop up close. */
     @Synchronized
     fun favoriteIcon(context: Context, direction: String): Icon {
@@ -144,6 +155,12 @@ object MapLibreStopIcons {
     fun focusedFavoriteDotIcon(context: Context): Icon {
         ensureLoaded(context)
         return starDotStopIconFocused
+    }
+
+    @Synchronized
+    fun dimmedFavoriteDotIcon(context: Context, focused: Boolean): Icon {
+        ensureLoaded(context)
+        return if (focused) dimmedStarDotStopIconFocused else dimmedStarDotStopIcon
     }
 
     private fun loadIcons(context: Context) {
@@ -188,23 +205,28 @@ object MapLibreStopIcons {
         starStopIcons = stars(starLight, starDark, focused = false)
         starStopIconsFocused = stars(focusColor, focusColor, focused = true)
 
-        dotStopIcon = iconFactory.fromBitmap(StopBitmaps.dot(basePx, arrowTip))
-        dotStopIconFocused = iconFactory.fromBitmap(
-            StopBitmaps.dot(basePx, focusColor, StopBitmaps.FOCUSED_DOT_SCALE),
-        )
+        val dot = StopBitmaps.dot(basePx, arrowTip)
+        val focusedDot = StopBitmaps.dot(basePx, focusColor, StopBitmaps.FOCUSED_DOT_SCALE)
+        dotStopIcon = iconFactory.fromBitmap(dot)
+        dotStopIconFocused = iconFactory.fromBitmap(focusedDot)
+        dimmedDotStopIcon = iconFactory.fromBitmap(StopBitmaps.fade(dot, DIMMED_STOP_OPACITY))
+        dimmedDotStopIconFocused =
+            iconFactory.fromBitmap(StopBitmaps.fade(focusedDot, DIMMED_STOP_OPACITY))
 
         // Dot-band starred stops: a plain star (no arrow, matching the plain dot), dot-sized and enlarged
         // when focused. Gold gradient normally, the selected color when focused; same thin outline.
         val starDotPx = (basePx * 0.5f * StopBitmaps.STAR_SIZE_SCALE).roundToInt()
-        starDotStopIcon = iconFactory.fromBitmap(
-            StopBitmaps.star(starDotPx, starLight, starDark, starOutlinePx),
+        val starDot = StopBitmaps.star(starDotPx, starLight, starDark, starOutlinePx)
+        val focusedStarDot = StopBitmaps.star(
+            (starDotPx * StopBitmaps.FOCUSED_DOT_SCALE).roundToInt(),
+            focusColor, focusColor, starOutlinePx,
         )
-        starDotStopIconFocused = iconFactory.fromBitmap(
-            StopBitmaps.star(
-                (starDotPx * StopBitmaps.FOCUSED_DOT_SCALE).roundToInt(),
-                focusColor, focusColor, starOutlinePx,
-            ),
-        )
+        starDotStopIcon = iconFactory.fromBitmap(starDot)
+        starDotStopIconFocused = iconFactory.fromBitmap(focusedStarDot)
+        dimmedStarDotStopIcon =
+            iconFactory.fromBitmap(StopBitmaps.fade(starDot, DIMMED_STOP_OPACITY))
+        dimmedStarDotStopIconFocused =
+            iconFactory.fromBitmap(StopBitmaps.fade(focusedStarDot, DIMMED_STOP_OPACITY))
     }
 
     /** The shared circle + direction arrow, at this flavor's raw (non-glyph-scaled) icon size. */

@@ -40,7 +40,7 @@ import org.onebusaway.android.database.oba.markStopUsed
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.models.TripPatternGeometry
+import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.models.contentKey
@@ -207,39 +207,9 @@ data class ArrivalsLoaded(
     val stop: ObaStop?,
     val routes: List<ObaRoute>?,
     val hasArrivals: Boolean,
-    /** The exact distinct GTFS shapes used by the displayed arrivals' trips, without expanding a
-     *  route into unrelated branches or variants. */
-    val tripPatterns: Set<TripPatternGeometry>,
-    /**
-     * The displayed routes paired with the GTFS directions of their actual upcoming trips. An empty
-     * direction set means trip metadata was incomplete and stop minimization must retain the route.
-     */
-    val routeDirections: Map<String, Set<Int>>,
+    /** Exact displayed trips; geometry and reachable stops resolve independently from this identity. */
+    val focusedTrips: Set<FocusedTrip>,
 )
-
-/**
- * Collapses upcoming (route, trip-direction) pairs into one stable route -> direction-set map. If any
- * arrival for a route lacks trip metadata, that route's empty set wins so adjacency never hides a
- * potentially valid direction based on incomplete data. When there are no upcoming arrivals, all
- * routes serving the focused stop are returned with unknown direction so adjacency can still focus
- * their stops.
- */
-internal fun focusedRouteDirections(
-    entries: List<Pair<String, Int?>>,
-    fallbackRouteIds: Iterable<String> = emptyList(),
-): Map<String, Set<Int>> {
-    val directions = LinkedHashMap<String, MutableSet<Int>?>()
-    for ((routeId, directionId) in entries) {
-        if (!directions.containsKey(routeId)) {
-            directions[routeId] = directionId?.let { linkedSetOf(it) }
-        } else {
-            val known = directions[routeId]
-            if (directionId == null) directions[routeId] = null else known?.add(directionId)
-        }
-    }
-    if (directions.isEmpty()) return fallbackRouteIds.associateWith { emptySet() }
-    return directions.mapValuesTo(LinkedHashMap()) { (_, value) -> value?.toSet().orEmpty() }
-}
 
 /** The fields the service-alert dialog shows, decoupled from `ObaSituation`. */
 data class AlertDetails(
@@ -278,7 +248,7 @@ class DefaultArrivalsRepository @Inject constructor(
      * - [receivedAt] — the monotonic device time the snapshot was received, so the stale-fallback path
      *   can project that server clock forward by elapsed device time (#1612).
      * - [loaded] — the map-relevant snapshot prebuilt from the *computed* [ArrivalsData] so its
-     *   [ArrivalsLoaded.routeDirections] matches the drawer's rows (see [ArrivalsLoaded]).
+     *   [ArrivalsLoaded.focusedTrips] exactly matches the drawer's displayed trips.
      *
      * Published through the single [AtomicReference] [lastGood] with one write per load, so a
      * concurrent getArrivals (e.g. a user refresh overlapping the poll loop) can't publish a new
@@ -512,19 +482,13 @@ class DefaultArrivalsRepository @Inject constructor(
 
     override fun lastLoaded(): ArrivalsLoaded? = lastGood.get()?.loaded
 
-    /** Pairs the response's map payload with exact trip shapes and directions from displayed arrivals. */
+    /** Pairs the response's map payload with the exact displayed trips. */
     private fun loadedSnapshot(snapshot: StopArrivals, data: ArrivalsData): ArrivalsLoaded =
         ArrivalsLoaded(
             stop = snapshot.stop,
             routes = snapshot.routes,
             hasArrivals = snapshot.hasArrivals,
-            tripPatterns = snapshot.tripPatternGeometries(data.arrivals.map { it.tripId }),
-            routeDirections = focusedRouteDirections(
-                data.arrivals.map { arrival ->
-                    arrival.routeId to snapshot.trip(arrival.tripId)?.directionId
-                },
-                fallbackRouteIds = snapshot.stop?.routeIds.orEmpty().asIterable(),
-            ),
+            focusedTrips = snapshot.focusedTrips(data.arrivals.map { it.tripId to it.routeId }),
         )
 
     companion object {

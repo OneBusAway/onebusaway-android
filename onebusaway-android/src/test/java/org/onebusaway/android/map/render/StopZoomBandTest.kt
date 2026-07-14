@@ -26,6 +26,20 @@ import org.junit.Test
 class StopZoomBandTest {
 
     @Test
+    fun `dimmed stops use reduced opacity while adjacent stops stay opaque`() {
+        assertEquals(DIMMED_STOP_OPACITY, stopOpacity(dimmed = true), 0f)
+        assertEquals(1f, stopOpacity(dimmed = false), 0f)
+    }
+
+    @Test
+    fun `adjacent route stops stack above favorites and ordinary stops`() {
+        assertEquals(0.75f, stopZIndex(routeStop = true, favorite = false), 0f)
+        assertEquals(0.75f, stopZIndex(routeStop = true, favorite = true), 0f)
+        assertEquals(0.5f, stopZIndex(routeStop = false, favorite = true), 0f)
+        assertEquals(0f, stopZIndex(routeStop = false, favorite = false), 0f)
+    }
+
+    @Test
     fun `below the threshold is the dot band, at or above is the full band`() {
         assertEquals(StopBand.DOT, stopZoomBand(STOP_DOT_ZOOM_THRESHOLD - 0.01f))
         assertEquals(StopBand.DOT, stopZoomBand(0f))

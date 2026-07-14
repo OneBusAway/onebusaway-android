@@ -22,7 +22,7 @@ import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.simplifyRoutePolyline
 import org.onebusaway.android.util.EARTH_RADIUS_METERS
 
-class AdjacencyPolylineSimplifierTest {
+class RoutePolylineSimplifierTest {
 
     @Test
     fun `dense collinear points collapse to endpoints`() {

@@ -33,7 +33,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Gradle cache
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v6
 
       # NOTE: Android Lint intentionally does NOT run on the PR/push path. lintObaGoogleDebug is
       # heavyweight (~7-15 min) and dominates this job's wall-clock; it's being moved to a dedicated

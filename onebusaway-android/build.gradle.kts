@@ -48,11 +48,11 @@ repositories {
 }
 
 android {
-    compileSdk = 37
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 23
-        targetSdk = 36
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 153
         versionName = "26.1.0"
 
@@ -143,8 +143,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())
+        targetCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())
         // Backport java.time.* (API 26) to minSdk 23. See issue #1693.
         isCoreLibraryDesugaringEnabled = true
     }
@@ -213,7 +213,7 @@ android {
 // there is no generated `kotlin { }` accessor to rely on. Configure the extension by type instead.
 configure<KotlinAndroidProjectExtension> {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.fromTarget(libs.versions.jdk.get()))
         // Promote Kotlin warnings to errors, but only when -PwarningsAsErrors=true is passed (CI
         // does; see .github/workflows/android.yml). Local builds default to off, so a Kotlin/AGP
         // bump that introduces new warnings can't block day-to-day work — it surfaces in CI

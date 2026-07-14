@@ -1,4 +1,5 @@
-# Gradle version catalog — the single source of truth for dependency + plugin coordinates.
+# Gradle version catalog — the single source of truth for dependency + plugin coordinates, plus the
+# Android SDK levels and JDK/Kotlin target (see the first [versions] block).
 #
 # Auto-imported by Gradle from this path (gradle/libs.versions.toml); exposes typed `libs.*`
 # accessors in the build scripts. Introduced in #1819 (build modernization). Bumps happen here,
@@ -7,6 +8,16 @@
 # NOTE: migrating to this catalog kept every version bit-identical — no upgrades rode along.
 
 [versions]
+# --- Android SDK levels + JDK/Kotlin target (project config, not dependency coordinates) ---
+# Centralized here so the app and :lint-rules share one source for the JVM target. Referenced from
+# the build scripts as libs.versions.<name>.get() (they resolve to plain strings). versionCode /
+# versionName intentionally stay in build.gradle.kts — they're release-cadence app identity, and
+# gradle-play-publisher auto-increments versionCode.
+compileSdk = "37"
+minSdk = "23"
+targetSdk = "36"
+jdk = "17"
+
 # --- Build tooling / plugins ---
 agp = "9.2.0"
 # Kotlin Gradle plugin + its compiler plugins (serialization, compose) all track the Kotlin

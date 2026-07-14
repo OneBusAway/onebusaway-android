@@ -27,9 +27,12 @@ adb shell am start -n com.joulespersecond.seattlebusbot/org.onebusaway.android.u
 
 ### Dependency + plugin versions live in `gradle/libs.versions.toml` (#1819)
 
-All dependency and plugin coordinates resolve from the Gradle **version catalog** at
-`gradle/libs.versions.toml` (auto-imported; exposes `libs.*` accessors). Bump a version there, in one
-place — not in a build script. Plugins are applied via the `plugins {}` DSL (`alias(libs.plugins.…)`),
+All dependency and plugin coordinates — plus the Android SDK levels (`compileSdk`/`minSdk`/`targetSdk`)
+and the JDK/Kotlin target (`jdk`) — resolve from the Gradle **version catalog** at
+`gradle/libs.versions.toml` (auto-imported; exposes `libs.*` accessors; the SDK/JDK entries are read as
+`libs.versions.<name>.get()`). Bump a version there, in one place — not in a build script. Only
+`versionCode`/`versionName` stay in `build.gradle.kts` (release-cadence app identity; gradle-play-publisher
+auto-increments `versionCode`). Plugins are applied via the `plugins {}` DSL (`alias(libs.plugins.…)`),
 with resolution repositories in `settings.gradle.kts`'s `pluginManagement`; the root `build.gradle.kts`
 declares them `apply false`. All the build scripts are **Kotlin DSL** (`.kts`) — root, `settings`, the
 app module (`onebusaway-android/build.gradle.kts`), and `:lint-rules`. The brand flavor files under

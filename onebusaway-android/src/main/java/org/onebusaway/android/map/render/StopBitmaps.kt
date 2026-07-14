@@ -69,19 +69,6 @@ object StopBitmaps {
             bitmap, (bitmap.width * factor).toInt(), (bitmap.height * factor).toInt(), true
         )
 
-    /** Copy [bitmap] with every pixel faded uniformly, for map APIs without marker-level opacity. */
-    @JvmStatic
-    fun fade(bitmap: Bitmap, opacity: Float): Bitmap {
-        val output = createBitmap(bitmap.width, bitmap.height)
-        Canvas(output).drawBitmap(
-            bitmap,
-            0f,
-            0f,
-            Paint(Paint.ANTI_ALIAS_FLAG).apply { alpha = (255 * opacity).roundToInt() },
-        )
-        return output
-    }
-
     /**
      * A filled circle in [fillColor] with a thin white outline for contrast against the map, sized
      * from [baseIconPx] (the full stop icon size) so a dense viewport reads as points. [scale]

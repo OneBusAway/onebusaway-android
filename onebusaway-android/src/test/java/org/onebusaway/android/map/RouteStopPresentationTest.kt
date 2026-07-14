@@ -12,7 +12,7 @@ import org.onebusaway.android.models.ObaRoute
 class RouteStopPresentationTest {
 
     @Test
-    fun `focused trips emphasize only exact scheduled stops and dim every other nearby stop`() {
+    fun `focused trips show only the exact scheduled stops`() {
         val exact = stop("exact")
         val other = stop("same-route-but-not-trip")
         val presentation = RouteStopPresentation(
@@ -20,8 +20,6 @@ class RouteStopPresentationTest {
             routes = emptyList(),
             routeStopIds = setOf(exact.id),
             projectedPoints = mapOf(exact.id to GeoPoint(48.0, -123.0)),
-            includeNearbyStops = true,
-            dimNonRouteStops = true,
         )
 
         val result = applyRouteStopPresentation(
@@ -32,24 +30,23 @@ class RouteStopPresentationTest {
         ).associateBy(StopMarker::id)
 
         assertTrue(result.getValue(exact.id).routeStop)
-        assertFalse(result.getValue(exact.id).dimmed)
-        assertFalse(result.getValue(other.id).routeStop)
-        assertTrue(result.getValue(other.id).dimmed)
+        assertFalse(result.containsKey(other.id))
     }
 
     @Test
-    fun `empty displayed trip set dims all nearby stops`() {
-        val nearby = stop("nearby")
+    fun `empty displayed trip set keeps only the focused stop`() {
+        val focused = stop("focused")
+        val other = stop("other")
         val presentation = RouteStopPresentation(
             stops = emptyList(), routes = emptyList(), routeStopIds = emptySet(),
-            projectedPoints = emptyMap(), includeNearbyStops = true, dimNonRouteStops = true,
+            projectedPoints = emptyMap(),
         )
 
         val result = applyRouteStopPresentation(
-            listOf(marker(nearby)), nearby.id, presentation, ::marker,
+            listOf(marker(focused), marker(other)), focused.id, presentation, ::marker,
         )
 
-        assertTrue(result.single().dimmed)
+        assertTrue(result.single().id == focused.id)
         assertFalse(result.single().routeStop)
     }
 

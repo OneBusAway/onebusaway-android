@@ -26,12 +26,6 @@ import org.junit.Test
 class StopZoomBandTest {
 
     @Test
-    fun `dimmed stops use reduced opacity while adjacent stops stay opaque`() {
-        assertEquals(DIMMED_STOP_OPACITY, stopOpacity(dimmed = true), 0f)
-        assertEquals(1f, stopOpacity(dimmed = false), 0f)
-    }
-
-    @Test
     fun `adjacent route stops stack above favorites and ordinary stops`() {
         assertEquals(0.75f, stopZIndex(routeStop = true, favorite = false), 0f)
         assertEquals(0.75f, stopZIndex(routeStop = true, favorite = true), 0f)
@@ -96,30 +90,6 @@ class StopZoomBandTest {
     }
 
     @Test
-    fun `a dimmed stop is forced to a dot regardless of zoom and keeps focus`() {
-        assertEquals(
-            StopIconKind.DOT,
-            stopIconKind(focused = false, band = StopBand.FULL, dimmed = true)
-        )
-        assertEquals(
-            StopIconKind.DOT_FOCUSED,
-            stopIconKind(focused = true, band = StopBand.FULL, dimmed = true)
-        )
-    }
-
-    @Test
-    fun `a dimmed favorite keeps the small favorite star`() {
-        assertEquals(
-            StopIconKind.FAVORITE_DOT,
-            stopIconKind(focused = false, band = StopBand.FULL, favorite = true, dimmed = true)
-        )
-        assertEquals(
-            StopIconKind.FAVORITE_DOT_FOCUSED,
-            stopIconKind(focused = true, band = StopBand.FULL, favorite = true, dimmed = true)
-        )
-    }
-
-    @Test
     fun `a route stop gets the centerline circle, focus filling its center`() {
         assertEquals(
             StopIconKind.ROUTE_CIRCLE,
@@ -150,7 +120,6 @@ class StopZoomBandTest {
                 band = StopBand.FULL,
                 favorite = true,
                 routeStop = true,
-                dimmed = true,
             )
         )
     }

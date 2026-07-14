@@ -58,9 +58,12 @@ import org.onebusaway.android.map.render.TripStopBitmaps
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
+import org.onebusaway.android.map.render.routeOutlineColor
+import org.onebusaway.android.map.render.routeOutlineWidthPx
 import org.onebusaway.android.map.render.stopIconKind
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
+import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDisplayName
 
 /**
@@ -112,10 +115,6 @@ class MapLibreRenderer(
     // The stop ids drawn as route-mode circles last reconcile, so entering/leaving route mode restyles a
     // *retained* (focused) stop whose route-circle vs nearby icon flips while focus + band stay the same.
     private var renderedRouteStopIds: Set<String> = emptySet()
-    // The stop ids last forced into their dot-band appearance by adjacency focus. Tracking them makes
-    // an adjacency enter/exit re-icon retained markers even when focus, zoom, and favorites are stable.
-    private var renderedDimmedStopIds: Set<String> = emptySet()
-
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
@@ -129,6 +128,7 @@ class MapLibreRenderer(
     // making the common stop-only update an O(1) identity check; equal republished values are retained too.
     private val routePolylines = mutableListOf<Polyline>()
     private var renderedRoutePolylines: List<RoutePolyline> = emptyList()
+    private var renderedRouteOutlineColor: Int? = null
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
     // vehicles keyed by active trip id, the trip-focus estimate markers keyed by role, and the band's
@@ -223,19 +223,38 @@ class MapLibreRenderer(
 
     /** Reconcile the independently collected route layer, retaining equal native polylines. */
     fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
-        if (renderedRoutePolylines === next || renderedRoutePolylines == next) return
+        val outlineColor = routeOutlineColor(ThemeUtils.isInDarkMode(context))
+        if ((renderedRoutePolylines === next || renderedRoutePolylines == next) &&
+            renderedRouteOutlineColor == outlineColor
+        ) return
 
         if (routePolylines.isNotEmpty()) map.removeAnnotations(routePolylines)
         routePolylines.clear()
         renderedRoutePolylines = next
+        renderedRouteOutlineColor = outlineColor
 
+        // Add every casing first so colored route strokes always remain above outlines at crossings.
         for (polyline in next) {
-            val options = PolylineOptions().color(polyline.resolvedColor).width(polyline.widthDp ?: ROUTE_WIDTH_DP)
-            for (point in polyline.points) {
-                options.add(point.toLatLng())
-            }
+            val innerWidth = polyline.widthDp ?: ROUTE_WIDTH_DP
+            val options = PolylineOptions()
+                .color(outlineColor)
+                .width(routeOutlineWidthPx(innerWidth, density))
+                .addPoints(polyline.points)
             routePolylines.add(map.addPolyline(options))
         }
+
+        for (polyline in next) {
+            val options = PolylineOptions()
+                .color(polyline.resolvedColor)
+                .width(polyline.widthDp ?: ROUTE_WIDTH_DP)
+                .addPoints(polyline.points)
+            routePolylines.add(map.addPolyline(options))
+        }
+    }
+
+    private fun PolylineOptions.addPoints(points: List<GeoPoint>): PolylineOptions {
+        for (point in points) add(point.toLatLng())
+        return this
     }
 
     /**
@@ -262,7 +281,6 @@ class MapLibreRenderer(
                 band = band,
                 favorite = stop.favorite,
                 routeStop = stop.routeStop,
-                dimmed = stop.dimmed,
             )
             val existing = stopMarkersByStopId[stop.id]
             if (existing == null) {
@@ -277,14 +295,13 @@ class MapLibreRenderer(
                     renderedStopBand,
                     stop.id in renderedFavoriteStopIds,
                     stop.id in renderedRouteStopIds,
-                    stop.id in renderedDimmedStopIds,
                 )
                 // Only the markers whose icon kind changed need a new icon (maplibre centers the icon
                 // on the position, so the dot/star/circle lands on the stop with no anchor change).
                 // Geometry and tap data are compared with the previously rendered model below: a
                 // projected route stop can move without a kind change, but the common retained nearby
                 // stop now avoids a redundant native position write.
-                if (previousKind != kind || stopByMarker[existing]?.dimmed != stop.dimmed) {
+                if (previousKind != kind) {
                     existing.icon = stopIcon(stop, kind)
                 }
                 if (stopByMarker[existing]?.point != stop.point) {
@@ -297,18 +314,9 @@ class MapLibreRenderer(
         renderedStopBand = band
         renderedFavoriteStopIds = buildSet { for (s in stops) if (s.favorite) add(s.id) }
         renderedRouteStopIds = buildSet { for (s in stops) if (s.routeStop) add(s.id) }
-        renderedDimmedStopIds = buildSet { for (s in stops) if (s.dimmed) add(s.id) }
     }
 
-    private fun stopIcon(stop: StopMarker, kind: StopIconKind): Icon {
-        if (stop.dimmed) return when (kind) {
-            StopIconKind.DOT -> MapLibreStopIcons.dimmedDotIcon(context, focused = false)
-            StopIconKind.DOT_FOCUSED -> MapLibreStopIcons.dimmedDotIcon(context, focused = true)
-            StopIconKind.FAVORITE_DOT -> MapLibreStopIcons.dimmedFavoriteDotIcon(context, focused = false)
-            StopIconKind.FAVORITE_DOT_FOCUSED -> MapLibreStopIcons.dimmedFavoriteDotIcon(context, focused = true)
-            else -> error("A dimmed stop must use a dot icon, not $kind")
-        }
-        return when (kind) {
+    private fun stopIcon(stop: StopMarker, kind: StopIconKind): Icon = when (kind) {
             StopIconKind.FULL -> MapLibreStopIcons.iconForDirection(context, stop.direction)
             StopIconKind.FULL_FOCUSED -> MapLibreStopIcons.focusedIconForDirection(context, stop.direction)
             StopIconKind.DOT -> MapLibreStopIcons.dotIcon(context)
@@ -321,7 +329,6 @@ class MapLibreRenderer(
             // overview map's route matches the trip map (#1752).
             StopIconKind.ROUTE_CIRCLE -> tripStopIcon
             StopIconKind.ROUTE_CIRCLE_FOCUSED -> tripStopSelectedIcon
-        }
     }
 
     /**

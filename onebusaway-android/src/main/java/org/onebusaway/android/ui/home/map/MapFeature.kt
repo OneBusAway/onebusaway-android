@@ -221,8 +221,6 @@ fun MapFeature(
                 is MapDirective.ShowStopRoutes ->
                     mapViewModel.showStopRoutes(
                         directive.stopId,
-                        directive.stopLat,
-                        directive.stopLon,
                         directive.routes,
                         directive.trips,
                     )

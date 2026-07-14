@@ -258,8 +258,6 @@ class HomeViewModel @Inject constructor(
         emitMapDirective(
             MapDirective.ShowStopRoutes(
                 stopId = stop.id,
-                stopLat = stop.latitude,
-                stopLon = stop.longitude,
                 routes = routes.orEmpty(),
                 trips = focusedTrips,
             )
@@ -414,8 +412,6 @@ sealed interface MapDirective {
     /** Draw all upcoming routes for the currently focused stop, without reframing the camera. */
     data class ShowStopRoutes(
         val stopId: String,
-        val stopLat: Double,
-        val stopLon: Double,
         val routes: List<ObaRoute>,
         val trips: Set<FocusedTrip> = emptySet(),
     ) : MapDirective

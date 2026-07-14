@@ -29,6 +29,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.location.FakeLocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.models.TripPatternGeometry
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.RegionStatus
 import org.onebusaway.android.region.region
@@ -289,12 +290,18 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         // No pending restored focus: the load still starts adjacency for the already-tapped stop.
-        vm.onArrivalsLoaded(obaStop, null, setOf("40", "44"))
+        val tripPatterns = setOf(
+            TripPatternGeometry("shape-40-express", "40", 0xFF112233.toInt()),
+            TripPatternGeometry("shape-44-local", "44", null),
+        )
+        vm.onArrivalsLoaded(obaStop, null, setOf("40", "44"), tripPatterns)
         advanceUntilIdle()
 
         assertEquals(setOf("40", "44"), vm.focusedRouteIds)
+        assertEquals(tripPatterns, vm.focusedTripPatterns)
         assertEquals(0, map.focusStops.size)
         assertEquals(listOf(setOf("40", "44")), map.adjacencies.map { it.routeIds })
+        assertEquals(listOf(tripPatterns), map.adjacencies.map { it.tripPatterns })
         job.cancel()
     }
 

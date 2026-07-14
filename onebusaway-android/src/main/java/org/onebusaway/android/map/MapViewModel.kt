@@ -31,6 +31,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
+import org.onebusaway.android.models.TripPatternGeometry
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.database.oba.StopCacheRepository
 import org.onebusaway.android.database.oba.StopDao
@@ -39,6 +40,7 @@ import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.bike.BikeStationsRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
+import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.preferences.PreferencesRepository
@@ -361,11 +363,18 @@ class MapViewModel @Inject constructor(
      * has precedence, and the stop must still be the rendered focus so a stale arrivals result cannot
      * restore an overlay after focus has moved.
      */
-    fun showStopAdjacency(stopId: String, routeIds: Set<String>) {
+    fun showStopAdjacency(
+        stopId: String,
+        stopLat: Double,
+        stopLon: Double,
+        routeIds: Set<String>,
+        tripPatterns: Set<TripPatternGeometry>,
+    ) {
         if (routeController.isActive) return
         val focusedStopId = renderState.snapshot.value.focusedStopId
         if (focusedStopId == null || !focusedStopId.equals(stopId, ignoreCase = true)) return
-        adjacencyController.start(stopId, routeIds)
+        val displayedPatterns = tripPatterns.filterTo(LinkedHashSet()) { it.routeId in routeIds }
+        adjacencyController.start(stopId, GeoPoint(stopLat, stopLon), displayedPatterns)
     }
 
     /** Clear only an active adjacency overlay, leaving any single-route line untouched. */

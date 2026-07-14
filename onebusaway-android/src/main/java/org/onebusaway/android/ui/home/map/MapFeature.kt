@@ -202,7 +202,13 @@ fun MapFeature(
                     mapViewModel.recenterOnFocusedStop(directive.lat, directive.lon)
                 is MapDirective.ShowRoute -> mapViewModel.toRoute(directive.request)
                 is MapDirective.ShowStopAdjacency ->
-                    mapViewModel.showStopAdjacency(directive.stopId, directive.routeIds)
+                    mapViewModel.showStopAdjacency(
+                        directive.stopId,
+                        directive.stopLat,
+                        directive.stopLon,
+                        directive.routeIds,
+                        directive.tripPatterns,
+                    )
                 MapDirective.ClearAdjacency -> mapViewModel.clearAdjacency()
                 MapDirective.ClearFocus -> mapViewModel.clearFocus()
                 is MapDirective.FocusStop ->

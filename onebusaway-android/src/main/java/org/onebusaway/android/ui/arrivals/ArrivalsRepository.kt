@@ -39,6 +39,7 @@ import org.onebusaway.android.database.oba.markStopUsed
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.TripPatternGeometry
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.models.contentKey
@@ -206,6 +207,9 @@ data class ArrivalsLoaded(
      *  from the computed [ArrivalsData.routeGroups] (which reflects the past-arrivals filter), not the
      *  raw response, so it matches what the drawer shows. */
     val routeIds: Set<String>,
+    /** The exact distinct GTFS shapes used by the displayed arrivals' trips. Unlike [routeIds], this
+     *  does not expand a route into unrelated branches or variants. */
+    val tripPatterns: Set<TripPatternGeometry>,
 )
 
 /** The fields the service-alert dialog shows, decoupled from `ObaSituation`. */
@@ -476,14 +480,15 @@ class DefaultArrivalsRepository @Inject constructor(
 
     override fun lastLoaded(): ArrivalsLoaded? = lastGood.get()?.loaded
 
-    /** Pairs the response's stop/routes/hasArrivals with the drawer-1:1 route set derived from the
-     *  *computed* [data] (see [ArrivalsLoaded.routeIds]). */
+    /** Pairs the response's stop/routes/hasArrivals with the drawer-1:1 route set and exact trip
+     *  shapes derived from the *computed* [data] (see [ArrivalsLoaded.routeIds]). */
     private fun loadedSnapshot(snapshot: StopArrivals, data: ArrivalsData): ArrivalsLoaded =
         ArrivalsLoaded(
             stop = snapshot.stop,
             routes = snapshot.routes,
             hasArrivals = snapshot.hasArrivals,
             routeIds = focusedRouteIds(data.routeGroups),
+            tripPatterns = snapshot.tripPatternGeometries(data.arrivals.map { it.tripId }),
         )
 
     companion object {

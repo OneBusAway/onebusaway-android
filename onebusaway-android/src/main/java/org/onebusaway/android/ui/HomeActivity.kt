@@ -296,7 +296,7 @@ class HomeActivity : AppCompatActivity() {
      */
     private fun onArrivalsLoaded(loaded: ArrivalsLoaded) {
         val stop = loaded.stop ?: return
-        viewModel.onArrivalsLoaded(stop, loaded.routes, loaded.routeIds)
+        viewModel.onArrivalsLoaded(stop, loaded.routes, loaded.routeIds, loaded.tripPatterns)
     }
 
     private fun goToSendFeedBack() {

@@ -161,6 +161,7 @@ class MapViewModel @Inject constructor(
         renderState = mapHost.renderState,
         repository = adjacencyRouteShapeRepository,
         scope = viewModelScope,
+        onStopFilterChanged = stopsController::setAdjacencyStopFilter,
     )
 
     // ----- Map-host surface (delegated) -----

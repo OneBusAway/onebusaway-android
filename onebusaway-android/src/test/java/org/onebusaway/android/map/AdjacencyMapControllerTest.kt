@@ -64,7 +64,7 @@ class AdjacencyMapControllerTest {
     fun `resolved shapes publish colored downstream lines and ignore invalid paths`() = runTest {
         val state = MapRenderState()
         val repository = FakeRepository()
-        val controller = AdjacencyMapController(state, repository, backgroundScope)
+        val controller = AdjacencyMapController(state, repository, backgroundScope) {}
         val first = listOf(GeoPoint(47.60, -122.30), GeoPoint(47.61, -122.31))
         val second = listOf(GeoPoint(47.62, -122.32), GeoPoint(47.63, -122.33))
 
@@ -108,7 +108,7 @@ class AdjacencyMapControllerTest {
     fun `same stop and route set does not refetch while a changed set replaces the lines`() = runTest {
         val state = MapRenderState()
         val repository = FakeRepository()
-        val controller = AdjacencyMapController(state, repository, backgroundScope)
+        val controller = AdjacencyMapController(state, repository, backgroundScope) {}
         val oldLine = line(GeoPoint(1.0, 1.0), GeoPoint(2.0, 2.0))
 
         controller.start("stop", oldLine.points.first(), patterns("a"))
@@ -129,7 +129,7 @@ class AdjacencyMapControllerTest {
     fun `a replaced session cannot publish after the new focus`() = runTest {
         val state = MapRenderState()
         val repository = FakeRepository()
-        val controller = AdjacencyMapController(state, repository, backgroundScope)
+        val controller = AdjacencyMapController(state, repository, backgroundScope) {}
         val oldPoints = listOf(GeoPoint(1.0, 1.0), GeoPoint(2.0, 2.0))
         val newPoints = listOf(GeoPoint(3.0, 3.0), GeoPoint(4.0, 4.0))
 
@@ -151,7 +151,7 @@ class AdjacencyMapControllerTest {
     fun `empty set clears an active session but inactive stop preserves foreign route lines`() = runTest {
         val state = MapRenderState()
         val repository = FakeRepository()
-        val controller = AdjacencyMapController(state, repository, backgroundScope)
+        val controller = AdjacencyMapController(state, repository, backgroundScope) {}
         val foreignLine = line(GeoPoint(1.0, 1.0), GeoPoint(2.0, 2.0))
         state.setRoutePolylines(listOf(foreignLine))
 

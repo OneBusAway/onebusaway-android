@@ -302,10 +302,13 @@ class HomeViewModelTest {
         )
         advanceUntilIdle()
 
-        assertEquals(setOf("40", "44"), vm.focusedRouteIds)
+        assertEquals(mapOf("40" to setOf(0), "44" to setOf(1)), vm.focusedRouteDirections)
         assertEquals(tripPatterns, vm.focusedTripPatterns)
         assertEquals(0, map.focusStops.size)
-        assertEquals(listOf(setOf("40", "44")), map.adjacencies.map { it.routeIds })
+        assertEquals(
+            listOf(mapOf("40" to setOf(0), "44" to setOf(1))),
+            map.adjacencies.map { it.routeDirections },
+        )
         assertEquals(listOf(tripPatterns), map.adjacencies.map { it.tripPatterns })
         job.cancel()
     }
@@ -321,7 +324,7 @@ class HomeViewModelTest {
         vm.onArrivalsLoaded(obaStop, null, mapOf("7" to setOf(0)))
         advanceUntilIdle()
 
-        assertEquals(setOf("7"), vm.focusedRouteIds)
+        assertEquals(mapOf("7" to setOf(0)), vm.focusedRouteDirections)
         assertEquals(1, map.focusStops.size) // pending focus still dispatched
         assertTrue(map.sent.indexOfFirst { it is MapDirective.FocusStop } <
             map.sent.indexOfFirst { it is MapDirective.ShowStopAdjacency })
@@ -335,11 +338,11 @@ class HomeViewModelTest {
         val job = launch { map.collect() }
         advanceUntilIdle()
         vm.onArrivalsLoaded(obaStop, null, mapOf("40" to setOf(0)))
-        assertEquals(setOf("40"), vm.focusedRouteIds)
+        assertEquals(mapOf("40" to setOf(0)), vm.focusedRouteDirections)
 
         vm.onStopFocused(FocusedStop("2", "2nd Ave", "200", 47.6, -122.3))
         advanceUntilIdle()
-        assertEquals(emptySet<String>(), vm.focusedRouteIds)
+        assertEquals(emptyMap<String, Set<Int>>(), vm.focusedRouteDirections)
         assertEquals(1, map.clearAdjacencyCount)
         job.cancel()
     }
@@ -348,10 +351,10 @@ class HomeViewModelTest {
     fun `clearing map focus resets the route set`() = runTest {
         val vm = viewModel()
         vm.onArrivalsLoaded(obaStop, null, mapOf("40" to setOf(0)))
-        assertEquals(setOf("40"), vm.focusedRouteIds)
+        assertEquals(mapOf("40" to setOf(0)), vm.focusedRouteDirections)
 
         vm.requestClearMapFocus()
-        assertEquals(emptySet<String>(), vm.focusedRouteIds)
+        assertEquals(emptyMap<String, Set<Int>>(), vm.focusedRouteDirections)
     }
 
     // --- focus + SavedStateHandle ---

@@ -123,8 +123,6 @@ class HomeViewModel @Inject constructor(
     var focusedRouteDirections: Map<String, Set<Int>> = emptyMap()
         private set
 
-    val focusedRouteIds: Set<String> get() = focusedRouteDirections.keys
-
     /** Exact trip-pattern shapes for the focused stop; route ids remain separate for stop adjacency. */
     var focusedTripPatterns: Set<TripPatternGeometry> = emptySet()
         private set
@@ -245,7 +243,7 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Arrivals loaded for the focused [stop]. Records the drawer's [routeIds] for adjacency focus
+     * Arrivals loaded for the focused [stop]. Records the drawer's [routeDirections] for adjacency focus
      * (#1827) on every load. Then, if a restore/deep-link focus is pending, consume the latch and tell
      * the map to focus it (recenter + add the marker) via [mapDirectives]. Then activates adjacency for
      * the loaded route set; a fresh map tap already established the render focus, while a restore emits
@@ -430,9 +428,7 @@ sealed interface MapDirective {
         val stopLon: Double,
         val routeDirections: Map<String, Set<Int>>,
         val tripPatterns: Set<TripPatternGeometry> = emptySet(),
-    ) : MapDirective {
-        val routeIds: Set<String> get() = routeDirections.keys
-    }
+    ) : MapDirective
 
     /** Clear an active adjacency overlay when the focused stop changes or is removed. */
     object ClearAdjacency : MapDirective

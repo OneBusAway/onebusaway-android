@@ -826,7 +826,7 @@
     </string>
     <string name="tutorial_recent_stops_routes_title">Recent stops and routes</string>
     <string name="tutorial_recent_stops_routes_text">Find the stops and routes that you\'ve recently
-        looked at via the \"More\" button at the top right of the screen.
+        looked at in the menu.
     </string>
     <!-- Onboarding spotlight card: the corner close button's accessibility label + the final-step action -->
     <string name="tutorial_button_close">End tutorial</string>

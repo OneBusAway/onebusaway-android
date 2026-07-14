@@ -359,6 +359,7 @@ fun HomeScreen(
             drawerState = drawerState,
             onStarredStops = onStarredStops,
             onStarredRoutes = onStarredRoutes,
+            onRecentStopsRoutes = onRecentStopsRoutes,
             onReminders = onReminders,
             onPlanTrip = onPlanTrip,
             onPayFare = onPayFare,
@@ -373,19 +374,14 @@ fun HomeScreen(
             // The TopAppBar applies its own top window inset (status bar), so the Column doesn't.
             Column(Modifier.fillMaxSize()) {
                 HomeTopBar(
-                    // HOME is always the map now; the list tabs are their own destinations with their
-                    // own top bars, so the home bar shows no list sort/clear.
+                    // HOME is always the map now; the list tabs are their own destinations with their own
+                    // top bars.
                     title = stringResource(R.string.navdrawer_item_nearby),
-                    showSort = false,
-                    showClear = false,
-                    clearLabel = R.string.my_option_clear_starred_stops,
                     onOpenDrawer = { scope.launch { drawerState.open() } },
                     onSearch = onSearch,
-                    onSort = {},
-                    onClear = {},
-                    onRecentStopsRoutes = onRecentStopsRoutes,
-                    // Wire the top bar's overflow anchor slot to the "recent stops/routes" spotlight target.
-                    overflowModifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_MORE_MENU),
+                    // Recent stops/routes now lives in the drawer, so the onboarding spotlight points at the
+                    // hamburger that opens it (was the retired overflow ⋮).
+                    menuModifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_MORE_MENU),
                 )
                 BottomSheetScaffold(
                     modifier = Modifier
@@ -510,6 +506,7 @@ private fun HomeDrawer(
     drawerState: DrawerState,
     onStarredStops: () -> Unit,
     onStarredRoutes: () -> Unit,
+    onRecentStopsRoutes: () -> Unit,
     onReminders: () -> Unit,
     onPlanTrip: () -> Unit,
     onPayFare: () -> Unit,
@@ -537,6 +534,7 @@ private fun HomeDrawer(
                 payFareAvailable = availability.payFareAvailable,
                 onStarredStops = { close(); onStarredStops() },
                 onStarredRoutes = { close(); onStarredRoutes() },
+                onRecentStopsRoutes = { close(); onRecentStopsRoutes() },
                 onReminders = { close(); onReminders() },
                 onPlanTrip = { close(); onPlanTrip() },
                 onPayFare = { close(); onPayFare() },

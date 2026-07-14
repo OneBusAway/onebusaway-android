@@ -639,7 +639,7 @@
     <string name="tutorial_arrival_header_sliding_panel_title">Scorri in su per mostrare più arrivi</string>
     <string name="tutorial_arrival_header_sliding_panel_text">Tocca la freccia o trascina il pannello in su per vedere altri arrivi a questa fermata.</string>
     <string name="tutorial_recent_stops_routes_title">Fermate e linee recenti</string>
-    <string name="tutorial_recent_stops_routes_text">Per ritrovare le fermate e le linee cercate di recente, tocca il pulsante \&quot;Altro\&quot; in alto a destra.</string>
+    <string name="tutorial_recent_stops_routes_text">Per ritrovare le fermate e le linee cercate di recente, apri il menu.</string>
 
     <!-- Permissions -->
     <string name="location_permissions_title">Autorizzazioni per la posizione</string>

@@ -21,8 +21,9 @@ import org.onebusaway.android.preferences.PreferencesRepository
 /**
  * The arrivals-panel onboarding sequence — the Compose successor to the legacy ShowcaseView
  * "arrival header" tutorial chain (which spotlighted XML views removed in the Compose migration).
- * Spotlights, in order, the ETA pill, the slide-up chevron, and the top-bar overflow (see the
- * [Modifier.tutorialAnchor] call sites in `ArrivalsPanel` / the sheet host). Shown once the first
+ * Spotlights, in order, the ETA pill, the slide-up chevron, and the hamburger menu — which now holds
+ * "Recent stops/routes" (see the [Modifier.tutorialAnchor] call sites in `ArrivalsPanel` / the sheet
+ * host). Shown once the first
  * time a stop's arrivals load, gated by [pendingSteps]; "show tutorials again" re-arms it by clearing
  * the [resetKeys] (see `TutorialPrefs.resetAllTutorials`).
  *
@@ -39,7 +40,11 @@ object ArrivalTutorial {
     /** Slide-up chevron — pull the panel up for the full arrivals list. */
     const val KEY_PANEL = ".tutorial_compose_arrival_panel"
 
-    /** Top-bar overflow (⋮) — find recently viewed stops and routes. */
+    /**
+     * Hamburger menu (☰) — "Recent stops/routes" moved out of the retired overflow into the drawer, so
+     * this now spotlights the nav icon that opens it. The persisted pref value stays the legacy
+     * `.tutorial_compose_more_menu` so users who already saw the step aren't re-shown it.
+     */
     const val KEY_MORE_MENU = ".tutorial_compose_more_menu"
 
     /** The sequence, in display order. */
@@ -59,7 +64,7 @@ object ArrivalTutorial {
             id = KEY_MORE_MENU,
             title = R.string.tutorial_recent_stops_routes_title,
             body = R.string.tutorial_recent_stops_routes_text,
-            bodyIcon = R.drawable.more_vert,
+            bodyIcon = R.drawable.history_24,
         ),
     )
 

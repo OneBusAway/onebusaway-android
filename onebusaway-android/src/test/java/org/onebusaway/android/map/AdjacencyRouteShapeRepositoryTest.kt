@@ -22,6 +22,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -31,12 +33,14 @@ import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.models.NearbyStops
 import org.onebusaway.android.models.RouteMapData
 import org.onebusaway.android.models.RouteMapStop
+import org.onebusaway.android.time.ElapsedTime
 
 /**
- * The multi-route shape fetch's bounded concurrency, single-flight de-dup, and partial-failure
- * tolerance, driven against a fake [MapDataSource] under virtual time. Fixtures use empty polyline
- * lists so no unmockable [android.location.Location] is constructed (JVM tests can't touch Android
- * statics); point conversion is a trivial `GeoPoint(lat, lon)` map covered implicitly.
+ * The multi-route shape fetch's bounded concurrency, single-flight de-dup, completed-result cache,
+ * and partial-failure tolerance, driven against a fake [MapDataSource] under virtual time. Fixtures
+ * use empty polyline lists so no unmockable [android.location.Location] is constructed (JVM tests
+ * can't touch Android statics); point conversion is a trivial `GeoPoint(lat, lon)` map covered
+ * implicitly.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AdjacencyRouteShapeRepositoryTest {
@@ -73,8 +77,20 @@ class AdjacencyRouteShapeRepositoryTest {
         }
     }
 
-    private fun repo(source: MapDataSource, scope: kotlinx.coroutines.CoroutineScope) =
-        DefaultAdjacencyRouteShapeRepository(source, scope, log = {})
+    private fun repo(
+        source: MapDataSource,
+        scope: kotlinx.coroutines.CoroutineScope,
+        cacheSize: Int = 32,
+        cacheTtl: Duration = 10.seconds,
+        now: () -> ElapsedTime = { ElapsedTime(0L) },
+    ) = DefaultAdjacencyRouteShapeRepository(
+        source,
+        scope,
+        log = {},
+        cacheSize = cacheSize,
+        cacheTtl = cacheTtl,
+        now = now,
+    )
 
     // Bounded concurrency ------------------------------------------------------------------------
 
@@ -104,7 +120,7 @@ class AdjacencyRouteShapeRepositoryTest {
         assertTrue(fake.callCounts.values.all { it == 1 })
     }
 
-    // Single-flight de-dup -----------------------------------------------------------------------
+    // Single-flight de-dup + completed cache -----------------------------------------------------
 
     @Test
     fun concurrentGetShapesForSameRouteShareOneFetch() = runTest {
@@ -122,12 +138,66 @@ class AdjacencyRouteShapeRepositoryTest {
     }
 
     @Test
-    fun sequentialGetShapesRefetch_noCache() = runTest {
+    fun sequentialGetShapesForSameRouteReuseCompletedSuccess() = runTest {
         val fake = FakeMapDataSource()
         val repo = repo(fake, backgroundScope)
 
         repo.getShapes(setOf("A"))
+        val second = repo.getShapes(setOf("A"))
+
+        assertEquals(setOf("A"), second.shapes.keys)
+        assertEquals(1, fake.callCounts["A"])
+    }
+
+    @Test
+    fun completedCacheEvictsLeastRecentlyUsedShapePastBound() = runTest {
+        val fake = FakeMapDataSource()
+        val repo = repo(fake, backgroundScope, cacheSize = 2)
+
         repo.getShapes(setOf("A"))
+        repo.getShapes(setOf("B"))
+        repo.getShapes(setOf("A")) // promote A, making B the eviction victim
+        repo.getShapes(setOf("C"))
+        repo.getShapes(setOf("B"))
+
+        assertEquals(1, fake.callCounts["A"])
+        assertEquals(2, fake.callCounts["B"])
+        assertEquals(1, fake.callCounts["C"])
+    }
+
+    @Test
+    fun completedCacheRefetchesAtExpiry() = runTest {
+        var nowMs = 0L
+        val fake = FakeMapDataSource()
+        val repo = repo(
+            fake,
+            backgroundScope,
+            cacheTtl = 10.seconds,
+            now = { ElapsedTime(nowMs) },
+        )
+
+        repo.getShapes(setOf("A"))
+        nowMs = 9_999L
+        repo.getShapes(setOf("A"))
+        assertEquals(1, fake.callCounts["A"])
+
+        nowMs = 10_000L
+        repo.getShapes(setOf("A"))
+        assertEquals(2, fake.callCounts["A"])
+    }
+
+    @Test
+    fun failedResultIsNotCachedAndLaterSuccessIsCached() = runTest {
+        var attempts = 0
+        val fake = FakeMapDataSource { id ->
+            if (attempts++ == 0) Result.failure(RuntimeException("network"))
+            else Result.success(routeMapData(id))
+        }
+        val repo = repo(fake, backgroundScope)
+
+        assertEquals(setOf("A"), repo.getShapes(setOf("A")).failedRouteIds)
+        assertEquals(setOf("A"), repo.getShapes(setOf("A")).shapes.keys)
+        assertEquals(setOf("A"), repo.getShapes(setOf("A")).shapes.keys)
         assertEquals(2, fake.callCounts["A"])
     }
 
@@ -181,9 +251,9 @@ class AdjacencyRouteShapeRepositoryTest {
         assertEquals(setOf("A"), survivor.await().shapes.keys)
         assertEquals(1, fake.callCounts["A"])
 
-        // A later fetch still acquires a permit (none leaked) and re-runs (no cache).
-        repo.getShapes(setOf("A"))
-        assertEquals(2, fake.callCounts["A"])
+        // A different later fetch still acquires a permit (none leaked).
+        repo.getShapes(setOf("B"))
+        assertEquals(1, fake.callCounts["B"])
     }
 
     // Mapping ------------------------------------------------------------------------------------

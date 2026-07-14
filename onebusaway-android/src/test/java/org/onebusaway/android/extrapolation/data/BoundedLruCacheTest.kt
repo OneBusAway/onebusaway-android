@@ -72,6 +72,16 @@ class BoundedLruCacheTest {
     }
 
     @Test
+    fun `remove drops and returns the requested entry`() {
+        val cache = BoundedLruCache<String, Int>(2)
+        cache.put("a", 1)
+
+        assertEquals(1, cache.remove("a"))
+        assertNull(cache.get("a"))
+        assertNull(cache.remove("missing"))
+    }
+
+    @Test
     fun `compute seeds from default when absent and returns the new value`() {
         val cache = BoundedLruCache<String, Int>(2)
 

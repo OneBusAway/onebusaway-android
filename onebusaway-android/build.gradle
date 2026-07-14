@@ -164,7 +164,17 @@ android {
         // LogNotTimber: this project intentionally uses android.util.Log, not Timber. The check is
         // a library-preference nudge, not a correctness signal, and its ~190 hits drown out the
         // actionable warnings, so we opt out of it rather than suppress each call site.
-        disable 'MissingTranslation', 'ExtraTranslation', 'LogNotTimber'
+        //
+        // GradleDependency / NewerVersionAvailable / AndroidGradlePluginVersion: "a newer version of
+        // X is available" advisory nags. Lint never flagged these on the old inline build.gradle
+        // version literals, but it scans the version catalog (gradle/libs.versions.toml, #1819) for
+        // stale versions and fires on every pinned coordinate that isn't the very latest. This project
+        // pins versions deliberately and bumps them on purpose (see the many "version pin" comments),
+        // so these are pure noise — and baselining them would rot on every bump. Disabling keeps the
+        // CI gate identical to before the catalog migration; version currency is Dependabot/Renovate's
+        // job, not a build-failing check.
+        disable 'MissingTranslation', 'ExtraTranslation', 'LogNotTimber',
+                'GradleDependency', 'NewerVersionAvailable', 'AndroidGradlePluginVersion'
         // Run the FULL lint catalog — including checks that are off by default and library-provided
         // ones (Compose, UseKtx, …) — so the checked set is comprehensive and current for the installed
         // lint, not just its (drifting) default-enabled subset. Pre-existing hits are grandfathered by

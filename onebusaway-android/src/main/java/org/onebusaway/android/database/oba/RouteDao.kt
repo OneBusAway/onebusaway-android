@@ -17,6 +17,7 @@ package org.onebusaway.android.database.oba
 
 import androidx.room.ColumnInfo
 import androidx.room.Dao
+import androidx.room.Embedded
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -31,8 +32,19 @@ data class RouteListRow(
     val url: String?,
 )
 
+/** A [RouteListRow] plus the raw [accessTime], for merging recent stops and routes into one time-ordered list. */
+data class RouteRecentRow(
+    @Embedded val row: RouteListRow,
+    @ColumnInfo(name = "access_time") val accessTime: Long?,
+)
+
 private const val ROUTE_REGION_SCOPE =
     "(:regionId IS NULL OR region_id = :regionId OR region_id IS NULL)"
+
+/** The recents predicate + ordering (newest first, capped), shared by the two recent-route queries. */
+private const val ROUTE_RECENT_FILTER =
+    "((access_time IS NOT NULL AND access_time > :cutoff) OR use_count > 0) AND $ROUTE_REGION_SCOPE"
+private const val ROUTE_RECENT_ORDER = "ORDER BY access_time DESC, use_count DESC LIMIT 20"
 
 /** Room access for routes + the My-tab recent/starred lists (the legacy `routes` table). */
 @Dao
@@ -172,10 +184,16 @@ interface RouteDao {
 
     @Query(
         "SELECT _id AS id, short_name, long_name, url FROM routes " +
-            "WHERE ((access_time IS NOT NULL AND access_time > :cutoff) OR use_count > 0) " +
-            "AND $ROUTE_REGION_SCOPE ORDER BY access_time DESC, use_count DESC LIMIT 20"
+            "WHERE $ROUTE_RECENT_FILTER $ROUTE_RECENT_ORDER"
     )
     fun recents(cutoff: Long, regionId: Long?): Flow<List<RouteListRow>>
+
+    /** Same rows as [recents], but carrying access_time so callers can merge stops and routes by recency. */
+    @Query(
+        "SELECT _id AS id, short_name, long_name, url, access_time FROM routes " +
+            "WHERE $ROUTE_RECENT_FILTER $ROUTE_RECENT_ORDER"
+    )
+    fun recentsForSearch(cutoff: Long, regionId: Long?): Flow<List<RouteRecentRow>>
 
     @Query(
         "SELECT _id AS id, short_name, long_name, url FROM routes " +

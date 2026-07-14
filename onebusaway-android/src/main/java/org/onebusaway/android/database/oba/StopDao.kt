@@ -17,6 +17,7 @@ package org.onebusaway.android.database.oba
 
 import androidx.room.ColumnInfo
 import androidx.room.Dao
+import androidx.room.Embedded
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -35,11 +36,22 @@ data class StopListRow(
     val favorite: Int?,
 )
 
+/** A [StopListRow] plus the raw [accessTime], for merging recent stops and routes into one time-ordered list. */
+data class StopRecentRow(
+    @Embedded val row: StopListRow,
+    @ColumnInfo(name = "access_time") val accessTime: Long?,
+)
+
 /** The legacy projected UI_NAME expression, reused across the stop list queries. */
 private const val UI_NAME = "(CASE WHEN user_name IS NOT NULL THEN user_name ELSE name END)"
 
 /** The legacy region scope: rows for the active region, or with no region, or (when none active) all. */
 private const val REGION_SCOPE = "(:regionId IS NULL OR region_id = :regionId OR region_id IS NULL)"
+
+/** The recents predicate + ordering (newest first, capped), shared by the two recent-stop queries. */
+private const val RECENT_FILTER =
+    "((access_time IS NOT NULL AND access_time > :cutoff) OR use_count > 0) AND $REGION_SCOPE"
+private const val RECENT_ORDER = "ORDER BY access_time DESC, use_count DESC LIMIT 20"
 
 /** Room access for stop user-state + the My-tab recent/starred lists (the legacy `stops` table). */
 @Dao
@@ -117,10 +129,16 @@ interface StopDao {
 
     @Query(
         "SELECT _id AS id, $UI_NAME AS ui_name, direction, latitude, longitude, favorite FROM stops " +
-            "WHERE ((access_time IS NOT NULL AND access_time > :cutoff) OR use_count > 0) " +
-            "AND $REGION_SCOPE ORDER BY access_time DESC, use_count DESC LIMIT 20"
+            "WHERE $RECENT_FILTER $RECENT_ORDER"
     )
     fun recents(cutoff: Long, regionId: Long?): Flow<List<StopListRow>>
+
+    /** Same rows as [recents], but carrying access_time so callers can merge stops and routes by recency. */
+    @Query(
+        "SELECT _id AS id, $UI_NAME AS ui_name, direction, latitude, longitude, favorite, access_time " +
+            "FROM stops WHERE $RECENT_FILTER $RECENT_ORDER"
+    )
+    fun recentsForSearch(cutoff: Long, regionId: Long?): Flow<List<StopRecentRow>>
 
     @Query(
         "SELECT _id AS id, $UI_NAME AS ui_name, direction, latitude, longitude, favorite FROM stops " +

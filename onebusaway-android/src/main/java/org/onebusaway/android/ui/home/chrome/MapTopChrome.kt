@@ -153,6 +153,7 @@ fun MapTopChrome(
                     focusManager.clearFocus()
                     onRecentRoute(routeId)
                 },
+                onDismiss = { focusManager.clearFocus() },
                 modifier = Modifier.weight(1f),
             )
         }
@@ -179,6 +180,7 @@ private fun SearchField(
     onSubmit: (String) -> Unit,
     onRecentStop: (id: String, name: String?) -> Unit,
     onRecentRoute: (routeId: String) -> Unit,
+    onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
@@ -250,8 +252,11 @@ private fun SearchField(
                         }
                     }
                 )
-                if (query.isNotEmpty()) {
-                    IconButton(onClick = { query = "" }) {
+                // The X shows whenever the field is active — there's text, or the field is focused with the
+                // recents list showing. It clears the query when there's text; on an already-blank field
+                // (recents showing) the same X dismisses the search (clears focus, collapsing the dropdown).
+                if (query.isNotEmpty() || expanded) {
+                    IconButton(onClick = { if (query.isNotEmpty()) query = "" else onDismiss() }) {
                         Icon(Icons.Default.Clear, stringResource(R.string.stop_info_clear))
                     }
                 }

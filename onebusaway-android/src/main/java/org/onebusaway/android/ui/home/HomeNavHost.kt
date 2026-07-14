@@ -178,7 +178,7 @@ fun HomeNavHost(
                     onSettings = { menuNav(NavRoutes.SETTINGS, R.string.analytics_label_button_press_settings) },
                     onSearch = { query -> navController.navigateFromHome(NavRoutes.search(query)) },
                     onRecentStopsRoutes = {
-                        // The user found the overflow on their own — don't later spotlight it in onboarding.
+                        // The user found the drawer item on their own — don't later spotlight it in onboarding.
                         PreferencesEntryPoint.get(context).setBoolean(ArrivalTutorial.KEY_MORE_MENU, true)
                         navController.navigateFromHome(NavRoutes.myRecent())
                     },

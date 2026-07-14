@@ -629,8 +629,8 @@
         nähdäksesi lisää tälle pysäkille saapuvia vuoroja.
     </string>
     <string name="tutorial_recent_stops_routes_title">Viimeisimmät pysäkit ja reitit</string>
-    <string name="tutorial_recent_stops_routes_text">Ruudun oikeasta laidasta löytyvän \"Lisää\" napin 
-        avulla löydät pysäkit ja reitit joita olet viimeksi katsellut.
+    <string name="tutorial_recent_stops_routes_text">Valikon avulla löydät pysäkit ja reitit
+        joita olet viimeksi katsellut.
     </string>
     <string name="tutorial_opt_out_dialog_title">Näytetäänkö opas?</string>
     <string name="tutorial_opt_out_dialog_text">Haluatko nähdä ponnahdusikkunoiden kuvaukset %1$sn käytöstä? Voit aina ottaa ponnahdusikkunat käyttöön tai poistaa ne käytöstä asetuksista, tai näyttää oppaan myöhemmin Ohje-valikon kautta.</string>

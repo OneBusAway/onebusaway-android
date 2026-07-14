@@ -53,6 +53,7 @@ fun HomeNavDrawerSheet(
     payFareAvailable: Boolean,
     onStarredStops: () -> Unit,
     onStarredRoutes: () -> Unit,
+    onRecentStopsRoutes: () -> Unit,
     onReminders: () -> Unit,
     onPlanTrip: () -> Unit,
     onPayFare: () -> Unit,
@@ -67,6 +68,7 @@ fun HomeNavDrawerSheet(
         Column(Modifier.verticalScroll(rememberScrollState())) {
             DrawerRow(R.string.navdrawer_item_starred_stops, R.drawable.stop_flag, onStarredStops)
             DrawerRow(R.string.navdrawer_item_starred_routes, R.drawable.ic_route, onStarredRoutes)
+            DrawerRow(R.string.my_recent_menu_title, R.drawable.history_24, onRecentStopsRoutes)
             if (showReminders) {
                 DrawerRow(R.string.navdrawer_item_my_reminders, R.drawable.ic_drawer_alarm, onReminders)
             }

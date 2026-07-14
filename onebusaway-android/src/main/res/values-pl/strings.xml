@@ -743,7 +743,7 @@
     </string>
     <string name="tutorial_recent_stops_routes_title">Ostatnie przystanki i trasy</string>
     <string name="tutorial_recent_stops_routes_text">Znajdź przystanki i trasy które ostatnio
-        przeglądając klikając przycisk \"Więcej\" u góry ekranu.
+        przeglądałeś w menu.
     </string>
     <string name="tutorial_opt_out_dialog_title">Pokazać samouczek?</string>
     <string name="tutorial_opt_out_dialog_text">Czy chcesz zobaczyć wyskakujące opisy jak korzystać z %1$s? Zawsze możesz włączyć lub wyłączyć wyskakujące okienka w Ustawieniach, lub wyświetlić samouczek później przez Pomoc.</string>

@@ -62,6 +62,17 @@ const val DEFAULT_ROUTE_LINE_COLOR: Int = 0xFF0000FF.toInt()
  */
 const val ROUTE_LINE_WIDTH_DP: Float = 10f
 
+/** Contrast casing drawn on each side of every route line. */
+const val ROUTE_OUTLINE_WIDTH_DP: Float = 0.75f
+
+/** Opaque 90%-white against dark maps; opaque 90%-black against light maps. */
+fun routeOutlineColor(darkMode: Boolean): Int =
+    if (darkMode) 0xFFE6E6E6.toInt() else 0xFF1A1A1A.toInt()
+
+/** Native backing-stroke width that leaves [ROUTE_OUTLINE_WIDTH_DP] visible on both sides. */
+fun routeOutlineWidthPx(innerWidthPx: Float, density: Float): Float =
+    innerWidthPx + 2f * ROUTE_OUTLINE_WIDTH_DP * density
+
 /** Optional renderer-bound geometry transforms. Lines opt in explicitly; the default is pass-through. */
 enum class RoutePolylineTransform {
     VIEWPORT_CLIP,
@@ -150,8 +161,6 @@ data class BikeMarker(
  * decided by [MapRenderSnapshot.focusedStopId], not stored here, so focusing is a one-field change.
  * [favorite] is stored here (it's a per-stop property that changes as the user stars/unstars), driving
  * the distinctive star icon + tap preference (#1680).
- * [dimmed] marks a stop outside the active adjacency route set. Renderers collapse it to the dot-band
- * appearance regardless of zoom (while retaining the small favorite-star variant for starred stops).
  *
  * [routeStop] marks a stop belonging to the route currently shown on the map: its [point] is projected
  * onto the route centerline and it renders as the trip-map-style circle instead of the direction-anchored
@@ -166,7 +175,6 @@ data class StopMarker(
     val stop: ObaStop,
     val favorite: Boolean = false,
     val routeStop: Boolean = false,
-    val dimmed: Boolean = false,
 )
 
 /**

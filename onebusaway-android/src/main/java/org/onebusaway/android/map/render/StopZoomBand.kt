@@ -22,12 +22,6 @@ package org.onebusaway.android.map.render
  */
 const val STOP_DOT_ZOOM_THRESHOLD = 15f
 
-/** Alpha applied to a stop outside the focused trips, in addition to its dot-size treatment. */
-const val DIMMED_STOP_OPACITY = 0.35f
-
-/** Marker opacity for the active stop presentation. Pure so both renderers share the same policy. */
-fun stopOpacity(dimmed: Boolean): Float = if (dimmed) DIMMED_STOP_OPACITY else 1f
-
 /**
  * Marker-group ordering. Native map SDKs always place markers above route polylines, but adjacent
  * route stops must still win every marker overlap; favorites remain above ordinary nearby stops.
@@ -59,26 +53,22 @@ enum class StopIconKind {
 
 /**
  * The icon a stop marker should show given whether it's the [focused] stop, whether it's a
- * [favorite] (starred) stop, whether it's a [routeStop] on the shown route, whether adjacency focus
- * [dimmed] it, and the current zoom [band]. A [routeStop] always draws the on-centerline circle
- * (matching the trip map, #1752) — it ignores the star, dimming, and zoom band so single-route mode's
- * stops read uniformly. A dimmed stop is forced into the dot band regardless of zoom; starred dimmed
- * stops keep the existing small favorite-star variant. Otherwise a starred stop gets its distinctive
- * star instead of the directional icon/dot (#1680). The focused stop always gets the matching focused
- * variant so a selection stays visible. Pure, so renderer icon-change decisions are unit-testable and
- * identical across both map flavors.
+ * [favorite] (starred) stop, whether it's a [routeStop] on the shown route, and the current zoom
+ * [band]. A [routeStop] always draws the on-centerline circle (matching the trip map, #1752) — it
+ * ignores the star and zoom band so single-route mode's stops read uniformly. Otherwise a starred
+ * stop gets its distinctive star instead of the directional icon/dot (#1680). The focused stop always
+ * gets the matching focused variant so a selection stays visible. Pure, so renderer icon-change
+ * decisions are unit-testable and identical across both map flavors.
  */
 fun stopIconKind(
     focused: Boolean,
     band: StopBand,
     favorite: Boolean = false,
     routeStop: Boolean = false,
-    dimmed: Boolean = false,
 ): StopIconKind = when {
     routeStop -> if (focused) StopIconKind.ROUTE_CIRCLE_FOCUSED else StopIconKind.ROUTE_CIRCLE
-    favorite && (dimmed || band == StopBand.DOT) ->
+    favorite && band == StopBand.DOT ->
         if (focused) StopIconKind.FAVORITE_DOT_FOCUSED else StopIconKind.FAVORITE_DOT
-    dimmed -> if (focused) StopIconKind.DOT_FOCUSED else StopIconKind.DOT
     favorite -> if (focused) StopIconKind.FAVORITE_FOCUSED else StopIconKind.FAVORITE
     band == StopBand.DOT -> if (focused) StopIconKind.DOT_FOCUSED else StopIconKind.DOT
     focused -> StopIconKind.FULL_FOCUSED

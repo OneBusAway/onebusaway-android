@@ -362,14 +362,12 @@ class MapViewModel @Inject constructor(
      */
     fun showStopRoutes(
         stopId: String,
-        stopLat: Double,
-        stopLon: Double,
         routes: List<ObaRoute>,
         trips: Set<FocusedTrip>,
     ) {
         val focusedStopId = renderState.snapshot.value.focusedStopId
         if (focusedStopId == null || !focusedStopId.equals(stopId, ignoreCase = true)) return
-        routeController.focusStop(stopId, GeoPoint(stopLat, stopLon), trips, routes)
+        routeController.focusStop(stopId, trips, routes)
     }
 
     /** Clear the focused-stop layer, revealing any active single route underneath. */

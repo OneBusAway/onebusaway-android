@@ -125,7 +125,6 @@ class RouteMapController(
 
     private data class StopFocusSession(
         val stopId: String,
-        val stopPoint: GeoPoint,
         val trips: Set<FocusedTrip>,
     )
 
@@ -456,15 +455,14 @@ class RouteMapController(
 
     /**
      * Show the exact trips currently displayed for a stop. Shape and schedule loading are deliberately
-     * independent: either result is useful on its own, and an empty trip set is a valid all-dimmed view.
+     * independent: either result is useful on its own, and an empty trip set is a valid focused-stop-only view.
      */
     fun focusStop(
         stopId: String,
-        stopPoint: GeoPoint,
         trips: Set<FocusedTrip>,
         routes: List<ObaRoute>,
     ) {
-        val next = StopFocusSession(stopId, stopPoint, LinkedHashSet(trips))
+        val next = StopFocusSession(stopId, LinkedHashSet(trips))
         focusedRoutes = routes
         if (stopFocusSession == next) {
             // Route wrappers may be recreated on every arrivals poll; refresh marker metadata without
@@ -526,15 +524,17 @@ class RouteMapController(
             stopsController.setRoutePresentation(baseStopPresentation)
             return
         }
-        renderState.setRoutePolylines(focusedGeometry.toRoutePolylines(focus.stopPoint))
+        val emphasizedRouteId = routeId
+        val visibleStopIds = focusedStops.stopIdsForRoute(focus.trips, emphasizedRouteId)
+        renderState.setRoutePolylines(
+            focusedGeometry.toRoutePolylines(emphasizedRouteId)
+        )
         stopsController.setRoutePresentation(
             RouteStopPresentation(
-                stops = focusedStops.stopIds.mapNotNull(focusedStops.stopsById::get),
+                stops = visibleStopIds.mapNotNull(focusedStops.stopsById::get),
                 routes = focusedRoutes,
-                routeStopIds = focusedStops.stopIds,
+                routeStopIds = visibleStopIds,
                 projectedPoints = projectFocusedStops(focus.trips, focusedGeometry, focusedStops),
-                includeNearbyStops = true,
-                dimNonRouteStops = true,
             )
         )
     }
@@ -640,8 +640,6 @@ class RouteMapController(
             routes = routeStopRoutes,
             routeStopIds = stops.mapTo(LinkedHashSet(), ObaStop::id),
             projectedPoints = projectStopsOntoShape(stops),
-            includeNearbyStops = false,
-            dimNonRouteStops = false,
         )
         publishMapPresentation()
     }
@@ -679,31 +677,14 @@ class RouteMapController(
         // when the selected direction's own travel-ordered shape is used — never on the whole-route
         // merged fallback (a direction that carried no shape on the wire).
         val shape = route.shapeForDirection(currentDirectionId)
-        val anchor = directionStopId
-            ?.takeIf { id -> routeStops.stopsForDirection(currentDirectionId).any { it.id == id } }
-            ?.let { id -> routeStops.firstOrNull { it.stop.id == id }?.stop?.location?.toGeoPoint() }
-        basePolylines = if (anchor == null) {
-            shape.polylines.map { points ->
-                RoutePolyline(
-                    route.route?.color,
-                    points,
-                    widthDp = ROUTE_LINE_WIDTH_DP,
-                    directional = shape.directional,
-                    transforms = ROUTE_VIEW_TRANSFORMS,
-                )
-            }
-        } else buildList {
-            for (points in shape.polylines) {
-                val split = splitPolylineAtStop(points, anchor) ?: continue
-                split.upstream.takeIf { it.size >= 2 }?.let {
-                    add(RoutePolyline(route.route?.color, it, ROUTE_UPSTREAM_LINE_WIDTH_DP, shape.directional,
-                        transforms = ROUTE_VIEW_TRANSFORMS))
-                }
-                split.downstream.takeIf { it.size >= 2 }?.let {
-                    add(RoutePolyline(route.route?.color, it, ROUTE_DOWNSTREAM_LINE_WIDTH_DP, shape.directional,
-                        transforms = ROUTE_VIEW_TRANSFORMS))
-                }
-            }
+        basePolylines = shape.polylines.map { points ->
+            RoutePolyline(
+                route.route?.color,
+                points,
+                widthDp = ROUTE_LINE_WIDTH_DP,
+                directional = shape.directional,
+                transforms = ROUTE_VIEW_TRANSFORMS,
+            )
         }
         publishMapPresentation()
     }

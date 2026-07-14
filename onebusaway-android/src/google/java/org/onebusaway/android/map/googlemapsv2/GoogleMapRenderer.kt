@@ -66,11 +66,13 @@ import org.onebusaway.android.map.render.TripStopBitmaps
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
+import org.onebusaway.android.map.render.routeOutlineColor
+import org.onebusaway.android.map.render.routeOutlineWidthPx
 import org.onebusaway.android.map.render.stopIconKind
-import org.onebusaway.android.map.render.stopOpacity
 import org.onebusaway.android.map.render.stopZIndex
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
+import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDisplayName
 import java.util.concurrent.TimeUnit
 
@@ -115,10 +117,6 @@ class GoogleMapRenderer(
     // The stop ids drawn as route-mode circles last reconcile, so entering/leaving route mode restyles a
     // *retained* (focused) stop whose route-circle vs nearby icon flips while focus + band stay the same.
     private var renderedRouteStopIds: Set<String> = emptySet()
-    // The stop ids last forced into their dot-band appearance by adjacency focus. Tracking them makes
-    // an adjacency enter/exit re-icon retained markers even when focus, zoom, and favorites are stable.
-    private var renderedDimmedStopIds: Set<String> = emptySet()
-
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
@@ -143,6 +141,7 @@ class GoogleMapRenderer(
     // making the common stop-only update an O(1) identity check; equal republished values are retained too.
     private val routePolylines = mutableListOf<Polyline>()
     private var renderedRoutePolylines: List<RoutePolyline> = emptyList()
+    private var renderedRouteOutlineColor: Int? = null
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route vehicles
     // keyed by active trip id, and the band's (interaction-free) polylines re-added each frame. The
@@ -276,16 +275,32 @@ class GoogleMapRenderer(
 
     /** Reconcile the independently collected route layer, retaining equal native polylines. */
     fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
-        if (renderedRoutePolylines === next || renderedRoutePolylines == next) return
+        val outlineColor = routeOutlineColor(ThemeUtils.isInDarkMode(context))
+        if ((renderedRoutePolylines === next || renderedRoutePolylines == next) &&
+            renderedRouteOutlineColor == outlineColor
+        ) return
 
         routePolylines.forEach { it.remove() }
         routePolylines.clear()
         renderedRoutePolylines = next
+        renderedRouteOutlineColor = outlineColor
+
+        // Add every casing first so colored route strokes always remain above outlines at crossings.
+        for (polyline in next) {
+            val innerWidth = widthPx(polyline)
+            val options = PolylineOptions()
+                .color(outlineColor)
+                .width(routeOutlineWidthPx(innerWidth, density))
+                .addPoints(polyline.points)
+                .applyDashPattern(polyline)
+            routePolylines.add(map.addPolyline(options))
+        }
 
         for (polyline in next) {
             val options = PolylineOptions()
                 .width(widthPx(polyline))
                 .addPoints(polyline.points)
+                .applyDashPattern(polyline)
             if (polyline.directional) {
                 // Advanced spans are substantially more expensive for Maps to retessellate while
                 // zooming. Reserve that path for the lines that actually need repeated chevrons.
@@ -310,10 +325,19 @@ class GoogleMapRenderer(
      */
     private fun renderContinuation(continuation: RouteContinuation) {
         val polyline = continuation.polyline
-        val options = PolylineOptions().color(polyline.resolvedColor).width(widthPx(polyline))
-        if (polyline.dashed) options.pattern(listOf(Dash(CONTINUATION_DASH_LENGTH_PX), Gap(CONTINUATION_GAP_LENGTH_PX)))
-        options.addPoints(polyline.points)
-        staticPolylines.add(map.addPolyline(options))
+        val innerWidth = widthPx(polyline)
+        val outline = PolylineOptions()
+            .color(routeOutlineColor(ThemeUtils.isInDarkMode(context)))
+            .width(routeOutlineWidthPx(innerWidth, density))
+            .addPoints(polyline.points)
+            .applyDashPattern(polyline)
+        staticPolylines.add(map.addPolyline(outline))
+        val line = PolylineOptions()
+            .color(polyline.resolvedColor)
+            .width(innerWidth)
+            .addPoints(polyline.points)
+            .applyDashPattern(polyline)
+        staticPolylines.add(map.addPolyline(line))
 
         val arrow = continuation.arrow
         staticMarkers.add(
@@ -360,6 +384,13 @@ class GoogleMapRenderer(
         return this
     }
 
+    private fun PolylineOptions.applyDashPattern(polyline: RoutePolyline): PolylineOptions {
+        if (polyline.dashed) {
+            pattern(listOf(Dash(CONTINUATION_DASH_LENGTH_PX), Gap(CONTINUATION_GAP_LENGTH_PX)))
+        }
+        return this
+    }
+
     /**
      * Diff the stop markers against [stops] in place (the [reconcileVehicleMarkers] pattern): remove
      * markers whose id has left, add markers for new ids, and re-icon an existing marker only when its
@@ -384,7 +415,6 @@ class GoogleMapRenderer(
                 band = band,
                 favorite = stop.favorite,
                 routeStop = stop.routeStop,
-                dimmed = stop.dimmed,
             )
             val existing = stopMarkersByStopId[stop.id]
             if (existing == null) {
@@ -393,7 +423,6 @@ class GoogleMapRenderer(
                     MarkerOptions()
                         .position(stop.point.toLatLng())
                         .icon(stopIcon(stop, kind))
-                        .alpha(stopOpacity(stop.dimmed))
                         .flat(true)
                         .anchor(anchorX, anchorY)
                         .zIndex(stopZIndex(stop.routeStop, stop.favorite))
@@ -406,7 +435,6 @@ class GoogleMapRenderer(
                     renderedStopBand,
                     stop.id in renderedFavoriteStopIds,
                     stop.id in renderedRouteStopIds,
-                    stop.id in renderedDimmedStopIds,
                 )
                 // Only the markers whose icon kind changed need a new icon (and matching anchor: the
                 // full icon is anchored on its circle per direction, the dot/star/circle at the marker
@@ -425,9 +453,6 @@ class GoogleMapRenderer(
                 if (previous?.favorite != stop.favorite || previous.routeStop != stop.routeStop) {
                     existing.zIndex = stopZIndex(stop.routeStop, stop.favorite)
                 }
-                if (previous?.dimmed != stop.dimmed) {
-                    existing.alpha = stopOpacity(stop.dimmed)
-                }
                 stopByMarker[existing] = stop
             }
         }
@@ -435,7 +460,6 @@ class GoogleMapRenderer(
         renderedStopBand = band
         renderedFavoriteStopIds = buildSet { for (s in stops) if (s.favorite) add(s.id) }
         renderedRouteStopIds = buildSet { for (s in stops) if (s.routeStop) add(s.id) }
-        renderedDimmedStopIds = buildSet { for (s in stops) if (s.dimmed) add(s.id) }
     }
 
     private fun stopIcon(stop: StopMarker, kind: StopIconKind): BitmapDescriptor = when (kind) {
@@ -475,6 +499,7 @@ class GoogleMapRenderer(
         routePolylines.forEach { it.remove() }
         routePolylines.clear()
         renderedRoutePolylines = emptyList()
+        renderedRouteOutlineColor = null
 
         stopMarkersByStopId.values.forEach { it.remove() }
         stopMarkersByStopId.clear()
@@ -482,7 +507,6 @@ class GoogleMapRenderer(
         renderedFocusedStopId = null
         renderedFavoriteStopIds = emptySet()
         renderedRouteStopIds = emptySet()
-        renderedDimmedStopIds = emptySet()
 
         vehicleMarkersByTripId.values.forEach { it.remove() }
         vehicleMarkersByTripId.clear()

@@ -106,7 +106,7 @@ class StopsMapController(
     private var favoriteIds: Set<String> = emptySet()
 
     // Optional route-owned presentation over the canonical nearby-stop cache. A single route hides
-    // nearby stops; a focused stop combines them with exact scheduled trip stops and dims non-members.
+    // nearby stops; a focused stop combines them with exact scheduled trip stops and hides non-members.
     private var routePresentation: RouteStopPresentation? = null
 
     private var loadJob: Job? = null
@@ -542,8 +542,6 @@ internal data class RouteStopPresentation(
     val routes: List<ObaRoute>,
     val routeStopIds: Set<String>,
     val projectedPoints: Map<String, GeoPoint>,
-    val includeNearbyStops: Boolean,
-    val dimNonRouteStops: Boolean,
 )
 
 /** Pure marker merge/style policy shared by base-route and exact-trip stop presentations. */
@@ -554,18 +552,13 @@ internal fun applyRouteStopPresentation(
     markerFor: (ObaStop) -> StopMarker,
 ): List<StopMarker> {
     val source = LinkedHashMap<String, StopMarker>()
-    if (presentation.includeNearbyStops) {
-        nearby.associateByTo(source, StopMarker::id)
-    } else {
-        nearby.firstOrNull { it.id == focusedStopId }?.let { source[it.id] = it }
-    }
+    nearby.firstOrNull { it.id == focusedStopId }?.let { source[it.id] = it }
     presentation.stops.forEach { source.putIfAbsent(it.id, markerFor(it)) }
     return source.values.map { marker ->
         val routeStop = marker.id in presentation.routeStopIds
         marker.copy(
             point = presentation.projectedPoints[marker.id] ?: marker.point,
             routeStop = routeStop,
-            dimmed = presentation.dimNonRouteStops && !routeStop,
         )
     }
 }

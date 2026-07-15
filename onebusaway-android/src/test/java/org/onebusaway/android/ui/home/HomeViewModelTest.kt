@@ -52,6 +52,7 @@ private class MapDirectiveRecorder(private val vm: HomeViewModel) {
     val sent = mutableListOf<MapDirective>()
 
     val recenters get() = sent.filterIsInstance<MapDirective.RecenterOnFocusedStop>().map { it.lat to it.lon }
+    val routeRequests get() = sent.filterIsInstance<MapDirective.ShowRoute>().map { it.request }
     val routesShown get() = sent.filterIsInstance<MapDirective.ShowRoute>().map { it.request.routeId }
     val stopRoutes get() = sent.filterIsInstance<MapDirective.ShowStopRoutes>()
     val clearStopRoutesCount get() = sent.count { it is MapDirective.ClearStopRoutes }
@@ -261,6 +262,24 @@ class HomeViewModelTest {
         // The sheet collapse is now a declarative UI reaction to route mode (routeHeader != null),
         // not a VM command — so this covers only the route directive.
         assertEquals(listOf("42"), map.routesShown)
+        mapJob.cancel()
+    }
+
+    @Test
+    fun `focused stop route badge preserves stop focus and line direction`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        vm.onStopFocused(FocusedStop("stop", "Main St", "100", 47.6, -122.3))
+
+        vm.requestShowFocusedStopRouteOnMap("42", directionId = 1)
+        advanceUntilIdle()
+
+        assertEquals(
+            ShowRouteRequest(routeId = "42", directionStopId = "stop", initialDirectionId = 1),
+            map.routeRequests.single(),
+        )
         mapJob.cancel()
     }
 

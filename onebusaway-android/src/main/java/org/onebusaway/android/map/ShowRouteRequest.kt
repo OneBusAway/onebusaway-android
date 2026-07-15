@@ -31,7 +31,7 @@ package org.onebusaway.android.map
  *   vehicle↔stop relationship. When no live vehicle is running that trip, the map shows the route and
  *   raises the "vehicle isn't on the map" toast. A plain arrival-row tap leaves this null (frame the whole
  *   route); only the ETA pill sets it.
- * @property initialDirectionId when non-null (the route-continuation badge tap, #1691), the GTFS
+ * @property initialDirectionId when non-null (a route-continuation or adjacency-badge tap), the GTFS
  *   direction to show instead of the route's default — validated against the loaded route's directions
  *   by [RouteMapController], falling back to the default when it doesn't match.
  */

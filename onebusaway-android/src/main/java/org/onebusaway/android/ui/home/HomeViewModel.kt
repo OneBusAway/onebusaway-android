@@ -281,6 +281,21 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
+     * A focused-stop route badge behaves like its arrivals-drawer row: carry the focused stop as the
+     * direction anchor so route mode preserves adjacency focus underneath it. The badge additionally
+     * supplies the direction of the line it labels, which wins over stop-based direction resolution.
+     */
+    fun requestShowFocusedStopRouteOnMap(routeId: String, directionId: Int?) {
+        requestShowRouteOnMap(
+            ShowRouteRequest(
+                routeId = routeId,
+                directionStopId = _uiState.value.focusedStop?.id,
+                initialDirectionId = directionId,
+            )
+        )
+    }
+
+    /**
      * Back-press from a peeking sheet — clear the focus. The VM owns the focused stop, so clearing it
      * here hides the sheet; the ClearFocus directive clears the map's render focus. (The old path
      * only told the map, relying on a focus-listener round-trip the host's setFocusStop(null) doesn't

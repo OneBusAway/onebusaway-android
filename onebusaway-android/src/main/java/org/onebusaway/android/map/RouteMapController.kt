@@ -188,8 +188,8 @@ class RouteMapController(
      * Show route [routeId]: load the route + header and start the vehicle poll. [zoomToRoute] frames
      * the shape once it loads (consumed once). [directionStopId], when non-null, narrows the overlay to
      * the single direction that serves that stop (the arrivals "show vehicles on map" launch); null
-     * shows the whole route. [initialDirectionId] is a restore override (the user-selected direction
-     * persisted across process death) that wins over the anchor stop when it's still a valid direction.
+     * shows the whole route. [initialDirectionId] is an explicit badge/restore override that wins over
+     * the anchor stop when it's still a valid direction.
      * [focusTripId], when non-null, asks the map to fit that trip's live vehicle together with the
      * originating [directionStopId] once the vehicle appears; the on-load framing is deferred until that
      * decision so a successful vehicle+stop fit isn't first yanked out to the whole-route extent, and a
@@ -203,9 +203,9 @@ class RouteMapController(
         focusTripId: String? = null,
     ) {
         this.routeId = routeId
-        // A badge tap enters single-route mode; remove the adjacency choices immediately instead of
-        // leaving them tappable during the route load.
-        renderState.setRouteBadges(emptyList())
+        // When stop focus survives an arrivals-row or route-badge tap, emphasize this route
+        // immediately from the already-loaded adjacency geometry instead of waiting for route load.
+        publishMapPresentation()
         this.directionStopId = directionStopId
         this.initialDirectionOverride = initialDirectionId
         this.pendingFocus = focusTripId?.let { PendingFocus(it, frameFallback = zoomToRoute) }

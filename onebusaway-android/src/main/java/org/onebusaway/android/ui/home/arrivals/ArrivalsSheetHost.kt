@@ -20,9 +20,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -35,6 +38,8 @@ import kotlinx.coroutines.flow.first
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.map.adjacencyRouteColors
+import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
@@ -111,6 +116,10 @@ internal fun ArrivalsSheetHost(
                 )
             }
             val listState = remember { LazyListState() }
+            // Mirror RouteMapController's session-stable palette: unchanged trip membership retains
+            // the original hue assignment even if a later poll returns those trips in another order.
+            var paletteTrips by remember { mutableStateOf<Set<FocusedTrip>?>(null) }
+            var mapRouteColors by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
 
             // This host owns the arrivals-tutorial wiring so the reusable panel stays tutorial-ignorant:
             // it maps the panel's opaque anchor slots to the spotlight targets and triggers the sequence.
@@ -123,6 +132,7 @@ internal fun ArrivalsSheetHost(
                     listState = listState,
                     initialTitle = stop.name.orEmpty(),
                     handler = handler,
+                    mapRouteColors = mapRouteColors,
                     onContentHeight = onContentHeight,
                     onTitleClick = onTitleClick,
                     etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
@@ -136,6 +146,12 @@ internal fun ArrivalsSheetHost(
             val sheetVisibleState = rememberUpdatedState(sheetVisible)
             LaunchedEffect(viewModel) {
                 viewModel.arrivalsLoaded.collect { loaded ->
+                    if (paletteTrips != loaded.focusedTrips) {
+                        paletteTrips = loaded.focusedTrips
+                        mapRouteColors = adjacencyRouteColors(
+                            loaded.focusedTrips.map(FocusedTrip::routeId)
+                        )
+                    }
                     onArrivalsLoaded(loaded)
                     if (tutorialState != null) {
                         maybeStartArrivalTutorial(prefs, tutorialState, loaded.hasArrivals) {

@@ -339,6 +339,8 @@ internal fun ArrivalsList(
     /** Whether a load-more request is in flight, for the footer button's spinner. Collected only by
      *  the footer item below, so a toggle recomposes just that item, not the whole list. */
     loadingMore: StateFlow<Boolean>,
+    /** Stop-focus map colors keyed by route id. Empty for arrivals shown outside the home drawer. */
+    mapRouteColors: Map<String, Int> = emptyMap(),
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     /** Hosts that show the stop's direction elsewhere (e.g. in their own header) set this false to
@@ -390,6 +392,7 @@ internal fun ArrivalsList(
                     actionsFor = { content.actions[it.tripId] },
                     isFavorite = group.routeId in content.favoriteRouteIds,
                     callbacks = rowCallbacks,
+                    mapRouteColor = mapRouteColors[group.routeId],
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
                     etaAnchor = if (index == 0) etaAnchor else Modifier,
                     // Glide up/down as the alert section above is toggled in/out.

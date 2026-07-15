@@ -249,6 +249,7 @@ fun RouteArrivalRow(
     actionsFor: (ArrivalInfo) -> ArrivalActions?,
     isFavorite: Boolean,
     callbacks: ArrivalRowCallbacks,
+    mapRouteColor: Int? = null,
     modifier: Modifier = Modifier,
     etaAnchor: Modifier = Modifier,
 ) {
@@ -293,6 +294,7 @@ fun RouteArrivalRow(
                         maxFontSize = 32.sp,
                         color = badgeContent,
                         containerColor = badgeContainer,
+                        endContainerColor = mapRouteColor?.let(::Color) ?: Color.Unspecified,
                     )
                     if (onAlertClick != null) {
                         ArrivalAlertIndicator(

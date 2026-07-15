@@ -37,6 +37,11 @@ class FirebaseMessagingManager @Inject constructor(
      * Fetches the current FCM registration token and persists it. Fire-and-forget; called once from
      * `Application.onCreate` so a token obtained before the app first read it is captured.
      */
+    // FirebaseMessaging.getToken() is deprecated in favor of register(), but register() returns
+    // Task<Void> (no token to store) — that's the new Firebase Installation ID registration model, a
+    // behavioral change tracked separately. Keep the FCM-token flow until then.
+    // TODO: migrate to register()/onRegistered() — https://github.com/OneBusAway/onebusaway-android/issues/1866
+    @Suppress("DEPRECATION")
     fun fetchAndStoreToken() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful) {

@@ -59,6 +59,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         showNotification(context, message, stopId)
     }
 
+    // onNewToken(String) is deprecated in favor of onRegistered(String), which delivers the Firebase
+    // Installation ID rather than the FCM registration token stored here — a behavioral change tracked
+    // separately. Keep the FCM-token callback until then.
+    // TODO: migrate to onRegistered() — https://github.com/OneBusAway/onebusaway-android/issues/1866
+    @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         prefsRepository.setString(R.string.firebase_messaging_token, token)

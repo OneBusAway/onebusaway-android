@@ -216,9 +216,13 @@ class MapViewModel @Inject constructor(
             .map { it?.toRouteHeader() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /** The route header reported its measured height; derive the map's top padding (0 clears it). */
+    /**
+     * The route header reported its measured height; report its contribution to the map's top padding
+     * (0 clears it). Stacks on the always-present floating-chrome inset set from
+     * [org.onebusaway.android.ui.home.map.MapFeature].
+     */
     fun setRouteHeaderHeight(heightPx: Int) {
-        mapHost.setTopPadding(if (heightPx > 0) heightPx + routeHeaderMarkerPaddingPx else 0)
+        mapHost.setRouteHeaderPadding(if (heightPx > 0) heightPx + routeHeaderMarkerPaddingPx else 0)
     }
 
     // Map the controller's raw load into the display header: blank-but-loading until the route resolves,

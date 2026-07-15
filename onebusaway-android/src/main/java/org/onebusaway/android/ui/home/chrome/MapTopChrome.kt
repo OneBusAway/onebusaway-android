@@ -67,6 +67,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.mylists.RecentItem
@@ -303,3 +304,14 @@ internal val MAP_TOP_CHROME_CLEARANCE = TOP_CHROME_TOP_MARGIN + TOP_CHROME_HEIGH
  */
 fun Modifier.mapTopChromeOverlayInset(): Modifier =
     this.statusBarsPadding().padding(top = MAP_TOP_CHROME_CLEARANCE)
+
+/**
+ * The floating top chrome's total vertical footprint in **pixels**: the caller-measured [statusBarTopPx]
+ * plus [MAP_TOP_CHROME_CLEARANCE]. Fed into the map's top content padding so the Google compass and any
+ * centered content clear the menu/search FAB row. Shares [MAP_TOP_CHROME_CLEARANCE] with
+ * [mapTopChromeOverlayInset], so the map padding can't drift from the overlays that line up against the
+ * same row. Deliberately not `@Composable`: the caller reads the snapshot-backed status-bar inset inside
+ * a `snapshotFlow` so inset changes don't recompose the map.
+ */
+fun mapTopChromeInsetPx(statusBarTopPx: Int, density: Density): Int =
+    statusBarTopPx + with(density) { MAP_TOP_CHROME_CLEARANCE.roundToPx() }

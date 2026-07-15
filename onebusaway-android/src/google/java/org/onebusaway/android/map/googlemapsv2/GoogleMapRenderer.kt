@@ -17,8 +17,10 @@ package org.onebusaway.android.map.googlemapsv2
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 import kotlin.math.cos
 import kotlin.math.pow
 import com.google.android.gms.maps.GoogleMap
@@ -204,6 +206,7 @@ class GoogleMapRenderer(
             // StrokeStyle above. keyboard_arrow_down is a neutral black template, so tint it white here.
             BitmapDescriptorFactory.fromBitmap(
                 vectorToBitmap(R.drawable.keyboard_arrow_down, 36, glyphScale = 1.7f, tint = Color.WHITE)
+                    .withLongitudinalSpacing(CHEVRON_REPEAT_SCALE)
             )
         ).build()
     }
@@ -218,6 +221,17 @@ class GoogleMapRenderer(
         val sizePx = (sizeDp * density).toInt()
         val inset = (sizePx * (1f - glyphScale) / 2f).toInt()
         return MarkerRendering.rasterize(context, resId, sizePx, tint, inset)
+    }
+
+    /**
+     * A texture stamp's top-to-bottom axis repeats along the polyline. Preserve the glyph at its
+     * existing size while extending that axis with transparent space to reduce repetition density.
+     */
+    private fun Bitmap.withLongitudinalSpacing(factor: Int): Bitmap {
+        if (factor <= 1) return this
+        val spaced = createBitmap(width, height * factor)
+        Canvas(spaced).drawBitmap(this, 0f, (spaced.height - height) / 2f, null)
+        return spaced
     }
 
     // Wraps each distinct marker icon in a BitmapDescriptor exactly once, keyed by a stable logical id, so
@@ -894,6 +908,9 @@ class GoogleMapRenderer(
 
         // The route-continuation badge (#1691) draws above vehicles so it's always reliably tappable.
         private const val ROUTE_BADGE_Z_INDEX = 1.5f
+
+        // The stamp bitmap is twice as long as its chevron, halving repetition without shrinking it.
+        private const val CHEVRON_REPEAT_SCALE = 2
 
         // The route-continuation line's dash pattern (#1691), in screen pixels like every other gms
         // polyline dimension here.

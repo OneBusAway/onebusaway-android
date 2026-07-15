@@ -208,7 +208,7 @@ private fun Open311FieldInput(
                         selected = isSelected,
                         onClick = { onSingleChoice(field.code, option.key) }
                     ),
-                    control = { RadioButton(selected = isSelected, onClick = null) }
+                    content = { RadioButton(selected = isSelected, onClick = null) }
                 )
             }
         }
@@ -224,7 +224,7 @@ private fun Open311FieldInput(
                         value = checked,
                         onValueChange = { onMultiChoice(field.code, option.key, it) }
                     ),
-                    control = { Checkbox(checked = checked, onCheckedChange = null) }
+                    content = { Checkbox(checked = checked, onCheckedChange = null) }
                 )
             }
         }
@@ -236,7 +236,7 @@ private fun Open311FieldInput(
 private fun ChoiceOptionRow(
     name: String,
     modifier: Modifier,
-    control: @Composable () -> Unit
+    content: @Composable () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -244,7 +244,7 @@ private fun ChoiceOptionRow(
             .then(modifier),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        control()
+        content()
         Text(name)
     }
 }

@@ -27,61 +27,6 @@
     </issue>
 
     <issue
-        id="ComposableLambdaParameterNaming"
-        message="Composable lambda parameter should be named `content`"
-        errorLine1="    body: @Composable () -> Unit,"
-        errorLine2="    ~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/ui/home/HomeListsDestinations.kt"
-            line="137"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposableLambdaParameterNaming"
-        message="Composable lambda parameter should be named `content`"
-        errorLine1="    actions: @Composable RowScope.() -> Unit = {}"
-        errorLine2="    ~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/ui/compose/components/ObaTopAppBar.kt"
-            line="42"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposableLambdaParameterNaming"
-        message="Composable lambda parameter should be named `content`"
-        errorLine1="    control: @Composable () -> Unit"
-        errorLine2="    ~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/ui/report/open311/Open311Screen.kt"
-            line="239"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposableLambdaParameterNaming"
-        message="Composable lambda parameter should be named `content`"
-        errorLine1="    trailing: (@Composable () -> Unit)? = null,"
-        errorLine2="    ~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/ui/settings/components/PreferenceItems.kt"
-            line="96"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposableLambdaParameterNaming"
-        message="Composable lambda parameter should be named `content`"
-        errorLine1="private fun OptionRow(text: String, onClick: () -> Unit, control: @Composable () -> Unit) {"
-        errorLine2="                                                         ~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/ui/survey/SurveyOverlay.kt"
-            line="326"
-            column="58"/>
-    </issue>
-
-    <issue
         id="PermissionNamingConvention"
         message="`${applicationId}.permission.TRIP_SERVICE does not follow recommended naming convention`"
         errorLine1="        android:name=&quot;${applicationId}.permission.TRIP_SERVICE&quot;"

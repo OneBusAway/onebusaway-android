@@ -233,7 +233,7 @@ fun InfrastructureIssueDestination(
             ObaTopAppBar(
                 title = stringResource(R.string.rt_infrastructure_problem_title),
                 onBack = { navController.popBackStack() },
-                actions = {
+                content = {
                     // The stop/trip form's "send" (Tier 1: was the form fragment's MenuProvider item).
                     formSubmit?.let { submit ->
                         IconButton(onClick = submit) {

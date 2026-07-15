@@ -39,9 +39,9 @@ import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
 import org.onebusaway.android.map.render.RouteStopCircles
-import org.onebusaway.android.map.render.STOP_DOT_ZOOM_THRESHOLD
+import org.onebusaway.android.map.render.DETAIL_RAMP_END_ZOOM
+import org.onebusaway.android.map.render.DETAIL_RAMP_START_ZOOM
 import org.onebusaway.android.map.render.STOP_FOCUS_ROUTE_MIN_SCALE
-import org.onebusaway.android.map.render.STOP_FOCUS_ROUTE_MIN_ZOOM
 import org.onebusaway.android.map.render.StopMarker
 
 /**
@@ -142,8 +142,8 @@ internal class MapLibreRouteStopCircleLayer(
     private fun radiusExpression(): Expression = interpolate(
         linear(),
         zoom(),
-        stop(STOP_FOCUS_ROUTE_MIN_ZOOM, get(MIN_RADIUS_PROPERTY)),
-        stop(STOP_DOT_ZOOM_THRESHOLD, get(MAX_RADIUS_PROPERTY)),
+        stop(DETAIL_RAMP_START_ZOOM, get(MIN_RADIUS_PROPERTY)),
+        stop(DETAIL_RAMP_END_ZOOM, get(MAX_RADIUS_PROPERTY)),
     )
 
     private companion object {

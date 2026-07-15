@@ -52,11 +52,11 @@ class StopZoomBandTest {
     }
 
     @Test
-    fun `stop-focus route circles ramp linearly from 30 percent at zoom 12 to full size at 15`() {
+    fun `stop-focus route circles use their own ramp from 30 percent at zoom 11 to full at 16`() {
         assertEquals(0.3f, focusedRouteStopScale(10f), 0f)
-        assertEquals(0.3f, focusedRouteStopScale(12f), 0f)
+        assertEquals(0.3f, focusedRouteStopScale(11f), 0f)
         assertEquals(0.65f, focusedRouteStopScale(13.5f), 0.0001f)
-        assertEquals(1f, focusedRouteStopScale(15f), 0f)
+        assertEquals(1f, focusedRouteStopScale(16f), 0f)
         assertEquals(1f, focusedRouteStopScale(18f), 0f)
     }
 

@@ -56,6 +56,7 @@ import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
+import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.getRouteDisplayName
@@ -105,6 +106,7 @@ class MapLibreRenderer(
     // making the common stop-only update an O(1) identity check; equal republished values are retained too.
     private val routePolylines = mutableListOf<Polyline>()
     private var renderedRoutePolylines: List<RoutePolyline> = emptyList()
+    private var renderedRouteWidthScale: Float? = null
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
     // vehicles keyed by active trip id, the trip-focus estimate markers keyed by role, and the band's
@@ -206,11 +208,13 @@ class MapLibreRenderer(
         if (routePolylines.isNotEmpty()) map.removeAnnotations(routePolylines)
         routePolylines.clear()
         renderedRoutePolylines = next
+        val widthScale = routeLineWidthScale(map.cameraPosition.zoom.toFloat())
+        renderedRouteWidthScale = widthScale
 
         for (polyline in next) {
             val options = PolylineOptions()
                 .color(polyline.resolvedColor)
-                .width(polyline.widthDp ?: ROUTE_WIDTH_DP)
+                .width(baseRouteWidth(polyline) * widthScale)
                 .addPoints(polyline.points)
             routePolylines.add(map.addPolyline(options))
         }
@@ -220,6 +224,17 @@ class MapLibreRenderer(
         for (point in points) add(point.toLatLng())
         return this
     }
+
+    fun onCameraSettled(zoom: Float) {
+        val widthScale = routeLineWidthScale(zoom)
+        if (widthScale == renderedRouteWidthScale) return
+        renderedRouteWidthScale = widthScale
+        for (index in routePolylines.indices) {
+            routePolylines[index].width = baseRouteWidth(renderedRoutePolylines[index]) * widthScale
+        }
+    }
+
+    private fun baseRouteWidth(polyline: RoutePolyline): Float = polyline.widthDp ?: ROUTE_WIDTH_DP
 
     /**
      * Update the dynamic layer for one display frame: the route's live [vehicles] (null off route mode)
@@ -244,6 +259,7 @@ class MapLibreRenderer(
         staticAnnotations.clear()
         routePolylines.clear()
         renderedRoutePolylines = emptyList()
+        renderedRouteWidthScale = null
         vehicleMarkersByTripId.clear()
         tripMarkersByRole.clear()
         bandPolylines.clear()

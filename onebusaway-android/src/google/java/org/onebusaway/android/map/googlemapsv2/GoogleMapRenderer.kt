@@ -66,6 +66,7 @@ import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
+import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ThemeUtils
@@ -129,6 +130,7 @@ class GoogleMapRenderer(
     // making the common stop-only update an O(1) identity check; equal republished values are retained too.
     private val routePolylines = mutableListOf<Polyline>()
     private var renderedRoutePolylines: List<RoutePolyline> = emptyList()
+    private var renderedRouteWidthScale: Float? = null
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route vehicles
     // keyed by active trip id, and the band's (interaction-free) polylines re-added each frame. The
@@ -296,10 +298,12 @@ class GoogleMapRenderer(
         routePolylines.forEach { it.remove() }
         routePolylines.clear()
         renderedRoutePolylines = next
+        val widthScale = routeLineWidthScale(map.cameraPosition.zoom)
+        renderedRouteWidthScale = widthScale
 
         for (polyline in next) {
             val options = PolylineOptions()
-                .width(widthPx(polyline))
+                .width(widthPx(polyline) * widthScale)
                 .addPoints(polyline.points)
                 .applyDashPattern(polyline)
             if (polyline.directional) {
@@ -404,6 +408,7 @@ class GoogleMapRenderer(
         routePolylines.forEach { it.remove() }
         routePolylines.clear()
         renderedRoutePolylines = emptyList()
+        renderedRouteWidthScale = null
 
         stopMarkerLayer.dispose()
 
@@ -743,7 +748,15 @@ class GoogleMapRenderer(
 
     fun onCameraMoveStarted() = routeStopLayer.onCameraMoveStarted()
 
-    fun onCameraSettled(zoom: Float) = routeStopLayer.onCameraSettled(zoom)
+    fun onCameraSettled(zoom: Float) {
+        routeStopLayer.onCameraSettled(zoom)
+        val widthScale = routeLineWidthScale(zoom)
+        if (widthScale == renderedRouteWidthScale) return
+        renderedRouteWidthScale = widthScale
+        for (index in routePolylines.indices) {
+            routePolylines[index].width = widthPx(renderedRoutePolylines[index]) * widthScale
+        }
+    }
 
     fun bikeForMarker(marker: Marker): BikeMarker? = bikeByMarker[marker]
 

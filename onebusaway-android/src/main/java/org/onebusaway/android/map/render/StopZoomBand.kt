@@ -22,10 +22,7 @@ package org.onebusaway.android.map.render
  */
 const val STOP_DOT_ZOOM_THRESHOLD = 15f
 
-/** Stop-focus route circles reach their smallest size at or below this zoom. */
-const val STOP_FOCUS_ROUTE_MIN_ZOOM = 12f
-
-/** Smallest stop-focus route-circle scale; zoom 15+ uses the normal trip-stop size. */
+/** Smallest focused route-stop circle scale at the zoomed-out end of the detail ramp. */
 const val STOP_FOCUS_ROUTE_MIN_SCALE = 0.3f
 
 /**
@@ -46,14 +43,16 @@ fun stopZoomBand(zoom: Float): StopBand =
     if (zoom < STOP_DOT_ZOOM_THRESHOLD) StopBand.DOT else StopBand.FULL
 
 /**
- * Linear stop-focus route-circle scale: compact at distant zoom, normal-sized once full stop icons
- * return. The renderer applies it only when a stop is focused; ordinary single-route mode stays 1x.
+ * Stop-circle-specific detail scale applied only while a stop is focused. Ordinary single-route mode
+ * stays 1x; interpolation machinery and zoom bounds remain shared with route-line width.
  */
-fun focusedRouteStopScale(zoom: Float): Float {
-    val progress = ((zoom - STOP_FOCUS_ROUTE_MIN_ZOOM) /
-        (STOP_DOT_ZOOM_THRESHOLD - STOP_FOCUS_ROUTE_MIN_ZOOM)).coerceIn(0f, 1f)
-    return STOP_FOCUS_ROUTE_MIN_SCALE + (1f - STOP_FOCUS_ROUTE_MIN_SCALE) * progress
-}
+fun focusedRouteStopScale(zoom: Float): Float = detailZoomRamp(
+    zoom,
+    startZoom = DETAIL_RAMP_START_ZOOM,
+    endZoom = DETAIL_RAMP_END_ZOOM,
+    distantValue = STOP_FOCUS_ROUTE_MIN_SCALE,
+    closeValue = 1f,
+)
 
 /**
  * The icon variants a stop marker can show: the full directional icon or the far-zoom dot (each

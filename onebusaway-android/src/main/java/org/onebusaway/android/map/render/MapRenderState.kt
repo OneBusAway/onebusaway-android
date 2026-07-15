@@ -64,6 +64,9 @@ const val DEFAULT_ROUTE_LINE_COLOR: Int = 0xFF0000FF.toInt()
  */
 const val ROUTE_LINE_WIDTH_DP: Float = 10f
 
+/** Route lines use the shared proportional route-detail scale. */
+fun routeLineWidthScale(zoom: Float): Float = routeDetailScale(zoom)
+
 /** Optional renderer-bound geometry transforms. Lines opt in explicitly; the default is pass-through. */
 enum class RoutePolylineTransform {
     VIEWPORT_CLIP,

@@ -28,10 +28,10 @@ class GoogleRouteStopBitmapLayerTest {
     @Test
     fun `stop focus bitmap size follows the zoom ramp`() {
         assertEquals(18, diameter(zoom = 10f, stopFocused = true, selected = false))
-        assertEquals(27, diameter(zoom = 12f, stopFocused = true, selected = true))
+        assertEquals(27, diameter(zoom = 11f, stopFocused = true, selected = true))
         assertEquals(39, diameter(zoom = 13.5f, stopFocused = true, selected = false))
         assertEquals(59, diameter(zoom = 13.5f, stopFocused = true, selected = true))
-        assertEquals(60, diameter(zoom = 15f, stopFocused = true, selected = false))
+        assertEquals(60, diameter(zoom = 16f, stopFocused = true, selected = false))
         assertEquals(90, diameter(zoom = 18f, stopFocused = true, selected = true))
     }
 

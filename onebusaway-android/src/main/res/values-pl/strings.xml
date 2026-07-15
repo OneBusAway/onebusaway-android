@@ -24,18 +24,18 @@
     <string name="route_not_found_error_no_region">Przepraszamy, dana trasa nie może być znaleziona. Jeśli był to skrót
         to możliwe, że jest on nieaktualny, lub wybrany region nie został zaznaczony.
         (Zmień w
-        \"Właściwości->Twój region\").
+        “Właściwości->Twój region”).
     </string>
     <string name="route_not_found_error_with_region_name">Przepraszamy, wybrana trasa nie może zostać znaleziona. Jeśli był to skrót to możliwe, że jest on nieaktualny, lub został wybrany zły region (Twój obecny region to
-        %1$s. Zmień w\"Właściwości->Twój region\").
+        %1$s. Zmień w“Właściwości->Twój region”).
     </string>
     <string name="stop_not_found_error_no_region">Przepraszamy, wybrana trasa nie może zostać znaleziona. Jeśli był to skrót to możliwe, że jest on nieaktualny, lub region nie został wybrany.
         (Zmień w
-        \"Ustawienia->Twój region\").
+        “Ustawienia->Twój region”).
     </string>
     <string name="stop_not_found_error_with_region_name">Przepraszamy, wybrana trasa nie może zostać znaleziona. Jeśli był to skrót to możliwe, że jest on nieaktualny, lub wybrany został zły region (Twój obecny region to
 
-        %1$s. Zmień w \"Ustawienia->Twój region\").
+        %1$s. Zmień w “Ustawienia->Twój region”).
     </string>
     <string name="internal_error">Oops, coś poszło nie tak. Spróbuj ponownie być może zadziała.</string>
     <string name="out_of_memory_error">Przepraszamy, nie ma tyle pamięci by poradzić sobie z tym.
@@ -71,9 +71,9 @@
         <b>Odświeżający nowy wygląd</b>
         - Yay material design!\n&#8226;\u0020
         <b>Autobusy w trasie zaznaczone na mapie</b>
-        - Stuknij na czas przyjazdu i wybierz \"Pokaż trasę na mapie\"!\n&#8226;\u0020
+        - Stuknij na czas przyjazdu i wybierz “Pokaż trasę na mapie”!\n&#8226;\u0020
         <b>Status podróży</b>
-        - Stuknij na czas przyjazdu i wybierz \"Pokaż status podróży\"!
+        - Stuknij na czas przyjazdu i wybierz “Pokaż status podróży”!
     </string>
     <string name="main_help_close">Zamknij</string>
     <string name="main_help_legend_title">Legenda</string>
@@ -269,7 +269,7 @@
     <string name="feedback_msg">Czy zostałeś powiadomiony we właściwym czasie, aby wysiąść na swoim przystanku?</string>
     <string name="feedback_freeText">Napisz swoją opinię</string>
     <string name="feedback_checkbox_text">Dołącz dziennik systemowy (Twój wybór zostanie zapisany dla przyszłych podróży)</string>
-    <string name="feedback_log_guide">Twoja opinia zostanie wysłana do %1$s. Jeśli zaznaczysz \"Dołącz dzienniki systemowe\", informacje o lokalizacji w czasie rzeczywistym z Twojego urządzenia zarejestrowane podczas zbliżania się do przystanku docelowego zostaną udostępnione %1$s, aby deweloperzy mogli ulepszyć funkcję przypomnień o celu podróży.\n\nZmień swoje preferencje dotyczące udostępniania dzienników systemowych w Ustawieniach.</string>
+    <string name="feedback_log_guide">Twoja opinia zostanie wysłana do %1$s. Jeśli zaznaczysz “Dołącz dzienniki systemowe”, informacje o lokalizacji w czasie rzeczywistym z Twojego urządzenia zarejestrowane podczas zbliżania się do przystanku docelowego zostaną udostępnione %1$s, aby deweloperzy mogli ulepszyć funkcję przypomnień o celu podróży.\n\nZmień swoje preferencje dotyczące udostępniania dzienników systemowych w Ustawieniach.</string>
 
     <!-- Destination reminder feedback Preferences -->
     <string name="preferences_category_user_logs">Udostępnianie informacji do debugowania</string>
@@ -278,7 +278,7 @@
 
     <!-- Destination reminder change location accuracy -->
     <string name="main_changelocationmode_title">Wysoka dokładność lokalizacji nie jest włączona</string>
-    <string name="main_changelocationmode">Twoje obecne ustawienie \"Metoda lokalizacji\" na urządzeniu może nie powiadomić Cię o zbliżaniu się do celu z powodu niedokładnych informacji o pozycji. Czy chcesz teraz zmienić \"Metodę lokalizacji\" urządzenia na \"Wysoka dokładność\"?
+    <string name="main_changelocationmode">Twoje obecne ustawienie “Metoda lokalizacji” na urządzeniu może nie powiadomić Cię o zbliżaniu się do celu z powodu niedokładnych informacji o pozycji. Czy chcesz teraz zmienić “Metodę lokalizacji” urządzenia na “Wysoka dokładność”?
     </string>
 
     <!-- Stop Details -->
@@ -564,7 +564,7 @@
     <string name="preferences_save_title">Zapisz w pamięci urządzenia</string>
     <string name="preferences_save_summary">Zapisz swoje ulubione i ostatnie przystanki oraz linie</string>
     <string name="preferences_restore_title">Przywróć poprzedni zapis</string>
-    <string name="preferences_restore_summary">Przywraca z poprzedniej kopii zapasowej. Po wybraniu tej opcji zostaniesz poproszony o wybranie pliku. Wybierz plik kopii zapasowej (np. \"db.backup\" lub \"%1$s.backup\"), który może znajdować się w folderze \"Dokumenty\" lub w dowolnym miejscu, gdzie zapisałeś kopię zapasową.</string>
+    <string name="preferences_restore_summary">Przywraca z poprzedniej kopii zapasowej. Po wybraniu tej opcji zostaniesz poproszony o wybranie pliku. Wybierz plik kopii zapasowej (np. “db.backup” lub “%1$s.backup”), który może znajdować się w folderze “Dokumenty” lub w dowolnym miejscu, gdzie zapisałeś kopię zapasową.</string>
     <string name="preferences_db_saved">Zapisano pomyślnie!</string>
     <string name="preferences_db_save_error">Niemożliwe by zapisać: %1$s</string>
     <string name="preferences_db_restore_warning">Wyczyści wszystkie istniejące dane! Iść dalej?
@@ -617,7 +617,7 @@
 
     <!-- Issue reporting implementation -->
     <string name="region_dialog_message">Czy jesteś w regionie %1$s?</string>
-    <string name="preference_region_dialog_message">Twój region jest obecnie ustawiony na %1$s. Jeśli to nieprawidłowe, dotknij \"Twój region\", aby to zmienić!</string>
+    <string name="preference_region_dialog_message">Twój region jest obecnie ustawiony na %1$s. Jeśli to nieprawidłowe, dotknij “Twój region”, aby to zmienić!</string>
     <string name="preference_region_dialog_title">Sprawdź region</string>
     <string name="report_dialog_stop_header">Dotknij przystanku na mapie</string>
 
@@ -811,7 +811,7 @@
     <!-- "(c)" here is the "501(c)(3)" US tax-code designation, not a copyright symbol. -->
     <string name="donation_learn_more_explanation" tools:ignore="TypographyOther">Mamy wielkie plany na ulepszenie %1$s, ale nie możemy tego zrobić bez Twojej pomocy. Ta aplikacja jest obecnie tworzona w 100%% dzięki pracy wolontariuszy, i potrzebujemy Ciebie, abyś pomógł nam sfinansować przyszły rozwój.\n\nJako kluczowy projekt Open Transit Software Foundation, organizacji non-profit 501(c)(3), polegamy na dobrej woli użytkowników takich jak Ty, aby kontynuować działanie i ulepszanie tego oprogramowania.\n\nCo roku tylko mała część naszych użytkowników dokonuje darowizn, ale każdy wkład, duży czy mały, pomaga zapewnić, że %1$s pozostanie darmowe, aktualne i dostępne dla wszystkich. Mała darowizna, nawet tylko koszt tygodniowego dojazdu do pracy, 27,50 dolarów, może zrobić różnicę.\n\nTwoja darowizna odliczalna od podatku zapewnia, że %1$s pozostanie darmowe i dostępne dla każdego. Kształtujmy razem przyszłość transportu publicznego!\n\nDziękujemy,\nZespół %1$s</string>
     <string name="preferences_reset_donation_timestamps_title">Zresetuj Znaczniki Czasu Dotacji</string>
-    <string name="preferences_reset_donation_timestamps_summary">Dotknięcie tej opcji spowoduje wyczyszczenie znaczników czasu \'Przypomnij mi później\' i \'Nie przeszkadzaj mi\' związanych z prośbami o darowizny.</string>
+    <string name="preferences_reset_donation_timestamps_summary">Dotknięcie tej opcji spowoduje wyczyszczenie znaczników czasu ’Przypomnij mi później’ i ’Nie przeszkadzaj mi’ związanych z prośbami o darowizny.</string>
     <string name="preferences_show_weather_view">Pokaż widok pogody</string>
     <string name="preferences_preferred_maps_title">Preferowany Typ Mapy</string>
     <string name="preferences_preferred_map_option_normal2d">Domyślna mapa</string>

@@ -8,6 +8,8 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import java.util.Locale;
 
 /**
@@ -22,7 +24,7 @@ public class GtfsAlertsHelper {
      * @param alert The GTFS alert.
      * @return The alert title.
      */
-    public static String getAlertTitle(GtfsRealtime.Alert alert) {
+    public static @NonNull String getAlertTitle(@NonNull GtfsRealtime.Alert alert) {
         String currentLanguageCode = getCurrentAppLanguageCode();
         String title = "";
 
@@ -44,7 +46,7 @@ public class GtfsAlertsHelper {
      * @param alert The GTFS alert.
      * @return The alert description.
      */
-    public static String getAlertDescription(GtfsRealtime.Alert alert) {
+    public static @NonNull String getAlertDescription(@NonNull GtfsRealtime.Alert alert) {
         String currentLanguageCode = getCurrentAppLanguageCode();
         String description = "";
 
@@ -66,7 +68,7 @@ public class GtfsAlertsHelper {
      * @param alert The GTFS alert.
      * @return The alert URL.
      */
-    public static String getAlertUrl(GtfsRealtime.Alert alert) {
+    public static @NonNull String getAlertUrl(@NonNull GtfsRealtime.Alert alert) {
         String currentLanguageCode = getCurrentAppLanguageCode();
         String url = "";
 
@@ -90,7 +92,7 @@ public class GtfsAlertsHelper {
      * @param nowMs  "Now" in epoch millis (the feed's server clock) for the start-date window (#1612).
      * @return True if the alert is valid, false otherwise.
      */
-    public static boolean isValidEntity(Context context, GtfsRealtime.FeedEntity entity, long nowMs) {
+    public static boolean isValidEntity(@NonNull Context context, @NonNull GtfsRealtime.FeedEntity entity, long nowMs) {
         return isAgencyWideAlert(entity.getAlert()) && isHighSeverity(entity.getAlert()) && isStartDateWithin24Hours(entity.getAlert(), nowMs) && !isAlertRead(context, entity);
     }
 
@@ -100,7 +102,7 @@ public class GtfsAlertsHelper {
      * @param alert The GTFS alert.
      * @return True if the alert is agency-wide, false otherwise.
      */
-    public static boolean isAgencyWideAlert(GtfsRealtime.Alert alert) {
+    public static boolean isAgencyWideAlert(@NonNull GtfsRealtime.Alert alert) {
         for (GtfsRealtime.EntitySelector es : alert.getInformedEntityList()) {
             if (es.hasAgencyId()) {
                 return true;
@@ -115,7 +117,7 @@ public class GtfsAlertsHelper {
      * @param alert The GTFS alert.
      * @return True if the alert has high severity, false otherwise.
      */
-    public static boolean isHighSeverity(GtfsRealtime.Alert alert) {
+    public static boolean isHighSeverity(@NonNull GtfsRealtime.Alert alert) {
         return alert.hasSeverityLevel() && (alert.getSeverityLevel() == GtfsRealtime.Alert.SeverityLevel.SEVERE || alert.getSeverityLevel() == GtfsRealtime.Alert.SeverityLevel.WARNING);
     }
 
@@ -130,7 +132,7 @@ public class GtfsAlertsHelper {
      * @param nowMs "Now" in epoch millis (the feed's server clock).
      * @return True if the start date is within the last 24 hours, false otherwise.
      */
-    public static boolean isStartDateWithin24Hours(GtfsRealtime.Alert alert, long nowMs) {
+    public static boolean isStartDateWithin24Hours(@NonNull GtfsRealtime.Alert alert, long nowMs) {
         // active_period is optional in GTFS-RT (an omitted period means "always active"). With no
         // period there is no start to bound, so don't surface it as a freshly-started wide alert —
         // and this avoids an IndexOutOfBoundsException on getActivePeriod(0) that would otherwise
@@ -153,7 +155,7 @@ public class GtfsAlertsHelper {
      * @return True if the alert exists in the database, false otherwise.
      */
 
-    public static boolean isAlertRead(Context context, GtfsRealtime.FeedEntity entity) {
+    public static boolean isAlertRead(@NonNull Context context, @NonNull GtfsRealtime.FeedEntity entity) {
         return alertsRepository(context).isAlertExists(entity.getId());
     }
 
@@ -163,7 +165,7 @@ public class GtfsAlertsHelper {
      * @param context The context to access the database.
      * @param entity The `GtfsRealtime.FeedEntity` object representing the alert.
      */
-    public static void markAlertAsRead(Context context, GtfsRealtime.FeedEntity entity) {
+    public static void markAlertAsRead(@NonNull Context context, @NonNull GtfsRealtime.FeedEntity entity) {
         alertsRepository(context).insertAlert(new AlertEntity(entity.getId()));
     }
 
@@ -175,7 +177,7 @@ public class GtfsAlertsHelper {
         return DatabaseEntryPoint.get(context).alertsRepository();
     }
 
-    public static String getCurrentAppLanguageCode() {
+    public static @NonNull String getCurrentAppLanguageCode() {
         return Locale.getDefault().getLanguage();
     }
 }
